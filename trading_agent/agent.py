@@ -417,17 +417,21 @@ def is_market_hours(now=None):
     return 13 * 60 + 30 <= minutes <= 20 * 60
 
 
-def run_loop(force=False):
+def run_loop(force=False, demo=False):
     """Live loop: run a cycle every LOOP_INTERVAL_MINUTES during market hours."""
     import time
     import schedule
+
+    if demo:
+        import demo_data
+        demo_data.install()
 
     print("Starting trading agent loop. Press Ctrl+C to stop.")
     if not config.ANTHROPIC_API_KEY:
         print("⚠ No ANTHROPIC_API_KEY set — running in transparent rule-based mode.")
 
     def job():
-        if force or is_market_hours():
+        if force or demo or is_market_hours():
             try:
                 run_cycle()
             except Exception as exc:  # never let one cycle kill the loop

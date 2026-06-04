@@ -1,8 +1,9 @@
 """CLI entry point for the US Stock Trading Agent.
 
 Run with ``python main.py`` for the interactive menu, or pass a subcommand:
-  python main.py run         # start the live loop
-  python main.py run --force # run cycles regardless of market hours (demo)
+  python main.py run         # start the live loop (real Yahoo Finance data)
+  python main.py run --force # run cycles regardless of market hours
+  python main.py run --demo  # run with synthetic data (no network needed)
   python main.py backtest    # run a historical backtest
   python main.py retrain      # force-retrain the ML model
 """
@@ -143,10 +144,10 @@ def force_retrain():
     predictor.clear_cache()
 
 
-def start_agent(force=False):
+def start_agent(force=False, demo=False):
     import agent
 
-    agent.run_loop(force=force)
+    agent.run_loop(force=force, demo=demo)
 
 
 def interactive():
@@ -188,7 +189,7 @@ def main():
 
     cmd = args[0]
     if cmd == "run":
-        start_agent(force="--force" in args)
+        start_agent(force="--force" in args, demo="--demo" in args)
     elif cmd == "backtest":
         run_backtest_cmd()
     elif cmd == "retrain":
