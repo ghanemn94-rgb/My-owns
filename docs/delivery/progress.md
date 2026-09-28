@@ -40,7 +40,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - F-DG0-146 (Low; fails closed).
   - The QA round-15 result.
   - An orchestrator-observed latent issue: a sandbox stub at `test-evidence/<stage>/audit` could block a reviewer's first `mkdir` in a new stage. Fix: the runner pre-creates the four evidence directories.
-- **Findings:** 77 closed and verified after round 15's code-security and domain verifications. F-DG0-145 and 146 are open, and F-DG0-235 awaits QA.
+- **Findings (round 15 not yet imported; QA is still running):** 74 closed and verified. The round-15 code-security sidecar verifies F-DG0-143 and 144, which makes 76 once imported. F-DG0-145 and 146 are new and open. F-DG0-235 awaits QA.
 
 ## Done in P0 so far
 
