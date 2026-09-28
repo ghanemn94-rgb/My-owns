@@ -86,16 +86,17 @@ PY
 
 # Configuration outside the candidate that could weaken the guard or run code during the auto-commit (F-DG0-136).
 # User and local settings are not loaded (--setting-sources project), but a change is still a tamper signal.
+entry() { printf '%s\t%s %s\n' "$1" "$(sha256sum "$1" 2>/dev/null | cut -d' ' -f1)" "$(readlink "$1" 2>/dev/null)"; }
 config_snapshot() {
   local f root
   for f in "$HOME/.claude/settings.json" "$HOME/.claude/settings.local.json" "$HOME/.gitconfig" \
            "$HOME/.config/git/config" "$HOME/.config/git/ignore" /etc/gitconfig /etc/claude-code/managed-settings.json \
            "$REPO_ROOT/.git/config" "$REPO_ROOT/.git/info/exclude" "$REPO_ROOT/.git/info/attributes"; do
-    if [ -e "$f" ] || [ -L "$f" ]; then echo "$f $(sha256sum "$f" 2>/dev/null | cut -d' ' -f1) $(readlink "$f" 2>/dev/null)"; else echo "$f absent"; fi
+    if [ -e "$f" ] || [ -L "$f" ]; then entry "$f"; else printf '%s\tabsent\n' "$f"; fi
   done
   # Hooks, including symlinked ones (F-DG0-138).
   find "$REPO_ROOT/.git/hooks" \( -type f -o -type l \) 2>/dev/null | sort | while read -r f; do
-    echo "$f $(sha256sum "$f" 2>/dev/null | cut -d' ' -f1) $(readlink "$f" 2>/dev/null)"
+    entry "$f"
   done
   # Claude configuration and ignore/attribute files anywhere in the repository and its worktrees, whether or not
   # git ignores them (F-DG0-137/226). Claude's own .claude/.cc-writes bookkeeping is excluded.
@@ -106,7 +107,7 @@ config_snapshot() {
         # Zero-length untracked files are the sandbox's transient mount stubs (e.g. .mcp.json, CLAUDE.local.md while
         # another agent's sandboxed command runs); an empty file carries no configuration. Tracked files always count.
         if [ ! -L "$f" ] && [ ! -s "$f" ] && ! git -C "$root" ls-files --error-unmatch -- "$f" >/dev/null 2>&1; then continue; fi
-        echo "$f $(sha256sum "$f" 2>/dev/null | cut -d' ' -f1) $(readlink "$f" 2>/dev/null)"
+        entry "$f"
       done
   done
 }
@@ -165,7 +166,28 @@ set -e
 FINISHED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 snapshot > "$OUT/.post-snapshot.json"
 config_snapshot > "$OUT/.post-config.txt"
-diff "$OUT/.pre-config.txt" "$OUT/.post-config.txt" | grep '^>' | sed 's/^> //' > "$OUT/.config-changed.txt" || true
+# Every entry that was added, changed or removed (F-DG0-012): a configuration file that disappears, or is truncated to a
+# zero-length untracked file (which the stub rule then skips), is reported as "<path> removed".
+if ! python3 -I -B - "$OUT/.pre-config.txt" "$OUT/.post-config.txt" > "$OUT/.config-changed.txt" <<'PY'
+import sys
+def load(path):
+    entries = {}
+    with open(path, encoding="utf-8", errors="surrogateescape") as f:
+        for line in f:
+            if line.strip():
+                key, _, value = line.rstrip("\n").partition("\t")
+                entries[key] = value
+    return entries
+pre, post = load(sys.argv[1]), load(sys.argv[2])
+for key in sorted(set(pre) | set(post)):
+    if key not in post:
+        print(f"{key} removed")
+    elif pre.get(key) != post[key]:
+        print(f"{key} {post[key]}".rstrip())
+PY
+then
+  echo "config-diff-failed (fail closed)" > "$OUT/.config-changed.txt"
+fi
 rm -f "$OUT/.pre-config.txt" "$OUT/.post-config.txt"
 gzip -n "$OUT/transcript.jsonl"
 

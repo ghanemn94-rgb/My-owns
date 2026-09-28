@@ -300,6 +300,9 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
   const init = lines.find((o) => o.type === "system" && o.subtype === "init");
   if (!init || init.session_id !== ref.session_id) bad("transcript has no init line for this session");
   else if (meta.model_requested && init.model !== meta.model_requested) bad(`transcript model ${init.model} != requested ${meta.model_requested}`);
+  // meta.cwd decides which repository the sandbox deny list must protect (F-DG0-230), so it is bound to the transcript:
+  // the CLI's own init line and the replayed runner prompt must both name the same working directory (F-DG0-233).
+  if (init && init.cwd !== meta.cwd) bad(`transcript init cwd ${init.cwd} != meta.cwd ${meta.cwd}`);
   // The CLI replays the prompt it received (isReplay: true, D-022). Only a replayed user message whose content is
   // text counts; the same words inside a tool result (e.g. someone reading run-agent.sh) do not.
   const promptText = (o) => {
@@ -316,6 +319,8 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
     const m = promptText(prompt).match(/Your complete assignment is in the file (.+?) \(sha256 ([0-9a-f]{64})\)/); // paths may contain spaces (F-DG0-223)
     if (!m) bad("the replayed prompt names no assignment file and sha256");
     else if (!m[1].endsWith(`/${meta.assignment}`) || m[2] !== meta.assignment_sha256) bad(`the replayed prompt names assignment ${m[1]} (sha256 ${m[2].slice(0, 12)}…), not meta's ${meta.assignment}`);
+    const wd = promptText(prompt).match(/ Your working directory is (.+)\.$/);
+    if (!wd || wd[1] !== meta.cwd) bad(`the replayed prompt names working directory ${wd ? wd[1] : "<none>"}, not meta.cwd ${meta.cwd}`);
   }
   const results = lines.filter((o) => o.type === "result");
   const last = results[results.length - 1];

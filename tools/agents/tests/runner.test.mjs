@@ -21,10 +21,13 @@ const STUB = `#!/usr/bin/env node
 const args = process.argv.slice(2);
 const sid = args[args.indexOf("--session-id") + 1] || args[args.indexOf("--resume") + 1];
 const model = args[args.indexOf("--model") + 1];
-// Files the "agent" leaves behind (set by a test): [[path, content]] or [[path, null, symlinkTarget]].
+// Files the "agent" leaves behind (set by a test): [[path, content]], [[path, null, symlinkTarget]] or [[path, null]]
+// (delete).
 const fs = require("node:fs");
 for (const [p, content, target] of JSON.parse(process.env.STUB_WRITE || "[]")) {
-  if (target !== undefined) fs.symlinkSync(target, p); else fs.writeFileSync(p, content);
+  if (target !== undefined) fs.symlinkSync(target, p);
+  else if (content === null) fs.rmSync(p);
+  else fs.writeFileSync(p, content);
 }
 let input = "";
 process.stdin.on("data", (d) => (input += d));
@@ -124,5 +127,29 @@ test("D-026: configuration with content, a symlink, or a truncated tracked file 
   assert.deepEqual(changed.sort(), [".mcp.json", "CLAUDE.local.md", "CLAUDE.md"]);
   assert.equal(res.status, 71, res.stderr);
   assert.match(execFileSync("git", ["-C", repo, "log", "--oneline"]).toString().trim(), /^\w+ c$/); // nothing auto-committed
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test("F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed", () => {
+  if (spawnSync("sh", ["-c", "command -v bwrap"]).status !== 0) assert.fail("bwrap is required by run-agent.sh (D-025)");
+  const repo = stubRepo();
+  mkdirSync(join(repo, "sub"));
+  writeFileSync(join(repo, ".git", "info", "exclude"), "settings.local.json\n"); // ignored (the exclude file is unchanged by the run)
+  // Before the run: untracked or ignored configuration with content.
+  writeFileSync(join(repo, ".mcp.json"), '{"mcpServers":{}}');
+  writeFileSync(join(repo, "sub", "CLAUDE.local.md"), "local rules\n");
+  writeFileSync(join(repo, ".claude", "settings.local.json"), '{"permissions":{"deny":["Bash"]}}');
+  writeFileSync(join(repo, "sub", ".gitignore"), "*.tmp\n");
+  const { res, changed } = runWith(repo, [
+    [join(repo, ".mcp.json"), null], // deleted
+    [join(repo, "sub", "CLAUDE.local.md"), ""], // truncated
+    [join(repo, ".claude", "settings.local.json"), ""], // ignored, truncated
+    [join(repo, "sub", ".gitignore"), null], // deleted
+  ]);
+  assert.deepEqual(changed.sort(), [".claude/settings.local.json", ".mcp.json", "sub/.gitignore", "sub/CLAUDE.local.md"]);
+  const meta = JSON.parse(readFileSync(join(repo, "docs", "delivery", "runs", "DG0",
+    readdirSync(join(repo, "docs", "delivery", "runs", "DG0"))[0], "meta.json"), "utf8"));
+  assert.ok(meta.external_config_changed.every((l) => l.endsWith(" removed")), meta.external_config_changed.join("; "));
+  assert.equal(res.status, 71, res.stderr);
   rmSync(repo, { recursive: true, force: true });
 });

@@ -74,8 +74,8 @@ function makeRun(repo, role, { assignment, startedAt = T_RUN, task = "T-REV", st
   const run_id = `${stage}-${task}-${role}-20260928T123000Z-${session_id.slice(0, 8)}`;
   const base = `docs/delivery/runs/${stage}/${run_id}`;
   const lines = [
-    { type: "system", subtype: "init", session_id, model: "claude-opus-5-5", tools: ["Read", "Bash", "Write"] },
-    { type: "user", isReplay: true, message: { role: "user", content: `You are invoked as project agent '${role}' for stage ${stage}, task ${task}. Your invocation_reference is: {"kind":"claude-code-cli-session","run_id":"${run_id}","session_id":"${session_id}"}. Your complete assignment is in the file ${RUN_CWD}/${assignment} (sha256 ${sha(readFileSync(join(repo, assignment)))}). Read it first.` }, session_id },
+    { type: "system", subtype: "init", session_id, cwd: RUN_CWD, model: "claude-opus-5-5", tools: ["Read", "Bash", "Write"] },
+    { type: "user", isReplay: true, message: { role: "user", content: `You are invoked as project agent '${role}' for stage ${stage}, task ${task}. Your invocation_reference is: {"kind":"claude-code-cli-session","run_id":"${run_id}","session_id":"${session_id}"}. Your complete assignment is in the file ${RUN_CWD}/${assignment} (sha256 ${sha(readFileSync(join(repo, assignment)))}). Read it first. Your working directory is ${RUN_CWD}.` }, session_id },
     { type: "result", subtype: "success", is_error: false, session_id, result: "done" },
   ];
   const transcript = gzipSync(Buffer.from(lines.map((l) => JSON.stringify(l)).join("\n") + "\n"));
@@ -908,4 +908,28 @@ test("F-DG0-230: the sandbox deny list must protect the run's own repository, no
   put(repo, rel, elsewhere);
   edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (m) => (m.settings_sha256 = sha(elsewhere)));
   expectError(validateGate(repo, "DG0"), /does not deny writes to \/work\/repo\/tools\/gates/);
+});
+
+test("F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the replayed prompt)", () => {
+  // A run whose meta.cwd and sandbox deny list both name a foreign root must not bind a gate record.
+  for (const tamper of ["meta", "init", "prompt"]) {
+    const { repo, records } = buildValidRepo();
+    const ref = get(repo, records["qa-verifier"]).invocation_reference;
+    const base = `docs/delivery/runs/DG0/${ref.run_id}`;
+    if (tamper === "meta") {
+      const foreign = Buffer.from(JSON.stringify({ sandbox: { enabled: true, failIfUnavailable: true, allowUnsandboxedCommands: false,
+        filesystem: { denyWrite: [".git", ".claude", "tools/gates", "tools/agents", "docs/source", "docs/delivery/reviews", "docs/delivery/runs"].map((x) => `/foreign/root/${x}`) } } }));
+      put(repo, `${base}/settings.json`, foreign);
+      edit(repo, `${base}/meta.json`, (m) => { m.cwd = "/foreign/root"; m.settings_sha256 = sha(foreign); });
+    } else {
+      const lines = gunzipSync(readFileSync(join(repo, base, "transcript.jsonl.gz"))).toString().trim().split("\n").map((l) => JSON.parse(l));
+      if (tamper === "init") lines[0].cwd = "/foreign/root";
+      else lines[1].message.content = lines[1].message.content.replace(`Your working directory is ${RUN_CWD}.`, "Your working directory is /foreign/root.");
+      const gz = gzipSync(Buffer.from(lines.map((l) => JSON.stringify(l)).join("\n") + "\n"));
+      put(repo, `${base}/transcript.jsonl.gz`, gz);
+      edit(repo, `${base}/meta.json`, (m) => (m.transcript_sha256 = sha(gz)));
+    }
+    const errs = validateGate(repo, "DG0");
+    expectError(errs, tamper === "prompt" ? /replayed prompt names working directory \/foreign\/root/ : /init cwd/);
+  }
 });

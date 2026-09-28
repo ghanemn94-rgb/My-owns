@@ -4,11 +4,16 @@
 #   tools/gates/sandbox-run.sh <revision> -- <command> [args...]
 #
 # The orchestrator must not execute agent-writable code, or import from agent-writable paths, outside a sandbox
-# (F-DG0-140, F-DG0-229). This script clones <revision> into a fresh directory, so ignored or untracked files in the
-# working tree (for example planted bytecode) are absent. It then runs the command with:
-#   - the whole filesystem read-only, except the clone and a private /tmp;
-#   - no network, a separate PID namespace, and a clean environment (hermetic git, no Python bytecode or safe-path gaps).
-# The clone is removed afterwards. The command's exit status is returned.
+# (D-026; F-DG0-140, F-DG0-229). Everything after resolving <revision> to a commit id happens INSIDE bubblewrap
+# (F-DG0-141): the clone, the checkout and the command. The work area is a tmpfs private to the sandbox's mount
+# namespace, so no other process (in particular no agent sharing $TMPDIR or /tmp) can see, plant into, or change the
+# clone while it is created or checked. Inside the sandbox:
+#   - the whole filesystem is read-only, except the private /tmp (which holds the clone and HOME); the repository's
+#     git directory is bound read-only at /tmp/src.git;
+#   - there is no network, a separate PID namespace, and a clean environment (hermetic git, no Python bytecode or
+#     safe-path gaps, git hooks off);
+#   - the clone contains only committed content, so ignored or untracked files (for example planted bytecode) are absent.
+# The command's exit status is returned.
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 REV="${1:?usage: sandbox-run.sh <revision> -- <command...>}"; shift
@@ -16,16 +21,20 @@ REV="${1:?usage: sandbox-run.sh <revision> -- <command...>}"; shift
 [ $# -gt 0 ] || { echo "sandbox-run: no command" >&2; exit 64; }
 command -v bwrap >/dev/null || { echo "sandbox-run: bubblewrap (bwrap) is required" >&2; exit 65; }
 cd /
-WORK="$(mktemp -d /tmp/claude-0/sbxrun.XXXXXX 2>/dev/null || mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
-git -C "$REPO_ROOT" -c core.hooksPath=/dev/null clone -q --no-hardlinks --no-checkout "$REPO_ROOT" "$WORK/repo"
-git -C "$WORK/repo" -c core.hooksPath=/dev/null -c advice.detachedHead=false checkout -q "$(git -C "$REPO_ROOT" rev-parse --verify "$REV^{commit}")"
-mkdir -p "$WORK/home"
-set +e
-env -i PATH="/usr/local/bin:/usr/bin:/bin" HOME="$WORK/home" LANG=C.UTF-8 TMPDIR=/tmp \
+# Resolving a name to a commit reads only the repository's own .git, which agents cannot write (D-025). The git
+# directory is then bound read-only into the sandbox, so the source is reachable even when the repository lives under /tmp.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+COMMIT="$(git -C "$REPO_ROOT" rev-parse --verify --end-of-options "$REV^{commit}")"
+GIT_COMMON="$(git -C "$REPO_ROOT" rev-parse --path-format=absolute --git-common-dir)"
+exec env -i PATH="/usr/local/bin:/usr/bin:/bin" HOME=/tmp/home LANG=C.UTF-8 TMPDIR=/tmp \
   PYTHONDONTWRITEBYTECODE=1 PYTHONSAFEPATH=1 GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 \
-  bwrap --ro-bind / / --dev /dev --proc /proc --tmpfs /tmp --bind "$WORK" "$WORK" \
-        --unshare-net --unshare-pid --die-with-parent --new-session --chdir "$WORK/repo" -- "$@"
-RC=$?
-set -e
-exit $RC
+  MTH_COMMIT="$COMMIT" \
+  bwrap --ro-bind / / --dev /dev --proc /proc --tmpfs /tmp --ro-bind "$GIT_COMMON" /tmp/src.git \
+        --unshare-net --unshare-pid --die-with-parent --new-session --chdir /tmp -- \
+  bash -c 'set -eu
+    mkdir /tmp/home
+    git -c core.hooksPath=/dev/null clone -q --no-hardlinks --no-checkout -- /tmp/src.git /tmp/repo
+    git -C /tmp/repo -c core.hooksPath=/dev/null -c advice.detachedHead=false checkout -q "$MTH_COMMIT"
+    cd /tmp/repo
+    unset MTH_COMMIT
+    exec "$@"' sandbox-run "$@"

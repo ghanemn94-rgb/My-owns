@@ -2,7 +2,7 @@
 // Run: node --test tools/gates/tests/*.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -61,5 +61,24 @@ test("F-DG0-140: inside the sandbox the source repository is read-only, there is
 test("sandbox-run: the command's exit status is returned", () => {
   const repo = fixture();
   assert.equal(run(repo, "exit 7").status, 7);
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test("F-DG0-141: the clone, checkout and command run inside the sandbox, in a work area no other process can see", async () => {
+  // A concurrently running agent can write $TMPDIR and /tmp (shell sandbox and file tools). If the work clone lived
+  // there, it could plant a git filter or hook before the checkout, or change files while they are checked.
+  const repo = fixture();
+  const tag = `mth-private-${process.pid}-${Date.now()}`;
+  const child = spawn(join(repo, "tools", "gates", "sandbox-run.sh"), ["HEAD", "--", "bash", "-c", `touch ${tag}; pwd; echo READY; sleep 3`],
+    { stdio: ["ignore", "pipe", "pipe"] });
+  let out = "";
+  const exited = new Promise((resolve) => child.on("exit", (code) => resolve(code)));
+  const ready = new Promise((resolve) => child.stdout.on("data", (d) => { out += d; if (out.includes("READY")) resolve(); }));
+  await Promise.race([ready, exited.then(() => { throw new Error(`sandbox-run exited before READY: ${out}`); })]);
+  const roots = [...new Set([tmpdir(), "/tmp", "/var/tmp"])];
+  const found = spawnSync("find", [...roots, "-name", tag], { encoding: "utf8" }).stdout.trim();
+  const code = await exited;
+  assert.equal(found, "", `the sandbox's work clone is visible outside the sandbox: ${found}`);
+  assert.equal(code, 0);
   rmSync(repo, { recursive: true, force: true });
 });
