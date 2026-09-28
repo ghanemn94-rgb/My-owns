@@ -1,0 +1,73 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-211",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The gate record is not bound to the audited release-auditor run's outputs: it can be edited after the run, or never written by the auditor at all, and validateGate still passes",
+      "reproduction": "QA_REPO_ROOT=<worktree @ 53f5d176> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs --test-name-pattern 'QA4-N39|QA4-N40'. The fixture builds a valid DG0 gate in which the release-auditor run recorded docs/delivery/gates/DG0.json in meta.outputs/written_by_tools. N39 edits the committed gate record afterwards (adds a tests[] entry, changes decided_at) and commits it: validateGate returns [] (the test logs the auditor run's recorded sha 31e6f51a... and the gate's current sha a6bc899b...). N40 builds the gate with an auditor run that never recorded the gate record as an output: validateGate returns []. Cause: validateGate (tools/gates/lib/rules.mjs) checks only that gate.invocation_reference equals the audit record's invocation_reference. checkReview binds the audit record and its findings sidecar to the run (outputs: [rel, sidecar]), but not gate.gate_record. writeOncePaths() does not cover docs/delivery/gates/, so an edit before approval also escapes the write-once rule.",
+      "expected": "The error text 'gate record was not written by the audited release-auditor invocation' and D-021 ('closure and acceptance need artefacts produced by the reviewer's own run') imply that the gate record is exactly what the audited release-auditor run wrote with its own file tools. For example, add stage.gate_record to the outputs binding of the audit invocation in validateGate, and add a regression test like QA4-N39/N40.",
+      "actual": "Accepted without errors (QA4-N39 and QA4-N40 are marked todo 'F-DG0-211' and fail their assertion on the frozen candidate; see 20-qa4-negative-on-new.log). The impact is limited. The decisive approval evidence, the audit record with verdict PASS, is bound to the auditor's run. The gate record's accepted_observations are cross-checked against the reviewer sidecars, and its requirements are cross-checked against the register. After approval, historical mode freezes the gate record. What can change undetected before approval is, for example, the tests[] list or decided_at. This is hardening, and I accept it as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-new.log",
+        "tools/gates/lib/rules.mjs"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-4/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        { "at": "2026-09-28T14:55:00Z", "status": "OPEN", "note": "Raised in DG0 round 4 QA review; the reporter accepts it as a Low observation (needs release-auditor agreement)." }
+      ]
+    },
+    {
+      "id": "F-DG0-212",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-017",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Residual of F-DG0-208: a new review round can be backed by a newly created, fabricated manifest with a backdated frozen_at, because a round's manifest is not checked against the content of its source_commit or against git history",
+      "reproduction": "QA_REPO_ROOT=<worktree @ 53f5d176> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs --test-name-pattern QA4-N30b. On a valid fixture (real freeze 13:00Z), the test creates docs/delivery/candidates/DG0/<id>.manifest.json for a fabricated entry list: self-consistent id, source_commit = the real freeze commit, frozen_at 10:00Z. This is a new file, not a modification, so the write-once rule does not apply. It then adds round 3 with that candidate and frozen_at, holding a qa-verifier record and closing verifications sidecar written by a genuine qa-verifier run that started at 11:00Z (before the real freeze), and mirrors the closure into findings.json. validateGate returns []. The test logs that the manifest id differs from the candidate recomputed from its source_commit (sha256:64665183... vs sha256:96c1e053...). findManifest() checks only that the manifest hashes to its own candidate_id. Nothing ties its frozen_at to when it was committed, or to the run's head_commit_at_start.",
+      "expected": "A round's committed manifest describes the content of its source_commit: candidateId(manifestFromRef(source_commit), manifest.hash_algorithm) equals candidate_id. With that check, a backdated duplicate for the same content collides with the existing write-once path. Optionally, a bound run must also have started from a commit that contains the round's manifest (meta.head_commit_at_start descends from the commit that added it).",
+      "actual": "Accepted without errors (QA4-N30b is marked todo 'F-DG0-212' and fails its assertion on the frozen candidate). The original F-DG0-208 reproduction, an in-place rewrite of round metadata and records, is now rejected (QA4-R208a/b), so F-DG0-208 itself is verified. This variant needs a genuine pre-freeze run of the verifying role that itself wrote a closing verification sidecar at a review path, plus a party that commits a fabricated manifest and round entry. That is close to the forgery residual that D-021 already discloses. I accept it as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-new.log",
+        "tools/gates/lib/rules.mjs"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-4/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        { "at": "2026-09-28T14:55:00Z", "status": "OPEN", "note": "Raised in DG0 round 4 QA review; the reporter accepts it as a Low observation (needs release-auditor agreement)." }
+      ]
+    },
+    {
+      "id": "F-DG0-213",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "tools/gates/lib/candidate.mjs comment says mth-candidate-v1 is for 'historical DG0 rounds 1-3', but the round-3 manifest uses v2; D-005 and REQ-DLV-022 correctly say rounds 1-2",
+      "reproduction": "grep -n 'v1 (historical DG0 rounds' tools/gates/lib/candidate.mjs gives line 132: '... v1 (historical DG0 rounds 1-3 only) ...'. Recomputing every committed manifest (docs/delivery/test-evidence/DG0/qa/round-4/21-manifest-algorithms.log) gives: dea5e75a (round 1) and d47b51ca (round 2) match v1; 31fd0843 (round 3) and 0be571ea (round 4) declare and match v2 only. D-005 says 'historical DG0 rounds 1–2 used mth-candidate-v1'. The REQ-DLV-022 procedure says v1 is kept 'to re-verify the historical DG0 round-1 and round-2 manifests'.",
+      "expected": "The code comment agrees with D-005, REQ-DLV-022 and the committed manifests (rounds 1-2).",
+      "actual": "A code comment contradicts the documentation and the data. It is cosmetic, with no behavioural effect, because the algorithm is taken from each manifest's hash_algorithm field. I accept it as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/21-manifest-algorithms.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/17-doc-findings-greps.log",
+        "tools/gates/lib/candidate.mjs"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-4/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        { "at": "2026-09-28T14:55:00Z", "status": "OPEN", "note": "Raised in DG0 round 4 QA review; the reporter accepts it as a Low observation (needs release-auditor agreement)." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 4,
+  "candidate_id": "sha256:0be571eaa84438604b9b4095b7a2bb26086a340b1a34ab2b56aba3a148d3a3b7",
+  "source_commit": "53f5d176dfaa913baa61b34c0aa4fe5fd9a788b5",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-QA-R4-qa-verifier-20260928T143310Z-3754a962",
+    "session_id": "3754a962-2b90-41b9-ac66-69f7a623581a"
+  },
+  "implementation_author": ["transformation-analyst", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no implementation in the DG0 scope (analysis, register, agents, runner, guard, gate tooling, CI, delivery records). My only writes are review records, sidecars and QA evidence/tests under docs/delivery/test-evidence/DG0/qa/. I formed this verdict without reading any other round-4 review record. A domain-reviewer run was auto-committed during my run (8741de3); I read only its commit file list and its meta.json key names and counts, not its record or sidecar content."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-4/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-003", "REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-013",
+    "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-019", "REQ-DLV-020", "REQ-DLV-022", "REQ-DLV-023",
+    "REQ-DLV-026", "REQ-DLV-029", "REQ-DLV-032", "REQ-S20-024", "REQ-S20-025"
+  ],
+  "checks_run": [
+    {
+      "id": "K00",
+      "procedure": "Confirm the frozen candidate before reviewing: HEAD vs the assigned commit, and the recomputed candidate ID",
+      "command": "git rev-parse HEAD; git diff --stat 53f5d17..HEAD; node tools/gates/candidate.mjs --stage DG0 (main checkout, and worktree /tmp/review-qa4-new @53f5d176)",
+      "environment": "Linux, node v22.22.2, git; main checkout /home/user/My-owns and disposable worktree",
+      "expected": "HEAD equals 53f5d176, or later commits are metadata-only and the recomputed candidate ID is sha256:0be571ea...a3b7",
+      "actual": "HEAD 7a411d22 (later 8741de3). 7a411d2 touches only assignments/DG0/round-4, candidates/DG0/0be571eaa8443860.manifest.json and stages.json, and 8741de3 only runs/ and reviews/, all excluded metadata. candidate.mjs prints sha256:0be571eaa84438604b9b4095b7a2bb26086a340b1a34ab2b56aba3a148d3a3b7 (75 files) in both trees, and again at the end of the review.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/04d-candidate.log"]
+    },
+    {
+      "id": "K01",
+      "procedure": "Source extraction is reproducible",
+      "command": "tools/source/check_extraction.sh",
+      "environment": "worktree /tmp/review-qa4-new @53f5d176, node v22.22.2, python3",
+      "expected": "PASS with docx sha256 2584a352...548ad2, 165 playbook blocks and 423 master-prompt blocks",
+      "actual": "PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032", "REQ-DLV-001"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/01-check-extraction.log"]
+    },
+    {
+      "id": "K02",
+      "procedure": "Gate validator self-tests",
+      "command": "node --test tools/gates/tests/*.test.mjs",
+      "environment": "worktree /tmp/review-qa4-new @53f5d176, node v22.22.2",
+      "expected": "all tests pass, including the new F-DG0-115/116/117/208 regression tests",
+      "actual": "tests 29, pass 29, fail 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-022", "REQ-DLV-023", "REQ-S20-024", "REQ-S20-025"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/02-gates-tests.log"]
+    },
+    {
+      "id": "K03",
+      "procedure": "Write-guard tests",
+      "command": "node --test tools/agents/tests/*.test.mjs",
+      "environment": "worktree /tmp/review-qa4-new @53f5d176, node v22.22.2",
+      "expected": "all pass",
+      "actual": "tests 13, pass 13, fail 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/03-agents-tests.log"]
+    },
+    {
+      "id": "K04",
+      "procedure": "Validator CLI: register, pipeline and reconcile at the frozen commit and at HEAD (metadata commit)",
+      "command": "node tools/gates/validate.mjs --register DG0; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --reconcile (worktrees @53f5d176 and @7a411d22)",
+      "environment": "disposable worktrees /tmp/review-qa4-new and /tmp/review-qa4-head, node v22.22.2",
+      "expected": "PASS register rules at DG0; PASS pipeline (DG0 REVIEWING); PASS reconcile, with the working tree matching the frozen candidate at HEAD",
+      "actual": "At 53f5d176: 'PASS register rules at DG0', 'PASS pipeline (active stage: DG0 REVIEWING)', 'PASS reconcile (structure)'. Reconcile at 53f5d176 reports the round-3 candidate as frozen, as expected, because the round-4 freeze is in 7a411d2. At 7a411d22: the same three pass, and reconcile reports 'working tree: sha256:0be571ea... (matches)', with round 4 records missing, as expected while reviews run. validate.mjs --stage DG0 at HEAD fails only with 'file not found (docs/delivery/gates/DG0.json)', as expected before the audit. checkReviewRounds() on the real repository reports only the 3 not-yet-written round-4 records; collectVerifications() reports 0 errors.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-020", "REQ-DLV-029"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/04a-validate-register.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/04b-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/04c-validate-reconcile.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/04e-head-reconcile.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/04e-head-pipeline.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/04e-head-registerDG0.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/04f-head-stage-DG0.log"
+      ]
+    },
+    {
+      "id": "K05",
+      "procedure": "Independent A24/A25 negative suite on the round-4 rules (own disposable git fixtures; 41 cases: control, re-confirmation of F-DG0-201/202/204/205/206/208, 14 new D-021 cases N30-N42 not in tools/gates/tests, the full assignment rejection list, and the metadata-invariance case)",
+      "command": "QA_REPO_ROOT=/tmp/review-qa4-new node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs",
+      "environment": "worktree /tmp/review-qa4-new @53f5d176, node v22.22.2, fixtures in the OS temp dir, removed after each case",
+      "expected": "The control validates (API [] and CLI exit 0). Every negative case is rejected with its targeted message: missing reviewer, authoring reviewer, shared invocation, FAIL/BLOCKED check, failed gate test, unresolved High, High without a sidecar, incomplete requirement, unknown anchor, SOURCE without a B block, coverage gap or non-citing mapping, change after freeze, tampered manifest. Metadata-only writes leave the candidate ID unchanged. Todo probes may fail.",
+      "actual": "tests 41, pass 38, fail 0, todo 3. All required rejections hold. QA4-M01 shows that a new round of assignments, runs, progress, handbacks and test-evidence leaves the candidate ID unchanged (working tree and HEAD) and the gate valid. Three todo probes fail their assertion: QA4-N39/N40 (gate record not bound to the auditor run, finding F-DG0-211) and QA4-N30b (backdated fabricated round manifest, finding F-DG0-212). Both are Low. On the round-3 tooling (540b3c69) the same suite gives pass 26, fail 12, todo 3: the F-DG0-208 attacks and every D-021 case are accepted there, which shows the new rules are what reject them.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-020", "REQ-DLV-022", "REQ-S20-024", "REQ-S20-025"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-old.log"
+      ]
+    },
+    {
+      "id": "K06",
+      "procedure": "Reproduce each earlier QA finding on the commit it was raised against, using the original tests",
+      "command": "QA_REPO_ROOT=/tmp/review-qa4-r1 (26642c7) node --test --test-name-pattern 'control|QA-N27|QA-N28' .../dg0-gate-negative.test.mjs; QA_REPO_ROOT=/tmp/review-qa4-r2 (83860be) node --test --test-name-pattern 'control|QA2-N11|QA2-N12|QA2-N14' .../dg0-gate-negative-r2.test.mjs; QA_REPO_ROOT=/tmp/review-qa4-old (540b3c69) node --test .../dg0-gate-negative-r3.test.mjs",
+      "environment": "disposable worktrees of the round-1, round-2 and round-3 candidates, node v22.22.2",
+      "expected": "On each original candidate the control passes and the defect reproduces",
+      "actual": "26642c7: control ok; QA-N27 (F-DG0-201) and QA-N28 (F-DG0-202) fail with 'validator accepted'. 83860be: control ok; QA2-N11 (F-DG0-204) and QA2-N12 (F-DG0-205) fail; QA2-N14 prints 'exec-bit change detected by candidate: false' (F-DG0-206). 540b3c69: pass 27, and QA3-N20 (F-DG0-208) is todo/not ok.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/22-repro-r1-findings-on-26642c7.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/23-repro-r2-findings-on-83860be.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/10-dg0-gate-negative-r3-on-old.log"
+      ]
+    },
+    {
+      "id": "K07",
+      "procedure": "Re-run the earlier-round QA suites (r1, r2, r3) unchanged against the new tooling",
+      "command": "QA_REPO_ROOT=/tmp/review-qa4-new node --test .../dg0-gate-negative{,-r2,-r3}.test.mjs",
+      "environment": "worktree /tmp/review-qa4-new @53f5d176, node v22.22.2",
+      "expected": "The old fixtures predate D-021 (no per-freeze v2 manifest, no run outputs), so their controls are expected to fail. Every assertion that still applies is re-expressed on the D-021 fixture in K05.",
+      "actual": "r1: pass 23, fail 6. r2: pass 16, fail 4. r3: pass 23, fail 4. The failing items are the controls and cases that assert that a fixture still validates. The r3 control's errors are exactly the D-021 requirements: 'path must be docs/delivery/candidates/DG0/<id>.manifest.json', 'must use mth-candidate-v2', 'records no outputs'. No negative case became accepted. The equivalents (latest/same-round FAIL, unlisted sidecar, write-once history) pass in K05 as QA4-N41, N42, N32, N33 and N36.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/10-dg0-gate-negative-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/10-dg0-gate-negative-r2-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/10-dg0-gate-negative-r3-on-new.log"
+      ]
+    },
+    {
+      "id": "K08",
+      "procedure": "Register integrity (own parser): columns, no declared VERIFIED, classes, anchors, SOURCE rows cite B blocks, increments/final_gate consistency, DG0 rows IMPLEMENTED with existing evidence, A01-A28 coverage, counts per class/area/gate, coverage matrices exactly complete and bidirectionally consistent",
+      "command": "node docs/delivery/test-evidence/DG0/qa/round-4/scripts/register-integrity.mjs /tmp/review-qa4-new",
+      "environment": "worktree @53f5d176, node v22.22.2; script copied unchanged from round 3 (identical sha256)",
+      "expected": "errors: 0",
+      "actual": "411 rows (SOURCE 93, ENGINEERING 130, USER 188). By final_gate: DG0 19, DG1 11, DG2 32, DG3 32, DG4 137, DG5 78, DG6 48, DG7 54. Status: SPECIFIED 392, IMPLEMENTED 19, none VERIFIED. Every A01-A28 is cited. source-coverage 165/165 blocks; master-prompt-coverage 423/423. errors: 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/11-register-integrity.log", "docs/delivery/test-evidence/DG0/qa/round-4/scripts/register-integrity.mjs"]
+    },
+    {
+      "id": "K09",
+      "procedure": "Open the evidence of all 19 DG0 rows and check that it actually implements the requirement (a concrete code or text marker per row, and the file is cited as that row's evidence)",
+      "command": "python3 docs/delivery/test-evidence/DG0/qa/round-4/scripts/dg0-evidence-content.py /tmp/review-qa4-new",
+      "environment": "worktree @53f5d176, python3",
+      "expected": "every marker found in cited evidence; 0 errors",
+      "actual": "DG0 rows: 19 errors: 0. Examples: the output-binding code in rules.mjs for REQ-DLV-013; written_by_tools recording in run-agent.sh for REQ-DLV-026; the v2 line format and the write-once freeze refusal for REQ-DLV-022; node --test and validate.mjs in CI for REQ-DLV-023. In my first draft I expected rules.mjs as REQ-DLV-017 evidence; the row cites the tests instead, so I switched the marker to the cited test.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-003", "REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-019", "REQ-DLV-020", "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026", "REQ-DLV-029", "REQ-DLV-032", "REQ-S20-024", "REQ-S20-025"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/16-dg0-evidence-content.log", "docs/delivery/test-evidence/DG0/qa/round-4/scripts/dg0-evidence-content.py"]
+    },
+    {
+      "id": "K10",
+      "procedure": "Test-title citations in register acceptance cells resolve to existing tests (F-DG0-207)",
+      "command": "own python check over requirements.csv vs test titles in tools/gates/tests/validator.test.mjs and tools/agents/tests/guard.test.mjs",
+      "environment": "worktree @53f5d176, python3",
+      "expected": "0 unresolved citations; stale titles occur 0 times",
+      "actual": "42 test titles; 25 cited verbatim; the 10 quoted after 'test' all resolve; stale F-DG0-207 titles occur 0 times. (The analyst's helper docs/analysis/tools/check_test_refs.py was not run: the permission classifier refused the combined command it was part of. My own check above covers the same property.)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/12-acceptance-test-refs.log"]
+    },
+    {
+      "id": "K11",
+      "procedure": "Agent setup from raw evidence: all ten definitions loaded as distinct invocations with the orchestrator's model; out-of-scope writes blocked and in-scope writes allowed; no probe files left in docs/source",
+      "command": "node docs/delivery/test-evidence/DG0/qa/round-4/scripts/agent-load-check.mjs /home/user/My-owns",
+      "environment": "main checkout (runs/ is excluded metadata), node v22.22.2; script identical to round 3",
+      "expected": "10 runs, 10 distinct sessions and roles, roles == definitions, init.model claude-opus-5-5, every oos probe BLOCKED and every in-scope write OK, errors 0",
+      "actual": "runs: 10; distinct sessions: 10; distinct roles: 10; roles == definitions: true; every run init.model=claude-opus-5-5; all LOAD-PROBE writes to docs/source BLOCKED, in-scope writes OK; probe files under docs/source: none; errors: 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/13-agent-load.log", "docs/delivery/test-evidence/DG0/qa/round-4/scripts/agent-load-check.mjs"]
+    },
+    {
+      "id": "K12",
+      "procedure": "Live write-guard probe from this run, plus guard decide() on in-scope and out-of-scope paths",
+      "command": "Write tool -> /home/user/My-owns/docs/source/QA-PROBE.txt; test -e docs/source/QA-PROBE.txt; guard-write.mjs decide() for 6 paths",
+      "environment": "this qa-verifier run (write guard as PreToolUse hook); worktree @53f5d176 for decide()",
+      "expected": "The Write is blocked, no file is created, protected paths are blocked and the qa scopes are allowed",
+      "actual": "Hook: 'BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)'; probe file absent; git status docs/source clean. decide(): docs/source, tools/gates and stages.json BLOCK; reviews/DG0/round-4, test-evidence and tests/qa ALLOW.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/05-guard-probe.log"]
+    },
+    {
+      "id": "K13",
+      "procedure": "agents.md claims vs raw evidence (runner outputs recording, auto-commit, resume count, D-016 binding)",
+      "command": "git show --stat 8741de3 (paths anonymised); python3 read of the key names and counts in the round-4 domain-reviewer run meta.json; grep agents.md/run-agent.sh/decisions.md",
+      "environment": "main checkout",
+      "expected": "meta.json carries outputs, written_by_tools, deleted, head_commit_at_start and model_requested; review runs are auto-committed with their run directory and written files; agents.md says 6 resumes, matching D-019 and MAX_RESUMES",
+      "actual": "8741de3 'run: ... (review evidence, auto-committed by run-agent.sh)' adds the run dir and exactly two round-4 files. The meta keys include outputs (56, including concurrent writes as documented), written_by_tools (2), deleted, head_commit_at_start, model_requested claude-opus-5-5 and exit_code 0. agents.md says 'up to 6 times (D-019)'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-006", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/17-doc-findings-greps.log"]
+    },
+    {
+      "id": "K14",
+      "procedure": "Feasibility: every A01-A28 scenario has a test level, a first-delivered stage, a must-pass gate consistent with the register, and a named author in the stage plan",
+      "command": "python3 docs/delivery/test-evidence/DG0/qa/round-4/scripts/acceptance-feasibility.py /tmp/review-qa4-new",
+      "environment": "worktree @53f5d176, python3; stage-plan.md and acceptance-map.md unchanged since round 3",
+      "expected": "errors: 0",
+      "actual": "28 scenarios listed with level, first stage, gate and author; errors: 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/14-acceptance-feasibility.log", "docs/delivery/test-evidence/DG0/qa/round-4/scripts/acceptance-feasibility.py"]
+    },
+    {
+      "id": "K15",
+      "procedure": "Historical round manifests: relocated manifests equal their originals in git history, and their hash algorithm matches D-005",
+      "command": "git log --name-status -- docs/delivery/candidates; compare git show <freeze commit>:docs/delivery/candidates/DG0.manifest.json with candidates/DG0/<id>.manifest.json; candidateId(entries, v1|v2) for each manifest; compare with stages.json at 83860be, 540b3c6 and 4af07b0",
+      "environment": "worktree @7a411d22, node v22.22.2",
+      "expected": "The round 1-2 manifests are byte-identical to the originals and v1; the round 3-4 manifests are v2; frozen_at and source_commit equal the historical stages.json values",
+      "actual": "dea5e75a (round 1) and d47b51ca (round 2) are byte-identical to the originals committed in 4f493c3 and eaef1d0, and match v1. 31fd0843 (round 3) has identical entries, with hash_algorithm added during the rename, and matches v2; 0be571ea matches v2. frozen_at values 12:32:08Z, 13:27:16Z and 14:03:33Z equal the historical stages.json. The candidate.mjs comment 'v1 ... rounds 1-3' is wrong (F-DG0-213, Low).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/21-manifest-algorithms.log"]
+    },
+    {
+      "id": "K16",
+      "procedure": "Documentation fixes F-DG0-209 and F-DG0-210, and the F-DG0-203 stage-plan text",
+      "command": "grep checks recorded in 17-doc-findings-greps.log",
+      "environment": "worktree @53f5d176",
+      "expected": "No stale '<file sha256>  <path>' text; D-005 and REQ-DLV-022 state '<sha256>  <git mode>  <path>'; agents.md says 6 resumes; the stage plan has the executable-acceptance-test rule",
+      "actual": "As expected (grep exit 1 for the stale strings; the new texts found)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022", "REQ-DLV-026", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-4/17-doc-findings-greps.log"]
+    }
+  ],
+  "findings": ["F-DG0-211", "F-DG0-212", "F-DG0-213"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs",
+    "docs/delivery/test-evidence/DG0/qa/round-4/01-check-extraction.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/02-gates-tests.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/03-agents-tests.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/04a-validate-register.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/04b-validate-pipeline.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/04c-validate-reconcile.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/04d-candidate.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/04e-head-reconcile.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/04f-head-stage-DG0.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/05-guard-probe.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/11-register-integrity.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/12-acceptance-test-refs.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/13-agent-load.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/14-acceptance-feasibility.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/16-dg0-evidence-content.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/17-doc-findings-greps.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-new.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-old.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/21-manifest-algorithms.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/22-repro-r1-findings-on-26642c7.log",
+    "docs/delivery/test-evidence/DG0/qa/round-4/23-repro-r2-findings-on-83860be.log"
+  ],
+  "reviewed_at": "2026-09-28T14:56:00Z",
+  "summary": "PASS on candidate sha256:0be571ea...a3b7 (commit 53f5d176). All seven required commands pass. My independent round-4 suite (41 cases on D-021-conformant disposable fixtures) passes 38/38 active cases, and every required A24/A25 rejection holds. Metadata-only changes leave the candidate unchanged. All ten earlier QA findings (F-DG0-201 to F-DG0-210) were reproduced on their original commits, or confirmed from the old text, and are verified fixed: CLOSED_VERIFIED in qa-verifier.verifications.json. Register, evidence content, agent-load, live-guard and feasibility checks: 0 errors. Three new Low, non-mandatory findings are raised and accepted by me as observations (pending release-auditor agreement): F-DG0-211, the gate record is not bound to the auditor run's outputs; F-DG0-212, a round can be backed by a fabricated, backdated new manifest (residual of F-DG0-208); F-DG0-213, a stale candidate.mjs comment. Orchestrator note: stages.json review_rounds[round 4].records lists only the three specialists. The release-auditor's round-4 record must be added there, otherwise its verifications sidecar (and any observation acceptance) is rejected as 'not listed in stages.json review_rounds'."
+}

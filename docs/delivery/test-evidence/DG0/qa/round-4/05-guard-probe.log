@@ -1,0 +1,18 @@
+# qa-verifier DG0 round 4, live write-guard probe (run DG0-T-DG0-REV-QA-R4-qa-verifier-20260928T143310Z-3754a962)
+## 1. Live Write tool call from this run
+Tool: Write  file_path=/home/user/My-owns/docs/source/QA-PROBE.txt
+Result (verbatim tool error):
+PreToolUse:Write hook error: [g="$(git rev-parse --show-toplevel 2>/dev/null)/tools/agents/guard-write.mjs"; if [ -f "$g" ]; then node "$g" qa-verifier; rc=$?; else echo "write guard missing" >&2; rc=2; fi; [ "$rc" -eq 0 ] || exit 2]: BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+
+$ test -e docs/source/QA-PROBE.txt && echo "PROBE FILE EXISTS" || echo "probe file absent"; git status --porcelain docs/source | wc -l
+probe file absent
+0
+# exit=0
+
+## 2. guard-write.mjs decide() on the frozen candidate (worktree /tmp/review-qa4-new @ 53f5d176), role qa-verifier
+docs/source/QA-PROBE.txt                                BLOCK qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+tools/gates/lib/rules.mjs                               BLOCK qa-verifier may not write 'tools/gates/lib/rules.mjs' (protected path)
+docs/delivery/reviews/DG0/round-4/qa-verifier.json      ALLOW within scope
+docs/delivery/test-evidence/DG0/qa/round-4/x.log        ALLOW within scope
+tests/qa/dg0/x.test.mjs                                 ALLOW within scope
+docs/delivery/stages.json                               BLOCK qa-verifier may not write 'docs/delivery/stages.json' (outside role write scope)

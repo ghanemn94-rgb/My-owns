@@ -1,0 +1,129 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-201",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on the round-1 candidate 26642c7: QA-N27 (a review whose invocation_reference points at the reviewer's T-DG0-LOAD run) fails with 'validator accepted an invalid gate' (22-repro-r1-findings-on-26642c7.log). On the frozen candidate 0be571ea (worktree @53f5d176), QA4-R201 is rejected with both 'ran assignment docs/delivery/assignments/DG0/T-DG0-LOAD.md' and 'before the candidate froze'. QA4-R201b (a record without an assignment) is also rejected, because binding.assignment is now mandatory. The producer's regression tests pass (tools/gates/tests 29/29). Fix is complete.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/22-repro-r1-findings-on-26642c7.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/02-gates-tests.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-202",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on 26642c7: QA-N28 (a DG0 IMPLEMENTED row with the bare evidence 'NO-SUCH-EVIDENCE.md') is accepted. On the frozen candidate, QA4-R202 is rejected with 'evidence is not an existing repository file: NO-SUCH-EVIDENCE.md'. My register-integrity script confirms that every evidence entry of the 19 DG0 rows is an existing file (0 errors), and dg0-evidence-content.py opened each row's evidence and found the implementing code or text (0 errors).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/22-repro-r1-findings-on-26642c7.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/11-register-integrity.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/16-dg0-evidence-content.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-203",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "docs/analysis/stage-plan.md and acceptance-map.md are unchanged since the round-3 candidate (git diff --quiet). stage-plan.md line 22 states the rule 'Executable acceptance tests (AN-05, finding F-DG0-203)', with per-stage 'authored in Pn' sections, and P6 'extends and re-runs'. My feasibility script, re-run on the frozen candidate, checks all 28 scenarios: the first authoring stage equals acceptance-map 'First delivered'; the must-pass gate equals the map and the register final_gate; no scenario is authored after its gate; every scenario has a named author. Result: 0 errors.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/14-acceptance-feasibility.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/17-doc-findings-greps.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/scripts/acceptance-feasibility.py"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-204",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on the round-2 candidate 83860be: QA2-N11 (findings.json verification citing the reporter's pre-freeze LOAD run) is accepted (23-repro-r2-findings-on-83860be.log). On the frozen candidate, QA4-R204 is rejected ('not the verifying reviewer's own run'). QA4-N31 (a pre-freeze LOAD run that did write a round-3 record and sidecar) is rejected with 'started 2026-09-28T11:00:00Z, before the candidate froze'. QA4-N34 and N35 (sidecar not written by this run's tools, or altered after the run) are rejected. The closure path is now bound to the round's assignment, the freeze and the run's outputs.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/23-repro-r2-findings-on-83860be.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-205",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on 83860be: QA2-N12 (in-repo symlink app/evidence-link.txt pointing outside the repository, used as register evidence) is accepted. On the frozen candidate, QA4-R205 rejects the outside link ('evidence is not an existing repository file: app/evidence-link.txt') and still accepts an in-repo relative symlink, so nothing is over-rejected.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/23-repro-r2-findings-on-83860be.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-new.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-206",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on 83860be: QA2-N14 prints '# QA2-N14 exec-bit change detected by candidate: false'. On the frozen candidate, QA4-R206 (a committed chmod +x of a tracked file after freeze) is rejected with 'candidate: current content hashes to ... app/main.txt'. The committed round-3 and round-4 manifests declare mth-candidate-v2 and match only the mode-inclusive hash; rounds 1-2 match v1, as D-005 states (21-manifest-algorithms.log). A stale code comment about v1 is raised separately as Low F-DG0-213.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/23-repro-r2-findings-on-83860be.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/21-manifest-algorithms.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-207",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Both stale titles occur 0 times in requirements.csv. Every test title quoted after 'test' in a register acceptance cell (10 citations, including REQ-DLV-013 and REQ-DLV-026 'A24 / F-DG0-102: fabricated or incomplete provenance is rejected') resolves verbatim to a test in tools/gates/tests or tools/agents/tests. 25 distinct titles are cited verbatim in total.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/12-acceptance-test-refs.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-208",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on the round-3 candidate 540b3c69: QA3-N20 (todo) and QA4-R208a/R208b/N30 are accepted by the old tooling (10-dg0-gate-negative-r3-on-old.log, 20-qa4-negative-on-old.log). On the frozen candidate, the committed attack (QA4-R208a) is rejected by 'round 1 frozen_at/source_commit differ from its committed manifest', 'write-once: M .../round-1/qa-verifier.json', 'write-once: D .../round-2/qa-verifier.verifications.json' and the output binding. The uncommitted variant (R208b) is rejected by the write-once status check. Write-once also covers assignments (N32), type changes (N33) and manifests (N36). The real repository passes checkReviewRounds: the round 1-4 manifests exist, and their frozen_at and source_commit equal the historical stages.json values. The relocated round-1/2 manifests are byte-identical to the originals in git history. A residual via a newly created, backdated manifest is raised separately as Low F-DG0-212. It is not the reproduction of this finding.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/10-dg0-gate-negative-r3-on-old.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-old.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/20-qa4-negative-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/04e-head-reconcile.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-209",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "grep 'file sha256>  <path>' over decisions.md and requirements.csv finds nothing (exit 1). D-005 now reads 'SHA-256 of the sorted lines \"<sha256>  <git mode>  <path>\\n\" (algorithm mth-candidate-v2; historical DG0 rounds 1–2 used mth-candidate-v1 ...)'. The REQ-DLV-022 procedure reads 'computes sha256 over the sorted lines '<sha256>  <git mode>  <path>''. Both match candidateId(), which returns `${e.sha256}  ${e.mode}  ${e.path}` for v2.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/17-doc-findings-greps.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-210",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "grep 'up to 3 times' docs/delivery/agents.md finds nothing (exit 1). agents.md now says 'resumes the same session up to 6 times (D-019)', which matches D-019, agent-protocol.md and run-agent.sh (MAX_RESUMES default 6). The remaining 'Retry up to 3 times' in agent-protocol.md is about an agent retrying a refused command, a different thing.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-4/17-doc-findings-greps.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-211",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Reporter's acceptance as a Low, non-mandatory observation. The decisive approval evidence (the audit record, verdict PASS) is bound to the release-auditor's run. The gate record's accepted_observations and requirements are cross-checked, and historical mode freezes it after approval. Recommended hardening: bind stage.gate_record to the audit invocation's outputs. Needs release-auditor agreement."
+    },
+    {
+      "finding_id": "F-DG0-212",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Reporter's acceptance as a Low, non-mandatory observation. Exploiting it needs a genuine pre-freeze run of the verifying role that itself wrote a closing sidecar at a review path, plus a party committing a fabricated manifest and round entry, which is close to the forgery residual disclosed in D-021. Recommended hardening: findManifest recomputes candidateId(manifestFromRef(source_commit)). Needs release-auditor agreement."
+    },
+    {
+      "finding_id": "F-DG0-213",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Reporter's acceptance as a Low, non-mandatory observation: a code comment only; behaviour follows each manifest's hash_algorithm field. Needs release-auditor agreement."
+    }
+  ]
+}
