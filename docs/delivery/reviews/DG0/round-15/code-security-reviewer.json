@@ -1,0 +1,263 @@
+{
+ "schema_version": 1,
+ "stage_id": "DG0",
+ "round": 15,
+ "candidate_id": "sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e",
+ "source_commit": "7fab49c5c6764721bbe2982aa621a34ea31cfdea",
+ "reviewer_role": "code-security-reviewer",
+ "invocation_reference": {
+  "kind": "claude-code-cli-session",
+  "run_id": "DG0-T-DG0-REV-SEC-R15-code-security-reviewer-20260928T232527Z-65015dd2",
+  "session_id": "65015dd2-5aa0-4fe8-a8ea-2f61e56bb126"
+ },
+ "implementation_author": [
+  "transformation-analyst",
+  "delivery-orchestrator"
+ ],
+ "independence_declaration": {
+  "reviewer_authored_reviewed_scope": false,
+  "statement": "I (code-security-reviewer) authored none of the implementation in the reviewed scope (tools/gates, tools/agents, tools/source, .claude/agents, the CI workflow, the analysis and delivery records). I formed this verdict before reading any other round-15 review record, and I read none: I saw only the file names in the round-15 directory. All my code execution ran in disposable clones inside this run's private TMPDIR. The live race probe wrote only to a directory I created for it, which I then removed, and it touched no other agent's files."
+ },
+ "assignment": "docs/delivery/assignments/DG0/round-15/review-code-security-reviewer.md",
+ "requirements_checked": [
+  "REQ-DLV-004",
+  "REQ-DLV-006",
+  "REQ-DLV-007",
+  "REQ-DLV-013",
+  "REQ-DLV-016",
+  "REQ-DLV-022",
+  "REQ-DLV-023",
+  "REQ-DLV-026"
+ ],
+ "checks_run": [
+  {
+   "id": "C1-candidate-match",
+   "procedure": "Confirm the frozen candidate: recompute the candidate ID from the working tree at run start and from the frozen commit in a disposable clone; confirm that commits after the freeze touch only excluded metadata.",
+   "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG0; git diff --stat 7fab49c..HEAD; git clone /home/user/My-owns $TMPDIR/dg0-sec && git checkout 7fab49c && node tools/gates/candidate.mjs --stage DG0",
+   "environment": "reviewer OS sandbox (bubblewrap), node v22.22.2, /home/user/My-owns and the $TMPDIR/dg0-sec clone at 7fab49c",
+   "expected": "candidate_id sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e both ways; post-freeze commits touch only delivery metadata",
+   "actual": "At start HEAD was 2c24f2e: 2 metadata-only commits after 7fab49c (round-15 assignments, the manifest, stages.json, orchestrator probe evidence). The candidate_id was sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e (87 files) from the working tree at 23:25Z and from the clone.",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": [
+    "REQ-DLV-022"
+   ],
+   "evidence": [
+    "docs/delivery/candidates/DG0/b7f60ed34dd77f93.manifest.json",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/07-candidate-determinism.log"
+   ]
+  },
+  {
+   "id": "C2-test-suites",
+   "procedure": "Run the shipped gate, guard and runner test suites in the candidate clone.",
+   "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs; python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'",
+   "environment": "$TMPDIR/dg0-sec at 7fab49c, reviewer sandbox, node v22.22.2, Python 3 (pytest absent, unittest used)",
+   "expected": "all tests pass",
+   "actual": "node: 76 tests, 76 pass, 0 fail (exit 0); unittest: Ran 17 tests, OK (exit 0)",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": [
+    "REQ-DLV-007",
+    "REQ-DLV-016",
+    "REQ-DLV-023"
+   ],
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/01-test-suites.log"
+   ]
+  },
+  {
+   "id": "C3-prefreeze",
+   "procedure": "Run the orchestrator's pre-freeze integration check in a fresh clone of the candidate commit, as the assignment requires.",
+   "command": "tools/gates/prefreeze.sh DG0",
+   "environment": "$TMPDIR/dg0-sec fresh clone at 7fab49c; nested bubblewrap via tools/gates/sandbox-run.sh",
+   "expected": "every line PASS, exit 0",
+   "actual": "11/11 PASS (extraction reproducible, validator and guard tests, runner and settings tests, register rules, register equals the merge, pipeline, 4 analysis checks, working-tree candidate equals HEAD b7f60ed3...); exit 0",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": [
+    "REQ-DLV-023"
+   ],
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/02-prefreeze.log"
+   ]
+  },
+  {
+   "id": "C4-F143-verification",
+   "procedure": "Re-run the round-14 /proc/<pid>/root construction plus 5 new hostile variants and 2 benign controls against the round-14 guard and the candidate guard.",
+   "command": "MTH_RUN_TMP=$TMPDIR node docs/delivery/test-evidence/DG0/code-security/round-15/repro-r15-f143-procroot.mjs $TMPDIR/dg0-old; ... $TMPDIR/dg0-sec",
+   "environment": "disposable clones 1e64eb0 and 7fab49c under $TMPDIR; the script's own bubblewrap child with a private tmpfs",
+   "expected": "old guard: allows and the write lands (the original failure); candidate guard: every hostile case blocked, benign cases allowed",
+   "actual": "old: A, B, E and F are allowed, and the victim reads SWAPPED-BY-ATTACKER. Candidate: A-F are blocked ('real path cannot be determined safely') and I is blocked; G and H are allowed; the victim reads ORIGINAL.",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": [
+    "REQ-DLV-007"
+   ],
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/repro-r15-f143-procroot.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/03-f143-procroot.log"
+   ]
+  },
+  {
+   "id": "C5-F144-shell-isolation",
+   "procedure": "From my own sandboxed shell, test writability of the shared scratch locations and of my own areas with unique probe names of my own, and read my own mount table for the other reviewers' areas, without touching them.",
+   "command": "touch/rm of <dir>/cs-r15-<random> for /var/tmp, /tmp, /tmp/claude-0, the run directory, $TMPDIR and my evidence directory; awk over /proc/self/mountinfo",
+   "environment": "reviewer OS sandbox of this run (settings in docs/delivery/runs/DG0/<run>/settings.json)",
+   "expected": "only $TMPDIR (…/claude-0) and my own areas writable; /tmp, /var/tmp and other runs' directories read-only; other reviewers' evidence, reviews and runs mounted ro",
+   "actual": "/var/tmp, /tmp, /tmp/claude-0 and /var/tmp/mth-run.4aYowI are read-only; only /var/tmp/mth-run.4aYowI/claude-0 and the own evidence directory are writable. DG0/qa, DG0/domain, DG0/audit, reviews, runs and tools are ro bind mounts. Also noted: new top-level entries such as test-evidence/DG1-* can be created, which the threat model discloses.",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": [
+    "REQ-DLV-007"
+   ],
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/06-f144-sandbox-probe.log"
+   ]
+  },
+  {
+   "id": "C6-F144-file-tool-scopes-live",
+   "procedure": "Real Write tool calls in this session against the shared /tmp/claude-0, /var/tmp, the qa evidence directory, the qa-verifier record and the own MTH_RUN_TMP.",
+   "command": "Write tool: /tmp/claude-0/cs-r15-f144-shared-scratch-probe.txt; /var/tmp/cs-r15-f144-var-tmp-probe.txt; docs/delivery/test-evidence/DG0/qa/cs-r15-f144-probe.txt; docs/delivery/reviews/DG0/round-15/qa-verifier.json; /var/tmp/mth-run.4aYowI/cs-r15-f144-own-scratch-probe.txt",
+   "environment": "this Claude Code session with the candidate's guard hook (MTH_GUARD_ROOT=/home/user/My-owns, MTH_RUN_TMP=/var/tmp/mth-run.4aYowI)",
+   "expected": "the first four are blocked, the last is allowed",
+   "actual": "the first four were BLOCKED by the write guard (outside the temporary directory / outside role write scope); the own MTH_RUN_TMP write was created",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": [
+    "REQ-DLV-007"
+   ],
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/08-f144-live-guard-writes.log"
+   ]
+  },
+  {
+   "id": "C7-new-tests-fail-on-old-code",
+   "procedure": "Run the candidate's tools/agents/tests against round-14 code, to show the new regression tests detect the fixed defects.",
+   "command": "(clone 1e64eb0, tests from 7fab49c) node --test tools/agents/tests/guard.test.mjs tools/agents/tests/runner.test.mjs; python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'",
+   "environment": "$TMPDIR/dg0-oldnewtests",
+   "expected": "the F-DG0-143/144 tests fail on the old code",
+   "actual": "4 node tests fail (the two F-DG0-144 guard tests, the F-DG0-143 guard test and the F-DG0-144 runner test); the settings unittest has 10 errors because the old build() lacks the stage argument. All pass on the candidate (C2).",
+   "exit_status": 1,
+   "result": "PASS",
+   "requirements": [
+    "REQ-DLV-007"
+   ],
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/09-new-tests-vs-old-code.log"
+   ]
+  },
+  {
+   "id": "C8-guard-toctou-offline",
+   "procedure": "Symlink-swap race against the real hook entry point: a background loop flips a scratch symlink between a benign and a forbidden directory, while the hook is called with the Write payload and the write is performed after an allow verdict.",
+   "command": "node docs/delivery/test-evidence/DG0/code-security/round-15/repro-r15-guard-toctou.mjs $TMPDIR/dg0-race $TMPDIR/toctou 200",
+   "environment": "$TMPDIR/dg0-race (copy of the 7fab49c clone, used as the guarded repository); MTH_RUN_TMP=$TMPDIR/toctou/runA; all targets inside my own scratch",
+   "expected": "no write lands in a forbidden directory after an allow verdict",
+   "actual": "The static controls are blocked. Racing: 236 of 600 allowed writes landed in forbidden places (80/200 in the stand-in for another run's private TMPDIR, 75/200 and 81/200 in the protected tools/gates/tests). Script exit 1. Finding F-DG0-145.",
+   "exit_status": 1,
+   "result": "FAIL",
+   "requirements": [
+    "REQ-DLV-007"
+   ],
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/repro-r15-guard-toctou.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/04-guard-toctou.log"
+   ]
+  },
+  {
+   "id": "C9-guard-toctou-live",
+   "procedure": "The same race with this session's real Claude Code Write tool: a background sandboxed loop flips $TMPDIR/live/flip between $TMPDIR/live/benign and a new, empty repository directory outside my scope, while I issue Writes to $TMPDIR/live/flip/race-attempt-N.txt.",
+   "command": "Write tool x12 (a static control, then attempts 1-11); flipper: while :; do ln -sfn benign .t1 && mv -Tf .t1 flip; ln -sfn FORBIDDEN .t2 && mv -Tf .t2 flip; done",
+   "environment": "this session, candidate guard hook, reviewer sandbox for the flipper; forbidden target docs/delivery/test-evidence/DG0/code-security-toctou-probe (created for the probe, removed afterwards)",
+   "expected": "no Write reaches the forbidden directory",
+   "actual": "The static control was blocked. Attempts: 4 refused by the CLI's own re-check, 5 blocked by the hook, 1 landed in benign, and attempt 9 was created in the forbidden directory. Finding F-DG0-145.",
+   "exit_status": null,
+   "result": "FAIL",
+   "requirements": [
+    "REQ-DLV-007"
+   ],
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/05-guard-toctou-live.log"
+   ]
+  },
+  {
+   "id": "C10-candidate-determinism",
+   "procedure": "D-005 determinism: the candidate from --ref, from the clone under different locales, and from an autocrlf (Windows-style) checkout; compare with the live working tree.",
+   "command": "node tools/gates/candidate.mjs --stage DG0 [--ref 7fab49c]; LC_ALL=C / LC_ALL=tr_TR.UTF-8; git -c core.autocrlf=true clone + checkout 7fab49c",
+   "environment": "live repository, $TMPDIR/dg0-sec, $TMPDIR/dg0-crlf",
+   "expected": "b7f60ed3... everywhere the content equals the commit",
+   "actual": "b7f60ed3... from --ref, both locales and the autocrlf checkout (80 CRLF files, .gitattributes * -text holds). The live working tree gave 4b7851cf... (100 files) because of 13 transient zero-length sandbox stub files; it fails closed. Low observation F-DG0-146.",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": [
+    "REQ-DLV-022"
+   ],
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/07-candidate-determinism.log"
+   ]
+  },
+  {
+   "id": "C11-validator-cli-modes",
+   "procedure": "Run every validator mode on the live repository and check the exit codes.",
+   "command": "node tools/gates/validate.mjs --register DG0 | --pipeline | --reconcile | --stage DG0 | --bogus",
+   "environment": "live repository, HEAD 2a611e9 (metadata commits after the freeze)",
+   "expected": "register and pipeline PASS (0); reconcile report (0); --stage DG0 FAIL non-zero (no gate record yet); a bad argument gives 64",
+   "actual": "PASS register (0); PASS pipeline, DG0 REVIEWING (0); reconcile shows the frozen candidate and the working tree differing by 13 added stub files (0); FAIL gate DG0, file not found docs/delivery/gates/DG0.json (1); usage (64)",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": [
+    "REQ-DLV-016",
+    "REQ-DLV-023"
+   ],
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/10-validator-modes.log"
+   ]
+  },
+  {
+   "id": "C12-source-review-diff-and-config",
+   "procedure": "Direct source review:\n- the full current guard-write.mjs, write-scopes.json, run-agent.sh, agent_settings.py, run_meta.py, validate.mjs and lib/candidate.mjs, plus the run-binding part of lib/rules.mjs (checkInvocation, checkReview);\n- the round-14 to round-15 diff of tools/, .claude/ and the threat model;\n- the agent frontmatter (tools lists, hook matcher);\n- the CI workflow (permissions, pinned actions, fetch-depth, failing steps);\n- whether the guard hook loads code from agent-writable scratch (node-compile-cache mtimes).",
+   "command": "git diff 1e64eb0..7fab49c -- tools .github .claude docs/delivery/threat-model.md docs/delivery/decisions.md; cat -n <files>; find $MTH_RUN_TMP/node-compile-cache -newermt 23:26",
+   "environment": "live repository (read-only) and my own MTH_RUN_TMP",
+   "expected": "no further bypasses; CI least privilege; the hook does not execute scratch-writable code",
+   "actual": "Findings:\n- Frontmatter tool lists include no NotebookEdit or MultiEdit, and the matcher covers Write|Edit|NotebookEdit|MultiEdit.\n- The CI workflow has contents: read, SHA-pinned actions, fetch-depth 0, and every step fails the job.\n- The runner adds a per-run mktemp -d with mode 700, a trap cleanup and exported TMPDIR/MTH_RUN_TMP, plus a stage-validated agent_settings call.\n- The node compile cache in MTH_RUN_TMP holds only CLI-start entries (72 at 23:25Z) and none from the ~20 hook invocations, so the hook does not load cached code.\n- No new issue beyond F-DG0-145 and F-DG0-146.",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": [
+    "REQ-DLV-004",
+    "REQ-DLV-006",
+    "REQ-DLV-013",
+    "REQ-DLV-023",
+    "REQ-DLV-026"
+   ],
+   "evidence": [
+    "tools/agents/guard-write.mjs",
+    "tools/agents/run-agent.sh",
+    "tools/agents/agent_settings.py",
+    "tools/agents/run_meta.py",
+    ".github/workflows/delivery-gates.yml"
+   ]
+  }
+ ],
+ "findings": [
+  "F-DG0-145",
+  "F-DG0-146"
+ ],
+ "verdict": "FAIL",
+ "evidence_paths": [
+  "docs/delivery/test-evidence/DG0/code-security/round-15/00-README.md",
+  "docs/delivery/test-evidence/DG0/code-security/round-15/01-test-suites.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-15/02-prefreeze.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-15/03-f143-procroot.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-15/04-guard-toctou.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-15/05-guard-toctou-live.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-15/06-f144-sandbox-probe.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-15/07-candidate-determinism.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-15/08-f144-live-guard-writes.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-15/09-new-tests-vs-old-code.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-15/10-validator-modes.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-15/repro-r15-f143-procroot.mjs",
+  "docs/delivery/test-evidence/DG0/code-security/round-15/repro-r15-guard-toctou.mjs"
+ ],
+ "reviewed_at": "2026-09-28T23:41:00Z",
+ "summary": "FAIL.\n\nF-DG0-143 and F-DG0-144 are fixed for the mechanisms they describe: both CLOSED_VERIFIED, reproduced on 1e64eb0 and blocked on 7fab49c, and their new tests fail on the old code. Tests pass 76/76 and 17/17, and prefreeze passes 11/11 in a fresh clone. The candidate ID is deterministic across --ref, locales and CRLF checkouts.\n\nNew High finding, a mandatory violation. F-DG0-145: the write guard is check-then-use. A symlink that the agent's own sandboxed shell keeps swapping lets a file-tool write pass the hook and land somewhere forbidden. Offline, 236 of 600 attempts did so. Live, with the real Write tool, 1 of 11 did, into a repository directory outside my scope. The most damaging target is another run's private TMPDIR, which re-opens the F-DG0-144 threat for file tools without a trace.\n\nNew Low observation, F-DG0-146: transient sandbox stub files perturb the working-tree candidate and --reconcile. This fails closed.",
+ "narrative": "See docs/delivery/test-evidence/DG0/code-security/round-15/00-README.md for the evidence map and the severity reasoning."
+}

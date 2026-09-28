@@ -1,0 +1,64 @@
+{
+ "schema_version": 1,
+ "findings": [
+  {
+   "id": "F-DG0-145",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-007",
+   "severity": "High",
+   "mandatory_violation": true,
+   "title": "Write guard is check-then-use: a symlink the agent's own sandboxed shell keeps swapping lets a file-tool write pass the hook and land in a forbidden place (another run's private TMPDIR, protected repository paths); demonstrated live with the real Write tool",
+   "reproduction": "tools/agents/guard-write.mjs:193-213 decide() resolves the target in the hook process (lexical check, then canonicalPath() at 112-139, lstat/readlink/realpath), and exits 0. The Claude Code CLI then performs the write itself, outside the Bash sandbox, re-resolving the path at write time. Nothing binds the two resolutions. The agent's sandboxed shell may create and atomically replace symlinks in its own $TMPDIR/claude-0 (and in its own evidence directory, or for implementers anywhere writable in the repository), and it may keep a loop running in the background (Bash run_in_background). A symlink target need not be writable or visible to the sandbox. (1) Offline, docs/delivery/test-evidence/DG0/code-security/round-15/repro-r15-guard-toctou.mjs, log 04-guard-toctou.log: the real hook entry point ('node guard-write.mjs <role>' with the JSON payload on stdin, exactly as the CLI calls it) with MTH_RUN_TMP=<scratch>/runA, while a loop flips <runA>/flip between <runA>/benign and a forbidden directory. The static control is blocked ('reached through a symlink'). Racing, 236 of 600 attempts wrote into the forbidden directory after an allow verdict: 80/200 into <scratch>/runB/clone/tools/gates/tests (standing in for another run's private TMPDIR, code-security-reviewer), 75/200 and 81/200 into the guarded clone's protected tools/gates/tests (backend-workflow-engineer, qa-verifier). (2) Live, 05-guard-toctou-live.log, in this session with the candidate's guard: a Write to $TMPDIR/live/flip/static-control.txt with flip -> docs/delivery/test-evidence/DG0/code-security-toctou-probe (outside my scope) was BLOCKED. With a background flipper, of Writes 1-11: 4 were refused by the CLI's own check ('parent-directory symlink resolution changed after permission was checked'), 5 were blocked by the hook, 1 landed in benign, and attempt 9 passed the hook and was CREATED IN THE FORBIDDEN REPOSITORY DIRECTORY. (The probe directory was removed afterwards.)",
+   "expected": "threat-model.md 'Mechanically prevented' row 1 (the guard 'follows symlinks, fails closed'; 'only the run's own private temporary directory is scratch') and row 2 (D-028: one agent cannot falsify another concurrently running agent's disposable clones), and REQ-DLV-007: a file tool must not be able to write outside the role's scope. Possible fixes, strongest first. (a) Confine the whole agent CLI process, not only its Bash, in its own mount namespace (for example run 'claude' under bubblewrap from run-agent.sh with the same deny list as read-only binds, and with other runs' /var/tmp/mth-run.* and the shared /tmp not bound), so file tools are kernel-confined and the guard becomes defence in depth. (b) Failing that, make the reviewers' executed checks verifiable against tampering (for example re-check 'git -C <clone> status --porcelain --ignored' and 'git fsck' plus the absence of filters/hooks before and after each run in the clone). Also move the guard to 'Detected, not prevented' for symlink races and state the residual. A hook-side symlink ban alone does not help: the shell can swap a real directory for a symlink after the hook runs.",
+   "actual": "The guard's decision is made on a path the attacker can re-point before the write. Claude Code's own re-check narrows the window but does not close it: it compares only the permission-time and write-time resolutions, not the hook's (1/11 live, about 40% offline without it). No trace for the most damaging target. A race-written file in ANOTHER run's private /var/tmp/mth-run.* (whose name is listable, since /var/tmp is readable in the sandbox, and whose mode 700 does not stop same-uid root processes) leaves nothing in the repository or the victim's run evidence. The attacker's transcript shows only a successful Write to a path in its own scratch. That is exactly the F-DG0-144 threat (falsify another reviewer's disposable clone: swap a test, plant a git filter or hook), re-opened for file tools. Protected repository paths (tools/gates, .git/hooks, .git/config, ~/.claude/settings.json) are also reachable. Those are detected afterwards (git status, prefreeze's working-tree check, or the runner's config scan, which for implementer runs only prints a warning), not prevented. High rather than Critical: it needs a malicious agent running a background flip loop and repeated attempts, and the repository-side effects are detected. mandatory_violation true: it breaks access control (scoped write access) and the integrity of independent review evidence.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/repro-r15-guard-toctou.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/04-guard-toctou.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/05-guard-toctou-live.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/00-README.md",
+    "tools/agents/guard-write.mjs#L193-L213",
+    "tools/agents/guard-write.mjs#L112-L139",
+    "docs/delivery/threat-model.md#mechanically-prevented"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-15/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T23:45:00Z",
+     "status": "OPEN",
+     "note": "raised by code-security-reviewer in DG0 round 15; reproduced offline (236/600) and live with the real Write tool (1/11) against candidate 7fab49c"
+    }
+   ]
+  },
+  {
+   "id": "F-DG0-146",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-022",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "The working-tree candidate ID and --reconcile are perturbed by the Claude Code sandbox's transient mount stubs (zero-length untracked files such as .bashrc, .mcp.json, CLAUDE.local.md and a FILE named docs/delivery/gates) while any agent's sandboxed command runs; fails closed (observation)",
+   "reproduction": "While a sandboxed command of this run was running in the background (from 23:31:31Z), the sandbox left 13 zero-length, read-only regular files in the repository (.bash_profile, .bashrc, .gitconfig, .gitmodules, .idea, .mcp.json, .profile, .ripgreprc, .vscode, .zprofile, .zshrc, CLAUDE.local.md, docs/delivery/gates). tools/gates/lib/candidate.mjs:90-107 manifestFromWorkingTree() hashes untracked-not-ignored regular files, so 'node tools/gates/candidate.mjs --stage DG0' in the live repository gave sha256:4b7851cf... (100 files) instead of the frozen sha256:b7f60ed3... (87 files) (07-candidate-determinism.log), and 'validate.mjs --reconcile' reported 'working tree ... differs: 13 added' and every review STALE (10-validator-modes.log). The earlier run at 23:25Z, when the stubs were char-device mounts, gave b7f60ed3. The META_EXCLUDES glob 'docs/delivery/gates/**' (candidate.mjs:11) does not match a file named exactly 'docs/delivery/gates'.",
+   "expected": "A deterministic working-tree candidate that does not depend on whether some agent's shell command is running, or at least a documented rule that the orchestrator computes it, and runs --stage in current mode or --reconcile, only when no sandboxed agent command is active.",
+   "actual": "It fails closed (a spurious mismatch or STALE, never a false pass), so it is not a gate bypass. Ignoring all zero-length files would be wrong, because an empty file is legitimate content. A narrower fix is to have --reconcile flag untracked zero-length read-only files as probable sandbox stubs, and to document the timing rule in environment.md or D-005. I would accept this as an observation.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/07-candidate-determinism.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/10-validator-modes.log",
+    "tools/gates/lib/candidate.mjs#L90-L107",
+    "tools/gates/lib/candidate.mjs#L9-L20"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-15/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T23:45:00Z",
+     "status": "OPEN",
+     "note": "raised by code-security-reviewer in DG0 round 15 as a Low observation"
+    }
+   ]
+  }
+ ]
+}

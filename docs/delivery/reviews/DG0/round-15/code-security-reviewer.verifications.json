@@ -1,0 +1,32 @@
+{
+ "verifications": [
+  {
+   "finding_id": "F-DG0-143",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Original failure reproduced against round-14 commit 1e64eb0 with repro-r15-f143-procroot.mjs (03-f143-procroot.log). The $TMPDIR symlink to /proc/<pid>/root/tmp of a private-tmpfs bubblewrap child is allowed as scratch, the write goes through, and the child reads SWAPPED-BY-ATTACKER. A loop and a dangling link were also allowed. On candidate 7fab49c (fix 5c4a12b) guard-write.mjs:112-175 fails closed. canonicalPath() returns null on lstat errors other than ENOENT/ENOTDIR, on realpath errors, and when crossesPseudoFs() sees /proc, /sys or /dev at any hop, including relative and chained links. decide():205-207 blocks a null result and a direct pseudo-fs path. All 6 hostile variants are blocked (absolute and relative /proc/<pid>/root, two-hop chain to /proc/self/cwd, /dev/shm, a loop, a dangling link); the victim keeps ORIGINAL; the benign scratch file and the symlink to a scratch directory remain allowed. The regression test 'F-DG0-143: ...' passes on the candidate and fails on 1e64eb0 (09-new-tests-vs-old-code.log). Closed for the static case the finding describes. A symlink-swap RACE is a separate, general guard weakness, raised as F-DG0-145.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/repro-r15-f143-procroot.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/03-f143-procroot.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/09-new-tests-vs-old-code.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/01-test-suites.log",
+    "tools/agents/guard-write.mjs#L112-L175"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-144",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "The finding's mechanism, one shared writable $TMPDIR (/tmp/claude-0) for all concurrently running agents, is removed. Shell side (06-f144-sandbox-probe.log, from /proc/self/mountinfo and unique probe names of my own, with no other agent's path touched): TMPDIR is this run's /var/tmp/mth-run.4aYowI/claude-0 and is the only rw scratch mount. /tmp, /tmp/claude-0, /var/tmp and the run directory's parent are read-only, so other runs' /var/tmp/mth-run.*/claude-0 cannot be written by this shell. The other reviewers' evidence directories (DG0/qa, domain, audit), reviews and runs are ro bind mounts. File-tool side (08-f144-live-guard-writes.log, with the real Write tool): the shared /tmp/claude-0, /var/tmp, the qa evidence directory and the qa-verifier round-15 record are all blocked, and the own MTH_RUN_TMP is allowed. Code: run-agent.sh:65-68 (mktemp -d, chmod 700, trap cleanup, export TMPDIR/MTH_RUN_TMP); guard-write.mjs:84-94 (scratch is MTH_RUN_TMP only); write-scopes.json:76-113 (per-reviewer record and evidence globs); agent_settings.py:98-110 (own evidence directory kept, other reviewers' keys denied even if absent). The new tests pass on the candidate and fail on 1e64eb0 (09-new-tests-vs-old-code.log). Caveat, tracked separately: F-DG0-145 shows a file-tool symlink-swap race that can still reach another run's private TMPDIR. That is a different root cause (the guard is check-then-use), so it does not reopen this finding, but it keeps the underlying threat open until fixed.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-15/06-f144-sandbox-probe.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/08-f144-live-guard-writes.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/09-new-tests-vs-old-code.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-15/01-test-suites.log",
+    "tools/agents/run-agent.sh#L62-L68",
+    "tools/agents/agent_settings.py#L98-L110",
+    "tools/agents/write-scopes.json#L76-L113"
+   ]
+  }
+ ]
+}
