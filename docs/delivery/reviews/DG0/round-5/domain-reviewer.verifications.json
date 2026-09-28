@@ -1,0 +1,86 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-001",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 6c67698 (parent of fix 73c4854): REQ-PB-049 final_gate DG5, with no invalid-weight acceptance at DG3. At the round-5 candidate d141d303, REQ-PB-049 is increments P3 / final_gate DG3. Its acceptance rejects weights totalling 95% (or 105%), versions weight sets (version 2 with risk/compliance) and keeps version-1 references. REQ-S09-005 (DG3) cites it. The Studio default configuration is split into REQ-PB-093 (DG5). check_counts.py exits 0, so the stage-plan lists match the register. M0406's DG3 evidence 'invalid weights … handled' is satisfied.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-5/02-07-10-register-checks.log",
+        "docs/delivery/test-evidence/DG0/domain/round-5/11-analysis-tools.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-002",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 6c67698: REQ-PB-020 had no T11 reference, and the matrix lacked the T11 Go-live / scale row and SP's RACI C on the TOM. At d141d303, REQ-PB-020 references T11, and permissions-matrix rule 7 defaults G5 to SP, configurable to BO per T11 'Go-live / scale'. It separates the transformation-level G5 from initiative-level T11 decisions. The TOM row gives SP 'Rv (RACI C for Target Operating Model)', consistent with B0099 and B0101.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
+        "docs/analysis/permissions-matrix.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-003",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 6c67698: the REQ-PB-055/085/088 notes carried the 'Source-grounded; no interpretation beyond the cited blocks' boilerplate despite master-prompt content and interpretations. At d141d303, none of the three rows carries that boilerplate. REQ-PB-055 labels the before-G4 block as an interpretation, and check_pb_provenance.py passes (93 REQ-PB rows, 0 problems).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-5/11-analysis-tools.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-004",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 8c8757a (parent of fix 6c67698): playbook.md had neither 'PRACTICAL EDITION' nor <br> in multi-line cells. At d141d303, the footer text is present, and multi-line cells use <br> (for example '6<br>PHASES'). My independent docx extraction (word/document.xml, with w:br/w:tab mapped to spaces) finds all 1001 non-empty paragraph segments and all 239 rows of the 49 tables contiguous in playbook.md, and footer1.xml's text is present. tools/source/check_extraction.sh passes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-5/01-extraction.log",
+        "docs/delivery/test-evidence/DG0/domain/round-5/11-analysis-tools.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-005",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 6c67698: 'Journey' was rendered 'رحلة العميل' and 'Modular mode' 'النمط المعياري'. At d141d303, the glossary uses 'الرحلة (رحلة العميل أو رحلة العمل)' and 'النمط الجزئي المرن (الدخول عند المرحلة المناسبة)', and records the old terms with a rationale in a change table. Both preserve the English meaning.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
+        "docs/analysis/glossary.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-006",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 18588e7 (parent of fix aa8fa37): the REQ-PB-088 notes attributed an M0348 rule that source_ref and coverage did not carry, and REQ-PB-068 filed the M0212 publication block under Interpretations. At d141d303, REQ-PB-088's M0348 attribution is consistent with source_ref and the M0348 coverage row. REQ-PB-068 lists the M0212 publication block under Master-prompt additions, and check_pb_provenance.py passes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-5/11-analysis-tools.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-007",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at eaef1d0 (parent of fix bf7f5e2): grep 'never implies' in agent-protocol.md finds nothing. At d141d303, line 10 reads 'Product gate G6 (Sustain) never implies that engineering gate DG7 has passed, and DG7 never implies any G1–G6 business approval.' That satisfies REQ-DLV-002's acceptance. The automated regex in verify.py was too strict (it reports False), and the log shows the direct grep that supersedes it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
+        "docs/delivery/agent-protocol.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-008",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at f0335fa (parent of fix 613946f): REQ-PB-091, -050 and -078 filed M0288/M0135/M0178/M0150 content under Interpretations. At d141d303, the Interpretations clauses no longer carry that content. REQ-PB-050 cites M0178 under Master-prompt additions, and check_pb_provenance.py (with its added R5–R7 rules) passes with 0 problems.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-5/11-analysis-tools.log"
+      ]
+    }
+  ]
+}

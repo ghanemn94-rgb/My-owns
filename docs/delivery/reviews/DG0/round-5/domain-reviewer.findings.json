@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG0-009",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-032",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Analyst consistency check check_test_refs.py exits 1 on the round-5 candidate because five validator test titles added by the round-4 repair are missing from EXPECTED_TITLES",
+      "reproduction": "In a worktree at the frozen candidate d141d303 (candidate sha256:4a8b14fd…c3468), run `python3 docs/analysis/tools/check_test_refs.py`. Output: '47 declared test titles, 42 expected; ... 5 problem(s)', exit 1. The five T4 problems are the tests added to tools/gates/tests/validator.test.mjs by ebc8fb7 (round-4 repair): 'F-DG0-115 residual: an evil merge cannot rewrite committed evidence', 'F-DG0-118: skip-worktree / assume-unchanged cannot hide edited evidence', 'F-DG0-119: only content replayed from the run's own successful Write/Edit calls is bound', 'F-DG0-121 / F-DG0-211: the gate file must be what the auditor run wrote', and 'F-DG0-212: a round manifest must describe its source commit; runs start from a commit containing it'. The same command on the round-4 candidate 53f5d176 reports '42 declared test titles, 42 expected; 0 problem(s)', exit 0. The script is part of the candidate manifest, and docs/analysis/README.md lists it as the register's test/file-reference consistency check (rule T4 exists 'so that the list itself cannot go stale unnoticed').",
+      "expected": "Every consistency check shipped in the DG0 candidate passes on that candidate. After the round-4 repair added the five tests, EXPECTED_TITLES is extended with them, and the register rows describing the new behaviour are reviewed for citation (for example, REQ-DLV-013 for tool-authored binding and REQ-DLV-016/021 for the gate file written by the auditor run). The script then exits 0.",
+      "actual": "check_test_refs.py exits 1 on the frozen candidate (T4 staleness only). Rules T1–T3 pass: all 29 quoted test-title citations in the 411 register rows still equal declared titles, and every named evidence file exists. So no register reference is broken, but the documented DG0 analysis check fails, and nobody reviewed the new tests for register citation. The fix is trivial: add the five titles, and optionally cite them in the relevant REQ-DLV rows.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-5/11-analysis-tools.log",
+        "docs/delivery/test-evidence/DG0/domain/round-5/12-check_test_refs-regression.log",
+        "docs/analysis/tools/check_test_refs.py",
+        "docs/analysis/README.md",
+        "tools/gates/tests/validator.test.mjs"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-5/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T15:04:05Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round-5 domain review. This is a regression introduced by the round-4 repair (ebc8fb7), which changed validator tests without updating the analyst check. Low severity, but a check in the candidate fails, so I want it fixed rather than accepted."
+        }
+      ]
+    }
+  ]
+}
