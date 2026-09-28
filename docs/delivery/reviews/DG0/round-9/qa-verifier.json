@@ -1,0 +1,273 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 9,
+  "candidate_id": "sha256:fc0bd2a2f2019ca436e586bdd5fb4d636b9bc6025f06321db7a7ac38cab18998",
+  "source_commit": "cbc755d035b47bb783ffedb4045df5faae40e4d7",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-QA-R9-qa-verifier-20260928T171212Z-b93c74f1",
+    "session_id": "b93c74f1-cd8a-4f00-af08-2444a16f1912"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no file in the reviewed candidate scope (analysis, register, agent definitions, runner, write guard, gate tooling, CI, source extraction, delivery records). My only writes are this review record, its sidecars, test evidence, and independent tests under docs/delivery/test-evidence/DG0/qa/, all excluded from the candidate. I formed this verdict without reading any other round-9 review record or findings file."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-9/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-003", "REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-013",
+    "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-019", "REQ-DLV-020", "REQ-DLV-022", "REQ-DLV-023",
+    "REQ-DLV-026", "REQ-DLV-029", "REQ-DLV-032", "REQ-S20-024", "REQ-S20-025"
+  ],
+  "checks_run": [
+    {
+      "id": "QA9-K00",
+      "procedure": "Confirm the frozen candidate. HEAD 777ec85 is a metadata-only commit after freeze commit cbc755d. Check that the recomputed ID in the main tree, in a clone at cbc755d and with --ref cbc755d all equal the manifest's candidate_id, and that the post-freeze diff touches only round-9 assignments, the manifest and stages.json.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG0; node tools/gates/candidate.mjs --stage DG0 --ref cbc755d035b47bb783ffedb4045df5faae40e4d7; git diff --stat cbc755d..777ec85",
+      "environment": "main working tree and a disposable clone at cbc755d; node v22.22.2",
+      "expected": "sha256:fc0bd2a2...8998 in every form; the post-freeze diff is metadata-only",
+      "actual": "Every form prints sha256:fc0bd2a2f2019ca436e586bdd5fb4d636b9bc6025f06321db7a7ac38cab18998 (79 files), matching manifest fc0bd2a2f2019ca4.manifest.json (source_commit cbc755d, frozen_at 17:12:09Z, before this run). The diff lists the 5 round-9 assignment files, the manifest and stages.json only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022", "REQ-S20-025"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/00-candidate-recheck.log"]
+    },
+    {
+      "id": "QA9-K01",
+      "procedure": "Source extraction reproducibility",
+      "command": "bash tools/source/check_extraction.sh",
+      "environment": "disposable clone at cbc755d; Python 3.11.15",
+      "expected": "PASS with docx sha256 2584a352...548ad2, 165 playbook blocks and 423 master-prompt blocks",
+      "actual": "PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/01-check-extraction.log"]
+    },
+    {
+      "id": "QA9-K02",
+      "procedure": "Gate validator self-tests",
+      "command": "node --test tools/gates/tests/*.test.mjs",
+      "environment": "disposable clone at cbc755d; node v22.22.2",
+      "expected": "all tests pass, including the new F-DG0-223 test",
+      "actual": "tests 40, pass 40, fail 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-S20-024", "REQ-S20-025"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/02-gates-tests.log"]
+    },
+    {
+      "id": "QA9-K03",
+      "procedure": "Write-guard tests and runner-metadata tests",
+      "command": "node --test tools/agents/tests/*.test.mjs; python3 -m unittest discover -s tools/agents/tests -p 'test_*.py' -v",
+      "environment": "disposable clone at cbc755d; node v22.22.2; Python 3.11.15 (pytest not installed, unittest fallback)",
+      "expected": "all pass",
+      "actual": "node: tests 13, pass 13, fail 0. Python: Ran 5 tests, OK.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/03-agents-tests.log", "docs/delivery/test-evidence/DG0/qa/round-9/03b-agents-py-tests.log"]
+    },
+    {
+      "id": "QA9-K04",
+      "procedure": "Validator modes: register at DG0, pipeline, reconcile; candidate CLI",
+      "command": "node tools/gates/validate.mjs --register DG0; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --reconcile; node tools/gates/candidate.mjs --stage DG0",
+      "environment": "disposable clone at cbc755d; node v22.22.2",
+      "expected": "PASS / PASS / PASS (structure) / candidate fc0bd2a2",
+      "actual": "PASS register rules at DG0; PASS pipeline (active stage: DG0 REVIEWING); PASS reconcile (structure), with earlier rounds reported STALE for current content; candidate_id sha256:fc0bd2a2...8998. All exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-020"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-9/04a-validate-register.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/04b-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/04c-validate-reconcile.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/04d-candidate.log"
+      ]
+    },
+    {
+      "id": "QA9-K05",
+      "procedure": "Informational: full gate validation before any gate record exists",
+      "command": "node tools/gates/validate.mjs --stage DG0",
+      "environment": "disposable clone at cbc755d; node v22.22.2",
+      "expected": "fails only because docs/delivery/gates/DG0.json does not exist yet (stage REVIEWING)",
+      "actual": "FAIL gate DG0 (current) (1 problem): file not found (docs/delivery/gates/DG0.json). This is the expected fail-closed behaviour before the audit, not a defect.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-016"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/04e-validate-stage-DG0-historical-check.log"]
+    },
+    {
+      "id": "QA9-K06",
+      "procedure": "Round-9 rule: run tools/gates/prefreeze.sh DG0 in a fresh clone of the candidate commit",
+      "command": "git clone /home/user/My-owns qa9-pre && git -C qa9-pre checkout cbc755d && bash tools/gates/prefreeze.sh DG0; git status --porcelain; node tools/gates/candidate.mjs --stage DG0",
+      "environment": "fresh disposable clone at cbc755d; node v22.22.2; Python 3.11.15",
+      "expected": "exit 0, tree clean afterwards, candidate ID unchanged",
+      "actual": "All steps PASS (extraction, gate+guard tests, runner metadata tests, register, pipeline, 3 analysis checks, working-tree candidate equals HEAD fc0bd2a2); exit 0; git status empty; ID fc0bd2a2 unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-023", "REQ-S20-025"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/05-prefreeze-fresh-clone.log"]
+    },
+    {
+      "id": "QA9-K07",
+      "procedure": "Verify F-DG0-223: reproduce on the round-8 candidate d662625, show it's fixed on cbc755d, and cross-check that the orchestrator's new regression test discriminates by running it against the old validator",
+      "command": "QA_REPO_ROOT=<clone> node --test --test-name-pattern=QA8-F223 docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs (old and new); cp <cbc755d>/tools/gates/tests/validator.test.mjs <d662625 clone> && node --test --test-name-pattern=F-DG0-223 ...",
+      "environment": "disposable clones at d662625 and cbc755d; node v22.22.2",
+      "expected": "fails on d662625, passes on cbc755d; the new tools/gates test fails against the old validator",
+      "actual": "QA8-F223: not ok on d662625 ('the replayed prompt names no assignment file and sha256'), ok on cbc755d. The new 'F-DG0-223: a genuine prompt binds when the checkout path contains spaces' fails against the d662625 validator. The unchanged round-8 suite passes 86/86 on the candidate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-026"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-9/06-f223-repro-old.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/06-f223-repro-cand.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/06c-orchestrator-regression-on-old.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/07-qa8-suite-on-candidate.log"
+      ]
+    },
+    {
+      "id": "QA9-K08",
+      "procedure": "Independent negative tests (A23/A24/A25). The round-9 suite carries every earlier case forward: missing reviewer, reviewer who authored the scope, shared invocation, failed or BLOCKED check, unresolved High finding, incomplete requirement, non-existent anchor, SOURCE row without a playbook block, coverage gaps, candidate change after freeze, tampered manifest, and 'review metadata does not alter the candidate' (QA5-M01). It adds 8 new QA9 cases, none of them in tools/gates/tests or tools/agents/tests: C01 binds a path with spaces, parentheses and Arabic characters; N93 wrong sha256; N94 another assignment with its own sha256; N95 space instead of a separator; N96 trailing suffix; N97 appended second clause; N98 newline in the path; F224 tooling installed under a path with a space.",
+      "command": "QA_REPO_ROOT=<cbc755d clone> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs; QA_REPO_ROOT=<clone> node --test --test-name-pattern=QA9- ... (cbc755d and d662625)",
+      "environment": "disposable clones at cbc755d and d662625; fixtures in the OS temp dir, removed per test; node v22.22.2",
+      "expected": "every carried-forward case and every QA9 F-DG0-223 case passes on the candidate",
+      "actual": "Full suite on cbc755d: 94 tests, 93 pass, 1 fail. The failure is QA9-F224, the reproduction of new finding F-DG0-224 (ENOENT on .../qa9%20tooling.../schemas/stages.schema.json). QA9-C01 and N93-N98 pass. On d662625, 7 of 8 QA9 cases fail. C01 and N93-N96 fail there because the old regex rejects any spaced path early. N97 is accepted there (0 errors): the old \\S+ skipped a spaced first clause and bound an appended second clause, so the repair is also stricter.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-022", "REQ-S20-024", "REQ-S20-025"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-9/10a-qa9-full-suite-on-candidate.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/10-qa9-cases-on-cand.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/10-qa9-cases-on-old.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs"
+      ]
+    },
+    {
+      "id": "QA9-K09",
+      "procedure": "Portability probe and reproduction of new finding F-DG0-224. Clone the candidate under a path containing spaces ('qa9 space dir/My Projects/repo') and under an Arabic path ('qa9-مستخدم/repo'). Run the gate and guard tests, prefreeze and every validator mode, locate the root cause, and confirm the failure mode is fail-closed (a crash or non-zero exit, never a false PASS).",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs; bash tools/gates/prefreeze.sh DG0; node tools/gates/validate.mjs --register DG0|--pipeline|--reconcile; node tools/gates/candidate.mjs --stage DG0",
+      "environment": "disposable clones at cbc755d under a space path and an Arabic path; node v22.22.2",
+      "expected": "Reproduction check: the defect reproduces deterministically, its root cause is identified, and the failure is fail-closed. The portability goal itself (tooling runs from any checkout location) is NOT expected to hold. It is the subject of F-DG0-224.",
+      "actual": "Reproduced. The portability goal is NOT met. Space path: 36/53 tests fail and prefreeze exits 1. Under both paths --pipeline and --reconcile crash with uncaught ENOENT on '...%20.../tools/gates/schemas/stages.schema.json' (exit 1); --register and candidate.mjs pass. Root cause: tools/gates/lib/rules.mjs:37 `new URL('.', import.meta.url).pathname` stays percent-encoded. Same line in d662625, introduced in 8825dca. Every failure is a crash with non-zero exit, so it fails closed with no false PASS and no integrity impact. Recorded as F-DG0-224 (Low, non-mandatory, acceptable as an observation). This check is PASS only as a reproduction; the defect itself is open.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-016"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-9/08-space-path-clone.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/09-f224-percent-encoded-path.log"
+      ]
+    },
+    {
+      "id": "QA9-K10",
+      "procedure": "Register integrity (independent script, own RFC-4180 parser). Check every row's columns and that no row is VERIFIED; open the IMPLEMENTED rows' evidence; check A01-A28 coverage, final_gate/increments consistency, counts per class/area/gate/status, and that the source-coverage and master-prompt-coverage matrices are exact.",
+      "command": "node docs/delivery/test-evidence/DG0/qa/round-9/scripts/register-integrity.mjs <cbc755d clone>",
+      "environment": "disposable clone at cbc755d; node v22.22.2",
+      "expected": "0 errors",
+      "actual": "411 rows (SOURCE 93, ENGINEERING 130, USER 188); final_gate DG0 19, DG1 11, DG2 32, DG3 32, DG4 137, DG5 78, DG6 48, DG7 54; status SPECIFIED 392, IMPLEMENTED 19, VERIFIED 0; every A01-A28 cited; source-coverage 165/165 blocks, master-prompt-coverage 423/423 blocks; errors: 0. requirements.csv and docs/analysis are unchanged since round 8.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-029", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/11-register-integrity.log", "docs/delivery/test-evidence/DG0/qa/round-9/scripts/register-integrity.mjs"]
+    },
+    {
+      "id": "QA9-K11",
+      "procedure": "Open each of the 19 IMPLEMENTED DG0 rows' evidence files and check concrete implementation markers (whether the evidence actually implements the requirement), including the F-DG0-133/D-022 markers in rules.mjs",
+      "command": "python3 docs/delivery/test-evidence/DG0/qa/round-9/scripts/dg0-evidence-content.py <cbc755d clone>",
+      "environment": "disposable clone at cbc755d; Python 3.11.15",
+      "expected": "every marker found; 0 errors",
+      "actual": "DG0 rows: 19, 58 marker checks ok, errors: 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-003", "REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-019", "REQ-DLV-020", "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026", "REQ-DLV-029", "REQ-DLV-032", "REQ-S20-024", "REQ-S20-025"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/16-dg0-evidence-content.log", "docs/delivery/test-evidence/DG0/qa/round-9/scripts/dg0-evidence-content.py"]
+    },
+    {
+      "id": "QA9-K12",
+      "procedure": "Agent setup (§0.1/§0.2) from the raw T-DG0-LOAD evidence: meta.json, result.json and transcript.jsonl.gz for all ten roles. Check distinct sessions, init model equal to the requested orchestrator model, that the out-of-scope write was blocked and the in-scope write succeeded, and that no probe file exists under docs/source.",
+      "command": "node docs/delivery/test-evidence/DG0/qa/round-9/scripts/agent-load-check.mjs <cbc755d clone>",
+      "environment": "disposable clone at cbc755d; node v22.22.2",
+      "expected": "10 definitions, 10 runs, 10 distinct sessions/roles, claude-opus-5-5, oos BLOCKED, 0 errors",
+      "actual": "runs: 10; distinct sessions: 10; distinct roles: 10; roles == definitions: true; every init.model claude-opus-5-5; every oos write to docs/source/LOAD-PROBE-<role>.txt BLOCKED, in-scope write OK; probe files under docs/source: none; errors: 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/13-agent-load.log", "docs/delivery/test-evidence/DG0/qa/round-9/scripts/agent-load-check.mjs"]
+    },
+    {
+      "id": "QA9-K13",
+      "procedure": "Check that the claims in docs/delivery/agents.md match the raw LOAD evidence, run-agent.sh and the validator's binding checks",
+      "command": "python3 docs/delivery/test-evidence/DG0/qa/round-9/scripts/agents-md-vs-evidence.py <cbc755d clone>",
+      "environment": "disposable clone at cbc755d; Python 3.11.15",
+      "expected": "0 errors",
+      "actual": "38 checks ok, errors 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/15-agents-md-vs-evidence.log", "docs/delivery/test-evidence/DG0/qa/round-9/scripts/agents-md-vs-evidence.py"]
+    },
+    {
+      "id": "QA9-K14",
+      "procedure": "Live write-guard probe: this run's Write tool to docs/source/QA-PROBE.txt",
+      "command": "Write tool, file_path=/home/user/My-owns/docs/source/QA-PROBE.txt; ls docs/source/QA-PROBE.txt; git status --porcelain docs/source",
+      "environment": "this run (session b93c74f1), main working tree, qa-verifier PreToolUse hook",
+      "expected": "blocked by the guard; no file created",
+      "actual": "BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path); ls: no such file; docs/source unchanged",
+      "exit_status": 2,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/12-live-guard-probe.log"]
+    },
+    {
+      "id": "QA9-K15",
+      "procedure": "Live check of this run's own stream-json transcript: the CLI-replayed prompt matches the candidate regex (rules.mjs:313), and the assignment path and sha256 match my assignment file",
+      "command": "python3 (read-only) over docs/delivery/runs/DG0/DG0-T-DG0-REV-QA-R9-qa-verifier-20260928T171212Z-b93c74f1/transcript.jsonl",
+      "environment": "main working tree; Python 3.11.15",
+      "expected": "one replayed prompt, prefix ok, regex match, path ends with the assignment, sha256 2d4e8bd3...de88",
+      "actual": "replayed text prompts: 1; prefix ok: True; candidate regex match: True; endsWith: True; sha equal: True (2d4e8bd38d9ea5adee84666bc4d2db38d79b98ec5bd301dcf5f6b68645dcde88); init model claude-opus-5-5",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/17-live-own-transcript.log"]
+    },
+    {
+      "id": "QA9-K16",
+      "procedure": "Feasibility: every A01-A28 scenario in acceptance-map.md and stage-plan.md has a concrete test level, a first stage, a passing gate and an author, and none is untestable",
+      "command": "python3 docs/delivery/test-evidence/DG0/qa/round-9/scripts/acceptance-feasibility.py <cbc755d clone>",
+      "environment": "disposable clone at cbc755d; Python 3.11.15",
+      "expected": "28 scenarios, 0 errors",
+      "actual": "28 scenarios A01-A28, each with a level (unit/integration/e2e/ops), first stage P0-P7, gate DG0-DG7 and author; A24/A25 pass at DG0; errors: 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032", "REQ-S20-024", "REQ-S20-025"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/14-acceptance-feasibility.log", "docs/delivery/test-evidence/DG0/qa/round-9/scripts/acceptance-feasibility.py"]
+    },
+    {
+      "id": "QA9-K17",
+      "procedure": "Cleanup of disposable clones and scratch files; confirm the main tree has only untracked evidence from runs",
+      "command": "rm -rf qa9-cand qa9-old qa9-pre 'qa9 space dir' qa9-مستخدم; git status --porcelain",
+      "environment": "session scratchpad; main working tree",
+      "expected": "clones removed; no tracked file modified",
+      "actual": "all clones removed; git status shows only untracked run/review/test-evidence paths, and no tracked modification",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-9/19-cleanup.log"]
+    }
+  ],
+  "findings": ["F-DG0-224"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/qa/round-9/README.md",
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs",
+    "docs/delivery/reviews/DG0/round-9/qa-verifier.findings.json",
+    "docs/delivery/reviews/DG0/round-9/qa-verifier.verifications.json",
+    "docs/delivery/candidates/DG0/fc0bd2a2f2019ca4.manifest.json"
+  ],
+  "reviewed_at": "2026-09-28T17:24:00Z",
+  "summary": "PASS on candidate fc0bd2a2 (cbc755d). Every required command passes in disposable clones: extraction, gate tests 40/40, guard tests 13/13, run_meta tests 5/5, register, pipeline, reconcile, candidate ID, and prefreeze on a fresh clone. The register (411 rows, 0 VERIFIED, exact coverage matrices) passes with 0 errors, as do all 19 DG0 rows' evidence content, the ten-agent load evidence, the agents.md claims, A01-A28 feasibility and the live guard probe. F-DG0-223 is reproduced on d662625 and fixed on cbc755d: CLOSED_VERIFIED, with 7 new QA9 regex cases showing the binding wasn't loosened. New F-DG0-224 (Low, non-mandatory, acceptable as an observation): rules.mjs:37 uses URL.pathname, so the validator crashes (fail closed) when the checkout path contains a space or non-ASCII characters. This environment and CI are unaffected. QA9-K09 (the portability probe) and the one failing QA9 case are reproductions of this Low finding. Each is recorded as a successful reproduction, with the unmet portability goal stated in full."
+}

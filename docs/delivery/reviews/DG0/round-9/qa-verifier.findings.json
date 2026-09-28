@@ -1,0 +1,33 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-224",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The gate validator cannot load its own schemas when the repository path contains a space or non-ASCII characters (rules.mjs uses URL.pathname, which stays percent-encoded), so the F-DG0-223 portability goal is still not met end to end",
+      "reproduction": "tools/gates/lib/rules.mjs line 37: `const here = new URL(\".\", import.meta.url).pathname;` then schema() reads join(here, \"..\", \"schemas\", ...). URL.pathname keeps percent-encoding (node -e: new URL('.', 'file:///a%20b/x.mjs').pathname -> '/a%20b/'), unlike fileURLToPath, which candidate.mjs, validate.mjs, import-findings.mjs and guard-write.mjs use. Clone cbc755d into '<tmp>/qa9 space dir/My Projects/repo' or '<tmp>/qa9-مستخدم/repo' and run `node tools/gates/validate.mjs --pipeline` (or --reconcile, or --stage DG0): uncaught ENOENT on '.../qa9%20space%20dir/My%20Projects/repo/tools/gates/schemas/stages.schema.json', exit 1. `node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs` there: 36 of 53 fail (including the new 'F-DG0-223: a genuine prompt binds when the checkout path contains spaces'), and `tools/gates/prefreeze.sh DG0` exits 1. The same clone at a path without spaces passes everything. Automated: QA_REPO_ROOT=<candidate clone> node --test --test-name-pattern=QA9-F224 docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs -> not ok (exit 1). The line is unchanged since 8825dca and is also present in the round-8 candidate d662625.",
+      "expected": "The validator, its self-tests and prefreeze run from any checkout location, as the other gate entry points do. Derive the schema directory with fileURLToPath (for example `dirname(fileURLToPath(import.meta.url))`), and add a regression test that installs the tooling under a path with a space and a non-ASCII character. The F-DG0-223 regression test only rewrites the prompt text inside a fixture while the tooling itself runs from a path without spaces, so it can't catch this.",
+      "actual": "Under a path containing a space or non-ASCII characters (for example an Arabic home directory), every validator mode that loads a schema crashes with ENOENT, and the gate self-tests and prefreeze fail. This fails closed, with a crash and non-zero exit, so there is no integrity or security impact and no gate can be wrongly approved. The current environment (/home/user/My-owns) and the GitHub Actions workspace have no such characters. It's a portability defect of the delivery tooling only, not of the product deployment. So I classify it Low and non-mandatory, consistent with F-DG0-223, and I'd accept it as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-9/09-f224-percent-encoded-path.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/08-space-path-clone.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/10-qa9-cases-on-cand.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs#QA9-F224",
+        "tools/gates/lib/rules.mjs#L37"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-9/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T17:22:30Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-9 QA review of candidate fc0bd2a2 (cbc755d)."
+        }
+      ]
+    }
+  ]
+}

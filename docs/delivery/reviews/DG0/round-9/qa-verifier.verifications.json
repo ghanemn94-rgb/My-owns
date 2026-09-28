@@ -1,0 +1,22 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-223",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on the round-8 candidate d662625: QA8-F223 fails there with 'the replayed prompt names no assignment file and sha256'. The orchestrator's new test 'F-DG0-223: a genuine prompt binds when the checkout path contains spaces' also fails against the d662625 validator, so it discriminates. On candidate cbc755d (fc0bd2a2), rules.mjs line 313 uses the lazy /in the file (.+?) \\(sha256 ([0-9a-f]{64})\\)/ and both tests pass. The full round-8 suite passes 86/86 and the gate self-tests pass 40/40. My new QA9 cases show the widening binds genuine paths with spaces, parentheses and Arabic characters (QA9-C01), and doesn't loosen the binding. The validator still rejects a spaced path with another content's sha256 (N93), another real assignment with its own correct sha256 (N94), a space instead of a path separator (N95), a trailing suffix (N96), an appended second clause (N97; the old \\S+ regex actually accepted it) and a newline in the path (N98). This run's own replayed prompt matches the new regex with the right assignment path and sha256. The runner quotes every path, and the guard hook quotes its path and fails closed. The defect this finding describes, the prompt check being unable to parse a path with a space, is fixed completely and correctly. A separate, pre-existing root cause (rules.mjs:37 URL.pathname) still stops the validator from running at all in such a checkout. That is not this regex, so I raised it as new finding F-DG0-224 (Low) rather than keeping this finding open.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-9/06-f223-repro-old.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/06-f223-repro-cand.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/06c-orchestrator-regression-on-old.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/07-qa8-suite-on-candidate.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/10-qa9-cases-on-cand.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/10-qa9-cases-on-old.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/17-live-own-transcript.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs#QA9-C01",
+        "tools/gates/lib/rules.mjs#L313",
+        "tools/gates/tests/validator.test.mjs#F-DG0-223"
+      ]
+    }
+  ]
+}
