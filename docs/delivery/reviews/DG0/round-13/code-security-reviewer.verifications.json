@@ -1,0 +1,17 @@
+{
+ "verifications": [
+  {
+   "finding_id": "F-DG0-140",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Reproduced against the old and new commits with my own script, repro-r13-f140-shadow.sh (disposable clones, stub claude that plants json/uuid/hashlib/subprocess/os/sys/sitecustomize/usercustomize/site/encodings modules and a .pth in the agent cwd). On round-12 commit 7f09967, unsandboxed runner helpers imported the planted json, hashlib and subprocess modules (argv '-c' and '-'), and uuid in the --cwd variant. On candidate 6c61f2e, zero shadow imports occurred in both the root-cwd and --cwd-subdirectory variants, and the runner exited 0. Code review of run-agent.sh: 'cd /' at L48 after inputs are resolved (ASSIGNMENT_ABS and CWD made absolute first); every Python helper runs as 'python3 -I -B' (L52, 61, 70, 116, 144, 172, 176, 191, 207); git always uses -C; only the claude process runs in the agent cwd. The regression test 'F-DG0-140: modules planted in the repository root are never imported by the runner's helpers' passes (04-test-suites.log). The Node gate tools import only node: built-ins and relative tools/ files (grep checked). The fix is complete for the runner. The new pre-freeze sandbox wrapper has a separate escape of its own, raised as F-DG0-141.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-13/repro-r13-f140-shadow.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-13/01-f140-shadow.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-13/04-test-suites.log",
+    "tools/agents/run-agent.sh#L48",
+    "tools/agents/tests/runner.test.mjs#F-DG0-140"
+   ]
+  }
+ ]
+}

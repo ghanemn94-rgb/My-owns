@@ -1,0 +1,114 @@
+{
+ "schema_version": 1,
+ "stage_id": "DG0",
+ "round": 13,
+ "candidate_id": "sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79",
+ "source_commit": "6c61f2e1aa07fa6acfc52f20a8ee9fbb554904ac",
+ "reviewer_role": "code-security-reviewer",
+ "invocation_reference": {"kind": "claude-code-cli-session", "run_id": "DG0-T-DG0-REV-SEC-R13-code-security-reviewer-20260928T215437Z-f8de01f5", "session_id": "f8de01f5-802f-40ed-9d75-eeab75df786f"},
+ "implementation_author": ["transformation-analyst", "delivery-orchestrator"],
+ "independence_declaration": {
+  "reviewer_authored_reviewed_scope": false,
+  "statement": "I authored none of the reviewed scope (gate tooling, runner, write guard and sandbox, agent definitions, CI, source scripts, register and analysis). I am the independent code-security reviewer. I formed this verdict before reading any other round-13 review record, and I read none."
+ },
+ "assignment": "docs/delivery/assignments/DG0/round-13/review-code-security-reviewer.md",
+ "requirements_checked": ["REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026"],
+ "checks_run": [
+  {
+   "id": "C1-candidate-identity",
+   "procedure": "Confirm the frozen candidate: recompute the candidate ID, and check that HEAD is a metadata-only descendant of the source commit.",
+   "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG0; git diff --stat 6c61f2e..HEAD",
+   "environment": "D-025 reviewer bash sandbox, node v22.22.2, /home/user/My-owns",
+   "expected": "candidate_id sha256:c3364ac2…fb79; the post-freeze diff touches only excluded delivery metadata",
+   "actual": "HEAD a733aaf. candidate_id sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79 (86 files); the fresh clone at 6c61f2e gives the same ID. The post-freeze diff covers only assignments/round-13, the candidates manifest, stages.json and test-evidence/orchestrator-probes. The untracked root entries (.bashrc, .mcp.json, CLAUDE.local.md, …) are /dev/null character-device mounts from my own sandbox and are not in the manifest.",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-022"]
+  },
+  {
+   "id": "C2-test-suites",
+   "procedure": "Run the shipped node and python test suites in a disposable clone of the candidate.",
+   "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs; python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'",
+   "environment": "$TMPDIR/dg0-sec clone at 6c61f2e, node v22.22.2, Python 3.11.15, nested bwrap available",
+   "expected": "all pass",
+   "actual": "node: 69/69 pass, including the F-DG0-140 runner test and the D-026 stub-rule tests. python: 14 tests OK.",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-023", "REQ-DLV-026"],
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-13/04-test-suites.log"]
+  },
+  {
+   "id": "C3-prefreeze",
+   "procedure": "Run tools/gates/prefreeze.sh DG0 in a fresh clone of the candidate commit.",
+   "command": "git clone /home/user/My-owns $TMPDIR/dg0-pf && git -C $TMPDIR/dg0-pf checkout 6c61f2e && $TMPDIR/dg0-pf/tools/gates/prefreeze.sh DG0",
+   "environment": "$TMPDIR/dg0-pf, reviewer sandbox, nested bwrap",
+   "expected": "exit 0, and every check PASS",
+   "actual": "exit 0. Ten PASS lines: extraction reproducible, validator and guard tests, runner tests, register rules, register equals the merge of parts, pipeline, three analysis checks, and working tree equals HEAD (sha256:c3364ac2…).",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-023"],
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-13/02-prefreeze.log"]
+  },
+  {
+   "id": "C4-F140-reverify",
+   "procedure": "Reproduce F-DG0-140 on the round-12 commit and on the candidate. A stub claude plants stdlib-shadowing modules (json, uuid, hashlib, subprocess, os, sys, sitecustomize, usercustomize, site, encodings) and a .pth in the agent cwd. Count how many are imported by the unsandboxed runner helpers, with cwd at the repo root and with --cwd set to a subdirectory.",
+   "command": "docs/delivery/test-evidence/DG0/code-security/round-13/repro-r13-f140-shadow.sh <commit>  (commits 7f09967, 6c61f2e)",
+   "environment": "disposable clones in $TMPDIR, reviewer sandbox",
+   "expected": "7f09967: imports occur (the original bug). 6c61f2e: zero imports.",
+   "actual": "7f09967: json, hashlib and subprocess imported (argv -c and -), and uuid in the --cwd variant. 6c61f2e: 0 imports in both variants, and the runner exits 0.",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-006", "REQ-DLV-007"],
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-13/repro-r13-f140-shadow.sh", "docs/delivery/test-evidence/DG0/code-security/round-13/01-f140-shadow.log"]
+  },
+  {
+   "id": "C5-sandbox-run-escape",
+   "procedure": "Attack the new tools/gates/sandbox-run.sh. Its work clone is under the agent-writable /tmp/claude-0, and its clone and checkout run outside bwrap. A concurrent watcher, emulating an agent's background shell, plants a smudge filter in the fresh clone before checkout.",
+   "command": "docs/delivery/test-evidence/DG0/code-security/round-13/repro-r13-sandbox-run-tmp-race.sh  (x3)",
+   "environment": "disposable clone of 6c61f2e as stand-in REPO_ROOT, reviewer sandbox, /tmp/claude-0 writable",
+   "expected": "No code from the work clone runs outside bwrap, and nothing outside WORK is written (D-026 claims mechanical prevention).",
+   "actual": "3/3 attempts escaped. The smudge payload ran 1154 times with cwd=/tmp/claude-0/sbxrun.*/repo outside bwrap, and wrote REPO_ROOT/tools/gates/PWNED-by-sandbox-run-race.txt, a path that is read-only inside the bwrap stage. Raised as F-DG0-141 (High).",
+   "exit_status": 0,
+   "result": "FAIL",
+   "requirements": ["REQ-DLV-007", "REQ-DLV-023"],
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-13/repro-r13-sandbox-run-tmp-race.sh", "docs/delivery/test-evidence/DG0/code-security/round-13/03-sandbox-run-tmp-race.log"]
+  },
+  {
+   "id": "C6-diff-review",
+   "procedure": "Source review of every non-metadata change from 7f09967 to 6c61f2e (run-agent.sh, agent_settings.py, rules.mjs F-DG0-230 deny check, prefreeze.sh, sandbox-run.sh, the CI workflow, runner and sandbox tests). Confirm that everything else in scope is byte-identical to round 12.",
+   "command": "git diff 7f09967..6c61f2e -- <scope>; git diff --stat 7f09967..6c61f2e -- tools/agents/guard-write.mjs tools/agents/write-scopes.json tools/agents/settings .claude/agents tools/gates/lib/{candidate,schema,csv}.mjs tools/gates/schemas tools/gates/{import-findings,validate,candidate}.mjs tools/source tools/agents/run_meta.py",
+   "environment": "$TMPDIR/dg0-sec clone",
+   "expected": "Changes are correct and do not weaken controls; the rest is unchanged.",
+   "actual": "The guard, scopes, settings, agent definitions, candidate/schema/CSV libraries, schemas, CLIs, source scripts and run_meta are unchanged since round 12, so my earlier closures stand. rules.mjs now requires exact denies for .git, .claude, tools/gates, tools/agents, docs/source, reviews and runs under meta.cwd; a mismatch fails closed. The stub rule in the runner (skip only non-symlink, zero-length, untracked files) cannot hide configuration with content, a symlink, or a tracked-file change; an empty file carries no configuration. I judge it acceptable. CI: permissions contents:read, fetch-depth 0, SHA-pinned actions, no secrets; failing steps fail the job; the bubblewrap step is disclosed as unverified on a hosted runner. sandbox-run.sh: see C5. Threat-model inconsistency on dependency installation: F-DG0-142 (Low).",
+   "exit_status": 0,
+   "result": "FAIL",
+   "requirements": ["REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-023", "REQ-DLV-026"],
+   "evidence": ["tools/gates/sandbox-run.sh", "tools/agents/run-agent.sh", "tools/gates/lib/rules.mjs", ".github/workflows/delivery-gates.yml", "docs/delivery/threat-model.md"]
+  },
+  {
+   "id": "C7-secrets",
+   "procedure": "Search the candidate's text files for credentials. Separately, search the compressed run transcripts added since round 12 for real token formats.",
+   "command": "git -C $TMPDIR/dg0-sec grep -nIE 'sk-ant-|ghp_[A-Za-z0-9]{20}|BEGIN (RSA|OPENSSH|EC|PRIVATE)|AKIA[0-9A-Z]{16}' 6c61f2e -- .; git grep -nIiE '(api[_-]?key|secret|token|password|...)' 6c61f2e -- . ':!docs/source' (filtered for value-like assignments); for f in $(git diff --name-only 7f09967..6c61f2e | grep '\\.gz$'); do zcat $f | grep -oE 'sk-ant-(api|oat)[0-9]{2}-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{36}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----'; done",
+   "environment": "$TMPDIR/dg0-sec clone at 6c61f2e",
+   "expected": "No credential values",
+   "actual": "No credential values. The strict pattern matches only secret-scan regex strings inside earlier reviewers' test-evidence logs. The broad pattern matches only register or review-record text ('secrets removed', 'Secret scan', check IDs). The 5 new .gz transcripts contain no real token formats.",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-023"]
+  }
+ ],
+ "findings": ["F-DG0-141", "F-DG0-142"],
+ "verdict": "FAIL",
+ "evidence_paths": [
+  "docs/delivery/reviews/DG0/round-13/code-security-reviewer.findings.json",
+  "docs/delivery/reviews/DG0/round-13/code-security-reviewer.verifications.json",
+  "docs/delivery/test-evidence/DG0/code-security/round-13/repro-r13-f140-shadow.sh",
+  "docs/delivery/test-evidence/DG0/code-security/round-13/01-f140-shadow.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-13/02-prefreeze.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-13/repro-r13-sandbox-run-tmp-race.sh",
+  "docs/delivery/test-evidence/DG0/code-security/round-13/03-sandbox-run-tmp-race.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-13/04-test-suites.log"
+ ],
+ "reviewed_at": "2026-09-28T22:06:00Z",
+ "summary": "FAIL. F-DG0-140 is verified fixed (CLOSED_VERIFIED): the runner no longer imports planted modules. New finding F-DG0-141 (High, mandatory): the D-026 wrapper sandbox-run.sh clones into the agent-writable /tmp/claude-0 and runs git checkout outside bwrap, so a concurrent agent's planted smudge filter runs as the orchestrator (reproduced 3/3). The same weakness lets a concurrent agent falsify pre-freeze results. New finding F-DG0-142 (Low): the threat model and D-026 contradict each other on unsandboxed dependency installation. All tests pass (69 node, 14 python), and prefreeze passes."
+}

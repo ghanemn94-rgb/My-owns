@@ -1,0 +1,62 @@
+{
+ "schema_version": 1,
+ "findings": [
+  {
+   "id": "F-DG0-141",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-007",
+   "severity": "High",
+   "mandatory_violation": true,
+   "title": "D-026 sandbox escape via tools/gates/sandbox-run.sh: the work clone is created under /tmp/claude-0 (the $TMPDIR every sandboxed agent shell may write), and the orchestrator runs 'git checkout' in it OUTSIDE bubblewrap. A concurrently running agent plants a git smudge filter (or fsmonitor) in the fresh clone's .git/config and .git/info/attributes; the checkout executes it with the orchestrator's privileges.",
+   "reproduction": "sandbox-run.sh:19 WORK=$(mktemp -d /tmp/claude-0/sbxrun.XXXXXX); sandbox-run.sh:21 git clone --no-checkout into $WORK/repo; sandbox-run.sh:22 git -C $WORK/repo checkout, run BEFORE and OUTSIDE the bwrap call at sandbox-run.sh:25-28. /tmp/claude-0 is the D-025 sandbox's writable $TMPDIR for every agent (agent_settings.py docstring lines 10-11; D-025 'Verified'; confirmed writable from my own reviewer sandbox), and every process runs as uid 0, so mktemp's 0700 mode does not isolate it. Script docs/delivery/test-evidence/DG0/code-security/round-13/repro-r13-sandbox-run-tmp-race.sh (disposable clone of 6c61f2e as stand-in REPO_ROOT): a background watcher, which is exactly what a sandboxed agent shell can run (run_in_background, writes only to $TMPDIR), polls /tmp/claude-0/sbxrun.*/repo/.git/config and (re-)appends '[filter \"x\"] smudge=<payload>' plus '* filter=x' in .git/info/attributes. The orchestrator-side call 'sandbox-run.sh HEAD -- ...' (as used by prefreeze.sh:23-34) then checks out. Log 03-sandbox-run-tmp-race.log: in 3 of 3 attempts the payload ran 1154 times with cwd=/tmp/claude-0/sbxrun.*/repo, outside bwrap. It wrote REPO_ROOT/tools/gates/PWNED-by-sandbox-run-race.txt, a path the same log shows is read-only inside the bwrap stage. Second, trace-free variant using the same weakness: for the whole bwrap run (about 20 s for the test suite), $WORK/repo stays writable from outside, so a concurrent agent can swap test or check files in the clone and make prefreeze report PASS for content that is not the committed HEAD. The final 'working tree equals HEAD' check does not look at the clone.",
+   "expected": "threat-model.md 'Mechanically prevented' row 3 / D-026: the orchestrator never executes agent-planted code with its own privileges, and pre-freeze checks run on a fresh clone of the committed revision that nothing else can alter. The sandbox-run work directory must not be writable by any agent sandbox: for example, create it under a path in every agent's denyWrite (such as $REPO_ROOT/.git/mth-sbx), or inside bwrap on a private tmpfs. The clone and checkout must also happen inside the sandbox, or with hermetic git options (-c core.fsmonitor=false, -c filter.*, GIT_ATTR_NOSYSTEM, no info/attributes). Add a regression test in which a concurrent writer plants a filter or fsmonitor and swaps a file during the run.",
+   "actual": "Any agent that is running while the orchestrator runs prefreeze.sh or sandbox-run.sh (parallel implementers or reviewers are the normal operating mode; the round-13 reviewers started in the same second) can execute arbitrary code as the orchestrator, outside every sandbox. That code can rewrite tools/gates, forge records, or plant .git hooks. It is the same trust-boundary escape class as F-DG0-140, reintroduced by the D-026 fix itself. The precondition (concurrency, plus a polling loop) makes it High rather than Critical. Separately, and without any code execution, the pre-freeze results can be falsified.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-13/repro-r13-sandbox-run-tmp-race.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-13/03-sandbox-run-tmp-race.log",
+    "tools/gates/sandbox-run.sh#L19-L22",
+    "tools/gates/prefreeze.sh#L23-L34",
+    "tools/agents/agent_settings.py#L10-L11",
+    "docs/delivery/threat-model.md#mechanically-prevented"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-13/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T22:03:00Z",
+     "status": "OPEN",
+     "note": "raised by code-security-reviewer in DG0 round 13; reproduced 3/3 in a disposable clone of the frozen candidate commit"
+    }
+   ]
+  },
+  {
+   "id": "F-DG0-142",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-007",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "Threat model inconsistency (forward-looking): D-026 says the orchestrator never executes agent-writable code outside a sandbox, but residual #3 and D-025 make dependency installation an unsandboxed orchestrator step. From P1, installing dependencies declared in agent-written package.json or lockfiles runs install scripts from agent-writable content outside the sandbox.",
+   "reproduction": "Documentation review only; nothing is exercised at DG0 (there is no package.json in the candidate). threat-model.md:48 (residual #3): 'Dependency installation is an orchestrator step, outside the sandbox (D-025)'. threat-model.md:29 and decisions.md D-026: the orchestrator never executes agent-writable code outside a sandbox. Scenario at P1: an implementer adds \"postinstall\": \"<payload>\" to package.json, or a git/tarball dependency, or an .npmrc in its scope; the orchestrator runs 'npm install' or 'npm ci' unsandboxed, and the payload runs as the orchestrator. prefreeze.sh:8-9 says only that later stages add build commands 'to the sandboxed list'. It says nothing about installation.",
+   "expected": "Before P1: the threat model and D-026 say how dependency installation is contained. For example: install with --ignore-scripts from a reviewed lockfile, then run lifecycle scripts only inside sandbox-run.sh; or run installation in a sandbox with a registry-only network allowlist. Alternatively, list it as a residual that explicitly qualifies the D-026 claim.",
+   "actual": "The two statements contradict each other, and the residual is larger than disclosed: it covers code execution, not just network access. I would accept this as an observation at DG0 (Low, not exercised yet), provided it is resolved before the first P1 dependency installation.",
+   "evidence": [
+    "docs/delivery/threat-model.md#disclosed-residuals",
+    "docs/delivery/decisions.md#D-026",
+    "tools/gates/prefreeze.sh#L8-L9"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-13/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T22:03:00Z",
+     "status": "OPEN",
+     "note": "raised by code-security-reviewer in DG0 round 13 (documentation review)"
+    }
+   ]
+  }
+ ]
+}
