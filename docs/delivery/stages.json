@@ -162,11 +162,10 @@
           "frozen_at": "2026-09-28T18:31:37Z",
           "source_commit": "7f09967ad36dc1a0d2a7065ae93f11bded29ccce",
           "records": {
-            "domain-reviewer": "docs/delivery/reviews/DG0/round-12/domain-reviewer.json",
             "code-security-reviewer": "docs/delivery/reviews/DG0/round-12/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG0/round-12/qa-verifier.json"
           },
-          "note": "Round 12: full re-review after D-025 (OS Bash sandbox) and threat model"
+          "note": "Round 12: full re-review after D-025 (OS Bash sandbox) and threat model. The domain-reviewer run finished (PASS) but the runner refused to commit it (exit 71): its configuration scan flagged the zero-length sandbox stub files .mcp.json and CLAUDE.local.md as external configuration changes. That was a false positive, but the run cannot bind, so its record was moved unchanged to docs/delivery/test-evidence/DG0/round-12-orphaned/ and the domain review is re-run in round 13. The qa-verifier run ended with exit 1 (is_error, account session limit) after writing its FAIL record, so its findings are repaired but QA re-verifies them, and F-DG0-226..228, in round 13."
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",

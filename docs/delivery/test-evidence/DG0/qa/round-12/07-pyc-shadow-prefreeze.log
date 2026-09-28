@@ -1,0 +1,71 @@
+# QA12-P1: gitignored sourceless .pyc shadows a stdlib module imported by a prefreeze analysis check. Disposable clone /tmp/claude-0/qa-r12/pyc @ 7f09967, 2026-09-28T18:44:03Z, Python 3.11.15
+## 1. Is docs/analysis/tools writable by the analyst's and an implementer's Bash sandbox? (agent_settings.build deny list)
+transformation-analyst: docs/analysis/tools/csv.pyc denied by sandbox = False
+backend-workflow-engineer: docs/analysis/tools/csv.pyc denied by sandbox = False
+qa-verifier: docs/analysis/tools/csv.pyc denied by sandbox = True
+## 2. candidate before
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c","files":83}
+## 3. plant docs/analysis/tools/csv.pyc (sourceless bytecode; payload writes a marker outside the analyst area, then loads the real csv)
+total 44
+drwxr-xr-x 2 root root 4096 Sep 28 18:44 .
+drwxr-xr-x 4 root root 4096 Sep 28 18:44 ..
+-rwxr-xr-x 1 root root 6069 Sep 28 18:44 check_counts.py
+-rw-r--r-- 1 root root 9769 Sep 28 18:44 check_pb_provenance.py
+-rw-r--r-- 1 root root 8477 Sep 28 18:44 check_test_refs.py
+-rw-r--r-- 1 root root 1770 Sep 28 18:44 csv.pyc
+## 4. git status --porcelain --untracked-files=all (expect: nothing, since *.py[cod] is ignored)
+[end status]
+## 5. runner snapshot command: git ls-files --cached --others --exclude-standard | grep pyc
+6
+## 6. candidate after
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c","files":83}
+candidate UNCHANGED
+## 7. $ tools/gates/prefreeze.sh DG0
+PASS  source extraction reproducible 
+PASS  gate validator + guard tests 
+PASS  runner metadata tests 
+PASS  register rules (DG0) 
+PASS  pipeline state 
+PASS  analysis check check_counts.py 
+PASS  analysis check check_pb_provenance.py 
+PASS  analysis check check_test_refs.py 
+FAIL  working-tree candidate (sha256:423fa1face55ab405faecb64d4a46e9b6da0d1b3d921d4e480ea00566ea2c992) differs from HEAD (sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c): uncommitted or untracked candidate changes
+[exit=1]
+## 8. marker in protected tools/gates?
+-rw-r--r-- 1 root root 58 Sep 28 18:44 tools/gates/QA12-PYC-MARKER.txt
+written by a planted, gitignored csv.pyc during prefreeze
+## 9. git status after (marker is a tracked-area untracked file, so it does show)
+?? tools/gates/QA12-PYC-MARKER.txt
+
+## note on step 5: the 6 matches are committed evidence file NAMES containing 'pyc' (listed below); docs/analysis/tools/csv.pyc itself is NOT in the snapshot list:
+docs/delivery/test-evidence/DG0/code-security/round-6/03-pyc-prefreeze-fresh.log
+docs/delivery/test-evidence/DG0/code-security/round-6/05-pyc-equivalence.log
+docs/delivery/test-evidence/DG0/code-security/round-6/05-pyc-equivalence.py
+docs/delivery/test-evidence/DG0/domain/round-6/12-pycache.log
+docs/delivery/test-evidence/DG0/qa/round-6/30-pyc-candidate-drift.log
+docs/delivery/test-evidence/DG0/qa/round-6/32-untracked-pyc-candidate.log
+.gitignore:4:*.py[cod]	docs/analysis/tools/csv.pyc
+
+## Variant B (stealthy): payload writes only outside the candidate (.git/hooks/post-commit, i.e. git metadata the threat model lists as protected from implementers), so prefreeze passes
+3:with open(os.path.join(_here, "..", "..", "..", ".git", "hooks", "post-commit"), "w") as f:
+4:    f.write("#!/bin/sh\necho QA12 hook ran > /dev/null\n")
+$ git status --porcelain --untracked-files=all
+[end]
+$ tools/gates/prefreeze.sh DG0
+PASS  source extraction reproducible 
+PASS  gate validator + guard tests 
+PASS  runner metadata tests 
+PASS  register rules (DG0) 
+PASS  pipeline state 
+PASS  analysis check check_counts.py 
+PASS  analysis check check_pb_provenance.py 
+PASS  analysis check check_test_refs.py 
+PASS  working-tree candidate equals HEAD (sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c)
+[exit=0]
+$ ls -la .git/hooks/post-commit
+-rw-r--r-- 1 root root 41 Sep 28 18:45 .git/hooks/post-commit
+#!/bin/sh
+echo QA12 hook ran > /dev/null
+$ git status --porcelain --untracked-files=all (after)
+[end: nothing visible]
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c","files":83}

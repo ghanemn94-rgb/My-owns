@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 12,
+  "candidate_id": "sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c",
+  "source_commit": "7f09967ad36dc1a0d2a7065ae93f11bded29ccce",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-DOM-R12-domain-reviewer-20260928T183204Z-1a1764b5",
+    "session_id": "1a1764b5-0212-4688-825e-114a4f9ce5a7"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (domain-reviewer) authored none of the analysis, register, source extraction, agent definitions, tooling or delivery records in the reviewed scope. My only outputs are this record and test evidence under docs/delivery/test-evidence/DG0/domain/round-12/. I formed this verdict before reading any other round-12 review record, and I read none of them. I ran code only in disposable fresh clones under $TMPDIR (/tmp/claude-0/dr12, /tmp/claude-0/dr12pf), which I removed afterwards."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-12/review-domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-003", "REQ-PB-004", "REQ-PB-005", "REQ-PB-006", "REQ-PB-007", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010",
+    "REQ-PB-011", "REQ-PB-012", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-019", "REQ-PB-020",
+    "REQ-PB-021", "REQ-PB-022", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025", "REQ-PB-026", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029", "REQ-PB-030",
+    "REQ-PB-031", "REQ-PB-032", "REQ-PB-033", "REQ-PB-034", "REQ-PB-035", "REQ-PB-036", "REQ-PB-037", "REQ-PB-038", "REQ-PB-039", "REQ-PB-040",
+    "REQ-PB-041", "REQ-PB-042", "REQ-PB-043", "REQ-PB-044", "REQ-PB-045", "REQ-PB-046", "REQ-PB-047", "REQ-PB-048", "REQ-PB-049", "REQ-PB-050",
+    "REQ-PB-051", "REQ-PB-052", "REQ-PB-053", "REQ-PB-054", "REQ-PB-055", "REQ-PB-056", "REQ-PB-057", "REQ-PB-058", "REQ-PB-059", "REQ-PB-060",
+    "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068", "REQ-PB-069", "REQ-PB-070",
+    "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-077", "REQ-PB-078", "REQ-PB-079", "REQ-PB-080",
+    "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090",
+    "REQ-PB-091", "REQ-PB-092", "REQ-PB-093",
+    "REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-020", "REQ-DLV-032"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM12-00",
+      "procedure": "Confirm the frozen candidate and assignment. HEAD 93b04b6 is the metadata-only freeze commit after 7f09967 (diff 7f09967..93b04b6 touches only candidates/, findings.json, stages.json, assignments and probe README). Recomputed the candidate ID in the repository tree and in a fresh clone checked out at 7f09967; verified the assignment SHA-256. Reviewed the candidate diff since the round-11 candidate 7e99163: no changes to docs/analysis, docs/source, requirements.csv, requirements-spec.md or .claude/agents; only a one-line change each to agent-protocol.md and decisions.md (D-025 sandbox), plus tooling. Nonetheless the domain scope was re-reviewed in full.",
+      "command": "sha256sum docs/delivery/assignments/DG0/round-12/review-domain-reviewer.md; git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG0; git clone /home/user/My-owns $TMPDIR/dr12 && git -C $TMPDIR/dr12 checkout 7f09967 && node tools/gates/candidate.mjs --stage DG0; git diff --stat 7f09967 93b04b6; git diff --stat 7e99163..7f09967 -- docs/analysis docs/source docs/delivery/requirements.csv docs/delivery/requirements-spec.md .claude CLAUDE.md docs/delivery/agent-protocol.md docs/delivery/decisions.md",
+      "environment": "Linux sandbox (bubblewrap), node + python3 3.11, repository tree and fresh clone at 7f09967",
+      "expected": "Assignment sha256 a1a6aa1c…be0d; candidate ID sha256:21f142b8…b047b21c in both tree and clone",
+      "actual": "Assignment sha256 matched; HEAD 93b04b6 (metadata-only after 7f09967); candidate_id sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c (83 files) in tree and clone; analysis/source/register unchanged since round 11",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/candidates/DG0/21f142b863c445f6.manifest.json"]
+    },
+    {
+      "id": "DOM12-01",
+      "procedure": "Extraction fidelity by independent means: unzipped the docx, extracted every w:p paragraph text from word/document.xml and word/footer1.xml with my own regex parser, normalized quotes/whitespace/markdown characters, and checked containment in normalized playbook.md. Counted tables and rows in the XML against Markdown tables. Also ran the committed reproducibility check.",
+      "command": "python3 docs/delivery/test-evidence/DG0/domain/round-12/docx-text-containment.py docs/source/Business_Transformation_Playbook.docx docs/source/playbook.md; grep -cE '^\\|( *:?-+:? *\\|)+ *$' docs/source/playbook.md; grep -c '^|' docs/source/playbook.md; bash tools/source/check_extraction.sh",
+      "environment": "fresh clone at 7f09967 in $TMPDIR/dr12, python3 3.11",
+      "expected": "All docx paragraphs present in playbook.md; 49 tables and 239 rows reproduced; extraction reproducible",
+      "actual": "1002 paragraphs; 15 reported missing by the strict matcher, all of which are present in playbook.md as cells whose in-cell line breaks render as <br> (cover figures, TOM canvas boxes, health-check score cell) or the title split over lines; manually confirmed each (playbook.md lines 5-7, 14, 295-300, 721). 49 tables in XML = 49 Markdown tables; 288 table lines - 49 separators = 239 rows = 239 w:tr. Footer text present as header comment. check_extraction.sh: PASS, docx sha256 2584a352…548ad2, 165 blocks, 423 master-prompt blocks. Master-prompt lines: 437 non-empty lines, all present in master-prompt.anchored.md except two decorative '────────' rules.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032", "REQ-DLV-001"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-12/docx-text-containment.log", "docs/delivery/test-evidence/DG0/domain/round-12/docx-text-containment.py", "docs/source/playbook.md#B0062"]
+    },
+    {
+      "id": "DOM12-02",
+      "procedure": "Source coverage: B0001-B0165 each have one disposition; REQUIREMENT blocks carry existing requirement IDs; inspected every CONTEXT and NON-REQUIREMENT rationale against the block text (B0001-B0006, headings/labels 'TEMPLATE', 'LAUNCH PLAN', 'REFERENCE', 'WORKED EXAMPLE', B0163-B0165); compared substance of principle and rule blocks (B0011-B0016, B0024, B0032, B0051, B0059, B0070, B0088, B0102, B0116, B0126, B0131) against their REQ-PB rows.",
+      "command": "python3 (csv/json inspection of docs/analysis/source-coverage.csv, docs/source/playbook.blocks.json, docs/delivery/requirements.csv); python3 docs/delivery/test-evidence/DG0/domain/round-12/domain-checks.py (section 3)",
+      "environment": "fresh clone at 7f09967",
+      "expected": "165 unique blocks; no dangling IDs; no REQUIREMENT without req_ids; rationales true; no dropped substance",
+      "actual": "165 blocks (129 REQUIREMENT, 29 CONTEXT, 7 NON-REQUIREMENT), no dangling IDs, no REQUIREMENT without req_ids. All 36 non-requirement rationales are accurate (pure labels/headings, cover, version stamp, reference URL list, Excel/PowerPoint extension advice). Principle blocks map to rows that implement their substance (e.g. B0070 chain's seven links are REQ-PB-044 input fields; B0088 in REQ-PB-058; B0131 in REQ-PB-082). B0029 workstream key questions/outputs and phase objective paragraphs are specified by block reference with a 'seeded verbatim' rule (REQ-PB-023, REQ-PB-014, field-inventory phase table 'Objective block' column), which is acceptable.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/analysis/source-coverage.csv", "docs/delivery/test-evidence/DG0/domain/round-12/domain-checks.log"]
+    },
+    {
+      "id": "DOM12-03",
+      "procedure": "Templates: for T01-T16 compared the source header row (T05: the 14 Field labels) verbatim against the template REQ row's input_fields and against field-inventory.md; checked value lists and seeded rows (T01 H/M/L and six dimensions; T06 25/25/20/15/15 and 1-5; T07 four waves with horizons/entry/exit; T08 Decision/Tech/Data/Vendor; T09 two example rows; T10 per-area RAG logic; T11 four rows and SLAs; T12 six deliverables incl. A/R; T13 H/M/L, Support/Neutral/Resist, interventions; T14 IDs, R/A/G, CX n/a; T15 R/A/I/D, Probability n/a; T16 DEC-01, A/B/C). Recomputed arithmetic in acceptance criteria.",
+      "command": "python3 docs/delivery/test-evidence/DG0/domain/round-12/domain-checks.py (sections 1, 2); manual reading of REQ-PB-026/047-052/056/057/062-067/070/075/076/079-081",
+      "environment": "fresh clone at 7f09967",
+      "expected": "All columns verbatim in register and field inventory; value lists and seeded rows preserved; acceptance arithmetic correct",
+      "actual": "All 16 templates: 0 missing columns in register and field inventory. Value lists, waves ('0-6 weeks' … '6-18 months'), T11 SLAs, T10 RAG texts, T12 letters present verbatim (domain-checks section 2: waves 20/20, T11 24/24, T10 18/18). T06 example 5,4,3,2,1 -> 3.30 verified by hand (1.25+1.00+0.60+0.30+0.15); T09 example 0.02 x 100000 x 50 = 100000 SAR verified. Closed-list and Probability rules labelled as interpretations.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-026", "REQ-PB-034", "REQ-PB-039", "REQ-PB-043", "REQ-PB-045", "REQ-PB-047", "REQ-PB-048", "REQ-PB-050", "REQ-PB-051", "REQ-PB-052", "REQ-PB-056", "REQ-PB-057", "REQ-PB-062", "REQ-PB-063", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-070", "REQ-PB-075", "REQ-PB-079", "REQ-PB-080", "REQ-PB-081"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-12/domain-checks.log", "docs/analysis/field-inventory.md", "docs/delivery/requirements.csv#REQ-PB-048"]
+    },
+    {
+      "id": "DOM12-04",
+      "procedure": "First-class deliverables: compared source blocks with register rows and field inventory for the Charter (14 fields), thesis (B0037), five scope sanity checks, outcome hierarchy (B0048), 10 TOM dimensions and 10 canvas boxes with prompts, 90-120 minute workshop (B0063), business case 10 sections with sub-items, five OS layers, six-step benefits lifecycle, seven adoption indicators, 90-day plan (windows, all 17 actions, outputs), Day-90 test (6 questions), 25 health-check questions and 4 bands, roaming example (7 elements, 3 traceability chains), two modes, six phases and G1-G6 questions/evidence, six minimum governance roles.",
+      "command": "python3 docs/delivery/test-evidence/DG0/domain/round-12/domain-checks.py (sections 1, 2); manual reading of REQ-PB-003/005/012-021/029-032/038/041/042/053/060/061/069/071/074/086-092",
+      "environment": "fresh clone at 7f09967",
+      "expected": "Every enumerated item present verbatim and specified with procedure and testable acceptance",
+      "actual": "All enumerations present with 0 missing: charter 14/14, scope checks 5/5, TOM 20/20, business case 20/20, OS layers 25/25, lifecycle 18/18, indicators 7/7, 90-day 12/12 cells (17/17 split actions), Day-90 6/6, health check 25/25 and bands 8/8, roaming 14/14, traceability 15/15, modes 6/6, phases 24/24, gates 18/18, roles 12/12. Outcome-hierarchy example present (differs only in straight vs curly quotes). Each row has a concrete acceptance (e.g. REQ-PB-086 date window, REQ-PB-092 boundary scores 21/16/10/9).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-12/domain-checks.log", "docs/delivery/requirements.csv#REQ-PB-029", "docs/delivery/requirements.csv#REQ-PB-091"]
+    },
+    {
+      "id": "DOM12-05",
+      "procedure": "No invented source requirements: every SOURCE row cites B blocks and no USER/ENGINEERING row cites B blocks; read the Playbook/Master-prompt additions/Interpretations notes on all 93 REQ-PB rows for correct attribution (e.g. REQ-PB-015 default approver SP labelled interpretation; REQ-PB-091 Yes=1/No=0 scoring labelled implementation assumption D-010; REQ-PB-031 response values labelled interpretation); ran the analyst provenance checker.",
+      "command": "python3 domain-checks.py (section 3); python3 docs/analysis/tools/check_pb_provenance.py; python3 docs/analysis/tools/check_counts.py; python3 docs/analysis/tools/check_test_refs.py",
+      "environment": "fresh clone at 7f09967",
+      "expected": "0 SOURCE rows without B refs; 0 non-SOURCE rows with B refs; additions and interpretations labelled; checkers exit 0",
+      "actual": "SOURCE rows without B ref: []; non-SOURCE with B ref: []; 93 PB rows with 0 provenance problems; all three checkers exit 0. Master-prompt substance in PB rows is attributed under 'Master-prompt additions' with M anchors; the M anchors cited in source_ref all back-map to the row (0 inconsistencies).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-12/prefreeze-fresh-clone.log", "docs/delivery/requirements.csv#REQ-PB-091"]
+    },
+    {
+      "id": "DOM12-06",
+      "procedure": "Provenance honesty and branding: grep of analysis docs, register, requirements-spec, CLAUDE.md and agent definitions for 'official', 'certif', 'brand', '#0078FF' and wordmark claims, excluding negated statements; read REQ-PB-001/002/077 and REQ-S15-002/006.",
+      "command": "grep -rn -i 'official\\|certif\\|0078FF\\|wordmark\\|brand' docs/analysis/*.md docs/delivery/requirements.csv docs/delivery/requirements-spec.md CLAUDE.md .claude/agents/*.md | grep -v -i 'never\\|not \\|no \\|without\\|provisional…'",
+      "environment": "fresh clone at 7f09967",
+      "expected": "No claim of official PMI status, certification or official Mobily branding; #0078FF labelled provisional",
+      "actual": "Remaining hits are the guardrail example 'brand', A20 branding test, dependency 'official documentation' (REQ-S16-009) and negated statements. REQ-PB-001 requires the verbatim B0004 synthesis statement and an automated no-'official PMI' scan; REQ-PB-002 badges custom extensions; REQ-S15-002 seeds #0078FF 'labelled provisional and not official Mobily colours'; REQ-S15-006 requires a provisional text wordmark.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-PB-002", "REQ-PB-077"],
+      "evidence": ["docs/delivery/requirements.csv#REQ-PB-001", "docs/delivery/requirements.csv#REQ-S15-002"]
+    },
+    {
+      "id": "DOM12-07",
+      "procedure": "Operating-logic semantics: searched the register for, and read, the rows stating each rule.",
+      "command": "python3 regex search over requirements.csv (task completion|activity completion; separate statuses; forecast…validated; accountable…Finance; unallocated; evidence snapshot; DG7) and reading of REQ-PB-063, REQ-S07-007, REQ-S03-003, REQ-S11-006, REQ-S08-001, REQ-S20-010, REQ-PB-013, REQ-S08-003, REQ-PB-067, REQ-PB-058, REQ-S08-013, REQ-PB-015, REQ-S04-002, REQ-DLV-002, REQ-PB-021",
+      "environment": "fresh clone at 7f09967",
+      "expected": "Each of the seven semantics stated correctly with testable acceptance",
+      "actual": "RAG from trajectory, never task completion: REQ-S07-007 and REQ-PB-063 (Portfolio milestone component kept as source logic). Separate delivery/adoption/validated value/closure: REQ-S03-003, REQ-S11-006, REQ-PB-009. Forecast never validated: REQ-S08-001, REQ-S20-010, REQ-PB-075. Finance validates (FIN only, 403 otherwise), Business Owner accountable: REQ-PB-013, REQ-S08-003, T12 Benefits Validation BO=A/FIN=R. Shared benefit once, allocation <=100%, unallocated shown: REQ-PB-058, REQ-S08-013 (60+50 rejected; 60+30 shows 10% unallocated). Gates explicit approvals on immutable evidence snapshots: REQ-PB-015, REQ-S04-002. DG0-DG7 separate from G1-G6: REQ-DLV-002, REQ-PB-021 (G6 never implies DG7).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-009", "REQ-PB-013", "REQ-PB-015", "REQ-PB-021", "REQ-PB-058", "REQ-PB-063", "REQ-DLV-002"],
+      "evidence": ["docs/delivery/requirements.csv#REQ-S03-003", "docs/delivery/requirements.csv#REQ-S08-013", "docs/delivery/requirements.csv#REQ-S04-002"]
+    },
+    {
+      "id": "DOM12-08",
+      "procedure": "Master-prompt coverage: integrity of all 423 dispositions, then a stratified random sample (seed 12, up to 3 blocks per section across the preamble and §0-§21 including table rows) of 86 M blocks: M0002 M0003 M0004 M0006 M0007 M0009 M0010 M0011 M0019 M0022 M0025 M0030 M0031 M0032 M0039 M0046 M0049 M0057 M0058 M0060 M0071 M0073 M0074 M0076 M0078 M0080 M0083 M0089 M0090 M0092 M0093 M0113 M0117 M0119 M0124 M0130 M0140 M0141 M0153 M0154 M0155 M0160 M0162 M0163 M0166 M0168 M0170 M0177 M0178 M0184 M0199 M0200 M0206 M0216 M0218 M0219 M0233 M0238 M0240 M0244 M0245 M0254 M0269 M0273 M0279 M0295 M0301 M0303 M0315 M0318 M0327 M0334 M0335 M0337 M0344 M0348 M0349 M0351 M0356 M0357 M0369 M0370 M0395 M0408 M0414 M0422. For each, read the block text, disposition and mapped requirement titles.",
+      "command": "python3 docs/delivery/test-evidence/DG0/domain/round-12/domain-checks.py (sections 3, 5) plus manual review of the sample listing",
+      "environment": "fresh clone at 7f09967",
+      "expected": "423 unique blocks; no dangling IDs; each sampled block's disposition and mapping correct and complete",
+      "actual": "423 blocks (367 REQUIREMENT, 49 CONTEXT, 7 NON-REQUIREMENT), 0 dangling, 0 REQUIREMENT without IDs, 0 source_ref/back-map inconsistencies. All 86 sampled mappings are correct and complete (e.g. M0092 -> REQ-S03-001/002/003 + REQ-PB-009; M0160 -> REQ-PB-063 + REQ-S07-007/008/009; M0199/M0200 -> T11 rows; M0369 header CONTEXT; M0422 reference entry NON-REQUIREMENT).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/analysis/master-prompt-coverage.csv", "docs/delivery/test-evidence/DG0/domain/round-12/domain-checks.log"]
+    },
+    {
+      "id": "DOM12-09",
+      "procedure": "Stage plan and staging against §21 M0403-M0412: final_gate of template, gate, Studio, reports, health check, demo and handover rows; concreteness of acceptance conditions.",
+      "command": "python3 domain-checks.py (section 4); python3 Counter of final_gate by section; sed -n '/[M0402/,/[M0412/p' docs/source/master-prompt.anchored.md",
+      "environment": "fresh clone at 7f09967",
+      "expected": "T01-T04 and G1-G3 at DG2; T05-T09 and G4 at DG3; T10-T16 and G5-G6 at DG4; Studio, reports, 90-day plan, health check and demo at DG5; handover at DG7",
+      "actual": "T01-T04 DG2; T05-T09 DG3; T10-T16 DG4; REQ-PB-016/017/018 DG2, 019 DG3, 020/021 DG4; S06 (Studio) 10xDG5; S14 4xDG5; S18 4xDG5; REQ-PB-086/087/088/091/092/093 DG5; S19 17xDG7 (2xDG1 foundations); REQ-PB-049 at DG3 for 'invalid weights handled'. Acceptance conditions are concrete (values, HTTP codes, dates).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/analysis/stage-plan.md", "docs/delivery/test-evidence/DG0/domain/round-12/domain-checks.log"]
+    },
+    {
+      "id": "DOM12-10",
+      "procedure": "Glossary, journeys and permissions: read all Arabic glossary terms; read journeys J1-J8 for phase/gate, modular entry, KPI update, Finance validation, committee, BAU handover and admin publishing coverage; read the permissions matrix role table, the full role x record grid and the rules against B0018, T11 (B0099) and T12 (B0101).",
+      "command": "grep '^|' docs/analysis/glossary.md; grep -n '^#' docs/analysis/user-journeys.md; sed -n 135,207p docs/analysis/user-journeys.md; sed -n 1,153p docs/analysis/permissions-matrix.md",
+      "environment": "fresh clone at 7f09967",
+      "expected": "Sensible business Arabic; all required journeys; matrix consistent with source roles, T11 and RACI; technical admins not business approvers",
+      "actual": "Arabic terms are sound business Arabic (e.g. ميثاق التحوّل, نموذج التشغيل المستهدف, خط الأساس, الاحتساب المزدوج), with earlier revisions recorded. Journeys J2.1-J2.6 cover all six phases and G1-G6; J3 modular entry; J4 KPI update; J5 Finance validation (FIN only, not the submitter, shared benefit once); J6 committee; J7 BAU handover (receiving BO A/R); J8 Draft->Preview/Test->Review->Publish. Matrix: six source roles from B0018 plus implementation roles labelled M0187; T11 rows (scope change SP, funding SteerCo, target-state BO, go-live BO) and T12 letters reflected; 'Technical administrators are not business approvers'; ADM has no Ap/Va; gate approver default SP labelled an implementation assumption.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-012", "REQ-PB-065", "REQ-PB-067"],
+      "evidence": ["docs/analysis/glossary.md", "docs/analysis/user-journeys.md", "docs/analysis/permissions-matrix.md"]
+    },
+    {
+      "id": "DOM12-11",
+      "procedure": "Run the pre-freeze suite in a fresh clone of the candidate commit, as required by the round-12 assignment, and run the gate validator in current mode.",
+      "command": "git clone /home/user/My-owns $TMPDIR/dr12pf && git checkout 7f09967 && bash tools/gates/prefreeze.sh DG0; node tools/gates/validate.mjs --stage DG0",
+      "environment": "fresh clone at 7f09967 in $TMPDIR/dr12pf, OS sandbox without network",
+      "expected": "prefreeze exits 0 with all steps PASS; validator reports only the absent gate record (expected while REVIEWING)",
+      "actual": "prefreeze exit 0: source extraction reproducible, gate validator + guard tests, runner metadata tests, register rules (DG0), pipeline state (DG0 REVIEWING), three analysis checks and working-tree candidate equals HEAD all PASS. validate.mjs --stage DG0 exits 1 with the single problem 'file not found (docs/delivery/gates/DG0.json)', which is expected before the auditor and gate record exist and is not a defect in my scope.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-12/prefreeze-fresh-clone.log"]
+    },
+    {
+      "id": "DOM12-12",
+      "procedure": "Earlier findings: listed every finding reported by domain-reviewer in docs/delivery/findings.json to determine whether any await my verification this round.",
+      "command": "node -e \"…findings.json filter reported_by==='domain-reviewer'\"",
+      "environment": "repository tree at HEAD 93b04b6",
+      "expected": "Any FIXED_PENDING_VERIFICATION domain findings are identified for verification",
+      "actual": "F-DG0-001 to F-DG0-011 are all CLOSED_VERIFIED from earlier rounds; none is pending, so no verifications sidecar is needed. The domain artefacts they concerned are unchanged since round 11 and still satisfy the fixes (e.g. REQ-PB-049 at DG3, REQ-PB-020 G5 approver consistent with the matrix).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/findings.json#F-DG0-001"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/domain/round-12/domain-checks.py",
+    "docs/delivery/test-evidence/DG0/domain/round-12/domain-checks.log",
+    "docs/delivery/test-evidence/DG0/domain/round-12/docx-text-containment.py",
+    "docs/delivery/test-evidence/DG0/domain/round-12/docx-text-containment.log",
+    "docs/delivery/test-evidence/DG0/domain/round-12/prefreeze-fresh-clone.log",
+    "docs/delivery/requirements.csv",
+    "docs/analysis/source-coverage.csv",
+    "docs/analysis/master-prompt-coverage.csv",
+    "docs/analysis/field-inventory.md",
+    "docs/analysis/permissions-matrix.md",
+    "docs/analysis/user-journeys.md",
+    "docs/analysis/glossary.md",
+    "docs/analysis/stage-plan.md"
+  ],
+  "reviewed_at": "2026-09-28T18:37:57Z",
+  "summary": "PASS. Candidate sha256:21f142b8…b047b21c (commit 7f09967) confirmed. The playbook extraction is complete by independent XML-text containment (1002 paragraphs, 49 tables, 239 rows) and reproducible. All 165 B blocks and 423 M blocks carry correct dispositions; T01-T16 columns, the Charter's 14 fields and every enumerated source list are verbatim in the register and field inventory. The operating-logic semantics, provenance honesty, §21 staging, glossary, journeys and permissions are correct. Pre-freeze passes in a fresh clone. No new findings; all earlier domain findings remain CLOSED_VERIFIED."
+}

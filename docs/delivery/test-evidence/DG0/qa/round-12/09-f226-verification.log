@@ -1,0 +1,60 @@
+# F-DG0-226 verification 2026-09-28T18:50:46Z
+## 1. Reproduce against the round-11 candidate (7e99163) and re-run against the round-12 candidate (7f09967): runner end to end with stub claude (QA11-R4/R5/R6)
+$ QA_REPO_ROOT=/tmp/claude-0/qa-r12/old node --test --test-name-pattern 'QA11-R' docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r11.test.mjs   # 7e99163
+not ok 1 - QA11-R6 D-024: a shell-written .claude/settings.local.json in the agent's worktree working directory must leave a trace in the run evidence
+  error: 'no trace in the run evidence: exit=0 external_config_changed=[]; main-repo git status=""; worktree git status="?? .claude/settings.local.json\\n"'
+ok 2 - QA11-R1 runner control: a run that changes no external configuration exits 0, records external_config_changed [] and auto-commits
+ok 3 - QA11-R2 D-024: a run whose shell edits ~/.gitconfig exits 71, is recorded in meta and is NOT auto-committed
+ok 4 - QA11-R3 D-024: a planted .git/hooks/pre-commit is detected before the auto-commit, so the hook never executes
+ok 5 - QA11-R4 control: a shell-written .claude/settings.local.json (loaded under --setting-sources project,local) shows in meta.outputs and git status
+not ok 6 - QA11-R5 D-024: hiding a shell-written .claude/settings.local.json with .git/info/exclude must still leave a trace in the run evidence
+  error: 'no trace: exit=0 external_config_changed=[] outputs has it=false git status=""'
+# pass 4
+# fail 2
+$ QA_REPO_ROOT=/tmp/claude-0/qa-r12/cand node --test --test-name-pattern 'QA11-R' docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r11.test.mjs   # 7f09967
+ok 1 - QA11-R6 D-024: a shell-written .claude/settings.local.json in the agent's worktree working directory must leave a trace in the run evidence
+ok 2 - QA11-R1 runner control: a run that changes no external configuration exits 0, records external_config_changed [] and auto-commits
+ok 3 - QA11-R2 D-024: a run whose shell edits ~/.gitconfig exits 71, is recorded in meta and is NOT auto-committed
+ok 4 - QA11-R3 D-024: a planted .git/hooks/pre-commit is detected before the auto-commit, so the hook never executes
+ok 5 - QA11-R4 control: a shell-written .claude/settings.local.json (loaded under --setting-sources project,local) shows in meta.outputs and git status
+ok 6 - QA11-R5 D-024: hiding a shell-written .claude/settings.local.json with .git/info/exclude must still leave a trace in the run evidence
+# pass 6
+# fail 0
+
+## 2. Source: the loaded setting sources (7f09967)
+82:# User settings are not loaded (--setting-sources project,local), but a change is still a tamper signal.
+141:    --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
+150:      --resume "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
+old (7e99163):
+79:# User settings are not loaded (--setting-sources project,local), but a change is still a tamper signal.
+126:    --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project,local \
+135:      --resume "$SESSION_ID" --settings "$SETTINGS" --setting-sources project,local \
+
+## 3. Source: config_snapshot now covers .git/info/exclude, ~/.config/git/ignore, symlinked hooks, and Claude config / ignore files anywhere in every worktree incl. git-ignored ones (find, not git ls-files)
+config_snapshot() {
+  local f root
+  for f in "$HOME/.claude/settings.json" "$HOME/.claude/settings.local.json" "$HOME/.gitconfig" \
+           "$HOME/.config/git/config" "$HOME/.config/git/ignore" /etc/gitconfig /etc/claude-code/managed-settings.json \
+           "$REPO_ROOT/.git/config" "$REPO_ROOT/.git/info/exclude" "$REPO_ROOT/.git/info/attributes"; do
+    if [ -e "$f" ] || [ -L "$f" ]; then echo "$f $(sha256sum "$f" 2>/dev/null | cut -d' ' -f1) $(readlink "$f" 2>/dev/null)"; else echo "$f absent"; fi
+  done
+  # Hooks, including symlinked ones (F-DG0-138).
+  find "$REPO_ROOT/.git/hooks" \( -type f -o -type l \) 2>/dev/null | sort | while read -r f; do
+    echo "$f $(sha256sum "$f" 2>/dev/null | cut -d' ' -f1) $(readlink "$f" 2>/dev/null)"
+  done
+  # Claude configuration and ignore/attribute files anywhere in the repository and its worktrees, whether or not
+  # git ignores them (F-DG0-137/226). Claude's own .claude/.cc-writes bookkeeping is excluded.
+  git -C "$REPO_ROOT" worktree list --porcelain | sed -n 's/^worktree //p' | while read -r root; do
+    find "$root" -path "$root/.git" -prune -o \( -name CLAUDE.md -o -name CLAUDE.local.md -o -name .mcp.json \
+         -o -name .gitignore -o -name .gitattributes -o -path '*/.claude/*' \) \( -type f -o -type l \) -print 2>/dev/null |
+      grep -v '/\.claude/\.cc-writes/' | sort | while read -r f; do
+        echo "$f $(sha256sum "$f" 2>/dev/null | cut -d' ' -f1) $(readlink "$f" 2>/dev/null)"
+      done
+  done
+}
+
+## 4. Prevention layer, live, in this reviewer's own sandboxed session (see 06-live-guard-and-sandbox-probe.log): shell writes to .claude/settings.local.json and .git/info/exclude were refused with 'Read-only file system'; the Write tool to .claude/settings.local.json was blocked by the guard.
+
+## 5. Orchestrator live probe guard-live-20260928T182513Z (hash-consistent, see 05-f228-verification.log): part A with planted user settings {"disableAllHooks": true} still produced 5 guard blocks, part B OS-refused the worktree .claude/settings.local.json and .git/info/exclude shell writes.
+
+## 6. Scope note: I could not repeat the round-11 live CLI experiment (claude -p with a planted settings.local.json) because this sandboxed shell has no network access; items 1, 4 and 5 cover the three layers (not loaded, not writable, detected).

@@ -7,8 +7,8 @@
       "requirement": "REQ-PB-049",
       "severity": "Medium",
       "mandatory_violation": false,
-      "title": "Invalid-weight handling (T06) is staged to DG5 although master prompt \u00a721 requires it as DG3 approval evidence",
-      "reproduction": "Read master prompt M0406 (\u00a721 row P3): the DG3 evidence required before approval includes 'invalid weights/cycles/capacity conflicts handled'. In docs/delivery/requirements.csv, the only row whose acceptance tests invalid weights ('saving weights totalling 95% is rejected') is REQ-PB-049, with final_gate DG5 (increments P3;P5). REQ-PB-048 (DG3) tests out-of-range scores only, not weights. REQ-S09-005 (final_gate DG3) has the acceptance 'the history shows weight version 2 as the cause of a rank change', which depends on the versioned weight sets in REQ-PB-049 (DG5). docs/analysis/stage-plan.md lists REQ-PB-049 under 'complete at DG5' and states that AN-04 checked that no row needed complete by an earlier gate's acceptance scenario completes later.",
+      "title": "Invalid-weight handling (T06) is staged to DG5 although master prompt §21 requires it as DG3 approval evidence",
+      "reproduction": "Read master prompt M0406 (§21 row P3): the DG3 evidence required before approval includes 'invalid weights/cycles/capacity conflicts handled'. In docs/delivery/requirements.csv, the only row whose acceptance tests invalid weights ('saving weights totalling 95% is rejected') is REQ-PB-049, with final_gate DG5 (increments P3;P5). REQ-PB-048 (DG3) tests out-of-range scores only, not weights. REQ-S09-005 (final_gate DG3) has the acceptance 'the history shows weight version 2 as the cause of a rank change', which depends on the versioned weight sets in REQ-PB-049 (DG5). docs/analysis/stage-plan.md lists REQ-PB-049 under 'complete at DG5' and states that AN-04 checked that no row needed complete by an earlier gate's acceptance scenario completes later.",
       "expected": "The DG3 final-gate scope contains a requirement whose acceptance proves invalid weights are rejected, for example weights not totalling 100% rejected, with a versioned weight set usable by REQ-S09-005. Only the Studio/admin default-configuration part stays at DG5. One fix is to split REQ-PB-049 into a DG3 row (per-transformation weight adjustment, 100% validation, versioning) and a DG5 row (admin-configured defaults in Studio), then update the stage plan and acceptance map.",
       "actual": "REQ-PB-049 final_gate=DG5. The DG3 gate's final_gate_ids therefore do not include any invalid-weight acceptance, and DG3-final REQ-S09-005 depends on a capability that is only complete at DG5.",
       "evidence": [
@@ -79,7 +79,7 @@
       "severity": "Low",
       "mandatory_violation": false,
       "title": "G5 approver and a RACI Consult cell are inconsistent between the register and the permissions matrix",
-      "reproduction": "(1) docs/analysis/permissions-matrix.md \u00a75 rule 7 says gate approvals default to SP 'except where T11 names another approver'. T11 (B0099) names Business owner as the approver for 'Go-live / scale'. REQ-PB-020 (G5 Scale) sets 'approve:SP' with no reference to T11, while REQ-PB-018 (G3) does reference T11 ('SP or BO per T11 Target-state design'). The matrix has no explicit row for the T11 'Go-live / scale' decision. (2) The T12 RACI (B0101) gives Sponsor 'C' for Target Operating Model, but the matrix row 'TOM canvas, T03 gaps, ...' gives SP only 'V', whereas every other RACI 'C' maps to Rv.",
+      "reproduction": "(1) docs/analysis/permissions-matrix.md §5 rule 7 says gate approvals default to SP 'except where T11 names another approver'. T11 (B0099) names Business owner as the approver for 'Go-live / scale'. REQ-PB-020 (G5 Scale) sets 'approve:SP' with no reference to T11, while REQ-PB-018 (G3) does reference T11 ('SP or BO per T11 Target-state design'). The matrix has no explicit row for the T11 'Go-live / scale' decision. (2) The T12 RACI (B0101) gives Sponsor 'C' for Target Operating Model, but the matrix row 'TOM canvas, T03 gaps, ...' gives SP only 'V', whereas every other RACI 'C' maps to Rv.",
       "expected": "Either REQ-PB-020 states 'approve: SP (default) or BO per T11 Go-live / scale, configurable', or rule 7 explicitly says G5 is a transformation-level gate distinct from the initiative-level T11 decision. The matrix includes a T11 Go-live / scale decision row (Recommend: Initiative owner; Approve: Business owner; Consult: Risk/Tech/CX; Inform: SteerCo), and SP has Rv on the TOM row.",
       "actual": "The two artefacts give ambiguous approval authority for G5. SP's Consult role on the TOM is rendered as view-only.",
       "evidence": [
@@ -149,7 +149,7 @@
       "severity": "Low",
       "mandatory_violation": false,
       "title": "Some SOURCE rows claim 'no interpretation beyond the cited blocks' while carrying interpretations or master-prompt additions",
-      "reproduction": "In docs/delivery/requirements.csv: (a) REQ-PB-085's notes start 'Source-grounded; no interpretation beyond the cited blocks', but its acceptance includes the master prompt \u00a712 severity/persistence rule absorbed from REQ-S12-007 (M0227). (b) REQ-PB-055 maps the source's 'early\u2014not after delivery' (B0084) to a hard 'before G4' block, which is an interpretation, yet it is labelled no-interpretation. (c) REQ-PB-088's acceptance 'the production initialization contains no demo records' comes from M0348 (\u00a718), not the playbook, under the same label.",
+      "reproduction": "In docs/delivery/requirements.csv: (a) REQ-PB-085's notes start 'Source-grounded; no interpretation beyond the cited blocks', but its acceptance includes the master prompt §12 severity/persistence rule absorbed from REQ-S12-007 (M0227). (b) REQ-PB-055 maps the source's 'early—not after delivery' (B0084) to a hard 'before G4' block, which is an interpretation, yet it is labelled no-interpretation. (c) REQ-PB-088's acceptance 'the production initialization contains no demo records' comes from M0348 (§18), not the playbook, under the same label.",
       "expected": "Each note separates the playbook content from the master-prompt additions and interpretations, as REQ-PB-042, -058, -069 and -083 already do.",
       "actual": "Three rows carry the boilerplate no-interpretation note despite containing non-source behaviour. The substance is still correctly anchored in source_ref, so this is a labelling problem only.",
       "evidence": [
@@ -284,7 +284,7 @@
       "severity": "Low",
       "mandatory_violation": false,
       "title": "Two proposed Arabic glossary terms are narrower than, or ambiguous against, the English meaning",
-      "reproduction": "In docs/analysis/glossary.md: (1) 'Journey' is rendered '\u0631\u062d\u0644\u0629 \u0627\u0644\u0639\u0645\u064a\u0644' (customer journey), but the definition is 'End-to-end customer or process path' and the source uses 'journeys/processes' generally; '\u0627\u0644\u0631\u062d\u0644\u0629' or '\u0631\u062d\u0644\u0629 \u0627\u0644\u0639\u0645\u0644/\u0627\u0644\u0639\u0645\u064a\u0644' would fit better. (2) 'Modular mode' is rendered '\u0627\u0644\u0646\u0645\u0637 \u0627\u0644\u0645\u0639\u064a\u0627\u0631\u064a', where '\u0645\u0639\u064a\u0627\u0631\u064a' commonly reads as 'standard/normative'. The parenthetical '(\u0627\u0644\u062f\u062e\u0648\u0644 \u0627\u0644\u062c\u0632\u0626\u064a)' helps, but a term such as '\u0627\u0644\u0646\u0645\u0637 \u0627\u0644\u0645\u0631\u0646/\u0627\u0644\u062c\u0632\u0626\u064a (\u062d\u0633\u0628 \u0627\u0644\u062d\u0627\u062c\u0629)' would be less ambiguous.",
+      "reproduction": "In docs/analysis/glossary.md: (1) 'Journey' is rendered 'رحلة العميل' (customer journey), but the definition is 'End-to-end customer or process path' and the source uses 'journeys/processes' generally; 'الرحلة' or 'رحلة العمل/العميل' would fit better. (2) 'Modular mode' is rendered 'النمط المعياري', where 'معياري' commonly reads as 'standard/normative'. The parenthetical '(الدخول الجزئي)' helps, but a term such as 'النمط المرن/الجزئي (حسب الحاجة)' would be less ambiguous.",
       "expected": "Arabic terms that preserve the English meaning without ambiguity.",
       "actual": "Two terms are narrower or ambiguous. The glossary already states that its terms are proposed and need review by a Mobily Arabic-language owner.",
       "evidence": [
@@ -341,7 +341,7 @@
           "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
           "docs/analysis/glossary.md"
         ],
-        "note": "Reproduced at 6c67698: 'Journey' was '\u0631\u062d\u0644\u0629 \u0627\u0644\u0639\u0645\u064a\u0644' and 'Modular mode' was '\u0627\u0644\u0646\u0645\u0637 \u0627\u0644\u0645\u0639\u064a\u0627\u0631\u064a'. In the candidate, the glossary gives '\u0627\u0644\u0631\u062d\u0644\u0629 (\u0631\u062d\u0644\u0629 \u0627\u0644\u0639\u0645\u064a\u0644 \u0623\u0648 \u0631\u062d\u0644\u0629 \u0627\u0644\u0639\u0645\u0644)' and '\u0627\u0644\u0646\u0645\u0637 \u0627\u0644\u062c\u0632\u0626\u064a \u0627\u0644\u0645\u0631\u0646 (\u0627\u0644\u062f\u062e\u0648\u0644 \u0639\u0646\u062f \u0627\u0644\u0645\u0631\u062d\u0644\u0629 \u0627\u0644\u0645\u0646\u0627\u0633\u0628\u0629)'. It keeps the old renderings in a 'Before' change table with rationale and keeps the pending-linguistic-review caveat. Both new terms preserve the English meaning."
+        "note": "Reproduced at 6c67698: 'Journey' was 'رحلة العميل' and 'Modular mode' was 'النمط المعياري'. In the candidate, the glossary gives 'الرحلة (رحلة العميل أو رحلة العمل)' and 'النمط الجزئي المرن (الدخول عند المرحلة المناسبة)'. It keeps the old renderings in a 'Before' change table with rationale and keeps the pending-linguistic-review caveat. Both new terms preserve the English meaning."
       }
     },
     {
@@ -1150,7 +1150,7 @@
       "severity": "Low",
       "mandatory_violation": false,
       "title": "Stage plan puts acceptance-test authorship for A01-A22 in P6, but acceptance-map requires A03-A05 and A08-A11 to pass at DG4 and A02, A06, A07, A15 and A16 at DG5",
-      "reproduction": "Read docs/analysis/stage-plan.md line 122 (P6: 'qa-verifier authors A01\u2013A22 tests under tests/qa/** and e2e/**') and compare it with docs/analysis/acceptance-map.md rows A02-A16 ('Must pass at' DG4/DG5). Sections P2-P5 of the stage plan name no owner for the executable REQ-S20-00x acceptance tests that must pass at those gates.",
+      "reproduction": "Read docs/analysis/stage-plan.md line 122 (P6: 'qa-verifier authors A01–A22 tests under tests/qa/** and e2e/**') and compare it with docs/analysis/acceptance-map.md rows A02-A16 ('Must pass at' DG4/DG5). Sections P2-P5 of the stage plan name no owner for the executable REQ-S20-00x acceptance tests that must pass at those gates.",
       "expected": "Every scenario has a concrete owner and stage for its executable test, consistent with the gate at which it must pass. For example, the stage plan says that the executable A-tests for DG2-DG5 are authored in P2-P5 (by the implementers, or by qa-verifier test-first before freeze), and that P6 extends and re-runs them.",
       "actual": "The acceptance map is internally consistent: every scenario has a test level, a first-delivered stage and a gate (independent check 14-acceptance-feasibility.log, 0 errors). The stage plan's only authorship statement is in P6, which reads as later than the gates it must serve. This is feasible but ambiguous. I would accept it as a Low observation.",
       "evidence": [
@@ -1217,7 +1217,7 @@
       "severity": "Low",
       "mandatory_violation": false,
       "title": "Two SOURCE rows have residual provenance-labelling inconsistencies after the F-DG0-003 relabelling",
-      "reproduction": "In docs/delivery/requirements.csv at 83860be: (a) the notes of REQ-PB-088 attribute the rule 'the production initialization contains no demo records' to master prompt '\u00a718 M0339, M0348', but source_ref (B0143;B0145;B0162;M0083;M0339;M0341-M0346) does not cite M0348, and docs/analysis/master-prompt-coverage.csv maps M0348 only to REQ-S18-002;REQ-S18-003. (b) The notes of REQ-PB-068 say 'Master-prompt additions: none' and then 'Interpretations: an item missing any element is blocked from publication (master prompt \u00a710)'. The hard publication block comes from M0212, which is already in source_ref, so it is a master-prompt addition rather than an interpretation.",
+      "reproduction": "In docs/delivery/requirements.csv at 83860be: (a) the notes of REQ-PB-088 attribute the rule 'the production initialization contains no demo records' to master prompt '§18 M0339, M0348', but source_ref (B0143;B0145;B0162;M0083;M0339;M0341-M0346) does not cite M0348, and docs/analysis/master-prompt-coverage.csv maps M0348 only to REQ-S18-002;REQ-S18-003. (b) The notes of REQ-PB-068 say 'Master-prompt additions: none' and then 'Interpretations: an item missing any element is blocked from publication (master prompt §10)'. The hard publication block comes from M0212, which is already in source_ref, so it is a master-prompt addition rather than an interpretation.",
       "expected": "REQ-PB-088 cites M0348 in source_ref (and the M0348 coverage row lists REQ-PB-088), or its notes drop the M0348 attribution and point to REQ-S18-003. REQ-PB-068 lists the M0212 publication block under 'Master-prompt additions'.",
       "actual": "The substance is correct and traceable (REQ-S18-003 carries the empty production initialization; M0212 is cited on REQ-PB-068). Only the labels are slightly inconsistent. I would accept this as an observation.",
       "evidence": [
@@ -1277,7 +1277,7 @@
           "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
           "docs/delivery/test-evidence/DG0/domain/round-7/02-register-coverage.log"
         ],
-        "note": "Reproduced at 18588e7, the parent of fix aa8fa37: REQ-PB-088 didn't cite M0348, and REQ-PB-068 filed the M0212 publication block under Interpretations. In the candidate, REQ-PB-088's source_ref includes M0348, the M0348 coverage row lists REQ-PB-088, and REQ-PB-068's notes read 'Master-prompt additions (\u00a710 M0212): ... blocked from publication. Interpretations: none.' reg7.py reports 0 coverage back-reference problems."
+        "note": "Reproduced at 18588e7, the parent of fix aa8fa37: REQ-PB-088 didn't cite M0348, and REQ-PB-068 filed the M0212 publication block under Interpretations. In the candidate, REQ-PB-088's source_ref includes M0348, the M0348 coverage row lists REQ-PB-088, and REQ-PB-068's notes read 'Master-prompt additions (§10 M0212): ... blocked from publication. Interpretations: none.' reg7.py reports 0 coverage back-reference problems."
       }
     },
     {
@@ -1287,7 +1287,7 @@
       "severity": "Low",
       "mandatory_violation": false,
       "title": "agent-protocol.md does not state that product G6 never implies DG7, as REQ-DLV-002's acceptance says it does",
-      "reproduction": "The acceptance of REQ-DLV-002 in docs/delivery/requirements.csv reads: 'CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval'. Running grep -niE 'impl(y|ies)|G6' docs/delivery/agent-protocol.md finds only line 8 ('G1\u2013G6 are business transformation approvals inside the product'). CLAUDE.md line 13 does contain 'Product gate G6 never implies DG7'.",
+      "reproduction": "The acceptance of REQ-DLV-002 in docs/delivery/requirements.csv reads: 'CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval'. Running grep -niE 'impl(y|ies)|G6' docs/delivery/agent-protocol.md finds only line 8 ('G1–G6 are business transformation approvals inside the product'). CLAUDE.md line 13 does contain 'Product gate G6 never implies DG7'.",
       "expected": "agent-protocol.md's 'Two gate systems' section says that product gate G6 never implies DG7, or the REQ-DLV-002 acceptance names only CLAUDE.md for that sentence.",
       "actual": "agent-protocol.md separates the two systems and forbids agent approvals, but lacks the explicit G6/DG7 sentence. Every agent definition requires reading CLAUDE.md, which has it, so the rule is available to every agent. I would accept this as an observation.",
       "evidence": [
@@ -1347,7 +1347,7 @@
           "docs/delivery/test-evidence/DG0/domain/round-7/12-F-DG0-011.log",
           "docs/delivery/agent-protocol.md"
         ],
-        "note": "Reproduced at eaef1d0, the parent of fix bf7f5e2: agent-protocol.md lacked the G6/DG7 sentence. In the candidate, agent-protocol.md line 10 reads 'Product gate G6 (Sustain) never implies that engineering gate DG7 has passed, and DG7 never implies any G1\u2013G6 business approval.' Line 9 states that no engineering agent grants a real business, Finance or IT approval. This matches the REQ-DLV-002 acceptance. The separate wording issue about agent definitions is raised as new finding F-DG0-011 and doesn't affect this closure."
+        "note": "Reproduced at eaef1d0, the parent of fix bf7f5e2: agent-protocol.md lacked the G6/DG7 sentence. In the candidate, agent-protocol.md line 10 reads 'Product gate G6 (Sustain) never implies that engineering gate DG7 has passed, and DG7 never implies any G1–G6 business approval.' Line 9 states that no engineering agent grants a real business, Finance or IT approval. This matches the REQ-DLV-002 acceptance. The separate wording issue about agent definitions is raised as new finding F-DG0-011 and doesn't affect this closure."
       }
     },
     {
@@ -1991,7 +1991,7 @@
       "severity": "Low",
       "mandatory_violation": false,
       "title": "Three REQ-PB rows still file master-prompt content under Interpretations or omit it from Master-prompt additions",
-      "reproduction": "At 540b3c6, compare the notes against the text of the cited M blocks in docs/source/master-prompt.anchored.md. (a) REQ-PB-091 cites M0288 in source_ref, and its notes list 'all three top actions are required, and reassessments are tracked' under Interpretations. M0288 says 'Require the top three improvement actions and track reassessments over time'. (b) REQ-PB-050 cites M0135 and M0178 and says 'Master-prompt additions: none. Interpretations: initiatives are assigned to waves with dates'. M0135 says 'linked initiatives, dates and milestones', and M0178 says the waves are 'overlapping planning horizons, not rigid deadlines', which is the row's own acceptance ('overlapping horizons are accepted'). (c) REQ-PB-078 cites M0150 and lists 'RAID Dependency entries reference the canonical T08 record rather than copying it' as an interpretation. M0150 says 'the dependency map and RAID dependency entries should refer to the same canonical dependency record'. docs/analysis/tools/check_pb_provenance.py passes because its R3 rule only detects Interpretations clauses that literally mention 'master prompt', '\u00a7' or an M anchor. It cannot detect master-prompt substance restated without a citation.",
+      "reproduction": "At 540b3c6, compare the notes against the text of the cited M blocks in docs/source/master-prompt.anchored.md. (a) REQ-PB-091 cites M0288 in source_ref, and its notes list 'all three top actions are required, and reassessments are tracked' under Interpretations. M0288 says 'Require the top three improvement actions and track reassessments over time'. (b) REQ-PB-050 cites M0135 and M0178 and says 'Master-prompt additions: none. Interpretations: initiatives are assigned to waves with dates'. M0135 says 'linked initiatives, dates and milestones', and M0178 says the waves are 'overlapping planning horizons, not rigid deadlines', which is the row's own acceptance ('overlapping horizons are accepted'). (c) REQ-PB-078 cites M0150 and lists 'RAID Dependency entries reference the canonical T08 record rather than copying it' as an interpretation. M0150 says 'the dependency map and RAID dependency entries should refer to the same canonical dependency record'. docs/analysis/tools/check_pb_provenance.py passes because its R3 rule only detects Interpretations clauses that literally mention 'master prompt', '§' or an M anchor. It cannot detect master-prompt substance restated without a citation.",
       "expected": "Content that a cited master-prompt block states is listed under 'Master-prompt additions' with its anchor, and the Interpretations clause keeps only analyst readings that neither source states.",
       "actual": "The substance of all three rows is correct, cited in source_ref and traceable in master-prompt-coverage.csv. Only the provenance label is wrong, and nothing is invented. I would accept this as an observation. It does not block DG0.",
       "evidence": [
@@ -2048,7 +2048,7 @@
           "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
           "docs/delivery/test-evidence/DG0/domain/round-7/09-analysis-tools.log"
         ],
-        "note": "Reproduced at f0335fa, the parent of fix 613946f: M0288 content in REQ-PB-091 sat under Interpretations, REQ-PB-050 said 'Master-prompt additions: none', and REQ-PB-078 filed the M0150 canonical-dependency rule as an interpretation. In the candidate, REQ-PB-091 lists M0288 (top three actions required, reassessments tracked) under Master-prompt additions. REQ-PB-050 lists \u00a75 M0135 and \u00a79 M0178, M0180-M0183 as additions, with 'Interpretations: none'. REQ-PB-078 lists the M0150 canonical dependency record as an addition, with 'Interpretations: none'. check_pb_provenance.py (with R5-R7) exits 0."
+        "note": "Reproduced at f0335fa, the parent of fix 613946f: M0288 content in REQ-PB-091 sat under Interpretations, REQ-PB-050 said 'Master-prompt additions: none', and REQ-PB-078 filed the M0150 canonical-dependency rule as an interpretation. In the candidate, REQ-PB-091 lists M0288 (top three actions required, reassessments tracked) under Master-prompt additions. REQ-PB-050 lists §5 M0135 and §9 M0178, M0180-M0183 as additions, with 'Interpretations: none'. REQ-PB-078 lists the M0150 canonical dependency record as an addition, with 'Interpretations: none'. check_pb_provenance.py (with R5-R7) exits 0."
       }
     },
     {
@@ -2819,7 +2819,7 @@
       "severity": "Low",
       "mandatory_violation": false,
       "title": "tools/gates/lib/candidate.mjs comment says mth-candidate-v1 is for 'historical DG0 rounds 1-3', but the round-3 manifest uses v2; D-005 and REQ-DLV-022 correctly say rounds 1-2",
-      "reproduction": "grep -n 'v1 (historical DG0 rounds' tools/gates/lib/candidate.mjs gives line 132: '... v1 (historical DG0 rounds 1-3 only) ...'. Recomputing every committed manifest (docs/delivery/test-evidence/DG0/qa/round-4/21-manifest-algorithms.log) gives: dea5e75a (round 1) and d47b51ca (round 2) match v1; 31fd0843 (round 3) and 0be571ea (round 4) declare and match v2 only. D-005 says 'historical DG0 rounds 1\u20132 used mth-candidate-v1'. The REQ-DLV-022 procedure says v1 is kept 'to re-verify the historical DG0 round-1 and round-2 manifests'.",
+      "reproduction": "grep -n 'v1 (historical DG0 rounds' tools/gates/lib/candidate.mjs gives line 132: '... v1 (historical DG0 rounds 1-3 only) ...'. Recomputing every committed manifest (docs/delivery/test-evidence/DG0/qa/round-4/21-manifest-algorithms.log) gives: dea5e75a (round 1) and d47b51ca (round 2) match v1; 31fd0843 (round 3) and 0be571ea (round 4) declare and match v2 only. D-005 says 'historical DG0 rounds 1–2 used mth-candidate-v1'. The REQ-DLV-022 procedure says v1 is kept 'to re-verify the historical DG0 round-1 and round-2 manifests'.",
       "expected": "The code comment agrees with D-005, REQ-DLV-022 and the committed manifests (rounds 1-2).",
       "actual": "A code comment contradicts the documentation and the data. It is cosmetic, with no behavioural effect, because the algorithm is taken from each manifest's hash_algorithm field. I accept it as a Low observation.",
       "evidence": [
@@ -2882,9 +2882,9 @@
       "severity": "Low",
       "mandatory_violation": false,
       "title": "Analyst consistency check check_test_refs.py exits 1 on the round-5 candidate because five validator test titles added by the round-4 repair are missing from EXPECTED_TITLES",
-      "reproduction": "In a worktree at the frozen candidate d141d303 (candidate sha256:4a8b14fd\u2026c3468), run `python3 docs/analysis/tools/check_test_refs.py`. Output: '47 declared test titles, 42 expected; ... 5 problem(s)', exit 1. The five T4 problems are the tests added to tools/gates/tests/validator.test.mjs by ebc8fb7 (round-4 repair): 'F-DG0-115 residual: an evil merge cannot rewrite committed evidence', 'F-DG0-118: skip-worktree / assume-unchanged cannot hide edited evidence', 'F-DG0-119: only content replayed from the run's own successful Write/Edit calls is bound', 'F-DG0-121 / F-DG0-211: the gate file must be what the auditor run wrote', and 'F-DG0-212: a round manifest must describe its source commit; runs start from a commit containing it'. The same command on the round-4 candidate 53f5d176 reports '42 declared test titles, 42 expected; 0 problem(s)', exit 0. The script is part of the candidate manifest, and docs/analysis/README.md lists it as the register's test/file-reference consistency check (rule T4 exists 'so that the list itself cannot go stale unnoticed').",
+      "reproduction": "In a worktree at the frozen candidate d141d303 (candidate sha256:4a8b14fd…c3468), run `python3 docs/analysis/tools/check_test_refs.py`. Output: '47 declared test titles, 42 expected; ... 5 problem(s)', exit 1. The five T4 problems are the tests added to tools/gates/tests/validator.test.mjs by ebc8fb7 (round-4 repair): 'F-DG0-115 residual: an evil merge cannot rewrite committed evidence', 'F-DG0-118: skip-worktree / assume-unchanged cannot hide edited evidence', 'F-DG0-119: only content replayed from the run's own successful Write/Edit calls is bound', 'F-DG0-121 / F-DG0-211: the gate file must be what the auditor run wrote', and 'F-DG0-212: a round manifest must describe its source commit; runs start from a commit containing it'. The same command on the round-4 candidate 53f5d176 reports '42 declared test titles, 42 expected; 0 problem(s)', exit 0. The script is part of the candidate manifest, and docs/analysis/README.md lists it as the register's test/file-reference consistency check (rule T4 exists 'so that the list itself cannot go stale unnoticed').",
       "expected": "Every consistency check shipped in the DG0 candidate passes on that candidate. After the round-4 repair added the five tests, EXPECTED_TITLES is extended with them, and the register rows describing the new behaviour are reviewed for citation (for example, REQ-DLV-013 for tool-authored binding and REQ-DLV-016/021 for the gate file written by the auditor run). The script then exits 0.",
-      "actual": "check_test_refs.py exits 1 on the frozen candidate (T4 staleness only). Rules T1\u2013T3 pass: all 29 quoted test-title citations in the 411 register rows still equal declared titles, and every named evidence file exists. So no register reference is broken, but the documented DG0 analysis check fails, and nobody reviewed the new tests for register citation. The fix is trivial: add the five titles, and optionally cite them in the relevant REQ-DLV rows.",
+      "actual": "check_test_refs.py exits 1 on the frozen candidate (T4 staleness only). Rules T1–T3 pass: all 29 quoted test-title citations in the 411 register rows still equal declared titles, and every named evidence file exists. So no register reference is broken, but the documented DG0 analysis check fails, and nobody reviewed the new tests for register citation. The fix is trivial: add the five titles, and optionally cite them in the relevant REQ-DLV rows.",
       "evidence": [
         "docs/delivery/test-evidence/DG0/domain/round-5/11-analysis-tools.log",
         "docs/delivery/test-evidence/DG0/domain/round-5/12-check_test_refs-regression.log",
@@ -2943,7 +2943,7 @@
       "severity": "Medium",
       "mandatory_violation": true,
       "title": "Committed Python bytecode caches (tools/agents/**/__pycache__/*.pyc) are part of the frozen candidate; running the candidate's own runner-metadata tests rewrites them, so tools/gates/prefreeze.sh DG0 exits 1 on a fresh checkout and the candidate ID drifts",
-      "reproduction": "1) git worktree add <tmp>/wt a059b55a7024f68cc7e33fedc8bd023d3b091336 (or git clone + checkout). 2) node tools/gates/candidate.mjs --stage DG0 prints sha256:c13a4f8e\u20263ff68 (matches the freeze). 3) Run tools/gates/prefreeze.sh DG0 (or only `python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'`, which CI and prefreeze both run). Every check prints PASS, then 'FAIL  uncommitted candidate changes: M tools/agents/__pycache__/run_meta.cpython-311.pyc, M tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc', exit 1. 4) node tools/gates/candidate.mjs --stage DG0 now prints a different ID: sha256:e4008b07\u20267190e in the worktree, sha256:1d672b48\u2026bbf33 in a fresh clone. Cause: commit d2630de (round-5 repair) added the two .pyc files. The frozen manifest lists them (c13a4f8e93cad95a.manifest.json lines 243 and 313), and the repo has no .gitignore. A CPython 3.11 .pyc header records the source mtime (here 1790608540 = 2026-09-28T15:15:40Z, the orchestrator's tree), and the code object embeds the absolute source path. Any other checkout has a different mtime and path, so importing run_meta.py recompiles and rewrites the cached files with checkout-specific bytes (13675 \u2192 13740 bytes in the worktree).",
+      "reproduction": "1) git worktree add <tmp>/wt a059b55a7024f68cc7e33fedc8bd023d3b091336 (or git clone + checkout). 2) node tools/gates/candidate.mjs --stage DG0 prints sha256:c13a4f8e…3ff68 (matches the freeze). 3) Run tools/gates/prefreeze.sh DG0 (or only `python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'`, which CI and prefreeze both run). Every check prints PASS, then 'FAIL  uncommitted candidate changes: M tools/agents/__pycache__/run_meta.cpython-311.pyc, M tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc', exit 1. 4) node tools/gates/candidate.mjs --stage DG0 now prints a different ID: sha256:e4008b07…7190e in the worktree, sha256:1d672b48…bbf33 in a fresh clone. Cause: commit d2630de (round-5 repair) added the two .pyc files. The frozen manifest lists them (c13a4f8e93cad95a.manifest.json lines 243 and 313), and the repo has no .gitignore. A CPython 3.11 .pyc header records the source mtime (here 1790608540 = 2026-09-28T15:15:40Z, the orchestrator's tree), and the code object embeds the absolute source path. Any other checkout has a different mtime and path, so importing run_meta.py recompiles and rewrites the cached files with checkout-specific bytes (13675 → 13740 bytes in the worktree).",
       "expected": "The frozen candidate contains only source, with no machine-generated, checkout-specific build artefacts. Running every check the candidate ships (REQ-DLV-023: prefreeze.sh runs the Python unittest suite and then an uncommitted-changes check) passes on any fresh checkout of the candidate, and doesn't change the candidate's content or its recomputed candidate ID.",
       "actual": "prefreeze.sh DG0 exits 1 on a fresh checkout of a059b55. It can pass only in the orchestrator's own working tree, where the source mtimes still match the committed caches. After the CI or prefreeze Python tests run, the working tree no longer hashes to the frozen candidate ID, and the drifted ID differs between checkouts. A reviewer who runs the required tests in the repository tree (rather than a disposable copy) would silently desynchronise the candidate. Fix: git rm --cached both .pyc files, add a .gitignore for __pycache__/ and *.pyc (or run the tests with PYTHONDONTWRITEBYTECODE=1 / -B in prefreeze and CI), and exclude such paths from the candidate manifest. Then re-freeze. I rate it Medium and mandatory: it is limited in scope and trivial to fix, but it breaks candidate reproducibility and makes a required DG0 check fail on the candidate.",
       "evidence": [
@@ -3280,7 +3280,7 @@
           "CLAUDE.md",
           "docs/delivery/agent-protocol.md"
         ],
-        "note": "Re-verified in round 9, with valid evidence paths, against the frozen candidate cbc755d (sha256:fc0bd2a2\u20268998). In a fresh clone, running git show on each .claude/agents/*.md at the original commit e11b5f08 reproduces the failure: none of the ten definitions contains the no-real-approval rule or the G6/DG7 rule (grep counts 0 and 0 in every file). At cbc755d, each of the ten definitions contains the rule exactly once, for example .claude/agents/domain-reviewer.md line 35: 'You are an engineering agent: you never grant a real business, Finance or IT approval. Product gates G1\u2013G6 are business approvals inside the product, and product gate G6 never implies engineering gate DG7 (or the reverse).' The REQ-DLV-002 procedure ('project rules and every agent definition state that an engineering agent cannot grant a real business, Finance or IT approval') is therefore literally true, and the expected result in the finding is met in full. The agent definitions, CLAUDE.md and the register are byte-identical between the round-8 candidate d6626258 and cbc755d."
+        "note": "Re-verified in round 9, with valid evidence paths, against the frozen candidate cbc755d (sha256:fc0bd2a2…8998). In a fresh clone, running git show on each .claude/agents/*.md at the original commit e11b5f08 reproduces the failure: none of the ten definitions contains the no-real-approval rule or the G6/DG7 rule (grep counts 0 and 0 in every file). At cbc755d, each of the ten definitions contains the rule exactly once, for example .claude/agents/domain-reviewer.md line 35: 'You are an engineering agent: you never grant a real business, Finance or IT approval. Product gates G1–G6 are business approvals inside the product, and product gate G6 never implies engineering gate DG7 (or the reverse).' The REQ-DLV-002 procedure ('project rules and every agent definition state that an engineering agent cannot grant a real business, Finance or IT approval') is therefore literally true, and the expected result in the finding is met in full. The agent definitions, CLAUDE.md and the register are byte-identical between the round-8 candidate d6626258 and cbc755d."
       }
     },
     {
@@ -3585,7 +3585,7 @@
       "severity": "Low",
       "mandatory_violation": false,
       "title": "The gate validator cannot load its own schemas when the repository path contains a space or non-ASCII characters (rules.mjs uses URL.pathname, which stays percent-encoded), so the F-DG0-223 portability goal is still not met end to end",
-      "reproduction": "tools/gates/lib/rules.mjs line 37: `const here = new URL(\".\", import.meta.url).pathname;` then schema() reads join(here, \"..\", \"schemas\", ...). URL.pathname keeps percent-encoding (node -e: new URL('.', 'file:///a%20b/x.mjs').pathname -> '/a%20b/'), unlike fileURLToPath, which candidate.mjs, validate.mjs, import-findings.mjs and guard-write.mjs use. Clone cbc755d into '<tmp>/qa9 space dir/My Projects/repo' or '<tmp>/qa9-\u0645\u0633\u062a\u062e\u062f\u0645/repo' and run `node tools/gates/validate.mjs --pipeline` (or --reconcile, or --stage DG0): uncaught ENOENT on '.../qa9%20space%20dir/My%20Projects/repo/tools/gates/schemas/stages.schema.json', exit 1. `node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs` there: 36 of 53 fail (including the new 'F-DG0-223: a genuine prompt binds when the checkout path contains spaces'), and `tools/gates/prefreeze.sh DG0` exits 1. The same clone at a path without spaces passes everything. Automated: QA_REPO_ROOT=<candidate clone> node --test --test-name-pattern=QA9-F224 docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs -> not ok (exit 1). The line is unchanged since 8825dca and is also present in the round-8 candidate d662625.",
+      "reproduction": "tools/gates/lib/rules.mjs line 37: `const here = new URL(\".\", import.meta.url).pathname;` then schema() reads join(here, \"..\", \"schemas\", ...). URL.pathname keeps percent-encoding (node -e: new URL('.', 'file:///a%20b/x.mjs').pathname -> '/a%20b/'), unlike fileURLToPath, which candidate.mjs, validate.mjs, import-findings.mjs and guard-write.mjs use. Clone cbc755d into '<tmp>/qa9 space dir/My Projects/repo' or '<tmp>/qa9-مستخدم/repo' and run `node tools/gates/validate.mjs --pipeline` (or --reconcile, or --stage DG0): uncaught ENOENT on '.../qa9%20space%20dir/My%20Projects/repo/tools/gates/schemas/stages.schema.json', exit 1. `node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs` there: 36 of 53 fail (including the new 'F-DG0-223: a genuine prompt binds when the checkout path contains spaces'), and `tools/gates/prefreeze.sh DG0` exits 1. The same clone at a path without spaces passes everything. Automated: QA_REPO_ROOT=<candidate clone> node --test --test-name-pattern=QA9-F224 docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs -> not ok (exit 1). The line is unchanged since 8825dca and is also present in the round-8 candidate d662625.",
       "expected": "The validator, its self-tests and prefreeze run from any checkout location, as the other gate entry points do. Derive the schema directory with fileURLToPath (for example `dirname(fileURLToPath(import.meta.url))`), and add a regression test that installs the tooling under a path with a space and a non-ASCII character. The F-DG0-223 regression test only rewrites the prompt text inside a fixture while the tooling itself runs from a path without spaces, so it can't catch this.",
       "actual": "Under a path containing a space or non-ASCII characters (for example an Arabic home directory), every validator mode that loads a schema crashes with ENOENT, and the gate self-tests and prefreeze fail. This fails closed, with a crash and non-zero exit, so there is no integrity or security impact and no gate can be wrongly approved. The current environment (/home/user/My-owns) and the GitHub Actions workspace have no such characters. It's a portability defect of the delivery tooling only, not of the product deployment. So I classify it Low and non-mandatory, consistent with F-DG0-223, and I'd accept it as an observation.",
       "evidence": [
@@ -3635,7 +3635,7 @@
           "tools/gates/lib/rules.mjs#L38",
           "tools/gates/tests/validator.test.mjs#F-DG0-224"
         ],
-        "note": "Reproduced on the round-9 candidate cbc755d, cloned to '/tmp/qa10 space dir/\u0645\u0633\u062a\u062e\u062f\u0645/old': validate.mjs --pipeline, --reconcile and --stage DG0 each crash with ENOENT on '/tmp/qa10%20space%20dir/%D9%85.../tools/gates/schemas/stages.schema.json' (exit 1). My round-9 regression test QA9-F224 fails there (exit 1). On the new candidate 85a0efa (1e959f25), rules.mjs line 38 uses fileURLToPath(new URL('.', import.meta.url)). In a clone at the same space/Arabic path, --pipeline, --reconcile and --register DG0 pass (exit 0), all 56 gate and agent self-tests pass, and tools/gates/prefreeze.sh DG0 exits 0 there. QA9-F224 passes. My new QA10-7 shows the candidate ID is identical in a plain clone and in a clone under 'qa10 \u0645\u0633\u0627\u0631 \u063a\u0631\u064a\u0628 .../My Projects/repo', unchanged by review metadata and changed by a source edit. QA10-8 shows every validator mode runs under such a path, and that a broken register (B9999) is rejected with a diagnostic, not a crash. QA10-8 fails on cbc755d and passes on 85a0efa. QA10-7 passes on both, as expected, because candidate.mjs already used fileURLToPath. No other URL.pathname use remains under tools/. The orchestrator's regression test 'F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters' passes. The fix is complete and correct."
+        "note": "Reproduced on the round-9 candidate cbc755d, cloned to '/tmp/qa10 space dir/مستخدم/old': validate.mjs --pipeline, --reconcile and --stage DG0 each crash with ENOENT on '/tmp/qa10%20space%20dir/%D9%85.../tools/gates/schemas/stages.schema.json' (exit 1). My round-9 regression test QA9-F224 fails there (exit 1). On the new candidate 85a0efa (1e959f25), rules.mjs line 38 uses fileURLToPath(new URL('.', import.meta.url)). In a clone at the same space/Arabic path, --pipeline, --reconcile and --register DG0 pass (exit 0), all 56 gate and agent self-tests pass, and tools/gates/prefreeze.sh DG0 exits 0 there. QA9-F224 passes. My new QA10-7 shows the candidate ID is identical in a plain clone and in a clone under 'qa10 مسار غريب .../My Projects/repo', unchanged by review metadata and changed by a source edit. QA10-8 shows every validator mode runs under such a path, and that a broken register (B9999) is rejected with a diagnostic, not a crash. QA10-8 fails on cbc755d and passes on 85a0efa. QA10-7 passes on both, as expected, because candidate.mjs already used fileURLToPath. No other URL.pathname use remains under tools/. The orchestrator's regression test 'F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters' passes. The fix is complete and correct."
       }
     },
     {
@@ -3851,7 +3851,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-11/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T18:06:00Z",
@@ -3862,10 +3862,31 @@
           "at": "2026-09-28T18:31:09Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at d1352f4817677d408dc65f16adebb946a1f647e4"
+        },
+        {
+          "at": "2026-09-28T18:44:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 12: PASS"
         }
       ],
       "fix_revision": "d1352f4817677d408dc65f16adebb946a1f647e4",
-      "fix_summary": "Fixed by d1352f4817677d408dc65f16adebb946a1f647e4 and its parents (round-11 repair: D-025 OS Bash sandbox, --setting-sources project, config scan, hook-free verified auto-commit, hermetic tests); live probe PASS in docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z"
+      "fix_summary": "Fixed by d1352f4817677d408dc65f16adebb946a1f647e4 and its parents (round-11 repair: D-025 OS Bash sandbox, --setting-sources project, config scan, hook-free verified auto-commit, hermetic tests); live probe PASS in docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R12-code-security-reviewer-20260928T183204Z-65abfbfc",
+          "session_id": "65abfbfc-2612-4791-9e3e-9d9ff286f833"
+        },
+        "at": "2026-09-28T18:44:00Z",
+        "result": "PASS",
+        "evidence": [
+          "tools/agents/run-agent.sh#L141",
+          "tools/agents/run-agent.sh#L86",
+          "docs/delivery/test-evidence/DG0/code-security/round-12/03-verify-137-138-139.log"
+        ],
+        "note": "The reported vector is fully prevented. Agents now start with '--setting-sources project' only (run-agent.sh:141,150), so a planted .claude/settings.local.json is never loaded; and the D-025 OS Bash sandbox denies shell writes to both .claude and .git. Live-verified in my own reviewer sandbox: 'echo {...disableAllHooks...} > .claude/settings.local.json' and 'echo zz >> .git/info/exclude' both fail with 'Read-only file system'. As detection defence-in-depth, config_snapshot now hashes .git/info/exclude, ~/.config/git/ignore, and every Claude/ignore file anywhere in the repo and worktrees (run-agent.sh:83-103). NOTE: a broader, distinct escape that can still reach the same 'disable the guard for later runs' outcome (planting a cwd-shadowing json.py that the unsandboxed runner imports) is raised separately as F-DG0-140; F-137's specific mechanism is closed."
+      }
     },
     {
       "id": "F-DG0-138",
@@ -3890,7 +3911,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-11/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T18:06:00Z",
@@ -3901,10 +3922,31 @@
           "at": "2026-09-28T18:31:10Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at d1352f4817677d408dc65f16adebb946a1f647e4"
+        },
+        {
+          "at": "2026-09-28T18:44:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 12: PASS"
         }
       ],
       "fix_revision": "d1352f4817677d408dc65f16adebb946a1f647e4",
-      "fix_summary": "Fixed by d1352f4817677d408dc65f16adebb946a1f647e4 and its parents (round-11 repair: D-025 OS Bash sandbox, --setting-sources project, config scan, hook-free verified auto-commit, hermetic tests); live probe PASS in docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z"
+      "fix_summary": "Fixed by d1352f4817677d408dc65f16adebb946a1f647e4 and its parents (round-11 repair: D-025 OS Bash sandbox, --setting-sources project, config scan, hook-free verified auto-commit, hermetic tests); live probe PASS in docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R12-code-security-reviewer-20260928T183204Z-65abfbfc",
+          "session_id": "65abfbfc-2612-4791-9e3e-9d9ff286f833"
+        },
+        "at": "2026-09-28T18:44:00Z",
+        "result": "PASS",
+        "evidence": [
+          "tools/agents/run-agent.sh#L91",
+          "tools/agents/run-agent.sh#L193",
+          "docs/delivery/test-evidence/DG0/code-security/round-12/02-cwd-python-shadow-stealth.log"
+        ],
+        "note": "The primary vector (a symlinked pre-commit hook running during the evidence auto-commit and smuggling extra files) is prevented on three layers: config_snapshot now lists symlinked hooks with 'find ( -type f -o -type l )' (run-agent.sh:91); the auto-commit runs hook-free with 'git -c core.hooksPath=/dev/null commit --no-verify' (run-agent.sh:193-195); and it then verifies the committed file list equals the pathspec list, exiting 72 otherwise (run-agent.sh:198-207). Live-confirmed in my F-140 stealth repro: the planted pre-commit hook did NOT fire during the runner's auto-commit (it only ran on a later manual 'git commit' outside the runner). The residual sub-items the finding also listed (validator not rejecting a non-array external_config_changed; ~/.claude.json not snapshotted) are only reachable by a party who can forge meta.json, i.e. the disclosed self-hashed-evidence residual (threat-model.md #1), so they add no mechanical exposure; accepting the fix as complete for its mechanically-defended scope."
+      }
     },
     {
       "id": "F-DG0-139",
@@ -3925,7 +3967,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-11/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T18:06:00Z",
@@ -3936,10 +3978,30 @@
           "at": "2026-09-28T18:31:10Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at d1352f4817677d408dc65f16adebb946a1f647e4"
+        },
+        {
+          "at": "2026-09-28T18:44:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 12: PASS"
         }
       ],
       "fix_revision": "d1352f4817677d408dc65f16adebb946a1f647e4",
-      "fix_summary": "Fixed by d1352f4817677d408dc65f16adebb946a1f647e4 and its parents (round-11 repair: D-025 OS Bash sandbox, --setting-sources project, config scan, hook-free verified auto-commit, hermetic tests); live probe PASS in docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z"
+      "fix_summary": "Fixed by d1352f4817677d408dc65f16adebb946a1f647e4 and its parents (round-11 repair: D-025 OS Bash sandbox, --setting-sources project, config scan, hook-free verified auto-commit, hermetic tests); live probe PASS in docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R12-code-security-reviewer-20260928T183204Z-65abfbfc",
+          "session_id": "65abfbfc-2612-4791-9e3e-9d9ff286f833"
+        },
+        "at": "2026-09-28T18:44:00Z",
+        "result": "PASS",
+        "evidence": [
+          "tools/agents/write-scopes.json#L2",
+          "docs/delivery/test-evidence/DG0/code-security/round-12/03-verify-137-138-139.log"
+        ],
+        "note": "write-scopes.json's $comment was rewritten and no longer claims 'Files outside any git work tree (scratch space) are always allowed'. It now states that outside the guarded repository and its worktrees only the OS temporary directory is scratch and the home directory never is (D-024), and that shell writes are confined separately by the OS sandbox from agent_settings.py (D-025). Documentation now matches the enforced rule."
+      }
     },
     {
       "id": "F-DG0-226",
@@ -3963,7 +4025,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-11/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T18:06:00Z",
@@ -3974,10 +4036,33 @@
           "at": "2026-09-28T18:31:10Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at d1352f4817677d408dc65f16adebb946a1f647e4"
+        },
+        {
+          "at": "2026-09-28T18:56:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 12: PASS"
         }
       ],
       "fix_revision": "d1352f4817677d408dc65f16adebb946a1f647e4",
-      "fix_summary": "Fixed by d1352f4817677d408dc65f16adebb946a1f647e4 and its parents (round-11 repair: D-025 OS Bash sandbox, --setting-sources project, config scan, hook-free verified auto-commit, hermetic tests); live probe PASS in docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z"
+      "fix_summary": "Fixed by d1352f4817677d408dc65f16adebb946a1f647e4 and its parents (round-11 repair: D-025 OS Bash sandbox, --setting-sources project, config scan, hook-free verified auto-commit, hermetic tests); live probe PASS in docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R12-qa-verifier-20260928T183204Z-a5a09551",
+          "session_id": "a5a09551-d12c-4dbc-b00d-386c83d09eb2"
+        },
+        "at": "2026-09-28T18:56:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-12/09-f226-verification.log",
+          "docs/delivery/test-evidence/DG0/qa/round-12/06-live-guard-and-sandbox-probe.log",
+          "docs/delivery/test-evidence/DG0/qa/round-12/08-qa12-new-cases.log#QA12-R7",
+          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r11.test.mjs#QA11-R5",
+          "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z/probe.log"
+        ],
+        "note": "I reproduced the original failure against the round-11 candidate 7e99163, using the runner end to end with a stub claude: QA11-R5 (settings.local.json hidden by .git/info/exclude) and QA11-R6 (planted in the worktree cwd) FAIL there with 'no trace'. Against 7f09967 all six QA11-R cases PASS: exit 71 and external_config_changed record the plant. The fix covers all three layers. (1) Not loaded: run-agent.sh now passes --setting-sources project (lines 141 and 150; old: project,local). (2) Not writable: agent_settings.py denies .claude, .git, CLAUDE*.md, .mcp.json and ignore files in the repository and every worktree. Live in my own sandboxed session, shell writes to .claude/settings.local.json and .git/info/exclude were refused with 'Read-only file system', and the Write tool was blocked by the guard. (3) Detected: config_snapshot uses find (ignored files included) over every worktree, plus .git/info/exclude and ~/.config/git/ignore. My new QA12-R7/R8/R9 (nested CLAUDE.md, nested .claude/settings.json, nested .gitignore) also exit 71. The orchestrator's live probe guard-live-20260928T182513Z is hash-consistent, and its part B shows the OS refusing the worktree .claude/settings.local.json and the .git/info/exclude writes. Limitation: I could not repeat the round-11 live CLI experiment, because this sandboxed shell has no network. The separate bytecode route I found this round is a new issue, raised as F-DG0-229, not a defect in this fix."
+      }
     },
     {
       "id": "F-DG0-227",
@@ -3996,7 +4081,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-11/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T18:06:00Z",
@@ -4007,10 +4092,30 @@
           "at": "2026-09-28T18:31:10Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at d1352f4817677d408dc65f16adebb946a1f647e4"
+        },
+        {
+          "at": "2026-09-28T18:56:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 12: PASS"
         }
       ],
       "fix_revision": "d1352f4817677d408dc65f16adebb946a1f647e4",
-      "fix_summary": "Fixed by d1352f4817677d408dc65f16adebb946a1f647e4 and its parents (round-11 repair: D-025 OS Bash sandbox, --setting-sources project, config scan, hook-free verified auto-commit, hermetic tests); live probe PASS in docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z"
+      "fix_summary": "Fixed by d1352f4817677d408dc65f16adebb946a1f647e4 and its parents (round-11 repair: D-025 OS Bash sandbox, --setting-sources project, config scan, hook-free verified auto-commit, hermetic tests); live probe PASS in docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R12-qa-verifier-20260928T183204Z-a5a09551",
+          "session_id": "a5a09551-d12c-4dbc-b00d-386c83d09eb2"
+        },
+        "at": "2026-09-28T18:56:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-12/04-f227-verification.log",
+          "tools/agents/tests/test_run_meta.py#ExternalConfigTest"
+        ],
+        "note": "Reproduced on 7e99163: `python3 tools/agents/tests/test_run_meta.py -v` ran 5 tests and skipped both ExternalConfigTest tests, and discover ran the 5 base tests twice through inheritance (12 total). On 7f09967, script mode runs 7 tests including test_external_config_changes_are_recorded and test_no_change_records_an_empty_list. ExternalConfigTest now derives from _RunMetaBase, so there are no duplicate runs. Discover runs 14 tests: 7 run_meta and 7 new agent_settings, all OK. The __main__ guard is now at the end of the file."
+      }
     },
     {
       "id": "F-DG0-228",
@@ -4019,7 +4124,7 @@
       "severity": "Low",
       "mandatory_violation": false,
       "title": "The orchestrator live-probe evidence names source commits (57d23de, 0593fd7) that are unreachable wip commits, kept only in the local reflog",
-      "reproduction": "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T174617Z/probe.log says 'source commit: 0593fd79fa244e6279f5c5c064c830fa4f9617fe', and the FAIL run says 57d23ded0b70\u2026. `git for-each-ref --contains <c>` returns no refs for either. They appear only in `git reflog` ('wip: round-10 repairs', 'wip: home never scratch'), so a clone over the network, or the repository after gc, can't resolve them. Also, the committed probe.log's block list was produced by the pre-candidate grep pattern (it shows backtick-suffixed duplicates the candidate's probe-guard-live.sh would not print). See docs/delivery/test-evidence/DG0/qa/round-11/06-f225-verification.log.",
+      "reproduction": "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T174617Z/probe.log says 'source commit: 0593fd79fa244e6279f5c5c064c830fa4f9617fe', and the FAIL run says 57d23ded0b70…. `git for-each-ref --contains <c>` returns no refs for either. They appear only in `git reflog` ('wip: round-10 repairs', 'wip: home never scratch'), so a clone over the network, or the repository after gc, can't resolve them. Also, the committed probe.log's block list was produced by the pre-candidate grep pattern (it shows backtick-suffixed duplicates the candidate's probe-guard-live.sh would not print). See docs/delivery/test-evidence/DG0/qa/round-11/06-f225-verification.log.",
       "expected": "Live-probe evidence names a commit that is in the published history, ideally the candidate commit. Otherwise, the README records that the probed guard is byte-identical to the candidate's.",
       "actual": "While the objects still exist, I verified that `git diff 0593fd79 7e99163 -- tools/agents/guard-write.mjs tools/agents/write-scopes.json tools/agents/settings tools/agents/run-agent.sh` is empty, so the PASS probe exercised exactly the candidate's guard. The evidence files are hash-consistent with their meta.json. Traceability only; Low and non-mandatory. I'd accept it as an observation.",
       "evidence": [
@@ -4030,7 +4135,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-11/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T18:06:00Z",
@@ -4041,10 +4146,176 @@
           "at": "2026-09-28T18:31:10Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at d1352f4817677d408dc65f16adebb946a1f647e4"
+        },
+        {
+          "at": "2026-09-28T18:56:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 12: PASS"
         }
       ],
       "fix_revision": "d1352f4817677d408dc65f16adebb946a1f647e4",
-      "fix_summary": "Fixed by d1352f4817677d408dc65f16adebb946a1f647e4 and its parents (round-11 repair: D-025 OS Bash sandbox, --setting-sources project, config scan, hook-free verified auto-commit, hermetic tests); live probe PASS in docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z"
+      "fix_summary": "Fixed by d1352f4817677d408dc65f16adebb946a1f647e4 and its parents (round-11 repair: D-025 OS Bash sandbox, --setting-sources project, config scan, hook-free verified auto-commit, hermetic tests); live probe PASS in docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R12-qa-verifier-20260928T183204Z-a5a09551",
+          "session_id": "a5a09551-d12c-4dbc-b00d-386c83d09eb2"
+        },
+        "at": "2026-09-28T18:56:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-12/05-f228-verification.log",
+          "docs/delivery/test-evidence/DG0/orchestrator-probes/README.md",
+          "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z/meta.json"
+        ],
+        "note": "The current live-probe evidence (guard-live-20260928T182513Z) names source commit e8758713, which is on the published branch (refs/heads and refs/remotes/origin) and an ancestor of the candidate 7f09967. `git diff e875871 7f09967` over guard-write.mjs, write-scopes.json, settings/, run-agent.sh, agent_settings.py, run_meta.py and probe-guard-live.sh is empty, so the probe exercised the candidate's exact tooling. The only later tools/ changes are the hermetic-git lines in four test files. Its transcript, result and settings hashes match meta.json. The README now marks the 57d23de and 0593fd7 runs as unpublished, unreachable and historical, 'not evidence for the current candidate'. Both still have no containing ref, which is correctly disclosed."
+      }
+    },
+    {
+      "id": "F-DG0-140",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Critical",
+      "mandatory_violation": true,
+      "title": "OS Bash sandbox escape (D-025): an agent plants a NEW top-level module (e.g. json.py, uuid.py) in the writable repository root; the runner's own unsandboxed 'python3 -c' / 'python3 -' helpers import it from cwd (sys.path[0]==''), executing attacker code OUTSIDE the sandbox as the runner/orchestrator. It can write any protected path (tools/gates, .git/hooks, review records) and forge gate approvals.",
+      "reproduction": "The D-025 sandbox generated by tools/agents/agent_settings.py denies COMMON_DENY paths but NOT the repository root itself, and deny_except() (agent_settings.py:148-170) denies only EXISTING entries, so NEW top-level files are writable. Confirmed live in my own reviewer sandbox: creating /home/user/My-owns/zz-sec-writable-probe.tmp succeeded (rc=0), and my run's settings.json denyWrite contains neither the repo root nor 'json.py'. run-agent.sh runs its helper Python with the ambient (repository-root) cwd, NOT inside the 'cd \"$CWD\"' subshell, and several helpers use 'python3 -' / 'python3 -c' whose sys.path[0]=='' (verified: python3 -c 'import sys;print(repr(sys.path[0]))' -> ''): classifier_outage (run-agent.sh:64, 'python3 -', imports json) runs after each agent turn; CONFIG_CHANGED (run-agent.sh:167, 'python3 -c', imports json) and the auto-commit helpers (run-agent.sh:182,198, 'python3 -', import json/subprocess) run at the tail of every reviewer run; the session-id helper (run-agent.sh:46, 'python3 -c') runs at the START of the next run. A json.py placed at the repo root by an agent is therefore imported by the unsandboxed runner. LIVE end-to-end in a disposable clone of the candidate commit (repro-r12-cwd-python-shadow.sh -> 01-cwd-python-shadow.log): a code-security-reviewer run plants json.py at the root; the runner's post-run Python imports it and the payload runs OUTSIDE the sandbox, writing tools/gates/PWNED-by-json-shadow.txt (a sandbox-denied path) and a .git/hooks/pre-commit hook. The log shows imports with argv=['-c'] and argv=['-'] (the classifier_outage and CONFIG_CHANGED helpers). STEALTH variant (repro-r12-cwd-python-shadow-stealth.sh -> 02-cwd-python-shadow-stealth.log): the payload self-deletes json.py and defers its write until after the runner's post-run config_snapshot. Result: meta.external_config_changed == [], meta.bash_sandbox == true, 'git status --porcelain' is EMPTY, the review evidence is auto-committed, and the attacker code then runs on the orchestrator's next ordinary 'git commit' (hook-ran.txt == HOOK-RAN-OUTSIDE-SANDBOX) with no trace in the run evidence.",
+      "expected": "Per docs/delivery/threat-model.md ('Mechanically prevented': an agent writing a protected path with the shell is blocked by the OS Bash sandbox, which has 'no unsandboxed escape'), no shell action by a sandboxed agent may cause code to run outside the sandbox or write a protected path. Concretely: the runner must not import cwd-relative modules. Run every helper with 'python3 -P' (or PYTHONSAFEPATH=1 / 'python3 -I' / 'python3 -S'), or run the helpers from a fixed non-repository directory, or use only absolute script files (run_meta.py-style) instead of 'python3 -c' / 'python3 -'. The sandbox deny list should also deny creation of new top-level files that shadow stdlib modules in any directory a runner helper executes from (or the helpers should never execute from an agent-writable cwd). Add a regression test: a planted repo-root json.py/uuid.py must not be imported by run-agent.sh's helpers.",
+      "actual": "A single ordinary, sandbox-permitted Bash write (creating a new file at the repository root, which the sandbox allows) lets an untrusted agent execute arbitrary code as the runner/orchestrator, entirely outside the OS sandbox that D-025 introduced this round as the primary mechanical control. The escaped code can rewrite tools/gates (the validator), forge or alter review/gate records and findings.json, plant persistent git hooks, or disable the write guard for later runs. This is a privilege escalation across the core trust boundary (untrusted agent -> trusted orchestrator identity). The stealth variant evades all three compensating detections (config_snapshot/external_config_changed, git status, and the auto-commit file-list check) and leaves no trace in the run evidence. This is not a disclosed residual: threat-model.md residual #1 concerns a party able to write the repository OUTSIDE any sandbox; here the sandboxed agent itself escapes, which the model asserts is prevented.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-12/repro-r12-cwd-python-shadow.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-12/01-cwd-python-shadow.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-12/repro-r12-cwd-python-shadow-stealth.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-12/02-cwd-python-shadow-stealth.log",
+        "tools/agents/run-agent.sh#L64",
+        "tools/agents/run-agent.sh#L167",
+        "tools/agents/agent_settings.py#L148-L170",
+        "docs/delivery/threat-model.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-12/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:40:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 12; live-reproduced against the frozen candidate commit"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-229",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "D-025 sandbox escape without a trace: an analyst or implementer shell can plant gitignored Python bytecode (e.g. docs/analysis/tools/csv.pyc) that the orchestrator's unsandboxed tools/gates/prefreeze.sh then imports and executes, writing protected paths (.git/hooks, tools/gates, HOME configuration) while git status, the run snapshots, config_snapshot and the candidate all stay clean",
+      "reproduction": "Disposable clone of candidate 7f09967 (docs/delivery/test-evidence/DG0/qa/round-12/07-pyc-shadow-prefreeze.log). 1) agent_settings.build() for transformation-analyst and backend-workflow-engineer does not deny docs/analysis/tools/csv.pyc: the analyst's confined area and every implementer's area include docs/analysis. 2) Compile a small csv.py whose payload writes a file and then hands over to the real csv module, into docs/analysis/tools/csv.pyc as sourceless bytecode. .gitignore line 4 (*.py[cod]) ignores it, so `git status --porcelain --untracked-files=all` is empty. The runner's snapshot (`git ls-files --cached --others --exclude-standard`) doesn't list it, and the working-tree candidate ID is unchanged (sha256:21f142b8…). 3) `tools/gates/prefreeze.sh DG0` runs `python3 docs/analysis/tools/check_counts.py`. The script directory comes first on sys.path, so `import csv` loads the planted bytecode. Variant A writes tools/gates/QA12-PYC-MARKER.txt, and prefreeze's final candidate check catches it. Variant B writes .git/hooks/post-commit, which is outside the candidate: prefreeze prints PASS on all nine checks and exits 0, the hook file exists, and git status and the candidate ID are unchanged. 4) Runner end to end, with a stub `claude` performing the plant as a transformation-analyst run (QA12-P1 in docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs): the runner exits 0, external_config_changed is [], the pyc is not in meta.outputs, and git status shows only the run directory. QA12-P2 shows prefreeze executing the planted bytecode and exiting 0.",
+      "expected": "threat-model.md lists 'An agent writes a protected path with the shell' as mechanically prevented, and 'New untracked files where the sandbox leaves the working directory writable' as detected through git status and the runner snapshots. So an agent-writable file that the orchestrator later executes outside the sandbox should either (a) not be executed from the agent-writable tree: run prefreeze and the analysis checks in a fresh clone of HEAD or inside the same bubblewrap sandbox, and/or use `python3 -I -B` (or PYTHONSAFEPATH=1 PYTHONDONTWRITEBYTECODE=1) so the script directory isn't searched and bytecode isn't used; or (b) be detected: fail prefreeze and flag the run (exit 71 for confined roles) when `git ls-files --others --ignored --exclude-standard` lists any ignored file outside a known cache allow-list, or when *.pyc/__pycache__ appear in the run's snapshot including ignored files. The threat model should also disclose that the orchestrator executes implementer-authored code (tracked or not) outside the sandbox before review.",
+      "actual": "The plant is invisible to every detection layer. The only trace is the Bash command in the agent's transcript, which the auditor may or may not review. Executed by the orchestrator's documented pre-freeze step, the planted code runs with full orchestrator rights and can write exactly what D-025 denies the agent's shell: git metadata and hooks, gate and agent tooling, Claude configuration. I rate it Medium and non-mandatory, consistent with F-DG0-226. It needs a malicious or prompt-injected analyst or implementer, the file tools and the OS sandbox are intact, and the transcript-review residual still applies. But it is a way around a control the threat model lists as mechanically prevented, not a restatement of a disclosed residual. Related: my own round-7 case QA7-N82 established that ignored __pycache__ doesn't fail prefreeze. That is still correct for the candidate hash, but the same ignore rule makes the bytecode executable without a trace.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/07-pyc-shadow-prefreeze.log",
+        "docs/delivery/test-evidence/DG0/qa/round-12/08-qa12-new-cases.log#QA12-P1",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs#QA12-P2",
+        "tools/gates/prefreeze.sh",
+        "tools/agents/agent_settings.py#CONFINED",
+        "docs/delivery/threat-model.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:55:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-12 QA review of candidate 21f142b8 (7f09967)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-230",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-013",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The validator's D-025 requireSandbox check accepts a sandbox deny list rooted in any directory: it only tests that some denyWrite entry ends with '/<protected path>', not that the entries are under the run's own repository (meta.cwd or its worktree roots)",
+      "reproduction": "QA12-V2 in docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs: in the D-025-adapted independent fixture (QA12-V1 validates cleanly), the qa-verifier run's settings.json is replaced by a fully enforced sandbox whose denyWrite is /somewhere/else/{.git,.claude,tools/gates,tools/agents,docs/delivery/reviews,docs/delivery/runs}. meta.settings_sha256 is kept consistent and the change is amended into the evidence commit, as if the run had produced it. validateGate returns no errors. See tools/gates/lib/rules.mjs checkInvocation: `deny.some((d) => d.endsWith(`/${p}`))`.",
+      "expected": "A gate record binds only to a run whose sandbox denied the protected paths of the repository it actually ran in: every required entry equals <root>/<p> for meta.cwd's repository root (and worktrees). Optionally, also check meta.bash_sandbox and the wider COMMON_DENY set (docs/source, CLAUDE.md, .gitignore …).",
+      "actual": "Accepted. Exploiting it needs fabricated run evidence, which the sandbox (docs/delivery/runs is denied) and the disclosed self-hashed-evidence residual already cover, so this is hardening only. Low, and I'd accept it as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/08-qa12-new-cases.log#QA12-V2",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs#QA12-V2",
+        "tools/gates/lib/rules.mjs#checkInvocation"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:55:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-12 QA review of candidate 21f142b8 (7f09967)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-231",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-019",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Delivery docs drifted after D-025: agent-protocol.md tells sandboxed agents to `git clone <repo> /tmp/<name>`, and D-025 / agent_settings.py say sandboxed commands may write /tmp, but in a real sandboxed reviewer session /tmp is read-only (only $TMPDIR=/tmp/claude-0 is writable). Stale comments also remain in run-agent.sh ('--setting-sources project,local') and agents.md ('Bash writes aren't path-guarded')",
+      "reproduction": "In this run's own sandbox: `git clone -q . /tmp/qa12-probe-clone` fails with 'could not create work tree dir ... Read-only file system' (exit 128), and `touch /tmp/x-qa` fails the same way. `git clone . $TMPDIR/qa-r12/cand` works. Text: docs/delivery/agent-protocol.md line 79; docs/delivery/decisions.md D-025 ('by default a sandboxed command may write only its working directory and /tmp'); tools/agents/agent_settings.py docstring line 10; tools/agents/run-agent.sh line 82 comment '(--setting-sources project,local)' while lines 141/150 pass `project`; docs/delivery/agents.md load-check observation 'Bash writes aren't path-guarded'. Side effect: my round-11 case QA11-G4 now fails only because the test's own tmpdir() is /tmp/claude-0 (docs/delivery/test-evidence/DG0/qa/round-12/03-prior-qa-suites-regression.log).",
+      "expected": "The documented disposable-copy location works inside the agent sandbox (use $TMPDIR), and comments and docs describe the current controls.",
+      "actual": "Documentation only. The controls themselves behave as intended, and the stricter /tmp is safer. Low, and I'd accept it as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/06-live-guard-and-sandbox-probe.log",
+        "docs/delivery/agent-protocol.md",
+        "tools/agents/agent_settings.py",
+        "tools/agents/run-agent.sh#config_snapshot",
+        "docs/delivery/agents.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:55:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-12 QA review of candidate 21f142b8 (7f09967)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-232",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The register does not reflect D-025: REQ-DLV-007 (IMPLEMENTED) still describes shell writes as controlled only by 'the orchestrator checks git status after each run', and no register row cites tools/agents/agent_settings.py, tools/agents/tests/test_agent_settings.py or the validator's D-025 test",
+      "reproduction": "In the candidate clone: `grep -c 'agent_settings\\|D-025' docs/delivery/requirements.csv` prints 0. The REQ-DLV-007 procedure ends '…the orchestrator checks git status after each run for Bash writes', and its evidence lists only guard-write.mjs and write-scopes.json. `git diff --stat 7e99163 7f09967 -- docs/delivery/requirements.csv docs/analysis` is empty: the round-11 repair didn't touch the register.",
+      "expected": "REQ-DLV-007's procedure, evidence and acceptance, and the REQ-DLV-013/023 test citations where relevant, name the OS Bash sandbox (agent_settings.py and the per-run settings.json) and its tests, so the requirement-to-evidence trace covers the control that now enforces the shell scope.",
+      "actual": "The row isn't false: the guard and git status checks still exist. But it omits the main shell control. Traceability only; Low, and I'd accept it as an observation.",
+      "evidence": [
+        "docs/delivery/requirements.csv#REQ-DLV-007",
+        "docs/delivery/test-evidence/DG0/qa/round-12/10-register-integrity.log",
+        "tools/agents/agent_settings.py"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:55:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-12 QA review of candidate 21f142b8 (7f09967)."
+        }
+      ]
     }
   ]
 }

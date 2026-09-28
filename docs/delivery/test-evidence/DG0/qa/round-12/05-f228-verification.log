@@ -1,0 +1,22 @@
+# F-DG0-228 verification 2026-09-28T18:42:00Z
+$ git for-each-ref --contains e8758713d2f026c28207758258f2a3056ce05d03 (branch/tag refs)
+refs/heads/claude/mobily-transformation-platform-kwcc4i
+refs/remotes/origin/claude/mobily-transformation-platform-kwcc4i
+$ git merge-base --is-ancestor e8758713d2f026c28207758258f2a3056ce05d03 7f09967 -> yes
+$ git for-each-ref --contains 0593fd79fa244e6279f5c5c064c830fa4f9617fe (branch/tag refs)
+$ git merge-base --is-ancestor 0593fd79fa244e6279f5c5c064c830fa4f9617fe 7f09967 -> no
+$ git for-each-ref --contains 57d23ded0b70 (branch/tag refs)
+$ git merge-base --is-ancestor 57d23ded0b70 7f09967 -> no
+$ git diff --stat e875871 7f09967 -- tools/agents/guard-write.mjs tools/agents/write-scopes.json tools/agents/settings tools/agents/run-agent.sh tools/agents/agent_settings.py tools/agents/run_meta.py tools/agents/probe-guard-live.sh
+[empty diff above = probed tooling byte-identical to candidate]
+$ git diff --stat e875871 7f09967 -- tools/
+ tools/agents/tests/guard.test.mjs         | 5 +++++
+ tools/agents/tests/test_agent_settings.py | 5 +++++
+ tools/agents/tests/test_run_meta.py       | 5 +++++
+ tools/gates/tests/validator.test.mjs      | 5 +++++
+ 4 files changed, 20 insertions(+)
+## hash consistency of docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z
+transcript_sha256 match
+result_sha256 match
+settings_sha256 match
+bash_sandbox True head_commit_at_start e8758713d2f026c28207758258f2a3056ce05d03

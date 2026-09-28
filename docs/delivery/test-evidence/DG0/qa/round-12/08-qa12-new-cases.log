@@ -1,0 +1,93 @@
+# $ QA_REPO_ROOT=/tmp/claude-0/qa-r12/cand node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs
+# candidate clone @ 7f09967; 2026-09-28T18:50:27Z; node v22.22.2; TMPDIR=/tmp/claude-0; sha256 of test file: 8309f4674b55333530bc1508b71508c01d40c8b61a250f717445b93431667083
+# Expected failures (findings): QA12-V2 -> F-DG0-230 (Low); QA12-P1, QA12-P2 -> F-DG0-229 (Medium)
+ok 1 - QA12-REG A23/A24/A25 regression: the 94-case round-9 suite passes against the candidate once fixture runs carry a sandboxed settings.json
+ok 2 - QA12-V1 control: the D-025-adapted independent fixture validates cleanly
+not ok 3 - QA12-V2 D-025: a sandbox deny list rooted in a different directory than the run's repository must not bind a gate record
+ok 4 - QA12-V3 D-025: settings.json present but meta.settings_sha256 missing is rejected
+ok 5 - QA12-V4 D-025: sandbox.enabled given as the string "true" (not boolean) is rejected
+ok 6 - QA12-V5 D-025: unparsable settings.json with a matching hash is rejected, not crashed on
+ok 7 - QA12-V6 D-025: a deny list missing only tools/agents is rejected and names the gap
+ok 8 - QA12-V7 metadata invariance: adding run directories with settings.json, a new review round and sidecars leaves the candidate unchanged
+ok 9 - QA12-A1 agent_settings: a sibling-prefix cwd (<repo>-evil) is refused
+ok 10 - QA12-A2 agent_settings: a cwd that is a symlink inside the repository pointing outside it is refused
+ok 11 - QA12-A3 agent_settings: qa-verifier is confined to test-evidence, tests/qa and e2e; everything else that exists is denied
+ok 12 - QA12-R7 D-024/D-025: a reviewer run that plants a nested CLAUDE.md inside its own evidence area is refused (exit 71, not committed)
+ok 13 - QA12-R8 D-024/D-025: a reviewer run that plants a nested .claude/settings.json in its evidence area is refused (exit 71)
+ok 14 - QA12-R9 D-024/D-025: a reviewer run that plants a .gitignore (hiding its own files from the snapshots) is refused (exit 71)
+ok 15 - QA12-R10 F-DG0-138: git hooks that already exist before the run never execute during the evidence auto-commit, which contains only the run directory
+ok 16 - QA12-R11 D-025: without bubblewrap on PATH the runner refuses to start (exit 65) and creates no run directory
+ok 17 - QA12-R12 D-025: each run keeps its generated settings.json; meta.settings_sha256 matches and meta.bash_sandbox is true; protected paths are denied
+not ok 18 - QA12-P1 D-024/D-025: an analyst run that plants a gitignored docs/analysis/tools/csv.pyc must leave a trace in the run evidence
+not ok 19 - QA12-P2 prefreeze.sh must not execute gitignored bytecode planted next to an analysis check (it runs outside any sandbox)
+# tests 19
+# pass 16
+# fail 3
+
+## failure details
+not ok 3 - QA12-V2 D-025: a sandbox deny list rooted in a different directory than the run's repository must not bind a gate record
+  ---
+  duration_ms: 381.315544
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs:92:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    Module.rejects (file:///tmp/claude-0/qa12-adapt-UtwP0d/fx.mjs:243:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs:94:6
+    Module.withFixture (file:///tmp/claude-0/qa12-adapt-UtwP0d/fx.mjs:249:12)
+  ...
+not ok 18 - QA12-P1 D-024/D-025: an analyst run that plants a gitignored docs/analysis/tools/csv.pyc must leave a trace in the run evidence
+  ---
+  duration_ms: 1626.547382
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs:296:1'
+  failureType: 'testCodeFailure'
+  error: 'no trace: exit=0 external_config_changed=[] outputs-has-pyc=false git status="?? docs/delivery/runs/DG0/DG0-T-QA12-transformation-analyst-20260928T185000Z-07119614/meta.json\\n?? docs/delivery/runs/DG0/DG0-T-QA12-transformation-analyst-20260928T185000Z-07119614/result.json\\n?? docs/delivery/runs/DG0/DG0-T-QA12-transformation-analyst-20260928T185000Z-07119614/settings.json\\n?? docs/delivery/runs/DG0/DG0-T-QA12-transformation-analyst-20260928T185000Z-07119614/stderr.log\\n?? docs/delivery/runs/DG0/DG0-T-QA12-transformation-analyst-20260928T185000Z-07119614/transcript.jsonl.gz\\n"'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+  ...
+not ok 19 - QA12-P2 prefreeze.sh must not execute gitignored bytecode planted next to an analysis check (it runs outside any sandbox)
+  ---
+  duration_ms: 25877.902847
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs:303:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    planted bytecode executed during prefreeze (marker written) and prefreeze still exited 0:
+    PASS  source extraction reproducible 
+    PASS  gate validator + guard tests 
+    PASS  runner metadata tests 
+    PASS  register rules (DG0) 
+    PASS  pipeline state 
+    PASS  analysis check check_counts.py 
+    PASS  analysis check check_pb_provenance.py 
+    PASS  analysis check check_test_refs.py 
+    PASS  working-tree candidate equals HEAD (sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 16
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 76375.780615
+[exit=1]
