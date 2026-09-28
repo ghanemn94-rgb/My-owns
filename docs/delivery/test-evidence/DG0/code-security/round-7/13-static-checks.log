@@ -1,0 +1,98 @@
+# worktree e11b5f0
+== CI workflow (F-DG0-109)
+11:permissions:
+12:  contents: read
+18:      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+20:          fetch-depth: 0 # historical gate verification recomputes candidates from recorded commits
+21:      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+== .gitattributes (F-DG0-113)
+# Byte-identical checkouts on every platform: no end-of-line conversion (candidate identity, decision D-005).
+* -text
+i/lf    w/lf    attr/-text            	docs/delivery/requirements.csv
+i/lf    w/lf    attr/-text            	tools/gates/lib/candidate.mjs
+== .gitignore
+
+# Python bytecode caches are build artefacts, never part of a candidate (F-DG0-010/130/220)
+__pycache__/
+*.py[cod]
+tracked pyc: 0
+== secrets / personal data scan over tracked candidate files
+docs/delivery/test-evidence/DG0/code-security/round-2/07-secrets-extraction-ci-frontmatter.log:4:secret regex: (AKIA[0-9A-Z]{16}|sk-ant-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|AIza[0-9A-Za-z_-]{35}|(password|passwd|secret|api[_-]?key|access[_-]?token)["']?\s*[:=]\s*["'][^"' ]{8,})
+secret-pattern hits (excl. runs/, trading_agent/): 1
+awk: 1: unexpected character '\'
+awk: 1: unexpected character '\'
+awk: line 1: runaway string constant " files, \" ...
+gzipped transcripts scanned: 
+email addresses in candidate files: t@example.com 
+.env / key files tracked: 0
+== public CDN references in candidate (non-doc) files
+(end)
+== agent frontmatter / settings (10 agents)
+  backend-workflow-engineer: name ok=True model=inherit tools=[Read, Grep, Glob, Write, Edit, Bash] settings-hook ok=False
+  code-security-reviewer: name ok=True model=inherit tools=[Read, Grep, Glob, Bash, Write] settings-hook ok=False
+  devops-engineer: name ok=True model=inherit tools=[Read, Grep, Glob, Write, Edit, Bash] settings-hook ok=False
+  domain-reviewer: name ok=True model=inherit tools=[Read, Grep, Glob, Bash, Write] settings-hook ok=False
+  frontend-ux-engineer: name ok=True model=inherit tools=[Read, Grep, Glob, Write, Edit, Bash] settings-hook ok=False
+  kpi-benefits-engineer: name ok=True model=inherit tools=[Read, Grep, Glob, Write, Edit, Bash] settings-hook ok=False
+  qa-verifier: name ok=True model=inherit tools=[Read, Grep, Glob, Bash, Write, Edit] settings-hook ok=False
+  release-auditor: name ok=True model=inherit tools=[Read, Grep, Glob, Bash, Write] settings-hook ok=False
+  solution-architect: name ok=True model=inherit tools=[Read, Grep, Glob, Write, Edit, Bash] settings-hook ok=False
+  transformation-analyst: name ok=True model=inherit tools=[Read, Grep, Glob, Write, Edit, Bash] settings-hook ok=False
+
+## CORRECTION (reviewer): the settings-hook column above used a wrong match pattern and the transcript scan had an awk quoting error; re-run below. The single secret-pattern hit is the round-2 evidence log that quotes the regex itself (false positive).
+== settings hooks (corrected)
+  File "<stdin>", line 6
+    print(f"  {n}: matcher={h['matcher']} role-arg ok={('node \"$g\" '+n+';') in c} fail-closed tail={c.rstrip().endswith('[ \"$rc\" -eq 0 ] || exit 2')} missing-guard->rc=2={'rc=2' in c} same-as-frontmatter={c in fm}")
+                                                                                                                                                                                                                          ^
+SyntaxError: f-string expression part cannot include a backslash
+  File "<stdin>", line 6
+    print(f"  {n}: matcher={h['matcher']} role-arg ok={('node \"$g\" '+n+';') in c} fail-closed tail={c.rstrip().endswith('[ \"$rc\" -eq 0 ] || exit 2')} missing-guard->rc=2={'rc=2' in c} same-as-frontmatter={c in fm}")
+                                                                                                                                                                                                                          ^
+SyntaxError: f-string expression part cannot include a backslash
+  File "<stdin>", line 6
+    print(f"  {n}: matcher={h['matcher']} role-arg ok={('node \"$g\" '+n+';') in c} fail-closed tail={c.rstrip().endswith('[ \"$rc\" -eq 0 ] || exit 2')} missing-guard->rc=2={'rc=2' in c} same-as-frontmatter={c in fm}")
+                                                                                                                                                                                                                          ^
+SyntaxError: f-string expression part cannot include a backslash
+  File "<stdin>", line 6
+    print(f"  {n}: matcher={h['matcher']} role-arg ok={('node \"$g\" '+n+';') in c} fail-closed tail={c.rstrip().endswith('[ \"$rc\" -eq 0 ] || exit 2')} missing-guard->rc=2={'rc=2' in c} same-as-frontmatter={c in fm}")
+                                                                                                                                                                                                                          ^
+SyntaxError: f-string expression part cannot include a backslash
+  File "<stdin>", line 6
+    print(f"  {n}: matcher={h['matcher']} role-arg ok={('node \"$g\" '+n+';') in c} fail-closed tail={c.rstrip().endswith('[ \"$rc\" -eq 0 ] || exit 2')} missing-guard->rc=2={'rc=2' in c} same-as-frontmatter={c in fm}")
+                                                                                                                                                                                                                          ^
+SyntaxError: f-string expression part cannot include a backslash
+  File "<stdin>", line 6
+    print(f"  {n}: matcher={h['matcher']} role-arg ok={('node \"$g\" '+n+';') in c} fail-closed tail={c.rstrip().endswith('[ \"$rc\" -eq 0 ] || exit 2')} missing-guard->rc=2={'rc=2' in c} same-as-frontmatter={c in fm}")
+                                                                                                                                                                                                                          ^
+SyntaxError: f-string expression part cannot include a backslash
+  File "<stdin>", line 6
+    print(f"  {n}: matcher={h['matcher']} role-arg ok={('node \"$g\" '+n+';') in c} fail-closed tail={c.rstrip().endswith('[ \"$rc\" -eq 0 ] || exit 2')} missing-guard->rc=2={'rc=2' in c} same-as-frontmatter={c in fm}")
+                                                                                                                                                                                                                          ^
+SyntaxError: f-string expression part cannot include a backslash
+  File "<stdin>", line 6
+    print(f"  {n}: matcher={h['matcher']} role-arg ok={('node \"$g\" '+n+';') in c} fail-closed tail={c.rstrip().endswith('[ \"$rc\" -eq 0 ] || exit 2')} missing-guard->rc=2={'rc=2' in c} same-as-frontmatter={c in fm}")
+                                                                                                                                                                                                                          ^
+SyntaxError: f-string expression part cannot include a backslash
+  File "<stdin>", line 6
+    print(f"  {n}: matcher={h['matcher']} role-arg ok={('node \"$g\" '+n+';') in c} fail-closed tail={c.rstrip().endswith('[ \"$rc\" -eq 0 ] || exit 2')} missing-guard->rc=2={'rc=2' in c} same-as-frontmatter={c in fm}")
+                                                                                                                                                                                                                          ^
+SyntaxError: f-string expression part cannot include a backslash
+  File "<stdin>", line 6
+    print(f"  {n}: matcher={h['matcher']} role-arg ok={('node \"$g\" '+n+';') in c} fail-closed tail={c.rstrip().endswith('[ \"$rc\" -eq 0 ] || exit 2')} missing-guard->rc=2={'rc=2' in c} same-as-frontmatter={c in fm}")
+                                                                                                                                                                                                                          ^
+SyntaxError: f-string expression part cannot include a backslash
+== secrets in gzipped run transcripts
+  39 transcripts, 0 matching lines
+== secrets in tracked files excluding evidence logs that quote the regex
+0
+== settings hooks (corrected, 2nd attempt: previous attempt hit a python f-string syntax error in my script)
+  backend-workflow-engineer: matcher=Write|Edit|NotebookEdit|MultiEdit role-arg ok=True fail-closed tail=True missing-guard->rc=2=True same-as-frontmatter=True
+  code-security-reviewer: matcher=Write|Edit|NotebookEdit|MultiEdit role-arg ok=True fail-closed tail=True missing-guard->rc=2=True same-as-frontmatter=True
+  devops-engineer: matcher=Write|Edit|NotebookEdit|MultiEdit role-arg ok=True fail-closed tail=True missing-guard->rc=2=True same-as-frontmatter=True
+  domain-reviewer: matcher=Write|Edit|NotebookEdit|MultiEdit role-arg ok=True fail-closed tail=True missing-guard->rc=2=True same-as-frontmatter=True
+  frontend-ux-engineer: matcher=Write|Edit|NotebookEdit|MultiEdit role-arg ok=True fail-closed tail=True missing-guard->rc=2=True same-as-frontmatter=True
+  kpi-benefits-engineer: matcher=Write|Edit|NotebookEdit|MultiEdit role-arg ok=True fail-closed tail=True missing-guard->rc=2=True same-as-frontmatter=True
+  qa-verifier: matcher=Write|Edit|NotebookEdit|MultiEdit role-arg ok=True fail-closed tail=True missing-guard->rc=2=True same-as-frontmatter=True
+  release-auditor: matcher=Write|Edit|NotebookEdit|MultiEdit role-arg ok=True fail-closed tail=True missing-guard->rc=2=True same-as-frontmatter=True
+  solution-architect: matcher=Write|Edit|NotebookEdit|MultiEdit role-arg ok=True fail-closed tail=True missing-guard->rc=2=True same-as-frontmatter=True
+  transformation-analyst: matcher=Write|Edit|NotebookEdit|MultiEdit role-arg ok=True fail-closed tail=True missing-guard->rc=2=True same-as-frontmatter=True

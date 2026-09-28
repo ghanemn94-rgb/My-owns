@@ -1,0 +1,131 @@
+# r4 original repro (docs/delivery/test-evidence/DG0/code-security/round-4/repro-r4.test.mjs) against 53f5d176dfaa913baa61b34c0aa4fe5fd9a788b5 (GATE_TOOLS=/tmp/dg0-sec7-old-r4), git version 2.43.0, node v22.22.2
+TAP version 13
+# Subtest: SANITY: the copied fixture is valid under the tools under test
+ok 1 - SANITY: the copied fixture is valid under the tools under test
+  ---
+  duration_ms: 262.792661
+  type: 'test'
+  ...
+# Subtest: SANITY: the genuine FAIL verification keeps the gate closed
+ok 2 - SANITY: the genuine FAIL verification keeps the gate closed
+  ---
+  duration_ms: 335.582892
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-115b: forging the closure in an ordinary commit is detected (write-once M)
+ok 3 - FIXED F-DG0-115b: forging the closure in an ordinary commit is detected (write-once M)
+  ---
+  duration_ms: 510.295055
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-115b (uncommitted): forging the closure in the working tree is detected
+ok 4 - FIXED F-DG0-115b (uncommitted): forging the closure in the working tree is detected
+  ---
+  duration_ms: 336.96619
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-115a: editing a committed round-1 sidecar + record to drop a High finding is detected
+ok 5 - FIXED F-DG0-115a: editing a committed round-1 sidecar + record to drop a High finding is detected
+  ---
+  duration_ms: 424.513593
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-115c: flipping a committed FAIL review verdict to PASS is detected
+ok 6 - FIXED F-DG0-115c: flipping a committed FAIL review verdict to PASS is detected
+  ---
+  duration_ms: 454.92605
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-102 residual (round-3 test 7): a 3-field verifying record without assignment cannot close a finding
+ok 7 - FIXED F-DG0-102 residual (round-3 test 7): a 3-field verifying record without assignment cannot close a finding
+  ---
+  duration_ms: 384.206408
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-117: ACCEPTED_OBSERVATION typed only into findings.json is rejected
+ok 8 - FIXED F-DG0-117: ACCEPTED_OBSERVATION typed only into findings.json is rejected
+  ---
+  duration_ms: 215.412945
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-116: core.fileMode=false takes tracked modes from the index
+ok 9 - FIXED F-DG0-116: core.fileMode=false takes tracked modes from the index
+  ---
+  duration_ms: 215.676234
+  type: 'test'
+  ...
+# Subtest: BYPASS N1 (evil merge): the forged closure committed inside a merge commit is NOT detected by write-once
+ok 10 - BYPASS N1 (evil merge): the forged closure committed inside a merge commit is NOT detected by write-once
+  ---
+  duration_ms: 1215.886209
+  type: 'test'
+  ...
+# Subtest: BYPASS N1b (evil merge): a committed round-1 High finding is dropped via a merge commit
+ok 11 - BYPASS N1b (evil merge): a committed round-1 High finding is dropped via a merge commit
+  ---
+  duration_ms: 530.136423
+  type: 'test'
+  ...
+# Subtest: DIAG N1: the git log used by checkWriteOnce prints nothing for the merge; -m / --diff-merges=first-parent would
+ok 12 - DIAG N1: the git log used by checkWriteOnce prints nothing for the merge; -m / --diff-merges=first-parent would
+  ---
+  duration_ms: 531.712046
+  type: 'test'
+  ...
+# Subtest: BYPASS N2 (local only, Low): skip-worktree hides a working-tree forgery from the status check
+ok 13 - BYPASS N2 (local only, Low): skip-worktree hides a working-tree forgery from the status check
+  ---
+  duration_ms: 356.303237
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-101: relabel to DG1, sidecar relabel, or drop of a raised finding is rejected
+ok 14 - FIXED F-DG0-101: relabel to DG1, sidecar relabel, or drop of a raised finding is rejected
+  ---
+  duration_ms: 818.694229
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-110: findings.json CLOSED_VERIFIED while the reporter's latest sidecar says FAIL is rejected; unchecked evidence/fix_revision rejected
+ok 15 - FIXED F-DG0-110: findings.json CLOSED_VERIFIED while the reporter's latest sidecar says FAIL is rejected; unchecked evidence/fix_revision rejected
+  ---
+  duration_ms: 682.654057
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-103/F-DG0-112: symlink repoint, exec bit and file/symlink swap change the committed candidate; gitlinks refused
+ok 16 - FIXED F-DG0-103/F-DG0-112: symlink repoint, exec bit and file/symlink swap change the committed candidate; gitlinks refused
+  ---
+  duration_ms: 563.335329
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-104: an extra exclude in the frozen manifest spec, or in stages.json, is rejected
+ok 17 - FIXED F-DG0-104: an extra exclude in the frozen manifest spec, or in stages.json, is rejected
+  ---
+  duration_ms: 416.116165
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-106: '\#', '.', a directory and a bare token are not evidence; empty gate tests[] rejected
+ok 18 - FIXED F-DG0-106: '\#', '.', a directory and a bare token are not evidence; empty gate tests[] rejected
+  ---
+  duration_ms: 1216.480342
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-107: malformed CSV throws (text after quote, ragged rows, stray quote, unterminated)
+ok 19 - FIXED F-DG0-107: malformed CSV throws (text after quote, ragged rows, stray quote, unterminated)
+  ---
+  duration_ms: 0.327818
+  type: 'test'
+  ...
+# Subtest: OBSERVATION N3: the gate record's content is not bound to the release-auditor run (only its invocation_reference is compared)
+ok 20 - OBSERVATION N3: the gate record's content is not bound to the release-auditor run (only its invocation_reference is compared)
+  ---
+  duration_ms: 207.733035
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9979.287156

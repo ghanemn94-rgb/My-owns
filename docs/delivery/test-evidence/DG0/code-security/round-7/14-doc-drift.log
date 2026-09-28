@@ -1,0 +1,25 @@
+# F-DG0-114 doc drift re-check on e11b5f0
+docs/delivery/agent-protocol.md:91:- **Retry a refused command.** Retry up to 3 times, and keep working on non-shell parts of the task in between.
+docs/delivery/agent-protocol.md:92:- **If you still can't run what the task needs, stop cleanly.** End your turn with a final message whose **first line is exactly** `CLASSIFIER-BLOCKED`, followed by what's done and what
+docs/delivery/agents.md:46:The validator does not trust `tool_authored` alone. It replays the hash-bound transcript itself and compares the result with the file (D-021). It snapshots the tree before and after the run. Fo
+docs/delivery/decisions.md:25:| D-019 | 2026-09-28 | delivery-orchestrator | **Classifier-outage resume.** When an agent run stops only because the permission classifier returned no verdict repeatedly, the runner resumes
+tools/agents/run-agent.sh:13:#   session (same invocation reference) after a pause, at most MTH_MAX_RESUMES times (default 6). An agent that is
+tools/agents/run-agent.sh:22:MAX_RESUMES="${MTH_MAX_RESUMES:-6}" RESUME_PAUSE="${MTH_RESUME_PAUSE_SECONDS:-120}"
+tools/agents/run-agent.sh:113:while [[ $ATTEMPTS -lt $MAX_RESUMES ]] && classifier_outage "$OUT/transcript.jsonl"; do
+== 'Bash' disclosure
+docs/delivery/agent-protocol.md:78:Bash is not path-guarded. Using Bash to write outside your scope is a protocol violation, and the orchestrator checks `git status` after every run. Reviewers who exe
+docs/delivery/decisions.md:26:| D-020 | 2026-09-28 | delivery-orchestrator | **Write-guard hardening** (F-DG0-105). All Claude configuration surfaces (`.claude/**`, `.mcp.json`, and `CLAUDE.md`/`CLAUD
+== (1) verifications bound (rules.mjs checkClosure passes binding with assignment/notBefore/manifest/outputs)
+265:export function checkInvocation(repo, stageId, ref, role, errors, label, binding = null) {
+373:  checkInvocation(repo, stage.id, rec.invocation_reference, role, errors, label, {
+466:        checkInvocation(repo, stage.id, e.record.invocation_reference, e.role, errors, `${where} acceptance by ${e.role}`, {
+567:  checkInvocation(repo, stage.id, v.record.invocation_reference, v.role, errors, `${where} verification`, {
+== (2) D-019 resume count
+docs/delivery/decisions.md:up to 6 times
+docs/delivery/agents.md:up to 6 times
+docs/delivery/agent-protocol.md:up to 3 times
+docs/delivery/agent-protocol.md:up to 6 times
+== (3) agents.md protected Claude paths
+5:The ten definitions live in `.claude/agents/`. The main Claude Code session is the eleventh role, **delivery-orchestrator**: it plans, delegates, integrates and reports, and never records a review verdict.
+23:- all Claude configuration surfaces: `.claude/**`, `.mcp.json`, and `CLAUDE.md`/`CLAUDE.local.md` at any depth;
+53:2. `claude -p --agent <name>` **does** load the definition from `.claude/agents/`. The agent reported its role text from the definition.

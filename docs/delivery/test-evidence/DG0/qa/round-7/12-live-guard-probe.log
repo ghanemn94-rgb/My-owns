@@ -1,0 +1,10 @@
+# Live write-guard probe, qa-verifier run DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063, 2026-09-28T16:38:30Z
+# Tool: Write(file_path=/home/user/My-owns/docs/source/QA-PROBE.txt)
+# Expected: blocked by the PreToolUse hook tools/agents/guard-write.mjs (docs/source/** is protected); file not created.
+# Actual tool result (verbatim, is_error=true; also recorded in this run's transcript):
+PreToolUse:Write hook error: [g="$(git rev-parse --show-toplevel 2>/dev/null)/tools/agents/guard-write.mjs"; if [ -f "$g" ]; then node "$g" qa-verifier; rc=$?; else echo "write guard missing" >&2; rc=2; fi; [ "$rc" -eq 0 ] || exit 2]: BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+$ ls docs/source/QA-PROBE.txt
+ls: cannot access 'docs/source/QA-PROBE.txt': No such file or directory
+$ git status --porcelain docs/source
+(empty)
+# Result: PASS (blocked; no file created)

@@ -1,0 +1,40 @@
+######## fresh clone @ a059b55a7024f68cc7e33fedc8bd023d3b091336
+before: {"stage":"DG0","source":"working-tree","candidate_id":"sha256:c13a4f8e93cad95a0741d49001bb170361aface2117bf3712391ea772da3ff68","files":80}
+PASS  analysis check check_test_refs.py :: 52 declared test titles derived from 3 test files; 42 quoted test title citation(s) in 411 register rows; 0 problem(s)
+FAIL  uncommitted candidate changes:
+       M tools/agents/__pycache__/run_meta.cpython-311.pyc
+       M tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc
+prefreeze exit=0
+after: {"stage":"DG0","source":"working-tree","candidate_id":"sha256:01a6976fc7d58546d9ae23b81cf6b206dd2304581598fcbaa30b1eb9c3e038fb","files":80}
+status: [ M tools/agents/__pycache__/run_meta.cpython-311.pyc  M tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc ]
+-- F-DG0-131 probe (edit docs/delivery/requirements-spec.md + untracked tools/gates/u.mjs), dirty-check line only:
+       M tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc
+######## fresh clone @ e11b5f08dfa8b6cbe8716964e3412e17697234aa
+before: {"stage":"DG0","source":"working-tree","candidate_id":"sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece","files":79}
+PASS  analysis check check_counts.py :: README COUNTS ALL MATCH
+PASS  analysis check check_pb_provenance.py :: checked 93 REQ-PB rows; 0 problem(s); 10 reviewed R5 false positive(s) accepted
+PASS  analysis check check_test_refs.py :: 55 declared test titles derived from 3 test files; 42 quoted test title citation(s) in 411 register rows; 0 problem(s)
+PASS  working-tree candidate equals HEAD (sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece)
+prefreeze exit=0
+after: {"stage":"DG0","source":"working-tree","candidate_id":"sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece","files":79}
+status: []
+-- F-DG0-131 probe (edit docs/delivery/requirements-spec.md + untracked tools/gates/u.mjs), dirty-check line only:
+FAIL  working-tree candidate (sha256:818757ab78d234e481c1065df1ba2f4d04c9f50615c062bc5e6050ce104f93c9) differs from HEAD (sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece): uncommitted or untracked candidate changes
+######## F-DG0-113: core.autocrlf=true checkout of e11b5f0
+CRLF files in checkout: 2
+working-tree candidate: {"stage":"DG0","source":"working-tree","candidate_id":"sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece","files":79}
+######## F-DG0-113 original (83860be3, no .gitattributes)
+CRLF files: 195
+working-tree: {"stage":"DG0","source":"working-tree","candidate_id":"sha256:9c13ca68d49c03da7c67c8c7d4704e924c34aa8a596b8730508df4fe5a9b7c56","files":71}
+HEAD:         {"stage":"DG0","source":"HEAD","candidate_id":"sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3","files":71}
+
+## NOTE (reviewer): 'prefreeze exit=0' printed above for a059b55 is a harness bug (PIPESTATUS[0] captured the ( ... | tail ) subshell, i.e. tail's status); prefreeze itself printed FAIL. The a059b55 F-DG0-131 probe above was polluted by regenerated .pyc files; clean re-run below.
+######## F-DG0-131 original, fresh clone @ a059b55, PYTHONDONTWRITEBYTECODE=1, edits: requirements-spec.md (candidate file under docs/delivery) + untracked tools/gates/u.mjs
+prefreeze exit=0
+PASS  no uncommitted candidate changes
+candidate --freeze on the same tree:
+refusing to freeze: uncommitted candidate changes ({"added":["tools/gates/u.mjs"],"removed":[],"changed":["docs/delivery/requirements-spec.md"]})
+freeze exit=1
+######## same probe @ e11b5f0
+prefreeze exit=1
+FAIL  working-tree candidate (sha256:818757ab78d234e481c1065df1ba2f4d04c9f50615c062bc5e6050ce104f93c9) differs from HEAD (sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece): uncommitted or untracked candidate changes

@@ -1,0 +1,133 @@
+REQ-PB-091 SOURCE DG5 | Implement the 25-question Transformation Health Check with score and top 3 actions 
+   PROC: Assessor answers all 25 questions; score out of 25 is calculated; three top actions are required; reassessments tracked 
+   ACC: A16: all 25 questions render verbatim; an assessment with an unanswered question is labelled incomplete and shows no band; submission without three actions is rejected 
+   NOTES: Playbook (B0149, B0150, B0161): the 25 questions (checkboxes), 'Score: __ / 25' and 'Top 3 actions'. Master-prompt additions (§14 M0262, M0288): Yes=1/No=0 scoring (REQ-S14-001) and incomplete-assessment handling (REQ-S14-002), both implementation assumption D-010 (M0262); the top three improvement actions are required and reassessments are tracked over time (M0288). Interpretations: the requirement for three actions is enforced by rejecting submission of an assessment with fewer than three.
+
+REQ-PB-092 SOURCE DG5 | Interpret the health-check score with the four source bands 
+   PROC: Completed assessments show the band text matching the score 
+   ACC: A16: scores 21, 16, 10 and 9 map to the four band texts verbatim 
+   NOTES: Playbook (B0151, B0152): the four score bands and their text. Master-prompt additions: none; §14 M0288 restates the four bands (its top-three-actions and reassessment clause is covered by REQ-PB-091). Interpretations: none.
+
+REQ-PB-001 SOURCE DG5 | Label the methodology provenance honestly as a practical synthesis inspired by PMI/Brightline/BRM and never claim official PMI status 
+   PROC: System displays the verbatim provenance statement in the Playbook reader, About page and generated report footers; the source-foundations table (Source / Used for) is shown read-only in the Playbook reader 
+   ACC: A01: provenance text on reader/About/report footer matches B0004 verbatim; an automated text scan of UI strings (en+ar) and report templates finds no claim of 'official PMI standard', 'PMI certified' or equivalent 
+   NOTES: Playbook (B0004, B0024, B0155, B0156): the provenance statement and the source-foundations table (Source / Used for). Master-prompt additions (§2): showing the statement in the reader, the About page and report footers, and the automated scan for claims of official PMI status or certification. Interpretations: none beyond where the statement is displayed. The Arabic rendering of the statement needs linguistic review.
+
+REQ-PB-002 SOURCE DG5 | Mark custom extensions of the playbook distinctly from PMI/Brightline-derived foundations 
+   PROC: Each seeded methodology element (phases, TOM dimensions, gates, templates, scoring model, cadence, launch plan, health check, roaming example, traceability chain) carries a provenance attribute 'custom extension (playbook v1.0)' shown as a badge in the Playbook reader and Studio 
+   ACC: A01: every seeded element listed in B0158-B0162 returns provenance=custom-extension from the API and renders the badge in en and ar; no such element is labelled as a PMI standard 
+   NOTES: Playbook (B0154, B0157-B0162): the list of custom extensions. Master-prompt additions: none; §2 M0089 restates the practical-synthesis distinction, and the provenance badge is how the platform displays the source list. Interpretations: B0160 says 'most practical templates', so the platform tags all of T01-T16 as custom extensions unless an admin records otherwise.
+
+REQ-PB-009 SOURCE DG4 | Apply 'Benefits before closure': an initiative is complete only when value is realized and sustained, not when delivered 
+   PROC: Initiatives carry separate delivery, value-realization and sustainment statuses; closure requires validated benefits and sustainment owner or a documented transition decision 
+   ACC: A11: an initiative with delivery=Complete and no validated benefit cannot be closed (API 409); UI shows 'Delivered — value validation pending' 
+   NOTES: Playbook (B0014): the principle 'Benefits before closure'. Master-prompt additions (§3 M0092, §11 M0218): separate delivery, value-realization and sustainment statuses, and the documented transition decision. Interpretations: the closure rule (validated benefits plus a sustainment owner, or a transition decision), enforced as API 409.
+
+REQ-PB-074 SOURCE DG4 | Implement the six-step benefits lifecycle Identify, Plan, Enable, Measure, Correct, Sustain 
+   PROC: Each benefit progresses through the steps with the source output required per step 
+   ACC: A04;A10;A11: a benefit cannot enter Measure without the Plan outputs; Sustain requires a BAU owner and control cadence 
+   NOTES: Playbook (B0120, B0121): the six steps with their question and output. Master-prompt additions (§12 M0234): submitted benefit evidence is routed to the Finance queue. Interpretations: each step's outputs are preconditions (Measure needs the Plan outputs; Sustain needs a BAU owner and control cadence).
+
+REQ-PB-077 SOURCE DG5 | Label the Realize phase as aligned with PMI BRM logic without claiming PMI standard status 
+   PROC: The Realize phase guidance shows the note that it aligns with PMI Benefits Realization Management logic 
+   ACC: A01: Realize guidance shows 'aligns with PMI Benefits Realization Management logic' and no 'certified'/'official' wording 
+   NOTES: Playbook (B0124): the Realize phase aligns with PMI Benefits Realization Management logic. Master-prompt additions (§2 M0089): no 'certified' or 'official' wording. Interpretations: none. This is a labelling requirement.
+
+REQ-PB-054 SOURCE DG3 | Support a transformation-level business case with lighter linked initiative cases 
+   PROC: Initiative cases are lighter forms linked to the transformation case; roll-up references, not copies 
+   ACC: A01;A10: an initiative case links to one transformation case; editing the initiative case changes the transformation roll-up without duplicating benefits 
+   NOTES: Playbook (B0084): a transformation-level case, with lighter initiative cases underneath. Master-prompt additions (§8 M0173): the roll-up works by reference and never duplicates benefits. Interpretations: none.
+
+REQ-PB-055 SOURCE DG3 | Require Finance validation of baseline and benefit logic early, before G4, not after delivery 
+   PROC: A business case cannot be submitted as G4 evidence until Finance has validated its baseline and benefit formulas 
+   ACC: A08;A10: G4 submission with a business case whose benefit formula is unvalidated is rejected listing 'Finance validation' 
+   NOTES: Playbook (B0084, B0139): Finance should validate the baseline and benefit logic 'early—not after delivery', and be aligned on baselines and benefit formulas by day 90. Master-prompt additions: none. Interpretations: 'early' becomes a hard rule: a business case cannot serve as G4 evidence until Finance has validated its baseline and benefit formulas (AN-05 relabelling, finding F-DG0-003).
+
+REQ-PB-058 SOURCE DG4 | Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link 
+   PROC: System rejects a benefit without a single owner, baseline, formula and a financial statement line or agreed non-financial KPI; initiatives link to canonical benefits via allocations, parent/child relationships and shared-benefit groups; portfolio totals sum canonical benefits, not links, so a shared benefit rolls up once 
+   ACC: A10: a benefit with two owners is rejected; a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the portfolio total 
+   NOTES: Shared-benefit allocation rules detailed in master prompt §8. AN-04 consolidation: absorbs former REQ-S08-012 (Prevent double counting through a canonical benefit register, parent/child relationships, shared-benefit groups and contribution allocations so portfolio aggregation counts a shared benefit once); its anchors M0173 and acceptance are carried here. The canonical benefit register, parent/child relationships, shared-benefit groups and contribution allocations are the master prompt §8 mecha
+
+task completion|activity completion -> ['REQ-PB-015', 'REQ-PB-063', 'REQ-S01-005', 'REQ-S04-002', 'REQ-S07-007']
+forecast.{0,80}(never|not).{0,40}validated|unvalidated -> ['REQ-PB-027', 'REQ-PB-055', 'REQ-S08-001', 'REQ-S08-008', 'REQ-S13-008', 'REQ-S16-010', 'REQ-S20-010']
+counted once|once in the portfolio|appears once -> ['REQ-PB-058', 'REQ-S05-005']
+unallocated -> ['REQ-S08-013']
+100%.{0,40}alloc|alloc.{0,60}(100%|≤ ?100) -> ['REQ-S08-013']
+evidence snapshot|snapshot -> ['REQ-PB-015', 'REQ-DLV-026', 'REQ-DLV-037', 'REQ-S04-002', 'REQ-S04-012', 'REQ-S04-014', 'REQ-S07-016', 'REQ-S10-013', 'REQ-S12-009', 'REQ-S13-007', 'REQ-S16-004', 'REQ-S16-022', 'REQ-S16-024', 'REQ-S19-012', 'REQ-S19-016', 'REQ-S20-007', 'REQ-S20-019']
+DG0.DG7.{0,80}G1.G6|G1.G6.{0,80}DG -> ['REQ-DLV-002', 'REQ-DLV-041', 'REQ-S12-009']
+official PMI|PMI certified -> ['REQ-PB-001']
+#0078FF|provisional -> ['REQ-S08-008', 'REQ-S13-008', 'REQ-S15-002', 'REQ-S15-003', 'REQ-S15-006', 'REQ-S20-029']
+Business Owner.{0,60}accountab|accountab.{0,60}Business Owner -> ['REQ-S08-003']
+closure|closed -> ['REQ-PB-009', 'REQ-PB-020', 'REQ-PB-042', 'REQ-PB-070', 'REQ-PB-081', 'REQ-PB-084', 'REQ-DLV-017', 'REQ-DLV-018', 'REQ-S03-002', 'REQ-S03-003', 'REQ-S04-011', 'REQ-S10-011', 'REQ-S11-004', 'REQ-S11-009', 'REQ-S20-026']
+REQ-S07-007 USER DG4 M0160 | Compute RAG from the approved expected trajectory with configurable thresholds and never from project task completion 
+   PROC: RAG = evaluation of actual versus expected-to-date by polarity using configured thresholds; task completion is not an input 
+   ACC: A04;A05: with all tasks complete and actual below the red threshold the KPI is Red; changing the threshold version recomputes RAG
+
+REQ-S01-005 ENGINEERING DG6 M0080 | Never imply an external operational change happened because a task was marked complete; require verified evidence or a confirmed integration result 
+   PROC: Deliverables flagged as external changes carry a separate confirmation state that only reviewed evidence or a confirmed connector result can set; task completion alone leaves it Unconfirmed 
+   ACC: A11;A17: marking the task complete leaves the deliverable Unconfirmed; a filename-only link does not confirm it; reviewed evidence or a test-adapter confirmation sets it and records the source
+
+REQ-S03-002 USER DG4 M0092 | Let performance areas and BAU ownership continue indefinitely while transformations remain time-bounded 
+   PROC: Closing a transformation does not close its performance areas; their KPIs, owners and review cadence remain active 
+   ACC: A11: after a transformation is closed its linked performance area still generates scheduled review tasks and accepts KPI actuals
+
+REQ-S03-003 USER DG4 M0092 | Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses 
+   PROC: Each status has its own state machine and owner; none is derived from another; views show all four side by side 
+   ACC: A11: setting delivery to Complete leaves adoption, validated value and closure unchanged; the API rejects a closure request while validated value is pending unless a transition decision exists
+
+REQ-S08-001 USER DG4 M0166 | Track planned, forecast, measured, submitted-for-validation, validated, rejected and sustained benefit values separately 
+   PROC: Each benefit keeps separate value series per state; aggregations never combine states 
+   ACC: A10: a forecast amount never appears in the validated total; a rejected measurement is retained and shown as rejected
+
+REQ-S08-003 USER DG4 M0167 | Record for each benefit a unique ID, type, accountable business owner, Finance validator where applicable, baseline/counterfactual, formula, driver units, target, timing, one-off/recurring classification, currency, measurement source, evidence, confidence, assumptions, contribution links and financial-statement mapping or agreed non-financial KPI 
+   PROC: Benefit profile form with server-side validation of required fields 
+   ACC: A10: a financial benefit without a financial-statement mapping, or a non-financial one without an agreed KPI, is rejected
+
+REQ-S08-008 ENGINEERING DG4 M0171 | Require the same period and a validated comparison basis for the cost reduction example 
+   PROC: Cost reduction = eligible volume x reduction in unit cost for the same period; evaluation requires a Finance-validated comparison basis 
+   ACC: A05;A10: with an unvalidated comparison basis the result is labelled provisional and excluded from validated totals
+
+REQ-S08-013 USER DG4 M0173 | Reject allocations over 100% and show any share below 100% as unallocated 
+   PROC: The server sums allocations per benefit; above 100% is rejected; below 100% shows the remaining share as unallocated 
+   ACC: A10: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated
+
+REQ-S13-008 USER DG5 M0254 | Label provisional or unvalidated values clearly in reports and exports 
+   PROC: Values not validated carry a 'provisional' label 
+   ACC: A10;A15: a pending benefit value is labelled provisional in the PDF pack
+
+REQ-S04-002 USER DG4 M0116 | Make gates explicit approval records tied to a versioned, immutable evidence snapshot, never inferred from task completion 
+   PROC: Submitting a gate freezes the linked evidence record versions into a snapshot; approvers decide on that snapshot; completing all tasks never changes gate state 
+   ACC: A07;A08: completing every phase task leaves the gate Draft; editing a record after submission does not change the snapshot content shown to approvers
+
+REQ-S04-012 USER DG4 M0125;M0228 | Block gate submission when mandatory evidence is missing unless a specifically authorized exception is recorded 
+   PROC: Gate readiness is evaluated live and the gate page lists missing mandatory evidence; on submit the server checks each mandatory evidence item; missing items are listed and submission is refused unless an authorized, unexpired exception covers the item 
+   ACC: A08: the gate page lists missing items; submission with one missing mandatory item returns 422 listing it; with a valid exception it succeeds and the snapshot records the exception
+
+REQ-S15-002 USER DG1 M0004;M0291;M0293;M0294;M0295;M0296;M0297;M0298;M0299 | Seed the provisional design tokens brand.primary #0078FF, brand.deep #003B73, surface.page #F5F8FC, surface.card #FFFFFF, text.primary #142438, text.secondary #526174 and border.default #DCE5EF, labelled provisional and not official Mobily colours 
+   PROC: Tokens are stored as configuration and applied through CSS variables; Branding Settings shows each token's provenance as 'provisional' until an admin loads official values 
+   ACC: A20: the API returns the seven tokens with the values listed and provenance=provisional; no UI string or document claims official Mobily brand compliance
+
+REQ-S15-003 USER DG6 M0300 | Validate contrast for every text/background token pair, derive an accessible action-button shade, and use separate semantic status tokens that always carry labels or icons, never using blue to imply a favourable status 
+   PROC: An automated check computes WCAG contrast for every text/background combination and fails the build below 4.5:1 (3:1 for large text); status chips render a label and icon with the colour 
+   ACC: A20: the contrast test lists every pair and passes; white small text on #0078FF is not used for action buttons; status chips are distinguishable in greyscale
+
+REQ-DLV-002 ENGINEERING DG0 M0007;M0412 | Keep engineering delivery gates DG0-DG7 separate from product business approvals G1-G6 in records, authority and meaning 
+   PROC: DG records live only under docs/delivery; G1-G6 are product records; project rules and every agent definition state that an engineering agent cannot grant a real business, Finance or IT approval 
+   ACC: A23;A28: gate records validate only with stage_id DG0-DG7; CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval
+
+REQ-DLV-041 ENGINEERING DG7 M0411;M0397 | Seal the DG7 release after approval: approve the frozen payload whose hash excludes review and gate metadata, append the DG7 gate record to the evidence envelope, run A28 integrity verification, and record the payload hash and archive checksum separately 
+   PROC: After the DG7 audit the orchestrator builds the envelope, runs the A28 check and declares delivery complete only if sealing passes; a sealing failure blocks delivery and a payload change requires new candidate reviews 
+   ACC: A28: the sealing check verifies that all eight gate records, the ten agent definitions, the register and the findings are present and match their checksums, that the payload hash equals the DG7 candidate ID, and that no DG record is confused with G1-G6
+
+REQ-S12-009 USER DG4 M0229 | Starter automation: on a valid gate submission, route the exact evidence snapshot to the required approvers 
+   PROC: Approval tasks reference the snapshot ID 
+   ACC: A08;A13: each required approver receives exactly one task referencing the snapshot
+
+REQ-PB-013 DG4 | Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role 
+    Only users holding FIN on the transformation can mark a baseline, benefit formula or realized value as validated; others can submit for validation 
+    A10;A12: a Business Owner calling the validate endpoint receives 403; a Finance user succeeds and the audit event records validator identity
+
+REQ-S08-003 DG4 | Record for each benefit a unique ID, type, accountable business owner, Finance validator where applicable, baseline/counterfactual, formula, driver units, target, timing, one-off/recurring classificat 
+    Benefit profile form with server-side validation of required fields 
+    A10: a financial benefit without a financial-statement mapping, or a non-financial one without an agreed KPI, is rejected
+

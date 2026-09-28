@@ -1,0 +1,45 @@
+# Documentation findings: reproduction on the reporting round's candidate commit vs the round-7 candidate e11b5f08dfa8b6cbe8716964e3412e17697234aa, 2026-09-28T16:39:33Z
+## F-DG0-203 (round 1 @ 26642c7): stage plan names test ownership only in P6
+$ git show 26642c7:docs/analysis/stage-plan.md | grep -c -e 'qa-verifier'  -> 1
+stage-plan P2-P5 lines naming qa-verifier as author of acceptance tests, new:
+23:  - **qa-verifier** writes the scenario suite **test-first, before the candidate freezes**, under `tests/qa/**` and `e2e/**`. This follows agent-protocol.md "Write scopes", and the suite becomes part of the candidate.
+61:- **Executable acceptance tests authored in P1:** qa-verifier writes test-first, before freeze, the first cases of:
+88:  | A01 | T01–T04, charter and TOM canvas feature mapping (e2e), by qa-verifier | DG6 |
+89:  | A02 | Guided lifecycle, Diagnose → Design segment (e2e), by qa-verifier | DG5 |
+90:  | A03 | Modular entry at Design with inherited evidence (integration and e2e), by qa-verifier with backend-workflow-engineer | DG4 |
+93:  | A08 | G1–G3 gate controls, by qa-verifier with backend-workflow-engineer: missing evidence blocked; non-approver, submitter and stale-version approval rejected | DG4 |
+116:  | A08 | G4 gate controls, by qa-verifier with backend-workflow-engineer | DG4 |
+117:  | A10 | Business-case line classification and allocation cases, by kpi-benefits-engineer and qa-verifier | DG4 |
+118:  | A01, A02 | Portfolio features and the Mobilize segment, by qa-verifier | DG6 (A01), DG5 (A02) |
+139:  | A04 | KPI → benefit → dashboard propagation (integration and e2e), by qa-verifier with kpi-benefits-engineer |
+141:  | A08 | G5–G6 gate controls, by qa-verifier with backend-workflow-engineer |
+142:  | A09 | Working-day SLA escalation, by qa-verifier with backend-workflow-engineer |
+## F-DG0-207 (round 2 @ 83860be): register cites non-existent validator test names
+old register cites 'a fabricated invocation reference (no recorded run) is rejected': 1; old tests define it: 0
+new register cites 'a fabricated invocation reference (no recorded run) is rejected': 0
+old register cites 'a review citing a non-existent run is rejected': 1; old tests define it: 0
+new register cites 'a review citing a non-existent run is rejected': 0
+new: python3 docs/analysis/tools/check_test_refs.py -> 55 declared test titles derived from 3 test files; 42 quoted test title citation(s) in 411 register rows; 0 problem(s)
+## F-DG0-209 (round 3 @ 540b3c69): '<file sha256>  <path>' wording
+$ git show 540b3c69:docs/delivery/decisions.md | grep -c -e 'file sha256>  <path>'  -> 1
+$ git show 540b3c69:docs/delivery/requirements.csv | grep -c -e 'file sha256>  <path>'  -> 1
+$ git show e11b5f08dfa8b6cbe8716964e3412e17697234aa:docs/delivery/decisions.md | grep -c -e 'file sha256>  <path>'  -> 0
+$ git show e11b5f08dfa8b6cbe8716964e3412e17697234aa:docs/delivery/requirements.csv | grep -c -e 'file sha256>  <path>'  -> 0
+$ git show e11b5f08dfa8b6cbe8716964e3412e17697234aa:tools/gates/lib/candidate.mjs | grep -c -e '\${e.sha256}  \${e.mode}  \${e.path}'  -> 1
+## F-DG0-210 (round 3 @ 540b3c69): agents.md 'up to 3 times'
+$ git show 540b3c69:docs/delivery/agents.md | grep -c -e 'up to 3 times'  -> 1
+$ git show e11b5f08dfa8b6cbe8716964e3412e17697234aa:docs/delivery/agents.md | grep -c -e 'up to 3 times'  -> 0
+$ git show e11b5f08dfa8b6cbe8716964e3412e17697234aa:docs/delivery/agents.md | grep -c -e 'up to 6 times'  -> 1
+$ git show e11b5f08dfa8b6cbe8716964e3412e17697234aa:tools/agents/run-agent.sh | grep -c -e 'MTH_MAX_RESUMES:-6'  -> 1
+## F-DG0-213 (round 4 @ 53f5d176): candidate.mjs comment 'rounds 1-3'
+$ git show 53f5d176:tools/gates/lib/candidate.mjs | grep -c -e 'v1 (historical DG0 rounds 1-3'  -> 1
+$ git show e11b5f08dfa8b6cbe8716964e3412e17697234aa:tools/gates/lib/candidate.mjs | grep -c -e 'rounds 1-3'  -> 0
+new comment:
+132:// v2 (current): "<sha256>  <git mode>  <path>". v1 (historical DG0 rounds 1-2 only): "<sha256>  <path>".
+## F-DG0-221 (round 6 @ a059b55): agents.md lacks run_meta.py / tool_authored / deleted
+$ git show a059b55:docs/delivery/agents.md | grep -c -e 'run_meta'  -> 0
+$ git show e11b5f08dfa8b6cbe8716964e3412e17697234aa:docs/delivery/agents.md | grep -c -e 'run_meta'  -> 1
+$ git show a059b55:docs/delivery/agents.md | grep -c -e 'tool_authored'  -> 0
+$ git show e11b5f08dfa8b6cbe8716964e3412e17697234aa:docs/delivery/agents.md | grep -c -e 'tool_authored'  -> 2
+$ git show a059b55:docs/delivery/agents.md | grep -c -e '`deleted`'  -> 0
+$ git show e11b5f08dfa8b6cbe8716964e3412e17697234aa:docs/delivery/agents.md | grep -c -e '`deleted`'  -> 1

@@ -1,0 +1,19 @@
+== F-DG0-108 original (26642c72 runner): argument validation / run id / dir reuse
+25:    *) echo "unknown argument: $1" >&2; exit 64 ;;
+28:[[ -n "$ROLE" && -n "$STAGE" && -n "$TASK" && -n "$ASSIGNMENT" ]] || { echo "usage: $0 --role R --stage DGx --task T --assignment FILE [--cwd DIR] [--model ID]" >&2; exit 64; }
+37:RUN_ID="${STAGE}-${TASK}-${ROLE}-$(date -u +%Y%m%dT%H%M%SZ)"
+39:mkdir -p "$OUT"
+== new (e11b5f0):
+35:[[ "$STAGE" =~ ^DG[0-7]$ ]] || { echo "invalid --stage '$STAGE' (expected DG0-DG7)" >&2; exit 64; }
+36:[[ "$TASK" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "invalid --task '$TASK' (allowed: A-Z a-z 0-9 . _ -)" >&2; exit 64; }
+37:[[ "$ROLE" =~ ^[a-z][a-z-]*$ ]] || { echo "invalid --role '$ROLE'" >&2; exit 64; }
+38:[[ "$MODEL" =~ ^[A-Za-z0-9._:-]+$ ]] || { echo "invalid --model '$MODEL'" >&2; exit 64; }
+48:RUN_ID="${STAGE}-${TASK}-${ROLE}-$(date -u +%Y%m%dT%H%M%SZ)-${SESSION_ID:0:8}"
+51:mkdir "$OUT" # fails if the directory exists: evidence is never overwritten
+
+== F-DG0-109 original (26642c72 workflow uses:)
+18:      - uses: actions/checkout@v4
+21:      - uses: actions/setup-node@v4
+== new:
+18:      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+21:      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0

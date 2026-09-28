@@ -1,0 +1,76 @@
+# QA_REPO_ROOT=/tmp/qa7-rep-83860be (clone @ 83860be3ea4774688f0e00a87923edd6605d2ace) node=v22.22.2 date=2026-09-28T16:39:08Z
+$ node --test --test-name-pattern 'control|QA2-N11|QA2-N12|QA2-N14' /home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs
+TAP version 13
+# \# QA2-N14 exec-bit change detected by candidate: false
+# Subtest: control: the independent round-2 fixture is accepted (API and CLI exit 0)
+ok 1 - control: the independent round-2 fixture is accepted (API and CLI exit 0)
+  ---
+  duration_ms: 505.022886
+  type: 'test'
+  ...
+# Subtest: QA2-N11 findings: a CLOSED_VERIFIED finding verified by a pre-freeze LOAD run of the reporter is rejected
+not ok 2 - QA2-N11 findings: a CLOSED_VERIFIED finding verified by a pre-freeze LOAD run of the reporter is rejected
+  ---
+  duration_ms: 239.048556
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:282:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:176:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:288:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:182:5)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:282:121)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    node:internal/test_runner/test:981:31
+    node:internal/process/task_queues:149:7
+  ...
+# Subtest: QA2-N12 register: evidence that is a symlink pointing outside the repository is rejected
+not ok 3 - QA2-N12 register: evidence that is a symlink pointing outside the repository is rejected
+  ---
+  duration_ms: 235.192404
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:291:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:176:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:299:5
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:182:5)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:291:104)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA2-N14 candidate: a committed post-freeze change to a tracked file's mode (exec bit) — reported, not asserted
+ok 4 - QA2-N14 candidate: a committed post-freeze change to a tracked file's mode (exec bit) — reported, not asserted
+  ---
+  duration_ms: 245.668959
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 2
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1447.63659
+# exit=1

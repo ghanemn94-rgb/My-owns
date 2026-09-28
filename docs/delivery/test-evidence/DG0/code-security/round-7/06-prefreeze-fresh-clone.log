@@ -1,0 +1,81 @@
+# fresh clone (git clone --no-local) of /home/user/My-owns, detached at e11b5f08dfa8b6cbe8716964e3412e17697234aa
+# before: {"stage":"DG0","source":"working-tree","candidate_id":"sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece","files":79}
+# status before: []
+PASS  source extraction reproducible :: PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)
+PASS  gate validator + guard tests :: # duration_ms 39515.967651
+PASS  runner metadata tests :: OK
+PASS  register rules (DG0) :: PASS register rules at DG0
+PASS  pipeline state :: PASS pipeline (active stage: DG0 REVIEWING)
+PASS  analysis check check_counts.py :: README COUNTS ALL MATCH
+PASS  analysis check check_pb_provenance.py :: checked 93 REQ-PB rows; 0 problem(s); 10 reviewed R5 false positive(s) accepted
+PASS  analysis check check_test_refs.py :: 55 declared test titles derived from 3 test files; 42 quoted test title citation(s) in 411 register rows; 0 problem(s)
+PASS  working-tree candidate equals HEAD (sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece)
+prefreeze exit=0
+# after: {"stage":"DG0","source":"working-tree","candidate_id":"sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece","files":79}
+# status after: []
+run_meta.cpython-311.pyc
+
+## F-DG0-131 probe A: modify a candidate file under docs/delivery (requirements-spec.md)
+FAIL  working-tree candidate (sha256:bb251b23f1bc81e247f2f683337274c6f4eebded37d9daa68df04fde2ddad4a0) differs from HEAD (sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece): uncommitted or untracked candidate changes
+exit=1
+## probe B: untracked candidate file tools/gates/untracked-new.mjs
+FAIL  working-tree candidate (sha256:aa472f1004e2632544353dbc4a697e9f7d4e90cca65b09a63cf7bb2e477605a3) differs from HEAD (sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece): uncommitted or untracked candidate changes
+exit=1
+## probe C: untracked ignored bytecode only (should PASS)
+PASS  working-tree candidate equals HEAD (sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece)
+exit=0
+## probe D: candidate.mjs failing (stages.json unreadable) -> must FAIL, not PASS
+<anonymous_script>:2
+
+
+SyntaxError: Expected property name or '}' in JSON at position 2 (line 2 column 1)
+    at JSON.parse (<anonymous>)
+    at file:///tmp/dg0-sec7-clone/tools/gates/candidate.mjs:25:24
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.22.2
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.11/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+<anonymous_script>:2
+
+
+SyntaxError: Expected property name or '}' in JSON at position 2 (line 2 column 1)
+    at JSON.parse (<anonymous>)
+    at file:///tmp/dg0-sec7-clone/tools/gates/candidate.mjs:25:24
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.22.2
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/lib/python3.11/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+PASS  analysis check check_test_refs.py :: 55 declared test titles derived from 3 test files; 42 quoted test title citation(s) in 411 register rows; 0 problem(s)
+FAIL  working-tree candidate () differs from HEAD (): uncommitted or untracked candidate changes
+exit=1
+# final status: []
