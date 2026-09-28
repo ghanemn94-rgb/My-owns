@@ -1,0 +1,60 @@
+{
+ "findings": [
+  {
+   "id": "F-DG0-220",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-022",
+   "severity": "Medium",
+   "mandatory_violation": true,
+   "title": "Committed Python bytecode (__pycache__/*.pyc) is part of the candidate. On any fresh checkout the shipped CI/prefreeze step rewrites it, so tools/gates/prefreeze.sh DG0 FAILS on the frozen candidate and the working-tree candidate ID changes on every run",
+   "reproduction": "git worktree add /tmp/w a059b55a7024f68cc7e33fedc8bd023d3b091336 && cd /tmp/w && node tools/gates/candidate.mjs --stage DG0 (prints sha256:c13a4f8e...) && tools/gates/prefreeze.sh DG0; echo $? ; git status --porcelain ; node tools/gates/candidate.mjs --stage DG0. prefreeze prints 'FAIL  uncommitted candidate changes: M tools/agents/__pycache__/run_meta.cpython-311.pyc, M tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc' and exits 1. The candidate then hashes to a different value (sha256:c8780ee7..., and again sha256:683bea44... / b76571e1... on later runs, because the .pyc header embeds the source mtime of the checkout). Automated: QA_REPO_ROOT=<worktree> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r6.test.mjs --test-name-pattern QA6-N60. Cause: the round-6 repair committed tools/agents/__pycache__/run_meta.cpython-311.pyc and tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc (the manifest c13a4f8e93cad95a.manifest.json lists both). The repository has no .gitignore, and candidate_spec excludes neither __pycache__ nor *.pyc. The step `python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'` (delivery-gates.yml and prefreeze.sh) imports run_meta and rewrites both files whenever the checkout's mtimes differ from the author's tree. It only passes in the orchestrator's own working tree, where the mtimes happen to match. Even after the two files are deleted from git, an untracked __pycache__ still changes the working-tree candidate: an untracked tools/gates/__pycache__/probe.cpython-311.pyc changes the ID and the file count goes 80 -> 81 (32-untracked-pyc-candidate.log).",
+   "expected": "REQ-DLV-022: the candidate ID is a deterministic hash that excludes generated metadata. A25: running the checks that ship with the candidate does not change its identity. The required pre-freeze check (review-common.md) passes on a clean checkout of the frozen commit. Bytecode is neither committed nor hashed: remove the .pyc files from git, and ignore __pycache__/ and *.pyc (a .gitignore entry, or an exclusion in candidate_spec and the approved policy). Optionally also run the unit tests with python3 -B or PYTHONDONTWRITEBYTECODE=1. Add a regression test showing that the candidate is unchanged after the shipped checks run on a fresh clone (QA6-N60 can be promoted).",
+   "actual": "On a fresh worktree of a059b55: prefreeze.sh DG0 exits 1 (31-prefreeze-fresh-worktree.log). After the unit-test step, git status shows both .pyc files modified, and the candidate ID moves from c13a4f8e... to a new, non-reproducible value every time (30-pyc-candidate-drift.log, 10-qa6-negative-on-new.log QA6-N60). The CI job does not catch this, because it never recomputes the candidate after the unit-test step.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/30-pyc-candidate-drift.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/31-prefreeze-fresh-worktree.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/32-untracked-pyc-candidate.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log",
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r6.test.mjs",
+    "docs/delivery/candidates/DG0/c13a4f8e93cad95a.manifest.json"
+   ],
+   "reported_by": "qa-verifier",
+   "reported_in": "docs/delivery/reviews/DG0/round-6/qa-verifier.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T15:35:00Z",
+     "status": "OPEN",
+     "note": "Raised in the DG0 round-6 QA review of candidate c13a4f8e (a059b55)."
+    }
+   ]
+  },
+  {
+   "id": "F-DG0-221",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-026",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "docs/delivery/agents.md does not mention tools/agents/run_meta.py, tool_authored or deleted in its description of the run evidence, although the validator binds reviewer artefacts to tool_authored (D-021)",
+   "reproduction": "git show a059b55:docs/delivery/agents.md | grep -c -e tool_authored -e run_meta   -> 0. Line 40 lists the meta.json fields as 'role, the run's outputs (path -> SHA-256) and written_by_tools, stage, task, ...'. It also lists the validator's run-binding conditions without the D-021 rule that a record's bytes must equal the replay of the run's own successful Write/Edit calls (tool_authored), which run_meta.py now computes.",
+   "expected": "agents.md, the documented invocation mechanism (REQ-DLV-006/026 evidence), names run_meta.py as the metadata step. It lists tool_authored and deleted among the recorded fields, and the tool_authored binding among the validator conditions, or refers to D-021 for them.",
+   "actual": "The description is accurate for the recorded T-DG0-LOAD evidence, which predates tool_authored, and every load-check claim matches the raw meta.json (15-agents-md-vs-evidence.log). It is incomplete for the current runner. The reporter would accept this as a Low observation (documentation completeness only; no rule or evidence is wrong).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/15-agents-md-vs-evidence.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/17-doc-findings-derivation.log"
+   ],
+   "reported_by": "qa-verifier",
+   "reported_in": "docs/delivery/reviews/DG0/round-6/qa-verifier.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T15:35:00Z",
+     "status": "OPEN",
+     "note": "Raised in DG0 round 6. The reporter would accept it as a Low observation; that needs release-auditor agreement."
+    }
+   ]
+  }
+ ]
+}

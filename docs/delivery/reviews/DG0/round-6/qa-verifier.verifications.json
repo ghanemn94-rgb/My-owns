@@ -1,0 +1,133 @@
+{
+ "verifications": [
+  {
+   "finding_id": "F-DG0-201",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Round-6 re-confirmation, re-run in this invocation. Reproduced on the round-1 candidate 26642c7: QA-N27 (a review whose invocation_reference points at the reviewer's T-DG0-LOAD run) fails with 'validator accepted an invalid gate (no errors)'. On the frozen round-6 candidate (worktree @ a059b55, candidate c13a4f8e), QA5-R201 in dg0-gate-negative-r6.test.mjs is rejected. The project regression 'F-DG0-201: a review bound to an unrelated run of the same role is rejected' passes (34/34 validator tests).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/22-repro-201-202-on-26642c7.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/02-gates-tests.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-202",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Round-6 re-confirmation. Reproduced on 26642c7: QA-N28 (a bare, non-existent evidence file name on an IMPLEMENTED DG0 row) is accepted there. On a059b55, QA5-R202 is rejected. My independent register script also finds every evidence path of the 19 IMPLEMENTED DG0 rows (errors: 0).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/22-repro-201-202-on-26642c7.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/11-register-integrity.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-203",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Round-6 re-confirmation by execution and derivation. docs/analysis/stage-plan.md and acceptance-map.md are unchanged since the round-4 candidate 53f5d176, per git diff --stat in 17-doc-findings-derivation.log. My feasibility script, re-run on a059b55, checks that the stage-plan authorship stage for each A01-A28 scenario is no later than the stage of its must-pass gate. It reports 28/28 scenarios with a concrete level, first stage, must-pass gate and author, and errors: 0.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/14-acceptance-feasibility.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/17-doc-findings-derivation.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-204",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Round-6 re-confirmation. Reproduced on the round-2 candidate 83860be: QA2-N11 (a findings.json verification citing the verifier's pre-freeze LOAD run) is accepted there (not ok). On a059b55, QA5-R204 is rejected, and the project regression 'F-DG0-110 / F-DG0-204' passes.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/23-repro-204-205-206-on-83860be.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-205",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Round-6 re-confirmation. Reproduced on 83860be: QA2-N12 (register evidence that is an in-repo symlink to a file outside the repository) is accepted there. On a059b55, QA5-R205 rejects the outside link and accepts an in-repo link.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/23-repro-204-205-206-on-83860be.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-206",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Round-6 re-confirmation. Reproduced on 83860be: QA2-N14 prints 'exec-bit change detected by candidate: false'. On a059b55, QA5-R206 (a committed chmod +x after freeze) invalidates the approval. The current manifest uses mth-candidate-v2 with git modes. Note: the new finding F-DG0-220 (committed .pyc files) is a separate defect and does not reopen this one.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/23-repro-204-205-206-on-83860be.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-207",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Round-6 re-confirmation. REQ-DLV-013 and REQ-DLV-026 changed in this candidate: run_meta.py, test_run_meta.py and new test citations were added. I re-checked every cited title. All quoted validator test titles exist in tools/gates/tests/validator.test.mjs, and every cited test_* name exists in tools/agents/tests/test_run_meta.py; the only mismatches in my ad-hoc scan were quote-splitting artifacts, namely the apostrophe in the F-DG0-119 title and the error text 'file not found'. The candidate's own docs/analysis/tools/check_test_refs.py reports '52 declared test titles derived from 3 test files; 42 quoted test title citation(s); 0 problem(s)' on a059b55.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/17-doc-findings-derivation.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/31-prefreeze-fresh-worktree.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-208",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Round-6 re-confirmation. Reproduced on the round-3 candidate 540b3c69: QA3-N20 logs 'errors (0)', i.e. the validator accepted the rewritten frozen_at plus a LOAD-run closure (a TODO probe there). On a059b55, QA5-R208a (committed) and QA5-R208b (uncommitted) are both rejected, and the project regression 'F-DG0-208: round metadata must match the committed manifest of its candidate' passes.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/24-repro-208-on-540b3c69.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-209",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Round-6 re-confirmation. On a059b55, D-005 reads 'sorted lines \"<sha256>  <git mode>  <path>\\n\" (algorithm mth-candidate-v2; historical DG0 rounds 1-2 used mth-candidate-v1, \"<sha256>  <path>\\n\")'. REQ-DLV-022's procedure reads 'sorted lines '<sha256>  <git mode>  <path>' (algorithm mth-candidate-v2 ...)'. Both match candidateId() in tools/gates/lib/candidate.mjs, which returns `${e.sha256}  ${e.mode}  ${e.path}\\n` for v2.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/17-doc-findings-derivation.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-210",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Round-6 re-confirmation. On a059b55, agents.md says 'resumes the same session up to 6 times (D-019)', and run-agent.sh line 22 has MAX_RESUMES=\"${MTH_MAX_RESUMES:-6}\". The '3 times' text is gone. agents.md is unchanged since 53f5d176.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/17-doc-findings-derivation.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-211",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Fix ebc8fb7e: the gate record is bound to the audited release-auditor run's tool-authored outputs, and I re-ran this in round 6. Reproduced on the round-4 candidate 53f5d176: QA5-R211a (gate record edited and committed after the auditor run), QA5-R211b (gate record absent from the auditor run's outputs) and QA5-R211c (present in the window but not tool-authored) are all accepted there (not ok). On a059b55 all three are rejected. QA5-N59 (gate record authored by a domain-reviewer run, with the auditor's outputs list edited in history) is also rejected, and the project regression 'F-DG0-121 / F-DG0-211' passes.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/25-repro-211-212-on-53f5d176.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-212",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Fix ebc8fb7e, re-run in round 6. findManifest recomputes each round manifest from its source_commit, and a bound run's head_commit_at_start must contain the round manifest. Reproduced on 53f5d176: QA5-R212a (a fabricated, backdated manifest) and QA5-R212b (an honest-content backdated manifest with a narrowed spec) both log 'errors (0)' and fail there. On a059b55 both are rejected, as are QA5-N57 (a manifest naming a non-existent source_commit) and QA5-N58 (a manifest edited in the working tree and hidden with assume-unchanged). All real DG0 round manifests present carry a hash_algorithm consistent with D-005.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/25-repro-211-212-on-53f5d176.log",
+    "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-213",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Fix ebc8fb7e, re-checked on a059b55. The candidate.mjs comment reads 'v1 (historical DG0 rounds 1-2 only)'. This agrees with D-005 ('historical DG0 rounds 1-2 used mth-candidate-v1'), with REQ-DLV-022 ('kept only to re-verify the historical DG0 round-1 and round-2 manifests') and with the manifests themselves: the round-3, 4, 5 and 6 manifests (31fd0843, 0be571ea, 4a8b14fd, c13a4f8e) declare mth-candidate-v2.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-6/17-doc-findings-derivation.log"
+   ]
+  }
+ ]
+}
