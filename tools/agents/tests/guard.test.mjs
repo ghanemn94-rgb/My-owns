@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, symlinkSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { tmpdir, homedir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { decide as decideAt, GUARD_ROOT } from "../guard-write.mjs";
@@ -158,4 +158,37 @@ test("F-DG0-134: every role's hook command takes the guard from MTH_GUARD_ROOT a
     const res = spawnSync("sh", ["-c", cmd], { env: { ...process.env, MTH_GUARD_ROOT: "" }, input: "{}" });
     assert.equal(res.status, 2, `${role} hook must fail closed without MTH_GUARD_ROOT`);
   }
+});
+
+test("F-DG0-135: the guard fails closed when the guarded roots cannot be determined", () => {
+  const notRepo = mkdtempSync(join(tmpdir(), "guard-norepo-"));
+  const v = decide(scopes, "backend-workflow-engineer", join(notRepo, "apps", "x.ts"), notRepo);
+  assert.equal(v.allow, false);
+  assert.match(v.reason, /cannot determine the guarded repository roots/);
+  // git unavailable to the hook process: every write is blocked, even ordinary implementation files.
+  const script = join(here, "..", "guard-write.mjs");
+  const res = spawnSync(process.execPath, [script, "backend-workflow-engineer"], {
+    env: { PATH: "/nonexistent", MTH_GUARD_ROOT: GUARD_ROOT }, input: JSON.stringify({ tool_input: { file_path: join(GUARD_ROOT, "apps/api/x.ts") } }),
+  });
+  assert.equal(res.status, 2);
+  assert.match(res.stderr.toString(), /cannot determine the guarded repository roots/);
+});
+
+test("F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable", () => {
+  for (const target of [join(homedir(), ".claude", "settings.json"), join(homedir(), ".gitconfig"), "/etc/claude-code/managed-settings.json", "/etc/gitconfig", join(homedir(), ".bashrc")]) {
+    for (const role of Object.keys(scopes.roles)) {
+      assert.equal(decide(scopes, role, target, repo).allow, false, `${role} must not write ${target}`);
+    }
+  }
+  assert.equal(decide(scopes, "domain-reviewer", join(tmpdir(), "scratch-notes.md"), repo).allow, true);
+});
+
+test("F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory", () => {
+  const fakeHome = mkdtempSync(join(tmpdir(), "guard-home-"));
+  const script = join(here, "..", "guard-write.mjs");
+  const env = { ...process.env, HOME: fakeHome, MTH_GUARD_ROOT: GUARD_ROOT };
+  const probe = (fp) => spawnSync("node", [script, "domain-reviewer"], { env, input: JSON.stringify({ tool_input: { file_path: fp } }) }).status;
+  assert.equal(probe(join(fakeHome, ".claude", "settings.json")), 2);
+  assert.equal(probe(join(fakeHome, ".gitconfig")), 2);
+  assert.equal(probe(join(tmpdir(), "not-home-scratch.txt")), 0);
 });

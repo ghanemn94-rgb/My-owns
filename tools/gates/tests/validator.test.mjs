@@ -867,3 +867,10 @@ test("F-DG0-224: the validator loads its schemas from a path with spaces and non
     `import(${JSON.stringify(join(dir, "gates", "lib", "rules.mjs"))}).then((m) => console.log(Object.keys(m.schema("review").properties).length > 5))`]).toString().trim();
   assert.equal(out, "true");
 });
+
+test("D-024: a run that changed configuration outside the candidate is rejected", () => {
+  const { repo, records } = buildValidRepo();
+  const ref = get(repo, records["qa-verifier"]).invocation_reference;
+  edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (m) => (m.external_config_changed = ["/root/.claude/settings.json 9f86d0"]));
+  expectError(validateGate(repo, "DG0"), /changed configuration outside the candidate/);
+});

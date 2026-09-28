@@ -75,6 +75,18 @@ sys.exit(0 if stopped or marked else 1)
 PY
 }
 
+# Configuration outside the candidate that could weaken the guard or run code during the auto-commit (F-DG0-136).
+# User settings are not loaded (--setting-sources project,local), but a change is still a tamper signal.
+config_snapshot() {
+  local f
+  for f in "$HOME/.claude/settings.json" "$HOME/.claude/settings.local.json" "$HOME/.gitconfig" \
+           "$HOME/.config/git/config" /etc/gitconfig /etc/claude-code/managed-settings.json \
+           "$REPO_ROOT/.git/config" "$REPO_ROOT/.git/info/attributes"; do
+    if [ -e "$f" ]; then echo "$f $(sha256sum "$f" | cut -d' ' -f1)"; else echo "$f absent"; fi
+  done
+  find "$REPO_ROOT/.git/hooks" -type f 2>/dev/null | sort | while read -r f; do echo "$f $(sha256sum "$f" | cut -d' ' -f1)"; done
+}
+
 # Snapshot of every non-ignored file (path -> sha256) before the run; the diff after the run is the run's outputs.
 snapshot() {
   python3 - "$REPO_ROOT" <<'PY'
@@ -96,6 +108,7 @@ json.dump(out, sys.stdout)
 PY
 }
 snapshot > "$OUT/.pre-snapshot.json"
+config_snapshot > "$OUT/.pre-config.txt"
 
 # The write-guard hook runs the main repository's guard and protects the repository and all of its worktrees,
 # whatever the agent's working directory (F-DG0-134). The agent's shell cannot change this process environment.
@@ -110,7 +123,7 @@ user_message() {
 ATTEMPTS=0
 set +e
 ( cd "$CWD" && user_message "$PROMPT" | claude -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
-    --session-id "$SESSION_ID" --settings "$SETTINGS" \
+    --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project,local \
     --input-format stream-json --replay-user-messages \
     --output-format stream-json --verbose ) > "$OUT/transcript.jsonl" 2> "$OUT/stderr.log"
 EXIT=$?
@@ -119,7 +132,7 @@ while [[ $ATTEMPTS -lt $MAX_RESUMES ]] && classifier_outage "$OUT/transcript.jso
   echo "classifier outage detected; resuming session $SESSION_ID (attempt $ATTEMPTS) after ${RESUME_PAUSE}s" >> "$OUT/stderr.log"
   sleep "$RESUME_PAUSE"
   ( cd "$CWD" && user_message "$RESUME_PROMPT" | claude -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
-      --resume "$SESSION_ID" --settings "$SETTINGS" \
+      --resume "$SESSION_ID" --settings "$SETTINGS" --setting-sources project,local \
       --input-format stream-json --replay-user-messages \
       --output-format stream-json --verbose ) >> "$OUT/transcript.jsonl" 2>> "$OUT/stderr.log"
   EXIT=$?
@@ -127,12 +140,21 @@ done
 set -e
 FINISHED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 snapshot > "$OUT/.post-snapshot.json"
+config_snapshot > "$OUT/.post-config.txt"
+diff "$OUT/.pre-config.txt" "$OUT/.post-config.txt" | grep '^>' | sed 's/^> //' > "$OUT/.config-changed.txt" || true
+rm -f "$OUT/.pre-config.txt" "$OUT/.post-config.txt"
 gzip -n "$OUT/transcript.jsonl"
 
 python3 "$REPO_ROOT/tools/agents/run_meta.py" "$OUT" "$RUN_ID" "$ROLE" "$STAGE" "$TASK" "$SESSION_ID" "$MODEL" "$CWD" "$HEAD_COMMIT" "$ASSIGN_REL" "$ASSIGN_SHA" "$STARTED" "$FINISHED" "$EXIT" "$ATTEMPTS" "$REPO_ROOT"
 
 # Review roles: commit the run evidence and the reviewer-authored files immediately, so they are write-once in git
 # history from the moment the run ends (D-021). Implementer output is integrated by the orchestrator instead.
+CONFIG_CHANGED="$(python3 -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1])).get("external_config_changed", [])))' "$OUT/meta.json")"
+if [[ -n "$CONFIG_CHANGED" ]]; then
+  echo "run-agent: configuration outside the candidate changed during $RUN_ID; evidence NOT auto-committed:" >&2
+  echo "$CONFIG_CHANGED" >&2
+  exit 71
+fi
 case "$ROLE" in
   domain-reviewer|code-security-reviewer|qa-verifier|release-auditor)
     LIST="$REPO_ROOT/.git/mth-commit-list-$RUN_ID"

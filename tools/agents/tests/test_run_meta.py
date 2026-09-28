@@ -92,3 +92,15 @@ class RunMetaTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ExternalConfigTest(RunMetaTest):
+    def test_external_config_changes_are_recorded(self):
+        with open(os.path.join(self.out, ".config-changed.txt"), "w", encoding="utf-8") as f:
+            f.write("/root/.claude/settings.json 0123\n")
+        meta = self.run_meta([{"type": "result", "session_id": "sid", "is_error": False}], {}, {})
+        self.assertEqual(meta["external_config_changed"], ["/root/.claude/settings.json 0123"])
+
+    def test_no_change_records_an_empty_list(self):
+        meta = self.run_meta([{"type": "result", "session_id": "sid", "is_error": False}], {}, {})
+        self.assertEqual(meta["external_config_changed"], [])

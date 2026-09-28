@@ -275,6 +275,8 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
   if (!meta.invocation_reference || meta.invocation_reference.session_id !== ref.session_id) bad("session_id does not match the recorded run");
   if (meta.result_session_id !== ref.session_id) bad("result_session_id does not match the requested session");
   if (meta.exit_code !== 0 || meta.is_error) bad("did not complete successfully");
+  // Runs before D-024 have no external_config_changed field; a present, non-empty list is a tamper signal.
+  if (Array.isArray(meta.external_config_changed) && meta.external_config_changed.length) bad(`changed configuration outside the candidate: ${meta.external_config_changed.join("; ")}`);
   for (const [rel, key] of [[resultRel, "result_sha256"], [transcriptRel, "transcript_sha256"]]) {
     if (!repoFile(repo, rel)) bad(`missing ${rel.split("/").pop()}`);
     else if (!meta[key] || sha256File(join(repo, rel)) !== meta[key]) bad(`${rel.split("/").pop()} does not match meta.${key}`);

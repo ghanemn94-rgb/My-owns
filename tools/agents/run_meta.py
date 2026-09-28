@@ -133,6 +133,12 @@ def build_meta(argv):
     meta["deleted"] = sorted(p for p in pre if p not in post)
     meta["written_by_tools"] = sorted(written)
     meta["tool_authored"] = dict(sorted(tool_authored.items()))
+    changed = f"{out}/.config-changed.txt"
+    meta["external_config_changed"] = []
+    if os.path.exists(changed):
+        with open(changed, encoding="utf-8") as f:
+            meta["external_config_changed"] = [l.strip() for l in f if l.strip()]
+        os.remove(changed)
     with open(f"{out}/result.json", "w", encoding="utf-8") as f:
         json.dump({"result": (result or {}).get("result")}, f, ensure_ascii=False, indent=1)
     for name, key in (("result.json", "result_sha256"), ("transcript.jsonl.gz", "transcript_sha256")):
