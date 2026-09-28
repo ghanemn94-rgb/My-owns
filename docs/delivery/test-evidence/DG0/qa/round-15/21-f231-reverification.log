@@ -1,0 +1,31 @@
+## F-DG0-231 re-verification (fresh, round 15), 2026-09-28T23:47:55Z
+### old13 = 6c61f2e
+$ grep -nE '/tmp/review|/tmp/<name>|worktree add /tmp|project,local|path-guarded|may write only its working directory and /tmp' docs/delivery/agent-protocol.md docs/delivery/agents.md .claude/agents/*.md tools/agents/agent_settings.py tools/agents/run-agent.sh docs/delivery/decisions.md
+docs/delivery/agents.md:28:No role may write a `.git` path segment. The runner exports `MTH_GUARD_ROOT` (the main repository), and every hook runs that repository's guard. The guard protects the repository **and all of i
+docs/delivery/agents.md:92:**Observation:** `Grep` and `Glob` are declared in the definitions but aren't exposed in `--agent` sessions of this CLI build. The agents use `grep`/`find` through Bash instead, which doesn't a
+.claude/agents/code-security-reviewer.md:33:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional narrative to
+.claude/agents/qa-verifier.md:31:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional narrative to the path i
+.claude/agents/domain-reviewer.md:33:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional narrative to the pa
+docs/delivery/decisions.md:15:| D-009 | 2026-09-28 | delivery-orchestrator | **Implementer write guard.** Implementers can't write `tools/gates/**`, `tools/agents/**`, `.claude/agents/**`, `docs/source/**`, reviews, gate
+docs/delivery/decisions.md:30:| D-024 | 2026-09-28 | delivery-orchestrator | **Guard fail-closed, scratch limited to the temp directory, user settings not loaded** (F-DG0-135, F-DG0-136).<br>• `guardedRoots()` throws w
+matches exit=0
+### old14 = 1e64eb0
+$ grep -nE '/tmp/review|/tmp/<name>|worktree add /tmp|project,local|path-guarded|may write only its working directory and /tmp' docs/delivery/agent-protocol.md docs/delivery/agents.md .claude/agents/*.md tools/agents/agent_settings.py tools/agents/run-agent.sh docs/delivery/decisions.md
+docs/delivery/agents.md:92:**Observation:** `Grep` and `Glob` are declared in the definitions but aren't exposed in `--agent` sessions of this CLI build. The agents use `grep`/`find` through Bash instead, which doesn't a
+docs/delivery/decisions.md:15:| D-009 | 2026-09-28 | delivery-orchestrator | **Implementer write guard.** Implementers can't write `tools/gates/**`, `tools/agents/**`, `.claude/agents/**`, `docs/source/**`, reviews, gate
+docs/delivery/decisions.md:30:| D-024 | 2026-09-28 | delivery-orchestrator | **Guard fail-closed, scratch limited to the temp directory, user settings not loaded** (F-DG0-135, F-DG0-136).<br>• `guardedRoots()` throws w
+docs/delivery/decisions.md:33:| D-027 | 2026-09-28 | delivery-orchestrator | **The sandbox wrapper runs entirely inside the sandbox; the config scan reports removals; meta.cwd is transcript-bound; dependency installation
+matches exit=0
+### rv = 7fab49c
+$ grep -nE '/tmp/review|/tmp/<name>|worktree add /tmp|project,local|path-guarded|may write only its working directory and /tmp' docs/delivery/agent-protocol.md docs/delivery/agents.md .claude/agents/*.md tools/agents/agent_settings.py tools/agents/run-agent.sh docs/delivery/decisions.md
+docs/delivery/agents.md:92:**Observation:** `Grep` and `Glob` are declared in the definitions but aren't exposed in `--agent` sessions of this CLI build. The agents use `grep`/`find` through Bash instead, which doesn't a
+docs/delivery/decisions.md:15:| D-009 | 2026-09-28 | delivery-orchestrator | **Implementer write guard.** Implementers can't write `tools/gates/**`, `tools/agents/**`, `.claude/agents/**`, `docs/source/**`, reviews, gate
+docs/delivery/decisions.md:30:| D-024 | 2026-09-28 | delivery-orchestrator | **Guard fail-closed, scratch limited to the temp directory, user settings not loaded** (F-DG0-135, F-DG0-136).<br>• `guardedRoots()` throws w
+docs/delivery/decisions.md:33:| D-027 | 2026-09-28 | delivery-orchestrator | **The sandbox wrapper runs entirely inside the sandbox; the config scan reports removals; meta.cwd is transcript-bound; dependency installation
+matches exit=0
+### candidate: disposable-copy guidance
+.claude/agents/qa-verifier.md:31:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional narrative to the path i
+.claude/agents/code-security-reviewer.md:33:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional narrative to
+docs/delivery/agent-protocol.md:79:Your Bash commands run in an OS sandbox (bubblewrap; D-025). Shell writes to protected paths fail with "Read-only file system": git metadata, Claude configuration, gate and agent toolin
+.claude/agents/domain-reviewer.md:33:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional narrative to the pa
+### live: see 12-live-sandbox-probe.log (/tmp and /var/tmp read-only; $TMPDIR writable; worktree add denied exit 128) and 01..08 logs, all produced in $TMPDIR clones

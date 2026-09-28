@@ -1,0 +1,18 @@
+## Live write-guard probe through this run's own Write tool (qa-verifier R15, session eaf04d57), ~2026-09-28T23:40Z
+Source: this run's transcript (docs/delivery/runs/DG0/DG0-T-DG0-REV-QA-R15-qa-verifier-20260928T232527Z-eaf04d57/), tool_result errors quoted verbatim.
+
+1. Write /home/user/My-owns/docs/source/QA-PROBE.txt
+   -> BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)      [expected: blocked]  PASS
+2. Write /home/user/My-owns/docs/delivery/reviews/DG0/round-15/domain-reviewer.qa15probe.json
+   -> BLOCKED by write guard: ... (outside role write scope)                                                [expected: blocked, F-DG0-144]  PASS
+3. Write /tmp/qa15-guard-probe.txt
+   -> BLOCKED by write guard: ... (outside the guarded repository and outside the temporary directory)     [expected: blocked, D-028]  PASS
+4. Write /proc/self/cwd/docs/source/QA-PROBE-proc.txt
+   -> BLOCKED by write guard: ... (outside the guarded repository and outside the temporary directory)     [expected: blocked, F-DG0-143]  PASS
+5. Write /home/user/My-owns/tests/qa/dg0/QA15-candidate-probe.txt
+   -> allowed (qa-verifier scope tests/qa/**)                                                               [expected: allowed by scope]  PASS
+   Operator note: this file is a candidate path. The working-tree candidate briefly became 74ec56b0... (101 files).
+   I deleted it immediately (rm + rmdir tests/qa/dg0 tests/qa tests); `candidate.mjs --stage DG0 --diff` then matched
+   b7f60ed3 again (23:41Z). No commit was made. Lesson: never probe tests/qa/** in the shared tree during a review.
+
+$ ls docs/source/QA-PROBE*  -> No such file or directory (nothing was written)

@@ -1,0 +1,35 @@
+## Live sandbox probe (this run, qa-verifier R15), 2026-09-28T23:40:00Z
+TMPDIR=/var/tmp/mth-run.peZEH0/claude-0 MTH_RUN_TMP=/var/tmp/mth-run.peZEH0
+drwx------ /var/tmp/mth-run.peZEH0
+drwx------ /var/tmp/mth-run.peZEH0
+$ touch /tmp/qa15-probe
+touch: cannot touch '/tmp/qa15-probe': Read-only file system
+exit=1
+$ touch /var/tmp/qa15-probe
+touch: cannot touch '/var/tmp/qa15-probe': Read-only file system
+exit=1
+$ touch /var/tmp/mth-run.peZEH0/claude-0/qa15-probe
+exit=0
+$ git worktree add -q /var/tmp/mth-run.peZEH0/claude-0/qa15-wt HEAD
+fatal: could not create leading directories of '.git/worktrees/qa15-wt': Read-only file system
+exit=128
+$ touch docs/source/QA-PROBE-bash.txt
+touch: cannot touch 'docs/source/QA-PROBE-bash.txt': Read-only file system
+exit=1
+$ touch tools/gates/qa15-probe
+touch: cannot touch 'tools/gates/qa15-probe': Read-only file system
+exit=1
+$ touch docs/delivery/reviews/DG0/round-15/domain-reviewer.qa15probe
+touch: cannot touch 'docs/delivery/reviews/DG0/round-15/domain-reviewer.qa15probe': Read-only file system
+exit=1
+$ touch docs/delivery/test-evidence/DG0/code-security/qa15probe
+touch: cannot touch 'docs/delivery/test-evidence/DG0/code-security/qa15probe': Read-only file system
+exit=1
+$ touch docs/delivery/requirements.csv
+touch: cannot touch 'docs/delivery/requirements.csv': Read-only file system
+exit=1
+$ touch docs/delivery/test-evidence/DG0/qa/round-15/qa15-own-area-probe
+exit=0
+$ curl -sS -m 5 https://example.com -o /dev/null
+curl: (7) Failed to connect to localhost port 3128 after 0 ms: Couldn't connect to server
+exit=7

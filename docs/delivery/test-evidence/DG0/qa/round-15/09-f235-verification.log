@@ -1,0 +1,86 @@
+## F-DG0-235 verification, 2026-09-28T23:27:23Z, node v22.22.2
+### A. my independent script on OLD round-14 candidate 1e64eb0
+$ node /home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/acceptance-feasibility.mjs $TMPDIR/old14
+A27 level=unit (validator);ops drill first=P0 (validator --reconcile, pro gate=DG7 proved=9 citing=9
+A28 level=ops (sealing check) first=P7 gate=DG7 proved=13 citing=13
+stage-plan mentions 28 distinct scenario IDs explicitly; ranges present: A01–A22,A03–A05,A08–A11,A01–A22,A01–A22,A01–A27,A01–A27,A23–A28,A01–A22,A01–A27
+errors (3):
+  - A18: register rows cite A18 but map omits: REQ-DLV-042
+  - A23: register rows cite A23 but map omits: REQ-DLV-042
+  - A24: register rows cite A24 but map omits: REQ-DLV-042
+RESULT: FAIL
+exit=1
+### B. same script on NEW candidate 7fab49c
+$ node /home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/acceptance-feasibility.mjs $TMPDIR/rv
+A24 level=unit (validator);CI first=P0 gate=DG0 proved=15 citing=15
+A25 level=unit (validator) first=P0 gate=DG0 proved=2 citing=2
+A26 level=ops drill first=P1 (first controlled defect-in gate=DG7 proved=6 citing=6
+A27 level=unit (validator);ops drill first=P0 (validator --reconcile, pro gate=DG7 proved=9 citing=9
+A28 level=ops (sealing check) first=P7 gate=DG7 proved=13 citing=13
+stage-plan mentions 28 distinct scenario IDs explicitly; ranges present: A01–A22,A03–A05,A08–A11,A01–A22,A01–A22,A01–A27,A01–A27,A23–A28,A01–A22,A01–A27
+errors (0):
+RESULT: PASS
+exit=0
+### C. REQ-DLV-042 occurrences in the new map
+25:- REQ-DLV-042 (added in AN-13; P1, DG1) cites A18, A23 and A24. It is now listed under all three scenarios. Its final gate DG1 is later than A24's gate DG0, so it is also in the A24 line of "Gate ordering of scenario suites".
+52:| A18 | Independent deployment | REQ-S20-018 | ops drill | P1 | DG7 | REQ-DLV-039, REQ-DLV-042; REQ-S01-001, REQ-S01-006; REQ-S15-005; REQ-S16-004, REQ-S16-006..009, REQ-S16-031; REQ-S17-009; REQ-S18-003; REQ-S19-001..005, REQ-S19-007..011, REQ-S19-013..019; REQ-S21-003..004 |
+57:| A23 | Real independent stage reviews | REQ-S20-023 | unit (validator);ops (gate audit) | P0 (validator unit tests); gate evidence from DG0 | DG7 | REQ-DLV-001..002, REQ-DLV-004..014, REQ-DLV-021, REQ-DLV-026, REQ-DLV-028, REQ-DLV-031..039, REQ-DLV-042; REQ-S20-031; REQ-S21-002, REQ-S21-004 |
+58:| A24 | Enforced advancement | REQ-S20-024 | unit (validator);CI | P0 | DG0 | REQ-DLV-007, REQ-DLV-013, REQ-DLV-015..017, REQ-DLV-019..020, REQ-DLV-023..026, REQ-DLV-032, REQ-DLV-040, REQ-DLV-042; REQ-S02-005 |
+83:| A24 | DG0 | REQ-DLV-024 (DG7), REQ-DLV-025 (DG1), REQ-DLV-040 (DG7), REQ-DLV-042 (DG1), REQ-S02-005 (DG7) |
+### D. diff of acceptance-map.md 1e64eb0..7fab49c
+diff --git a/docs/analysis/acceptance-map.md b/docs/analysis/acceptance-map.md
+index 8b1e99f..df08772 100644
+--- a/docs/analysis/acceptance-map.md
++++ b/docs/analysis/acceptance-map.md
+@@ -21,6 +21,13 @@ Test levels follow M0399: unit for formulas and state rules, integration for per
+   - P6 extends and re-runs the A01–A22 suites.
+   - Only A17 (must pass at DG6) and the A19 restore drill (must pass at DG7) are first authored in P6.
+ 
++**AN-14 update (F-DG0-235).**
++- REQ-DLV-042 (added in AN-13; P1, DG1) cites A18, A23 and A24. It is now listed under all three scenarios. Its final gate DG1 is later than A24's gate DG0, so it is also in the A24 line of "Gate ordering of scenario suites".
++- **Automated check.** `docs/analysis/tools/check_acceptance_map.py` enforces the rule of this map in both directions on every `prefreeze.sh` run. It exits non-zero and prints every mismatch.
++  - **Citation (M1).** A row cites `Ann` when its `acceptance` column contains `Ann` as a whole word. This is the same rule `check_counts.py` uses for the README "A-citations" counts. A prose range such as "A01-A27 tests pass" is not expanded: its two endpoints count, like any other token.
++  - **Requirements proved (M2).** The "Requirements proved" list of each scenario is exactly the set of citing rows, minus the scenario's own `REQ-S20-###` test row.
++  - **Gate ordering (M3).** The "Gate ordering" line of each scenario is exactly the set of those rows whose `final_gate` is later than the scenario's "Must pass at" gate, each annotated with that final gate. A scenario with no such row has no line.
++
+ **Regression rule.** Once a scenario's test first passes at its gate, every later gate re-runs it (M0066, M0413). The P7 evidence covers A01–A27 on the DG7 candidate (M0410), and A28 is the post-approval sealing check (M0411).
+ 
+ | ID | Scenario | Executable test req | Test level | First delivered | Must pass at | Requirements proved (all areas) |
+@@ -42,13 +49,13 @@ Test levels follow M0399: unit for formulas and state rules, integration for per
+ | A15 | Reporting | REQ-S20-015 | integration;visual | P4 | DG5 | REQ-PB-089; REQ-DLV-037; REQ-S09-011; REQ-S10-013; REQ-S12-015; REQ-S13-004..009; REQ-S15-007; REQ-S20-030 |
+ | A16 | Health and launch | REQ-S20-016 | unit;e2e | P5 | DG5 | REQ-PB-086..087, REQ-PB-091..092; REQ-DLV-037; REQ-S12-004; REQ-S14-001..004; REQ-S16-021 |
+ | A17 | Import and integration | REQ-S20-017 | integration | P6 | DG6 | REQ-DLV-038; REQ-S01-005; REQ-S07-003; REQ-S12-019; REQ-S17-001..005; REQ-S19-007 |
+-| A18 | Independent deployment | REQ-S20-018 | ops drill | P1 | DG7 | REQ-DLV-039; REQ-S01-001, REQ-S01-006; REQ-S15-005; REQ-S16-004, REQ-S16-006..009, REQ-S16-031; REQ-S17-009; REQ-S18-003; REQ-S19-001..005, REQ-S19-007..011, REQ-S19-013..019; REQ-S21-003..004 |
++| A18 | Independent deployment | REQ-S20-018 | ops drill | P1 | DG7 | REQ-DLV-039, REQ-DLV-042; REQ-S01-001, REQ-S01-006; REQ-S15-005; REQ-S16-004, REQ-S16-006..009, REQ-S16-031; REQ-S17-009; REQ-S18-003; REQ-S19-001..005, REQ-S19-007..011, REQ-S19-013..019; REQ-S21-003..004 |
+ | A19 | Backup and recovery | REQ-S20-019 | ops drill | P6 | DG7 | REQ-DLV-039; REQ-S16-004, REQ-S16-024; REQ-S19-012..013 |
+ | A20 | UX and branding | REQ-S20-020 | e2e;visual | P1 | DG6 | REQ-DLV-033; REQ-S01-002; REQ-S03-007; REQ-S07-008, REQ-S07-017; REQ-S13-009; REQ-S15-001..007, REQ-S15-009, REQ-S15-011..014; REQ-S16-002 |
+ | A21 | No-AI operation | REQ-S20-021 | e2e | P5 | DG6 | REQ-DLV-038; REQ-S01-004; REQ-S12-023; REQ-S17-005, REQ-S17-009..010; REQ-S19-018 |
+ | A22 | Operational readiness | REQ-S20-022 | integration;ops drill | P5 | DG6 | REQ-DLV-003, REQ-DLV-038; REQ-S12-019, REQ-S12-022; REQ-S16-001, REQ-S16-024, REQ-S16-029, REQ-S16-033; REQ-S18-001, REQ-S18-003; REQ-S19-010..011; REQ-S20-029; REQ-S21-001 |
+-| A23 | Real independent stage reviews | REQ-S20-023 | unit (validator);ops (gate audit) | P0 (validator unit tests); gate evidence from DG0 | DG7 | REQ-DLV-001..002, REQ-DLV-004..014, REQ-DLV-021, REQ-DLV-026, REQ-DLV-028, REQ-DLV-031..039; REQ-S20-031; REQ-S21-002, REQ-S21-004 |
+-| A24 | Enforced advancement | REQ-S20-024 | unit (validator);CI | P0 | DG0 | REQ-DLV-007, REQ-DLV-013, REQ-DLV-015..017, REQ-DLV-019..020, REQ-DLV-023..026, REQ-DLV-032, REQ-DLV-040; REQ-S02-005 |
++| A23 | Real independent stage reviews | REQ-S20-023 | unit (validator);ops (gate audit) | P0 (validator unit tests); gate evidence from DG0 | DG7 | REQ-DLV-001..002, REQ-DLV-004..014, REQ-DLV-021, REQ-DLV-026, REQ-DLV-028, REQ-DLV-031..039, REQ-DLV-042; REQ-S20-031; REQ-S21-002, REQ-S21-004 |
++| A24 | Enforced advancement | REQ-S20-024 | unit (validator);CI | P0 | DG0 | REQ-DLV-007, REQ-DLV-013, REQ-DLV-015..017, REQ-DLV-019..020, REQ-DLV-023..026, REQ-DLV-032, REQ-DLV-040, REQ-DLV-042; REQ-S02-005 |
+ | A25 | Candidate integrity | REQ-S20-025 | unit (validator) | P0 | DG0 | REQ-DLV-022; REQ-S21-002 |
+ | A26 | Repair and re-review | REQ-S20-026 | ops drill | P1 (first controlled defect-injection drill) | DG7 | REQ-DLV-008, REQ-DLV-012, REQ-DLV-014, REQ-DLV-017..018; REQ-S20-031 |
+ | A27 | Reliable resumption | REQ-S20-027 | unit (validator);ops drill | P0 (validator --reconcile, progress.md); drill in P7 | DG7 | REQ-DLV-003, REQ-DLV-011, REQ-DLV-019, REQ-DLV-024, REQ-DLV-027..030, REQ-DLV-039 |
+@@ -73,7 +80,7 @@ A scenario's executable test first passes at its "must pass at" gate with the re
+ | A17 | DG6 | REQ-S17-004 (DG7), REQ-S19-007 (DG7) |
+ | A21 | DG6 | REQ-S19-018 (DG7) |
+ | A22 | DG6 | REQ-S16-024 (DG7), REQ-S16-033 (DG7), REQ-S19-010 (DG7), REQ-S19-011 (DG7) |
+-| A24 | DG0 | REQ-DLV-024 (DG7), REQ-DLV-025 (DG1), REQ-DLV-040 (DG7), REQ-S02-005 (DG7) |
++| A24 | DG0 | REQ-DLV-024 (DG7), REQ-DLV-025 (DG1), REQ-DLV-040 (DG7), REQ-DLV-042 (DG1), REQ-S02-005 (DG7) |
+ | A25 | DG0 | REQ-S21-002 (DG7) |
+ 
+ ## Pass conditions (verbatim from M0370–M0397)
+### E. analyst check_acceptance_map.py on new candidate (in clone)
+checked 28 scenarios against 412 register rows in docs/analysis/acceptance-map.md
+ACCEPTANCE MAP MATCHES THE REGISTER
+exit=0
+### F. analyst check against the pre-fix map (old acceptance-map.md copied into a scratch clone of the candidate)
+MISMATCH M2 A18: register row cites A18 but the map omits it: REQ-DLV-042
+MISMATCH M2 A23: register row cites A23 but the map omits it: REQ-DLV-042
+MISMATCH M2 A24: register row cites A24 but the map omits it: REQ-DLV-042
+MISMATCH M3 A24: gate-ordering table omits REQ-DLV-042 (DG1)
+checked 28 scenarios against 412 register rows in docs/analysis/acceptance-map.md
+ACCEPTANCE MAP MISMATCH (4 problem(s))
+exit=1

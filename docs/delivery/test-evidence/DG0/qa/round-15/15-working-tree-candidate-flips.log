@@ -1,0 +1,28 @@
+## Working-tree candidate ID sampled from the shared tree (read-only), 2026-09-28T23:43:44Z
+$ node tools/gates/candidate.mjs --stage DG0 ; node tools/gates/candidate.mjs --stage DG0 --diff
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:4b7851cfc02e0cce6e373207f7fc857d143fa9834556482fc60cf4bc39ae4124","files":100}
+{"frozen":"sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e","working_tree":"sha256:4b7851cfc02e0cce6e373207f7fc857d143fa9834556482fc60cf4bc39ae4124","matches":false,"added":[".bash_profile",".bashrc",".gitconfig",".gitmodules",".idea",".mcp.json",".profile",".ripgreprc",".vscode",".zprofile",".zshrc","CLAUDE.local.md","docs/delivery/gates"],"removed":[],"changed":[]}
+exit(diff)=0
+$ stat -c '%F %s %n' <stub paths>
+regular empty file 0 .bash_profile
+regular empty file 0 .bashrc
+regular empty file 0 .gitconfig
+regular empty file 0 .gitmodules
+regular empty file 0 .idea
+regular empty file 0 .mcp.json
+regular empty file 0 .profile
+regular empty file 0 .ripgreprc
+regular empty file 0 .vscode
+regular empty file 0 .zprofile
+regular empty file 0 .zshrc
+regular empty file 0 CLAUDE.local.md
+regular empty file 0 docs/delivery/gates
+$ node tools/gates/validate.mjs --reconcile | head -3
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e
+working tree:     sha256:4b7851cfc02e0cce6e373207f7fc857d143fa9834556482fc60cf4bc39ae4124 (differs: 0 changed, 13 added, 0 removed)
+$ node tools/gates/candidate.mjs --stage DG0 --ref HEAD
+{"stage":"DG0","source":"HEAD","candidate_id":"sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e","files":87}
+# earlier in this run: 23:25Z 87 files b7f60ed3; 23:40Z 101 files 74ec56b0 (with my tests/qa probe) then 100 files 4b7851cf; 23:41Z 87 files b7f60ed3 (six samples); 23:42Z 100 files 4b7851cf
+# NOTE: 'exit(diff)=0' above is a logging slip (PIPESTATUS referred to the trailing echo). candidate.mjs --diff exits 1 on this mismatch, as seen at 23:42Z in this run.
+# 2026-09-28T23:47:55Z: the 13 stub files currently in the shared tree have mtime 2026-09-28 23:41:32Z = the start of this run's background monitor (13-candidate-path-monitor.log), which I terminated with pkill at ~23:43Z; its sandbox therefore most likely did not remove its stubs. They are in this run's deny list, so I cannot remove them; reported to the orchestrator for cleanup. The 23:40Z observation (100/101 files) predates the monitor and came from another command's sandbox.
