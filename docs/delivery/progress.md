@@ -40,7 +40,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - F-DG0-146 (Low; fails closed).
   - The QA round-15 result.
   - An orchestrator-observed latent issue: a sandbox stub at `test-evidence/<stage>/audit` could block a reviewer's first `mkdir` in a new stage. Fix: the runner pre-creates the four evidence directories.
-- **Findings (round 15 imported):** 79 closed and verified. Open: F-DG0-145 (High), and the Low findings 146, 236 and 237. 146 and 236 are the same issue (sandbox stubs perturb the working-tree candidate; fails closed). 237 is a threat-model wording gap (new files outside the deny list, detected).
+- **Findings (round 15 imported):** 77 closed and verified. Open: F-DG0-145 (High), and the Low findings 146, 236 and 237. 146 and 236 are the same issue (sandbox stubs perturb the working-tree candidate; fails closed). 237 is a threat-model wording gap (new files outside the deny list, detected).
 
 ## Done in P0 so far
 
