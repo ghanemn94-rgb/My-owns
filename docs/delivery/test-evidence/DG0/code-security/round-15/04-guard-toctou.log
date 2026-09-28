@@ -1,0 +1,10 @@
+$ node repro-r15-guard-toctou.mjs $TMPDIR/dg0-race $TMPDIR/toctou 200   (clone of 7fab49c; node v22.22.2)
+guard /var/tmp/mth-run.4aYowI/claude-0/dg0-race/tools/agents/guard-write.mjs; MTH_RUN_TMP=/var/tmp/mth-run.4aYowI/claude-0/toctou/runA; 2026-09-28T23:29:49.411Z
+[other run's private TMPDIR] static check, flip -> forbidden: hook rc=2 BLOCKED by write guard: code-security-reviewer may not write '/var/tmp/mth-run.4aYowI/claude-0/toctou/runB/clone/tools/gates/tests/static.txt' (outside the guarded repository and outside the temporary directory) (reached through a symlink)
+[other run's private TMPDIR] role=code-security-reviewer attempts=200 hook-allowed=103 hook-blocked=97 landed-in-FORBIDDEN=80 landed-benign=23
+[protected repo path tools/gates/tests] static check, flip -> forbidden: hook rc=2 BLOCKED by write guard: backend-workflow-engineer may not write 'tools/gates/tests/static.txt' (protected path) (reached through a symlink)
+[protected repo path tools/gates/tests] role=backend-workflow-engineer attempts=200 hook-allowed=95 hook-blocked=105 landed-in-FORBIDDEN=75 landed-benign=20
+[protected repo path tools/gates/tests] static check, flip -> forbidden: hook rc=2 BLOCKED by write guard: qa-verifier may not write 'tools/gates/tests/static.txt' (protected path) (reached through a symlink)
+[protected repo path tools/gates/tests] role=qa-verifier attempts=200 hook-allowed=99 hook-blocked=101 landed-in-FORBIDDEN=81 landed-benign=18
+RESULT: forbidden writes after an allow verdict: 236
+exit=1

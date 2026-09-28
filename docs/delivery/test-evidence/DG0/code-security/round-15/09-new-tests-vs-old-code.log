@@ -1,0 +1,22 @@
+# candidate 7fab49c's tools/agents/tests run against round-14 code 1e64eb0 (guard, scopes, runner, settings from 1e64eb0); 2026-09-28T23:36:46Z
+$ node --test tools/agents/tests/guard.test.mjs tools/agents/tests/runner.test.mjs
+not ok 19 - F-DG0-144: a reviewer may not write another reviewer's record, sidecars or evidence
+not ok 20 - F-DG0-144: only the run's own private temporary directory is scratch, never the shared /tmp
+not ok 21 - F-DG0-143: writes that resolve through /proc, /sys or /dev, or whose real path cannot be determined, are blocked
+not ok 26 - F-DG0-144: every run gets its own private TMPDIR, exported to the agent and removed when the run ends
+# tests 26
+# pass 22
+# fail 4
+$ python3 -m unittest discover -s tools/agents/tests -p test_*.py
+ERROR: test_a_stage_is_required (test_agent_settings.AgentSettingsTest.test_a_stage_is_required)
+ERROR: test_analyst_keeps_analysis_and_register_only (test_agent_settings.AgentSettingsTest.test_analyst_keeps_analysis_and_register_only)
+ERROR: test_cwd_outside_the_repository_is_refused (test_agent_settings.AgentSettingsTest.test_cwd_outside_the_repository_is_refused)
+ERROR: test_each_reviewer_writes_only_its_own_evidence_directory (test_agent_settings.AgentSettingsTest.test_each_reviewer_writes_only_its_own_evidence_directory)
+ERROR: test_every_role_denies_protected_paths (test_agent_settings.AgentSettingsTest.test_every_role_denies_protected_paths)
+ERROR: test_implementers_may_write_product_code (test_agent_settings.AgentSettingsTest.test_implementers_may_write_product_code)
+ERROR: test_reviewers_are_confined_to_evidence (test_agent_settings.AgentSettingsTest.test_reviewers_are_confined_to_evidence)
+ERROR: test_roles_without_evidence_cannot_write_any (test_agent_settings.AgentSettingsTest.test_roles_without_evidence_cannot_write_any)
+ERROR: test_unknown_role_is_refused (test_agent_settings.AgentSettingsTest.test_unknown_role_is_refused)
+ERROR: test_worktrees_are_covered (test_agent_settings.AgentSettingsTest.test_worktrees_are_covered)
+Ran 17 tests in 0.286s
+FAILED (errors=10)

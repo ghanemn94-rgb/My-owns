@@ -1,0 +1,11 @@
+# F-DG0-144 live file-tool checks with the real Claude Code Write tool (code-security-reviewer, DG0 round 15)
+# session 65015dd2-5aa0-4fe8-a8ea-2f61e56bb126 (calls and hook results are in this run's transcript); ~2026-09-28T23:37Z
+# guard: /home/user/My-owns/tools/agents/guard-write.mjs (candidate 7fab49c), MTH_RUN_TMP=/var/tmp/mth-run.4aYowI
+Write /tmp/claude-0/cs-r15-f144-shared-scratch-probe.txt            -> BLOCKED (outside the guarded repository and outside the temporary directory)   expected BLOCKED  PASS
+Write /var/tmp/cs-r15-f144-var-tmp-probe.txt                         -> BLOCKED (outside the guarded repository and outside the temporary directory)   expected BLOCKED  PASS
+Write docs/delivery/test-evidence/DG0/qa/cs-r15-f144-probe.txt       -> BLOCKED (outside role write scope)                                             expected BLOCKED  PASS
+Write docs/delivery/reviews/DG0/round-15/qa-verifier.json            -> BLOCKED (outside role write scope)                                             expected BLOCKED  PASS
+Write /var/tmp/mth-run.4aYowI/cs-r15-f144-own-scratch-probe.txt      -> created (own private MTH_RUN_TMP is scratch)                                   expected ALLOWED  PASS
+Shell side: see 06-f144-sandbox-probe.log (/tmp, /tmp/claude-0, /var/tmp and /var/tmp/mth-run.4aYowI read-only; only this run's claude-0 is a rw mount;
+other reviewers' evidence directories, reviews and runs are ro bind mounts).
+Caveat: the static guard decisions above can be bypassed by a symlink-swap race (F-DG0-145, 04-guard-toctou.log, 05-guard-toctou-live.log).

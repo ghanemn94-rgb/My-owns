@@ -1,0 +1,48 @@
+$ MTH_RUN_TMP=/var/tmp/mth-run.4aYowI/claude-0 node repro-r15-f143-procroot.mjs $TMPDIR/dg0-old   (2026-09-28T23:28:52Z)
+guard of 1e64eb02caf8a8c8c5d59d0c6aad390c70e5b7c5; scratch /var/tmp/mth-run.4aYowI/claude-0
+A symlink -> /proc/<victim>/root/tmp (round-14 case) :: decide(code-security-reviewer) -> allow=true (temporary directory (scratch))
+A symlink -> /proc/<victim>/root/tmp (round-14 case) :: decide(backend-workflow-engineer) -> allow=true (temporary directory (scratch))
+B relative symlink ../../../..(to /)proc/<victim>/root :: decide(code-security-reviewer) -> allow=true (temporary directory (scratch))
+B relative symlink ../../../..(to /)proc/<victim>/root :: decide(backend-workflow-engineer) -> allow=true (temporary directory (scratch))
+C two-hop chain: l2 -> l3 -> /proc/self/cwd :: decide(code-security-reviewer) -> allow=false (code-security-reviewer may not write '/home/user/My-owns/x.txt' (outside the guarded repository and outside the temporary directory) (reached through a symlink))
+C two-hop chain: l2 -> l3 -> /proc/self/cwd :: decide(backend-workflow-engineer) -> allow=false (backend-workflow-engineer may not write '/home/user/My-owns/x.txt' (outside the guarded repository and outside the temporary directory) (reached through a symlink))
+D symlink -> /dev/shm :: decide(code-security-reviewer) -> allow=false (code-security-reviewer may not write '/dev/shm/x.txt' (outside the guarded repository and outside the temporary directory) (reached through a symlink))
+D symlink -> /dev/shm :: decide(backend-workflow-engineer) -> allow=false (backend-workflow-engineer may not write '/dev/shm/x.txt' (outside the guarded repository and outside the temporary directory) (reached through a symlink))
+E symlink loop :: decide(code-security-reviewer) -> allow=true (temporary directory (scratch))
+E symlink loop :: decide(backend-workflow-engineer) -> allow=true (temporary directory (scratch))
+F dangling symlink (target missing) :: decide(code-security-reviewer) -> allow=true (temporary directory (scratch))
+F dangling symlink (target missing) :: decide(backend-workflow-engineer) -> allow=true (temporary directory (scratch))
+G benign: plain file in scratch :: decide(code-security-reviewer) -> allow=true (temporary directory (scratch))
+G benign: plain file in scratch :: decide(backend-workflow-engineer) -> allow=true (temporary directory (scratch))
+H benign: symlink -> scratch dir :: decide(code-security-reviewer) -> allow=true (temporary directory (scratch))
+H benign: symlink -> scratch dir :: decide(backend-workflow-engineer) -> allow=true (temporary directory (scratch))
+I direct /proc/<victim>/root/tmp path :: decide(code-security-reviewer) -> allow=false (code-security-reviewer may not write '/proc/16/root/tmp/repo/check.txt' (outside the guarded repository and outside the temporary directory))
+I direct /proc/<victim>/root/tmp path :: decide(backend-workflow-engineer) -> allow=false (backend-workflow-engineer may not write '/proc/16/root/tmp/repo/check.txt' (outside the guarded repository and outside the temporary directory))
+case A allowed -> wrote through the magic link
+victim sees: SWAPPED-BY-ATTACKER
+exit=0
+
+$ MTH_RUN_TMP=/var/tmp/mth-run.4aYowI/claude-0 node repro-r15-f143-procroot.mjs $TMPDIR/dg0-sec   (2026-09-28T23:28:55Z)
+guard of 7fab49c5c6764721bbe2982aa621a34ea31cfdea; scratch /var/tmp/mth-run.4aYowI/claude-0
+A symlink -> /proc/<victim>/root/tmp (round-14 case) :: decide(code-security-reviewer) -> allow=false (code-security-reviewer may not write '/var/tmp/mth-run.4aYowI/claude-0/r15-procroot-RbpVf0/l/repo/check.txt' (its real path cannot be determined safely); blocking to fail safe)
+A symlink -> /proc/<victim>/root/tmp (round-14 case) :: decide(backend-workflow-engineer) -> allow=false (backend-workflow-engineer may not write '/var/tmp/mth-run.4aYowI/claude-0/r15-procroot-RbpVf0/l/repo/check.txt' (its real path cannot be determined safely); blocking to fail safe)
+B relative symlink ../../../..(to /)proc/<victim>/root :: decide(code-security-reviewer) -> allow=false (code-security-reviewer may not write '/var/tmp/mth-run.4aYowI/claude-0/r15-procroot-RbpVf0/rel/repo/check.txt' (its real path cannot be determined safely); blocking to fail safe)
+B relative symlink ../../../..(to /)proc/<victim>/root :: decide(backend-workflow-engineer) -> allow=false (backend-workflow-engineer may not write '/var/tmp/mth-run.4aYowI/claude-0/r15-procroot-RbpVf0/rel/repo/check.txt' (its real path cannot be determined safely); blocking to fail safe)
+C two-hop chain: l2 -> l3 -> /proc/self/cwd :: decide(code-security-reviewer) -> allow=false (code-security-reviewer may not write '/var/tmp/mth-run.4aYowI/claude-0/r15-procroot-RbpVf0/l2/x.txt' (its real path cannot be determined safely); blocking to fail safe)
+C two-hop chain: l2 -> l3 -> /proc/self/cwd :: decide(backend-workflow-engineer) -> allow=false (backend-workflow-engineer may not write '/var/tmp/mth-run.4aYowI/claude-0/r15-procroot-RbpVf0/l2/x.txt' (its real path cannot be determined safely); blocking to fail safe)
+D symlink -> /dev/shm :: decide(code-security-reviewer) -> allow=false (code-security-reviewer may not write '/var/tmp/mth-run.4aYowI/claude-0/r15-procroot-RbpVf0/shm/x.txt' (its real path cannot be determined safely); blocking to fail safe)
+D symlink -> /dev/shm :: decide(backend-workflow-engineer) -> allow=false (backend-workflow-engineer may not write '/var/tmp/mth-run.4aYowI/claude-0/r15-procroot-RbpVf0/shm/x.txt' (its real path cannot be determined safely); blocking to fail safe)
+E symlink loop :: decide(code-security-reviewer) -> allow=false (code-security-reviewer may not write '/var/tmp/mth-run.4aYowI/claude-0/r15-procroot-RbpVf0/loop1/x.txt' (its real path cannot be determined safely); blocking to fail safe)
+E symlink loop :: decide(backend-workflow-engineer) -> allow=false (backend-workflow-engineer may not write '/var/tmp/mth-run.4aYowI/claude-0/r15-procroot-RbpVf0/loop1/x.txt' (its real path cannot be determined safely); blocking to fail safe)
+F dangling symlink (target missing) :: decide(code-security-reviewer) -> allow=false (code-security-reviewer may not write '/var/tmp/mth-run.4aYowI/claude-0/r15-procroot-RbpVf0/dangle' (its real path cannot be determined safely); blocking to fail safe)
+F dangling symlink (target missing) :: decide(backend-workflow-engineer) -> allow=false (backend-workflow-engineer may not write '/var/tmp/mth-run.4aYowI/claude-0/r15-procroot-RbpVf0/dangle' (its real path cannot be determined safely); blocking to fail safe)
+G benign: plain file in scratch :: decide(code-security-reviewer) -> allow=true (temporary directory (scratch))
+G benign: plain file in scratch :: decide(backend-workflow-engineer) -> allow=true (temporary directory (scratch))
+H benign: symlink -> scratch dir :: decide(code-security-reviewer) -> allow=true (temporary directory (scratch))
+H benign: symlink -> scratch dir :: decide(backend-workflow-engineer) -> allow=true (temporary directory (scratch))
+I direct /proc/<victim>/root/tmp path :: decide(code-security-reviewer) -> allow=false (code-security-reviewer may not write '/proc/53/root/tmp/repo/check.txt' (outside the guarded repository and outside the temporary directory))
+I direct /proc/<victim>/root/tmp path :: decide(backend-workflow-engineer) -> allow=false (backend-workflow-engineer may not write '/proc/53/root/tmp/repo/check.txt' (outside the guarded repository and outside the temporary directory))
+case A blocked -> no write attempted
+victim sees: ORIGINAL
+exit=0
+
