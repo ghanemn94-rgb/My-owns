@@ -1,0 +1,36 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-137",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The reported vector is fully prevented. Agents now start with '--setting-sources project' only (run-agent.sh:141,150), so a planted .claude/settings.local.json is never loaded; and the D-025 OS Bash sandbox denies shell writes to both .claude and .git. Live-verified in my own reviewer sandbox: 'echo {...disableAllHooks...} > .claude/settings.local.json' and 'echo zz >> .git/info/exclude' both fail with 'Read-only file system'. As detection defence-in-depth, config_snapshot now hashes .git/info/exclude, ~/.config/git/ignore, and every Claude/ignore file anywhere in the repo and worktrees (run-agent.sh:83-103). NOTE: a broader, distinct escape that can still reach the same 'disable the guard for later runs' outcome (planting a cwd-shadowing json.py that the unsandboxed runner imports) is raised separately as F-DG0-140; F-137's specific mechanism is closed.",
+      "evidence": [
+        "tools/agents/run-agent.sh#L141",
+        "tools/agents/run-agent.sh#L86",
+        "docs/delivery/test-evidence/DG0/code-security/round-12/03-verify-137-138-139.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-138",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The primary vector (a symlinked pre-commit hook running during the evidence auto-commit and smuggling extra files) is prevented on three layers: config_snapshot now lists symlinked hooks with 'find ( -type f -o -type l )' (run-agent.sh:91); the auto-commit runs hook-free with 'git -c core.hooksPath=/dev/null commit --no-verify' (run-agent.sh:193-195); and it then verifies the committed file list equals the pathspec list, exiting 72 otherwise (run-agent.sh:198-207). Live-confirmed in my F-140 stealth repro: the planted pre-commit hook did NOT fire during the runner's auto-commit (it only ran on a later manual 'git commit' outside the runner). The residual sub-items the finding also listed (validator not rejecting a non-array external_config_changed; ~/.claude.json not snapshotted) are only reachable by a party who can forge meta.json, i.e. the disclosed self-hashed-evidence residual (threat-model.md #1), so they add no mechanical exposure; accepting the fix as complete for its mechanically-defended scope.",
+      "evidence": [
+        "tools/agents/run-agent.sh#L91",
+        "tools/agents/run-agent.sh#L193",
+        "docs/delivery/test-evidence/DG0/code-security/round-12/02-cwd-python-shadow-stealth.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-139",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "write-scopes.json's $comment was rewritten and no longer claims 'Files outside any git work tree (scratch space) are always allowed'. It now states that outside the guarded repository and its worktrees only the OS temporary directory is scratch and the home directory never is (D-024), and that shell writes are confined separately by the OS sandbox from agent_settings.py (D-025). Documentation now matches the enforced rule.",
+      "evidence": [
+        "tools/agents/write-scopes.json#L2",
+        "docs/delivery/test-evidence/DG0/code-security/round-12/03-verify-137-138-139.log"
+      ]
+    }
+  ]
+}

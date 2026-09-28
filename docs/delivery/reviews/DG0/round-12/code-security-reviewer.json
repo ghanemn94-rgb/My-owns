@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 12,
+  "candidate_id": "sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c",
+  "source_commit": "7f09967ad36dc1a0d2a7065ae93f11bded29ccce",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-SEC-R12-code-security-reviewer-20260928T183204Z-65abfbfc",
+    "session_id": "65abfbfc-2612-4791-9e3e-9d9ff286f833"
+  },
+  "implementation_author": ["transformation-analyst", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I authored none of the reviewed scope (gate tooling, runner, write guard/sandbox, agent definitions, CI, source scripts, register/analysis). I am the independent code-security reviewer. I formed this verdict before reading any other round-12 review record."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-12/review-code-security-reviewer.md",
+  "requirements_checked": ["REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-025", "REQ-DLV-026"],
+  "checks_run": [
+    {
+      "id": "C1-candidate-identity",
+      "procedure": "Confirm the frozen candidate matches before reviewing: recompute the candidate ID and verify HEAD is a metadata-only commit after the freeze.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG0; git diff --stat 7f09967..93b04b6",
+      "environment": "sandboxed bash, node v22, repo /home/user/My-owns",
+      "expected": "candidate.mjs prints sha256:21f142b863c445f6...; HEAD (93b04b6) diff vs source commit touches only delivery metadata (assignments, manifest, findings.json, stages.json, probe README).",
+      "actual": "candidate_id sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c (83 files); post-freeze diff is metadata only. Match confirmed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022"]
+    },
+    {
+      "id": "C2-node-tests",
+      "procedure": "Run the gate validator and write-guard/agent test suites.",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+      "environment": "sandboxed bash, node v22",
+      "expected": "all tests pass",
+      "actual": "61 tests, 61 pass, 0 fail (includes D-024 and D-025 sandbox-binding tests).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-023"]
+    },
+    {
+      "id": "C3-python-tests",
+      "procedure": "Run the runner metadata and agent-settings Python tests.",
+      "command": "python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'",
+      "environment": "sandboxed bash, python3",
+      "expected": "all tests pass",
+      "actual": "Ran 14 tests, OK.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-026"]
+    },
+    {
+      "id": "C4-prefreeze-fresh-clone",
+      "procedure": "Run tools/gates/prefreeze.sh DG0 in a fresh clone of the candidate commit (round-12 rule).",
+      "command": "git clone /home/user/My-owns <tmp>; git checkout 7f09967; bash tools/gates/prefreeze.sh DG0",
+      "environment": "sandboxed bash, disposable clone under $TMPDIR, hermetic git config",
+      "expected": "all prefreeze checks PASS; working-tree candidate equals HEAD equals frozen ID",
+      "actual": "All checks PASS; working-tree candidate sha256:21f142b863c445f6... equals HEAD; exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022", "REQ-DLV-023"]
+    },
+    {
+      "id": "C5-candidate-determinism",
+      "procedure": "Compare candidate ID computed from the working tree and from HEAD (determinism / platform independence).",
+      "command": "node tools/gates/candidate.mjs --stage DG0 ; node tools/gates/candidate.mjs --stage DG0 --ref HEAD",
+      "environment": "sandboxed bash, node v22",
+      "expected": "identical IDs equal to the frozen candidate",
+      "actual": "working-tree == HEAD == sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c (MATCH).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022"]
+    },
+    {
+      "id": "C6-f140-sandbox-escape",
+      "procedure": "Attempt a D-025 sandbox escape: plant a cwd-shadowing json.py at the repo root and let the runner's unsandboxed helper Python import it (disposable clone of the candidate commit).",
+      "command": "bash docs/delivery/test-evidence/DG0/code-security/round-12/repro-r12-cwd-python-shadow.sh",
+      "environment": "disposable git clone of 7f09967 under $TMPDIR, stubbed claude simulating a sandbox-permitted repo-root write",
+      "expected": "the escape is impossible: no code runs outside the sandbox and no protected path is written",
+      "actual": "ESCAPE SUCCEEDS: the runner's 'python3 -c' / 'python3 -' helpers imported the planted json.py (log shows argv=['-c'] and argv=['-']) and the payload wrote tools/gates/PWNED-by-json-shadow.txt (a sandbox-denied path) and a .git/hooks/pre-commit, i.e. code ran OUTSIDE the sandbox as the runner. Raised as F-DG0-140.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-12/01-cwd-python-shadow.log", "docs/delivery/test-evidence/DG0/code-security/round-12/repro-r12-cwd-python-shadow.sh"]
+    },
+    {
+      "id": "C7-f140-stealth",
+      "procedure": "Attempt the stealth variant: the shadow module self-deletes and defers its protected write until after the runner's post-run config snapshot.",
+      "command": "bash docs/delivery/test-evidence/DG0/code-security/round-12/repro-r12-cwd-python-shadow-stealth.sh",
+      "environment": "disposable git clone of 7f09967 under $TMPDIR",
+      "expected": "any escape is detected (external_config_changed non-empty, git status dirty, or auto-commit refused)",
+      "actual": "UNDETECTED: meta.external_config_changed==[], meta.bash_sandbox==true, 'git status --porcelain' empty, evidence auto-committed; the planted hook ran on the orchestrator's next ordinary commit (hook-ran.txt==HOOK-RAN-OUTSIDE-SANDBOX). All three compensating detections evaded. Supports F-DG0-140.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-007", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-12/02-cwd-python-shadow-stealth.log", "docs/delivery/test-evidence/DG0/code-security/round-12/repro-r12-cwd-python-shadow-stealth.sh"]
+    },
+    {
+      "id": "C8-f140-preconditions",
+      "procedure": "Verify the escape preconditions live in my own reviewer sandbox: repo-root new files are writable, the deny list omits the root and json.py, and 'python3 -c' puts cwd on sys.path.",
+      "command": "echo probe > /home/user/My-owns/zz-sec-writable-probe.tmp; grep -c json.py <my-run>/settings.json; python3 -c 'import sys;print(repr(sys.path[0]))'",
+      "environment": "my live sandboxed code-security-reviewer shell",
+      "expected": "if D-025 fully confined the shell, a repo-root write would be refused",
+      "actual": "repo-root write SUCCEEDED (rc=0); settings.json denyWrite contains neither the repo root nor 'json.py' (grep count 0); python3 -c sys.path[0]=='' (cwd). Preconditions for F-DG0-140 confirmed on the live candidate.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-007"]
+    },
+    {
+      "id": "C9-verify-f137",
+      "procedure": "Verify F-DG0-137 fix: local settings not loaded and the sandbox refuses the reported shell vectors.",
+      "command": "grep -- '--setting-sources project' tools/agents/run-agent.sh; echo '{...}' > .claude/settings.local.json; echo zz >> .git/info/exclude",
+      "environment": "my live sandboxed shell + source review",
+      "expected": "--setting-sources is 'project' only; both shell writes refused",
+      "actual": "run-agent.sh:141,150 use '--setting-sources project'; both writes fail 'Read-only file system' (rc=1). Reported vector prevented. CLOSED_VERIFIED (broader escape tracked as F-DG0-140).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-12/03-verify-137-138-139.log"]
+    },
+    {
+      "id": "C10-verify-f138",
+      "procedure": "Verify F-DG0-138 fix: symlinked hooks snapshotted; auto-commit hook-free and file-list-verified.",
+      "command": "grep -n 'type f -o -type l|core.hooksPath=/dev/null|--no-verify|show --name-only' tools/agents/run-agent.sh (+ observation from the F-140 stealth run)",
+      "environment": "source review + disposable-clone observation",
+      "expected": "hooks listed incl. symlinks; commit runs with hooks disabled and verifies its file list; a planted hook does not fire during the auto-commit",
+      "actual": "run-agent.sh:91 lists symlinked hooks; :193-195 commit with core.hooksPath=/dev/null --no-verify; :198-207 verify the committed set (exit 72 otherwise). In the F-140 stealth run the planted pre-commit did NOT fire during the auto-commit. CLOSED_VERIFIED.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-12/03-verify-137-138-139.log", "docs/delivery/test-evidence/DG0/code-security/round-12/02-cwd-python-shadow-stealth.log"]
+    },
+    {
+      "id": "C11-verify-f139",
+      "procedure": "Verify F-DG0-139 fix: write-scopes.json $comment matches the enforced rule.",
+      "command": "sed -n '2p' tools/agents/write-scopes.json",
+      "environment": "source review",
+      "expected": "the stale 'outside any git work tree is always allowed' text is gone",
+      "actual": "$comment now states only the OS temp dir is scratch and home never is (D-024), and shell writes are confined by the D-025 sandbox. CLOSED_VERIFIED.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-12/03-verify-137-138-139.log"]
+    },
+    {
+      "id": "C12-ci-workflow",
+      "procedure": "Review .github/workflows/delivery-gates.yml for least privilege, pinned actions, fetch-depth and gate enforcement.",
+      "command": "cat .github/workflows/delivery-gates.yml",
+      "environment": "source review",
+      "expected": "permissions: contents: read; actions pinned to commit SHAs; fetch-depth 0 for historical; a failed check fails the job; product jobs must 'needs: delivery-gates'",
+      "actual": "permissions contents:read; checkout@3d3c42e (v7.0.1) and setup-node@8207627 (v7.0.0) pinned to full SHAs; fetch-depth: 0; steps run source-extraction, node/python test suites, validate.mjs --pipeline and --reconcile (default fail-fast). Enforcement contract documented in header. PASS.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-023", "REQ-DLV-025"]
+    },
+    {
+      "id": "C13-secrets-scan",
+      "procedure": "Scan the candidate scope (excluding trading_agent) for committed credentials/keys.",
+      "command": "git grep -nEI '(PRIVATE KEY|AKIA...|xox.-...|ghp_...|password/secret = \"...\")' -- . ':(exclude)trading_agent/**'",
+      "environment": "sandboxed bash",
+      "expected": "no matches",
+      "actual": "No matches. No secrets or personal credentials committed in scope.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-019"]
+    }
+  ],
+  "findings": ["F-DG0-140"],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/code-security/round-12/repro-r12-cwd-python-shadow.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-12/01-cwd-python-shadow.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-12/repro-r12-cwd-python-shadow-stealth.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-12/02-cwd-python-shadow-stealth.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-12/03-verify-137-138-139.log"
+  ],
+  "reviewed_at": "2026-09-28T18:44:00Z",
+  "summary": "FAIL. Round-11 fixes I re-verified (F-DG0-137, 138, 139) are all correctly fixed and CLOSED_VERIFIED: local settings are no longer loaded and the sandbox refuses the reported shell vectors; the evidence auto-commit is hook-free and file-list-verified; the stale write-scopes comment is corrected. The candidate identity, determinism, prefreeze (fresh clone), test suites, CI least-privilege/pinned-actions, and secrets scan all PASS. However I found one Critical, mandatory issue that blocks the gate: F-DG0-140, an escape from the new D-025 OS Bash sandbox. Because the sandbox leaves the repository root writable for new files and run-agent.sh runs its own 'python3 -c'/'python3 -' helpers from the repository-root cwd (sys.path[0]==''), a sandboxed agent can drop a shadowing json.py (or uuid.py) that the UNSANDBOXED runner imports, executing arbitrary code as the orchestrator; a stealth variant evades config_snapshot, git status and the auto-commit file-list check with no trace. This defeats the primary mechanical control D-025 added this round (threat-model.md 'no unsandboxed escape') and enables forged gate approvals. Fix: run the runner's Python helpers with PYTHONSAFEPATH/-P/-I or from a fixed non-repository directory, and deny agent creation of top-level modules that shadow stdlib. Minor non-blocking note (no finding raised): run-agent.sh:82 still comments '--setting-sources project,local' though the flag is now 'project' only."
+}
