@@ -1,0 +1,15 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-011",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced the original failure at e11b5f08: none of the ten .claude/agents/*.md definitions contained the no-real-approval rule or the G6/DG7 rule (grep counts 0 for both in every file). At the candidate d6626258 (fix 51f5b9c), every one of the ten definitions contains the line 'You are an engineering agent: you never grant a real business, Finance or IT approval. Product gates G1–G6 are business approvals inside the product, and product gate G6 never implies engineering gate DG7 (or the reverse).' (grep counts 1 and 1 in each file). The REQ-DLV-002 procedure, which says every agent definition states the rule, is now literally true, and the expected result in the finding (rule plus G6/DG7 in each definition) is met in full.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-8/checks.log",
+        ".claude/agents/",
+        "docs/delivery/requirements.csv (REQ-DLV-002)"
+      ]
+    }
+  ]
+}

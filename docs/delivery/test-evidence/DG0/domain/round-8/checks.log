@@ -1,0 +1,89 @@
+# DG0 round-8 domain review: consolidated check log (domain-reviewer)
+# Candidate sha256:90ad5271429719ba975cc900c61f0a611120045c1b72040ad50c94359c5178e0, commit d6626258cf76cd3726d082f9d3cc3cd0a49745dc
+# Disposable trees (session scratchpad): git worktree "wt" at d6626258, fresh clone "fc" at d6626258; both removed after the review.
+# Scripts: reused unchanged from docs/delivery/test-evidence/DG0/domain/round-7/scripts/ (ext7, reg7, tpl7, deliv7, bl); mp8.py = mp7.py with random.seed(8).
+
+## 00 candidate
+$ git rev-parse HEAD                       -> 1474a962440a9c714eeddd10e209f1b67687aecf (metadata-only freeze commit: round-8 assignments, manifest 90ad5271429719ba, stages.json)
+$ node tools/gates/candidate.mjs --stage DG0  (repo tree)      -> sha256:90ad5271429719ba975cc900c61f0a611120045c1b72040ad50c94359c5178e0, 79 files, exit 0
+$ node tools/gates/candidate.mjs --stage DG0  (worktree d6626258) -> same ID
+$ sha256sum docs/delivery/assignments/DG0/round-8/review-domain-reviewer.md -> 4cf806fdf7a4f8f7aba30760d2760d7d4db08271895980bde14873cc80819832 (matches prompt)
+$ git diff --quiet e11b5f08 d6626258 -- docs/analysis docs/delivery/requirements.csv docs/delivery/requirements-spec.md docs/source tools/source -> exit 0 (unchanged)
+Candidate-scope changes since round 7: .claude/agents/*.md (+2 lines each), docs/delivery/agents.md, docs/delivery/decisions.md, tools/gates/lib/rules.mjs, tools/gates/tests/validator.test.mjs.
+
+## 01 extraction fidelity (python3 ext7.py <unzipped docx> docs/source/playbook.md)
+docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2
+paragraph segments 1001 missing 0
+tables 49 rows 239 rows with missing cells 0
+segments out of order 0
+footer1.xml 'BUSINESS TRANSFORMATION PLAYBOOK PRACTICAL EDITION' present
+blocks 165 B0001 B0165 contiguous True
+md anchors unique 165
+exit=0
+
+## 02 coverage (python3 reg7.py)
+source-coverage.csv 165 {REQUIREMENT:129, CONTEXT:29, NON-REQUIREMENT:7} problems 0
+master-prompt-coverage.csv 423 {REQUIREMENT:367, CONTEXT:49, NON-REQUIREMENT:7}; the only flags are 367 empty rationale cells on REQUIREMENT rows (the req_ids mapping is the rationale); every CONTEXT/NON-REQUIREMENT row has a rationale
+classes {USER:188, ENGINEERING:130, SOURCE:93}
+SOURCE rows without B anchor []; non-SOURCE rows without M anchor []; REQ-PB not SOURCE []; empty acceptance []; reverse B refs not in coverage 0
+
+## 03 templates (python3 tpl7.py) -- identical to round-7 output
+16 templates; 13 with every source column verbatim in FI and register. The 3 flagged are script artefacts, confirmed manually:
+ T02: 'Level/Definition/Example' belong to the outcome-hierarchy table B0048 (in FI under the hierarchy deliverable); T02's own columns all present.
+ T05: source is a Field/Fill-in table; all 14 row labels present in FI and REQ-PB-045 input_fields.
+ T10: Area/What to show/RAG logic are table headers; all six areas + show + RAG text are in FI; RAG logic per area is in REQ-PB-063 input_fields (paraphrased labels, e.g. 'People & adoption RAG (vs adoption curve)').
+
+## 04 value lists (register reg= / field inventory FI= match counts)
+H/M/L reg=5 FI=5; Support/Neutral/Resist 1/1; Decision/Tech/Data/Vendor 1/1; Risk/Assumption/Issue/Dependency 1/1; Comms/training/involvement/incentive 1/1
+Waves 0-6 weeks,1-3 months,3-9 months,6-18 months: 1/1 each (REQ-PB-050 seeds verbatim; exit evidence text verbatim in FI)
+T11 SLAs '5 working days' 2/1, '10 working days' 1/1, 'Next SteerCo / urgent route' 2/2, 'Per release plan' 2/2
+Weights: REQ-PB-048 25/25/20/15/15 on 1-5 scale; acceptance example 5,4,3,2,1 -> 3.30 (recomputed: 1.25+1.00+0.60+0.30+0.15 = 3.30)
+A/R: REQ-PB-067 accepts A, R, C, I or A/R; seeded RACI must equal B0101.
+
+## 05 deliverables (python3 deliv7.py) -- identical to round-7 output
+Charter 14/14; scope checks 5; outcome hierarchy; TOM 10 dims + 10 canvas cells (20 prompts); business case 10 sections; lifecycle; 7 adoption indicators; 90-day plan; Day-90 test 6; health check 25 questions; bands; roaming example + traceability rows; modes; phases; gates; governance roles -- missing-everywhere [] for all.
+Script artefacts checked manually: thesis in FI line 324 and REQ-PB-030 as four parts; principles in REQ-PB-006..010 + glossary; workstreams in REQ-PB-023..025 + FI; traceability chain REQ-PB-044 + glossary; 'Score / 25' + 'Top 3 actions' in REQ-PB-091 + FI line 501; workshop 90-120 min present in register.
+
+## 06 semantics (python regex over requirements.csv, permissions-matrix.md)
+REQ-S07-007 RAG from approved trajectory, never task completion (A04/A05); REQ-PB-063 'outcome RAG never uses task completion', Unknown/Stale for missing data
+REQ-S03-003 delivery/adoption/validated value/closure separate (A11); REQ-S11-006 separate states
+REQ-S08-001 'a forecast amount never appears in the validated total'; REQ-S13-008 unvalidated labelled
+REQ-PB-013 FIN-only validation (BO gets 403); permissions-matrix rule 3 'even where the Business Owner remains accountable (M0211)'; REQ-S08-003 accountable business owner + Finance validator
+REQ-PB-058 shared 10 million SAR benefit counted once; REQ-S08-013 allocations >100% rejected, 60%+30% shows 10% unallocated
+REQ-S04-002 gates explicit approval records tied to immutable evidence snapshot, never from task completion; REQ-PB-015
+REQ-DLV-002, REQ-PB-021, REQ-S04-008, REQ-S18-003, REQ-S21-001: DG0-DG7 separate from G1-G6; G6 never implies DG7
+REQ-S10-003 + permissions-matrix rule 2: technical administrators are not business approvers
+Provenance: REQ-PB-001/002/077 inspired-by wording, no official PMI; #0078FF provisional (REQ-S15-002, REQ-S15-006 provisional text wordmark)
+
+## 07 staging (python over requirements.csv)
+T01-T04 DG2, T05-T09 DG3, T10-T16 DG4: every template has its primary row at the expected gate
+G1 REQ-PB-016 DG2, G2 -017 DG2, G3 -018 DG2, G4 -019 DG3, G5 -020 DG4, G6 -021 DG4
+Studio DG5 x4; health check DG5 x3 (DG7 one is REQ-S19-010 infra health checks); roaming demo DG5 x2; IT handover DG7; BAU handover DG4
+final_gate {DG0:19, DG1:11, DG2:32, DG3:32, DG4:137, DG5:78, DG6:48, DG7:54}; increments beyond final gate: none; acceptance shorter than 40 chars: none
+IMPLEMENTED rows only at DG0 (REQ-DLV-* and REQ-S20-024/025)
+
+## 08 master-prompt sample (python3 mp8.py, seed 8) -- 80 blocks, all sections §preamble, §0-§21, incl. table rows
+M0002 M0004 M0010 M0015 M0018 M0021 M0022 M0029 M0030 M0036 M0037 M0053 M0056 M0075 M0080 M0089 M0090 M0103 M0105 M0106 M0109 M0118 M0121 M0128 M0133 M0141 M0150 M0151 M0153 M0160 M0163 M0166 M0171 M0179 M0182 M0185 M0188 M0189 M0198 M0209 M0212 M0217 M0218 M0221 M0223 M0230 M0237 M0241 M0246 M0254 M0260 M0261 M0265 M0269 M0287 M0290 M0296 M0298 M0300 M0309 M0311 M0323 M0332 M0336 M0337 M0342 M0346 M0352 M0361 M0363 M0370 M0373 M0377 M0387 M0389 M0398 M0406 M0409 M0416 M0419
+Every disposition checked by reading the block and the mapped requirement titles: headings and table header rows CONTEXT with covering rows named; title/date and reference list NON-REQUIREMENT; all REQUIREMENT blocks map to rows whose substance matches. No mis-mapping found.
+
+## 09 glossary / journeys / permissions (unchanged since round 7; spot-checked)
+Glossary AR: North Star النجم الشمالي (الغاية العليا); TOM نموذج التشغيل المستهدف; Stage gate بوابة المرحلة; Value pool مجمّع القيمة; Adoption التبنّي; BAU العمليات الاعتيادية -- sensible business Arabic
+Journeys: J2.1-J2.6 cover six phases and G1-G6; J3 modular entry; J4 KPI update; J5 Finance validation; J6 committee workflow; J7 BAU handover; J8 admin publishing
+Permissions: rule 2 technical admins not business approvers; rule 3 FIN-only validation; rule 7 G3/G5 configurable to BO per T11; RACI/T11 rows present
+
+## 10 prefreeze in fresh clone at d6626258: bash tools/gates/prefreeze.sh DG0
+PASS source extraction reproducible (docx sha256 2584a352...548ad2; 165 playbook blocks; 423 master-prompt blocks)
+PASS gate validator + guard tests
+PASS runner metadata tests
+PASS register rules (DG0)
+PASS pipeline state (active stage: DG0 REVIEWING)
+PASS analysis check check_counts.py / check_pb_provenance.py / check_test_refs.py
+PASS working-tree candidate equals HEAD (sha256:90ad5271429719ba975cc900c61f0a611120045c1b72040ad50c94359c5178e0)
+prefreeze-exit=0; git status --porcelain afterwards: 0 lines
+analysis tools (python3 -B, fresh clone): check_counts.py exit=0, check_pb_provenance.py exit=0, check_test_refs.py exit=0
+
+## 11 F-DG0-011 reproduction (old e11b5f08 vs new d6626258)
+for each .claude/agents/*.md: grep -c -i -E 'never grants? a real business, Finance or IT approval' and grep -c 'G6 never implies engineering gate DG7'
+e11b5f08: all ten definitions grant=0 g6dg7=0   (original failure reproduced)
+d6626258: all ten definitions grant=1 g6dg7=1   (fixed; line: "You are an engineering agent: you never grant a real business, Finance or IT approval. Product gates G1-G6 are business approvals inside the product, and product gate G6 never implies engineering gate DG7 (or the reverse).")
+REQ-DLV-002 procedure ('project rules and every agent definition state that an engineering agent cannot grant a real business, Finance or IT approval') is now literally true.
