@@ -1,0 +1,338 @@
+TAP version 13
+# R8-01 gzip(' \\n'): 4 errors; first: review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): invocation DG0-T-REV-R2-domain-reviewer-20260928T123000Z-00000043: transcript has no init line for this session
+# R8-15 observed: 0 errors (0 = accepted; the sha still pins the content)
+# Subtest: R8-00 control: the verbatim fixture is a valid DG0 gate (current + historical)
+ok 1 - R8-00 control: the verbatim fixture is a valid DG0 gate (current + historical)
+  ---
+  duration_ms: 921.114834
+  type: 'test'
+  ...
+# Subtest: R8-01 FIXED F-DG0-132 (r7 tests 3/4): an empty transcript gzip('') on a reviewer run is rejected
+not ok 2 - R8-01 FIXED F-DG0-132 (r7 tests 3/4): an empty transcript gzip('') on a reviewer run is rejected
+  ---
+  duration_ms: 459.850341
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:270:3'
+  failureType: 'testCodeFailure'
+  error: 'empty transcript accepted'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:274:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: R8-01 FIXED F-DG0-132 (r7 tests 3/4): an empty transcript gzip('\\n\\n\\n') on a reviewer run is rejected
+not ok 3 - R8-01 FIXED F-DG0-132 (r7 tests 3/4): an empty transcript gzip('\\n\\n\\n') on a reviewer run is rejected
+  ---
+  duration_ms: 486.633442
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:270:3'
+  failureType: 'testCodeFailure'
+  error: 'empty transcript accepted'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:274:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R8-01 FIXED F-DG0-132 (r7 tests 3/4): an empty transcript gzip(' \\n') on a reviewer run is rejected
+ok 4 - R8-01 FIXED F-DG0-132 (r7 tests 3/4): an empty transcript gzip(' \\n') on a reviewer run is rejected
+  ---
+  duration_ms: 396.988217
+  type: 'test'
+  ...
+# Subtest: R8-02 FIXED: a transcript of unparsable lines only is rejected
+ok 5 - R8-02 FIXED: a transcript of unparsable lines only is rejected
+  ---
+  duration_ms: 486.871004
+  type: 'test'
+  ...
+# Subtest: R8-03 FIXED F-DG0-132 (r7 test 5): a record rewritten after its run, with meta re-pointed and transcript emptied, is rejected
+not ok 6 - R8-03 FIXED F-DG0-132 (r7 test 5): a record rewritten after its run, with meta re-pointed and transcript emptied, is rejected
+  ---
+  duration_ms: 517.010351
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:285:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /cannot be reconstructed from this run's own successful Write\/Edit calls/, got:
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    expectError (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:243:10)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:293:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R8-04 FIXED F-DG0-132 (r7 test 6): a verifying run with an empty transcript cannot close High F-DG0-101
+not ok 7 - R8-04 FIXED F-DG0-132 (r7 test 6): a verifying run with an empty transcript cannot close High F-DG0-101
+  ---
+  duration_ms: 502.523442
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:297:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /verification.*transcript is empty|transcript is empty/, got:
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    expectError (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:243:10)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:301:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R8-05 FIXED F-DG0-132 (r7 test 7): the same forgery committed and approved fails historical validation
+not ok 8 - R8-05 FIXED F-DG0-132 (r7 test 7): the same forgery committed and approved fails historical validation
+  ---
+  duration_ms: 825.611304
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:305:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(errs.length > 0)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:310:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R8-06 FIXED F-DG0-102 (original r1 R0 shape): a hand-written meta with no transcript/result is rejected
+not ok 9 - R8-06 FIXED F-DG0-102 (original r1 R0 shape): a hand-written meta with no transcript/result is rejected
+  ---
+  duration_ms: 439.8441
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:315:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /transcript is empty/, got:
+    review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-REV-R2-qa-verifier-20260928T123000Z-00000112: missing result.json
+    review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-REV-R2-qa-verifier-20260928T123000Z-00000112: missing transcript.jsonl.gz
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    expectError (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:243:10)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:326:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R8-07 FIXED: init present but no successful final result for the session is rejected
+ok 10 - R8-07 FIXED: init present but no successful final result for the session is rejected
+  ---
+  duration_ms: 444.349402
+  type: 'test'
+  ...
+# Subtest: R8-10 FIXED F-DG0-133 (r7 test 8): a prompt naming another assignment path and sha is rejected
+not ok 11 - R8-10 FIXED F-DG0-133 (r7 test 8): a prompt naming another assignment path and sha is rejected
+  ---
+  duration_ms: 488.381835
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:346:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /the replayed prompt names assignment/, got:
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    expectError (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:243:10)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:350:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R8-11 FIXED F-DG0-133: right path but wrong sha in the prompt is rejected
+not ok 12 - R8-11 FIXED F-DG0-133: right path but wrong sha in the prompt is rejected
+  ---
+  duration_ms: 482.638224
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:352:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /the replayed prompt names assignment/, got:
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    expectError (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:243:10)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:356:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R8-12 FIXED F-DG0-133: right sha but a different assignment file name is rejected
+not ok 13 - R8-12 FIXED F-DG0-133: right sha but a different assignment file name is rejected
+  ---
+  duration_ms: 492.660207
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:358:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /the replayed prompt names assignment/, got:
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    expectError (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:243:10)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:362:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R8-13 FIXED F-DG0-133: a prompt that names no assignment is rejected (old-style prompt)
+not ok 14 - R8-13 FIXED F-DG0-133: a prompt that names no assignment is rejected (old-style prompt)
+  ---
+  duration_ms: 475.386401
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:364:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /names no assignment file and sha256/, got:
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    expectError (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:243:10)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:368:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R8-14 FIXED F-DG0-133: meta re-pointed at a different assignment (record+meta consistent) no longer matches the transcript
+not ok 15 - R8-14 FIXED F-DG0-133: meta re-pointed at a different assignment (record+meta consistent) no longer matches the transcript
+  ---
+  duration_ms: 457.756285
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:370:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /the replayed prompt names assignment .*qa-verifier\.md/, got:
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    expectError (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:243:10)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:381:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R8-15 PROBE: the prompt path is compared by suffix; a different directory prefix with the same relative path and sha is accepted
+ok 16 - R8-15 PROBE: the prompt path is compared by suffix; a different directory prefix with the same relative path and sha is accepted
+  ---
+  duration_ms: 478.421056
+  type: 'test'
+  ...
+# Subtest: R8-16 PROBE: a second replayed prompt later in the transcript cannot override the first
+not ok 17 - R8-16 PROBE: a second replayed prompt later in the transcript cannot override the first
+  ---
+  duration_ms: 479.569174
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:391:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /the replayed prompt names assignment/, got:
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    expectError (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:243:10)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs:400:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 5
+# fail 12
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9045.883307

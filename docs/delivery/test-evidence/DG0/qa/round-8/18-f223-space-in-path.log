@@ -1,0 +1,52 @@
+# QA_REPO_ROOT=/tmp/qa8-cand; 2026-09-28T17:05:16Z
+TAP version 13
+# \# QA8-F223 errors (1):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000006: the replayed prompt names no assignment file and sha256
+# Subtest: QA8-F223 portability: a genuine runner-shaped prompt from a checkout whose absolute path contains a space binds
+not ok 1 - QA8-F223 portability: a genuine runner-shaped prompt from a checkout whose absolute path contains a space binds
+  ---
+  duration_ms: 1029.483921
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1128:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    a genuine run from a path with a space is refused
+    + actual - expected
+    
+    + [
+    +   'finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000006: the replayed prompt names no assignment file and sha256'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000006: the replayed prompt names no assignment file and sha256'
+  operator: 'deepStrictEqual'
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1131:10
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:244:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1128:127)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1153.617776
+exit=1
+
+# runner side: run-agent.sh has no check rejecting spaces in REPO_ROOT/--cwd/--assignment:
+42:ASSIGNMENT_ABS="$(cd "$(dirname "$ASSIGNMENT")" && pwd)/$(basename "$ASSIGNMENT")"
+44:[[ "$ASSIGNMENT_ABS" == "$REPO_ROOT/"* ]] || { echo "assignment must live inside the repository" >&2; exit 66; }
+56:PROMPT="You are invoked as project agent '${ROLE}' for stage ${STAGE}, task ${TASK}. Your invocation_reference is: {\"kind\":\"claude-code-cli-session\",\"run_id\":\"${RUN_ID}\",\"session_id\":\"${SESSION_ID}\"}. Your complete assignment is in the file ${ASSIGNMENT_ABS} (sha256 ${ASSIGN_SHA}). Read it first, then read CLAUDE.md and docs/delivery/agent-protocol.md, and execute the assignment exactly. Your working directory is ${CWD}."
+# validator side:
+313:    const m = promptText(prompt).match(/Your complete assignment is in the file (\S+) \(sha256 ([0-9a-f]{64})\)/);

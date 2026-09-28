@@ -1,0 +1,315 @@
+# QA_REPO_ROOT=/tmp/qa8-old (round-7 candidate e11b5f0); QA8-* only; 2026-09-28T17:03:32Z
+TAP version 13
+# \# QA8-C00 errors (0):
+# \# QA8-N84 errors (1):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000012: transcript is not valid gzip (unexpected end of file)
+# \# QA8-N85 errors (5):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000018: transcript has no init line for this session
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000018: transcript does not contain the CLI-replayed runner prompt for 'qa-verifier' and run DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000018
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000018: transcript does not end in a successful result for this session
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000018: docs/delivery/reviews/DG0/round-3/qa-verifier.json cannot be reconstructed from this run's own successful Write/Edit calls in its transcript
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000018: docs/delivery/reviews/DG0/round-3/qa-verifier.verifications.json cannot be reconstructed from this run's own successful Write/Edit calls in its transcript
+# \# QA8-N86 errors (1):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000024: missing transcript.jsonl.gz
+# \# QA8-N87 errors (0):
+# \# QA8-N88 errors (0):
+# \# QA8-N89 errors (0):
+# \# QA8-N90 errors (0):
+# \# QA8-N91 errors (0):
+# \# QA8-N92 errors (1):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000060: transcript model claude-haiku-x != requested claude-opus-5-5
+# \# QA8-P03 (informational; sha256 still binds the content) errors (0):
+# Subtest: QA8-C00 control: the round-8 fixture (runner-shaped prompt with assignment + sha256) closes the finding cleanly
+ok 1 - QA8-C00 control: the round-8 fixture (runner-shaped prompt with assignment + sha256) closes the finding cleanly
+  ---
+  duration_ms: 1194.731495
+  type: 'test'
+  ...
+# Subtest: QA8-N84 F-DG0-132: a 0-byte transcript that is not even gzip fails the gzip check AND every transcript check
+not ok 2 - QA8-N84 F-DG0-132: a 0-byte transcript that is not even gzip fails the gzip check AND every transcript check
+  ---
+  duration_ms: 1077.801173
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1028:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /transcript is empty/; got:
+      finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000012: transcript is not valid gzip (unexpected end of file)
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:239:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1032:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:244:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1028:124)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: QA8-N85 F-DG0-132: a gzip transcript of non-JSON garbage lines (non-empty, all unparsable) fails every transcript check
+ok 3 - QA8-N85 F-DG0-132: a gzip transcript of non-JSON garbage lines (non-empty, all unparsable) fails every transcript check
+  ---
+  duration_ms: 1122.183527
+  type: 'test'
+  ...
+# Subtest: QA8-N86 F-DG0-132: a missing transcript file (meta hash removed as well) fails every transcript check
+not ok 4 - QA8-N86 F-DG0-132: a missing transcript file (meta hash removed as well) fails every transcript check
+  ---
+  duration_ms: 1047.309341
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1048:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /transcript is empty/; got:
+      finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000024: missing transcript.jsonl.gz
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:239:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1052:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:244:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1048:117)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA8-N87 F-DG0-133: the right assignment path but the sha256 of other content (e.g. a pre-edit version) is rejected
+not ok 5 - QA8-N87 F-DG0-133: the right assignment path but the sha256 of other content (e.g. a pre-edit version) is rejected
+  ---
+  duration_ms: 1021.418939
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1056:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:238:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1059:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:244:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1056:130)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA8-N88 F-DG0-133: another real assignment of the same role with ITS correct sha256 (round-2) is rejected
+not ok 6 - QA8-N88 F-DG0-133: another real assignment of the same role with ITS correct sha256 (round-2) is rejected
+  ---
+  duration_ms: 899.869116
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1062:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:238:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1066:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:244:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1062:121)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA8-N89 F-DG0-133: a suffix-sibling path (/work/repo/xdocs/...) whose tail equals meta.assignment minus its first char is rejected
+not ok 7 - QA8-N89 F-DG0-133: a suffix-sibling path (/work/repo/xdocs/...) whose tail equals meta.assignment minus its first char is rejected
+  ---
+  duration_ms: 983.955509
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1069:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:238:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1072:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:244:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1069:146)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA8-N90 F-DG0-133: a replayed prompt with no 'assignment ... (sha256 ...)' clause at all is rejected
+not ok 8 - QA8-N90 F-DG0-133: a replayed prompt with no 'assignment ... (sha256 ...)' clause at all is rejected
+  ---
+  duration_ms: 1050.137928
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1075:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:238:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1078:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:244:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1075:116)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA8-N91 F-DG0-133: an upper-case hex sha256 in the prompt (not what the runner emits) is rejected, never silently accepted
+not ok 9 - QA8-N91 F-DG0-133: an upper-case hex sha256 in the prompt (not what the runner emits) is rejected, never silently accepted
+  ---
+  duration_ms: 1138.16764
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1081:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:238:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1084:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:244:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1081:138)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA8-N92 transcript: an init line whose model differs from meta.model_requested is rejected
+ok 10 - QA8-N92 transcript: an init line whose model differs from meta.model_requested is rejected
+  ---
+  duration_ms: 933.209371
+  type: 'test'
+  ...
+# Subtest: QA8-P03 probe (informational): the prompt names the right relative assignment under a different absolute root
+ok 11 - QA8-P03 probe (informational): the prompt names the right relative assignment under a different absolute root
+  ---
+  duration_ms: 942.876661
+  type: 'test'
+  ...
+# Subtest: QA8-S01 F-DG0-011 static: all ten agent definitions state the no-real-approval rule and that G6 never implies DG7
+not ok 12 - QA8-S01 F-DG0-011 static: all ten agent definitions state the no-real-approval rule and that G6 never implies DG7
+  ---
+  duration_ms: 0.697236
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1098:1'
+  failureType: 'testCodeFailure'
+  error: 'backend-workflow-engineer.md: no-real-approval rule missing'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    ---
+    name: backend-workflow-engineer
+    description: Backend/workflow engineer for the Mobily Transformation Hub. Use to implement persistent records, server-side authorization, workflows, stage gates, approvals, durable jobs, automation, audit and APIs. Does not independently certify its own controls.
+    tools: Read, Grep, Glob, Write, Edit, Bash
+    model: inherit
+    color: green
+    hooks:
+      PreToolUse:
+        - matcher: "Write|Edit|NotebookEdit|MultiEdit"
+          hooks:
+            - type: command
+              command: 'g="$(git rev-parse --show-toplevel 2>/dev/null)/tools/agents/guard-write.mjs"; if [ -f "$g" ]; then node "$g" backend-workflow-engineer; rc=$?; else echo "write guard missing" >&2; rc=2; fi; [ "$rc" -eq 0 ] || exit 2'
+    ---
+    
+    You are **backend-workflow-engineer** for the Mobily Transformation Hub.
+    
+    ## Responsibility
+    You implement TypeScript API modules and the worker against PostgreSQL:
+    - migrations, repositories and services;
+    - scoped RBAC enforced on the server for records, files, exports, search and AI retrieval;
+    - state machines for gates, approvals and procedures;
+    - a transactional outbox with durable, idempotent jobs, bounded retry and backoff, and a failure queue;
+    - automation rules, notifications (in-app inbox), and an append-only audit trail.
+    
+    ## Rules
+    - Business approvals (G1–G6, Finance validation, decisions) are human actions recorded with assignee, request version, rationale and timestamp. Timers may escalate, never approve.
+    - Reject stale approvals when the record version changed. Enforce separation of duties where the policy is configured. Delegation must not create approval loops.
+    - Missing mandatory evidence blocks gate submission unless there's an authorized waiver (reason, scope, approver, expiry, compensating action).
+    - Every mutation has optimistic concurrency, input validation, an audit event, and an authorization check covered by tests (positive and negative).
+    - Working-day SLAs use the configurable business calendar (default Asia/Riyadh). Never elapsed days when working days are specified, and never hardcoded holidays.
+    - Write integration tests against a real PostgreSQL (disposable database), not mocks, for persistence, authorization and jobs.
+    
+    ## Handback
+    Follow `docs/delivery/agent-protocol.md`. Include migration names, the API endpoints added, and the test commands you ran with their results.
+    
+    Read `docs/delivery/agent-protocol.md` and `CLAUDE.md` before you start any assignment.
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1104:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA8-S02 F-DG0-222 static: agents.md documents the runner's actual stream-json/replay invocation and the D-022/F-DG0-132/133 binding conditions
+not ok 13 - QA8-S02 F-DG0-222 static: agents.md documents the runner's actual stream-json/replay invocation and the D-022/F-DG0-132/133 binding conditions
+  ---
+  duration_ms: 0.567951
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1109:1'
+  failureType: 'testCodeFailure'
+  error: 'agents.md lacks --input-format stream-json'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs:1114:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 4
+# fail 9
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11569.605874
+exit=1

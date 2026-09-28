@@ -1,0 +1,19 @@
+# 2026-09-28T17:00:04Z repo HEAD 1474a962440a9c714eeddd10e209f1b67687aecf
+$ node tools/gates/candidate.mjs --stage DG0 --ref d6626258cf76cd3726d082f9d3cc3cd0a49745dc
+{"stage":"DG0","source":"d6626258cf76cd3726d082f9d3cc3cd0a49745dc","candidate_id":"sha256:90ad5271429719ba975cc900c61f0a611120045c1b72040ad50c94359c5178e0","files":79}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG0 --ref HEAD
+{"stage":"DG0","source":"HEAD","candidate_id":"sha256:90ad5271429719ba975cc900c61f0a611120045c1b72040ad50c94359c5178e0","files":79}
+exit=0
+$ manifest candidate_id/source_commit
+sha256:90ad5271429719ba975cc900c61f0a611120045c1b72040ad50c94359c5178e0 d6626258cf76cd3726d082f9d3cc3cd0a49745dc 2026-09-28T16:57:34Z 0
+$ git diff --name-only d6626258 HEAD
+docs/delivery/assignments/DG0/round-8/audit.md
+docs/delivery/assignments/DG0/round-8/review-code-security-reviewer.md
+docs/delivery/assignments/DG0/round-8/review-common.md
+docs/delivery/assignments/DG0/round-8/review-domain-reviewer.md
+docs/delivery/assignments/DG0/round-8/review-qa-verifier.md
+docs/delivery/candidates/DG0/90ad5271429719ba.manifest.json
+docs/delivery/stages.json
+$ stages.json DG0
+[{"id": "DG0", "stage": "P0", "name": "Discovery and execution setup", "state": "REVIEWING", "depends_on": [], "implementation_owners": ["transformation-analyst", "delivery-orchestrator"], "candidate_spec": {"include": ["**"], "exclude": ["trading_agent/**"]}, "candidate": {"candidate_id": "sha256:90ad5271429719ba975cc900c61f0a611120045c1b72040ad50c94359c5178e0", "source_commit": "d6626258cf76cd3726d082f9d3cc3cd0a49745dc", "frozen_at": "2026-09-28T16:57:34Z", "manifest_path": "docs/delivery/candidates/DG0/90ad5271429719ba.manifest.json"}, "review_rounds": [{"round": 1, "candidate_id": "sha256:

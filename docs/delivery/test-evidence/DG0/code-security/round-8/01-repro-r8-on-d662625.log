@@ -1,0 +1,122 @@
+TAP version 13
+# R8-01 gzip(''): 5 errors; first: review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): invocation DG0-T-REV-R2-domain-reviewer-20260928T123000Z-00000017: transcript is empty
+# R8-01 gzip('\\n\\n\\n'): 5 errors; first: review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): invocation DG0-T-REV-R2-domain-reviewer-20260928T123000Z-00000030: transcript is empty
+# R8-01 gzip(' \\n'): 4 errors; first: review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): invocation DG0-T-REV-R2-domain-reviewer-20260928T123000Z-00000043: transcript has no init line for this session
+# R8-03 errors:
+# review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-REV-R2-qa-verifier-20260928T123000Z-00000073: transcript is empty
+# review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-REV-R2-qa-verifier-20260928T123000Z-00000073: transcript has no init line for this session
+# review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-REV-R2-qa-verifier-20260928T123000Z-00000073: transcript does not contain the CLI-replayed runner prompt for 'qa-verifier' and run DG0-T-REV-R2-qa-verifier-20260928T123000Z-00000073
+# review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-REV-R2-qa-verifier-20260928T123000Z-00000073: transcript does not end in a successful result for this session
+# review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-REV-R2-qa-verifier-20260928T123000Z-00000073: docs/delivery/reviews/DG0/round-2/qa-verifier.json cannot be reconstructed from this run's own successful Write/Edit calls in its transcript
+# R8-15 observed: 0 errors (0 = accepted; the sha still pins the content)
+# Subtest: R8-00 control: the verbatim fixture is a valid DG0 gate (current + historical)
+ok 1 - R8-00 control: the verbatim fixture is a valid DG0 gate (current + historical)
+  ---
+  duration_ms: 951.592094
+  type: 'test'
+  ...
+# Subtest: R8-01 FIXED F-DG0-132 (r7 tests 3/4): an empty transcript gzip('') on a reviewer run is rejected
+ok 2 - R8-01 FIXED F-DG0-132 (r7 tests 3/4): an empty transcript gzip('') on a reviewer run is rejected
+  ---
+  duration_ms: 424.487137
+  type: 'test'
+  ...
+# Subtest: R8-01 FIXED F-DG0-132 (r7 tests 3/4): an empty transcript gzip('\\n\\n\\n') on a reviewer run is rejected
+ok 3 - R8-01 FIXED F-DG0-132 (r7 tests 3/4): an empty transcript gzip('\\n\\n\\n') on a reviewer run is rejected
+  ---
+  duration_ms: 414.18747
+  type: 'test'
+  ...
+# Subtest: R8-01 FIXED F-DG0-132 (r7 tests 3/4): an empty transcript gzip(' \\n') on a reviewer run is rejected
+ok 4 - R8-01 FIXED F-DG0-132 (r7 tests 3/4): an empty transcript gzip(' \\n') on a reviewer run is rejected
+  ---
+  duration_ms: 427.883517
+  type: 'test'
+  ...
+# Subtest: R8-02 FIXED: a transcript of unparsable lines only is rejected
+ok 5 - R8-02 FIXED: a transcript of unparsable lines only is rejected
+  ---
+  duration_ms: 414.196112
+  type: 'test'
+  ...
+# Subtest: R8-03 FIXED F-DG0-132 (r7 test 5): a record rewritten after its run, with meta re-pointed and transcript emptied, is rejected
+ok 6 - R8-03 FIXED F-DG0-132 (r7 test 5): a record rewritten after its run, with meta re-pointed and transcript emptied, is rejected
+  ---
+  duration_ms: 425.736796
+  type: 'test'
+  ...
+# Subtest: R8-04 FIXED F-DG0-132 (r7 test 6): a verifying run with an empty transcript cannot close High F-DG0-101
+ok 7 - R8-04 FIXED F-DG0-132 (r7 test 6): a verifying run with an empty transcript cannot close High F-DG0-101
+  ---
+  duration_ms: 391.314094
+  type: 'test'
+  ...
+# Subtest: R8-05 FIXED F-DG0-132 (r7 test 7): the same forgery committed and approved fails historical validation
+ok 8 - R8-05 FIXED F-DG0-132 (r7 test 7): the same forgery committed and approved fails historical validation
+  ---
+  duration_ms: 1083.444551
+  type: 'test'
+  ...
+# Subtest: R8-06 FIXED F-DG0-102 (original r1 R0 shape): a hand-written meta with no transcript/result is rejected
+ok 9 - R8-06 FIXED F-DG0-102 (original r1 R0 shape): a hand-written meta with no transcript/result is rejected
+  ---
+  duration_ms: 386.110473
+  type: 'test'
+  ...
+# Subtest: R8-07 FIXED: init present but no successful final result for the session is rejected
+ok 10 - R8-07 FIXED: init present but no successful final result for the session is rejected
+  ---
+  duration_ms: 405.033193
+  type: 'test'
+  ...
+# Subtest: R8-10 FIXED F-DG0-133 (r7 test 8): a prompt naming another assignment path and sha is rejected
+ok 11 - R8-10 FIXED F-DG0-133 (r7 test 8): a prompt naming another assignment path and sha is rejected
+  ---
+  duration_ms: 392.37461
+  type: 'test'
+  ...
+# Subtest: R8-11 FIXED F-DG0-133: right path but wrong sha in the prompt is rejected
+ok 12 - R8-11 FIXED F-DG0-133: right path but wrong sha in the prompt is rejected
+  ---
+  duration_ms: 408.135
+  type: 'test'
+  ...
+# Subtest: R8-12 FIXED F-DG0-133: right sha but a different assignment file name is rejected
+ok 13 - R8-12 FIXED F-DG0-133: right sha but a different assignment file name is rejected
+  ---
+  duration_ms: 395.487902
+  type: 'test'
+  ...
+# Subtest: R8-13 FIXED F-DG0-133: a prompt that names no assignment is rejected (old-style prompt)
+ok 14 - R8-13 FIXED F-DG0-133: a prompt that names no assignment is rejected (old-style prompt)
+  ---
+  duration_ms: 437.154185
+  type: 'test'
+  ...
+# Subtest: R8-14 FIXED F-DG0-133: meta re-pointed at a different assignment (record+meta consistent) no longer matches the transcript
+ok 15 - R8-14 FIXED F-DG0-133: meta re-pointed at a different assignment (record+meta consistent) no longer matches the transcript
+  ---
+  duration_ms: 434.900039
+  type: 'test'
+  ...
+# Subtest: R8-15 PROBE: the prompt path is compared by suffix; a different directory prefix with the same relative path and sha is accepted
+ok 16 - R8-15 PROBE: the prompt path is compared by suffix; a different directory prefix with the same relative path and sha is accepted
+  ---
+  duration_ms: 375.697347
+  type: 'test'
+  ...
+# Subtest: R8-16 PROBE: a second replayed prompt later in the transcript cannot override the first
+ok 17 - R8-16 PROBE: a second replayed prompt later in the transcript cannot override the first
+  ---
+  duration_ms: 423.626431
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8440.667859

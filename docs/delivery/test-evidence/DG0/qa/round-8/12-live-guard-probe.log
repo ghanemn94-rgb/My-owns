@@ -1,0 +1,12 @@
+# live guard probe, 2026-09-28T17:04:29Z, session 3521f846-645f-4d08-958d-8fc1bee565b0
+Tool: Write file_path=/home/user/My-owns/docs/source/QA-PROBE.txt
+Hook result: BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+$ ls docs/source/QA-PROBE.txt
+ls: cannot access 'docs/source/QA-PROBE.txt': No such file or directory
+exit=2
+$ git status --porcelain docs/source
+(empty = unchanged)
+$ transcript tool_result for the probe
+is_error= True "$rc" -eq 0 ] || exit 2]: BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+
+is_error= None None

@@ -1,0 +1,113 @@
+## agent-definition diff e11b5f0..d662625
+     10 +
+     10 +You are an engineering agent: you never grant a real business, Finance or IT approval. Product gates G1–G6 are business approvals inside the product, and product gate G6 never implies engineering gate DG7 (or the reverse).
+## frontmatter (tools/hooks/permissionMode) per agent at d662625
+--- .claude/agents/backend-workflow-engineer.md
+name: backend-workflow-engineer
+tools: Read, Grep, Glob, Write, Edit, Bash
+model: inherit
+hooks:
+--- .claude/agents/code-security-reviewer.md
+name: code-security-reviewer
+tools: Read, Grep, Glob, Bash, Write
+model: inherit
+hooks:
+--- .claude/agents/devops-engineer.md
+name: devops-engineer
+tools: Read, Grep, Glob, Write, Edit, Bash
+model: inherit
+hooks:
+--- .claude/agents/domain-reviewer.md
+name: domain-reviewer
+tools: Read, Grep, Glob, Bash, Write
+model: inherit
+hooks:
+--- .claude/agents/frontend-ux-engineer.md
+name: frontend-ux-engineer
+tools: Read, Grep, Glob, Write, Edit, Bash
+model: inherit
+hooks:
+--- .claude/agents/kpi-benefits-engineer.md
+name: kpi-benefits-engineer
+tools: Read, Grep, Glob, Write, Edit, Bash
+model: inherit
+hooks:
+--- .claude/agents/qa-verifier.md
+name: qa-verifier
+tools: Read, Grep, Glob, Bash, Write, Edit
+model: inherit
+hooks:
+--- .claude/agents/release-auditor.md
+name: release-auditor
+tools: Read, Grep, Glob, Bash, Write
+model: inherit
+hooks:
+--- .claude/agents/solution-architect.md
+name: solution-architect
+tools: Read, Grep, Glob, Write, Edit, Bash
+model: inherit
+hooks:
+--- .claude/agents/transformation-analyst.md
+name: transformation-analyst
+tools: Read, Grep, Glob, Write, Edit, Bash
+model: inherit
+hooks:
+## frontmatter unchanged vs e11b5f0?
+same .claude/agents/backend-workflow-engineer.md
+same .claude/agents/code-security-reviewer.md
+same .claude/agents/devops-engineer.md
+same .claude/agents/domain-reviewer.md
+same .claude/agents/frontend-ux-engineer.md
+same .claude/agents/kpi-benefits-engineer.md
+same .claude/agents/qa-verifier.md
+same .claude/agents/release-auditor.md
+same .claude/agents/solution-architect.md
+same .claude/agents/transformation-analyst.md
+## agents.md diff
+diff --git a/docs/delivery/agents.md b/docs/delivery/agents.md
+index e3fdfe3..ade79bc 100644
+--- a/docs/delivery/agents.md
++++ b/docs/delivery/agents.md
+@@ -32,9 +32,11 @@ No role may write a `.git` path segment. The guard scopes every path from its ow
+ `tools/agents/run-agent.sh --role <agent> --stage <DGx> --task <id> --assignment <file>` runs:
+ 
+ ```
++user_message "<pointer to the assignment file>" |   # a stream-json user message (D-022)
+ claude -p --agent <agent> --model <orchestrator model> --permission-mode auto \
+        --session-id <fresh uuid> --settings tools/agents/settings/<agent>.settings.json \
+-       --output-format stream-json --verbose "<pointer to the assignment file>"
++       --input-format stream-json --replay-user-messages \
++       --output-format stream-json --verbose
+ ```
+ 
+ The metadata step is `tools/agents/run_meta.py`, tested in `tools/agents/tests/test_run_meta.py`. It records in `meta.json`:
+@@ -43,7 +45,14 @@ The metadata step is `tools/agents/run_meta.py`, tested in `tools/agents/tests/t
+ - `written_by_tools`: the paths the agent targeted with Write/Edit/MultiEdit/NotebookEdit;
+ - `tool_authored`: the paths whose final bytes equal a replay of the agent's own **successful** Write/Edit/MultiEdit calls.
+ 
+-The validator does not trust `tool_authored` alone. It replays the hash-bound transcript itself and compares the result with the file (D-021). It snapshots the tree before and after the run. For review roles, it auto-commits the run directory and the files the reviewer wrote (D-021). It records `docs/delivery/runs/<DGx>/<run-id>/meta.json` (role, the run's `outputs` (path → SHA-256) and `written_by_tools`, stage, task, session ID, model, assignment path and SHA-256, start commit, start and finish times, exit code, turns, models used, classifier-outage resumes, and the SHA-256 of `result.json` and `transcript.jsonl.gz`), `result.json` (the final message) and `transcript.jsonl.gz` (the full stream transcript). Run IDs include the session prefix, and directories are never reused (F-DG0-108). The arguments are validated. If a run stops only because the permission classifier returned no verdict repeatedly, the runner resumes the same session up to 6 times (D-019). The `invocation_reference` used in review records is `{kind, run_id, session_id}`. The validator refuses any review, audit or finding verification unless its run evidence is complete and hash-consistent, belongs to the same role and stage, executed exactly the cited assignment, started after the candidate froze, and ends in a successful result for the same session (D-016).
++The validator does not trust `tool_authored` alone. It replays the hash-bound transcript itself and compares the result with the file (D-021). The runner snapshots the tree before and after the run. For review roles, the runner auto-commits the run directory and the reviewer's tool-authored files, and fails with exit 70 if that commit fails (D-021). It records `docs/delivery/runs/<DGx>/<run-id>/meta.json` (role, the run's `outputs` (path → SHA-256) and `written_by_tools`, stage, task, session ID, model, assignment path and SHA-256, start commit, start and finish times, exit code, turns, models used, classifier-outage resumes, and the SHA-256 of `result.json` and `transcript.jsonl.gz`), `result.json` (the final message) and `transcript.jsonl.gz` (the full stream transcript). Run IDs include the session prefix, and directories are never reused (F-DG0-108). The arguments are validated. If a run stops only because the permission classifier returned no verdict repeatedly, the runner resumes the same session up to 6 times (D-019). The `invocation_reference` used in review records is `{kind, run_id, session_id}`. The validator refuses any review, audit or finding verification unless all of these hold for its run:
++- the run evidence is complete and hash-consistent;
++- it belongs to the same role and stage;
++- its transcript contains the **CLI-replayed runner prompt** (`isReplay: true`), carrying the run's `run_id` and `session_id` and naming the same assignment path and SHA-256 as meta (D-022, F-DG0-133);
++- it executed exactly the cited assignment;
++- it started after the candidate froze, from a commit containing the frozen manifest;
++- its transcript starts with an init line and ends in a successful result for the same session. These transcript checks are unconditional, so an empty transcript fails them (F-DG0-132);
++- every bound output equals the validator's own replay of the transcript's successful Write/Edit calls (D-016, D-021).
+ 
+ ### Why not the in-session Agent tool?
+ 
+diff --git a/docs/delivery/decisions.md b/docs/delivery/decisions.md
+index c9dce61..70a1f64 100644
+--- a/docs/delivery/decisions.md
++++ b/docs/delivery/decisions.md
+@@ -25,4 +25,4 @@ Engineering and business assumptions for the delivery. Each entry records who de
+ | D-019 | 2026-09-28 | delivery-orchestrator | **Classifier-outage resume.** When an agent run stops only because the permission classifier returned no verdict repeatedly, the runner resumes the **same session** (same invocation reference) after a pause, up to 6 times, and records `classifier_outage_resumes` in meta. An agent can also end a turn with the first line `CLASSIFIER-BLOCKED` to request the same resume. The permission mode is unchanged. | Round 1 of DG0 lost the code-security reviewer's shell checks to this outage (its record was BLOCKED). Resuming keeps one invocation per review without weakening any control. | — |
+ | D-020 | 2026-09-28 | delivery-orchestrator | **Write-guard hardening** (F-DG0-105). All Claude configuration surfaces (`.claude/**`, `.mcp.json`, and `CLAUDE.md`/`CLAUDE.local.md` at any depth) and `trading_agent/**` are protected. The guard also checks the symlink-resolved real path, and deny rules match case-insensitively. Bash remains unguarded, which is disclosed; the orchestrator runs `git status` after every run. | The findings showed that implementers could otherwise disable hooks through `settings.local.json` or write through symlinks. | — |
+ | D-021 | 2026-09-28 | delivery-orchestrator | **Reviewer artefacts are bound to their run and are write-once** (F-DG0-115, F-DG0-208, F-DG0-117, F-DG0-102).<br>• **Run outputs.** The runner snapshots the tree before and after each run. It records in `meta.json`:<br>• `outputs`: every file the run window changed, path → SHA-256;<br>• `written_by_tools`: the paths the agent targeted with file tools;<br>• `tool_authored`: the paths whose final bytes equal a replay of the agent's own **successful** Write/Edit/MultiEdit calls from the transcript (F-DG0-119).<br>It auto-commits the run directory plus the `tool_authored` files, using literal NUL-separated pathspecs, and fails with exit 70 if the commit fails (F-DG0-120). It auto-commits a reviewer's run directory together with its written files immediately.<br>• **Output binding.** The validator requires every gate review record, and every record and sidecar used to close or accept a finding, to equal what its run wrote.<br>• **Write-once history.** For every path under `reviews/<DGx>/`, `runs/<DGx>/`, `candidates/<DGx>/` and `assignments/<DGx>/round-*/`, all commit events against every parent (merges included) must introduce **one and the same blob**, with no modify, type-change or delete events. HEAD and the bytes on disk (hashed directly, so skip-worktree can't hide edits) must equal that blob. No commit may be back-dated before one of its parents. This is a root-cause redesign: F-DG0-115/118 showed that diff inspection misses merges and index flags, and the round-6 residual showed that a "first added" rule can be defeated by forged commit dates. The validator also replays each bound run's hash-bound transcript itself rather than trusting `meta.tool_authored`.<br>• **Per-freeze manifests.** Each freeze writes its own write-once manifest `candidates/<DGx>/<id-prefix>.manifest.json`, and every review round's `candidate_id`, `frozen_at` and `source_commit` must match it. The manifest must also recompute from its `source_commit`, and a bound run must have started from a commit that already contains it (F-DG0-212).<br>• **Sidecar-only acceptance.** Observations are accepted only through bound sidecar entries (`status_after: ACCEPTED_OBSERVATION`) from a specialist reviewer and from the release-auditor. | Reviewer-written evidence can no longer be edited in place undetected. Closure and acceptance need artefacts produced by the reviewer's own run. Evidence from rounds 1–3 predates output recording, so every finding closure is re-confirmed in round 4 by bound runs. **Residual (disclosed):** run evidence is self-hashed rather than externally attested. A party able to fabricate a complete, internally consistent run directory *and* commit it as new history can still forge evidence. The remaining controls are the auditor's transcript review and the published git history. | An external attestation service becomes available, such as signed transcripts. |
+-| D-022 | 2026-09-28 | delivery-orchestrator | **Prompt binding through CLI replay.** The runner sends each prompt, including resume prompts, as a stream-json user message with `--input-format stream-json --replay-user-messages`. The CLI then records the prompt it received in the transcript, as a user event with `isReplay: true`. The validator accepts a run only if its transcript holds such a replayed message whose text starts with the runner prompt for that role and stage, and which carries the run's `run_id` and `session_id`. The same words inside a tool result don't count. | **Self-found defect, disclosed.** The prompt check added in the round-1 repair (F-DG0-102) looked for any `user` event containing the prompt text. `claude -p` does not echo its argument prompt, so on real transcripts the check matched nothing, or matched tool-result text where an agent had read `run-agent.sh`. It passed only on synthetic test fixtures. The orchestrator found this while pre-checking closures before round 7. **Consequence:** none of the DG0 runs before this change carry a replayed prompt, so none of them can bind a closure. In round 7, every reviewer re-confirms every finding it has raised. Verified end-to-end with the real CLI in a disposable clone, for both a first run and a resume. | — |
++| D-022 | 2026-09-28 | delivery-orchestrator | **Prompt binding through CLI replay.** The runner sends each prompt, including resume prompts, as a stream-json user message with `--input-format stream-json --replay-user-messages`. The CLI then records the prompt it received in the transcript, as a user event with `isReplay: true`. The validator accepts a run only if its transcript holds such a replayed message whose text starts with the runner prompt for that role and stage, and which carries the run's `run_id` and `session_id`. The same words inside a tool result don't count. | **Self-found defect, disclosed.** The prompt check added in the round-1 repair (F-DG0-102) looked for any `user` event containing the prompt text. `claude -p` does not echo its argument prompt, so on real transcripts the check matched nothing, or matched tool-result text where an agent had read `run-agent.sh`. It passed only on synthetic test fixtures. The orchestrator found this while pre-checking closures before round 7. **Consequence:** none of the DG0 runs before this change carry a replayed prompt, so none of them can bind a closure. In round 7, every reviewer re-confirms every finding it has raised. Verified end-to-end with the real CLI in a disposable clone, for both a first run and a resume. **Round-7 hardening:** every transcript check is unconditional, so an empty or newline-only transcript fails them all (F-DG0-132). The assignment path and SHA-256 named in the replayed prompt must equal `meta.assignment` / `meta.assignment_sha256` (F-DG0-133). | — |
+## secret scan over candidate files
+secret-scan-done
+## workflow unchanged?
+(empty = unchanged)
