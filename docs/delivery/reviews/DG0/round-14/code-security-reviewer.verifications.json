@@ -1,0 +1,30 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-141",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original failure reproduced against 6c61f2e (race: smudge ran outside bwrap in 3/3 attempts; the clone could be swapped from outside). Fixed at 1e64eb0 (fix cf13cb1): sandbox-run.sh:26-40 runs only 'git rev-parse' outside (hermetic config, --end-of-options), and the clone, checkout and command all run inside bubblewrap on a private tmpfs with the git directory bound read-only. The clean proof is 02-f141-readonly.log: with the whole filesystem, including /tmp/claude-0, read-only in an outer sandbox, the old script fails at mktemp (exit 1) and the fixed script succeeds (exit 0) with an exact checkout (candidate recomputes to a25db736652685e2), '/' and /tmp/src.git read-only inside. So the fixed wrapper creates nothing that another agent's sandboxed shell can reach, and an agent shell cannot use /proc/<pid>/root either (separate PID namespace; /proc/1/root denied). The regression test 'F-DG0-141: ...' passes in 04-test-suites.log, and prefreeze passes 10/10. The residual path through agent FILE tools via /proc/<pid>/root is a separate write-guard gap, raised as F-DG0-143 (Medium). It does not reopen the code-execution escape this finding was about.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-14/02-f141-readonly.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-14/repro-r14-f141-readonly.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-14/01-f141-race.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-14/04-test-suites.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-14/05-prefreeze.log",
+        "tools/gates/sandbox-run.sh#L26-L40"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-142",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Documentation-level finding; nothing is installed at DG0. The contradiction is resolved: threat-model.md row 3 of 'Mechanically prevented' and residual 3 (lines 48-54), plus decisions.md D-025/D-027, now state that dependency installation runs inside bubblewrap (registry-only network, read-only root, only the target tree and package store writable, lifecycle scripts off unless allow-listed, frozen lockfile install). The register gained REQ-DLV-042 (ENGINEERING, P1, final_gate DG1, SPECIFIED) with testable acceptance: a write outside the target fails; a non-allow-listed lifecycle script does not run; a missing or changed lockfile fails; a missing bwrap exits non-zero; the first install is shown in run evidence. The register-equals-merge prefreeze check passes. Implementation will be verified at DG1.",
+      "evidence": [
+        "docs/delivery/threat-model.md#disclosed-residuals",
+        "docs/delivery/decisions.md#D-027",
+        "docs/delivery/requirements.csv#REQ-DLV-042",
+        "docs/delivery/test-evidence/DG0/code-security/round-14/05-prefreeze.log"
+      ]
+    }
+  ]
+}

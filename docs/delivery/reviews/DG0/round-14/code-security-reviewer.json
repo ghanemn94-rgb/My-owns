@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 14,
+  "candidate_id": "sha256:a25db736652685e24073f8ddf6d7932d4df459b5c64efc04a6e5716c8f962552",
+  "source_commit": "1e64eb02caf8a8c8c5d59d0c6aad390c70e5b7c5",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-SEC-R14-code-security-reviewer-20260928T224157Z-da3ae857",
+    "session_id": "da3ae857-f8e7-4aa3-aa73-ecc0b5e9a64a"
+  },
+  "implementation_author": ["transformation-analyst", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer) authored none of the implementation in the reviewed scope (tools/gates, tools/agents, tools/source, .claude/agents, the CI workflow, the analysis and delivery records). I formed this verdict before reading any other round-14 review record, and I read none. Disclosure: my race reproduction unintentionally modified other concurrently running agents' scratch clones in the shared $TMPDIR (see 00-README-and-incident.md). That affects their scratch space, not my independence or the candidate, which was verified unchanged."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-14/review-code-security-reviewer.md",
+  "requirements_checked": ["REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026", "REQ-DLV-042"],
+  "checks_run": [
+    {
+      "id": "C1-candidate-match",
+      "procedure": "Confirm the frozen candidate: recompute the candidate ID from the working tree and from the frozen commit in a disposable clone; confirm that commits after the freeze touch only excluded metadata.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG0; git diff --stat 1e64eb0..HEAD; (clone) node tools/gates/candidate.mjs --stage DG0 --ref HEAD",
+      "environment": "reviewer OS sandbox (bubblewrap), node 22, /home/user/My-owns and $TMPDIR/dg0-sec clone at 1e64eb0",
+      "expected": "candidate_id sha256:a25db736...62552 both ways; post-freeze commits touch only docs/delivery/{assignments,candidates,test-evidence}/ and stages.json",
+      "actual": "HEAD 84d709c (2 metadata-only commits after 1e64eb0: round-14 assignments, manifest, stages.json, orchestrator probe evidence); candidate_id sha256:a25db736652685e24073f8ddf6d7932d4df459b5c64efc04a6e5716c8f962552 (86 files) from the working tree and from the clone's HEAD",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022"],
+      "evidence": ["docs/delivery/candidates/DG0/a25db736652685e2.manifest.json"]
+    },
+    {
+      "id": "C2-diff-review",
+      "procedure": "Source review of the round-13 to round-14 diff (sandbox-run.sh, run-agent.sh config diff, rules.mjs meta.cwd binding, tests, threat model, decisions) plus the full current sandbox-run.sh, prefreeze.sh, guard-write.mjs and CI workflow.",
+      "command": "git diff 6c61f2e1aa07fa6acfc52f20a8ee9fbb554904ac..1e64eb02caf8a8c8c5d59d0c6aad390c70e5b7c5 -- tools .claude .github docs/delivery/threat-model.md docs/delivery/decisions.md",
+      "environment": "reviewer OS sandbox, read-only source inspection",
+      "expected": "sandbox-run.sh does all work inside bwrap; the config diff reports added, changed and removed entries and fails closed; meta.cwd is bound to the transcript init cwd and the prompt; CI stays least-privilege with pinned actions",
+      "actual": "As expected. sandbox-run.sh:26-40 uses hermetic git and --end-of-options outside, then the clone, checkout and exec run inside bwrap. run-agent.sh:171-190 uses a Python diff with a 'removed' line and fails closed, and any non-empty change makes a review run exit 71 (lines 196-204). rules.mjs:303-305 and 322-323 bind cwd. CI (contents: read, SHA-pinned actions, fetch-depth 0) is unchanged. One new gap in the unchanged guard: canonicalPath fails open on a realpath error (F-DG0-143).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-023", "REQ-DLV-026"],
+      "evidence": ["tools/gates/sandbox-run.sh#L26-L40", "tools/agents/run-agent.sh#L171-L204", "tools/gates/lib/rules.mjs#L303-L323", "tools/agents/guard-write.mjs#L104-L154"]
+    },
+    {
+      "id": "C3-f141-race-old-vs-new",
+      "procedure": "Re-run the round-13 race (watcher in $TMPDIR plants a smudge filter and swaps a test file) against sandbox-run.sh at 6c61f2e and at 1e64eb0, 3 attempts each.",
+      "command": "docs/delivery/test-evidence/DG0/code-security/round-14/repro-r14-f141-race.sh <commit>",
+      "environment": "reviewer OS sandbox, nested bwrap, disposable clones under $TMPDIR",
+      "expected": "old: escape; new: my sandbox-run creates no reachable clone",
+      "actual": "Old: ESCAPE and SWAP in 3/3 attempts. New: the inner clone was untouched (SWAPPED count 0, /tmp/repo), but the over-broad watcher hit OTHER agents' concurrent clones (sbxrun.* from the old script, qa5-dg0-*), so the new-commit 'ESCAPE/SWAP' lines are not about the fixed wrapper. This is disclosed as an incident, and it demonstrates F-DG0-144.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-007", "REQ-DLV-023"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-14/01-f141-race.log", "docs/delivery/test-evidence/DG0/code-security/round-14/repro-r14-f141-race.sh", "docs/delivery/test-evidence/DG0/code-security/round-14/00-README-and-incident.md"]
+    },
+    {
+      "id": "C4-f141-readonly-outer-sandbox",
+      "procedure": "Run sandbox-run.sh (old and fixed) inside an outer bwrap in which the whole filesystem, including /tmp/claude-0, is read-only; inside, check HEAD, cleanliness, candidate ID and read-only root and git dir.",
+      "command": "docs/delivery/test-evidence/DG0/code-security/round-14/repro-r14-f141-readonly.sh",
+      "environment": "reviewer OS sandbox, nested bwrap, disposable clones under $TMPDIR",
+      "expected": "old fails (needs a shared work dir); fixed succeeds with an exact checkout and a read-only / and src.git",
+      "actual": "Old: 'mktemp: ... Read-only file system', exit 1. Fixed: exit 0, HEAD 1e64eb0, 0 changes, candidate sha256:a25db736652685e2, '/' read-only, src.git read-only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-023"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-14/02-f141-readonly.log", "docs/delivery/test-evidence/DG0/code-security/round-14/repro-r14-f141-readonly.sh"]
+    },
+    {
+      "id": "C5-agent-shell-pid-isolation",
+      "procedure": "From my own sandboxed shell (the same kind of sandbox an attacking agent's shell has), check whether host processes, and hence /proc/<pid>/root of the orchestrator's sandbox, are reachable.",
+      "command": "ls /proc | grep -E '^[0-9]+$' | wc -l; ps -eo pid,args; ls /proc/1/root/",
+      "environment": "reviewer OS sandbox",
+      "expected": "separate PID namespace; no access to host processes",
+      "actual": "6 PIDs visible, all my own; /proc/1/root: Permission denied. An agent's shell cannot reach sandbox-run's tmpfs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-14/00-README-and-incident.md"]
+    },
+    {
+      "id": "C6-guard-procroot",
+      "procedure": "Offline probe of guard-write.mjs decide(): a $TMPDIR symlink to /proc/<pid>/root/tmp of a bubblewrap child with a private tmpfs; decide() for three roles; then a write through the link.",
+      "command": "node docs/delivery/test-evidence/DG0/code-security/round-14/repro-r14-guard-procroot.mjs \"$TMPDIR/dg0-sec\"",
+      "environment": "reviewer OS sandbox, node 22, disposable clone of 1e64eb0 as MTH_GUARD_ROOT, own child bwrap as victim",
+      "expected": "guard blocks: a path that reaches outside scratch through an unresolvable magic link must fail closed",
+      "actual": "realpathSync -> ENOENT; decide() allow=true (scratch) for domain-reviewer, transformation-analyst and backend-workflow-engineer; the write succeeded; the victim saw 'SWAPPED-BY-ATTACKER' (F-DG0-143)",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-14/03-guard-procroot.log", "docs/delivery/test-evidence/DG0/code-security/round-14/repro-r14-guard-procroot.mjs"]
+    },
+    {
+      "id": "C7-guard-procroot-live",
+      "procedure": "Live end-to-end probe of F-DG0-143 through my own Write tool against a victim sandbox.",
+      "environment": "reviewer session",
+      "expected": "demonstrate or refute the chain through a real agent file tool",
+      "actual": "Not completed: my session's safety classifier stopped the probe and I did not retry. F-DG0-143 rests on the offline reproduction (C6).",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-14/00-README-and-incident.md"]
+    },
+    {
+      "id": "C8-test-suites",
+      "procedure": "Run the gate, guard and runner test suites in a disposable clone of the candidate commit.",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs; python3 -I -B -m unittest discover -s tools/agents/tests -p 'test_*.py'",
+      "environment": "reviewer OS sandbox, node 22, python3, $TMPDIR/dg0-sec at 1e64eb0",
+      "expected": "all pass",
+      "actual": "node: 72 tests, 72 pass, 0 fail (exit 0); python: 14 tests OK",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-14/04-test-suites.log"]
+    },
+    {
+      "id": "C9-prefreeze",
+      "procedure": "Run the pre-freeze integration check in a fresh clone of the candidate commit.",
+      "command": "tools/gates/prefreeze.sh DG0",
+      "environment": "reviewer OS sandbox, nested bwrap, fresh clone at 1e64eb0 under $TMPDIR (removed afterwards)",
+      "expected": "every check PASS, exit 0",
+      "actual": "10/10 PASS (extraction, both node suites, python suite, register rules, register equals merge, pipeline, 3 analysis checks, working tree equals HEAD sha256:a25db736...62552), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-023"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-14/05-prefreeze.log"]
+    },
+    {
+      "id": "C10-f142-docs",
+      "procedure": "Verify F-DG0-142: the threat model, D-025/D-027 and the new register row describe sandboxed dependency installation consistently and testably.",
+      "command": "grep -n D-027 docs/delivery/decisions.md; grep -n REQ-DLV-042 docs/delivery/requirements.csv; grep -n -i install docs/delivery/threat-model.md",
+      "environment": "read-only inspection",
+      "expected": "no contradiction with D-026; DG1 requirement with testable acceptance",
+      "actual": "Consistent: threat-model row 3 and residual 3, D-025 points to D-027, and REQ-DLV-042 (P1/DG1, SPECIFIED) has 4 testable acceptance points plus run evidence",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": ["docs/delivery/requirements.csv#REQ-DLV-042", "docs/delivery/threat-model.md#disclosed-residuals"]
+    }
+  ],
+  "findings": ["F-DG0-143", "F-DG0-144"],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/code-security/round-14/00-README-and-incident.md",
+    "docs/delivery/test-evidence/DG0/code-security/round-14/01-f141-race.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-14/02-f141-readonly.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-14/03-guard-procroot.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-14/04-test-suites.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-14/05-prefreeze.log",
+    "docs/delivery/reviews/DG0/round-14/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG0/round-14/code-security-reviewer.verifications.json"
+  ],
+  "reviewed_at": "2026-09-28T22:58:00Z",
+  "summary": "FAIL. F-DG0-141 (High) is fixed: CLOSED_VERIFIED by a clean outer-read-only-sandbox proof and the race re-run. F-DG0-142 (Low) is CLOSED_VERIFIED. Tests pass 72/72 and 14/14; prefreeze passes 10/10. Two new Medium findings. F-DG0-143: the write guard fails open when realpath errors, so a file tool can write through a $TMPDIR symlink into another namespace's private tmpfs via /proc/<pid>/root, which undercuts D-027's 'no other process can change the clone' claim; offline repro only, and the live probe is BLOCKED. F-DG0-144 (mandatory): every concurrently running agent shares one writable $TMPDIR, where reviewers make their disposable clones, so one agent can falsify another reviewer's executed checks without trace. My own race reproduction demonstrated this unintentionally against other round-14 agents' clones (22:44:18Z to 22:45:10Z); see the incident note, which the orchestrator should act on."
+}

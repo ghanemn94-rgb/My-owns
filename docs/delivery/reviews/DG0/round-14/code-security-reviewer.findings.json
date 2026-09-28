@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG0-143",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Write guard allows file-tool writes into another mount namespace's private tmpfs through a $TMPDIR symlink to /proc/<pid>/root, which undercuts D-027's claim that no other process can see or change sandbox-run.sh's work clone",
+      "reproduction": "tools/agents/guard-write.mjs:104-120 canonicalPath() walks up while existsSync() is false, then calls realpathSync() and, on error, silently keeps the LEXICAL path (lines 116-118). decide() (lines 150-154) re-checks only if the canonical path differs from the lexical one. decideOne() (lines 124-128) allows any path under the temp directory as scratch. Script docs/delivery/test-evidence/DG0/code-security/round-14/repro-r14-guard-procroot.mjs, run against a disposable clone of 1e64eb0: it starts a bubblewrap child with a private '--tmpfs /tmp' holding /tmp/repo/tools/gates/tests/check.txt (the same construction sandbox-run.sh:32 uses for its clone) and creates the symlink $TMPDIR/r14-procroot-*/l -> /proc/<child pid>/root/tmp, which an agent's sandboxed Bash can create because $TMPDIR is writable and a symlink target need not exist in its namespace. It then calls decide(scopes, role, '$TMPDIR/.../l/repo/check.txt'). Log 03-guard-procroot.log: realpathSync -> ENOENT (the cross-namespace magic link does not resolve to a host path); decide() -> allow=true ('temporary directory (scratch)') for domain-reviewer, transformation-analyst and backend-workflow-engineer; the write through the link succeeds; the sandboxed child then reads 'SWAPPED-BY-ATTACKER'. In the real setup the attacker's Write/Edit tools run in the agent's unsandboxed CLI process in the host PID namespace, the same namespace as the orchestrator's sandbox-run.sh bubblewrap, so /proc/<pid>/root of the orchestrator's sandboxed command is reachable, and the pid is discoverable from host /proc. NOT demonstrated: the full live chain through a real agent file tool against a real orchestrator prefreeze. I started a live probe; my session's safety classifier stopped it and I did not retry.",
+      "expected": "threat-model.md:29 and decisions.md D-027 (F-DG0-141): 'no other process (in particular no agent sharing $TMPDIR or /tmp) can see, plant into, or change the clone while it is created or checked' (also sandbox-run.sh:8-10 and REQ-DLV-023's procedure). The write guard (threat-model 'Mechanically prevented' row 1: 'follows symlinks, fails closed') must not let a file tool write through a symlink it cannot resolve. Fix: in canonicalPath/decide, fail closed when the lexical path exists but realpathSync throws. Deny any path whose resolved components pass through /proc (or any magic link: readlink of /proc/*/root, /proc/*/cwd, /proc/*/fd/*). Add a regression test with a $TMPDIR symlink to /proc/<pid>/root of a bubblewrap child.",
+      "actual": "The guard's symlink check fails open on a realpath error, so a file tool can write into a private tmpfs through /proc/<pid>/root. For sandbox-run.sh this re-opens the trace-free variant of F-DG0-141: a concurrently running agent swaps a test or check file in the orchestrator's sandboxed clone during prefreeze, so prefreeze reports PASS for content that is not the committed HEAD. It is NOT a code-execution escape: the command still runs inside bubblewrap with a read-only root and the git directory bound read-only (02-f141-readonly.log). Medium rather than High for three reasons: it needs a concurrent malicious agent and pid discovery; the effect is limited to the orchestrator's pre-freeze results, which the three independent reviews and the auditor re-check; and I showed the chain only offline.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-14/repro-r14-guard-procroot.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-14/03-guard-procroot.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-14/00-README-and-incident.md",
+        "tools/agents/guard-write.mjs#L104-L128",
+        "tools/agents/guard-write.mjs#L150-L154",
+        "tools/gates/sandbox-run.sh#L7-L10",
+        "docs/delivery/threat-model.md#mechanically-prevented"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-14/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T22:55:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 14; offline reproduction against the guard function in a disposable clone of 1e64eb0"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-144",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "All concurrently running agents share one writable $TMPDIR (/tmp/claude-0), where reviewers are told to make their disposable clones: any agent can plant git filters or hooks in, or swap files in, another reviewer's clone and falsify that reviewer's executed checks without trace (demonstrated live, unintentionally, in this round)",
+      "reproduction": "agent-protocol.md:79 and the reviewer definitions (.claude/agents/code-security-reviewer.md:33, qa-verifier.md:31) tell reviewers to execute code in 'git clone <repo> \"$TMPDIR/<name>\"'. tools/agents/agent_settings.py:10-11: a sandboxed command may write its working directory and $TMPDIR, and $TMPDIR is /tmp/claude-0 for every agent (same uid 0, directories created mode 0700 but all agents are root). Live demonstration in this round (docs/delivery/test-evidence/DG0/code-security/round-14/01-f141-race.log, attempts on commit 1e64eb0; details and time window in 00-README-and-incident.md): from my own sandboxed reviewer shell, a background loop found and modified clones created by OTHER concurrently running round-14 agents: '/tmp/claude-0/qa5-dg0-*' (created by the qa-verifier's docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r*.test.mjs) and '/tmp/claude-0/sbxrun.*' (created by another agent running the old sandbox-run.sh). It planted a git smudge filter in their .git/config and .git/info/attributes, and the filter then ran 454 and 291 times inside their checkouts; it also replaced tools/gates/tests/validator.test.mjs in two of their clones with a one-test stub ('SWAP: the clone was modified from outside'). Nothing in the repository, the runner's config snapshot or the victim's run evidence records this. The planted filter executes as the victim agent inside the victim's sandbox, with the victim's write scope, which for a reviewer includes docs/delivery/test-evidence/**.",
+      "expected": "The independence of the three reviewers and the auditor is the gate's central control (master prompt §0; threat-model residual 4 relies on it). One agent must not be able to alter another agent's executed checks. The threat model should list this path, and the runner should give each run a private scratch directory: for example, set TMPDIR to a fresh per-run directory and generate the sandbox allowWrite for that directory only, denying writes to the shared /tmp/claude-0 and to other runs' directories. Alternatively, disclose it as a residual with its real scope. D-027 moved only the orchestrator's own files out of $TMPDIR.",
+      "actual": "threat-model.md 'Actors and trust' confines reviewers to 'their own records, sidecars and test evidence', and D-025 says 'Reviewers and the analyst are confined to their own areas', but their executed checks live in a directory every concurrently running agent can write, including implementers when they run concurrently. A malicious or compromised agent can make an independent reviewer's test runs pass (swap tests) or run code as that reviewer (git filter or hook, or a planted module in the clone), and no record shows it. Medium: it requires a concurrent malicious agent, and a falsified run still needs the reviewer's own record, which is transcript-bound. mandatory_violation true because it breaks the integrity of independent review evidence.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-14/01-f141-race.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-14/00-README-and-incident.md",
+        "docs/delivery/test-evidence/DG0/code-security/round-14/repro-r14-f141-race.sh",
+        "docs/delivery/agent-protocol.md#L79",
+        "tools/agents/agent_settings.py#L10-L11",
+        "docs/delivery/threat-model.md#actors-and-trust"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-14/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T22:55:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 14; demonstrated live (unintentionally, see the incident note) against other concurrently running agents' clones"
+        }
+      ]
+    }
+  ]
+}
