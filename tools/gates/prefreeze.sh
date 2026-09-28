@@ -25,6 +25,9 @@ run "source extraction reproducible (sandboxed)" "${SBX[@]}" tools/source/check_
 run "gate validator + guard tests (sandboxed)" "${SBX[@]}" bash -c 'node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs'
 run "runner metadata + settings tests (sandboxed)" "${SBX[@]}" python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'
 run "register rules ($STAGE) (sandboxed)" "${SBX[@]}" node tools/gates/validate.mjs --register "$STAGE"
+# The register and coverage matrix must equal what the merge script produces from the analyst part files: no hand edits.
+run "register equals the merge of docs/analysis/parts (sandboxed)" "${SBX[@]}" bash -c \
+  'python3 -I -B tools/source/merge_register.py && git diff --exit-code --stat -- docs/delivery/requirements.csv docs/analysis/master-prompt-coverage.csv && echo "register and coverage equal the merge output"'
 run "pipeline state (sandboxed)" "${SBX[@]}" node tools/gates/validate.mjs --pipeline
 for script in $(git -C "$REPO_ROOT" ls-tree --name-only HEAD docs/analysis/tools/ 2>/dev/null | grep '\.py$'); do
   run "analysis check $(basename "$script") (sandboxed)" "${SBX[@]}" python3 -I -B "$script"
