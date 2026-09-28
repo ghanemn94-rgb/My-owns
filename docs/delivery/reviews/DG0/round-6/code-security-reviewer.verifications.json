@@ -1,0 +1,229 @@
+{
+ "verifications": [
+  {
+   "finding_id": "F-DG0-101",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Re-run in round 6. Old: the round-1 repro on 26642c72 passes R1a (an OPEN High finding relabelled to DG1 escapes the gate) and R1b (an earlier-round High finding is dropped from findings.json) (09-r1-repro-on-26642c72.log, tests 2-3). The round-3 repro on 540b3c69 test 2 shows deleting a whole round is detected there (09-r3). New a059b55: carried suite test 16 rejects a relabel to DG1, a drop, and the deletion of round 1 (02-repro-carried-on-a059b55.log). rules.mjs and validator.test.mjs are byte-identical between d141d303 and a059b55. The fix is complete for the relabel and drop vectors. The separate rewrite-in-history weakness is F-DG0-115.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r3-repro-on-540b3c69.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/repro-r6-carried.test.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-102",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-1 repro R0 on 26642c72 passes a DG0 gate with fabricated 5-field run records and no transcripts (09-r1, test 1). The round-3 repro on 540b3c69 test 7 shows a verifying record without an assignment skipping the binding (09-r3). New a059b55: carried test 14 rejects a 4-field meta without transcript/result and a mismatched transcript hash. Test 15 rejects a verifying record without an assignment and unlisted records (02-repro-carried-on-a059b55.log). The disclosed D-021 residual (a fully fabricated, internally consistent run directory committed as new history) remains. It is documented, and outside this finding's scope.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r3-repro-on-540b3c69.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-103",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-1 repro R2 on 26642c72 shows symlinks silently excluded from the candidate, and repointable after approval undetected (09-r1, test 4). New a059b55: carried test 19 shows that repointing a committed symlink changes the committed candidate and that gitlinks are refused (02-repro-carried-on-a059b55.log). candidate.mjs:101 and :126-127 hash symlinks by target, with mode 120000.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-104",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-1 repro R3 on 26642c72 shows an extra exclude in the frozen manifest hiding deliverables (09-r1, test 5). New a059b55: carried test 20 rejects an extra exclude both in the manifest spec and in stages.json candidate_spec (02-repro-carried-on-a059b55.log). candidate.mjs:23-30 fixes APPROVED_SPEC, and --freeze refuses a non-conforming spec (candidate.mjs:44-48).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-105",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-1 repro R6 on 26642c72 shows the guard following symlinks and leaving .claude/settings.local.json, .mcp.json and trading_agent/ writable for implementers (09-r1, test 8). New a059b55: the end-to-end probe runs the real per-role hook command from tools/agents/settings/*.settings.json (06-guard-e2e.sh/.log). For backend-workflow-engineer it gives exit 2 (deny) for .claude/settings.local.json, .mcp.json, sub/CLAUDE.md, trading_agent/x.py, a symlink src/lnk -> tools/gates, an upper-case TOOLS/GATES path, '..' traversal, MultiEdit and NotebookEdit. An ordinary src/ok.ts is allowed (exit 0). Without a git binary, or with a cwd outside any repository, the hook denies (exit 2; 07-guard-no-git.log). This corrects my first probe, whose exit 127 came from env not finding bash in the harness.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/06-guard-e2e.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/06-guard-e2e.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/07-guard-no-git.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-106",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-1 repro R4 on 26642c72 accepts '#', '.' and non-path strings as evidence (09-r1, test 6). New a059b55: carried test 21 rejects '#', '.', a directory and a bare token as evidence, and rejects an empty gate tests[] (02-repro-carried-on-a059b55.log).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-107",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-1 repro R5 on 26642c72 shows parseCsv silently accepting characters after a closing quote (09-r1, test 7). New a059b55: carried test 22 shows that parseCsv throws on text after a closing quote, ragged rows, a stray quote and an unterminated field (02-repro-carried-on-a059b55.log).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-108",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old 26642c72 (19-orig-state-and-docs.log): run-agent.sh had no --stage/--task/--role/--model validation. RUN_ID had second resolution only (line 37), and it used 'mkdir -p \"$OUT\"' (line 39), so evidence could collide or be overwritten. New a059b55 has regex validation at lines 35-38, a RUN_ID with an 8-hex UUID suffix (line 48) and a plain 'mkdir \"$OUT\"' (line 51) that fails if the directory exists. End to end with a stub claude in a disposable clone (08-runner-e2e.log, 18-runner-on-a059b55.log): --stage DG9 and 'DG0;id', --task ../../x, --role ../x and --model 'x;id' exit 64, and an assignment outside the repository exits 66.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/19-orig-state-and-docs.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/08-runner-e2e.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/08-runner-e2e.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-109",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old 26642c72: actions/checkout@v4 and actions/setup-node@v4, mutable tags (19-orig-state-and-docs.log). New a059b55: both are pinned to 40-hex commit SHAs, with permissions 'contents: read' and fetch-depth 0. The workflow references no secrets and uses no continue-on-error, '|| true' or pull_request_target (11-ci.log). The only change since round 5 is the added 'Runner metadata tests' step.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/19-orig-state-and-docs.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/11-ci.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-110",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-2 repro on 83860be3 passes N1a (a closure cited from a pre-freeze unrelated run), N1b (the sidecar says FAIL while findings.json says CLOSED_VERIFIED) and N1c (evidence and fix_revision never checked) (09-r2-repro-on-83860be3.log, tests 9-11). New a059b55: carried test 17 rejects CLOSED_VERIFIED against a latest-FAIL sidecar, a foreign fix_revision and '#' evidence (02-repro-carried-on-a059b55.log). The closure now derives from the reporter's bound sidecar. How robust that sidecar is against rewriting is F-DG0-115, which is still open.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r2-repro-on-83860be3.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-111",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-2 repro N3 on 83860be3 shows an implementer planting tools/.git and then writing protected gate files (09-r2, test 13). New a059b55: the end-to-end probe (06-guard-e2e.log) denies Write of tools/.git and docs/.git. With 'gitdir:' files planted at tools/.git and docs/.git, writes to tools/gates/lib/rules.mjs, write-scopes.json, stages.json and docs/source are still denied (exit 2). guard-write.mjs:42 fixes GUARD_ROOT from the script location, and :82 denies any '.git' segment.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r2-repro-on-83860be3.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/06-guard-e2e.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-112",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-2 repro on 83860be3 passes N4 (a file containing 'symlink:<t>' collides with a symlink) and N5 (the exec bit is not in the identity) (09-r2, tests 14-15). New a059b55: carried test 19 shows that the exec bit and a file/symlink swap change the committed candidate (02-repro-carried-on-a059b55.log). candidate.mjs:145 hashes '<sha256>  <mode>  <path>' (mth-candidate-v2).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r2-repro-on-83860be3.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-113",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-2 repro N6 on 83860be3 shows the working-tree candidate differing under core.autocrlf=true (09-r2, test 16). New a059b55: .gitattributes has '* -text'. A clone with core.autocrlf=true and core.eol=crlf, checked out at a059b55, recomputes sha256:c13a4f8e...ff68 exactly (15-autocrlf.log). Note: a different platform-dependence (committed .pyc files rewritten by the candidate's own tests) is raised separately as F-DG0-130. It is not a line-ending issue and does not reopen this finding.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r2-repro-on-83860be3.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/15-autocrlf.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-114",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Re-checked at a059b55 (19-orig-state-and-docs.log). D-016 lists what provenance binding actually checks. The resume count is 6 in decisions.md (D-019), agents.md:40, agent-protocol.md:92 and run-agent.sh (MTH_MAX_RESUMES:-6). The other numbers are the 4-worker limit and the in-agent 3-retry rule, which are different things. The protected-path list in agents.md:20-26 matches write-scopes.json protected_for_implementers, using brace and any-depth forms. One remaining documentation inaccuracy (D-021 says evidence 'can no longer be edited in place undetected') belongs to F-DG0-115, not to this finding.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/19-orig-state-and-docs.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-115",
+   "result": "FAIL",
+   "status_after": "OPEN",
+   "note": "Still bypassable in the round-6 candidate. rules.mjs is byte-identical between d141d303 and a059b55, and my round-5 result (never bound, because that run was orphaned) re-runs identically. The original round-3 vectors are fixed. On 540b3c69, tests 4-6 of the round-3 repro edit a committed sidecar or record to drop a High finding, flip a FAIL verification and flip a FAIL verdict (09-r3). On a059b55, carried tests 3-7 reject those edits: an ordinary-commit rewrite, an uncommitted edit, a verdict flip and the plain evil merge (02-repro-carried-on-a059b55.log). The root-cause design is still defeated by ordering. tools/gates/lib/rules.mjs:606-641 (checkWriteOnce) runs 'git log -m --full-history --diff-filter=A --reverse' (line 609) and keeps as reference the blob of whichever commit that output lists first (lines 610-615). --reverse follows commit ordering, which is influenced by committer dates that the committer chooses freely. It then compares HEAD and the disk only with that blob (lines 633-636) and never looks at M events or at other add events. Carried test 10 (BYPASS N4) passes on a059b55. The runner commits the reviewer's genuine round-2 sidecar (FAIL/OPEN for High F-DG0-101), which keeps the gate closed. A forger then makes side commit S from the freeze commit, with committer date 2001-01-01. S adds the round evidence with a forged PASS/CLOSED_VERIFIED sidecar and a meta.json whose outputs and tool_authored are re-pointed to the forged bytes. The forger merges S with a merge whose tree is the forgery. validateGate(current) then returns []. After approval, validateGate(historical) and validatePipeline return []. 'git diff <round commit> HEAD' shows M on the sidecar. Test 11 (N4b) drops a committed round-1 High finding and flips the round-1 FAIL verdict to PASS the same way. Control test 9: with a current date for S the rewrite is detected, so ordering alone decides. This contradicts D-021 ('every file ever added ... must still hold ... the exact blob that first added it'; 'can no longer be edited in place undetected'), and it is not covered by the disclosed residual, which is fabricating a new run directory as new history; here the genuine blob stays in history. Expected fix: every write-once path has exactly one distinct blob across ALL add/modify events against EVERY parent ('git log -m --full-history --raw'), with no M/T events, and HEAD and the disk equal that blob. Alternatively, reject merges and commits whose committer date precedes a parent's. That rule is satisfiable today: the real history at b6fa2c28 has 224 write-once paths, 0 with more than one blob, 0 merges and 0 back-dated commits (10-history-feasibility.log). Defence in depth: the validator should replay tool_authored from the bound transcript instead of trusting meta.tool_authored. No actual tampering is observed in the real DG0 evidence; this is a control weakness. Severity stays High and mandatory.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/repro-r6-carried.test.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r5carried-repro-on-d141d303.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r3-repro-on-540b3c69.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/10-history-feasibility.py",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/10-history-feasibility.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-116",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-3 repro test 9 on 540b3c69 shows that with core.fileMode=false the working-tree mode disagrees with git (09-r3). New a059b55: carried test 23 shows that with core.fileMode=false tracked modes are taken from the index, so the committed candidate is reproduced (02-repro-carried-on-a059b55.log; candidate.mjs:84-104).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r3-repro-on-540b3c69.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-117",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-3 repro test 10 on 540b3c69 shows ACCEPTED_OBSERVATION trusting role names typed into findings.json (09-r3). New a059b55: carried test 18 rejects an observation that is only typed into findings.json, so bound sidecar entries from a specialist and the auditor are required (02-repro-carried-on-a059b55.log). The sidecars' own rewrite resistance is F-DG0-115.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r3-repro-on-540b3c69.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-118",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-4 repro test 13 (BYPASS N2) on 53f5d176 shows skip-worktree hiding a working-tree forgery while the gate passes (09-r4-repro-on-53f5d176.log). New a059b55: rules.mjs:626-640 hashes the on-disk bytes with 'git hash-object --no-filters' and compares them with the reference blob. Carried test 8 flags the sidecar, meta.json and findings.json as skip-worktree (and assume-unchanged), forges them, confirms 'git status' is empty, and gets the 'working-tree ... differs ... skip-worktree' error (02-repro-carried-on-a059b55.log). The choice of reference blob is F-DG0-115.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r4-repro-on-53f5d176.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-119",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old 53f5d176, with the real run-agent.sh and a stub claude in a disposable clone (18-runner-on-53f5d176.log): a Write denied by the hook (tool_result is_error) plus other-writer content B is recorded in outputs and auto-committed as the reviewer's file. meta has no tool_authored. New a059b55 (08-runner-e2e.log, 18-runner-on-a059b55.log):\n- denied Write plus B: tool_authored={}, not committed;\n- Write then Bash append: tool_authored={};\n- Edit-only change of a pre-existing file: tool_authored={}, fails closed;\n- honest Write, Write+Edit and Write+MultiEdit: bound to the sha256 of the replayed text, and committed;\n- the round-5 crash input (a string 'message', null message, string content, a non-JSON line): meta.json is built and the honest Write is bound (strmsg mode);\n- a Write through an in-tree symlink: recorded under the real path.\nValidator side: carried test 12 rejects outputs without a matching tool_authored digest (02-repro-carried-on-a059b55.log). The residual (the validator trusts meta.tool_authored rather than replaying the transcript) depends on F-DG0-115.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/18-runner-old-vs-new.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/18-runner-on-53f5d176.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/18-runner-on-a059b55.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/08-runner-e2e.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/fake-claude-r6.py",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-120",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old 53f5d176 (18-runner-on-53f5d176.log, glob mode): the agent Writes a file literally named 'x*' while the tracked 'xy.md' is modified by someone else. The auto-commit contains 'A x*' AND 'M xy.md', so the unrelated file is swept in. New a059b55 (18-runner-on-a059b55.log and 08-runner-e2e.log): the auto-commit contains only 'A x*' plus the run directory, and xy.md stays an uncommitted modification. A path with a space is committed literally. With a held .git/index.lock (lockfail mode) the runner prints 'FAILED to auto-commit review evidence ... the evidence is NOT write-once yet' and exits 70. On 53f5d176 the same case exited 128 with no explanation. run-agent.sh:126-151 uses NUL-separated --pathspec-from-file with GIT_LITERAL_PATHSPECS=1 under flock.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/18-runner-old-vs-new.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/18-runner-on-53f5d176.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/18-runner-on-a059b55.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/08-runner-e2e.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-121",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Old: the round-4 repro test 20 (OBSERVATION N3) on 53f5d176 shows that replacing the gate record's tests[] with a fabricated entry still passes (09-r4-repro-on-53f5d176.log). New a059b55: carried test 13 rejects the same edit ('gates/DG0.json differs from what the run wrote'). A gate file absent from the auditor's outputs and tool_authored is also rejected (02-repro-carried-on-a059b55.log). The binding holds only as long as the auditor's meta.json stays write-once, which the F-DG0-115 back-dated merge still undermines. That dependency is tracked under F-DG0-115.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/09-r4-repro-on-53f5d176.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+   ]
+  }
+ ]
+}

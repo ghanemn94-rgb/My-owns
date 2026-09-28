@@ -1,0 +1,59 @@
+{
+ "findings": [
+  {
+   "id": "F-DG0-130",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-022",
+   "severity": "Medium",
+   "mandatory_violation": false,
+   "title": "Committed Python bytecode (__pycache__/*.pyc) makes the candidate non-reproducible: the candidate's own checks rewrite it on any clean checkout, so prefreeze.sh fails, --freeze refuses and the working-tree candidate ID drifts",
+   "reproduction": "The candidate (a059b55) tracks tools/agents/__pycache__/run_meta.cpython-311.pyc and tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc (manifest entries), and the repository has no .gitignore. CPython reuses a .pyc only if the source mtime and size in its header match the file on disk. The headers carry the orchestrator's mtimes (run_meta.py: 2026-09-28T15:15:40Z). In any fresh checkout the source mtime is the checkout time, so importing the module rewrites both files. The candidate's own documented checks do exactly that: prefreeze.sh:19 and .github/workflows/delivery-gates.yml:30-31 both run 'python3 -m unittest discover -s tools/agents/tests', which imports run_meta. Steps (03-pyc-prefreeze-fresh.log): (1) git worktree add of a059b55: status clean, candidate.mjs --stage DG0 prints sha256:c13a4f8e...ff68. (2) tools/gates/prefreeze.sh DG0: every check PASSes, then 'FAIL uncommitted candidate changes: M tools/agents/__pycache__/run_meta.cpython-311.pyc, M .../test_run_meta.cpython-311.pyc', exit 1. (3) candidate.mjs --stage DG0 now prints sha256:657843aa...; in a second worktree it printed sha256:ac1a2d5d... (01-existing-tests.log run), so the value depends on checkout time. (4) validate.mjs --stage DG0 in current mode recomputes from the working tree (rules.mjs:689-691), and --reconcile (rules.mjs:860) reports the tree as differing and every review as STALE. (5) candidate.mjs --stage DG0 --freeze refuses: 'uncommitted candidate changes ... changed: [both .pyc]' (16-prefreeze-dirty-gap.log, part A). With a Python other than 3.11 (CI's ubuntu-24.04 ships 3.12), new untracked cpython-312.pyc files appear instead, and they too enter the working-tree candidate (candidate.mjs:90 lists untracked, non-ignored files). The main tree passes only because its .pyc headers happen to match its own mtimes (04-prefreeze-main-tree.log). The committed bytecode is also opaque to review, and it embeds the orchestrator's absolute path (/home/user/My-owns/...). I checked that it is currently code-equal to the committed sources (05-pyc-equivalence.log), so this is not hidden code.",
+   "expected": "Candidate identity is deterministic and platform-independent (D-005): a clean checkout of the frozen commit reproduces the candidate ID before and after the candidate's own documented checks, and the pre-freeze check passes on a clean checkout. Build artefacts are not deliverables. Fix: remove the __pycache__ files from the repository and add a .gitignore with '__pycache__/' and '*.pyc' (ignored files are excluded from the working-tree candidate by --exclude-standard). Also export PYTHONDONTWRITEBYTECODE=1 in prefreeze.sh and in the CI job.",
+   "actual": "Two build artefacts are part of the frozen deliverable. On any machine other than the one that compiled them, the documented checks rewrite them. prefreeze.sh DG0 then exits 1, --freeze refuses, current-mode gate validation and reconcile see a different candidate, and the ID depends on checkout time. It fails closed, so no gate can be passed wrongly, but independent verifiers (reviewers or auditor in clean clones) cannot reproduce the pre-freeze check or the candidate after running the tests.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/03-pyc-prefreeze-fresh.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/04-prefreeze-main-tree.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/05-pyc-equivalence.py",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/05-pyc-equivalence.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/16-prefreeze-dirty-gap.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-6/01-existing-tests.log"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-6/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T15:35:12Z",
+     "status": "OPEN",
+     "note": "Raised in DG0 round-6 code-security review (checks C4, C5)."
+    }
+   ]
+  },
+  {
+   "id": "F-DG0-131",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-023",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "prefreeze.sh prints 'PASS no uncommitted candidate changes' while candidate files under docs/delivery, or untracked candidate files, differ from HEAD",
+   "reproduction": "tools/gates/prefreeze.sh:25 computes 'git status --porcelain -- . :(exclude)docs/delivery :(exclude)trading_agent | grep -v ^??'. It therefore ignores (a) the six candidate files under docs/delivery (requirements.csv, requirements-spec.md, decisions.md, agent-protocol.md, agents.md, environment.md). Only specific metadata paths under docs/delivery are excluded from the candidate (candidate.mjs META_EXCLUDES). It also ignores (b) untracked non-ignored files, which are part of the working-tree candidate (candidate.mjs:90). Repro (16-prefreeze-dirty-gap.log, part B): in a disposable worktree of a059b55, append a line to docs/delivery/requirements-spec.md and create tools/gates/untracked-new.mjs. The prefreeze line-25 expression yields 'PASS no uncommitted candidate changes'. candidate.mjs --freeze then correctly refuses ('changed: docs/delivery/requirements-spec.md; added: tools/gates/untracked-new.mjs').",
+   "expected": "The pre-freeze dirty check uses the same definition as the candidate. For example, it compares 'candidate.mjs --stage DGx' (working tree) with 'candidate.mjs --stage DGx --ref HEAD', or reuses the --freeze comparison.",
+   "actual": "A misleading PASS line. Impact is low because --freeze independently refuses to freeze an uncommitted candidate, and the validator binds the manifest to source_commit. I would accept this as a Low observation.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-6/16-prefreeze-dirty-gap.log"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-6/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T15:35:12Z",
+     "status": "OPEN",
+     "note": "Raised in DG0 round-6 code-security review (check C5)."
+    }
+   ]
+  }
+ ]
+}
