@@ -1,0 +1,25 @@
+# worktree @ 53f5d176dfaa913baa61b34c0aa4fe5fd9a788b5; 2026-09-28T14:48:33Z
+## F-DG0-203
+$ grep -nE "Executable acceptance-test ownership|Executable acceptance tests|extends|re-runs" docs/analysis/stage-plan.md | head
+22:- **Executable acceptance tests (AN-05, finding F-DG0-203).** Each A-scenario's executable test (`REQ-S20-001`…`-028`) is authored in the stage that first delivers the scenario. That can be earlier than the gate at 
+26:  Each later stage extends and re-runs the suite (regression rule M0066/M0413). P6 extends the A01–A22 suites and re-runs them on the DG6 candidate; it is not the first place they are written. Tests written during a
+61:- **Executable acceptance tests authored in P1:** qa-verifier writes test-first, before freeze, the first cases of:
+68:  The first A26 defect-injection drill is run by the orchestrator. Implementers add the unit and integration tests for their rows. These suites must pass at DG6 (A12, A13, A14, A20) and DG7 (A18, A26), and every gate 
+84:- **Executable acceptance tests authored in P2**, before freeze. None of these scenarios must pass at DG2, so each P2 part is an early increment of a suite that passes at a later gate.
+110:- **Executable acceptance tests authored in P3**, before freeze.
+stage-plan.md and acceptance-map.md unchanged since round-3 candidate
+## F-DG0-209
+$ grep -n 'file sha256>  <path>' docs/delivery/decisions.md docs/delivery/requirements.csv
+# grep exit=1 (1 = no stale text)
+Candidate identity** = `sha256:` + SHA-256 of the sorted lines `"<sha256>  <git mode>  <path>\n"`
+computes sha256 over the sorted lines '<sha256>  <git mode>  <path>'
+## F-DG0-210
+$ grep -n 'up to 3 times' docs/delivery/agents.md
+# grep exit=1 (1 = no stale text)
+resumes the same session up to 6 times (D-019)
+docs/delivery/agent-protocol.md:up to 6 times
+docs/delivery/decisions.md:up to 6 times
+## new: candidate.mjs comment vs D-005/REQ-DLV-022
+132:// v2 (current): "<sha256>  <git mode>  <path>". v1 (historical DG0 rounds 1-3 only): "<sha256>  <path>".
+historical DG0 rounds 1–2 used `mth-candidate-v1`
+re-verify the historical DG0 round-1 and round-2 manifests

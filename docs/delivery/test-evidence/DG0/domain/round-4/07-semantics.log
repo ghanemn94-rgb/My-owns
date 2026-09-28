@@ -1,0 +1,127 @@
+#### RAG trajectory 11
+   REQ-PB-015 SOURCE DG4 | Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required 
+      ACC: A08: submission with missing mandatory evidence is rejected; approval by a non-approver returns 403; approval of a stale submission version is rejected
+   REQ-PB-063 SOURCE DG4 | Apply the area-specific T10 RAG logic 
+      ACC: A04;A05: an outcome whose tasks are 100% complete but KPI is below trajectory is Red/Amber, not Green; a KPI with no actual shows Unknown
+   REQ-PB-069 SOURCE DG4 | Manage adoption as an outcome with measurable leading indicators, separate from delivery 
+      ACC: A11: an initiative with delivery Complete and adoption below trajectory shows adoption at risk and triggers an intervention; an adoption actual below trajectory creates exactly one intervention
+   REQ-PB-071 SOURCE DG4 | Seed the seven leading adoption indicators 
+      ACC: A11: all seven indicators are available by name; an actual below trajectory creates a corrective intervention
+   REQ-PB-085 SOURCE DG4 | Create a recovery plan / corrective action when a benefit or KPI is off track 
+      ACC: A04;A11;A13: a benefit below plan creates one corrective action; repeated evaluation does not duplicate it; a KPI deviation persisting two cycles under a two-cycle rule creates one case and the third cycle updates it
+   REQ-S01-005 ENGINEERING DG6 | Never imply an external operational change happened because a task was marked complete; require verified evide 
+      ACC: A11;A17: marking the task complete leaves the deliverable Unconfirmed; a filename-only link does not confirm it; reviewed evidence or a test-adapter confirmation sets it and records the source
+#### separate statuses 1
+   REQ-S03-003 USER DG4 | Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses 
+      ACC: A11: setting delivery to Complete leaves adoption, validated value and closure unchanged; the API rejects a closure request while validated value is pending unless a transition decision exists
+#### forecast never validated 7
+   REQ-PB-027 SOURCE DG2 | Record measurable baselines with metric, source and baseline date 
+      ACC: A01;A05: a baseline without a value or source is flagged 'not measurable'; a missing baseline shows Unknown, never zero
+   REQ-PB-055 SOURCE DG3 | Require Finance validation of baseline and benefit logic early, before G4, not after delivery 
+      ACC: A08;A10: G4 submission with a business case whose benefit formula is unvalidated is rejected listing 'Finance validation'
+   REQ-S08-001 USER DG4 | Track planned, forecast, measured, submitted-for-validation, validated, rejected and sustained benefit values  
+      ACC: A10: a forecast amount never appears in the validated total; a rejected measurement is retained and shown as rejected
+   REQ-S08-008 ENGINEERING DG4 | Require the same period and a validated comparison basis for the cost reduction example 
+      ACC: A05;A10: with an unvalidated comparison basis the result is labelled provisional and excluded from validated totals
+   REQ-S13-008 USER DG5 | Label provisional or unvalidated values clearly in reports and exports 
+      ACC: A10;A15: a pending benefit value is labelled provisional in the PDF pack
+   REQ-S16-010 ENGINEERING DG5 | Use typed relational tables for core entities and validated metadata/JSON structures for extensible custom fie 
+      ACC: A06: a custom field value violating its schema is rejected by the API; core entities have typed columns and foreign keys
+#### finance validates/BO accountable 1
+   REQ-S08-003 USER DG4 | Record for each benefit a unique ID, type, accountable business owner, Finance validator where applicable, bas 
+      ACC: A10: a financial benefit without a financial-statement mapping, or a non-financial one without an agreed KPI, is rejected
+#### double count / allocation 8
+   REQ-PB-049 SOURCE DG3 | Adjust T06 weights per transformation, including risk/compliance replacing part of the weighting, with a 100%  
+      ACC: A01;A05;A07: saving weights totalling 95% (or 105%) is rejected with a validation error; a risk/compliance criterion at 10% with strategic fit reduced to 15% is accepted as weight-set version 2 and rescoring uses it; scores computed under version 1 keep their version-1 reference; the REQ-S09-005 ranking history can name 'weight 
+   REQ-PB-058 SOURCE DG4 | Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-fin 
+      ACC: A10: a benefit with two owners is rejected; a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the portfolio total
+   REQ-PB-063 SOURCE DG4 | Apply the area-specific T10 RAG logic 
+      ACC: A04;A05: an outcome whose tasks are 100% complete but KPI is below trajectory is Red/Amber, not Green; a KPI with no actual shows Unknown
+   REQ-PB-072 SOURCE DG4 | Track training completion and observed proficiency separately 
+      ACC: A11: 100% training completion with no proficiency observations shows proficiency Unknown, not adopted
+   REQ-PB-093 SOURCE DG5 | Let methodology administrators configure the default T06 weight set and scoring rubrics in Playbook Studio as  
+      ACC: A06;A07: an admin changes the default Feasibility rubric text and the default weights to 30/20/20/15/15 in the UI and publishes without a code change; a transformation created afterwards starts with the new default; an existing transformation keeps its weight set and rubric version; publishing defaults that total 95% is rejected
+   REQ-S05-005 USER DG3 | Classify business-case investment (capex, opex, internal FTE, vendor cost, opportunity cost) and benefits (rev 
+      ACC: A10: a line with two classes is rejected; the case total equals the sum of distinct lines with each counted once
+#### gate evidence snapshot 16
+   REQ-PB-015 SOURCE DG4 | Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required 
+      ACC: A08: submission with missing mandatory evidence is rejected; approval by a non-approver returns 403; approval of a stale submission version is rejected
+   REQ-DLV-037 ENGINEERING DG5 | Deliver the P5 outputs and evidence: Playbook Studio, native procedure/form builders, version migration, rule  
+      ACC: A06;A07;A15;A16;A23: the A06, A07, A15 and A16 executable tests pass on the DG5 candidate; exported PDF/DOCX/XLSX/PPTX samples are inspected in both languages
+   REQ-S04-002 USER DG4 | Make gates explicit approval records tied to a versioned, immutable evidence snapshot, never inferred from tas 
+      ACC: A07;A08: completing every phase task leaves the gate Draft; editing a record after submission does not change the snapshot content shown to approvers
+   REQ-S04-012 USER DG4 | Block gate submission when mandatory evidence is missing unless a specifically authorized exception is recorde 
+      ACC: A08: the gate page lists missing items; submission with one missing mandatory item returns 422 listing it; with a valid exception it succeeds and the snapshot records the exception
+   REQ-S04-014 USER DG4 | Trigger impact assessment and reapproval for material changes to approved scope, baseline, target, TOM, cost o 
+      ACC: A07: changing an approved G4 benefit formula creates a change request; the prior G4 approval and snapshot are still retrievable unchanged
+   REQ-S07-016 USER DG5 | Apply approved KPI changes prospectively by default; allow retrospective restatement only with explicit period 
+      ACC: A07: a prospective target change leaves last quarter's RAG unchanged; a restatement of Q1 without authority is rejected; the Q1 report issued earlier is unchanged and a reissue creates version 2
+#### DG vs G 12
+   REQ-DLV-002 ENGINEERING DG0 | Keep engineering delivery gates DG0-DG7 separate from product business approvals G1-G6 in records, authority a 
+      ACC: A23;A28: gate records validate only with stage_id DG0-DG7; CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval
+   REQ-DLV-005 ENGINEERING DG7 | Apply each role's independence rule at every gate: no role reviews, certifies or approves its own work, and th 
+      ACC: A23: at every gate DG0-DG7 the validator accepts only review records whose reviewer_role is not in the gate's implementation authors and whose invocation references are distinct; the P0 test 'A23: a reviewer who authored the scope, or who is an owner, is rejected' passes
+   REQ-DLV-010 ENGINEERING DG7 | Run the three mandatory independent specialist reviews (domain, code-security, QA) and the release audit at ev 
+      ACC: A23: every gate DG0-DG7 has domain-reviewer, code-security-reviewer and qa-verifier PASS records and a release-auditor record on the same candidate_id, each linked to a distinct recorded run
+   REQ-DLV-021 ENGINEERING DG7 | Record each gate's individual review records under reviews/DGx/round-N and the audited gate decision in gates/ 
+      ACC: A23;A28: gates/DG0.json ... gates/DG7.json all exist, validate against gate.schema.json and reference review records on the same candidate
+   REQ-DLV-027 ENGINEERING DG7 | Continue automatically through DG0-DG7 without routine user confirmation, while real business approvals, produ 
+      ACC: A27: progress.md and stages.json show each next stage entering BUILDING after the prior APPROVED gate with no recorded user confirmation step; no record claims a business, Finance, IT or production approval
+   REQ-DLV-039 ENGINEERING DG7 | Deliver the P7 outputs and final release: complete source/archive, clean deployment, migrated data/files/confi 
+      ACC: A18;A19;A23;A28: A01-A27 tests pass on the DG7 candidate; the offline clean-environment demonstration is recorded; all eight gate reports are included; any unmet mandatory acceptance criterion is listed as a release blocker
+REQ-PB-013 SOURCE DG4 | Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role 
+  PROC: Only users holding FIN on the transformation can mark a baseline, benefit formula or realized value as validated; others can submit for validation 
+  ACC: A10;A12: a Business Owner calling the validate endpoint receives 403; a Finance user succeeds and the audit event records validator identity 
+  PERM: submit:BO,WL,KDS; validate:FIN only; view:scoped
+REQ-PB-012 SOURCE DG2 | Seed the six minimum governance roles with their source accountabilities and assign them per transformation 
+  PROC: Admin seeds roles; Transformation Lead/Office assign named people to roles per transformation; accountability text shown on the role assignment 
+  ACC: A12: a user assigned Workstream Lead on transformation X cannot read transformation Y; role accountability text matches B0018 
+  PERM: assign:TO,TL; manage-catalogue:ADM; view:scoped; note:ADM cannot grant business approvals
+REQ-PB-075 SOURCE DG4 | Implement Template 14 Benefits Register as a native register 
+  PROC: Users record benefits with Type (Revenue | Cost | CX | ...), Value (SAR) and Realized amounts, evidence source and Status R/A/G; IDs B01, B02... 
+  ACC: A10: T14 persists all 10 columns; realized value awaiting Finance validation is labelled pending and excluded from validated totals 
+  PERM: create/edit:BO,TL; validate-realized:FIN; view:scoped
+REQ-PB-076 SOURCE DG4 | Allow non-financial benefits with Value (SAR) n/a and Realized expressed as KPI actual 
+  PROC: For non-financial types (e.g. CX) Value (SAR) is n/a and Realized holds the KPI actual; no automatic monetization 
+  ACC: A10: a CX benefit saved with Value n/a is excluded from SAR totals and not counted as zero 
+  PERM: edit:BO; view:scoped
+REQ-S08-002 USER DG4 | Treat a delivered capability as an enabler, not proof of realized value 
+  PROC: Completing a capability or deliverable updates the Enable step only; realized value requires measurement and validation 
+  ACC: A11: completing the enabling deliverable leaves realized value unchanged at zero validated and marks the benefit 'enabled - not yet measured' 
+  PERM: n/a
+REQ-S08-004 ENGINEERING DG4 | Provide a safe formula builder with a restricted expression language and typed variables that never evaluates arbitrary user-supplied code 
+  PROC: Formulas are parsed by a whitelist grammar into an AST and evaluated with decimal arithmetic; no eval or dynamic code execution 
+  ACC: A05;A12: an expression containing a function call outside the whitelist or a JavaScript payload is rejected at parse time; code review finds no eval/Function use 
+  PERM: author:FIN,KDS,TL; view:scoped
+REQ-S08-005 USER DG5 | Preview formula examples, units and edge cases before publication 
+  PROC: Before publishing, the builder shows evaluated examples, the resulting unit and edge-case outcomes 
+  ACC: A05: preview of the revenue uplift example shows SAR as the unit and 'Not computable' for a missing ARPU 
+  PERM: preview:formula authors
+REQ-S08-006 ENGINEERING DG4 | Version formulas and preserve calculation lineage: input actuals, source versions, assumptions, rates, period and formula version 
+  PROC: Each calculation run stores its lineage; any displayed number can show its lineage 
+  ACC: A05;A07: a benefit value drills to the formula version, input actual versions and rates used; after a formula change old results keep the old version reference 
+  PERM: view:scoped incl. AUD
+REQ-S04-001 USER DG4 | Give every phase guided inputs, procedural steps, required evidence, named owners, completion rules, outputs and a review queue 
+  PROC: Each phase workspace lists its steps and required evidence with owners; completion rules are evaluated server-side; completed outputs enter the phase review queue 
+  ACC: A02: each of the six phases shows steps, required evidence, owners and a review queue; a step with an unmet completion rule cannot be marked complete via the API 
+  PERM: configure:ADM; own-step:named owners; review:configured reviewers; view:scoped
+REQ-PB-062 SOURCE DG4 | Implement Template 10 Executive Transformation Dashboard with its six source areas 
+  PROC: Dashboard renders six areas from live canonical data with drill-down; each area shows what the source requires 
+  ACC: A01;A04: all six areas render in en and ar from persisted data; each headline drills to contributing records 
+  PERM: view:scoped(SP,TL,BO,WL,FIN,TO,AUD)
+allocation rows ['REQ-PB-058', 'REQ-PB-065', 'REQ-S03-006', 'REQ-S06-010', 'REQ-S08-013', 'REQ-S16-017', 'REQ-S20-010']
+REQ-PB-058 A10: a benefit with two owners is rejected; a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the portfolio total
+REQ-PB-065 A01: four rows seeded verbatim; a change request of type Business scope change routes approval to the Sponsor
+REQ-S03-006 A01;A10: one initiative links to two gaps and two KPIs; an allocation link set totalling 110% is rejected; changing a KPI target lists the linked benefits and dashboards as affected
+REQ-S06-010 A06;A12: a methodology admin can publish a form change but receives 403 approving a funding reallocation; a KPI owner can update assigned KPI actuals but not Studio
+REQ-S08-013 USER DG4 Reject allocations over 100% and show any share below 100% as unallocated 
+ PROC: The server sums allocations per benefit; above 100% is rejected; below 100% shows the remaining share as unallocated 
+ ACC: A10: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated
+REQ-S20-010 ENGINEERING DG4 Deliver and pass the executable acceptance test A10 Benefit integrity 
+ PROC: qa-verifier derives an executable test (unit;integration) from the scenario and runs it against the gate candidate, recording the command, environment and actual result in test-evidence 
+ ACC: A10: A shared benefit rolls up once; 110% allocation is rejected; unvalidated or forecast value cannot appear as validated actual
+REQ-S03-006 USER DG4 Support many-to-many traceability links with explicit contribution and allocation rules, clickable nodes and downstream impact 
+ PROC: Users link records along the chain diagnosed issue -> gap -> initiative -> deliverable -> capability change -> KPI movement -> benefit; every node opens its record; editing a record shows the downstream records affected 
+ ACC: A01;A10: one initiative links to two gaps and two KPIs; an allocation link set totalling 110% is rejected; changing a KPI target lists the linked benefits and dashboards as affected
+ACC-row REQ-S08-003 Record for each benefit a unique ID, type, accountable business owner, Finance validator where applicable, baseline/counterfactual, formula, driver un | A10: a financial benefit without a financial-statement mapping, or a non-financial one without an agreed KPI, is rejected
+ACC-row REQ-S12-026 Keep human business judgment, investment decisions, gate approvals and Finance attestations as accountable human actions while preparation, routing, c | A08;A13: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run

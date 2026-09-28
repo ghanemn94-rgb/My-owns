@@ -1,0 +1,244 @@
+# QA_REPO_ROOT=/tmp/review-qa4-old (540b3c69a0e0477476eca0207b0b9c0aaded1ea9)
+$ node --test tests/dg0-gate-negative-r2.test.mjs
+TAP version 13
+# \# QA2-N14 exec-bit change detected by candidate: true
+# Subtest: control: the independent round-2 fixture is accepted (API and CLI exit 0)
+not ok 1 - control: the independent round-2 fixture is accepted (API and CLI exit 0)
+  ---
+  duration_ms: 237.221838
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:197:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   'review rounds: DG0/round-1 exists but is not recorded in stages.json',
+    +   'review rounds: DG0/round-2 exists but is not recorded in stages.json',
+    +   'finding F-DG0-201 (Medium, mandatory): CLOSED_VERIFIED but no reviewer verifications sidecar verifies it'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'review rounds: DG0/round-1 exists but is not recorded in stages.json'
+    1: 'review rounds: DG0/round-2 exists but is not recorded in stages.json'
+    2: 'finding F-DG0-201 (Medium, mandatory): CLOSED_VERIFIED but no reviewer verifications sidecar verifies it'
+  operator: 'deepStrictEqual'
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:198:10
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:182:5)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:197:89)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: QA2-R201 (F-DG0-201): the QA review citing its own pre-freeze LOAD run of the same role is rejected
+ok 2 - QA2-R201 (F-DG0-201): the QA review citing its own pre-freeze LOAD run of the same role is rejected
+  ---
+  duration_ms: 230.231584
+  type: 'test'
+  ...
+# Subtest: QA2-R201b (F-DG0-201): the right assignment but a run started before the freeze is rejected
+ok 3 - QA2-R201b (F-DG0-201): the right assignment but a run started before the freeze is rejected
+  ---
+  duration_ms: 208.294845
+  type: 'test'
+  ...
+# Subtest: QA2-R202 (F-DG0-202): a bare non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+ok 4 - QA2-R202 (F-DG0-202): a bare non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+  ---
+  duration_ms: 184.075833
+  type: 'test'
+  ...
+# Subtest: QA2-N01 provenance: a run recorded under another stage cannot back a DG0 review
+ok 5 - QA2-N01 provenance: a run recorded under another stage cannot back a DG0 review
+  ---
+  duration_ms: 242.58497
+  type: 'test'
+  ...
+# Subtest: QA2-N02 provenance: transcript model differs from the orchestrator's requested model
+ok 6 - QA2-N02 provenance: transcript model differs from the orchestrator's requested model
+  ---
+  duration_ms: 192.417115
+  type: 'test'
+  ...
+# Subtest: QA2-N03 provenance: transcript whose final result is an error, even though meta claims success
+ok 7 - QA2-N03 provenance: transcript whose final result is an error, even though meta claims success
+  ---
+  duration_ms: 232.358596
+  type: 'test'
+  ...
+# Subtest: QA2-N04 provenance: a transcript from a different role's prompt cannot back the auditor
+ok 8 - QA2-N04 provenance: a transcript from a different role's prompt cannot back the auditor
+  ---
+  duration_ms: 243.453041
+  type: 'test'
+  ...
+# Subtest: QA2-N05 provenance: result_session_id drift (the CLI resumed a different session) is rejected
+ok 9 - QA2-N05 provenance: result_session_id drift (the CLI resumed a different session) is rejected
+  ---
+  duration_ms: 219.726177
+  type: 'test'
+  ...
+# Subtest: QA2-N06 provenance: result.json swapped after the run no longer matches meta.result_sha256
+ok 10 - QA2-N06 provenance: result.json swapped after the run no longer matches meta.result_sha256
+  ---
+  duration_ms: 223.845433
+  type: 'test'
+  ...
+# Subtest: QA2-N07 findings: a review record may not list a finding that no reviewer sidecar raised (orchestrator-invented)
+ok 11 - QA2-N07 findings: a review record may not list a finding that no reviewer sidecar raised (orchestrator-invented)
+  ---
+  duration_ms: 246.530108
+  type: 'test'
+  ...
+# Subtest: QA2-N08 findings: a sidecar may not raise a finding in another reviewer's name
+ok 12 - QA2-N08 findings: a sidecar may not raise a finding in another reviewer's name
+  ---
+  duration_ms: 207.007177
+  type: 'test'
+  ...
+# Subtest: QA2-N09 findings: reviewer-set mandatory_violation cannot be flipped off in findings.json
+ok 13 - QA2-N09 findings: reviewer-set mandatory_violation cannot be flipped off in findings.json
+  ---
+  duration_ms: 217.062542
+  type: 'test'
+  ...
+# Subtest: QA2-N10 findings: verification cited from a run of a different role than by_role is rejected
+not ok 14 - QA2-N10 findings: verification cited from a run of a different role than by_role is rejected
+  ---
+  duration_ms: 229.214
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:277:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /F-DG0-201.*verification.*was run as 'domain-reviewer', not 'qa-verifier'/; got:
+      review rounds: DG0/round-1 exists but is not recorded in stages.json
+      review rounds: DG0/round-2 exists but is not recorded in stages.json
+      finding F-DG0-201 (Medium, mandatory): CLOSED_VERIFIED but no reviewer verifications sidecar verifies it
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:177:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:279:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:182:5)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:277:108)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA2-N11 findings: a CLOSED_VERIFIED finding verified by a pre-freeze LOAD run of the reporter is rejected
+not ok 15 - QA2-N11 findings: a CLOSED_VERIFIED finding verified by a pre-freeze LOAD run of the reporter is rejected
+  ---
+  duration_ms: 200.268751
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:282:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /F-DG0-201.*verification.*(assignment|before the candidate froze)/; got:
+      review rounds: DG0/round-1 exists but is not recorded in stages.json
+      review rounds: DG0/round-2 exists but is not recorded in stages.json
+      finding F-DG0-201 (Medium, mandatory): CLOSED_VERIFIED but no reviewer verifications sidecar verifies it
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:177:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:288:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:182:5)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:282:121)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA2-N12 register: evidence that is a symlink pointing outside the repository is rejected
+ok 16 - QA2-N12 register: evidence that is a symlink pointing outside the repository is rejected
+  ---
+  duration_ms: 214.144997
+  type: 'test'
+  ...
+# Subtest: QA2-N13 register: an evidence entry padded with whitespace or duplicated ';' still must resolve
+ok 17 - QA2-N13 register: an evidence entry padded with whitespace or duplicated ';' still must resolve
+  ---
+  duration_ms: 185.775676
+  type: 'test'
+  ...
+# Subtest: QA2-N14 candidate: a committed post-freeze change to a tracked file's mode (exec bit) — reported, not asserted
+ok 18 - QA2-N14 candidate: a committed post-freeze change to a tracked file's mode (exec bit) — reported, not asserted
+  ---
+  duration_ms: 214.578475
+  type: 'test'
+  ...
+# Subtest: QA2-N15 metadata: a new review round, verifications sidecar and run dirs leave the candidate and gate unchanged
+not ok 19 - QA2-N15 metadata: a new review round, verifications sidecar and run dirs leave the candidate and gate unchanged
+  ---
+  duration_ms: 382.677916
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:319:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   'review rounds: DG0/round-1 exists but is not recorded in stages.json',
+    +   'review rounds: DG0/round-2 exists but is not recorded in stages.json',
+    +   'review rounds: DG0/round-3 exists but is not recorded in stages.json',
+    +   'verifications sidecar docs/delivery/reviews/DG0/round-3/qa-verifier.verifications.json record: file not found (docs/delivery/reviews/DG0/round-3/qa-verifier.json)',
+    +   'finding F-DG0-201 (Medium, mandatory): CLOSED_VERIFIED but no reviewer verifications sidecar verifies it'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'review rounds: DG0/round-1 exists but is not recorded in stages.json'
+    1: 'review rounds: DG0/round-2 exists but is not recorded in stages.json'
+    2: 'review rounds: DG0/round-3 exists but is not recorded in stages.json'
+    3: 'verifications sidecar docs/delivery/reviews/DG0/round-3/qa-verifier.verifications.json record: file not found (docs/delivery/reviews/DG0/round-3/qa-verifier.json)'
+    4: 'finding F-DG0-201 (Medium, mandatory): CLOSED_VERIFIED but no reviewer verifications sidecar verifies it'
+  operator: 'deepStrictEqual'
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:330:10
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:182:5)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:319:127)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA2-N16 candidate: deleting a review-round findings sidecar that raised a finding is caught (dropped finding source)
+ok 20 - QA2-N16 candidate: deleting a review-round findings sidecar that raised a finding is caught (dropped finding source)
+  ---
+  duration_ms: 228.50775
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 16
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4678.144325
+# exit=1

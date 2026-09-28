@@ -1,0 +1,102 @@
+## M0001 §preamble [NON-REQUIREMENT] Mobily Transformation Platform Claude Code Master Prompt
+   rationale: Document title.
+## M0002 §preamble [NON-REQUIREMENT] Version 2.0 · English edition · 28 September 2026
+   rationale: Version and date stamp of the master prompt.
+## M0006 §0 [REQUIREMENT] You are Claude Code acting as the delivery-orchestrator. Build the platform with actual specialized agent invocations, staged implementation, independent review and recorded quality gates. Use this protocol throughout execution; a role list or simulated conversation between personas does not satisfy it.
+   -> REQ-DLV-006 Delegate through real, separate agent invocations (ordinary subagents by default; Agent Teams optional); if real delegation is unavailable, mark indep | DG0 | refs True
+   -> REQ-DLV-010 Run the three mandatory independent specialist reviews (domain, code-security, QA) and the release audit at every stage, against the same frozen candi | DG7 | refs True
+## M0007 §0 [REQUIREMENT] There are two different gate systems. DG0–DG7 are software delivery gates for your engineering team. G1–G6 are business transformation approvals inside the product. Keep their records, authority and meanings separate. An engineering agent cannot grant a real business, Finance or IT production approval.
+   -> REQ-DLV-002 Keep engineering delivery gates DG0-DG7 separate from product business approvals G1-G6 in records, authority and meaning | DG0 | refs True
+## M0010 §0.1 [REQUIREMENT] Use project subagent definitions in .claude/agents/, with supported YAML frontmatter and explicit role instructions. Set model: inherit unless the user has selected another model. Confirm each definition loads and actually runs. If a reload is required, checkpoint precisely and explain the required action. Verify current officia
+   -> REQ-DLV-004 Define the ten project agents in .claude/agents with supported frontmatter, role instructions, handback contracts and verified loading and execution | DG0 | refs True
+## M0011 §0.1 [REQUIREMENT] Use ordinary subagents as the default coordination mechanism. Agent Teams are optional when available and appropriately configured; the workflow must not depend on enabling that experimental feature. If concurrency is limited, invoke separate agents sequentially. If real delegation is unavailable, do useful preparation but mark 
+   -> REQ-DLV-006 Delegate through real, separate agent invocations (ordinary subagents by default; Agent Teams optional); if real delegation is unavailable, mark indep | DG0 | refs True
+## M0026 §0.2 [REQUIREMENT] |release-auditor          |Check reviewer independence, unresolved findings, candidate identity, evidence and gate completeness               |Recorded gate decision and final release readiness audit                  |Cannot replace a missing specialist review or waive an unmet mandatory requirement|
+   -> REQ-DLV-004 Define the ten project agents in .claude/agents with supported frontmatter, role instructions, handback contracts and verified loading and execution | DG0 | refs True
+   -> REQ-DLV-005 Apply each role's independence rule at every gate: no role reviews, certifies or approves its own work, and the orchestrator never records a review ve | DG7 | refs True
+## M0028 §0.2 [REQUIREMENT] The three mandatory specialist reviewers for every stage, including planning and architecture, are domain-reviewer, code-security-reviewer and qa-verifier. release-auditor verifies their evidence and the gate conditions before approval. Early-stage checks evaluate the actual specifications, contracts, agent setup and feasibility
+   -> REQ-DLV-010 Run the three mandatory independent specialist reviews (domain, code-security, QA) and the release audit at every stage, against the same frozen candi | DG7 | refs True
+## M0031 §0.3 [REQUIREMENT] Implementation handback includes changed files, behavior, tests actually run, results, known gaps and merge instructions. An unfinished agent task remains unfinished even if its final message sounds positive.
+   -> REQ-DLV-012 Require implementation handbacks listing changed files, behaviour, checks actually run with results, known gaps and merge instructions; unfinished tas | DG7 | refs True
+## M0033 §0.3 [REQUIREMENT] A reviewer must not be an implementation author for the reviewed scope, even under another agent name. Record the agent role, actual invocation/run reference if exposed, reviewed revision, assignment and independence declaration. If the runtime exposes no stable run ID, preserve the distinct invocation evidence and state that li
+   -> REQ-DLV-005 Apply each role's independence rule at every gate: no role reviews, certifies or approves its own work, and the orchestrator never records a review ve | DG7 | refs True
+   -> REQ-DLV-013 Define the review record contract and verify provenance: role, candidate, invocation reference, implementation author, independence declaration, requi | DG0 | refs True
+## M0039 §0.4 [REQUIREMENT] 4. Review: invoke all three independent reviewers against that candidate. For visible changes, review rendered screens in Arabic and English as well as code.
+   -> REQ-DLV-014 Run the eight-step gate loop for every stage: plan, implement, integrate and freeze, review (rendered Arabic and English screens for visible changes), | DG7 | refs True
+## M0046 §0.4 [REQUIREMENT] • Every requirement assigned to that stage is implemented or, for specification stages, concretely specified and verified as required by its acceptance criteria.
+   -> REQ-DLV-016 Mechanically apply the gate pass conditions: assigned requirements complete, three PASS reviews plus auditor PASS on one candidate, checks actually ru | DG0 | refs True
+## M0047 §0.4 [REQUIREMENT] • All three independent reviewer verdicts are PASS on the same final candidate and the release-auditor records PASS.
+   -> REQ-DLV-010 Run the three mandatory independent specialist reviews (domain, code-security, QA) and the release audit at every stage, against the same frozen candi | DG7 | refs True
+   -> REQ-DLV-016 Mechanically apply the gate pass conditions: assigned requirements complete, three PASS reviews plus auditor PASS on one candidate, checks actually ru | DG0 | refs True
+## M0058 §0.5 [REQUIREMENT] • docs/delivery/requirements.csv: source-to-feature-to-test coverage, stage ownership and status.
+   -> REQ-DLV-020 Maintain the requirement register (source heading/template, requirement ID, input fields, procedure, output, owner, permissions, automation, screen/AP | DG0 | refs True
+## M0069 §0.5 [REQUIREMENT] Each review record must include stage_id, candidate_id, reviewer_role, invocation_reference, implementation_author, requirements_checked, checks_run, findings, verdict, evidence_paths and reviewed_at. Each check records its command/procedure, environment, expected result, actual result and exit status where applicable. Each find
+   -> REQ-DLV-013 Define the review record contract and verify provenance: role, candidate, invocation reference, implementation author, independence declaration, requi | DG0 | refs True
+## M0071 §0.6 [REQUIREMENT] Technical stage approvals are delegated to the review process above. Do not stop after every successful stage to ask the user “continue?” Continue automatically through DG0–DG7 within the existing authorization. Real company business approvals, production access, release authorization and irreversible actions follow the user’s/c
+   -> REQ-DLV-027 Continue automatically through DG0-DG7 without routine user confirmation, while real business approvals, production access, release authorization and  | DG7 | refs True
+## M0074 §0.6 [REQUIREMENT] Neither the number of agents nor their agreement guarantees correctness. The quality mechanism is independent inspection, executed tests, traceability, repair and reproducible evidence. Preserve this distinction in status and final delivery.
+   -> REQ-DLV-031 State in every status report and in final delivery that agent count or agreement does not guarantee correctness; quality rests on independent inspecti | DG7 | refs True
+## M0077 §1 [REQUIREMENT] Working product name: Mobily Transformation Hub. Make the name configurable.
+   -> REQ-S01-002 Make the working product name configurable with default 'Mobily Transformation Hub' | DG5 | refs True
+## M0078 §1 [REQUIREMENT] The attached Business_Transformation_Playbook(2).docx is the authoritative methodology source. Convert its entire operating system into connected, editable, executable workflows: input → procedure → validation → approval where required → output → performance and benefits monitoring → correction → sustainment.
+   -> REQ-S01-003 Convert the playbook operating system into connected executable workflows from input through procedure, validation, approval, output, monitoring and c | DG5 | refs True
+## M0085 §2 [REQUIREMENT] • Source requirement — grounded in the attached playbook.
+   -> REQ-DLV-020 Maintain the requirement register (source heading/template, requirement ID, input fields, procedure, output, owner, permissions, automation, screen/AP | DG0 | refs True
+## M0089 §2 [REQUIREMENT] The source describes a practical synthesis inspired by PMI, Brightline and benefits realization concepts. Its six-phase model, ten-dimension TOM, gates and templates include custom content. Preserve this distinction; do not claim that the application or entire methodology is an official PMI standard or certified product.
+   -> REQ-PB-001 Label the methodology provenance honestly as a practical synthesis inspired by PMI/Brightline/BRM and never claim official PMI status | DG5 | refs True
+   -> REQ-PB-002 Mark custom extensions of the playbook distinctly from PMI/Brightline-derived foundations | DG5 | refs True
+   -> REQ-PB-077 Label the Realize phase as aligned with PMI BRM logic without claiming PMI standard status | DG5 | refs True
+## M0096 §3 [CONTEXT] Use shared canonical records to maintain this traceability:
+   rationale: Lead-in sentence to the traceability chain (M0097); covered by REQ-PB-044 and REQ-S03-006.
+## M0098 §3 [REQUIREMENT] Support many-to-many relationships with explicit contribution and allocation rules. Every node is clickable, and each change can show downstream impact. Add a traceability view and an orphan report for missing links.
+   -> REQ-PB-044 Maintain the traceability chain from diagnosed issue to benefit with a view and orphan report | DG4 | refs True
+   -> REQ-S03-006 Support many-to-many traceability links with explicit contribution and allocation rules, clickable nodes and downstream impact | DG4 | refs True
+## M0099 §3 [CONTEXT] Primary navigation:
+   rationale: Lead-in 'Primary navigation:'; the fourteen areas (M0100-M0113) are covered by REQ-S03-007 to REQ-S03-010.
+## M0112 §3 [REQUIREMENT] • BAU and Improvement: handovers, controls, lessons and improvement backlog.
+   -> REQ-S03-007 Provide the fourteen primary navigation areas: My Work, Executive Overview, Transformations, Playbook and Procedures, Strategy and KPIs, Target Operat | DG5 | refs True
+## M0117 §4 [CONTEXT] |Phase and gate                 |Inputs and native procedure                                                                                                                                                                                                                                                   |Required outputs and decis
+   rationale: Table header row (Phase and gate / Inputs and native procedure / Required outputs and decision evidence); data rows M0118-M0123 are covered by REQ-S04-003..008.
+## M0118 §4 [REQUIREMENT] |1 Diagnose — G1 Case for Change|Register scope and sponsor; assess business/financial performance, customer experience, processes/operations, organization/governance, technology/data and capabilities; collect baseline evidence; distinguish symptoms from root causes; identify value pools and confidence|Current-state diagnostic, 
+   -> REQ-PB-016 G1 Case for Change: require diagnostic, baseline, root causes and value pools as gate evidence | DG2 | refs True
+   -> REQ-S04-003 Run the Diagnose phase procedure and G1 Case for Change decision | DG2 | refs True
+   -> REQ-PB-028 Record value pools quantified by driver with upside and downside | DG2 | refs True
+## M0128 §5 [CONTEXT] |ID |Source template                   |Minimum fields or content                                                                                                                                                                                                              |
+   rationale: Table header row (ID / Source template / Minimum fields or content); data rows M0129-M0144 map to the REQ-PB template rows.
+## M0134 §5 [REQUIREMENT] |T06|Prioritization Scorecard          |Initiative; 1–5 scores for strategic fit, financial value, customer impact, feasibility and time-to-value; weights and weighted result                                                                                                 |
+   -> REQ-PB-047 Implement Template 6 Prioritization Scorecard as a native register | DG3 | refs True
+   -> REQ-PB-048 Apply T06 default weights 25/25/20/15/15 with a 1-5 scale and a calculated weighted score | DG3 | refs True
+## M0138 §5 [REQUIREMENT] |T10|Executive Transformation Dashboard|Outcomes; value; portfolio; dependencies; decisions; people/adoption, with the source-specific RAG logic described below                                                                                                               |
+   -> REQ-PB-062 Implement Template 10 Executive Transformation Dashboard with its six source areas | DG4 | refs True
+   -> REQ-PB-063 Apply the area-specific T10 RAG logic | DG4 | refs True
+## M0140 §5 [REQUIREMENT] |T12|RACI                              |Deliverable, Sponsor, Transformation Lead, Business Owner, Workstream Lead, Finance, Tech/Data; assignments using R/A/C/I including allowed A/R combinations                                                                           |
+   -> REQ-PB-067 Implement Template 12 RACI with the six seeded deliverables and R/A/C/I values including A/R | DG4 | refs True
+## M0153 §6 [REQUIREMENT] Each launched procedure creates a persistent procedure instance showing current step, assignee, due date, missing inputs, completed evidence and next action. Its outputs must be real linked records or generated deliverables. Include configurable procedures for new transformation intake, baseline validation, KPI submission, TOM a
+   -> REQ-S06-002 Create a persistent procedure instance on launch showing current step, assignee, due date, missing inputs, completed evidence and next action, whose o | DG5 | refs True
+   -> REQ-S06-003 Seed configurable procedures for new transformation intake, baseline validation, KPI submission, TOM approval, initiative prioritization, gate review, | DG5 | refs True
+## M0154 §6 [REQUIREMENT] Provide an administrator Playbook Studio that can edit methodology text, phases, gates, mandatory artifacts, checklists, templates, fields, labels, help text, validation, formulas, routing, approvers, reminders, escalation rules, dashboards and reporting layouts through the UI. Include field types for text, rich text, number, cu
+   -> REQ-S06-004 Provide an administrator Playbook Studio to edit methodology text, phases, gates, mandatory artifacts, checklists, templates, fields, labels, help tex | DG5 | refs True
+   -> REQ-S06-005 Support Studio field types text, rich text, number, currency, percentage, date, reference, attachment, lookup, choice and calculated value | DG5 | refs True
+   -> REQ-S06-006 Protect stable system identifiers and core data invariants from configuration changes | DG5 | refs True
+   -> REQ-PB-038 Seed the 10 TOM dimensions with their design questions | DG2 | refs True
+   -> REQ-PB-093 Let methodology administrators configure the default T06 weight set and scoring rubrics in Playbook Studio as versioned configuration | DG5 | refs True
+## M0163 §7 [REQUIREMENT] Changing a KPI definition, baseline or target creates a versioned change request with reason and impact preview. Show affected outcomes, benefits, gates, reports and formulas. Approved changes take effect prospectively by default. A retrospective restatement requires explicit period selection, authority and a retained reconcilia
+   -> REQ-S07-015 Handle changes to a KPI definition, baseline or target through a versioned change request with reason, impact preview and list of affected outcomes, b | DG4 | refs True
+   -> REQ-S07-016 Apply approved KPI changes prospectively by default; allow retrospective restatement only with explicit period selection, authority and a retained rec | DG5 | refs True
+## M0164 §7 [REQUIREMENT] Design the routine update interaction to be quick: open KPI → select period → enter/import actual and evidence → submit. Let users see which downstream views changed and whether any review is pending.
+   -> REQ-S07-017 Make the routine KPI update quick: open KPI, select period, enter or import actual and evidence, submit; then show which downstream views changed and  | DG4 | refs True
+## M0171 §8 [REQUIREMENT] • Cost reduction = eligible volume × reduction in unit cost for the same period, with a validated comparison basis.
+   -> REQ-PB-057 Seed the two source benefit formula examples | DG3 | refs True
+   -> REQ-S08-008 Require the same period and a validated comparison basis for the cost reduction example | DG4 | refs True
+## M0172 §8 [REQUIREMENT] Keep revenue uplift separate from profit or margin benefit. Keep avoided cost separate from cash savings. Do not monetize CX or other non-financial benefits without an approved valuation method. Show gross benefits, implementation cost and net value separately; do not automatically subtract the same cost at both initiative and t
+   -> REQ-PB-076 Allow non-financial benefits with Value (SAR) n/a and Realized expressed as KPI actual | DG4 | refs True
+   -> REQ-S08-009 Keep revenue uplift separate from profit or margin benefit and avoided cost separate from cash savings | DG4 | refs True
+   -> REQ-S08-010 Do not monetize CX or other non-financial benefits without an approved valuation method | DG4 | refs True
+   -> REQ-S08-011 Show gross benefits, implementation cost and net value separately without subtracting the same cost at both initiative and transformation level | DG4 | refs True
+## M0180 §9 [REQUIREMENT] |Wave 0 Mobilize|Baseline, governance, design decisions|0–6 weeks      |Sponsor and charter    |Approved case, owners, gates                |
+   -> REQ-PB-050 Implement Template 7 Wave Roadmap with the four seeded source waves | DG3 | refs True
+## M0185 §9 [REQUIREMENT] Owners submit concise structured updates covering achievements, next steps, milestones, outcomes, adoption, risks, dependencies and asks. Generate executive views directly from these updates and canonical metrics. Do not require owners to recreate the same update in a slide deck.
+   -> REQ-S09-011 Collect concise structured owner updates and generate executive views directly from them and canonical metrics | DG5 | refs True
+## M0187 §10 [REQUIREMENT] Implement role and record-level access for the source roles: Executive Sponsor, Transformation Lead, Business Owner, Workstream Lead, Finance/Value Office and Transformation Office. Add KPI/Data Steward, Tech/Data contributor, committee member/secretary, read-only auditor and system administrator as implementation roles.
+   -> REQ-PB-012 Seed the six minimum governance roles with their source accountabilities and assign them per transformation | DG2 | refs True
+   -> REQ-S10-001 Implement role and record-level access for the source roles and the implementation roles KPI/Data Steward, Tech/Data contributor, committee member/sec | DG2 | refs True

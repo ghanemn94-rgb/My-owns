@@ -1,0 +1,334 @@
+# QA_REPO_ROOT=/tmp/review-qa4-new (53f5d176dfaa913baa61b34c0aa4fe5fd9a788b5); node v22.22.2; 2026-09-28T14:47:22Z
+$ QA_REPO_ROOT=/tmp/review-qa4-new node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs
+TAP version 13
+# \# QA4-R208a errors (7):
+# \#   review rounds: DG0 round 1 frozen_at/source_commit differ from its committed manifest
+# \#   write-once: M docs/delivery/reviews/DG0/round-1/qa-verifier.json after it was committed (review evidence is append-only)
+# \#   write-once: D docs/delivery/reviews/DG0/round-2/qa-verifier.verifications.json after it was committed (review evidence is append-only)
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-LOAD-qa-verifier-20260928T133000Z-00000011: docs/delivery/reviews/DG0/round-1/qa-verifier.json differs from what the run wrote (edited after the run?)
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-LOAD-qa-verifier-20260928T133000Z-00000011: docs/delivery/reviews/DG0/round-1/qa-verifier.json was not written by this run's file tools
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-LOAD-qa-verifier-20260928T133000Z-00000011: docs/delivery/reviews/DG0/round-1/qa-verifier.verifications.json differs from what the run wrote (edited after the run?)
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-LOAD-qa-verifier-20260928T133000Z-00000011: docs/delivery/reviews/DG0/round-1/qa-verifier.verifications.json was not written by this run's file tools
+# \# QA4-N30 errors (4):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-LOAD-qa-verifier-20260928T133000Z-00000023: docs/delivery/reviews/DG0/round-3/qa-verifier.json differs from what the run wrote (edited after the run?)
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-LOAD-qa-verifier-20260928T133000Z-00000023: docs/delivery/reviews/DG0/round-3/qa-verifier.json was not written by this run's file tools
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-LOAD-qa-verifier-20260928T133000Z-00000023: docs/delivery/reviews/DG0/round-3/qa-verifier.verifications.json differs from what the run wrote (edited after the run?)
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-LOAD-qa-verifier-20260928T133000Z-00000023: docs/delivery/reviews/DG0/round-3/qa-verifier.verifications.json was not written by this run's file tools
+# \# QA4-N30b round-3 manifest sha256:64665183e3bb6f38 vs content of its source_commit sha256:96c1e05362e98cd2
+# \# QA4-N30b errors (0):
+# \#   
+# \# QA4-N39 auditor run outputs gate sha 87fa925e9f8c0be0d0272332e6521b6347d593c0f35577a7e0232d031a259732, gate now 49be2532c3c419c18d34266a1a43be4b685a081f682809c7a2e1eea1796a3f6d
+# \# QA4-N39 errors (0):
+# \#   
+# \# QA4-N40 errors (0):
+# \#   
+# Subtest: control: the independent round-4 fixture is accepted (API and CLI exit 0)
+ok 1 - control: the independent round-4 fixture is accepted (API and CLI exit 0)
+  ---
+  duration_ms: 604.891104
+  type: 'test'
+  ...
+# Subtest: QA4-R208a (F-DG0-208): the QA3-N20 attack (rewrite round-1 frozen_at + record to cite a LOAD run), committed, is rejected
+ok 2 - QA4-R208a (F-DG0-208): the QA3-N20 attack (rewrite round-1 frozen_at + record to cite a LOAD run), committed, is rejected
+  ---
+  duration_ms: 723.611614
+  type: 'test'
+  ...
+# Subtest: QA4-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+ok 3 - QA4-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+  ---
+  duration_ms: 545.093033
+  type: 'test'
+  ...
+# Subtest: QA4-N30 (F-DG0-208 variant): a new round with a fabricated early manifest and a new record citing the LOAD run is rejected (no write-once edit needed)
+ok 4 - QA4-N30 (F-DG0-208 variant): a new round with a fabricated early manifest and a new record citing the LOAD run is rejected (no write-once edit needed)
+  ---
+  duration_ms: 662.411477
+  type: 'test'
+  ...
+# Subtest: QA4-N30b probe: a fresh round backed by a fabricated, backdated manifest legitimises a genuine pre-freeze run's closure
+not ok 5 - QA4-N30b probe: a fresh round backed by a fabricated, backdated manifest legitimises a genuine pre-freeze run's closure # TODO F-DG0-212
+  ---
+  duration_ms: 643.477976
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:326:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted a closure bound to a round whose manifest was fabricated with a backdated frozen_at'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:338:10
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:326:158)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N31 (F-DG0-208 variant): a LOAD run that did write a record cannot close a finding after the fact (assignment + freeze binding)
+ok 6 - QA4-N31 (F-DG0-208 variant): a LOAD run that did write a record cannot close a finding after the fact (assignment + freeze binding)
+  ---
+  duration_ms: 611.757053
+  type: 'test'
+  ...
+# Subtest: QA4-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+ok 7 - QA4-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+  ---
+  duration_ms: 513.919635
+  type: 'test'
+  ...
+# Subtest: QA4-R201b (F-DG0-201): a review record that names no assignment cannot be bound to any run
+ok 8 - QA4-R201b (F-DG0-201): a review record that names no assignment cannot be bound to any run
+  ---
+  duration_ms: 378.811431
+  type: 'test'
+  ...
+# Subtest: QA4-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+ok 9 - QA4-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+  ---
+  duration_ms: 430.446311
+  type: 'test'
+  ...
+# Subtest: QA4-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+ok 10 - QA4-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+  ---
+  duration_ms: 537.775212
+  type: 'test'
+  ...
+# Subtest: QA4-R205 (F-DG0-205): register evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+ok 11 - QA4-R205 (F-DG0-205): register evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+  ---
+  duration_ms: 338.309977
+  type: 'test'
+  ...
+# Subtest: QA4-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+ok 12 - QA4-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+  ---
+  duration_ms: 499.971853
+  type: 'test'
+  ...
+# Subtest: QA4-N32 write-once: a committed round assignment edited later is rejected (history M and assignment sha mismatch)
+ok 13 - QA4-N32 write-once: a committed round assignment edited later is rejected (history M and assignment sha mismatch)
+  ---
+  duration_ms: 535.724152
+  type: 'test'
+  ...
+# Subtest: QA4-N33 write-once: a committed record replaced by a symlink to identical bytes is rejected (type change T)
+ok 14 - QA4-N33 write-once: a committed record replaced by a symlink to identical bytes is rejected (type change T)
+  ---
+  duration_ms: 505.695324
+  type: 'test'
+  ...
+# Subtest: QA4-N34 binding: a record written by another reviewer's run (not this run's file tools) is rejected
+ok 15 - QA4-N34 binding: a record written by another reviewer's run (not this run's file tools) is rejected
+  ---
+  duration_ms: 524.147968
+  type: 'test'
+  ...
+# Subtest: QA4-N35 binding: a record whose meta.outputs hash is for different bytes (record written, then altered before commit) is rejected
+ok 16 - QA4-N35 binding: a record whose meta.outputs hash is for different bytes (record written, then altered before commit) is rejected
+  ---
+  duration_ms: 518.12967
+  type: 'test'
+  ...
+# Subtest: QA4-N36 write-once: deleting a committed frozen manifest in the working tree is rejected
+ok 17 - QA4-N36 write-once: deleting a committed frozen manifest in the working tree is rejected
+  ---
+  duration_ms: 350.039678
+  type: 'test'
+  ...
+# Subtest: QA4-N37 rounds: a gate candidate manifest in the retired single-file location or with hash v1 is rejected
+ok 18 - QA4-N37 rounds: a gate candidate manifest in the retired single-file location or with hash v1 is rejected
+  ---
+  duration_ms: 434.042921
+  type: 'test'
+  ...
+# Subtest: QA4-N38 acceptance: positive control, then a specialist's later-round FAIL/OPEN withdraws the observation acceptance
+ok 19 - QA4-N38 acceptance: positive control, then a specialist's later-round FAIL/OPEN withdraws the observation acceptance
+  ---
+  duration_ms: 552.691729
+  type: 'test'
+  ...
+# Subtest: QA4-N38b acceptance: a Low observation still marked accepted in findings.json/gate after the auditor withdrew it is rejected
+ok 20 - QA4-N38b acceptance: a Low observation still marked accepted in findings.json/gate after the auditor withdrew it is rejected
+  ---
+  duration_ms: 548.234256
+  type: 'test'
+  ...
+# Subtest: QA4-N41 findings: in the same round a PASS by the reporter and a FAIL by another bound reviewer -> FAIL wins
+ok 21 - QA4-N41 findings: in the same round a PASS by the reporter and a FAIL by another bound reviewer -> FAIL wins
+  ---
+  duration_ms: 813.440194
+  type: 'test'
+  ...
+# Subtest: QA4-N42 findings: a verifications sidecar for a role not listed in its round is rejected
+ok 22 - QA4-N42 findings: a verifications sidecar for a role not listed in its round is rejected
+  ---
+  duration_ms: 408.971524
+  type: 'test'
+  ...
+# Subtest: QA4-N39 probe: a gate record edited after the auditor's run (tests list trimmed, decided_at changed) is rejected
+not ok 23 - QA4-N39 probe: a gate record edited after the auditor's run (tests list trimmed, decided_at changed) is rejected # TODO F-DG0-211
+  ---
+  duration_ms: 521.753048
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:512:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted a gate record that differs from what the audited release-auditor run wrote'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:519:10
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:512:151)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N40 probe: a gate record never written by the auditor run (absent from its outputs) is rejected
+not ok 24 - QA4-N40 probe: a gate record never written by the auditor run (absent from its outputs) is rejected # TODO F-DG0-211
+  ---
+  duration_ms: 509.2702
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:522:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted a gate record that the audited release-auditor run did not write'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:534:10
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:522:138)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+ok 25 - QA4-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+  ---
+  duration_ms: 600.951186
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: missing reviewer
+ok 26 - QA4-A24 rejects: missing reviewer
+  ---
+  duration_ms: 322.522036
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: reviewer who authored the scope
+ok 27 - QA4-A24 rejects: reviewer who authored the scope
+  ---
+  duration_ms: 396.144667
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: reviewer listed as implementation author
+ok 28 - QA4-A24 rejects: reviewer listed as implementation author
+  ---
+  duration_ms: 387.991531
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: shared invocation
+ok 29 - QA4-A24 rejects: shared invocation
+  ---
+  duration_ms: 396.463388
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: failed check
+ok 30 - QA4-A24 rejects: failed check
+  ---
+  duration_ms: 470.379249
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: blocked check
+ok 31 - QA4-A24 rejects: blocked check
+  ---
+  duration_ms: 448.823555
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: failed gate test
+ok 32 - QA4-A24 rejects: failed gate test
+  ---
+  duration_ms: 421.245185
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: unresolved High finding
+ok 33 - QA4-A24 rejects: unresolved High finding
+  ---
+  duration_ms: 455.309298
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: High finding closed without any verification sidecar
+ok 34 - QA4-A24 rejects: High finding closed without any verification sidecar
+  ---
+  duration_ms: 600.606549
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: incomplete requirement
+ok 35 - QA4-A24 rejects: incomplete requirement
+  ---
+  duration_ms: 431.273991
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: register row with a non-existent block anchor
+ok 36 - QA4-A24 rejects: register row with a non-existent block anchor
+  ---
+  duration_ms: 457.381154
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: SOURCE row without a playbook block
+ok 37 - QA4-A24 rejects: SOURCE row without a playbook block
+  ---
+  duration_ms: 466.600075
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: coverage matrix missing a block
+ok 38 - QA4-A24 rejects: coverage matrix missing a block
+  ---
+  duration_ms: 427.36317
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+ok 39 - QA4-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+  ---
+  duration_ms: 422.24798
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: candidate change after freeze
+ok 40 - QA4-A24 rejects: candidate change after freeze
+  ---
+  duration_ms: 498.231892
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: tampered manifest
+ok 41 - QA4-A24 rejects: tampered manifest
+  ---
+  duration_ms: 401.9766
+  type: 'test'
+  ...
+1..41
+# tests 41
+# suites 0
+# pass 38
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 3
+# duration_ms 20496.824085
+# exit=0

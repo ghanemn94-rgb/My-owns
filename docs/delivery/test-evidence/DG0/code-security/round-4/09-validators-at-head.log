@@ -1,0 +1,42 @@
+# validators on a clean worktree of HEAD 7a411d22 (metadata commit after freeze of 53f5d176)
+$ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+exit=0
+$ node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+exit=0
+$ node tools/gates/validate.mjs --reconcile
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:0be571eaa84438604b9b4095b7a2bb26086a340b1a34ab2b56aba3a148d3a3b7
+working tree:     sha256:0be571eaa84438604b9b4095b7a2bb26086a340b1a34ab2b56aba3a148d3a3b7 (matches)
+round 1 domain-reviewer: FAIL (STALE for current content)
+round 1 code-security-reviewer: BLOCKED (STALE for current content)
+round 1 qa-verifier: FAIL (STALE for current content)
+round 2 domain-reviewer: PASS (STALE for current content)
+round 2 code-security-reviewer: FAIL (STALE for current content)
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: PASS (STALE for current content)
+round 3 code-security-reviewer: FAIL (STALE for current content)
+round 3 qa-verifier: PASS (STALE for current content)
+round 4 domain-reviewer: missing (STALE for current content)
+round 4 code-security-reviewer: missing (STALE for current content)
+round 4 qa-verifier: missing (STALE for current content)
+PASS reconcile (structure)
+exit=0
+$ node tools/gates/validate.mjs --stage DG0
+FAIL gate DG0 (current) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+exit=1
+$ node tools/gates/validate.mjs --stage DG0 --historical
+FAIL gate DG0 (historical) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+exit=1
+$ tools/source/check_extraction.sh
+PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)
+exit=0
+$ node tools/gates/candidate.mjs --stage DG0 --ref 53f5d176
+{"stage":"DG0","source":"53f5d176dfaa913baa61b34c0aa4fe5fd9a788b5","candidate_id":"sha256:0be571eaa84438604b9b4095b7a2bb26086a340b1a34ab2b56aba3a148d3a3b7","files":75}
+$ git log --merges --oneline | wc -l
+0
+$ write-once scan on real history (log -m, MDT) for DG0 paths
+(end)

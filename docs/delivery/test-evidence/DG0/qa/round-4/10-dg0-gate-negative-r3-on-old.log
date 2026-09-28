@@ -1,0 +1,201 @@
+# QA_REPO_ROOT=/tmp/review-qa4-old (540b3c69a0e0477476eca0207b0b9c0aaded1ea9)
+$ node --test tests/dg0-gate-negative-r3.test.mjs
+TAP version 13
+# \# QA3-N20 errors (0):
+# \#   
+# Subtest: control: the independent round-3 fixture is accepted (API and CLI exit 0)
+ok 1 - control: the independent round-3 fixture is accepted (API and CLI exit 0)
+  ---
+  duration_ms: 394.855547
+  type: 'test'
+  ...
+# Subtest: QA3-R204 (F-DG0-204): findings.json citing a pre-freeze LOAD run as the verification is rejected
+ok 2 - QA3-R204 (F-DG0-204): findings.json citing a pre-freeze LOAD run as the verification is rejected
+  ---
+  duration_ms: 242.88499
+  type: 'test'
+  ...
+# Subtest: QA3-R204b (F-DG0-204): moving the sidecar to a round-1 record that cites a LOAD run is rejected (assignment + freeze binding)
+ok 3 - QA3-R204b (F-DG0-204): moving the sidecar to a round-1 record that cites a LOAD run is rejected (assignment + freeze binding)
+  ---
+  duration_ms: 224.554727
+  type: 'test'
+  ...
+# Subtest: QA3-N17 findings: a later-round PASS overrides an earlier FAIL (positive), but a same-round FAIL by another reviewer wins
+ok 4 - QA3-N17 findings: a later-round PASS overrides an earlier FAIL (positive), but a same-round FAIL by another reviewer wins
+  ---
+  duration_ms: 276.407815
+  type: 'test'
+  ...
+# Subtest: QA3-N18 findings: a verifications sidecar with no review record of that role in its round is rejected
+ok 5 - QA3-N18 findings: a verifications sidecar with no review record of that role in its round is rejected
+  ---
+  duration_ms: 219.23891
+  type: 'test'
+  ...
+# Subtest: QA3-N19 findings: the owner cannot close its own finding through a sidecar in its name (non-review role)
+ok 6 - QA3-N19 findings: the owner cannot close its own finding through a sidecar in its name (non-review role)
+  ---
+  duration_ms: 235.376343
+  type: 'test'
+  ...
+# Subtest: QA3-N20 findings: rewriting an older round's frozen_at to legitimise a LOAD-run verification — probe
+not ok 7 - QA3-N20 findings: rewriting an older round's frozen_at to legitimise a LOAD-run verification — probe # TODO F-DG0-208
+  ---
+  duration_ms: 234.509953
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs:263:1'
+  failureType: 'testCodeFailure'
+  error: "validator accepted a closure bound to a LOAD run after the round's frozen_at was rewritten"
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs:276:10
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs:197:5)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs:263:139)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA3-R205 (F-DG0-205): a symlinked directory pointing outside the repo cannot supply evidence; in-repo symlink still accepted
+ok 8 - QA3-R205 (F-DG0-205): a symlinked directory pointing outside the repo cannot supply evidence; in-repo symlink still accepted
+  ---
+  duration_ms: 247.529698
+  type: 'test'
+  ...
+# Subtest: QA3-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+ok 9 - QA3-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+  ---
+  duration_ms: 394.966742
+  type: 'test'
+  ...
+# Subtest: QA3-N21 candidate: a manifest whose entry mode was flipped (id unchanged) is rejected as tampered
+ok 10 - QA3-N21 candidate: a manifest whose entry mode was flipped (id unchanged) is rejected as tampered
+  ---
+  duration_ms: 252.05643
+  type: 'test'
+  ...
+# Subtest: QA3-N22 candidate: a manifest entry without a mode (pre-round-3 format) is rejected, not silently hashed
+ok 11 - QA3-N22 candidate: a manifest entry without a mode (pre-round-3 format) is rejected, not silently hashed
+  ---
+  duration_ms: 255.18011
+  type: 'test'
+  ...
+# Subtest: QA3-N23 metadata: a round-3 verifications sidecar + run dir + assignments leave the candidate unchanged
+ok 12 - QA3-N23 metadata: a round-3 verifications sidecar + run dir + assignments leave the candidate unchanged
+  ---
+  duration_ms: 409.780747
+  type: 'test'
+  ...
+# Subtest: QA3-N24 history: after approval, editing an earlier round's findings sidecar is detected in historical mode
+ok 13 - QA3-N24 history: after approval, editing an earlier round's findings sidecar is detected in historical mode
+  ---
+  duration_ms: 1209.168867
+  type: 'test'
+  ...
+# Subtest: QA3-N25 guard: a qa-verifier write into a '.git' segment inside its evidence scope is blocked
+ok 14 - QA3-N25 guard: a qa-verifier write into a '.git' segment inside its evidence scope is blocked
+  ---
+  duration_ms: 3.761163
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: missing reviewer
+ok 15 - QA3-A24 rejects: missing reviewer
+  ---
+  duration_ms: 257.412291
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: reviewer who authored the scope
+ok 16 - QA3-A24 rejects: reviewer who authored the scope
+  ---
+  duration_ms: 258.826855
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: reviewer listed as implementation author
+ok 17 - QA3-A24 rejects: reviewer listed as implementation author
+  ---
+  duration_ms: 251.957679
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: shared invocation
+ok 18 - QA3-A24 rejects: shared invocation
+  ---
+  duration_ms: 260.102037
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: failed check
+ok 19 - QA3-A24 rejects: failed check
+  ---
+  duration_ms: 283.629723
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: blocked check
+ok 20 - QA3-A24 rejects: blocked check
+  ---
+  duration_ms: 263.601044
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: unresolved High finding
+ok 21 - QA3-A24 rejects: unresolved High finding
+  ---
+  duration_ms: 249.471076
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: incomplete requirement
+ok 22 - QA3-A24 rejects: incomplete requirement
+  ---
+  duration_ms: 291.756401
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: register row with a non-existent block anchor
+ok 23 - QA3-A24 rejects: register row with a non-existent block anchor
+  ---
+  duration_ms: 261.066808
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: SOURCE row without a playbook block
+ok 24 - QA3-A24 rejects: SOURCE row without a playbook block
+  ---
+  duration_ms: 296.664303
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: coverage matrix missing a block
+ok 25 - QA3-A24 rejects: coverage matrix missing a block
+  ---
+  duration_ms: 251.056692
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+ok 26 - QA3-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+  ---
+  duration_ms: 266.753872
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: candidate change after freeze
+ok 27 - QA3-A24 rejects: candidate change after freeze
+  ---
+  duration_ms: 418.22772
+  type: 'test'
+  ...
+# Subtest: QA3-A24 rejects: tampered manifest
+ok 28 - QA3-A24 rejects: tampered manifest
+  ---
+  duration_ms: 275.329527
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 27
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 1
+# duration_ms 8663.430624
+# exit=0

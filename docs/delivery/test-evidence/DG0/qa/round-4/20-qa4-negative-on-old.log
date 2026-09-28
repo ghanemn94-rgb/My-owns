@@ -1,0 +1,561 @@
+# QA_REPO_ROOT=/tmp/review-qa4-old (540b3c69a0e0477476eca0207b0b9c0aaded1ea9); node v22.22.2; 2026-09-28T14:47:43Z
+$ QA_REPO_ROOT=/tmp/review-qa4-old node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs
+TAP version 13
+# \# QA4-R208a errors (1):
+# \#   review rounds: docs/delivery/reviews/DG0/round-2/qa-verifier.verifications.json was deleted from git history; review evidence is append-only
+# \# QA4-N30 errors (0):
+# \#   
+# \# QA4-N30b round-3 manifest sha256:64665183e3bb6f38 vs content of its source_commit sha256:96c1e05362e98cd2
+# \# QA4-N30b errors (0):
+# \#   
+# \# QA4-N39 auditor run outputs gate sha 976e5d3b11ff6e124ed8c60079d5697c4a66d9a00253510109ef6345fb2a6aa3, gate now a3577b6c7eb2cc36aba9003fb0199281ca1d5c09dc5ec336f9aaf8e99632a168
+# \# QA4-N39 errors (0):
+# \#   
+# \# QA4-N40 errors (0):
+# \#   
+# Subtest: control: the independent round-4 fixture is accepted (API and CLI exit 0)
+ok 1 - control: the independent round-4 fixture is accepted (API and CLI exit 0)
+  ---
+  duration_ms: 570.808694
+  type: 'test'
+  ...
+# Subtest: QA4-R208a (F-DG0-208): the QA3-N20 attack (rewrite round-1 frozen_at + record to cite a LOAD run), committed, is rejected
+not ok 2 - QA4-R208a (F-DG0-208): the QA3-N20 attack (rewrite round-1 frozen_at + record to cite a LOAD run), committed, is rejected
+  ---
+  duration_ms: 661.002853
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:276:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /round 1 frozen_at\/source_commit differ from its committed manifest/; got:
+      review rounds: docs/delivery/reviews/DG0/round-2/qa-verifier.verifications.json was deleted from git history; review evidence is append-only
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:222:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:286:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:276:137)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: QA4-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+not ok 3 - QA4-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+  ---
+  duration_ms: 517.562665
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:292:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:221:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:300:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:292:87)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N30 (F-DG0-208 variant): a new round with a fabricated early manifest and a new record citing the LOAD run is rejected (no write-once edit needed)
+not ok 4 - QA4-N30 (F-DG0-208 variant): a new round with a fabricated early manifest and a new record citing the LOAD run is rejected (no write-once edit needed)
+  ---
+  duration_ms: 666.214432
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:305:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:221:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:321:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:305:166)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N30b probe: a fresh round backed by a fabricated, backdated manifest legitimises a genuine pre-freeze run's closure
+not ok 5 - QA4-N30b probe: a fresh round backed by a fabricated, backdated manifest legitimises a genuine pre-freeze run's closure # TODO F-DG0-212
+  ---
+  duration_ms: 687.761079
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:326:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted a closure bound to a round whose manifest was fabricated with a backdated frozen_at'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:338:10
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:326:158)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N31 (F-DG0-208 variant): a LOAD run that did write a record cannot close a finding after the fact (assignment + freeze binding)
+ok 6 - QA4-N31 (F-DG0-208 variant): a LOAD run that did write a record cannot close a finding after the fact (assignment + freeze binding)
+  ---
+  duration_ms: 509.381655
+  type: 'test'
+  ...
+# Subtest: QA4-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+ok 7 - QA4-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+  ---
+  duration_ms: 547.257683
+  type: 'test'
+  ...
+# Subtest: QA4-R201b (F-DG0-201): a review record that names no assignment cannot be bound to any run
+ok 8 - QA4-R201b (F-DG0-201): a review record that names no assignment cannot be bound to any run
+  ---
+  duration_ms: 404.285948
+  type: 'test'
+  ...
+# Subtest: QA4-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+ok 9 - QA4-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+  ---
+  duration_ms: 430.856868
+  type: 'test'
+  ...
+# Subtest: QA4-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+ok 10 - QA4-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+  ---
+  duration_ms: 539.09356
+  type: 'test'
+  ...
+# Subtest: QA4-R205 (F-DG0-205): register evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+ok 11 - QA4-R205 (F-DG0-205): register evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+  ---
+  duration_ms: 352.869455
+  type: 'test'
+  ...
+# Subtest: QA4-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+ok 12 - QA4-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+  ---
+  duration_ms: 491.185141
+  type: 'test'
+  ...
+# Subtest: QA4-N32 write-once: a committed round assignment edited later is rejected (history M and assignment sha mismatch)
+not ok 13 - QA4-N32 write-once: a committed round assignment edited later is rejected (history M and assignment sha mismatch)
+  ---
+  duration_ms: 525.71199
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:411:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /write-once: M docs\/delivery\/assignments\/DG0\/round-2\/review-domain-reviewer\.md/; got:
+      review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): invocation DG0-T-DG0-REV-R2-domain-reviewer-20260928T133000Z-00000069: assignment file changed since the run (sha256 mismatch)
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:222:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:415:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:411:129)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N33 write-once: a committed record replaced by a symlink to identical bytes is rejected (type change T)
+not ok 14 - QA4-N33 write-once: a committed record replaced by a symlink to identical bytes is rejected (type change T)
+  ---
+  duration_ms: 523.351828
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:419:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:221:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:427:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:419:123)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N34 binding: a record written by another reviewer's run (not this run's file tools) is rejected
+not ok 15 - QA4-N34 binding: a record written by another reviewer's run (not this run's file tools) is rejected
+  ---
+  duration_ms: 540.540962
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:430:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:221:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:448:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:430:115)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N35 binding: a record whose meta.outputs hash is for different bytes (record written, then altered before commit) is rejected
+not ok 16 - QA4-N35 binding: a record whose meta.outputs hash is for different bytes (record written, then altered before commit) is rejected
+  ---
+  duration_ms: 561.453857
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:451:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:221:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:465:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:451:145)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N36 write-once: deleting a committed frozen manifest in the working tree is rejected
+not ok 17 - QA4-N36 write-once: deleting a committed frozen manifest in the working tree is rejected
+  ---
+  duration_ms: 389.732815
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:468:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /write-once: uncommitted change to committed evidence: D docs\/delivery\/candidates\/DG0\//; got:
+      candidate manifest: file not found (docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json)
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:222:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:471:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:468:104)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N37 rounds: a gate candidate manifest in the retired single-file location or with hash v1 is rejected
+not ok 18 - QA4-N37 rounds: a gate candidate manifest in the retired single-file location or with hash v1 is rejected
+  ---
+  duration_ms: 505.67386
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:474:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:221:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:478:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:474:121)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N38 acceptance: positive control, then a specialist's later-round FAIL/OPEN withdraws the observation acceptance
+not ok 19 - QA4-N38 acceptance: positive control, then a specialist's later-round FAIL/OPEN withdraws the observation acceptance
+  ---
+  duration_ms: 516.038858
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:485:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:221:10)
+    withFixture.severity (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:488:3)
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:485:132)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N38b acceptance: a Low observation still marked accepted in findings.json/gate after the auditor withdrew it is rejected
+not ok 20 - QA4-N38b acceptance: a Low observation still marked accepted in findings.json/gate after the auditor withdrew it is rejected
+  ---
+  duration_ms: 497.979413
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:491:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:221:10)
+    withFixture.severity (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:494:3)
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:491:140)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N41 findings: in the same round a PASS by the reporter and a FAIL by another bound reviewer -> FAIL wins
+ok 21 - QA4-N41 findings: in the same round a PASS by the reporter and a FAIL by another bound reviewer -> FAIL wins
+  ---
+  duration_ms: 802.352144
+  type: 'test'
+  ...
+# Subtest: QA4-N42 findings: a verifications sidecar for a role not listed in its round is rejected
+not ok 22 - QA4-N42 findings: a verifications sidecar for a role not listed in its round is rejected
+  ---
+  duration_ms: 352.817355
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:506:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expected an error matching /round-1\/domain-reviewer\.verifications\.json: domain-reviewer's record for round-1 is not listed/; got:
+      verifications sidecar docs/delivery/reviews/DG0/round-1/domain-reviewer.verifications.json record: file not found (docs/delivery/reviews/DG0/round-1/domain-reviewer.json)
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:222:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:508:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:506:104)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N39 probe: a gate record edited after the auditor's run (tests list trimmed, decided_at changed) is rejected
+not ok 23 - QA4-N39 probe: a gate record edited after the auditor's run (tests list trimmed, decided_at changed) is rejected # TODO F-DG0-211
+  ---
+  duration_ms: 458.698481
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:512:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted a gate record that differs from what the audited release-auditor run wrote'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:519:10
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:512:151)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-N40 probe: a gate record never written by the auditor run (absent from its outputs) is rejected
+not ok 24 - QA4-N40 probe: a gate record never written by the auditor run (absent from its outputs) is rejected # TODO F-DG0-211
+  ---
+  duration_ms: 476.364678
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:522:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted a gate record that the audited release-auditor run did not write'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:534:10
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:227:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r4.test.mjs:522:138)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA4-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+ok 25 - QA4-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+  ---
+  duration_ms: 584.662246
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: missing reviewer
+ok 26 - QA4-A24 rejects: missing reviewer
+  ---
+  duration_ms: 368.210601
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: reviewer who authored the scope
+ok 27 - QA4-A24 rejects: reviewer who authored the scope
+  ---
+  duration_ms: 381.890068
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: reviewer listed as implementation author
+ok 28 - QA4-A24 rejects: reviewer listed as implementation author
+  ---
+  duration_ms: 402.708664
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: shared invocation
+ok 29 - QA4-A24 rejects: shared invocation
+  ---
+  duration_ms: 447.721757
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: failed check
+ok 30 - QA4-A24 rejects: failed check
+  ---
+  duration_ms: 406.037353
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: blocked check
+ok 31 - QA4-A24 rejects: blocked check
+  ---
+  duration_ms: 401.683458
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: failed gate test
+ok 32 - QA4-A24 rejects: failed gate test
+  ---
+  duration_ms: 426.156841
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: unresolved High finding
+ok 33 - QA4-A24 rejects: unresolved High finding
+  ---
+  duration_ms: 472.340957
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: High finding closed without any verification sidecar
+ok 34 - QA4-A24 rejects: High finding closed without any verification sidecar
+  ---
+  duration_ms: 539.205853
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: incomplete requirement
+ok 35 - QA4-A24 rejects: incomplete requirement
+  ---
+  duration_ms: 415.933979
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: register row with a non-existent block anchor
+ok 36 - QA4-A24 rejects: register row with a non-existent block anchor
+  ---
+  duration_ms: 361.332749
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: SOURCE row without a playbook block
+ok 37 - QA4-A24 rejects: SOURCE row without a playbook block
+  ---
+  duration_ms: 381.266024
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: coverage matrix missing a block
+ok 38 - QA4-A24 rejects: coverage matrix missing a block
+  ---
+  duration_ms: 417.37083
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+ok 39 - QA4-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+  ---
+  duration_ms: 416.563525
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: candidate change after freeze
+ok 40 - QA4-A24 rejects: candidate change after freeze
+  ---
+  duration_ms: 513.833869
+  type: 'test'
+  ...
+# Subtest: QA4-A24 rejects: tampered manifest
+ok 41 - QA4-A24 rejects: tampered manifest
+  ---
+  duration_ms: 379.334133
+  type: 'test'
+  ...
+1..41
+# tests 41
+# suites 0
+# pass 26
+# fail 12
+# cancelled 0
+# skipped 0
+# todo 3
+# duration_ms 20016.768086
+# exit=1
