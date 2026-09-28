@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 8,
+  "candidate_id": "sha256:90ad5271429719ba975cc900c61f0a611120045c1b72040ad50c94359c5178e0",
+  "source_commit": "d6626258cf76cd3726d082f9d3cc3cd0a49745dc",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {"kind":"claude-code-cli-session","run_id":"DG0-T-DG0-REV-SEC-R8-code-security-reviewer-20260928T165738Z-20a603ee","session_id":"20a603ee-6f70-40ab-9a2b-b5bef2aa68d4"},
+  "implementation_author": ["transformation-analyst", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer) authored no implementation in the DG0 scope. I only wrote review records and evidence under docs/delivery/test-evidence/DG0/code-security/. I formed this verdict without reading any other reviewer's round-8 record."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-8/review-code-security-reviewer.md",
+  "requirements_checked": ["REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026"],
+  "checks_run": [
+    {
+      "id": "C0",
+      "procedure": "Confirm the frozen candidate: HEAD is a post-freeze metadata-only commit, and the recomputed candidate ID matches",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG0; git diff --name-only d6626258..HEAD",
+      "environment": "/home/user/My-owns working tree, node v22, linux",
+      "expected": "candidate_id sha256:90ad5271…78e0; the post-freeze diff touches only assignments/candidates/stages.json",
+      "actual": "HEAD 1474a962 (metadata commit after d6626258). candidate.mjs printed sha256:90ad5271429719ba975cc900c61f0a611120045c1b72040ad50c94359c5178e0 (79 files), and the same in a d6626258 worktree. The post-freeze diff contains only docs/delivery/{assignments/DG0/round-8, candidates/DG0/90ad5271429719ba.manifest.json, stages.json}.",
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "C1",
+      "procedure": "Direct source review of the round-7→round-8 diff (rules.mjs checkInvocation, validator.test.mjs) and of every checkInvocation call site and replayToolContent in the full candidate",
+      "command": "git diff e11b5f08..d6626258 -- tools/ .github/; sed -n 200,420p tools/gates/lib/rules.mjs; grep -n checkInvocation tools/gates/lib/rules.mjs",
+      "environment": "git worktree /tmp/dg0-sec8 at d6626258 (removed afterwards)",
+      "expected": "Transcript checks unconditional; the replay is not skippable; the prompt assignment is bound to meta; all call sites pass a binding with outputs",
+      "actual": "rules.mjs:295 'transcript is empty' error. The init, prompt and result checks (296-319) and the replay (346) are unconditional, and a null replay is an error. The prompt assignment regex (310-313) compares against meta.assignment/assignment_sha256. The call sites at 378 (reviews/gate), 471 (acceptances) and 572 (verifications) all pass bindings with outputs. No other code changed in tools/, .github/ or the frontmatter of .claude/agents.",
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "C2",
+      "procedure": "Own reproduction harness for F-DG0-132, F-DG0-102 and F-DG0-133 (17 tests, candidate fixture helpers copied verbatim) against the candidate",
+      "command": "GATE_TOOLS=/tmp/dg0-sec8 node --test docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs",
+      "environment": "node v22; worktree /tmp/dg0-sec8 at d6626258; temp git fixtures under os.tmpdir()",
+      "expected": "Every FIXED test passes (weakness absent); the control passes; probes document behaviour",
+      "actual": "pass 17 / fail 0. Empty and newline-only transcripts, a rewritten record behind an emptied transcript, an empty-transcript verifying run, the historical/pipeline forgery, the hand-written meta without transcript/result, and prompts naming another assignment path or sha, or none, are all rejected. R8-15 probe: a suffix-compared path with the same sha is accepted (harmless, since the sha pins the content).",
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "C3",
+      "procedure": "Differential: the same harness against the round-7 candidate e11b5f08, to show the original failures reproduce there",
+      "command": "GATE_TOOLS=/tmp/dg0-sec8-old node --test docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs",
+      "environment": "node v22; worktree /tmp/dg0-sec8-old at e11b5f08 (removed afterwards)",
+      "expected": "Non-zero exit: the F-DG0-132 and F-DG0-133 tests fail on the old validator (the weakness is present)",
+      "actual": "exit 1 as expected, pass 5 / fail 12. R8-01 ('' and '\\n\\n\\n'), R8-03, R8-04, R8-05, R8-06 and R8-10 to R8-14 plus R8-16 fail on e11b5f08, confirming the original bypasses. The control, R8-01(' \\n'), R8-02 and R8-07 pass on both, because non-empty invalid transcripts were already caught.",
+      "exit_status": 1,
+      "result": "PASS"
+    },
+    {
+      "id": "C4",
+      "procedure": "Existing test suites of the candidate (gate validator, candidate hashing and write guard)",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+      "environment": "worktree /tmp/dg0-sec8 at d6626258, node v22",
+      "expected": "all tests pass, exit 0",
+      "actual": "tests 52, pass 52, fail 0, exit 0 (including the new 'F-DG0-132' and 'F-DG0-133' regression tests)",
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "C5",
+      "procedure": "Fail-closed sanity check: apply the candidate's checkInvocation, with the verification binding (rules.mjs:572-577), to every real DG0 review record at HEAD",
+      "command": "node docs/delivery/test-evidence/DG0/code-security/round-8/05-real-runs-check.mjs /tmp/dg0-sec8 /tmp/dg0-sec8-head",
+      "environment": "worktrees at d6626258 (tools) and 1474a962 (records), node v22; read-only",
+      "expected": "The round-7 runs, which carry the standing closures, pass the stricter checks. Rounds 1-6 predate later binding rules and are expected to fail (their closures were re-verified in round 7), so the script exits 1.",
+      "actual": "Round-7 code-security, domain and qa runs: ok (including the new prompt-assignment check). Rounds 1-6: FAIL on rules introduced after them (outputs, replayed prompt, manifest). 19 records checked, 16 with errors, exit 1, as expected.",
+      "exit_status": 1,
+      "result": "PASS"
+    },
+    {
+      "id": "C6",
+      "procedure": "Validator CLI at HEAD (current, historical and pipeline modes)",
+      "command": "node tools/gates/validate.mjs --stage DG0; node tools/gates/validate.mjs --stage DG0 --historical; node tools/gates/validate.mjs --pipeline",
+      "environment": "worktree /tmp/dg0-sec8-head at 1474a962, node v22",
+      "expected": "--stage exits non-zero (no gate record yet: the gate must not pass); --pipeline PASS with DG0 REVIEWING",
+      "actual": "--stage DG0: FAIL 'file not found (docs/delivery/gates/DG0.json)', exit 1, in both modes. --pipeline: 'PASS pipeline (active stage: DG0 REVIEWING)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "C7",
+      "procedure": "tools/gates/prefreeze.sh DG0 in a fresh clone of the candidate commit",
+      "command": "git clone --no-local . /tmp/dg0-sec8-clone && git checkout d6626258 && bash tools/gates/prefreeze.sh DG0",
+      "environment": "fresh clone at d6626258, node v22, python3; removed afterwards",
+      "expected": "all prefreeze checks PASS; the working-tree candidate equals HEAD equals 90ad5271…; exit 0",
+      "actual": "PASS: source extraction reproducible (docx 2584a352…548ad2, 165/423 blocks), validator + guard tests, runner metadata tests, register rules DG0, pipeline, check_counts, check_pb_provenance, check_test_refs, 'working-tree candidate equals HEAD (sha256:90ad5271…78e0)'. exit 0.",
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "C8",
+      "procedure": "Static checks: agent-definition changes and frontmatter integrity, docs drift (agents.md/decisions.md), a secret scan of tracked files, and unchanged workflow/runner/guard/source tools",
+      "command": "git diff e11b5f08..d6626258 -- .claude/agents docs/delivery/agents.md docs/delivery/decisions.md .github tools/agents tools/source; frontmatter sha compare; grep secret patterns over git ls-files",
+      "environment": "worktree /tmp/dg0-sec8 at d6626258",
+      "expected": "Agent frontmatter (tools, hooks, model) is unchanged and only the G6/DG7 sentence was added; the docs describe the enforced checks; no credentials; CI/runner/guard unchanged since round-7 closures",
+      "actual": "All ten frontmatter blocks are byte-identical to e11b5f08. Each definition gains exactly the 'never grant a real business, Finance or IT approval … G6 never implies DG7' sentence. agents.md lists the stream-json/replay invocation and the unconditional transcript checks, consistent with the code; its wording 'starts with an init line' is looser than the code's any-position init check, which isn't material. No secret patterns matched. .github, tools/agents and tools/source are unchanged.",
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "C9",
+      "procedure": "Cleanup of the disposable worktrees and clone",
+      "command": "git worktree remove --force /tmp/dg0-sec8 /tmp/dg0-sec8-old /tmp/dg0-sec8-head; rm -rf /tmp/dg0-sec8-clone; git worktree prune",
+      "environment": "/home/user/My-owns",
+      "expected": "my worktrees removed; candidate tree unmodified apart from my evidence and review files",
+      "actual": "Removed. The remaining listed worktree belongs to another session and was left untouched. git status shows only untracked round-8 review, evidence and run directories.",
+      "exit_status": 0,
+      "result": "PASS"
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-8/01-repro-r8-on-d662625.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-8/02-repro-r8-on-e11b5f0.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-8/03-existing-tests.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-8/04-validators-at-head.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-8/05-real-runs-check.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-8/05-real-runs-check.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-8/06-prefreeze-fresh-clone.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-8/07-static-checks.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-8/08-cleanup.log"
+  ],
+  "reviewed_at": "2026-09-28T17:03:08Z",
+  "summary": "Round 8 PASS, with no new findings. F-DG0-132 (High), F-DG0-102 (High) and F-DG0-133 (Low) are verified fixed and CLOSED_VERIFIED. The transcript checks and the D-021 replay are now unconditional, and the CLI-replayed prompt's assignment is bound to meta. A differential reproduction shows each bypass is accepted on e11b5f08 and rejected on d6626258. The existing tests pass 52/52, prefreeze.sh passes in a fresh clone, the real round-7 runs still validate, and nothing else in tools/, .github/ or the agent frontmatter changed since the round-7 closures. Residual (disclosed in D-021, not a defect): someone with repository write access can still forge a complete, internally consistent run directory."
+}

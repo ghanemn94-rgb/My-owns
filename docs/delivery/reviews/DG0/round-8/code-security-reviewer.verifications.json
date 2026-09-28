@@ -1,0 +1,40 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-132",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed in 51f5b9cf (in candidate d6626258). tools/gates/lib/rules.mjs:295-319: the init, CLI-replayed prompt and final-result checks are no longer wrapped in 'if (lines.length)', and an empty parsed transcript adds 'transcript is empty'. rules.mjs:346 now runs the D-021 replay whenever the output file exists; a null replay is an error. All three call sites (checkReview:378, acceptance:471, verification:572) pass a binding with outputs, so no path skips the replay. Differential reproduction with my own harness (repro-r8.test.mjs, helpers copied verbatim from the candidate's validator.test.mjs). On e11b5f08 these weaknesses are present: gzip('') and gzip('\\n\\n\\n') transcripts accepted (R8-01), a rewritten record with re-pointed meta and an emptied transcript accepted (R8-03, r7 test 5), a verifying run with an empty transcript closes High F-DG0-101 (R8-04, r7 test 6), and the committed forgery passes historical and pipeline validation (R8-05, r7 test 7). On d6626258 all of these are rejected, with errors including 'transcript is empty', 'no init line', 'CLI-replayed runner prompt', 'does not end in a successful result' and 'cannot be reconstructed'. The candidate's own regression test (validator.test.mjs 'F-DG0-132') also passes (52/52). The real round-7 runs still satisfy the stricter checks (05-real-runs-check.log), so the change fails closed without invalidating legitimate evidence.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-8/01-repro-r8-on-d662625.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-8/02-repro-r8-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-8/03-existing-tests.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-8/05-real-runs-check.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-102",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Round 7 kept this OPEN only because of the empty-transcript gap (F-DG0-132), and that gap is now closed. Expected behaviour from the finding, checked on d6626258: transcript.jsonl.gz and result.json must exist (rules.mjs:281-284); their hashes must match meta (283-284); the transcript must carry an init line and a final successful result for the session, unconditionally (296-319); result_session_id must equal the session (277); the assignment path and SHA-256 must bind the record, meta and the transcript-bound prompt (310-313, 321-323); meta.stage must match (275); and the run must start after the freeze, from a commit containing the manifest (324-332). Reproduction R8-06 builds the original r1 R0 shape (hand-written meta, no transcript and no result). It is rejected on d6626258 with 'missing transcript.jsonl.gz', 'missing result.json', 'transcript is empty' and 'no init line'. The empty-transcript forgery that reopened this finding (R8-01/03/04/05) is rejected too, and both still reproduce on e11b5f08 (02-repro-r8-on-e11b5f0.log). What remains is forging a complete, internally consistent run directory, including a transcript with plausible Write calls. That is the residual D-021 discloses, and it needs repository write access: an accepted limit of a repository-local validator, not this defect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-8/01-repro-r8-on-d662625.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-8/02-repro-r8-on-e11b5f0.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-133",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed in 51f5b9cf (in candidate d6626258). rules.mjs:310-313 extract 'Your complete assignment is in the file <path> (sha256 <hex>)' from the CLI-replayed prompt, reject a prompt that names none, and require the path to end with '/'+meta.assignment and the SHA-256 to equal meta.assignment_sha256. Together with the existing binding (record.assignment == meta.assignment, file sha == meta.assignment_sha256), this makes the transcript-bound prompt the anchor. Reproduction on d6626258 (all rejected): R8-10, another path and a zero sha (r7 test 8); R8-11, the right path with a wrong sha; R8-12, the right sha with another file name; R8-13, a prompt with no assignment statement; R8-14, meta and record re-pointed consistently at a different assignment; R8-16, a forged prompt placed before the genuine one. The same six (R8-10 to R8-14, R8-16) are all accepted on e11b5f08. Probe R8-15: a different directory prefix with the same relative path and the same sha is accepted, because the path is compared by suffix. That's harmless, since the sha pins the content, and I don't raise it. The runner's real prompt (run-agent.sh:56) matches the regex, and the round-7 real runs pass (05-real-runs-check.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-8/repro-r8.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-8/01-repro-r8-on-d662625.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-8/02-repro-r8-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-8/05-real-runs-check.log"
+      ]
+    }
+  ]
+}
