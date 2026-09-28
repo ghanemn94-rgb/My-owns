@@ -1,0 +1,43 @@
+REQ-S07-007 USER DG4 | Compute RAG from the approved expected trajectory with configurable thresholds and never from project task completion 
+   PROC: RAG = evaluation of actual versus expected-to-date by polarity using configured thresholds; task completion is not an input 
+   ACC: A04;A05: with all tasks complete and actual below the red threshold the KPI is Red; changing the threshold version recomputes RAG
+REQ-PB-063 SOURCE DG4 | Apply the area-specific T10 RAG logic 
+   PROC: Each area computes status by its own rule; outcome RAG never uses task completion; missing data shows Unknown/Stale 
+   ACC: A04;A05: an outcome whose tasks are 100% complete but KPI is below trajectory is Red/Amber, not Green; a KPI with no actual shows Unknown
+REQ-S03-003 USER DG4 | Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses 
+   PROC: Each status has its own state machine and owner; none is derived from another; views show all four side by side 
+   ACC: A11: setting delivery to Complete leaves adoption, validated value and closure unchanged; the API rejects a closure request while validated value is pending unless a transition decision exists
+REQ-S08-001 USER DG4 | Track planned, forecast, measured, submitted-for-validation, validated, rejected and sustained benefit values separately 
+   PROC: Each benefit keeps separate value series per state; aggregations never combine states 
+   ACC: A10: a forecast amount never appears in the validated total; a rejected measurement is retained and shown as rejected
+REQ-S07-014 USER DG4 | Keep new benefit values pending, not validated realized value, when Finance validation is required 
+   PROC: Recalculated benefit values enter 'submitted for validation' and are excluded from validated totals until Finance approves 
+   ACC: A04;A10: after an accepted KPI actual, the linked benefit shows a pending amount and the validated total is unchanged
+REQ-S13-008 USER DG5 | Label provisional or unvalidated values clearly in reports and exports 
+   PROC: Values not validated carry a 'provisional' label 
+   ACC: A10;A15: a pending benefit value is labelled provisional in the PDF pack
+REQ-PB-013 SOURCE DG4 | Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role 
+   PROC: Only users holding FIN on the transformation can mark a baseline, benefit formula or realized value as validated; others can submit for validation 
+   ACC: A10;A12: a Business Owner calling the validate endpoint receives 403; a Finance user succeeds and the audit event records validator identity
+REQ-S08-003 USER DG4 | Record for each benefit a unique ID, type, accountable business owner, Finance validator where applicable, baseline/counterfactual, formula, driver units, target, timing, one-off/recurring classification, currency, measurement source, evidence, confidence, assumptions, contribution links and financial-statement mapping or agreed non-financial KPI 
+   PROC: Benefit profile form with server-side validation of required fields 
+   ACC: A10: a financial benefit without a financial-statement mapping, or a non-financial one without an agreed KPI, is rejected
+REQ-PB-058 SOURCE DG4 | Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link 
+   PROC: System rejects a benefit without a single owner, baseline, formula and a financial statement line or agreed non-financial KPI; initiatives link to canonical benefits via allocations, parent/child relationships and shared-benefit groups; portfolio totals sum canonical benefits, not links, so a shared benefit rolls up once 
+   ACC: A10: a benefit with two owners is rejected; a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the portfolio total
+REQ-S08-013 USER DG4 | Reject allocations over 100% and show any share below 100% as unallocated 
+   PROC: The server sums allocations per benefit; above 100% is rejected; below 100% shows the remaining share as unallocated 
+   ACC: A10: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated
+REQ-S04-002 USER DG4 | Make gates explicit approval records tied to a versioned, immutable evidence snapshot, never inferred from task completion 
+   PROC: Submitting a gate freezes the linked evidence record versions into a snapshot; approvers decide on that snapshot; completing all tasks never changes gate state 
+   ACC: A07;A08: completing every phase task leaves the gate Draft; editing a record after submission does not change the snapshot content shown to approvers
+REQ-PB-015 SOURCE DG4 | Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required 
+   PROC: Owner assembles evidence, submits the gate; approver records decision against the evidence snapshot; gates are never inferred from task completion 
+   ACC: A08: submission with missing mandatory evidence is rejected; approval by a non-approver returns 403; approval of a stale submission version is rejected
+REQ-DLV-002 ENGINEERING DG0 | Keep engineering delivery gates DG0-DG7 separate from product business approvals G1-G6 in records, authority and meaning 
+   PROC: DG records live only under docs/delivery; G1-G6 are product records; project rules and every agent definition state that an engineering agent cannot grant a real business, Finance or IT approval 
+   ACC: A23;A28: gate records validate only with stage_id DG0-DG7; CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval
+REQ-S21-001 USER DG5 | Label product gates, phases and demo approvals so that product gate G6 never implies engineering release DG7, and a demo Sponsor approval never approves a real Mobily transformation 
+   PROC: Product gate screens and exports show business-gate wording only; demo approvals carry a synthetic label; no product screen shows DG status 
+   ACC: A28;A22: a text scan of UI strings and export templates finds no DG0-DG7 references; demo G-approvals display 'Synthetic demonstration - approves nothing real'
+exit=0
