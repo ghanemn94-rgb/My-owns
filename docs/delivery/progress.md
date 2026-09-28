@@ -4,8 +4,8 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 
 ## Current checkpoint
 
-- **Active stage:** P0 / DG0, state **REVIEWING**. The round-12 findings are repaired; round 13 is next.
-- **Round-12 candidate:** `sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c` (commit `7f09967`)
+- **Active stage:** P0 / DG0. The round-13 findings are repaired (D-027, AN-13); round 14 is next.
+- **Round-13 candidate:** `sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79` (commit `6c61f2e`)
 
 **Review history**
 
@@ -22,24 +22,24 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 | 9 | PASS | FAIL | PASS | 2 (134 Medium: worktree guard bypass) |
 | 10 | PASS | FAIL | PASS | 3 (135/136 Medium: guard fail-open, user settings) |
 | 11 | PASS | FAIL | FAIL | 6 (137 High, 226: shell bypasses of the guard). Led to the §0.4 root-cause response: D-025 (OS Bash sandbox) and `threat-model.md` |
-| 12 | (orphaned: stub false positive; run PASS) | FAIL | FAIL (run exit 1, account session limit; does not bind) | 5: 140 Critical (runner imports planted modules), 229 Medium (pre-freeze imports planted bytecode), 230/231/232 Low |
+| 12 | (orphaned: stub false positive; run PASS) | FAIL | FAIL (run exit 1; does not bind) | 5: 140 Critical (runner imports planted modules), 229 Medium, 230/231/232 Low |
+| 13 | PASS | FAIL | FAIL (Low only) | 5: 141 High (sandbox wrapper cloned into agent-writable `$TMPDIR`), 012/142/233/234 Low; 231 reopened |
 
-- **Findings:** 64 closed and verified, 5 open (F-DG0-140, 229, 230, 231, 232).
-  - The round-12 QA closures of F-DG0-226, 227 and 228 come from a run that ended in error. The validator rejects them (`checkInvocation`: "did not complete successfully"), so QA re-verifies them in round 13.
-- **Round-12 repairs (D-026):**
-  - The orchestrator never executes agent-writable code outside a sandbox. The runner's Python helpers run as `python3 -I -B` from `/`.
-  - The pre-freeze runs candidate code only through `tools/gates/sandbox-run.sh`.
-  - The validator binds the sandbox deny list to the run's own directory.
-  - Docs now say `$TMPDIR` rather than `/tmp`.
-  - The config scan ignores the sandbox's zero-length stubs.
-  - CI installs bubblewrap. The CI step is unverified until a hosted run reports.
+- **Findings:** 68 closed and verified, 7 fixed and pending verification (F-DG0-012, 141, 142, 231, 233, 234; F-DG0-140 closed in round 13).
+- **Round-13 repairs (D-027):**
+  - `sandbox-run.sh` does the clone, the checkout and the command inside bubblewrap on a private tmpfs.
+  - The config scan reports removals.
+  - `meta.cwd` is bound to the transcript.
+  - Dependency installation is sandboxed (REQ-DLV-042, DG1).
+  - Stale text is removed.
+- **Orchestrator practice change:** helper scripts and logs live in a root-only directory, never in the agent-writable `/tmp` or `$TMPDIR`.
+- **Record correction:** the DG0 state-history timestamps for rounds 1–12 had been estimates, and several contradicted git. They were corrected from evidence (freeze times, reviewer run finish times), with the old values kept in each note. The missing round-12/13 transitions were added retrospectively and are labelled as such.
 - **Next:**
-  1. Mark the fixes: `import-findings.mjs --fix` for F-DG0-140, 229, 230 and 231.
-  2. The analyst task T-DG0-ANA-R12 for F-DG0-232 (register rows citing D-025/D-026 controls).
-  3. Run the pre-freeze and freeze round 13.
-  4. Run the three reviews: domain (full review), code-security (verifies 140), and QA (verifies 226–232).
-  5. If all PASS: VERIFYING, then the release audit, then APPROVE DG0.
-  6. Then P1: the architecture assignment `docs/delivery/assignments/DG1/T-DG1-ARCH-01.md`.
+  1. Run the pre-freeze, then freeze round 14.
+  2. Run the live probe (the runner changed).
+  3. Run the three reviews: domain verifies 012; code-security verifies 141/142; QA verifies 231/233/234.
+  4. If all PASS: VERIFYING, release audit, full and historical validation, APPROVE DG0.
+  5. Then P1.
 
 ## Done in P0 so far
 
