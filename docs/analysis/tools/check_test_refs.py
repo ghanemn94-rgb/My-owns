@@ -17,7 +17,8 @@ Checks on docs/delivery/requirements.csv:
   T4  EXPECTED_TITLES equals the set of test("...") titles declared in tools/gates/tests/*.test.mjs and
       tools/agents/tests/*.test.mjs, so that the list itself cannot go stale unnoticed.
 EXPECTED_TITLES is the list of current titles given in assignment T-DG0-AN-08 (output of
-`node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs` at the round-2 base).
+`node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs` at the round-2 base), extended in
+T-DG0-AN-09 with the five titles added by the round-3 repair.
 Exit status 1 on any problem.
 """
 import csv, glob, os, re, sys
@@ -61,6 +62,12 @@ EXPECTED_TITLES = [
     "F-DG0-101 residual: deleting an earlier review round is detected",
     "F-DG0-205: evidence that is a symlink to a file outside the repository is rejected",
     "F-DG0-112 / F-DG0-206: file mode and entry type are part of the candidate identity",
+    # Added in T-DG0-AN-09: titles introduced by the DG0 round-3 repair (commit 265db13).
+    "F-DG0-115: reviewer artefacts cannot be edited after the run, committed or not",
+    "F-DG0-208: round metadata must match the committed manifest of its candidate",
+    "F-DG0-102 residual: a verifying record must be the round's listed, schema-valid record",
+    "F-DG0-117: observations are accepted only through specialist and auditor sidecars",
+    "F-DG0-116: with core.fileMode=false tracked modes come from the index",
 ]
 # Bare file names used in acceptance text, resolved to their repository path.
 BARE = {
@@ -86,9 +93,12 @@ def declared_titles():
 
 def quoted_titles(clause):
     """Quoted strings that follow 'test(s)' or 'including' (possibly as a list joined by ',' / 'and')."""
+    # An apostrophe between two letters (reviewer's, round's) is part of a title, not a closing quote; the same rule
+    # as split_clauses (T-DG0-AN-09).
+    q = r"'(?:[^']|(?<=[A-Za-z])'(?=[A-Za-z]))+'"
     found = []
-    for m in re.finditer(r"\b(?:tests?|including)\s+((?:'[^']+'(?:\s*,\s*|\s+and\s+)?)+)", clause):
-        found += re.findall(r"'([^']+)'", m.group(1))
+    for m in re.finditer(r"\b(?:tests?|including)\s+((?:" + q + r"(?:\s*,\s*|\s+and\s+)?)+)", clause):
+        found += [t[1:-1] for t in re.findall(q, m.group(1))]
     return found
 
 
