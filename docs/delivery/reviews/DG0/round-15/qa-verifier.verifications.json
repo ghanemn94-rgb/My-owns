@@ -1,0 +1,62 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-235",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "I reproduced the original failure on the round-14 commit 1e64eb0. My independent script acceptance-feasibility.mjs reports the 3 errors (A18, A23 and A24 cite REQ-DLV-042, but the map omits it). On candidate 7fab49c the same script reports 0 errors, and REQ-DLV-042 is listed under A18 (map line 52), A23 (line 57), A24 (line 58), and in the A24 gate-ordering row as 'REQ-DLV-042 (DG1)' (line 83). The new analyst check docs/analysis/tools/check_acceptance_map.py passes on the candidate. Run with the pre-fix map in a scratch clone, it reports exactly the four mismatches I reported (M2 A18, M2 A23, M2 A24, M3 A24) and exits 1. I then mutated the map six ways of my own through --map (QA15-A1: drop a citing row from A18 and from A24, drop the gate-ordering entry, change its annotated gate, add a non-citing row, rename a scenario row). Every mutation is rejected with the right M2/M3/M4 message, and the unmodified map passes. The sandboxed prefreeze in a fresh clone runs the check and passes. The fix is complete, and it adds the automated two-way check I asked for.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-15/09-f235-verification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/10-f235-check-mutations.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/18-acceptance-feasibility.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/20-qa15-new-cases-on-rv.log#QA15-A1",
+        "docs/delivery/test-evidence/DG0/qa/round-15/08-prefreeze-fresh-clone.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r15.test.mjs#QA15-A1",
+        "docs/analysis/acceptance-map.md#L52",
+        "docs/analysis/tools/check_acceptance_map.py"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-231",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fresh round-15 re-verification, done entirely in this run's private $TMPDIR clones, outside the round-14 incident window. On the old commit 6c61f2e the stale guidance is still present: agents.md line 28 'project,local', and the reviewer definitions prescribing 'git worktree add /tmp/review-<id>' (21-f231-reverification.log). On candidate 7fab49c: agent-protocol.md line 79 says 'git clone <repo> \"$TMPDIR/<name>\"', that only the run's own $TMPDIR is writable scratch, and that /tmp and /var/tmp are read-only. agents.md lines 28 and 104 say '--setting-sources project', matching run-agent.sh lines 158 and 167. The reviewer definitions say to clone into $TMPDIR. The only remaining pattern matches are historical: decisions D-009, D-024 (marked superseded) and D-027, and the agents.md line 92 sentence 'Before that [D-025], Bash writes weren't path-guarded'. I checked the docs live against this run's sandbox (12-live-sandbox-probe.log): touch /tmp and /var/tmp give 'Read-only file system'; $TMPDIR (/var/tmp/mth-run.peZEH0, mode 700) is writable; git worktree add fails with exit 128; git clone into $TMPDIR works, and every check in this review ran that way. The docs describe the current controls.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-15/21-f231-reverification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/12-live-sandbox-probe.log",
+        "docs/delivery/agent-protocol.md#L79",
+        "docs/delivery/agents.md#L28",
+        ".claude/agents/qa-verifier.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-233",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fresh round-15 re-verification in private clones. Old 6c61f2e: my round-13 suite has QA13-V5 (meta.cwd and the deny list forged to /somewhere/else) failing, i.e. the forgery binds (11-r13-suite-on-old13.log), and my round-14 suite fails 9 of 18, including V2, V3, V4, V5 and V12 (11-r14-suite-on-old13.log). Candidate 7fab49c: the round-14 suite passes 18/18 (11b-r14-suite-on-rv-tmp-parent.log). That includes QA14-V12, the exact original forgery, rejected by both the init-cwd and the replayed-prompt checks. It also includes the positive controls V1, V8, V9 and V10 (spaces, parentheses, Arabic) and QA14-REG: the round-9 suite, 91 passes, with the 3 one-field cwd fixtures failing only on cwd binding. The round-13 QA13-V5 case now reports the forged run rejected. The candidate's own test 'F-DG0-233: meta.cwd is bound to the transcript' passes within the 50/50 gate self-tests. Environment note: the round-14 runner cases first failed on the candidate with ENOENT for meta.json, only because D-028's runner creates its private TMPDIR under /var/tmp, which is read-only inside my sandbox. With the documented MTH_RUN_TMP_PARENT=$TMPDIR override, all pass. That is a harness environment effect, not a product regression.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-15/11-r13-suite-on-old13.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/11-r14-suite-on-old13.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/11b-r14-suite-on-rv-tmp-parent.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/11b-r13-suite-on-rv-tmp-parent.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/02-gates-selftests.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r14.test.mjs#QA14-V12",
+        "tools/gates/lib/rules.mjs#checkInvocation"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-234",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fresh round-15 re-verification, with the runner end to end and a stub claude in private fixtures. Old 6c61f2e: QA13-R1b (an ignored .claude/settings.local.json truncated to zero) and QA13-R2 (the same file deleted) fail, meaning no trace (11-r13-suite-on-old13.log). The round-14 cases R4 (deleted .git/hooks file), R5 (deleted nested .gitignore in a second worktree) and R7 (fail closed when the before-snapshot vanishes) also fail there (11-r14-suite-on-old13.log). Candidate 7fab49c, with the runner's temp parent set to my $TMPDIR (D-028): QA13-R1, R1b and R2 give exit 71 with '<path> removed', and QA13-R3 still ignores new zero-length stubs (11b-r13-suite-on-rv-tmp-parent.log). QA14-R0 is a clean control (exit 0, []). R4 and R5 report the removals, R6 reports a retargeted symlink, and R7 gives 'config-diff-failed (fail closed)', exit 71 (11b-r14-suite-on-rv-tmp-parent.log). The candidate's tests 'F-DG0-012/F-DG0-234 ...' pass within the 26/26 agent tests and the prefreeze sandboxed suites.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-15/11-r13-suite-on-old13.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/11-r14-suite-on-old13.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/11b-r13-suite-on-rv-tmp-parent.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/11b-r14-suite-on-rv-tmp-parent.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/03-agents-tests.log",
+        "tools/agents/run-agent.sh#config_snapshot"
+      ]
+    }
+  ]
+}

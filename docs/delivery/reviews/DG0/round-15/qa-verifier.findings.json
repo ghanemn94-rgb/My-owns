@@ -1,0 +1,64 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-236",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The working-tree candidate ID (candidate.mjs, validate.mjs --stage in current mode, --reconcile, --diff) counts the zero-length stub files that concurrently running agent sandboxes leave in the shared tree, so during a review round it flips between the frozen b7f60ed3 (87 files) and 4b7851cf (100 files) with no content change; one stub is a regular file at docs/delivery/gates, where the auditor must create gates/DG0.json",
+      "reproduction": "Shared tree /home/user/My-owns during this round (read-only commands). 23:25Z: `node tools/gates/candidate.mjs --stage DG0` gives b7f60ed3, 87 files. 23:40Z and 23:42-23:43Z: the same command gives 4b7851cf, 100 files, and `--diff` / `validate.mjs --reconcile` report 13 added: .bash_profile .bashrc .gitconfig .gitmodules .idea .mcp.json .profile .ripgreprc .vscode .zprofile .zshrc CLAUDE.local.md docs/delivery/gates, each a 'regular empty file' of 0 bytes (15-working-tree-candidate-flips.log). These are the mount-point stubs the agent sandbox creates for deny-list paths that don't exist: inside the command whose own sandbox created them they are char devices (skipped by manifestFromWorkingTree), but any other command sees them as regular files and they're added to the manifest (lib/candidate.mjs lines 90-105 list untracked, non-ignored paths and include every regular file). `--ref HEAD` stays b7f60ed3. Independent test QA15-C2 (dg0-gate-negative-r15.test.mjs) reproduces it in a fixture: four zero-length untracked stub-shaped files change the working-tree ID, and the committed ID is unchanged. The stubs present at 23:47Z carry mtime 23:41:32Z, the start of my own background monitor command, which I ended with pkill (so its sandbox likely skipped its cleanup). The earlier 23:40Z observation predates it. Every role's sandbox deny list, the auditor's included, names docs/delivery/gates (19-agent-settings-stage.log and a direct agent_settings.py check), so while such a stub exists, creating docs/delivery/gates/DG0.json fails (its parent is a file). I didn't reproduce that last step with a real auditor run.",
+      "expected": "The candidate identity reviewers are told to confirm, and that `validate.mjs --stage` (current mode) and `--reconcile` recompute, is stable while other agents run: the frozen content is unchanged, so the ID shouldn't change. The runner's config_snapshot already treats zero-length untracked non-symlink files as sandbox stubs (D-026). Proposal: (a) have assignments confirm with `candidate.mjs --stage DGx --ref <commit>` or in a fresh clone, not the shared working tree; (b) have the orchestrator and auditor run current-mode validation only when no agent is running, and remove leftover stubs first (or make the validator name them as stubs in its error); (c) create docs/delivery/gates/ (e.g. with a .gitkeep) so the sandbox never stubs it as a file. I don't propose excluding zero-length files from the candidate, because a real empty file (for example __init__.py) must count.",
+      "actual": "Fail-closed only: it can't cause a false approval, because the gate compares against the committed manifest, and prefreeze requires working tree = HEAD. It can cause a false 'candidate mismatch' (a reviewer following review-common's working-tree confirmation would return BLOCKED), a spurious current-mode validator failure, every record shown STALE by --reconcile, and potentially a failed auditor gate-record write. Low and non-mandatory. I'd accept it as an observation for DG0, provided (a) and (c) are in place before the DG1 reviews. Cleanup request: the 13 stub files currently in the shared tree (mtime 23:41:32Z) came from my run and should be removed by the orchestrator. They are inside my deny list, so I couldn't remove them.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-15/15-working-tree-candidate-flips.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/13-candidate-path-monitor.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/20-qa15-new-cases-on-rv.log#QA15-C2",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r15.test.mjs#QA15-C2",
+        "tools/gates/lib/candidate.mjs#manifestFromWorkingTree",
+        "tools/gates/lib/rules.mjs#reconcile",
+        "docs/delivery/assignments/DG0/round-15/review-common.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-15/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T23:50:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-15 QA review of candidate b7f60ed3 (7fab49c). Low; I would accept it as an observation for DG0."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-237",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "threat-model.md understates where a confined reviewer's shell can create new files: it says 'on the path to its own areas, for example at the repository root', but the per-run sandbox is a deny list, so any new path outside it is writable (docs/architecture/**, src/**, tests/unit/**, docs/delivery/<new>)",
+      "reproduction": "In this qa-verifier run's own sandbox, with git-ignored probe names so no candidate path changed: `mkdir -p <d> && touch <d>/qa15.pyc` succeeded for docs/architecture/__pycache__, src/__pycache__, tests/unit/__pycache__, docs/delivery/__pycache__ and __pycache__, and I removed each one straight away (14-new-path-scope-probe.log). The run's settings.json sandbox.filesystem.denyWrite lists protected paths only, with no allow list for the repository. Positive side, checked independently (QA15-S1 and my run's settings): every tracked file, including all 87 candidate files, is under a deny entry for every reviewer role, so existing content can't be changed by the shell. Live, touching docs/source, tools/gates, docs/delivery/requirements.csv, another reviewer's record or another reviewer's evidence directory all fail with 'Read-only file system' (12-live-sandbox-probe.log).",
+      "expected": "The 'New untracked files' row of the detection table states the actual scope: a confined role's shell can create any new path that isn't denied, including product-source paths such as src/** and tests/**. Such files are detected by git status, the runner snapshots and prefreeze's working tree = HEAD check.",
+      "actual": "This restates a disclosed and detected residual, with a scope larger than the text says. Detection holds (prefreeze refuses untracked candidate files, and the gate compares committed content). Low and non-mandatory; I'd accept it as an observation. An optional hardening would be a positive allow list for reviewer shells (their own evidence directory plus $TMPDIR).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-15/14-new-path-scope-probe.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/12-live-sandbox-probe.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r15.test.mjs#QA15-S1",
+        "docs/delivery/threat-model.md",
+        "tools/agents/agent_settings.py"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-15/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T23:50:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-15 QA review of candidate b7f60ed3 (7fab49c). Low; I would accept it as an observation."
+        }
+      ]
+    }
+  ]
+}
