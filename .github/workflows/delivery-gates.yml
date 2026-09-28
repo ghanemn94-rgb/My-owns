@@ -1,0 +1,33 @@
+# Delivery gate enforcement (master prompt §0.5, acceptance A24/A25).
+# The product build jobs added from P1 onward must declare `needs: delivery-gates`, so a failed or
+# unapproved gate stops the automated pipeline from advancing.
+name: delivery-gates
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  delivery-gates:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # historical gate verification recomputes candidates from recorded commits
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Source extraction is reproducible
+        run: tools/source/check_extraction.sh
+      - name: Gate validator self-tests
+        run: node --test tools/gates/tests/*.test.mjs
+      - name: Write-guard tests
+        run: node --test tools/agents/tests/*.test.mjs
+      - name: Pipeline gate state (approved gates re-verified; no stage advanced past an unapproved gate)
+        run: node tools/gates/validate.mjs --pipeline
+      - name: Resumption reconciliation report
+        run: node tools/gates/validate.mjs --reconcile

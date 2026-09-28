@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Delivery stage state",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "stages"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "stage",
+          "name",
+          "state",
+          "depends_on",
+          "implementation_owners",
+          "candidate_spec",
+          "candidate",
+          "review_rounds",
+          "gate_record",
+          "history"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^DG[0-7]$"
+          },
+          "stage": {
+            "type": "string",
+            "pattern": "^P[0-7]$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "PLANNED",
+              "BUILDING",
+              "REVIEWING",
+              "FIXING",
+              "VERIFYING",
+              "APPROVED",
+              "BLOCKED"
+            ]
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^DG[0-7]$"
+            }
+          },
+          "implementation_owners": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "transformation-analyst",
+                "solution-architect",
+                "frontend-ux-engineer",
+                "backend-workflow-engineer",
+                "kpi-benefits-engineer",
+                "devops-engineer",
+                "domain-reviewer",
+                "code-security-reviewer",
+                "qa-verifier",
+                "release-auditor",
+                "delivery-orchestrator"
+              ]
+            }
+          },
+          "candidate_spec": {
+            "type": "object",
+            "required": [
+              "include",
+              "exclude"
+            ],
+            "properties": {
+              "include": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "exclude": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "candidate": {
+            "type": "object",
+            "required": [
+              "candidate_id",
+              "source_commit",
+              "frozen_at",
+              "manifest_path"
+            ],
+            "properties": {
+              "candidate_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_commit": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "frozen_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "manifest_path": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "review_rounds": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "round",
+                "candidate_id",
+                "records"
+              ],
+              "properties": {
+                "round": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "candidate_id": {
+                  "type": "string",
+                  "pattern": "^sha256:[0-9a-f]{64}$"
+                },
+                "records": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "note": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "gate_record": {
+            "type": "string"
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "history": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "state",
+                "at"
+              ],
+              "properties": {
+                "state": {
+                  "enum": [
+                    "PLANNED",
+                    "BUILDING",
+                    "REVIEWING",
+                    "FIXING",
+                    "VERIFYING",
+                    "APPROVED",
+                    "BLOCKED"
+                  ]
+                },
+                "at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "note": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

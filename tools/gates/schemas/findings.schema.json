@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Delivery findings",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "findings"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "stage_id",
+          "requirement",
+          "severity",
+          "mandatory_violation",
+          "title",
+          "reproduction",
+          "expected",
+          "actual",
+          "evidence",
+          "reported_by",
+          "reported_in",
+          "owner",
+          "status",
+          "history"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^F-DG[0-7]-[0-9]{3}$"
+          },
+          "stage_id": {
+            "type": "string",
+            "pattern": "^DG[0-7]$"
+          },
+          "requirement": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "Critical",
+              "High",
+              "Medium",
+              "Low"
+            ]
+          },
+          "mandatory_violation": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 5
+          },
+          "reproduction": {
+            "type": "string",
+            "minLength": 5
+          },
+          "expected": {
+            "type": "string"
+          },
+          "actual": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reported_by": {
+            "enum": [
+              "domain-reviewer",
+              "code-security-reviewer",
+              "qa-verifier",
+              "release-auditor"
+            ]
+          },
+          "reported_in": {
+            "type": "string"
+          },
+          "owner": {
+            "enum": [
+              "transformation-analyst",
+              "solution-architect",
+              "frontend-ux-engineer",
+              "backend-workflow-engineer",
+              "kpi-benefits-engineer",
+              "devops-engineer",
+              "domain-reviewer",
+              "code-security-reviewer",
+              "qa-verifier",
+              "release-auditor",
+              "delivery-orchestrator"
+            ]
+          },
+          "status": {
+            "enum": [
+              "OPEN",
+              "FIXING",
+              "FIXED_PENDING_VERIFICATION",
+              "CLOSED_VERIFIED",
+              "ACCEPTED_OBSERVATION",
+              "REJECTED_INVALID",
+              "BLOCKED"
+            ]
+          },
+          "fix_revision": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fix_summary": {
+            "type": "string"
+          },
+          "verification": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "required": [
+              "by_role",
+              "invocation_reference",
+              "at",
+              "result",
+              "evidence"
+            ],
+            "properties": {
+              "by_role": {
+                "enum": [
+                  "domain-reviewer",
+                  "code-security-reviewer",
+                  "qa-verifier",
+                  "release-auditor"
+                ]
+              },
+              "invocation_reference": {
+                "$ref": "#/$defs/invref"
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "result": {
+                "enum": [
+                  "PASS",
+                  "FAIL"
+                ]
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "acceptance": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "required": [
+              "rationale",
+              "owner",
+              "accepted_by"
+            ],
+            "properties": {
+              "rationale": {
+                "type": "string",
+                "minLength": 10
+              },
+              "owner": {
+                "enum": [
+                  "transformation-analyst",
+                  "solution-architect",
+                  "frontend-ux-engineer",
+                  "backend-workflow-engineer",
+                  "kpi-benefits-engineer",
+                  "devops-engineer",
+                  "domain-reviewer",
+                  "code-security-reviewer",
+                  "qa-verifier",
+                  "release-auditor",
+                  "delivery-orchestrator"
+                ]
+              },
+              "accepted_by": {
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                  "enum": [
+                    "domain-reviewer",
+                    "code-security-reviewer",
+                    "qa-verifier",
+                    "release-auditor"
+                  ]
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "at",
+                "status"
+              ],
+              "properties": {
+                "at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "status": {
+                  "enum": [
+                    "OPEN",
+                    "FIXING",
+                    "FIXED_PENDING_VERIFICATION",
+                    "CLOSED_VERIFIED",
+                    "ACCEPTED_OBSERVATION",
+                    "REJECTED_INVALID",
+                    "BLOCKED"
+                  ]
+                },
+                "note": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "invref": {
+      "type": "object",
+      "required": [
+        "kind",
+        "run_id",
+        "session_id"
+      ],
+      "properties": {
+        "kind": {
+          "const": "claude-code-cli-session"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^DG[0-7]-[A-Za-z0-9._-]+$"
+        },
+        "session_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

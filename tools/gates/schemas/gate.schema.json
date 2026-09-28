@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DG gate decision record",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "stage_id",
+    "decision",
+    "candidate_id",
+    "source_commit",
+    "manifest_path",
+    "previous_gate",
+    "reviews",
+    "release_audit",
+    "requirements",
+    "tests",
+    "blocking_conditions",
+    "accepted_observations",
+    "decided_at",
+    "decided_by",
+    "invocation_reference"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "stage_id": {
+      "type": "string",
+      "pattern": "^DG[0-7]$"
+    },
+    "decision": {
+      "enum": [
+        "APPROVED",
+        "BLOCKED"
+      ]
+    },
+    "candidate_id": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "manifest_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "previous_gate": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reviews": {
+      "type": "object",
+      "required": [
+        "domain-reviewer",
+        "code-security-reviewer",
+        "qa-verifier"
+      ],
+      "properties": {
+        "domain-reviewer": {
+          "type": "string"
+        },
+        "code-security-reviewer": {
+          "type": "string"
+        },
+        "qa-verifier": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "release_audit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requirements": {
+      "type": "object",
+      "required": [
+        "final_gate_ids"
+      ],
+      "properties": {
+        "final_gate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "command",
+          "result",
+          "evidence"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string"
+          },
+          "result": {
+            "enum": [
+              "PASS",
+              "FAIL",
+              "BLOCKED"
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "blocking_conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "accepted_observations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decided_by": {
+      "const": "release-auditor"
+    },
+    "invocation_reference": {
+      "$ref": "#/$defs/invref"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "invref": {
+      "type": "object",
+      "required": [
+        "kind",
+        "run_id",
+        "session_id"
+      ],
+      "properties": {
+        "kind": {
+          "const": "claude-code-cli-session"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^DG[0-7]-[A-Za-z0-9._-]+$"
+        },
+        "session_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
