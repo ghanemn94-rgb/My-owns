@@ -1,0 +1,107 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-204",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-017",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "A finding's verification may cite any successful run of the verifying role, including a pre-freeze load-check run; the F-DG0-201 binding is not applied to verifications",
+      "reproduction": "QA_REPO_ROOT=<frozen worktree @83860be> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs --test-name-pattern QA2-N11. The disposable fixture builds a fully valid DG0 gate in which F-DG0-201 (Medium, mandatory) was raised by qa-verifier in round 1 and is CLOSED_VERIFIED in round 2. The test then adds a successful qa-verifier run for task T-DG0-LOAD (assignment docs/delivery/assignments/DG0/T-DG0-LOAD.md, started 11:00Z, before the 13:00Z freeze) and points findings.json F-DG0-201.verification.invocation_reference at it. validateGate() returns []. Cause: tools/gates/lib/rules.mjs:417 calls checkInvocation(repo, stageId, v.invocation_reference, v.by_role, errors, ...) without a binding argument, so the assignment/assignment_sha256 and notBefore checks at rules.mjs:302-308 are skipped for verifications. In this repository, successful LOAD runs exist for all four review roles (docs/delivery/runs/DG0/DG0-T-DG0-LOAD-*), so any finding in the stage could be closed with a verification that cites a run which never examined the fix. docs/delivery/agents.md line 32 (D-016) states the opposite: 'The validator refuses any review, audit or finding verification unless its run ... executed exactly the cited assignment, started after the candidate froze'.",
+      "expected": "A CLOSED_VERIFIED or REJECTED_INVALID finding's verification must be bound to a run that could have verified it. The run must start after the fix (at least after fix_revision was committed, or after the candidate the fix is in froze). It must have executed a review or verification assignment of this stage, for example the verifier's round-N assignment, whose record lists the finding in its <role>.verifications.json. A regression test must cover the pre-freeze LOAD-run case. Otherwise agents.md/D-016 must be corrected, but the gate condition 'independent verification' then remains unenforced.",
+      "actual": "validateGate returns no errors (test QA2-N11 fails with 'validator accepted an invalid gate (no errors)'). The round-2 re-verification of F-DG0-201 itself passed only for reviews (QA2-R201, QA2-R201b pass); the same defect class remains open for finding verifications.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r2.log",
+        "tools/gates/lib/rules.mjs:417",
+        "docs/delivery/agents.md:32"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [
+        { "at": "2026-09-28T13:45:00Z", "status": "OPEN", "note": "Raised in DG0 round 2 QA review." }
+      ]
+    },
+    {
+      "id": "F-DG0-205",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "repoFile() accepts an in-repository symlink whose target is outside the repository as existing evidence",
+      "reproduction": "QA_REPO_ROOT=<frozen worktree> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs --test-name-pattern QA2-N12. The test creates app/evidence-link.txt -> /tmp/qa2-outside-*/secret.txt and sets it as REQ-DLV-001 evidence. checkRegister() reports no error, because rules.mjs:49-61 checks containment lexically with path.resolve and then calls statSync, which follows the link. The same helper backs review evidence_paths, gate test evidence and assignments.",
+      "expected": "Evidence resolves (realpath) to a regular file inside the repository, so evidence content is under version control and part of what reviewers and auditors can inspect.",
+      "actual": "Evidence that lives outside the repository is accepted. The symlink itself is hashed into the candidate by its target string (F-DG0-103 fix), so a change of target is detected, but the target content is not. I would accept this as a Low observation if it is tracked.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r2.log",
+        "tools/gates/lib/rules.mjs:49-61"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [
+        { "at": "2026-09-28T13:45:00Z", "status": "OPEN", "note": "Raised in DG0 round 2 QA review; acceptable as a Low observation." }
+      ]
+    },
+    {
+      "id": "F-DG0-206",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Candidate identity ignores the file mode, so an executable-bit change after freeze does not invalidate the approval",
+      "reproduction": "QA2-N14 in docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs runs 'chmod +x app/main.txt' on a validated fixture. It prints '# QA2-N14 exec-bit change detected by candidate: false' on both the round-1 and round-2 tooling. tools/gates/lib/candidate.mjs:91-92 and :111-113 hash content only; the git tree mode (100644/100755) is read at :104 but not included in the entry.",
+      "expected": "A25: 'A source/test/configuration change invalidates mismatched approval.' The executable bit of scripts that CI and the runner call directly (tools/source/check_extraction.sh, tools/agents/run-agent.sh) is configuration. Include the mode (for example 'file:100755') in each entry's hash, and add a regression test.",
+      "actual": "A mode-only change leaves the candidate ID unchanged. The impact is limited: it cannot change what code runs, only whether it can be executed directly. I would accept this as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r2.log",
+        "tools/gates/lib/candidate.mjs:85-115"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [
+        { "at": "2026-09-28T13:45:00Z", "status": "OPEN", "note": "Raised in DG0 round 2 QA review; acceptable as a Low observation." }
+      ]
+    },
+    {
+      "id": "F-DG0-207",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-013",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "REQ-DLV-013 and REQ-DLV-026 acceptance cite validator test names that do not exist",
+      "reproduction": "grep -cF 'a fabricated invocation reference (no recorded run) is rejected' tools/gates/tests/validator.test.mjs returns 0, and so does grep -cF 'a review citing a non-existent run is rejected'. Those strings are cited in the acceptance column of REQ-DLV-013 and REQ-DLV-026 in docs/delivery/requirements.csv. The behaviour is tested under a different name: 'A24 / F-DG0-102: fabricated or incomplete provenance is rejected' (first sub-case: no run directory, 'file not found'). The other six cited test names match exactly (docs/delivery/test-evidence/DG0/qa/round-2/12-dg0-acceptance-evidence.log).",
+      "expected": "Acceptance text names tests that exist, so that 'derived verification' from test names is traceable, or it cites the test by its current title.",
+      "actual": "Two acceptance clauses reference renamed tests. The substance is covered and passes (tools/gates/tests: 20/20). This is traceability only; I would accept it as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-2/12-dg0-acceptance-evidence.log",
+        "docs/delivery/requirements.csv (REQ-DLV-013, REQ-DLV-026)"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [
+        { "at": "2026-09-28T13:45:00Z", "status": "OPEN", "note": "Raised in DG0 round 2 QA review; acceptable as a Low observation." }
+      ]
+    }
+  ]
+}

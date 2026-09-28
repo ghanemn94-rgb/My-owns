@@ -1,0 +1,17 @@
+# env: v22.22.2, git version 2.43.0, Linux 6.18.44-fc-v37, date 2026-09-28T13:36:06Z
+# cwd /home/user/My-owns (HEAD eaef1d0fb6b7d4da4e5f2f25d451f57316a58c7c); frozen worktree /tmp/review-qa-r2
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3","files":71}
+exit=0
+$ (worktree @83860be) node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3","files":71}
+exit=0
+$ git diff --stat 83860be..HEAD
+ .../DG0/round-2/review-code-security-reviewer.md   |  25 +++
+ .../assignments/DG0/round-2/review-common.md       |  69 +++++++
+ .../DG0/round-2/review-domain-reviewer.md          |  47 +++++
+ .../assignments/DG0/round-2/review-qa-verifier.md  |  38 ++++
+ .../DG0/round-2/review-release-auditor.md          |  24 +++
+ docs/delivery/candidates/DG0.manifest.json         | 221 ++++++++++++++-------
+ docs/delivery/stages.json                          |  23 ++-
+ 7 files changed, 370 insertions(+), 77 deletions(-)

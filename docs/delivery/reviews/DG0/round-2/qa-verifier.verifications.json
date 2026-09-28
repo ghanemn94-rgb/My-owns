@@ -1,0 +1,38 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-201",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on the round-1 tooling (worktree @26642c7): QA-N27 fails with 'validator accepted an invalid gate', and QA2-R201/QA2-R201b fail. On the frozen candidate (@83860be), QA-N27 (round-1 test), QA2-R201 (review cites the pre-freeze T-DG0-LOAD run of the same role: rejected with 'ran assignment docs/delivery/assignments/DG0/T-DG0-LOAD.md' and 'before the candidate froze') and QA2-R201b (right assignment, run started before the freeze: rejected) all pass. The producer's regression test 'F-DG0-201: a review bound to an unrelated run of the same role is rejected' also passes (tools/gates/tests 20/20). checkReview passes the binding {assignment, notBefore: frozen_at} (rules.mjs:333-336). The fix is complete for review and audit records, which is the scope of F-DG0-201. The same binding is missing for finding verifications (rules.mjs:417); that is a separate path, raised as new finding F-DG0-204.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-on-r1.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-on-r2.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r1.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r2.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/02-gates-tests.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-202",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on round-1 tooling: QA-N28 (bare 'NO-SUCH-EVIDENCE.md') is accepted. On the frozen candidate, QA2-R202 is rejected with 'evidence is not an existing repository file: NO-SUCH-EVIDENCE.md'. QA2-N13 ('app/main.txt; ;docs/nope.md') also rejects the missing entry. The round-1 QA-N28 test fails on r2 only because the message wording changed (it expects 'evidence path not found'); the rejection itself happens. Every register evidence entry now goes through repoFile() (rules.mjs:217-219). My register-integrity script confirms all evidence entries of the 19 IMPLEMENTED DG0 rows are existing regular files. A residual symlink-escape edge case is raised separately as Low F-DG0-205.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-on-r1.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r2.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/11-register-integrity.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-203",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "docs/analysis/stage-plan.md now has the rule 'Executable acceptance tests (AN-05, finding F-DG0-203)', per-stage 'authored in Pn' tables for P1-P6, and the 'Executable acceptance-test ownership' table. My independent script (acceptance-feasibility.py, 0 errors) checks, for all 28 scenarios, that the table's first 'Authored in' stage equals acceptance-map 'First delivered', that its 'Must pass at' equals acceptance-map and the register final_gate of REQ-S20-0nn, that no scenario is first authored after its must-pass gate, that every scenario has a named author, and that the stage-plan section of the first-delivered stage mentions the scenario. P6 now reads 'extends ... re-runs', and only A17 (and the first A19 drill) are first authored in P6. docs/analysis/tools/check_counts.py reports STAGE-PLAN LISTS ALL MATCH.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-2/14-acceptance-feasibility.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/acceptance-feasibility.py"
+      ]
+    }
+  ]
+}

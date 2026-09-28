@@ -1,0 +1,24 @@
+# Round-2 repro against round-1 candidate 26642c72 (differential: FIXED tests must fail here)
+# date: 2026-09-28T13:35:15Z  node v22.22.2  git 2.43.0  Linux 6.18.44-fc-v37
+# cwd: /home/user/My-owns
+
+$ GATE_TOOLS=/tmp/dg0-sec-r1old node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs
+ok 1 - baseline: the copied fixture is a valid DG0 gate for the code under test
+not ok 2 - FIXED F-DG0-101: relabelled, sidecar-relabelled or dropped findings are rejected
+not ok 3 - FIXED F-DG0-102: a run without transcript/result, or with a forged hash, is rejected
+not ok 4 - FIXED F-DG0-103: a committed symlink repointed after freeze changes the candidate
+not ok 5 - FIXED F-DG0-104: an extra exclude in the frozen manifest is rejected
+not ok 6 - FIXED F-DG0-106: '\#', '.', a directory and a bare token are not accepted as evidence; empty tests[] rejected
+not ok 7 - FIXED F-DG0-107: CSV text after a closing quote and ragged rows throw
+not ok 8 - FIXED F-DG0-105: symlink, case and config-surface bypasses of the write guard are blocked
+ok 9 - BYPASS N1a: a finding is CLOSED_VERIFIED by citing a pre-freeze, unrelated run of the reporter role (e.g. the LOAD check)
+ok 10 - BYPASS N1b: the reporter's own verification sidecar says FAIL/OPEN, findings.json says CLOSED_VERIFIED; the gate passes
+ok 11 - BYPASS N1c: verification evidence paths and the fix_revision are never checked
+ok 12 - BYPASS N2: deleting a whole earlier review round (record + sidecar) and its findings passes, even when stages.json lists the round
+ok 13 - BYPASS N3: an implementer (allow **) plants tools/.git (or docs/.git) and then writes protected gate files
+not ok 14 - BYPASS N4 (Low): a regular file whose content is 'symlink:<t>' has the same manifest hash as a symlink to <t>
+ok 15 - BYPASS N5 (Low): the executable bit is not part of the candidate identity
+ok 16 - N6 (Low, platform): with core.autocrlf=true the working-tree candidate differs from the committed one (fails closed)
+# pass 8
+# fail 8
+exit=1

@@ -1,0 +1,381 @@
+# Round-1 repro (docs/delivery/test-evidence/DG0/code-security/repro.test.mjs) against round-1 candidate 26642c72 (expect: all pass = bugs present)
+# date: 2026-09-28T13:35:15Z  node v22.22.2  git 2.43.0  Linux 6.18.44-fc-v37
+# cwd: /home/user/My-owns
+
+$ GATE_TOOLS=/tmp/dg0-sec-r1old node --test docs/delivery/test-evidence/DG0/code-security/repro.test.mjs
+TAP version 13
+# Subtest: R0 baseline: fixture with fabricated 5-field run records, no transcripts and zero gate tests passes DG0
+ok 1 - R0 baseline: fixture with fabricated 5-field run records, no transcripts and zero gate tests passes DG0
+  ---
+  duration_ms: 246.05891
+  type: 'test'
+  ...
+# Subtest: R1a: an OPEN High mandatory DG0 finding relabelled stage_id DG1 escapes the terminal-state rule
+ok 2 - R1a: an OPEN High mandatory DG0 finding relabelled stage_id DG1 escapes the terminal-state rule
+  ---
+  duration_ms: 237.499665
+  type: 'test'
+  ...
+# Subtest: R1b: an OPEN High finding from an earlier FAIL round can be dropped from findings.json; round records are not cross-checked
+ok 3 - R1b: an OPEN High finding from an earlier FAIL round can be dropped from findings.json; round records are not cross-checked
+  ---
+  duration_ms: 239.093513
+  type: 'test'
+  ...
+# Subtest: R2: symlinks are silently excluded from the candidate; a committed symlink can be repointed after approval undetected
+ok 4 - R2: symlinks are silently excluded from the candidate; a committed symlink can be repointed after approval undetected
+  ---
+  duration_ms: 194.684505
+  type: 'test'
+  ...
+# Subtest: R3: manifest.spec is not bound to stages.json candidate_spec; an exclude in the frozen manifest hides deliverables
+ok 5 - R3: manifest.spec is not bound to stages.json candidate_spec; an exclude in the frozen manifest hides deliverables
+  ---
+  duration_ms: 210.030506
+  type: 'test'
+  ...
+# Subtest: R4: weak evidence existence checks accept '\#', '.', and non-path evidence
+ok 6 - R4: weak evidence existence checks accept '\#', '.', and non-path evidence
+  ---
+  duration_ms: 215.215043
+  type: 'test'
+  ...
+# Subtest: R5: CSV parser silently accepts characters after a closing quote
+ok 7 - R5: CSV parser silently accepts characters after a closing quote
+  ---
+  duration_ms: 0.618164
+  type: 'test'
+  ...
+# Subtest: R6: write guard follows no symlinks, and leaves settings.local.json / .mcp.json / trading_agent writable for implementers
+ok 8 - R6: write guard follows no symlinks, and leaves settings.local.json / .mcp.json / trading_agent writable for implementers
+  ---
+  duration_ms: 11.399773
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1551.091917
+exit=0
+
+# ---- same script against round-2 candidate 83860be3 (GATE_TOOLS=/tmp/dg0-sec-r2): all fail. NOTE: its fabricated fixtures now trip unrelated policy checks, so this is NOT used as fix evidence; see 04/05.
+TAP version 13
+# Subtest: R0 baseline: fixture with fabricated 5-field run records, no transcripts and zero gate tests passes DG0
+not ok 1 - R0 baseline: fixture with fabricated 5-field run records, no transcripts and zero gate tests passes DG0
+  ---
+  duration_ms: 213.653123
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:98:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   'stages.json: DG0 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG1 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG2 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG3 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG4 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG5 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG6 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG7 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'gate DG0: $.tests: fewer than 1 items'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'stages.json: DG0 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    1: 'stages.json: DG1 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    2: 'stages.json: DG2 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    3: 'stages.json: DG3 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    4: 'stages.json: DG4 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    5: 'stages.json: DG5 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    6: 'stages.json: DG6 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    7: 'stages.json: DG7 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    8: 'gate DG0: $.tests: fewer than 1 items'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:100:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: R1a: an OPEN High mandatory DG0 finding relabelled stage_id DG1 escapes the terminal-state rule
+not ok 2 - R1a: an OPEN High mandatory DG0 finding relabelled stage_id DG1 escapes the terminal-state rule
+  ---
+  duration_ms: 211.546083
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:104:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   'stages.json: DG0 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG1 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG2 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG3 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG4 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG5 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG6 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG7 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'gate DG0: $.tests: fewer than 1 items'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'stages.json: DG0 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    1: 'stages.json: DG1 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    2: 'stages.json: DG2 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    3: 'stages.json: DG3 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    4: 'stages.json: DG4 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    5: 'stages.json: DG5 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    6: 'stages.json: DG6 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    7: 'stages.json: DG7 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    8: 'gate DG0: $.tests: fewer than 1 items'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:107:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: R1b: an OPEN High finding from an earlier FAIL round can be dropped from findings.json; round records are not cross-checked
+not ok 3 - R1b: an OPEN High finding from an earlier FAIL round can be dropped from findings.json; round records are not cross-checked
+  ---
+  duration_ms: 207.698944
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:113:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   'stages.json: DG0 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG1 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG2 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG3 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG4 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG5 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG6 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG7 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'gate DG0: $.tests: fewer than 1 items'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'stages.json: DG0 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    1: 'stages.json: DG1 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    2: 'stages.json: DG2 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    3: 'stages.json: DG3 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    4: 'stages.json: DG4 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    5: 'stages.json: DG5 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    6: 'stages.json: DG6 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    7: 'stages.json: DG7 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    8: 'gate DG0: $.tests: fewer than 1 items'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:121:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R2: symlinks are silently excluded from the candidate; a committed symlink can be repointed after approval undetected
+not ok 4 - R2: symlinks are silently excluded from the candidate; a committed symlink can be repointed after approval undetected
+  ---
+  duration_ms: 214.50158
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:124:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    symlink absent from manifest
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:127:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R3: manifest.spec is not bound to stages.json candidate_spec; an exclude in the frozen manifest hides deliverables
+not ok 5 - R3: manifest.spec is not bound to stages.json candidate_spec; an exclude in the frozen manifest hides deliverables
+  ---
+  duration_ms: 162.254649
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:136:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   'stages.json: DG0 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG1 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG2 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG3 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG4 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG5 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG6 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG7 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'gate DG0: $.tests: fewer than 1 items'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'stages.json: DG0 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    1: 'stages.json: DG1 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    2: 'stages.json: DG2 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    3: 'stages.json: DG3 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    4: 'stages.json: DG4 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    5: 'stages.json: DG5 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    6: 'stages.json: DG6 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    7: 'stages.json: DG7 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    8: 'gate DG0: $.tests: fewer than 1 items'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:140:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R4: weak evidence existence checks accept '\#', '.', and non-path evidence
+not ok 6 - R4: weak evidence existence checks accept '\#', '.', and non-path evidence
+  ---
+  duration_ms: 184.033123
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:143:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   'stages.json: DG0 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG1 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG2 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG3 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG4 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG5 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG6 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'stages.json: DG7 candidate_spec exclude must be ["trading_agent/**"] (D-005)',
+    +   'gate DG0: $.tests: fewer than 1 items'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'stages.json: DG0 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    1: 'stages.json: DG1 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    2: 'stages.json: DG2 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    3: 'stages.json: DG3 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    4: 'stages.json: DG4 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    5: 'stages.json: DG5 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    6: 'stages.json: DG6 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    7: 'stages.json: DG7 candidate_spec exclude must be ["trading_agent/**"] (D-005)'
+    8: 'gate DG0: $.tests: fewer than 1 items'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:151:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R5: CSV parser silently accepts characters after a closing quote
+not ok 7 - R5: CSV parser silently accepts characters after a closing quote
+  ---
+  duration_ms: 0.455124
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:154:1'
+  failureType: 'testCodeFailure'
+  error: 'CSV: unexpected character after closing quote near record 2'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    parseCsv (file:///tmp/dg0-sec-r2/tools/gates/lib/csv.mjs:21:19)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:155:13)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R6: write guard follows no symlinks, and leaves settings.local.json / .mcp.json / trading_agent writable for implementers
+not ok 8 - R6: write guard follows no symlinks, and leaves settings.local.json / .mcp.json / trading_agent writable for implementers
+  ---
+  duration_ms: 12.937
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:159:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/code-security/repro.test.mjs:166:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 0
+# fail 8
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1334.871349
+exit=1

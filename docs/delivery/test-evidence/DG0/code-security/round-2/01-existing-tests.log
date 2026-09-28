@@ -1,0 +1,76 @@
+# Existing candidate tests at 83860be3 (worktree /tmp/dg0-sec-r2)
+# date: 2026-09-28T13:35:02Z  node v22.22.2  git 2.43.0  Linux 6.18.44-fc-v37
+# cwd: /tmp/dg0-sec-r2
+
+$ node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs
+# Subtest: reviewers may write only review records and evidence
+ok 1 - reviewers may write only review records and evidence
+# Subtest: qa-verifier may add tests under tests/qa and e2e but not product code
+ok 2 - qa-verifier may add tests under tests/qa and e2e but not product code
+# Subtest: implementers cannot edit gate rules, agent definitions, sources or gate records
+ok 3 - implementers cannot edit gate rules, agent definitions, sources or gate records
+# Subtest: release-auditor writes gate decisions but not implementation
+ok 4 - release-auditor writes gate decisions but not implementation
+# Subtest: transformation-analyst is limited to analysis outputs and the register
+ok 5 - transformation-analyst is limited to analysis outputs and the register
+# Subtest: unknown roles are denied and scratch space outside a repo is allowed
+ok 6 - unknown roles are denied and scratch space outside a repo is allowed
+# Subtest: the hook entry point blocks with exit code 2 and allows with 0
+ok 7 - the hook entry point blocks with exit code 2 and allows with 0
+# Subtest: implementers cannot write reviewer test evidence
+ok 8 - implementers cannot write reviewer test evidence
+# Subtest: F-DG0-105: Claude configuration surfaces and the unrelated project are protected from implementers
+ok 9 - F-DG0-105: Claude configuration surfaces and the unrelated project are protected from implementers
+# Subtest: F-DG0-105: writes through a symlink into a protected path are blocked
+ok 10 - F-DG0-105: writes through a symlink into a protected path are blocked
+# Subtest: F-DG0-105: protected-path matching is case-insensitive
+ok 11 - F-DG0-105: protected-path matching is case-insensitive
+# Subtest: a fully evidenced DG0 gate passes in current and historical mode
+ok 12 - a fully evidenced DG0 gate passes in current and historical mode
+# Subtest: A24: a missing specialist reviewer fails the gate
+ok 13 - A24: a missing specialist reviewer fails the gate
+# Subtest: A23: a reviewer who authored the scope, or who is an owner, is rejected
+ok 14 - A23: a reviewer who authored the scope, or who is an owner, is rejected
+# Subtest: A23: reviewers sharing one invocation are not independent
+ok 15 - A23: reviewers sharing one invocation are not independent
+# Subtest: A24 / F-DG0-102: fabricated or incomplete provenance is rejected
+ok 16 - A24 / F-DG0-102: fabricated or incomplete provenance is rejected
+# Subtest: F-DG0-201: a review bound to an unrelated run of the same role is rejected
+ok 17 - F-DG0-201: a review bound to an unrelated run of the same role is rejected
+# Subtest: A24: failed or BLOCKED checks and non-PASS verdicts fail the gate
+ok 18 - A24: failed or BLOCKED checks and non-PASS verdicts fail the gate
+# Subtest: A24: unresolved blocking findings fail the gate; owners cannot verify their own fix
+ok 19 - A24: unresolved blocking findings fail the gate; owners cannot verify their own fix
+# Subtest: F-DG0-101: findings cannot escape by relabelling, dropping or downgrading
+ok 20 - F-DG0-101: findings cannot escape by relabelling, dropping or downgrading
+# Subtest: A24 / F-DG0-106 / F-DG0-202: incomplete requirements, placeholder evidence and coverage gaps fail
+ok 21 - A24 / F-DG0-106 / F-DG0-202: incomplete requirements, placeholder evidence and coverage gaps fail
+# Subtest: A25: a source change invalidates the approval; review metadata does not
+ok 22 - A25: a source change invalidates the approval; review metadata does not
+# Subtest: A25 / F-DG0-103: symlinks are part of the candidate identity; submodules are refused
+ok 23 - A25 / F-DG0-103: symlinks are part of the candidate identity; submodules are refused
+# Subtest: F-DG0-104: the manifest spec must equal the stage spec and the approved policy
+ok 24 - F-DG0-104: the manifest spec must equal the stage spec and the approved policy
+# Subtest: A25: a tampered manifest or a stale review candidate is detected
+ok 25 - A25: a tampered manifest or a stale review candidate is detected
+# Subtest: F-DG0-102: approval records are immutable after approval (historical mode)
+ok 26 - F-DG0-102: approval records are immutable after approval (historical mode)
+# Subtest: the gate record must be written by the audited release-auditor invocation
+ok 27 - the gate record must be written by the audited release-auditor invocation
+# Subtest: A24: the pipeline cannot advance past a gate that is not APPROVED
+ok 28 - A24: the pipeline cannot advance past a gate that is not APPROVED
+# Subtest: illegal stage transitions are rejected
+ok 29 - illegal stage transitions are rejected
+# Subtest: an APPROVED gate with a BLOCKED decision or blocking conditions fails
+ok 30 - an APPROVED gate with a BLOCKED decision or blocking conditions fails
+# Subtest: F-DG0-107: the CSV parser rejects text after a closing quote and ragged rows
+ok 31 - F-DG0-107: the CSV parser rejects text after a closing quote and ragged rows
+# tests 31
+# suites 0
+# pass 31
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12909.878882
+exit=0

@@ -1,0 +1,13 @@
+qa-verifier round 2 (run DG0-T-DG0-REV-QA-R2-qa-verifier-20260928T132727Z-633e04f1), live write-guard probe via the Write tool.
+
+Probe 1: Write docs/source/QA-PROBE.txt
+Result: PreToolUse:Write hook error ... node tools/agents/guard-write.mjs qa-verifier ...
+        BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+Expected: BLOCKED. Actual: BLOCKED. PASS.
+
+Probe 2: Write tools/gates/QA-PROBE.txt
+Result: BLOCKED by write guard: qa-verifier may not write 'tools/gates/QA-PROBE.txt' (protected path)
+Expected: BLOCKED. Actual: BLOCKED. PASS.
+
+Probe 3: Write docs/delivery/test-evidence/DG0/qa/round-2/05-guard-probe.log (this file)
+Expected: allowed. Actual: allowed (this file exists). PASS.

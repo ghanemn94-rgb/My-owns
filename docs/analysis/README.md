@@ -11,7 +11,7 @@ The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, wit
 | `docs/delivery/requirements.csv` | The requirement register (411 rows). Generated only by `tools/source/merge_register.py` from `parts/req-*.csv` and `parts/ref-additions-*.csv`. | AN-01..AN-04 (merge AN-04) |
 | `docs/analysis/source-coverage.csv` | One disposition per playbook block B0001–B0165 (165 rows). | AN-01 |
 | `docs/analysis/master-prompt-coverage.csv` | One disposition per master-prompt block M0001–M0423 (423 rows). Generated from `parts/mp-coverage-*.csv`. | AN-02, AN-03 (merge AN-04) |
-| `docs/analysis/parts/` | The editable sources of the register and master-prompt coverage: `req-pb.csv`, `req-s01-s13.csv`, `req-dlv-s14-s21.csv`, `mp-coverage-s01-s13.csv`, `mp-coverage-p0-s14-s21.csv`, `ref-additions-an02.csv`, `ref-additions-an03.csv`. | AN-01..AN-04 |
+| `docs/analysis/parts/` | The editable sources of the register and master-prompt coverage: `req-pb.csv`, `req-s01-s13.csv`, `req-dlv-s14-s21.csv`, `mp-coverage-s01-s13.csv`, `mp-coverage-p0-s14-s21.csv`, `ref-additions-an02.csv`, `ref-additions-an03.csv`, `ref-additions-an08.csv`. | AN-01..AN-04; AN-08 |
 | `docs/analysis/glossary.md` | Domain glossary, English and Arabic. The Arabic terms are proposals pending native-speaker review. | AN-01 |
 | `docs/analysis/field-inventory.md` | Fields of every template (T01–T16, charter, TOM canvas, business case, launch plan, health check, roaming example) and first-class record, with the source column names kept verbatim. | AN-01 |
 | `docs/analysis/user-journeys.md` | Journeys J1–J8 per role. | AN-02 (ID references updated by AN-04) |
@@ -19,6 +19,8 @@ The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, wit
 | `docs/analysis/acceptance-map.md` | A01–A28: executable-test row, requirements proved, test level, first delivery, gate, and the gate ordering of scenario suites. | AN-03 (proves lists regenerated for all areas by AN-04) |
 | `docs/analysis/stage-plan.md` | P0–P7: owners, outputs, evidence, dependencies, and the IDs completing or partially delivered per stage. | AN-03 (ID lists regenerated for all areas by AN-04) |
 | `docs/analysis/tools/check_counts.py` | Consistency check: recomputes the counts in this README and the stage-plan ID lists from the register; exits 1 on any mismatch. `--write` regenerates the stage-plan lists. | AN-06 (promoted into the repository by AN-07) |
+| `docs/analysis/tools/check_pb_provenance.py` | Consistency check for REQ-PB notes: every master-prompt anchor or section named in the notes is cited in `source_ref`; the Interpretations clause cites no master-prompt text (such items are labelled additions); every master-prompt anchor in a REQ-PB `source_ref` maps back to that row in `master-prompt-coverage.csv`. Exits 1 on any problem. | AN-08 |
+| `docs/analysis/tools/check_test_refs.py` | Consistency check for the register's test and file references: quoted test titles in acceptance equal the declared `test(...)` titles in `tools/gates/tests` and `tools/agents/tests`; a named self-test quotes its title; evidence files and named files exist. Exits 1 on any problem. | AN-08 |
 
 ## Register counts
 
@@ -183,3 +185,11 @@ Also fixed: two stale IDs in `user-journeys.md`. REQ-DLV-026 and REQ-DLV-032 now
 ## AN-07 stage-plan list regeneration
 
 The P0–P6 "increment in Pn that complete later" lists in `stage-plan.md` left out the 16 recurring DG7 protocol rows (REQ-DLV-005, -008..012, -014, -018, -021, -024, -027, -028, -030, -031, -039, -040), so they did not equal the register. They are now generated from the register by `docs/analysis/tools/check_counts.py --write` and include those rows. The "Recurring obligations" bullet now names REQ-DLV-039, which it had omitted. No register row changed; the counts above were confirmed by the script.
+
+## AN-08 round-2 register repairs
+
+| Finding | Repair |
+|---|---|
+| F-DG0-006 | REQ-PB-068: the M0212 publication block is now a master-prompt addition, not an interpretation. REQ-PB-088: M0348 is cited in `source_ref` and the M0348 coverage row lists REQ-PB-088. A scan of all 93 REQ-PB rows (`tools/check_pb_provenance.py`) found further label/`source_ref` mismatches of the same kind (counts in the AN-08 handback): anchors named in the notes but not cited (added through `parts/ref-additions-an08.csv`, 59 anchor citations over 46 rows, each mirrored in the coverage rows), section-only citations (now anchored), and master-prompt content filed under Interpretations (REQ-PB-003, -007, -031, -063, -082 relabelled as additions; REQ-PB-006, -008, -011, -035, -036, -061, -073 no longer cite the master prompt for an analyst reading). No requirement's scope, class, increments or gate changed. |
+| F-DG0-207 | REQ-DLV-013 and REQ-DLV-026 cite 'A24 / F-DG0-102: fabricated or incomplete provenance is rejected'. The re-check (`tools/check_test_refs.py`) also corrected partial or unquoted test references in REQ-DLV-005, -007, -016, -017, -022, -023, -032 and -040. All 19 quoted titles now equal declared test titles. |
+

@@ -1,0 +1,172 @@
+# env: node v22.22.2; tooling under test: /tmp/review-qa-r2 @ 83860be3ea4774688f0e00a87923edd6605d2ace; 2026-09-28T13:37:18Z
+$ QA_REPO_ROOT=/tmp/review-qa-r2 node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs
+TAP version 13
+# \# QA2-N14 exec-bit change detected by candidate: false
+# Subtest: control: the independent round-2 fixture is accepted (API and CLI exit 0)
+ok 1 - control: the independent round-2 fixture is accepted (API and CLI exit 0)
+  ---
+  duration_ms: 303.200666
+  type: 'test'
+  ...
+# Subtest: QA2-R201 (F-DG0-201): the QA review citing its own pre-freeze LOAD run of the same role is rejected
+ok 2 - QA2-R201 (F-DG0-201): the QA review citing its own pre-freeze LOAD run of the same role is rejected
+  ---
+  duration_ms: 213.698985
+  type: 'test'
+  ...
+# Subtest: QA2-R201b (F-DG0-201): the right assignment but a run started before the freeze is rejected
+ok 3 - QA2-R201b (F-DG0-201): the right assignment but a run started before the freeze is rejected
+  ---
+  duration_ms: 242.637858
+  type: 'test'
+  ...
+# Subtest: QA2-R202 (F-DG0-202): a bare non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+ok 4 - QA2-R202 (F-DG0-202): a bare non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+  ---
+  duration_ms: 173.65891
+  type: 'test'
+  ...
+# Subtest: QA2-N01 provenance: a run recorded under another stage cannot back a DG0 review
+ok 5 - QA2-N01 provenance: a run recorded under another stage cannot back a DG0 review
+  ---
+  duration_ms: 222.066861
+  type: 'test'
+  ...
+# Subtest: QA2-N02 provenance: transcript model differs from the orchestrator's requested model
+ok 6 - QA2-N02 provenance: transcript model differs from the orchestrator's requested model
+  ---
+  duration_ms: 222.168129
+  type: 'test'
+  ...
+# Subtest: QA2-N03 provenance: transcript whose final result is an error, even though meta claims success
+ok 7 - QA2-N03 provenance: transcript whose final result is an error, even though meta claims success
+  ---
+  duration_ms: 191.195588
+  type: 'test'
+  ...
+# Subtest: QA2-N04 provenance: a transcript from a different role's prompt cannot back the auditor
+ok 8 - QA2-N04 provenance: a transcript from a different role's prompt cannot back the auditor
+  ---
+  duration_ms: 207.966353
+  type: 'test'
+  ...
+# Subtest: QA2-N05 provenance: result_session_id drift (the CLI resumed a different session) is rejected
+ok 9 - QA2-N05 provenance: result_session_id drift (the CLI resumed a different session) is rejected
+  ---
+  duration_ms: 209.893933
+  type: 'test'
+  ...
+# Subtest: QA2-N06 provenance: result.json swapped after the run no longer matches meta.result_sha256
+ok 10 - QA2-N06 provenance: result.json swapped after the run no longer matches meta.result_sha256
+  ---
+  duration_ms: 205.646713
+  type: 'test'
+  ...
+# Subtest: QA2-N07 findings: a review record may not list a finding that no reviewer sidecar raised (orchestrator-invented)
+ok 11 - QA2-N07 findings: a review record may not list a finding that no reviewer sidecar raised (orchestrator-invented)
+  ---
+  duration_ms: 192.249328
+  type: 'test'
+  ...
+# Subtest: QA2-N08 findings: a sidecar may not raise a finding in another reviewer's name
+ok 12 - QA2-N08 findings: a sidecar may not raise a finding in another reviewer's name
+  ---
+  duration_ms: 221.001455
+  type: 'test'
+  ...
+# Subtest: QA2-N09 findings: reviewer-set mandatory_violation cannot be flipped off in findings.json
+ok 13 - QA2-N09 findings: reviewer-set mandatory_violation cannot be flipped off in findings.json
+  ---
+  duration_ms: 199.03266
+  type: 'test'
+  ...
+# Subtest: QA2-N10 findings: verification cited from a run of a different role than by_role is rejected
+ok 14 - QA2-N10 findings: verification cited from a run of a different role than by_role is rejected
+  ---
+  duration_ms: 235.015488
+  type: 'test'
+  ...
+# Subtest: QA2-N11 findings: a CLOSED_VERIFIED finding verified by a pre-freeze LOAD run of the reporter is rejected
+not ok 15 - QA2-N11 findings: a CLOSED_VERIFIED finding verified by a pre-freeze LOAD run of the reporter is rejected
+  ---
+  duration_ms: 248.858082
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:282:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:176:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:288:3
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:182:5)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:282:121)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA2-N12 register: evidence that is a symlink pointing outside the repository is rejected
+not ok 16 - QA2-N12 register: evidence that is a symlink pointing outside the repository is rejected
+  ---
+  duration_ms: 201.922765
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:291:1'
+  failureType: 'testCodeFailure'
+  error: 'validator accepted an invalid gate (no errors)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    rejects (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:176:10)
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:299:5
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:182:5)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs:291:104)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA2-N13 register: an evidence entry padded with whitespace or duplicated ';' still must resolve
+ok 17 - QA2-N13 register: an evidence entry padded with whitespace or duplicated ';' still must resolve
+  ---
+  duration_ms: 208.632636
+  type: 'test'
+  ...
+# Subtest: QA2-N14 candidate: a committed post-freeze change to a tracked file's mode (exec bit) — reported, not asserted
+ok 18 - QA2-N14 candidate: a committed post-freeze change to a tracked file's mode (exec bit) — reported, not asserted
+  ---
+  duration_ms: 244.327118
+  type: 'test'
+  ...
+# Subtest: QA2-N15 metadata: a new review round, verifications sidecar and run dirs leave the candidate and gate unchanged
+ok 19 - QA2-N15 metadata: a new review round, verifications sidecar and run dirs leave the candidate and gate unchanged
+  ---
+  duration_ms: 455.129651
+  type: 'test'
+  ...
+# Subtest: QA2-N16 candidate: deleting a review-round findings sidecar that raised a finding is caught (dropped finding source)
+ok 20 - QA2-N16 candidate: deleting a review-round findings sidecar that raised a finding is caught (dropped finding source)
+  ---
+  duration_ms: 241.927619
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 18
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4788.586035
+exit=1

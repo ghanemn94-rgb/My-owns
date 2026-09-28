@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 2,
+  "candidate_id": "sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3",
+  "source_commit": "83860be3ea4774688f0e00a87923edd6605d2ace",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-QA-R2-qa-verifier-20260928T132727Z-633e04f1",
+    "session_id": "633e04f1-5e10-444e-ba13-066f798f1e13"
+  },
+  "implementation_author": ["transformation-analyst", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (qa-verifier) authored no implementation in the DG0 scope. My only writes are independent tests and evidence under docs/delivery/test-evidence/DG0/qa/ and the review files under docs/delivery/reviews/DG0/round-2/qa-verifier.*. I formed the verdict before opening any other round-2 review record. I read other round-2 records only for their invocation_reference, to map records to runs for REQ-DLV-006; I did not read their verdicts or findings."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-2/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-003", "REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-007",
+    "REQ-DLV-013", "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-019", "REQ-DLV-020",
+    "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026", "REQ-DLV-029", "REQ-DLV-032",
+    "REQ-S20-024", "REQ-S20-025"
+  ],
+  "checks_run": [
+    {
+      "id": "Q2-00",
+      "procedure": "Confirm the frozen candidate: HEAD is a metadata-only descendant of the frozen commit, and the recomputed ID equals the assigned candidate (both in the live tree and in a disposable worktree at 83860be)",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG0; git diff --stat 83860be..HEAD; (cd /tmp/review-qa-r2 && node tools/gates/candidate.mjs --stage DG0)",
+      "environment": "node v22.22.2, git 2.43.0, Linux 6.18; /home/user/My-owns @ eaef1d0 and worktree /tmp/review-qa-r2 @ 83860be",
+      "expected": "candidate_id sha256:d47b51ca...c76c3; post-freeze diff only in excluded metadata",
+      "actual": "Both print sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3 (71 files). The diff 83860be..eaef1d0 touches only docs/delivery/assignments/DG0/round-2/*, docs/delivery/candidates/DG0.manifest.json and docs/delivery/stages.json, all excluded under D-005.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-2/00-candidate.log"]
+    },
+    {
+      "id": "Q2-01",
+      "procedure": "Source extraction reproducibility",
+      "command": "tools/source/check_extraction.sh",
+      "environment": "worktree /tmp/review-qa-r2 @ 83860be; python3 3.11.15",
+      "expected": "PASS, docx sha256 2584a352...548ad2, 165 + 423 blocks",
+      "actual": "PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-2/01-check-extraction.log"]
+    },
+    {
+      "id": "Q2-02",
+      "procedure": "Gate validator self-tests",
+      "command": "node --test tools/gates/tests/*.test.mjs",
+      "environment": "worktree /tmp/review-qa-r2 @ 83860be; node v22.22.2",
+      "expected": "all pass",
+      "actual": "tests 20, pass 20, fail 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-022", "REQ-DLV-023", "REQ-S20-024", "REQ-S20-025"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-2/02-gates-tests.log"]
+    },
+    {
+      "id": "Q2-03",
+      "procedure": "Write-guard tests",
+      "command": "node --test tools/agents/tests/*.test.mjs",
+      "environment": "worktree /tmp/review-qa-r2 @ 83860be; node v22.22.2",
+      "expected": "all pass",
+      "actual": "tests 11, pass 11, fail 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-2/03-agents-tests.log"]
+    },
+    {
+      "id": "Q2-04",
+      "procedure": "Validator register, pipeline and reconcile modes, plus the candidate command, on the frozen worktree and on the live repository metadata",
+      "command": "node tools/gates/validate.mjs --register DG0; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --reconcile; node tools/gates/candidate.mjs --stage DG0",
+      "environment": "worktree /tmp/review-qa-r2 @ 83860be and /home/user/My-owns @ eaef1d0 (read-only commands)",
+      "expected": "register PASS; pipeline PASS with DG0 active; reconcile reports the frozen candidate matching the working tree",
+      "actual": "Worktree: 'PASS register rules at DG0'; 'PASS pipeline (active stage: DG0 FIXING)', because the round-2 freeze metadata is committed after 83860be; reconcile PASS. At HEAD: register PASS; 'PASS pipeline (active stage: DG0 REVIEWING)'; reconcile shows frozen sha256:d47b51ca... = working tree (matches), with round-1 records STALE and round-2 records missing, as expected while the review is in progress. All exit 0. For information, 'validate.mjs --stage DG0' exits 1 only because docs/delivery/gates/DG0.json does not exist yet, which is correct before the audit.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-023", "REQ-DLV-029"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-2/04a-validate-register.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/04b-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/04c-validate-reconcile.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/04d-candidate.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/04e-validate-at-head.log"
+      ]
+    },
+    {
+      "id": "Q2-05",
+      "procedure": "Live write-guard probe from this qa-verifier session: out-of-scope writes via the Write tool, then an in-scope write",
+      "command": "Write docs/source/QA-PROBE.txt; Write tools/gates/QA-PROBE.txt; Write docs/delivery/test-evidence/DG0/qa/round-2/05-guard-probe.log",
+      "environment": "this run (session 633e04f1...), guard settings tools/agents/settings/qa-verifier.settings.json",
+      "expected": "both out-of-scope writes BLOCKED; in-scope write allowed",
+      "actual": "'BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)' and the same for tools/gates/QA-PROBE.txt; the in-scope log was written. No probe file exists under docs/source.",
+      "exit_status": 2,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-2/05-guard-probe.log"]
+    },
+    {
+      "id": "Q2-06",
+      "procedure": "Reproduce my round-1 findings on the round-1 tooling, then run the round-1 and round-2 independent negative suites on the frozen candidate",
+      "command": "QA_REPO_ROOT=/tmp/review-qa-{r1,r2} node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative.test.mjs; QA_REPO_ROOT=/tmp/review-qa-{r1,r2} node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs",
+      "environment": "node v22.22.2; worktrees /tmp/review-qa-r1 @ 26642c7 (round-1 candidate) and /tmp/review-qa-r2 @ 83860be; disposable git fixtures in the OS temp dir, removed after each case",
+      "expected": "On r1, QA-N27/N28 fail (original defects reproduced). On r2, the F-DG0-201/202 regression cases pass. The round-1 suite's failures on r2 are explained by stricter run-evidence rules and message wording only.",
+      "actual": "r1: round-1 suite 27/29 (QA-N27, QA-N28 fail, reproducing F-DG0-201/202); round-2 suite 4/20. r2: round-2 suite 18/20. QA2-R201, R201b and R202 pass. Failing: QA2-N11 (finding verification accepts a pre-freeze LOAD run, F-DG0-204) and QA2-N12 (evidence symlink escaping the repo accepted, F-DG0-205). The round-1 suite on r2 is 24/29: the control and N25 fail because the round-1 fixture's 4-field meta.json is now correctly rejected (missing result/transcript, no assignment binding); N09, N14 and N28 fail only on the renamed message ('evidence is not an existing repository file'), and the rejection does happen. QA2-N14 (informational) prints 'exec-bit change detected by candidate: false' (F-DG0-206).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-022", "REQ-S20-024", "REQ-S20-025"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-on-r1.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-on-r2.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r1.log",
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r2.log"
+      ]
+    },
+    {
+      "id": "Q2-07",
+      "procedure": "Independent register-integrity script (own RFC-4180 parser): columns, no declared VERIFIED, IMPLEMENTED rows' evidence exists, A01-A28 coverage including REQ-S20-0nn rows, final_gate equals last increment and increments ascending, counts per class/area/gate, exact completeness of both coverage matrices including the reverse mapping",
+      "command": "node docs/delivery/test-evidence/DG0/qa/round-2/register-integrity.mjs /tmp/review-qa-r2",
+      "environment": "node v22.22.2; worktree /tmp/review-qa-r2 @ 83860be",
+      "expected": "0 errors; counts equal the stage-plan table",
+      "actual": "0 errors. 411 rows: SOURCE 93, USER 188, ENGINEERING 130. By gate: DG0 19, DG1 11, DG2 32, DG3 32, DG4 137, DG5 78, DG6 48, DG7 54 (equals the stage-plan counts). 19 IMPLEMENTED (exactly the DG0 rows), 392 SPECIFIED, none VERIFIED. source-coverage 165/165, master-prompt-coverage 423/423; no one-way mappings.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-2/11-register-integrity.log", "docs/delivery/test-evidence/DG0/qa/round-2/register-integrity.mjs"]
+    },
+    {
+      "id": "Q2-08",
+      "procedure": "Open each DG0 row's evidence and check its acceptance clause: D-001/D-002; G6/DG7 separation; environment verifying commands and trading_agent untouched; cited validator test names; the BUILDING->APPROVED transition; stages/findings schemas; progress.md; CI steps",
+      "command": "see 12-dg0-acceptance-evidence.log (grep/node one-liners)",
+      "environment": "worktree /tmp/review-qa-r2 @ 83860be, plus stages/findings/progress at HEAD",
+      "expected": "every acceptance clause is satisfied by an existing artefact",
+      "actual": "All clauses are satisfied in substance. D-001/D-002 are present; CLAUDE.md states 'G6 never implies DG7'; the gate stage_id pattern is ^DG[0-7]$; environment.md has a verifying command per capability; trading_agent has no commit after base f099f3d and no working-tree changes; TRANSITIONS.BUILDING excludes APPROVED; stages.json and findings.json are schema-valid at the freeze and at HEAD; progress.md names the active stage and next actions; CI runs the extraction check, both test suites, --pipeline and --reconcile, with actions pinned by SHA. Deviation: 2 of 8 cited test names do not exist verbatim (REQ-DLV-013, REQ-DLV-026). The behaviour is tested under a renamed test (Low F-DG0-207).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-003", "REQ-DLV-013", "REQ-DLV-015", "REQ-DLV-017", "REQ-DLV-019", "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026", "REQ-DLV-029"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-2/12-dg0-acceptance-evidence.log"]
+    },
+    {
+      "id": "Q2-09",
+      "procedure": "Agent setup from raw run evidence: ten definitions (frontmatter name, description, protocol reference), and ten T-DG0-LOAD runs. For each run: distinct session in the init and result lines, init model = orchestrator model, success, per-role guard settings, the out-of-scope docs/source write BLOCKED in the transcript tool_result, the in-scope write OK, and the role sentence quoted from the role's own definition. Compared with the agents.md table.",
+      "command": "node docs/delivery/test-evidence/DG0/qa/round-2/agent-load-check.mjs .; role-sentence comparison of result.json against .claude/agents/<role>.md",
+      "environment": "node v22.22.2; /home/user/My-owns @ eaef1d0 (runs are candidate-excluded evidence)",
+      "expected": "10/10 on every criterion; agents.md matches the raw evidence",
+      "actual": "10 definitions; 10 runs, 10 distinct sessions, roles equal the definitions; init.model claude-opus-5-5 in all transcripts (models_used also lists claude-haiku-4-5, as disclosed in agents.md); all out-of-scope writes BLOCKED; all in-scope writes OK; no probe file under docs/source; each result quotes its own definition's role sentence verbatim. The agents.md table's session IDs and results match. One claim does not match the code: agents.md:32 says finding verifications are bound to assignment and freeze time, but they are not (F-DG0-204).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-2/13-agent-load.log", "docs/delivery/test-evidence/DG0/qa/round-2/13b-agent-role-quote.log", "docs/delivery/test-evidence/DG0/qa/round-2/agent-load-check.mjs"]
+    },
+    {
+      "id": "Q2-10",
+      "procedure": "Feasibility: every A01-A28 has a test level, a first-delivered stage no later than its must-pass gate, an owner, and a REQ-S20-0nn row whose final_gate equals the gate. The acceptance-map 'proves' lists equal the rows citing each scenario, and the stage-plan ownership table is consistent with them (F-DG0-203).",
+      "command": "python3 docs/delivery/test-evidence/DG0/qa/round-2/acceptance-feasibility.py /tmp/review-qa-r2; python3 docs/analysis/tools/check_counts.py",
+      "environment": "python3 3.11.15; worktree /tmp/review-qa-r2 @ 83860be",
+      "expected": "0 errors; stage-plan lists match the register",
+      "actual": "acceptance-feasibility: 0 errors, 28/28 scenarios assigned. check_counts.py: STAGE-PLAN LISTS ALL MATCH, README COUNTS ALL MATCH.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-2/14-acceptance-feasibility.log", "docs/delivery/test-evidence/DG0/qa/round-2/acceptance-feasibility.py"]
+    },
+    {
+      "id": "Q2-11",
+      "procedure": "REQ-DLV-006/026: every review record in reviews/DG0 maps to a run with the same role and session, and every completed run has meta.json with session, role and exit code",
+      "command": "node one-liner over docs/delivery/reviews/DG0/*/<role>.json and docs/delivery/runs/DG0/*/meta.json",
+      "environment": "/home/user/My-owns @ eaef1d0",
+      "expected": "0 records without a run; all completed runs carry the fields",
+      "actual": "5 existing records all map to runs with matching role and session. 24 run dirs, 24 distinct sessions. The only dir without meta.json is this in-progress run (the runner writes meta at exit).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-006", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-2/15-runs-vs-records.log"]
+    }
+  ],
+  "findings": ["F-DG0-204", "F-DG0-205", "F-DG0-206", "F-DG0-207"],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG0/round-2/qa-verifier.findings.json",
+    "docs/delivery/reviews/DG0/round-2/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG0/round-2/qa-verifier.md",
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs",
+    "docs/delivery/test-evidence/DG0/qa/round-2/00-candidate.log",
+    "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r2.log",
+    "docs/delivery/test-evidence/DG0/qa/round-2/11-register-integrity.log",
+    "docs/delivery/test-evidence/DG0/qa/round-2/13-agent-load.log",
+    "docs/delivery/test-evidence/DG0/qa/round-2/14-acceptance-feasibility.log"
+  ],
+  "reviewed_at": "2026-09-28T13:47:00Z",
+  "summary": "FAIL on one Medium, mandatory-violation finding. F-DG0-204: a finding's verification is not bound to the run that verified it. The F-DG0-201 binding covers reviews and audits but not verifications (rules.mjs:417), which contradicts agents.md/D-016. My round-1 findings F-DG0-201, 202 and 203 are independently verified as fixed (CLOSED_VERIFIED). All seven assigned commands pass on the frozen candidate. The register and both coverage matrices are exactly complete. All ten agents loaded as distinct invocations on the orchestrator's model, with out-of-scope writes blocked (re-verified live). A01-A28 are all feasibly assigned. Three Low observations (F-DG0-205, 206, 207) I would accept as observations."
+}

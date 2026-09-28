@@ -1,0 +1,52 @@
+# DG0 row acceptance evidence check; cwd /tmp/review-qa-r2 @ 83860be3ea4774688f0e00a87923edd6605d2ace; 2026-09-28T13:38:33Z
+## REQ-DLV-001 decisions D-001/D-002
+7:| D-001 | 2026-09-28 | delivery-orchestrator | The uploaded `Business_Transformation_Playbook(2).docx` (SHA-256 `2584a352…548ad2`) is the authoritative methodology source. It's committed at `docs/source/` together with a reproducible, standard-library-only extraction (`tools/source/check_extraction.sh`). | Master prompt §1–§2. The file was supplied as a session upload. Extraction is anchored `B0001`–`B0165` so every requirement can cite exact source text. | Mobily supplies a newer playbook version. That requires a re-extraction, then reopening DG0 and every gate whose requirements change. |
+8:| D-002 | 2026-09-28 | delivery-orchestrator | The Arabic edition of the master prompt isn't present. The English edition v2.0 is executed. | Master prompt header: "The Arabic edition is an equivalent translation, not an additional scope." | The Arabic edition is supplied and differs materially. |
+## REQ-DLV-002
+CLAUDE.md:13:- **G1–G6**: business approvals inside the product. An engineering agent never grants a real business, Finance or IT approval. Product gate G6 never implies DG7.
+docs/delivery/agent-protocol.md:9:- An engineering agent can never grant a real business, Finance or IT production approval. A demo Sponsor approval in seed data approves nothing real.
+CLAUDE.md:13:- **G1–G6**: business approvals inside the product. An engineering agent never grants a real business, Finance or IT approval. Product gate G6 never implies DG7.
+gate stage_id schema: {"type":"string","pattern":"^DG[0-7]$"}
+## REQ-DLV-003 environment.md
+claude: 8 lines
+node: 1 lines
+postgres: 2 lines
+docker: 4 lines
+egress\|outbound: 3 lines
+trading_agent changes since first commit:
+f099f3d Add offline demo data mode for the live dashboard
+6902f92 Build production-grade US stock trading agent (paper trading)
+## validator test titles cited by acceptance
+'a fabricated invocation reference (no recorded run) is rejected'      0
+'reviewers sharing one invocation are not independent'                 1
+'illegal stage transitions are rejected'                               1
+'owners cannot verify their own fix'                                   1
+'a source change invalidates the approval; review metadata does not'   1
+'a tampered manifest or a stale review candidate is detected'          1
+'the pipeline cannot advance past a gate that is not APPROVED'         1
+'a review citing a non-existent run is rejected'                       0
+## REQ-DLV-015 BUILDING->APPROVED
+TRANSITIONS.BUILDING = ["REVIEWING","BLOCKED"] -> APPROVED allowed: false
+## REQ-DLV-019 schemas
+docs/delivery/stages.json (@frozen) valid
+docs/delivery/findings.json (@frozen) valid
+docs/delivery/stages.json (@HEAD) valid
+docs/delivery/findings.json (@HEAD) valid
+progress.md headings:
+1:# Delivery progress checkpoint
+5:## Current checkpoint
+7:- **Active stage:** P0 / DG0, state **REVIEWING** (round 2)
+17:- **Next:**
+22:## Done in P0 so far
+32:## In flight
+44:## Next actions
+51:## Unresolved blockers
+## REQ-DLV-023/029 CI workflow
+2:# The product build jobs added from P1 onward must declare `needs: delivery-gates`, so a failed or
+18:      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+21:      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+25:        run: tools/source/check_extraction.sh
+27:        run: node --test tools/gates/tests/*.test.mjs
+29:        run: node --test tools/agents/tests/*.test.mjs
+31:        run: node tools/gates/validate.mjs --pipeline
+33:        run: node tools/gates/validate.mjs --reconcile

@@ -1,0 +1,112 @@
+# Round-2 repro against round-2 candidate 83860be3
+# date: 2026-09-28T13:35:15Z  node v22.22.2  git 2.43.0  Linux 6.18.44-fc-v37
+# cwd: /home/user/My-owns
+
+$ GATE_TOOLS=/tmp/dg0-sec-r2 node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs
+TAP version 13
+# Subtest: baseline: the copied fixture is a valid DG0 gate for the code under test
+ok 1 - baseline: the copied fixture is a valid DG0 gate for the code under test
+  ---
+  duration_ms: 198.551829
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-101: relabelled, sidecar-relabelled or dropped findings are rejected
+ok 2 - FIXED F-DG0-101: relabelled, sidecar-relabelled or dropped findings are rejected
+  ---
+  duration_ms: 691.122028
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-102: a run without transcript/result, or with a forged hash, is rejected
+ok 3 - FIXED F-DG0-102: a run without transcript/result, or with a forged hash, is rejected
+  ---
+  duration_ms: 438.833103
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-103: a committed symlink repointed after freeze changes the candidate
+ok 4 - FIXED F-DG0-103: a committed symlink repointed after freeze changes the candidate
+  ---
+  duration_ms: 216.521966
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-104: an extra exclude in the frozen manifest is rejected
+ok 5 - FIXED F-DG0-104: an extra exclude in the frozen manifest is rejected
+  ---
+  duration_ms: 184.056345
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-106: '\#', '.', a directory and a bare token are not accepted as evidence; empty tests[] rejected
+ok 6 - FIXED F-DG0-106: '\#', '.', a directory and a bare token are not accepted as evidence; empty tests[] rejected
+  ---
+  duration_ms: 1018.509835
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-107: CSV text after a closing quote and ragged rows throw
+ok 7 - FIXED F-DG0-107: CSV text after a closing quote and ragged rows throw
+  ---
+  duration_ms: 0.856675
+  type: 'test'
+  ...
+# Subtest: FIXED F-DG0-105: symlink, case and config-surface bypasses of the write guard are blocked
+ok 8 - FIXED F-DG0-105: symlink, case and config-surface bypasses of the write guard are blocked
+  ---
+  duration_ms: 18.742827
+  type: 'test'
+  ...
+# Subtest: BYPASS N1a: a finding is CLOSED_VERIFIED by citing a pre-freeze, unrelated run of the reporter role (e.g. the LOAD check)
+ok 9 - BYPASS N1a: a finding is CLOSED_VERIFIED by citing a pre-freeze, unrelated run of the reporter role (e.g. the LOAD check)
+  ---
+  duration_ms: 205.581573
+  type: 'test'
+  ...
+# Subtest: BYPASS N1b: the reporter's own verification sidecar says FAIL/OPEN, findings.json says CLOSED_VERIFIED; the gate passes
+ok 10 - BYPASS N1b: the reporter's own verification sidecar says FAIL/OPEN, findings.json says CLOSED_VERIFIED; the gate passes
+  ---
+  duration_ms: 219.839419
+  type: 'test'
+  ...
+# Subtest: BYPASS N1c: verification evidence paths and the fix_revision are never checked
+ok 11 - BYPASS N1c: verification evidence paths and the fix_revision are never checked
+  ---
+  duration_ms: 218.64487
+  type: 'test'
+  ...
+# Subtest: BYPASS N2: deleting a whole earlier review round (record + sidecar) and its findings passes, even when stages.json lists the round
+ok 12 - BYPASS N2: deleting a whole earlier review round (record + sidecar) and its findings passes, even when stages.json lists the round
+  ---
+  duration_ms: 797.082362
+  type: 'test'
+  ...
+# Subtest: BYPASS N3: an implementer (allow **) plants tools/.git (or docs/.git) and then writes protected gate files
+ok 13 - BYPASS N3: an implementer (allow **) plants tools/.git (or docs/.git) and then writes protected gate files
+  ---
+  duration_ms: 73.922075
+  type: 'test'
+  ...
+# Subtest: BYPASS N4 (Low): a regular file whose content is 'symlink:<t>' has the same manifest hash as a symlink to <t>
+ok 14 - BYPASS N4 (Low): a regular file whose content is 'symlink:<t>' has the same manifest hash as a symlink to <t>
+  ---
+  duration_ms: 43.852649
+  type: 'test'
+  ...
+# Subtest: BYPASS N5 (Low): the executable bit is not part of the candidate identity
+ok 15 - BYPASS N5 (Low): the executable bit is not part of the candidate identity
+  ---
+  duration_ms: 22.217856
+  type: 'test'
+  ...
+# Subtest: N6 (Low, platform): with core.autocrlf=true the working-tree candidate differs from the committed one (fails closed)
+ok 16 - N6 (Low, platform): with core.autocrlf=true the working-tree candidate differs from the committed one (fails closed)
+  ---
+  duration_ms: 153.35052
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4719.788073
+exit=0

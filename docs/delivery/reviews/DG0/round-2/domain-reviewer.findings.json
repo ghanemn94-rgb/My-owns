@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG0-006",
+      "stage_id": "DG0",
+      "requirement": "REQ-PB-088",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Two SOURCE rows have residual provenance-labelling inconsistencies after the F-DG0-003 relabelling",
+      "reproduction": "In docs/delivery/requirements.csv at 83860be: (a) the notes of REQ-PB-088 attribute the rule 'the production initialization contains no demo records' to master prompt '§18 M0339, M0348', but source_ref (B0143;B0145;B0162;M0083;M0339;M0341-M0346) does not cite M0348, and docs/analysis/master-prompt-coverage.csv maps M0348 only to REQ-S18-002;REQ-S18-003. (b) The notes of REQ-PB-068 say 'Master-prompt additions: none' and then 'Interpretations: an item missing any element is blocked from publication (master prompt §10)'. The hard publication block comes from M0212, which is already in source_ref, so it is a master-prompt addition rather than an interpretation.",
+      "expected": "REQ-PB-088 cites M0348 in source_ref (and the M0348 coverage row lists REQ-PB-088), or its notes drop the M0348 attribution and point to REQ-S18-003. REQ-PB-068 lists the M0212 publication block under 'Master-prompt additions'.",
+      "actual": "The substance is correct and traceable (REQ-S18-003 carries the empty production initialization; M0212 is cited on REQ-PB-068). Only the labels are slightly inconsistent. I would accept this as an observation.",
+      "evidence": [
+        "docs/delivery/requirements.csv (REQ-PB-068, REQ-PB-088)",
+        "docs/analysis/master-prompt-coverage.csv (M0348)",
+        "docs/source/master-prompt.anchored.md#M0212",
+        "docs/source/master-prompt.anchored.md#M0348"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:36:15Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round-2 domain review. Labelling only; I would accept it as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-007",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "agent-protocol.md does not state that product G6 never implies DG7, as REQ-DLV-002's acceptance says it does",
+      "reproduction": "The acceptance of REQ-DLV-002 in docs/delivery/requirements.csv reads: 'CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval'. Running grep -niE 'impl(y|ies)|G6' docs/delivery/agent-protocol.md finds only line 8 ('G1–G6 are business transformation approvals inside the product'). CLAUDE.md line 13 does contain 'Product gate G6 never implies DG7'.",
+      "expected": "agent-protocol.md's 'Two gate systems' section says that product gate G6 never implies DG7, or the REQ-DLV-002 acceptance names only CLAUDE.md for that sentence.",
+      "actual": "agent-protocol.md separates the two systems and forbids agent approvals, but lacks the explicit G6/DG7 sentence. Every agent definition requires reading CLAUDE.md, which has it, so the rule is available to every agent. I would accept this as an observation.",
+      "evidence": [
+        "docs/delivery/agent-protocol.md (lines 5-9)",
+        "CLAUDE.md (line 13)",
+        "docs/delivery/requirements.csv (REQ-DLV-002)"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:36:15Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round-2 domain review. Wording only; I would accept it as an observation."
+        }
+      ]
+    }
+  ]
+}

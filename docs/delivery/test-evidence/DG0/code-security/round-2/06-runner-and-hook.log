@@ -1,0 +1,49 @@
+# Runner argument validation (F-DG0-108) and hook fail-closed paths, worktree /tmp/dg0-sec-r2 @83860be3
+# date: 2026-09-28T13:35:28Z  node v22.22.2  Linux 6.18.44-fc-v37
+
+$ bash tools/agents/run-agent.sh --role qa-verifier --stage ../DG0 --task T1 --assignment CLAUDE.md
+invalid --stage '../DG0' (expected DG0-DG7)
+exit=64
+$ bash tools/agents/run-agent.sh --role qa-verifier --stage DG9 --task T1 --assignment CLAUDE.md
+invalid --stage 'DG9' (expected DG0-DG7)
+exit=64
+$ bash tools/agents/run-agent.sh --role qa-verifier --stage DG0 --task a/b --assignment CLAUDE.md
+invalid --task 'a/b' (allowed: A-Z a-z 0-9 . _ -)
+exit=64
+$ bash tools/agents/run-agent.sh --role ../x --stage DG0 --task T1 --assignment CLAUDE.md
+invalid --role '../x'
+exit=64
+$ bash tools/agents/run-agent.sh --role qa-verifier --stage DG0 --task T1 --assignment CLAUDE.md --model x;y
+invalid --model 'x;y'
+exit=64
+
+48:RUN_ID="${STAGE}-${TASK}-${ROLE}-$(date -u +%Y%m%dT%H%M%SZ)-${SESSION_ID:0:8}"
+51:mkdir "$OUT" # fails if the directory exists: evidence is never overwritten
+
+hook command (qa-verifier settings): g="$(git rev-parse --show-toplevel 2>/dev/null)/tools/agents/guard-write.mjs"; if [ -f "$g" ]; then node "$g" qa-verifier; rc=$?; else echo "write guard missing" >&2; rc=2; fi; [ "$rc" -eq 0 ] || exit 2
+$ (allowed path)
+exit=0
+$ (protected path)
+BLOCKED by write guard: qa-verifier may not write 'tools/gates/x' (protected path)
+exit=2
+$ (garbage payload)
+guard-write: unreadable hook payload; blocking to fail safe
+exit=2
+$ (node binary missing: node replaced by no-such-node-binary)
+sh: 1: no-such-node-binary: not found
+exit=2
+$ (cwd outside any git repo: /tmp)
+write guard missing
+exit=2
+
+settings role argument per file:
+ok  backend-workflow-engineer matcher=Write|Edit|NotebookEdit|MultiEdit
+ok  code-security-reviewer matcher=Write|Edit|NotebookEdit|MultiEdit
+ok  devops-engineer matcher=Write|Edit|NotebookEdit|MultiEdit
+ok  domain-reviewer matcher=Write|Edit|NotebookEdit|MultiEdit
+ok  frontend-ux-engineer matcher=Write|Edit|NotebookEdit|MultiEdit
+ok  kpi-benefits-engineer matcher=Write|Edit|NotebookEdit|MultiEdit
+ok  qa-verifier matcher=Write|Edit|NotebookEdit|MultiEdit
+ok  release-auditor matcher=Write|Edit|NotebookEdit|MultiEdit
+ok  solution-architect matcher=Write|Edit|NotebookEdit|MultiEdit
+ok  transformation-analyst matcher=Write|Edit|NotebookEdit|MultiEdit

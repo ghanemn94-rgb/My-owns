@@ -1,0 +1,377 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 2,
+  "candidate_id": "sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3",
+  "source_commit": "83860be3ea4774688f0e00a87923edd6605d2ace",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-SEC-R2-code-security-reviewer-20260928T132727Z-12000182",
+    "session_id": "12000182-cac3-47f9-a5aa-d535bbc9f64b"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer) authored no implementation in the reviewed scope (tools/gates, tools/agents, tools/source, the CI workflow, .claude/agents, analysis or delivery records). My only writes are this review record, its findings/verifications sidecars and narrative, and evidence under docs/delivery/test-evidence/DG0/code-security/. I formed this verdict before reading any other round-2 review record."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-2/review-code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-004",
+    "REQ-DLV-006",
+    "REQ-DLV-007",
+    "REQ-DLV-013",
+    "REQ-DLV-015",
+    "REQ-DLV-016",
+    "REQ-DLV-017",
+    "REQ-DLV-020",
+    "REQ-DLV-022",
+    "REQ-DLV-023",
+    "REQ-DLV-026"
+  ],
+  "checks_run": [
+    {
+      "id": "C01",
+      "procedure": "Confirm the frozen candidate: HEAD is a metadata-only descendant of 83860be3, and the recomputed candidate ID equals the assignment's",
+      "environment": "main repo /home/user/My-owns @eaef1d0f (read-only commands); node v22.22.2",
+      "expected": "candidate_id sha256:d47b51ca…c76c3; assignment sha256 d591f582…",
+      "actual": "HEAD eaef1d0f (1 commit after 83860be3, touching only assignments/, candidates/ and stages.json); working tree and ref both give sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3 (71 files); assignment sha256 d591f582…0c97 matches",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-022"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/08-candidate-and-validators.log"
+      ],
+      "command": "git rev-parse HEAD; git diff --stat 83860be3..HEAD; node tools/gates/candidate.mjs --stage DG0; node tools/gates/candidate.mjs --stage DG0 --ref 83860be3…; sha256sum <assignment>"
+    },
+    {
+      "id": "C02",
+      "procedure": "Run the candidate's own gate and guard test suites",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18",
+      "expected": "all pass",
+      "actual": "31 tests, 31 pass, 0 fail",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-007",
+        "REQ-DLV-013",
+        "REQ-DLV-015",
+        "REQ-DLV-016",
+        "REQ-DLV-022",
+        "REQ-DLV-023"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/01-existing-tests.log"
+      ],
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs"
+    },
+    {
+      "id": "C03",
+      "procedure": "Re-run my round-1 reproduction script against the round-1 commit (bugs must reproduce) and against the candidate",
+      "environment": "disposable worktrees /tmp/dg0-sec-r1old @26642c72 and /tmp/dg0-sec-r2 @83860be3 (removed afterwards)",
+      "expected": "8/8 reproduce on 26642c72",
+      "actual": "8/8 reproduce on 26642c72 (exit 0). On 83860be3 all 8 fail, but mostly because the old fabricated fixtures now trip unrelated policy checks, so this is not used as fix evidence (see C04)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-016"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/02-round1-repro-old-vs-new.log"
+      ],
+      "command": "GATE_TOOLS=/tmp/dg0-sec-r1old node --test docs/delivery/test-evidence/DG0/code-security/repro.test.mjs; GATE_TOOLS=/tmp/dg0-sec-r2 node --test (same)"
+    },
+    {
+      "id": "C04",
+      "procedure": "Differential fix verification on a valid fixture (the candidate's own buildValidRepo), one mutation per round-1 vector",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18; plus /tmp/dg0-sec-r1old @26642c72",
+      "expected": "the 8 'FIXED' tests (F-101..F-107 vectors, CSV) pass on the candidate and fail on 26642c72",
+      "actual": "8/8 pass on 83860be3; the same 8 fail on 26642c72; baseline fixture valid on both",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-007",
+        "REQ-DLV-013",
+        "REQ-DLV-016",
+        "REQ-DLV-020",
+        "REQ-DLV-022",
+        "REQ-DLV-026"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log"
+      ],
+      "command": "GATE_TOOLS=/tmp/dg0-sec-r2 node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs; GATE_TOOLS=/tmp/dg0-sec-r1old node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs"
+    },
+    {
+      "id": "C05",
+      "procedure": "Attack: close a High finding by citing a pre-freeze LOAD-check run of the reporter role as its verification (N1a)",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18",
+      "expected": "validateGate rejects (verification run not bound to the assignment or the freeze, per D-016)",
+      "actual": "validateGate returns [] (accepted)",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-DLV-013",
+        "REQ-DLV-016",
+        "REQ-DLV-026"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log"
+      ],
+      "command": "GATE_TOOLS=/tmp/dg0-sec-r2 node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs --test-name-pattern N1a"
+    },
+    {
+      "id": "C06",
+      "procedure": "Attack: the reporter's verification sidecar says FAIL/OPEN while findings.json says CLOSED_VERIFIED; bogus verification evidence and fix_revision (N1b, N1c)",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18",
+      "expected": "validateGate rejects",
+      "actual": "validateGate returns [] in both cases",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-DLV-016",
+        "REQ-DLV-017"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log"
+      ],
+      "command": "GATE_TOOLS=/tmp/dg0-sec-r2 node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs --test-name-pattern N1"
+    },
+    {
+      "id": "C07",
+      "procedure": "Attack: delete an entire earlier review round (record + findings sidecar) and its findings.json entry while stages.json still lists the round (N2)",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18",
+      "expected": "validateGate / historical / pipeline reject",
+      "actual": "all three return [] (accepted)",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-DLV-016",
+        "REQ-DLV-017"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log"
+      ],
+      "command": "GATE_TOOLS=/tmp/dg0-sec-r2 node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs --test-name-pattern N2"
+    },
+    {
+      "id": "C08",
+      "procedure": "Attack: implementer plants tools/.git, docs/.git or .github/.git, then writes protected files, via decide() and the hook entry point (N3); check git-status visibility",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18; scratch git repo",
+      "expected": "guard denies the plant or the protected writes",
+      "actual": "the plant is allowed; afterwards tools/gates/lib/rules.mjs, tools/agents/write-scopes.json, docs/delivery/stages.json, docs/source/playbook.md and the workflow are ALLOWED (hook exit 0). The plant is invisible in git status; the later content edit shows as ' M'",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-DLV-007"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/09-nested-git-visibility.log"
+      ],
+      "command": "GATE_TOOLS=/tmp/dg0-sec-r2 node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs --test-name-pattern N3; scratch repo git status"
+    },
+    {
+      "id": "C09",
+      "procedure": "Candidate hash: entry type and file mode (N4, N5)",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18",
+      "expected": "a symlink and a regular file differ; a mode change changes the ID",
+      "actual": "'symlink:app.txt' file == symlink->app.txt; chmod 755->644 leaves the ID unchanged",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-DLV-022"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log"
+      ],
+      "command": "GATE_TOOLS=/tmp/dg0-sec-r2 node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs --test-name-pattern 'N4|N5'"
+    },
+    {
+      "id": "C10",
+      "procedure": "Candidate hash platform independence: CRLF checkout (N6)",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18",
+      "expected": "working-tree ID equals ref ID on every platform",
+      "actual": "with core.autocrlf=true the working-tree ID differs from the ref ID (fails closed); no .gitattributes",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-DLV-022"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log"
+      ],
+      "command": "GATE_TOOLS=/tmp/dg0-sec-r2 node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs --test-name-pattern N6"
+    },
+    {
+      "id": "C11",
+      "procedure": "Runner: argument validation, evidence non-overwrite, shell-injection review, permission mode, model pinning, exit-code propagation",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18",
+      "expected": "invalid values rejected before any side effect; no injection; permission mode auto; model passed explicitly; exit code propagated",
+      "actual": "all five exit 64 with a clear message; mkdir without -p; all expansions quoted, python via argv and a quoted heredoc; --permission-mode auto, --model $MODEL, --session-id uuid4; 'exit $EXIT' at the end",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-006",
+        "REQ-DLV-026"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/06-runner-and-hook.log"
+      ],
+      "command": "bash tools/agents/run-agent.sh with --stage ../DG0 | DG9, --task a/b, --role ../x, --model 'x;y'; static review of run-agent.sh"
+    },
+    {
+      "id": "C12",
+      "procedure": "Hook command fail-closed paths and per-role settings",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18",
+      "expected": "only an in-scope write exits 0; everything else exits 2; each settings file passes its own role; matcher covers Write|Edit|NotebookEdit|MultiEdit",
+      "actual": "allowed 0; protected 2; garbage 2; no node 2; no repo 2; 10/10 settings pass their own role with the full matcher",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-007"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/06-runner-and-hook.log"
+      ],
+      "command": "sh -c <hook command> with an allowed path, a protected path, a garbage payload, no node binary, cwd outside git; parse tools/agents/settings/*.json"
+    },
+    {
+      "id": "C13",
+      "procedure": "Agent definitions: frontmatter validity, tools and hooks",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18",
+      "expected": "10 definitions, name == file name, tools listed, model inherit, write-guard hook present",
+      "actual": "10/10 valid; name matches; hook matcher Write|Edit|NotebookEdit|MultiEdit; every role has Bash (unguarded; disclosed in agent-protocol.md:75, D-009, D-020)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-004",
+        "REQ-DLV-007"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/07-secrets-extraction-ci-frontmatter.log"
+      ],
+      "command": "python3 frontmatter parse of .claude/agents/*.md"
+    },
+    {
+      "id": "C14",
+      "procedure": "CI workflow: least privilege, full history, pinned actions, no secrets, failure propagation",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18; network via agent proxy",
+      "expected": "contents: read; fetch-depth 0; SHA pins resolving to the commented tags; no secrets; steps fail the job",
+      "actual": "all as expected; SHAs resolve to v7.0.1 and v7.0.0; each step is a plain run: whose non-zero exit fails the job",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-023"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/07-secrets-extraction-ci-frontmatter.log"
+      ],
+      "command": "read .github/workflows/delivery-gates.yml; git ls-remote actions/checkout, actions/setup-node"
+    },
+    {
+      "id": "C15",
+      "procedure": "Secrets / credentials / personal data scan of all tracked files (candidate and trading_agent/)",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18",
+      "expected": "no credentials",
+      "actual": "0 matching files in the candidate, 0 in trading_agent/, 0 key/env-like file names; e-mails only noreply@anthropic.com and example/invalid test addresses",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/07-secrets-extraction-ci-frontmatter.log"
+      ],
+      "command": "git ls-files | xargs grep -IlE <secret regex>; e-mail address extraction; key-file name scan"
+    },
+    {
+      "id": "C16",
+      "procedure": "Source extraction reproducibility",
+      "environment": "disposable worktree /tmp/dg0-sec-r2 @83860be3 (removed afterwards); node v22.22.2; Linux 6.18",
+      "expected": "PASS",
+      "actual": "PASS source extraction reproducible (docx sha256 2584a352…548ad2; 165 playbook blocks; 423 master-prompt blocks)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-020"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/07-secrets-extraction-ci-frontmatter.log"
+      ],
+      "command": "tools/source/check_extraction.sh"
+    },
+    {
+      "id": "C17",
+      "procedure": "Real-repository validators (register, pipeline, reconcile, stage gate fails closed without a gate record)",
+      "environment": "main repo /home/user/My-owns @eaef1d0f (read-only commands); node v22.22.2",
+      "expected": "register/pipeline/reconcile PASS; --stage DG0 exits non-zero (no gate record yet)",
+      "actual": "register PASS (0); pipeline PASS, active DG0 REVIEWING (0); reconcile: working tree matches the frozen candidate (0); --stage DG0 FAIL 'gate DG0: file not found' (exit 1)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-015",
+        "REQ-DLV-016",
+        "REQ-DLV-020",
+        "REQ-DLV-023"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/08-candidate-and-validators.log"
+      ],
+      "command": "node tools/gates/validate.mjs --register DG0 | --pipeline | --reconcile | --stage DG0"
+    },
+    {
+      "id": "C18",
+      "procedure": "merge_register.py rejects ragged part-file rows",
+      "environment": "scratch copy of the candidate @83860be3; Python 3.11.15",
+      "expected": "both rejected; the unmodified merge reproduces the committed register",
+      "actual": "both 'MERGE FAILED … cell count different from the header' (exit 1); control merge exit 0 and byte-identical",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-020"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/10-merge-register-ragged.log"
+      ],
+      "command": "scratch copy: append an over-long row, then a short row, to docs/analysis/parts/req-dlv-s14-s21.csv; python3 tools/source/merge_register.py"
+    }
+  ],
+  "findings": [
+    "F-DG0-110",
+    "F-DG0-111",
+    "F-DG0-112",
+    "F-DG0-113",
+    "F-DG0-114"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-2/01-existing-tests.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-2/02-round1-repro-old-vs-new.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-2/06-runner-and-hook.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-2/07-secrets-extraction-ci-frontmatter.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-2/08-candidate-and-validators.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-2/09-nested-git-visibility.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-2/10-merge-register-ragged.log",
+    "docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG0/round-2/code-security-reviewer.md"
+  ],
+  "reviewed_at": "2026-09-28T13:38:41Z",
+  "summary": "FAIL. Round-1 fixes verified for F-DG0-103..109 (CLOSED_VERIFIED). F-DG0-101 and F-DG0-102 are only partially fixed (OPEN): a whole earlier review round can be deleted undetected, and finding verifications are not bound to the assignment or the freeze, contrary to D-016. New: F-DG0-110 High (finding closure not derived from the reviewer's verification sidecar), F-DG0-111 Medium (write guard bypassed via a planted nested .git), plus Lows F-DG0-112 (hash omits type/mode), F-DG0-113 (CRLF platform dependence) and F-DG0-114 (documentation drift). No secrets; runner, hook fail-closed paths, CI workflow and extraction are sound.",
+  "narrative": "docs/delivery/reviews/DG0/round-2/code-security-reviewer.md"
+}

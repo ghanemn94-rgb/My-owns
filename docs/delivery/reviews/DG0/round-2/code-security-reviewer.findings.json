@@ -1,0 +1,146 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-110",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Finding closure is taken from orchestrator-written findings.json; the reviewer's own verification sidecar, the verification evidence and the fix revision are never checked",
+      "reproduction": "tools/gates/lib/rules.mjs:408-418 accepts CLOSED_VERIFIED/REJECTED_INVALID when findings.json carries a verification object with result PASS, by_role != owner and a valid run. collectRaisedFindings (rules.mjs:342-367; filename filter at :360) never reads <role>.verifications.json, so the reviewer-authored verification is not the source of truth. verification.evidence paths and fix_revision (rules.mjs:416 only checks truthiness) are not checked. Reproduced with GATE_TOOLS=/tmp/dg0-sec-r2 node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs: (N1b) on a fully valid gate, add round-2/code-security-reviewer.verifications.json {finding_id F-DG0-101, result FAIL, status_after OPEN} while findings.json says CLOSED_VERIFIED/PASS citing that reviewer's round-2 run. validateGate returns []. (N1c) Set fix_revision 'not-a-commit' and verification.evidence ['does/not/exist.log']. validateGate returns []. Precondition: whoever maintains findings.json (the orchestrator, D-008) writes the verification object directly instead of via import-findings.mjs. The reporter's final-round record can still be PASS, because nothing ties a PASS verdict to the absence of a FAIL verification.",
+      "expected": "A finding reaches CLOSED_VERIFIED/REJECTED_INVALID only if a reviewer-authored verifications sidecar in a round of this stage contains an entry for that finding with result PASS and a matching status_after. The sidecar belongs to a PASS or FAIL record whose run is bound (assignment and post-freeze, as for reviews). findings.json.verification must equal that entry. Verification evidence must be existing repository files, and fix_revision must be a commit that is an ancestor of the candidate's source_commit. A FAIL entry in a later round supersedes an earlier PASS.",
+      "actual": "The gate's 'zero unresolved Critical/High and mandatory findings' condition can be met by editing one object in findings.json, even when the reporting reviewer explicitly recorded the fix as FAIL.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "tools/gates/lib/rules.mjs:342-367",
+        "tools/gates/lib/rules.mjs:408-418"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-2 code-security review (reproduced: repro-r2 tests N1b, N1c)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-111",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Write guard: an implementer can plant a nested '.git' (tools/.git, docs/.git, .github/.git) that moves the guard's repo root and un-protects gate rules, sources and delivery records",
+      "reproduction": "tools/agents/guard-write.mjs:40-48 (repoRootOf) takes the nearest ancestor containing '.git' as the repository root, and :72 matches patterns against the path relative to that root. solution-architect/frontend/backend/kpi/devops have allow '**'. 'tools/.git', 'docs/.git' and '.github/.git' match no deny pattern, so a Write to them is allowed. After Write tools/.git ('gitdir: /nonexistent'), a Write to tools/gates/lib/rules.mjs is evaluated as 'gates/lib/rules.mjs' and ALLOWED. The same holds for tools/agents/write-scopes.json (via tools/.git), docs/delivery/stages.json and docs/source/playbook.md (via docs/.git), and .github/workflows/delivery-gates.yml (via .github/.git). Reproduced through decide() and end-to-end through the hook entry point (exit 0): repro-r2 test N3. The planted file is invisible in 'git status' (09-nested-git-visibility.log), so it persists silently for later sessions. Edits to tracked protected files still show as ' M' and change the candidate, so the orchestrator's git-status check and the candidate hash remain compensating controls. Bash remains unguarded (disclosed, D-009/D-020); this finding is about the Write-tool guard itself.",
+      "expected": "The guard uses a fixed repository root (for example the root of the tree containing tools/agents/guard-write.mjs, or `git rev-parse --show-toplevel` evaluated once by the hook) rather than the nearest '.git'. It also denies writes of any path segment named '.git' (the pattern '**/.git' and '**/.git/**') for every role.",
+      "actual": "Implementer roles can disable the write guard for protected paths with two Write calls, and the first one leaves no trace in git status.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/09-nested-git-visibility.log",
+        "tools/agents/guard-write.mjs:40-48",
+        "tools/agents/guard-write.mjs:69-77"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-2 code-security review (reproduced: repro-r2 test N3)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-112",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Candidate identity omits the entry type and the file mode: a file containing 'symlink:<t>' collides with a symlink to <t>, and chmod +x/-x does not change the candidate",
+      "reproduction": "tools/gates/lib/candidate.mjs:58-60 hashes a symlink as sha256('symlink:'+target). candidateId (:117-124) serialises only '<sha256>  <path>', dropping entry.type, so a regular file whose bytes are 'symlink:app.txt' hashes identically to a symlink -> app.txt (repro-r2 N4). The git mode (100644 vs 100755) is not hashed either, so removing the executable bit from tools/source/check_extraction.sh (which CI runs directly) or tools/agents/run-agent.sh leaves the candidate unchanged (repro-r2 N5).",
+      "expected": "The canonical line includes the type and the mode, e.g. '<sha256>  <mode>  <path>', with mode taken from git (100644/100755/120000) in both manifestFromRef and manifestFromWorkingTree.",
+      "actual": "Two distinct deliverables share one candidate ID; a behaviour-changing mode change is invisible to A25 change detection. Exploitation of the collision requires crafting a file whose content equals the link's marker string; impact is low. I would accept this as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "tools/gates/lib/candidate.mjs:58-60",
+        "tools/gates/lib/candidate.mjs:91-92",
+        "tools/gates/lib/candidate.mjs:117-124"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-2 code-security review (reproduced: repro-r2 tests N4, N5). Would accept as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-113",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Working-tree candidate depends on the platform's line-ending conversion; no .gitattributes pins it",
+      "reproduction": "manifestFromWorkingTree (tools/gates/lib/candidate.mjs:73-96) hashes on-disk bytes, while manifestFromRef hashes blobs. With core.autocrlf=true (the Git for Windows default), checked-out text files contain CRLF, so candidate.mjs --stage and validate.mjs --stage (current mode) compute a different ID from the frozen one (repro-r2 N6). The repository has no .gitattributes, and D-005 is silent on line endings. The effect is fail-closed (a false 'changed' result, not a bypass).",
+      "expected": "Either a committed .gitattributes ('* -text' or '* text=auto eol=lf') makes checkouts byte-identical to blobs on every platform, or current mode hashes the git-normalised content (git hash-object --path / the clean filter). D-005 states the rule.",
+      "actual": "Candidate identity is not platform-independent in current mode; a Windows reviewer or CI runner cannot reproduce the frozen ID.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "tools/gates/lib/candidate.mjs:73-96",
+        "docs/delivery/decisions.md:11"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-2 code-security review (reproduced: repro-r2 test N6). Would accept as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-114",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-019",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Delivery documentation drift: D-016 claims bound finding verifications, D-019 says 3 resumes, agents.md lists a stale protected-path set",
+      "reproduction": "(1) docs/delivery/decisions.md:22 (D-016) says the validator accepts a finding verification only when its run executed the cited assignment and started after the freeze. rules.mjs:417 calls checkInvocation without a binding for verifications (see F-DG0-102 re-verification). (2) decisions.md:25 (D-019) says the runner resumes 'up to 3 times', while tools/agents/run-agent.sh:22 defaults MTH_MAX_RESUMES to 6 and its header says 6. (3) docs/delivery/agents.md:20 lists '.claude/agents/**, .claude/settings.json' as the protected Claude paths, while write-scopes.json now protects .claude/**, .mcp.json, CLAUDE*.md at any depth and trading_agent/** (D-020).",
+      "expected": "The decision records and agents.md describe the controls as implemented.",
+      "actual": "Three statements in the delivery records don't match the code.",
+      "evidence": [
+        "docs/delivery/decisions.md:22",
+        "docs/delivery/decisions.md:25",
+        "tools/agents/run-agent.sh:22",
+        "docs/delivery/agents.md:20"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-2 code-security review. Would accept (2) and (3) as observations; (1) is resolved by fixing F-DG0-102."
+        }
+      ]
+    }
+  ]
+}

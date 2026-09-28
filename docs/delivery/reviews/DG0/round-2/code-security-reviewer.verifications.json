@@ -1,0 +1,103 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-101",
+      "result": "FAIL",
+      "status_after": "OPEN",
+      "note": "Partially fixed. The stated vectors are fixed and verified differentially (repro-r2 'FIXED F-DG0-101' passes on 83860be3 and fails on 26642c72): relabelling in findings.json or a sidecar, dropping a sidecar-raised finding, and downgrading. Still open (repro-r2 N2): deleting a whole earlier round (the round-N/<role>.json record plus its .findings.json sidecar) together with the findings.json entry passes validateGate in current AND historical mode and validatePipeline, even when stages.json review_rounds[].records still lists the deleted record. The original finding's expected result covered 'all review_rounds records and their findings sidecars'. loadStages (rules.mjs:89-113) never checks that review_rounds records exist, collectRaisedFindings (rules.mjs:342-367) only sees files currently on disk, and checkApprovalImmutable pins only the final-round records. Suggested fix: require every stages.json review_rounds[].records path (and its sidecar, if the record lists findings) to exist, and pin all review_rounds files in historical mode.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/02-round1-repro-old-vs-new.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-102",
+      "result": "FAIL",
+      "status_after": "OPEN",
+      "note": "Partially fixed. Reviews and audits are now bound: meta/result/transcript present and hash-consistent, init/prompt/result session, stage, role, assignment path and SHA, and started_at >= frozen_at (repro-r2 'FIXED F-DG0-102'; the candidate's F-DG0-102/F-DG0-201 tests pass). Still open: the original expected result explicitly covered verifications ('refuses a review/audit/verification unless … the run's assignment … matches … and the run started after the candidate froze'), and D-016 claims the same. rules.mjs:417 calls checkInvocation for finding verifications with binding=null. repro-r2 N1a: a CLOSED_VERIFIED High finding whose verification cites a code-security-reviewer LOAD-check run that started before the freeze, with an unrelated assignment, passes validateGate. Residual (accepted as a design limit, disclosed in D-016): run evidence is self-hashed, not attested, so a fully forged consistent transcript set still passes; historical immutability (D-017) limits after-the-fact rewriting.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-103",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Symlinks are now hashed by target in both working-tree and ref manifests; gitlinks and nested repositories throw. repro-r2 'FIXED F-DG0-103' (repointing a committed symlink changes the candidate) passes on 83860be3 and fails on 26642c72. The candidate's test 'A25 / F-DG0-103' passes. A new Low weakness in the chosen encoding (type/mode not in the canonical line) is raised separately as F-DG0-112.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/01-existing-tests.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-104",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "checkCandidate requires manifest.spec == stage candidate_spec, and specPolicyErrors pins both to APPROVED_SPEC; loadStages applies the policy to every stage and candidate.mjs --freeze refuses a non-policy spec. repro-r2 'FIXED F-DG0-104' passes on the candidate and fails on 26642c72.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-105",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The three reported vectors are fixed: symlink real-path check, case-insensitive deny, and .claude/**, .mcp.json, CLAUDE*.md at any depth and trading_agent/** protected. repro-r2 'FIXED F-DG0-105' passes on the candidate and fails on 26642c72. The hook fails closed on a missing guard, a missing node binary, no git repo and an unreadable payload (06-runner-and-hook.log). A different bypass vector (nested .git root shift) is raised separately as F-DG0-111.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/06-runner-and-hook.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-106",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "repoFile() requires a regular file strictly inside the repository; '#x', '.', a directory and a bare token are rejected as review evidence, register evidence and gate-test evidence; gate tests[] has minItems 1. repro-r2 'FIXED F-DG0-106' passes on the candidate and fails on 26642c72.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-107",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The parser throws on text after a closing quote, on stray quotes and on ragged rows (repro-r2 'FIXED F-DG0-107'). merge_register.py rejects both over-long and short part-file rows with 'cell count different from the header', and an unmodified merge reproduces the committed register byte-for-byte (10-merge-register-ragged.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/10-merge-register-ragged.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-108",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "run-agent.sh validates --stage ^DG[0-7]$, --task, --role and --model (each bad value exits 64), puts the session UUID prefix in RUN_ID, and uses mkdir without -p so an existing run directory aborts. Static review found no shell injection: all expansions are quoted, python receives values via argv with a quoted heredoc, and the prompt is a single argument (06-runner-and-hook.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/06-runner-and-hook.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-109",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "actions/checkout@3d3c42e5… and actions/setup-node@82076278… are full SHAs; git ls-remote confirms they are the commits of tags v7.0.1 and v7.0.0, matching the comments. permissions: contents: read; fetch-depth: 0; no secrets referenced (07-secrets-extraction-ci-frontmatter.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/07-secrets-extraction-ci-frontmatter.log"
+      ]
+    }
+  ]
+}

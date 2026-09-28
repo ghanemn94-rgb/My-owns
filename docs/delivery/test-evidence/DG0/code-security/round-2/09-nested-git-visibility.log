@@ -1,0 +1,8 @@
+# N3 companion: is a planted nested .git visible to the orchestrator's git status control? (scratch repo)
+# date: 2026-09-28T13:36:01Z  node v22.22.2  Linux 6.18.44-fc-v37
+
+$ printf "gitdir: /nonexistent\n" > tools/.git; git status --short
+exit=0 (plant is invisible)
+$ echo tampered > tools/gates/r.mjs; git status --short
+ M tools/gates/r.mjs
+exit=0 (content edit of the protected file is visible)

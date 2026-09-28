@@ -1,0 +1,58 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-001",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on the old candidate 26642c7: REQ-PB-049 had increments P3;P5 and final_gate DG5. On 83860be REQ-PB-049 is P3/DG3. It covers per-transformation weight sets, risk/compliance replacing part of the weighting, a server-side 100% total check (95% and 105% rejected) and immutable weight-set versions, and it names 'weight version 2' as a rank-change cause for REQ-S09-005 (DG3). The Studio default-weights and rubric part is the new REQ-PB-093 (P5/DG5, ADM configure-default only, never approving a transformation's weights). B0077 and M0176 coverage rows list both rows. The field inventory, acceptance map (A07 first delivered in P3), user journey J2.4 step 4 and the stage-plan §21 recheck (DG3 row names REQ-PB-049) are updated. check_counts.py reports all stage-plan lists match, and validate.mjs --register DG0 passes.",
+      "evidence": [
+        "docs/delivery/requirements.csv (REQ-PB-049, REQ-PB-093, REQ-S09-005)",
+        "docs/analysis/stage-plan.md (§21 evidence recheck, DG3 row)",
+        "docs/analysis/source-coverage.csv (B0077)",
+        "docs/analysis/master-prompt-coverage.csv (M0176)",
+        "docs/analysis/user-journeys.md (J2.4)"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-002",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on 26642c7: REQ-PB-020 had 'approve:SP' with no T11 reference, the matrix had no T11 Go-live / scale row, and SP had V on the TOM row. On 83860be: REQ-PB-020 and REQ-S04-007 give 'approve:SP (default) or BO per T11 Go-live / scale (configurable per gate)', with a concrete acceptance (SP gets 403 when G5 is configured to BO). Permissions-matrix rule 7 explains that B0023 names no approver and distinguishes the transformation-level G5 from initiative-level T11 decisions. A new matrix row mirrors B0099 exactly (Recommend initiative owner, Approve BO, Consult Risk/Tech/CX, Inform SteerCo), with the role mapping labelled as an implementation assumption. SP now has Rv on the TOM row (RACI C, B0101). Journey J2.5 step 5a adds the per-initiative T11 decision.",
+      "evidence": [
+        "docs/analysis/permissions-matrix.md (§4 TOM row and T11 Go-live / scale row; §5 rule 7)",
+        "docs/delivery/requirements.csv (REQ-PB-020, REQ-S04-007)",
+        "docs/analysis/user-journeys.md (J2.5)",
+        "docs/source/playbook.md B0099, B0101"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-003",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on 26642c7: REQ-PB-055, -085 and -088 had 'Source-grounded; no interpretation beyond the cited blocks'. Across all SOURCE rows, 49 had that boilerplate and 48 cited M blocks without a master-prompt label. On 83860be, 0 SOURCE rows carry the boilerplate and 0 cite M blocks without a label. Each note uses the 'Playbook (...) / Master-prompt additions / Interpretations' structure. PB-055 labels the hard 'before G4' rule as an interpretation, and PB-085 and PB-088 name their §12 and §18 additions. Two small residual label inconsistencies (PB-088's M0348 attribution is not cited in source_ref; PB-068 calls an M0212 rule an interpretation) are raised separately as Low F-DG0-006. They don't reopen this finding, whose three named rows are fixed.",
+      "evidence": [
+        "docs/delivery/requirements.csv (REQ-PB-055, REQ-PB-085, REQ-PB-088; all SOURCE rows)"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-004",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on 26642c7: 'PRACTICAL EDITION' occurred 0 times in playbook.md, and 6 table lines were broken by raw newlines in cells. On 83860be: the extractor records running headers/footers as an HTML comment ('footer1: BUSINESS TRANSFORMATION PLAYBOOK  |  PRACTICAL EDITION'), cells use <br>, and 0 table lines are broken. playbook.blocks.json and the master-prompt files are byte-identical to the round-1 candidate, so block IDs B0001-B0165 are unchanged. tools/source/check_extraction.sh passes, reproducing playbook.md from the docx (sha256 2584a352…548ad2). My independent extraction finds all 1001 body paragraph segments and 885 table cells (49 tables, 239 rows) of word/document.xml, plus the footer text, in playbook.md.",
+      "evidence": [
+        "docs/source/playbook.md",
+        "tools/source/extract_docx.py",
+        "tools/source/check_extraction.sh"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-005",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on 26642c7: Journey was 'رحلة العميل' and Modular mode 'النمط المعياري (الدخول الجزئي)'. On 83860be: Journey is 'الرحلة (رحلة العميل أو رحلة العمل)' and Modular mode 'النمط الجزئي المرن (الدخول عند المرحلة المناسبة)'. Both preserve the English meaning. The analyst also fixed nine other terms with sound reasons: 'مناصر التغيير' for Champion (B0116), 'فحص معقولية النطاق' (no clash with the Health Check term), an attach-rate term that conveys add-on uptake, and an SLA term that covers non-duration SLAs (B0099). The old terms now appear only in the revision table's 'Before' column, and nowhere in the register or other analysis files. The pending Mobily Arabic-language-owner review caveat is kept.",
+      "evidence": [
+        "docs/analysis/glossary.md"
+      ]
+    }
+  ]
+}

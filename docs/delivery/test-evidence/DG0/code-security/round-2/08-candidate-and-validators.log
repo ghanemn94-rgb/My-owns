@@ -1,0 +1,46 @@
+# Candidate identity and real-repository validators (main repo /home/user/My-owns, HEAD eaef1d0fb6b7d4da4e5f2f25d451f57316a58c7c; read-only commands)
+# date: 2026-09-28T13:36:00Z  node v22.22.2  Linux 6.18.44-fc-v37
+
+$ git rev-parse HEAD
+eaef1d0fb6b7d4da4e5f2f25d451f57316a58c7c
+$ git merge-base --is-ancestor 83860be3 HEAD
+exit=0
+$ git diff --stat 83860be3..HEAD  (post-freeze commits: metadata only)
+ .../DG0/round-2/review-code-security-reviewer.md   |  25 +++
+ .../assignments/DG0/round-2/review-common.md       |  69 +++++++
+ .../DG0/round-2/review-domain-reviewer.md          |  47 +++++
+ .../assignments/DG0/round-2/review-qa-verifier.md  |  38 ++++
+ .../DG0/round-2/review-release-auditor.md          |  24 +++
+ docs/delivery/candidates/DG0.manifest.json         | 221 ++++++++++++++-------
+ docs/delivery/stages.json                          |  23 ++-
+ 7 files changed, 370 insertions(+), 77 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3","files":71}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG0 --ref 83860be3ea4774688f0e00a87923edd6605d2ace
+{"stage":"DG0","source":"83860be3ea4774688f0e00a87923edd6605d2ace","candidate_id":"sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3","files":71}
+exit=0
+$ sha256sum docs/delivery/assignments/DG0/round-2/review-code-security-reviewer.md
+d591f582ae3ef597c7694377bf604b2b0a95d0450ed4719aa90b0451bb630c97  docs/delivery/assignments/DG0/round-2/review-code-security-reviewer.md
+$ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+exit=0
+$ node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+exit=0
+$ node tools/gates/validate.mjs --reconcile
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3
+working tree:     sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3 (matches)
+round 1 domain-reviewer: FAIL (STALE for current content)
+round 1 code-security-reviewer: BLOCKED (STALE for current content)
+round 1 qa-verifier: FAIL (STALE for current content)
+round 2 domain-reviewer: missing (STALE for current content)
+round 2 code-security-reviewer: missing (STALE for current content)
+round 2 qa-verifier: missing (STALE for current content)
+PASS reconcile (structure)
+exit=0
+$ node tools/gates/validate.mjs --stage DG0
+FAIL gate DG0 (current) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+exit=1
