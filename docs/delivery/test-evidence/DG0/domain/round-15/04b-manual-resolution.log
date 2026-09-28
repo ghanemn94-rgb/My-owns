@@ -1,0 +1,62 @@
+# manual resolution of 04-deliverables misses (grep -c -F in docs/analysis/field-inventory.md @7fab49c)
+field-inventory.md changed since round-14 candidate? no
+If we change \[capabilities                                    0
+then \[customer/operational outcomes\]                         0
+which will create \[financial/strategic benefits\]             0
+because \[evidence / causal logic\]                            0
+Make roaming effortless, trusted and economically accretive    1
+| 1 | Customer & Value Proposition                             1
+| 2 | Products & Services                                      1
+| 3 | Journeys & Processes                                     1
+| 4 | Organization                                             1
+| 5 | Governance & Decision Rights                             1
+| 6 | People & Capabilities                                    1
+| 7 |                                                          15
+| 8 |                                                          7
+| 9 |                                                          7
+| 10 | Performance Management                                  1
+PERFORMANCE | KPIs / benefits / management cadence / CI        1
+90-120                                                         1
+unresolved                                                     2
+Top 3 actions                                                  1
+____ / 25                                                      1
+--- TOM rows 7-9 in field inventory:
+60:| 7 | Leading indicator | B0050 | reference→KPI (leading) or text | R | | |
+102:| 7 | Status | B0065 | choice | R | seeded: Open (default); further states (Decided, Deferred, Cancelled) are interpretation | Source shows only "Open" |
+114:| 7 | Key deliverables | B0072 | list of reference→Deliverable | R | warn if count outside 3–7 (interpretation: warn, not block) | "[3-7 deliverables]" |
+115:| 8 | Outcome/KPI contribution | B0072 | reference→Outcome/KPI with contribution text | R | ≥1 link to submit | "[Outcome + KPI]" |
+116:| 9 | Financial benefit | B0072 | reference→Benefit (T14) + classification | O | classification: Revenue / cost / avoided cost / capital efficiency | "[Revenue / cost / avoided cost / capital efficiency]" |
+133:| 7 | Weighted score | B0076 | calculated (decimal) | — | read-only | "[calc]". **Interpretation (master prompt §9):** Σ(score × weight) on a 1–5 scale; a missing score means incomplete, not zero |
+--- workshop lines:
+358:The workshop record (B0063, REQ-PB-042) holds:
+362:| workshop date | date | R | |
+--- re-check with regex grep (the -F lines above searched a literal backslash):
+If we change \[capabilities                             1
+then \[customer/operational outcomes\]                  1
+which will create \[financial/strategic benefits\]      1
+because \[evidence / causal logic\]                     1
+--- TOM dimensions 7-10 from playbook B0056 and their field-inventory rows:
+Technology & Data              0
+Performance Management         1
+--- B0056 TOM rows: dimension name and prompt, each checked verbatim in field-inventory.md
+OK      What experience/value should customers receive?
+OK      What portfolio, pricing, features and service model are required?
+OK      What end-to-end journeys/processes must change?
+OK      What structure, roles and accountabilities are needed?
+OK      Who decides what, at what level, using what forums?
+OK      What skills, capacity, behaviors and incentives are required?
+OK      What platforms, systems and integration are required?
+OK      What data, metrics, models and ownership are needed?
+OK      What should be built, bought, outsourced or partnered?
+OK      How will KPIs, benefits and continuous improvement be managed?
+--- B0056 dimension names (source "N. Name" rendered as "| N | Name" in field-inventory.md)
+OK      1. Customer & Value Proposition
+OK      2. Products & Services
+OK      3. Journeys & Processes
+OK      4. Organization
+OK      5. Governance & Decision Rights
+OK      6. People & Capabilities
+OK      7. Technology
+OK      8. Data & Analytics
+OK      9. Partners & Sourcing
+OK      10. Performance Management
