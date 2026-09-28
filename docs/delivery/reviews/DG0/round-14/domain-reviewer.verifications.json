@@ -1,0 +1,17 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-012",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "I reproduced the original failure and confirmed the fix independently. My probe extracts entry(), config_snapshot() and the comparison step verbatim from tools/agents/run-agent.sh at each commit and runs them before and after a change in a disposable clone, with HOME redirected into $TMPDIR. Old runner (round-13 candidate 6c61f2e, diff|grep '^>'): case D (non-empty untracked CLAUDE.local.md truncated to zero), case E (the same file deleted), case G (ignored .claude/settings.local.json deleted) and case I (a deleted 'sub dir/CLAUDE.md') are all reported as <nothing>. New runner (candidate 1e64eb0, embedded Python comparator): D, E, G and I are each reported as '<path> removed'. Cases B, C, F and H are still reported. The controls stay quiet: A (a new zero-length stub) and J (no change) report nothing. Case K (an unreadable pre-snapshot) produces the 'config-diff-failed (fail closed)' marker. The runner's own regression test 'F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed' passes (4/4 in runner.test.mjs). REQ-DLV-007's procedure, acceptance and notes describe the new behaviour. The fix is complete and correct.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-14/06-f012-verification.sh",
+        "docs/delivery/test-evidence/DG0/domain/round-14/06-f012-verification.log",
+        "docs/delivery/test-evidence/DG0/domain/round-14/07-runner-tests.log",
+        "tools/agents/run-agent.sh#L168-L189",
+        "docs/delivery/requirements.csv#REQ-DLV-007"
+      ]
+    }
+  ]
+}
