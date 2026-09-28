@@ -89,7 +89,7 @@ Every agent was invoked through the runner as a separate process. Each one:
 
 Result: 10/10 definitions load and run as separate invocations, with 10 distinct session IDs, all on the orchestrator's model. Out-of-scope writes were blocked 10/10, in-scope writes succeeded 10/10, and no probe file exists under `docs/source/`. The in-scope probe files are under `docs/delivery/handbacks/DG0/agent-load/` and `docs/delivery/test-evidence/DG0/agent-load/`.
 
-**Observation:** `Grep` and `Glob` are declared in the definitions but aren't exposed in `--agent` sessions of this CLI build. The agents use `grep`/`find` through Bash instead, which doesn't affect the guard. Bash writes aren't path-guarded, so the orchestrator runs `git status` after every run and investigates any write outside the assignment's permitted files.
+**Observation:** `Grep` and `Glob` are declared in the definitions but aren't exposed in `--agent` sessions of this CLI build. The agents use `grep`/`find` through Bash instead, which doesn't affect the guard. Since D-025, Bash writes are confined by the OS sandbox (see "Bash sandbox" below). Before that, Bash writes weren't path-guarded, and the orchestrator checked `git status` after every run.
 
 ## Concurrency
 

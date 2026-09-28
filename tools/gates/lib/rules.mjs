@@ -334,8 +334,10 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
       }
       const deny = (sb.filesystem && sb.filesystem.denyWrite) || [];
       if (!(sb.enabled === true && sb.failIfUnavailable === true && sb.allowUnsandboxedCommands === false)) bad("its Bash sandbox was not enforced (enabled, failIfUnavailable, no unsandboxed commands)");
-      for (const p of [".git", ".claude", "tools/gates", "tools/agents", "docs/delivery/reviews", "docs/delivery/runs"]) {
-        if (!deny.some((d) => d.endsWith(`/${p}`))) bad(`its Bash sandbox does not deny writes to ${p}`);
+      // The deny entries must protect the repository the run actually worked in (F-DG0-230).
+      const cwdRoot = String(meta.cwd || "").replace(/\/+$/, "");
+      for (const p of [".git", ".claude", "tools/gates", "tools/agents", "docs/source", "docs/delivery/reviews", "docs/delivery/runs"]) {
+        if (!cwdRoot || !deny.includes(`${cwdRoot}/${p}`)) bad(`its Bash sandbox does not deny writes to ${cwdRoot || "<unknown cwd>"}/${p}`);
       }
     }
   }

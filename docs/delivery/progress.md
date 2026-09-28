@@ -4,8 +4,8 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 
 ## Current checkpoint
 
-- **Active stage:** P0 / DG0, state **REVIEWING** (round 11)
-- **Round-11 candidate:** `sha256:1a73d6f015807d383ca41c9cc322bcfca157f6217e3f0d2f56b42ab6543a57c1` (commit `7e99163`)
+- **Active stage:** P0 / DG0, state **REVIEWING**. The round-12 findings are repaired; round 13 is next.
+- **Round-12 candidate:** `sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c` (commit `7f09967`)
 
 **Review history**
 
@@ -21,13 +21,25 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 | 8 | PASS | PASS | PASS | 1 Low (path with space) |
 | 9 | PASS | FAIL | PASS | 2 (134 Medium: worktree guard bypass) |
 | 10 | PASS | FAIL | PASS | 3 (135/136 Medium: guard fail-open, user settings) |
+| 11 | PASS | FAIL | FAIL | 6 (137 High, 226: shell bypasses of the guard). Led to the §0.4 root-cause response: D-025 (OS Bash sandbox) and `threat-model.md` |
+| 12 | (orphaned: stub false positive; run PASS) | FAIL | FAIL (run exit 1, account session limit; does not bind) | 5: 140 Critical (runner imports planted modules), 229 Medium (pre-freeze imports planted bytecode), 230/231/232 Low |
 
-- **Findings:** 60 closed and verified by bound, replay-verified reviewer runs; 3 fixed and pending verification (F-DG0-135/136/225).
-- **Pattern:** the product specification (register, coverage, analysis) has been stable and domain-PASS since round 7. The remaining findings are about how tamper-resistant the delivery tooling is.
-- **Planned response if round 11 finds more:** add an explicit threat model for the delivery controls, `docs/delivery/threat-model.md`, bounding what is mechanically defended and what is a disclosed residual, per §0.4 root-cause analysis.
+- **Findings:** 64 closed and verified, 5 open (F-DG0-140, 229, 230, 231, 232).
+  - The round-12 QA closures of F-DG0-226, 227 and 228 come from a run that ended in error. The validator rejects them (`checkInvocation`: "did not complete successfully"), so QA re-verifies them in round 13.
+- **Round-12 repairs (D-026):**
+  - The orchestrator never executes agent-writable code outside a sandbox. The runner's Python helpers run as `python3 -I -B` from `/`.
+  - The pre-freeze runs candidate code only through `tools/gates/sandbox-run.sh`.
+  - The validator binds the sandbox deny list to the run's own directory.
+  - Docs now say `$TMPDIR` rather than `/tmp`.
+  - The config scan ignores the sandbox's zero-length stubs.
+  - CI installs bubblewrap. The CI step is unverified until a hosted run reports.
 - **Next:**
-  1. Import round 11.
-  2. If all three PASS with every finding terminal: move to VERIFYING, run the release audit, run the full validator, then APPROVE DG0.
+  1. Mark the fixes: `import-findings.mjs --fix` for F-DG0-140, 229, 230 and 231.
+  2. The analyst task T-DG0-ANA-R12 for F-DG0-232 (register rows citing D-025/D-026 controls).
+  3. Run the pre-freeze and freeze round 13.
+  4. Run the three reviews: domain (full review), code-security (verifies 140), and QA (verifies 226–232).
+  5. If all PASS: VERIFYING, then the release audit, then APPROVE DG0.
+  6. Then P1: the architecture assignment `docs/delivery/assignments/DG1/T-DG1-ARCH-01.md`.
 
 ## Done in P0 so far
 

@@ -18,6 +18,10 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# The runner never executes or imports anything from agent-writable paths (F-DG0-140): it works from a neutral
+# directory, every Python helper runs isolated (-I: no cwd, script dir, user site or PYTHON* env; -B: no bytecode),
+# and git is always addressed with -C.
+export PYTHONDONTWRITEBYTECODE=1
 ROLE="" STAGE="" TASK="" ASSIGNMENT="" CWD="$REPO_ROOT" MODEL="${MTH_AGENT_MODEL:-claude-opus-5-5}"
 MAX_RESUMES="${MTH_MAX_RESUMES:-6}" RESUME_PAUSE="${MTH_RESUME_PAUSE_SECONDS:-120}"
 while [[ $# -gt 0 ]]; do
@@ -40,10 +44,12 @@ done
 [[ -f "$REPO_ROOT/tools/agents/settings/$ROLE.settings.json" ]] || { echo "no guard settings for $ROLE" >&2; exit 65; }
 command -v bwrap >/dev/null || { echo "bubblewrap (bwrap) is required for the agent Bash sandbox (D-025)" >&2; exit 65; }
 ASSIGNMENT_ABS="$(cd "$(dirname "$ASSIGNMENT")" && pwd)/$(basename "$ASSIGNMENT")"
+CWD="$(cd "$CWD" && pwd)"
+cd / # neutral working directory from here on (F-DG0-140)
 [[ -f "$ASSIGNMENT_ABS" ]] || { echo "assignment not found: $ASSIGNMENT" >&2; exit 66; }
 [[ "$ASSIGNMENT_ABS" == "$REPO_ROOT/"* ]] || { echo "assignment must live inside the repository" >&2; exit 66; }
 
-SESSION_ID="$(python3 -c 'import uuid; print(uuid.uuid4())')"
+SESSION_ID="$(python3 -I -B -c 'import uuid; print(uuid.uuid4())')"
 STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 RUN_ID="${STAGE}-${TASK}-${ROLE}-$(date -u +%Y%m%dT%H%M%SZ)-${SESSION_ID:0:8}"
 OUT="$REPO_ROOT/docs/delivery/runs/$STAGE/$RUN_ID"
@@ -52,7 +58,7 @@ mkdir "$OUT" # fails if the directory exists: evidence is never overwritten
 HEAD_COMMIT="$(git -C "$CWD" rev-parse HEAD 2>/dev/null || echo unknown)"
 # Per-run settings: the role's write-guard hook plus the OS Bash sandbox deny list (D-025), kept as run evidence.
 SETTINGS="$OUT/settings.json"
-python3 "$REPO_ROOT/tools/agents/agent_settings.py" "$ROLE" "$REPO_ROOT" "$CWD" > "$SETTINGS"
+python3 -I -B "$REPO_ROOT/tools/agents/agent_settings.py" "$ROLE" "$REPO_ROOT" "$CWD" > "$SETTINGS"
 ASSIGN_SHA="$(sha256sum "$ASSIGNMENT_ABS" | cut -d' ' -f1)"
 ASSIGN_REL="${ASSIGNMENT_ABS#"$REPO_ROOT"/}"
 
@@ -61,7 +67,7 @@ RESUME_PROMPT="Your previous turn in this session was interrupted because the pe
 
 classifier_outage() {
   # True when the last result line reports the classifier-outage stop.
-  python3 - "$1" <<'PY'
+  python3 -I -B - "$1" <<'PY'
 import json, sys
 last = None
 for line in open(sys.argv[1], encoding="utf-8", errors="replace"):
@@ -79,7 +85,7 @@ PY
 }
 
 # Configuration outside the candidate that could weaken the guard or run code during the auto-commit (F-DG0-136).
-# User settings are not loaded (--setting-sources project,local), but a change is still a tamper signal.
+# User and local settings are not loaded (--setting-sources project), but a change is still a tamper signal.
 config_snapshot() {
   local f root
   for f in "$HOME/.claude/settings.json" "$HOME/.claude/settings.local.json" "$HOME/.gitconfig" \
@@ -97,6 +103,9 @@ config_snapshot() {
     find "$root" -path "$root/.git" -prune -o \( -name CLAUDE.md -o -name CLAUDE.local.md -o -name .mcp.json \
          -o -name .gitignore -o -name .gitattributes -o -path '*/.claude/*' \) \( -type f -o -type l \) -print 2>/dev/null |
       grep -v '/\.claude/\.cc-writes/' | sort | while read -r f; do
+        # Zero-length untracked files are the sandbox's transient mount stubs (e.g. .mcp.json, CLAUDE.local.md while
+        # another agent's sandboxed command runs); an empty file carries no configuration. Tracked files always count.
+        if [ ! -L "$f" ] && [ ! -s "$f" ] && ! git -C "$root" ls-files --error-unmatch -- "$f" >/dev/null 2>&1; then continue; fi
         echo "$f $(sha256sum "$f" 2>/dev/null | cut -d' ' -f1) $(readlink "$f" 2>/dev/null)"
       done
   done
@@ -104,7 +113,7 @@ config_snapshot() {
 
 # Snapshot of every non-ignored file (path -> sha256) before the run; the diff after the run is the run's outputs.
 snapshot() {
-  python3 - "$REPO_ROOT" <<'PY'
+  python3 -I -B - "$REPO_ROOT" <<'PY'
 import hashlib, json, os, subprocess, sys
 root = sys.argv[1]
 paths = subprocess.run(["git", "-C", root, "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
@@ -132,7 +141,7 @@ export MTH_GUARD_ROOT="$REPO_ROOT"
 # The prompt is sent as a stream-json user message and replayed by the CLI into the transcript (isReplay: true),
 # so the transcript itself records what this run was asked to do (D-022).
 user_message() {
-  python3 -c 'import json,sys; print(json.dumps({"type": "user", "message": {"role": "user", "content": sys.argv[1]}}))' "$1"
+  python3 -I -B -c 'import json,sys; print(json.dumps({"type": "user", "message": {"role": "user", "content": sys.argv[1]}}))' "$1"
 }
 
 ATTEMPTS=0
@@ -160,11 +169,11 @@ diff "$OUT/.pre-config.txt" "$OUT/.post-config.txt" | grep '^>' | sed 's/^> //' 
 rm -f "$OUT/.pre-config.txt" "$OUT/.post-config.txt"
 gzip -n "$OUT/transcript.jsonl"
 
-python3 "$REPO_ROOT/tools/agents/run_meta.py" "$OUT" "$RUN_ID" "$ROLE" "$STAGE" "$TASK" "$SESSION_ID" "$MODEL" "$CWD" "$HEAD_COMMIT" "$ASSIGN_REL" "$ASSIGN_SHA" "$STARTED" "$FINISHED" "$EXIT" "$ATTEMPTS" "$REPO_ROOT"
+python3 -I -B "$REPO_ROOT/tools/agents/run_meta.py" "$OUT" "$RUN_ID" "$ROLE" "$STAGE" "$TASK" "$SESSION_ID" "$MODEL" "$CWD" "$HEAD_COMMIT" "$ASSIGN_REL" "$ASSIGN_SHA" "$STARTED" "$FINISHED" "$EXIT" "$ATTEMPTS" "$REPO_ROOT"
 
 # Review roles: commit the run evidence and the reviewer-authored files immediately, so they are write-once in git
 # history from the moment the run ends (D-021). Implementer output is integrated by the orchestrator instead.
-CONFIG_CHANGED="$(python3 -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1])).get("external_config_changed", [])))' "$OUT/meta.json")"
+CONFIG_CHANGED="$(python3 -I -B -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1])).get("external_config_changed", [])))' "$OUT/meta.json")"
 if [[ -n "$CONFIG_CHANGED" ]]; then
   case "$ROLE" in
     domain-reviewer|code-security-reviewer|qa-verifier|release-auditor|transformation-analyst)
@@ -179,7 +188,7 @@ fi
 case "$ROLE" in
   domain-reviewer|code-security-reviewer|qa-verifier|release-auditor)
     LIST="$REPO_ROOT/.git/mth-commit-list-$RUN_ID"
-    python3 - "$OUT/meta.json" "$REPO_ROOT" "docs/delivery/runs/$STAGE/$RUN_ID" > "$LIST" <<'PY'
+    python3 -I -B - "$OUT/meta.json" "$REPO_ROOT" "docs/delivery/runs/$STAGE/$RUN_ID" > "$LIST" <<'PY'
 import json, os, sys
 meta = json.load(open(sys.argv[1]))
 root, run_dir = sys.argv[2], sys.argv[3]
@@ -195,7 +204,7 @@ PY
       msg="$("${G[@]}" commit -q --no-verify -m "run: $RUN_ID (review evidence, auto-committed by run-agent.sh)" \
         --pathspec-from-file="$LIST" --pathspec-file-nul 2>&1)" && {
         # The commit must contain exactly the run directory and the tool-authored files (F-DG0-138).
-        python3 - "$REPO_ROOT" "$LIST" <<'PY' || exit 72
+        python3 -I -B - "$REPO_ROOT" "$LIST" <<'PY' || exit 72
 import subprocess, sys
 root, lst = sys.argv[1], sys.argv[2]
 expected = [p for p in open(lst, encoding="utf-8").read().split("\0") if p]

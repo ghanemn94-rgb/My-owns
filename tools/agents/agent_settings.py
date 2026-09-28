@@ -7,7 +7,8 @@ The settings combine:
     cannot write gate rules, agent tooling, sources, delivery records, git metadata or Claude configuration.
 
 Sandbox facts verified in this environment (docs/delivery/decisions.md D-025):
-  - By default a sandboxed command may write only its working directory and /tmp; HOME and /etc are read-only.
+  - By default a sandboxed command may write only its working directory and $TMPDIR (Claude Code sets it, e.g.
+    /tmp/claude-0); /tmp itself, HOME and /etc are read-only.
   - denyWrite wins over allowWrite, and may name paths that do not exist yet.
   - enableWeakerNestedSandbox is required in this container (no unprivileged user namespaces).
   - Sandboxed commands have no network access here.

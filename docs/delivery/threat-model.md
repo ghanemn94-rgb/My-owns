@@ -1,6 +1,6 @@
 # Threat model for the delivery controls (DG0–DG7)
 
-This document scopes what the delivery tooling defends mechanically, what it only detects, and what remains a disclosed residual. It concerns the software delivery gates, not the product. Reviewers judge findings about the delivery tooling against this model. A finding outside it still gets recorded, and it can lead to a revision of this document (decisions D-016 to D-025).
+This document scopes what the delivery tooling defends mechanically, what it only detects, and what remains a disclosed residual. It concerns the software delivery gates, not the product. Reviewers judge findings about the delivery tooling against this model. A finding outside it still gets recorded, and it can lead to a revision of this document (decisions D-016 to D-026).
 
 It was written after round 11 of DG0 as the root-cause response required by master prompt §0.4. From round 6 onward, each review round found a new gap in the controls compensating for the unguarded agent shell. Rather than keep patching around the shell, D-025 moved the shell into an OS sandbox, and this model bounds the rest.
 
@@ -8,7 +8,7 @@ It was written after round 11 of DG0 as the root-cause response required by mast
 
 | Actor | Trusted for | Not trusted for |
 |---|---|---|
-| **Delivery orchestrator** (the main session) | Planning, integrating, freezing candidates, importing reviewer sidecars into `findings.json`, running the pre-freeze checks | Recording review verdicts, closing or accepting findings (only reviewer sidecars can), editing reviewer artefacts after the fact (write-once) |
+| **Delivery orchestrator** (the main session) | Planning, integrating, freezing candidates, importing reviewer sidecars into `findings.json`, running the pre-freeze checks | Recording review verdicts, closing or accepting findings (only reviewer sidecars can), editing reviewer artefacts after the fact (write-once), executing agent-writable code outside a sandbox (D-026) |
 | **Implementer agents** (analyst, architect, frontend, backend, kpi-benefits, devops) | Changing product and analysis files within their role scope | Changing gate rules, agent tooling, sources, delivery records, git metadata or Claude configuration |
 | **Reviewer agents** (domain, code-security, QA, release auditor) | Producing their own records, sidecars and test evidence | Changing anything else in the repository |
 | **Environment operator** (root in the container, the Claude Code platform) | Everything | — (out of scope) |
@@ -26,6 +26,8 @@ It was written after round 11 of DG0 as the root-cause response required by mast
 |---|---|
 | An agent writes a protected path with a **file tool** | Write guard hook (`tools/agents/guard-write.mjs`, D-009, D-020, D-023, D-024). It uses a fixed root, covers worktrees, follows symlinks, folds case, fails closed, and treats only the temp directory as scratch (never home). |
 | An agent writes a protected path with the **shell** | OS Bash sandbox (bubblewrap) generated per run by `tools/agents/agent_settings.py` (D-025). It has `failIfUnavailable` and no unsandboxed escape. The deny list covers git metadata, Claude configuration, ignore and attribute files, tooling, sources and delivery records in the repository and every worktree. Reviewers and the analyst are confined to their own areas. Home and `/etc` are read-only by default. |
+| The orchestrator runs **agent-planted code with its own privileges** (a module or bytecode file in the working tree that an unsandboxed interpreter imports) | D-026. The runner's Python helpers run as `python3 -I -B` from `/`, and its Node helpers import only built-ins and protected `tools/` files. The pre-freeze runs every check that executes candidate code through `tools/gates/sandbox-run.sh`: a fresh clone of the committed revision (no ignored or untracked files) under bubblewrap, with a read-only root, private `/tmp`, no network and a clean environment. Only protected `tools/gates` code runs outside the sandbox. |
+| A sandbox configuration that protects **some other directory** | The validator requires the deny list to name the protected paths under the run's own working directory (F-DG0-230). |
 | User or local settings switch the guard off (`disableAllHooks`) | Agents start with `--setting-sources project` only. Project settings live under `.claude`, which neither file tools nor the shell can write. |
 | Git hooks run during the evidence auto-commit | The auto-commit runs with `core.hooksPath=/dev/null` and `--no-verify`, and checks that it committed exactly the run directory plus the tool-authored files (F-DG0-138). |
 | Reviewer artefacts edited after the run | Output binding to transcript replay, plus write-once history (single blob, no modify, type-change or delete events, no back-dating, working tree equal to history) (D-021). |
@@ -36,7 +38,7 @@ It was written after round 11 of DG0 as the root-cause response required by mast
 
 | Threat | Detection |
 |---|---|
-| A process outside the sandbox changes configuration: user Claude settings, git config and excludes, hooks including symlinks, or Claude configuration and ignore files anywhere in the repository and worktrees, whether or not git ignores them | The runner's before-and-after `config_snapshot`. A review or analyst run is refused (exit 71, no auto-commit). For an implementer run it prints a warning for the orchestrator (D-024, D-025). |
+| A process outside the sandbox changes configuration: user Claude settings, git config and excludes, hooks including symlinks, or Claude configuration and ignore files anywhere in the repository and worktrees, whether or not git ignores them | The runner's before-and-after `config_snapshot`. A review or analyst run is refused (exit 71, no auto-commit). For an implementer run it prints a warning for the orchestrator (D-024, D-025). Zero-length, untracked, non-symlink files are ignored, because they are the sandbox's own stubs and carry no configuration (D-026). |
 | New untracked files where the sandbox leaves the working directory writable | `git status` and the runner's snapshots. For implementers these are ordinary product changes, reviewed at the gate. |
 
 ## Disclosed residuals (out of scope for mechanical defence)

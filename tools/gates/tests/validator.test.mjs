@@ -83,7 +83,7 @@ function makeRun(repo, role, { assignment, startedAt = T_RUN, task = "T-REV", st
   put(repo, `${base}/transcript.jsonl.gz`, transcript);
   put(repo, `${base}/result.json`, result);
   const settings = Buffer.from(JSON.stringify({ sandbox: { enabled: true, failIfUnavailable: true, allowUnsandboxedCommands: false,
-    filesystem: { denyWrite: [".git", ".claude", "tools/gates", "tools/agents", "docs/delivery/reviews", "docs/delivery/runs"].map((x) => `${RUN_CWD}/${x}`) } } }));
+    filesystem: { denyWrite: [".git", ".claude", "tools/gates", "tools/agents", "docs/source", "docs/delivery/reviews", "docs/delivery/runs"].map((x) => `${RUN_CWD}/${x}`) } } }));
   put(repo, `${base}/settings.json`, settings);
   const invocation_reference = { kind: "claude-code-cli-session", run_id, session_id };
   put(repo, `${base}/meta.json`, {
@@ -896,5 +896,16 @@ test("D-025: gate records must come from Bash-sandboxed runs", () => {
   edit(b.repo, `docs/delivery/runs/DG0/${refB.run_id}/meta.json`, (m) => (m.settings_sha256 = sha(weak)));
   const errs = validateGate(b.repo, "DG0");
   expectError(errs, /Bash sandbox was not enforced/);
-  expectError(errs, /does not deny writes to tools\/gates/);
+  expectError(errs, /does not deny writes to .*\/tools\/gates/);
+});
+
+test("F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory", () => {
+  const { repo, records } = buildValidRepo();
+  const ref = get(repo, records["qa-verifier"]).invocation_reference;
+  const rel = `docs/delivery/runs/DG0/${ref.run_id}/settings.json`;
+  const elsewhere = Buffer.from(JSON.stringify({ sandbox: { enabled: true, failIfUnavailable: true, allowUnsandboxedCommands: false,
+    filesystem: { denyWrite: [".git", ".claude", "tools/gates", "tools/agents", "docs/source", "docs/delivery/reviews", "docs/delivery/runs"].map((x) => `/somewhere/else/${x}`) } } }));
+  put(repo, rel, elsewhere);
+  edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (m) => (m.settings_sha256 = sha(elsewhere)));
+  expectError(validateGate(repo, "DG0"), /does not deny writes to \/work\/repo\/tools\/gates/);
 });
