@@ -4386,7 +4386,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T18:55:00Z",
@@ -4402,10 +4402,15 @@
           "at": "2026-09-28T22:30:00Z",
           "status": "OPEN",
           "note": "verified by qa-verifier round 13: FAIL"
+        },
+        {
+          "at": "2026-09-28T22:32:40Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at cf13cb12e810ee0205567d20d02df79bbd5f475b"
         }
       ],
-      "fix_revision": "1a8658299a8f37e431a4dd93d25079cb64d67e61",
-      "fix_summary": "agent-protocol.md now says git clone <repo> \"$TMPDIR/<name>\" and that /tmp is read-only in the sandbox; agent_settings.py docstring and D-025 corrected to $TMPDIR; run-agent.sh comment now says --setting-sources project; agents.md no longer says Bash writes are unguarded (D-025 sandbox).",
+      "fix_revision": "cf13cb12e810ee0205567d20d02df79bbd5f475b",
+      "fix_summary": "agents.md now says --setting-sources project (D-025) and that removals are reported; the three reviewer definitions now say git clone <repo> \"$TMPDIR/review-<id>\" (worktree add is denied, /tmp is read-only); agent-protocol.md no longer offers a worktree as the disposable copy; D-024's historical 'project,local' is marked superseded by D-025.",
       "verification": {
         "by_role": "qa-verifier",
         "invocation_reference": {
@@ -4493,14 +4498,21 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-13/domain-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T22:00:00Z",
           "status": "OPEN",
           "note": "raised by domain-reviewer in DG0 round 13 (Low; acceptable as an observation)"
+        },
+        {
+          "at": "2026-09-28T22:32:40Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at cf13cb12e810ee0205567d20d02df79bbd5f475b"
         }
-      ]
+      ],
+      "fix_revision": "cf13cb12e810ee0205567d20d02df79bbd5f475b",
+      "fix_summary": "run-agent.sh compares the tab-separated before/after config snapshots and reports added, changed AND removed entries ('<path> removed'), so deleting a config file or truncating it to zero length (then skipped by the stub rule) is reported; a failing comparison counts as changed (fail closed). Test 'F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed' (fails on the old runner). D-027."
     },
     {
       "id": "F-DG0-141",
@@ -4523,14 +4535,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-13/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T22:03:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer in DG0 round 13; reproduced 3/3 in a disposable clone of the frozen candidate commit"
+        },
+        {
+          "at": "2026-09-28T22:32:40Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at cf13cb12e810ee0205567d20d02df79bbd5f475b"
         }
-      ]
+      ],
+      "fix_revision": "cf13cb12e810ee0205567d20d02df79bbd5f475b",
+      "fix_summary": "tools/gates/sandbox-run.sh: only 'git rev-parse' runs outside (against the repository's own protected .git); the clone, the checkout and the command all run inside bubblewrap on a tmpfs private to the sandbox's mount namespace, with the git directory bound read-only at /tmp/src.git. No work clone exists in /tmp or $TMPDIR. Your race repro against the fixed wrapper: no escape 3/3. Test 'F-DG0-141: the clone, checkout and command run inside the sandbox, in a work area no other process can see' (fails on the old script). D-027."
     },
     {
       "id": "F-DG0-142",
@@ -4579,14 +4598,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-13/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T22:25:00Z",
           "status": "OPEN",
           "note": "Raised in the DG0 round-13 QA review of candidate c3364ac2 (6c61f2e)."
+        },
+        {
+          "at": "2026-09-28T22:32:40Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at cf13cb12e810ee0205567d20d02df79bbd5f475b"
         }
-      ]
+      ],
+      "fix_revision": "cf13cb12e810ee0205567d20d02df79bbd5f475b",
+      "fix_summary": "rules.mjs checkInvocation: meta.cwd must equal the transcript's CLI init cwd and the working directory named in the replayed runner prompt ('Your working directory is <cwd>.'), so the F-DG0-230 deny-list check rests on transcript-bound data. All 60 recorded runs satisfy the init check. Test 'F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the replayed prompt)' covers tampered meta, init and prompt (fails on the old validator). D-027."
     },
     {
       "id": "F-DG0-234",
@@ -4609,14 +4635,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-13/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T22:25:00Z",
           "status": "OPEN",
           "note": "Raised in the DG0 round-13 QA review of candidate c3364ac2 (6c61f2e)."
+        },
+        {
+          "at": "2026-09-28T22:32:40Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at cf13cb12e810ee0205567d20d02df79bbd5f475b"
         }
-      ]
+      ],
+      "fix_revision": "cf13cb12e810ee0205567d20d02df79bbd5f475b",
+      "fix_summary": "Same fix as F-DG0-012: removals are reported, including ignored files such as .claude/settings.local.json deleted or truncated to zero length (the test plants an ignored .claude/settings.local.json and a nested .gitignore). D-027."
     }
   ]
 }
