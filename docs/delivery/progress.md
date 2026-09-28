@@ -4,8 +4,8 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 
 ## Current checkpoint
 
-- **Active stage:** P0 / DG0. The round-13 findings are repaired (D-027, AN-13); round 14 is next.
-- **Round-13 candidate:** `sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79` (commit `6c61f2e`)
+- **Active stage:** P0 / DG0, state **REVIEWING** (round 15 in progress). **Blocked on a user decision for F-DG0-145; see below.**
+- **Round-15 candidate:** `sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e` (commit `7fab49c`)
 
 **Review history**
 
@@ -24,22 +24,23 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 | 11 | PASS | FAIL | FAIL | 6 (137 High, 226: shell bypasses of the guard). Led to the §0.4 root-cause response: D-025 (OS Bash sandbox) and `threat-model.md` |
 | 12 | (orphaned: stub false positive; run PASS) | FAIL | FAIL (run exit 1; does not bind) | 5: 140 Critical (runner imports planted modules), 229 Medium, 230/231/232 Low |
 | 13 | PASS | FAIL | FAIL (Low only) | 5: 141 High (sandbox wrapper cloned into agent-writable `$TMPDIR`), 012/142/233/234 Low; 231 reopened |
+| 14 | PASS | FAIL | PASS (Low) | 3: 143/144 Medium (guard fail-open via /proc; shared $TMPDIR, demonstrated by an unintended cross-agent incident), 235 Low |
+| 15 | PASS | FAIL | (running) | 145 High (guard check-then-use: symlink swap between hook check and Write), 146 Low (sandbox stubs perturb working-tree candidate; fails closed) |
 
-- **Findings:** 68 closed and verified, 7 fixed and pending verification (F-DG0-012, 141, 142, 231, 233, 234; F-DG0-140 closed in round 13).
-- **Round-13 repairs (D-027):**
-  - `sandbox-run.sh` does the clone, the checkout and the command inside bubblewrap on a private tmpfs.
-  - The config scan reports removals.
-  - `meta.cwd` is bound to the transcript.
-  - Dependency installation is sandboxed (REQ-DLV-042, DG1).
-  - Stale text is removed.
-- **Orchestrator practice change:** helper scripts and logs live in a root-only directory, never in the agent-writable `/tmp` or `$TMPDIR`.
-- **Record correction:** the DG0 state-history timestamps for rounds 1–12 had been estimates, and several contradicted git. They were corrected from evidence (freeze times, reviewer run finish times), with the old values kept in each note. The missing round-12/13 transitions were added retrospectively and are labelled as such.
-- **Next:**
-  1. Run the pre-freeze, then freeze round 14.
-  2. Run the live probe (the runner changed).
-  3. Run the three reviews: domain verifies 012; code-security verifies 141/142; QA verifies 231/233/234.
-  4. If all PASS: VERIFYING, release audit, full and historical validation, APPROVE DG0.
-  5. Then P1.
+- **Open blocker: F-DG0-145 (High, mandatory).**
+  - **The finding.** The file-tool write guard is a PreToolUse check, and Claude Code's Write tool runs unsandboxed. An agent's own sandboxed shell can swap a symlink between the check and the write. Code-security showed this live once in 11 attempts, and 236 of 600 times offline.
+  - **Planned fix: run the whole agent process inside an outer bubblewrap.** Its writable areas would be the role's scope, the run's private `TMPDIR` and the CLI's session store, so the kernel refuses forbidden writes whichever tool makes them.
+  - **Experiment 1.** The CLI and its Write tool work under such a sandbox with a read-only home. Bash needs the environment's process cgroup to be writable.
+  - **Experiment 2 (the follow-up) was refused by the session's auto-mode classifier**, as credential-related. It is not retried in any form.
+  - **Options for the user:**
+    1. Allow that experiment, so the outer-sandbox fix can be built and tested.
+    2. Choose a detection-based alternative: post-run integrity checks of protected paths, and re-scoping F-DG0-145's control in the threat model from "prevented" to "detected". The reviewers would then judge it against the revised model.
+    3. Another approach.
+- **Also pending:**
+  - F-DG0-146 (Low; fails closed).
+  - The QA round-15 result.
+  - An orchestrator-observed latent issue: a sandbox stub at `test-evidence/<stage>/audit` could block a reviewer's first `mkdir` in a new stage. Fix: the runner pre-creates the four evidence directories.
+- **Findings:** 77 closed and verified after round 15's code-security and domain verifications. F-DG0-145 and 146 are open, and F-DG0-235 awaits QA.
 
 ## Done in P0 so far
 
