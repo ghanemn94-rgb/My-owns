@@ -1,0 +1,88 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-226",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "D-024 detection gap: a shell-planted .claude/settings.local.json with disableAllHooks switches the write guard off for later runs (loaded via --setting-sources project,local), and hiding it with .git/info/exclude, or planting it in a worktree working directory, leaves no trace in the run evidence",
+      "reproduction": "1) Live, real CLI 2.1.283 in a disposable clone of candidate 7e99163, with the runner's own flags (MTH_GUARD_ROOT=<clone>; claude -p --settings <clone>/tools/agents/settings/qa-verifier.settings.json --setting-sources project,local): asked to Write <clone>/docs/source/QA11-LIVE-*.txt. Control run: 'BLOCKED by write guard ... (protected path)', no file. With <clone>/.claude/settings.local.json = {\"disableAllHooks\": true}, no guard hook runs, and 'File created successfully' writes the protected docs/source file (docs/delivery/test-evidence/DG0/qa/round-11/05-live-local-settings-disable-guard.log). 2) Runner end to end (run-agent.sh from the candidate, stub `claude` on PATH doing what an agent's unguarded Bash could do), in docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r11.test.mjs: QA11-R4 (control), a plain shell write of .claude/settings.local.json, shows in meta.outputs and in git status. QA11-R5: `echo .claude/settings.local.json >> .git/info/exclude` and then the same write gives runner exit 0, external_config_changed [], the file absent from meta.outputs, and `git status` empty. QA11-R6: the same file written into the agent's worktree --cwd gives runner exit 0, external_config_changed [] and nothing in meta.outputs; only that worktree's own git status shows it. config_snapshot() (run-agent.sh) covers ~/.claude/settings*.json, git config files, managed settings, .git/config, .git/info/attributes and .git/hooks, but not .git/info/exclude and not in-repository or worktree Claude local configuration. snapshot() uses `git ls-files --exclude-standard`, so .git/info/exclude blinds it.",
+      "expected": "D-024 and docs/delivery/agents.md say the runner starts agents with --setting-sources project,local so settings can't switch the guard off, that project and local settings are protected in-repository paths, and that the runner detects configuration changes outside the candidate (exit 71; validator rejects the run). A loaded configuration surface that can disable the guard should therefore be either (a) not loaded, e.g. `--setting-sources project`, since project settings are tracked so tampering shows in git status, or (b) covered by the tamper detection: snapshot <REPO_ROOT>/.claude/settings.local.json, CLAUDE.local.md and .mcp.json, the same files under the run's --cwd and every worktree, and .git/info/exclude, including ignored files for these paths, so exit 71 fires. Add a runner-level regression test like QA11-R5/R6.",
+      "actual": "Under the runner's exact flags, the guard can be disabled persistently for all subsequent agent runs (any role) by one Bash command in an earlier run. With the .git/info/exclude variant, or when planted in a worktree working directory, this leaves no trace in meta.json (outputs, external_config_changed), the runner exits 0 and auto-commits, and the main repository's `git status` is clean. The remaining control is the auditor's transcript review, where the Bash command would be visible. The Write/Edit enforcement itself is intact, and 'Bash is not path-guarded' is a disclosed residual (D-009/D-020/D-024). That's why I rate this Medium and non-mandatory rather than High: the defect is that D-024's detection claim does not cover the one loaded surface that defeats the guard. Scope note: my live check used --permission-mode acceptEdits and the haiku model to keep it cheap. Hook execution happens before permission evaluation and doesn't depend on the model, but I did not repeat it under --permission-mode auto.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-11/05-live-local-settings-disable-guard.log",
+        "docs/delivery/test-evidence/DG0/qa/round-11/04-qa11-new-cases.log#QA11-R5",
+        "docs/delivery/test-evidence/DG0/qa/round-11/04-qa11-new-cases.log#QA11-R6",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r11.test.mjs#QA11-R5",
+        "tools/agents/run-agent.sh#config_snapshot",
+        "docs/delivery/decisions.md#D-024",
+        "docs/delivery/agents.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-11/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:06:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-11 QA review of candidate 1a73d6f0 (7e99163)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-227",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-026",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "test_run_meta.py defines the D-024 ExternalConfigTest after its `if __name__ == \"__main__\": unittest.main()` block, so running the file directly silently skips the new tests",
+      "reproduction": "In a clone of 7e99163: `python3 tools/agents/tests/test_run_meta.py -v` prints 'Ran 5 tests ... OK', and neither test_external_config_changes_are_recorded nor test_no_change_records_an_empty_list runs. `python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'`, the form used by tools/gates/prefreeze.sh:19 and .github/workflows/delivery-gates.yml:31, runs 12 tests including both. ExternalConfigTest also subclasses RunMetaTest, so the 5 base tests run twice. See docs/delivery/test-evidence/DG0/qa/round-11/07-run-meta-test-invocation.log.",
+      "expected": "New test classes sit above the __main__ guard, and don't inherit and re-run the base cases, so every invocation form runs the same tests.",
+      "actual": "Script mode reports OK while skipping the D-024 tests. The official gate paths (prefreeze, CI) are unaffected; I confirmed both new tests pass there. Low and non-mandatory; I'd accept it as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-11/07-run-meta-test-invocation.log",
+        "tools/agents/tests/test_run_meta.py#ExternalConfigTest"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-11/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:06:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-11 QA review of candidate 1a73d6f0 (7e99163)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-228",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-026",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The orchestrator live-probe evidence names source commits (57d23de, 0593fd7) that are unreachable wip commits, kept only in the local reflog",
+      "reproduction": "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T174617Z/probe.log says 'source commit: 0593fd79fa244e6279f5c5c064c830fa4f9617fe', and the FAIL run says 57d23ded0b70…. `git for-each-ref --contains <c>` returns no refs for either. They appear only in `git reflog` ('wip: round-10 repairs', 'wip: home never scratch'), so a clone over the network, or the repository after gc, can't resolve them. Also, the committed probe.log's block list was produced by the pre-candidate grep pattern (it shows backtick-suffixed duplicates the candidate's probe-guard-live.sh would not print). See docs/delivery/test-evidence/DG0/qa/round-11/06-f225-verification.log.",
+      "expected": "Live-probe evidence names a commit that is in the published history, ideally the candidate commit. Otherwise, the README records that the probed guard is byte-identical to the candidate's.",
+      "actual": "While the objects still exist, I verified that `git diff 0593fd79 7e99163 -- tools/agents/guard-write.mjs tools/agents/write-scopes.json tools/agents/settings tools/agents/run-agent.sh` is empty, so the PASS probe exercised exactly the candidate's guard. The evidence files are hash-consistent with their meta.json. Traceability only; Low and non-mandatory. I'd accept it as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-11/06-f225-verification.log",
+        "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T174617Z/probe.log",
+        "docs/delivery/test-evidence/DG0/orchestrator-probes/README.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-11/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:06:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-11 QA review of candidate 1a73d6f0 (7e99163)."
+        }
+      ]
+    }
+  ]
+}

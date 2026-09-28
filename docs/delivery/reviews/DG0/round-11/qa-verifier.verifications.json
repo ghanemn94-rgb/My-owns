@@ -1,0 +1,19 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-225",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on the round-10 candidate 85a0efa: D-023 says 'Verified live: a backend-workflow-engineer run in a worktree had all three writes blocked ...', and `git ls-tree -r --name-only 85a0efa | grep -c orchestrator-probes` is 0, so no evidence exists. On the new candidate 7e99163 (1a73d6f0): D-023 no longer claims an unrecorded verification. It says the first live check's evidence was not preserved (citing F-DG0-225) and points to the reproducible probe tools/agents/probe-guard-live.sh. Its evidence is committed in docs/delivery/test-evidence/DG0/orchestrator-probes/: a README plus two runs, the disclosed FAIL and the PASS rerun, each with probe.log, meta.json, result.json and transcript.jsonl.gz. I recomputed both transcript and result SHA-256 values; they match meta.json. The PASS transcript contains 5 distinct guard blocks: the main repository's tools/gates and docs/source, a relative tools/gates path in the worktree, HOME/.claude/settings.json and HOME/.gitconfig, all 'BLOCKED by write guard'. The guard code that the PASS probe ran (source commit 0593fd79) is byte-identical to the candidate's (`git diff 0593fd79 7e99163 -- tools/agents/guard-write.mjs write-scopes.json settings run-agent.sh` is empty). I also re-verified the behaviour independently: QA11-G1..G5 pass against the candidate, and a live Write from this session to docs/source/QA-PROBE.txt was blocked. The fix is complete for what F-DG0-225 asked, so I close it. The residual, that the probe's source commits are reachable only through the reflog, is raised separately as Low F-DG0-228.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-11/06-f225-verification.log",
+        "docs/delivery/decisions.md#D-023",
+        "docs/delivery/test-evidence/DG0/orchestrator-probes/README.md",
+        "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T174617Z/probe.log",
+        "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T174617Z/meta.json",
+        "docs/delivery/test-evidence/DG0/qa/round-11/04-qa11-new-cases.log",
+        "docs/delivery/test-evidence/DG0/qa/round-11/12-live-guard-probe.log"
+      ]
+    }
+  ]
+}
