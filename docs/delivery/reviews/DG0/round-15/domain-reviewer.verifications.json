@@ -1,0 +1,17 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-012",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Round-15 re-verification, as the round-15 assignment requires after the round-14 scratch incident and the D-028 runner change. I did the whole re-verification again from scratch in my own private $TMPDIR, reusing none of the round-14 results. The probe (06-f012-verification.sh) extracts entry(), config_snapshot() and the comparison step verbatim from tools/agents/run-agent.sh at each commit. It runs them before and after a change in a disposable clone, with HOME redirected into $TMPDIR.\n\nOld runner (6c61f2e, diff|grep '^>'): the original defect reproduces. D (non-empty untracked CLAUDE.local.md truncated to zero), E (the same file deleted), G (ignored .claude/settings.local.json deleted) and I (a deleted 'sub dir/CLAUDE.md') all report <nothing>.\n\nRound-15 candidate (7fab49c5, embedded Python comparator): D, E, G and I are each reported as '<path> removed'. B, C, F and H are still reported. The controls A (a new zero-length stub) and J (no change) report nothing. K (an unreadable pre-snapshot) yields 'config-diff-failed (fail closed)'.\n\nThe only runner change since round 14 is the D-028 private TMPDIR block. It adds the script's only trap (trap 'rm -rf $RUN_TMP' EXIT), and the pre/post config scans run sequentially rather than from a trap, so the change does not interfere with the scan. runner.test.mjs passes 5/5 in the clone, including 'F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed'. The fix remains complete and correct.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-15/06-f012-verification.sh",
+        "docs/delivery/test-evidence/DG0/domain/round-15/06-f012-verification.log",
+        "docs/delivery/test-evidence/DG0/domain/round-15/07c-runner-tests.log",
+        "tools/agents/run-agent.sh#L175-L194",
+        "docs/delivery/requirements.csv#REQ-DLV-007"
+      ]
+    }
+  ]
+}

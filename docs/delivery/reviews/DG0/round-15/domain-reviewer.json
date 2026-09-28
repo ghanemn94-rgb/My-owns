@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 15,
+  "candidate_id": "sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e",
+  "source_commit": "7fab49c5c6764721bbe2982aa621a34ea31cfdea",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-DOM-R15-domain-reviewer-20260928T232527Z-79779ed1",
+    "session_id": "79779ed1-e5c6-4aef-b9bd-d6b14a994e1b"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (domain-reviewer) wrote no implementation in the reviewed scope.\n- transformation-analyst wrote the analysis, register, coverage files, glossary, field inventory, journeys, permissions matrix, acceptance map and stage plan.\n- delivery-orchestrator wrote the agent definitions, runner, write guard, gate tooling, extraction scripts and delivery records.\n\nI formed this verdict without reading any other round-15 review record. I wrote only review evidence under docs/delivery/test-evidence/DG0/domain/round-15/, plus this record and its verification sidecar. I executed code only in disposable clones under my private $TMPDIR."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-15/review-domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-003", "REQ-PB-004", "REQ-PB-005", "REQ-PB-006", "REQ-PB-007", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010",
+    "REQ-PB-011", "REQ-PB-012", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-019", "REQ-PB-020",
+    "REQ-PB-021", "REQ-PB-022", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025", "REQ-PB-026", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029", "REQ-PB-030",
+    "REQ-PB-031", "REQ-PB-032", "REQ-PB-033", "REQ-PB-034", "REQ-PB-035", "REQ-PB-036", "REQ-PB-037", "REQ-PB-038", "REQ-PB-039", "REQ-PB-040",
+    "REQ-PB-041", "REQ-PB-042", "REQ-PB-043", "REQ-PB-044", "REQ-PB-045", "REQ-PB-046", "REQ-PB-047", "REQ-PB-048", "REQ-PB-049", "REQ-PB-050",
+    "REQ-PB-051", "REQ-PB-052", "REQ-PB-053", "REQ-PB-054", "REQ-PB-055", "REQ-PB-056", "REQ-PB-057", "REQ-PB-058", "REQ-PB-059", "REQ-PB-060",
+    "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068", "REQ-PB-069", "REQ-PB-070",
+    "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-077", "REQ-PB-078", "REQ-PB-079", "REQ-PB-080",
+    "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090",
+    "REQ-PB-091", "REQ-PB-092", "REQ-PB-093",
+    "REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-007", "REQ-DLV-020", "REQ-DLV-032"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM15-00-candidate",
+      "procedure": "Confirm the frozen candidate:\n1. Record the main-repository HEAD.\n2. Clone the repository into $TMPDIR, check out the candidate commit and recompute the candidate ID.\n3. List every path changed after the freeze that is not delivery metadata.",
+      "command": "git rev-parse HEAD; git clone -q /home/user/My-owns $TMPDIR/review-dom15 && git checkout -q 7fab49c5 && node tools/gates/candidate.mjs --stage DG0; git diff --name-only 7fab49c5..HEAD | grep -v -E '^docs/delivery/(assignments|candidates|stages.json|test-evidence|runs)'",
+      "environment": "Claude Code Bash sandbox (bubblewrap, no network), node, disposable clone $TMPDIR/review-dom15",
+      "expected": "The candidate ID recomputes to sha256:b7f60ed3…abddb5e. Any post-freeze commits touch only the delivery metadata that D-005 excludes.",
+      "actual": "The main-repository HEAD is 2c24f2e. The two commits after the freeze (c17b84e: round-15 freeze and assignments; 2c24f2e: live guard probe evidence) touch only D-005 metadata, and the grep prints nothing. candidate.mjs prints sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e in both the working tree and the clone at 7fab49c5. review-common.md explicitly allows this metadata-only case. Every check below ran against the clone at 7fab49c5.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-15/00-candidate.log"]
+    },
+    {
+      "id": "DOM15-01-extraction",
+      "procedure": "Independent extraction fidelity check. Unzip the docx into $TMPDIR and walk word/document.xml and footer*.xml with my own regex tokenizer (w:t, w:tab, w:br), without python-docx or the project's extraction scripts. Normalise the text, then check that every paragraph appears in playbook.md in order and that every table cell and footer paragraph is present.",
+      "command": "unzip -q docs/source/Business_Transformation_Playbook.docx -d $TMPDIR/docx; python3 docs/delivery/test-evidence/DG0/domain/round-15/01-extraction.py $TMPDIR/docx docs/source/playbook.md",
+      "environment": "Disposable clone at 7fab49c5; python3; unzip",
+      "expected": "The docx SHA-256 is 2584a352…548ad2. No paragraph is missing or out of order, and no table cell or footer paragraph is missing.",
+      "actual": "sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2. paragraphs=1001 missing=0 out_of_order=0; tables=49 rows=239 cells=885 cells_missing=0; footer_paras=1 footer_missing=0. prefreeze also re-ran the project's own sandboxed extraction reproducibility check, which reported PASS (DOM15-08).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-15/01-extraction.py", "docs/delivery/test-evidence/DG0/domain/round-15/01-extraction.log"]
+    },
+    {
+      "id": "DOM15-02-source-coverage",
+      "procedure": "Source coverage integrity and rationale truth:\n- every B0001–B0165 block has exactly one disposition;\n- every REQUIREMENT block maps to existing rows that cite it;\n- every SOURCE row cites at least one block.\nThen I read each CONTEXT/NON-REQUIREMENT block text next to its rationale by hand.",
+      "command": "python3 docs/delivery/test-evidence/DG0/domain/round-15/02b-source-coverage.py",
+      "environment": "Disposable clone at 7fab49c5; python3",
+      "expected": "165/165 blocks covered with no duplicates or dangling IDs, every REQUIREMENT block cited, and every non-requirement rationale true.",
+      "actual": "165 coverage rows: 129 REQUIREMENT, 29 CONTEXT, 7 NON-REQUIREMENT. Nothing is missing, extra or duplicated, and there are 0 dangling IDs and 0 'does not cite' lines. All 93 SOURCE rows cite B blocks, and all 129 REQUIREMENT blocks are cited by the register.\n\nManual reading: the 29 CONTEXT rows are headings or labels (PHASE n, TEMPLATE, section titles), each pointing to the requirement that covers the substance. The 7 NON-REQUIREMENT rows are the cover title, strapline, cover figures, version stamp, the reference-list heading, the reference URLs and the 'How to extend' Excel/PowerPoint advice. All rationales are true. No dropped substance was found (see also DOM15-03 and DOM15-04).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-15/02b-source-coverage.py", "docs/delivery/test-evidence/DG0/domain/round-15/02b-source-coverage.log"]
+    },
+    {
+      "id": "DOM15-03-templates",
+      "procedure": "Check the T01–T16 columns and value lists verbatim. Every source column header (T05: every field row) must appear in the owning register row's input_fields and in field-inventory.md. The source value lists must appear in the register rows: H/M/L; Support/Neutral/Resist; the intervention list; Decision/Tech/Data/Vendor; Risk/Assumption/Issue/Dependency with R01/A01/I01/D01; A/R; the 25/25/20/15/15 weights with the 1-5 scale; the wave horizons; the T11 SLAs; the T10 area RAG logic; T14 R/A/G; the T16/T04 IDs and option lists. The wave entry/exit texts and the T11 role cells must appear in the field inventory.",
+      "command": "python3 docs/delivery/test-evidence/DG0/domain/round-15/03-templates.py",
+      "environment": "Disposable clone at 7fab49c5; python3",
+      "expected": "0 missing columns and 0 missing values.",
+      "actual": "All 16 templates have missing_in_register=[] and missing_in_field_inventory=[]. All value-list probes report missing=[]. All wave entry/exit and T11 role strings are OK. problems 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-026", "REQ-PB-034", "REQ-PB-039", "REQ-PB-043", "REQ-PB-045", "REQ-PB-047", "REQ-PB-048", "REQ-PB-050", "REQ-PB-051", "REQ-PB-052", "REQ-PB-056", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-067", "REQ-PB-070", "REQ-PB-075", "REQ-PB-079", "REQ-PB-081"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-15/03-templates.py", "docs/delivery/test-evidence/DG0/domain/round-15/03-templates.log"]
+    },
+    {
+      "id": "DOM15-04-deliverables",
+      "procedure": "First-class deliverables. Every source cell or line of the following blocks must appear verbatim in field-inventory.md:\n- modes B0009, roles B0018, phases B0021, gates B0023;\n- charter B0035 (14 fields), thesis B0037, scope checks B0039-43, outcome hierarchy B0048;\n- TOM B0056, canvas B0062, workshop B0063;\n- business case B0085, OS layers B0093, benefits lifecycle B0121, adoption B0109-115;\n- 90-day B0134, Day-90 B0136-141, health check B0150, bands B0152;\n- roaming B0145/B0147, T11 B0099, RACI B0101.\n\nThe automated misses are then resolved manually: dimension names cell by cell, thesis segments by regex grep, and the workshop record lines.",
+      "command": "python3 docs/delivery/test-evidence/DG0/domain/round-15/04-deliverables.py; manual grep and python resolution recorded in 04b-manual-resolution.log",
+      "environment": "Disposable clone at 7fab49c5; python3; grep",
+      "expected": "Every item is present. Any automated miss must be a formatting artefact (the source 'N. Name' is rendered as a '| N | Name' table cell, escaped brackets, <br> joins), not missing substance.",
+      "actual": "The automated script exits 1 with 16 misses. All of them are formatting artefacts, identical to the round-14 set:\n- field-inventory.md is unchanged since the round-14 candidate.\n- Manual resolution: all ten TOM dimension names (1. Customer & Value Proposition … 7. Technology, 8. Data & Analytics, 9. Partners & Sourcing, 10. Performance Management) and all ten prompts are present verbatim.\n- All four thesis segments are present (regex grep count 1 each; my first -F grep had searched a literal backslash, and the log records the correction).\n- The North Star example, the canvas PERFORMANCE box, '90-120', the workshop record (L358-366, B0063, REQ-PB-042), 'Top 3 actions' and '____ / 25' are all present.\n- 'Fill-in' is the B0035 column header, not a field.\n\nEvery other group has 0 missing: charter 14 fields, 5 scope checks, business case 10 sections, 5 OS layers, lifecycle, 7 adoption indicators, 90-day plan, Day-90 six questions, 25 questions, 4 bands, roaming example and trace rows, modes, 6 phases, G1–G6 questions and evidence, and the minimum roles.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-PB-003", "REQ-PB-011", "REQ-PB-014", "REQ-PB-015", "REQ-PB-029", "REQ-PB-030", "REQ-PB-031", "REQ-PB-032", "REQ-PB-038", "REQ-PB-041", "REQ-PB-042", "REQ-PB-053", "REQ-PB-060", "REQ-PB-071", "REQ-PB-074", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-090", "REQ-PB-091", "REQ-PB-092"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-15/04-deliverables.py", "docs/delivery/test-evidence/DG0/domain/round-15/04-deliverables.log", "docs/delivery/test-evidence/DG0/domain/round-15/04b-manual-resolution.log"]
+    },
+    {
+      "id": "DOM15-05-analyst-checks",
+      "procedure": "Run the analyst's own consistency checks in the clone:\n- the acceptance map against the register, both directions (new in AN-14, F-DG0-235);\n- README and stage-plan counts;\n- REQ-PB provenance labelling;\n- test-title references.",
+      "command": "python3 docs/analysis/tools/check_acceptance_map.py; python3 docs/analysis/tools/check_counts.py; python3 docs/analysis/tools/check_pb_provenance.py; python3 docs/analysis/tools/check_test_refs.py",
+      "environment": "Disposable clone at 7fab49c5; python3",
+      "expected": "All four checks exit 0.",
+      "actual": "All four checks exit 0:\n- 'ACCEPTANCE MAP MATCHES THE REGISTER' (28 scenarios, 412 rows);\n- 'STAGE-PLAN LISTS ALL MATCH' and 'README COUNTS ALL MATCH';\n- 93 REQ-PB rows with 0 problems;\n- 84 test-title citations with 0 problems.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-15/05-analyst-checks.log"]
+    },
+    {
+      "id": "DOM15-06-f012-reverification",
+      "procedure": "Re-verify F-DG0-012 from scratch, as the round-15 assignment requires after the round-14 incident. In disposable clones of the old runner (6c61f2e) and the round-15 candidate (7fab49c5), extract entry(), config_snapshot() and each commit's own comparator verbatim from run-agent.sh. Snapshot before and after 11 cases (A–K), with HOME redirected into $TMPDIR. Also inspect the D-028 runner diff for interference with the config scan.",
+      "command": "bash docs/delivery/test-evidence/DG0/domain/round-15/06-f012-verification.sh; git diff 1e64eb02..7fab49c5 -- tools/agents/run-agent.sh; grep -n trap tools/agents/run-agent.sh",
+      "environment": "Private $TMPDIR clones; bash; python3; HOME=$TMPDIR/f012home",
+      "expected": "Old runner: D, E, G and I report nothing (the defect). New runner: D, E, G and I report '<path> removed'; B, C, F and H are still reported; A and J report nothing; K fails closed. The D-028 change does not affect the scan.",
+      "actual": "Old runner: D, E, G and I all report <nothing>, so the defect reproduces.\nNew runner: D, E, G and I each report '<path> removed'. B, C, F and H are reported, A and J report nothing, and K reports 'config-diff-failed (fail closed)'.\nThe D-028 diff adds the script's only trap (removing RUN_TMP on EXIT). The config scans run sequentially at L143 and L175, so there is no interference.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-15/06-f012-verification.sh", "docs/delivery/test-evidence/DG0/domain/round-15/06-f012-verification.log"]
+    },
+    {
+      "id": "DOM15-07-semantics-provenance",
+      "procedure": "Probe the register and analysis documents for:\n- the operating-logic semantics: RAG from the trajectory; four separate statuses; forecast never validated; Finance validation with owner accountability; count once; allocation ≤100% with unallocated shown; gates as explicit approvals tied to evidence snapshots; G6 never implies DG7;\n- provenance honesty: PMI/Brightline/BRM synthesis, custom extensions, #0078FF provisional, and no claim of official status;\n- SOURCE-row provenance labels and health-check interpretations;\n- glossary Arabic terms, journey coverage and permissions rules.\n\nEvery FAIL line is then resolved manually.",
+      "command": "python3 docs/delivery/test-evidence/DG0/domain/round-15/07-semantics-provenance.py; manual resolution script recorded in 07b-manual-resolution.log; grep -n 'T11|RACI' docs/analysis/permissions-matrix.md",
+      "environment": "Disposable clone at 7fab49c5; python3; grep",
+      "expected": "Each semantic rule is stated correctly in at least one register row with testable acceptance. Provenance is honest. Arabic terms are sensible business Arabic. The journeys cover all phases, gates and the named workflows. The permissions matrix follows B0018, T11 and T12 and states that technical admins are not approvers.",
+      "actual": "The script exits 1 with 11 flagged lines. My manual resolution shows every one is a probe artefact (wrong row ID or phrasing variant), not a defect:\n- Gates as approvals tied to evidence snapshots: REQ-S04-002 ('completing every phase task leaves the gate Draft; editing after submission does not change the snapshot'), plus REQ-PB-015 and REQ-S04-012/014.\n- Allocation: REQ-S08-013 ('60%+50% rejected; 60%+30% shows 10% unallocated').\n- Count once: REQ-PB-058 and REQ-S05-005.\n- Technical admins: REQ-S10-003 ('ADM-only user … gets 403'), and permissions-matrix rule 2 'Technical administrators are not business approvers'.\n- Finance validates, owner accountable: REQ-PB-013 (a Business Owner gets 403 on validate), REQ-S08-003 (accountable business owner plus Finance validator) and REQ-S07-014 (pending, not validated).\n- RAG from trajectory: REQ-S07-007 and REQ-PB-063 ('100% tasks complete but KPI below trajectory is Red/Amber'; missing data shows Unknown).\n- Four separate statuses: REQ-S03-003.\n- Forecast never validated: REQ-S08-001.\n- G6 never implies DG7: REQ-PB-021, REQ-DLV-002, REQ-S21-001 and others.\n- #0078FF: REQ-S15-003 only references the colour for a contrast rule, while REQ-S15-002 labels it provisional.\n- The two 'SUSPECT CLAIM' lines are honest disclaimers ('inspired by'; 'Nothing here is an official PMI standard').\n- REQ-PB-042, 058 and 069 separate source (B0063/B0088/B0105) from master-prompt additions (M0147/M0173/M0216) in prose, and check_pb_provenance passes.\n- T11 SLAs sit in REQ-PB-065/066 and the field inventory (DOM15-03), not in permission cells. The matrix maps T11 and T12 roles and labels the mapping as an implementation assumption.\n- Health-check three-action enforcement is labelled an interpretation.\n\n132 glossary rows with Arabic read as sensible business Arabic, including the earlier F-DG0-005 corrections. The journeys cover Diagnose→G1 … Realize→G6, modular entry, KPI update, Finance validation, the committee workflow, BAU handover and admin publishing (all OK).",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-PB-002", "REQ-PB-009", "REQ-PB-012", "REQ-PB-013", "REQ-PB-015", "REQ-PB-021", "REQ-PB-055", "REQ-PB-058", "REQ-PB-063", "REQ-PB-065", "REQ-PB-067", "REQ-PB-080", "REQ-PB-091", "REQ-DLV-002"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-15/07-semantics-provenance.py", "docs/delivery/test-evidence/DG0/domain/round-15/07-semantics-provenance.log", "docs/delivery/test-evidence/DG0/domain/round-15/07b-manual-resolution.log", "docs/analysis/permissions-matrix.md", "docs/analysis/glossary.md", "docs/analysis/user-journeys.md"]
+    },
+    {
+      "id": "DOM15-07c-runner-tests",
+      "procedure": "Run the runner regression tests in the clone. They include the F-DG0-012/F-DG0-234 case and the new F-DG0-144 private-TMPDIR case.",
+      "command": "node --test tools/agents/tests/runner.test.mjs",
+      "environment": "Disposable clone at 7fab49c5; node --test",
+      "expected": "All tests pass.",
+      "actual": "Tests 5, pass 5, fail 0. This includes 'F-DG0-012/F-DG0-234: … reported as removed' and 'F-DG0-144: every run gets its own private TMPDIR …'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-15/07c-runner-tests.log"]
+    },
+    {
+      "id": "DOM15-08-mp-sample",
+      "procedure": "Master-prompt coverage. Check all 423 M blocks for a disposition, with no dangling IDs. Then take a random sample (seed 15, not the round-14 sample): 3 blocks per section across all 23 sections (§preamble, §0–§21), plus 10 table rows, for 78 blocks. For each, read the block text next to its disposition and mapped rows, and check that each mapped row cites the block.\n\nSample: M0001;M0002;M0003;M0007;M0025;M0035;M0075;M0076;M0080;M0082;M0085;M0087;M0101;M0105;M0113;M0119;M0120;M0121;M0130;M0133;M0134;M0137;M0152;M0153;M0155;M0159;M0160;M0162;M0168;M0171;M0173;M0181;M0182;M0184;M0188;M0192;M0195;M0200;M0201;M0216;M0217;M0218;M0225;M0230;M0238;M0242;M0249;M0250;M0252;M0253;M0257;M0260;M0287;M0291;M0295;M0296;M0297;M0310;M0324;M0330;M0333;M0335;M0336;M0339;M0340;M0345;M0350;M0353;M0362;M0369;M0371;M0378;M0385;M0396;M0404;M0407;M0412;M0416.",
+      "command": "python3 docs/delivery/test-evidence/DG0/domain/round-15/08-mp-sample.py",
+      "environment": "Disposable clone at 7fab49c5; python3",
+      "expected": "423/423 covered. Every sampled disposition and mapping is correct and complete, and every mapped row cites its block.",
+      "actual": "423 coverage rows: 367 REQUIREMENT, 49 CONTEXT, 7 NON-REQUIREMENT. Nothing is uncovered or extra, no REQUIREMENT row lacks req_ids, there are no dangling IDs, and 0 'DOES NOT CITE' lines.\n\nManual reading of all 78: the dispositions are correct (titles and version stamps are NON-REQUIREMENT; headings and lead-ins are CONTEXT). The mappings are complete and semantically right. For example:\n- M0160 maps to REQ-S07-007/008/009 and REQ-PB-063;\n- M0173 maps to REQ-PB-058 and REQ-S08-013/014;\n- M0188 maps to REQ-S10-003;\n- M0218 maps to REQ-PB-009 and REQ-S11-006/007;\n- M0412 maps to REQ-DLV-002, REQ-S21-001 and REQ-PB-021;\n- M0291 maps to REQ-S15-002 (provisional tokens);\n- the §21 rows map to the REQ-DLV stage-output rows.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-020"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-15/08-mp-sample.py", "docs/delivery/test-evidence/DG0/domain/round-15/08-mp-sample.log"]
+    },
+    {
+      "id": "DOM15-08b-prefreeze",
+      "procedure": "Run tools/gates/prefreeze.sh DG0 in a fresh clone of the candidate commit, as the round-15 assignment requires.",
+      "command": "git clone -q /home/user/My-owns $TMPDIR/prefreeze-dom15 && git checkout -q 7fab49c5 && bash tools/gates/prefreeze.sh DG0",
+      "environment": "Fresh clone in private $TMPDIR; nested bubblewrap sandbox; node; python3",
+      "expected": "Every step passes, and the working-tree candidate equals HEAD, sha256:b7f60ed3…",
+      "actual": "All 11 steps report PASS: extraction reproducible (docx sha 2584a352…, 165 and 423 blocks), validator and guard tests, runner metadata and settings tests, register rules, register equals the merge of the parts, pipeline state, the four analysis checks, and 'working-tree candidate equals HEAD (sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e)'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-15/08b-prefreeze.log"]
+    },
+    {
+      "id": "DOM15-09-staging",
+      "procedure": "Check the §21 staging:\n- template rows' final_gate: T01–T04 at DG2, T05–T09 at DG3, T10–T16 at DG4;\n- product gates G1–G3 at DG2, G4 at DG3, G5–G6 at DG4;\n- Studio, reports, health check and demo at DG5; handover at DG7;\n- no empty or trivial acceptance.\nAlso inspect the register diff since round 14.",
+      "command": "python3 docs/delivery/test-evidence/DG0/domain/round-15/09-staging.py; git diff 1e64eb02..7fab49c5 -- docs/delivery/requirements.csv docs/analysis",
+      "environment": "Disposable clone at 7fab49c5; python3; git",
+      "expected": "Staging follows §21, and every deviation has a sound rationale. Acceptance is concrete and testable.",
+      "actual": "32 template rows were checked. There are two deviations, both justified:\n- REQ-PB-093 (T06 weights in Studio) is at DG5, since Studio is DG5 by §21.\n- REQ-PB-032 (outcome hierarchy to initiative contribution, increments P2;P3) has final gate DG3, because the initiative-contribution level needs P3 initiatives while the P2 outcome/KPI definitions are delivered in the P2 increment. This is the same interpretation I accepted in round 14.\n\nG1–G3 are at DG2, G4 at DG3 and G5/G6 at DG4. REQ-PB-091/092 (health check), 088/090 (demo) and REQ-S13-005 (exports) are at DG5. REQ-S19-001 and REQ-DLV-039 are at DG7. No acceptance cell is empty or trivial.\n\nSince round 14, the register changed only in REQ-DLV-006/007/008/023, whose notes and acceptance now describe D-028. The analysis changed only in the acceptance-map update and its new checker.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-019", "REQ-PB-020", "REQ-PB-021", "REQ-PB-032", "REQ-PB-088", "REQ-PB-090", "REQ-PB-091", "REQ-PB-092", "REQ-PB-093", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-15/09-staging.py", "docs/delivery/test-evidence/DG0/domain/round-15/09-staging.log"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/domain/round-15/00-candidate.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/01-extraction.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/02b-source-coverage.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/03-templates.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/04-deliverables.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/04b-manual-resolution.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/05-analyst-checks.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/06-f012-verification.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/07-semantics-provenance.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/07b-manual-resolution.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/07c-runner-tests.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/08-mp-sample.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/08b-prefreeze.log",
+    "docs/delivery/test-evidence/DG0/domain/round-15/09-staging.log",
+    "docs/delivery/reviews/DG0/round-15/domain-reviewer.verifications.json"
+  ],
+  "reviewed_at": "2026-09-28T23:31:00Z",
+  "summary": "PASS on candidate sha256:b7f60ed3…abddb5e (commit 7fab49c5). I reviewed the whole candidate independently:\n- extraction fidelity is exact (1001 paragraphs, 885 cells, 1 footer, 0 missing);\n- all 165 B blocks and 423 M blocks have a correct disposition;\n- the T01–T16 columns and value lists are verbatim;\n- every first-class deliverable is fully specified;\n- the operating-logic semantics and provenance honesty are stated correctly in the register;\n- §21 staging is followed;\n- the glossary, journeys and permissions are sound;\n- prefreeze passes in a fresh clone.\n\nF-DG0-012 re-verified: CLOSED_VERIFIED. There are no new findings. The candidate is specification-only for product requirements, and nothing here claims that future runtime features are delivered."
+}
