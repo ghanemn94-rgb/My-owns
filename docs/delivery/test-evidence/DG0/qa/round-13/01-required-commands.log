@@ -1,0 +1,152 @@
+# qa-verifier round 13: required DG0 commands
+# env: disposable clone /tmp/claude-0/qa-r13/cand at 6c61f2e1aa07fa6acfc52f20a8ee9fbb554904ac; node v22.22.2; Python 3.11.15; date 2026-09-28T21:55:16Z
+
+================ $ bash tools/source/check_extraction.sh
+PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)
+exit_status=0
+
+================ $ node --test tools/gates/tests/validator.test.mjs tools/gates/tests/sandbox.test.mjs
+  ...
+# Subtest: F-DG0-223: a genuine prompt binds when the checkout path contains spaces
+ok 44 - F-DG0-223: a genuine prompt binds when the checkout path contains spaces
+  ---
+  duration_ms: 254.910834
+  type: 'test'
+  ...
+# Subtest: F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters
+ok 45 - F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters
+  ---
+  duration_ms: 171.495184
+  type: 'test'
+  ...
+# Subtest: D-024: a run that changed configuration outside the candidate is rejected
+ok 46 - D-024: a run that changed configuration outside the candidate is rejected
+  ---
+  duration_ms: 265.758507
+  type: 'test'
+  ...
+# Subtest: D-025: gate records must come from Bash-sandboxed runs
+ok 47 - D-025: gate records must come from Bash-sandboxed runs
+  ---
+  duration_ms: 454.387646
+  type: 'test'
+  ...
+# Subtest: F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory
+ok 48 - F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory
+  ---
+  duration_ms: 261.82088
+  type: 'test'
+  ...
+1..48
+# tests 48
+# suites 0
+# pass 48
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 22810.512156
+exit_status=0
+
+================ $ node --test tools/agents/tests/guard.test.mjs tools/agents/tests/runner.test.mjs
+  ...
+# Subtest: F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable
+ok 17 - F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable
+  ---
+  duration_ms: 221.837025
+  type: 'test'
+  ...
+# Subtest: F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory
+ok 18 - F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory
+  ---
+  duration_ms: 178.693612
+  type: 'test'
+  ...
+# Subtest: F-DG0-140: modules planted in the repository root are never imported by the runner's helpers
+ok 19 - F-DG0-140: modules planted in the repository root are never imported by the runner's helpers
+  ---
+  duration_ms: 680.197864
+  type: 'test'
+  ...
+# Subtest: D-026: zero-length untracked sandbox stubs are not reported as configuration changes
+ok 20 - D-026: zero-length untracked sandbox stubs are not reported as configuration changes
+  ---
+  duration_ms: 719.445742
+  type: 'test'
+  ...
+# Subtest: D-026: configuration with content, a symlink, or a truncated tracked file is still reported (exit 71, no auto-commit)
+ok 21 - D-026: configuration with content, a symlink, or a truncated tracked file is still reported (exit 71, no auto-commit)
+  ---
+  duration_ms: 588.981256
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2091.955189
+exit_status=0
+
+================ $ python3 -m unittest discover -s tools/agents/tests -p test_*.py
+..............
+----------------------------------------------------------------------
+Ran 14 tests in 0.168s
+
+OK
+exit_status=0
+
+================ $ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+exit_status=0
+
+================ $ node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+exit_status=0
+
+================ $ node tools/gates/validate.mjs --reconcile
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c
+working tree:     sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79 (differs: 13 changed, 3 added, 0 removed)
+round 1 domain-reviewer: FAIL (STALE for current content)
+round 1 code-security-reviewer: BLOCKED (STALE for current content)
+round 1 qa-verifier: FAIL (STALE for current content)
+round 2 domain-reviewer: PASS (STALE for current content)
+round 2 code-security-reviewer: FAIL (STALE for current content)
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: PASS (STALE for current content)
+round 3 code-security-reviewer: FAIL (STALE for current content)
+round 3 qa-verifier: PASS (STALE for current content)
+round 4 domain-reviewer: PASS (STALE for current content)
+round 4 code-security-reviewer: FAIL (STALE for current content)
+round 4 qa-verifier: PASS (STALE for current content)
+round 5 domain-reviewer: FAIL (STALE for current content)
+round 6 domain-reviewer: FAIL (STALE for current content)
+round 6 code-security-reviewer: FAIL (STALE for current content)
+round 6 qa-verifier: FAIL (STALE for current content)
+round 7 domain-reviewer: PASS (STALE for current content)
+round 7 code-security-reviewer: FAIL (STALE for current content)
+round 7 qa-verifier: PASS (STALE for current content)
+round 8 domain-reviewer: PASS (STALE for current content)
+round 8 code-security-reviewer: PASS (STALE for current content)
+round 8 qa-verifier: PASS (STALE for current content)
+round 9 domain-reviewer: PASS (STALE for current content)
+round 9 code-security-reviewer: FAIL (STALE for current content)
+round 9 qa-verifier: PASS (STALE for current content)
+round 10 domain-reviewer: PASS (STALE for current content)
+round 10 code-security-reviewer: FAIL (STALE for current content)
+round 10 qa-verifier: PASS (STALE for current content)
+round 11 domain-reviewer: PASS (STALE for current content)
+round 11 code-security-reviewer: FAIL (STALE for current content)
+round 11 qa-verifier: FAIL (STALE for current content)
+round 12 code-security-reviewer: FAIL (STALE for current content)
+round 12 qa-verifier: FAIL (STALE for current content)
+PASS reconcile (structure)
+exit_status=0
+
+================ $ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79","files":86}
+exit_status=0

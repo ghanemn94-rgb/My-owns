@@ -1,0 +1,100 @@
+# F-DG0-226 / F-DG0-227 re-verification 2026-09-28T22:13:35Z. OLD = round-11 candidate 7e99163 (clone /tmp/claude-0/qa-r13/r11); NEW = candidate 6c61f2e (clone /tmp/claude-0/qa-r13/t13)
+
+## F-DG0-226 (1) setting sources passed to claude
+[r11]
+79:# User settings are not loaded (--setting-sources project,local), but a change is still a tamper signal.
+126:    --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project,local \
+135:      --resume "$SESSION_ID" --settings "$SETTINGS" --setting-sources project,local \
+[t13]
+88:# User and local settings are not loaded (--setting-sources project), but a change is still a tamper signal.
+150:    --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
+159:      --resume "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
+
+## F-DG0-226 (2) runner end to end with stub claude: QA11-R1..R6 (R5 = .git/info/exclude-hidden settings.local.json, R6 = planted in worktree cwd)
+[r11] $ QA_REPO_ROOT=/tmp/claude-0/qa-r13/r11 node --test --test-name-pattern='QA11-R' docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r11.test.mjs
+✖ QA11-R6 D-024: a shell-written .claude/settings.local.json in the agent's worktree working directory must leave a trace in the run evidence (1190.242583ms)
+✖ QA11-R1 runner control: a run that changes no external configuration exits 0, records external_config_changed [] and auto-commits (1215.134701ms)
+✖ QA11-R2 D-024: a run whose shell edits ~/.gitconfig exits 71, is recorded in meta and is NOT auto-committed (1006.234629ms)
+✖ QA11-R3 D-024: a planted .git/hooks/pre-commit is detected before the auto-commit, so the hook never executes (1197.42419ms)
+✖ QA11-R4 control: a shell-written .claude/settings.local.json (loaded under --setting-sources project,local) shows in meta.outputs and git status (948.238178ms)
+✖ QA11-R5 D-024: hiding a shell-written .claude/settings.local.json with .git/info/exclude must still leave a trace in the run evidence (1250.289658ms)
+ℹ pass 0
+ℹ fail 6
+✖ failing tests:
+[t13] $ QA_REPO_ROOT=/tmp/claude-0/qa-r13/t13 node --test --test-name-pattern='QA11-R' docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r11.test.mjs
+✖ QA11-R6 D-024: a shell-written .claude/settings.local.json in the agent's worktree working directory must leave a trace in the run evidence (1102.19007ms)
+✖ QA11-R1 runner control: a run that changes no external configuration exits 0, records external_config_changed [] and auto-commits (1485.529818ms)
+✖ QA11-R2 D-024: a run whose shell edits ~/.gitconfig exits 71, is recorded in meta and is NOT auto-committed (1510.454901ms)
+✖ QA11-R3 D-024: a planted .git/hooks/pre-commit is detected before the auto-commit, so the hook never executes (1012.045799ms)
+✖ QA11-R4 control: a shell-written .claude/settings.local.json (loaded under --setting-sources project,local) shows in meta.outputs and git status (1088.204868ms)
+✖ QA11-R5 D-024: hiding a shell-written .claude/settings.local.json with .git/info/exclude must still leave a trace in the run evidence (1024.033784ms)
+ℹ pass 0
+ℹ fail 6
+✖ failing tests:
+
+## F-DG0-226 (3) nested-config plants QA12-R7..R9 against NEW
+✔ QA12-R7 D-024/D-025: a reviewer run that plants a nested CLAUDE.md inside its own evidence area is refused (exit 71, not committed) (1799.451749ms)
+✔ QA12-R8 D-024/D-025: a reviewer run that plants a nested .claude/settings.json in its evidence area is refused (exit 71) (1769.089879ms)
+✔ QA12-R9 D-024/D-025: a reviewer run that plants a .gitignore (hiding its own files from the snapshots) is refused (exit 71) (1359.129826ms)
+✔ QA12-R10 F-DG0-138: git hooks that already exist before the run never execute during the evidence auto-commit, which contains only the run directory (1536.98859ms)
+✔ QA12-R12 D-025: each run keeps its generated settings.json; meta.settings_sha256 matches and meta.bash_sandbox is true; protected paths are denied (1240.858568ms)
+ℹ pass 5
+ℹ fail 0
+
+## F-DG0-226 (4) live: this run's own shell cannot write .claude/settings.local.json or .git/info/exclude (see 08-live-guard-probe.log)
+
+## F-DG0-227 script-mode vs discover
+[r11] $ python3 -B tools/agents/tests/test_run_meta.py -v
+test_edit_without_a_prior_write_is_not_reconstructible (__main__.RunMetaTest.test_edit_without_a_prior_write_is_not_reconstructible) ... ok
+test_failed_calls_and_shell_edits_are_not_bound (__main__.RunMetaTest.test_failed_calls_and_shell_edits_are_not_bound) ... ok
+test_snapshots_survive_a_failure_for_diagnosis (__main__.RunMetaTest.test_snapshots_survive_a_failure_for_diagnosis) ... ok
+test_string_messages_and_non_object_lines_are_tolerated (__main__.RunMetaTest.test_string_messages_and_non_object_lines_are_tolerated) ... ok
+test_write_then_edit_is_replayed_and_bound (__main__.RunMetaTest.test_write_then_edit_is_replayed_and_bound) ... ok
+Ran 5 tests in 0.007s
+OK
+[r11] $ python3 -B -m unittest discover -s tools/agents/tests -p 'test_*.py'
+Ran 12 tests in 0.012s
+OK
+[t13] $ python3 -B tools/agents/tests/test_run_meta.py -v
+test_external_config_changes_are_recorded (__main__.ExternalConfigTest.test_external_config_changes_are_recorded) ... ok
+test_no_change_records_an_empty_list (__main__.ExternalConfigTest.test_no_change_records_an_empty_list) ... ok
+test_edit_without_a_prior_write_is_not_reconstructible (__main__.RunMetaTest.test_edit_without_a_prior_write_is_not_reconstructible) ... ok
+test_failed_calls_and_shell_edits_are_not_bound (__main__.RunMetaTest.test_failed_calls_and_shell_edits_are_not_bound) ... ok
+test_snapshots_survive_a_failure_for_diagnosis (__main__.RunMetaTest.test_snapshots_survive_a_failure_for_diagnosis) ... ok
+test_string_messages_and_non_object_lines_are_tolerated (__main__.RunMetaTest.test_string_messages_and_non_object_lines_are_tolerated) ... ok
+test_write_then_edit_is_replayed_and_bound (__main__.RunMetaTest.test_write_then_edit_is_replayed_and_bound) ... ok
+Ran 7 tests in 0.008s
+OK
+[t13] $ python3 -B -m unittest discover -s tools/agents/tests -p 'test_*.py'
+Ran 14 tests in 0.151s
+OK
+[t13] tail of test_run_meta.py:
+
+if __name__ == "__main__":
+    unittest.main()
+23:class _RunMetaBase(unittest.TestCase):
+48:class RunMetaTest(_RunMetaBase):
+101:class ExternalConfigTest(_RunMetaBase):
+
+## F-DG0-226 (2, rerun) the r11 suite is not hermetic: the first run above failed every QA11-R case, including the R1 control, at the fixture's own 'git commit' (host global config forces commit signing via a network service that this no-network sandbox cannot reach). Re-run with GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1:
+[r11] $ GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 QA_REPO_ROOT=/tmp/claude-0/qa-r13/r11 node --test --test-name-pattern='QA11-R' dg0-gate-negative-r11.test.mjs
+✖ QA11-R6 D-024: a shell-written .claude/settings.local.json in the agent's worktree working directory must leave a trace in the run evidence (1460.84175ms)
+✔ QA11-R1 runner control: a run that changes no external configuration exits 0, records external_config_changed [] and auto-commits (1152.910732ms)
+✔ QA11-R2 D-024: a run whose shell edits ~/.gitconfig exits 71, is recorded in meta and is NOT auto-committed (948.657865ms)
+✔ QA11-R3 D-024: a planted .git/hooks/pre-commit is detected before the auto-commit, so the hook never executes (1007.567534ms)
+✔ QA11-R4 control: a shell-written .claude/settings.local.json (loaded under --setting-sources project,local) shows in meta.outputs and git status (1108.04333ms)
+✖ QA11-R5 D-024: hiding a shell-written .claude/settings.local.json with .git/info/exclude must still leave a trace in the run evidence (1109.822743ms)
+ℹ pass 4
+ℹ fail 2
+✖ failing tests:
+  AssertionError [ERR_ASSERTION]: no trace in the run evidence: exit=0 external_config_changed=[]; main-repo git status=""; worktree git status="?? .claude/settings.local.json\n"
+  AssertionError [ERR_ASSERTION]: no trace: exit=0 external_config_changed=[] outputs has it=false git status=""
+[t13] $ GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 QA_REPO_ROOT=/tmp/claude-0/qa-r13/t13 node --test --test-name-pattern='QA11-R' dg0-gate-negative-r11.test.mjs
+✔ QA11-R6 D-024: a shell-written .claude/settings.local.json in the agent's worktree working directory must leave a trace in the run evidence (1929.774804ms)
+✔ QA11-R1 runner control: a run that changes no external configuration exits 0, records external_config_changed [] and auto-commits (1296.872632ms)
+✔ QA11-R2 D-024: a run whose shell edits ~/.gitconfig exits 71, is recorded in meta and is NOT auto-committed (1330.069848ms)
+✔ QA11-R3 D-024: a planted .git/hooks/pre-commit is detected before the auto-commit, so the hook never executes (1351.270733ms)
+✔ QA11-R4 control: a shell-written .claude/settings.local.json (loaded under --setting-sources project,local) shows in meta.outputs and git status (1071.075611ms)
+✔ QA11-R5 D-024: hiding a shell-written .claude/settings.local.json with .git/info/exclude must still leave a trace in the run evidence (1777.026212ms)
+ℹ pass 6
+ℹ fail 0

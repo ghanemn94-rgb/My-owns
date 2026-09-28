@@ -1,0 +1,28 @@
+# F-DG0-230 re-verification 2026-09-28T22:12:01Z
+## 1. original repro QA12-V2 (foreign-root deny list, meta.settings_sha256 consistent) against OLD 7f09967
+$ QA_REPO_ROOT=/tmp/claude-0/qa-r13/old node --test --test-name-pattern='QA12-V[12]' docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs
+✔ QA12-V1 control: the D-025-adapted independent fixture validates cleanly (384.339425ms)
+✖ QA12-V2 D-025: a sandbox deny list rooted in a different directory than the run's repository must not bind a gate record (422.999287ms)
+✖ failing tests:
+  AssertionError [ERR_ASSERTION]: validator accepted an invalid gate (no errors)
+
+## 2. the candidate's own regression test 'F-DG0-230', copied into the OLD tree (must FAIL there) and run in the candidate (must PASS)
+✖ F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory (300.568896ms)
+✖ F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory (300.568896ms)
+✔ D-025: gate records must come from Bash-sandboxed runs (549.562204ms)
+✔ F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory (269.792187ms)
+
+## 3. independent QA13 cases against the NEW candidate (from 04 log)
+✔ QA13-V1 control: the D-026-adapted fixture validates cleanly (255.405607ms)
+✔ QA13-V2 F-DG0-230/D-026: a deny list without docs/source (the round-12 runner shape) is rejected (264.221415ms)
+✔ QA13-V3 F-DG0-230: a run whose meta has no cwd cannot bind a record (the deny list cannot be anchored) (300.195325ms)
+✔ QA13-V4 F-DG0-230: non-normalised deny entries (<cwd>/./x) are rejected; the check fails closed (283.645694ms)
+✖ QA13-V5 F-DG0-230 residual: a run whose meta.cwd is forged to the foreign root its deny list protects (transcript init/prompt say /work/repo) should not bind (242.92166ms)
+✖ QA13-V5 F-DG0-230 residual: a run whose meta.cwd is forged to the foreign root its deny list protects (transcript init/prompt say /work/repo) should not bind (242.92166ms)
+
+## 4. code (rules.mjs checkInvocation, candidate)
+337:      // The deny entries must protect the repository the run actually worked in (F-DG0-230).
+338-      const cwdRoot = String(meta.cwd || "").replace(/\/+$/, "");
+339-      for (const p of [".git", ".claude", "tools/gates", "tools/agents", "docs/source", "docs/delivery/reviews", "docs/delivery/runs"]) {
+340-        if (!cwdRoot || !deny.includes(`${cwdRoot}/${p}`)) bad(`its Bash sandbox does not deny writes to ${cwdRoot || "<unknown cwd>"}/${p}`);
+341-      }

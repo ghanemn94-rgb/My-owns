@@ -1,0 +1,63 @@
+# prior qa-verifier suites against disposable candidate clone /tmp/claude-0/qa-r13/t13 @ 6c61f2e, HERMETIC git (GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1); rebuilt 2026-09-28T22:22:31Z from the per-suite outputs of the hermetic run
+# A first, non-hermetic background attempt failed wholesale at the fixtures' own 'git commit' (host global config forces commit signing via a network service this no-network sandbox cannot reach). Harness artefact; discarded.
+# r2..r9 and the round-1 raw suites: superseded fixture shape (no sandbox settings.json / meta.cwd); their controls fail by design since D-025/D-026. Their cases are carried by the D-026-adapted round-9 suite: QA13-REG 94/94 in 04-qa13-new-cases.log.
+
+=================== $ GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 QA_REPO_ROOT=/tmp/claude-0/qa-r13/t13 node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r10.test.mjs
+✔ QA10-1 F-DG0-134 root cause: a worktree's tampered guard copy cannot weaken the hook when MTH_GUARD_ROOT names the repository (738.270137ms)
+✔ QA10-2 fail closed: MTH_GUARD_ROOT unset, empty, nonexistent or without a guard blocks every role's writes (832.214092ms)
+✔ QA10-3 runner started from a linked worktree: MTH_GUARD_ROOT = worktree still guards the main repository and sibling worktrees (374.455998ms)
+✔ QA10-4 portability x worktrees: a worktree under a path with spaces and Arabic characters is guarded; in-scope writes still pass (427.590642ms)
+✔ QA10-5 worktree bypass attempts: symlink from scratch into a worktree, case variants, and the worktree's .git file are blocked (548.482369ms)
+✔ QA10-6 deepest root wins: a worktree nested inside the repository is scoped from its own root (383.574381ms)
+✔ QA10-7 F-DG0-224 end to end: the candidate ID is independent of checkout location, and review metadata leaves it unchanged there (2165.632163ms)
+✔ QA10-8 F-DG0-224 negative path: under a space/Arabic path every validator mode runs and fails closed with diagnostics, not a crash (1405.928758ms)
+ℹ tests 8
+ℹ pass 8
+ℹ fail 0
+
+=================== $ GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 QA_REPO_ROOT=/tmp/claude-0/qa-r13/t13 node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r11.test.mjs
+✔ QA11-G1 F-DG0-136: a symlink inside the temp directory that points into HOME cannot be used to write HOME configuration (553.011385ms)
+✔ QA11-G2 F-DG0-136: TMPDIR pointing at HOME does not make HOME scratch (home rule wins over the temp rule) (330.412709ms)
+✔ QA11-G3 F-DG0-136: when the guarded repository lies inside HOME, in-repo scopes still apply (the home rule does not over-block) and HOME files stay blocked (460.647356ms)
+✖ QA11-G4 F-DG0-136: path normalisation and sibling prefixes: '..' out of the temp dir, '/tmpX' and a HOME sibling are classified correctly (105.571208ms)
+✔ QA11-G5 F-DG0-135: the hook fails closed for a non-existent MTH_GUARD_ROOT and for a repository whose git metadata is corrupt, even for temp scratch (267.510517ms)
+✔ QA11-R6 D-024: a shell-written .claude/settings.local.json in the agent's worktree working directory must leave a trace in the run evidence (2986.046808ms)
+✔ QA11-R1 runner control: a run that changes no external configuration exits 0, records external_config_changed [] and auto-commits (1878.093454ms)
+✔ QA11-R2 D-024: a run whose shell edits ~/.gitconfig exits 71, is recorded in meta and is NOT auto-committed (1721.089558ms)
+✔ QA11-R3 D-024: a planted .git/hooks/pre-commit is detected before the auto-commit, so the hook never executes (1401.459561ms)
+✔ QA11-R4 control: a shell-written .claude/settings.local.json (loaded under --setting-sources project,local) shows in meta.outputs and git status (1863.53038ms)
+✔ QA11-R5 D-024: hiding a shell-written .claude/settings.local.json with .git/info/exclude must still leave a trace in the run evidence (1605.878816ms)
+ℹ tests 11
+ℹ pass 10
+ℹ fail 1
+✖ failing tests:
+
+=================== $ GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 QA_REPO_ROOT=/tmp/claude-0/qa-r13/t13 node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs
+✖ QA12-REG A23/A24/A25 regression: the 94-case round-9 suite passes against the candidate once fixture runs carry a sandboxed settings.json (101400.681237ms)
+✖ QA12-V1 control: the D-025-adapted independent fixture validates cleanly (325.15558ms)
+✔ QA12-V2 D-025: a sandbox deny list rooted in a different directory than the run's repository must not bind a gate record (346.469637ms)
+✔ QA12-V3 D-025: settings.json present but meta.settings_sha256 missing is rejected (354.297044ms)
+✔ QA12-V4 D-025: sandbox.enabled given as the string "true" (not boolean) is rejected (335.98289ms)
+✔ QA12-V5 D-025: unparsable settings.json with a matching hash is rejected, not crashed on (384.475389ms)
+✖ QA12-V6 D-025: a deny list missing only tools/agents is rejected and names the gap (349.869747ms)
+✔ QA12-V7 metadata invariance: adding run directories with settings.json, a new review round and sidecars leaves the candidate unchanged (244.370519ms)
+✔ QA12-A1 agent_settings: a sibling-prefix cwd (<repo>-evil) is refused (65.438554ms)
+✔ QA12-A2 agent_settings: a cwd that is a symlink inside the repository pointing outside it is refused (73.823131ms)
+✔ QA12-A3 agent_settings: qa-verifier is confined to test-evidence, tests/qa and e2e; everything else that exists is denied (72.721788ms)
+✔ QA12-R7 D-024/D-025: a reviewer run that plants a nested CLAUDE.md inside its own evidence area is refused (exit 71, not committed) (1765.517277ms)
+✔ QA12-R8 D-024/D-025: a reviewer run that plants a nested .claude/settings.json in its evidence area is refused (exit 71) (1875.707453ms)
+✔ QA12-R9 D-024/D-025: a reviewer run that plants a .gitignore (hiding its own files from the snapshots) is refused (exit 71) (1799.838704ms)
+✔ QA12-R10 F-DG0-138: git hooks that already exist before the run never execute during the evidence auto-commit, which contains only the run directory (1719.513634ms)
+✔ QA12-R11 D-025: without bubblewrap on PATH the runner refuses to start (exit 65) and creates no run directory (1500.528193ms)
+✔ QA12-R12 D-025: each run keeps its generated settings.json; meta.settings_sha256 matches and meta.bash_sandbox is true; protected paths are denied (1781.368222ms)
+✖ QA12-P1 D-024/D-025: an analyst run that plants a gitignored docs/analysis/tools/csv.pyc must leave a trace in the run evidence (1594.868392ms)
+✔ QA12-P2 prefreeze.sh must not execute gitignored bytecode planted next to an analysis check (it runs outside any sandbox) (35084.841264ms)
+ℹ tests 19
+ℹ pass 15
+ℹ fail 4
+✖ failing tests:
+
+## Expected failures, explained
+- QA11-G4: the test's own tmpdir() is $TMPDIR=/tmp/claude-0 inside this sandbox, so '/tmp'-relative expectations shift (known since round 12); not a candidate defect.
+- QA12-REG / QA12-V1 / QA12-V6: the round-12 adapter writes a 6-path deny list and no meta.cwd; the F-DG0-230 fix (exact <meta.cwd>/<path>, docs/source added) rejects that shape by design. Superseded by QA13-REG and QA13-V1..V4 (all pass).
+- QA12-P1: documents that a planted ignored .pyc leaves no runner trace. F-DG0-229 was fixed by option (a) of its expected result (never executed), proven by QA12-P2 (now PASS), QA13-S6 and 03-f229-verification.log.

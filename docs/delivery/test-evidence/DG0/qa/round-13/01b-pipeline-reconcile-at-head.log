@@ -1,0 +1,68 @@
+# env: disposable clone /tmp/claude-0/qa-r13/head at a733aaf72f90f7da8276919e98d27c0b8d8840da (freeze metadata commit; candidate content identical)
+
+=== $ node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+exit_status=0
+
+=== $ node tools/gates/validate.mjs --reconcile
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79
+working tree:     sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79 (matches)
+round 1 domain-reviewer: FAIL (STALE for current content)
+round 1 code-security-reviewer: BLOCKED (STALE for current content)
+round 1 qa-verifier: FAIL (STALE for current content)
+round 2 domain-reviewer: PASS (STALE for current content)
+round 2 code-security-reviewer: FAIL (STALE for current content)
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: PASS (STALE for current content)
+round 3 code-security-reviewer: FAIL (STALE for current content)
+round 3 qa-verifier: PASS (STALE for current content)
+round 4 domain-reviewer: PASS (STALE for current content)
+round 4 code-security-reviewer: FAIL (STALE for current content)
+round 4 qa-verifier: PASS (STALE for current content)
+round 5 domain-reviewer: FAIL (STALE for current content)
+round 6 domain-reviewer: FAIL (STALE for current content)
+round 6 code-security-reviewer: FAIL (STALE for current content)
+round 6 qa-verifier: FAIL (STALE for current content)
+round 7 domain-reviewer: PASS (STALE for current content)
+round 7 code-security-reviewer: FAIL (STALE for current content)
+round 7 qa-verifier: PASS (STALE for current content)
+round 8 domain-reviewer: PASS (STALE for current content)
+round 8 code-security-reviewer: PASS (STALE for current content)
+round 8 qa-verifier: PASS (STALE for current content)
+round 9 domain-reviewer: PASS (STALE for current content)
+round 9 code-security-reviewer: FAIL (STALE for current content)
+round 9 qa-verifier: PASS (STALE for current content)
+round 10 domain-reviewer: PASS (STALE for current content)
+round 10 code-security-reviewer: FAIL (STALE for current content)
+round 10 qa-verifier: PASS (STALE for current content)
+round 11 domain-reviewer: PASS (STALE for current content)
+round 11 code-security-reviewer: FAIL (STALE for current content)
+round 11 qa-verifier: FAIL (STALE for current content)
+round 12 code-security-reviewer: FAIL (STALE for current content)
+round 12 qa-verifier: FAIL (STALE for current content)
+round 13 domain-reviewer: missing (STALE for current content)
+round 13 code-security-reviewer: missing (STALE for current content)
+round 13 qa-verifier: missing (STALE for current content)
+PASS reconcile (structure)
+exit_status=0
+
+=== $ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+exit_status=0
+
+=== $ node tools/gates/candidate.mjs --stage DG0 --diff
+{
+  "frozen": "sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79",
+  "working_tree": "sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit_status=0
+
+=== $ node tools/gates/validate.mjs --stage DG0 --historical
+FAIL gate DG0 (historical) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+exit_status=1

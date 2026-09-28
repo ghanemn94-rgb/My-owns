@@ -1,0 +1,56 @@
+# F-DG0-232 re-verification 2026-09-28T22:13:19Z
+[old @ 7f09967] grep -c 'agent_settings|D-025|D-026|sandbox-run' requirements.csv = 0
+[t13 @ 6c61f2e] grep -c 'agent_settings|D-025|D-026|sandbox-run' requirements.csv = 7
+
+## REQ-DLV-007 in the candidate: shell-control terms present?
+  procedure has 'agent_settings.py': True
+  procedure has 'Bash sandbox': True
+  procedure has 'bubblewrap': True
+  procedure has 'failIfUnavailable': True
+  procedure has 'allowUnsandboxedCommands false': True
+  procedure has '--setting-sources project': True
+  procedure has 'meta.cwd': True
+  procedure has 'F-DG0-230': True
+  procedure has 'D-026': True
+  procedure has 'zero-length': True
+  acceptance cites 'test_every_role_denies_protected_paths': True
+  acceptance cites 'F-DG0-230: the sandbox deny list must protect': True
+  acceptance cites 'D-025: gate records must come from Bash-sandboxed runs': True
+  acceptance cites 'D-026: zero-length untracked sandbox stubs': True
+  evidence tools/agents/guard-write.mjs: exists=True
+  evidence tools/agents/write-scopes.json: exists=True
+  evidence tools/agents/tests/guard.test.mjs: exists=True
+  evidence tools/agents/settings/transformation-analyst.settings.json: exists=True
+  evidence tools/agents/settings/qa-verifier.settings.json: exists=True
+  evidence tools/agents/agent_settings.py: exists=True
+  evidence tools/agents/tests/test_agent_settings.py: exists=True
+  evidence tools/agents/run-agent.sh: exists=True
+  evidence tools/agents/run_meta.py: exists=True
+  evidence tools/agents/tests/test_run_meta.py: exists=True
+  evidence tools/gates/lib/rules.mjs: exists=True
+  evidence tools/gates/tests/validator.test.mjs: exists=True
+  evidence tools/agents/probe-guard-live.sh: exists=True
+  evidence docs/delivery/test-evidence/DG0/orchestrator-probes/README.md: exists=True
+  evidence docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z/probe.log: exists=True
+  evidence docs/delivery/threat-model.md: exists=True
+  evidence docs/delivery/decisions.md: exists=True
+
+## every quoted test title in the register exists (candidate's own check, run in the sandboxed prefreeze): see 02-prefreeze-fresh-clone.log
+PASS  analysis check check_test_refs.py (sandboxed) :: 83 declared test titles derived from 6 test files; 74 quoted test title citation(s) in 411 register rows; 0 problem(s)
+
+## the cited test functions exist and pass
+38:    def test_every_role_denies_protected_paths(self):
+44:    def test_reviewers_are_confined_to_evidence(self):
+64:    def test_worktrees_are_covered(self):
+test_analyst_keeps_analysis_and_register_only (test_agent_settings.AgentSettingsTest.test_analyst_keeps_analysis_and_register_only) ... ok
+test_cwd_outside_the_repository_is_refused (test_agent_settings.AgentSettingsTest.test_cwd_outside_the_repository_is_refused) ... ok
+test_every_role_denies_protected_paths (test_agent_settings.AgentSettingsTest.test_every_role_denies_protected_paths) ... ok
+test_implementers_may_write_product_code (test_agent_settings.AgentSettingsTest.test_implementers_may_write_product_code) ... ok
+test_reviewers_are_confined_to_evidence (test_agent_settings.AgentSettingsTest.test_reviewers_are_confined_to_evidence) ... ok
+test_unknown_role_is_refused (test_agent_settings.AgentSettingsTest.test_unknown_role_is_refused) ... ok
+test_worktrees_are_covered (test_agent_settings.AgentSettingsTest.test_worktrees_are_covered) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.130s
+
+OK

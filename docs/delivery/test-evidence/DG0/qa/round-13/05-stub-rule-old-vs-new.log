@@ -1,0 +1,31 @@
+# D-026 stub rule: R1/R1b/R2 against the round-12 runner (7f09967, no stub rule) vs the candidate (6c61f2e, see 04 log). 2026-09-28T22:10:59Z
+$ QA_REPO_ROOT=/tmp/claude-0/qa-r13/old node --test --test-name-pattern='QA13-R' docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r13.test.mjs
+  QA13-R1 exit=71 external_config_changed=["/tmp/claude-0/qa13-run-66Orb6/CLAUDE.local.md e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"] outputs=["CLAUDE.local.md"]
+  QA13-R1b exit=71 external_config_changed=["/tmp/claude-0/qa13-run-PYPoAC/.claude/settings.local.json e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"] outputs=[]
+  QA13-R2 exit=0 external_config_changed=[] deleted=[]
+✔ QA13-REG A24/A25 regression: the 94-case round-9 suite (every assignment negative) passes against the candidate with D-026-shaped run evidence (30445.546962ms)
+✔ QA13-R1 probe D-026 stub rule: a pre-existing untracked, non-empty CLAUDE.local.md truncated to zero during a run (560.651443ms)
+✔ QA13-R1b probe D-026 stub rule: a pre-existing ignored, non-empty .claude/settings.local.json truncated to zero during a run (reported before D-026) (608.164334ms)
+✖ QA13-R2 probe D-024: a pre-existing ignored, non-empty .claude/settings.local.json deleted during a run (677.337419ms)
+✖ QA13-R3 D-026 by design: zero-length untracked .gitattributes and nested .claude files are ignored; the same files with content are reported (625.31965ms)
+ℹ tests 5
+ℹ pass 3
+ℹ fail 2
+✖ failing tests:
+✖ QA13-R2 probe D-024: a pre-existing ignored, non-empty .claude/settings.local.json deleted during a run (677.337419ms)
+✖ QA13-R3 D-026 by design: zero-length untracked .gitattributes and nested .claude files are ignored; the same files with content are reported (625.31965ms)
+exit_status=1
+
+## candidate (6c61f2e):
+  QA13-R1 exit=0 external_config_changed=[] outputs=["CLAUDE.local.md"]
+  QA13-R1b exit=0 external_config_changed=[] outputs=[]
+  QA13-R2 exit=0 external_config_changed=[] deleted=[]
+✔ QA13-REG A24/A25 regression: the 94-case round-9 suite (every assignment negative) passes against the candidate with D-026-shaped run evidence (100749.994785ms)
+✔ QA13-R1 probe D-026 stub rule: a pre-existing untracked, non-empty CLAUDE.local.md truncated to zero during a run (663.086264ms)
+✖ QA13-R1b probe D-026 stub rule: a pre-existing ignored, non-empty .claude/settings.local.json truncated to zero during a run (reported before D-026) (682.387942ms)
+✖ QA13-R2 probe D-024: a pre-existing ignored, non-empty .claude/settings.local.json deleted during a run (721.345039ms)
+✔ QA13-R3 D-026 by design: zero-length untracked .gitattributes and nested .claude files are ignored; the same files with content are reported (1328.261452ms)
+✖ QA13-R1b probe D-026 stub rule: a pre-existing ignored, non-empty .claude/settings.local.json truncated to zero during a run (reported before D-026) (682.387942ms)
+✖ QA13-R2 probe D-024: a pre-existing ignored, non-empty .claude/settings.local.json deleted during a run (721.345039ms)
+
+## config_snapshot diff line in both versions:

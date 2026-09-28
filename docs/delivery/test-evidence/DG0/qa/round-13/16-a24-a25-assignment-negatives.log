@@ -1,0 +1,48 @@
+# Assignment item 2: A24/A25 negatives from QA13-REG (the round-9 suite adapted to D-026 run evidence: meta.cwd + 7-path deny list anchored at meta.cwd) against candidate clone @ 6c61f2e. Source: 04-qa13-new-cases.log
+ok 1 - control: the independent round-5 fixture is accepted (API and CLI exit 0)
+ok 2 - control: a genuine later-round closure (post-manifest run) is accepted
+ok 13 - QA5-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+ok 32 - QA5-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+ok 33 - QA5-A24 rejects: missing reviewer
+ok 34 - QA5-A24 rejects: reviewer who authored the scope
+ok 35 - QA5-A24 rejects: reviewer listed as implementation author
+ok 36 - QA5-A24 rejects: shared invocation
+ok 37 - QA5-A24 rejects: failed check
+ok 38 - QA5-A24 rejects: blocked check
+ok 39 - QA5-A24 rejects: failed gate test
+ok 40 - QA5-A24 rejects: unresolved High finding
+ok 41 - QA5-A24 rejects: incomplete requirement
+ok 42 - QA5-A24 rejects: register row with a non-existent block anchor
+ok 43 - QA5-A24 rejects: SOURCE row without a playbook block
+ok 44 - QA5-A24 rejects: coverage matrix missing a block
+ok 45 - QA5-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+ok 46 - QA5-A24 rejects: candidate change after freeze
+ok 47 - QA5-A24 rejects: tampered manifest
+ok 48 - QA6-N60 A25: on a fresh clone, running the shipped runner-metadata unit tests (CI + prefreeze step) leaves the candidate ID and the tree unchanged
+ok 70 - QA7-N82 A25 prefreeze: on a fresh clone an ignored __pycache__ file does not fail prefreeze, but an untracked non-ignored candidate file does
+
+# Assignment mapping:
+missing reviewer -> QA5-A24 'missing reviewer'; reviewer who authored the scope -> 'reviewer who authored the scope' + 'reviewer listed as implementation author'; shared invocation -> 'shared invocation'; failed/blocked check -> 'failed check', 'blocked check', 'failed gate test'; unresolved High -> 'unresolved High finding'; incomplete requirement -> 'incomplete requirement'; non-existent anchor -> 'register row with a non-existent block anchor'; SOURCE w/o playbook block -> 'SOURCE row without a playbook block'; coverage -> 'coverage matrix missing a block', 'coverage maps a block to a requirement that doesn't cite it'; candidate change after freeze -> 'candidate change after freeze' (+ QA5-R206 exec-bit, QA13-C1 mode); tampered manifest -> 'tampered manifest'; review-metadata invariance -> QA5-M01 + QA13-C1.
+
+# New round-13 cases not in tools/gates/tests or tools/agents/tests (results in 04 log):
+✔ QA13-REG A24/A25 regression: the 94-case round-9 suite (every assignment negative) passes against the candidate with D-026-shaped run evidence (100749.994785ms)
+✔ QA13-V1 control: the D-026-adapted fixture validates cleanly (255.405607ms)
+✔ QA13-V2 F-DG0-230/D-026: a deny list without docs/source (the round-12 runner shape) is rejected (264.221415ms)
+✔ QA13-V3 F-DG0-230: a run whose meta has no cwd cannot bind a record (the deny list cannot be anchored) (300.195325ms)
+✔ QA13-V4 F-DG0-230: non-normalised deny entries (<cwd>/./x) are rejected; the check fails closed (283.645694ms)
+✖ QA13-V5 F-DG0-230 residual: a run whose meta.cwd is forged to the foreign root its deny list protects (transcript init/prompt say /work/repo) should not bind (242.92166ms)
+✔ QA13-S1 sandbox-run: an uncommitted edit of a tracked file never reaches the command (it checks the committed revision) (65.686219ms)
+✔ QA13-S2 sandbox-run: BASH_ENV, NODE_OPTIONS, PYTHONPATH and PYTHONSTARTUP from the caller do not reach the sandboxed command (127.228734ms)
+✔ QA13-S3 sandbox-run: a hook planted in the source repository's .git/hooks never runs during clone/checkout (82.892527ms)
+✔ QA13-S4 sandbox-run: an unknown revision fails before the command runs (88.118044ms)
+✔ QA13-S5 sandbox-run: the command can write neither the source repository's .git nor the caller's HOME (145.806694ms)
+✔ QA13-S6 F-DG0-229 regression: prefreeze never imports gitignored bytecode planted next to an analysis check (35035.252853ms)
+✔ QA13-S7 prefreeze: an uncommitted edit of a tracked candidate file fails (the sandboxed checks see HEAD only; the final check catches the drift) (36439.894051ms)
+✔ QA13-R1 probe D-026 stub rule: a pre-existing untracked, non-empty CLAUDE.local.md truncated to zero during a run (663.086264ms)
+✖ QA13-R1b probe D-026 stub rule: a pre-existing ignored, non-empty .claude/settings.local.json truncated to zero during a run (reported before D-026) (682.387942ms)
+✖ QA13-R2 probe D-024: a pre-existing ignored, non-empty .claude/settings.local.json deleted during a run (721.345039ms)
+✔ QA13-R3 D-026 by design: zero-length untracked .gitattributes and nested .claude files are ignored; the same files with content are reported (1328.261452ms)
+✔ QA13-C1 A25: review metadata leaves the candidate unchanged; a new tests/qa file (or a mode change) changes it (1525.385945ms)
+✖ QA13-V5 F-DG0-230 residual: a run whose meta.cwd is forged to the foreign root its deny list protects (transcript init/prompt say /work/repo) should not bind (242.92166ms)
+✖ QA13-R1b probe D-026 stub rule: a pre-existing ignored, non-empty .claude/settings.local.json truncated to zero during a run (reported before D-026) (682.387942ms)
+✖ QA13-R2 probe D-024: a pre-existing ignored, non-empty .claude/settings.local.json deleted during a run (721.345039ms)

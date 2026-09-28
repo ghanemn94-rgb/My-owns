@@ -1,0 +1,73 @@
+# F-DG0-231 re-verification 2026-09-28T22:12:42Z: old 7f09967 vs candidate 6c61f2e
+
+### grep -rnF -- 'git clone <repo> /tmp' (docs/delivery/{agent-protocol,decisions,agents,threat-model}.md tools/agents/{agent_settings.py,run-agent.sh} CLAUDE.md .claude/agents)
+[old]
+docs/delivery/agent-protocol.md:79:Your Bash commands run in an OS sandbox (bubblewrap; D-025). Shell writes to protected paths fail with "Read-only file system": git metadata, Claude configuration, gate and agent tooling, sources
+[t13]
+(no match)
+
+### grep -rnF -- 'clone <repo> "\$TMPDIR' (docs/delivery/{agent-protocol,decisions,agents,threat-model}.md tools/agents/{agent_settings.py,run-agent.sh} CLAUDE.md .claude/agents)
+[old]
+(no match)
+[t13]
+docs/delivery/agent-protocol.md:79:Your Bash commands run in an OS sandbox (bubblewrap; D-025). Shell writes to protected paths fail with "Read-only file system": git metadata, Claude configuration, gate and agent tooling, sources
+
+### grep -rnF -- 'working directory and /tmp' (docs/delivery/{agent-protocol,decisions,agents,threat-model}.md tools/agents/{agent_settings.py,run-agent.sh} CLAUDE.md .claude/agents)
+[old]
+tools/agents/agent_settings.py:10:  - By default a sandboxed command may write only its working directory and /tmp; HOME and /etc are read-only.
+[t13]
+(no match)
+
+### grep -rnF -- '\$TMPDIR' (docs/delivery/{agent-protocol,decisions,agents,threat-model}.md tools/agents/{agent_settings.py,run-agent.sh} CLAUDE.md .claude/agents)
+[old]
+(no match)
+[t13]
+docs/delivery/decisions.md:31:| D-025 | 2026-09-28 | delivery-orchestrator | **Agent shells run in an OS sandbox.** Root-cause response to F-DG0-137, F-DG0-226 and the recurring findings that the agent shell was unguarded. The run
+docs/delivery/agent-protocol.md:79:Your Bash commands run in an OS sandbox (bubblewrap; D-025). Shell writes to protected paths fail with "Read-only file system": git metadata, Claude configuration, gate and agent tooling, sources
+tools/agents/agent_settings.py:10:  - By default a sandboxed command may write only its working directory and $TMPDIR (Claude Code sets it, e.g.
+
+### grep -rnF -- 'setting-sources project,local' (docs/delivery/{agent-protocol,decisions,agents,threat-model}.md tools/agents/{agent_settings.py,run-agent.sh} CLAUDE.md .claude/agents)
+[old]
+docs/delivery/decisions.md:30:| D-024 | 2026-09-28 | delivery-orchestrator | **Guard fail-closed, scratch limited to the temp directory, user settings not loaded** (F-DG0-135, F-DG0-136).<br>• `guardedRoots()` throws when the wo
+tools/agents/run-agent.sh:82:# User settings are not loaded (--setting-sources project,local), but a change is still a tamper signal.
+docs/delivery/agents.md:28:No role may write a `.git` path segment. The runner exports `MTH_GUARD_ROOT` (the main repository), and every hook runs that repository's guard. The guard protects the repository **and all of its git wor
+[t13]
+docs/delivery/agents.md:28:No role may write a `.git` path segment. The runner exports `MTH_GUARD_ROOT` (the main repository), and every hook runs that repository's guard. The guard protects the repository **and all of its git wor
+docs/delivery/decisions.md:30:| D-024 | 2026-09-28 | delivery-orchestrator | **Guard fail-closed, scratch limited to the temp directory, user settings not loaded** (F-DG0-135, F-DG0-136).<br>• `guardedRoots()` throws when the wo
+
+### grep -rnF -- 'Bash writes aren't path-guarded' (docs/delivery/{agent-protocol,decisions,agents,threat-model}.md tools/agents/{agent_settings.py,run-agent.sh} CLAUDE.md .claude/agents)
+[old]
+docs/delivery/decisions.md:15:| D-009 | 2026-09-28 | delivery-orchestrator | **Implementer write guard.** Implementers can't write `tools/gates/**`, `tools/agents/**`, `.claude/agents/**`, `docs/source/**`, reviews, gates, runs, c
+docs/delivery/agents.md:92:**Observation:** `Grep` and `Glob` are declared in the definitions but aren't exposed in `--agent` sessions of this CLI build. The agents use `grep`/`find` through Bash instead, which doesn't affect the 
+[t13]
+docs/delivery/decisions.md:15:| D-009 | 2026-09-28 | delivery-orchestrator | **Implementer write guard.** Implementers can't write `tools/gates/**`, `tools/agents/**`, `.claude/agents/**`, `docs/source/**`, reviews, gates, runs, c
+
+### grep -rnF -- 'aren.t path-guarded' (docs/delivery/{agent-protocol,decisions,agents,threat-model}.md tools/agents/{agent_settings.py,run-agent.sh} CLAUDE.md .claude/agents)
+[old]
+docs/delivery/agents.md:92:**Observation:** `Grep` and `Glob` are declared in the definitions but aren't exposed in `--agent` sessions of this CLI build. The agents use `grep`/`find` through Bash instead, which doesn't affect the 
+docs/delivery/decisions.md:15:| D-009 | 2026-09-28 | delivery-orchestrator | **Implementer write guard.** Implementers can't write `tools/gates/**`, `tools/agents/**`, `.claude/agents/**`, `docs/source/**`, reviews, gates, runs, c
+[t13]
+docs/delivery/decisions.md:15:| D-009 | 2026-09-28 | delivery-orchestrator | **Implementer write guard.** Implementers can't write `tools/gates/**`, `tools/agents/**`, `.claude/agents/**`, `docs/source/**`, reviews, gates, runs, c
+
+### remaining '/tmp' mentions in candidate docs/agent definitions (context check)
+docs/delivery/agent-protocol.md:79:Your Bash commands run in an OS sandbox (bubblewrap; D-025). Shell writes to protected paths fail with "Read-only file system": git metadata, Claude configuration, gate and agent toolin
+.claude/agents/code-security-reviewer.md:33:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional narrative to
+.claude/agents/qa-verifier.md:31:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional narrative to the path i
+docs/delivery/threat-model.md:29:| The orchestrator runs **agent-planted code with its own privileges** (a module or bytecode file in the working tree that an unsandboxed interpreter imports) | D-026. The runner's Python
+.claude/agents/domain-reviewer.md:33:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional narrative to the pa
+
+## Residual drift in the candidate (6c61f2e)
+### docs/delivery/agents.md line 28 (current invocation-mechanism doc, not a dated decision) still states the old flag:
+the home directory never is. The runner starts agents with `--setting-sources project,local` and detects changes to configuration outside the candidate
+### actual flag in tools/agents/run-agent.sh:
+150:    --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
+159:      --resume "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
+### reviewer agent definitions still prescribe a disposable copy that the sandbox refuses (git worktree add needs .git writes; /tmp is read-only):
+.claude/agents/code-security-reviewer.md:33:git worktree add /tmp/review-<id> <commit>
+.claude/agents/qa-verifier.md:31:git worktree add /tmp/review-<id> <commit>
+.claude/agents/domain-reviewer.md:33:git worktree add /tmp/review-<id> <commit>
+### live check in this run's sandbox:
+Preparing worktree (detached HEAD 6c61f2e)
+fatal: could not create leading directories of '.git/worktrees/review-qa13': Read-only file system
+rc=0
+### D-024 (dated decision) still quotes project,local: historical record, acceptable.

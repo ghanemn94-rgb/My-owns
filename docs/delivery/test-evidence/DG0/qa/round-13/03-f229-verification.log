@@ -1,0 +1,61 @@
+# F-DG0-229 re-verification, 2026-09-28T21:57:31Z. Environment: agent sandbox shell (bwrap nested), node v22.22.2, Python 3.11.15
+
+########## OLD round-12 candidate 7f09967 ##########
+## clone at 7f09967ad36dc1a0d2a7065ae93f11bded29ccce
+## planted:
+-rw-r--r-- 1 root root  801 Sep 28 21:57 docs/analysis/tools/csv.pyc
+
+docs/analysis/tools/__pycache__/:
+total 12
+drwxr-xr-x 2 root root 4096 Sep 28 21:57 .
+drwxr-xr-x 3 root root 4096 Sep 28 21:57 ..
+-rw-r--r-- 1 root root  801 Sep 28 21:57 csv.cpython-311.pyc
+## git status --porcelain --untracked-files=all (expect empty: ignored)
+[end]
+## sanity: running check_counts.py the OLD way (python3 script) imports the plant?
+rc=42 (42 = plant executed)
+## $ tools/gates/prefreeze.sh DG0
+PASS  source extraction reproducible
+PASS  gate validator + guard tests
+PASS  runner metadata tests
+PASS  register rules (DG0)
+PASS  pipeline state
+FAIL  analysis check check_counts.py
+      
+FAIL  analysis check check_pb_provenance.py
+      
+FAIL  analysis check check_test_refs.py
+      
+PASS  working-tree candidate equals HEAD (sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c)
+prefreeze_exit=1
+## .git/hooks/post-commit written by the plant during prefreeze?
+YES (plant executed with orchestrator rights)
+
+########## NEW round-13 candidate 6c61f2e ##########
+## clone at 6c61f2e1aa07fa6acfc52f20a8ee9fbb554904ac
+## planted:
+-rw-r--r-- 1 root root  801 Sep 28 21:58 docs/analysis/tools/csv.pyc
+
+docs/analysis/tools/__pycache__/:
+total 12
+drwxr-xr-x 2 root root 4096 Sep 28 21:58 .
+drwxr-xr-x 3 root root 4096 Sep 28 21:58 ..
+-rw-r--r-- 1 root root  801 Sep 28 21:58 csv.cpython-311.pyc
+## git status --porcelain --untracked-files=all (expect empty: ignored)
+[end]
+## sanity: running check_counts.py the OLD way (python3 script) imports the plant?
+rc=42 (42 = plant executed)
+## $ tools/gates/prefreeze.sh DG0
+PASS  source extraction reproducible (sandboxed)
+PASS  gate validator + guard tests (sandboxed)
+PASS  runner metadata + settings tests (sandboxed)
+PASS  register rules (DG0) (sandboxed)
+PASS  register equals the merge of docs/analysis/parts (sandboxed)
+PASS  pipeline state (sandboxed)
+PASS  analysis check check_counts.py (sandboxed)
+PASS  analysis check check_pb_provenance.py (sandboxed)
+PASS  analysis check check_test_refs.py (sandboxed)
+PASS  working-tree candidate equals HEAD (sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79)
+prefreeze_exit=0
+## .git/hooks/post-commit written by the plant during prefreeze?
+no

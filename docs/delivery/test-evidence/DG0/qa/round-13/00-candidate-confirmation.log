@@ -1,0 +1,37 @@
+# qa-verifier round 13: candidate confirmation, 2026-09-28T22:23:06Z
+$ git rev-parse HEAD
+ec9775dad8f2b73f9992df4185659614c1f9ca51
+(differs from freeze commit 6c61f2e; the later commits are metadata-only, see below)
+$ git log --oneline 6c61f2e1aa07fa6acfc52f20a8ee9fbb554904ac..HEAD
+ec9775d DG0 round 13: domain and code-security test evidence (hashes match their run outputs)
+4b33781 run: DG0-T-DG0-REV-SEC-R13-code-security-reviewer-20260928T215437Z-f8de01f5 (review evidence, auto-committed by run-agent.sh)
+1966762 run: DG0-T-DG0-REV-DOM-R13-domain-reviewer-20260928T215437Z-4b94627c (review evidence, auto-committed by run-agent.sh)
+a733aaf DG0: live guard probe against the round-13 candidate (PASS)
+c1aaa42 DG0: freeze round-13 candidate, round-13 assignments
+$ git diff --name-only 6c61f2e..HEAD | sed 's#/[^/]*$##' | sort | uniq -c
+      1 docs/delivery
+      5 docs/delivery/assignments/DG0/round-13
+      1 docs/delivery/candidates/DG0
+      5 docs/delivery/reviews/DG0/round-13
+      5 docs/delivery/runs/DG0/DG0-T-DG0-REV-DOM-R13-domain-reviewer-20260928T215437Z-4b94627c
+      5 docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R13-code-security-reviewer-20260928T215437Z-f8de01f5
+      6 docs/delivery/test-evidence/DG0/code-security/round-13
+     15 docs/delivery/test-evidence/DG0/domain/round-13
+      1 docs/delivery/test-evidence/DG0/orchestrator-probes
+      7 docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T215218Z
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79","files":86}
+$ node tools/gates/candidate.mjs --stage DG0 --ref 6c61f2e1aa07fa6acfc52f20a8ee9fbb554904ac
+{"stage":"DG0","source":"6c61f2e1aa07fa6acfc52f20a8ee9fbb554904ac","candidate_id":"sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79","files":86}
+$ node tools/gates/candidate.mjs --stage DG0 --diff
+{
+  "frozen": "sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79",
+  "working_tree": "sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+$ sha256sum docs/delivery/assignments/DG0/round-13/review-qa-verifier.md
+a5ff18a0b080ca4164e04e52125f730f15c7420c42f39bb6d8a2ab4b05f29afc  docs/delivery/assignments/DG0/round-13/review-qa-verifier.md
+RESULT: candidate sha256:c3364ac2f1c27b37bdaef6c07196d25b13016e94703449b9ff87524ff18afb79 confirmed (working tree, freeze ref and frozen manifest agree); assignment sha matches the prompt.
