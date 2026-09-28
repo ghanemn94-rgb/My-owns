@@ -1,0 +1,30 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-134",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "The write-guard hook selects which guard to run from the hook's cwd (git rev-parse --show-toplevel), so in the documented '--cwd <worktree>' mode (and after a Bash cd into any nested repo) Write/Edit to the main repository's protected paths are allowed",
+      "reproduction": "Every tools/agents/settings/<role>.settings.json:9 runs g=\"$(git rev-parse --show-toplevel)/tools/agents/guard-write.mjs\"; node \"$g\" <role>. The guard found this way pins GUARD_ROOT to its own location (guard-write.mjs:42) and allows any path outside that root as 'scratch' (guard-write.mjs:80). run-agent.sh:108/117 start claude with 'cd \"$CWD\"' and --settings from the main repository (run-agent.sh:40), and agents.md:96 / D-004 prescribe '--cwd <worktree>' for concurrent writers. (1) Worktree mode, file tools only, no Bash: see 09-guard-worktree-cwd.log. A 'git worktree add' of the candidate is created, then the real hook command is run with cwd = worktree and a Write payload for the MAIN checkout. For backend-workflow-engineer, transformation-analyst and code-security-reviewer, tools/gates/lib/rules.mjs, docs/delivery/stages.json, .claude/settings.local.json, docs/delivery/gates/DG1.json and tools/agents/write-scopes.json all return rc=0 (allowed). The same payloads from cwd = main checkout return rc=2 (blocked). (2) Live confirmation that Claude Code runs the PreToolUse hook in the session's current cwd: see 08-hookcwd-live-probe.log. After a Bash 'cd' into a nested git repo whose tools/agents/guard-write.mjs only logs, an in-scope Write in this very session executed that nested file (hook_process_cwd = the nested repo), not the real guard. So an agent can also replace the guard by planting any guard-write.mjs in a nested repo and cd-ing into it. With an unmodified guard copy in the nested repo, every main-repo path is allowed (07-guard-nogit-and-nested-cwd.log B1).",
+      "expected": "REQ-DLV-007's procedure and agents.md:28 / D-020 say the guard 'fix[es] the guarded root to this repository', so a nested .git 'can't move the root'. In every supported run mode, including '--cwd <worktree>', Write/Edit/MultiEdit/NotebookEdit to the orchestrator repository's protected paths must be blocked for implementers and reviewers. Fix sketch: the hook command should invoke a fixed guard path, for example the absolute path of the main repository's tools/agents/guard-write.mjs, written into the settings by run-agent.sh so it does not depend on the hook's cwd. That guard must protect both REPO_ROOT and the run's worktree (or treat any path inside any checkout of this repository as guarded), rather than allowing everything outside its own root. Add a regression test that runs the hook entry point from a worktree and from a nested repository.",
+      "actual": "The guard in force is whichever guard-write.mjs sits at the git toplevel of the hook's cwd. In the sanctioned worktree mode, that guard protects only the worktree, and the main repository (gate rules, agent definitions, Claude configuration, stages.json, gate records) is writable through plain file tools. Mitigations: the orchestrator's git-status check and full-candidate review would surface committed changes. But REQ-DLV-007 makes the mechanical file-tool guard the control, and the git-status check is documented only as the compensating control for Bash. The Bash-cd variant needs a Bash step, which is already disclosed as unguarded. The worktree variant needs none. Every recorded DG0 run so far used cwd = the repository root (12-run-cwds.log), so the worktree variant has not been exercised. It is, however, the mode D-004 prescribes for concurrent writers from P1 onward. I did not audit past transcripts for the Bash-cd variant.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-9/09-guard-worktree-cwd.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-9/08-hookcwd-live-probe.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-9/07-guard-nogit-and-nested-cwd.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-9/12-run-cwds.log",
+        "tools/agents/settings/backend-workflow-engineer.settings.json",
+        "tools/agents/guard-write.mjs",
+        "tools/agents/run-agent.sh",
+        "docs/delivery/agents.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-9/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": []
+    }
+  ]
+}

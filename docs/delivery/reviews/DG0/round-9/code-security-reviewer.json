@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 9,
+  "candidate_id": "sha256:fc0bd2a2f2019ca436e586bdd5fb4d636b9bc6025f06321db7a7ac38cab18998",
+  "source_commit": "cbc755d035b47bb783ffedb4045df5faae40e4d7",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-SEC-R9-code-security-reviewer-20260928T171212Z-f9934ae4",
+    "session_id": "f9934ae4-0088-4015-925a-3e8548a4f489"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer) authored no implementation in the DG0 scope. The authors are transformation-analyst and delivery-orchestrator. I formed this verdict before reading any other round-9 review record, and I did not open any other reviewer's round-9 files."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-9/review-code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-006",
+    "REQ-DLV-007",
+    "REQ-DLV-013",
+    "REQ-DLV-015",
+    "REQ-DLV-016",
+    "REQ-DLV-017",
+    "REQ-DLV-022",
+    "REQ-DLV-023",
+    "REQ-DLV-026"
+  ],
+  "checks_run": [
+    {
+      "id": "C01-candidate-identity",
+      "procedure": "Confirm the frozen candidate: HEAD of the main checkout (777ec85, a metadata-only freeze commit after cbc755d) and the recomputed candidate ID; recompute from a disposable clone at cbc755d (ref and working tree); confirm that the only candidate changes since round 8 (d662625..cbc755d over the candidate paths) are rules.mjs:313 (regex \\S+ -> .+?), a regression test, and one agent-protocol line",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG0; (clone at cbc755d) node tools/gates/candidate.mjs --stage DG0 --ref HEAD; git diff d6626258..cbc755d -- tools/ .claude/ .github/ CLAUDE.md docs/delivery/*.md",
+      "environment": "main checkout /home/user/My-owns (read-only) and disposable clone in the session scratchpad; node v22, git",
+      "expected": "candidate_id sha256:fc0bd2a2...18998 everywhere",
+      "actual": "sha256:fc0bd2a2f2019ca436e586bdd5fb4d636b9bc6025f06321db7a7ac38cab18998 from the main working tree, the clone ref and the clone working tree (79 files). The diff is limited to rules.mjs:313, validator.test.mjs (+13) and agent-protocol.md (+1). Rechecked after HEAD moved to 90bd35e (another reviewer's auto-commit): still identical.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-9/00-candidate-identity.log"]
+    },
+    {
+      "id": "C02-existing-tests",
+      "procedure": "Run the shipped validator, guard and runner-metadata test suites on the candidate commit",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs; python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'",
+      "environment": "disposable clone at cbc755d; node v22; python3",
+      "expected": "all pass, exit 0",
+      "actual": "node: 53 tests, 53 pass, 0 fail (exit 0). python: 5 tests OK (exit 0).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007", "REQ-DLV-016", "REQ-DLV-023", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-9/01-existing-tests.log"]
+    },
+    {
+      "id": "C03-prefreeze-fresh-clone",
+      "procedure": "Run tools/gates/prefreeze.sh DG0 in a fresh clone of the candidate commit (required by the round-9 assignment)",
+      "command": "git clone /home/user/My-owns <scratch>/pf && git checkout cbc755d && tools/gates/prefreeze.sh DG0",
+      "environment": "fresh clone at cbc755d in the session scratchpad",
+      "expected": "every line PASS, exit 0",
+      "actual": "All 9 lines PASS (extraction reproducible, tests, runner metadata, register rules, pipeline, 3 analysis checks, working-tree candidate == HEAD fc0bd2a2...); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022", "REQ-DLV-023"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-9/02-prefreeze-fresh-clone.log"]
+    },
+    {
+      "id": "C04-regex-change-adversarial",
+      "procedure": "Own reproduction suite for the only code change (rules.mjs:313): decoy (path, sha) pair before the real one, a fake '(sha256 ..)' inside the path, a wrong sha with the right path, a legitimate path with spaces and parentheses, a newline in the path, a missing '/' boundary before the relative path, and a 200 KB forged prompt line (timing). Run against the new candidate and the round-8 candidate.",
+      "command": "bash docs/delivery/test-evidence/DG0/code-security/round-9/run-repro-r9.sh <clone> cbc755d; same with d6626258",
+      "environment": "disposable clone; the harness is lines 1-238 of tools/gates/tests/validator.test.mjs plus repro-r9-cases.mjs, written into the clone only",
+      "expected": "cbc755d: all 8 pass (every forgery rejected, legitimate spaced path accepted, bounded time). d6626258: only R9-5 (path with spaces) fails, which is the original F-DG0-223 behaviour.",
+      "actual": "cbc755d: 8/8 pass (R9-8 took 118 ms). d6626258: 7/8, only R9-5 fails as expected. The lazy match fails closed: the first '(sha256 <hex>)' binds, and the endsWith('/'+meta.assignment) plus sha equality still applies. No regression against \\S+.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-026"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-9/repro-r9-cases.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-9/run-repro-r9.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-9/03-repro-r9-on-cbc755d.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-9/04-repro-r9-on-d662625.log"
+      ]
+    },
+    {
+      "id": "C05-validators-at-head",
+      "procedure": "Run every validator mode read-only on the main checkout",
+      "command": "node tools/gates/validate.mjs --register DG0 | --pipeline | --reconcile | --stage DG0 | --stage DG0 --historical",
+      "environment": "main checkout at 777ec85 (candidate fc0bd2a2), read-only",
+      "expected": "register/pipeline/reconcile PASS (exit 0); --stage DG0 and --historical FAIL (exit 1), because no gate record exists yet (a correct negative)",
+      "actual": "register PASS 0; pipeline PASS 0 (DG0 REVIEWING); reconcile PASS 0 (working tree matches frozen candidate); --stage DG0 FAIL 1 and --historical FAIL 1 with 'file not found (docs/delivery/gates/DG0.json)'",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-023"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-9/05-validators-at-head.log"]
+    },
+    {
+      "id": "C06-guard-hook-bypass-vectors",
+      "procedure": "Feed the real hook command from the per-role settings, run from the clone root, with the following bypass vectors: '..' segments, a file symlink and a directory symlink into tools/gates, case variants, nested .claude and CLAUDE.md, .GIT, MultiEdit, NotebookEdit notebook_path, relative paths, an unparsable payload, and a hook cwd outside any repository",
+      "command": "printf '<payload>' | (cd <cwd> && bash -c \"$HOOK\")  (see log)",
+      "environment": "disposable clone at cbc755d; code-security-reviewer settings",
+      "expected": "in-scope path rc=0; every vector rc=2",
+      "actual": "All vectors are blocked with rc=2, and the in-scope path is allowed with rc=0. The 'git absent' probe in this log was invalid (the stripped PATH also removed bash, rc=127), so it was redone in C07.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-9/06-guard-hook-probes.log"]
+    },
+    {
+      "id": "C07-guard-no-git-and-nested-repo-cwd",
+      "procedure": "Hook with git absent from PATH (node and bash present). Separately, hook run with cwd inside a nested git repository that carries (B1) an unmodified copy of the guard or (B2) no guard, targeting a protected path of the enclosing checkout.",
+      "command": "see log (env PATH=<dir with node,bash only>; cwd=<clone>/docs/delivery/test-evidence/nested)",
+      "environment": "disposable clone at cbc755d",
+      "expected": "no git: rc=2 (fail closed). B1 and B2: rc=2.",
+      "actual": "No git: rc=2 'write guard missing' (fail closed, as expected). B2: rc=2. B1: rc=0, so the protected tools/gates/lib/rules.mjs of the enclosing checkout is ALLOWED, because the nested copy treats it as 'scratch' (F-DG0-134).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-9/07-guard-nogit-and-nested-cwd.log"]
+    },
+    {
+      "id": "C08-live-hook-cwd-probe",
+      "procedure": "Live, harmless check of which directory Claude Code runs the PreToolUse hook in. A nested git repo was created inside my evidence directory with a tools/agents/guard-write.mjs that only logs its cwd and allows the call. Bash cd'd into it, and an in-scope Write (08-hookcwd-probe-target.txt) was issued. The probe repo was deleted afterwards.",
+      "command": "mkdir -p .../hookcwd-probe/tools/agents; git init; cd hookcwd-probe; Write(08-hookcwd-probe-target.txt); cat probe.log; rm -rf hookcwd-probe",
+      "environment": "this live session (claude-code-cli, permission mode auto, code-security-reviewer settings); the target was inside my write scope",
+      "expected": "If the hook were cwd-independent, the probe log would not exist",
+      "actual": "probe.log exists: hook_process_cwd and payload cwd are the nested repo. The Write was gated by the nested repo's guard-write.mjs, not the real guard, which confirms that the guard in force follows the session cwd (F-DG0-134).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-9/08-hookcwd-live-probe.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-9/08-hookcwd-probe-target.txt"
+      ]
+    },
+    {
+      "id": "C09-guard-worktree-mode",
+      "procedure": "Documented concurrent-writer mode (agents.md:96, D-004: run-agent.sh --cwd <worktree>). In a clone, 'git worktree add' the candidate, then run the real hook command (main-repo settings) with cwd = worktree and Write payloads targeting the MAIN checkout's protected paths, for two implementer roles and one reviewer role. Control: the same payloads with cwd = main checkout.",
+      "command": "git worktree add --detach <scratch>/wt-impl cbc755d; printf '{..file_path:<main>/<protected>}' | (cd <wt|main> && bash -c \"$HOOK\")",
+      "environment": "disposable clone plus worktree in the session scratchpad; removed and pruned afterwards",
+      "expected": "rc=2 for every protected main-repo path, whatever the cwd",
+      "actual": "cwd = main: rc=2 for all 15 probes. cwd = worktree: rc=0 for all 15 (tools/gates/lib/rules.mjs, docs/delivery/stages.json, .claude/settings.local.json, docs/delivery/gates/DG1.json, tools/agents/write-scopes.json for backend-workflow-engineer, transformation-analyst and code-security-reviewer). File-tool writes to protected main-repo paths are allowed without any Bash step (F-DG0-134, Medium, mandatory).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-9/09-guard-worktree-cwd.log"]
+    },
+    {
+      "id": "C10-static-secrets-portability-config",
+      "procedure": "Scan the candidate at cbc755d for credential patterns, e-mail addresses (personal data), public CDN or builder-hosted references, agent frontmatter validity, per-role settings uniformity, CI least privilege, pinning and fetch-depth, and subprocess/network use in the source scripts. Also read the full sources of tools/gates/**, tools/agents/**, tools/source/**, the workflow and the settings.",
+      "command": "git grep -I -E '<secret patterns>' cbc755d; git grep -o '<email>' over the manifest paths; git grep '<cdn hosts>'; frontmatter parser; node settings comparison; grep of the workflow",
+      "environment": "disposable clone at cbc755d and the main checkout (read-only)",
+      "expected": "no credentials, no personal data, no CDNs; valid frontmatter; identical guard hooks; CI permissions contents: read, SHA-pinned actions, fetch-depth 0, no continue-on-error",
+      "actual": "Secret and CDN greps printed zero match lines (the 'exit=0' in the log is head's status, not grep's). E-mails: only the t@example.com fixture and noreply@anthropic.com. All 10 definitions have name == filename and model inherit. All 10 settings have one PreToolUse hook with matcher Write|Edit|NotebookEdit|MultiEdit, identical apart from the role. CI: permissions contents: read, actions pinned to commit SHAs, fetch-depth 0, and no continue-on-error, so a failing validator fails the job. extract_docx.py reads the zip in memory (no path traversal).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-006", "REQ-DLV-023"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-9/10-static-checks.log"]
+    },
+    {
+      "id": "C11-full-source-review",
+      "procedure": "Line-by-line review of the full candidate sources: tools/gates/lib/{candidate,rules,csv,schema}.mjs, validate.mjs, candidate.mjs, import-findings.mjs, prefreeze.sh, tools/agents/{guard-write.mjs,run-agent.sh,run_meta.py,write-scopes.json,settings/*}, tools/source/*, .github/workflows/delivery-gates.yml, .gitattributes and .gitignore. Covered: gate-bypass paths (schema subset, glob semantics, META_EXCLUDES, APPROVED_SPEC, historical approval immutability, provenance binding and transcript replay, terminal finding states, register checks, pipeline advancement, exit codes); runner injection and quoting (the prompt passes through python argv and json.dumps, arguments are regex-validated, pathspecs are NUL-separated and literal); CSV/JSON robustness; candidate determinism (sorted paths, git mode, -text in .gitattributes).",
+      "command": "cat -n over the listed files; git diff d6626258..cbc755d",
+      "environment": "main checkout (read-only)",
+      "expected": "no new gate-bypass or runner defects beyond the probed items",
+      "actual": "No new defect in the validator, the candidate hashing, the CSV/schema parsers, the runner or the CI. The only new defect is the hook's cwd-dependent guard selection (F-DG0-134). The JS replay (rules.mjs:688-723) and the Python replay (run_meta.py:53-87) agree on Write/Edit/MultiEdit semantics (first occurrence vs replace_all). Relative-path handling differs slightly, which fails closed.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026"],
+      "evidence": [
+        "tools/gates/lib/rules.mjs",
+        "tools/gates/lib/candidate.mjs",
+        "tools/agents/guard-write.mjs",
+        "tools/agents/run-agent.sh",
+        "tools/agents/run_meta.py",
+        ".github/workflows/delivery-gates.yml"
+      ]
+    },
+    {
+      "id": "C12-own-findings-status",
+      "procedure": "List my earlier findings (F-DG0-101..133) in findings.json and look for any in FIXED_PENDING_VERIFICATION that I must verify this round",
+      "command": "node -e '<list findings with reported_by code-security-reviewer and status>'",
+      "environment": "main checkout (read-only)",
+      "expected": "any pending item is identified",
+      "actual": "All 26 of my findings are CLOSED_VERIFIED. The only FIXED_PENDING_VERIFICATION finding is F-DG0-223 (qa-verifier's, not mine), so I write no verifications sidecar. I checked its code change independently for security in C04.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-017"],
+      "evidence": ["docs/delivery/findings.json#F-DG0-133"]
+    },
+    {
+      "id": "C13-run-cwds-and-cleanup",
+      "procedure": "Record the cwd of every DG0 run (to scope F-DG0-134), then remove all disposable clones and worktrees and confirm that the main checkout has only evidence and run output",
+      "command": "python3 over docs/delivery/runs/*/*/meta.json; rm -rf <scratch clones>; git worktree list; git status --short",
+      "environment": "main checkout (read-only) and session scratchpad",
+      "expected": "no leftovers; no candidate file modified",
+      "actual": "All 44 recorded runs used cwd /home/user/My-owns, so the worktree mode is not yet exercised. The clones were removed and the worktree list shows only the main checkout. git status shows only untracked run and test-evidence directories (and other reviewers' round-9 outputs). No candidate file changed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-9/12-run-cwds.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-9/11-cleanup.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG0-134"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/code-security/round-9/00-candidate-identity.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/01-existing-tests.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/02-prefreeze-fresh-clone.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/03-repro-r9-on-cbc755d.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/04-repro-r9-on-d662625.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/05-validators-at-head.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/06-guard-hook-probes.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/07-guard-nogit-and-nested-cwd.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/08-hookcwd-live-probe.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/08-hookcwd-probe-target.txt",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/09-guard-worktree-cwd.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/10-static-checks.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/11-cleanup.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/12-run-cwds.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/repro-r9-cases.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-9/run-repro-r9.sh"
+  ],
+  "reviewed_at": "2026-09-28T17:21:42Z",
+  "summary": "FAIL. The round-9 code change (rules.mjs:313, \\S+ -> .+?) is correct and fails closed under 8 adversarial cases. Tests (53+5) pass, prefreeze passes in a fresh clone, and there are no secrets, personal data or CDNs. New finding F-DG0-134 (Medium, mandatory, REQ-DLV-007): the hook command picks the guard from the hook cwd's git toplevel. In the documented '--cwd <worktree>' concurrent-writer mode, any role can Write/Edit the main repository's protected files (gate rules, write scopes, .claude/, stages.json, gate records) with file tools alone. A live probe in this session also showed that a Bash cd into a nested repo swaps in that repo's guard-write.mjs."
+}
