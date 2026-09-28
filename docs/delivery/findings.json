@@ -4412,6 +4412,11 @@
           "at": "2026-09-28T23:15:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 14: PASS"
+        },
+        {
+          "at": "2026-09-28T23:52:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 15: PASS"
         }
       ],
       "fix_revision": "cf13cb12e810ee0205567d20d02df79bbd5f475b",
@@ -4420,20 +4425,19 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R14-qa-verifier-20260928T224157Z-0634a37b",
-          "session_id": "0634a37b-ac99-483d-ad58-c23b005f5b9f"
+          "run_id": "DG0-T-DG0-REV-QA-R15-qa-verifier-20260928T232527Z-eaf04d57",
+          "session_id": "eaf04d57-266e-422d-92b6-34402a62bd10"
         },
-        "at": "2026-09-28T23:15:00Z",
+        "at": "2026-09-28T23:52:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-14/03-f231-verification.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/21-f231-reverification.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/12-live-sandbox-probe.log",
+          "docs/delivery/agent-protocol.md#L79",
           "docs/delivery/agents.md#L28",
-          ".claude/agents/qa-verifier.md",
-          ".claude/agents/domain-reviewer.md",
-          ".claude/agents/code-security-reviewer.md",
-          "docs/delivery/agent-protocol.md#L79"
+          ".claude/agents/qa-verifier.md"
         ],
-        "note": "I reproduced both round-13 residuals on the old commit 6c61f2e. (1) docs/delivery/agents.md line 28 said '--setting-sources project,local'. (2) All three reviewer definitions prescribed 'git worktree add /tmp/review-<id> <commit>', and that instruction still fails live in this sandbox: 'could not create leading directories of .git/worktrees/...: Read-only file system', exit 128. On candidate 1e64eb0: agents.md lines 28 and 104 both say 'setting-sources project', matching run-agent.sh lines 150 and 159. The domain-reviewer, code-security-reviewer and qa-verifier definitions say 'git clone <repo> \"$TMPDIR/review-<id>\" and check out the commit'. That is exactly what I did for this whole review ($TMPDIR/review-qa14, $TMPDIR/pf14, $TMPDIR/head14), and it works. agent-protocol.md line 79 now mentions worktree add only to say it is denied. D-024's historical 'project,local' is marked as superseded by D-025. No current doc, definition, runner comment or agent_settings docstring still gives the stale instruction. The expected result of the finding is met."
+        "note": "Fresh round-15 re-verification, done entirely in this run's private $TMPDIR clones, outside the round-14 incident window. On the old commit 6c61f2e the stale guidance is still present: agents.md line 28 'project,local', and the reviewer definitions prescribing 'git worktree add /tmp/review-<id>' (21-f231-reverification.log). On candidate 7fab49c: agent-protocol.md line 79 says 'git clone <repo> \"$TMPDIR/<name>\"', that only the run's own $TMPDIR is writable scratch, and that /tmp and /var/tmp are read-only. agents.md lines 28 and 104 say '--setting-sources project', matching run-agent.sh lines 158 and 167. The reviewer definitions say to clone into $TMPDIR. The only remaining pattern matches are historical: decisions D-009, D-024 (marked superseded) and D-027, and the agents.md line 92 sentence 'Before that [D-025], Bash writes weren't path-guarded'. I checked the docs live against this run's sandbox (12-live-sandbox-probe.log): touch /tmp and /var/tmp give 'Read-only file system'; $TMPDIR (/var/tmp/mth-run.peZEH0, mode 700) is writable; git worktree add fails with exit 128; git clone into $TMPDIR works, and every check in this review ran that way. The docs describe the current controls."
       }
     },
     {
@@ -4521,6 +4525,11 @@
           "at": "2026-09-28T22:48:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by domain-reviewer round 14: PASS"
+        },
+        {
+          "at": "2026-09-28T23:31:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 15: PASS"
         }
       ],
       "fix_revision": "cf13cb12e810ee0205567d20d02df79bbd5f475b",
@@ -4529,19 +4538,19 @@
         "by_role": "domain-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-DOM-R14-domain-reviewer-20260928T224157Z-7988280f",
-          "session_id": "7988280f-d9f5-49d8-9704-712c6669ab02"
+          "run_id": "DG0-T-DG0-REV-DOM-R15-domain-reviewer-20260928T232527Z-79779ed1",
+          "session_id": "79779ed1-e5c6-4aef-b9bd-d6b14a994e1b"
         },
-        "at": "2026-09-28T22:48:00Z",
+        "at": "2026-09-28T23:31:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/domain/round-14/06-f012-verification.sh",
-          "docs/delivery/test-evidence/DG0/domain/round-14/06-f012-verification.log",
-          "docs/delivery/test-evidence/DG0/domain/round-14/07-runner-tests.log",
-          "tools/agents/run-agent.sh#L168-L189",
+          "docs/delivery/test-evidence/DG0/domain/round-15/06-f012-verification.sh",
+          "docs/delivery/test-evidence/DG0/domain/round-15/06-f012-verification.log",
+          "docs/delivery/test-evidence/DG0/domain/round-15/07c-runner-tests.log",
+          "tools/agents/run-agent.sh#L175-L194",
           "docs/delivery/requirements.csv#REQ-DLV-007"
         ],
-        "note": "I reproduced the original failure and confirmed the fix independently. My probe extracts entry(), config_snapshot() and the comparison step verbatim from tools/agents/run-agent.sh at each commit and runs them before and after a change in a disposable clone, with HOME redirected into $TMPDIR. Old runner (round-13 candidate 6c61f2e, diff|grep '^>'): case D (non-empty untracked CLAUDE.local.md truncated to zero), case E (the same file deleted), case G (ignored .claude/settings.local.json deleted) and case I (a deleted 'sub dir/CLAUDE.md') are all reported as <nothing>. New runner (candidate 1e64eb0, embedded Python comparator): D, E, G and I are each reported as '<path> removed'. Cases B, C, F and H are still reported. The controls stay quiet: A (a new zero-length stub) and J (no change) report nothing. Case K (an unreadable pre-snapshot) produces the 'config-diff-failed (fail closed)' marker. The runner's own regression test 'F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed' passes (4/4 in runner.test.mjs). REQ-DLV-007's procedure, acceptance and notes describe the new behaviour. The fix is complete and correct."
+        "note": "Round-15 re-verification, as the round-15 assignment requires after the round-14 scratch incident and the D-028 runner change. I did the whole re-verification again from scratch in my own private $TMPDIR, reusing none of the round-14 results. The probe (06-f012-verification.sh) extracts entry(), config_snapshot() and the comparison step verbatim from tools/agents/run-agent.sh at each commit. It runs them before and after a change in a disposable clone, with HOME redirected into $TMPDIR.\n\nOld runner (6c61f2e, diff|grep '^>'): the original defect reproduces. D (non-empty untracked CLAUDE.local.md truncated to zero), E (the same file deleted), G (ignored .claude/settings.local.json deleted) and I (a deleted 'sub dir/CLAUDE.md') all report <nothing>.\n\nRound-15 candidate (7fab49c5, embedded Python comparator): D, E, G and I are each reported as '<path> removed'. B, C, F and H are still reported. The controls A (a new zero-length stub) and J (no change) report nothing. K (an unreadable pre-snapshot) yields 'config-diff-failed (fail closed)'.\n\nThe only runner change since round 14 is the D-028 private TMPDIR block. It adds the script's only trap (trap 'rm -rf $RUN_TMP' EXIT), and the pre/post config scans run sequentially rather than from a trap, so the change does not interfere with the scan. runner.test.mjs passes 5/5 in the clone, including 'F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed'. The fix remains complete and correct."
       }
     },
     {
@@ -4697,6 +4706,11 @@
           "at": "2026-09-28T23:15:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 14: PASS"
+        },
+        {
+          "at": "2026-09-28T23:52:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 15: PASS"
         }
       ],
       "fix_revision": "cf13cb12e810ee0205567d20d02df79bbd5f475b",
@@ -4705,20 +4719,21 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R14-qa-verifier-20260928T224157Z-0634a37b",
-          "session_id": "0634a37b-ac99-483d-ad58-c23b005f5b9f"
+          "run_id": "DG0-T-DG0-REV-QA-R15-qa-verifier-20260928T232527Z-eaf04d57",
+          "session_id": "eaf04d57-266e-422d-92b6-34402a62bd10"
         },
-        "at": "2026-09-28T23:15:00Z",
+        "at": "2026-09-28T23:52:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-14/04-f233-verification.log",
-          "docs/delivery/test-evidence/DG0/qa/round-14/08-r13-suite-old-vs-new.log",
-          "docs/delivery/test-evidence/DG0/qa/round-14/09-qa14-new-cases.log",
-          "docs/delivery/test-evidence/DG0/qa/round-14/10-real-runs-cwd-binding.log",
-          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r14.test.mjs",
+          "docs/delivery/test-evidence/DG0/qa/round-15/11-r13-suite-on-old13.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/11-r14-suite-on-old13.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/11b-r14-suite-on-rv-tmp-parent.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/11b-r13-suite-on-rv-tmp-parent.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/02-gates-selftests.log",
+          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r14.test.mjs#QA14-V12",
           "tools/gates/lib/rules.mjs#checkInvocation"
         ],
-        "note": "I reproduced the original failure on 6c61f2e: QA13-V5 (meta.cwd and the deny list forged to /somewhere/else while the transcript says /work/repo) gives validateGate [] there. On 1e64eb0 that old fixture is rejected, but only partly for the right reason: it has no init cwd at all (08-r13-suite-old-vs-new.log). So my independent round-14 cases use a fixture whose init line carries cwd, like real transcripts. All 18 pass on 1e64eb0, and 9 fail on 6c61f2e (09-qa14-new-cases.log). QA14-V12 is the exact original forgery (meta.cwd and deny list set to /somewhere/else, init and prompt at /work/repo). It returns [] on 6c61f2e. On 1e64eb0 it is rejected by both the init check and the prompt check, and only for the forged run. V2 to V5 also fail on 6c61f2e: V2 (init without cwd), V3 (meta and init forged consistently, only the prompt still says /work/repo, rejected by the prompt check alone), V4 (prompt with no working-directory sentence) and V5 (trailing-slash meta.cwd, strict). Positive controls V1, V8, V9 and V10 bind: spaces, parentheses, Arabic, and absolute Write paths under a consistent cwd. The round-9 suite still passes 91 of 94. The 3 others are one-field-only cwd fixtures (QA7-N77, QA8-F223, QA9-C01), and they now fail only with cwd-binding errors, as they should. Every one of the 63 real recorded runs has init cwd equal to meta.cwd, and so do all 26 runs with a string replayed prompt. The existing candidate test 'F-DG0-233: meta.cwd is bound to the transcript' passes. Limits I recorded, not findings: a whole-evidence consistent forgery (V6), and an extra resume init line naming another cwd (V7, only the first init is compared), are still accepted. Both need fabricated self-hashed run evidence, which is disclosed residual 1. The runner uses one $CWD for every attempt (run-agent.sh lines 150 and 159), so it cannot produce either."
+        "note": "Fresh round-15 re-verification in private clones. Old 6c61f2e: my round-13 suite has QA13-V5 (meta.cwd and the deny list forged to /somewhere/else) failing, i.e. the forgery binds (11-r13-suite-on-old13.log), and my round-14 suite fails 9 of 18, including V2, V3, V4, V5 and V12 (11-r14-suite-on-old13.log). Candidate 7fab49c: the round-14 suite passes 18/18 (11b-r14-suite-on-rv-tmp-parent.log). That includes QA14-V12, the exact original forgery, rejected by both the init-cwd and the replayed-prompt checks. It also includes the positive controls V1, V8, V9 and V10 (spaces, parentheses, Arabic) and QA14-REG: the round-9 suite, 91 passes, with the 3 one-field cwd fixtures failing only on cwd binding. The round-13 QA13-V5 case now reports the forged run rejected. The candidate's own test 'F-DG0-233: meta.cwd is bound to the transcript' passes within the 50/50 gate self-tests. Environment note: the round-14 runner cases first failed on the candidate with ENOENT for meta.json, only because D-028's runner creates its private TMPDIR under /var/tmp, which is read-only inside my sandbox. With the documented MTH_RUN_TMP_PARENT=$TMPDIR override, all pass. That is a harness environment effect, not a product regression."
       }
     },
     {
@@ -4758,6 +4773,11 @@
           "at": "2026-09-28T23:15:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 14: PASS"
+        },
+        {
+          "at": "2026-09-28T23:52:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 15: PASS"
         }
       ],
       "fix_revision": "cf13cb12e810ee0205567d20d02df79bbd5f475b",
@@ -4766,19 +4786,20 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R14-qa-verifier-20260928T224157Z-0634a37b",
-          "session_id": "0634a37b-ac99-483d-ad58-c23b005f5b9f"
+          "run_id": "DG0-T-DG0-REV-QA-R15-qa-verifier-20260928T232527Z-eaf04d57",
+          "session_id": "eaf04d57-266e-422d-92b6-34402a62bd10"
         },
-        "at": "2026-09-28T23:15:00Z",
+        "at": "2026-09-28T23:52:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-14/05-f234-verification.log",
-          "docs/delivery/test-evidence/DG0/qa/round-14/08-r13-suite-old-vs-new.log",
-          "docs/delivery/test-evidence/DG0/qa/round-14/09-qa14-new-cases.log",
-          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r14.test.mjs",
-          "tools/agents/run-agent.sh#L166-L190"
+          "docs/delivery/test-evidence/DG0/qa/round-15/11-r13-suite-on-old13.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/11-r14-suite-on-old13.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/11b-r13-suite-on-rv-tmp-parent.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/11b-r14-suite-on-rv-tmp-parent.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/03-agents-tests.log",
+          "tools/agents/run-agent.sh#config_snapshot"
         ],
-        "note": "I reproduced the original failure on 6c61f2e with the runner end to end and a stub claude. QA13-R1b (an ignored .claude/settings.local.json truncated to zero) and QA13-R2 (the same file deleted) both give exit 0 with external_config_changed [] there. On 1e64eb0 both give exit 71 with '<path> removed', and QA13-R1 (an untracked CLAUDE.local.md truncated) is now reported too. QA13-R3 is unchanged: new zero-length stubs are still ignored and content is still reported. My independent round-14 cases pass on 1e64eb0, and R4, R5 and R7 fail on 6c61f2e. R0 is a control: no change gives exit 0 and []. R4: a deleted .git/hooks file is reported as removed. R5: a nested .gitignore deleted in a second worktree is reported as removed. R6: a symlink retargeted to identical content is reported, because the link target is part of the entry. R7 checks fail-closed: when the before-snapshot is missing, the comparison fails, and the run records 'config-diff-failed (fail closed)' and exits 71. The existing candidate test 'F-DG0-012/F-DG0-234 ...' passes."
+        "note": "Fresh round-15 re-verification, with the runner end to end and a stub claude in private fixtures. Old 6c61f2e: QA13-R1b (an ignored .claude/settings.local.json truncated to zero) and QA13-R2 (the same file deleted) fail, meaning no trace (11-r13-suite-on-old13.log). The round-14 cases R4 (deleted .git/hooks file), R5 (deleted nested .gitignore in a second worktree) and R7 (fail closed when the before-snapshot vanishes) also fail there (11-r14-suite-on-old13.log). Candidate 7fab49c, with the runner's temp parent set to my $TMPDIR (D-028): QA13-R1, R1b and R2 give exit 71 with '<path> removed', and QA13-R3 still ignores new zero-length stubs (11b-r13-suite-on-rv-tmp-parent.log). QA14-R0 is a clean control (exit 0, []). R4 and R5 report the removals, R6 reports a retargeted symlink, and R7 gives 'config-diff-failed (fail closed)', exit 71 (11b-r14-suite-on-rv-tmp-parent.log). The candidate's tests 'F-DG0-012/F-DG0-234 ...' pass within the 26/26 agent tests and the prefreeze sandboxed suites."
       }
     },
     {
@@ -4803,7 +4824,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-14/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T22:55:00Z",
@@ -4814,10 +4835,33 @@
           "at": "2026-09-28T23:15:59Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 5c4a12b4d7c89bab262e32ef9cc21206c35e5c04"
+        },
+        {
+          "at": "2026-09-28T23:41:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 15: PASS"
         }
       ],
       "fix_revision": "5c4a12b4d7c89bab262e32ef9cc21206c35e5c04",
-      "fix_summary": "D-028: guard-write.mjs canonicalPath fails closed: a path whose real path cannot be determined, or whose resolution (hop by hop) passes through /proc, /sys or /dev, is blocked; the scratch set is only MTH_RUN_TMP (or tmpdir() without the runner), no hard-coded /tmp. Test 'F-DG0-143: writes that resolve through /proc, /sys or /dev, or whose real path cannot be determined, are blocked' covers a symlink to /proc/<pid>/root/tmp, /proc/self/cwd, /proc/self/root, /dev/shm and a symlink loop (fails on the previous guard)."
+      "fix_summary": "D-028: guard-write.mjs canonicalPath fails closed: a path whose real path cannot be determined, or whose resolution (hop by hop) passes through /proc, /sys or /dev, is blocked; the scratch set is only MTH_RUN_TMP (or tmpdir() without the runner), no hard-coded /tmp. Test 'F-DG0-143: writes that resolve through /proc, /sys or /dev, or whose real path cannot be determined, are blocked' covers a symlink to /proc/<pid>/root/tmp, /proc/self/cwd, /proc/self/root, /dev/shm and a symlink loop (fails on the previous guard).",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R15-code-security-reviewer-20260928T232527Z-65015dd2",
+          "session_id": "65015dd2-5aa0-4fe8-a8ea-2f61e56bb126"
+        },
+        "at": "2026-09-28T23:41:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-15/repro-r15-f143-procroot.mjs",
+          "docs/delivery/test-evidence/DG0/code-security/round-15/03-f143-procroot.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-15/09-new-tests-vs-old-code.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-15/01-test-suites.log",
+          "tools/agents/guard-write.mjs#L112-L175"
+        ],
+        "note": "Original failure reproduced against round-14 commit 1e64eb0 with repro-r15-f143-procroot.mjs (03-f143-procroot.log). The $TMPDIR symlink to /proc/<pid>/root/tmp of a private-tmpfs bubblewrap child is allowed as scratch, the write goes through, and the child reads SWAPPED-BY-ATTACKER. A loop and a dangling link were also allowed. On candidate 7fab49c (fix 5c4a12b) guard-write.mjs:112-175 fails closed. canonicalPath() returns null on lstat errors other than ENOENT/ENOTDIR, on realpath errors, and when crossesPseudoFs() sees /proc, /sys or /dev at any hop, including relative and chained links. decide():205-207 blocks a null result and a direct pseudo-fs path. All 6 hostile variants are blocked (absolute and relative /proc/<pid>/root, two-hop chain to /proc/self/cwd, /dev/shm, a loop, a dangling link); the victim keeps ORIGINAL; the benign scratch file and the symlink to a scratch directory remain allowed. The regression test 'F-DG0-143: ...' passes on the candidate and fails on 1e64eb0 (09-new-tests-vs-old-code.log). Closed for the static case the finding describes. A symlink-swap RACE is a separate, general guard weakness, raised as F-DG0-145."
+      }
     },
     {
       "id": "F-DG0-144",
@@ -4840,7 +4884,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-14/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T22:55:00Z",
@@ -4851,10 +4895,35 @@
           "at": "2026-09-28T23:15:59Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 5c4a12b4d7c89bab262e32ef9cc21206c35e5c04"
+        },
+        {
+          "at": "2026-09-28T23:41:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 15: PASS"
         }
       ],
       "fix_revision": "5c4a12b4d7c89bab262e32ef9cc21206c35e5c04",
-      "fix_summary": "D-028: every run gets a private TMPDIR (/var/tmp/mth-run.XXXXXX, mode 700, exported as TMPDIR and MTH_RUN_TMP, removed at the end). Verified: with it the Claude Code sandbox allows only $TMPDIR/claude-0, and /tmp/claude-0 and /var/tmp are read-only, so concurrent agents no longer share a writable scratch. Each reviewer may write only docs/delivery/reviews/*/round-*/<role>.* and docs/delivery/test-evidence/*/<key>/** (write-scopes.json), and its shell only test-evidence/<stage>/<key>, with the other reviewers' directories denied even before they exist (agent_settings.py). Tests: guard 'F-DG0-144: a reviewer may not write another reviewer's record, sidecars or evidence' and 'F-DG0-144: only the run's own private temporary directory is scratch, never the shared /tmp'; settings test_each_reviewer_writes_only_its_own_evidence_directory; runner 'F-DG0-144: every run gets its own private TMPDIR, exported to the agent and removed when the run ends'; live probe part B (another run's TMPDIR unwritable)."
+      "fix_summary": "D-028: every run gets a private TMPDIR (/var/tmp/mth-run.XXXXXX, mode 700, exported as TMPDIR and MTH_RUN_TMP, removed at the end). Verified: with it the Claude Code sandbox allows only $TMPDIR/claude-0, and /tmp/claude-0 and /var/tmp are read-only, so concurrent agents no longer share a writable scratch. Each reviewer may write only docs/delivery/reviews/*/round-*/<role>.* and docs/delivery/test-evidence/*/<key>/** (write-scopes.json), and its shell only test-evidence/<stage>/<key>, with the other reviewers' directories denied even before they exist (agent_settings.py). Tests: guard 'F-DG0-144: a reviewer may not write another reviewer's record, sidecars or evidence' and 'F-DG0-144: only the run's own private temporary directory is scratch, never the shared /tmp'; settings test_each_reviewer_writes_only_its_own_evidence_directory; runner 'F-DG0-144: every run gets its own private TMPDIR, exported to the agent and removed when the run ends'; live probe part B (another run's TMPDIR unwritable).",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R15-code-security-reviewer-20260928T232527Z-65015dd2",
+          "session_id": "65015dd2-5aa0-4fe8-a8ea-2f61e56bb126"
+        },
+        "at": "2026-09-28T23:41:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-15/06-f144-sandbox-probe.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-15/08-f144-live-guard-writes.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-15/09-new-tests-vs-old-code.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-15/01-test-suites.log",
+          "tools/agents/run-agent.sh#L62-L68",
+          "tools/agents/agent_settings.py#L98-L110",
+          "tools/agents/write-scopes.json#L76-L113"
+        ],
+        "note": "The finding's mechanism, one shared writable $TMPDIR (/tmp/claude-0) for all concurrently running agents, is removed. Shell side (06-f144-sandbox-probe.log, from /proc/self/mountinfo and unique probe names of my own, with no other agent's path touched): TMPDIR is this run's /var/tmp/mth-run.4aYowI/claude-0 and is the only rw scratch mount. /tmp, /tmp/claude-0, /var/tmp and the run directory's parent are read-only, so other runs' /var/tmp/mth-run.*/claude-0 cannot be written by this shell. The other reviewers' evidence directories (DG0/qa, domain, audit), reviews and runs are ro bind mounts. File-tool side (08-f144-live-guard-writes.log, with the real Write tool): the shared /tmp/claude-0, /var/tmp, the qa evidence directory and the qa-verifier round-15 record are all blocked, and the own MTH_RUN_TMP is allowed. Code: run-agent.sh:65-68 (mktemp -d, chmod 700, trap cleanup, export TMPDIR/MTH_RUN_TMP); guard-write.mjs:84-94 (scratch is MTH_RUN_TMP only); write-scopes.json:76-113 (per-reviewer record and evidence globs); agent_settings.py:98-110 (own evidence directory kept, other reviewers' keys denied even if absent). The new tests pass on the candidate and fail on 1e64eb0 (09-new-tests-vs-old-code.log). Caveat, tracked separately: F-DG0-145 shows a file-tool symlink-swap race that can still reach another run's private TMPDIR. That is a different root cause (the guard is check-then-use), so it does not reopen this finding, but it keeps the underlying threat open until fixed."
+      }
     },
     {
       "id": "F-DG0-235",
@@ -4876,7 +4945,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-14/qa-verifier.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T23:10:00Z",
@@ -4887,10 +4956,155 @@
           "at": "2026-09-28T23:22:16Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 475235d4c65c188e568c18f943f65f0fe091368a"
+        },
+        {
+          "at": "2026-09-28T23:52:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 15: PASS"
         }
       ],
       "fix_revision": "475235d4c65c188e568c18f943f65f0fe091368a",
-      "fix_summary": "acceptance-map.md now lists REQ-DLV-042 under A18, A23 and A24 and in the A24 gate-ordering table as 'REQ-DLV-042 (DG1)'. New automated check docs/analysis/tools/check_acceptance_map.py verifies the map against the register both ways (citations M2, later-gate table M3, structure M4, with a built-in negative control M5); the sandboxed pre-freeze runs it. It fails on the pre-fix map with exactly the four mismatches you reported and passes after the fix (analyst task T-DG0-AN-14)."
+      "fix_summary": "acceptance-map.md now lists REQ-DLV-042 under A18, A23 and A24 and in the A24 gate-ordering table as 'REQ-DLV-042 (DG1)'. New automated check docs/analysis/tools/check_acceptance_map.py verifies the map against the register both ways (citations M2, later-gate table M3, structure M4, with a built-in negative control M5); the sandboxed pre-freeze runs it. It fails on the pre-fix map with exactly the four mismatches you reported and passes after the fix (analyst task T-DG0-AN-14).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R15-qa-verifier-20260928T232527Z-eaf04d57",
+          "session_id": "eaf04d57-266e-422d-92b6-34402a62bd10"
+        },
+        "at": "2026-09-28T23:52:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-15/09-f235-verification.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/10-f235-check-mutations.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/18-acceptance-feasibility.log",
+          "docs/delivery/test-evidence/DG0/qa/round-15/20-qa15-new-cases-on-rv.log#QA15-A1",
+          "docs/delivery/test-evidence/DG0/qa/round-15/08-prefreeze-fresh-clone.log",
+          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r15.test.mjs#QA15-A1",
+          "docs/analysis/acceptance-map.md#L52",
+          "docs/analysis/tools/check_acceptance_map.py"
+        ],
+        "note": "I reproduced the original failure on the round-14 commit 1e64eb0. My independent script acceptance-feasibility.mjs reports the 3 errors (A18, A23 and A24 cite REQ-DLV-042, but the map omits it). On candidate 7fab49c the same script reports 0 errors, and REQ-DLV-042 is listed under A18 (map line 52), A23 (line 57), A24 (line 58), and in the A24 gate-ordering row as 'REQ-DLV-042 (DG1)' (line 83). The new analyst check docs/analysis/tools/check_acceptance_map.py passes on the candidate. Run with the pre-fix map in a scratch clone, it reports exactly the four mismatches I reported (M2 A18, M2 A23, M2 A24, M3 A24) and exits 1. I then mutated the map six ways of my own through --map (QA15-A1: drop a citing row from A18 and from A24, drop the gate-ordering entry, change its annotated gate, add a non-citing row, rename a scenario row). Every mutation is rejected with the right M2/M3/M4 message, and the unmodified map passes. The sandboxed prefreeze in a fresh clone runs the check and passes. The fix is complete, and it adds the automated two-way check I asked for."
+      }
+    },
+    {
+      "id": "F-DG0-145",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Write guard is check-then-use: a symlink the agent's own sandboxed shell keeps swapping lets a file-tool write pass the hook and land in a forbidden place (another run's private TMPDIR, protected repository paths); demonstrated live with the real Write tool",
+      "reproduction": "tools/agents/guard-write.mjs:193-213 decide() resolves the target in the hook process (lexical check, then canonicalPath() at 112-139, lstat/readlink/realpath), and exits 0. The Claude Code CLI then performs the write itself, outside the Bash sandbox, re-resolving the path at write time. Nothing binds the two resolutions. The agent's sandboxed shell may create and atomically replace symlinks in its own $TMPDIR/claude-0 (and in its own evidence directory, or for implementers anywhere writable in the repository), and it may keep a loop running in the background (Bash run_in_background). A symlink target need not be writable or visible to the sandbox. (1) Offline, docs/delivery/test-evidence/DG0/code-security/round-15/repro-r15-guard-toctou.mjs, log 04-guard-toctou.log: the real hook entry point ('node guard-write.mjs <role>' with the JSON payload on stdin, exactly as the CLI calls it) with MTH_RUN_TMP=<scratch>/runA, while a loop flips <runA>/flip between <runA>/benign and a forbidden directory. The static control is blocked ('reached through a symlink'). Racing, 236 of 600 attempts wrote into the forbidden directory after an allow verdict: 80/200 into <scratch>/runB/clone/tools/gates/tests (standing in for another run's private TMPDIR, code-security-reviewer), 75/200 and 81/200 into the guarded clone's protected tools/gates/tests (backend-workflow-engineer, qa-verifier). (2) Live, 05-guard-toctou-live.log, in this session with the candidate's guard: a Write to $TMPDIR/live/flip/static-control.txt with flip -> docs/delivery/test-evidence/DG0/code-security-toctou-probe (outside my scope) was BLOCKED. With a background flipper, of Writes 1-11: 4 were refused by the CLI's own check ('parent-directory symlink resolution changed after permission was checked'), 5 were blocked by the hook, 1 landed in benign, and attempt 9 passed the hook and was CREATED IN THE FORBIDDEN REPOSITORY DIRECTORY. (The probe directory was removed afterwards.)",
+      "expected": "threat-model.md 'Mechanically prevented' row 1 (the guard 'follows symlinks, fails closed'; 'only the run's own private temporary directory is scratch') and row 2 (D-028: one agent cannot falsify another concurrently running agent's disposable clones), and REQ-DLV-007: a file tool must not be able to write outside the role's scope. Possible fixes, strongest first. (a) Confine the whole agent CLI process, not only its Bash, in its own mount namespace (for example run 'claude' under bubblewrap from run-agent.sh with the same deny list as read-only binds, and with other runs' /var/tmp/mth-run.* and the shared /tmp not bound), so file tools are kernel-confined and the guard becomes defence in depth. (b) Failing that, make the reviewers' executed checks verifiable against tampering (for example re-check 'git -C <clone> status --porcelain --ignored' and 'git fsck' plus the absence of filters/hooks before and after each run in the clone). Also move the guard to 'Detected, not prevented' for symlink races and state the residual. A hook-side symlink ban alone does not help: the shell can swap a real directory for a symlink after the hook runs.",
+      "actual": "The guard's decision is made on a path the attacker can re-point before the write. Claude Code's own re-check narrows the window but does not close it: it compares only the permission-time and write-time resolutions, not the hook's (1/11 live, about 40% offline without it). No trace for the most damaging target. A race-written file in ANOTHER run's private /var/tmp/mth-run.* (whose name is listable, since /var/tmp is readable in the sandbox, and whose mode 700 does not stop same-uid root processes) leaves nothing in the repository or the victim's run evidence. The attacker's transcript shows only a successful Write to a path in its own scratch. That is exactly the F-DG0-144 threat (falsify another reviewer's disposable clone: swap a test, plant a git filter or hook), re-opened for file tools. Protected repository paths (tools/gates, .git/hooks, .git/config, ~/.claude/settings.json) are also reachable. Those are detected afterwards (git status, prefreeze's working-tree check, or the runner's config scan, which for implementer runs only prints a warning), not prevented. High rather than Critical: it needs a malicious agent running a background flip loop and repeated attempts, and the repository-side effects are detected. mandatory_violation true: it breaks access control (scoped write access) and the integrity of independent review evidence.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-15/repro-r15-guard-toctou.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-15/04-guard-toctou.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-15/05-guard-toctou-live.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-15/00-README.md",
+        "tools/agents/guard-write.mjs#L193-L213",
+        "tools/agents/guard-write.mjs#L112-L139",
+        "docs/delivery/threat-model.md#mechanically-prevented"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-15/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T23:45:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 15; reproduced offline (236/600) and live with the real Write tool (1/11) against candidate 7fab49c"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-146",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The working-tree candidate ID and --reconcile are perturbed by the Claude Code sandbox's transient mount stubs (zero-length untracked files such as .bashrc, .mcp.json, CLAUDE.local.md and a FILE named docs/delivery/gates) while any agent's sandboxed command runs; fails closed (observation)",
+      "reproduction": "While a sandboxed command of this run was running in the background (from 23:31:31Z), the sandbox left 13 zero-length, read-only regular files in the repository (.bash_profile, .bashrc, .gitconfig, .gitmodules, .idea, .mcp.json, .profile, .ripgreprc, .vscode, .zprofile, .zshrc, CLAUDE.local.md, docs/delivery/gates). tools/gates/lib/candidate.mjs:90-107 manifestFromWorkingTree() hashes untracked-not-ignored regular files, so 'node tools/gates/candidate.mjs --stage DG0' in the live repository gave sha256:4b7851cf... (100 files) instead of the frozen sha256:b7f60ed3... (87 files) (07-candidate-determinism.log), and 'validate.mjs --reconcile' reported 'working tree ... differs: 13 added' and every review STALE (10-validator-modes.log). The earlier run at 23:25Z, when the stubs were char-device mounts, gave b7f60ed3. The META_EXCLUDES glob 'docs/delivery/gates/**' (candidate.mjs:11) does not match a file named exactly 'docs/delivery/gates'.",
+      "expected": "A deterministic working-tree candidate that does not depend on whether some agent's shell command is running, or at least a documented rule that the orchestrator computes it, and runs --stage in current mode or --reconcile, only when no sandboxed agent command is active.",
+      "actual": "It fails closed (a spurious mismatch or STALE, never a false pass), so it is not a gate bypass. Ignoring all zero-length files would be wrong, because an empty file is legitimate content. A narrower fix is to have --reconcile flag untracked zero-length read-only files as probable sandbox stubs, and to document the timing rule in environment.md or D-005. I would accept this as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-15/07-candidate-determinism.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-15/10-validator-modes.log",
+        "tools/gates/lib/candidate.mjs#L90-L107",
+        "tools/gates/lib/candidate.mjs#L9-L20"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-15/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T23:45:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 15 as a Low observation"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-236",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The working-tree candidate ID (candidate.mjs, validate.mjs --stage in current mode, --reconcile, --diff) counts the zero-length stub files that concurrently running agent sandboxes leave in the shared tree, so during a review round it flips between the frozen b7f60ed3 (87 files) and 4b7851cf (100 files) with no content change; one stub is a regular file at docs/delivery/gates, where the auditor must create gates/DG0.json",
+      "reproduction": "Shared tree /home/user/My-owns during this round (read-only commands). 23:25Z: `node tools/gates/candidate.mjs --stage DG0` gives b7f60ed3, 87 files. 23:40Z and 23:42-23:43Z: the same command gives 4b7851cf, 100 files, and `--diff` / `validate.mjs --reconcile` report 13 added: .bash_profile .bashrc .gitconfig .gitmodules .idea .mcp.json .profile .ripgreprc .vscode .zprofile .zshrc CLAUDE.local.md docs/delivery/gates, each a 'regular empty file' of 0 bytes (15-working-tree-candidate-flips.log). These are the mount-point stubs the agent sandbox creates for deny-list paths that don't exist: inside the command whose own sandbox created them they are char devices (skipped by manifestFromWorkingTree), but any other command sees them as regular files and they're added to the manifest (lib/candidate.mjs lines 90-105 list untracked, non-ignored paths and include every regular file). `--ref HEAD` stays b7f60ed3. Independent test QA15-C2 (dg0-gate-negative-r15.test.mjs) reproduces it in a fixture: four zero-length untracked stub-shaped files change the working-tree ID, and the committed ID is unchanged. The stubs present at 23:47Z carry mtime 23:41:32Z, the start of my own background monitor command, which I ended with pkill (so its sandbox likely skipped its cleanup). The earlier 23:40Z observation predates it. Every role's sandbox deny list, the auditor's included, names docs/delivery/gates (19-agent-settings-stage.log and a direct agent_settings.py check), so while such a stub exists, creating docs/delivery/gates/DG0.json fails (its parent is a file). I didn't reproduce that last step with a real auditor run.",
+      "expected": "The candidate identity reviewers are told to confirm, and that `validate.mjs --stage` (current mode) and `--reconcile` recompute, is stable while other agents run: the frozen content is unchanged, so the ID shouldn't change. The runner's config_snapshot already treats zero-length untracked non-symlink files as sandbox stubs (D-026). Proposal: (a) have assignments confirm with `candidate.mjs --stage DGx --ref <commit>` or in a fresh clone, not the shared working tree; (b) have the orchestrator and auditor run current-mode validation only when no agent is running, and remove leftover stubs first (or make the validator name them as stubs in its error); (c) create docs/delivery/gates/ (e.g. with a .gitkeep) so the sandbox never stubs it as a file. I don't propose excluding zero-length files from the candidate, because a real empty file (for example __init__.py) must count.",
+      "actual": "Fail-closed only: it can't cause a false approval, because the gate compares against the committed manifest, and prefreeze requires working tree = HEAD. It can cause a false 'candidate mismatch' (a reviewer following review-common's working-tree confirmation would return BLOCKED), a spurious current-mode validator failure, every record shown STALE by --reconcile, and potentially a failed auditor gate-record write. Low and non-mandatory. I'd accept it as an observation for DG0, provided (a) and (c) are in place before the DG1 reviews. Cleanup request: the 13 stub files currently in the shared tree (mtime 23:41:32Z) came from my run and should be removed by the orchestrator. They are inside my deny list, so I couldn't remove them.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-15/15-working-tree-candidate-flips.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/13-candidate-path-monitor.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/20-qa15-new-cases-on-rv.log#QA15-C2",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r15.test.mjs#QA15-C2",
+        "tools/gates/lib/candidate.mjs#manifestFromWorkingTree",
+        "tools/gates/lib/rules.mjs#reconcile",
+        "docs/delivery/assignments/DG0/round-15/review-common.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-15/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T23:50:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-15 QA review of candidate b7f60ed3 (7fab49c). Low; I would accept it as an observation for DG0."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-237",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "threat-model.md understates where a confined reviewer's shell can create new files: it says 'on the path to its own areas, for example at the repository root', but the per-run sandbox is a deny list, so any new path outside it is writable (docs/architecture/**, src/**, tests/unit/**, docs/delivery/<new>)",
+      "reproduction": "In this qa-verifier run's own sandbox, with git-ignored probe names so no candidate path changed: `mkdir -p <d> && touch <d>/qa15.pyc` succeeded for docs/architecture/__pycache__, src/__pycache__, tests/unit/__pycache__, docs/delivery/__pycache__ and __pycache__, and I removed each one straight away (14-new-path-scope-probe.log). The run's settings.json sandbox.filesystem.denyWrite lists protected paths only, with no allow list for the repository. Positive side, checked independently (QA15-S1 and my run's settings): every tracked file, including all 87 candidate files, is under a deny entry for every reviewer role, so existing content can't be changed by the shell. Live, touching docs/source, tools/gates, docs/delivery/requirements.csv, another reviewer's record or another reviewer's evidence directory all fail with 'Read-only file system' (12-live-sandbox-probe.log).",
+      "expected": "The 'New untracked files' row of the detection table states the actual scope: a confined role's shell can create any new path that isn't denied, including product-source paths such as src/** and tests/**. Such files are detected by git status, the runner snapshots and prefreeze's working tree = HEAD check.",
+      "actual": "This restates a disclosed and detected residual, with a scope larger than the text says. Detection holds (prefreeze refuses untracked candidate files, and the gate compares committed content). Low and non-mandatory; I'd accept it as an observation. An optional hardening would be a positive allow list for reviewer shells (their own evidence directory plus $TMPDIR).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-15/14-new-path-scope-probe.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/12-live-sandbox-probe.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r15.test.mjs#QA15-S1",
+        "docs/delivery/threat-model.md",
+        "tools/agents/agent_settings.py"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-15/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T23:50:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-15 QA review of candidate b7f60ed3 (7fab49c). Low; I would accept it as an observation."
+        }
+      ]
     }
   ]
 }

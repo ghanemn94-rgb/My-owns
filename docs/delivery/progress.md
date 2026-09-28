@@ -4,7 +4,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 
 ## Current checkpoint
 
-- **Active stage:** P0 / DG0, state **REVIEWING** (round 15 in progress). **Blocked on a user decision for F-DG0-145; see below.**
+- **Active stage:** P0 / DG0, state **FIXING** (round 15 complete and imported). **Blocked on a user decision for F-DG0-145; see below.**
 - **Round-15 candidate:** `sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e` (commit `7fab49c`)
 
 **Review history**
@@ -25,7 +25,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 | 12 | (orphaned: stub false positive; run PASS) | FAIL | FAIL (run exit 1; does not bind) | 5: 140 Critical (runner imports planted modules), 229 Medium, 230/231/232 Low |
 | 13 | PASS | FAIL | FAIL (Low only) | 5: 141 High (sandbox wrapper cloned into agent-writable `$TMPDIR`), 012/142/233/234 Low; 231 reopened |
 | 14 | PASS | FAIL | PASS (Low) | 3: 143/144 Medium (guard fail-open via /proc; shared $TMPDIR, demonstrated by an unintended cross-agent incident), 235 Low |
-| 15 | PASS | FAIL | (running) | 145 High (guard check-then-use: symlink swap between hook check and Write), 146 Low (sandbox stubs perturb working-tree candidate; fails closed) |
+| 15 | PASS | FAIL | PASS (Low: 236, 237) | 145 High (guard check-then-use: symlink swap between hook check and Write), 146 Low (sandbox stubs perturb working-tree candidate; fails closed) |
 
 - **Open blocker: F-DG0-145 (High, mandatory).**
   - **The finding.** The file-tool write guard is a PreToolUse check, and Claude Code's Write tool runs unsandboxed. An agent's own sandboxed shell can swap a symlink between the check and the write. Code-security showed this live once in 11 attempts, and 236 of 600 times offline.
@@ -40,7 +40,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - F-DG0-146 (Low; fails closed).
   - The QA round-15 result.
   - An orchestrator-observed latent issue: a sandbox stub at `test-evidence/<stage>/audit` could block a reviewer's first `mkdir` in a new stage. Fix: the runner pre-creates the four evidence directories.
-- **Findings (round 15 not yet imported; QA is still running):** 74 closed and verified. The round-15 code-security sidecar verifies F-DG0-143 and 144, which makes 76 once imported. F-DG0-145 and 146 are new and open. F-DG0-235 awaits QA.
+- **Findings (round 15 imported):** 79 closed and verified. Open: F-DG0-145 (High), and the Low findings 146, 236 and 237. 146 and 236 are the same issue (sandbox stubs perturb the working-tree candidate; fails closed). 237 is a threat-model wording gap (new files outside the deny list, detected).
 
 ## Done in P0 so far
 
