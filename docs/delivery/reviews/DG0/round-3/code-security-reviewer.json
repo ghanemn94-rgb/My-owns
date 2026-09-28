@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 3,
+  "candidate_id": "sha256:31fd0843977d30afd4459591abdfd730c5c994440030816188227d9f6ec4cbf9",
+  "source_commit": "540b3c69a0e0477476eca0207b0b9c0aaded1ea9",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-SEC-R3-code-security-reviewer-20260928T140336Z-823222d3",
+    "session_id": "823222d3-60b2-4e9a-b7e7-a1f72adead47"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer) authored no implementation in the DG0 scope: gate tooling, runner, write guard, CI workflow, source extraction, agent definitions and analysis were authored by delivery-orchestrator and transformation-analyst. I formed this verdict without reading any other round-3 review record."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-3/review-code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-006",
+    "REQ-DLV-007",
+    "REQ-DLV-013",
+    "REQ-DLV-015",
+    "REQ-DLV-016",
+    "REQ-DLV-017",
+    "REQ-DLV-022",
+    "REQ-DLV-023",
+    "REQ-DLV-026"
+  ],
+  "checks_run": [
+    {
+      "id": "C1-candidate-identity",
+      "procedure": "Confirm the frozen candidate before reviewing. HEAD is 4af07b03, a post-freeze metadata-only commit: assignments, manifest and stages.json, all excluded by META_EXCLUDES. Recompute the candidate at the working tree and at the source commit, and diff it against the frozen manifest.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG0; node tools/gates/candidate.mjs --stage DG0 --ref 540b3c69a0e0477476eca0207b0b9c0aaded1ea9; node tools/gates/candidate.mjs --stage DG0 --diff; git diff --stat 540b3c69..HEAD",
+      "environment": "main repo (read-only commands), Node v22, git; Linux",
+      "expected": "candidate_id sha256:31fd0843977d30afd4459591abdfd730c5c994440030816188227d9f6ec4cbf9 at both the working tree and 540b3c69; diff matches; post-freeze commit touches only excluded metadata",
+      "actual": "Both print sha256:31fd0843...cbf9 (75 files); --diff shows matches:true with no added, removed or changed files; 540b3c69..HEAD touches only docs/delivery/assignments/DG0/round-3/*, candidates/DG0.manifest.json and stages.json",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/08-validators-at-head.log"
+      ]
+    },
+    {
+      "id": "C2-existing-tests",
+      "procedure": "Run the candidate's gate-validator and write-guard self-tests in a disposable worktree of the source commit",
+      "command": "git worktree add /tmp/dg0-sec-r3 540b3c69; cd /tmp/dg0-sec-r3; node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+      "environment": "disposable git worktree /tmp/dg0-sec-r3 at 540b3c69, Node v22",
+      "expected": "all tests pass, exit 0",
+      "actual": "37 tests, 37 pass, 0 fail, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007", "REQ-DLV-016", "REQ-DLV-022", "REQ-DLV-023"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/01-existing-tests.log"
+      ]
+    },
+    {
+      "id": "C3-source-review",
+      "procedure": "Direct source review: the full current tools/gates/lib/rules.mjs, lib/candidate.mjs, lib/schema.mjs, candidate.mjs, validate.mjs, import-findings.mjs, tools/agents/guard-write.mjs, run-agent.sh, write-scopes.json, per-role settings, .github/workflows/delivery-gates.yml and .gitattributes. Also the diff 83860be3..540b3c69 for tools/, decisions.md, agents.md and the schemas.",
+      "command": "git diff 83860be3ea4774688f0e00a87923edd6605d2ace..540b3c69a0e0477476eca0207b0b9c0aaded1ea9 -- tools .gitattributes docs/delivery/decisions.md docs/delivery/agents.md; cat -n <files>",
+      "environment": "disposable worktree /tmp/dg0-sec-r3 at 540b3c69",
+      "expected": "no gate bypass, write-guard bypass or runner weakness",
+      "actual": "Defects found. rules.mjs:537-543 treats the evidence as append-only for deletions only (--diff-filter=D). Record, findings-sidecar and verifications-sidecar content is not bound to the run (F-DG0-115, High). rules.mjs:306 skips the assignment binding when a verifying record lacks 'assignment', and the verifying record is not schema-validated (:466-467), which keeps F-DG0-102 open. candidate.mjs:92 reads the working-tree mode from the filesystem (F-DG0-116, Low). rules.mjs:416-425 takes observation acceptance on the orchestrator's word (F-DG0-117, Low). The runner, CI workflow, settings, write-scopes, CSV parser, CLIs and source scripts are unchanged since round 2. CI: permissions contents:read, fetch-depth 0, actions pinned by SHA, and the job fails on a non-zero validator exit.",
+      "exit_status": null,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-016", "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026"]
+    },
+    {
+      "id": "C4-repro-new-bypasses",
+      "procedure": "Write reproduction tests (fixtures copied verbatim from the candidate's validator.test.mjs) for suspected bypasses and fix verifications, and run them against the candidate tools",
+      "command": "GATE_TOOLS=/tmp/dg0-sec-r3 node --test docs/delivery/test-evidence/DG0/code-security/round-3/repro-r3.test.mjs",
+      "environment": "disposable worktree /tmp/dg0-sec-r3 at 540b3c69; fixtures in mkdtemp git repos (removed by test.after), Node v22",
+      "expected": "BYPASS tests fail (the weakness is absent)",
+      "actual": "10/10 tests pass, exit 0. The BYPASS tests pass, so the weaknesses are present. 115a (edit a committed sidecar and record: the gate passes in current and historical mode and in the pipeline), 115b (flip a committed FAIL verification to PASS), 115c (flip a committed FAIL verdict to PASS), 115d (a verifying record without an assignment skips the binding, see F-DG0-102), 117 (acceptance by role names only). The FIXED tests for F-DG0-101, F-DG0-102 N1a and F-DG0-112 pass.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-026"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/repro-r3.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/02-repro-r3-candidate.log"
+      ]
+    },
+    {
+      "id": "C5-old-commit-baseline",
+      "procedure": "Reproduce the original round-2 failures against the round-2 candidate commit, as the baseline for the fix verification",
+      "command": "git worktree add /tmp/dg0-sec-r2old 83860be3; GATE_TOOLS=/tmp/dg0-sec-r2old node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+      "environment": "disposable worktree /tmp/dg0-sec-r2old at 83860be3, Node v22",
+      "expected": "N1a, N1b, N1c, N2, N3, N4, N5 and N6 reproduce on the old commit",
+      "actual": "16/16 pass, exit 0. Every original bypass (N1a-N6) is present on 83860be3.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/03-repro-r2-on-old-commit.log"
+      ]
+    },
+    {
+      "id": "C6-guard-e2e",
+      "procedure": "Probe the write guard end to end through the real per-role hook command: nested .git planting, protected targets, NotebookEdit and MultiEdit payloads, and a garbage payload. Run on the old and the new commit.",
+      "command": "docs/delivery/test-evidence/DG0/code-security/round-3/04-guard-e2e.sh /tmp/dg0-sec-r2old; ... /tmp/dg0-sec-r3",
+      "environment": "disposable worktrees; bash; Node v22; role backend-workflow-engineer settings",
+      "expected": "candidate: .git paths and every protected target exit 2 even with a nested .git planted; product path exit 0; garbage exit 2",
+      "actual": "Old: planted .git un-protects everything (exit 0). Candidate: all .git and protected targets exit 2; src/ok.ts exit 0; garbage payload exit 2.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/04-guard-e2e.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/04-guard-e2e.log"
+      ]
+    },
+    {
+      "id": "C7-autocrlf",
+      "procedure": "Clone with core.autocrlf=true, check out the old and the new commit, and compare the working-tree candidate with the committed candidate",
+      "command": "git clone --no-checkout --config core.autocrlf=true . <scratch>; git checkout <c>; node tools/gates/candidate.mjs --stage DG0; node tools/gates/candidate.mjs --stage DG0 --ref <c>",
+      "environment": "scratchpad clones (removed), Node v22, git",
+      "expected": "candidate: working-tree ID equals the --ref ID",
+      "actual": "Old: 9c13ca68 vs d47b51ca (differ). Candidate: both sha256:31fd0843...cbf9.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/05-autocrlf.log"
+      ]
+    },
+    {
+      "id": "C8-docs-consistency",
+      "procedure": "Compare D-016, D-018, D-019 and agents.md with the code (for F-DG0-114)",
+      "command": "grep D-016/D-018/D-019 docs/delivery/decisions.md; grep MTH_MAX_RESUMES tools/agents/run-agent.sh; sed -n 18,30p docs/delivery/agents.md; write-scopes.json protected list",
+      "environment": "disposable worktree at 540b3c69",
+      "expected": "documentation matches the implementation",
+      "actual": "D-019 says 6, matching run-agent.sh:22. agents.md matches write-scopes.json. D-016 matches rules.mjs:503-506, apart from the fail-open case tracked in F-DG0-102. D-018 correctly says 'deleted'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/06-docs-consistency.log"
+      ]
+    },
+    {
+      "id": "C9-schema-subset",
+      "procedure": "Check that every gate schema uses only the keywords the subset validator implements, so no constraint is silently ignored",
+      "command": "node -e '<walk tools/gates/schemas/*.json keywords vs supported set>'",
+      "environment": "disposable worktree at 540b3c69, Node v22",
+      "expected": "no unsupported keywords",
+      "actual": "findings, gate, review and stages schemas: unsupported none; formats: date-time only",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-023"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/07-schema-keywords.log"
+      ]
+    },
+    {
+      "id": "C10-validators-at-head",
+      "procedure": "Run the real validators and the extraction check on a disposable worktree of HEAD",
+      "command": "node tools/gates/validate.mjs --register DG0 | --pipeline | --reconcile | --stage DG0; tools/source/check_extraction.sh",
+      "environment": "disposable worktree /tmp/dg0-sec-head at 4af07b03, Node v22, python3",
+      "expected": "register, pipeline and reconcile PASS; --stage DG0 fails closed (no gate record yet); extraction reproducible",
+      "actual": "register PASS (0), pipeline PASS (0), reconcile PASS (0). --stage DG0 FAIL exit 1: 'gate DG0: file not found', the expected fail-closed result. check_extraction PASS (0): docx sha256 2584a352...548ad2, 165 and 423 blocks.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-016", "REQ-DLV-023"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/08-validators-at-head.log"
+      ]
+    },
+    {
+      "id": "C11-secrets",
+      "procedure": "Scan all tracked candidate files (excluding trading_agent/) and all 25 committed run transcripts for credentials, key files, emails and public CDNs",
+      "command": "git grep -nIE '<AWS/Anthropic/GitHub/Slack/Google key, private-key and assignment patterns>' 540b3c69 -- . ':!trading_agent'; zcat transcripts | grep -oE '<patterns>'",
+      "environment": "main repo, read-only git commands",
+      "expected": "no credentials",
+      "actual": "One hit: the regex text itself, quoted in my round-2 log. No key files and no CDN references. Emails: noreply@anthropic.com (commit trailer doc) and synthetic example.* addresses only. 0 of 25 transcripts contain secret patterns.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/09-secrets-pii.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/10-transcript-secrets.log"
+      ]
+    },
+    {
+      "id": "C12-frontmatter-settings",
+      "procedure": "Parse all ten agent frontmatters and compare their hook with the per-role settings used by the runner. Confirm that runner, CI, settings, scopes and the source scripts are unchanged since round 2.",
+      "command": "python3 <frontmatter parser> for .claude/agents/*.md; git diff --stat 83860be3 540b3c69 -- .github .claude tools/source tools/agents/run-agent.sh tools/agents/settings tools/agents/write-scopes.json tools/gates/lib/csv.mjs tools/gates/import-findings.mjs tools/gates/validate.mjs tools/gates/candidate.mjs",
+      "environment": "disposable worktree at 540b3c69, python3",
+      "expected": "name equals the file name, model inherit, matcher Write|Edit|NotebookEdit|MultiEdit, hook command identical to settings, fails closed when the guard is missing",
+      "actual": "All 10 OK. The first attempt of my own parser had a quoting bug and was rerun; the log records this. The diff is empty: those files are unchanged since round 2.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-006", "REQ-DLV-007"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/11-frontmatter-settings.log"
+      ]
+    },
+    {
+      "id": "C13-cleanup",
+      "procedure": "Remove the disposable worktrees and confirm that the source tree is unmodified",
+      "command": "git worktree remove --force /tmp/dg0-sec-r3 /tmp/dg0-sec-r2old /tmp/dg0-sec-head; git worktree prune; git status --short",
+      "environment": "main repo",
+      "expected": "worktrees removed; only review and evidence paths are untracked",
+      "actual": "All three removed. git status shows only docs/delivery/{reviews,runs,test-evidence}/ additions and no modified tracked files.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/12-cleanup.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG0-115",
+    "F-DG0-116",
+    "F-DG0-117"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG0/round-3/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG0/round-3/code-security-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/repro-r3.test.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/01-existing-tests.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/02-repro-r3-candidate.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/03-repro-r2-on-old-commit.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/04-guard-e2e.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/04-guard-e2e.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/05-autocrlf.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/06-docs-consistency.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/07-schema-keywords.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/08-validators-at-head.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/09-secrets-pii.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/10-transcript-secrets.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/11-frontmatter-settings.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-3/12-cleanup.log"
+  ],
+  "reviewed_at": "2026-09-28T14:13:51Z",
+  "summary": "FAIL. Six of my seven pending findings are verified fixed and closed: F-DG0-101, 110, 111, 112, 113 and 114. F-DG0-102 stays OPEN because the verification assignment binding fails open when the verifying record lacks 'assignment'. New: F-DG0-115 (High, mandatory). Reviewer-authored records and sidecars are not bound to their run, and the append-only history check covers deletions only. Editing committed review files in place drops a High finding, turns a FAIL verification into a closure, or turns a FAIL verdict into PASS, and the gate, historical mode and pipeline still pass. Two Low observations, which I would accept: F-DG0-116 (working-tree mode vs core.fileMode=false) and F-DG0-117 (observation acceptance is not bound to any reviewer artefact)."
+}

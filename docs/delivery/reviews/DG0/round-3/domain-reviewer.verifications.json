@@ -1,0 +1,27 @@
+{
+ "verifications": [
+  {
+   "finding_id": "F-DG0-006",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Reproduced on 83860be: I ran the AN-08 checker check_pb_provenance.py (copied into a temporary directory in the old worktree, then removed) and it reports 115 problems. They include 'REQ-PB-068: R3 the Interpretations clause cites the master prompt' and 'REQ-PB-088: R1 notes name M0348 (§18) but source_ref does not cite it'. At 540b3c6 it reports 0 problems and exits 0. Reading the rows directly: REQ-PB-068 lists the M0212 publication block under 'Master-prompt additions (§10 M0212)' with 'Interpretations: none'. REQ-PB-088's source_ref now cites M0348, and the M0348 coverage row lists REQ-S18-002;REQ-S18-003;REQ-PB-088. The sampled new anchor citations are grounded in the text of their M blocks: M0125 gate evidence and waivers → PB-016..021; M0090 → PB-026/039/079; M0149 → PB-027/028/059; M0159 → PB-063/072/076; M0231 → PB-065/081; M0302 → PB-064/089. validate.mjs --register DG0 and check_counts.py pass. Both examples in the finding are fixed. Three further semantic mislabels, which the checker cannot detect, are raised separately as Low observation F-DG0-008.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/domain/round-3/06-provenance-old-83860be.log",
+    "docs/delivery/test-evidence/DG0/domain/round-3/06-provenance-new.log",
+    "docs/delivery/requirements.csv (REQ-PB-068, REQ-PB-088)",
+    "docs/analysis/master-prompt-coverage.csv (M0348)"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-007",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Reproduced on 83860be: grep -niE 'G6.*DG7|never implies' docs/delivery/agent-protocol.md finds nothing. At 540b3c6, line 10 of the 'Two gate systems' section reads 'Product gate G6 (Sustain) never implies that engineering gate DG7 has passed, and DG7 never implies any G1–G6 business approval.' Line 9 still forbids any engineering-agent business/Finance/IT approval, and CLAUDE.md line 13 still carries the rule. REQ-DLV-002's acceptance now holds for both files.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/domain/round-3/12-f007.log",
+    "docs/delivery/agent-protocol.md (line 10)",
+    "CLAUDE.md (line 13)"
+   ]
+  }
+ ]
+}

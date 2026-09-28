@@ -1,0 +1,35 @@
+{
+ "schema_version": 1,
+ "findings": [
+  {
+   "id": "F-DG0-008",
+   "stage_id": "DG0",
+   "requirement": "REQ-PB-091",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "Three REQ-PB rows still file master-prompt content under Interpretations or omit it from Master-prompt additions",
+   "reproduction": "At 540b3c6, compare the notes against the text of the cited M blocks in docs/source/master-prompt.anchored.md. (a) REQ-PB-091 cites M0288 in source_ref, and its notes list 'all three top actions are required, and reassessments are tracked' under Interpretations. M0288 says 'Require the top three improvement actions and track reassessments over time'. (b) REQ-PB-050 cites M0135 and M0178 and says 'Master-prompt additions: none. Interpretations: initiatives are assigned to waves with dates'. M0135 says 'linked initiatives, dates and milestones', and M0178 says the waves are 'overlapping planning horizons, not rigid deadlines', which is the row's own acceptance ('overlapping horizons are accepted'). (c) REQ-PB-078 cites M0150 and lists 'RAID Dependency entries reference the canonical T08 record rather than copying it' as an interpretation. M0150 says 'the dependency map and RAID dependency entries should refer to the same canonical dependency record'. docs/analysis/tools/check_pb_provenance.py passes because its R3 rule only detects Interpretations clauses that literally mention 'master prompt', '§' or an M anchor. It cannot detect master-prompt substance restated without a citation.",
+   "expected": "Content that a cited master-prompt block states is listed under 'Master-prompt additions' with its anchor, and the Interpretations clause keeps only analyst readings that neither source states.",
+   "actual": "The substance of all three rows is correct, cited in source_ref and traceable in master-prompt-coverage.csv. Only the provenance label is wrong, and nothing is invented. I would accept this as an observation. It does not block DG0.",
+   "evidence": [
+    "docs/delivery/requirements.csv (REQ-PB-050, REQ-PB-078, REQ-PB-091)",
+    "docs/source/master-prompt.anchored.md#M0135",
+    "docs/source/master-prompt.anchored.md#M0178",
+    "docs/source/master-prompt.anchored.md#M0150",
+    "docs/source/master-prompt.anchored.md#M0288",
+    "docs/analysis/tools/check_pb_provenance.py (rule R3)"
+   ],
+   "reported_by": "domain-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-3/domain-reviewer.json",
+   "owner": "transformation-analyst",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T14:12:00Z",
+     "status": "OPEN",
+     "note": "Reported in DG0 round-3 domain review. Labelling only; I would accept it as an observation."
+    }
+   ]
+  }
+ ]
+}

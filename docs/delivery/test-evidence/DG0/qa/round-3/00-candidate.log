@@ -1,0 +1,21 @@
+# 2026-09-28T14:10:21Z main checkout
+$ git rev-parse HEAD
+4af07b032331f14b4ef1c84b169af8a61fc9adf0
+$ git log --oneline 540b3c69..HEAD
+4af07b0 DG0: freeze round-3 candidate, round-3 assignments
+$ git diff --stat 540b3c69..HEAD  (metadata only: assignments, candidates manifest, stages.json)
+ .../DG0/round-3/review-code-security-reviewer.md   |  25 +++
+ .../assignments/DG0/round-3/review-common.md       |  74 ++++++++
+ .../DG0/round-3/review-domain-reviewer.md          |  47 +++++
+ .../assignments/DG0/round-3/review-qa-verifier.md  |  38 ++++
+ .../DG0/round-3/review-release-auditor.md          |  24 +++
+ docs/delivery/candidates/DG0.manifest.json         | 200 +++++++++++----------
+ docs/delivery/stages.json                          |  18 +-
+ 7 files changed, 333 insertions(+), 93 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:31fd0843977d30afd4459591abdfd730c5c994440030816188227d9f6ec4cbf9","files":75}
+exit=0
+$ jq candidate_id docs/delivery/candidates/DG0.manifest.json
+sha256:31fd0843977d30afd4459591abdfd730c5c994440030816188227d9f6ec4cbf9 540b3c69a0e0477476eca0207b0b9c0aaded1ea9 2026-09-28T14:03:33Z
+$ sha256sum assignment
+c2d8377e8417c08b06c3945f024976576433bddacf9a8678edc1dd31d7e77fa1  docs/delivery/assignments/DG0/round-3/review-qa-verifier.md

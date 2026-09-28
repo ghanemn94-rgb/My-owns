@@ -1,0 +1,85 @@
+{
+ "findings": [
+  {
+   "id": "F-DG0-208",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-017",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "Round metadata (review_rounds[].frozen_at) and committed review records can be rewritten in place before approval; only deletions are detected, so a closure can be rebound to a LOAD run",
+   "reproduction": "QA_REPO_ROOT=<worktree @ 540b3c69> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs --test-name-pattern QA3-N20. The fixture moves stages.json review_rounds[0].frozen_at to 10:00Z (before an 11:00Z qa-verifier T-DG0-LOAD run), rewrites the committed round-1 qa-verifier.json to cite that LOAD run and its assignment, and adds a round-1 verifications sidecar closing F-DG0-201. validateGate() returns []. checkClosure binds the run to the record's own assignment and to round.frozen_at, and both come from files that can be edited; checkReviewRounds only detects deletions in git history (git log --diff-filter=D).",
+   "expected": "Round entries and committed review records/sidecars are append-only: for example, the validator rejects a modification (not only a deletion) of a committed file under reviews/<DGx>/round-N/, and cross-checks round.frozen_at/source_commit against the git history of stages.json or the manifest at that round.",
+   "actual": "Accepted without errors. D-016 already accepts that forging reviewer records is controlled by auditor spot-checks and git history, so this is hardening only. I accept it as a Low observation if it is tracked.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs",
+    "docs/delivery/test-evidence/DG0/qa/round-3/10b-qa3-negative-on-r3.log",
+    "tools/gates/lib/rules.mjs (checkClosure, checkReviewRounds)"
+   ],
+   "reported_by": "qa-verifier",
+   "reported_in": "docs/delivery/reviews/DG0/round-3/qa-verifier.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T14:20:00Z",
+     "status": "OPEN",
+     "note": "Raised in DG0 round 3 QA review; acceptable as a Low observation."
+    }
+   ]
+  },
+  {
+   "id": "F-DG0-209",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-022",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "D-005's first sentence and REQ-DLV-022's procedure still describe the candidate line as '<file sha256>  <path>', but the implementation hashes '<sha256>  <mode>  <path>'",
+   "reproduction": "grep -n 'file sha256>  <path>' docs/delivery/decisions.md docs/delivery/requirements.csv; compare with tools/gates/lib/candidate.mjs candidateId(), which returns `${e.sha256}  ${e.mode}  ${e.path}` (F-DG0-206 fix). Later in the same row, D-005 correctly says 'Each manifest line is <sha256>  <git mode>  <path>'.",
+   "expected": "D-005 and REQ-DLV-022 procedure state the current line format consistently, so that someone recomputing the candidate from the documentation gets the same ID.",
+   "actual": "Two contradictory statements in D-005, and a stale REQ-DLV-022 procedure. Documentation only; the code and tests are correct. I accept it as a Low observation.",
+   "evidence": [
+    "docs/delivery/decisions.md (D-005)",
+    "docs/delivery/requirements.csv (REQ-DLV-022 procedure)",
+    "tools/gates/lib/candidate.mjs"
+   ],
+   "reported_by": "qa-verifier",
+   "reported_in": "docs/delivery/reviews/DG0/round-3/qa-verifier.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T14:20:00Z",
+     "status": "OPEN",
+     "note": "Raised in DG0 round 3 QA review; acceptable as a Low observation."
+    }
+   ]
+  },
+  {
+   "id": "F-DG0-210",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-026",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "agents.md still says the runner resumes a classifier-blocked session 'up to 3 times (D-019)', while D-019, agent-protocol.md and run-agent.sh (MAX_RESUMES default 6) say 6",
+   "reproduction": "grep -n 'up to 3 times' docs/delivery/agents.md -> the invocation-mechanism paragraph; grep -n MAX_RESUMES tools/agents/run-agent.sh -> default 6; D-019 in decisions.md -> 'up to 6 times'. This may overlap the documentation part of F-DG0-114 (code-security-reviewer), which I do not verify; I found this residual independently while checking agents.md against the raw evidence (assignment item 4).",
+   "expected": "agents.md matches D-019 and the runner (6 resumes).",
+   "actual": "agents.md says 3. Documentation only. I accept it as a Low observation.",
+   "evidence": [
+    "docs/delivery/agents.md",
+    "tools/agents/run-agent.sh:22",
+    "docs/delivery/decisions.md (D-019)"
+   ],
+   "reported_by": "qa-verifier",
+   "reported_in": "docs/delivery/reviews/DG0/round-3/qa-verifier.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T14:20:00Z",
+     "status": "OPEN",
+     "note": "Raised in DG0 round 3 QA review; acceptable as a Low observation."
+    }
+   ]
+  }
+ ]
+}

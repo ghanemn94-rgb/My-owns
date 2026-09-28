@@ -1,0 +1,77 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-101",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified differentially. On the old commit 83860be3, round-2 repro N2 passes: deleting a whole earlier round plus its findings.json entry passes the gate (03-repro-r2-on-old-commit.log). On candidate 540b3c69, repro-r3 test 2 shows the same attack is rejected: the round is still listed in stages.json (\"file not found\"), and when stages.json is rewritten and committed, the deletion is caught in git history. The candidate's own regression test ('F-DG0-101 residual') passes (01-existing-tests.log). The earlier vectors (relabel, sidecar relabel, drop, downgrade) stay fixed. The stated vectors of this finding are fixed. The related residual, editing a committed sidecar in place instead of deleting it, has a different root cause (reviewer artefacts are not bound to their run, and the append-only check covers deletions only). It is tracked separately as F-DG0-115, so this finding closes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/repro-r3.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/02-repro-r3-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/03-repro-r2-on-old-commit.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/01-existing-tests.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-102",
+      "result": "FAIL",
+      "status_after": "OPEN",
+      "note": "Mostly fixed, but the verification binding still fails open. Fixed: on the old commit, N1a passes (a closure citing a pre-freeze LOAD run with an unrelated assignment, 03-repro-r2-on-old-commit.log). On the candidate, repro-r3 test 3 shows it is rejected ('ran assignment ... T-DG0-LOAD.md', 'before the candidate froze'). Still open (repro-r3 test 7): checkClosure passes binding.assignment = v.record.assignment, and checkInvocation skips the whole assignment check when that is undefined (rules.mjs:306 'if (binding.assignment !== undefined)'). The verifying record is never schema-validated (collectVerifications, rules.mjs:466-467), and it need not be listed in the round's stages.json records (a round entry with records {} is accepted). So a round-3 verifications sidecar next to a three-field record {reviewer_role, candidate_id, invocation_reference} pointing at an unrelated post-freeze run of the role (assignment T-OTHER.md) closes a High finding: validateGate returns []. This is exactly the verification binding the original expected result required ('the run's assignment path/SHA matches the record's assignment file'). Fix: validate the verifying record against review.schema (assignment is required there), require it to be the record listed in stages.json review_rounds[round].records[role] with a matching round, and make a binding without an assignment an error rather than a skip. Residual accepted as a design limit and disclosed in D-016: run evidence is self-hashed, not attested.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/repro-r3.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/02-repro-r3-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/03-repro-r2-on-old-commit.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-110",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified differentially. On the old commit, N1b (the reporter's sidecar says FAIL while findings.json says CLOSED_VERIFIED) and N1c (unchecked evidence and fix_revision) pass the gate (03-repro-r2-on-old-commit.log). On the candidate, closure is read only from the latest reviewer verifications sidecar (rules.mjs:454-514). A same-round FAIL wins. findings.json must mirror by_role, result, invocation and evidence. The evidence must be existing repository files. fix_revision must be a full commit id that is an ancestor of both the verified round's source_commit and the gate commit. The candidate's regression tests cover the FAIL sidecar, the missing sidecar, a foreign invocation, missing evidence, a malformed fix_revision and a post-freeze fix, and all pass (01-existing-tests.log). As specified, the finding is fixed. What remains is that the sidecar itself can be edited after the run (repro-r3 test 5). That is a new root cause, tracked as F-DG0-115, and the fail-open assignment binding for verifying records is tracked under F-DG0-102.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/01-existing-tests.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/03-repro-r2-on-old-commit.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/02-repro-r3-candidate.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-111",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified end to end through the real per-role hook command (settings JSON) in disposable worktrees (04-guard-e2e.sh, 04-guard-e2e.log). On the old commit 83860be3, a Write to tools/.git or docs/.git is allowed (exit 0). After tools/.git and docs/.git are planted, writes to tools/gates/lib/rules.mjs, tools/agents/write-scopes.json, docs/delivery/stages.json, docs/source/playbook.md and a NotebookEdit under tools/gates are all allowed (exit 0). On candidate 540b3c69, every .git segment is blocked ('git metadata', exit 2). With nested .git files planted, all protected targets stay blocked (exit 2), because paths are scoped from the fixed GUARD_ROOT (guard-write.mjs:42-57). Ordinary product paths are still allowed, and a garbage payload fails safe (exit 2). The candidate's guard tests pass.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/04-guard-e2e.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/04-guard-e2e.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/01-existing-tests.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-112",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "On the old commit, N4 (a file containing 'symlink:<t>' collides with a symlink to <t>) and N5 (the exec bit is not hashed) reproduce (03-repro-r2-on-old-commit.log). On the candidate, the canonical line is '<sha256>  <mode>  <path>' with the git mode (candidate.mjs:118-129). Unsupported modes and manifest entries without a mode are refused, and diffManifests compares the mode too. repro-r3 test 8 verifies this for committed trees (update-index --chmod=+x changes the ID; a file-to-symlink swap with identical marker bytes changes the ID; a mode-less entry throws). The candidate's own test covers the working tree. The Windows working-tree mode side effect is recorded separately as the Low observation F-DG0-116.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/02-repro-r3-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/03-repro-r2-on-old-commit.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-113",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "A clone with core.autocrlf=true, checked out at each commit (05-autocrlf.log). On the old commit 83860be3, 197 files are checked out with CRLF, and the working-tree candidate (9c13ca68...) differs from the committed one (d47b51ca...). On candidate 540b3c69, '.gitattributes: * -text' disables conversion: the working-tree and --ref IDs are both sha256:31fd0843..., equal to the frozen ID. The 28 files containing CR there are byte-identical to their blobs. D-005 references the rule in .gitattributes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/05-autocrlf.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-114",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "(1) D-016 claims finding verifications are bound to assignment and freeze. rules.mjs:503-506 now passes that binding. Its fail-open case for records without an assignment is tracked in F-DG0-102, not as documentation drift. (2) D-019 now says 'up to 6 times', matching run-agent.sh:22 (MTH_MAX_RESUMES default 6). (3) agents.md now lists the protected set as write-scopes.json has it (.claude/**, .mcp.json, CLAUDE*.md at any depth, trading_agent/**, the .git rule). See 06-docs-consistency.log.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/06-docs-consistency.log"
+      ]
+    }
+  ]
+}

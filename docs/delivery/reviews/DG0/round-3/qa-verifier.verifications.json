@@ -1,0 +1,47 @@
+{
+ "verifications": [
+  {
+   "finding_id": "F-DG0-204",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Reproduced on 83860be (QA2-N11 fails: validator accepts a verification bound to a pre-freeze LOAD run). Fixed in 540b3c69: closure is read from the reviewer's own verifications sidecar; findings.json must mirror the reviewer's own round record invocation; that run is bound to the record's assignment and the round's frozen_at; fix_revision must be an ancestor of the round and gate candidates. My independent QA3-R204 (findings.json cites the LOAD run -> 'not the verifying reviewer's own run') and QA3-R204b (sidecar moved to a round-1 record rebound to the LOAD run -> 'started 11:00Z, before the candidate froze') pass, and so does the in-repo test 'F-DG0-110 / F-DG0-204'. The residual metadata-rewrite path is tracked separately as F-DG0-208 (Low).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-3/10a-repro-r2-findings-on-old.log",
+    "docs/delivery/test-evidence/DG0/qa/round-3/10b-qa3-negative-on-r3.log",
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-205",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Reproduced on 83860be (QA2-N12 fails: outside-repo symlink accepted as evidence). Fixed: repoFile() compares the realpath with the realpath of the root. QA3-R205 passes: review evidence reached through a directory symlink that leaves the repo is rejected, and an in-repo relative symlink to a tracked file is still accepted, so there is no over-rejection.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-3/10a-repro-r2-findings-on-old.log",
+    "docs/delivery/test-evidence/DG0/qa/round-3/10b-qa3-negative-on-r3.log",
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-206",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Reproduced on 83860be (QA2-N14 prints 'exec-bit change detected by candidate: false'). Fixed: each manifest entry carries the git mode, and candidateId() hashes '<sha256>  <mode>  <path>' and refuses entries without a valid mode. QA3-R206 (committed chmod +x after freeze -> candidate error), QA3-N21 (mode flipped in the manifest -> tampered) and QA3-N22 (entry without mode -> 'lacks a valid mode') pass. The D-005 text drift is tracked as F-DG0-209 (Low).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-3/10a-repro-r2-findings-on-old.log",
+    "docs/delivery/test-evidence/DG0/qa/round-3/10b-qa3-negative-on-r3.log",
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-207",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Both stale titles now occur 0 times in requirements.csv. REQ-DLV-013 and REQ-DLV-026 cite 'A24 / F-DG0-102: fabricated or incomplete provenance is rejected', which exists at validator.test.mjs:236 and asserts /file not found/ for a missing run. All 19 quoted test-title citations in the register resolve verbatim (my own check, plus check_test_refs.py: 0 problems).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-3/12-acceptance-test-refs.log",
+    "docs/delivery/test-evidence/DG0/qa/round-3/15-analysis-tools.log"
+   ]
+  }
+ ]
+}

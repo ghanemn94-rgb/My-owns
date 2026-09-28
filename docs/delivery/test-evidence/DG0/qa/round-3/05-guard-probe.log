@@ -1,0 +1,12 @@
+# Live write-guard probe by qa-verifier (session 414fe1d7-6c32-42b1-b9cb-3642d7ec2fc8), 2026-09-28T14:09:50Z, main checkout HEAD 4af07b032331f14b4ef1c84b169af8a61fc9adf0
+Tool: Write  file_path=/home/user/My-owns/docs/source/QA-PROBE.txt
+  -> PreToolUse:Write hook error: BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+Tool: Write  file_path=/home/user/My-owns/tests/qa/.git/QA-PROBE.txt
+  -> BLOCKED by write guard: qa-verifier may not write 'tests/qa/.git/QA-PROBE.txt' (git metadata)
+Tool: Write  file_path=/home/user/My-owns/tools/gates/QA-PROBE.txt
+  -> BLOCKED by write guard: qa-verifier may not write 'tools/gates/QA-PROBE.txt' (protected path)
+Tool: Write  in-scope files under docs/delivery/test-evidence/DG0/qa/** -> allowed (this log and the round-3 test file were written)
+$ ls docs/source/QA-PROBE.txt tools/gates/QA-PROBE.txt tests/qa/.git
+ls: cannot access 'docs/source/QA-PROBE.txt': No such file or directory
+ls: cannot access 'tools/gates/QA-PROBE.txt': No such file or directory
+ls: cannot access 'tests/qa/.git': No such file or directory

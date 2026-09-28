@@ -1,0 +1,28 @@
+## D-016 (verification binding claim)
+22:| D-016 | 2026-09-28 | delivery-orchestrator | **Provenance binding** (F-DG0-102, F-DG0-201). The validator accepts a review, audit or finding verification only when its run:<br>• has `meta.json`, `result.json` and `transcript.jsonl.gz`, with SHA-256 hashes recorded in meta that match;<br>• has an init line, a runner prompt (role and run ID) and a final successful result line for the same s
+## rules.mjs verification binding call
+503:  checkInvocation(repo, stage.id, v.record.invocation_reference, v.role, errors, `${where} verification`, {
+504-    assignment: v.record.assignment,
+505-    notBefore: round.frozen_at,
+506-  });
+## D-019 resumes
+up to 6 times
+22:MAX_RESUMES="${MTH_MAX_RESUMES:-6}" RESUME_PAUSE="${MTH_RESUME_PAUSE_SECONDS:-120}"
+## agents.md protected paths
+| release-auditor | independent auditor | `docs/delivery/reviews/**`, `docs/delivery/gates/**`, `docs/delivery/test-evidence/**` |
+
+The paths protected from implementers are:
+- the gate rules and agent tooling: `tools/gates/**` and `tools/agents/**`;
+- the sources: `docs/source/**`;
+- all Claude configuration surfaces: `.claude/**`, `.mcp.json`, and `CLAUDE.md`/`CLAUDE.local.md` at any depth;
+- the unrelated project: `trading_agent/**`;
+- the delivery records: `docs/delivery/{reviews,gates,runs,candidates,test-evidence}/**`, `docs/delivery/stages.json` and `docs/delivery/findings.json`;
+- the gate CI workflow: `.github/workflows/delivery-gates.yml`.
+
+No role may write a `.git` path segment. The guard scopes every path from its own fixed repository root, so a planted nested `.git` can't move the root. It checks the symlink-resolved real path as well as the lexical one, and deny rules match case-insensitively (D-020, F-DG0-111). The source of truth is `tools/agents/write-scopes.json`, and the tests are `tools/agents/tests/guard.test.mjs`.
+
+## Invocation mechanism (decision D-003)
+## write-scopes protected_for_implementers
+tools/gates/** tools/agents/** docs/source/** docs/delivery/reviews/** docs/delivery/gates/** docs/delivery/stages.json .github/workflows/delivery-gates.yml docs/delivery/runs/** docs/delivery/findings.json docs/delivery/candidates/** docs/delivery/test-evidence/** .claude/** **/.claude/** .mcp.json **/.mcp.json CLAUDE.md **/CLAUDE.md **/CLAUDE.local.md CLAUDE.local.md trading_agent/**
+## D-018 append-only wording
+no file under `reviews/<DGx>/` or `runs/<DGx>/` may ever be deleted from git history.

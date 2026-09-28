@@ -1,0 +1,82 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-115",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Reviewer-authored records and sidecars are not bound to the reviewer's run, and 'append-only' covers deletions only: editing them in place drops findings, flips FAIL verifications and FAIL verdicts",
+      "reproduction": "tools/gates/lib/rules.mjs:537-543 (checkReviewRounds) scans git history only with --diff-filter=D, so a committed file under reviews/<DGx>/ or runs/<DGx>/ may be MODIFIED in any later commit. Nothing binds the content of a review record (checkReview, rules.mjs:315-341), a findings sidecar (collectRaisedFindings, rules.mjs:345-370) or a verifications sidecar (collectVerifications, rules.mjs:454-481) to the run that supposedly wrote it: checkInvocation (rules.mjs:265-312) only proves that SOME successful run of that role exists. tools/agents/run-agent.sh:109-118 records no manifest of the files the agent wrote. Historical immutability (rules.mjs:586-626) starts only at the first commit where the gate record is APPROVED, and it pins whatever the files contained at that moment. Reproduced with GATE_TOOLS=/tmp/dg0-sec-r3 node --test docs/delivery/test-evidence/DG0/code-security/round-3/repro-r3.test.mjs (log 02-repro-r3-candidate.log): (a) test 4: round 1 raised High mandatory F-DG0-101, and the round-1 files were committed. A later commit rewrites round-1/code-security-reviewer.findings.json to {findings:[]}, sets the round-1 record's findings to [] and removes the entry from findings.json. validateGate current, validateGate historical (after approval) and validatePipeline all return []. (b) test 5: the reviewer's committed round-2 verifications sidecar says FAIL/OPEN. A later commit edits it to PASS/CLOSED_VERIFIED and mirrors findings.json. validateGate returns []. (c) test 6: a committed qa-verifier record with verdict FAIL and a FAIL check is edited to PASS. validateGate returns []. The real runs show a mechanical check is feasible: the transcripts contain the reviewer's Write/Bash tool calls. No file under reviews/DG0 or runs/DG0 has been modified or deleted in the real history so far (git log --diff-filter=D/M empty), so a stricter rule would not block DG0.",
+      "expected": "Once written by the reviewer's run, reviewer artefacts cannot be changed without the validator noticing. Minimum: (1) the history check rejects modifications as well as deletions (--diff-filter=DM, or first-committed blob == current blob) for every file under reviews/<DGx>/**, runs/<DGx>/** and the round's assignment, and it also compares the working tree with the first committed version. (2) The runner records the SHA-256 of every file the run created or changed (git status before/after) in meta.json, which is itself hash-bound. The validator requires every review record, findings sidecar and verifications sidecar to match the outputs of the run that its record cites. (3) The orchestrator commits the run's outputs together with its run directory immediately after the run, and D-016/D-018 describe the residual window. The error message 'review evidence is append-only' must be true.",
+      "actual": "The fixes for F-DG0-101/F-DG0-110 moved the source of truth from orchestrator-written findings.json to reviewer sidecars, but the sidecars and records can be edited by the same actor at the same cost (one JSON edit). An unresolved High finding can be removed, a reviewer's FAIL verification turned into a closure, or a FAIL review turned into PASS, and the gate, historical mode and pipeline still pass. D-018 states the evidence is append-only, but the implementation only forbids deletion.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/repro-r3.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/02-repro-r3-candidate.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-3/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T14:13:51Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-3 code-security review (reproduced: repro-r3 tests 4, 5, 6)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-116",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Working-tree candidate mode is read from the filesystem exec bit, so it disagrees with git where core.fileMode=false (Windows default); the result fails closed",
+      "reproduction": "tools/gates/lib/candidate.mjs:92 derives the mode of a working-tree file from st.mode & 0o111. On filesystems without exec bits (NTFS, FAT; git sets core.fileMode=false there), tracked 100755 files (tools/agents/run-agent.sh, tools/source/check_extraction.sh) are hashed as 100644. Then candidate.mjs --stage DGx and validate.mjs --stage DGx (current mode) report a different ID from the frozen one, although git status is clean. repro-r3 test 9 simulates this on Linux: chmod -x plus core.fileMode=false gives an empty git status and a different working-tree candidate. The effect is a false 'changed' result, not a bypass.",
+      "expected": "For tracked files, the working-tree manifest takes the mode from the index (git ls-files --stage, which manifestFromWorkingTree already runs at :74) when core.fileMode is false, or always. Only content is read from disk.",
+      "actual": "Current-mode candidate identity is not reproducible on Windows checkouts. The F-DG0-113 line-ending fix works, but the F-DG0-112 mode fix reintroduces a platform dependency. I would accept this as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/repro-r3.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/02-repro-r3-candidate.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-3/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T14:13:51Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-3 code-security review (repro-r3 test 9). Would accept as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-117",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ACCEPTED_OBSERVATION trusts the role names typed into findings.json; no reviewer or auditor artefact is required",
+      "reproduction": "tools/gates/lib/rules.mjs:416-425 accepts a finding as ACCEPTED_OBSERVATION when findings.json.acceptance.accepted_by contains release-auditor and one specialist role name, and the gate lists the ID. Unlike closures (checkClosure, :484-514), no reviewer sidecar entry, record or run is consulted. repro-r3 test 10: a Low finding raised in a round-1 sidecar is marked ACCEPTED_OBSERVATION with accepted_by [code-security-reviewer, release-auditor], written only into findings.json, and validateGate returns [].",
+      "expected": "Acceptance is read from reviewer-authored artefacts, as closure is (D-018): for example a verifications-sidecar entry with status_after ACCEPTED_OBSERVATION by the specialist and the auditor, bound to their runs for the round. findings.json must mirror those entries.",
+      "actual": "The orchestrator alone can accept a Low, non-mandatory finding. The impact is limited to Low findings, because severity and the mandatory flag are immutable against the reviewer's sidecar. I would accept this as a Low observation, and it would be resolved naturally by the F-DG0-115 binding.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-3/repro-r3.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-3/02-repro-r3-candidate.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-3/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T14:13:51Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-3 code-security review (repro-r3 test 10). Would accept as an observation."
+        }
+      ]
+    }
+  ]
+}
