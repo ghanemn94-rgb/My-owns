@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "g=\"$(git rev-parse --show-toplevel 2>/dev/null)/tools/agents/guard-write.mjs\"; if [ -f \"$g\" ]; then node \"$g\" kpi-benefits-engineer; rc=$?; else echo \"write guard missing\" >&2; rc=2; fi; [ \"$rc\" -eq 0 ] || exit 2"
+          }
+        ]
+      }
+    ]
+  }
+}

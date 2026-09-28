@@ -1,0 +1,98 @@
+{
+  "$comment": "Role write scopes enforced by tools/agents/guard-write.mjs (PreToolUse hook on Write/Edit/NotebookEdit). Paths are repo-relative globs. 'deny' wins over 'allow'. Files outside any git work tree (scratch space) are always allowed. Changing this file is a gate-rule change: it is part of every stage candidate's review scope and implementers cannot edit it.",
+  "protected_for_implementers": [
+    "tools/gates/**",
+    "tools/agents/**",
+    ".claude/agents/**",
+    ".claude/settings.json",
+    "docs/source/**",
+    "docs/delivery/reviews/**",
+    "docs/delivery/gates/**",
+    "docs/delivery/stages.json",
+    ".github/workflows/delivery-gates.yml",
+    "docs/delivery/runs/**",
+    "docs/delivery/findings.json",
+    "docs/delivery/candidates/**"
+  ],
+  "roles": {
+    "transformation-analyst": {
+      "allow": [
+        "docs/analysis/**",
+        "docs/delivery/requirements.csv",
+        "docs/delivery/handbacks/**"
+      ],
+      "deny": []
+    },
+    "solution-architect": {
+      "allow": [
+        "**"
+      ],
+      "deny": [
+        "@protected_for_implementers"
+      ]
+    },
+    "frontend-ux-engineer": {
+      "allow": [
+        "**"
+      ],
+      "deny": [
+        "@protected_for_implementers"
+      ]
+    },
+    "backend-workflow-engineer": {
+      "allow": [
+        "**"
+      ],
+      "deny": [
+        "@protected_for_implementers"
+      ]
+    },
+    "kpi-benefits-engineer": {
+      "allow": [
+        "**"
+      ],
+      "deny": [
+        "@protected_for_implementers"
+      ]
+    },
+    "devops-engineer": {
+      "allow": [
+        "**"
+      ],
+      "deny": [
+        "@protected_for_implementers"
+      ]
+    },
+    "domain-reviewer": {
+      "allow": [
+        "docs/delivery/reviews/**",
+        "docs/delivery/test-evidence/**"
+      ],
+      "deny": []
+    },
+    "code-security-reviewer": {
+      "allow": [
+        "docs/delivery/reviews/**",
+        "docs/delivery/test-evidence/**"
+      ],
+      "deny": []
+    },
+    "qa-verifier": {
+      "allow": [
+        "tests/qa/**",
+        "e2e/**",
+        "docs/delivery/reviews/**",
+        "docs/delivery/test-evidence/**"
+      ],
+      "deny": []
+    },
+    "release-auditor": {
+      "allow": [
+        "docs/delivery/reviews/**",
+        "docs/delivery/gates/**",
+        "docs/delivery/test-evidence/**"
+      ],
+      "deny": []
+    }
+  }
+}
