@@ -1,0 +1,56 @@
+docs/analysis/source-coverage.csv rows 165 expected 165 Counter({'REQUIREMENT': 129, 'CONTEXT': 29, 'NON-REQUIREMENT': 7}) problems []
+docs/analysis/master-prompt-coverage.csv rows 423 expected 423 Counter({'REQUIREMENT': 367, 'CONTEXT': 49, 'NON-REQUIREMENT': 7}) problems []
+classes Counter({'USER': 188, 'ENGINEERING': 130, 'SOURCE': 93})
+SOURCE rows without B anchor []
+non-SOURCE rows without M anchor []
+
+## Operating-logic semantics (item 7)
+REQ-S07-007 DG4 | Compute RAG from the approved expected trajectory with configurable thresholds and never from project task completion 
+   A: A04;A05: with all tasks complete and actual below the red threshold the KPI is Red; changing the threshold version recomputes RAG
+REQ-PB-063 DG4 | Apply the area-specific T10 RAG logic 
+   A: A04;A05: an outcome whose tasks are 100% complete but KPI is below trajectory is Red/Amber, not Green; a KPI with no actual shows Unknown
+REQ-S03-003 DG4 | Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses 
+   A: A11: setting delivery to Complete leaves adoption, validated value and closure unchanged; the API rejects a closure request while validated value is pending unless a transition decision exists
+REQ-S11-006 DG4 | Show delivery complete, value validation pending and BAU accepted as separate states so success is never inferred from initiative completion 
+   A: A11: with all initiatives complete and value pending, the transformation shows 'Delivery complete - value validation pending', not successful
+REQ-S08-001 DG4 | Track planned, forecast, measured, submitted-for-validation, validated, rejected and sustained benefit values separately 
+   A: A10: a forecast amount never appears in the validated total; a rejected measurement is retained and shown as rejected
+REQ-S08-016 DG4 | Keep measure-only submissions out of the validated total until approved 
+   A: A10: submitting a measurement leaves the validated total unchanged; approval increases it by exactly the approved amount
+REQ-PB-013 DG4 | Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role 
+   A: A10;A12: a Business Owner calling the validate endpoint receives 403; a Finance user succeeds and the audit event records validator identity
+REQ-S08-003 DG4 | Record for each benefit a unique ID, type, accountable business owner, Finance validator where applicable, baseline/counterfactual, formula, driver units, targe 
+   A: A10: a financial benefit without a financial-statement mapping, or a non-financial one without an agreed KPI, is rejected
+REQ-PB-058 DG4 | Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link 
+   A: A10: a benefit with two owners is rejected; a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the portfolio total
+REQ-S08-013 DG4 | Reject allocations over 100% and show any share below 100% as unallocated 
+   A: A10: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated
+REQ-S04-002 DG4 | Make gates explicit approval records tied to a versioned, immutable evidence snapshot, never inferred from task completion 
+   A: A07;A08: completing every phase task leaves the gate Draft; editing a record after submission does not change the snapshot content shown to approvers
+REQ-PB-015 DG4 | Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required 
+   A: A08: submission with missing mandatory evidence is rejected; approval by a non-approver returns 403; approval of a stale submission version is rejected
+REQ-DLV-002 DG0 | Keep engineering delivery gates DG0-DG7 separate from product business approvals G1-G6 in records, authority and meaning 
+   A: A23;A28: gate records validate only with stage_id DG0-DG7; CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval
+REQ-PB-001 DG5 | Label the methodology provenance honestly as a practical synthesis inspired by PMI/Brightline/BRM and never claim official PMI status 
+   A: A01: provenance text on reader/About/report footer matches B0004 verbatim; an automated text scan of UI strings (en+ar) and report templates finds no claim of 'official PMI standard', 'PMI certified' or equivalent
+REQ-S15-002 DG1 | Seed the provisional design tokens brand.primary #0078FF, brand.deep #003B73, surface.page #F5F8FC, surface.card #FFFFFF, text.primary #142438, text.secondary # 
+   A: A20: the API returns the seven tokens with the values listed and provenance=provisional; no UI string or document claims official Mobily brand compliance
+
+## Staging (item 9)
+{'BIZCASE': ['DG3'], 'CHARTER': ['DG2'], 'HEALTH25': ['DG5'], 'LAUNCH90': ['DG5'], 'ROAMING-EX': ['DG5'], 'T01': ['DG2'], 'T02': ['DG2', 'DG3'], 'T03': ['DG2'], 'T04': ['DG2'], 'T05': ['DG3'], 'T06': ['DG3', 'DG5'], 'T07': ['DG3'], 'T08': ['DG3'], 'T09': ['DG3'], 'T10': ['DG4'], 'T11': ['DG4'], 'T12': ['DG4'], 'T13': ['DG4'], 'T14': ['DG4'], 'T15': ['DG4'], 'T16': ['DG4'], 'TOM-CANVAS': ['DG2']}
+REQ-PB-016 P2 DG2 G1 Case for Change: require diagnostic, baseline, root causes and value pools as gate evidence
+REQ-PB-017 P2 DG2 G2 Direction: require North Star, outcome tree, KPI definitions and guardrails as gate evidence
+REQ-PB-018 P2 DG2 G3 Target State: require Target Operating Model, capability gaps and future journeys as gate evidenc
+REQ-PB-019 P3 DG3 G4 Mobilization: require initiative cards, business cases, roadmap, owners and capacity as gate evid
+REQ-PB-020 P4 DG4 G5 Scale: require performance evidence, adoption, risk closure and decision log as gate evidence
+REQ-PB-021 P4 DG4 G6 Sustain: require benefits evidence, ownership transfer, controls and continuous improvement backl
+REQ-PB-049 P3 DG3 Adjust T06 weights per transformation, including risk/compliance replacing part of the weighting, wi
+REQ-PB-093 P5 DG5 Let methodology administrators configure the default T06 weight set and scoring rubrics in Playbook 
+REQ-S09-005 P3 DG3 Explain ranking changes and overrides
+REQ-PB-086 P5 DG5 Seed the 90-day launch plan as scheduled tasks relative to a start date
+REQ-PB-087 P5 DG5 Run the Day-90 leadership test
+REQ-PB-088 P5 DG5 Seed the International Roaming worked example as clearly synthetic demo data
+REQ-PB-091 P5 DG5 Implement the 25-question Transformation Health Check with score and top 3 actions
+REQ-PB-092 P5 DG5 Interpret the health-check score with the four source bands
+empty acceptance []
+DG0 rows [('REQ-DLV-001', 'IMPLEMENTED'), ('REQ-DLV-002', 'IMPLEMENTED'), ('REQ-DLV-003', 'IMPLEMENTED'), ('REQ-DLV-004', 'IMPLEMENTED'), ('REQ-DLV-006', 'IMPLEMENTED'), ('REQ-DLV-007', 'IMPLEMENTED'), ('REQ-DLV-013', 'IMPLEMENTED'), ('REQ-DLV-015', 'IMPLEMENTED'), ('REQ-DLV-016', 'IMPLEMENTED'), ('REQ-DLV-017', 'IMPLEMENTED'), ('REQ-DLV-019', 'IMPLEMENTED'), ('REQ-DLV-020', 'IMPLEMENTED'), ('REQ-DLV-022', 'IMPLEMENTED'), ('REQ-DLV-023', 'IMPLEMENTED'), ('REQ-DLV-026', 'IMPLEMENTED'), ('REQ-DLV-029', 'IMPLEMENTED'), ('REQ-DLV-032', 'IMPLEMENTED'), ('REQ-S20-024', 'IMPLEMENTED'), ('REQ-S20-025', 'IMPLEMENTED')]

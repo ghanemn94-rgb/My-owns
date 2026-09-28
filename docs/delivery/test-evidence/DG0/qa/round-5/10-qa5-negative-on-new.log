@@ -1,0 +1,301 @@
+$ QA_REPO_ROOT=/tmp/review-dg0-r5-qa node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r5.test.mjs
+# HEAD=8b8503157fa4bfd79ed5750bf50b7f0ca8a0b8e8 (candidate content = d141d303) node=v22.22.2 date=2026-09-28T15:03:51Z
+TAP version 13
+# \# QA5-R212a errors (2):
+# \#   review rounds: DG0 round 3 manifest docs/delivery/candidates/DG0/64665183e3bb6f38.manifest.json does not describe its source_commit 85c4d44b73 (recomputes to sha256:96c1e05362e98cd2c0964789ac72d48d165bc2cc7aa062ef382f098970efadb7)
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000032: started from 85c4d44b73, which does not contain docs/delivery/candidates/DG0/64665183e3bb6f38.manifest.json
+# \# QA5-R212b errors (1):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000038: started from 4e28bb0fe7, which does not contain docs/delivery/candidates/DG0/901b6701a5a59c82.manifest.json
+# \# QA5-P01 narrow-spec round accepted: true (errors: none)
+# Subtest: control: the independent round-5 fixture is accepted (API and CLI exit 0)
+ok 1 - control: the independent round-5 fixture is accepted (API and CLI exit 0)
+  ---
+  duration_ms: 859.022783
+  type: 'test'
+  ...
+# Subtest: control: a genuine later-round closure (post-manifest run) is accepted
+ok 2 - control: a genuine later-round closure (post-manifest run) is accepted
+  ---
+  duration_ms: 984.290217
+  type: 'test'
+  ...
+# Subtest: QA5-R211a (F-DG0-211 = QA4-N39): a gate record edited and committed after the auditor's run is rejected
+ok 3 - QA5-R211a (F-DG0-211 = QA4-N39): a gate record edited and committed after the auditor's run is rejected
+  ---
+  duration_ms: 664.049716
+  type: 'test'
+  ...
+# Subtest: QA5-R211b (F-DG0-211 = QA4-N40): a gate record the auditor run never wrote (absent from its outputs) is rejected
+ok 4 - QA5-R211b (F-DG0-211 = QA4-N40): a gate record the auditor run never wrote (absent from its outputs) is rejected
+  ---
+  duration_ms: 689.859162
+  type: 'test'
+  ...
+# Subtest: QA5-R211c (F-DG0-211 variant): a gate record present in the auditor run's window but not tool-authored (shell/other writer) is rejected
+ok 5 - QA5-R211c (F-DG0-211 variant): a gate record present in the auditor run's window but not tool-authored (shell/other writer) is rejected
+  ---
+  duration_ms: 725.313047
+  type: 'test'
+  ...
+# Subtest: QA5-R212a (F-DG0-212 = QA4-N30b): a round backed by a fabricated, backdated manifest is rejected
+ok 6 - QA5-R212a (F-DG0-212 = QA4-N30b): a round backed by a fabricated, backdated manifest is rejected
+  ---
+  duration_ms: 879.334059
+  type: 'test'
+  ...
+# Subtest: QA5-R212b (F-DG0-212 variant, new): an honest-content but backdated manifest (narrowed spec, so a new id/path) cannot legitimise a run that started before it was committed
+ok 7 - QA5-R212b (F-DG0-212 variant, new): an honest-content but backdated manifest (narrowed spec, so a new id/path) cannot legitimise a run that started before it was committed
+  ---
+  duration_ms: 833.012441
+  type: 'test'
+  ...
+# Subtest: QA5-P01 probe (informational): a later round whose manifest uses a narrower spec than the stage candidate_spec
+ok 8 - QA5-P01 probe (informational): a later round whose manifest uses a narrower spec than the stage candidate_spec
+  ---
+  duration_ms: 1108.836418
+  type: 'test'
+  ...
+# Subtest: QA5-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+ok 9 - QA5-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+  ---
+  duration_ms: 737.957643
+  type: 'test'
+  ...
+# Subtest: QA5-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+ok 10 - QA5-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+  ---
+  duration_ms: 576.07194
+  type: 'test'
+  ...
+# Subtest: QA5-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+ok 11 - QA5-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+  ---
+  duration_ms: 759.06954
+  type: 'test'
+  ...
+# Subtest: QA5-R205 (F-DG0-205): evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+ok 12 - QA5-R205 (F-DG0-205): evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+  ---
+  duration_ms: 450.775107
+  type: 'test'
+  ...
+# Subtest: QA5-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+ok 13 - QA5-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+  ---
+  duration_ms: 724.843695
+  type: 'test'
+  ...
+# Subtest: QA5-R208a (F-DG0-208 = QA3-N20): rewrite round-1 frozen_at + record to cite a LOAD run, committed, is rejected
+ok 14 - QA5-R208a (F-DG0-208 = QA3-N20): rewrite round-1 frozen_at + record to cite a LOAD run, committed, is rejected
+  ---
+  duration_ms: 827.219615
+  type: 'test'
+  ...
+# Subtest: QA5-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+ok 15 - QA5-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+  ---
+  duration_ms: 756.932837
+  type: 'test'
+  ...
+# Subtest: QA5-N50 binding: a run whose meta has written_by_tools but no tool_authored (round-4 runner shape) cannot bind a record
+ok 16 - QA5-N50 binding: a run whose meta has written_by_tools but no tool_authored (round-4 runner shape) cannot bind a record
+  ---
+  duration_ms: 747.366923
+  type: 'test'
+  ...
+# Subtest: QA5-N51 binding: a closing sidecar that the run touched with file tools but whose final bytes are not the replay (e.g. shell edit after Write) cannot close a finding
+ok 17 - QA5-N51 binding: a closing sidecar that the run touched with file tools but whose final bytes are not the replay (e.g. shell edit after Write) cannot close a finding
+  ---
+  duration_ms: 1068.230355
+  type: 'test'
+  ...
+# Subtest: QA5-N52 binding: head_commit_at_start that is not a commit in this repository is rejected
+ok 18 - QA5-N52 binding: head_commit_at_start that is not a commit in this repository is rejected
+  ---
+  duration_ms: 765.571441
+  type: 'test'
+  ...
+# Subtest: QA5-N53 binding: a run with no head_commit_at_start at all is rejected
+ok 19 - QA5-N53 binding: a run with no head_commit_at_start at all is rejected
+  ---
+  duration_ms: 746.230575
+  type: 'test'
+  ...
+# Subtest: QA5-N54 write-once: delete a committed record, then re-add it with different bytes in a later commit, is rejected
+ok 20 - QA5-N54 write-once: delete a committed record, then re-add it with different bytes in a later commit, is rejected
+  ---
+  duration_ms: 980.123552
+  type: 'test'
+  ...
+# Subtest: QA5-N55 write-once: re-adding the identical bytes after a delete is accepted (content, not history shape, is what matters)
+ok 21 - QA5-N55 write-once: re-adding the identical bytes after a delete is accepted (content, not history shape, is what matters)
+  ---
+  duration_ms: 853.655953
+  type: 'test'
+  ...
+# Subtest: QA5-N56 write-once: an edited round assignment committed on a side branch and merged is rejected (history + sha binding)
+ok 22 - QA5-N56 write-once: an edited round assignment committed on a side branch and merged is rejected (history + sha binding)
+  ---
+  duration_ms: 857.100863
+  type: 'test'
+  ...
+# Subtest: QA5-N57 manifests: a round whose manifest names a source_commit that does not exist is rejected
+ok 23 - QA5-N57 manifests: a round whose manifest names a source_commit that does not exist is rejected
+  ---
+  duration_ms: 709.157176
+  type: 'test'
+  ...
+# Subtest: QA5-N58 manifests: a committed frozen manifest edited in the working tree (hidden with assume-unchanged) is rejected
+ok 24 - QA5-N58 manifests: a committed frozen manifest edited in the working tree (hidden with assume-unchanged) is rejected
+  ---
+  duration_ms: 622.085288
+  type: 'test'
+  ...
+# Subtest: QA5-N59 gate: the gate record authored by a domain-reviewer run (not the auditor) is rejected even if the auditor's outputs list is edited in history to match
+ok 25 - QA5-N59 gate: the gate record authored by a domain-reviewer run (not the auditor) is rejected even if the auditor's outputs list is edited in history to match
+  ---
+  duration_ms: 649.303852
+  type: 'test'
+  ...
+# Subtest: QA5-RP1 runner replay: Write then Edit (chained) is tool_authored; outputs record the change
+ok 26 - QA5-RP1 runner replay: Write then Edit (chained) is tool_authored; outputs record the change
+  ---
+  duration_ms: 37.901534
+  type: 'test'
+  ...
+# Subtest: QA5-RP2 runner replay: Write followed by a shell rewrite (final bytes differ) is NOT tool_authored
+ok 27 - QA5-RP2 runner replay: Write followed by a shell rewrite (final bytes differ) is NOT tool_authored
+  ---
+  duration_ms: 35.1132
+  type: 'test'
+  ...
+# Subtest: QA5-RP3 runner replay: a failed (guard-denied) Write whose content appears via the shell is NOT tool_authored
+ok 28 - QA5-RP3 runner replay: a failed (guard-denied) Write whose content appears via the shell is NOT tool_authored
+  ---
+  duration_ms: 35.20328
+  type: 'test'
+  ...
+# Subtest: QA5-RP4 runner replay: an Edit on a pre-existing file (not written by this run) is NOT tool_authored
+ok 29 - QA5-RP4 runner replay: an Edit on a pre-existing file (not written by this run) is NOT tool_authored
+  ---
+  duration_ms: 40.004559
+  type: 'test'
+  ...
+# Subtest: QA5-RP5 runner replay: an Edit whose old_string does not occur poisons the replay; writes outside the repo are ignored
+ok 30 - QA5-RP5 runner replay: an Edit whose old_string does not occur poisons the replay; writes outside the repo are ignored
+  ---
+  duration_ms: 38.27831
+  type: 'test'
+  ...
+# Subtest: QA5-RP6 runner replay: a later successful Write supersedes an earlier failed one and binds the final bytes
+ok 31 - QA5-RP6 runner replay: a later successful Write supersedes an earlier failed one and binds the final bytes
+  ---
+  duration_ms: 36.053598
+  type: 'test'
+  ...
+# Subtest: QA5-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+ok 32 - QA5-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+  ---
+  duration_ms: 736.705039
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: missing reviewer
+ok 33 - QA5-A24 rejects: missing reviewer
+  ---
+  duration_ms: 648.766879
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: reviewer who authored the scope
+ok 34 - QA5-A24 rejects: reviewer who authored the scope
+  ---
+  duration_ms: 598.423934
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: reviewer listed as implementation author
+ok 35 - QA5-A24 rejects: reviewer listed as implementation author
+  ---
+  duration_ms: 539.828996
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: shared invocation
+ok 36 - QA5-A24 rejects: shared invocation
+  ---
+  duration_ms: 598.969356
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: failed check
+ok 37 - QA5-A24 rejects: failed check
+  ---
+  duration_ms: 573.20795
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: blocked check
+ok 38 - QA5-A24 rejects: blocked check
+  ---
+  duration_ms: 563.934399
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: failed gate test
+ok 39 - QA5-A24 rejects: failed gate test
+  ---
+  duration_ms: 590.007727
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: unresolved High finding
+ok 40 - QA5-A24 rejects: unresolved High finding
+  ---
+  duration_ms: 690.009894
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: incomplete requirement
+ok 41 - QA5-A24 rejects: incomplete requirement
+  ---
+  duration_ms: 607.683707
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: register row with a non-existent block anchor
+ok 42 - QA5-A24 rejects: register row with a non-existent block anchor
+  ---
+  duration_ms: 598.673033
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: SOURCE row without a playbook block
+ok 43 - QA5-A24 rejects: SOURCE row without a playbook block
+  ---
+  duration_ms: 589.48176
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: coverage matrix missing a block
+ok 44 - QA5-A24 rejects: coverage matrix missing a block
+  ---
+  duration_ms: 596.398581
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+ok 45 - QA5-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+  ---
+  duration_ms: 588.1083
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: candidate change after freeze
+ok 46 - QA5-A24 rejects: candidate change after freeze
+  ---
+  duration_ms: 695.2235
+  type: 'test'
+  ...
+# Subtest: QA5-A24 rejects: tampered manifest
+ok 47 - QA5-A24 rejects: tampered manifest
+  ---
+  duration_ms: 556.412718
+  type: 'test'
+  ...
+1..47
+# tests 47
+# suites 0
+# pass 47
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 29720.822419
+# exit=0

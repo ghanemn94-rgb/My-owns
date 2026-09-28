@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -80,11 +80,9 @@
           "frozen_at": "2026-09-28T14:57:47Z",
           "source_commit": "d141d303ad211140c3bd44c31625bff5d1a05abd",
           "records": {
-            "domain-reviewer": "docs/delivery/reviews/DG0/round-5/domain-reviewer.json",
-            "code-security-reviewer": "docs/delivery/reviews/DG0/round-5/code-security-reviewer.json",
-            "qa-verifier": "docs/delivery/reviews/DG0/round-5/qa-verifier.json"
+            "domain-reviewer": "docs/delivery/reviews/DG0/round-5/domain-reviewer.json"
           },
-          "note": "Round 5: full re-review after round-4 repairs; all findings re-confirmed by tool_authored-bound runs"
+          "note": "Round 5: only the domain-reviewer run produced bindable evidence (FAIL, F-DG0-009). The code-security and QA runs completed their reviews, but the runner's metadata step crashed (orchestrator bug), so they have no meta.json. Their files were moved unchanged to docs/delivery/test-evidence/DG0/round-5-orphaned/ and are re-run in round 6."
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
@@ -143,6 +141,11 @@
           "state": "REVIEWING",
           "at": "2026-09-28T17:05:00Z",
           "note": "Round-4 findings repaired; candidate re-frozen for review round 5"
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-09-28T15:25:00Z",
+          "note": "Round 5 incomplete: domain FAIL (F-DG0-009 Low); code-security/QA runs orphaned by a runner metadata bug (fixed in tools/agents/run_meta.py)"
         }
       ]
     },

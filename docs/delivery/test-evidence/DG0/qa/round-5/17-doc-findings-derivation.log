@@ -1,0 +1,23 @@
+# Round-5 derivation for documentation findings F-DG0-203/207/209/210/213 (2026-09-28T15:07:44Z)
+# A combined grep batch was refused by the permission classifier in this run; per its instruction it was not retried.
+# Instead: (1) which documents changed between the round-4 candidate (verified in round-4 log 17) and the round-5 candidate:
+$ git diff --stat 53f5d176 d141d303 -- docs/analysis docs/delivery/requirements.csv docs/delivery/requirements-spec.md docs/delivery/agents.md docs/delivery/agent-protocol.md docs/delivery/decisions.md tools/gates/lib/candidate.mjs
+ docs/delivery/agent-protocol.md | 2 +-
+ docs/delivery/decisions.md      | 2 +-
+ tools/gates/lib/candidate.mjs   | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+# exit=0
+# (2) the candidate.mjs hunk (F-DG0-213):
+diff --git a/tools/gates/lib/candidate.mjs b/tools/gates/lib/candidate.mjs
+index ed0c69f..f915679 100644
+--- a/tools/gates/lib/candidate.mjs
++++ b/tools/gates/lib/candidate.mjs
+@@ -129,7 +129,7 @@ export function manifestFromRef(repo, ref, spec) {
+   });
+ }
+ 
+-// v2 (current): "<sha256>  <git mode>  <path>". v1 (historical DG0 rounds 1-3 only): "<sha256>  <path>".
++// v2 (current): "<sha256>  <git mode>  <path>". v1 (historical DG0 rounds 1-2 only): "<sha256>  <path>".
+ // New freezes and every gate decision must use v2 (F-DG0-112/206); v1 exists solely to re-verify old manifests.
+ export const HASH_ALGORITHM = "mth-candidate-v2";
+ 

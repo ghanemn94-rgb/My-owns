@@ -27,6 +27,8 @@ jobs:
         run: node --test tools/gates/tests/*.test.mjs
       - name: Write-guard tests
         run: node --test tools/agents/tests/*.test.mjs
+      - name: Runner metadata tests
+        run: python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'
       - name: Pipeline gate state (approved gates re-verified; no stage advanced past an unapproved gate)
         run: node tools/gates/validate.mjs --pipeline
       - name: Resumption reconciliation report

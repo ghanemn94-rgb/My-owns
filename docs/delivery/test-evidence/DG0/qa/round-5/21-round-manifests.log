@@ -1,0 +1,17 @@
+$ node rounds.mjs /home/user/My-owns   # calls tools/gates/lib/rules.mjs findManifest() for every DG0 review round (script body below)  2026-09-28T15:10:03Z
+round 1 dea5e75a8c5fe118 alg=(none=v1) frozen_at_match=true source_commit_match=true errors=0
+round 2 d47b51caa83c28b0 alg=(none=v1) frozen_at_match=true source_commit_match=true errors=0
+round 3 31fd0843977d30af alg=mth-candidate-v2 frozen_at_match=true source_commit_match=true errors=0
+round 4 0be571eaa8443860 alg=mth-candidate-v2 frozen_at_match=true source_commit_match=true errors=0
+round 5 4a8b14fd05013c17 alg=mth-candidate-v2 frozen_at_match=true source_commit_match=true errors=0
+# exit=0
+--- script ---
+import { readFileSync } from "node:fs";
+const repo = process.argv[2];
+const rules = await import(repo + "/tools/gates/lib/rules.mjs");
+const st = JSON.parse(readFileSync(repo + "/docs/delivery/stages.json", "utf8")).stages.find((s) => s.id === "DG0");
+for (const r of st.review_rounds) {
+  const errors = [];
+  const m = rules.findManifest(repo, "DG0", r.candidate_id, errors, `round ${r.round}`);
+  console.log(`round ${r.round} ${r.candidate_id.slice(7, 23)} alg=${m && (m.hash_algorithm || "(none=v1)")} frozen_at_match=${m && m.frozen_at === r.frozen_at} source_commit_match=${m && m.source_commit === r.source_commit} errors=${errors.length ? errors.join(" | ") : 0}`);
+}

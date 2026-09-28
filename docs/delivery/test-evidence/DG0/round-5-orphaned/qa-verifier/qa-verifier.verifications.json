@@ -1,0 +1,142 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-201",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Round-5 re-confirmation. Reproduced again on the round-1 candidate 26642c7: QA-N27 (a review whose invocation_reference points at the reviewer's T-DG0-LOAD run) fails with 'validator accepted an invalid gate (no errors)'. On the frozen round-5 candidate (4a8b14fd, commit d141d303), QA5-R201 in my new round-5 fixture (tool_authored + manifest-containing start commit) is rejected with both 'ran assignment docs/delivery/assignments/DG0/T-DG0-LOAD.md' and 'before the candidate froze'. The project regression test 'F-DG0-201: a review bound to an unrelated run of the same role is rejected' passes (tools/gates/tests 34/34).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/22a-repro-r1-findings-on-26642c7.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/10-qa5-negative-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/02-gates-tests.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-202",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Round-5 re-confirmation. Reproduced on 26642c7: QA-N28 (a bare, non-existent evidence file name on an IMPLEMENTED DG0 row) is accepted there. On the round-5 candidate, QA5-R202 is rejected with 'evidence is not an existing repository file: NO-SUCH-EVIDENCE.md'. My independent register script also existence-checks every evidence entry of the 19 IMPLEMENTED rows: 0 errors.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/22a-repro-r1-findings-on-26642c7.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/10-qa5-negative-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/11-register-integrity.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-203",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Round-5 re-confirmation. docs/analysis/stage-plan.md and acceptance-map.md are unchanged between the round-4 candidate (53f5d176) and the round-5 candidate (d141d303) (git diff --stat, 17-doc-findings-derivation.log). In round 4 the stage plan was verified to state that each scenario's executable test is authored in the stage that first delivers it, and that P6 extends and re-runs the suites (round-4 log 17). My round-5 feasibility script, run on the frozen candidate, finds every A01-A28 scenario with a test level, a first stage no later than its must-pass gate, and a named author: 0 errors.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/14-acceptance-feasibility.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/17-doc-findings-derivation.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/17-doc-findings-greps.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-204",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Round-5 re-confirmation. Reproduced on the round-2 candidate 83860be: QA2-N11 (a findings.json verification citing the verifier's pre-freeze LOAD run) is accepted there. On the round-5 candidate, QA5-R204 is rejected with 'not the verifying reviewer's own run'. QA5-R212a, R212b and N51 show that closures are also bound to a start commit that contains the round manifest, and to tool-authored sidecar bytes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/23a-repro-r2-findings-on-83860be.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/10-qa5-negative-on-new.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-205",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Round-5 re-confirmation. Reproduced on 83860be: QA2-N12 (register evidence that is an in-repo symlink to a file outside the repository) is accepted there. On the round-5 candidate, QA5-R205 rejects the outside link ('evidence is not an existing repository file: app/evidence-link.txt'), and an in-repo relative link remains valid.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/23a-repro-r2-findings-on-83860be.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/10-qa5-negative-on-new.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-206",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Round-5 re-confirmation. Reproduced on 83860be: QA2-N14 prints 'exec-bit change detected by candidate: false'. On the round-5 candidate, QA5-R206 (a committed chmod +x after freeze) is rejected with 'candidate: current content hashes to ... app/main.txt'.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/23a-repro-r2-findings-on-83860be.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/10-qa5-negative-on-new.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-207",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Round-5 re-confirmation by derivation. docs/delivery/requirements.csv is byte-identical between the round-4 candidate and the round-5 candidate (git diff --stat shows no change, 17-doc-findings-derivation.log). In round 4 the REQ-DLV-013/026 acceptance text was verified to cite existing test titles (round-4 12-acceptance-test-refs.log). My round-5 evidence-content script finds the cited validator test titles (for example 'A24: a missing specialist reviewer fails the gate') in tools/gates/tests/validator.test.mjs. Limitation: in this run the permission classifier refused a combined grep batch that included the two stale strings. Per its instruction I did not retry it, so the absence of the stale strings rests on the unchanged file plus the round-4 grep.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/17-doc-findings-derivation.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/16-dg0-evidence-content.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/12-acceptance-test-refs.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-208",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Round-5 re-confirmation. Reproduced on 540b3c69: QA3-N20 is accepted there ('validator accepted a closure bound to a LOAD run after the round's frozen_at was rewritten'). On the round-5 candidate, QA5-R208a (committed rewrite) is rejected with 'round 1 frozen_at/source_commit differ from its committed manifest', 'write-once: ...round-1/qa-verifier.json in HEAD differs' and '...round-2/qa-verifier.verifications.json was removed'. QA5-R208b (uncommitted) is rejected with 'working-tree ... differs' and 'is missing from the working tree'. QA5-N54, N56 and N58 cover delete+re-add, a merged side-branch edit and an assume-unchanged hidden edit.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/24a-repro-r3-finding-on-540b3c69.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/10-qa5-negative-on-new.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-209",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Round-5 re-confirmation by derivation. requirements.csv is unchanged since the round-4 candidate. decisions.md changed only in the D-021 row, which I read in full in the round-4 to round-5 diff: it introduces no '<file sha256>  <path>' text. Round-4 greps found no stale line format, and found D-005/REQ-DLV-022 stating '<sha256>  <git mode>  <path>'. My round-5 evidence-content script confirms that candidate.mjs builds `${e.sha256}  ${e.mode}  ${e.path}` and that decisions.md names mth-candidate-v2. The same classifier limitation as F-DG0-207 applies to a fresh grep for the stale string.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/17-doc-findings-derivation.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/16-dg0-evidence-content.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/17-doc-findings-greps.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-210",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Round-5 re-confirmation by derivation. docs/delivery/agents.md is unchanged between the round-4 and round-5 candidates. In round 4 it said 'up to 6 times (D-019)', and 'up to 3 times' was absent. D-019 (unchanged row) and the current agent-protocol.md, which I read at the start of this run, both say 6 resumes. The same classifier limitation applies: I did not re-grep agents.md or the runner's MAX_RESUMES default in this run.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/17-doc-findings-derivation.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/17-doc-findings-greps.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-211",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix ebc8fb7e (validateGate passes stage.gate_record as an extra output of the audit invocation). Reproduced on the round-4 candidate 53f5d176: QA5-R211a (gate record edited and committed after the auditor's run), R211b (gate record absent from the auditor run's outputs) and R211c (in the run window but not tool-authored) are each accepted with 'validator accepted an invalid gate (no errors)'. On the round-5 candidate all three are rejected: '...gates/DG0.json differs from what the run wrote' or 'was not written by this run's file tools'. My new QA5-N59, a gate record whose bytes come from another role's run, is rejected too. The project test 'F-DG0-121 / F-DG0-211' passes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/10-qa5-negative-on-old.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/10-qa5-negative-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r5.test.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-212",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix ebc8fb7e: findManifest recomputes each round manifest from its source_commit, and checkInvocation requires the run's head_commit_at_start to contain the round manifest. Reproduced on 53f5d176: QA5-R212a (the QA4-N30b attack: a fabricated, backdated manifest plus a genuine pre-freeze run) and R212b (a new variant: an honest-content manifest with a narrowed spec, so a new path, backdated) are both accepted. On the round-5 candidate, R212a is rejected with 'does not describe its source_commit' and 'started from ..., which does not contain docs/delivery/candidates/DG0/...'. R212b is rejected by the start-commit containment rule. N52/N53 (bogus or missing head_commit_at_start) and N57 (non-existent source_commit) are rejected. Informational probe QA5-P01: a round manifest may use a spec narrower than the stage candidate_spec, provided a genuine run started after it was committed. No stated rule requires spec equality for round manifests, and the run-ordering binding holds, so I do not raise it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/10-qa5-negative-on-old.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/10-qa5-negative-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r5.test.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-213",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix ebc8fb7e changes the tools/gates/lib/candidate.mjs comment from 'historical DG0 rounds 1-3 only' to 'rounds 1-2 only' (the diff hunk is recorded in 17-doc-findings-derivation.log). This agrees with D-005, REQ-DLV-022 and the committed manifests: round-4 recomputation found dea5e75a/d47b51ca matching v1, and 31fd0843/0be571ea declaring and matching v2 (round-4 log 21). In round 5, the validator's own findManifest() on the real repository recomputes every DG0 round manifest from its source_commit with 0 errors: rounds 1-2 are v1, and rounds 3-5 (including 4a8b14fd) are v2 (21-round-manifests.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-5/17-doc-findings-derivation.log",
+        "docs/delivery/test-evidence/DG0/qa/round-5/21-round-manifests.log",
+        "docs/delivery/test-evidence/DG0/qa/round-4/21-manifest-algorithms.log"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+# CI workflow and docs checks @ d141d303ad211140c3bd44c31625bff5d1a05abd
+$ cat .github/workflows/delivery-gates.yml
+     1	# Delivery gate enforcement (master prompt §0.5, acceptance A24/A25).
+     2	# The product build jobs added from P1 onward must declare `needs: delivery-gates`, so a failed or
+     3	# unapproved gate stops the automated pipeline from advancing.
+     4	name: delivery-gates
+     5	
+     6	on:
+     7	  push:
+     8	  pull_request:
+     9	  workflow_dispatch:
+    10	
+    11	permissions:
+    12	  contents: read
+    13	
+    14	jobs:
+    15	  delivery-gates:
+    16	    runs-on: ubuntu-24.04
+    17	    steps:
+    18	      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    19	        with:
+    20	          fetch-depth: 0 # historical gate verification recomputes candidates from recorded commits
+    21	      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+    22	        with:
+    23	          node-version: "22"
+    24	      - name: Source extraction is reproducible
+    25	        run: tools/source/check_extraction.sh
+    26	      - name: Gate validator self-tests
+    27	        run: node --test tools/gates/tests/*.test.mjs
+    28	      - name: Write-guard tests
+    29	        run: node --test tools/agents/tests/*.test.mjs
+    30	      - name: Pipeline gate state (approved gates re-verified; no stage advanced past an unapproved gate)
+    31	        run: node tools/gates/validate.mjs --pipeline
+    32	      - name: Resumption reconciliation report
+    33	        run: node tools/gates/validate.mjs --reconcile
+
+$ grep uses: (must be 40-hex pinned)
+all uses: pinned to 40-hex SHAs
+$ grep -n "secrets\." 
+no secrets referenced
+$ grep continue-on-error / || true
+none
+$ cat .gitattributes
+# Byte-identical checkouts on every platform: no end-of-line conversion (candidate identity, decision D-005).
+* -text
+
+# F-DG0-114 doc drift re-check
+$ grep D-016 / D-019 lines
+22:| D-016 | 2026-09-28 | delivery-orchestrator | **Provenance binding** (F-DG0-102, F-DG0-201). The validator accepts a review, audit or finding verification only when its run:<br>• has `meta.json`, `result.json` and `transcript.jsonl.gz`, with SHA-256 hashes recorded in meta that match;<br>• has an init line, a runner prompt (role and run ID) and a final successful result line for the same session in its transcript;<br>• has a requested model that matches the transcript;<br>• has the same stage and role as the record;<br>• executed exactly the assignment the record cites (path and SHA-256);<br>• started after the candidate froze. | The runner's evidence is verified, not trusted
+25:| D-019 | 2026-09-28 | delivery-orchestrator | **Classifier-outage resume.** When an agent run stops only because the permission classifier returned no verdict repeatedly, the runner resumes the **same session** (same invocation reference) after a pause, up to 6 times, and records `classifier_outage_resumes` in meta. An agent can also end a turn with the first line `CLASSIFIER-BLOCKED` to request the same resume. The permission mode is unchanged. | Round 1 of DG0 lost the code-security reviewer's shell checks to this outage (its record was BLOCKED). Resuming keeps one invocation per review without weakening any control. | — |
+$ grep resume count in runner/agents.md/protocol
+docs/delivery/agent-protocol.md:91:- **Retry a refused command.** Retry up to 3 times, and keep working on non-shell parts of the task in between.
+docs/delivery/agent-protocol.md:92:- **If you still can't run what the task needs, stop cleanly.** End your turn with a final message whose **first line is exactly** `CLASSIFIER-BLOCKED`, followed by what's done and what's pending. The runner then resumes the **same session** (same invocation reference) after a pause, up to 6 times, and you continue from where you stopped.
+docs/delivery/agents.md:40:It snapshots the tree before and after the run. For review roles, it auto-commits the run directory and the files the reviewer wrote (D-021). It records `docs/delivery/runs/<DGx>/<run-id>/meta.json` (role, the run's `outputs` (path → SHA-256) and `written_by_tools`, stage, task, session ID, model, assignment path and SHA-256, start commit, start and finish times, exit code, turns, models used, classifier-outage resumes, and the SHA-256 of `result.json` and `transcript.jsonl.gz`), `result.json` (the final message) and `transcript.jsonl.gz` (the full stream transcript). Run IDs include the session prefix, and directories are never reused (F-DG0-108). The arguments are validated. If a run stops only because the permission classifier returned no verdict repeatedly, the runner resumes the same session up to 6 times (D-019). The `invocation_reference` used in review records is `{kind, run_id, session_id}`. The validator refuses any review, audit or finding verification unless its run evidence is complete and hash-consistent, belongs to the same role and stage, executed exactly the cited assignment, started after the candidate froze, and ends in a successful result for the same session (D-016).
+tools/agents/run-agent.sh:13:#   session (same invocation reference) after a pause, at most MTH_MAX_RESUMES times (default 6). An agent that is
+tools/agents/run-agent.sh:22:MAX_RESUMES="${MTH_MAX_RESUMES:-6}" RESUME_PAUSE="${MTH_RESUME_PAUSE_SECONDS:-120}"
+$ protected_config in write-scopes.json vs agents.md
+['.claude/**', '**/.claude/**', '.mcp.json', '**/.mcp.json', 'CLAUDE.md', '**/CLAUDE.md', 'CLAUDE.local.md', '**/CLAUDE.local.md', 'tools/gates/**', 'tools/agents/**', 'docs/source/**', 'trading_agent/**']
+['$comment', 'protected_for_implementers', 'roles', 'protected_config']
+10:| solution-architect | implementer | everything except the protected paths |
+11:| frontend-ux-engineer | implementer | everything except the protected paths |
+12:| backend-workflow-engineer | implementer | everything except the protected paths |
+13:| kpi-benefits-engineer | implementer | everything except the protected paths |
+14:| devops-engineer | implementer | everything except the protected paths |
+20:The paths protected from implementers are:
+$ write-scopes protected_for_implementers
+['tools/gates/**', 'tools/agents/**', 'docs/source/**', 'docs/delivery/reviews/**', 'docs/delivery/gates/**', 'docs/delivery/stages.json', '.github/workflows/delivery-gates.yml', 'docs/delivery/runs/**', 'docs/delivery/findings.json', 'docs/delivery/candidates/**', 'docs/delivery/test-evidence/**', '.claude/**', '**/.claude/**', '.mcp.json', '**/.mcp.json', 'CLAUDE.md', '**/CLAUDE.md', '**/CLAUDE.local.md', 'CLAUDE.local.md', 'trading_agent/**']
+$ agents.md lines 18-32
+| release-auditor | independent auditor | `docs/delivery/reviews/**`, `docs/delivery/gates/**`, `docs/delivery/test-evidence/**` |
+
+The paths protected from implementers are:
+- the gate rules and agent tooling: `tools/gates/**` and `tools/agents/**`;
+- the sources: `docs/source/**`;
+- all Claude configuration surfaces: `.claude/**`, `.mcp.json`, and `CLAUDE.md`/`CLAUDE.local.md` at any depth;
+- the unrelated project: `trading_agent/**`;
+- the delivery records: `docs/delivery/{reviews,gates,runs,candidates,test-evidence}/**`, `docs/delivery/stages.json` and `docs/delivery/findings.json`;
+- the gate CI workflow: `.github/workflows/delivery-gates.yml`.
+
+No role may write a `.git` path segment. The guard scopes every path from its own fixed repository root, so a planted nested `.git` can't move the root. It checks the symlink-resolved real path as well as the lexical one, and deny rules match case-insensitively (D-020, F-DG0-111). The source of truth is `tools/agents/write-scopes.json`, and the tests are `tools/agents/tests/guard.test.mjs`.
+
+## Invocation mechanism (decision D-003)
+
+`tools/agents/run-agent.sh --role <agent> --stage <DGx> --task <id> --assignment <file>` runs:

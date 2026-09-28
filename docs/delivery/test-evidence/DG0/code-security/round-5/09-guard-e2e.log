@@ -1,0 +1,37 @@
+worktree d141d303ad211140c3bd44c31625bff5d1a05abd
+-- implementer (backend-workflow-engineer)
+  Write tools/.git exit=2
+  Write docs/.git exit=2
+  Write tools/gates/lib/rules.mjs exit=2
+  Write tools/agents/write-scopes.json exit=2
+  Write docs/delivery/stages.json exit=2
+  Write docs/source/playbook.md exit=2
+  Write .claude/settings.local.json exit=2
+  Write .mcp.json exit=2
+  Write sub/CLAUDE.md exit=2
+  Write trading_agent/x.py exit=2
+  Write docs/delivery/reviews/DG0/round-5/x.json exit=2
+  Write src/../tools/gates/lib/rules.mjs exit=2
+  Write TOOLS/GATES/lib/rules.mjs exit=2
+  MultiEdit tools/gates/lib/rules.mjs exit=2
+  NotebookEdit tools/gates/x.ipynb exit=2
+  Write src/lnk/lib/rules.mjs exit=2
+  Write src/ok.ts exit=0
+  garbage payload exit=2
+-- reviewer (code-security-reviewer)
+  Write docs/delivery/reviews/DG0/round-5/code-security-reviewer.json exit=0
+  Write docs/delivery/test-evidence/DG0/code-security/x.log exit=0
+  Write tools/gates/lib/rules.mjs exit=2
+  Write src/app.ts exit=2
+  Write docs/delivery/findings.json exit=2
+  Write docs/delivery/stages.json exit=2
+  Write docs/delivery/gates/DG0.json exit=2
+  Write docs/delivery/runs/DG0/x/meta.json exit=2
+-- missing git binary on PATH (implementer, allowed path src/ok.ts and protected tools/gates/lib/rules.mjs)
+  Write src/ok.ts (no git) exit=127
+  Write tools/gates/lib/rules.mjs (no git) exit=127
+-- rerun with absolute /usr/bin/bash (the earlier 127 was the probe: env could not find bash on the reduced PATH)
+write guard missing
+  Write src/ok.ts (PATH has node only, no git) exit=2
+write guard missing
+  Write tools/gates/lib/rules.mjs (PATH has node only, no git) exit=2
