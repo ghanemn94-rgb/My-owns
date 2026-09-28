@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG0-010",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Committed Python bytecode caches (tools/agents/**/__pycache__/*.pyc) are part of the frozen candidate; running the candidate's own runner-metadata tests rewrites them, so tools/gates/prefreeze.sh DG0 exits 1 on a fresh checkout and the candidate ID drifts",
+      "reproduction": "1) git worktree add <tmp>/wt a059b55a7024f68cc7e33fedc8bd023d3b091336 (or git clone + checkout). 2) node tools/gates/candidate.mjs --stage DG0 prints sha256:c13a4f8e…3ff68 (matches the freeze). 3) Run tools/gates/prefreeze.sh DG0 (or only `python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'`, which CI and prefreeze both run). Every check prints PASS, then 'FAIL  uncommitted candidate changes: M tools/agents/__pycache__/run_meta.cpython-311.pyc, M tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc', exit 1. 4) node tools/gates/candidate.mjs --stage DG0 now prints a different ID: sha256:e4008b07…7190e in the worktree, sha256:1d672b48…bbf33 in a fresh clone. Cause: commit d2630de (round-5 repair) added the two .pyc files. The frozen manifest lists them (c13a4f8e93cad95a.manifest.json lines 243 and 313), and the repo has no .gitignore. A CPython 3.11 .pyc header records the source mtime (here 1790608540 = 2026-09-28T15:15:40Z, the orchestrator's tree), and the code object embeds the absolute source path. Any other checkout has a different mtime and path, so importing run_meta.py recompiles and rewrites the cached files with checkout-specific bytes (13675 → 13740 bytes in the worktree).",
+      "expected": "The frozen candidate contains only source, with no machine-generated, checkout-specific build artefacts. Running every check the candidate ships (REQ-DLV-023: prefreeze.sh runs the Python unittest suite and then an uncommitted-changes check) passes on any fresh checkout of the candidate, and doesn't change the candidate's content or its recomputed candidate ID.",
+      "actual": "prefreeze.sh DG0 exits 1 on a fresh checkout of a059b55. It can pass only in the orchestrator's own working tree, where the source mtimes still match the committed caches. After the CI or prefreeze Python tests run, the working tree no longer hashes to the frozen candidate ID, and the drifted ID differs between checkouts. A reviewer who runs the required tests in the repository tree (rather than a disposable copy) would silently desynchronise the candidate. Fix: git rm --cached both .pyc files, add a .gitignore for __pycache__/ and *.pyc (or run the tests with PYTHONDONTWRITEBYTECODE=1 / -B in prefreeze and CI), and exclude such paths from the candidate manifest. Then re-freeze. I rate it Medium and mandatory: it is limited in scope and trivial to fix, but it breaks candidate reproducibility and makes a required DG0 check fail on the candidate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-6/11-shipped-checks-prefreeze.log",
+        "docs/delivery/test-evidence/DG0/domain/round-6/12-pycache.log",
+        "docs/delivery/candidates/DG0/c13a4f8e93cad95a.manifest.json",
+        "tools/gates/prefreeze.sh",
+        ".github/workflows/delivery-gates.yml",
+        "tools/agents/__pycache__/run_meta.cpython-311.pyc",
+        "tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-6/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T15:32:00Z",
+          "status": "OPEN",
+          "note": "Reported in the DG0 round-6 domain review. The assignment required me to run prefreeze.sh DG0 on the candidate, and it exits 1. This is a regression introduced by the round-5 repair commit d2630de, which committed the bytecode caches alongside run_meta.py."
+        }
+      ]
+    }
+  ]
+}

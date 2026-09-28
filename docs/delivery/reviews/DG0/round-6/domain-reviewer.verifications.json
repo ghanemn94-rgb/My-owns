@@ -1,0 +1,16 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-009",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on the round-5 candidate d141d303: check_test_refs.py reports 5 T4 problems and exits 1. On the round-6 candidate a059b55 it reports '52 declared test titles derived from 3 test files; 42 quoted test title citation(s) in 411 register rows; 0 problem(s)' and exits 0. The fix removes the hand-maintained EXPECTED_TITLES list and derives the titles from the test files: JS test(...) literals and Python def test_* methods. It adds sound T4 derivation checks (JS call count equals literal titles, every test file yields titles, no duplicate titles) and a built-in T5 negative control. I checked the fix with my own mutations in a disposable copy. Renaming a cited JS title gives a T1 problem and exit 1 (REQ-DLV-022). Renaming a cited Python test gives a T1 problem and exit 1 (REQ-DLV-013). Adding a test with a non-literal title gives a T4 problem and exit 1. The clean copy exits 0. The five round-4 tests and the five run_meta unit tests are now cited in REQ-DLV-013/016/021/022/026, and every cited title exists and passes (unittest: 5 tests OK). prefreeze.sh now runs every docs/analysis/tools check. The fix is complete. Separately, prefreeze.sh itself fails on the candidate because of committed .pyc files; that is a new, unrelated defect, recorded as F-DG0-010.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-6/01-F-DG0-009-old.log",
+        "docs/delivery/test-evidence/DG0/domain/round-6/02-F-DG0-009-new.log",
+        "docs/delivery/test-evidence/DG0/domain/round-6/03-F-DG0-009-mutations.log",
+        "docs/delivery/test-evidence/DG0/domain/round-6/11-shipped-checks-prefreeze.log"
+      ]
+    }
+  ]
+}
