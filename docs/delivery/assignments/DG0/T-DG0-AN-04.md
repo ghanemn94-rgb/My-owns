@@ -1,6 +1,6 @@
 # Assignment T-DG0-AN-04: integrate the register and coverage, run a consistency pass (transformation-analyst)
 
-- **Stage:** P0 / DG0 (BUILDING). **Base revision:** `__BASE__`. HEAD may be ahead by metadata-only commits under `docs/delivery/assignments/**`.
+- **Stage:** P0 / DG0 (BUILDING). **Base revision:** `c07065ea5700357ae04e0bbd0157a3df007a887b`. HEAD may be ahead by metadata-only commits under `docs/delivery/assignments/**`.
 - **Dependencies:** AN-01, AN-02 and AN-03 are complete. Their part files are in `docs/analysis/parts/` and their handbacks are in `docs/delivery/handbacks/DG0/`.
 
 ## Steps
