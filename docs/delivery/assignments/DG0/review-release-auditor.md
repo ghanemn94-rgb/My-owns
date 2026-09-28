@@ -16,7 +16,7 @@ Perform the audit defined in your agent definition, points 1–7. For DG0 there 
 - Check the derived requirement verification: each `final_gate = DG0` requirement is in QA's `requirements_checked` and in the domain or code-security reviewer's.
 - Confirm there are no unresolved findings for DG0.
 
-Write your audit record `docs/delivery/reviews/DG0/round-__ROUND__/release-auditor.json`. Then write `docs/delivery/gates/DG0.json` (gate schema) with decision APPROVED **only** if every condition holds; otherwise write BLOCKED and list `blocking_conditions`. Use your invocation reference in both.
+Write your audit record `docs/delivery/reviews/DG0/round-__ROUND__/release-auditor.json`, and later the gate record, **with the Write/Edit tools only**. The validator binds both to your run's tool-authored output (D-021). Then write `docs/delivery/gates/DG0.json` (gate schema) with decision APPROVED **only** if every condition holds; otherwise write BLOCKED and list `blocking_conditions`. Use your invocation reference in both.
 - `manifest_path`: `docs/delivery/candidates/DG0.manifest.json`
 - `requirements.final_gate_ids`: every register row with `final_gate` DG0
 - `tests`: the key executed checks with evidence paths

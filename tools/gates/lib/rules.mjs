@@ -6,7 +6,7 @@ import { gunzipSync } from "node:zlib";
 import { join, resolve, sep } from "node:path";
 import { validate } from "./schema.mjs";
 import { parseCsv } from "./csv.mjs";
-import { candidateId, manifestFromRef, manifestFromWorkingTree, diffManifests, specPolicyErrors, HASH_ALGORITHM } from "./candidate.mjs";
+import { candidateId, manifestFromRef, manifestFromWorkingTree, diffManifests, specPolicyErrors, HASH_ALGORITHM, matchesAny } from "./candidate.mjs";
 
 export const STAGE_ORDER = ["DG0", "DG1", "DG2", "DG3", "DG4", "DG5", "DG6", "DG7"];
 export const REQUIRED_REVIEWERS = ["domain-reviewer", "code-security-reviewer", "qa-verifier"];
@@ -307,6 +307,14 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
     else if (meta.assignment !== binding.assignment) bad(`ran assignment ${meta.assignment}, record cites ${binding.assignment}`);
     else if (!repoFile(repo, binding.assignment) || sha256File(join(repo, binding.assignment)) !== meta.assignment_sha256) bad("assignment file changed since the run (sha256 mismatch)");
     if (binding.notBefore && !(meta.started_at >= binding.notBefore)) bad(`started ${meta.started_at}, before the candidate froze at ${binding.notBefore}`);
+    if (binding.manifestPath) {
+      // The run must have started from a commit that already contained the frozen manifest it reviewed (F-DG0-212).
+      try {
+        execFileSync("git", ["-C", repo, "cat-file", "-e", `${meta.head_commit_at_start}:${binding.manifestPath}`], { stdio: "ignore" });
+      } catch {
+        bad(`started from ${String(meta.head_commit_at_start).slice(0, 10)}, which does not contain ${binding.manifestPath}`);
+      }
+    }
     for (const rel of binding.outputs || []) {
       // The file must be exactly what this run wrote with its own file tools (D-021).
       if (!meta.outputs || typeof meta.outputs !== "object") {
@@ -315,13 +323,16 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
       }
       if (!repoFile(repo, rel)) bad(`output ${rel} is missing`);
       else if (meta.outputs[rel] !== sha256File(join(repo, rel))) bad(`${rel} differs from what the run wrote (edited after the run?)`);
-      if (!Array.isArray(meta.written_by_tools) || !meta.written_by_tools.includes(rel)) bad(`${rel} was not written by this run's file tools`);
+      // tool_authored: paths whose final bytes equal the replay of this run's successful Write/Edit calls (F-DG0-119).
+      const authored = meta.tool_authored && typeof meta.tool_authored === "object" ? meta.tool_authored : {};
+      if (authored[rel] === undefined) bad(`${rel} was not written by this run's file tools`);
+      else if (authored[rel] !== meta.outputs[rel]) bad(`${rel} does not equal the content of this run's own Write/Edit calls`);
     }
   }
 }
 
 // ---------- review records ----------
-export function checkReview(repo, rel, { stage, role, candidate }, errors) {
+export function checkReview(repo, rel, { stage, role, candidate, extraOutputs = [] }, errors) {
   const label = `review ${role} (${rel})`;
   const rec = readJson(repo, rel, errors, label);
   if (!rec) return null;
@@ -346,7 +357,8 @@ export function checkReview(repo, rel, { stage, role, candidate }, errors) {
   checkInvocation(repo, stage.id, rec.invocation_reference, role, errors, label, {
     assignment: rec.assignment,
     notBefore: stage.candidate.frozen_at,
-    outputs: [rel, ...(repoFile(repo, sidecar) ? [sidecar] : [])],
+    manifestPath: manifestPathFor(stage.id, candidate),
+    outputs: [rel, ...(repoFile(repo, sidecar) ? [sidecar] : []), ...(extraOutputs || [])],
   });
   return rec;
 }
@@ -437,6 +449,7 @@ export function checkFindings(repo, stage, reviewRecords, gate, errors) {
         const round = roundEntry(stage, e.roundDir);
         checkInvocation(repo, stage.id, e.record.invocation_reference, e.role, errors, `${where} acceptance by ${e.role}`, {
           assignment: e.record.assignment, notBefore: round && round.frozen_at, outputs: [e.recordPath, e.sidecar],
+          manifestPath: round && manifestPathFor(stage.id, round.candidate_id),
         });
       }
       const roles = accepting.map((e) => e.role).sort();
@@ -538,6 +551,7 @@ function checkClosure(repo, stage, gate, f, v, where, errors) {
   checkInvocation(repo, stage.id, v.record.invocation_reference, v.role, errors, `${where} verification`, {
     assignment: v.record.assignment,
     notBefore: round.frozen_at,
+    manifestPath: manifestPathFor(stage.id, round.candidate_id),
     outputs: [v.recordPath, v.sidecar],
   });
   if (f.status === "CLOSED_VERIFIED") {
@@ -584,14 +598,43 @@ export function writeOncePaths(stageId) {
   return [`docs/delivery/reviews/${stageId}`, `docs/delivery/runs/${stageId}`, `docs/delivery/candidates/${stageId}`, `docs/delivery/assignments/${stageId}/round-*`];
 }
 
-/** Once committed, files under the write-once paths may never be modified or deleted, in history or working tree. */
+/**
+ * Once committed, files under the write-once paths may never change (F-DG0-115, F-DG0-118). Root-cause design:
+ * rather than inspecting diffs (which miss merge commits and index flags), every write-once path that was ever
+ * added in HEAD's history (merges included) must still hold, in HEAD and on disk, the exact blob that first added it.
+ */
 export function checkWriteOnce(repo, stageId, errors) {
-  const paths = writeOncePaths(stageId).map((p) => `:(glob)${p}/**`);
+  const specs = writeOncePaths(stageId).map((p) => `:(glob)${p}/**`);
   try {
-    const changed = git(repo, ["log", "--no-renames", "--diff-filter=MDT", "--name-status", "--format=", "--", ...paths]).toString().split("\n").filter(Boolean);
-    for (const line of [...new Set(changed)]) errors.push(`write-once: ${line.replace("\t", " ")} after it was committed (review evidence is append-only)`);
-    const status = git(repo, ["status", "--porcelain=v1", "--", ...paths]).toString().split("\n").filter(Boolean);
-    for (const line of status) if (!line.startsWith("??")) errors.push(`write-once: uncommitted change to committed evidence: ${line.trim()}`);
+    const log = git(repo, ["log", "-m", "--full-history", "--no-renames", "--diff-filter=A", "--reverse", "--format=@%H", "--name-only", "--", ...specs]).toString();
+    const firstAdd = new Map(); // path -> commit that first added it
+    let commit = null;
+    for (const line of log.split("\n")) {
+      if (line.startsWith("@")) commit = line.slice(1);
+      else if (line && !firstAdd.has(line)) firstAdd.set(line, commit);
+    }
+    if (!firstAdd.size) return;
+    const head = new Map();
+    const globs = writeOncePaths(stageId).map((p) => `${p}/**`);
+    for (const line of git(repo, ["ls-tree", "-r", "--full-tree", "HEAD"]).toString().split("\n").filter(Boolean)) {
+      const [meta, path] = line.split("\t");
+      if (matchesAny(path, globs)) head.set(path, meta.split(" ")[2]);
+    }
+    const input = [...firstAdd].map(([path, c]) => `${c}:${path}`).join("\n") + "\n";
+    const firstBlobs = execFileSync("git", ["-C", repo, "cat-file", "--batch-check=%(objectname)"], { input }).toString().split("\n");
+    const paths = [...firstAdd.keys()];
+    const onDisk = paths.filter((p) => repoFile(repo, p));
+    const diskBlobs = onDisk.length
+      ? execFileSync("git", ["-C", repo, "hash-object", "--no-filters", "--stdin-paths"], { input: onDisk.join("\n") + "\n" }).toString().split("\n")
+      : [];
+    const diskBlob = new Map(onDisk.map((p, i) => [p, diskBlobs[i]]));
+    paths.forEach((path, i) => {
+      const first = firstBlobs[i];
+      if (!head.has(path)) errors.push(`write-once: ${path} was removed after it was committed (review evidence is append-only)`);
+      else if (head.get(path) !== first) errors.push(`write-once: ${path} in HEAD differs from the version first committed in ${firstAdd.get(path).slice(0, 10)} (review evidence is append-only)`);
+      if (!diskBlob.has(path)) errors.push(`write-once: ${path} is missing from the working tree`);
+      else if (diskBlob.get(path) !== first) errors.push(`write-once: working-tree ${path} differs from the version first committed (edited locally, or hidden by skip-worktree/assume-unchanged)`);
+    });
   } catch (e) {
     errors.push(`write-once: cannot inspect git history (${e.message.split("\n")[0]})`);
   }
@@ -613,6 +656,12 @@ export function findManifest(repo, stageId, cid, errors, label) {
     errors.push(`${label} manifest: ${e.message}`);
   }
   if (m.candidate_id !== cid || id !== cid || m.stage_id !== stageId) errors.push(`${label} manifest ${rel} does not hash to ${cid}`);
+  try {
+    const fromCommit = candidateId(manifestFromRef(repo, m.source_commit, m.spec), m.hash_algorithm || "mth-candidate-v1");
+    if (fromCommit !== cid) errors.push(`${label} manifest ${rel} does not describe its source_commit ${String(m.source_commit).slice(0, 10)} (recomputes to ${fromCommit})`);
+  } catch (e) {
+    errors.push(`${label} manifest ${rel}: cannot recompute from its source_commit (${e.message.split("\n")[0]})`);
+  }
   return m;
 }
 
@@ -737,7 +786,7 @@ export function validateGate(repo, stageId, { mode = "current", stagesDoc = null
     const rec = checkReview(repo, rel, { stage, role, candidate: gate.candidate_id }, errors);
     if (rec) records.push(rec);
   }
-  const audit = checkReview(repo, gate.release_audit, { stage, role: AUDITOR, candidate: gate.candidate_id }, errors);
+  const audit = checkReview(repo, gate.release_audit, { stage, role: AUDITOR, candidate: gate.candidate_id, extraOutputs: [stage.gate_record] }, errors);
   if (audit) {
     records.push(audit);
     if (JSON.stringify(audit.invocation_reference) !== JSON.stringify(gate.invocation_reference)) {

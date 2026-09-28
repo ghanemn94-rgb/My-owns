@@ -129,7 +129,7 @@ export function manifestFromRef(repo, ref, spec) {
   });
 }
 
-// v2 (current): "<sha256>  <git mode>  <path>". v1 (historical DG0 rounds 1-3 only): "<sha256>  <path>".
+// v2 (current): "<sha256>  <git mode>  <path>". v1 (historical DG0 rounds 1-2 only): "<sha256>  <path>".
 // New freezes and every gate decision must use v2 (F-DG0-112/206); v1 exists solely to re-verify old manifests.
 export const HASH_ALGORITHM = "mth-candidate-v2";
 

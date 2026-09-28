@@ -4,20 +4,28 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 
 ## Current checkpoint
 
-- **Active stage:** P0 / DG0, state **REVIEWING** (round 2)
-- **Round-2 candidate:** `sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3` (commit `83860be`, 71 files)
-- **Round 1** (candidate `sha256:dea5e75a…`, commit `26642c7`) raised 17 findings:
-  - 2 High, mandatory (validator bypasses: finding escape, fabricated provenance);
-  - 5 Medium;
-  - 10 Low.
-- **Repairs:** all 17 are fixed and pending independent verification.
-  - 12 tooling findings, fixed by the orchestrator in `6c67698`, with regression tests (31/31 pass).
-  - 5 analysis findings, fixed by transformation-analyst in AN-05/06/07.
-- **Environment issue (recurring):** the permission classifier intermittently returns no verdict for nested agent sessions. The runner now resumes the same session automatically (D-019), and agents can signal `CLASSIFIER-BLOCKED`.
+- **Active stage:** P0 / DG0, state **REVIEWING** (round 4)
+- **Round-4 candidate:** `sha256:0be571eaa84438604b9b4095b7a2bb26086a340b1a34ab2b56aba3a148d3a3b7` (commit `53f5d17`). The manifest is `docs/delivery/candidates/DG0/0be571eaa8443860.manifest.json`.
+
+**Review history**
+
+| Round | Outcome | Findings |
+|---|---|---|
+| 1 | domain FAIL · code-security BLOCKED (classifier outage) · QA FAIL | 17, including 2 High |
+| 2 | domain PASS · code-security FAIL · QA FAIL | 15 verified closed; 11 new, including 1 High |
+| 3 | domain PASS · QA PASS · code-security FAIL | 15 verified closed; 7 new, including 1 High |
+
+- **Total so far:** 35 findings. 27 were closed by round-2/3 verifications, and 8 were fixed pending verification. Because rounds 1–3 predate run-output binding (D-021), round 4 re-confirms every closure.
+- **The main hardening came from these reviews:**
+  - provenance bound to complete run evidence;
+  - reviewer artefacts bound to their run's outputs and write-once in git history;
+  - finding closure and acceptance only through reviewer sidecars;
+  - a candidate identity that includes file modes;
+  - a write guard with a fixed root that follows symlinks.
 - **Next:**
-  1. Import the round-2 findings and verifications.
-  2. If all three reviewers PASS, run the release audit; otherwise repair and start round 3.
-  3. After DG0 is APPROVED, run `validate.mjs --stage DG0 --historical`, then start P1 with T-DG1-ARCH-01.
+  1. Import the round-4 results.
+  2. If all three reviewers PASS with every finding terminal, run the release audit, adding the auditor record to the round-4 `review_rounds` records.
+  3. Otherwise, run repair and round 5. After three unproductive cycles, do a root-cause review per §0.4.
 
 ## Done in P0 so far
 

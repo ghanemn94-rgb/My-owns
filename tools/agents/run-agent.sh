@@ -160,27 +160,68 @@ os.remove(f"{out}/.post-snapshot.json")
 outputs = {p: h for p, h in post.items() if pre.get(p) != h}
 deleted = sorted(p for p in pre if p not in post)
 repo_root = os.path.realpath(repo_root_arg)
-written = set()
+
+def rel_path(fp):
+    ap = os.path.realpath(fp if os.path.isabs(fp) else os.path.join(cwd, fp))
+    for base in (repo_root, os.path.realpath(cwd)):
+        if ap.startswith(base + os.sep):
+            return os.path.relpath(ap, base).replace(os.sep, "/")
+    return None
+
+# Replay the agent's SUCCESSFUL file-tool calls in order (F-DG0-119): Write sets the content, Edit/MultiEdit apply
+# their replacements. A path whose final bytes equal the replay is "tool_authored"; attempted or failed calls,
+# later shell edits and other writers do not count.
+uses, failed = [], set()
 with gzip.open(f"{out}/transcript.jsonl.gz", "rt", encoding="utf-8", errors="replace") as f:
     for line in f:
         try:
             o = json.loads(line)
         except ValueError:
             continue
-        if o.get("type") != "assistant":
+        content = (o.get("message") or {}).get("content")
+        if not isinstance(content, list):
             continue
-        for c in (o.get("message") or {}).get("content") or []:
-            if isinstance(c, dict) and c.get("type") == "tool_use" and c.get("name") in ("Write", "Edit", "MultiEdit", "NotebookEdit"):
-                fp = (c.get("input") or {}).get("file_path") or (c.get("input") or {}).get("notebook_path")
-                if fp:
-                    ap = os.path.realpath(fp if os.path.isabs(fp) else os.path.join(cwd, fp))
-                    for base in (repo_root, os.path.realpath(cwd)):
-                        if ap.startswith(base + os.sep):
-                            written.add(os.path.relpath(ap, base).replace(os.sep, "/"))
-                            break
+        for c in content:
+            if not isinstance(c, dict):
+                continue
+            if o.get("type") == "assistant" and c.get("type") == "tool_use" and c.get("name") in ("Write", "Edit", "MultiEdit", "NotebookEdit"):
+                uses.append(c)
+            elif o.get("type") == "user" and c.get("type") == "tool_result" and c.get("is_error"):
+                failed.add(c.get("tool_use_id"))
+written, state = set(), {}
+for c in uses:
+    inp = c.get("input") or {}
+    rp = rel_path(inp.get("file_path") or inp.get("notebook_path") or "")
+    if not rp:
+        continue
+    written.add(rp)
+    if c.get("id") in failed:
+        continue
+    name = c.get("name")
+    if name == "Write":
+        state[rp] = inp.get("content", "")
+    elif name in ("Edit", "MultiEdit") and isinstance(state.get(rp), str):
+        edits = [inp] if name == "Edit" else (inp.get("edits") or [])
+        cur = state[rp]
+        for e in edits:
+            old, new = e.get("old_string", ""), e.get("new_string", "")
+            if old == "" or old not in cur:
+                cur = None
+                break
+            cur = cur.replace(old, new) if e.get("replace_all") else cur.replace(old, new, 1)
+        state[rp] = cur
+    else:
+        state[rp] = None  # cannot be reconstructed from this run's own calls
+tool_authored = {}
+for rp, text in state.items():
+    if isinstance(text, str):
+        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+        if post.get(rp) == digest:
+            tool_authored[rp] = digest
 meta["outputs"] = dict(sorted(outputs.items()))
 meta["deleted"] = deleted
 meta["written_by_tools"] = sorted(written)
+meta["tool_authored"] = dict(sorted(tool_authored.items()))
 with open(f"{out}/result.json", "w", encoding="utf-8") as f:
     json.dump({"result": (result or {}).get("result")}, f, ensure_ascii=False, indent=1)
 for name, key in (("result.json", "result_sha256"), ("transcript.jsonl.gz", "transcript_sha256")):
@@ -195,21 +236,32 @@ PY
 # history from the moment the run ends (D-021). Implementer output is integrated by the orchestrator instead.
 case "$ROLE" in
   domain-reviewer|code-security-reviewer|qa-verifier|release-auditor)
-    python3 - "$OUT/meta.json" "$REPO_ROOT" > "$OUT/../.commit-list-$RUN_ID" <<'PY'
+    LIST="$REPO_ROOT/.git/mth-commit-list-$RUN_ID"
+    python3 - "$OUT/meta.json" "$REPO_ROOT" "docs/delivery/runs/$STAGE/$RUN_ID" > "$LIST" <<'PY'
 import json, os, sys
 meta = json.load(open(sys.argv[1]))
-root = sys.argv[2]
-for p in meta.get("written_by_tools", []):
-    if p in meta.get("outputs", {}) and os.path.exists(os.path.join(root, p)):
-        print(p)
+root, run_dir = sys.argv[2], sys.argv[3]
+paths = [run_dir] + [p for p in sorted(meta.get("tool_authored", {})) if os.path.exists(os.path.join(root, p))]
+sys.stdout.write("\0".join(paths) + "\0")
 PY
+    COMMIT_RC=0
     (
       flock 9
-      git -C "$REPO_ROOT" add -- "docs/delivery/runs/$STAGE/$RUN_ID" $(cat "$OUT/../.commit-list-$RUN_ID")
-      git -C "$REPO_ROOT" commit -q -m "run: $RUN_ID (review evidence, auto-committed by run-agent.sh)" \
-        -- "docs/delivery/runs/$STAGE/$RUN_ID" $(cat "$OUT/../.commit-list-$RUN_ID") || true
-    ) 9> "$REPO_ROOT/.git/mth-commit.lock"
-    rm -f "$OUT/../.commit-list-$RUN_ID"
+      export GIT_LITERAL_PATHSPECS=1
+      git -C "$REPO_ROOT" add --pathspec-from-file="$LIST" --pathspec-file-nul || exit $?
+      msg="$(git -C "$REPO_ROOT" commit -q -m "run: $RUN_ID (review evidence, auto-committed by run-agent.sh)" \
+        --pathspec-from-file="$LIST" --pathspec-file-nul 2>&1)" && exit 0
+      rc=$?
+      case "$msg" in
+        *"nothing to commit"*|*"no changes added"*) echo "auto-commit: nothing to commit for $RUN_ID" >&2; exit 0 ;;
+        *) echo "$msg" >&2; exit "$rc" ;;
+      esac
+    ) 9> "$REPO_ROOT/.git/mth-commit.lock" || COMMIT_RC=$?
+    rm -f "$LIST"
+    if [[ $COMMIT_RC -ne 0 ]]; then
+      echo "run-agent: FAILED to auto-commit review evidence for $RUN_ID (git exit $COMMIT_RC); the evidence is NOT write-once yet" >&2
+      exit 70
+    fi
     ;;
 esac
 exit "$EXIT"
