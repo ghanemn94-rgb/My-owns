@@ -29,7 +29,7 @@ class AgentSettingsTest(unittest.TestCase):
         self.tmp.cleanup()
 
     def deny(self, role, cwd=None):
-        s = agent_settings.build(role, self.repo, cwd or self.repo)
+        s = agent_settings.build(role, self.repo, cwd or self.repo, "DG1")
         sb = s["sandbox"]
         self.assertTrue(sb["enabled"] and sb["failIfUnavailable"] and sb["allowUnsandboxedCommands"] is False)
         self.assertIn("PreToolUse", s["hooks"])
@@ -64,18 +64,37 @@ class AgentSettingsTest(unittest.TestCase):
     def test_worktrees_are_covered(self):
         wt = os.path.realpath(os.path.join(self.tmp.name, "wt"))
         subprocess.run(["git", "-C", self.repo, "worktree", "add", "-q", wt], check=True)
-        s = agent_settings.build("backend-workflow-engineer", self.repo, wt)
+        s = agent_settings.build("backend-workflow-engineer", self.repo, wt, "DG1")
         denies = s["sandbox"]["filesystem"]["denyWrite"]
         self.assertIn(os.path.join(wt, "tools/gates"), denies)
         self.assertIn(os.path.join(self.repo, "tools/gates"), denies)
 
     def test_cwd_outside_the_repository_is_refused(self):
         with self.assertRaises(SystemExit):
-            agent_settings.build("backend-workflow-engineer", self.repo, self.tmp.name)
+            agent_settings.build("backend-workflow-engineer", self.repo, self.tmp.name, "DG1")
 
     def test_unknown_role_is_refused(self):
         with self.assertRaises((SystemExit, FileNotFoundError)):
-            agent_settings.build("nobody", self.repo, self.repo)
+            agent_settings.build("nobody", self.repo, self.repo, "DG1")
+
+    def test_each_reviewer_writes_only_its_own_evidence_directory(self):
+        # F-DG0-144: concurrently running reviewers cannot alter each other's evidence, even before it exists.
+        keys = agent_settings.EVIDENCE_KEYS
+        for role, key in keys.items():
+            d = self.deny(role)
+            self.assertNotIn(f"docs/delivery/test-evidence/DG1/{key}", d)
+            for other, other_key in keys.items():
+                if other != role:
+                    self.assertIn(f"docs/delivery/test-evidence/DG1/{other_key}", d, f"{role} must deny {other}'s evidence")
+
+    def test_roles_without_evidence_cannot_write_any(self):
+        for role in ["transformation-analyst", "backend-workflow-engineer", "solution-architect"]:
+            self.assertIn("docs/delivery/test-evidence", self.deny(role))
+
+    def test_a_stage_is_required(self):
+        for stage in [None, "", "DG8", "../x"]:
+            with self.assertRaises(SystemExit):
+                agent_settings.build("qa-verifier", self.repo, self.repo, stage)
 
 
 if __name__ == "__main__":

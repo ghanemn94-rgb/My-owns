@@ -23,9 +23,10 @@ const p = (rel) => join(repo, rel);
 const decide = (sc, role, file, root = repo) => decideAt(sc, role, file, root);
 
 test("reviewers may write only review records and evidence", () => {
-  for (const role of ["domain-reviewer", "code-security-reviewer"]) {
-    assert.equal(decide(scopes, role, p("docs/delivery/reviews/DG1/round-1/x.json")).allow, true);
-    assert.equal(decide(scopes, role, p("docs/delivery/test-evidence/DG1/log.txt")).allow, true);
+  for (const [role, key] of [["domain-reviewer", "domain"], ["code-security-reviewer", "code-security"]]) {
+    assert.equal(decide(scopes, role, p(`docs/delivery/reviews/DG1/round-1/${role}.json`)).allow, true);
+    assert.equal(decide(scopes, role, p(`docs/delivery/reviews/DG1/round-1/${role}.findings.json`)).allow, true);
+    assert.equal(decide(scopes, role, p(`docs/delivery/test-evidence/DG1/${key}/round-1/log.txt`)).allow, true);
     assert.equal(decide(scopes, role, p("apps/api/src/server.ts")).allow, false);
     assert.equal(decide(scopes, role, p("docs/delivery/gates/DG1.json")).allow, false);
     assert.equal(decide(scopes, role, p("docs/delivery/findings.json")).allow, false);
@@ -72,7 +73,7 @@ test("the hook entry point blocks with exit code 2 and allows with 0", () => {
   const block = spawnSync("node", [script, "domain-reviewer"], { input: JSON.stringify({ tool_input: { file_path: join(GUARD_ROOT, "apps/api/x.ts") } }) });
   assert.equal(block.status, 2);
   assert.match(block.stderr.toString(), /BLOCKED by write guard/);
-  const allow = spawnSync("node", [script, "domain-reviewer"], { input: JSON.stringify({ tool_input: { file_path: join(GUARD_ROOT, "docs/delivery/reviews/DG1/a.json") } }) });
+  const allow = spawnSync("node", [script, "domain-reviewer"], { input: JSON.stringify({ tool_input: { file_path: join(GUARD_ROOT, "docs/delivery/reviews/DG1/round-1/domain-reviewer.json") } }) });
   assert.equal(allow.status, 0);
   const garbage = spawnSync("node", [script, "domain-reviewer"], { input: "{not json" });
   assert.equal(garbage.status, 2, "unreadable payload must fail closed");
@@ -129,7 +130,7 @@ test("F-DG0-111: a planted nested .git cannot move the guarded root; .git paths 
 test("the production guard root is this repository", () => {
   assert.ok(readFileSync(join(GUARD_ROOT, "tools", "agents", "write-scopes.json")));
   assert.equal(decideAt(scopes, "domain-reviewer", join(GUARD_ROOT, "tools", "gates", "validate.mjs")).allow, false);
-  assert.equal(decideAt(scopes, "domain-reviewer", join(GUARD_ROOT, "docs", "delivery", "reviews", "DG1", "x.json")).allow, true);
+  assert.equal(decideAt(scopes, "domain-reviewer", join(GUARD_ROOT, "docs", "delivery", "reviews", "DG1", "round-1", "domain-reviewer.json")).allow, true);
 });
 
 test("F-DG0-134: the repository's worktrees are guarded too, from any working directory", () => {
@@ -196,4 +197,54 @@ test("F-DG0-136: the home directory is never scratch, even when HOME lies inside
   assert.equal(probe(join(fakeHome, ".claude", "settings.json")), 2);
   assert.equal(probe(join(fakeHome, ".gitconfig")), 2);
   assert.equal(probe(join(tmpdir(), "not-home-scratch.txt")), 0);
+});
+
+test("F-DG0-144: a reviewer may not write another reviewer's record, sidecars or evidence", () => {
+  const roles = { "domain-reviewer": "domain", "code-security-reviewer": "code-security", "qa-verifier": "qa", "release-auditor": "audit" };
+  for (const [role, key] of Object.entries(roles)) {
+    assert.equal(decide(scopes, role, p(`docs/delivery/reviews/DG1/round-2/${role}.verifications.json`)).allow, true);
+    assert.equal(decide(scopes, role, p(`docs/delivery/test-evidence/DG1/${key}/x.log`)).allow, true);
+    for (const [other, otherKey] of Object.entries(roles)) {
+      if (other === role) continue;
+      for (const rel of [`docs/delivery/reviews/DG1/round-2/${other}.json`, `docs/delivery/reviews/DG1/round-2/${other}.findings.json`,
+        `docs/delivery/test-evidence/DG1/${otherKey}/x.log`, `docs/delivery/test-evidence/DG1/x.log`]) {
+        assert.equal(decide(scopes, role, p(rel)).allow, false, `${role} must not write ${rel}`);
+      }
+    }
+  }
+});
+
+test("F-DG0-144: only the run's own private temporary directory is scratch, never the shared /tmp", () => {
+  const own = mkdtempSync(join(tmpdir(), "guard-runtmp-"));
+  const other = mkdtempSync(join(tmpdir(), "guard-othertmp-"));
+  const saved = process.env.MTH_RUN_TMP;
+  process.env.MTH_RUN_TMP = own;
+  try {
+    assert.equal(decide(scopes, "qa-verifier", join(own, "clone", "notes.md")).allow, true);
+    assert.equal(decide(scopes, "qa-verifier", join(other, "clone", "notes.md")).allow, false);
+    assert.equal(decide(scopes, "qa-verifier", "/tmp/shared-scratch.md").allow, false);
+  } finally {
+    if (saved === undefined) delete process.env.MTH_RUN_TMP;
+    else process.env.MTH_RUN_TMP = saved;
+  }
+});
+
+test("F-DG0-143: writes that resolve through /proc, /sys or /dev, or whose real path cannot be determined, are blocked", () => {
+  const own = mkdtempSync(join(tmpdir(), "guard-proc-"));
+  const saved = process.env.MTH_RUN_TMP;
+  process.env.MTH_RUN_TMP = own;
+  try {
+    symlinkSync(`/proc/${process.pid}/root/tmp`, join(own, "into-other-namespace"));
+    symlinkSync("/proc/self/cwd", join(own, "self-cwd"));
+    symlinkSync(join(own, "loop-b"), join(own, "loop-a"));
+    symlinkSync(join(own, "loop-a"), join(own, "loop-b"));
+    for (const target of [join(own, "into-other-namespace", "x.txt"), join(own, "self-cwd", "x.txt"), "/proc/self/root/tmp/x.txt",
+      "/dev/shm/x.txt", join(own, "loop-a", "x.txt")]) {
+      assert.equal(decide(scopes, "qa-verifier", target).allow, false, `must block ${target}`);
+    }
+    assert.equal(decide(scopes, "qa-verifier", join(own, "plain.txt")).allow, true);
+  } finally {
+    if (saved === undefined) delete process.env.MTH_RUN_TMP;
+    else process.env.MTH_RUN_TMP = saved;
+  }
 });

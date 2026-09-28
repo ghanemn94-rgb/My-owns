@@ -12,10 +12,10 @@ The ten definitions live in `.claude/agents/`. The main Claude Code session is t
 | backend-workflow-engineer | implementer | everything except the protected paths |
 | kpi-benefits-engineer | implementer | everything except the protected paths |
 | devops-engineer | implementer | everything except the protected paths |
-| domain-reviewer | independent reviewer | `docs/delivery/reviews/**`, `docs/delivery/test-evidence/**` |
-| code-security-reviewer | independent reviewer | `docs/delivery/reviews/**`, `docs/delivery/test-evidence/**` |
-| qa-verifier | independent verifier | `tests/qa/**`, `e2e/**`, `docs/delivery/reviews/**`, `docs/delivery/test-evidence/**` |
-| release-auditor | independent auditor | `docs/delivery/reviews/**`, `docs/delivery/gates/**`, `docs/delivery/test-evidence/**` |
+| domain-reviewer | independent reviewer | `docs/delivery/reviews/*/round-*/domain-reviewer.*`, `docs/delivery/test-evidence/*/domain/**` |
+| code-security-reviewer | independent reviewer | `docs/delivery/reviews/*/round-*/code-security-reviewer.*`, `docs/delivery/test-evidence/*/code-security/**` |
+| qa-verifier | independent verifier | `tests/qa/**`, `e2e/**`, `docs/delivery/reviews/*/round-*/qa-verifier.*`, `docs/delivery/test-evidence/*/qa/**` |
+| release-auditor | independent auditor | `docs/delivery/reviews/*/round-*/release-auditor.*`, `docs/delivery/gates/**`, `docs/delivery/test-evidence/*/audit/**` |
 
 The paths protected from implementers are:
 - the gate rules and agent tooling: `tools/gates/**` and `tools/agents/**`;
@@ -25,7 +25,7 @@ The paths protected from implementers are:
 - the delivery records: `docs/delivery/{reviews,gates,runs,candidates,test-evidence}/**`, `docs/delivery/stages.json` and `docs/delivery/findings.json`;
 - the gate CI workflow: `.github/workflows/delivery-gates.yml`.
 
-No role may write a `.git` path segment. The runner exports `MTH_GUARD_ROOT` (the main repository), and every hook runs that repository's guard. The guard protects the repository **and all of its git worktrees**, scoping each path from the deepest containing root, so neither a planted nested `.git` nor a worktree working directory can move the root (D-023). The guard fails closed if the roots can't be determined. Outside the repository only the OS temp directory is scratch, and the home directory never is. The runner starts agents with `--setting-sources project` (D-025; user and local settings are not loaded) and detects changes to configuration outside the candidate, including removals (D-024, D-027). Shell commands run in the OS Bash sandbox generated per run (D-025). It checks the symlink-resolved real path as well as the lexical one, and deny rules match case-insensitively (D-020, F-DG0-111). The source of truth is `tools/agents/write-scopes.json`, and the tests are `tools/agents/tests/guard.test.mjs`.
+No role may write a `.git` path segment. The runner exports `MTH_GUARD_ROOT` (the main repository), and every hook runs that repository's guard. The guard protects the repository **and all of its git worktrees**, scoping each path from the deepest containing root, so neither a planted nested `.git` nor a worktree working directory can move the root (D-023). The guard fails closed if the roots can't be determined. Outside the repository only the run's own private temporary directory (`MTH_RUN_TMP`, created per run by the runner) is scratch. The shared `/tmp` and the home directory never are. The guard fails closed on paths it cannot resolve safely, including anything through `/proc`, `/sys` or `/dev` (D-028). The runner starts agents with `--setting-sources project` (D-025; user and local settings are not loaded) and detects changes to configuration outside the candidate, including removals (D-024, D-027). Shell commands run in the OS Bash sandbox generated per run (D-025). It checks the symlink-resolved real path as well as the lexical one, and deny rules match case-insensitively (D-020, F-DG0-111). The source of truth is `tools/agents/write-scopes.json`, and the tests are `tools/agents/tests/guard.test.mjs`.
 
 ## Invocation mechanism (decision D-003)
 

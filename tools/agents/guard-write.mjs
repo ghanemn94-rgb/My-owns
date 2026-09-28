@@ -4,7 +4,7 @@
 // Reads the hook payload (JSON) on stdin. Exit 0 = allow, exit 2 = block (stderr is shown to the agent).
 // Both the lexical target and its symlink-resolved real path must pass. Deny rules match case-insensitively
 // (so case-insensitive filesystems cannot bypass them); allow rules match exactly.
-import { readFileSync, existsSync, realpathSync } from "node:fs";
+import { readFileSync, existsSync, lstatSync, readlinkSync, realpathSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { homedir, tmpdir } from "node:os";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
@@ -76,9 +76,13 @@ export function homeRoots() {
   return [...set];
 }
 
-/** Scratch space: only the OS temporary directory (F-DG0-136). Home, /etc and other paths are never scratch. */
+/**
+ * Scratch space: only this run's own private temporary directory (F-DG0-136, F-DG0-144). The runner creates one per
+ * run and exports it as MTH_RUN_TMP (and TMPDIR); without the runner, the OS temporary directory. The shared /tmp is
+ * never scratch, so one agent's file tools cannot reach another agent's scratch. Home, /etc and other paths never are.
+ */
 export function scratchRoots() {
-  const set = new Set([resolve(tmpdir()), "/tmp"]);
+  const set = new Set([resolve(process.env.MTH_RUN_TMP || tmpdir())]);
   for (const r of [...set]) {
     try {
       set.add(realpathSync(r));
@@ -100,23 +104,74 @@ export function repoRootOf(filePath, roots = guardedRoots()) {
   return best;
 }
 
-/** Resolves symlinks on the deepest existing ancestor, then re-appends the not-yet-existing remainder. */
+/**
+ * Resolves symlinks on the deepest existing ancestor, then re-appends the not-yet-existing remainder.
+ * Fails closed (F-DG0-143): returns null when the real path cannot be determined, or when resolution passes through
+ * /proc, /sys or /dev (for example a symlink to /proc/<pid>/root, which reaches into another mount namespace).
+ */
 export function canonicalPath(filePath) {
   let cur = resolve(filePath);
   const rest = [];
-  while (!existsSync(cur)) {
+  for (;;) {
+    let present;
+    try {
+      lstatSync(cur);
+      present = true;
+    } catch (e) {
+      if (e && e.code !== "ENOENT" && e.code !== "ENOTDIR") return null;
+      present = false;
+    }
+    if (present) break;
     const parent = dirname(cur);
     if (parent === cur) break;
     rest.unshift(basename(cur));
     cur = parent;
   }
-  let real = cur;
+  if (crossesPseudoFs(cur)) return null;
+  let real;
   try {
     real = realpathSync(cur);
   } catch {
-    /* keep lexical */
+    return null;
   }
+  if (isPseudoFs(real)) return null;
   return rest.length ? join(real, ...rest) : real;
+}
+
+const PSEUDO = ["/proc", "/sys", "/dev"];
+const isPseudoFs = (p) => PSEUDO.some((r) => p === r || p.startsWith(r + "/"));
+
+/** True if resolving the path, hop by hop, visits /proc, /sys or /dev, or cannot be followed (fail closed). */
+function crossesPseudoFs(path) {
+  let pending = resolve(path).split("/").filter(Boolean);
+  let cur = "/";
+  for (let hops = 0; pending.length; ) {
+    const next = cur === "/" ? `/${pending[0]}` : `${cur}/${pending[0]}`;
+    pending = pending.slice(1);
+    if (isPseudoFs(next)) return true;
+    let st;
+    try {
+      st = lstatSync(next);
+    } catch {
+      return true;
+    }
+    if (st.isSymbolicLink()) {
+      if (++hops > 40) return true;
+      let target;
+      try {
+        target = readlinkSync(next);
+      } catch {
+        return true;
+      }
+      const abs = target.startsWith("/") ? resolve(target) : resolve(cur, target);
+      if (isPseudoFs(abs)) return true;
+      pending = [...abs.split("/").filter(Boolean), ...pending];
+      cur = "/";
+    } else {
+      cur = next;
+    }
+  }
+  return false;
 }
 
 function decideOne(scopes, cfg, roleName, filePath, roots) {
@@ -147,7 +202,9 @@ export function decide(scopes, roleName, filePath, root = null) {
   if (!cfg) return { allow: false, reason: `unknown role '${roleName}' has no write scope` };
   const lexical = decideOne(scopes, cfg, roleName, filePath, roots);
   if (!lexical.allow) return lexical;
+  if (isPseudoFs(resolve(filePath))) return { allow: false, reason: `${roleName} may not write '${resolve(filePath)}' (pseudo filesystem)` };
   const real = canonicalPath(filePath);
+  if (real === null) return { allow: false, reason: `${roleName} may not write '${resolve(filePath)}' (its real path cannot be determined safely); blocking to fail safe` };
   if (real !== resolve(filePath)) {
     const viaLink = decideOne(scopes, cfg, roleName, real, roots);
     if (!viaLink.allow) return { allow: false, reason: `${viaLink.reason} (reached through a symlink)` };

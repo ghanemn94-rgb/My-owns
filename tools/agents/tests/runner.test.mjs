@@ -29,6 +29,11 @@ for (const [p, content, target] of JSON.parse(process.env.STUB_WRITE || "[]")) {
   else if (content === null) fs.rmSync(p);
   else fs.writeFileSync(p, content);
 }
+if (process.env.STUB_ENV_OUT) {
+  const tmp = process.env.MTH_RUN_TMP || "";
+  fs.writeFileSync(process.env.STUB_ENV_OUT, JSON.stringify({ TMPDIR: process.env.TMPDIR, MTH_RUN_TMP: tmp,
+    existed: tmp !== "" && fs.existsSync(tmp), mode: tmp && fs.existsSync(tmp) ? (fs.statSync(tmp).mode & 0o777) : null }));
+}
 let input = "";
 process.stdin.on("data", (d) => (input += d));
 process.stdin.on("end", () => {
@@ -63,7 +68,7 @@ test("F-DG0-140: modules planted in the repository root are never imported by th
   chmodSync(join(bin, "claude"), 0o755);
   const res = spawnSync(join(repo, "tools", "agents", "run-agent.sh"),
     ["--role", "domain-reviewer", "--stage", "DG0", "--task", "T-STUB", "--assignment", join(repo, "docs/delivery/assignments/DG0/T.md")],
-    { cwd: repo, env: { ...process.env, PATH: `${bin}:${process.env.PATH}` }, encoding: "utf8" });
+    { cwd: repo, env: { ...process.env, MTH_RUN_TMP_PARENT: tmpdir(), PATH: `${bin}:${process.env.PATH}` }, encoding: "utf8" });
   const imported = existsSync(marker) ? readFileSync(marker, "utf8") : "";
   assert.equal(imported, "", `runner imported planted modules: ${imported}`);
   assert.equal(res.status, 0, res.stderr);
@@ -90,13 +95,13 @@ function stubRepo() {
   execFileSync("git", ["-C", repo, "commit", "-qm", "c"]);
   return repo;
 }
-function runWith(repo, writes) {
+function runWith(repo, writes, extraEnv = {}) {
   const bin = mkdtempSync(join(tmpdir(), "stubbin-"));
   writeFileSync(join(bin, "claude"), STUB);
   chmodSync(join(bin, "claude"), 0o755);
   const res = spawnSync(join(repo, "tools", "agents", "run-agent.sh"),
     ["--role", "domain-reviewer", "--stage", "DG0", "--task", "T-STUB", "--assignment", join(repo, "docs/delivery/assignments/DG0/T.md")],
-    { cwd: repo, env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, STUB_WRITE: JSON.stringify(writes) }, encoding: "utf8" });
+    { cwd: repo, env: { ...process.env, MTH_RUN_TMP_PARENT: tmpdir(), PATH: `${bin}:${process.env.PATH}`, STUB_WRITE: JSON.stringify(writes), ...extraEnv }, encoding: "utf8" });
   rmSync(bin, { recursive: true, force: true });
   const runs = readdirSync(join(repo, "docs", "delivery", "runs", "DG0"));
   assert.equal(runs.length, 1);
@@ -152,4 +157,25 @@ test("F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is de
   assert.ok(meta.external_config_changed.every((l) => l.endsWith(" removed")), meta.external_config_changed.join("; "));
   assert.equal(res.status, 71, res.stderr);
   rmSync(repo, { recursive: true, force: true });
+});
+
+test("F-DG0-144: every run gets its own private TMPDIR, exported to the agent and removed when the run ends", () => {
+  if (spawnSync("sh", ["-c", "command -v bwrap"]).status !== 0) assert.fail("bwrap is required by run-agent.sh (D-025)");
+  const seen = [];
+  for (let i = 0; i < 2; i++) {
+    const repo = stubRepo();
+    const envOut = join(mkdtempSync(join(tmpdir(), "stubenv-")), "env.json");
+    const { res } = runWith(repo, [], { STUB_ENV_OUT: envOut });
+    assert.equal(res.status, 0, res.stderr);
+    const env = JSON.parse(readFileSync(envOut, "utf8"));
+    assert.equal(env.TMPDIR, env.MTH_RUN_TMP);
+    assert.match(env.MTH_RUN_TMP, /\/mth-run\.[A-Za-z0-9]{6}$/);
+    assert.ok(env.MTH_RUN_TMP.startsWith(tmpdir() + "/"), env.MTH_RUN_TMP);
+    assert.equal(env.existed, true);
+    assert.equal(env.mode, 0o700);
+    assert.equal(existsSync(env.MTH_RUN_TMP), false, "the private TMPDIR must be removed after the run");
+    seen.push(env.MTH_RUN_TMP);
+    rmSync(repo, { recursive: true, force: true });
+  }
+  assert.notEqual(seen[0], seen[1]);
 });

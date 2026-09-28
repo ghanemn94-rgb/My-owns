@@ -6,17 +6,19 @@ The settings combine:
   - an OS-level Bash sandbox (bubblewrap) whose filesystem deny list mirrors the protected paths, so shell commands
     cannot write gate rules, agent tooling, sources, delivery records, git metadata or Claude configuration.
 
-Sandbox facts verified in this environment (docs/delivery/decisions.md D-025):
-  - By default a sandboxed command may write only its working directory and $TMPDIR (Claude Code sets it, e.g.
-    /tmp/claude-0); /tmp itself, HOME and /etc are read-only.
+Sandbox facts verified in this environment (docs/delivery/decisions.md D-025, D-028):
+  - By default a sandboxed command may write only its working directory and a scratch directory under $TMPDIR (Claude
+    Code uses $TMPDIR/claude-0); /tmp itself, /var/tmp, HOME and /etc are read-only. run-agent.sh gives every run its
+    own private TMPDIR, so concurrently running agents cannot write each other's scratch (F-DG0-144).
   - denyWrite wins over allowWrite, and may name paths that do not exist yet.
   - enableWeakerNestedSandbox is required in this container (no unprivileged user namespaces).
   - Sandboxed commands have no network access here.
 
-Usage: agent_settings.py ROLE REPO_ROOT CWD > settings.json
+Usage: agent_settings.py ROLE REPO_ROOT CWD STAGE > settings.json
 """
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -30,13 +32,18 @@ COMMON_DENY = [
     "docs/delivery/assignments", "docs/delivery/findings.json", "docs/delivery/stages.json",
 ]
 
+# Each reviewer's own evidence directory within a stage: docs/delivery/test-evidence/<stage>/<key> (F-DG0-144).
+EVIDENCE_KEYS = {"domain-reviewer": "domain", "code-security-reviewer": "code-security", "qa-verifier": "qa",
+                 "release-auditor": "audit"}
+
 # Roles confined to specific areas: every other existing path in the repository is denied (see deny_except).
+# "{evidence}" stands for the role's own evidence directory in the run's stage.
 CONFINED = {
     "transformation-analyst": ["docs/analysis", "docs/delivery/requirements.csv", "docs/delivery/handbacks"],
-    "domain-reviewer": ["docs/delivery/test-evidence"],
-    "code-security-reviewer": ["docs/delivery/test-evidence"],
-    "qa-verifier": ["docs/delivery/test-evidence", "tests/qa", "e2e"],
-    "release-auditor": ["docs/delivery/test-evidence"],
+    "domain-reviewer": ["{evidence}"],
+    "code-security-reviewer": ["{evidence}"],
+    "qa-verifier": ["{evidence}", "tests/qa", "e2e"],
+    "release-auditor": ["{evidence}"],
 }
 IMPLEMENTERS = {"solution-architect", "frontend-ux-engineer", "backend-workflow-engineer", "kpi-benefits-engineer",
                 "devops-engineer"}
@@ -77,20 +84,30 @@ def deny_except(root, keep):
     return denies
 
 
-def build(role, repo_root, cwd):
+def build(role, repo_root, cwd, stage=None):
+    if role not in CONFINED and role not in IMPLEMENTERS:
+        raise SystemExit(f"agent_settings: unknown role {role}")
+    if not re.fullmatch(r"DG[0-7]", stage or ""):
+        raise SystemExit(f"agent_settings: a stage DG0-DG7 is required (got {stage!r})")
     with open(os.path.join(HERE, "settings", f"{role}.settings.json"), encoding="utf-8") as f:
         settings = json.load(f)  # the role's guard hook (tested in tools/agents/tests/guard.test.mjs)
     roots = worktree_roots(repo_root)
     cwd_real = os.path.realpath(cwd)
     if not any(cwd_real == r or cwd_real.startswith(r + os.sep) for r in roots):
         raise SystemExit(f"agent_settings: cwd {cwd} is not inside the repository or one of its worktrees")
+    evidence = f"docs/delivery/test-evidence/{stage}"
+    own = f"{evidence}/{EVIDENCE_KEYS[role]}" if role in EVIDENCE_KEYS else None
     deny = []
     for root in roots:
         deny += [os.path.join(root, p) for p in COMMON_DENY]
         if role in CONFINED:
-            deny += deny_except(root, CONFINED[role])
-        elif role not in IMPLEMENTERS:
-            raise SystemExit(f"agent_settings: unknown role {role}")
+            deny += deny_except(root, [own if k == "{evidence}" else k for k in CONFINED[role]])
+        # No role may write another reviewer's evidence, even where that directory does not exist yet (F-DG0-144);
+        # roles without evidence of their own may write none.
+        if own:
+            deny += [os.path.join(root, evidence, k) for r, k in EVIDENCE_KEYS.items() if r != role]
+        else:
+            deny.append(os.path.join(root, "docs/delivery/test-evidence"))
     settings["sandbox"] = {
         "enabled": True,
         "failIfUnavailable": True,
@@ -103,8 +120,8 @@ def build(role, repo_root, cwd):
 
 
 def main():
-    role, repo_root, cwd = sys.argv[1:4]
-    json.dump(build(role, repo_root, cwd), sys.stdout, indent=1)
+    role, repo_root, cwd, stage = sys.argv[1:5]
+    json.dump(build(role, repo_root, cwd, stage), sys.stdout, indent=1)
     sys.stdout.write("\n")
 
 

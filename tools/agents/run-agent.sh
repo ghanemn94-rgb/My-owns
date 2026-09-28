@@ -58,7 +58,14 @@ mkdir "$OUT" # fails if the directory exists: evidence is never overwritten
 HEAD_COMMIT="$(git -C "$CWD" rev-parse HEAD 2>/dev/null || echo unknown)"
 # Per-run settings: the role's write-guard hook plus the OS Bash sandbox deny list (D-025), kept as run evidence.
 SETTINGS="$OUT/settings.json"
-python3 -I -B "$REPO_ROOT/tools/agents/agent_settings.py" "$ROLE" "$REPO_ROOT" "$CWD" > "$SETTINGS"
+python3 -I -B "$REPO_ROOT/tools/agents/agent_settings.py" "$ROLE" "$REPO_ROOT" "$CWD" "$STAGE" > "$SETTINGS"
+# A private scratch directory per run (F-DG0-144). The agent's sandboxed shell may write only there (Claude Code uses
+# $TMPDIR/claude-0) and in its own repository areas; its file tools treat only MTH_RUN_TMP as scratch. Another agent
+# running at the same time therefore cannot reach this run's disposable clones. It is removed when the run ends.
+RUN_TMP="$(mktemp -d "${MTH_RUN_TMP_PARENT:-/var/tmp}/mth-run.XXXXXX")"
+chmod 700 "$RUN_TMP"
+trap 'rm -rf "$RUN_TMP"' EXIT
+export MTH_RUN_TMP="$RUN_TMP" TMPDIR="$RUN_TMP"
 ASSIGN_SHA="$(sha256sum "$ASSIGNMENT_ABS" | cut -d' ' -f1)"
 ASSIGN_REL="${ASSIGNMENT_ABS#"$REPO_ROOT"/}"
 
