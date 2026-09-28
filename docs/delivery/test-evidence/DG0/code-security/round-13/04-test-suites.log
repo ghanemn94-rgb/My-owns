@@ -1,0 +1,80 @@
+# clone at 6c61f2e1aa07fa6acfc52f20a8ee9fbb554904ac, node v22.22.2, Python 3.11.15
+$ node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs
+ok 1 - reviewers may write only review records and evidence
+ok 2 - qa-verifier may add tests under tests/qa and e2e but not product code
+ok 3 - implementers cannot edit gate rules, agent definitions, sources or gate records
+ok 4 - release-auditor writes gate decisions but not implementation
+ok 5 - transformation-analyst is limited to analysis outputs and the register
+ok 6 - unknown roles are denied and scratch space outside a repo is allowed
+ok 7 - the hook entry point blocks with exit code 2 and allows with 0
+ok 8 - implementers cannot write reviewer test evidence
+ok 9 - F-DG0-105: Claude configuration surfaces and the unrelated project are protected from implementers
+ok 10 - F-DG0-105: writes through a symlink into a protected path are blocked
+ok 11 - F-DG0-105: protected-path matching is case-insensitive
+ok 12 - F-DG0-111: a planted nested .git cannot move the guarded root; .git paths are never writable
+ok 13 - the production guard root is this repository
+ok 14 - F-DG0-134: the repository's worktrees are guarded too, from any working directory
+ok 15 - F-DG0-134: every role's hook command takes the guard from MTH_GUARD_ROOT and fails closed without it
+ok 16 - F-DG0-135: the guard fails closed when the guarded roots cannot be determined
+ok 17 - F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable
+ok 18 - F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory
+ok 19 - F-DG0-140: modules planted in the repository root are never imported by the runner's helpers
+ok 20 - D-026: zero-length untracked sandbox stubs are not reported as configuration changes
+ok 21 - D-026: configuration with content, a symlink, or a truncated tracked file is still reported (exit 71, no auto-commit)
+ok 22 - sandbox-run: requires bubblewrap (a missing sandbox is a failure, not a pass)
+ok 23 - F-DG0-229: ignored or untracked files in the working tree never reach the sandboxed clone
+ok 24 - F-DG0-140: inside the sandbox the source repository is read-only, there is no network, and cwd is not on sys.path
+ok 25 - sandbox-run: the command's exit status is returned
+ok 26 - a fully evidenced DG0 gate passes in current and historical mode
+ok 27 - A24: a missing specialist reviewer fails the gate
+ok 28 - A23: a reviewer who authored the scope, or who is an owner, is rejected
+ok 29 - A23: reviewers sharing one invocation are not independent
+ok 30 - A24 / F-DG0-102: fabricated or incomplete provenance is rejected
+ok 31 - F-DG0-201: a review bound to an unrelated run of the same role is rejected
+ok 32 - A24: failed or BLOCKED checks and non-PASS verdicts fail the gate
+ok 33 - A24: unresolved blocking findings fail the gate; owners cannot verify their own fix
+ok 34 - F-DG0-101: findings cannot escape by relabelling, dropping or downgrading
+ok 35 - A24 / F-DG0-106 / F-DG0-202: incomplete requirements, placeholder evidence and coverage gaps fail
+ok 36 - A25: a source change invalidates the approval; review metadata does not
+ok 37 - A25 / F-DG0-103: symlinks are part of the candidate identity; submodules are refused
+ok 38 - F-DG0-104: the manifest spec must equal the stage spec and the approved policy
+ok 39 - A25: a tampered manifest or a stale review candidate is detected
+ok 40 - F-DG0-102: approval records are immutable after approval (historical mode)
+ok 41 - the gate record must be written by the audited release-auditor invocation
+ok 42 - A24: the pipeline cannot advance past a gate that is not APPROVED
+ok 43 - illegal stage transitions are rejected
+ok 44 - an APPROVED gate with a BLOCKED decision or blocking conditions fails
+ok 45 - F-DG0-107: the CSV parser rejects text after a closing quote and ragged rows
+ok 46 - F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification sidecar and bound run
+ok 47 - F-DG0-101 residual: deleting an earlier review round is detected
+ok 48 - F-DG0-205: evidence that is a symlink to a file outside the repository is rejected
+ok 49 - F-DG0-112 / F-DG0-206: file mode and entry type are part of the candidate identity
+ok 50 - F-DG0-115: reviewer artefacts cannot be edited after the run, committed or not
+ok 51 - F-DG0-208: round metadata must match the committed manifest of its candidate
+ok 52 - F-DG0-102 residual: a verifying record must be the round's listed, schema-valid record
+ok 53 - F-DG0-117: observations are accepted only through specialist and auditor sidecars
+ok 54 - F-DG0-116: with core.fileMode=false tracked modes come from the index
+ok 55 - F-DG0-115 residual: an evil merge cannot rewrite committed evidence
+ok 56 - F-DG0-118: skip-worktree / assume-unchanged cannot hide edited evidence
+ok 57 - F-DG0-119: only content replayed from the run's own successful Write/Edit calls is bound
+ok 58 - F-DG0-121 / F-DG0-211: the gate file must be what the auditor run wrote
+ok 59 - F-DG0-212: a round manifest must describe its source commit; runs start from a commit containing it
+ok 60 - F-DG0-115 residual: a back-dated side branch merged in cannot replace committed evidence
+ok 61 - F-DG0-115 defence in depth: meta.tool_authored cannot vouch for content the transcript never wrote
+ok 62 - D-022: only a CLI-replayed prompt binds a transcript to its run; the same text in a tool result does not
+ok 63 - F-DG0-132: an empty or newline-only transcript fails every transcript check
+ok 64 - F-DG0-133: the assignment named in the replayed prompt must be the one recorded in meta
+ok 65 - F-DG0-223: a genuine prompt binds when the checkout path contains spaces
+ok 66 - F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters
+ok 67 - D-024: a run that changed configuration outside the candidate is rejected
+ok 68 - D-025: gate records must come from Bash-sandboxed runs
+ok 69 - F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory
+# tests 69
+# pass 69
+# fail 0
+exit=0
+$ python3 -m unittest discover -s tools/agents/tests -p test_*.py
+Ran 14 tests in 0.159s
+
+OK
+exit=0
