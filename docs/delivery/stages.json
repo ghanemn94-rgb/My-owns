@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -20,10 +20,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:a25db736652685e24073f8ddf6d7932d4df459b5c64efc04a6e5716c8f962552",
-        "source_commit": "1e64eb02caf8a8c8c5d59d0c6aad390c70e5b7c5",
-        "frozen_at": "2026-09-28T22:39:27Z",
-        "manifest_path": "docs/delivery/candidates/DG0/a25db736652685e2.manifest.json"
+        "candidate_id": "sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e",
+        "source_commit": "7fab49c5c6764721bbe2982aa621a34ea31cfdea",
+        "frozen_at": "2026-09-28T23:22:48Z",
+        "manifest_path": "docs/delivery/candidates/DG0/b7f60ed34dd77f93.manifest.json"
       },
       "review_rounds": [
         {
@@ -190,6 +190,18 @@
             "qa-verifier": "docs/delivery/reviews/DG0/round-14/qa-verifier.json"
           },
           "note": "Round 14: full re-review after the round-13 repairs (D-027) and the register update T-DG0-AN-13"
+        },
+        {
+          "round": 15,
+          "candidate_id": "sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e",
+          "frozen_at": "2026-09-28T23:22:48Z",
+          "source_commit": "7fab49c5c6764721bbe2982aa621a34ea31cfdea",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG0/round-15/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG0/round-15/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG0/round-15/qa-verifier.json"
+          },
+          "note": "Round 15: full re-review after the round-14 repairs (D-028: concurrent agents isolated) and T-DG0-AN-14; round-14 closures by domain and QA re-verified because of the round-14 incident"
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
@@ -343,6 +355,11 @@
           "state": "FIXING",
           "at": "2026-09-28T23:14:34Z",
           "note": "Round 14: domain PASS; code-security FAIL (F-DG0-143 Medium, F-DG0-144 Medium mandatory: concurrent agents shared one writable $TMPDIR; the reviewer's own reproduction touched other agents' clones 22:44:18Z-22:45:10Z, so round-14 domain/QA results from that window are treated as possibly affected); QA PASS (F-DG0-235 Low). Repairs: D-028. [at source: finished_at of the last round-14 reviewer run]"
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-09-28T23:22:48Z",
+          "note": "Round-14 findings repaired (D-028, AN-14); sandboxed prefreeze PASS; candidate re-frozen for review round 15"
         }
       ]
     },
