@@ -4,9 +4,20 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 
 ## Current checkpoint
 
-- **Active stage:** P0 / DG0, state **BUILDING**
-- **Branch:** `claude/mobily-transformation-platform-kwcc4i`
-- **Candidate:** not yet frozen
+- **Active stage:** P0 / DG0, state **FIXING** (after review round 1)
+- **Round-1 candidate:** `sha256:dea5e75a…` (commit `26642c7`), now superseded by the repairs
+- **Round 1 outcome:**
+  - domain-reviewer FAIL (5 findings: 1 Medium, 4 Low);
+  - code-security-reviewer BLOCKED (9 findings: 2 High mandatory, 3 Medium, 4 Low). A permission-classifier outage stopped most of its shell checks;
+  - qa-verifier FAIL (3 findings: 1 Medium mandatory, 2 Low).
+- **Repairs:**
+  - The 12 orchestrator-owned findings were fixed in `6c67698`, with regression tests (31/31 pass). They are FIXED_PENDING_VERIFICATION.
+  - The 5 analyst-owned findings (F-DG0-001/002/003/005/203) are being repaired in T-DG0-AN-05, a re-run after the classifier outage.
+- **Next:**
+  1. Merge AN-05 and run `validate.mjs --register DG0`.
+  2. Freeze a new candidate.
+  3. Run review round 2: all three reviewers, each verifying its own findings.
+  4. Run the release audit.
 
 ## Done in P0 so far
 

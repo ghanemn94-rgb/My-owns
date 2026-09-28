@@ -7,6 +7,24 @@ Definitions paraphrase or quote the playbook (block IDs given). The Arabic terms
 
 The playbook is a practical synthesis *inspired by* PMI/Brightline/BRM with custom extensions (B0004). No term here implies official PMI status.
 
+**Revision T-DG0-AN-05 (finding F-DG0-005).** I re-scanned every Arabic term against its English meaning and definition, and changed the ones that were narrower than the English or open to a second reading. The terms are still proposals that need a Mobily Arabic-language owner's review.
+
+| English term | Before | Now | Why |
+|---|---|---|---|
+| Journey | رحلة العميل | الرحلة (رحلة العميل أو رحلة العمل) | The old term covered customer journeys only; the source means customer *or* process paths. |
+| Modular mode | النمط المعياري (الدخول الجزئي) | النمط الجزئي المرن (الدخول عند المرحلة المناسبة) | "معياري" usually reads as "standard/normative". |
+| Business Owner | مالك الأعمال | المالك التشغيلي للأعمال | "مالك الأعمال" reads as the proprietor of a business; the role owns target-state capabilities and BAU adoption. |
+| Champion | سفير التغيير | مناصر التغيير | "سفير" (ambassador) stresses broadcasting messages, which B0116 explicitly says a champion does more than. |
+| Define (phase) | التحديد | التحديد (تحديد التوجّه) | On its own, "التحديد" doesn't say what is defined; the phase sets direction. |
+| Mobilize (phase) | التعبئة | التعبئة (حشد الموارد والتهيئة للتنفيذ) | On its own, "التعبئة" can also mean filling or packaging. |
+| Scope sanity check | فحص سلامة النطاق | فحص معقولية النطاق | "سلامة" duplicated the Health Check term (فحص سلامة التحوّل). |
+| Attach rate | معدل الإلحاق | معدل الاشتراك في الخدمات الإضافية | "الإلحاق" does not convey an add-on uptake rate. |
+| Rapid Response / Sprint | … / الدفعة القصيرة | … / دورة العمل القصيرة (سبرنت) | "الدفعة" commonly reads as "payment" or "batch". |
+| SLA | مدة الإنجاز المتفق عليها | مستوى الخدمة المتفق عليه للقرار (SLA) | The old term, a duration, was narrower than B0099, where the SLA can also be "Next SteerCo / urgent route" or "Per release plan". |
+| Recovery plan | خطة المعالجة | خطة الاستدراك والمعالجة | "المعالجة" alone can read as "processing" or "treatment"; the plan recovers an off-track benefit. |
+
+I kept the other terms. Transformation Business Case stays "دراسة الجدوى للتحوّل", the usual Saudi business rendering, although it is broader than a pure feasibility study; the Arabic-language owner should confirm it.
+
 ## Methodology structure
 
 | English term | Arabic term | Definition | Source |
@@ -14,14 +32,14 @@ The playbook is a practical synthesis *inspired by* PMI/Brightline/BRM with cust
 | Business Transformation Playbook | دليل تحوّل الأعمال | The methodology source: a practical system to diagnose, design, mobilize, execute and realize transformation value. | B0001, B0002 |
 | Transformation | التحوّل | An enterprise or business-unit change effort managed through the six phases, with outcomes, TOM, portfolio and benefits. | B0008, B0009 |
 | End-to-End mode | النمط الشامل (من البداية إلى النهاية) | Run Phases 1-6 sequentially for a new transformation; do not launch initiatives before the North Star, outcomes and target state are clear. | B0009 |
-| Modular mode | النمط المعياري (الدخول الجزئي) | Enter an underway transformation at the relevant phase, complete the minimum mandatory templates, then reconnect to outcomes and benefits. | B0009 |
+| Modular mode | النمط الجزئي المرن (الدخول عند المرحلة المناسبة) | Enter an underway transformation at the relevant phase, complete the minimum mandatory templates, then reconnect to outcomes and benefits. | B0009 |
 | Design principles | مبادئ التصميم | Five principles: outcome before activity; current state before solution; operating model before execution; benefits before closure; one source of truth. | B0011–B0015 |
 | Rule of thumb (four questions) | القاعدة العامة (الأسئلة الأربعة) | Every deliverable answers one of: Why change? What must become different? How will we execute? How will we prove value? | B0016 |
 | Phase | مرحلة | One of six methodology phases. | B0021 |
 | Diagnose | التشخيص | Phase 1: establish fact base (current state, root causes, value pools). | B0021, B0027 |
-| Define | التحديد | Phase 2: set direction (North Star, outcomes, KPIs, guardrails). | B0021, B0046 |
+| Define | التحديد (تحديد التوجّه) | Phase 2: set direction (North Star, outcomes, KPIs, guardrails). | B0021, B0046 |
 | Design | التصميم | Phase 3: create target state (TOM, capabilities, journeys). | B0021, B0054 |
-| Mobilize | التعبئة | Phase 4: build execution portfolio (initiatives, business cases, roadmap, resourcing). | B0021, B0068 |
+| Mobilize | التعبئة (حشد الموارد والتهيئة للتنفيذ) | Phase 4: build execution portfolio (initiatives, business cases, roadmap, resourcing). | B0021, B0068 |
 | Transform | التحويل والتنفيذ | Phase 5: execute and govern (operating system, workstreams, decisions, adoption). | B0021, B0091 |
 | Realize | تحقيق القيمة | Phase 6: prove and sustain value (benefits, BAU handover, continuous improvement). | B0021, B0119 |
 | Stage gate | بوابة المرحلة | A business decision point with a decision question and required evidence (G1–G6). It is not an engineering delivery gate (DG0–DG7). | B0023 |
@@ -39,11 +57,11 @@ The playbook is a practical synthesis *inspired by* PMI/Brightline/BRM with cust
 |---|---|---|---|
 | Executive Sponsor | الراعي التنفيذي | Owns enterprise outcome, removes constraints, approves major trade-offs. | B0018 |
 | Transformation Lead | قائد التحوّل | Integrates workstreams, drives cadence, ensures outcome realization. | B0018 |
-| Business Owner | مالك الأعمال | Owns target-state capabilities and BAU adoption. | B0018 |
+| Business Owner | المالك التشغيلي للأعمال | Owns target-state capabilities and BAU adoption. | B0018 |
 | Workstream Lead | قائد مسار العمل | Delivers initiatives and manages dependencies. | B0018 |
 | Finance / Value Office | الإدارة المالية / مكتب القيمة | Validates baseline, benefit logic, value realization. | B0018 |
 | Transformation Office | مكتب التحوّل | Governance, reporting, risks, dependencies, decisions, standards. | B0018 |
-| Champion | سفير التغيير | Person in impacted teams who surfaces constraints and shapes decisions, not only broadcasts messages. | B0116 |
+| Champion | مناصر التغيير | Person in impacted teams who surfaces constraints and shapes decisions, not only broadcasts messages. | B0116 |
 
 ## Phase 1 — Diagnose
 
@@ -59,7 +77,7 @@ The playbook is a practical synthesis *inspired by* PMI/Brightline/BRM with cust
 | Transformation Charter | ميثاق التحوّل | Record naming sponsor, lead, case for change, North Star, scope, baseline date, horizon, outcomes, guardrails, forum, decision rights, success definition. | B0035 |
 | Case for change | مبررات التغيير | What is happening and why now. | B0035 |
 | Transformation thesis | فرضية التحوّل | "If we change …, then … will improve, which will create …, because …". | B0037 |
-| Scope sanity check | فحص سلامة النطاق | Five questions testing scope linkage, exclusions, measurable baseline and visible executive decisions. | B0039–B0043 |
+| Scope sanity check | فحص معقولية النطاق | Five questions testing scope linkage, exclusions, measurable baseline and visible executive decisions. | B0039–B0043 |
 | Strategic guardrails | الضوابط الاستراتيجية | Non-negotiables: regulatory, CX, capex, risk, brand, etc. | B0035 |
 | Target horizon | الأفق الزمني المستهدف | Time frame of the transformation (e.g. 18 months). | B0035 |
 | Success definition | تعريف النجاح | Evidence that proves the transformation succeeded. | B0035 |
@@ -87,7 +105,7 @@ The playbook is a practical synthesis *inspired by* PMI/Brightline/BRM with cust
 | TOM Canvas | لوحة نموذج التشغيل المستهدف | Ten-box workshop canvas for target-state design. | B0062 |
 | Design decision | قرار التصميم | Explicit choice resolving a TOM design question, with options, recommendation, owner, due date. | B0065 |
 | Design Decision Log (T04) | سجل قرارات التصميم | Register of design decisions. | B0065 |
-| Journey | رحلة العميل | End-to-end customer or process path. | B0056 |
+| Journey | الرحلة (رحلة العميل أو رحلة العمل) | End-to-end customer or process path. | B0056 |
 
 ## Phase 4 — Mobilize
 
@@ -112,7 +130,7 @@ The playbook is a practical synthesis *inspired by* PMI/Brightline/BRM with cust
 | Benefit Formula (T09) | معادلة المنفعة | Benefit, baseline driver, change assumption, formula, ramp, confidence. | B0087 |
 | Ramp | منحنى تصاعد المنفعة | Time profile over which benefit builds (e.g. Q1-Q4). | B0087 |
 | Percentage point (pp) | نقطة مئوية | Absolute difference between two percentages. | B0087 |
-| Attach rate | معدل الإلحاق | Share of customers taking an add-on product. | B0087 |
+| Attach rate | معدل الاشتراك في الخدمات الإضافية | Share of customers taking an add-on product. | B0087 |
 | ARPU | متوسط الإيراد لكل مستخدم | Average revenue per user. | B0087 |
 | Double counting | الاحتساب المزدوج | Counting the same benefit more than once; prevented by unique owner, baseline, formula and financial link. | B0088 |
 
@@ -124,12 +142,12 @@ The playbook is a practical synthesis *inspired by* PMI/Brightline/BRM with cust
 | Executive SteerCo | اللجنة التوجيهية التنفيذية | Monthly forum: outcomes, trade-offs, funding, escalation. | B0093 |
 | Transformation Review | مراجعة التحوّل | Bi-weekly portfolio health, dependencies, risks, decisions. | B0093 |
 | Workstream Review | مراجعة مسار العمل | Weekly delivery, issues, actions. | B0093 |
-| Rapid Response / Sprint | الاستجابة السريعة / الدفعة القصيرة | Daily or 2-3x week small empowered team solving a cross-functional issue. | B0093 |
+| Rapid Response / Sprint | الاستجابة السريعة / دورة العمل القصيرة (سبرنت) | Daily or 2-3x week small empowered team solving a cross-functional issue. | B0093 |
 | Value Review | مراجعة القيمة | Monthly Finance + benefit owners validating realized benefits vs plan. | B0093 |
 | Executive Transformation Dashboard (T10) | لوحة المؤشرات التنفيذية للتحوّل | Six areas with area-specific RAG logic. | B0095 |
 | RAG | حالة أحمر / كهرماني / أخضر | Red/Amber/Green status. | B0095 |
 | Decision Rights Matrix (T11) | مصفوفة صلاحيات القرار | Decision, Recommend, Approve, Consult, Inform, SLA. | B0099 |
-| SLA | مدة الإنجاز المتفق عليها | Time allowed for a decision (e.g. 5 working days). | B0099 |
+| SLA | مستوى الخدمة المتفق عليه للقرار (SLA) | Agreed service level for a decision: a number of working days, the next SteerCo / urgent route, or per release plan. | B0099 |
 | RACI (T12) | مصفوفة المسؤوليات (منفّذ/مساءَل/مستشار/مُطّلع) | Responsible, Accountable, Consulted, Informed per deliverable and role. | B0101 |
 | Governance rule | قاعدة الحوكمة | Escalate decisions, not status. | B0102 |
 | Adoption | التبنّي | The organization actually using the new way of working, managed as an outcome. | B0105 |
@@ -147,7 +165,7 @@ The playbook is a practical synthesis *inspired by* PMI/Brightline/BRM with cust
 | Benefits lifecycle | دورة حياة المنافع | Identify → Plan → Enable → Measure → Correct → Sustain. | B0121 |
 | Benefit profile | ملف المنفعة | Output of Identify step. | B0121 |
 | Benefit dependency chain | سلسلة اعتماديات المنفعة | Capabilities/deliverables that must exist before a benefit appears. | B0121 |
-| Recovery plan | خطة المعالجة | Action when a benefit is off track. | B0121 |
+| Recovery plan | خطة الاستدراك والمعالجة | Action when a benefit is off track. | B0121 |
 | Benefits Register (T14) | سجل المنافع | ID, benefit, type, baseline, target, value (SAR), realized, owner, evidence, status. | B0123 |
 | Realized value | القيمة المحقَّقة | Benefit actually achieved and evidenced. | B0123 |
 | BAU (business as usual) | العمليات الاعتيادية | Normal operations after transformation closure. | B0021, B0121 |

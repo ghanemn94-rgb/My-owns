@@ -1,6 +1,6 @@
 # Analysis artefacts: index
 
-Maintained by transformation-analyst. Last integration: T-DG0-AN-04 (stage P0 / DG0). All counts below come from the merged `docs/delivery/requirements.csv` and the two coverage matrices at the time of writing. The register is authoritative; re-run the merge and `node tools/gates/validate.mjs --register DG0` after any part-file change.
+Maintained by transformation-analyst. Last integration: T-DG0-AN-05 (stage P0 / DG0, round-1 repairs). All counts below come from the merged `docs/delivery/requirements.csv` and the two coverage matrices at the time of writing. The register is authoritative; re-run the merge and `node tools/gates/validate.mjs --register DG0` after any part-file change.
 
 The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, with custom extensions. Neither the playbook nor this product is an official PMI standard or a certified product. `#0078FF` is a provisional brand token.
 
@@ -8,7 +8,7 @@ The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, wit
 
 | Artefact | Purpose | Producer |
 |---|---|---|
-| `docs/delivery/requirements.csv` | The requirement register (410 rows). Generated only by `tools/source/merge_register.py` from `parts/req-*.csv` and `parts/ref-additions-*.csv`. | AN-01..AN-04 (merge AN-04) |
+| `docs/delivery/requirements.csv` | The requirement register (411 rows). Generated only by `tools/source/merge_register.py` from `parts/req-*.csv` and `parts/ref-additions-*.csv`. | AN-01..AN-04 (merge AN-04) |
 | `docs/analysis/source-coverage.csv` | One disposition per playbook block B0001–B0165 (165 rows). | AN-01 |
 | `docs/analysis/master-prompt-coverage.csv` | One disposition per master-prompt block M0001–M0423 (423 rows). Generated from `parts/mp-coverage-*.csv`. | AN-02, AN-03 (merge AN-04) |
 | `docs/analysis/parts/` | The editable sources of the register and master-prompt coverage: `req-pb.csv`, `req-s01-s13.csv`, `req-dlv-s14-s21.csv`, `mp-coverage-s01-s13.csv`, `mp-coverage-p0-s14-s21.csv`, `ref-additions-an02.csv`, `ref-additions-an03.csv`. | AN-01..AN-04 |
@@ -18,6 +18,7 @@ The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, wit
 | `docs/analysis/permissions-matrix.md` | Role × record × action matrix, scope rules, separation of duties. | AN-02 (ID references updated by AN-04) |
 | `docs/analysis/acceptance-map.md` | A01–A28: executable-test row, requirements proved, test level, first delivery, gate, and the gate ordering of scenario suites. | AN-03 (proves lists regenerated for all areas by AN-04) |
 | `docs/analysis/stage-plan.md` | P0–P7: owners, outputs, evidence, dependencies, and the IDs completing or partially delivered per stage. | AN-03 (ID lists regenerated for all areas by AN-04) |
+| `docs/analysis/tools/check_counts.py` | Consistency check: recomputes the counts in this README and the stage-plan ID lists from the register; exits 1 on any mismatch. `--write` regenerates the stage-plan lists. | AN-06 (promoted into the repository by AN-07) |
 
 ## Register counts
 
@@ -25,10 +26,10 @@ The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, wit
 
 | Class | Rows |
 |---|---|
-| SOURCE | 92 |
+| SOURCE | 93 |
 | USER | 188 |
 | ENGINEERING | 130 |
-| Total | 410 |
+| Total | 411 |
 
 Every SOURCE row cites at least one playbook block. USER and ENGINEERING rows cite master-prompt blocks. Master-prompt details that the playbook lacks are labelled `implementation-assumption` or `extension` in `notes`. An example is the Yes=1/No=0 health-check scoring (REQ-S14-001, D-010).
 
@@ -36,21 +37,21 @@ Every SOURCE row cites at least one playbook block. USER and ENGINEERING rows ci
 
 | Final gate | DG0 | DG1 | DG2 | DG3 | DG4 | DG5 | DG6 | DG7 | Total |
 |---|---|---|---|---|---|---|---|---|---|
-| Rows | 19 | 11 | 32 | 31 | 137 | 76 | 50 | 54 | 410 |
+| Rows | 19 | 11 | 32 | 32 | 137 | 78 | 48 | 54 | 411 |
 
 ### Class × final gate
 
 | Class | DG0 | DG1 | DG2 | DG3 | DG4 | DG5 | DG6 | DG7 |
 |---|---|---|---|---|---|---|---|---|
-| SOURCE | 0 | 0 | 24 | 20 | 36 | 12 | 0 | 0 |
+| SOURCE | 0 | 0 | 24 | 21 | 36 | 12 | 0 | 0 |
 | USER | 0 | 3 | 6 | 7 | 76 | 55 | 19 | 22 |
-| ENGINEERING | 19 | 8 | 2 | 4 | 25 | 9 | 31 | 32 |
+| ENGINEERING | 19 | 8 | 2 | 4 | 25 | 11 | 29 | 32 |
 
 ### By area
 
 | Area | SOURCE | USER | ENGINEERING | Total | DG0 | DG1 | DG2 | DG3 | DG4 | DG5 | DG6 | DG7 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| PB | 92 | 0 | 0 | 92 |  |  | 24 | 20 | 36 | 12 |  |  |
+| PB | 93 | 0 | 0 | 93 |  |  | 24 | 21 | 36 | 12 |  |  |
 | DLV | 0 | 0 | 41 | 41 | 17 | 2 | 1 | 1 | 1 | 1 | 1 | 17 |
 | S01 | 0 | 5 | 1 | 6 |  |  |  |  |  | 3 | 1 | 2 |
 | S02 | 0 | 3 | 2 | 5 |  |  |  |  |  | 2 | 1 | 2 |
@@ -63,7 +64,7 @@ Every SOURCE row cites at least one playbook block. USER and ENGINEERING rows ci
 | S09 | 0 | 8 | 2 | 10 |  |  |  | 6 | 3 | 1 |  |  |
 | S10 | 0 | 18 | 1 | 19 |  |  | 1 |  | 14 | 2 | 2 |  |
 | S11 | 0 | 8 | 0 | 8 |  |  |  |  | 8 |  |  |  |
-| S12 | 0 | 18 | 4 | 22 |  |  |  |  | 7 | 10 | 5 |  |
+| S12 | 0 | 18 | 4 | 22 |  |  |  |  | 7 | 12 | 3 |  |
 | S13 | 0 | 10 | 3 | 13 |  |  | 1 |  | 3 | 7 | 2 |  |
 | S14 | 0 | 4 | 0 | 4 |  |  |  |  |  | 4 |  |  |
 | S15 | 0 | 14 | 0 | 14 |  | 3 |  |  | 1 | 1 | 9 |  |
@@ -79,7 +80,7 @@ Every SOURCE row cites at least one playbook block. USER and ENGINEERING rows ci
 | Status | Rows |
 |---|---|
 | IMPLEMENTED | 19 |
-| SPECIFIED | 391 |
+| SPECIFIED | 392 |
 
 `VERIFIED` is never written to the register. Verification is derived by the validator from PASS review records.
 
@@ -100,9 +101,9 @@ All 28 scenarios are referenced. "Rows citing" counts the register rows whose `a
 | A02 | Complete lifecycle | REQ-S20-002 | DG5 | 27 |
 | A03 | Modular entry | REQ-S20-003 | DG4 | 5 |
 | A04 | KPI propagation | REQ-S20-004 | DG4 | 18 |
-| A05 | Calculation correctness | REQ-S20-005 | DG4 | 30 |
+| A05 | Calculation correctness | REQ-S20-005 | DG4 | 31 |
 | A06 | Configuration change | REQ-S20-006 | DG5 | 23 |
-| A07 | Historical integrity | REQ-S20-007 | DG5 | 20 |
+| A07 | Historical integrity | REQ-S20-007 | DG5 | 21 |
 | A08 | Gate controls | REQ-S20-008 | DG4 | 41 |
 | A09 | Decision escalation | REQ-S20-009 | DG4 | 16 |
 | A10 | Benefit integrity | REQ-S20-010 | DG4 | 28 |
@@ -135,7 +136,7 @@ IDs are not renumbered, so the gaps remain. Each keeper row carries the union of
 |---|---|---|
 | REQ-S16-028 | REQ-S10-004 | Same capability: authorization scopes for exports and search indexes (M0330) are a subset of the server-side permission enforcement for records, files, APIs, exports, search and AI retrieval (M0188). |
 | REQ-S02-002 | REQ-DLV-020 | Same capability: the requirements traceability register (M0084-M0087) is the register maintained under §0.5 (M0058). The S02 row sat at DG7 while the same register must be complete at DG0. |
-| REQ-S09-002 | REQ-PB-049 | Same capability: configurable, versioned rubrics and weights (M0176). REQ-PB-049 already specified versioned weight sets. |
+| REQ-S09-002 | REQ-PB-049 | Same capability: configurable, versioned rubrics and weights (M0176). REQ-PB-049 already specified versioned weight sets. (AN-05: the Studio/admin part is now REQ-PB-093.) |
 | REQ-S12-008 | REQ-S04-012 | Same behaviour: block gate submission while mandatory evidence is missing (M0228 starter automation, M0125 rule). |
 | REQ-S12-007 | REQ-PB-085 | Same behaviour: a KPI or benefit off track creates or updates one corrective-action case (M0227; B0121, B0093). |
 | REQ-S12-013 | REQ-PB-082 | Same behaviour: a blocker Red across the configured cycles requires one executive ask (M0233; B0131). REQ-PB-082 already cited M0233 and the no-duplicate rule. |
@@ -166,3 +167,19 @@ Starter-automation configurability in the rule builder stays at DG5 under REQ-S1
 - **REQ-S10-012 vs REQ-PB-081.** The executive-ask fields map onto the verbatim T16 columns, for example Required date → Decision date.
 - **REQ-PB-091 vs REQ-S14-001/002.** The incomplete-assessment rule and Yes=1/No=0 scoring are implementation assumptions (D-010), specified in the S14 rows.
 - **Class review (AN-02 gap 1).** No S01–S13 row was reclassified as SOURCE. Every S row that shares a master-prompt block with a REQ-PB row now names the related SOURCE rows in `notes`. Where an S row's playbook-grounded substance duplicated a REQ-PB row, it was consolidated into that SOURCE row instead (see above), with the master-prompt additions labelled.
+
+## AN-05 round-1 repairs
+
+| Finding | Change |
+|---|---|
+| F-DG0-001 | REQ-PB-049 was split. It keeps the per-transformation weights, the 100% check and weight-set versions, with P3 / DG3. The new REQ-PB-093 covers admin default weights and rubrics in Playbook Studio, with P5 / DG5. A §21 recheck of M0403–M0410 also moved REQ-S12-020/021 to DG5 and added invalid-approval acceptance to REQ-S04-003..006. See `stage-plan.md`, "§21 evidence recheck". |
+| F-DG0-002 | The G5 approver is SP by default, configurable to BO per T11 "Go-live / scale" (REQ-PB-020, REQ-S04-007). The permissions matrix gains a T11 "Go-live / scale" row, SP has Rv on the TOM row, and rule 7 is clarified. |
+| F-DG0-003 | The notes of every SOURCE row now separate the playbook content from master-prompt additions and interpretations. The "no interpretation beyond the cited blocks" boilerplate was removed from every row. |
+| F-DG0-005 | Glossary: Journey and Modular mode fixed, plus nine other terms (see the revision table in `glossary.md`). |
+| F-DG0-203 | `stage-plan.md` gains a per-scenario ownership table and per-stage "executable acceptance tests" bullets; `acceptance-map.md` is aligned with it, and A07 is now first delivered in P3. |
+
+Also fixed: two stale IDs in `user-journeys.md`. REQ-DLV-026 and REQ-DLV-032 now cite regular files instead of directories.
+
+## AN-07 stage-plan list regeneration
+
+The P0–P6 "increment in Pn that complete later" lists in `stage-plan.md` left out the 16 recurring DG7 protocol rows (REQ-DLV-005, -008..012, -014, -018, -021, -024, -027, -028, -030, -031, -039, -040), so they did not equal the register. They are now generated from the register by `docs/analysis/tools/check_counts.py --write` and include those rows. The "Recurring obligations" bullet now names REQ-DLV-039, which it had omitted. No register row changed; the counts above were confirmed by the script.

@@ -8,6 +8,11 @@
   - "Audit" means that every mutation writes an audit event with actor, action, timestamp, record ID, prior/new version and reason (§16, AN-03).
   - Every mutation also uses optimistic concurrency. A conflicting save shows a recoverable conflict (A14).
 
+Revision T-DG0-AN-05:
+- J2.5 has the initiative-level T11 "Go-live / scale" step and the configurable G5 approver (finding F-DG0-002).
+- J2.4 step 4 names the weight-set versions (REQ-PB-049/093, finding F-DG0-001).
+- Two stale IDs were corrected: REQ-S05-004 was consolidated into REQ-PB-042, and the filename-evidence rule is REQ-S13-012.
+
 Screen and API names are planned names, pending the P1 ADRs. Demo walk-throughs run only in the separate demo environment, on synthetic data (REQ-S18-001, REQ-PB-088/089). A demo Sponsor approval approves nothing real.
 
 ---
@@ -34,7 +39,7 @@ Common gate mechanics (REQ-S04-002, REQ-S04-009…014, REQ-S12-009…010; REQ-S0
 | # | Actor | Step | Screen | Record | Guard condition |
 |---|---|---|---|---|---|
 | G-a | TL | Open the gate readiness view. The system lists mandatory evidence and what is missing. | Governance > Stage gates > Gx | GateInstance (Draft) | none (read) |
-| G-b | TL | Submit the gate. The evidence snapshot is frozen. | Same | GateInstance → Submitted; evidence snapshot | All mandatory evidence is present, or an authorized, unexpired waiver covers each gap (reason, scope, approver, expiry, compensating action). Evidence that is only a filename or an inaccessible link doesn't count (REQ-S13-013). |
+| G-b | TL | Submit the gate. The evidence snapshot is frozen. | Same | GateInstance → Submitted; evidence snapshot | All mandatory evidence is present, or an authorized, unexpired waiver covers each gap (reason, scope, approver, expiry, compensating action). Evidence that is only a filename or an inaccessible link doesn't count (REQ-S13-012). |
 | G-c | system | Route the exact snapshot to the required approvers. Status → Under Review. | Same; approvers' My Work | Approval tasks | Exactly one task per approver (idempotent). |
 | G-d | reviewers | Record per criterion: completeness, finding, open condition, risk. | Gate review table | GateCriterionReview | Reviewer role on the gate. |
 | G-e | approver (default SP) | Decide: Approved, Rejected, Changes Requested or Deferred, with rationale. Conditional approval is allowed only if enabled, and records scope, conditions, owners and deadlines. | Gate decision | GateDecision | Not the submitter; not ADM; the request version is current; rationale is required; a conditional approval must name a limited scope. |
@@ -65,7 +70,7 @@ Common gate mechanics (REQ-S04-002, REQ-S04-009…014, REQ-S12-009…010; REQ-S0
 | 4 | TL | Record strategic guardrails. | Charter > Guardrails | StrategicGuardrail | none. |
 | 5 | TL → SP | Gate G2. Decision: "outcomes are specific enough to steer choices". | Stage gates > G2 | GateInstance G2 | Evidence: North Star, outcome/KPI tree, KPI dictionary, target trajectory and guardrails. |
 
-### J2.3 Design → G3 Target State (REQ-S04-005, REQ-S05-003/004, REQ-PB-038–043)
+### J2.3 Design → G3 Target State (REQ-S04-005, REQ-S05-003, REQ-PB-038–043; REQ-PB-042 absorbs former REQ-S05-004)
 
 | # | Actor | Step | Screen | Record | Guard condition |
 |---|---|---|---|---|---|
@@ -83,7 +88,7 @@ Common gate mechanics (REQ-S04-002, REQ-S04-009…014, REQ-S12-009…010; REQ-S0
 | 1 | WL | Create T05 initiative cards from gaps. | Initiatives and Roadmaps > Initiative card | Initiative | At least one gap link and one outcome/KPI link before submit. |
 | 2 | TL, FIN | Build the transformation business case and linked initiative cases, with classified investment and benefits. | Initiatives and Roadmaps > Business case | BusinessCase, Scenario | Each line has one class; scenarios are kept apart from actuals. |
 | 3 | WL, FIN | Define T09 benefit formulas in the safe builder and preview examples. | Benefits and Finance > Formula builder | BenefitFormulaVersion | Grammar whitelist; no circular references; units align. |
-| 4 | TL, WL, FIN | Score T06 (1–5). The weighted score is calculated. | Initiatives and Roadmaps > Prioritization | Score | Scores ∈ 1–5; a missing score means incomplete; weights total 100%. |
+| 4 | TL, WL, FIN | Score T06 (1–5). The weighted score is calculated. Optionally, TL proposes an adjusted weight set for the transformation (for example, adding risk/compliance), and SP approves it as a new weight-set version (REQ-PB-049). | Initiatives and Roadmaps > Prioritization | Score, WeightSetVersion | Scores ∈ 1–5; a missing score means incomplete; weights total 100%; each score records the weight-set version used. The defaults come from Playbook Studio (REQ-PB-093, J8). |
 | 5 | TL → SP | Propose the ranking, then approve the portfolio selection. | Prioritization > Portfolio | Ranking, PortfolioSelection | Selection is separate from ranking; overrides need a reason and an approver. |
 | 6 | TL, FIN → SteerCo | Funding decision. | Initiatives and Roadmaps > Funding | FundingDecision | Per T11 "Funding reallocation"; unfunded initiatives can't launch. |
 | 7 | TL | Assign waves (T07), dependencies (T08) and capacity. | Roadmap / Dependencies / Resources | RoadmapWave, Dependency, ResourceDemand | Cycles are rejected; schedule and capacity conflicts are flagged. |
@@ -98,7 +103,8 @@ Common gate mechanics (REQ-S04-002, REQ-S04-009…014, REQ-S12-009…010; REQ-S0
 | 3 | KDS/BO | Update KPI and adoption actuals (J4). | KPI / Change and Adoption | KPIActual | See J4. |
 | 4 | WL, TL | Manage RAID, dependencies and corrective actions. | Risks and Actions | Risk, Issue, Assumption, Dependency, Action | Probability only for Risk. |
 | 5 | forums | Run the committee workflow (J6). | Governance > Meetings | Meeting, Decision | See J6. |
-| 6 | TL → SP | Gate G5 with the proposed scale scope. Decision: "results justify the proposed scope of scale". | Stage gates > G5 | GateInstance G5 | Evidence: performance/pilot evidence, adoption results, material risks resolved or dispositioned, and the decision log. Scaling outside the approved scope is blocked. |
+| 5a | WL (initiative owner) → BO | Per initiative, the T11 "Go-live / scale" decision: the initiative owner recommends, Risk/Tech/CX are consulted, the BO approves, and the SteerCo is informed. The SLA is "Per release plan". | Governance > Decisions | Decision (T11 decision type "Go-live / scale") | BO approves (B0099); not the recommender. The decision is recorded in the decision log and becomes G5 evidence. It doesn't approve G5. |
+| 6 | TL → SP (default) or BO (where configured per T11 "Go-live / scale") | Gate G5 with the proposed scale scope. Decision: "results justify the proposed scope of scale". | Stage gates > G5 | GateInstance G5 | Evidence: performance/pilot evidence, adoption results, material risks resolved or dispositioned, and the decision log (including the initiative-level go-live decisions from step 5a). Scaling outside the approved scope is blocked. |
 
 ### J2.6 Realize → G6 Sustain (REQ-S04-008, REQ-S08-*, REQ-S11-*)
 
@@ -205,7 +211,7 @@ Common gate mechanics (REQ-S04-002, REQ-S04-009…014, REQ-S12-009…010; REQ-S0
 |---|---|
 | SP | J1 (approvals), J2 gate decisions G1–G6, J6 (chair or decision owner) |
 | TL | J1, J2 (all phases, gate submissions), J3, J6 (asks), J7 (prepare) |
-| BO | J1, J2.2/J2.3 (outcomes, TOM), J4 (own KPIs), J7 (accept), recurring BAU |
+| BO | J1, J2.2/J2.3 (outcomes, TOM), J2.5 (T11 "Go-live / scale" per initiative; G3/G5 gate decisions where configured per T11), J4 (own KPIs), J7 (accept), recurring BAU |
 | WL | J1, J2.1/J2.4/J2.5 (content), J7 (prepare) |
 | FIN | J1, J5, J2.4 (business case, formulas) |
 | TO | J1, J2 (review), J3, J8 (review where configured) |

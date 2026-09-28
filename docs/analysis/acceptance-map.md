@@ -1,6 +1,6 @@
 # Acceptance map: A01–A28
 
-Produced by transformation-analyst (task T-DG0-AN-03). Source: master prompt §20 (M0368–M0399) and §21 (M0401–M0411).
+Produced by transformation-analyst (task T-DG0-AN-03). Revised in T-DG0-AN-05. Source: master prompt §20 (M0368–M0399) and §21 (M0401–M0411).
 
 For each acceptance scenario, this map lists:
 - the executable-test requirement (`REQ-S20-###`);
@@ -13,6 +13,14 @@ Test levels follow M0399: unit for formulas and state rules, integration for per
 
 **Scope note.** Updated by AN-04 (T-DG0-AN-04) from the merged `docs/delivery/requirements.csv`: the "proves" lists now cover every area (`REQ-PB`, `REQ-DLV`, `REQ-S01`…`REQ-S21`). A requirement is listed when its `acceptance` column cites the scenario; the scenario's own `REQ-S20-###` test row is not repeated. IDs consolidated in AN-04 no longer appear (see the consolidation table in `docs/analysis/README.md`).
 
+**AN-05 update.**
+- **F-DG0-001.** REQ-PB-049 (DG3) now proves A01, A05 and A07. The new REQ-PB-093 (DG5) proves A06 and A07.
+- **F-DG0-203.** A07 is first delivered in P3, because the weight-set version history of REQ-PB-049 and REQ-S09-005 is needed at DG3.
+- **F-DG0-203, test ownership.** "First delivered" is the stage in which the executable test is first authored, before that stage's candidate freezes. Who authors each scenario, and in which stages, is in `stage-plan.md`, section "Executable acceptance-test ownership". That table is consistent with the "First delivered" and "Must pass at" columns below:
+  - No scenario is first authored after the gate at which it must pass.
+  - P6 extends and re-runs the A01–A22 suites.
+  - Only A17 (must pass at DG6) and the A19 restore drill (must pass at DG7) are first authored in P6.
+
 **Regression rule.** Once a scenario's test first passes at its gate, every later gate re-runs it (M0066, M0413). The P7 evidence covers A01–A27 on the DG7 candidate (M0410), and A28 is the post-approval sealing check (M0411).
 
 | ID | Scenario | Executable test req | Test level | First delivered | Must pass at | Requirements proved (all areas) |
@@ -21,9 +29,9 @@ Test levels follow M0399: unit for formulas and state rules, integration for per
 | A02 | Complete lifecycle | REQ-S20-002 | e2e | P2 | DG5 | REQ-PB-004, REQ-PB-007, REQ-PB-014, REQ-PB-022; REQ-S01-001, REQ-S01-003..004; REQ-S03-001, REQ-S03-004, REQ-S03-008, REQ-S03-011; REQ-S04-001, REQ-S04-003..008; REQ-S06-002..003; REQ-S09-011; REQ-S10-011; REQ-S12-010; REQ-S18-002, REQ-S18-004; REQ-S21-004 |
 | A03 | Modular entry | REQ-S20-003 | integration;e2e | P2 | DG4 | REQ-PB-003, REQ-PB-005; REQ-DLV-034; REQ-S03-005 |
 | A04 | KPI propagation | REQ-S20-004 | integration;e2e | P2 | DG4 | REQ-PB-062..063, REQ-PB-074, REQ-PB-085; REQ-DLV-036; REQ-S03-009; REQ-S07-007..008, REQ-S07-012..014, REQ-S07-017; REQ-S12-006; REQ-S13-001..003; REQ-S16-014 |
-| A05 | Calculation correctness | REQ-S20-005 | unit | P2 | DG4 | REQ-PB-027, REQ-PB-048, REQ-PB-057, REQ-PB-063; REQ-DLV-035; REQ-S06-005; REQ-S07-001..007, REQ-S07-009..011; REQ-S08-004..008, REQ-S08-019; REQ-S09-001, REQ-S09-007, REQ-S09-009; REQ-S13-003; REQ-S15-008, REQ-S15-014; REQ-S16-025 |
-| A06 | Configuration change | REQ-S20-006 | e2e | P5 | DG5 | REQ-PB-049; REQ-DLV-037; REQ-S01-002; REQ-S02-001; REQ-S05-002; REQ-S06-001, REQ-S06-003..008, REQ-S06-010; REQ-S10-005, REQ-S10-007, REQ-S10-015; REQ-S12-002, REQ-S12-018; REQ-S16-010, REQ-S16-022; REQ-S19-008; REQ-S21-004 |
-| A07 | Historical integrity | REQ-S20-007 | integration | P4 | DG5 | REQ-PB-049; REQ-DLV-037; REQ-S04-002, REQ-S04-014; REQ-S06-008..009; REQ-S07-015..016; REQ-S08-006, REQ-S08-017; REQ-S09-005, REQ-S09-010; REQ-S10-007; REQ-S11-009; REQ-S12-018; REQ-S13-007; REQ-S14-003; REQ-S16-023, REQ-S16-032 |
+| A05 | Calculation correctness | REQ-S20-005 | unit | P2 | DG4 | REQ-PB-027, REQ-PB-048..049, REQ-PB-057, REQ-PB-063; REQ-DLV-035; REQ-S06-005; REQ-S07-001..007, REQ-S07-009..011; REQ-S08-004..008, REQ-S08-019; REQ-S09-001, REQ-S09-007, REQ-S09-009; REQ-S13-003; REQ-S15-008, REQ-S15-014; REQ-S16-025 |
+| A06 | Configuration change | REQ-S20-006 | e2e | P5 | DG5 | REQ-PB-093; REQ-DLV-037; REQ-S01-002; REQ-S02-001; REQ-S05-002; REQ-S06-001, REQ-S06-003..008, REQ-S06-010; REQ-S10-005, REQ-S10-007, REQ-S10-015; REQ-S12-002, REQ-S12-018; REQ-S16-010, REQ-S16-022; REQ-S19-008; REQ-S21-004 |
+| A07 | Historical integrity | REQ-S20-007 | integration | P3 | DG5 | REQ-PB-049, REQ-PB-093; REQ-DLV-037; REQ-S04-002, REQ-S04-014; REQ-S06-008..009; REQ-S07-015..016; REQ-S08-006, REQ-S08-017; REQ-S09-005, REQ-S09-010; REQ-S10-007; REQ-S11-009; REQ-S12-018; REQ-S13-007; REQ-S14-003; REQ-S16-023, REQ-S16-032 |
 | A08 | Gate controls | REQ-S20-008 | integration | P2 | DG4 | REQ-PB-004, REQ-PB-015..022, REQ-PB-037, REQ-PB-046, REQ-PB-055; REQ-DLV-034..035; REQ-S02-006; REQ-S03-004; REQ-S04-002..007, REQ-S04-009..013; REQ-S09-003; REQ-S10-014..018; REQ-S12-009, REQ-S12-026; REQ-S13-012; REQ-S16-012, REQ-S16-023, REQ-S16-027; REQ-S17-008 |
 | A09 | Decision escalation | REQ-S20-009 | integration | P4 | DG4 | REQ-PB-064, REQ-PB-066, REQ-PB-068, REQ-PB-081..082; REQ-DLV-036; REQ-S10-006, REQ-S10-011..012, REQ-S10-019; REQ-S12-011, REQ-S12-025; REQ-S15-008; REQ-S16-018..019 |
 | A10 | Benefit integrity | REQ-S20-010 | unit;integration | P3 | DG4 | REQ-PB-013, REQ-PB-054..055, REQ-PB-058, REQ-PB-074..076; REQ-DLV-036; REQ-S03-006; REQ-S05-005; REQ-S07-014; REQ-S08-001, REQ-S08-003, REQ-S08-008..011, REQ-S08-013..018; REQ-S12-014; REQ-S13-008; REQ-S16-017; REQ-S17-008 |
@@ -101,7 +109,7 @@ A scenario's executable test first passes at its "must pass at" gate with the re
 
 ## Placement rationale
 
-- **A03, A04, A05, A08, A09, A10 and A11 at DG4.** These capabilities complete with the P4 KPI/benefit engines, gates G1–G6 and adoption/BAU (M0407).
+- **A03, A04, A05, A08, A09, A10 and A11 at DG4.** These capabilities complete with the P4 KPI/benefit engines, gates G1–G6 and adoption/BAU (M0407). Their executable tests are authored from P2 (A10 from P3; A09 and A11 in P4), test-first before each freeze. P6 does not author them for the first time.
 - **A02, A06, A07, A15 and A16 at DG5.**
   - A02: the guided walkthrough, including report generation, is a P5 output (M0349, M0408).
   - A06 and A07: the Studio and version migration are P5 outputs.

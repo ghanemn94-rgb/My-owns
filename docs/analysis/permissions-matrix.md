@@ -76,10 +76,10 @@ Unless stated otherwise, "own" means records where the user is the named owner o
 | KPI actual acceptance (review route) | — | Ap (configurable) | Ap (configurable) | — | — | — | — | — | — | V | — |
 | KPI definition/baseline/target change request; retrospective restatement | Ap (restatement authority) | C S | Ap | V | Rv / Va (financial impact) | V | C S | V | V | V | — |
 | Manual RAG override | Ap | Ap (configured) | Ap (configured) | — | — | — | — | — | — | V | — |
-| TOM canvas, T03 gaps, capabilities, journeys/processes, workshops | V | C U S | C U Ap (per T11 Target-state design) | C U (own) | Rv | V | V | C U Rv | V | V | — |
+| TOM canvas, T03 gaps, capabilities, journeys/processes, workshops | Rv (RACI C for Target Operating Model) | C U S | C U Ap (per T11 Target-state design) | C U (own) | Rv | V | V | C U Rv | V | V | — |
 | T04 design decisions | V | C U | Ap (decision owner) | C | Rv | V | V | Rv | V | V | — |
 | Gate submission (G1–G6) | V | C S | Rv | V | Rv | Rv | V | V | V | V | — |
-| Gate decision (approve, reject, request changes, defer) | Ap (default) | — (the submitter cannot approve; SoD) | Ap where configured (for example G3 per T11) | — | Rv (Finance criteria) | — | — | — | — | V | — (never) |
+| Gate decision (approve, reject, request changes, defer) | Ap (default) | — (the submitter cannot approve; SoD) | Ap where configured (G3 per T11 Target-state design; G5 per T11 Go-live / scale) | — | Rv (Finance criteria) | — | — | — | — | V | — (never) |
 | Waiver or exception to mandatory evidence | Ap | S | Rv | — | Rv | Rv | — | — | — | V | — |
 | Conditional approval (extension, disabled by default) | Ap | S | Ap where configured | — | — | — | — | — | — | V | Cf (enable only) |
 | Modular entry: inherited records | V | C U | Rv | V | Rv | C U | V | V | V | V | — |
@@ -98,6 +98,7 @@ Unless stated otherwise, "own" means records where the user is the named owner o
 | Valuation method for non-financial benefits; NPV/ROI assumptions | V | Rv | Rv | — | Ap Cf | V | — | — | — | V | Cf (enable extension only) |
 | T10 and other dashboards | V | V | V | V (workstream) | V | V | V | V | V | V | — (except the operations dashboard) |
 | T11 decision rights matrix | Ap | U | Rv | V | Rv | U | V | V | V | V | — |
+| T11 decision "Go-live / scale" for an initiative (B0099: Recommend Initiative owner; Approve Business owner; Consult Risk / Tech / CX; Inform SteerCo) | V | Rv | Ap (Business owner) | S Rv (as initiative owner: Recommend) | V | Rv (Risk consult, via RAID) | V | Rv (Tech consult) | V (SteerCo members: Inform) | V | — |
 | T12 RACI (per transformation, versioned) | Ap | U | Rv | V | Rv | U | V | V | V | V | — |
 | Forums, recurrence, cut-offs | V | Rv | V | V | V | Cf | V | V | U (SEC) | V | Cf (calendar only) |
 | Meeting: agenda, attendance/quorum, minutes, actions | Ap (chair, where SP chairs) | C U | V | V | V | U | V | V | SEC: C U S; CM: Rv; chair: Ap (minutes) | V | — |
@@ -130,7 +131,11 @@ Unless stated otherwise, "own" means records where the user is the named owner o
 4. **Stale approvals are rejected.** An approval must reference the current submitted version (REQ-S10-017).
 5. **Automation never approves.** Timers escalate, route and remind. They never set approve or validate outcomes (REQ-S10-019, REQ-S12-026).
 6. **One accountable per deliverable.** The exception is a documented governance rule; "A/R" counts as one accountable (REQ-S10-009).
-7. **Gate approvals** default to SP, except where T11 names another approver (for example Target-state design → Business Owner). The default is configurable per gate. The G6 product gate has no relation to engineering gate DG7.
+7. **Gate approvals** default to SP. The playbook's gate table (B0023) names no approver, and B0018 gives the Sponsor "approves major trade-offs". Where a T11 decision (B0099) matches what a gate decides, the gate's approver can be configured to the T11 approver:
+   - G3 Target State: BO, per T11 "Target-state design" (REQ-PB-018, REQ-S04-005);
+   - G5 Scale: BO, per T11 "Go-live / scale" (REQ-PB-020, REQ-S04-007).
+
+   The default is configurable per gate. G5 is the **transformation-level** gate ("Are pilots/results sufficient to scale?"). T11 "Go-live / scale" decisions taken on **individual initiatives** (Recommend: initiative owner; Approve: BO; Consult: Risk/Tech/CX; Inform: SteerCo) are separate decision records, with their own row in the matrix above, and they feed G5's decision-log evidence. An initiative-level go-live approval never approves G5, and G5 approval does not replace the initiative-level decisions. The G6 product gate has no relation to engineering gate DG7. (AN-05, finding F-DG0-002.)
 8. **Waivers** cannot be approved by the requester or by ADM (REQ-S04-013).
 
 ## 6. Delegation (REQ-S10-010)
@@ -144,3 +149,5 @@ Unless stated otherwise, "own" means records where the user is the named owner o
 
 - The action codes per cell, the default gate approver (SP) and the sub-profiles of ADM (technical, access, methodology) are **implementation assumptions** derived from B0018, T11 and T12 and from §10. The domain reviewer and Mobily business owners must confirm them.
 - Sensitive-record categories are placeholders until Mobily defines its data classification.
+- In the T11 "Go-live / scale" row, the T11 roles map to matrix roles as follows. "Initiative owner" is the initiative's named owner, recorded on T05 and typically the WL, or the BO where the BO owns it. "Risk" consultees act through the TO's RAID responsibility (B0018). "Tech" is TD. "CX" has no separate matrix role and is consulted as a named person under Rv on the decision record. "SteerCo" is its CM members. This mapping is an implementation assumption.
+- Revision T-DG0-AN-05 (finding F-DG0-002): SP now has Rv (RACI "C", B0101) instead of V on the TOM row; the T11 "Go-live / scale" row was added; rule 7 was clarified.

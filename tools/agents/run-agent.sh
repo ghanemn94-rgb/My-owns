@@ -10,14 +10,16 @@
 # - Passes the orchestrator's model explicitly, so `model: inherit` really means the orchestrator's model.
 # - Keeps permission mode `auto` (the same classifier-gated controls as the orchestrator session; not weakened).
 # - If the run stops only because the permission classifier returned no verdict repeatedly, it resumes the SAME
-#   session (same invocation reference) after a pause, at most MTH_MAX_RESUMES times (default 3).
+#   session (same invocation reference) after a pause, at most MTH_MAX_RESUMES times (default 6). An agent that is
+#   stuck on repeated classifier refusals ends its turn with a final message whose first line is exactly
+#   CLASSIFIER-BLOCKED; that is treated the same way.
 # - Writes docs/delivery/runs/<stage>/<run-id>/{meta.json,result.json,transcript.jsonl.gz} in the main repository,
 #   with SHA-256 hashes of the result and transcript recorded in meta.json.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ROLE="" STAGE="" TASK="" ASSIGNMENT="" CWD="$REPO_ROOT" MODEL="${MTH_AGENT_MODEL:-claude-opus-5-5}"
-MAX_RESUMES="${MTH_MAX_RESUMES:-3}" RESUME_PAUSE="${MTH_RESUME_PAUSE_SECONDS:-90}"
+MAX_RESUMES="${MTH_MAX_RESUMES:-6}" RESUME_PAUSE="${MTH_RESUME_PAUSE_SECONDS:-120}"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --role) ROLE="$2"; shift 2 ;;
@@ -67,7 +69,9 @@ for line in open(sys.argv[1], encoding="utf-8", errors="replace"):
     if o.get("type") == "result":
         last = o
 blob = json.dumps(last or {})
-sys.exit(0 if last and last.get("is_error") and "no safety verdict" in blob else 1)
+stopped = bool(last) and last.get("is_error") and "no safety verdict" in blob
+marked = bool(last) and str(last.get("result") or "").lstrip().startswith("CLASSIFIER-BLOCKED")
+sys.exit(0 if stopped or marked else 1)
 PY
 }
 
@@ -77,7 +81,7 @@ set +e
     --session-id "$SESSION_ID" --settings "$SETTINGS" \
     --output-format stream-json --verbose "$PROMPT" < /dev/null ) > "$OUT/transcript.jsonl" 2> "$OUT/stderr.log"
 EXIT=$?
-while [[ $EXIT -ne 0 && $ATTEMPTS -lt $MAX_RESUMES ]] && classifier_outage "$OUT/transcript.jsonl"; do
+while [[ $ATTEMPTS -lt $MAX_RESUMES ]] && classifier_outage "$OUT/transcript.jsonl"; do
   ATTEMPTS=$((ATTEMPTS + 1))
   echo "classifier outage detected; resuming session $SESSION_ID (attempt $ATTEMPTS) after ${RESUME_PAUSE}s" >> "$OUT/stderr.log"
   sleep "$RESUME_PAUSE"

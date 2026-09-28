@@ -80,3 +80,11 @@ Bash is not path-guarded. Using Bash to write outside your scope is a protocol v
 - Record demonstration data as synthetic.
 - Do not claim PMI certification, official Mobily brand compliance or regulatory compliance.
 - `#0078FF` is a provisional brand token, not a verified Mobily colour.
+
+## Infrastructure: permission-classifier outages
+
+Your shell runs in the permission mode `auto`. Sometimes the server-side classifier returns no verdict, and a command is refused with "classifier gave no verdict" or "Classifier unavailable". That's a transient infrastructure failure, not a judgement about your action.
+
+- **Retry a refused command.** Retry up to 3 times, and keep working on non-shell parts of the task in between.
+- **If you still can't run what the task needs, stop cleanly.** End your turn with a final message whose **first line is exactly** `CLASSIFIER-BLOCKED`, followed by what's done and what's pending. The runner then resumes the **same session** (same invocation reference) after a pause, up to 6 times, and you continue from where you stopped.
+- **Never report a check as passed that didn't run.**

@@ -120,7 +120,7 @@ An outcome that is not just "launch", "implement" or "deliver" is the source int
 | 13 | Milestones | B0072 | list (name, date) | R | valid dates | "[Dates]" |
 | 14 | Required decisions | B0072 | reference→Decision (decision + owner + date) | O | each has owner and date | "[Decision + owner + date]" |
 
-## T06 — Prioritization Scorecard (B0075, B0076, B0077) → REQ-PB-047, REQ-PB-048, REQ-PB-049
+## T06 — Prioritization Scorecard (B0075, B0076, B0077) → REQ-PB-047, REQ-PB-048, REQ-PB-049, REQ-PB-093
 
 | # | Source field (verbatim) | Block | Type | Req. | Validation | Notes |
 |---|---|---|---|---|---|---|
@@ -131,7 +131,7 @@ An outcome that is not just "launch", "implement" or "deliver" is the source int
 | 5 | Feasibility (15%) | B0076 | number | R | 1–5 | Default weight 0.15 |
 | 6 | Time-to-value (15%) | B0076 | number | R | 1–5 | Default weight 0.15 |
 | 7 | Weighted score | B0076 | calculated (decimal) | — | read-only | "[calc]". **Interpretation (master prompt §9):** Σ(score × weight) on a 1–5 scale; a missing score means incomplete, not zero |
-| — | Weight (per criterion) | B0077 | percentage (fraction) | R | **interpretation (§9):** total = 100%; versioned | "Adjust weights to the transformation context"; risk/compliance may replace part of the weighting |
+| — | Weight (per criterion) | B0077 | percentage (fraction) | R | **master prompt §9 (M0176):** total = 100%; versioned | "Adjust weights to the transformation context"; risk/compliance may replace part of the weighting. Per-transformation weight sets: REQ-PB-049 (DG3). Administrator default weights and rubrics in Playbook Studio: REQ-PB-093 (DG5) |
 
 ## T07 — Wave Roadmap (B0078, B0079) → REQ-PB-050
 
