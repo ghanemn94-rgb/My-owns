@@ -12,6 +12,11 @@ import { fileURLToPath } from "node:url";
 import { candidateId, manifestFromRef, manifestFromWorkingTree } from "../lib/candidate.mjs";
 import { validateGate, validatePipeline, reconcile, REGISTER_COLUMNS, STAGE_ORDER } from "../lib/rules.mjs";
 import { parseCsv } from "../lib/csv.mjs";
+// Hermetic git: fixtures must not depend on the host's global or system git config (e.g. mandatory commit signing).
+process.env.GIT_CONFIG_GLOBAL = "/dev/null";
+process.env.GIT_CONFIG_NOSYSTEM = "1";
+process.env.GIT_AUTHOR_NAME = process.env.GIT_COMMITTER_NAME = "gate-test";
+process.env.GIT_AUTHOR_EMAIL = process.env.GIT_COMMITTER_EMAIL = "gate-test@example.invalid";
 
 const T_FREEZE = "2026-09-28T12:00:00Z";
 const T_RUN = "2026-09-28T12:30:00Z";

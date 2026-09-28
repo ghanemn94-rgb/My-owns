@@ -5,6 +5,11 @@ import sys
 import tempfile
 import unittest
 
+# Hermetic git: tests must not depend on the host's global or system git config (e.g. mandatory commit signing).
+os.environ.update({"GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1", "GIT_AUTHOR_NAME": "gate-test",
+                   "GIT_COMMITTER_NAME": "gate-test", "GIT_AUTHOR_EMAIL": "gate-test@example.invalid",
+                   "GIT_COMMITTER_EMAIL": "gate-test@example.invalid"})
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import agent_settings  # noqa: E402
 

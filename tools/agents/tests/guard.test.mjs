@@ -8,6 +8,11 @@ import { tmpdir, homedir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { decide as decideAt, GUARD_ROOT } from "../guard-write.mjs";
+// Hermetic git: fixtures must not depend on the host's global or system git config (e.g. mandatory commit signing).
+process.env.GIT_CONFIG_GLOBAL = "/dev/null";
+process.env.GIT_CONFIG_NOSYSTEM = "1";
+process.env.GIT_AUTHOR_NAME = process.env.GIT_COMMITTER_NAME = "gate-test";
+process.env.GIT_AUTHOR_EMAIL = process.env.GIT_COMMITTER_EMAIL = "gate-test@example.invalid";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const scopes = JSON.parse(readFileSync(join(here, "..", "write-scopes.json"), "utf8"));
