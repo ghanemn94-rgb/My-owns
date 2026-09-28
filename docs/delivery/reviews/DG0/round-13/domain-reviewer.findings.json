@@ -1,0 +1,34 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-012",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The runner's config scan reports only added or changed lines, so a non-empty untracked Claude configuration file that is deleted, or (since the D-026 stub rule) truncated to zero bytes, leaves no trace in external_config_changed",
+      "reproduction": "docs/delivery/test-evidence/DG0/domain/round-13/06-stub-rule-probe.sh extracts config_snapshot() verbatim from tools/agents/run-agent.sh at the candidate commit 6c61f2e, runs it before and after a change in a disposable clone (HOME redirected to $TMPDIR), and applies the runner's own filter (diff pre post | grep '^>'). Case D: an untracked CLAUDE.local.md containing 'local rule' is truncated to zero bytes, and nothing is reported. Case E: the same file is deleted, and nothing is reported. The controls behave as intended: case A (a new zero-length stub) is ignored; B (new content), C (a stub gaining content) and F (a tracked .gitignore truncated) are all reported.",
+      "expected": "threat-model.md 'Detected, not prevented' says that a process outside the sandbox changing 'Claude configuration and ignore files anywhere in the repository and worktrees' is detected by the before/after config_snapshot. D-026 says the stub rule ignores only files that 'carry no configuration'. The removal of configuration content (deletion, or truncation of a file that had content before the run) is also a configuration change, so it should appear in external_config_changed. One way to do this: report '<' lines as well, and skip a zero-length untracked entry only when the file was absent or zero-length before the run.",
+      "actual": "Deletion of an untracked, non-empty config file was never reported, because the runner keeps only '>' lines. Since D-026, truncation to zero bytes is also unreported, because the post-run scan skips the now-empty untracked file. Neither leaves any git trace, since the file is untracked. Impact is limited. Inside a run, the agent's Bash sandbox denyWrite already covers .claude, CLAUDE*.md and .mcp.json (D-025), and the write guard covers file tools, so an agent cannot do this itself. The gap applies only to the 'process outside the sandbox' row, and only to removing configuration, not adding it. I would accept this as a Low observation for DG0 if the orchestrator documents it in threat-model.md, or fixes it in a later stage.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-13/06-stub-rule-probe.sh",
+        "docs/delivery/test-evidence/DG0/domain/round-13/06-stub-rule-probe.log",
+        "tools/agents/run-agent.sh#L89-L112",
+        "tools/agents/run-agent.sh#L168",
+        "docs/delivery/threat-model.md#detected-not-prevented",
+        "docs/delivery/decisions.md#D-026"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-13/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T22:00:00Z",
+          "status": "OPEN",
+          "note": "raised by domain-reviewer in DG0 round 13 (Low; acceptable as an observation)"
+        }
+      ]
+    }
+  ]
+}
