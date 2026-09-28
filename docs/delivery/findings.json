@@ -4803,14 +4803,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-14/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T22:55:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer in DG0 round 14; offline reproduction against the guard function in a disposable clone of 1e64eb0"
+        },
+        {
+          "at": "2026-09-28T23:15:59Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 5c4a12b4d7c89bab262e32ef9cc21206c35e5c04"
         }
-      ]
+      ],
+      "fix_revision": "5c4a12b4d7c89bab262e32ef9cc21206c35e5c04",
+      "fix_summary": "D-028: guard-write.mjs canonicalPath fails closed: a path whose real path cannot be determined, or whose resolution (hop by hop) passes through /proc, /sys or /dev, is blocked; the scratch set is only MTH_RUN_TMP (or tmpdir() without the runner), no hard-coded /tmp. Test 'F-DG0-143: writes that resolve through /proc, /sys or /dev, or whose real path cannot be determined, are blocked' covers a symlink to /proc/<pid>/root/tmp, /proc/self/cwd, /proc/self/root, /dev/shm and a symlink loop (fails on the previous guard)."
     },
     {
       "id": "F-DG0-144",
@@ -4833,14 +4840,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-14/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T22:55:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer in DG0 round 14; demonstrated live (unintentionally, see the incident note) against other concurrently running agents' clones"
+        },
+        {
+          "at": "2026-09-28T23:15:59Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 5c4a12b4d7c89bab262e32ef9cc21206c35e5c04"
         }
-      ]
+      ],
+      "fix_revision": "5c4a12b4d7c89bab262e32ef9cc21206c35e5c04",
+      "fix_summary": "D-028: every run gets a private TMPDIR (/var/tmp/mth-run.XXXXXX, mode 700, exported as TMPDIR and MTH_RUN_TMP, removed at the end). Verified: with it the Claude Code sandbox allows only $TMPDIR/claude-0, and /tmp/claude-0 and /var/tmp are read-only, so concurrent agents no longer share a writable scratch. Each reviewer may write only docs/delivery/reviews/*/round-*/<role>.* and docs/delivery/test-evidence/*/<key>/** (write-scopes.json), and its shell only test-evidence/<stage>/<key>, with the other reviewers' directories denied even before they exist (agent_settings.py). Tests: guard 'F-DG0-144: a reviewer may not write another reviewer's record, sidecars or evidence' and 'F-DG0-144: only the run's own private temporary directory is scratch, never the shared /tmp'; settings test_each_reviewer_writes_only_its_own_evidence_directory; runner 'F-DG0-144: every run gets its own private TMPDIR, exported to the agent and removed when the run ends'; live probe part B (another run's TMPDIR unwritable)."
     },
     {
       "id": "F-DG0-235",
