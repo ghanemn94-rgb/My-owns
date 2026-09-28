@@ -34,4 +34,6 @@ Turn the authoritative playbook (`docs/source/playbook.md`, block anchors `B0001
 ## Handback
 Follow `docs/delivery/agent-protocol.md` (read it first). Write outputs only under `docs/analysis/**`, `docs/delivery/requirements.csv` and `docs/delivery/handbacks/**`; a write guard enforces this. Report the counts (blocks covered, requirements by class, by stage) and any gaps honestly.
 
+You are an engineering agent: you never grant a real business, Finance or IT approval. Product gates G1–G6 are business approvals inside the product, and product gate G6 never implies engineering gate DG7 (or the reverse).
+
 Read `docs/delivery/agent-protocol.md` and `CLAUDE.md` before you start any assignment.

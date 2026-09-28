@@ -45,6 +45,11 @@
           "at": "2026-09-28T15:04:05Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by domain-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-09-28T16:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "73c485466a17cbb785e8f4ecee9bd967fe8333be",
@@ -53,17 +58,18 @@
         "by_role": "domain-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-DOM-R5-domain-reviewer-20260928T145750Z-bf7a9f5a",
-          "session_id": "bf7a9f5a-595e-45cb-8e59-0a6b1d1c529c"
+          "run_id": "DG0-T-DG0-REV-DOM-R7-domain-reviewer-20260928T162818Z-1524cacd",
+          "session_id": "1524cacd-6e1b-4a31-bd19-cfa3d99cf326"
         },
-        "at": "2026-09-28T15:04:05Z",
+        "at": "2026-09-28T16:45:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
-          "docs/delivery/test-evidence/DG0/domain/round-5/02-07-10-register-checks.log",
-          "docs/delivery/test-evidence/DG0/domain/round-5/11-analysis-tools.log"
+          "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+          "docs/delivery/test-evidence/DG0/domain/round-7/07-staging.log",
+          "docs/delivery/test-evidence/DG0/domain/round-7/09-analysis-tools.log",
+          "docs/delivery/requirements.csv"
         ],
-        "note": "Reproduced at 6c67698 (parent of fix 73c4854): REQ-PB-049 final_gate DG5, with no invalid-weight acceptance at DG3. At the round-5 candidate d141d303, REQ-PB-049 is increments P3 / final_gate DG3. Its acceptance rejects weights totalling 95% (or 105%), versions weight sets (version 2 with risk/compliance) and keeps version-1 references. REQ-S09-005 (DG3) cites it. The Studio default configuration is split into REQ-PB-093 (DG5). check_counts.py exits 0, so the stage-plan lists match the register. M0406's DG3 evidence 'invalid weights … handled' is satisfied."
+        "note": "Reproduced at 6c67698, the parent of fix 73c4854: REQ-PB-049 had final_gate DG5, so DG3 had no invalid-weight acceptance. In the candidate e11b5f0, REQ-PB-049 has final_gate DG3 and increments P3. Its acceptance says weights totalling 95% (or 105%) are rejected, a risk/compliance criterion at 10% creates weight-set version 2, and the REQ-S09-005 ranking history can name that version. The admin-default part is split out as REQ-PB-093 (DG5). stage-plan.md lists REQ-PB-049 under 'complete at DG3' (REQ-PB-045..057), and check_counts.py confirms the lists match the register (exit 0). This satisfies M0406 'invalid weights ... handled' at DG3."
       }
     },
     {
@@ -110,6 +116,11 @@
           "at": "2026-09-28T15:04:05Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by domain-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-09-28T16:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "73c485466a17cbb785e8f4ecee9bd967fe8333be",
@@ -118,16 +129,17 @@
         "by_role": "domain-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-DOM-R5-domain-reviewer-20260928T145750Z-bf7a9f5a",
-          "session_id": "bf7a9f5a-595e-45cb-8e59-0a6b1d1c529c"
+          "run_id": "DG0-T-DG0-REV-DOM-R7-domain-reviewer-20260928T162818Z-1524cacd",
+          "session_id": "1524cacd-6e1b-4a31-bd19-cfa3d99cf326"
         },
-        "at": "2026-09-28T15:04:05Z",
+        "at": "2026-09-28T16:45:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
-          "docs/analysis/permissions-matrix.md"
+          "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+          "docs/analysis/permissions-matrix.md",
+          "docs/analysis/user-journeys.md"
         ],
-        "note": "Reproduced at 6c67698: REQ-PB-020 had no T11 reference, and the matrix lacked the T11 Go-live / scale row and SP's RACI C on the TOM. At d141d303, REQ-PB-020 references T11, and permissions-matrix rule 7 defaults G5 to SP, configurable to BO per T11 'Go-live / scale'. It separates the transformation-level G5 from initiative-level T11 decisions. The TOM row gives SP 'Rv (RACI C for Target Operating Model)', consistent with B0099 and B0101."
+        "note": "Reproduced at 6c67698: REQ-PB-020 didn't reference T11 'Go-live / scale', the permissions matrix had no T11 Go-live / scale row, and SP had only V on the TOM row. In the candidate, the REQ-PB-020 acceptance says 'with the G5 approver configured to BO per T11 Go-live / scale, an SP approval returns 403 and a BO approval succeeds'. Its notes separate the transformation-level G5 from the initiative-level T11 decisions. The matrix has SP 'Rv (RACI C for Target Operating Model)' and an explicit T11 'Go-live / scale' row matching B0099 (Recommend initiative owner, Approve BO, Consult Risk/Tech/CX, Inform SteerCo). Rule 7 explains the distinction, and journey J2.5 step 5a uses it."
       }
     },
     {
@@ -172,6 +184,11 @@
           "at": "2026-09-28T15:04:05Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by domain-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-09-28T16:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "73c485466a17cbb785e8f4ecee9bd967fe8333be",
@@ -180,16 +197,16 @@
         "by_role": "domain-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-DOM-R5-domain-reviewer-20260928T145750Z-bf7a9f5a",
-          "session_id": "bf7a9f5a-595e-45cb-8e59-0a6b1d1c529c"
+          "run_id": "DG0-T-DG0-REV-DOM-R7-domain-reviewer-20260928T162818Z-1524cacd",
+          "session_id": "1524cacd-6e1b-4a31-bd19-cfa3d99cf326"
         },
-        "at": "2026-09-28T15:04:05Z",
+        "at": "2026-09-28T16:45:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
-          "docs/delivery/test-evidence/DG0/domain/round-5/11-analysis-tools.log"
+          "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+          "docs/delivery/test-evidence/DG0/domain/round-7/09-analysis-tools.log"
         ],
-        "note": "Reproduced at 6c67698: the REQ-PB-055/085/088 notes carried the 'Source-grounded; no interpretation beyond the cited blocks' boilerplate despite master-prompt content and interpretations. At d141d303, none of the three rows carries that boilerplate. REQ-PB-055 labels the before-G4 block as an interpretation, and check_pb_provenance.py passes (93 REQ-PB rows, 0 problems)."
+        "note": "Reproduced at 6c67698: the notes of REQ-PB-055, -085 and -088 carried 'no interpretation beyond the cited blocks'. In the candidate, none of them does. Each note now separates Playbook content, Master-prompt additions and Interpretations. REQ-PB-055 lists 'early becomes a hard rule before G4' as an interpretation, REQ-PB-085 lists the M0227 severity/persistence rule as an addition, and REQ-PB-088 lists M0339/M0348 as additions. check_pb_provenance.py: 93 REQ-PB rows, 0 problems, exit 0."
       }
     },
     {
@@ -235,6 +252,11 @@
           "at": "2026-09-28T15:04:05Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by domain-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-09-28T16:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
@@ -243,17 +265,16 @@
         "by_role": "domain-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-DOM-R5-domain-reviewer-20260928T145750Z-bf7a9f5a",
-          "session_id": "bf7a9f5a-595e-45cb-8e59-0a6b1d1c529c"
+          "run_id": "DG0-T-DG0-REV-DOM-R7-domain-reviewer-20260928T162818Z-1524cacd",
+          "session_id": "1524cacd-6e1b-4a31-bd19-cfa3d99cf326"
         },
-        "at": "2026-09-28T15:04:05Z",
+        "at": "2026-09-28T16:45:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
-          "docs/delivery/test-evidence/DG0/domain/round-5/01-extraction.log",
-          "docs/delivery/test-evidence/DG0/domain/round-5/11-analysis-tools.log"
+          "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+          "docs/delivery/test-evidence/DG0/domain/round-7/01-extraction.log"
         ],
-        "note": "Reproduced at 8c8757a (parent of fix 6c67698): playbook.md had neither 'PRACTICAL EDITION' nor <br> in multi-line cells. At d141d303, the footer text is present, and multi-line cells use <br> (for example '6<br>PHASES'). My independent docx extraction (word/document.xml, with w:br/w:tab mapped to spaces) finds all 1001 non-empty paragraph segments and all 239 rows of the 49 tables contiguous in playbook.md, and footer1.xml's text is present. tools/source/check_extraction.sh passes."
+        "note": "Reproduced at 8c8757a, the parent of fix 6c67698: playbook.md had neither 'PRACTICAL EDITION' nor <br>. In the candidate, line 2 of playbook.md records '<!-- footer1: BUSINESS TRANSFORMATION PLAYBOOK  |  PRACTICAL EDITION -->', and multi-line cells use <br> (7 occurrences, including B0003 '6<br>PHASES' and B0150 'Score: ____ / 25<br>Top 3 actions'). My independent docx diff finds 1001 of 1001 paragraph segments present and in order, 49 tables and 239 rows with no missing cell, and the footer present. check_extraction.sh exits 0."
       }
     },
     {
@@ -298,6 +319,11 @@
           "at": "2026-09-28T15:04:05Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by domain-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-09-28T16:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "73c485466a17cbb785e8f4ecee9bd967fe8333be",
@@ -306,16 +332,16 @@
         "by_role": "domain-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-DOM-R5-domain-reviewer-20260928T145750Z-bf7a9f5a",
-          "session_id": "bf7a9f5a-595e-45cb-8e59-0a6b1d1c529c"
+          "run_id": "DG0-T-DG0-REV-DOM-R7-domain-reviewer-20260928T162818Z-1524cacd",
+          "session_id": "1524cacd-6e1b-4a31-bd19-cfa3d99cf326"
         },
-        "at": "2026-09-28T15:04:05Z",
+        "at": "2026-09-28T16:45:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
+          "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
           "docs/analysis/glossary.md"
         ],
-        "note": "Reproduced at 6c67698: 'Journey' was rendered 'رحلة العميل' and 'Modular mode' 'النمط المعياري'. At d141d303, the glossary uses 'الرحلة (رحلة العميل أو رحلة العمل)' and 'النمط الجزئي المرن (الدخول عند المرحلة المناسبة)', and records the old terms with a rationale in a change table. Both preserve the English meaning."
+        "note": "Reproduced at 6c67698: 'Journey' was 'رحلة العميل' and 'Modular mode' was 'النمط المعياري'. In the candidate, the glossary gives 'الرحلة (رحلة العميل أو رحلة العمل)' and 'النمط الجزئي المرن (الدخول عند المرحلة المناسبة)'. It keeps the old renderings in a 'Before' change table with rationale and keeps the pending-linguistic-review caveat. Both new terms preserve the English meaning."
       }
     },
     {
@@ -372,6 +398,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "bf7f5e251d3a89173d9b9157ac0bf0283b40bf9d",
@@ -380,18 +411,17 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r3-repro-on-540b3c69.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/repro-r6-carried.test.mjs",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/05-existing-tests.log"
         ],
-        "note": "Re-run in round 6. Old: the round-1 repro on 26642c72 passes R1a (an OPEN High finding relabelled to DG1 escapes the gate) and R1b (an earlier-round High finding is dropped from findings.json) (09-r1-repro-on-26642c72.log, tests 2-3). The round-3 repro on 540b3c69 test 2 shows deleting a whole round is detected there (09-r3). New a059b55: carried suite test 16 rejects a relabel to DG1, a drop, and the deletion of round 1 (02-repro-carried-on-a059b55.log). rules.mjs and validator.test.mjs are byte-identical between d141d303 and a059b55. The fix is complete for the relabel and drop vectors. The separate rewrite-in-history weakness is F-DG0-115."
+        "note": "Original reproduced in this run on 26642c72: r1 R1a (an OPEN High mandatory finding relabelled to DG1 escapes) and R1b (a dropped finding) pass the gate (15-r1). Fixed on e11b5f08: carried test 16 rejects a relabel to DG1, a sidecar relabel, a drop, and deleting round 1. The round-4/6 variants (tests 3-7, which rewrite committed sidecars to drop findings) are all rejected by write-once (04-carried-neutral-on-e11b5f0). The candidate's own tests pass (05)."
       }
     },
     {
@@ -413,7 +443,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "CLOSED_VERIFIED",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-09-28T12:32:32Z",
@@ -454,6 +484,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 7: FAIL"
         }
       ],
       "fix_revision": "265db13585e8177b3ccc1a476823b0654f7dde08",
@@ -462,17 +497,18 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
-        "result": "PASS",
+        "at": "2026-09-28T16:51:05Z",
+        "result": "FAIL",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r3-repro-on-540b3c69.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/01-repro-r7-on-e11b5f0.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/repro-r7.test.mjs"
         ],
-        "note": "Old: the round-1 repro R0 on 26642c72 passes a DG0 gate with fabricated 5-field run records and no transcripts (09-r1, test 1). The round-3 repro on 540b3c69 test 7 shows a verifying record without an assignment skipping the binding (09-r3). New a059b55: carried test 14 rejects a 4-field meta without transcript/result and a mismatched transcript hash. Test 15 rejects a verifying record without an assignment and unlisted records (02-repro-carried-on-a059b55.log). The disclosed D-021 residual (a fully fabricated, internally consistent run directory committed as new history) remains. It is documented, and outside this finding's scope."
+        "note": "Not fully fixed. Original reproduced on 26642c72: r1 R0 passes DG0 with fabricated 5-field run records and no transcripts (15-r1). On e11b5f08 the narrower vectors are rejected: a 4-field meta without transcript/result, a mismatched transcript hash, and a verifying record without an assignment (carried tests 14-15, 04-carried-neutral-on-e11b5f0). However, the finding's expected behaviour (the transcript's init/prompt/result lines must be present and carry the session) is not enforced when the transcript is valid gzip of '' or of newlines. rules.mjs:294 wraps every transcript check in 'if (lines.length)', so a fabricated meta.json + result.json + empty transcript passes validateGate in current and historical mode (repro-r7 tests 3-7, 01-repro-r7-on-e11b5f0). This is the original forgery cost again. Raised as F-DG0-132; fixing F-DG0-132 closes this finding too."
       }
     },
     {
@@ -519,6 +555,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
@@ -527,16 +568,16 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log"
         ],
-        "note": "Old: the round-1 repro R2 on 26642c72 shows symlinks silently excluded from the candidate, and repointable after approval undetected (09-r1, test 4). New a059b55: carried test 19 shows that repointing a committed symlink changes the committed candidate and that gitlinks are refused (02-repro-carried-on-a059b55.log). candidate.mjs:101 and :126-127 hash symlinks by target, with mode 120000."
+        "note": "Original reproduced on 26642c72: r1 R2 shows symlinks silently excluded and repointable after approval (15-r1). Fixed on e11b5f08: carried test 19 shows that a symlink repoint and a file/symlink swap change the committed candidate, and that gitlinks are refused (04-carried-neutral-on-e11b5f0). candidate.mjs:101 and :126 hash symlinks as 'symlink:<target>' with mode 120000."
       }
     },
     {
@@ -583,6 +624,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
@@ -591,16 +637,17 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/11-validators-at-head.log"
         ],
-        "note": "Old: the round-1 repro R3 on 26642c72 shows an extra exclude in the frozen manifest hiding deliverables (09-r1, test 5). New a059b55: carried test 20 rejects an extra exclude both in the manifest spec and in stages.json candidate_spec (02-repro-carried-on-a059b55.log). candidate.mjs:23-30 fixes APPROVED_SPEC, and --freeze refuses a non-conforming spec (candidate.mjs:44-48)."
+        "note": "Original reproduced on 26642c72: r1 R3 shows that an exclude added to the frozen manifest spec hides deliverables (15-r1). Fixed on e11b5f08: carried test 20 rejects an extra exclude in the manifest spec or in stages.json (04-carried-neutral-on-e11b5f0). specPolicyErrors pins include ['**'] and exclude ['trading_agent/**'], and checkCandidate (rules.mjs:761-762) binds manifest.spec to candidate_spec. The real manifest dee0316d has that spec (11-validators-at-head)."
       }
     },
     {
@@ -647,6 +694,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
@@ -655,18 +707,17 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/06-guard-e2e.sh",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/06-guard-e2e.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/07-guard-no-git.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/07-guard-e2e.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/08-guard-no-git.log"
         ],
-        "note": "Old: the round-1 repro R6 on 26642c72 shows the guard following symlinks and leaving .claude/settings.local.json, .mcp.json and trading_agent/ writable for implementers (09-r1, test 8). New a059b55: the end-to-end probe runs the real per-role hook command from tools/agents/settings/*.settings.json (06-guard-e2e.sh/.log). For backend-workflow-engineer it gives exit 2 (deny) for .claude/settings.local.json, .mcp.json, sub/CLAUDE.md, trading_agent/x.py, a symlink src/lnk -> tools/gates, an upper-case TOOLS/GATES path, '..' traversal, MultiEdit and NotebookEdit. An ordinary src/ok.ts is allowed (exit 0). Without a git binary, or with a cwd outside any repository, the hook denies (exit 2; 07-guard-no-git.log). This corrects my first probe, whose exit 127 came from env not finding bash in the harness."
+        "note": "Original reproduced on 26642c72: r1 R6 shows the guard following no symlinks and leaving settings.local.json, .mcp.json and trading_agent writable (15-r1). Fixed on e11b5f08, tested end to end through the real per-role hook commands (07-guard-e2e). For the implementer, all of the following are blocked with exit 2: .claude/settings.local.json, .mcp.json, sub/CLAUDE.md, trading_agent/x.py, tools/gates/**, write-scopes.json, stages.json, docs/source, reviews, the '..' segment, the upper-case path, MultiEdit, NotebookEdit and a symlinked directory. src/ok.ts is allowed. A garbage payload is blocked. With git absent, the guard fails closed (08-guard-no-git). The Bash gap is disclosed in agent-protocol.md:78 and D-020 (13-static-checks, 14-doc-drift)."
       }
     },
     {
@@ -714,6 +765,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
@@ -722,16 +778,16 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log"
         ],
-        "note": "Old: the round-1 repro R4 on 26642c72 accepts '#', '.' and non-path strings as evidence (09-r1, test 6). New a059b55: carried test 21 rejects '#', '.', a directory and a bare token as evidence, and rejects an empty gate tests[] (02-repro-carried-on-a059b55.log)."
+        "note": "Original reproduced on 26642c72: r1 R4 shows '#', '.' and non-path evidence accepted (15-r1). Fixed on e11b5f08: carried test 21 rejects '#', '.', a directory and a bare token as evidence, and rejects empty gate tests[] (04-carried-neutral-on-e11b5f0). repoFile (rules.mjs:49-64) requires a regular file whose real path is inside the repository."
       }
     },
     {
@@ -777,6 +833,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
@@ -785,16 +846,17 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r1-repro-on-26642c72.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/05-existing-tests.log"
         ],
-        "note": "Old: the round-1 repro R5 on 26642c72 shows parseCsv silently accepting characters after a closing quote (09-r1, test 7). New a059b55: carried test 22 shows that parseCsv throws on text after a closing quote, ragged rows, a stray quote and an unterminated field (02-repro-carried-on-a059b55.log)."
+        "note": "Original reproduced on 26642c72: r1 R5 shows the CSV parser accepting text after a closing quote (15-r1). Fixed on e11b5f08: carried test 22 shows that text after a quote, ragged rows, a stray quote and an unterminated quote all throw (04-carried-neutral-on-e11b5f0). The candidate's validator tests pass (05)."
       }
     },
     {
@@ -839,6 +901,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
@@ -847,17 +914,17 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/19-orig-state-and-docs.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/08-runner-e2e.sh",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/08-runner-e2e.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/17-runner-ci-originals.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/09-runner-e2e.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/16-runner-on-e11b5f08.log"
         ],
-        "note": "Old 26642c72 (19-orig-state-and-docs.log): run-agent.sh had no --stage/--task/--role/--model validation. RUN_ID had second resolution only (line 37), and it used 'mkdir -p \"$OUT\"' (line 39), so evidence could collide or be overwritten. New a059b55 has regex validation at lines 35-38, a RUN_ID with an 8-hex UUID suffix (line 48) and a plain 'mkdir \"$OUT\"' (line 51) that fails if the directory exists. End to end with a stub claude in a disposable clone (08-runner-e2e.log, 18-runner-on-a059b55.log): --stage DG9 and 'DG0;id', --task ../../x, --role ../x and --model 'x;id' exit 64, and an assignment outside the repository exits 66."
+        "note": "Original shown statically on 26642c72: no --stage/--task/--role/--model validation, RUN_ID without a session suffix, and 'mkdir -p' reuses directories (17-runner-ci-originals). Fixed on e11b5f08 (run-agent.sh:35-38, 48, 51). Executed: '--stage DG9', '--stage DG0;id', '--task ../../x', '--task $(id)', '--role ../x' and '--model x;id' exit 64, and '--assignment /etc/passwd' exits 66. No run directory with ';' or '..' is created. Session IDs are unique across 10 runs. An assignment path containing $(...) and backticks is passed as data (no PWNED file), and the replayed prompt carries the literal path (09-runner-e2e, 16-runner-on-e11b5f08)."
       }
     },
     {
@@ -902,6 +969,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
@@ -910,16 +982,16 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/19-orig-state-and-docs.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/11-ci.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/17-runner-ci-originals.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/13-static-checks.log"
         ],
-        "note": "Old 26642c72: actions/checkout@v4 and actions/setup-node@v4, mutable tags (19-orig-state-and-docs.log). New a059b55: both are pinned to 40-hex commit SHAs, with permissions 'contents: read' and fetch-depth 0. The workflow references no secrets and uses no continue-on-error, '|| true' or pull_request_target (11-ci.log). The only change since round 5 is the added 'Runner metadata tests' step."
+        "note": "Original shown on 26642c72: actions/checkout@v4 and actions/setup-node@v4 are mutable tags (17-runner-ci-originals). Fixed on e11b5f08: both actions are pinned to 40-hex commit SHAs with version comments. permissions is contents: read, fetch-depth is 0, and the workflow has no secrets, continue-on-error or '|| true' (13-static-checks). Every step is a plain command, so a failing validator exits non-zero and fails the job."
       }
     },
     {
@@ -945,17 +1017,18 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/22-repro-201-202-on-26642c7.log",
-          "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log",
-          "docs/delivery/test-evidence/DG0/qa/round-6/02-gates-tests.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/22-repro-201-202-on-26642c7.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/10-qa7-negative-on-new.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/02-gates-tests.log",
+          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r7.test.mjs"
         ],
-        "note": "Round-6 re-confirmation, re-run in this invocation. Reproduced on the round-1 candidate 26642c7: QA-N27 (a review whose invocation_reference points at the reviewer's T-DG0-LOAD run) fails with 'validator accepted an invalid gate (no errors)'. On the frozen round-6 candidate (worktree @ a059b55, candidate c13a4f8e), QA5-R201 in dg0-gate-negative-r6.test.mjs is rejected. The project regression 'F-DG0-201: a review bound to an unrelated run of the same role is rejected' passes (34/34 validator tests)."
+        "note": "Round-7 re-confirmation in this bound run. Reproduced on the round-1 candidate 26642c7: QA-N27 fails with 'validator accepted an invalid gate (no errors)'. On the round-7 candidate (fresh clone @ e11b5f0, dee0316d), QA5-R201 is rejected ('ran assignment .../T-DG0-LOAD.md' and 'before the candidate froze'), with the fixture upgraded to D-022-shaped transcripts. tools/gates tests: 37/37 pass."
       },
       "acceptance": null,
       "history": [
@@ -982,6 +1055,11 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
@@ -1010,17 +1088,17 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/22-repro-201-202-on-26642c7.log",
-          "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log",
-          "docs/delivery/test-evidence/DG0/qa/round-6/11-register-integrity.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/22-repro-201-202-on-26642c7.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/10-qa7-negative-on-new.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/11-register-integrity.log"
         ],
-        "note": "Round-6 re-confirmation. Reproduced on 26642c7: QA-N28 (a bare, non-existent evidence file name on an IMPLEMENTED DG0 row) is accepted there. On a059b55, QA5-R202 is rejected. My independent register script also finds every evidence path of the 19 IMPLEMENTED DG0 rows (errors: 0)."
+        "note": "Reproduced on 26642c7 (QA-N28: a bare non-existent evidence name is accepted). On the round-7 candidate, QA5-R202 is rejected with 'evidence is not an existing repository file: NO-SUCH-EVIDENCE.md'. The independent register-integrity and evidence-content scripts find every DG0 evidence path present (0 errors)."
       },
       "acceptance": null,
       "history": [
@@ -1047,6 +1125,11 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
@@ -1073,16 +1156,16 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/14-acceptance-feasibility.log",
-          "docs/delivery/test-evidence/DG0/qa/round-6/17-doc-findings-derivation.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/26-doc-findings-old-vs-new.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/14-acceptance-feasibility.log"
         ],
-        "note": "Round-6 re-confirmation by execution and derivation. docs/analysis/stage-plan.md and acceptance-map.md are unchanged since the round-4 candidate 53f5d176, per git diff --stat in 17-doc-findings-derivation.log. My feasibility script, re-run on a059b55, checks that the stage-plan authorship stage for each A01-A28 scenario is no later than the stage of its must-pass gate. It reports 28/28 scenarios with a concrete level, first stage, must-pass gate and author, and errors: 0."
+        "note": "At 26642c7, stage-plan.md named qa-verifier once (P6 only). At e11b5f0, it assigns test-first authorship before freeze (line 23) and per-stage owners for the A01-A22 scenarios in P1-P5, matching the acceptance map's 'must pass at' gates. The independent feasibility check reports 0 errors, and every A01-A28 scenario has a level, a first stage, a gate and an author."
       },
       "acceptance": null,
       "history": [
@@ -1109,6 +1192,11 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_summary": "Fixed by transformation-analyst in T-DG0-AN-05/06/07, integrated in 73c485466a17cbb785e8f4ecee9bd967fe8333be; see docs/delivery/handbacks/DG0/T-DG0-AN-05-transformation-analyst.md and T-DG0-AN-07"
@@ -1158,6 +1246,11 @@
           "at": "2026-09-28T15:04:05Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by domain-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-09-28T16:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "aa8fa37267361a87ecd034b722f6b90646abcb76",
@@ -1166,16 +1259,16 @@
         "by_role": "domain-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-DOM-R5-domain-reviewer-20260928T145750Z-bf7a9f5a",
-          "session_id": "bf7a9f5a-595e-45cb-8e59-0a6b1d1c529c"
+          "run_id": "DG0-T-DG0-REV-DOM-R7-domain-reviewer-20260928T162818Z-1524cacd",
+          "session_id": "1524cacd-6e1b-4a31-bd19-cfa3d99cf326"
         },
-        "at": "2026-09-28T15:04:05Z",
+        "at": "2026-09-28T16:45:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
-          "docs/delivery/test-evidence/DG0/domain/round-5/11-analysis-tools.log"
+          "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+          "docs/delivery/test-evidence/DG0/domain/round-7/02-register-coverage.log"
         ],
-        "note": "Reproduced at 18588e7 (parent of fix aa8fa37): the REQ-PB-088 notes attributed an M0348 rule that source_ref and coverage did not carry, and REQ-PB-068 filed the M0212 publication block under Interpretations. At d141d303, REQ-PB-088's M0348 attribution is consistent with source_ref and the M0348 coverage row. REQ-PB-068 lists the M0212 publication block under Master-prompt additions, and check_pb_provenance.py passes."
+        "note": "Reproduced at 18588e7, the parent of fix aa8fa37: REQ-PB-088 didn't cite M0348, and REQ-PB-068 filed the M0212 publication block under Interpretations. In the candidate, REQ-PB-088's source_ref includes M0348, the M0348 coverage row lists REQ-PB-088, and REQ-PB-068's notes read 'Master-prompt additions (§10 M0212): ... blocked from publication. Interpretations: none.' reg7.py reports 0 coverage back-reference problems."
       }
     },
     {
@@ -1222,6 +1315,11 @@
           "at": "2026-09-28T15:04:05Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by domain-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-09-28T16:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "bf7f5e251d3a89173d9b9157ac0bf0283b40bf9d",
@@ -1230,16 +1328,17 @@
         "by_role": "domain-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-DOM-R5-domain-reviewer-20260928T145750Z-bf7a9f5a",
-          "session_id": "bf7a9f5a-595e-45cb-8e59-0a6b1d1c529c"
+          "run_id": "DG0-T-DG0-REV-DOM-R7-domain-reviewer-20260928T162818Z-1524cacd",
+          "session_id": "1524cacd-6e1b-4a31-bd19-cfa3d99cf326"
         },
-        "at": "2026-09-28T15:04:05Z",
+        "at": "2026-09-28T16:45:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
+          "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+          "docs/delivery/test-evidence/DG0/domain/round-7/12-F-DG0-011.log",
           "docs/delivery/agent-protocol.md"
         ],
-        "note": "Reproduced at eaef1d0 (parent of fix bf7f5e2): grep 'never implies' in agent-protocol.md finds nothing. At d141d303, line 10 reads 'Product gate G6 (Sustain) never implies that engineering gate DG7 has passed, and DG7 never implies any G1–G6 business approval.' That satisfies REQ-DLV-002's acceptance. The automated regex in verify.py was too strict (it reports False), and the log shows the direct grep that supersedes it."
+        "note": "Reproduced at eaef1d0, the parent of fix bf7f5e2: agent-protocol.md lacked the G6/DG7 sentence. In the candidate, agent-protocol.md line 10 reads 'Product gate G6 (Sustain) never implies that engineering gate DG7 has passed, and DG7 never implies any G1–G6 business approval.' Line 9 states that no engineering agent grants a real business, Finance or IT approval. This matches the REQ-DLV-002 acceptance. The separate wording issue about agent definitions is raised as new finding F-DG0-011 and doesn't affect this closure."
       }
     },
     {
@@ -1287,6 +1386,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "bf7f5e251d3a89173d9b9157ac0bf0283b40bf9d",
@@ -1295,16 +1399,16 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r2-repro-on-83860be3.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r2-original-on-83860be3.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log"
         ],
-        "note": "Old: the round-2 repro on 83860be3 passes N1a (a closure cited from a pre-freeze unrelated run), N1b (the sidecar says FAIL while findings.json says CLOSED_VERIFIED) and N1c (evidence and fix_revision never checked) (09-r2-repro-on-83860be3.log, tests 9-11). New a059b55: carried test 17 rejects CLOSED_VERIFIED against a latest-FAIL sidecar, a foreign fix_revision and '#' evidence (02-repro-carried-on-a059b55.log). The closure now derives from the reporter's bound sidecar. How robust that sidecar is against rewriting is F-DG0-115, which is still open."
+        "note": "Original reproduced on 83860be3: r2 N1a, N1b and N1c pass. A closure can cite a pre-freeze unrelated run, findings.json can say CLOSED_VERIFIED while the reporter's sidecar says FAIL, and evidence and fix_revision are unchecked (15-r2). Fixed on e11b5f08: carried test 17 rejects CLOSED_VERIFIED against a latest FAIL sidecar, a foreign fix_revision and '#' evidence. Carried test 2 (a genuine FAIL keeps the gate closed) passes (04-carried-neutral-on-e11b5f0). Note: the closure's run binding inherits the F-DG0-132 empty-transcript gap, which is tracked there."
       }
     },
     {
@@ -1353,6 +1457,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "bf7f5e251d3a89173d9b9157ac0bf0283b40bf9d",
@@ -1361,16 +1470,16 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r2-repro-on-83860be3.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/06-guard-e2e.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r2-original-on-83860be3.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/07-guard-e2e.log"
         ],
-        "note": "Old: the round-2 repro N3 on 83860be3 shows an implementer planting tools/.git and then writing protected gate files (09-r2, test 13). New a059b55: the end-to-end probe (06-guard-e2e.log) denies Write of tools/.git and docs/.git. With 'gitdir:' files planted at tools/.git and docs/.git, writes to tools/gates/lib/rules.mjs, write-scopes.json, stages.json and docs/source are still denied (exit 2). guard-write.mjs:42 fixes GUARD_ROOT from the script location, and :82 denies any '.git' segment."
+        "note": "Original reproduced on 83860be3: r2 N3 shows that an implementer can plant tools/.git or docs/.git and then write protected gate files (15-r2). Fixed on e11b5f08. GUARD_ROOT is fixed at the guard's own location (guard-write.mjs:42), and any '.git' segment is refused (:82). End to end, writes to tools/.git and docs/.git are blocked. With planted tools/.git and docs/.git files present, writes to rules.mjs, write-scopes.json and stages.json are still blocked with exit 2 (07-guard-e2e)."
       }
     },
     {
@@ -1419,6 +1528,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "bf7f5e251d3a89173d9b9157ac0bf0283b40bf9d",
@@ -1427,16 +1541,17 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r2-repro-on-83860be3.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r2-original-on-83860be3.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/11-validators-at-head.log"
         ],
-        "note": "Old: the round-2 repro on 83860be3 passes N4 (a file containing 'symlink:<t>' collides with a symlink) and N5 (the exec bit is not in the identity) (09-r2, tests 14-15). New a059b55: carried test 19 shows that the exec bit and a file/symlink swap change the committed candidate (02-repro-carried-on-a059b55.log). candidate.mjs:145 hashes '<sha256>  <mode>  <path>' (mth-candidate-v2)."
+        "note": "Original reproduced on 83860be3: r2 N4 (a file containing 'symlink:<t>' collides with a symlink) and N5 (the exec bit is not part of identity) (15-r2). Fixed on e11b5f08: mth-candidate-v2 hashes '<sha256>  <mode>  <path>' (candidate.mjs:136-149). Carried test 19 shows that an exec-bit change and a file/symlink swap change the candidate (04-carried-neutral-on-e11b5f0). The real manifest uses mth-candidate-v2 (11-validators-at-head)."
       }
     },
     {
@@ -1484,6 +1599,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "bf7f5e251d3a89173d9b9157ac0bf0283b40bf9d",
@@ -1492,16 +1612,17 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r2-repro-on-83860be3.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/15-autocrlf.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/18-prefreeze-crlf-old-vs-new.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r2-original-on-83860be3.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/13-static-checks.log"
         ],
-        "note": "Old: the round-2 repro N6 on 83860be3 shows the working-tree candidate differing under core.autocrlf=true (09-r2, test 16). New a059b55: .gitattributes has '* -text'. A clone with core.autocrlf=true and core.eol=crlf, checked out at a059b55, recomputes sha256:c13a4f8e...ff68 exactly (15-autocrlf.log). Note: a different platform-dependence (committed .pyc files rewritten by the candidate's own tests) is raised separately as F-DG0-130. It is not a line-ending issue and does not reopen this finding."
+        "note": "Original reproduced in this run on 83860be3: with core.autocrlf=true, 195 files are checked out CRLF, and the working-tree candidate (9c13ca68...) differs from HEAD's (d47b51ca...) (18-prefreeze-crlf-old-vs-new). Also r2 N6 (15-r2). Fixed on e11b5f08 by .gitattributes '* -text'. An autocrlf=true checkout reproduces sha256:dee0316d... exactly (18). git ls-files --eol shows attr/-text (13-static-checks)."
       }
     },
     {
@@ -1549,6 +1670,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "bf7f5e251d3a89173d9b9157ac0bf0283b40bf9d",
@@ -1557,15 +1683,15 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/19-orig-state-and-docs.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/14-doc-drift.log"
         ],
-        "note": "Re-checked at a059b55 (19-orig-state-and-docs.log). D-016 lists what provenance binding actually checks. The resume count is 6 in decisions.md (D-019), agents.md:40, agent-protocol.md:92 and run-agent.sh (MTH_MAX_RESUMES:-6). The other numbers are the 4-worker limit and the in-agent 3-retry rule, which are different things. The protected-path list in agents.md:20-26 matches write-scopes.json protected_for_implementers, using brace and any-depth forms. One remaining documentation inaccuracy (D-021 says evidence 'can no longer be edited in place undetected') belongs to F-DG0-115, not to this finding."
+        "note": "All three drift items are fixed on e11b5f08 (14-doc-drift). (1) Verifications are now bound: checkClosure calls checkInvocation with assignment, notBefore, manifestPath and outputs (rules.mjs:567). (2) D-019, agents.md and run-agent.sh all say 6 resumes. The agent-protocol's 'up to 3 times' is the separate per-command retry rule. (3) agents.md:23 lists .claude/**, .mcp.json and CLAUDE.md/CLAUDE.local.md at any depth, matching write-scopes.json. New drift is covered by F-DG0-132: D-016 and D-022 describe the transcript checks as unconditional, which they are not for empty transcripts."
       }
     },
     {
@@ -1593,16 +1719,17 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/23-repro-204-205-206-on-83860be.log",
-          "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/23-repro-204-205-206-on-83860be.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/10-qa7-negative-on-new.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/06-d022-prior-runs-replay.log"
         ],
-        "note": "Round-6 re-confirmation. Reproduced on the round-2 candidate 83860be: QA2-N11 (a findings.json verification citing the verifier's pre-freeze LOAD run) is accepted there (not ok). On a059b55, QA5-R204 is rejected, and the project regression 'F-DG0-110 / F-DG0-204' passes."
+        "note": "Reproduced on 83860be (QA2-N11: a closure citing the verifier's pre-freeze LOAD run is accepted). On the round-7 candidate, QA5-R204 is rejected ('not the verifying reviewer's own run'). D-022 additionally makes every pre-round-7 run unable to bind a closure: 06-d022-prior-runs-replay.log shows 0 replayed prompts in all 39 earlier runs, and QA7-N70 confirms that the pre-D-022 transcript shape is rejected."
       },
       "acceptance": null,
       "history": [
@@ -1630,6 +1757,11 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_summary": "Fixed in bf7f5e251d3a89173d9b9157ac0bf0283b40bf9d (round-2 repair); regression tests in tools/gates/tests/validator.test.mjs and tools/agents/tests/guard.test.mjs"
@@ -1658,16 +1790,16 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/23-repro-204-205-206-on-83860be.log",
-          "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/23-repro-204-205-206-on-83860be.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/10-qa7-negative-on-new.log"
         ],
-        "note": "Round-6 re-confirmation. Reproduced on 83860be: QA2-N12 (register evidence that is an in-repo symlink to a file outside the repository) is accepted there. On a059b55, QA5-R205 rejects the outside link and accepts an in-repo link."
+        "note": "Reproduced on 83860be (QA2-N12: an in-repo symlink to a file outside the repository is accepted as evidence). On the round-7 candidate, QA5-R205 rejects the outside link and accepts an in-repo link (control)."
       },
       "acceptance": null,
       "history": [
@@ -1695,6 +1827,11 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_summary": "Fixed in bf7f5e251d3a89173d9b9157ac0bf0283b40bf9d (round-2 repair); regression tests in tools/gates/tests/validator.test.mjs and tools/agents/tests/guard.test.mjs"
@@ -1722,16 +1859,17 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/23-repro-204-205-206-on-83860be.log",
-          "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/23-repro-204-205-206-on-83860be.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/10-qa7-negative-on-new.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/00-candidate-recheck.log"
         ],
-        "note": "Round-6 re-confirmation. Reproduced on 83860be: QA2-N14 prints 'exec-bit change detected by candidate: false'. On a059b55, QA5-R206 (a committed chmod +x after freeze) invalidates the approval. The current manifest uses mth-candidate-v2 with git modes. Note: the new finding F-DG0-220 (committed .pyc files) is a separate defect and does not reopen this one."
+        "note": "Reproduced on 83860be (QA2-N14 prints 'exec-bit change detected by candidate: false'). On the round-7 candidate, QA5-R206 is rejected: a committed chmod +x after freeze gives 'candidate: current content hashes to ...'. The manifest uses mth-candidate-v2 (<sha256>  <mode>  <path>)."
       },
       "acceptance": null,
       "history": [
@@ -1759,6 +1897,11 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_summary": "Fixed in bf7f5e251d3a89173d9b9157ac0bf0283b40bf9d (round-2 repair); regression tests in tools/gates/tests/validator.test.mjs and tools/agents/tests/guard.test.mjs"
@@ -1786,16 +1929,16 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/17-doc-findings-derivation.log",
-          "docs/delivery/test-evidence/DG0/qa/round-6/31-prefreeze-fresh-worktree.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/26-doc-findings-old-vs-new.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/05-prefreeze-fresh-clone.log"
         ],
-        "note": "Round-6 re-confirmation. REQ-DLV-013 and REQ-DLV-026 changed in this candidate: run_meta.py, test_run_meta.py and new test citations were added. I re-checked every cited title. All quoted validator test titles exist in tools/gates/tests/validator.test.mjs, and every cited test_* name exists in tools/agents/tests/test_run_meta.py; the only mismatches in my ad-hoc scan were quote-splitting artifacts, namely the apostrophe in the F-DG0-119 title and the error text 'file not found'. The candidate's own docs/analysis/tools/check_test_refs.py reports '52 declared test titles derived from 3 test files; 42 quoted test title citation(s); 0 problem(s)' on a059b55."
+        "note": "At 83860be, the register cited two validator test names that did not exist (1 citation each, 0 definitions). At e11b5f0 both citations are gone, and docs/analysis/tools/check_test_refs.py reports '42 quoted test title citation(s) in 411 register rows; 0 problem(s)'. It also passes inside prefreeze on a fresh clone."
       },
       "acceptance": null,
       "history": [
@@ -1823,6 +1966,11 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_summary": "Fixed by transformation-analyst in T-DG0-AN-08, integrated in aa8fa37267361a87ecd034b722f6b90646abcb76"
@@ -1869,6 +2017,11 @@
           "at": "2026-09-28T15:04:05Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by domain-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-09-28T16:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "613946f760b703c3b5a6c7693bdef1358e7a3fee",
@@ -1877,16 +2030,16 @@
         "by_role": "domain-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-DOM-R5-domain-reviewer-20260928T145750Z-bf7a9f5a",
-          "session_id": "bf7a9f5a-595e-45cb-8e59-0a6b1d1c529c"
+          "run_id": "DG0-T-DG0-REV-DOM-R7-domain-reviewer-20260928T162818Z-1524cacd",
+          "session_id": "1524cacd-6e1b-4a31-bd19-cfa3d99cf326"
         },
-        "at": "2026-09-28T15:04:05Z",
+        "at": "2026-09-28T16:45:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/domain/round-5/13-verifications.log",
-          "docs/delivery/test-evidence/DG0/domain/round-5/11-analysis-tools.log"
+          "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+          "docs/delivery/test-evidence/DG0/domain/round-7/09-analysis-tools.log"
         ],
-        "note": "Reproduced at f0335fa (parent of fix 613946f): REQ-PB-091, -050 and -078 filed M0288/M0135/M0178/M0150 content under Interpretations. At d141d303, the Interpretations clauses no longer carry that content. REQ-PB-050 cites M0178 under Master-prompt additions, and check_pb_provenance.py (with its added R5–R7 rules) passes with 0 problems."
+        "note": "Reproduced at f0335fa, the parent of fix 613946f: M0288 content in REQ-PB-091 sat under Interpretations, REQ-PB-050 said 'Master-prompt additions: none', and REQ-PB-078 filed the M0150 canonical-dependency rule as an interpretation. In the candidate, REQ-PB-091 lists M0288 (top three actions required, reassessments tracked) under Master-prompt additions. REQ-PB-050 lists §5 M0135 and §9 M0178, M0180-M0183 as additions, with 'Interpretations: none'. REQ-PB-078 lists the M0150 canonical dependency record as an addition, with 'Interpretations: none'. check_pb_provenance.py (with R5-R7) exits 0."
       }
     },
     {
@@ -1906,7 +2059,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-3/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T14:13:51Z",
@@ -1937,6 +2090,11 @@
           "at": "2026-09-28T16:26:58Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1583bf105848fa77c20fb8bdc27a1acb8796e86e"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "1583bf105848fa77c20fb8bdc27a1acb8796e86e",
@@ -1945,20 +2103,21 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
-        "result": "FAIL",
+        "at": "2026-09-28T16:51:05Z",
+        "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/repro-r6-carried.test.mjs",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r5carried-repro-on-d141d303.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r3-repro-on-540b3c69.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/10-history-feasibility.py",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/10-history-feasibility.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r3-original-on-540b3c69.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r4-original-on-53f5d176.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-a059b55.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/03-carried-on-e11b5f0.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/12-real-history-writeonce.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/repro-r7-carried-neutral.test.mjs"
         ],
-        "note": "Still bypassable in the round-6 candidate. rules.mjs is byte-identical between d141d303 and a059b55, and my round-5 result (never bound, because that run was orphaned) re-runs identically. The original round-3 vectors are fixed. On 540b3c69, tests 4-6 of the round-3 repro edit a committed sidecar or record to drop a High finding, flip a FAIL verification and flip a FAIL verdict (09-r3). On a059b55, carried tests 3-7 reject those edits: an ordinary-commit rewrite, an uncommitted edit, a verdict flip and the plain evil merge (02-repro-carried-on-a059b55.log). The root-cause design is still defeated by ordering. tools/gates/lib/rules.mjs:606-641 (checkWriteOnce) runs 'git log -m --full-history --diff-filter=A --reverse' (line 609) and keeps as reference the blob of whichever commit that output lists first (lines 610-615). --reverse follows commit ordering, which is influenced by committer dates that the committer chooses freely. It then compares HEAD and the disk only with that blob (lines 633-636) and never looks at M events or at other add events. Carried test 10 (BYPASS N4) passes on a059b55. The runner commits the reviewer's genuine round-2 sidecar (FAIL/OPEN for High F-DG0-101), which keeps the gate closed. A forger then makes side commit S from the freeze commit, with committer date 2001-01-01. S adds the round evidence with a forged PASS/CLOSED_VERIFIED sidecar and a meta.json whose outputs and tool_authored are re-pointed to the forged bytes. The forger merges S with a merge whose tree is the forgery. validateGate(current) then returns []. After approval, validateGate(historical) and validatePipeline return []. 'git diff <round commit> HEAD' shows M on the sidecar. Test 11 (N4b) drops a committed round-1 High finding and flips the round-1 FAIL verdict to PASS the same way. Control test 9: with a current date for S the rewrite is detected, so ordering alone decides. This contradicts D-021 ('every file ever added ... must still hold ... the exact blob that first added it'; 'can no longer be edited in place undetected'), and it is not covered by the disclosed residual, which is fabricating a new run directory as new history; here the genuine blob stays in history. Expected fix: every write-once path has exactly one distinct blob across ALL add/modify events against EVERY parent ('git log -m --full-history --raw'), with no M/T events, and HEAD and the disk equal that blob. Alternatively, reject merges and commits whose committer date precedes a parent's. That rule is satisfiable today: the real history at b6fa2c28 has 224 write-once paths, 0 with more than one blob, 0 merges and 0 back-dated commits (10-history-feasibility.log). Defence in depth: the validator should replay tool_authored from the bound transcript instead of trusting meta.tool_authored. No actual tampering is observed in the real DG0 evidence; this is a control weakness. Severity stays High and mandatory."
+        "note": "Originals reproduced in this run. On 540b3c69, r3 tests 4-6 edit committed sidecars and records to drop a High finding, flip a FAIL verification and flip a FAIL verdict (15-r3). On 53f5d176, r4 N1/N1b hide the edit in an evil merge (15-r4). On a059b55 (the round-6 residual), carried tests 10-11 (N4/N4b), a back-dated side branch plus merge, still pass the gate (04-carried-neutral-on-a059b55). On e11b5f08 all are rejected: carried tests 3-9 FIXED, and N4/N4b now fail. The errors are 'was committed with 2 different contents', 'has a M event' and 'is back-dated before its parent' (04-carried-neutral-on-e11b5f0; message-wording-only differences explained in 03-carried-on-e11b5f0). Real repository history passes the new checks (12-real-history-writeonce: checkWriteOnce []). I found no way around the single-blob rule. Colour config does not affect --raw, and log.showRoot=false only hides root-commit adds. The runner commits a review's outputs immediately (16-runner-on-e11b5f08). Scope note: the defence-in-depth transcript replay advertised with this fix is skipped for empty transcripts. That only matters for fabricated or uncommitted run directories, which are F-DG0-102/F-DG0-132 territory and tracked there, not the in-place-edit problem this finding describes."
       }
     },
     {
@@ -1999,6 +2158,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "265db13585e8177b3ccc1a476823b0654f7dde08",
@@ -2007,16 +2171,16 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r3-repro-on-540b3c69.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r3-original-on-540b3c69.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log"
         ],
-        "note": "Old: the round-3 repro test 9 on 540b3c69 shows that with core.fileMode=false the working-tree mode disagrees with git (09-r3). New a059b55: carried test 23 shows that with core.fileMode=false tracked modes are taken from the index, so the committed candidate is reproduced (02-repro-carried-on-a059b55.log; candidate.mjs:84-104)."
+        "note": "Original reproduced on 540b3c69: r3 test 9 shows that with core.fileMode=false the working-tree mode disagrees with git (15-r3). Fixed on e11b5f08 (candidate.mjs:84-105): carried test 23 shows tracked modes taken from the index when core.fileMode=false (04-carried-neutral-on-e11b5f0)."
       }
     },
     {
@@ -2057,6 +2221,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "265db13585e8177b3ccc1a476823b0654f7dde08",
@@ -2065,16 +2234,16 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r3-repro-on-540b3c69.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r3-original-on-540b3c69.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log"
         ],
-        "note": "Old: the round-3 repro test 10 on 540b3c69 shows ACCEPTED_OBSERVATION trusting role names typed into findings.json (09-r3). New a059b55: carried test 18 rejects an observation that is only typed into findings.json, so bound sidecar entries from a specialist and the auditor are required (02-repro-carried-on-a059b55.log). The sidecars' own rewrite resistance is F-DG0-115."
+        "note": "Original reproduced on 540b3c69: r3 test 10 shows ACCEPTED_OBSERVATION accepted on role names typed into findings.json (15-r3). Fixed on e11b5f08: carried test 18 rejects an acceptance typed only into findings.json (04-carried-neutral-on-e11b5f0). rules.mjs:455-476 require bound sidecar entries from a specialist and from the release-auditor."
       }
     },
     {
@@ -2116,6 +2285,11 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_revision": "265db13585e8177b3ccc1a476823b0654f7dde08",
@@ -2124,16 +2298,16 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/24-repro-208-on-540b3c69.log",
-          "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/24-repro-208-on-540b3c69.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/10-qa7-negative-on-new.log"
         ],
-        "note": "Round-6 re-confirmation. Reproduced on the round-3 candidate 540b3c69: QA3-N20 logs 'errors (0)', i.e. the validator accepted the rewritten frozen_at plus a LOAD-run closure (a TODO probe there). On a059b55, QA5-R208a (committed) and QA5-R208b (uncommitted) are both rejected, and the project regression 'F-DG0-208: round metadata must match the committed manifest of its candidate' passes."
+        "note": "Reproduced on 540b3c69 (QA3-N20: 0 errors for a rewritten frozen_at plus a record re-pointed at a LOAD run). On the round-7 candidate, QA5-R208a (committed) and R208b (uncommitted) are rejected by the manifest check and by write-once, with the round-7 single-blob messages. The new QA7-N79/N80/N81 show that merge, type-change and modify-then-revert histories are also rejected."
       }
     },
     {
@@ -2175,6 +2349,11 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_revision": "613946f760b703c3b5a6c7693bdef1358e7a3fee",
@@ -2183,15 +2362,16 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/17-doc-findings-derivation.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/26-doc-findings-old-vs-new.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/16-dg0-evidence-content.log"
         ],
-        "note": "Round-6 re-confirmation. On a059b55, D-005 reads 'sorted lines \"<sha256>  <git mode>  <path>\\n\" (algorithm mth-candidate-v2; historical DG0 rounds 1-2 used mth-candidate-v1, \"<sha256>  <path>\\n\")'. REQ-DLV-022's procedure reads 'sorted lines '<sha256>  <git mode>  <path>' (algorithm mth-candidate-v2 ...)'. Both match candidateId() in tools/gates/lib/candidate.mjs, which returns `${e.sha256}  ${e.mode}  ${e.path}\\n` for v2."
+        "note": "At 540b3c69, decisions.md and requirements.csv each contained '<file sha256>  <path>' once. At e11b5f0 both counts are 0, and candidate.mjs hashes `${e.sha256}  ${e.mode}  ${e.path}`, consistent with D-005 and REQ-DLV-022."
       }
     },
     {
@@ -2233,6 +2413,11 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_revision": "265db13585e8177b3ccc1a476823b0654f7dde08",
@@ -2241,15 +2426,16 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/17-doc-findings-derivation.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/26-doc-findings-old-vs-new.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/15-agents-md-vs-evidence.log"
         ],
-        "note": "Round-6 re-confirmation. On a059b55, agents.md says 'resumes the same session up to 6 times (D-019)', and run-agent.sh line 22 has MAX_RESUMES=\"${MTH_MAX_RESUMES:-6}\". The '3 times' text is gone. agents.md is unchanged since 53f5d176."
+        "note": "At 540b3c69, agents.md said 'up to 3 times'. At e11b5f0 it says 'up to 6 times', matching run-agent.sh MTH_MAX_RESUMES:-6 and D-019. The separate D-022 gap in agents.md is raised as new finding F-DG0-222, not as a failure of this fix."
       }
     },
     {
@@ -2285,6 +2471,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "ebc8fb7e19aa1ce28c7642f77776232b27365389",
@@ -2293,16 +2484,17 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r4-repro-on-53f5d176.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r4-original-on-53f5d176.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/repro-r7-carried-neutral.test.mjs"
         ],
-        "note": "Old: the round-4 repro test 13 (BYPASS N2) on 53f5d176 shows skip-worktree hiding a working-tree forgery while the gate passes (09-r4-repro-on-53f5d176.log). New a059b55: rules.mjs:626-640 hashes the on-disk bytes with 'git hash-object --no-filters' and compares them with the reference blob. Carried test 8 flags the sidecar, meta.json and findings.json as skip-worktree (and assume-unchanged), forges them, confirms 'git status' is empty, and gets the 'working-tree ... differs ... skip-worktree' error (02-repro-carried-on-a059b55.log). The choice of reference blob is F-DG0-115."
+        "note": "Original reproduced on 53f5d176: r4 N2 shows skip-worktree hiding a working-tree forgery (15-r4). Fixed on e11b5f08: carried test 8 (wording-neutral variant, which also flags the run transcript that the new fixture rewrites) sets skip-worktree and assume-unchanged, leaves git status empty, and the validator still reports 'working-tree ... differs'. checkWriteOnce hashes disk bytes with hash-object --no-filters (04-carried-neutral-on-e11b5f0)."
       }
     },
     {
@@ -2339,6 +2531,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "ebc8fb7e19aa1ce28c7642f77776232b27365389",
@@ -2347,20 +2544,18 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/18-runner-old-vs-new.sh",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/18-runner-on-53f5d176.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/18-runner-on-a059b55.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/08-runner-e2e.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/fake-claude-r6.py",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/16-runner-on-53f5d176.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/16-runner-on-e11b5f08.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/09-runner-e2e.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/fake-claude-r7.py"
         ],
-        "note": "Old 53f5d176, with the real run-agent.sh and a stub claude in a disposable clone (18-runner-on-53f5d176.log): a Write denied by the hook (tool_result is_error) plus other-writer content B is recorded in outputs and auto-committed as the reviewer's file. meta has no tool_authored. New a059b55 (08-runner-e2e.log, 18-runner-on-a059b55.log):\n- denied Write plus B: tool_authored={}, not committed;\n- Write then Bash append: tool_authored={};\n- Edit-only change of a pre-existing file: tool_authored={}, fails closed;\n- honest Write, Write+Edit and Write+MultiEdit: bound to the sha256 of the replayed text, and committed;\n- the round-5 crash input (a string 'message', null message, string content, a non-JSON line): meta.json is built and the honest Write is bound (strmsg mode);\n- a Write through an in-tree symlink: recorded under the real path.\nValidator side: carried test 12 rejects outputs without a matching tool_authored digest (02-repro-carried-on-a059b55.log). The residual (the validator trusts meta.tool_authored rather than replaying the transcript) depends on F-DG0-115."
+        "note": "Original reproduced in this run on 53f5d176 with a stub CLI. A write the hook denied (then written by someone else) and a Bash-edited record are both recorded as outputs and auto-committed, with no tool_authored field (16-runner-on-53f5d176). Fixed on e11b5f08: the denied and shelledit runs give tool_authored [] and nothing is committed besides the run directory (16-runner-on-e11b5f08). checkInvocation rejects them ('not written by this run's file tools', 'differs from the replay'), while honest Write, Edit and MultiEdit runs bind cleanly (09-runner-e2e). Carried test 12 covers the validator side (04-carried-neutral-on-e11b5f0)."
       }
     },
     {
@@ -2396,6 +2591,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "ebc8fb7e19aa1ce28c7642f77776232b27365389",
@@ -2404,18 +2604,17 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/18-runner-old-vs-new.sh",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/18-runner-on-53f5d176.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/18-runner-on-a059b55.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/08-runner-e2e.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/16-runner-on-53f5d176.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/16-runner-on-e11b5f08.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/09-runner-e2e.log"
         ],
-        "note": "Old 53f5d176 (18-runner-on-53f5d176.log, glob mode): the agent Writes a file literally named 'x*' while the tracked 'xy.md' is modified by someone else. The auto-commit contains 'A x*' AND 'M xy.md', so the unrelated file is swept in. New a059b55 (18-runner-on-a059b55.log and 08-runner-e2e.log): the auto-commit contains only 'A x*' plus the run directory, and xy.md stays an uncommitted modification. A path with a space is committed literally. With a held .git/index.lock (lockfail mode) the runner prints 'FAILED to auto-commit review evidence ... the evidence is NOT write-once yet' and exits 70. On 53f5d176 the same case exited 128 with no explanation. run-agent.sh:126-151 uses NUL-separated --pathspec-from-file with GIT_LITERAL_PATHSPECS=1 under flock."
+        "note": "Original reproduced in this run on 53f5d176: a Write to '<dir>/x*' makes the auto-commit also commit the unrelated, externally modified <dir>/xy.md (M xy.md in the run commit) (16-runner-on-53f5d176). Fixed on e11b5f08: only 'x*' is committed, literally (GIT_LITERAL_PATHSPECS and NUL pathspec file). A held index.lock makes the runner exit 70 with an explicit 'FAILED to auto-commit' message (16-runner-on-e11b5f08). A path with a space is committed literally (09-runner-e2e)."
       }
     },
     {
@@ -2451,6 +2650,11 @@
           "at": "2026-09-28T15:39:59Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "ebc8fb7e19aa1ce28c7642f77776232b27365389",
@@ -2459,16 +2663,16 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6",
-          "session_id": "3eb7fbe6-0232-414f-a6a8-d4b53d5b948f"
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
         },
-        "at": "2026-09-28T15:39:59Z",
+        "at": "2026-09-28T16:51:05Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-6/09-r4-repro-on-53f5d176.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-6/02-repro-carried-on-a059b55.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-7/15-r4-original-on-53f5d176.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log"
         ],
-        "note": "Old: the round-4 repro test 20 (OBSERVATION N3) on 53f5d176 shows that replacing the gate record's tests[] with a fabricated entry still passes (09-r4-repro-on-53f5d176.log). New a059b55: carried test 13 rejects the same edit ('gates/DG0.json differs from what the run wrote'). A gate file absent from the auditor's outputs and tool_authored is also rejected (02-repro-carried-on-a059b55.log). The binding holds only as long as the auditor's meta.json stays write-once, which the F-DG0-115 back-dated merge still undermines. That dependency is tracked under F-DG0-115."
+        "note": "Original reproduced on 53f5d176: r4 test 20 (N3) shows the gate record's content not bound to the auditor run (15-r4). Fixed on e11b5f08: carried test 13 rejects editing the gate record's tests[] after the auditor wrote it (04-carried-neutral-on-e11b5f0). validateGate passes stage.gate_record as an extra bound output of the audit run (rules.mjs:866). This binding inherits the F-DG0-132 empty-transcript gap, which is tracked there."
       }
     },
     {
@@ -2510,22 +2714,27 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "verification": {
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/25-repro-211-212-on-53f5d176.log",
-          "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/25-repro-211-212-on-53f5d176.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/10-qa7-negative-on-new.log"
         ],
-        "note": "Fix ebc8fb7e: the gate record is bound to the audited release-auditor run's tool-authored outputs, and I re-ran this in round 6. Reproduced on the round-4 candidate 53f5d176: QA5-R211a (gate record edited and committed after the auditor run), QA5-R211b (gate record absent from the auditor run's outputs) and QA5-R211c (present in the window but not tool-authored) are all accepted there (not ok). On a059b55 all three are rejected. QA5-N59 (gate record authored by a domain-reviewer run, with the auditor's outputs list edited in history) is also rejected, and the project regression 'F-DG0-121 / F-DG0-211' passes."
+        "note": "Reproduced on 53f5d176 (QA5-R211a/b/c fail: the gate record is not bound to the auditor run). On the round-7 candidate, all three are rejected ('differs from what the run wrote' / 'was not written by this run's file tools'). The validator now also replays the transcript itself, so a gate record whose bytes differ from the auditor's own Write is rejected (QA7-N75 shows the same mechanism for sidecars)."
       },
       "fix_revision": "ebc8fb7e19aa1ce28c7642f77776232b27365389",
       "fix_summary": "Fixed in ebc8fb7e19aa1ce28c7642f77776232b27365389 (round-4 repair; D-021 redesign); regression tests in tools/gates/tests/validator.test.mjs; runner replay verified end-to-end in a disposable clone"
@@ -2569,22 +2778,27 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "verification": {
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/25-repro-211-212-on-53f5d176.log",
-          "docs/delivery/test-evidence/DG0/qa/round-6/10-qa6-negative-on-new.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/25-repro-211-212-on-53f5d176.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/10-qa7-negative-on-new.log"
         ],
-        "note": "Fix ebc8fb7e, re-run in round 6. findManifest recomputes each round manifest from its source_commit, and a bound run's head_commit_at_start must contain the round manifest. Reproduced on 53f5d176: QA5-R212a (a fabricated, backdated manifest) and QA5-R212b (an honest-content backdated manifest with a narrowed spec) both log 'errors (0)' and fail there. On a059b55 both are rejected, as are QA5-N57 (a manifest naming a non-existent source_commit) and QA5-N58 (a manifest edited in the working tree and hidden with assume-unchanged). All real DG0 round manifests present carry a hash_algorithm consistent with D-005."
+        "note": "Reproduced on 53f5d176 (QA5-R212a/b: 0 errors for a fabricated or backdated manifest round). On the round-7 candidate, both are rejected ('does not describe its source_commit' / 'which does not contain docs/delivery/candidates/DG0/...'). The new back-dating rule is also covered: QA7-N78 rejects a commit back-dated before its parent."
       },
       "fix_revision": "ebc8fb7e19aa1ce28c7642f77776232b27365389",
       "fix_summary": "Fixed in ebc8fb7e19aa1ce28c7642f77776232b27365389 (round-4 repair; D-021 redesign); regression tests in tools/gates/tests/validator.test.mjs; runner replay verified end-to-end in a disposable clone"
@@ -2628,21 +2842,26 @@
           "at": "2026-09-28T15:36:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "verification": {
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670",
-          "session_id": "c7277670-7297-410a-93d3-819a97354b69"
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
         },
-        "at": "2026-09-28T15:36:00Z",
+        "at": "2026-09-28T16:42:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-6/17-doc-findings-derivation.log"
+          "docs/delivery/test-evidence/DG0/qa/round-7/26-doc-findings-old-vs-new.log"
         ],
-        "note": "Fix ebc8fb7e, re-checked on a059b55. The candidate.mjs comment reads 'v1 (historical DG0 rounds 1-2 only)'. This agrees with D-005 ('historical DG0 rounds 1-2 used mth-candidate-v1'), with REQ-DLV-022 ('kept only to re-verify the historical DG0 round-1 and round-2 manifests') and with the manifests themselves: the round-3, 4, 5 and 6 manifests (31fd0843, 0be571ea, 4a8b14fd, c13a4f8e) declare mth-candidate-v2."
+        "note": "At 53f5d176, the candidate.mjs comment said 'v1 (historical DG0 rounds 1-3'. At e11b5f0, line 132 reads 'v1 (historical DG0 rounds 1-2 only)', consistent with D-005, REQ-DLV-022 and the committed manifests."
       },
       "fix_revision": "ebc8fb7e19aa1ce28c7642f77776232b27365389",
       "fix_summary": "Fixed in ebc8fb7e19aa1ce28c7642f77776232b27365389 (round-4 repair; D-021 redesign); regression tests in tools/gates/tests/validator.test.mjs; runner replay verified end-to-end in a disposable clone"
@@ -2683,6 +2902,11 @@
           "at": "2026-09-28T15:34:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by domain-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-09-28T16:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "bcb8c6130821eee9826506623111cf1b36ed07ad",
@@ -2691,18 +2915,16 @@
         "by_role": "domain-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-DOM-R6-domain-reviewer-20260928T152410Z-253a6c23",
-          "session_id": "253a6c23-820d-4cf1-a65e-248c2609ff96"
+          "run_id": "DG0-T-DG0-REV-DOM-R7-domain-reviewer-20260928T162818Z-1524cacd",
+          "session_id": "1524cacd-6e1b-4a31-bd19-cfa3d99cf326"
         },
-        "at": "2026-09-28T15:34:00Z",
+        "at": "2026-09-28T16:45:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/domain/round-6/01-F-DG0-009-old.log",
-          "docs/delivery/test-evidence/DG0/domain/round-6/02-F-DG0-009-new.log",
-          "docs/delivery/test-evidence/DG0/domain/round-6/03-F-DG0-009-mutations.log",
-          "docs/delivery/test-evidence/DG0/domain/round-6/11-shipped-checks-prefreeze.log"
+          "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+          "docs/delivery/test-evidence/DG0/domain/round-7/10-prefreeze-F-DG0-010.log"
         ],
-        "note": "Reproduced on the round-5 candidate d141d303: check_test_refs.py reports 5 T4 problems and exits 1. On the round-6 candidate a059b55 it reports '52 declared test titles derived from 3 test files; 42 quoted test title citation(s) in 411 register rows; 0 problem(s)' and exits 0. The fix removes the hand-maintained EXPECTED_TITLES list and derives the titles from the test files: JS test(...) literals and Python def test_* methods. It adds sound T4 derivation checks (JS call count equals literal titles, every test file yields titles, no duplicate titles) and a built-in T5 negative control. I checked the fix with my own mutations in a disposable copy. Renaming a cited JS title gives a T1 problem and exit 1 (REQ-DLV-022). Renaming a cited Python test gives a T1 problem and exit 1 (REQ-DLV-013). Adding a test with a non-literal title gives a T4 problem and exit 1. The clean copy exits 0. The five round-4 tests and the five run_meta unit tests are now cited in REQ-DLV-013/016/021/022/026, and every cited title exists and passes (unittest: 5 tests OK). prefreeze.sh now runs every docs/analysis/tools check. The fix is complete. Separately, prefreeze.sh itself fails on the candidate because of committed .pyc files; that is a new, unrelated defect, recorded as F-DG0-010."
+        "note": "Reproduced at d2630de, the parent of fix bcb8c61: check_test_refs.py reports T4 problems (declared tests missing from EXPECTED_TITLES) and exits 1. In the candidate e11b5f0 it reports '55 declared test titles derived from 3 test files; 42 quoted test title citation(s) in 411 register rows; 0 problem(s)' and exits 0. prefreeze.sh DG0 now runs every shipped analysis check, and all of them pass in a fresh clone."
       }
     },
     {
@@ -2727,7 +2949,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-6/domain-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T15:32:00Z",
@@ -2738,10 +2960,32 @@
           "at": "2026-09-28T16:26:58Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c09616c893906de8a7d8fa772eefdc0369368fea"
+        },
+        {
+          "at": "2026-09-28T16:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "c09616c893906de8a7d8fa772eefdc0369368fea",
-      "fix_summary": "Fixed in c09616c893906de8a7d8fa772eefdc0369368fea (round-6 repair); fresh-clone prefreeze passes and leaves the tree clean"
+      "fix_summary": "Fixed in c09616c893906de8a7d8fa772eefdc0369368fea (round-6 repair); fresh-clone prefreeze passes and leaves the tree clean",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-DOM-R7-domain-reviewer-20260928T162818Z-1524cacd",
+          "session_id": "1524cacd-6e1b-4a31-bd19-cfa3d99cf326"
+        },
+        "at": "2026-09-28T16:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/domain/round-7/10-prefreeze-F-DG0-010.log",
+          "docs/delivery/test-evidence/DG0/domain/round-7/00-candidate.log",
+          ".gitignore",
+          "tools/gates/prefreeze.sh"
+        ],
+        "note": "Reproduced on a fresh clone of the round-6 candidate a059b55. It tracks tools/agents/__pycache__/run_meta.cpython-311.pyc and tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc and has no .gitignore. prefreeze.sh DG0 exits 1 with 'FAIL uncommitted candidate changes: M ...pyc', and the recomputed candidate ID drifts from sha256:c13a4f8e...3ff68 to sha256:3cb9f538...61a23. On a fresh clone of the candidate e11b5f0, git ls-files tracks 0 .pyc files, .gitignore ignores __pycache__/ and *.py[cod], and the manifest covers 79 files (80 before). prefreeze.sh DG0 exits 0, with every check PASS, including 'runner metadata tests' and 'working-tree candidate equals HEAD'. Afterwards the regenerated __pycache__ directories show only as ignored (!!), and candidate.mjs still prints sha256:dee0316d...8cece. The fix is complete: the candidate is reproducible and the shipped checks pass on any fresh checkout."
+      }
     },
     {
       "id": "F-DG0-130",
@@ -2764,7 +3008,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-6/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T15:35:12Z",
@@ -2775,10 +3019,32 @@
           "at": "2026-09-28T16:26:58Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c09616c893906de8a7d8fa772eefdc0369368fea"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "c09616c893906de8a7d8fa772eefdc0369368fea",
-      "fix_summary": "Fixed in c09616c893906de8a7d8fa772eefdc0369368fea (round-6 repair); fresh-clone prefreeze passes and leaves the tree clean"
+      "fix_summary": "Fixed in c09616c893906de8a7d8fa772eefdc0369368fea (round-6 repair); fresh-clone prefreeze passes and leaves the tree clean",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
+        },
+        "at": "2026-09-28T16:51:05Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-7/18-prefreeze-crlf-old-vs-new.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/06-prefreeze-fresh-clone.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/05-existing-tests.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/13-static-checks.log"
+        ],
+        "note": "Original reproduced in this run in a fresh clone of a059b55. The candidate's own unittest step rewrites the two tracked .pyc files, and prefreeze prints 'FAIL uncommitted candidate changes: M ...pyc'. The candidate ID drifts from c13a4f8e... to 01a6976f... (18-prefreeze-crlf-old-vs-new; the 'prefreeze exit=0' printed there is a harness artefact that I annotated in the log). Fixed on e11b5f08: no .pyc is tracked, and .gitignore has __pycache__/ and *.py[cod] (13-static-checks). In a fresh clone the full prefreeze passes (exit 0), and the candidate is sha256:dee0316d... before and after, with a clean status (06-prefreeze-fresh-clone). After the test run, generated bytecode shows as ignored (05-existing-tests)."
+      }
     },
     {
       "id": "F-DG0-131",
@@ -2796,7 +3062,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-6/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T15:35:12Z",
@@ -2807,10 +3073,30 @@
           "at": "2026-09-28T16:26:58Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c09616c893906de8a7d8fa772eefdc0369368fea"
+        },
+        {
+          "at": "2026-09-28T16:51:05Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
       ],
       "fix_revision": "c09616c893906de8a7d8fa772eefdc0369368fea",
-      "fix_summary": "Fixed in c09616c893906de8a7d8fa772eefdc0369368fea (round-6 repair); fresh-clone prefreeze passes and leaves the tree clean"
+      "fix_summary": "Fixed in c09616c893906de8a7d8fa772eefdc0369368fea (round-6 repair); fresh-clone prefreeze passes and leaves the tree clean",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10",
+          "session_id": "b9224c10-5afc-401e-a882-c22f219197f4"
+        },
+        "at": "2026-09-28T16:51:05Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-7/18-prefreeze-crlf-old-vs-new.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-7/06-prefreeze-fresh-clone.log"
+        ],
+        "note": "Original reproduced in this run in a fresh clone of a059b55 (PYTHONDONTWRITEBYTECODE=1). With docs/delivery/requirements-spec.md modified and an untracked tools/gates/u.mjs, prefreeze prints 'PASS no uncommitted candidate changes' and exits 0, while candidate --freeze refuses (18-prefreeze-crlf-old-vs-new). Fixed on e11b5f08: prefreeze.sh:263-269 compares the working-tree and HEAD candidate IDs. The same probe gives FAIL, exit 1 (18 and 06). Ignored bytecode alone still passes (06 probe C). A broken candidate.mjs makes the check FAIL, not PASS (06 probe D)."
+      }
     },
     {
       "id": "F-DG0-220",
@@ -2833,7 +3119,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-6/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T15:35:00Z",
@@ -2844,10 +3130,31 @@
           "at": "2026-09-28T16:26:58Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c09616c893906de8a7d8fa772eefdc0369368fea"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_revision": "c09616c893906de8a7d8fa772eefdc0369368fea",
-      "fix_summary": "Fixed in c09616c893906de8a7d8fa772eefdc0369368fea (round-6 repair); fresh-clone prefreeze passes and leaves the tree clean"
+      "fix_summary": "Fixed in c09616c893906de8a7d8fa772eefdc0369368fea (round-6 repair); fresh-clone prefreeze passes and leaves the tree clean",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
+        },
+        "at": "2026-09-28T16:42:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-7/20-repro-220-on-a059b55.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/05-prefreeze-fresh-clone.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/10-qa7-negative-on-new.log"
+        ],
+        "note": "Reproduced on a fresh clone of the round-6 candidate a059b55: prefreeze.sh DG0 exits 1 ('M tools/agents/__pycache__/run_meta.cpython-311.pyc', 'M .../test_run_meta.cpython-311.pyc'), and the candidate moves from c13a4f8e to ed940c9a. On a fresh clone of e11b5f0: no bytecode is tracked, .gitignore ignores __pycache__/ and *.py[cod], and prefreeze.sh DG0 exits 0 with all 9 checks PASS. Afterwards git status shows only ignored __pycache__ and the candidate stays dee0316d. QA6-N60 passes on the candidate. The new QA7-N82 shows that an ignored .pyc does not fail prefreeze, while an untracked non-ignored candidate file does (the candidate-ID comparison)."
+      }
     },
     {
       "id": "F-DG0-221",
@@ -2866,7 +3173,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-6/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T15:35:00Z",
@@ -2877,10 +3184,138 @@
           "at": "2026-09-28T16:26:58Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c09616c893906de8a7d8fa772eefdc0369368fea"
+        },
+        {
+          "at": "2026-09-28T16:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_revision": "c09616c893906de8a7d8fa772eefdc0369368fea",
-      "fix_summary": "Fixed in c09616c893906de8a7d8fa772eefdc0369368fea (round-6 repair); fresh-clone prefreeze passes and leaves the tree clean"
+      "fix_summary": "Fixed in c09616c893906de8a7d8fa772eefdc0369368fea (round-6 repair); fresh-clone prefreeze passes and leaves the tree clean",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R7-qa-verifier-20260928T162818Z-4976b063",
+          "session_id": "4976b063-5ccf-4968-9ef0-34a8b842c28f"
+        },
+        "at": "2026-09-28T16:42:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-7/26-doc-findings-old-vs-new.log",
+          "docs/delivery/test-evidence/DG0/qa/round-7/15-agents-md-vs-evidence.log"
+        ],
+        "note": "At a059b55, agents.md mentioned none of run_meta, tool_authored or `deleted`. At e11b5f0 it describes tools/agents/run_meta.py and its test, the outputs/deleted/written_by_tools/tool_authored fields, and that the validator replays the hash-bound transcript itself (verified by QA7-N75/N76). The scope of this finding is fixed. The D-022 invocation-command gap that appeared after it was raised is tracked separately as F-DG0-222."
+      }
+    },
+    {
+      "id": "F-DG0-011",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "REQ-DLV-002's procedure says every agent definition states that an engineering agent cannot grant a real business, Finance or IT approval, but no definition in .claude/agents states it directly",
+      "reproduction": "In a fresh clone at e11b5f08dfa8b6cbe8716964e3412e17697234aa, the REQ-DLV-002 procedure in docs/delivery/requirements.csv reads: 'project rules and every agent definition state that an engineering agent cannot grant a real business, Finance or IT approval'. Running grep -l -i -E 'never grants?|cannot grant|can never grant|no agent grants' .claude/agents/*.md matches none of the ten definitions. backend-workflow-engineer.md line 26 comes closest: business approvals are human actions and timers never approve. Every definition instead ends with 'Read docs/delivery/agent-protocol.md and CLAUDE.md before you start any assignment', and both of those files state the rule (CLAUDE.md line 13; agent-protocol.md lines 9-10).",
+      "expected": "Either each agent definition carries the one-line rule that an engineering agent never grants a real business, Finance or IT approval (and that product G6 never implies DG7), or the REQ-DLV-002 procedure says the definitions incorporate the rule through the mandatory reading of CLAUDE.md and agent-protocol.md.",
+      "actual": "The rule applies to every agent in substance, because each definition makes reading CLAUDE.md and agent-protocol.md mandatory, and REQ-DLV-002's acceptance criterion names only those two files. Only the register's procedure wording overstates where the rule is written. This is a wording inconsistency with no behavioural effect, and I would accept it as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-7/12-F-DG0-011.log",
+        "docs/delivery/requirements.csv (REQ-DLV-002)",
+        ".claude/agents/",
+        "CLAUDE.md",
+        "docs/delivery/agent-protocol.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-7/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T16:40:00Z",
+          "status": "OPEN",
+          "note": "Reported in the DG0 round-7 domain review. Wording only; I would accept it as an observation (Low, non-mandatory)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-132",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-013",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "An empty (or newline-only) transcript.jsonl.gz skips every transcript check: init line, D-022 replayed prompt, final result and the D-021 transcript replay are all bypassed",
+      "reproduction": "tools/gates/lib/rules.mjs:281-314 (checkInvocation, candidate e11b5f08): lines = gunzip(transcript).split('\\n').filter(Boolean). The init-line check (295-297), the D-022 CLI-replayed prompt check (300-309) and the successful-result check (310-312) all sit inside 'if (lines.length) { ... }' (294). The D-021 independent replay of the run's Write/Edit calls (341-345) is also guarded by 'if (lines.length && ...)'. A transcript that is valid gzip of '' or of '\\n\\n\\n' gives lines = [], so none of these checks runs and no error is pushed. The only transcript requirement left is that its SHA-256 equals meta.transcript_sha256, and the forger writes that field. Reproduction (docs/delivery/test-evidence/DG0/code-security/round-7/repro-r7.test.mjs, log 01-repro-r7-on-e11b5f0.log), all against the e11b5f08 validator. Control 2: a transcript of unparsable lines is rejected ('no init line'). Tests 3/4: replacing a reviewer's transcript with gzip('') or gzip('\\n\\n\\n') and re-hashing it in meta gives validateGate(...) === []. Test 5: a qa-verifier record is rewritten after its run and meta.outputs/tool_authored are re-pointed. With the real transcript, the round-7 replay rejects it ('differs from the replay of this run's transcript'). After the transcript is emptied, validateGate returns []. Test 6: the verifying run that closes High F-DG0-101 has an empty transcript and the closure is accepted. Test 7: the same forgery committed and approved passes validateGate(historical). The gap is older than round 7: tests 3, 4, 6, 7 and 8 pass on a059b55 as well (02-repro-r7-on-a059b55.log). Scenario: anyone with repo write access (Bash is unguarded for every role) writes docs/delivery/runs/DG0/<id>/{meta.json,result.json,transcript.jsonl.gz(empty)} with self-consistent hashes, the fields checkInvocation reads (role, stage, session, exit_code 0, assignment + sha, started_at after the freeze, head_commit_at_start containing the manifest, outputs/tool_authored hashes), plus PASS records, sidecars and a gate record. They commit it as ordinary new history with current dates, so write-once and back-dating are satisfied. validate.mjs --stage DG0, --historical and --pipeline then exit 0 with no agent ever invoked.",
+      "expected": "D-016 and D-022 describe the transcript checks as unconditional. A run whose transcript has no init line for the session, no CLI-replayed runner prompt (isReplay: true, carrying run_id and session_id) or no final successful result for the session is rejected. Every bound output must be reconstructible from the transcript's own successful Write/Edit calls. Fix: treat an empty parsed transcript as an error ('transcript is empty'), and run the init, prompt, result and replay checks unconditionally whenever the transcript file exists (a replay result of null must be an error, not skipped). Add regression tests for gzip('') and gzip('\\n').",
+      "actual": "The init, CLI-replayed-prompt, final-result and D-021 replay checks are all skipped for an empty transcript. A fabricated run directory then needs only meta.json, result.json and an empty gzip. That is the same cost as the original F-DG0-102 forgery (one small JSON file plus two trivial files), not the 'complete, internally consistent run directory' that D-021 discloses as the residual. The D-022 and D-021 replay repairs in this round do not hold against it. Mandatory: it lets the gate validator accept invalid provenance evidence (DG0 approval condition: the review protocol and gate validator reject missing/invalid evidence; A23/A24).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/repro-r7.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/01-repro-r7-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/02-repro-r7-on-a059b55.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-7/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T16:50:00Z",
+          "status": "OPEN"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-133",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-026",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The CLI-replayed prompt is not cross-checked with meta.assignment / assignment_sha256, so 'executed exactly the cited assignment' rests on unanchored meta fields",
+      "reproduction": "tools/gates/lib/rules.mjs:305-309 require the replayed prompt only to start with \"You are invoked as project agent '<role>' for stage <DGx>\" and to contain the run_id and session_id. The assignment binding (315-318) compares the record's 'assignment' with meta.assignment and the file's SHA-256 with meta.assignment_sha256. It never compares either with the path and 'sha256 ...' that run-agent.sh:56 writes into the prompt, which is the only assignment statement bound by the transcript hash. Reproduction: repro-r7.test.mjs test 8 (01-repro-r7-on-e11b5f0.log). The replayed prompt of a qa-verifier run is extended with 'Your complete assignment is in the file .../round-9/some-other.md (sha256 000...0)', and validateGate still returns []. The validator's own fixture prompt (validator.test.mjs makeRun) names no assignment at all and passes.",
+      "expected": "D-016 says a run is accepted only if it 'executed exactly the assignment the record cites (path and SHA-256)'. The validator extracts the assignment path (relative to meta.cwd) and the sha256 from the replayed prompt and requires them to equal meta.assignment / meta.assignment_sha256 (and therefore the record's assignment).",
+      "actual": "meta.json is not hash-bound by anything, so an edited or fabricated meta can re-point a genuine transcript at a different assignment. Impact is limited: committed meta.json files are write-once, and fabricating a new run directory is the disclosed D-021 residual. I would accept this as a Low observation once F-DG0-132 is fixed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/repro-r7.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/01-repro-r7-on-e11b5f0.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-7/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T16:50:00Z",
+          "status": "OPEN"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-222",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-006",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "docs/delivery/agents.md was not updated for D-022: its invocation command still passes the prompt as a positional argument without --input-format stream-json --replay-user-messages, and its list of run-binding conditions omits the CLI-replayed prompt",
+      "reproduction": "git show e11b5f08dfa8b6cbe8716964e3412e17697234aa:docs/delivery/agents.md | grep -c -e '--replay-user-messages' -> 0. The command block under 'Invocation mechanism (decision D-003)' still reads 'claude -p --agent <agent> ... --output-format stream-json --verbose \"<pointer to the assignment file>\"'. tools/agents/run-agent.sh (lines 108 and 117) instead pipes user_message \"$PROMPT\" into 'claude -p ... --input-format stream-json --replay-user-messages --output-format stream-json --verbose'. The paragraph's final sentence lists the conditions under which the validator refuses a run (complete, hash-consistent, same role and stage, exact assignment, post-freeze start, successful result). It does not mention D-022's requirement of a CLI-replayed prompt (isReplay: true) carrying the run_id and session_id, which tools/gates/lib/rules.mjs checkInvocation now enforces. Also, the round-6 edit put 'The validator does not trust tool_authored alone. It replays ...' directly before 'It snapshots the tree before and after the run. For review roles, it auto-commits ...', so 'It' now grammatically refers to the validator although it means the runner. Automated: docs/delivery/test-evidence/DG0/qa/round-7/15-agents-md-vs-evidence.log (3 FAIL lines).",
+      "expected": "agents.md describes the invocation mechanism the runner actually uses and the conditions the validator actually enforces. Update the command block to the stream-json/replay form, add the replayed-prompt condition (D-022) to the binding list, and make the runner the explicit subject of the snapshot/auto-commit/records sentences.",
+      "actual": "The code (run-agent.sh, rules.mjs) and decisions.md D-022 are correct and consistent. I verified D-022 independently: QA7-N70..N74 and N83, plus this run's own live transcript, which carries the replayed prompt. Only agents.md, which REQ-DLV-004/006/026 cite as evidence, still describes the pre-D-022 invocation. This is documentation only, with no effect on any rule or evidence. The reporter would accept it as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-7/15-agents-md-vs-evidence.log",
+        "docs/delivery/agents.md",
+        "tools/agents/run-agent.sh",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-7/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T16:41:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-7 QA review of candidate dee0316d (e11b5f0)."
+        }
+      ]
     }
   ]
 }

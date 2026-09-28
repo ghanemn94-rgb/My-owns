@@ -4,28 +4,28 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 
 ## Current checkpoint
 
-- **Active stage:** P0 / DG0, state **REVIEWING** (round 4)
-- **Round-4 candidate:** `sha256:0be571eaa84438604b9b4095b7a2bb26086a340b1a34ab2b56aba3a148d3a3b7` (commit `53f5d17`). The manifest is `docs/delivery/candidates/DG0/0be571eaa8443860.manifest.json`.
+- **Active stage:** P0 / DG0, state **REVIEWING** (round 7)
+- **Round-7 candidate:** `sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece` (commit `e11b5f0`). The manifest is `docs/delivery/candidates/DG0/dee0316dce953eb0.manifest.json`.
 
 **Review history**
 
-| Round | Outcome | Findings |
+| Round | Outcome | New findings |
 |---|---|---|
-| 1 | domain FAIL · code-security BLOCKED (classifier outage) · QA FAIL | 17, including 2 High |
-| 2 | domain PASS · code-security FAIL · QA FAIL | 15 verified closed; 11 new, including 1 High |
-| 3 | domain PASS · QA PASS · code-security FAIL | 15 verified closed; 7 new, including 1 High |
+| 1 | domain FAIL · code-security BLOCKED (classifier outage) · QA FAIL | 17 (2 High) |
+| 2 | domain PASS · code-security FAIL · QA FAIL | 11 (1 High) |
+| 3 | domain PASS · QA PASS · code-security FAIL | 7 (1 High) |
+| 4 | domain PASS · QA PASS · code-security FAIL | 7 (all Low; F-DG0-115 reopened) |
+| 5 | domain FAIL (1 Low); code-security and QA orphaned by a runner metadata bug (fixed) | 1 |
+| 6 | all three FAIL, on committed `__pycache__` (Medium), plus the F-DG0-115 back-dating residual | 5 |
 
-- **Total so far:** 35 findings. 27 were closed by round-2/3 verifications, and 8 were fixed pending verification. Because rounds 1–3 predate run-output binding (D-021), round 4 re-confirms every closure.
-- **The main hardening came from these reviews:**
-  - provenance bound to complete run evidence;
-  - reviewer artefacts bound to their run's outputs and write-once in git history;
-  - finding closure and acceptance only through reviewer sidecars;
-  - a candidate identity that includes file modes;
-  - a write guard with a fixed root that follows symlinks.
+- **Root causes addressed:**
+  - a write-once design that inspected diffs (now single-blob over all commit events, with back-dating rejected);
+  - runner metadata robustness (now `run_meta.py` with tests);
+  - build artefacts in the candidate (now `.gitignore`d);
+  - D-022: prompt binding that only worked on synthetic fixtures, found by the orchestrator. It's fixed with CLI prompt replay, which means **every** finding is re-confirmed in round 7.
 - **Next:**
-  1. Import the round-4 results.
-  2. If all three reviewers PASS with every finding terminal, run the release audit, adding the auditor record to the round-4 `review_rounds` records.
-  3. Otherwise, run repair and round 5. After three unproductive cycles, do a root-cause review per §0.4.
+  1. Import the round-7 results.
+  2. If all three reviewers PASS and every finding is terminal, set VERIFYING and run the release audit (`round-7/audit.md`), then run the full validator, then APPROVE.
 
 ## Done in P0 so far
 

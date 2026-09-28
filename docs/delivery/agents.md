@@ -32,9 +32,11 @@ No role may write a `.git` path segment. The guard scopes every path from its ow
 `tools/agents/run-agent.sh --role <agent> --stage <DGx> --task <id> --assignment <file>` runs:
 
 ```
+user_message "<pointer to the assignment file>" |   # a stream-json user message (D-022)
 claude -p --agent <agent> --model <orchestrator model> --permission-mode auto \
        --session-id <fresh uuid> --settings tools/agents/settings/<agent>.settings.json \
-       --output-format stream-json --verbose "<pointer to the assignment file>"
+       --input-format stream-json --replay-user-messages \
+       --output-format stream-json --verbose
 ```
 
 The metadata step is `tools/agents/run_meta.py`, tested in `tools/agents/tests/test_run_meta.py`. It records in `meta.json`:
@@ -43,7 +45,14 @@ The metadata step is `tools/agents/run_meta.py`, tested in `tools/agents/tests/t
 - `written_by_tools`: the paths the agent targeted with Write/Edit/MultiEdit/NotebookEdit;
 - `tool_authored`: the paths whose final bytes equal a replay of the agent's own **successful** Write/Edit/MultiEdit calls.
 
-The validator does not trust `tool_authored` alone. It replays the hash-bound transcript itself and compares the result with the file (D-021). It snapshots the tree before and after the run. For review roles, it auto-commits the run directory and the files the reviewer wrote (D-021). It records `docs/delivery/runs/<DGx>/<run-id>/meta.json` (role, the run's `outputs` (path → SHA-256) and `written_by_tools`, stage, task, session ID, model, assignment path and SHA-256, start commit, start and finish times, exit code, turns, models used, classifier-outage resumes, and the SHA-256 of `result.json` and `transcript.jsonl.gz`), `result.json` (the final message) and `transcript.jsonl.gz` (the full stream transcript). Run IDs include the session prefix, and directories are never reused (F-DG0-108). The arguments are validated. If a run stops only because the permission classifier returned no verdict repeatedly, the runner resumes the same session up to 6 times (D-019). The `invocation_reference` used in review records is `{kind, run_id, session_id}`. The validator refuses any review, audit or finding verification unless its run evidence is complete and hash-consistent, belongs to the same role and stage, executed exactly the cited assignment, started after the candidate froze, and ends in a successful result for the same session (D-016).
+The validator does not trust `tool_authored` alone. It replays the hash-bound transcript itself and compares the result with the file (D-021). The runner snapshots the tree before and after the run. For review roles, the runner auto-commits the run directory and the reviewer's tool-authored files, and fails with exit 70 if that commit fails (D-021). It records `docs/delivery/runs/<DGx>/<run-id>/meta.json` (role, the run's `outputs` (path → SHA-256) and `written_by_tools`, stage, task, session ID, model, assignment path and SHA-256, start commit, start and finish times, exit code, turns, models used, classifier-outage resumes, and the SHA-256 of `result.json` and `transcript.jsonl.gz`), `result.json` (the final message) and `transcript.jsonl.gz` (the full stream transcript). Run IDs include the session prefix, and directories are never reused (F-DG0-108). The arguments are validated. If a run stops only because the permission classifier returned no verdict repeatedly, the runner resumes the same session up to 6 times (D-019). The `invocation_reference` used in review records is `{kind, run_id, session_id}`. The validator refuses any review, audit or finding verification unless all of these hold for its run:
+- the run evidence is complete and hash-consistent;
+- it belongs to the same role and stage;
+- its transcript contains the **CLI-replayed runner prompt** (`isReplay: true`), carrying the run's `run_id` and `session_id` and naming the same assignment path and SHA-256 as meta (D-022, F-DG0-133);
+- it executed exactly the cited assignment;
+- it started after the candidate froze, from a commit containing the frozen manifest;
+- its transcript starts with an init line and ends in a successful result for the same session. These transcript checks are unconditional, so an empty transcript fails them (F-DG0-132);
+- every bound output equals the validator's own replay of the transcript's successful Write/Edit calls (D-016, D-021).
 
 ### Why not the in-session Agent tool?
 

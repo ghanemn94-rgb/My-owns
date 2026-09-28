@@ -69,7 +69,7 @@ function makeRun(repo, role, { assignment, startedAt = T_RUN, task = "T-REV", st
   const base = `docs/delivery/runs/${stage}/${run_id}`;
   const lines = [
     { type: "system", subtype: "init", session_id, model: "claude-opus-5-5", tools: ["Read", "Bash", "Write"] },
-    { type: "user", isReplay: true, message: { role: "user", content: `You are invoked as project agent '${role}' for stage ${stage}, task ${task}. Your invocation_reference is: {"kind":"claude-code-cli-session","run_id":"${run_id}","session_id":"${session_id}"}` }, session_id },
+    { type: "user", isReplay: true, message: { role: "user", content: `You are invoked as project agent '${role}' for stage ${stage}, task ${task}. Your invocation_reference is: {"kind":"claude-code-cli-session","run_id":"${run_id}","session_id":"${session_id}"}. Your complete assignment is in the file ${RUN_CWD}/${assignment} (sha256 ${sha(readFileSync(join(repo, assignment)))}). Read it first.` }, session_id },
     { type: "result", subtype: "success", is_error: false, session_id, result: "done" },
   ];
   const transcript = gzipSync(Buffer.from(lines.map((l) => JSON.stringify(l)).join("\n") + "\n"));
@@ -814,4 +814,33 @@ test("D-022: only a CLI-replayed prompt binds a transcript to its run; the same 
   put(repo, `${base}/transcript.jsonl.gz`, gz);
   edit(repo, `${base}/meta.json`, (m) => (m.transcript_sha256 = sha(gz)));
   expectError(validateGate(repo, "DG0"), /does not contain the CLI-replayed runner prompt for 'domain-reviewer'/);
+});
+
+test("F-DG0-132: an empty or newline-only transcript fails every transcript check", () => {
+  for (const body of ["", "\n\n\n"]) {
+    const { repo, records } = buildValidRepo();
+    const ref = get(repo, records["qa-verifier"]).invocation_reference;
+    const gz = gzipSync(Buffer.from(body));
+    put(repo, `docs/delivery/runs/DG0/${ref.run_id}/transcript.jsonl.gz`, gz);
+    edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (m) => (m.transcript_sha256 = sha(gz)));
+    const errors = validateGate(repo, "DG0");
+    expectError(errors, /transcript is empty/);
+    expectError(errors, /no init line/);
+    expectError(errors, /CLI-replayed runner prompt/);
+    expectError(errors, /does not end in a successful result/);
+    expectError(errors, /cannot be reconstructed from this run's own successful Write\/Edit calls/);
+  }
+});
+
+test("F-DG0-133: the assignment named in the replayed prompt must be the one recorded in meta", () => {
+  const { repo, records } = buildValidRepo();
+  const ref = get(repo, records["qa-verifier"]).invocation_reference;
+  const base = `docs/delivery/runs/DG0/${ref.run_id}`;
+  const lines = gunzipSync(readFileSync(join(repo, `${base}/transcript.jsonl.gz`))).toString("utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  const p = lines.find((o) => o.isReplay);
+  p.message.content = p.message.content.replace(/in the file \S+ \(sha256 [0-9a-f]{64}\)/, `in the file ${RUN_CWD}/docs/delivery/assignments/DG0/round-9/other.md (sha256 ${"0".repeat(64)})`);
+  const gz = gzipSync(Buffer.from(lines.map((o) => JSON.stringify(o)).join("\n") + "\n"));
+  put(repo, `${base}/transcript.jsonl.gz`, gz);
+  edit(repo, `${base}/meta.json`, (m) => (m.transcript_sha256 = sha(gz)));
+  expectError(validateGate(repo, "DG0"), /the replayed prompt names assignment .*round-9\/other\.md/);
 });

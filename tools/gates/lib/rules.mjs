@@ -291,27 +291,32 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
     } catch (e) {
       bad(`transcript is not valid gzip (${e.message})`);
     }
-    if (lines.length) {
-      const init = lines.find((o) => o.type === "system" && o.subtype === "init");
-      if (!init || init.session_id !== ref.session_id) bad("transcript has no init line for this session");
-      else if (meta.model_requested && init.model !== meta.model_requested) bad(`transcript model ${init.model} != requested ${meta.model_requested}`);
-      // The CLI replays the prompt it received (isReplay: true, D-022). Only a replayed user message whose content is
-      // text counts; the same words inside a tool result (e.g. someone reading run-agent.sh) do not.
-      const promptText = (o) => {
-        const c = o && o.message && o.message.content;
-        if (typeof c === "string") return c;
-        return Array.isArray(c) && c.every((x) => x && x.type === "text") ? c.map((x) => x.text).join("") : null;
-      };
-      const prompt = lines.find((o) => o.type === "user" && o.isReplay === true && typeof promptText(o) === "string" &&
-        promptText(o).startsWith(`You are invoked as project agent '${role}' for stage ${stageId}`));
-      if (!prompt || !promptText(prompt).includes(`"run_id":"${ref.run_id}"`) || !promptText(prompt).includes(`"session_id":"${ref.session_id}"`)) {
-        bad(`transcript does not contain the CLI-replayed runner prompt for '${role}' and run ${ref.run_id}`);
-      }
-      const results = lines.filter((o) => o.type === "result");
-      const last = results[results.length - 1];
-      if (!last || last.session_id !== ref.session_id || last.is_error) bad("transcript does not end in a successful result for this session");
-    }
   }
+  // Every transcript check is unconditional: an empty or unparsable transcript fails them all (F-DG0-132).
+  if (!lines.length) bad("transcript is empty");
+  const init = lines.find((o) => o.type === "system" && o.subtype === "init");
+  if (!init || init.session_id !== ref.session_id) bad("transcript has no init line for this session");
+  else if (meta.model_requested && init.model !== meta.model_requested) bad(`transcript model ${init.model} != requested ${meta.model_requested}`);
+  // The CLI replays the prompt it received (isReplay: true, D-022). Only a replayed user message whose content is
+  // text counts; the same words inside a tool result (e.g. someone reading run-agent.sh) do not.
+  const promptText = (o) => {
+    const c = o && o.message && o.message.content;
+    if (typeof c === "string") return c;
+    return Array.isArray(c) && c.every((x) => x && x.type === "text") ? c.map((x) => x.text).join("") : null;
+  };
+  const prompt = lines.find((o) => o.type === "user" && o.isReplay === true && typeof promptText(o) === "string" &&
+    promptText(o).startsWith(`You are invoked as project agent '${role}' for stage ${stageId}`));
+  if (!prompt || !promptText(prompt).includes(`"run_id":"${ref.run_id}"`) || !promptText(prompt).includes(`"session_id":"${ref.session_id}"`)) {
+    bad(`transcript does not contain the CLI-replayed runner prompt for '${role}' and run ${ref.run_id}`);
+  } else {
+    // The assignment the prompt named is the transcript-bound statement of what the run executed (F-DG0-133).
+    const m = promptText(prompt).match(/Your complete assignment is in the file (\S+) \(sha256 ([0-9a-f]{64})\)/);
+    if (!m) bad("the replayed prompt names no assignment file and sha256");
+    else if (!m[1].endsWith(`/${meta.assignment}`) || m[2] !== meta.assignment_sha256) bad(`the replayed prompt names assignment ${m[1]} (sha256 ${m[2].slice(0, 12)}…), not meta's ${meta.assignment}`);
+  }
+  const results = lines.filter((o) => o.type === "result");
+  const last = results[results.length - 1];
+  if (!last || last.session_id !== ref.session_id || last.is_error) bad("transcript does not end in a successful result for this session");
   if (binding) {
     if (typeof binding.assignment !== "string" || !binding.assignment) bad("the record names no assignment to bind the run to");
     else if (meta.assignment !== binding.assignment) bad(`ran assignment ${meta.assignment}, record cites ${binding.assignment}`);
@@ -338,7 +343,7 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
       if (authored[rel] === undefined) bad(`${rel} was not written by this run's file tools`);
       else if (authored[rel] !== meta.outputs[rel]) bad(`${rel} does not equal the content of this run's own Write/Edit calls`);
       // Independently replay the hash-bound transcript rather than trusting meta.tool_authored (F-DG0-115).
-      if (lines.length && repoFile(repo, rel)) {
+      if (repoFile(repo, rel)) {
         const replayed = replayToolContent(lines, meta.cwd, rel);
         if (replayed === null) bad(`${rel} cannot be reconstructed from this run's own successful Write/Edit calls in its transcript`);
         else if (!Buffer.from(replayed, "utf8").equals(readFileSync(join(repo, rel)))) bad(`${rel} differs from the replay of this run's transcript`);
