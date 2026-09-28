@@ -4195,14 +4195,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-12/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T18:40:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer in DG0 round 12; live-reproduced against the frozen candidate commit"
+        },
+        {
+          "at": "2026-09-28T21:39:10Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 1a8658299a8f37e431a4dd93d25079cb64d67e61"
         }
-      ]
+      ],
+      "fix_revision": "1a8658299a8f37e431a4dd93d25079cb64d67e61",
+      "fix_summary": "run-agent.sh runs every Python helper as python3 -I -B (isolated: no cwd or script dir on sys.path, no PYTHON* env, no bytecode) and changes to / after resolving its inputs; only the claude process runs in the agent's cwd. Regression test tools/agents/tests/runner.test.mjs plants json.py/uuid.py/hashlib.py in the repository root and fails on the previous runner (D-026)."
     },
     {
       "id": "F-DG0-229",
@@ -4225,14 +4232,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T18:55:00Z",
           "status": "OPEN",
           "note": "Raised in the DG0 round-12 QA review of candidate 21f142b8 (7f09967)."
+        },
+        {
+          "at": "2026-09-28T21:39:10Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 1a8658299a8f37e431a4dd93d25079cb64d67e61"
         }
-      ]
+      ],
+      "fix_revision": "1a8658299a8f37e431a4dd93d25079cb64d67e61",
+      "fix_summary": "prefreeze.sh runs every check that executes candidate code through tools/gates/sandbox-run.sh: a fresh clone of the committed HEAD (no ignored or untracked files such as planted .pyc) under bubblewrap with a read-only root, private /tmp, no network, clean env (PYTHONSAFEPATH=1, PYTHONDONTWRITEBYTECODE=1); only protected tools/gates code runs outside, from /. Tests: tools/gates/tests/sandbox.test.mjs (D-026)."
     },
     {
       "id": "F-DG0-230",
@@ -4252,14 +4266,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T18:55:00Z",
           "status": "OPEN",
           "note": "Raised in the DG0 round-12 QA review of candidate 21f142b8 (7f09967)."
+        },
+        {
+          "at": "2026-09-28T21:39:10Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 1a8658299a8f37e431a4dd93d25079cb64d67e61"
         }
-      ]
+      ],
+      "fix_revision": "1a8658299a8f37e431a4dd93d25079cb64d67e61",
+      "fix_summary": "requireSandbox now requires each protected path to be denied exactly as ${meta.cwd}/<path> (docs/source added to the required list); a deny list rooted in another directory fails. Validator test 'F-DG0-230' added."
     },
     {
       "id": "F-DG0-231",
@@ -4281,14 +4302,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T18:55:00Z",
           "status": "OPEN",
           "note": "Raised in the DG0 round-12 QA review of candidate 21f142b8 (7f09967)."
+        },
+        {
+          "at": "2026-09-28T21:39:10Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 1a8658299a8f37e431a4dd93d25079cb64d67e61"
         }
-      ]
+      ],
+      "fix_revision": "1a8658299a8f37e431a4dd93d25079cb64d67e61",
+      "fix_summary": "agent-protocol.md now says git clone <repo> \"$TMPDIR/<name>\" and that /tmp is read-only in the sandbox; agent_settings.py docstring and D-025 corrected to $TMPDIR; run-agent.sh comment now says --setting-sources project; agents.md no longer says Bash writes are unguarded (D-025 sandbox)."
     },
     {
       "id": "F-DG0-232",
