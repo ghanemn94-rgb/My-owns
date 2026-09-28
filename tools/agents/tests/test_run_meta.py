@@ -15,7 +15,7 @@ def sha(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-class RunMetaTest(unittest.TestCase):
+class _RunMetaBase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = os.path.realpath(self.tmp.name)
@@ -38,6 +38,9 @@ class RunMetaTest(unittest.TestCase):
 
     def tool_use(self, uid, name, **inp):
         return {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": uid, "name": name, "input": inp}]}}
+
+
+class RunMetaTest(_RunMetaBase):
 
     def test_string_messages_and_non_object_lines_are_tolerated(self):
         # Regression: round 5 crashed on an event whose "message" is a string.
@@ -90,11 +93,7 @@ class RunMetaTest(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(self.out, "meta.json")))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
-class ExternalConfigTest(RunMetaTest):
+class ExternalConfigTest(_RunMetaBase):
     def test_external_config_changes_are_recorded(self):
         with open(os.path.join(self.out, ".config-changed.txt"), "w", encoding="utf-8") as f:
             f.write("/root/.claude/settings.json 0123\n")
@@ -104,3 +103,7 @@ class ExternalConfigTest(RunMetaTest):
     def test_no_change_records_an_empty_list(self):
         meta = self.run_meta([{"type": "result", "session_id": "sid", "is_error": False}], {}, {})
         self.assertEqual(meta["external_config_changed"], [])
+
+
+if __name__ == "__main__":
+    unittest.main()

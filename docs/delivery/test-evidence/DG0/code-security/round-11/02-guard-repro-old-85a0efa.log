@@ -1,0 +1,69 @@
+## 2026-09-28T17:54:10Z $ docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-guard.sh 85a0efac57008884109e40e4bea56f14c5c892aa /tmp/dg0-sec-r11-old
+commit=85a0efac57008884109e40e4bea56f14c5c892aa  main=/tmp/dg0-sec-r11-old/main  worktree=/tmp/dg0-sec-r11-old/wt
+== F (F-DG0-135): malformed global git config makes 'git worktree list' fail. Expect rc=2 for EVERY path (fail closed).
+   git worktree list with malformed ~/.gitconfig: exit=128
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/tools/gates/lib/rules.mjs env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/docs/source/playbook.md env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/.claude/settings.local.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/tools/agents/write-scopes.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/apps/api/in-scope.ts env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=tools/gates/lib/rules.mjs env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=code-security-reviewer cwd=wt target=wt/tools/gates/lib/rules.mjs env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+   control: well-formed ~/.gitconfig, worktree protected path (expect 2) and in-scope path (expect 0)
+rc=2 role=backend-workflow-engineer cwd=wt target=wt/tools/gates/lib/rules.mjs env[HOME=/tmp/dg0-sec-r11-old/home] :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/gates/lib/rules.mjs' (protected path)
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/apps/api/in-scope.ts env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+== G (F-DG0-135): git absent from the hook's PATH. Expect rc=2 for every path.
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/tools/gates/lib/rules.mjs env[PATH=/tmp/dg0-sec-r11-old/bin] :: 
+rc=2 role=backend-workflow-engineer cwd=wt target=main/tools/gates/lib/rules.mjs env[PATH=/tmp/dg0-sec-r11-old/bin] :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/gates/lib/rules.mjs' (protected path)
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/apps/api/in-scope.ts env[PATH=/tmp/dg0-sec-r11-old/bin] :: 
+== G2: MTH_GUARD_ROOT pointing at a directory that is not a git repository (expect 2)
+   rc=0 notrepo in-scope path
+== E (F-DG0-136): user-level config outside the repository, HOME=/tmp/dg0-sec-r11-old/home (inside /tmp). Expect rc=2 for all roles.
+rc=0 role=backend-workflow-engineer cwd=wt target=home/.claude/settings.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=home/.claude/settings.local.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=home/.gitconfig env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=home/.claude.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=home/.claude/agents/x.md env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=home/.bashrc env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=home/.config/git/config env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=transformation-analyst cwd=wt target=home/.claude/settings.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=transformation-analyst cwd=wt target=home/.claude/settings.local.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=transformation-analyst cwd=wt target=home/.gitconfig env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=transformation-analyst cwd=wt target=home/.claude.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=transformation-analyst cwd=wt target=home/.claude/agents/x.md env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=transformation-analyst cwd=wt target=home/.bashrc env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=transformation-analyst cwd=wt target=home/.config/git/config env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=code-security-reviewer cwd=wt target=home/.claude/settings.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=code-security-reviewer cwd=wt target=home/.claude/settings.local.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=code-security-reviewer cwd=wt target=home/.gitconfig env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=code-security-reviewer cwd=wt target=home/.claude.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=code-security-reviewer cwd=wt target=home/.claude/agents/x.md env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=code-security-reviewer cwd=wt target=home/.bashrc env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=code-security-reviewer cwd=wt target=home/.config/git/config env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=release-auditor cwd=wt target=home/.claude/settings.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=release-auditor cwd=wt target=home/.claude/settings.local.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=release-auditor cwd=wt target=home/.gitconfig env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=release-auditor cwd=wt target=home/.claude.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=release-auditor cwd=wt target=home/.claude/agents/x.md env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=release-auditor cwd=wt target=home/.bashrc env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=release-auditor cwd=wt target=home/.config/git/config env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+== H: symlink inside the scratch area pointing into HOME (lexical = scratch, real = home). Expect rc=2.
+rc=0 role=backend-workflow-engineer cwd=wt target=scr/link-to-claude/settings.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=scr/link-to-home/.gitconfig env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=scr/link-to-home/new-dir/x env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+== H2: '..' segments and trailing slash in HOME. Expect rc=2.
+rc=0 role=backend-workflow-engineer cwd=wt target=scr/../home/.claude/settings.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=home/.claude/settings.json env[HOME=/tmp/dg0-sec-r11-old/home/] :: 
+== H3: HOME given as a symlink to the real home dir. Expect rc=2 for the real path.
+rc=0 role=backend-workflow-engineer cwd=wt target=home/.claude/settings.json env[HOME=/tmp/dg0-sec-r11-old/homelink] :: 
+== I: non-temp paths outside the repository. Expect rc=2.
+rc=0 role=backend-workflow-engineer cwd=wt target=/var/tmp/r11-probe.txt env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=/dev/shm/r11-probe.txt env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=/etc/claude-code/managed-settings.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=/etc/gitconfig env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=/usr/local/bin/git env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=/root/.claude/settings.json env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+== J: controls that must stay allowed: temp scratch, and in-scope repository files (expect rc=0)
+rc=0 role=backend-workflow-engineer cwd=wt target=scr/notes.txt env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=code-security-reviewer cwd=main target=main/docs/delivery/test-evidence/DG0/x.log env[HOME=/tmp/dg0-sec-r11-old/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/apps/api/x.ts env[HOME=/tmp/dg0-sec-r11-old/home] :: 

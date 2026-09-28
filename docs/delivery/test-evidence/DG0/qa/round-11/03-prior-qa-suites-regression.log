@@ -1,0 +1,105 @@
+# QA regression: all prior-round QA suites against candidate clone /tmp/qa-r11 @ 7e99163db57d1c2e62aca6d376b024927613a3f6 2026-09-28T17:53:21Z
+## dg0-gate-negative-r10.test.mjs
+# tests 8
+# pass 8
+# fail 0
+exit=0
+## dg0-gate-negative-r2.test.mjs
+not ok 1 - control: the independent round-2 fixture is accepted (API and CLI exit 0)
+not ok 8 - QA2-N04 provenance: a transcript from a different role's prompt cannot back the auditor
+not ok 14 - QA2-N10 findings: verification cited from a run of a different role than by_role is rejected
+not ok 15 - QA2-N11 findings: a CLOSED_VERIFIED finding verified by a pre-freeze LOAD run of the reporter is rejected
+not ok 19 - QA2-N15 metadata: a new review round, verifications sidecar and run dirs leave the candidate and gate unchanged
+# tests 20
+# pass 15
+# fail 5
+exit=1
+## dg0-gate-negative-r3.test.mjs
+not ok 1 - control: the independent round-3 fixture is accepted (API and CLI exit 0)
+not ok 4 - QA3-N17 findings: a later-round PASS overrides an earlier FAIL (positive), but a same-round FAIL by another reviewer wins
+not ok 5 - QA3-N18 findings: a verifications sidecar with no review record of that role in its round is rejected
+not ok 13 - QA3-N24 history: after approval, editing an earlier round's findings sidecar is detected in historical mode
+# tests 28
+# pass 23
+# fail 4
+exit=1
+## dg0-gate-negative-r4.test.mjs
+not ok 1 - control: the independent round-4 fixture is accepted (API and CLI exit 0)
+not ok 2 - QA4-R208a (F-DG0-208): the QA3-N20 attack (rewrite round-1 frozen_at + record to cite a LOAD run), committed, is rejected
+not ok 3 - QA4-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+not ok 13 - QA4-N32 write-once: a committed round assignment edited later is rejected (history M and assignment sha mismatch)
+not ok 14 - QA4-N33 write-once: a committed record replaced by a symlink to identical bytes is rejected (type change T)
+not ok 17 - QA4-N36 write-once: deleting a committed frozen manifest in the working tree is rejected
+not ok 19 - QA4-N38 acceptance: positive control, then a specialist's later-round FAIL/OPEN withdraws the observation acceptance
+not ok 21 - QA4-N41 findings: in the same round a PASS by the reporter and a FAIL by another bound reviewer -> FAIL wins
+not ok 25 - QA4-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+not ok 33 - QA4-A24 rejects: unresolved High finding
+not ok 34 - QA4-A24 rejects: High finding closed without any verification sidecar
+# tests 41
+# pass 27
+# fail 11
+exit=1
+## dg0-gate-negative-r5.test.mjs
+not ok 1 - control: the independent round-5 fixture is accepted (API and CLI exit 0)
+not ok 2 - control: a genuine later-round closure (post-manifest run) is accepted
+not ok 14 - QA5-R208a (F-DG0-208 = QA3-N20): rewrite round-1 frozen_at + record to cite a LOAD run, committed, is rejected
+not ok 20 - QA5-N54 write-once: delete a committed record, then re-add it with different bytes in a later commit, is rejected
+not ok 21 - QA5-N55 write-once: re-adding the identical bytes after a delete is accepted (content, not history shape, is what matters)
+not ok 22 - QA5-N56 write-once: an edited round assignment committed on a side branch and merged is rejected (history + sha binding)
+not ok 26 - QA5-RP1 runner replay: Write then Edit (chained) is tool_authored; outputs record the change
+not ok 27 - QA5-RP2 runner replay: Write followed by a shell rewrite (final bytes differ) is NOT tool_authored
+not ok 28 - QA5-RP3 runner replay: a failed (guard-denied) Write whose content appears via the shell is NOT tool_authored
+not ok 29 - QA5-RP4 runner replay: an Edit on a pre-existing file (not written by this run) is NOT tool_authored
+not ok 30 - QA5-RP5 runner replay: an Edit whose old_string does not occur poisons the replay; writes outside the repo are ignored
+not ok 31 - QA5-RP6 runner replay: a later successful Write supersedes an earlier failed one and binds the final bytes
+not ok 32 - QA5-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+not ok 40 - QA5-A24 rejects: unresolved High finding
+# tests 47
+# pass 33
+# fail 14
+exit=1
+## dg0-gate-negative-r6.test.mjs
+not ok 1 - control: the independent round-5 fixture is accepted (API and CLI exit 0)
+not ok 2 - control: a genuine later-round closure (post-manifest run) is accepted
+not ok 14 - QA5-R208a (F-DG0-208 = QA3-N20): rewrite round-1 frozen_at + record to cite a LOAD run, committed, is rejected
+not ok 20 - QA5-N54 write-once: delete a committed record, then re-add it with different bytes in a later commit, is rejected
+not ok 21 - QA5-N55 write-once: re-adding the identical bytes after a delete is accepted (content, not history shape, is what matters)
+not ok 22 - QA5-N56 write-once: an edited round assignment committed on a side branch and merged is rejected (history + sha binding)
+not ok 32 - QA5-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+not ok 40 - QA5-A24 rejects: unresolved High finding
+# tests 57
+# pass 49
+# fail 8
+exit=1
+## dg0-gate-negative-r7.test.mjs
+not ok 1 - control: the independent round-5 fixture is accepted (API and CLI exit 0)
+not ok 2 - control: a genuine later-round closure (post-manifest run) is accepted
+not ok 32 - QA5-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+not ok 40 - QA5-A24 rejects: unresolved High finding
+not ok 62 - QA7-N74 D-022: a replayed prompt for another stage (DG1) is rejected; the same prompt as an array of text blocks is accepted (control)
+not ok 65 - QA7-N77 replay (control): Write of a draft, then a successful Edit producing the final bytes, plus an unrelated failed Edit, binds; an absolute path under meta.cwd binds too
+# tests 72
+# pass 66
+# fail 6
+exit=1
+## dg0-gate-negative-r8.test.mjs
+# tests 86
+# pass 86
+# fail 0
+exit=0
+## dg0-gate-negative-r9.test.mjs
+# tests 94
+# pass 94
+# fail 0
+exit=0
+## dg0-gate-negative.test.mjs
+not ok 1 - control: the independent fixture is accepted (current mode and CLI exit 0)
+not ok 10 - QA-N09 gate test evidence missing or BLOCKED fails the gate
+not ok 13 - QA-N12 a High finding CLOSED_VERIFIED without verification, and one referenced by a review but missing from findings.json
+not ok 15 - QA-N14 incomplete requirement: DG0 row IMPLEMENTED with no evidence, or a non-existent evidence path
+not ok 26 - QA-N25 metadata writes in every excluded area leave the candidate ID unchanged (and the gate valid)
+not ok 29 - QA-N28 incomplete requirement: a DG0 row whose evidence is a bare, non-existent file name is rejected
+# tests 29
+# pass 23
+# fail 6
+exit=1

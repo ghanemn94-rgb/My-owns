@@ -76,7 +76,7 @@ A finding closes only through a reviewer-authored `<role>.verifications.json` si
   - **During a review of a frozen candidate:** new tests go under `docs/delivery/test-evidence/<DGx>/qa/tests/`, so they don't alter the candidate. The orchestrator promotes them into `tests/qa/` in the next stage.
 - Implementers cannot write gate rules, agent definitions, source documents, reviews, gate records or `stages.json`.
 
-Bash is not path-guarded. Using Bash to write outside your scope is a protocol violation, and the orchestrator checks `git status` after every run. Reviewers who execute code must do so in a disposable copy: a temporary clone or worktree, or a throwaway database or container. Never do it in the candidate tree.
+Your Bash commands run in an OS sandbox (bubblewrap; D-025). Shell writes to protected paths fail with "Read-only file system": git metadata, Claude configuration, gate and agent tooling, sources, delivery records, and for reviewers and the analyst everything outside their own areas. The sandbox has **no network access**. For a disposable copy of the candidate use `git clone <repo> /tmp/<name>`; `git worktree add` needs write access to `.git` and is denied. The runner also checks configuration surfaces before and after your run (D-024/D-025). Reviewers who execute code must do so in a disposable copy: a temporary clone or worktree, or a throwaway database or container. Never do it in the candidate tree.
 
 ## Honesty rules
 

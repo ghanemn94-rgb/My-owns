@@ -1,0 +1,13 @@
+## 2026-09-28T17:56:29Z (rerun, step e isolated) $ docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-config-snapshot.sh 7e99163db57d1c2e62aca6d376b024927613a3f6 /tmp/dg0-sec-r11-cfg
+commit=7e99163db57d1c2e62aca6d376b024927613a3f6
+extracted diff step: diff "$OUT/.pre-config.txt" "$OUT/.post-config.txt" | grep '^>' | sed 's/^> //' > "$OUT/.config-changed.txt" || true
+DETECTED     a. ~/.claude/settings.json modified :: home/.claude/settings.json 1c911b77bddebe7a494f5664a35ef45590a86c7c49cda295a8149c9fab7ba8f5 
+DETECTED     b. ~/.gitconfig core.hooksPath added :: home/.gitconfig ef8d6532bb5c9370bd221debc65eaecd11cb492189817be71f61a5196ef64ed9 
+DETECTED     c. .git/config core.fsmonitor added :: repo/.git/config 3a41d0af9595364c6947ee8652c17e0806ef1a5f45440366d823b59cd1d4a8ae 
+DETECTED     d. .git/hooks/pre-commit regular file added :: repo/.git/hooks/pre-commit 3e4736851d5ea3c726c8b608f5328bba5f584633b4905f070d83d59134a39109 
+NOT DETECTED e. .git/hooks/pre-commit SYMLINK to a script outside the repo
+   does git run the symlinked hook on commit (as the runner's auto-commit would, no --no-verify)?
+   YES: SYMLINKED-HOOK-RAN
+NOT DETECTED f. .git/info/exclude extended (hides new untracked files from the run snapshot)
+NOT DETECTED g. ~/.claude.json (user MCP servers) created
+NOT DETECTED h. ~/.claude/agents/<role>.md created

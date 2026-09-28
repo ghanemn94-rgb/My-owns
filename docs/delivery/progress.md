@@ -4,28 +4,30 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 
 ## Current checkpoint
 
-- **Active stage:** P0 / DG0, state **REVIEWING** (round 7)
-- **Round-7 candidate:** `sha256:dee0316dce953eb00665cbfc452ba9da140dce70b9faa0c028af0de38626cece` (commit `e11b5f0`). The manifest is `docs/delivery/candidates/DG0/dee0316dce953eb0.manifest.json`.
+- **Active stage:** P0 / DG0, state **REVIEWING** (round 11)
+- **Round-11 candidate:** `sha256:1a73d6f015807d383ca41c9cc322bcfca157f6217e3f0d2f56b42ab6543a57c1` (commit `7e99163`)
 
 **Review history**
 
-| Round | Outcome | New findings |
-|---|---|---|
-| 1 | domain FAIL · code-security BLOCKED (classifier outage) · QA FAIL | 17 (2 High) |
-| 2 | domain PASS · code-security FAIL · QA FAIL | 11 (1 High) |
-| 3 | domain PASS · QA PASS · code-security FAIL | 7 (1 High) |
-| 4 | domain PASS · QA PASS · code-security FAIL | 7 (all Low; F-DG0-115 reopened) |
-| 5 | domain FAIL (1 Low); code-security and QA orphaned by a runner metadata bug (fixed) | 1 |
-| 6 | all three FAIL, on committed `__pycache__` (Medium), plus the F-DG0-115 back-dating residual | 5 |
+| Round | domain | code-security | QA | New findings |
+|---|---|---|---|---|
+| 1 | FAIL | BLOCKED (classifier outage) | FAIL | 17 (2 High) |
+| 2 | PASS | FAIL | FAIL | 11 (1 High) |
+| 3 | PASS | FAIL | PASS | 7 (1 High) |
+| 4 | PASS | FAIL | PASS | 7 Low; 115 reopened |
+| 5 | FAIL | (orphaned: runner bug) | (orphaned) | 1 |
+| 6 | FAIL | FAIL | FAIL | 5 (bytecode in candidate; 115 back-dating residual) |
+| 7 | PASS | FAIL | PASS | 4 (132 High: empty-transcript bypass). D-022 prompt-binding defect found by the orchestrator |
+| 8 | PASS | PASS | PASS | 1 Low (path with space) |
+| 9 | PASS | FAIL | PASS | 2 (134 Medium: worktree guard bypass) |
+| 10 | PASS | FAIL | PASS | 3 (135/136 Medium: guard fail-open, user settings) |
 
-- **Root causes addressed:**
-  - a write-once design that inspected diffs (now single-blob over all commit events, with back-dating rejected);
-  - runner metadata robustness (now `run_meta.py` with tests);
-  - build artefacts in the candidate (now `.gitignore`d);
-  - D-022: prompt binding that only worked on synthetic fixtures, found by the orchestrator. It's fixed with CLI prompt replay, which means **every** finding is re-confirmed in round 7.
+- **Findings:** 60 closed and verified by bound, replay-verified reviewer runs; 3 fixed and pending verification (F-DG0-135/136/225).
+- **Pattern:** the product specification (register, coverage, analysis) has been stable and domain-PASS since round 7. The remaining findings are about how tamper-resistant the delivery tooling is.
+- **Planned response if round 11 finds more:** add an explicit threat model for the delivery controls, `docs/delivery/threat-model.md`, bounding what is mechanically defended and what is a disclosed residual, per §0.4 root-cause analysis.
 - **Next:**
-  1. Import the round-7 results.
-  2. If all three reviewers PASS and every finding is terminal, set VERIFYING and run the release audit (`round-7/audit.md`), then run the full validator, then APPROVE.
+  1. Import round 11.
+  2. If all three PASS with every finding terminal: move to VERIFYING, run the release audit, run the full validator, then APPROVE DG0.
 
 ## Done in P0 so far
 

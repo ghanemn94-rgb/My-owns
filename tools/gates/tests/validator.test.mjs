@@ -77,12 +77,15 @@ function makeRun(repo, role, { assignment, startedAt = T_RUN, task = "T-REV", st
   const result = Buffer.from(JSON.stringify({ result: "done" }));
   put(repo, `${base}/transcript.jsonl.gz`, transcript);
   put(repo, `${base}/result.json`, result);
+  const settings = Buffer.from(JSON.stringify({ sandbox: { enabled: true, failIfUnavailable: true, allowUnsandboxedCommands: false,
+    filesystem: { denyWrite: [".git", ".claude", "tools/gates", "tools/agents", "docs/delivery/reviews", "docs/delivery/runs"].map((x) => `${RUN_CWD}/${x}`) } } }));
+  put(repo, `${base}/settings.json`, settings);
   const invocation_reference = { kind: "claude-code-cli-session", run_id, session_id };
   put(repo, `${base}/meta.json`, {
     run_id, role, stage, task, invocation_reference, model_requested: "claude-opus-5-5",
     assignment, assignment_sha256: sha(readFileSync(join(repo, assignment))),
     started_at: startedAt, exit_code: 0, is_error: false, result_session_id: session_id, head_commit_at_start: freezeCommit, cwd: RUN_CWD,
-    result_sha256: sha(result), transcript_sha256: sha(transcript),
+    result_sha256: sha(result), transcript_sha256: sha(transcript), settings_sha256: sha(settings),
   });
   return invocation_reference;
 }
@@ -873,4 +876,20 @@ test("D-024: a run that changed configuration outside the candidate is rejected"
   const ref = get(repo, records["qa-verifier"]).invocation_reference;
   edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (m) => (m.external_config_changed = ["/root/.claude/settings.json 9f86d0"]));
   expectError(validateGate(repo, "DG0"), /changed configuration outside the candidate/);
+});
+
+test("D-025: gate records must come from Bash-sandboxed runs", () => {
+  const a = buildValidRepo();
+  const ref = get(a.repo, a.records["qa-verifier"]).invocation_reference;
+  unlinkSync(join(a.repo, `docs/delivery/runs/DG0/${ref.run_id}/settings.json`));
+  expectError(validateGate(a.repo, "DG0"), /has no settings\.json/);
+  const b = buildValidRepo();
+  const refB = get(b.repo, b.records["domain-reviewer"]).invocation_reference;
+  const rel = `docs/delivery/runs/DG0/${refB.run_id}/settings.json`;
+  const weak = Buffer.from(JSON.stringify({ sandbox: { enabled: true, failIfUnavailable: true, allowUnsandboxedCommands: true, filesystem: { denyWrite: [] } } }));
+  put(b.repo, rel, weak);
+  edit(b.repo, `docs/delivery/runs/DG0/${refB.run_id}/meta.json`, (m) => (m.settings_sha256 = sha(weak)));
+  const errs = validateGate(b.repo, "DG0");
+  expectError(errs, /Bash sandbox was not enforced/);
+  expectError(errs, /does not deny writes to tools\/gates/);
 });

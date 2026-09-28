@@ -320,6 +320,25 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
   const results = lines.filter((o) => o.type === "result");
   const last = results[results.length - 1];
   if (!last || last.session_id !== ref.session_id || last.is_error) bad("transcript does not end in a successful result for this session");
+  if (binding && binding.requireSandbox) {
+    // Gate records must come from runs whose Bash was OS-sandboxed with the repository's protected paths denied (D-025).
+    const settingsRel = `docs/delivery/runs/${stageId}/${ref.run_id}/settings.json`;
+    if (!repoFile(repo, settingsRel)) bad("has no settings.json (runs before D-025 cannot bind a gate record)");
+    else if (sha256File(join(repo, settingsRel)) !== meta.settings_sha256) bad("settings.json does not match meta.settings_sha256");
+    else {
+      let sb = {};
+      try {
+        sb = JSON.parse(readFileSync(join(repo, settingsRel), "utf8")).sandbox || {};
+      } catch {
+        /* reported below */
+      }
+      const deny = (sb.filesystem && sb.filesystem.denyWrite) || [];
+      if (!(sb.enabled === true && sb.failIfUnavailable === true && sb.allowUnsandboxedCommands === false)) bad("its Bash sandbox was not enforced (enabled, failIfUnavailable, no unsandboxed commands)");
+      for (const p of [".git", ".claude", "tools/gates", "tools/agents", "docs/delivery/reviews", "docs/delivery/runs"]) {
+        if (!deny.some((d) => d.endsWith(`/${p}`))) bad(`its Bash sandbox does not deny writes to ${p}`);
+      }
+    }
+  }
   if (binding) {
     if (typeof binding.assignment !== "string" || !binding.assignment) bad("the record names no assignment to bind the run to");
     else if (meta.assignment !== binding.assignment) bad(`ran assignment ${meta.assignment}, record cites ${binding.assignment}`);
@@ -379,6 +398,7 @@ export function checkReview(repo, rel, { stage, role, candidate, extraOutputs = 
   if (!repoFile(repo, rec.assignment)) errors.push(`${label}: assignment file not found: ${rec.assignment}`);
   const sidecar = rel.replace(/\.json$/, ".findings.json");
   checkInvocation(repo, stage.id, rec.invocation_reference, role, errors, label, {
+    requireSandbox: true,
     assignment: rec.assignment,
     notBefore: stage.candidate.frozen_at,
     manifestPath: manifestPathFor(stage.id, candidate),

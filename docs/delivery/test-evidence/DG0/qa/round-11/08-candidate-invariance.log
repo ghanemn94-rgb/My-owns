@@ -1,0 +1,16 @@
+# candidate invariance under live metadata changes in the main working tree (2026-09-28T18:04:14Z)
+$ git status --short
+ M docs/delivery/progress.md
+?? docs/delivery/runs/DG0/DG0-T-DG0-REV-QA-R11-qa-verifier-20260928T174936Z-b9aa245a/
+?? docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R11-code-security-reviewer-20260928T174936Z-c0211f6d/
+?? docs/delivery/test-evidence/DG0/code-security/round-11/
+?? docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r11.test.mjs
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:1a73d6f015807d383ca41c9cc322bcfca157f6217e3f0d2f56b42ab6543a57c1","files":80}
+exit=0
+expected: sha256:1a73d6f015807d383ca41c9cc322bcfca157f6217e3f0d2f56b42ab6543a57c1 (frozen manifest docs/delivery/candidates/DG0/1a73d6f015807d38.manifest.json)
+HEAD=147fbacdc8433082267b3124214a5d9f038c689b. Commits after the freeze commit 7e99163:
+  147fbac run: DG0-T-DG0-REV-DOM-R11-domain-reviewer-20260928T174936Z-427bc15e (review evidence, auto-committed by run-agent.sh)
+  50e0d87 DG0: freeze round-11 candidate, round-11 assignments
+$ git diff --name-only 7e99163 HEAD | grep -v -E "^docs/delivery/(assignments|candidates|runs|reviews|test-evidence)/|^docs/delivery/stages.json$"
+(empty = only excluded delivery metadata changed after the freeze)

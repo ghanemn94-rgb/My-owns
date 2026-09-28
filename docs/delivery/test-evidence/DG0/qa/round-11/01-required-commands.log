@@ -1,0 +1,102 @@
+# DG0 round-11 QA: required commands
+# env: clone /tmp/qa-r11 @ 7e99163db57d1c2e62aca6d376b024927613a3f6; node v22.22.2; Linux 6.18.44-fc-v37; date 2026-09-28T17:50:07Z
+
+$ bash tools/source/check_extraction.sh
+PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)
+exit=0
+
+$ node --test tools/gates/tests/*.test.mjs
+  ---
+  duration_ms: 449.06278
+  type: 'test'
+  ...
+# Subtest: F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters
+ok 41 - F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters
+  ---
+  duration_ms: 80.214342
+  type: 'test'
+  ...
+# Subtest: D-024: a run that changed configuration outside the candidate is rejected
+ok 42 - D-024: a run that changed configuration outside the candidate is rejected
+  ---
+  duration_ms: 446.285539
+  type: 'test'
+  ...
+1..42
+# tests 42
+# suites 0
+# pass 42
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 43094.069273
+exit=0
+
+$ node --test tools/agents/tests/*.test.mjs
+  ---
+  duration_ms: 50.06253
+  type: 'test'
+  ...
+# Subtest: F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable
+ok 17 - F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable
+  ---
+  duration_ms: 222.671895
+  type: 'test'
+  ...
+# Subtest: F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory
+ok 18 - F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory
+  ---
+  duration_ms: 202.263319
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1694.503391
+exit=0
+
+$ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+exit=0
+
+$ node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+exit=0
+
+$ node tools/gates/validate.mjs --reconcile
+round 2 code-security-reviewer: FAIL (STALE for current content)
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: PASS (STALE for current content)
+round 3 code-security-reviewer: FAIL (STALE for current content)
+round 3 qa-verifier: PASS (STALE for current content)
+round 4 domain-reviewer: PASS (STALE for current content)
+round 4 code-security-reviewer: FAIL (STALE for current content)
+round 4 qa-verifier: PASS (STALE for current content)
+round 5 domain-reviewer: FAIL (STALE for current content)
+round 6 domain-reviewer: FAIL (STALE for current content)
+round 6 code-security-reviewer: FAIL (STALE for current content)
+round 6 qa-verifier: FAIL (STALE for current content)
+round 7 domain-reviewer: PASS (STALE for current content)
+round 7 code-security-reviewer: FAIL (STALE for current content)
+round 7 qa-verifier: PASS (STALE for current content)
+round 8 domain-reviewer: PASS (STALE for current content)
+round 8 code-security-reviewer: PASS (STALE for current content)
+round 8 qa-verifier: PASS (STALE for current content)
+round 9 domain-reviewer: PASS (STALE for current content)
+round 9 code-security-reviewer: FAIL (STALE for current content)
+round 9 qa-verifier: PASS (STALE for current content)
+round 10 domain-reviewer: PASS (STALE for current content)
+round 10 code-security-reviewer: FAIL (STALE for current content)
+round 10 qa-verifier: PASS (STALE for current content)
+PASS reconcile (structure)
+exit=0
+
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:1a73d6f015807d383ca41c9cc322bcfca157f6217e3f0d2f56b42ab6543a57c1","files":80}
+exit=0

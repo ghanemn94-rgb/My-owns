@@ -1,0 +1,72 @@
+## 2026-09-28T17:58:23Z static checks, fresh clone @7e99163
+$ secret patterns over tracked files (excluding transcripts .gz)
+  (end secret scan)
+$ grep for session tokens / messaging tokens in gz transcripts of committed runs
+  hit: docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R10-code-security-reviewer-20260928T172954Z-8746ec2e/transcript.jsonl.gz
+  hit: docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R2-code-security-reviewer-20260928T132727Z-12000182/transcript.jsonl.gz
+  hit: docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R3-code-security-reviewer-20260928T140336Z-823222d3/transcript.jsonl.gz
+  hit: docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R4-code-security-reviewer-20260928T143310Z-cf8395e9/transcript.jsonl.gz
+  hit: docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R5-code-security-reviewer-20260928T145750Z-65b43ddb/transcript.jsonl.gz
+  hit: docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R6-code-security-reviewer-20260928T152410Z-3eb7fbe6/transcript.jsonl.gz
+  hit: docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R7-code-security-reviewer-20260928T162818Z-b9224c10/transcript.jsonl.gz
+  hit: docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R8-code-security-reviewer-20260928T165738Z-20a603ee/transcript.jsonl.gz
+  hit: docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R9-code-security-reviewer-20260928T171212Z-f9934ae4/transcript.jsonl.gz
+  (end transcript scan)
+$ git diff 85a0efa..7e99163 --stat -- .github .claude tools/source tools/gates/schemas tools/gates/lib/candidate.mjs tools/gates/lib/schema.mjs tools/gates/lib/csv.mjs
+  (empty = unchanged since round 10)
+$ CI workflow key lines
+11:permissions:
+12:  contents: read
+18:      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+20:          fetch-depth: 0 # historical gate verification recomputes candidates from recorded commits
+21:      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+25:        run: tools/source/check_extraction.sh
+27:        run: node --test tools/gates/tests/*.test.mjs
+29:        run: node --test tools/agents/tests/*.test.mjs
+31:        run: python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'
+33:        run: node tools/gates/validate.mjs --pipeline
+35:        run: node tools/gates/validate.mjs --reconcile
+$ agent frontmatter (name/tools/hooks lines)
+  .claude/agents/backend-workflow-engineer.md: name: backend-workflow-engineer tools: Read, Grep, Glob, Write, Edit, Bash model: inherit 
+  .claude/agents/code-security-reviewer.md: name: code-security-reviewer tools: Read, Grep, Glob, Bash, Write model: inherit 
+  .claude/agents/devops-engineer.md: name: devops-engineer tools: Read, Grep, Glob, Write, Edit, Bash model: inherit 
+  .claude/agents/domain-reviewer.md: name: domain-reviewer tools: Read, Grep, Glob, Bash, Write model: inherit 
+  .claude/agents/frontend-ux-engineer.md: name: frontend-ux-engineer tools: Read, Grep, Glob, Write, Edit, Bash model: inherit 
+  .claude/agents/kpi-benefits-engineer.md: name: kpi-benefits-engineer tools: Read, Grep, Glob, Write, Edit, Bash model: inherit 
+  .claude/agents/qa-verifier.md: name: qa-verifier tools: Read, Grep, Glob, Bash, Write, Edit model: inherit 
+  .claude/agents/release-auditor.md: name: release-auditor tools: Read, Grep, Glob, Bash, Write model: inherit 
+  .claude/agents/solution-architect.md: name: solution-architect tools: Read, Grep, Glob, Write, Edit, Bash model: inherit 
+  .claude/agents/transformation-analyst.md: name: transformation-analyst tools: Read, Grep, Glob, Write, Edit, Bash model: inherit 
+$ write-scopes.json $comment
+2:  "$comment": "Role write scopes enforced by tools/agents/guard-write.mjs (PreToolUse hook on Write/Edit/NotebookEdit). Paths are repo-relative globs. 'deny' wins over 'allow'. Files outside any git work tree (scratch space) are always allowed. Changing this
+$ config_snapshot hooks line
+87:  find "$REPO_ROOT/.git/hooks" -type f 2>/dev/null | sort | while read -r f; do echo "$f $(sha256sum "$f" | cut -d' ' -f1)"; done
+$ does the auto-commit disable hooks?
+  no --no-verify / core.hooksPath override in run-agent.sh
+
+## 2026-09-28T18:00:43Z follow-up on transcript pattern hits
+$ context of the sk-ant-/token pattern hits in committed .gz transcripts (sorted, counted)
+       12 cret regex: (AKIA[0-9A-Z]{16}|sk-ant-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0
+        4 p_[A-Za-z0-9]{36}|github_pat_|sk-ant-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0
+        2 |github_pat_[A-Za-z0-9_]{20,}|sk-ant-api|xox[baprs]-[A-Za-z0-9-]{10
+        2 |github_pat_[A-Za-z0-9_]{20,}|sk-ant-api[0-9A-Za-z_-]{10,}|xox[bapr
+        2 |github_pat_[A-Za-z0-9_]{20,}|sk-ant-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0
+        2 p -I -n -E '(AKIA[0-9A-Z]{16}|sk-ant-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0
+        2 ec-r2\nPAT='(AKIA[0-9A-Z]{16}|sk-ant-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0
+        2 cret regex: (AKIA[0-9A-Z]{16}|sk-ant-[A-Za-z0-9_-]{10,}|sk-[\nsecre
+        2 _[A-Za-z0-9]{30,}|github_pat_|sk-ant-api|xox[baprs]-' ; done | awk 
+        2 _[A-Za-z0-9]{30,}|github_pat_|sk-ant-[A-Za-z0-9-]{10,}|xox[baprs]-|
+        2 _[A-Za-z0-9]{30,}|github_pat_|sk-ant-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-
+        2 [0-9A-Z]{16}|ASIA[0-9A-Z]{16}|sk-ant-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0
+        2 VATE KEY|ghp_[A-Za-z0-9]{30,}|sk-ant-[A-Za-z0-9-]{10,}|xox[bp]-|api
+        2 BEGIN [A-Z ]*PRIVATE KEY-----|sk-ant-(api|admin|oat)[0-9]{2}-[A-Za-
+        2 9A-Z]{16}|ghp_[A-Za-z0-9]{36}|sk-ant-[A-Za-z0-9_-]{20,}|-----BEGIN 
+        2 -r2 && PAT='(AKIA[0-9A-Z]{16}|sk-ant-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0
+        2 -----BEGIN [A-Z ]*PRIVATE KEY|sk-ant-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0
+        2 -----BEGIN [A-Z ]*PRIVATE KEY|sk-ant-[A-Za-z0-9_-]{10,}|ghp_[A-Za-z
+        2  grep -nIE '(AKIA[0-9A-Z]{16}|sk-ant-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0
+        1 cret regex: (AKIA[0-9A-Z]{16}|sk-ant-[A-Za-z0-9_-]{10,}|sk-[","+sec
+  => every hit is a reviewer's own grep regex text quoted in its transcript; no credential value.
+$ personal e-mail (gmail.com) in tracked files or committed transcripts
+  (end; no hits = none)
+  note: the string 'ghanem' occurs only as the repository slug ghanemn94-rgb/My-owns (docs/delivery/environment.md:11 and transcript 'repository' fields), a public repo identifier, not a credential.

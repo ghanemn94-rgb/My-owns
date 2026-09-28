@@ -1,0 +1,14 @@
+# test_run_meta.py: script mode vs discover mode (clone /tmp/qa-r11 @ 7e99163db57d1c2e62aca6d376b024927613a3f6, Python 3.11.15, 2026-09-28T18:04:14Z)
+$ python3 tools/agents/tests/test_run_meta.py -v
+Ran 5 tests in 0.008s
+OK
+exit=0
+$ python3 -m unittest discover -s tools/agents/tests -p "test_*.py" -v   (the form used by prefreeze.sh:19 and delivery-gates.yml:31)
+test_external_config_changes_are_recorded (test_run_meta.ExternalConfigTest.test_external_config_changes_are_recorded) ... ok
+Ran 12 tests in 0.012s
+OK
+exit=0
+$ grep -n "__main__\|^class" tools/agents/tests/test_run_meta.py
+18:class RunMetaTest(unittest.TestCase):
+93:if __name__ == "__main__":
+97:class ExternalConfigTest(RunMetaTest):

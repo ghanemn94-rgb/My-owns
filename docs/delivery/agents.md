@@ -94,3 +94,14 @@ Result: 10/10 definitions load and run as separate invocations, with 10 distinct
 ## Concurrency
 
 At most 4 active workers (D-004). Concurrent writers get separate git worktrees, via `--cwd <worktree>`, and explicit file ownership. Reviewers never share an invocation.
+
+## Bash sandbox (D-025)
+
+Every agent's shell runs in an OS sandbox (bubblewrap). The runner generates the configuration per run with `tools/agents/agent_settings.py` and keeps it as `runs/<DGx>/<run-id>/settings.json`.
+
+- **Protected paths.** Shell writes to git metadata, Claude configuration, ignore and attribute files, gate and agent tooling, sources and delivery records are refused by the operating system, in the repository and in all of its worktrees.
+- **Confined roles.** Reviewers and the analyst can additionally write only their own areas.
+- **Not loaded:** user and local settings. Agents start with `--setting-sources project`.
+- **Network:** sandboxed shells have none.
+
+The scope of the controls is in `docs/delivery/threat-model.md`.

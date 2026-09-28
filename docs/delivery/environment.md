@@ -61,3 +61,9 @@ Purpose: section 0.1 of the master prompt. This records what the build environme
 3. **Egress proxy CA.** Image builds must accept an optional build-time CA secret. Runtime images must not require public internet (verified in P6/P7).
 4. **No stable provider run IDs.** The runtime exposes an internal agent identifier per invocation. Review records store it as `invocation_reference` together with the transcript path when available. Where no ID is exposed, the record says so explicitly rather than inventing one.
 5. **Permission classifier interruptions.** Shell commands were intermittently refused while the permission classifier was unavailable. Read-only tools were used meanwhile. This doesn't affect product behaviour.
+
+## Changes after P0 start
+
+| Date | Change | Reason |
+|---|---|---|
+| 2026-09-28 | Installed `bubblewrap` 0.9.0 and `socat` with apt | They're required by the Claude Code Bash sandbox (D-025). The container has no unprivileged user namespaces, so agents run with `enableWeakerNestedSandbox`. Sandboxed agent shells have no network access. |

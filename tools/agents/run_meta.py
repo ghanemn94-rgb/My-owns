@@ -133,6 +133,14 @@ def build_meta(argv):
     meta["deleted"] = sorted(p for p in pre if p not in post)
     meta["written_by_tools"] = sorted(written)
     meta["tool_authored"] = dict(sorted(tool_authored.items()))
+    settings = f"{out}/settings.json"
+    if os.path.exists(settings):
+        with open(settings, "rb") as f:
+            meta["settings_sha256"] = hashlib.sha256(f.read()).hexdigest()
+        with open(settings, encoding="utf-8") as f:
+            sandbox = json.load(f).get("sandbox") or {}
+        meta["bash_sandbox"] = bool(sandbox.get("enabled") and sandbox.get("failIfUnavailable")
+                                    and sandbox.get("allowUnsandboxedCommands") is False)
     changed = f"{out}/.config-changed.txt"
     meta["external_config_changed"] = []
     if os.path.exists(changed):

@@ -37,8 +37,8 @@ done
 [[ "$ROLE" =~ ^[a-z][a-z-]*$ ]] || { echo "invalid --role '$ROLE'" >&2; exit 64; }
 [[ "$MODEL" =~ ^[A-Za-z0-9._:-]+$ ]] || { echo "invalid --model '$MODEL'" >&2; exit 64; }
 [[ -f "$REPO_ROOT/.claude/agents/$ROLE.md" ]] || { echo "no agent definition for $ROLE" >&2; exit 65; }
-SETTINGS="$REPO_ROOT/tools/agents/settings/$ROLE.settings.json"
-[[ -f "$SETTINGS" ]] || { echo "no guard settings for $ROLE" >&2; exit 65; }
+[[ -f "$REPO_ROOT/tools/agents/settings/$ROLE.settings.json" ]] || { echo "no guard settings for $ROLE" >&2; exit 65; }
+command -v bwrap >/dev/null || { echo "bubblewrap (bwrap) is required for the agent Bash sandbox (D-025)" >&2; exit 65; }
 ASSIGNMENT_ABS="$(cd "$(dirname "$ASSIGNMENT")" && pwd)/$(basename "$ASSIGNMENT")"
 [[ -f "$ASSIGNMENT_ABS" ]] || { echo "assignment not found: $ASSIGNMENT" >&2; exit 66; }
 [[ "$ASSIGNMENT_ABS" == "$REPO_ROOT/"* ]] || { echo "assignment must live inside the repository" >&2; exit 66; }
@@ -50,6 +50,9 @@ OUT="$REPO_ROOT/docs/delivery/runs/$STAGE/$RUN_ID"
 mkdir -p "$REPO_ROOT/docs/delivery/runs/$STAGE"
 mkdir "$OUT" # fails if the directory exists: evidence is never overwritten
 HEAD_COMMIT="$(git -C "$CWD" rev-parse HEAD 2>/dev/null || echo unknown)"
+# Per-run settings: the role's write-guard hook plus the OS Bash sandbox deny list (D-025), kept as run evidence.
+SETTINGS="$OUT/settings.json"
+python3 "$REPO_ROOT/tools/agents/agent_settings.py" "$ROLE" "$REPO_ROOT" "$CWD" > "$SETTINGS"
 ASSIGN_SHA="$(sha256sum "$ASSIGNMENT_ABS" | cut -d' ' -f1)"
 ASSIGN_REL="${ASSIGNMENT_ABS#"$REPO_ROOT"/}"
 
@@ -78,13 +81,25 @@ PY
 # Configuration outside the candidate that could weaken the guard or run code during the auto-commit (F-DG0-136).
 # User settings are not loaded (--setting-sources project,local), but a change is still a tamper signal.
 config_snapshot() {
-  local f
+  local f root
   for f in "$HOME/.claude/settings.json" "$HOME/.claude/settings.local.json" "$HOME/.gitconfig" \
-           "$HOME/.config/git/config" /etc/gitconfig /etc/claude-code/managed-settings.json \
-           "$REPO_ROOT/.git/config" "$REPO_ROOT/.git/info/attributes"; do
-    if [ -e "$f" ]; then echo "$f $(sha256sum "$f" | cut -d' ' -f1)"; else echo "$f absent"; fi
+           "$HOME/.config/git/config" "$HOME/.config/git/ignore" /etc/gitconfig /etc/claude-code/managed-settings.json \
+           "$REPO_ROOT/.git/config" "$REPO_ROOT/.git/info/exclude" "$REPO_ROOT/.git/info/attributes"; do
+    if [ -e "$f" ] || [ -L "$f" ]; then echo "$f $(sha256sum "$f" 2>/dev/null | cut -d' ' -f1) $(readlink "$f" 2>/dev/null)"; else echo "$f absent"; fi
   done
-  find "$REPO_ROOT/.git/hooks" -type f 2>/dev/null | sort | while read -r f; do echo "$f $(sha256sum "$f" | cut -d' ' -f1)"; done
+  # Hooks, including symlinked ones (F-DG0-138).
+  find "$REPO_ROOT/.git/hooks" \( -type f -o -type l \) 2>/dev/null | sort | while read -r f; do
+    echo "$f $(sha256sum "$f" 2>/dev/null | cut -d' ' -f1) $(readlink "$f" 2>/dev/null)"
+  done
+  # Claude configuration and ignore/attribute files anywhere in the repository and its worktrees, whether or not
+  # git ignores them (F-DG0-137/226). Claude's own .claude/.cc-writes bookkeeping is excluded.
+  git -C "$REPO_ROOT" worktree list --porcelain | sed -n 's/^worktree //p' | while read -r root; do
+    find "$root" -path "$root/.git" -prune -o \( -name CLAUDE.md -o -name CLAUDE.local.md -o -name .mcp.json \
+         -o -name .gitignore -o -name .gitattributes -o -path '*/.claude/*' \) \( -type f -o -type l \) -print 2>/dev/null |
+      grep -v '/\.claude/\.cc-writes/' | sort | while read -r f; do
+        echo "$f $(sha256sum "$f" 2>/dev/null | cut -d' ' -f1) $(readlink "$f" 2>/dev/null)"
+      done
+  done
 }
 
 # Snapshot of every non-ignored file (path -> sha256) before the run; the diff after the run is the run's outputs.
@@ -123,7 +138,7 @@ user_message() {
 ATTEMPTS=0
 set +e
 ( cd "$CWD" && user_message "$PROMPT" | claude -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
-    --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project,local \
+    --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
     --input-format stream-json --replay-user-messages \
     --output-format stream-json --verbose ) > "$OUT/transcript.jsonl" 2> "$OUT/stderr.log"
 EXIT=$?
@@ -132,7 +147,7 @@ while [[ $ATTEMPTS -lt $MAX_RESUMES ]] && classifier_outage "$OUT/transcript.jso
   echo "classifier outage detected; resuming session $SESSION_ID (attempt $ATTEMPTS) after ${RESUME_PAUSE}s" >> "$OUT/stderr.log"
   sleep "$RESUME_PAUSE"
   ( cd "$CWD" && user_message "$RESUME_PROMPT" | claude -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
-      --resume "$SESSION_ID" --settings "$SETTINGS" --setting-sources project,local \
+      --resume "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
       --input-format stream-json --replay-user-messages \
       --output-format stream-json --verbose ) >> "$OUT/transcript.jsonl" 2>> "$OUT/stderr.log"
   EXIT=$?
@@ -151,9 +166,15 @@ python3 "$REPO_ROOT/tools/agents/run_meta.py" "$OUT" "$RUN_ID" "$ROLE" "$STAGE" 
 # history from the moment the run ends (D-021). Implementer output is integrated by the orchestrator instead.
 CONFIG_CHANGED="$(python3 -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1])).get("external_config_changed", [])))' "$OUT/meta.json")"
 if [[ -n "$CONFIG_CHANGED" ]]; then
-  echo "run-agent: configuration outside the candidate changed during $RUN_ID; evidence NOT auto-committed:" >&2
-  echo "$CONFIG_CHANGED" >&2
-  exit 71
+  case "$ROLE" in
+    domain-reviewer|code-security-reviewer|qa-verifier|release-auditor|transformation-analyst)
+      echo "run-agent: configuration changed during $RUN_ID; evidence NOT auto-committed:" >&2
+      echo "$CONFIG_CHANGED" >&2
+      exit 71 ;;
+    *)
+      echo "run-agent: WARNING configuration changed during $RUN_ID; the orchestrator must review before integrating:" >&2
+      echo "$CONFIG_CHANGED" >&2 ;;
+  esac
 fi
 case "$ROLE" in
   domain-reviewer|code-security-reviewer|qa-verifier|release-auditor)
@@ -169,9 +190,23 @@ PY
     (
       flock 9
       export GIT_LITERAL_PATHSPECS=1
-      git -C "$REPO_ROOT" add --pathspec-from-file="$LIST" --pathspec-file-nul || exit $?
-      msg="$(git -C "$REPO_ROOT" commit -q -m "run: $RUN_ID (review evidence, auto-committed by run-agent.sh)" \
-        --pathspec-from-file="$LIST" --pathspec-file-nul 2>&1)" && exit 0
+      G=(git -C "$REPO_ROOT" -c core.hooksPath=/dev/null)
+      "${G[@]}" add --pathspec-from-file="$LIST" --pathspec-file-nul || exit $?
+      msg="$("${G[@]}" commit -q --no-verify -m "run: $RUN_ID (review evidence, auto-committed by run-agent.sh)" \
+        --pathspec-from-file="$LIST" --pathspec-file-nul 2>&1)" && {
+        # The commit must contain exactly the run directory and the tool-authored files (F-DG0-138).
+        python3 - "$REPO_ROOT" "$LIST" <<'PY' || exit 72
+import subprocess, sys
+root, lst = sys.argv[1], sys.argv[2]
+expected = [p for p in open(lst, encoding="utf-8").read().split("\0") if p]
+got = subprocess.run(["git", "-C", root, "show", "--name-only", "--format=", "HEAD"], capture_output=True, text=True, check=True).stdout.split()
+bad = [p for p in got if not any(p == e or p.startswith(e.rstrip("/") + "/") for e in expected)]
+if bad:
+    print("auto-commit contains unexpected files: " + ", ".join(bad), file=sys.stderr)
+    sys.exit(1)
+PY
+        exit 0
+      }
       rc=$?
       case "$msg" in
         *"nothing to commit"*|*"no changes added"*) echo "auto-commit: nothing to commit for $RUN_ID" >&2; exit 0 ;;
