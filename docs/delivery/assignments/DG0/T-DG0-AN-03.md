@@ -1,6 +1,6 @@
 # Assignment T-DG0-AN-03: master prompt preamble, §0 and §14–§21 into requirements (transformation-analyst)
 
-- **Stage:** P0 / DG0 (BUILDING). **Base revision:** `__BASE__` on `claude/mobily-transformation-platform-kwcc4i`. Verify it with `git rev-parse HEAD`.
+- **Stage:** P0 / DG0 (BUILDING). **Base revision:** `ab80507725f434916e5a9cb1e52bfe2c7b32d04a` on `claude/mobily-transformation-platform-kwcc4i`. Verify it with `git rev-parse HEAD`.
 - **Requirement IDs you create:** `REQ-DLV-###` (preamble and §0: the delivery protocol) and `REQ-S14-###` … `REQ-S21-###`. You own only these areas.
 - **Dependencies:** AN-01 is complete (`docs/analysis/parts/req-pb.csv`, IDs `REQ-PB-###`). AN-02 runs in parallel with you and covers §1–§13 (areas S01–S13). Don't create IDs in those areas.
 
