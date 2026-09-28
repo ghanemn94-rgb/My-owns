@@ -1,0 +1,32 @@
+{
+ "findings": [
+  {
+   "id": "F-DG0-222",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-006",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "docs/delivery/agents.md was not updated for D-022: its invocation command still passes the prompt as a positional argument without --input-format stream-json --replay-user-messages, and its list of run-binding conditions omits the CLI-replayed prompt",
+   "reproduction": "git show e11b5f08dfa8b6cbe8716964e3412e17697234aa:docs/delivery/agents.md | grep -c -e '--replay-user-messages' -> 0. The command block under 'Invocation mechanism (decision D-003)' still reads 'claude -p --agent <agent> ... --output-format stream-json --verbose \"<pointer to the assignment file>\"'. tools/agents/run-agent.sh (lines 108 and 117) instead pipes user_message \"$PROMPT\" into 'claude -p ... --input-format stream-json --replay-user-messages --output-format stream-json --verbose'. The paragraph's final sentence lists the conditions under which the validator refuses a run (complete, hash-consistent, same role and stage, exact assignment, post-freeze start, successful result). It does not mention D-022's requirement of a CLI-replayed prompt (isReplay: true) carrying the run_id and session_id, which tools/gates/lib/rules.mjs checkInvocation now enforces. Also, the round-6 edit put 'The validator does not trust tool_authored alone. It replays ...' directly before 'It snapshots the tree before and after the run. For review roles, it auto-commits ...', so 'It' now grammatically refers to the validator although it means the runner. Automated: docs/delivery/test-evidence/DG0/qa/round-7/15-agents-md-vs-evidence.log (3 FAIL lines).",
+   "expected": "agents.md describes the invocation mechanism the runner actually uses and the conditions the validator actually enforces. Update the command block to the stream-json/replay form, add the replayed-prompt condition (D-022) to the binding list, and make the runner the explicit subject of the snapshot/auto-commit/records sentences.",
+   "actual": "The code (run-agent.sh, rules.mjs) and decisions.md D-022 are correct and consistent. I verified D-022 independently: QA7-N70..N74 and N83, plus this run's own live transcript, which carries the replayed prompt. Only agents.md, which REQ-DLV-004/006/026 cite as evidence, still describes the pre-D-022 invocation. This is documentation only, with no effect on any rule or evidence. The reporter would accept it as a Low observation.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/qa/round-7/15-agents-md-vs-evidence.log",
+    "docs/delivery/agents.md",
+    "tools/agents/run-agent.sh",
+    "docs/delivery/decisions.md"
+   ],
+   "reported_by": "qa-verifier",
+   "reported_in": "docs/delivery/reviews/DG0/round-7/qa-verifier.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-28T16:41:00Z",
+     "status": "OPEN",
+     "note": "Raised in the DG0 round-7 QA review of candidate dee0316d (e11b5f0)."
+    }
+   ]
+  }
+ ]
+}
