@@ -45,6 +45,7 @@ if (opt("--fix")) {
           continue;
         }
         if (f.reported_by !== role) throw new Error(`${fPath}: ${f.id} reported_by ${f.reported_by} != ${role}`);
+        if (f.stage_id !== stage || !f.id.startsWith(`F-${stage}-`)) throw new Error(`${fPath}: ${f.id} (stage_id ${f.stage_id}) does not belong to ${stage}`);
         f.history = f.history && f.history.length ? f.history : [{ at: now, status: f.status, note: `imported from ${role} round ${round}` }];
         doc.findings.push(f);
         byId.set(f.id, f);

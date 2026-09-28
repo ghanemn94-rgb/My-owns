@@ -23,7 +23,7 @@
 | `increments` | The stages that implement parts of it, semicolon-separated (`P2;P4`). |
 | `final_gate` | Exactly one of `DG0`…`DG7`: the gate at which it must be fully VERIFIED. |
 | `status` | `PLANNED` → `SPECIFIED` → `IMPLEMENTED`, or `BLOCKED` (with `notes` naming the exact missing dependency). **`VERIFIED` is never written into the register.** Verification is derived by the validator from PASS review records that list the requirement in `requirements_checked`. This keeps verification bookkeeping out of the reviewed candidate. |
-| `evidence` | Semicolon-separated test IDs or evidence paths once they exist. Empty while PLANNED or SPECIFIED. |
+| `evidence` | Semicolon-separated repository file paths, each optionally followed by a `#fragment` (for example a test name). Every entry must name an existing regular file inside the repository; directories, bare words and paths outside the repository are rejected. Empty while PLANNED or SPECIFIED. |
 | `notes` | Assumptions, and labels such as `implementation-assumption` or `extension`. |
 
 ## Coverage matrices
@@ -48,7 +48,7 @@ Disposition values:
   - Both coverage matrices are complete and consistent in both directions.
   - Every A01–A28 scenario is referenced by at least one requirement.
 - **DGn (including DG0):**
-  - Every row with `final_gate` ≤ DGn is `IMPLEMENTED` with non-empty `evidence`, and every evidence path exists.
+  - Every row with `final_gate` ≤ DGn is `IMPLEMENTED` with non-empty `evidence`, and every evidence entry names an existing repository file. The file check applies at every gate, to every row with evidence.
   - The gate record's `final_gate_ids` equals the set of rows with `final_gate = DGn`.
   - Each of those rows appears in the `qa-verifier` record's `requirements_checked`, and in the `domain-reviewer` or `code-security-reviewer` record's, all being PASS records for the gate candidate. This is the *derived* verification.
 - **Pre-review self-check:** `node tools/gates/validate.mjs --register DGn` applies every rule except the derived-verification rule.

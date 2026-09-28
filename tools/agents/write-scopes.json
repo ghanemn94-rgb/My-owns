@@ -3,8 +3,6 @@
   "protected_for_implementers": [
     "tools/gates/**",
     "tools/agents/**",
-    ".claude/agents/**",
-    ".claude/settings.json",
     "docs/source/**",
     "docs/delivery/reviews/**",
     "docs/delivery/gates/**",
@@ -13,7 +11,16 @@
     "docs/delivery/runs/**",
     "docs/delivery/findings.json",
     "docs/delivery/candidates/**",
-    "docs/delivery/test-evidence/**"
+    "docs/delivery/test-evidence/**",
+    ".claude/**",
+    "**/.claude/**",
+    ".mcp.json",
+    "**/.mcp.json",
+    "CLAUDE.md",
+    "**/CLAUDE.md",
+    "**/CLAUDE.local.md",
+    "CLAUDE.local.md",
+    "trading_agent/**"
   ],
   "roles": {
     "transformation-analyst": {
@@ -22,7 +29,9 @@
         "docs/delivery/requirements.csv",
         "docs/delivery/handbacks/**"
       ],
-      "deny": []
+      "deny": [
+        "@protected_config"
+      ]
     },
     "solution-architect": {
       "allow": [
@@ -69,14 +78,18 @@
         "docs/delivery/reviews/**",
         "docs/delivery/test-evidence/**"
       ],
-      "deny": []
+      "deny": [
+        "@protected_config"
+      ]
     },
     "code-security-reviewer": {
       "allow": [
         "docs/delivery/reviews/**",
         "docs/delivery/test-evidence/**"
       ],
-      "deny": []
+      "deny": [
+        "@protected_config"
+      ]
     },
     "qa-verifier": {
       "allow": [
@@ -85,7 +98,9 @@
         "docs/delivery/reviews/**",
         "docs/delivery/test-evidence/**"
       ],
-      "deny": []
+      "deny": [
+        "@protected_config"
+      ]
     },
     "release-auditor": {
       "allow": [
@@ -93,7 +108,23 @@
         "docs/delivery/gates/**",
         "docs/delivery/test-evidence/**"
       ],
-      "deny": []
+      "deny": [
+        "@protected_config"
+      ]
     }
-  }
+  },
+  "protected_config": [
+    ".claude/**",
+    "**/.claude/**",
+    ".mcp.json",
+    "**/.mcp.json",
+    "CLAUDE.md",
+    "**/CLAUDE.md",
+    "CLAUDE.local.md",
+    "**/CLAUDE.local.md",
+    "tools/gates/**",
+    "tools/agents/**",
+    "docs/source/**",
+    "trading_agent/**"
+  ]
 }

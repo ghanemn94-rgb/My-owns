@@ -66,6 +66,12 @@ def main():
     with zipfile.ZipFile(src) as z:
         styles = load_styles(z)
         body = ET.fromstring(z.read("word/document.xml")).find(W + "body")
+        running = []
+        for name in sorted(n for n in z.namelist() if n.startswith("word/header") or n.startswith("word/footer")):
+            texts = [para_text(p) for p in ET.fromstring(z.read(name)).iter(W + "p")]
+            text = " ".join(t for t in texts if t)
+            if text:
+                running.append(f"{name.split('/')[-1].replace('.xml', '')}: {text}")
     blocks = []
     for el in body:
         if el.tag == W + "p":
@@ -86,7 +92,9 @@ def main():
                            "level": level, "style": style, "text": text})
         elif el.tag == W + "tbl":
             blocks.append({"type": "table", "rows": table_rows(el)})
-    lines = []
+    lines = ["<!-- Extracted by tools/source/extract_docx.py. Running headers/footers (not body blocks; no requirement substance): -->"]
+    lines += [f"<!-- {r} -->" for r in running] or ["<!-- none -->"]
+    lines.append("")
     for i, b in enumerate(blocks, 1):
         anchor = f"B{i:04d}"
         b["id"] = anchor
@@ -101,7 +109,7 @@ def main():
             if not rows:
                 continue
             width = max(len(r) for r in rows)
-            norm = [r + [""] * (width - len(r)) for r in rows]
+            norm = [[c.replace("\n", "<br>") for c in r] + [""] * (width - len(r)) for r in rows]
             lines.append(f"\n<!-- {anchor} table -->")
             lines.append("| " + " | ".join(norm[0]) + " |")
             lines.append("|" + "---|" * width)

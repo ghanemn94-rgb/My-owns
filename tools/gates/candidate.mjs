@@ -8,7 +8,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { candidateId, diffManifests, manifestFromRef, manifestFromWorkingTree } from "./lib/candidate.mjs";
+import { candidateId, diffManifests, manifestFromRef, manifestFromWorkingTree, specPolicyErrors } from "./lib/candidate.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const args = process.argv.slice(2);
@@ -41,6 +41,11 @@ if (args.includes("--diff")) {
 }
 
 if (args.includes("--freeze")) {
+  const policy = specPolicyErrors(spec);
+  if (policy.length) {
+    console.error(`refusing to freeze: candidate_spec violates policy: ${policy.join("; ")}`);
+    process.exit(1);
+  }
   const head = execFileSync("git", ["-C", repo, "rev-parse", "HEAD"]).toString().trim();
   const fromHead = manifestFromRef(repo, head, spec);
   const fromTree = manifestFromWorkingTree(repo, spec);

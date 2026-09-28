@@ -1,13 +1,17 @@
 // Delivery gate rules (master prompt §0.4–§0.5). Pure checks over repository files; every check returns error strings.
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { gunzipSync } from "node:zlib";
+import { join, resolve, sep } from "node:path";
 import { validate } from "./schema.mjs";
 import { parseCsv } from "./csv.mjs";
-import { candidateId, manifestFromRef, manifestFromWorkingTree, diffManifests } from "./candidate.mjs";
+import { candidateId, manifestFromRef, manifestFromWorkingTree, diffManifests, specPolicyErrors } from "./candidate.mjs";
 
 export const STAGE_ORDER = ["DG0", "DG1", "DG2", "DG3", "DG4", "DG5", "DG6", "DG7"];
 export const REQUIRED_REVIEWERS = ["domain-reviewer", "code-security-reviewer", "qa-verifier"];
 export const AUDITOR = "release-auditor";
+export const REVIEW_ROLES = [...REQUIRED_REVIEWERS, AUDITOR];
 export const TRANSITIONS = {
   PLANNED: ["BUILDING", "BLOCKED"],
   BUILDING: ["REVIEWING", "BLOCKED"],
@@ -27,6 +31,8 @@ const OPTIONAL_COLUMNS = new Set(["template_id", "evidence", "notes"]);
 // that list the requirement in requirements_checked (so recording verification cannot alter the candidate).
 const STATUS_RANK = { PLANNED: 0, SPECIFIED: 1, IMPLEMENTED: 2, BLOCKED: -1 };
 const TERMINAL_FINDING = new Set(["CLOSED_VERIFIED", "ACCEPTED_OBSERVATION", "REJECTED_INVALID"]);
+// Fields a reviewer sets when raising a finding; the orchestrator may not alter them in findings.json.
+const IMMUTABLE_FINDING_FIELDS = ["stage_id", "requirement", "severity", "mandatory_violation", "title", "reported_by"];
 
 const here = new URL(".", import.meta.url).pathname;
 const schemaCache = {};
@@ -35,14 +41,32 @@ export function schema(name) {
   return schemaCache[name];
 }
 
+export function sha256File(abs) {
+  return createHash("sha256").update(readFileSync(abs)).digest("hex");
+}
+
+/** True when `ref` (optionally with a #fragment) names an existing regular file strictly inside the repository. */
+export function repoFile(repo, ref) {
+  if (typeof ref !== "string") return false;
+  const rel = ref.split("#")[0];
+  if (!rel || rel.startsWith("/") || rel.includes("\0")) return false;
+  const root = resolve(repo);
+  const abs = resolve(root, rel);
+  if (!abs.startsWith(root + sep)) return false;
+  try {
+    return statSync(abs).isFile();
+  } catch {
+    return false;
+  }
+}
+
 export function readJson(repo, rel, errors, label = rel) {
-  const p = join(repo, rel);
-  if (!existsSync(p)) {
+  if (!repoFile(repo, rel)) {
     errors.push(`${label}: file not found (${rel})`);
     return null;
   }
   try {
-    return JSON.parse(readFileSync(p, "utf8"));
+    return JSON.parse(readFileSync(join(repo, rel), "utf8"));
   } catch (e) {
     errors.push(`${label}: invalid JSON (${e.message})`);
     return null;
@@ -57,6 +81,10 @@ export function stageIndex(id) {
   return STAGE_ORDER.indexOf(id);
 }
 
+function git(repo, args) {
+  return execFileSync("git", ["-C", repo, ...args], { maxBuffer: 1 << 30, stdio: ["ignore", "pipe", "pipe"] });
+}
+
 // ---------- stages.json ----------
 export function loadStages(repo, errors) {
   const doc = readJson(repo, "docs/delivery/stages.json", errors, "stages.json");
@@ -68,6 +96,7 @@ export function loadStages(repo, errors) {
   if (JSON.stringify(ids) !== JSON.stringify(STAGE_ORDER)) errors.push(`stages.json: stages must be exactly ${STAGE_ORDER.join(",")} in order`);
   for (const s of doc.stages) {
     if (s.stage !== "P" + s.id.slice(2)) errors.push(`stages.json: ${s.id} must map to P${s.id.slice(2)}`);
+    for (const e of specPolicyErrors(s.candidate_spec)) errors.push(`stages.json: ${s.id} candidate_spec ${e}`);
     const hist = s.history;
     if (hist[0].state !== "PLANNED") errors.push(`stages.json: ${s.id} history must start at PLANNED`);
     for (let i = 1; i < hist.length; i++) {
@@ -90,13 +119,12 @@ function loadBlockIds(repo, rel, errors) {
 }
 
 function loadCsv(repo, rel, errors) {
-  const p = join(repo, rel);
-  if (!existsSync(p)) {
+  if (!repoFile(repo, rel)) {
     errors.push(`${rel}: file not found`);
     return null;
   }
   try {
-    return parseCsv(readFileSync(p, "utf8"));
+    return parseCsv(readFileSync(join(repo, rel), "utf8"));
   } catch (e) {
     errors.push(`${rel}: ${e.message}`);
     return null;
@@ -186,10 +214,8 @@ export function checkRegister(repo, stageId, errors, gateRecord = null, reviewRe
       errors.push(`${where}: final gate ${row.final_gate} requires IMPLEMENTED at ${stageId} (is ${row.status})`);
     }
     if (fg >= 0 && fg <= gateIdx && !row.evidence.trim()) errors.push(`${where}: IMPLEMENTED for ${row.final_gate} without evidence`);
-    if (row.evidence.trim()) {
-      for (const ev of splitList(row.evidence)) {
-        if (ev.includes("/") && !existsSync(join(repo, ev.split("#")[0]))) errors.push(`${where}: evidence path not found: ${ev}`);
-      }
+    for (const ev of splitList(row.evidence)) {
+      if (!repoFile(repo, ev)) errors.push(`${where}: evidence is not an existing repository file: ${ev}`);
     }
   }
   for (let n = 1; n <= 28; n++) {
@@ -222,16 +248,64 @@ export function checkRegister(repo, stageId, errors, gateRecord = null, reviewRe
 }
 
 // ---------- invocation provenance ----------
-export function checkInvocation(repo, stageId, ref, role, errors, label) {
-  if (!ref) return errors.push(`${label}: missing invocation_reference`);
-  const metaRel = `docs/delivery/runs/${stageId}/${ref.run_id}/meta.json`;
+/** Files that make up a run's evidence (for history-immutability checks). */
+export function runFiles(stageId, runId) {
+  const base = `docs/delivery/runs/${stageId}/${runId}`;
+  return [`${base}/meta.json`, `${base}/result.json`, `${base}/transcript.jsonl.gz`];
+}
+
+/**
+ * A review/audit/verification must point at a real, completed run of the same role for this stage:
+ * meta, result and transcript present with matching hashes; the transcript's init, prompt and result lines carry
+ * the same session and role; and (when binding is given) the run executed the record's assignment after the freeze.
+ */
+export function checkInvocation(repo, stageId, ref, role, errors, label, binding = null) {
+  if (!ref) return void errors.push(`${label}: missing invocation_reference`);
+  const [metaRel, resultRel, transcriptRel] = runFiles(stageId, ref.run_id);
   const meta = readJson(repo, metaRel, errors, `${label} invocation`);
   if (!meta) return;
-  if (meta.role !== role) errors.push(`${label}: invocation ${ref.run_id} was run as '${meta.role}', not '${role}'`);
-  if (!meta.invocation_reference || meta.invocation_reference.session_id !== ref.session_id) {
-    errors.push(`${label}: session_id does not match the recorded run ${ref.run_id}`);
+  const bad = (m) => errors.push(`${label}: invocation ${ref.run_id}: ${m}`);
+  if (meta.run_id !== ref.run_id) bad(`meta.run_id is ${meta.run_id}`);
+  if (meta.role !== role) bad(`was run as '${meta.role}', not '${role}'`);
+  if (meta.stage !== stageId) bad(`belongs to stage ${meta.stage}, not ${stageId}`);
+  if (!meta.invocation_reference || meta.invocation_reference.session_id !== ref.session_id) bad("session_id does not match the recorded run");
+  if (meta.result_session_id !== ref.session_id) bad("result_session_id does not match the requested session");
+  if (meta.exit_code !== 0 || meta.is_error) bad("did not complete successfully");
+  for (const [rel, key] of [[resultRel, "result_sha256"], [transcriptRel, "transcript_sha256"]]) {
+    if (!repoFile(repo, rel)) bad(`missing ${rel.split("/").pop()}`);
+    else if (!meta[key] || sha256File(join(repo, rel)) !== meta[key]) bad(`${rel.split("/").pop()} does not match meta.${key}`);
   }
-  if (meta.exit_code !== 0 || meta.is_error) errors.push(`${label}: invocation ${ref.run_id} did not complete successfully`);
+  if (repoFile(repo, transcriptRel)) {
+    let lines = [];
+    try {
+      lines = gunzipSync(readFileSync(join(repo, transcriptRel))).toString("utf8").split("\n").filter(Boolean).map((l) => {
+        try {
+          return JSON.parse(l);
+        } catch {
+          return {};
+        }
+      });
+    } catch (e) {
+      bad(`transcript is not valid gzip (${e.message})`);
+    }
+    if (lines.length) {
+      const init = lines.find((o) => o.type === "system" && o.subtype === "init");
+      if (!init || init.session_id !== ref.session_id) bad("transcript has no init line for this session");
+      else if (meta.model_requested && init.model !== meta.model_requested) bad(`transcript model ${init.model} != requested ${meta.model_requested}`);
+      const prompt = lines.find((o) => o.type === "user" && JSON.stringify(o.message || "").includes(`invoked as project agent '${role}'`));
+      if (!prompt || !JSON.stringify(prompt.message).includes(ref.run_id)) bad(`transcript does not contain the runner prompt for '${role}' and run ${ref.run_id}`);
+      const results = lines.filter((o) => o.type === "result");
+      const last = results[results.length - 1];
+      if (!last || last.session_id !== ref.session_id || last.is_error) bad("transcript does not end in a successful result for this session");
+    }
+  }
+  if (binding) {
+    if (binding.assignment !== undefined) {
+      if (meta.assignment !== binding.assignment) bad(`ran assignment ${meta.assignment}, record cites ${binding.assignment}`);
+      else if (!repoFile(repo, binding.assignment) || sha256File(join(repo, binding.assignment)) !== meta.assignment_sha256) bad("assignment file changed since the run (sha256 mismatch)");
+    }
+    if (binding.notBefore && !(meta.started_at >= binding.notBefore)) bad(`started ${meta.started_at}, before the candidate froze at ${binding.notBefore}`);
+  }
 }
 
 // ---------- review records ----------
@@ -253,14 +327,45 @@ export function checkReview(repo, rel, { stage, role, candidate }, errors) {
     if (c.result !== "PASS") errors.push(`${label}: check ${c.id} is ${c.result}`);
   }
   for (const ev of rec.evidence_paths) {
-    if (!existsSync(join(repo, ev.split("#")[0]))) errors.push(`${label}: evidence path not found: ${ev}`);
+    if (!repoFile(repo, ev)) errors.push(`${label}: evidence path is not an existing repository file: ${ev}`);
   }
-  if (!existsSync(join(repo, rec.assignment))) errors.push(`${label}: assignment file not found: ${rec.assignment}`);
-  checkInvocation(repo, stage.id, rec.invocation_reference, role, errors, label);
+  if (!repoFile(repo, rec.assignment)) errors.push(`${label}: assignment file not found: ${rec.assignment}`);
+  checkInvocation(repo, stage.id, rec.invocation_reference, role, errors, label, {
+    assignment: rec.assignment,
+    notBefore: stage.candidate.frozen_at,
+  });
   return rec;
 }
 
 // ---------- findings ----------
+/** Every finding raised in any review round of the stage, from the reviewer-authored sidecars and records. */
+export function collectRaisedFindings(repo, stageId, errors) {
+  const raised = new Map(); // id -> { finding, round, file }
+  const referenced = new Map(); // id -> record path
+  const dir = join(repo, "docs/delivery/reviews", stageId);
+  if (!existsSync(dir)) return { raised, referenced };
+  const rounds = readdirSync(dir).filter((d) => /^round-\d+$/.test(d)).sort((a, b) => Number(a.slice(6)) - Number(b.slice(6)));
+  for (const round of rounds) {
+    for (const file of readdirSync(join(dir, round)).sort()) {
+      const rel = `docs/delivery/reviews/${stageId}/${round}/${file}`;
+      const sidecar = file.match(/^(.+)\.findings\.json$/);
+      if (sidecar) {
+        const data = readJson(repo, rel, errors, "findings sidecar");
+        for (const f of (data && data.findings) || []) {
+          if (f.stage_id !== stageId) errors.push(`${rel}: finding ${f.id} is labelled ${f.stage_id} but was raised in ${stageId}`);
+          if (!String(f.id).startsWith(`F-${stageId}-`)) errors.push(`${rel}: finding id ${f.id} does not belong to ${stageId}`);
+          if (f.reported_by !== sidecar[1]) errors.push(`${rel}: finding ${f.id} reported_by ${f.reported_by} but the sidecar belongs to ${sidecar[1]}`);
+          raised.set(f.id, { finding: f, round, file: rel }); // later rounds supersede earlier versions
+        }
+      } else if (/^[a-z-]+\.json$/.test(file) && REVIEW_ROLES.includes(file.slice(0, -5))) {
+        const rec = readJson(repo, rel, errors, "review record");
+        for (const id of (rec && rec.findings) || []) referenced.set(id, rel);
+      }
+    }
+  }
+  return { raised, referenced };
+}
+
 export function checkFindings(repo, stageId, reviewRecords, gate, errors) {
   const doc = readJson(repo, "docs/delivery/findings.json", errors, "findings.json");
   if (!doc) return;
@@ -272,10 +377,29 @@ export function checkFindings(repo, stageId, reviewRecords, gate, errors) {
     if (byId.has(f.id)) errors.push(`findings.json: duplicate id ${f.id}`);
     byId.set(f.id, f);
   }
+  const { raised, referenced } = collectRaisedFindings(repo, stageId, errors);
+  for (const [id, where] of referenced) {
+    if (!byId.has(id)) errors.push(`${where}: lists finding ${id}, which is not in findings.json`);
+    else if (!raised.has(id)) errors.push(`${where}: lists finding ${id}, which no reviewer sidecar raised`);
+  }
   for (const rec of reviewRecords) {
     for (const fid of rec.findings) if (!byId.has(fid)) errors.push(`review ${rec.reviewer_role}: finding ${fid} not in findings.json`);
   }
-  for (const f of doc.findings.filter((x) => x.stage_id === stageId)) {
+  for (const [id, { finding, file }] of raised) {
+    const f = byId.get(id);
+    if (!f) {
+      errors.push(`finding ${id} raised in ${file} is missing from findings.json (dropped)`);
+      continue;
+    }
+    for (const k of IMMUTABLE_FINDING_FIELDS) {
+      if (JSON.stringify(f[k]) !== JSON.stringify(finding[k])) errors.push(`finding ${id}: ${k} in findings.json (${JSON.stringify(f[k])}) differs from the reviewer's (${JSON.stringify(finding[k])})`);
+    }
+  }
+  for (const f of doc.findings) {
+    if (f.id.startsWith(`F-${stageId}-`) && f.stage_id !== stageId) errors.push(`finding ${f.id}: relabelled to ${f.stage_id}; findings stay with the stage that raised them`);
+    if (f.stage_id === stageId && !raised.has(f.id)) errors.push(`finding ${f.id}: no reviewer sidecar raised it`);
+  }
+  for (const f of doc.findings.filter((x) => x.stage_id === stageId || x.id.startsWith(`F-${stageId}-`))) {
     const where = `finding ${f.id} (${f.severity}${f.mandatory_violation ? ", mandatory" : ""})`;
     if (!TERMINAL_FINDING.has(f.status)) {
       errors.push(`${where}: unresolved (${f.status})`);
@@ -317,8 +441,10 @@ export function checkCandidate(repo, stage, gate, mode, errors) {
   if (!manifest) return;
   if (manifest.stage_id !== stage.id) errors.push(`candidate manifest: stage_id ${manifest.stage_id} != ${stage.id}`);
   if (manifest.candidate_id !== gate.candidate_id) errors.push(`candidate manifest: id ${manifest.candidate_id} != gate ${gate.candidate_id}`);
-  if (candidateId(manifest.entries) !== manifest.candidate_id) errors.push("candidate manifest: entries do not hash to its candidate_id (tampered)");
+  if (!Array.isArray(manifest.entries) || candidateId(manifest.entries) !== manifest.candidate_id) errors.push("candidate manifest: entries do not hash to its candidate_id (tampered)");
   if (manifest.source_commit !== gate.source_commit) errors.push("candidate manifest: source_commit differs from the gate record");
+  if (JSON.stringify(manifest.spec) !== JSON.stringify(stage.candidate_spec)) errors.push("candidate manifest: spec differs from the stage's candidate_spec");
+  for (const e of specPolicyErrors(manifest.spec)) errors.push(`candidate manifest: spec ${e}`);
   if (stage.candidate.candidate_id !== gate.candidate_id) errors.push(`stages.json: ${stage.id} candidate ${stage.candidate.candidate_id} != gate ${gate.candidate_id}`);
   let recomputed;
   try {
@@ -331,9 +457,57 @@ export function checkCandidate(repo, stage, gate, mode, errors) {
   }
   const id = candidateId(recomputed);
   if (id !== gate.candidate_id) {
-    const d = diffManifests(manifest.entries, recomputed);
+    const d = diffManifests(manifest.entries || [], recomputed);
     const sample = [...d.changed.map((p) => `~${p}`), ...d.added.map((p) => `+${p}`), ...d.removed.map((p) => `-${p}`)].slice(0, 12);
     errors.push(`candidate: ${mode} content hashes to ${id}, approval covers ${gate.candidate_id}; changed: ${sample.join(" ")}`);
+  }
+}
+
+// ---------- approval immutability (historical mode) ----------
+/**
+ * After a gate is approved, its decision record and every evidence file it relies on must stay byte-identical in
+ * git history. The approval commit is the first commit in which the gate file records APPROVED; no later commit
+ * and no working-tree edit may change those files. Rewriting this requires rewriting published git history.
+ */
+export function checkApprovalImmutable(repo, gateRel, evidenceRels, stageId, errors) {
+  let commits;
+  try {
+    commits = git(repo, ["log", "--reverse", "--format=%H", "--", gateRel]).toString().split("\n").filter(Boolean);
+  } catch (e) {
+    return void errors.push(`history: cannot read git history of ${gateRel} (${e.message.split("\n")[0]})`);
+  }
+  let approval = null;
+  for (const c of commits) {
+    try {
+      if (JSON.parse(git(repo, ["show", `${c}:${gateRel}`]).toString()).decision === "APPROVED") {
+        approval = c;
+        break;
+      }
+    } catch {
+      /* file absent or unparsable in that commit */
+    }
+  }
+  if (!approval) return void errors.push(`history: ${gateRel} has never been committed with decision APPROVED`);
+  const files = [gateRel, ...evidenceRels];
+  for (const rel of files) {
+    let atApproval;
+    try {
+      atApproval = git(repo, ["show", `${approval}:${rel}`]);
+    } catch {
+      errors.push(`history: ${rel} was not committed at the approval commit ${approval.slice(0, 10)}`);
+      continue;
+    }
+    const later = git(repo, ["log", "--format=%h", `${approval}..HEAD`, "--", rel]).toString().split("\n").filter(Boolean);
+    if (later.length) errors.push(`history: ${rel} changed after approval (commits ${later.join(",")})`);
+    if (!repoFile(repo, rel) || !readFileSync(join(repo, rel)).equals(atApproval)) errors.push(`history: working-tree ${rel} differs from the approved version`);
+  }
+  // Findings of this stage are frozen at approval as well.
+  try {
+    const then = JSON.parse(git(repo, ["show", `${approval}:docs/delivery/findings.json`]).toString()).findings.filter((f) => f.stage_id === stageId);
+    const now = JSON.parse(readFileSync(join(repo, "docs/delivery/findings.json"), "utf8")).findings.filter((f) => f.stage_id === stageId);
+    if (JSON.stringify(then) !== JSON.stringify(now)) errors.push(`history: ${stageId} findings changed after approval`);
+  } catch (e) {
+    errors.push(`history: cannot compare ${stageId} findings with the approval commit (${e.message.split("\n")[0]})`);
   }
 }
 
@@ -388,10 +562,15 @@ export function validateGate(repo, stageId, { mode = "current", stagesDoc = null
   }
   for (const t of gate.tests) {
     if (t.result !== "PASS") errors.push(`gate ${stageId}: test '${t.name}' is ${t.result}`);
-    for (const ev of t.evidence) if (!existsSync(join(repo, ev.split("#")[0]))) errors.push(`gate ${stageId}: test evidence not found: ${ev}`);
+    for (const ev of t.evidence) if (!repoFile(repo, ev)) errors.push(`gate ${stageId}: test evidence is not an existing repository file: ${ev}`);
   }
   checkFindings(repo, stageId, records, gate, errors);
   checkRegister(repo, stageId, errors, gate, records);
+  if (mode === "historical") {
+    const evidence = [gate.manifest_path, ...REQUIRED_REVIEWERS.map((r) => gate.reviews[r]).filter(Boolean), gate.release_audit];
+    for (const rec of records) evidence.push(...runFiles(stageId, rec.invocation_reference.run_id));
+    checkApprovalImmutable(repo, stage.gate_record, [...new Set(evidence)], stageId, errors);
+  }
   return errors;
 }
 
@@ -427,7 +606,7 @@ export function reconcile(repo) {
   const active = doc.stages.find((s) => s.state !== "APPROVED");
   if (!active) return { errors, report: ["all stages APPROVED"] };
   report.push(`active stage: ${active.id} (${active.state})`);
-  if (active.candidate.manifest_path && existsSync(join(repo, active.candidate.manifest_path))) {
+  if (active.candidate.manifest_path && repoFile(repo, active.candidate.manifest_path)) {
     const manifest = JSON.parse(readFileSync(join(repo, active.candidate.manifest_path), "utf8"));
     const now = manifestFromWorkingTree(repo, manifest.spec);
     const id = candidateId(now);
@@ -436,7 +615,7 @@ export function reconcile(repo) {
     report.push(`working tree:     ${id} (${id === manifest.candidate_id ? "matches" : `differs: ${d.changed.length} changed, ${d.added.length} added, ${d.removed.length} removed`})`);
     for (const r of active.review_rounds) {
       for (const [role, rel] of Object.entries(r.records)) {
-        const rec = existsSync(join(repo, rel)) ? JSON.parse(readFileSync(join(repo, rel), "utf8")) : null;
+        const rec = repoFile(repo, rel) ? JSON.parse(readFileSync(join(repo, rel), "utf8")) : null;
         const stale = !rec || rec.candidate_id !== id;
         report.push(`round ${r.round} ${role}: ${rec ? rec.verdict : "missing"}${stale ? " (STALE for current content)" : " (current)"}`);
       }

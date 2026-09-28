@@ -53,7 +53,10 @@ def main():
         if rows and list(rows[0].keys()) != COLUMNS:
             problems.append(f"{path}: header differs from register columns")
             continue
-        for r in rows:
+        for n, r in enumerate(rows, start=2):
+            if None in r or any(v is None for v in r.values()):
+                problems.append(f"{path}: record {n} has a cell count different from the header")
+                continue
             rid = r["req_id"].strip()
             if rid in reqs:
                 problems.append(f"{path}: duplicate {rid} (already from {reqs[rid]['_src']})")
@@ -73,7 +76,10 @@ def main():
             reqs[rid]["source_ref"] = ";".join(refs)
     cov = {}
     for path in sorted(glob.glob("docs/analysis/parts/mp-coverage-*.csv")):
-        for r in read(path):
+        for n, r in enumerate(read(path), start=2):
+            if None in r or any(v is None for v in r.values()):
+                problems.append(f"{path}: record {n} has a cell count different from the header")
+                continue
             b = r["block_id"].strip()
             if b in cov:
                 problems.append(f"{path}: duplicate coverage row for {b}")

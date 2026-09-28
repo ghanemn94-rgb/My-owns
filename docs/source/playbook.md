@@ -1,3 +1,6 @@
+<!-- Extracted by tools/source/extract_docx.py. Running headers/footers (not body blocks; no requirement substance): -->
+<!-- footer1: BUSINESS TRANSFORMATION PLAYBOOK  |  PRACTICAL EDITION -->
+
 
 BUSINESS
 TRANSFORMATION
@@ -8,10 +11,7 @@ A practical system to diagnose, design, mobilize, execute and realize transforma
 
 
 <!-- B0003 table -->
-| 6
-PHASES | 15+
-READY TEMPLATES | 1
-OPERATING SYSTEM |
+| 6<br>PHASES | 15+<br>READY TEMPLATES | 1<br>OPERATING SYSTEM |
 |---|---|---|
 
 
@@ -292,42 +292,12 @@ Target Operating Model Canvas <!-- B0061 -->
 
 
 <!-- B0062 table -->
-| CUSTOMER & VALUE
-Segments / needs / promise / experience principles
-
-[Write target-state design here] | PRODUCTS & SERVICES
-Portfolio / bundles / pricing / service model
-
-[Write target-state design here] |
+| CUSTOMER & VALUE<br>Segments / needs / promise / experience principles<br><br>[Write target-state design here] | PRODUCTS & SERVICES<br>Portfolio / bundles / pricing / service model<br><br>[Write target-state design here] |
 |---|---|
-| JOURNEYS & PROCESSES
-Critical E2E journeys / automation / controls
-
-[Write target-state design here] | ORGANIZATION
-Structure / role clarity / accountability
-
-[Write target-state design here] |
-| GOVERNANCE
-Decision rights / forums / escalation
-
-[Write target-state design here] | PEOPLE & CAPABILITY
-Skills / capacity / incentives / behaviors
-
-[Write target-state design here] |
-| TECHNOLOGY
-Platforms / architecture / integration
-
-[Write target-state design here] | DATA & ANALYTICS
-Sources / ownership / insight / AI / measurement
-
-[Write target-state design here] |
-| PARTNERS & SOURCING
-Partner model / vendors / build-buy-partner
-
-[Write target-state design here] | PERFORMANCE
-KPIs / benefits / management cadence / CI
-
-[Write target-state design here] |
+| JOURNEYS & PROCESSES<br>Critical E2E journeys / automation / controls<br><br>[Write target-state design here] | ORGANIZATION<br>Structure / role clarity / accountability<br><br>[Write target-state design here] |
+| GOVERNANCE<br>Decision rights / forums / escalation<br><br>[Write target-state design here] | PEOPLE & CAPABILITY<br>Skills / capacity / incentives / behaviors<br><br>[Write target-state design here] |
+| TECHNOLOGY<br>Platforms / architecture / integration<br><br>[Write target-state design here] | DATA & ANALYTICS<br>Sources / ownership / insight / AI / measurement<br><br>[Write target-state design here] |
+| PARTNERS & SOURCING<br>Partner model / vendors / build-buy-partner<br><br>[Write target-state design here] | PERFORMANCE<br>KPIs / benefits / management cadence / CI<br><br>[Write target-state design here] |
 
 
 Canvas use: complete with business owners in a 90-120 minute workshop; then convert unresolved items into explicit design decisions and owners. <!-- B0063 -->
@@ -748,8 +718,7 @@ Transformation Health Check — 25 Questions <!-- B0149 -->
 | ☐ 19. Are adoption metrics tracked? | ☐ 20. Are frontline/business teams involved in design? |
 | ☐ 21. Are benefits validated with evidence? | ☐ 22. Is BAU ownership defined before closure? |
 | ☐ 23. Is a continuous-improvement backlog retained? | ☐ 24. Are lessons reused across transformations? |
-| ☐ 25. Can leadership state what support the transformation needs now? | Score: ____ / 25
-Top 3 actions: ____________________________ |
+| ☐ 25. Can leadership state what support the transformation needs now? | Score: ____ / 25<br>Top 3 actions: ____________________________ |
 
 
 Interpretation <!-- B0151 -->

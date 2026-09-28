@@ -29,7 +29,7 @@ claude -p --agent <agent> --model <orchestrator model> --permission-mode auto \
        --output-format stream-json --verbose "<pointer to the assignment file>"
 ```
 
-It records `docs/delivery/runs/<DGx>/<run-id>/meta.json` (role, session ID, model, assignment SHA-256, start commit, exit code, turns, models used), `result.json` (final message) and `transcript.jsonl.gz` (the full stream transcript). The `invocation_reference` used in review records is `{kind, run_id, session_id}`. The validator refuses any review, audit or finding verification whose run record is missing, belongs to a different role, or didn't complete.
+It records `docs/delivery/runs/<DGx>/<run-id>/meta.json` (role, stage, task, session ID, model, assignment path and SHA-256, start commit, start and finish times, exit code, turns, models used, classifier-outage resumes, and the SHA-256 of `result.json` and `transcript.jsonl.gz`), `result.json` (the final message) and `transcript.jsonl.gz` (the full stream transcript). Run IDs include the session prefix, and directories are never reused (F-DG0-108). The arguments are validated. If a run stops only because the permission classifier returned no verdict repeatedly, the runner resumes the same session up to 3 times (D-019). The `invocation_reference` used in review records is `{kind, run_id, session_id}`. The validator refuses any review, audit or finding verification unless its run evidence is complete and hash-consistent, belongs to the same role and stage, executed exactly the cited assignment, started after the candidate froze, and ends in a successful result for the same session (D-016).
 
 ### Why not the in-session Agent tool?
 

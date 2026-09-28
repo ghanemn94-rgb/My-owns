@@ -16,6 +16,10 @@ export function parseCsv(text) {
           i++;
         } else {
           inQuotes = false;
+          const next = text[i + 1];
+          if (next !== undefined && next !== "," && next !== "\n" && next !== "\r") {
+            throw new Error(`CSV: unexpected character after closing quote near record ${records.length + 1}`);
+          }
         }
       } else {
         field += c;

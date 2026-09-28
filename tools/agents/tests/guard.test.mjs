@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -74,4 +74,33 @@ test("the hook entry point blocks with exit code 2 and allows with 0", () => {
 test("implementers cannot write reviewer test evidence", () => {
   assert.equal(decide(scopes, "backend-workflow-engineer", p("docs/delivery/test-evidence/DG1/qa.log")).allow, false);
   assert.equal(decide(scopes, "backend-workflow-engineer", p("docs/delivery/handbacks/DG1/T-1.md")).allow, true);
+});
+
+test("F-DG0-105: Claude configuration surfaces and the unrelated project are protected from implementers", () => {
+  for (const role of ["backend-workflow-engineer", "devops-engineer"]) {
+    for (const rel of [".claude/settings.local.json", ".claude/hooks/x.sh", ".claude/commands/y.md", ".mcp.json",
+      "CLAUDE.md", "apps/api/CLAUDE.md", "apps/web/.claude/settings.json", "trading_agent/agent.py", "CLAUDE.local.md"]) {
+      assert.equal(decide(scopes, role, p(rel)).allow, false, `${role} must not write ${rel}`);
+    }
+  }
+  for (const role of ["domain-reviewer", "qa-verifier", "release-auditor", "transformation-analyst"]) {
+    assert.equal(decide(scopes, role, p(".claude/settings.local.json")).allow, false);
+  }
+});
+
+test("F-DG0-105: writes through a symlink into a protected path are blocked", () => {
+  const r = mkdtempSync(join(tmpdir(), "guard-link-"));
+  execFileSync("git", ["init", "-q", r]);
+  mkdirSync(join(r, "tools", "gates", "lib"), { recursive: true });
+  mkdirSync(join(r, "docs", "analysis"), { recursive: true });
+  symlinkSync(join(r, "tools", "gates"), join(r, "docs", "analysis", "lnk"));
+  const verdict = decide(scopes, "transformation-analyst", join(r, "docs", "analysis", "lnk", "lib", "rules.mjs"));
+  assert.equal(verdict.allow, false);
+  assert.match(verdict.reason, /symlink/);
+  assert.equal(decide(scopes, "transformation-analyst", join(r, "docs", "analysis", "real.md")).allow, true);
+});
+
+test("F-DG0-105: protected-path matching is case-insensitive", () => {
+  assert.equal(decide(scopes, "backend-workflow-engineer", p("Tools/Gates/lib/rules.mjs")).allow, false);
+  assert.equal(decide(scopes, "backend-workflow-engineer", p("DOCS/SOURCE/playbook.md")).allow, false);
 });

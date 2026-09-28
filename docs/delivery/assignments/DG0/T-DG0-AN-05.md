@@ -28,3 +28,12 @@ After the fixes, run `python3 tools/source/merge_register.py` and `node tools/ga
 
 ## Handback
 `docs/delivery/handbacks/DG0/T-DG0-AN-05-transformation-analyst.md`. For each finding, give what changed (with file paths) and how you checked it.
+
+## Addendum (orchestrator): register rule tightened by the F-DG0-106/202 fixes
+Evidence entries must now be existing regular **files**; directories are rejected. `node tools/gates/validate.mjs --register DG0` currently fails on:
+- REQ-DLV-026: `docs/delivery/runs/DG0`
+- REQ-DLV-032: `.claude/agents`, `docs/delivery/handbacks/DG0/agent-load`, `docs/delivery/test-evidence/DG0/agent-load`, `docs/delivery/runs/DG0`
+
+Replace each directory with the specific files that evidence the requirement. For example, list the ten `.claude/agents/<name>.md` files and `docs/delivery/agents.md` (which tabulates the load-check runs), instead of the directories. Note that `docs/delivery/runs/**`, `handbacks/**` and `test-evidence/**` are delivery metadata excluded from the candidate. Prefer candidate files (`docs/delivery/agents.md`, `tools/agents/run-agent.sh`, `.claude/agents/*.md`) as evidence wherever they demonstrate the requirement.
+
+(An earlier attempt at this task was stopped by a transient permission-classifier outage before it changed any file. This is a fresh run.)
