@@ -46,7 +46,7 @@ Produced by transformation-analyst (task T-DG0-AN-03). Revised in T-DG0-AN-05 fo
 - **Concrete outputs:** Architecture decisions, ERD/API contracts, repo/build/CI, database migrations, authentication/scoped access, bilingual shell, design tokens, persisted transformation creation and audit baseline.
 - **Evidence required before approval:** Clean startup; real create/read/update and authorization checks; agreed data/contracts; Arabic/English screen review; migration and baseline audit checks.
 - **Dependencies:** DG0 APPROVED; `validate.mjs --stage DG0 --historical` passes before the first write task.
-- **Requirements completing at DG1 (11):** REQ-DLV-025, REQ-DLV-033; REQ-S15-002, REQ-S15-005..006; REQ-S16-001..004; REQ-S19-004, REQ-S19-006
+- **Requirements completing at DG1 (12):** REQ-DLV-025, REQ-DLV-033, REQ-DLV-042; REQ-S15-002, REQ-S15-005..006; REQ-S16-001..004; REQ-S19-004, REQ-S19-006
 - **Requirements with an increment in P1 that complete later (80):** REQ-PB-001, REQ-PB-003, REQ-PB-012, REQ-PB-014, REQ-PB-029; REQ-DLV-005, REQ-DLV-008..012, REQ-DLV-014, REQ-DLV-018, REQ-DLV-021, REQ-DLV-024, REQ-DLV-027..028, REQ-DLV-030..031, REQ-DLV-039..040; REQ-S01-001..002, REQ-S01-006; REQ-S02-006; REQ-S03-001, REQ-S03-007..008, REQ-S03-011; REQ-S06-010; REQ-S10-001..004; REQ-S12-004; REQ-S15-001, REQ-S15-003..004, REQ-S15-007..008, REQ-S15-010..013; REQ-S16-005..012, REQ-S16-022..023, REQ-S16-026..027, REQ-S16-030..032; REQ-S18-001; REQ-S19-002..003, REQ-S19-005, REQ-S19-007, REQ-S19-009..010, REQ-S19-015, REQ-S19-019; REQ-S20-012..014, REQ-S20-018, REQ-S20-020, REQ-S20-023, REQ-S20-026..027, REQ-S20-031; REQ-S21-002..004
 - **Parallelization and serialization:**
   - **Serial first:** solution-architect writes the ADRs (stack, module boundaries, auth, storage), the ERD and the OpenAPI v1 contract. The contract and migration design are shared files, so they are frozen before the others start.
@@ -280,21 +280,23 @@ Each "Evidence required before approval" clause was checked against the `final_g
 | DG6 (M0409) | Applicable A01–A22; authorization boundaries; malformed/duplicate input; concurrency/failure recovery; realistic load; AI disabled; honest integration status | REQ-S10-002, -004, REQ-S17-001..003, REQ-S16-026, REQ-S20-021, REQ-S20-029 and the other DG6 rows | OK |
 | DG7 (M0410) | A01–A27 and all product requirements; clean offline runtime; final reviews and audit; A28 sealing | REQ-DLV-039, -041, REQ-S01-006, REQ-S19-*, REQ-S20-018/019/023/026..028 (DG7) | OK |
 
-## Counts (all areas, merged register after AN-05)
+## Counts (all areas, merged register after AN-13)
 
 | Gate | Rows with this final gate |
 |---|---|
 | DG0 | 19 |
-| DG1 | 11 |
+| DG1 | 12 |
 | DG2 | 32 |
 | DG3 | 32 |
 | DG4 | 137 |
 | DG5 | 78 |
 | DG6 | 48 |
 | DG7 | 54 |
-| Total | 411 |
+| Total | 412 |
 
 AN-05 changes relative to AN-04:
 - REQ-PB-049 moved from DG5 to DG3;
 - new REQ-PB-093 at DG5;
 - REQ-S12-020 and REQ-S12-021 moved from DG6 to DG5.
+
+AN-13 changes: new REQ-DLV-042 (sandboxed dependency installation, F-DG0-142, D-027) at DG1.

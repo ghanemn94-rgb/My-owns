@@ -8,7 +8,7 @@ The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, wit
 
 | Artefact | Purpose | Producer |
 |---|---|---|
-| `docs/delivery/requirements.csv` | The requirement register (411 rows). Generated only by `tools/source/merge_register.py` from `parts/req-*.csv` and `parts/ref-additions-*.csv`. | AN-01..AN-04 (merge AN-04) |
+| `docs/delivery/requirements.csv` | The requirement register (412 rows). Generated only by `tools/source/merge_register.py` from `parts/req-*.csv` and `parts/ref-additions-*.csv`. | AN-01..AN-04 (merge AN-04) |
 | `docs/analysis/source-coverage.csv` | One disposition per playbook block B0001–B0165 (165 rows). | AN-01 |
 | `docs/analysis/master-prompt-coverage.csv` | One disposition per master-prompt block M0001–M0423 (423 rows). Generated from `parts/mp-coverage-*.csv`. | AN-02, AN-03 (merge AN-04) |
 | `docs/analysis/parts/` | The editable sources of the register and master-prompt coverage: `req-pb.csv`, `req-s01-s13.csv`, `req-dlv-s14-s21.csv`, `mp-coverage-s01-s13.csv`, `mp-coverage-p0-s14-s21.csv`, `ref-additions-an02.csv`, `ref-additions-an03.csv`, `ref-additions-an08.csv`. | AN-01..AN-04; AN-08 |
@@ -30,8 +30,8 @@ The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, wit
 |---|---|
 | SOURCE | 93 |
 | USER | 188 |
-| ENGINEERING | 130 |
-| Total | 411 |
+| ENGINEERING | 131 |
+| Total | 412 |
 
 Every SOURCE row cites at least one playbook block. USER and ENGINEERING rows cite master-prompt blocks. Master-prompt details that the playbook lacks are labelled `implementation-assumption` or `extension` in `notes`. An example is the Yes=1/No=0 health-check scoring (REQ-S14-001, D-010).
 
@@ -39,7 +39,7 @@ Every SOURCE row cites at least one playbook block. USER and ENGINEERING rows ci
 
 | Final gate | DG0 | DG1 | DG2 | DG3 | DG4 | DG5 | DG6 | DG7 | Total |
 |---|---|---|---|---|---|---|---|---|---|
-| Rows | 19 | 11 | 32 | 32 | 137 | 78 | 48 | 54 | 411 |
+| Rows | 19 | 12 | 32 | 32 | 137 | 78 | 48 | 54 | 412 |
 
 ### Class × final gate
 
@@ -47,14 +47,14 @@ Every SOURCE row cites at least one playbook block. USER and ENGINEERING rows ci
 |---|---|---|---|---|---|---|---|---|
 | SOURCE | 0 | 0 | 24 | 21 | 36 | 12 | 0 | 0 |
 | USER | 0 | 3 | 6 | 7 | 76 | 55 | 19 | 22 |
-| ENGINEERING | 19 | 8 | 2 | 4 | 25 | 11 | 29 | 32 |
+| ENGINEERING | 19 | 9 | 2 | 4 | 25 | 11 | 29 | 32 |
 
 ### By area
 
 | Area | SOURCE | USER | ENGINEERING | Total | DG0 | DG1 | DG2 | DG3 | DG4 | DG5 | DG6 | DG7 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | PB | 93 | 0 | 0 | 93 |  |  | 24 | 21 | 36 | 12 |  |  |
-| DLV | 0 | 0 | 41 | 41 | 17 | 2 | 1 | 1 | 1 | 1 | 1 | 17 |
+| DLV | 0 | 0 | 42 | 42 | 17 | 3 | 1 | 1 | 1 | 1 | 1 | 17 |
 | S01 | 0 | 5 | 1 | 6 |  |  |  |  |  | 3 | 1 | 2 |
 | S02 | 0 | 3 | 2 | 5 |  |  |  |  |  | 2 | 1 | 2 |
 | S03 | 0 | 11 | 0 | 11 |  |  |  |  | 9 | 2 |  |  |
@@ -82,7 +82,7 @@ Every SOURCE row cites at least one playbook block. USER and ENGINEERING rows ci
 | Status | Rows |
 |---|---|
 | IMPLEMENTED | 19 |
-| SPECIFIED | 392 |
+| SPECIFIED | 393 |
 
 `VERIFIED` is never written to the register. Verification is derived by the validator from PASS review records.
 
@@ -116,13 +116,13 @@ All 28 scenarios are referenced. "Rows citing" counts the register rows whose `a
 | A15 | Reporting | REQ-S20-015 | DG5 | 14 |
 | A16 | Health and launch | REQ-S20-016 | DG5 | 12 |
 | A17 | Import and integration | REQ-S20-017 | DG6 | 11 |
-| A18 | Independent deployment | REQ-S20-018 | DG7 | 32 |
+| A18 | Independent deployment | REQ-S20-018 | DG7 | 33 |
 | A19 | Backup and recovery | REQ-S20-019 | DG7 | 6 |
 | A20 | UX and branding | REQ-S20-020 | DG6 | 20 |
 | A21 | No-AI operation | REQ-S20-021 | DG6 | 8 |
 | A22 | Operational readiness | REQ-S20-022 | DG6 | 15 |
-| A23 | Real independent stage reviews | REQ-S20-023 | DG7 | 29 |
-| A24 | Enforced advancement | REQ-S20-024 | DG0 | 15 |
+| A23 | Real independent stage reviews | REQ-S20-023 | DG7 | 30 |
+| A24 | Enforced advancement | REQ-S20-024 | DG0 | 16 |
 | A25 | Candidate integrity | REQ-S20-025 | DG0 | 3 |
 | A26 | Repair and re-review | REQ-S20-026 | DG7 | 7 |
 | A27 | Reliable resumption | REQ-S20-027 | DG7 | 10 |
@@ -199,3 +199,12 @@ The P0–P6 "increment in Pn that complete later" lists in `stage-plan.md` left 
 |---|---|
 | F-DG0-008 | REQ-PB-091 (M0288: top three actions required, reassessments tracked), REQ-PB-050 (M0135 linked initiatives, dates and milestones; M0178 overlapping planning horizons) and REQ-PB-078 (M0150 canonical dependency record) now list that content under 'Master-prompt additions' with anchors; their Interpretations keep only readings neither source states. `check_pb_provenance.py` gained R5 (phrase overlap with cited blocks), R6 and R7. The whole-register re-check also relabelled REQ-PB-003 (M0095 entry phase), -072 (M0216 attendance is not adoption), -087 (M0261 Day-90 test as a scheduled task) and -093 (M0176 seeded weights), and made eleven 'additions: none' rows name the cited block they merely restate (REQ-PB-002, -030, -032, -034, -040, -041, -045, -047, -070, -080, -092). Ten R5 flags were reviewed as false positives. Only `notes` changed. No scope, class, increment, gate or `source_ref` changed. |
 | F-DG0-209 (register part) | REQ-DLV-022 now states the `mth-candidate-v2` line `<sha256>  <git mode>  <path>`, the historical `mth-candidate-v1` use, and the per-freeze write-once manifest `docs/delivery/candidates/<DGx>/<id-prefix>.manifest.json`. Checked against `tools/gates/lib/*.mjs`, `run-agent.sh`, `guard-write.mjs` and D-016..D-021: REQ-DLV-006 (D-019 resume), -007 (D-020 guard hardening), -013 (D-016/D-021 provenance and output binding), -016 (sidecar-only observation acceptance), -017 (sidecar closure, import-findings), -021 (write-once records) and -026 (run outputs, reviewer auto-commit) were updated, with the new tests cited. No register row referred to the removed `docs/delivery/candidates/DG0.manifest.json`. |
+
+## AN-13 round-13 register repairs (D-027)
+
+| Finding | Repair |
+|---|---|
+| F-DG0-142 | New ENGINEERING requirement REQ-DLV-042 (P1 / DG1, SPECIFIED): dependency installation, an orchestrator step because agent shells have no network, runs inside bubblewrap with registry-only network, a read-only root, only the target tree and package store writable, lifecycle scripts off unless allow-listed, and a committed lockfile. Grounded in M0012, M0314, M0331 and M0404; the bubblewrap mechanism is labelled as implementation decision D-027. The four coverage rows list it. |
+| F-DG0-141 | REQ-DLV-023 now describes `sandbox-run.sh` doing the clone, checkout and command inside bubblewrap on a private tmpfs with the git directory bound read-only (no clone into `$TMPDIR`), and cites the F-DG0-141 sandbox test. |
+| F-DG0-012, F-DG0-234 | REQ-DLV-007: the configuration scan reports added, changed and removed entries and fails closed; cites the F-DG0-012/F-DG0-234 runner test. |
+| F-DG0-233 | REQ-DLV-013: `meta.cwd` must equal the transcript's CLI init `cwd` and the replayed prompt's working directory; cites the F-DG0-233 validator test. |
