@@ -1,6 +1,6 @@
 # Assignment T-DG0-AN-02: master prompt §1–§13 into requirements (transformation-analyst)
 
-- **Stage:** P0 / DG0 (BUILDING). **Base revision:** `ab80507725f434916e5a9cb1e52bfe2c7b32d04a` on `claude/mobily-transformation-platform-kwcc4i`. Verify it with `git rev-parse HEAD`.
+- **Stage:** P0 / DG0 (BUILDING). **Base revision:** `ab80507725f434916e5a9cb1e52bfe2c7b32d04a` on `claude/mobily-transformation-platform-kwcc4i`. Verify it with `git rev-parse HEAD`. HEAD may be ahead of the base by metadata-only commits; confirm that `git diff --stat <base>..HEAD` touches only `docs/delivery/assignments/**`.
 - **Requirement IDs you create:** `REQ-S01-001` … `REQ-S13-NNN`. The area is the master-prompt section the requirement primarily comes from. You own only these areas.
 - **Dependencies:** AN-01 is complete. Its SOURCE requirements are in `docs/analysis/parts/req-pb.csv` (IDs `REQ-PB-###`), with its handback at `docs/delivery/handbacks/DG0/T-DG0-AN-01-transformation-analyst.md`. AN-03 runs in parallel with you and covers the preamble, §0 and §14–§21 (areas DLV and S14–S21). Don't create IDs in those areas.
 

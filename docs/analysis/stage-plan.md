@@ -1,0 +1,150 @@
+# Stage plan: P0–P7 (software delivery stages DG0–DG7)
+
+Produced by transformation-analyst (task T-DG0-AN-03). Sources: master prompt §21 (M0401–M0416), §0.2 (M0027), §0.1 (M0013) and `docs/delivery/stages.json`. These are engineering delivery stages. They are not the methodology phases or the product gates G1–G6 (M0412).
+
+## Rules that apply to every stage
+
+- **Order.** Stages run in order. A stage starts only after the previous gate is APPROVED; read-only discovery is allowed earlier (M0401, REQ-DLV-040). Before the first write task, run `node tools/gates/validate.mjs --stage DG(n-1) --historical` (REQ-DLV-024).
+- **Gate loop.** Every stage ends with the full loop: plan, implement, integrate/freeze, three independent reviews, findings, repair, reverify, audit (REQ-DLV-014, REQ-DLV-010).
+- **Concurrency.** At most **4 active workers**. Concurrent writers use separate worktrees with explicit file ownership. The following are single-owner and serialized:
+  - migrations;
+  - the API contract (OpenAPI);
+  - shared configuration (CI workflows, Compose, environment templates, i18n catalogues' key schema, design tokens);
+  - the demo seed.
+  Two agents never edit the same file concurrently, and only the orchestrator integrates (REQ-DLV-008, REQ-DLV-009).
+- **Reviews.** The three reviewers of a round run in parallel against one frozen candidate. release-auditor runs after them.
+- **Scope lists.** The lists below come from `REQ-PB-###` (AN-01) and the AN-03 areas (`REQ-DLV`, `REQ-S14`…`REQ-S21`).
+  - Areas S01–S13 are produced in parallel by AN-02. Their rows carry their own `increments` and `final_gate`, and they join the scope when AN-04 merges the register.
+  - The merged register is authoritative. The gate record's `final_gate_ids` must equal the set of rows with that `final_gate`.
+- **Recurring obligations.** Protocol requirements with increments P0–P7 and final gate DG7 apply at every stage but are listed only once, under P7. They are REQ-DLV-005, -008, -009, -010, -011, -012, -014, -018, -021, -024, -027, -028, -030, -031 and -040.
+
+## P0 Discovery and execution setup — DG0
+
+- **Implementation owners (§21, M0403):** transformation-analyst; delivery-orchestrator
+- **Concrete outputs:** Full source extraction, field/template inventory, glossary, requirement IDs, user journeys, stage plan, agent definitions, gate schema/validator and assumptions.
+- **Evidence required before approval:** All source items accounted for; ten definitions validated and required stage agents actually invoked; review protocol and gate validator reject missing/invalid evidence; no invented source requirements.
+- **Dependencies:** None (first stage).
+- **Requirements completing at DG0 (19):** REQ-DLV-001..004, REQ-DLV-006..007, REQ-DLV-013, REQ-DLV-015..017, REQ-DLV-019..020, REQ-DLV-022..023, REQ-DLV-026, REQ-DLV-029, REQ-DLV-032; REQ-S20-024..025
+- **Requirements with an increment in P0 that complete later (4):** REQ-S20-023, REQ-S20-027; REQ-S21-003..004
+- **Parallelization and serialization:**
+  - AN-01 (playbook to REQ-PB, source coverage, glossary, field inventory): done.
+  - AN-02 (§1–§13) and AN-03 (preamble, §0, §14–§21) run in parallel. They have disjoint ID areas and disjoint part files, so no shared file is written.
+  - AN-04 merges the parts. This is serialized, because it is the only writer of `docs/delivery/requirements.csv` and `docs/analysis/master-prompt-coverage.csv`.
+  - The orchestrator then freezes the candidate. The three reviewers run in parallel (3 workers), followed by release-auditor (1 worker).
+
+## P1 Architecture and working foundation — DG1
+
+- **Implementation owners (§21, M0404):** solution-architect; frontend-ux-engineer; backend-workflow-engineer; devops-engineer
+- **Concrete outputs:** Architecture decisions, ERD/API contracts, repo/build/CI, database migrations, authentication/scoped access, bilingual shell, design tokens, persisted transformation creation and audit baseline.
+- **Evidence required before approval:** Clean startup; real create/read/update and authorization checks; agreed data/contracts; Arabic/English screen review; migration and baseline audit checks.
+- **Dependencies:** DG0 APPROVED; `validate.mjs --stage DG0 --historical` passes before the first write task.
+- **Requirements completing at DG1 (11):** REQ-DLV-025, REQ-DLV-033; REQ-S15-002, REQ-S15-005..006; REQ-S16-001..004; REQ-S19-004, REQ-S19-006
+- **Requirements with an increment in P1 that complete later (49):** REQ-PB-001, REQ-PB-003, REQ-PB-012, REQ-PB-014, REQ-PB-029; REQ-S15-001, REQ-S15-003..004, REQ-S15-007..008, REQ-S15-010..013; REQ-S16-005..012, REQ-S16-022..023, REQ-S16-026..027, REQ-S16-030..032; REQ-S19-002..003, REQ-S19-005, REQ-S19-007, REQ-S19-009..010, REQ-S19-015, REQ-S19-019; REQ-S20-012..014, REQ-S20-018, REQ-S20-020, REQ-S20-023, REQ-S20-026..027, REQ-S20-031; REQ-S21-002..004
+- **Parallelization and serialization:**
+  - **Serial first:** solution-architect writes the ADRs (stack, module boundaries, auth, storage), the ERD and the OpenAPI v1 contract. The contract and migration design are shared files, so they are frozen before the others start.
+  - **Then in parallel (≤4 workers, separate worktrees):**
+    - backend-workflow-engineer owns `migrations/**`, the API modules and audit.
+    - frontend-ux-engineer owns the web shell, tokens and i18n catalogues.
+    - devops-engineer owns the Dockerfiles, Compose, CI build jobs (with `needs: delivery-gates`) and the Keycloak test realm.
+  - **Shared-file serialization:**
+    - Only backend-workflow-engineer writes `migrations/**`.
+    - Only solution-architect writes the OpenAPI contract; other agents request changes through the orchestrator.
+    - Only devops-engineer writes `.github/workflows/**` product jobs, never `delivery-gates.yml`.
+
+## P2 Diagnose define and design — DG2
+
+- **Implementation owners (§21, M0405):** transformation-analyst; frontend-ux-engineer; backend-workflow-engineer; kpi-benefits-engineer
+- **Concrete outputs:** Charter, diagnostic, baseline, value pools, outcome/KPI definitions, TOM canvas/gaps, capabilities/journeys, design decisions, T01–T04 and business gates G1–G3.
+- **Evidence required before approval:** Source fields and scope preserved; records trace correctly; missing evidence/invalid approval blocked; history retained; real end-to-end phase procedures.
+- **Dependencies:** DG1 APPROVED (auth, audit, migrations and contracts exist).
+- **Requirements completing at DG2 (26):** REQ-PB-003, REQ-PB-012, REQ-PB-016..018, REQ-PB-023..031, REQ-PB-033..039, REQ-PB-041..043; REQ-DLV-034; REQ-S16-013
+- **Requirements with an increment in P2 that complete later (50):** REQ-PB-002, REQ-PB-004..005, REQ-PB-007..008, REQ-PB-010..011, REQ-PB-013..015, REQ-PB-022, REQ-PB-032, REQ-PB-040, REQ-PB-044, REQ-PB-073; REQ-S15-007, REQ-S15-010..013; REQ-S16-006, REQ-S16-012, REQ-S16-014..015, REQ-S16-018, REQ-S16-023, REQ-S16-025..027, REQ-S16-032; REQ-S19-002, REQ-S19-005, REQ-S19-015, REQ-S19-019; REQ-S20-001..005, REQ-S20-008, REQ-S20-012, REQ-S20-014, REQ-S20-023, REQ-S20-026..027, REQ-S20-031; REQ-S21-001..004
+- **Parallelization and serialization:**
+  - transformation-analyst refines the per-screen acceptance details for T01–T04 and the charter from the field inventory. This is analysis only, with no code.
+  - backend-workflow-engineer builds the entities, gate workflow G1–G3 and APIs. It is the single owner of `migrations/**` in this stage.
+  - kpi-benefits-engineer builds the baseline, KPI definitions and decimal foundations in a calculation module worktree.
+  - frontend-ux-engineer builds the screens against the published contract.
+  - Contract changes are serialized through solution-architect's contract owner, or through the orchestrator if the architect is inactive.
+
+## P3 Mobilization and portfolio — DG3
+
+- **Implementation owners (§21, M0406):** backend-workflow-engineer; frontend-ux-engineer; kpi-benefits-engineer
+- **Concrete outputs:** Initiative cards, business cases, formula foundations, prioritization, waves, resources, funding, dependencies, T05–T09 and business gate G4.
+- **Evidence required before approval:** Weighted scores verified; invalid weights/cycles/capacity conflicts handled; initiative-to-gap/outcome links; executable approval flow and tested financial inputs.
+- **Dependencies:** DG2 APPROVED.
+- **Requirements completing at DG3 (22):** REQ-PB-004, REQ-PB-006..007, REQ-PB-019, REQ-PB-022, REQ-PB-032, REQ-PB-040, REQ-PB-045..048, REQ-PB-050..057, REQ-PB-059; REQ-DLV-035; REQ-S16-016
+- **Requirements with an increment in P3 that complete later (41):** REQ-PB-005, REQ-PB-009..010, REQ-PB-013..015, REQ-PB-044, REQ-PB-049, REQ-PB-058; REQ-S15-007, REQ-S15-010..014; REQ-S16-017..018, REQ-S16-023, REQ-S16-025..027, REQ-S16-032; REQ-S19-002, REQ-S19-005, REQ-S19-015, REQ-S19-019; REQ-S20-001..003, REQ-S20-005, REQ-S20-008, REQ-S20-010, REQ-S20-012, REQ-S20-014, REQ-S20-023, REQ-S20-026..027, REQ-S20-031; REQ-S21-002..004
+- **Parallelization and serialization:**
+  - kpi-benefits-engineer owns the formula engine and scoring (T06, T09).
+  - backend-workflow-engineer owns the portfolio entities, migrations, G4 and dependency cycle detection.
+  - frontend-ux-engineer owns the portfolio screens.
+  - 3 workers; migrations and contract serialized as in P1.
+
+## P4 Execution value and sustainment — DG4
+
+- **Implementation owners (§21, M0407):** backend-workflow-engineer; kpi-benefits-engineer; frontend-ux-engineer
+- **Concrete outputs:** Full KPI/benefit engines, T10–T16, forums/decisions/RACI/RAID, adoption, corrective actions, core scheduled jobs, BAU handover, continuous improvement and G5–G6.
+- **Evidence required before approval:** KPI-to-benefit-to-dashboard scenario; Finance validation; double-counting prevention; recurrence and escalation; adoption/BAU acceptance and ownership continuity.
+- **Dependencies:** DG3 APPROVED.
+- **Requirements completing at DG4 (53):** REQ-PB-005, REQ-PB-008..010, REQ-PB-013..015, REQ-PB-020..021, REQ-PB-044, REQ-PB-058, REQ-PB-060..076, REQ-PB-078..085; REQ-DLV-036; REQ-S15-008; REQ-S16-005, REQ-S16-011, REQ-S16-014, REQ-S16-017..020, REQ-S16-025; REQ-S20-003..005, REQ-S20-008..011
+- **Requirements with an increment in P4 that complete later (36):** REQ-PB-077; REQ-S15-001, REQ-S15-007, REQ-S15-009..014; REQ-S16-021..023, REQ-S16-026..027, REQ-S16-029, REQ-S16-032; REQ-S19-002, REQ-S19-005, REQ-S19-015, REQ-S19-019; REQ-S20-001..002, REQ-S20-007, REQ-S20-012..015, REQ-S20-020, REQ-S20-023, REQ-S20-026..027, REQ-S20-031; REQ-S21-001..004
+- **Parallelization and serialization:**
+  - kpi-benefits-engineer owns the KPI actuals, RAG, benefit measurement, allocations and Finance validation logic.
+  - backend-workflow-engineer owns the forums, decisions, RAID, jobs/scheduler, BAU and G5–G6.
+  - frontend-ux-engineer owns the dashboards and governance screens.
+  - 3 workers. The scheduler/job tables are a shared file, owned by backend-workflow-engineer.
+
+## P5 Configuration automation and outputs — DG5
+
+- **Implementation owners (§21, M0408):** backend-workflow-engineer; frontend-ux-engineer; kpi-benefits-engineer
+- **Concrete outputs:** Complete Playbook Studio, native procedure/form builders, version migration, full rule builder, report/export formats, 90-day launch plan, 25-question health check and source-grounded demo.
+- **Evidence required before approval:** Admin changes without routine code edits; draft/publish/migration/reapproval behavior; durable rule retries; report snapshots and bilingual export inspection; all required starter automations.
+- **Dependencies:** DG4 APPROVED.
+- **Requirements completing at DG5 (31):** REQ-PB-001..002, REQ-PB-011, REQ-PB-049, REQ-PB-077, REQ-PB-086..092; REQ-DLV-037; REQ-S14-001..004; REQ-S15-004; REQ-S16-010, REQ-S16-012, REQ-S16-015, REQ-S16-021; REQ-S18-001..002, REQ-S18-004; REQ-S20-002, REQ-S20-006..007, REQ-S20-015..016; REQ-S21-001
+- **Requirements with an increment in P5 that complete later (32):** REQ-S15-007, REQ-S15-010..013; REQ-S16-022..023, REQ-S16-026..028, REQ-S16-032; REQ-S18-003; REQ-S19-002, REQ-S19-005, REQ-S19-008, REQ-S19-015, REQ-S19-019; REQ-S20-001, REQ-S20-012..014, REQ-S20-020..023, REQ-S20-026..027, REQ-S20-030..031; REQ-S21-002..004
+- **Parallelization and serialization:**
+  - backend-workflow-engineer owns the Studio versioning, rule engine, launch plan and health check.
+  - kpi-benefits-engineer owns formula versioning and reapproval, report snapshots and the seed data numbers.
+  - frontend-ux-engineer owns the builders, exports and Branding Settings.
+  - The demo seed script is a shared file, owned by backend-workflow-engineer, with contributions routed through it.
+
+## P6 Integration and system hardening — DG6
+
+- **Implementation owners (§21, M0409):** devops-engineer; backend-workflow-engineer; frontend-ux-engineer
+- **Concrete outputs:** Controlled imports, connector contracts/test adapters, identity/storage integration, optional AI adapter, security/performance/accessibility refinements and operational monitoring.
+- **Evidence required before approval:** Applicable A01–A22 checks; authorization boundary tests; malformed/duplicate input; concurrency/failure recovery; realistic load; complete lifecycle with external AI disabled; honest live-integration status.
+- **Dependencies:** DG5 APPROVED.
+- **Requirements completing at DG6 (40):** REQ-DLV-038; REQ-S15-001, REQ-S15-003, REQ-S15-007, REQ-S15-009..014; REQ-S16-006..007, REQ-S16-022..023, REQ-S16-026..030, REQ-S16-032; REQ-S17-001..003, REQ-S17-005..011; REQ-S20-001, REQ-S20-012..014, REQ-S20-017, REQ-S20-020..022, REQ-S20-029..030
+- **Requirements with an increment in P6 that complete later (21):** REQ-S16-024, REQ-S16-033; REQ-S17-004; REQ-S19-002, REQ-S19-005, REQ-S19-007, REQ-S19-009..010, REQ-S19-012, REQ-S19-015, REQ-S19-018..019; REQ-S20-018..019, REQ-S20-023, REQ-S20-026..027, REQ-S20-031; REQ-S21-002..004
+- **Parallelization and serialization:**
+  - devops-engineer owns identity/storage adapters, monitoring and the load test.
+  - backend-workflow-engineer owns imports, connectors and the AI adapter.
+  - frontend-ux-engineer owns accessibility and performance refinements.
+  - qa-verifier authors A01–A22 tests under `tests/qa/**` and `e2e/**` (reviewer scope).
+  - ≤4 workers.
+
+## P7 Independent transfer and release — DG7
+
+- **Implementation owners (§21, M0410):** devops-engineer; delivery-orchestrator
+- **Concrete outputs:** Complete source/archive, clean deployment, migrated data/files/configuration, restore drill, guides, traceability and final IT handover.
+- **Evidence required before approval:** A01–A27 and all product requirements verified; clean-environment/outbound-internet-disabled runtime demonstration; independent final domain/code/QA reviews and release audit, followed by A28 package sealing and integrity verification.
+- **Dependencies:** DG6 APPROVED.
+- **Requirements completing at DG7 (51):** REQ-DLV-005, REQ-DLV-008..012, REQ-DLV-014, REQ-DLV-018, REQ-DLV-021, REQ-DLV-024, REQ-DLV-027..028, REQ-DLV-030..031, REQ-DLV-039..041; REQ-S16-008..009, REQ-S16-024, REQ-S16-031, REQ-S16-033; REQ-S17-004; REQ-S18-003; REQ-S19-001..003, REQ-S19-005, REQ-S19-007..019; REQ-S20-018..019, REQ-S20-023, REQ-S20-026..028, REQ-S20-031; REQ-S21-002..004
+- **Requirements with an increment in P7 that complete later (0):** none
+- **Parallelization and serialization:**
+  - devops-engineer owns the package, the transfer, restore and offline drills, and the guides.
+  - The orchestrator owns traceability, release notes and A28 sealing.
+  - Serialized: the payload is frozen, then reviewed, then audited, then sealed (M0411).
+
+## Counts (REQ-PB plus AN-03 areas only)
+
+| Gate | Rows with this final gate |
+|---|---|
+| DG0 | 19 |
+| DG1 | 11 |
+| DG2 | 26 |
+| DG3 | 22 |
+| DG4 | 53 |
+| DG5 | 31 |
+| DG6 | 40 |
+| DG7 | 51 |
