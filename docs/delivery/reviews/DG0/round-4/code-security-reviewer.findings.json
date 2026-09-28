@@ -1,0 +1,109 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-118",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Write-once working-tree check is blind to skip-worktree/assume-unchanged index flags (local validation only)",
+      "reproduction": "tools/gates/lib/rules.mjs:593 (checkWriteOnce) detects uncommitted edits to committed evidence only through 'git status --porcelain'. The validator then reads the working-tree bytes (checkInvocation output binding, rules.mjs:310-318; collectVerifications). If a committed file is flagged with 'git update-index --skip-worktree' (or --assume-unchanged), git status stays empty while the file on disk differs. repro-r4.test.mjs test 13 ('BYPASS N2'): a committed round-2 FAIL/OPEN verification sidecar, its run's meta.json and findings.json are flagged skip-worktree. They are then edited on disk to PASS/CLOSED_VERIFIED, with meta.outputs re-pointed. 'git status --porcelain' is empty, and validateGate(repo,'DG0') returns [] (05-repro-r4-candidate.log). Impact is limited to a local working tree: CI checks out committed content, and committing the forgery shows up as an 'M' in history. But the release-auditor decides the gate by running validate.mjs locally.",
+      "expected": "The write-once check refuses to run (or reports an error) when any file under the write-once paths carries the skip-worktree or assume-unchanged flag. For example, 'git ls-files -v -- <paths>' must show no 'S' or lower-case tags. Alternatively, it compares working-tree bytes with the HEAD blob directly (hash each file and compare with 'git ls-tree HEAD').",
+      "actual": "A locally tampered working tree passes validate.mjs --stage DG0 with a clean git status. I would accept this as a Low observation if the orchestrator documents that the gate decision is re-validated from a clean checkout (CI), or adds the ls-files -v check.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-4/repro-r4.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-4/05-repro-r4-candidate.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-4/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T14:44:21Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-4 code-security review (repro-r4 test 13)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-119",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-026",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Run output binding records end-of-window bytes at any path a file tool was merely attempted on; 'exact bytes your run wrote with its file tools' is not what is checked",
+      "reproduction": "tools/agents/run-agent.sh:163-179 adds every Write/Edit/MultiEdit/NotebookEdit tool_use file_path from the transcript to written_by_tools, without looking at the matching tool_result, so hook-denied and failed calls count too. meta.outputs (run-agent.sh:160) is the post-snapshot hash taken when the run ends. The validator (rules.mjs:310-318) accepts a file when it equals meta.outputs and its path is in written_by_tools. So bytes produced by any other writer during the run window are bound as the reviewer's own: a Bash command, or a concurrent process such as the orchestrator's session. End-to-end with the real runner and a stub claude in a disposable clone (06-runner-e2e.log, FAKE_MODE=denied): the agent's Write of the review record is denied (tool_result is_error=true). Another writer puts 'B written by someone else' there during the window. meta.written_by_tools lists the record, meta.outputs holds sha256(B), and the runner auto-commits B as 'review evidence'. Real history shows the same gap in benign form (12-transcript-write-content.log): my own round-3 findings sidecar differs from the content of the run's Write call, because the same run later edited it with sed. The binding cannot tell the difference. The stream-json transcript does carry the full Write content and the tool_result status, so a stricter check is feasible.",
+      "expected": "Either (a) the runner counts only tool calls whose tool_result is not an error, and for Write records sha256(last successful Write content) per path. The validator, or the runner before auto-committing, requires the file to equal that content, and Edit/MultiEdit reconstruction is either done or those paths are flagged. Or (b) D-021 and agent-protocol.md ('the validator binds each of them to the exact bytes your run wrote with its file tools') are corrected to say what is actually bound: the bytes present at the end of the run window at paths the agent targeted with a file tool. The residual, overwrites by other writers during the window, is then disclosed next to the existing self-hashing residual.",
+      "actual": "The binding holds any end-of-window bytes at attempted paths. The documentation overstates it. The incremental risk is below the already disclosed residual (a fully fabricated run directory), so the severity is Low. It is not acceptable as an observation until the documentation matches the mechanism.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-4/fake-claude.py",
+        "docs/delivery/test-evidence/DG0/code-security/round-4/06-runner-e2e.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-4/12-transcript-write-content.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-4/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T14:44:21Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-4 code-security review (runner e2e, FAKE_MODE=denied)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-120",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-026",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Runner auto-commit passes reviewer-written paths as unquoted git pathspecs: glob characters commit unrelated files, and failures are masked by '|| true'",
+      "reproduction": "tools/agents/run-agent.sh:205-211 runs git add/commit with an unquoted $(cat \"$OUT/../.commit-list-$RUN_ID\"). Each written path is word-split by the shell and interpreted by git as a pathspec with glob magic. In a disposable clone with a stub claude (06-runner-e2e.log, FAKE_MODE=glob), the agent Writes a file literally named 'docs/delivery/reviews/DG0/round-9/x*'. An unrelated tracked file 'xy.md' in the same directory was modified by someone else during the window. The auto-commit 'run: <id> (review evidence ...)' contains 'A .../x*' and also 'M .../xy.md', which the agent never wrote. That turns another party's change into write-once 'review evidence' attributed to the run. By code inspection (not executed): a path containing whitespace is split into two pathspecs, 'git add' fails, and under set -e the runner then aborts before 'exit \"$EXIT\"' with the evidence uncommitted. The '|| true' on the commit (run-agent.sh:210) also hides every commit failure (hook, identity, lock), so the write-once window never starts, and neither meta.json nor the exit status records that.",
+      "expected": "Build the pathspec list safely: NUL-separated, 'git add --pathspec-from-file=- --pathspec-file-nul' with ':(literal)' magic or GIT_LITERAL_PATHSPECS=1. Commit exactly those paths. Treat 'nothing to commit' as the only tolerated non-zero result, and otherwise fail the runner with a distinct exit code and a message, so the orchestrator notices that the evidence was not committed.",
+      "actual": "Unrelated modified files can be swept into a reviewer's auto-commit, and commit failures are silent.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-4/fake-claude.py",
+        "docs/delivery/test-evidence/DG0/code-security/round-4/06-runner-e2e.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-4/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T14:44:21Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-4 code-security review (runner e2e, FAKE_MODE=glob)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-121",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The gate record's content is not bound to the release-auditor run; only its invocation_reference string is compared",
+      "reproduction": "tools/gates/lib/rules.mjs:743-744 reports 'gate record was not written by the audited release-auditor invocation' only when gate.invocation_reference differs from the audit record's. The gate file itself (docs/delivery/gates/DGx.json) is not in the outputs passed to checkInvocation (rules.mjs:345-349 binds only the audit record and its findings sidecar), and it is not write-once before approval. repro-r4.test.mjs test 20: the auditor run's meta.outputs does not contain the gate file. After tests[] is replaced with a fabricated entry ('forged: full regression suite', command 'never run', result PASS) and decided_at is changed, validateGate returns []. Most gate fields are re-derived and cross-checked (reviews, register ids, observations, candidate), so the practical impact is limited to tests[] and descriptive fields.",
+      "expected": "checkReview for the release audit also passes gate_record in outputs, so the gate file must equal what the auditor's run wrote with its file tools. Otherwise, the error message and D-021 must stop implying authorship.",
+      "actual": "Anyone with repo write access can alter the gate record's tests[] and other non-derived fields after the auditor wrote it, and the validator still attributes it to the auditor. I would accept this as a Low observation if the message and documentation are corrected. Binding is preferred.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-4/repro-r4.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-4/05-repro-r4-candidate.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-4/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T14:44:21Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-4 code-security review (repro-r4 test 20)."
+        }
+      ]
+    }
+  ]
+}
