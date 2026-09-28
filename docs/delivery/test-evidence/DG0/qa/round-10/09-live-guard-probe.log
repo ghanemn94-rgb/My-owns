@@ -1,0 +1,11 @@
+# env: node v22.22.2; git 2.43.0; Linux 6.18.44-fc-v37; worktree /tmp/review-qa-r10 at 85a0efac57008884109e40e4bea56f14c5c892aa; MTH_GUARD_ROOT=/home/user/My-owns; qa-verifier run DG0-T-DG0-REV-QA-R10-qa-verifier-20260928T172954Z-8b701d58
+# Live probe through this qa-verifier session's real Write tool (PreToolUse hook from tools/agents/settings/qa-verifier.settings.json)
+Write /home/user/My-owns/docs/source/QA-PROBE.txt            -> BLOCKED: "BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)"
+Write /tmp/review-qa-r10/docs/source/QA-PROBE.txt (worktree)  -> BLOCKED: "BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)"
+Write /tmp/review-qa-r10/tools/gates/QA-PROBE.mjs (worktree)  -> BLOCKED: "BLOCKED by write guard: qa-verifier may not write 'tools/gates/QA-PROBE.mjs' (protected path)"
+Write <session scratchpad>/QA-PROBE-scratch.txt (control)     -> allowed (outside every guarded root)
+Hook command shown by the CLI: if [ -z "$MTH_GUARD_ROOT" ]; then ... exit 2; fi; g="$MTH_GUARD_ROOT/tools/agents/guard-write.mjs"; ... node "$g" qa-verifier ...
+# Post-check (ls):
+probe-file check: ls: cannot access '/home/user/My-owns/docs/source/QA-PROBE.txt': No such file or directory
+probe-file check: ls: cannot access '/tmp/review-qa-r10/docs/source/QA-PROBE.txt': No such file or directory
+probe-file check: ls: cannot access '/tmp/review-qa-r10/tools/gates/QA-PROBE.mjs': No such file or directory

@@ -1,0 +1,67 @@
+### CI workflow (.github/workflows/delivery-gates.yml @85a0efa)
+     1	# Delivery gate enforcement (master prompt §0.5, acceptance A24/A25).
+     2	# The product build jobs added from P1 onward must declare `needs: delivery-gates`, so a failed or
+     3	# unapproved gate stops the automated pipeline from advancing.
+     4	name: delivery-gates
+     5	
+     6	on:
+     7	  push:
+     8	  pull_request:
+     9	  workflow_dispatch:
+    10	
+    11	permissions:
+    12	  contents: read
+    13	
+    14	jobs:
+    15	  delivery-gates:
+    16	    runs-on: ubuntu-24.04
+    17	    steps:
+    18	      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    19	        with:
+    20	          fetch-depth: 0 # historical gate verification recomputes candidates from recorded commits
+    21	      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+    22	        with:
+    23	          node-version: "22"
+    24	      - name: Source extraction is reproducible
+    25	        run: tools/source/check_extraction.sh
+    26	      - name: Gate validator self-tests
+    27	        run: node --test tools/gates/tests/*.test.mjs
+    28	      - name: Write-guard tests
+    29	        run: node --test tools/agents/tests/*.test.mjs
+    30	      - name: Runner metadata tests
+    31	        run: python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'
+    32	      - name: Pipeline gate state (approved gates re-verified; no stage advanced past an unapproved gate)
+    33	        run: node tools/gates/validate.mjs --pipeline
+    34	      - name: Resumption reconciliation report
+    35	        run: node tools/gates/validate.mjs --reconcile
+
+### secrets / credential patterns across all tracked files at 85a0efa (excluding binary)
+docs/delivery/test-evidence/DG0/code-security/round-2/07-secrets-extraction-ci-frontmatter.log:4:secret regex: (AKIA[0-9A-Z]{16}|sk-ant-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|AIza[0-9A-Za-z_-]{35}|(password|passwd|secret|api[_-]?key|access[_-]?token)["']?\s*[:=]\s*["'][^"' ]{8,})
+docs/delivery/test-evidence/DG0/code-security/round-7/13-static-checks.log:20:docs/delivery/test-evidence/DG0/code-security/round-2/07-secrets-extraction-ci-frontmatter.log:4:secret regex: (AKIA[0-9A-Z]{16}|sk-ant-[A-Za-z0-9_-]{10,}|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|AIza[0-9A-Za-z_-]{35}|(password|passwd|secret|api[_-]?key|access[_-]?token)["']?\s*[:=]\s*["'][^"' ]{8,})
+exit(grep; 1 = no match)=0
+### tracked .env / key files
+(none listed above = none)
+### personal email occurrences in candidate files (manifest)
+["stage_id","candidate_id","hash_algorithm","source_commit","frozen_at","spec","meta_excluded","entries"]
+### agent frontmatter: tools + hook command identical pattern for all 10
+backend-workflow-engineer.md tools=[Read, Grep, Glob, Write, Edit, Bash] hook_uses_MTH_GUARD_ROOT=1 failclosed=1
+code-security-reviewer.md tools=[Read, Grep, Glob, Bash, Write] hook_uses_MTH_GUARD_ROOT=1 failclosed=1
+devops-engineer.md tools=[Read, Grep, Glob, Write, Edit, Bash] hook_uses_MTH_GUARD_ROOT=1 failclosed=1
+domain-reviewer.md tools=[Read, Grep, Glob, Bash, Write] hook_uses_MTH_GUARD_ROOT=1 failclosed=1
+frontend-ux-engineer.md tools=[Read, Grep, Glob, Write, Edit, Bash] hook_uses_MTH_GUARD_ROOT=1 failclosed=1
+kpi-benefits-engineer.md tools=[Read, Grep, Glob, Write, Edit, Bash] hook_uses_MTH_GUARD_ROOT=1 failclosed=1
+qa-verifier.md tools=[Read, Grep, Glob, Bash, Write, Edit] hook_uses_MTH_GUARD_ROOT=1 failclosed=1
+release-auditor.md tools=[Read, Grep, Glob, Bash, Write] hook_uses_MTH_GUARD_ROOT=1 failclosed=1
+solution-architect.md tools=[Read, Grep, Glob, Write, Edit, Bash] hook_uses_MTH_GUARD_ROOT=1 failclosed=1
+transformation-analyst.md tools=[Read, Grep, Glob, Write, Edit, Bash] hook_uses_MTH_GUARD_ROOT=1 failclosed=1
+### per-role settings: matcher + command
+backend-workflow-engineer.settings.json 1 Write|Edit|NotebookEdit|MultiEdit true hooks
+code-security-reviewer.settings.json 1 Write|Edit|NotebookEdit|MultiEdit true hooks
+devops-engineer.settings.json 1 Write|Edit|NotebookEdit|MultiEdit true hooks
+domain-reviewer.settings.json 1 Write|Edit|NotebookEdit|MultiEdit true hooks
+frontend-ux-engineer.settings.json 1 Write|Edit|NotebookEdit|MultiEdit true hooks
+kpi-benefits-engineer.settings.json 1 Write|Edit|NotebookEdit|MultiEdit true hooks
+qa-verifier.settings.json 1 Write|Edit|NotebookEdit|MultiEdit true hooks
+release-auditor.settings.json 1 Write|Edit|NotebookEdit|MultiEdit true hooks
+solution-architect.settings.json 1 Write|Edit|NotebookEdit|MultiEdit true hooks
+transformation-analyst.settings.json 1 Write|Edit|NotebookEdit|MultiEdit true hooks

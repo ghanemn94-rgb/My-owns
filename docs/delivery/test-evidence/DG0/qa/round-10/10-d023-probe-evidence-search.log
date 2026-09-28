@@ -1,0 +1,23 @@
+# Search for the recorded live worktree probe claimed by D-023 / F-DG0-134 fix_summary (qa-verifier R10, 2026-09-28T17:38:49Z)
+$ grep -n "D-023" docs/delivery/decisions.md | grep -o "Verified live[^|]*"
+Verified live: a backend-workflow-engineer run in a worktree had all three writes blocked (two absolute paths into the main repository's protected files, one relative path inside the worktree). 
+
+$ node -e (F-DG0-134 fix_summary)
+Fixed in c24ec0420dea5cef8d54479e54aeab6ce800bf2c (D-023); regression tests in tools/agents/tests/guard.test.mjs and tools/gates/tests/validator.test.mjs; live worktree probe blocked
+
+$ ls docs/delivery/runs/DG0 | grep -v -E "REV-|LOAD-|-AN-" (non-review, non-load, non-analyst runs)
+(end of list)
+
+$ ls docs/delivery/runs/DG0 | grep -i backend-workflow-engineer
+DG0-T-DG0-LOAD-backend-workflow-engineer-20260928T115301Z
+(end of list)
+
+$ git show --stat c24ec04 85a0efa | grep -iE "probe|worktree|runs/"
+== c24ec04 DG0 repair round 9: guard protects the repository and its worktrees via MTH_GUARD_ROOT (F-DG0-134); validator path decoding (F-DG0-224)
+== 85a0efa DG0: import round 9, record fixes; stage to REVIEWING
+ .../code-security/round-9/06-guard-hook-probes.log |   22 +
+ .../round-9/08-hookcwd-live-probe.log              |    5 +
+ .../round-9/09-guard-worktree-cwd.log              |   44 +
+ .../DG0/qa/round-9/12-live-guard-probe.log         |    8 +
+
+# Conclusion: c24ec04 (the fix) and 85a0efa (the record import) add no run directory and no evidence file for a post-fix backend-workflow-engineer worktree probe. The round-9 code-security files listed above are pre-fix reproductions of F-DG0-134, not the claimed post-fix probe.

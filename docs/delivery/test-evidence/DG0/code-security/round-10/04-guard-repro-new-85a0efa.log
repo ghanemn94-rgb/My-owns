@@ -1,0 +1,46 @@
+### NEW candidate 85a0efa
+commit=85a0efac57008884109e40e4bea56f14c5c892aa  main=/tmp/dg0-sec-r10/new/main  worktree=/tmp/dg0-sec-r10/new/wt  nested-repo=/tmp/dg0-sec-r10/new/main/docs/delivery/test-evidence/nested
+== A. F-DG0-134 original vector: agent cwd = worktree, Write into the MAIN repository's protected paths (expect rc=2)
+rc=2 role=backend-workflow-engineer cwd=wt target=main/tools/gates/lib/rules.mjs  :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/gates/lib/rules.mjs' (protected path)
+rc=2 role=backend-workflow-engineer cwd=wt target=main/docs/delivery/stages.json  :: BLOCKED by write guard: backend-workflow-engineer may not write 'docs/delivery/stages.json' (protected path)
+rc=2 role=backend-workflow-engineer cwd=wt target=main/.claude/settings.local.json  :: BLOCKED by write guard: backend-workflow-engineer may not write '.claude/settings.local.json' (protected path)
+rc=2 role=backend-workflow-engineer cwd=wt target=main/docs/delivery/gates/DG1.json  :: BLOCKED by write guard: backend-workflow-engineer may not write 'docs/delivery/gates/DG1.json' (protected path)
+rc=2 role=backend-workflow-engineer cwd=wt target=main/tools/agents/write-scopes.json  :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/agents/write-scopes.json' (protected path)
+rc=2 role=transformation-analyst cwd=wt target=main/tools/gates/lib/rules.mjs  :: BLOCKED by write guard: transformation-analyst may not write 'tools/gates/lib/rules.mjs' (protected path)
+rc=2 role=transformation-analyst cwd=wt target=main/docs/delivery/stages.json  :: BLOCKED by write guard: transformation-analyst may not write 'docs/delivery/stages.json' (outside role write scope)
+rc=2 role=transformation-analyst cwd=wt target=main/.claude/settings.local.json  :: BLOCKED by write guard: transformation-analyst may not write '.claude/settings.local.json' (protected path)
+rc=2 role=transformation-analyst cwd=wt target=main/docs/delivery/gates/DG1.json  :: BLOCKED by write guard: transformation-analyst may not write 'docs/delivery/gates/DG1.json' (outside role write scope)
+rc=2 role=transformation-analyst cwd=wt target=main/tools/agents/write-scopes.json  :: BLOCKED by write guard: transformation-analyst may not write 'tools/agents/write-scopes.json' (protected path)
+rc=2 role=code-security-reviewer cwd=wt target=main/tools/gates/lib/rules.mjs  :: BLOCKED by write guard: code-security-reviewer may not write 'tools/gates/lib/rules.mjs' (protected path)
+rc=2 role=code-security-reviewer cwd=wt target=main/docs/delivery/stages.json  :: BLOCKED by write guard: code-security-reviewer may not write 'docs/delivery/stages.json' (outside role write scope)
+rc=2 role=code-security-reviewer cwd=wt target=main/.claude/settings.local.json  :: BLOCKED by write guard: code-security-reviewer may not write '.claude/settings.local.json' (protected path)
+rc=2 role=code-security-reviewer cwd=wt target=main/docs/delivery/gates/DG1.json  :: BLOCKED by write guard: code-security-reviewer may not write 'docs/delivery/gates/DG1.json' (outside role write scope)
+rc=2 role=code-security-reviewer cwd=wt target=main/tools/agents/write-scopes.json  :: BLOCKED by write guard: code-security-reviewer may not write 'tools/agents/write-scopes.json' (protected path)
+== B. cwd = worktree, protected paths inside the worktree itself, absolute and relative (expect rc=2)
+rc=2 role=backend-workflow-engineer cwd=wt target=wt/tools/gates/lib/rules.mjs  :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/gates/lib/rules.mjs' (protected path)
+rc=2 role=backend-workflow-engineer cwd=wt target=tools/gates/lib/rules.mjs  :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/gates/lib/rules.mjs' (protected path)
+rc=2 role=backend-workflow-engineer cwd=wt target=wt/.claude/settings.local.json  :: BLOCKED by write guard: backend-workflow-engineer may not write '.claude/settings.local.json' (protected path)
+== C. F-DG0-134 Bash-cd variant: cwd = nested git repo inside main carrying a guard that allows everything (expect rc=2)
+rc=2 role=backend-workflow-engineer cwd=main/docs/delivery/test-evidence/nested target=main/tools/gates/lib/rules.mjs  :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/gates/lib/rules.mjs' (protected path)
+== D. control: in-scope writes still allowed (expect rc=0)
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/apps/api/x.ts  :: 
+rc=0 role=code-security-reviewer cwd=wt target=main/docs/delivery/test-evidence/DG0/x.log  :: 
+== E. residual: paths OUTSIDE every guarded root are 'scratch' (allowed). These are files the CLI and git read at every run.
+rc=0 role=backend-workflow-engineer cwd=wt target=home/.claude/settings.json env[HOME=/tmp/dg0-sec-r10/new/home] :: 
+rc=0 role=code-security-reviewer cwd=main target=home/.claude/settings.json env[HOME=/tmp/dg0-sec-r10/new/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=home/.gitconfig env[HOME=/tmp/dg0-sec-r10/new/home] :: 
+== F. residual: guardedRoots() swallows git errors (guard-write.mjs:52). A malformed global git config (a scratch file the agent may Write, see E)
+      makes 'git worktree list' fail, so the worktree drops out of the guarded roots. Simulated with HOME=<fake home with a malformed .gitconfig>.
+   git worktree list with malformed ~/.gitconfig: exit=128
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/tools/gates/lib/rules.mjs env[HOME=/tmp/dg0-sec-r10/new/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/docs/source/playbook.md env[HOME=/tmp/dg0-sec-r10/new/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/.claude/settings.local.json env[HOME=/tmp/dg0-sec-r10/new/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/tools/agents/write-scopes.json env[HOME=/tmp/dg0-sec-r10/new/home] :: 
+rc=0 role=backend-workflow-engineer cwd=wt target=tools/gates/lib/rules.mjs env[HOME=/tmp/dg0-sec-r10/new/home] :: 
+   control, same fake home, main repository path (still guarded because it is MTH_GUARD_ROOT itself):
+rc=2 role=backend-workflow-engineer cwd=wt target=main/tools/gates/lib/rules.mjs env[HOME=/tmp/dg0-sec-r10/new/home] :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/gates/lib/rules.mjs' (protected path)
+   control, well-formed fake ~/.gitconfig:
+rc=2 role=backend-workflow-engineer cwd=wt target=wt/tools/gates/lib/rules.mjs env[HOME=/tmp/dg0-sec-r10/new/home] :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/gates/lib/rules.mjs' (protected path)
+== G. git absent from PATH for the hook (PATH = node dir + /bin minimal), worktree path
+rc=0 role=backend-workflow-engineer cwd=wt target=wt/tools/gates/lib/rules.mjs env[PATH=/tmp/dg0-sec-r10/new/bin] :: 
+rc=2 role=backend-workflow-engineer cwd=wt target=main/tools/gates/lib/rules.mjs env[PATH=/tmp/dg0-sec-r10/new/bin] :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/gates/lib/rules.mjs' (protected path)

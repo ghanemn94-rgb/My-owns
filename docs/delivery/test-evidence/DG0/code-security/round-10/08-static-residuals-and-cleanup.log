@@ -1,0 +1,29 @@
+$ grep -n 'catch' tools/agents/guard-write.mjs (fail-open site)
+52:  } catch {
+53-    /* not a git repository or git unavailable: the root itself is still guarded */
+54-  }
+--
+$ grep regression tests for a git-failure path in guard.test.mjs
+8:import { join, dirname } from "node:path";
+9:import { fileURLToPath } from "node:url";
+12:const here = dirname(fileURLToPath(import.meta.url));
+67:  const block = spawnSync("node", [script, "domain-reviewer"], { input: JSON.stringify({ tool_input: { file_path: join(GUARD_ROOT, "apps/api/x.ts") } }) });
+70:  const allow = spawnSync("node", [script, "domain-reviewer"], { input: JSON.stringify({ tool_input: { file_path: join(GUARD_ROOT, "docs/delivery/reviews/DG1/a.json") } }) });
+93:test("F-DG0-105: writes through a symlink into a protected path are blocked", () => {
+105:test("F-DG0-105: protected-path matching is case-insensitive", () => {
+110:test("F-DG0-111: a planted nested .git cannot move the guarded root; .git paths are never writable", () => {
+117:  // Even if a nested .git exists, paths are scoped from the fixed root.
+141:  // The hook entry point: root from MTH_GUARD_ROOT, agent working in the worktree, relative and absolute paths.
+145:    const res = spawnSync("node", [script, "backend-workflow-engineer"], { cwd: join(w, "wt"), env, input: JSON.stringify({ tool_input: { file_path: fp } }) });
+148:  const ok = spawnSync("node", [script, "backend-workflow-engineer"], { cwd: join(w, "wt"), env, input: JSON.stringify({ tool_input: { file_path: "apps/api/x.ts" } }) });
+$ grep runner for --setting-sources / CLAUDE_CONFIG_DIR
+(none: user-level settings load in every agent run)
+### cleanup
+removed /tmp/dg0-sec-r10 (clones, worktrees, fake homes, throwaway config dirs)
+/home/user/My-owns  cf91cfa [claude/mobily-transformation-platform-kwcc4i]
+/tmp/review-qa-r10  85a0efa (detached HEAD)
+?? docs/delivery/runs/DG0/DG0-T-DG0-REV-QA-R10-qa-verifier-20260928T172954Z-8b701d58/
+?? docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R10-code-security-reviewer-20260928T172954Z-8746ec2e/
+?? docs/delivery/test-evidence/DG0/code-security/round-10/
+?? docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r10.test.mjs
+ls: cannot access '/root/.claude/settings.json': No such file or directory

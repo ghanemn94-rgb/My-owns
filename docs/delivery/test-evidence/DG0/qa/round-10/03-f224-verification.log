@@ -1,0 +1,43 @@
+# env: node v22.22.2; git 2.43.0; Linux 6.18.44-fc-v37; worktree /tmp/review-qa-r10 at 85a0efac57008884109e40e4bea56f14c5c892aa; MTH_GUARD_ROOT=/home/user/My-owns; qa-verifier run DG0-T-DG0-REV-QA-R10-qa-verifier-20260928T172954Z-8b701d58
+# F-DG0-224 reproduction. Clones of the repo under '/tmp/qa10 space dir/مستخدم/{old,new}'
+### OLD cbc755d at /tmp/qa10 space dir/مستخدم/old
+Error: ENOENT: no such file or directory, open '/tmp/qa10%20space%20dir/%D9%85%D8%B3%D8%AA%D8%AE%D8%AF%D9%85/old/tools/gates/schemas/stages.schema.json'
+  code: 'ENOENT',
+validate --pipeline exit=1
+Error: ENOENT: no such file or directory, open '/tmp/qa10%20space%20dir/%D9%85%D8%B3%D8%AA%D8%AE%D8%AF%D9%85/old/tools/gates/schemas/stages.schema.json'
+  code: 'ENOENT',
+validate --reconcile exit=1
+Error: ENOENT: no such file or directory, open '/tmp/qa10%20space%20dir/%D9%85%D8%B3%D8%AA%D8%AE%D8%AF%D9%85/old/tools/gates/schemas/stages.schema.json'
+  code: 'ENOENT',
+validate --stage DG0 exit=1
+### NEW 85a0efa at /tmp/qa10 space dir/مستخدم/new
+PASS pipeline (active stage: DG0 REVIEWING)
+validate --pipeline exit=0
+round 1 domain-reviewer: FAIL (STALE for current content)
+round 1 qa-verifier: FAIL (STALE for current content)
+validate --reconcile exit=0
+PASS register rules at DG0
+validate --register DG0 exit=0
+# tests 56
+# pass 56
+# fail 0
+node --test exit=0
+PASS  analysis check check_pb_provenance.py :: checked 93 REQ-PB rows; 0 problem(s); 10 reviewed R5 false positive(s) accepted
+PASS  analysis check check_test_refs.py :: 61 declared test titles derived from 3 test files; 42 quoted test title citation(s) in 411 register rows; 0 problem(s)
+PASS  working-tree candidate equals HEAD (sha256:1e959f250e6f2b6e622d56464aa7d8be450628805392633046621b60bbe90c54)
+prefreeze exit=0
+
+# QA9-F224 (round-9 QA test) against both
+### QA9-F224 against old
+not ok 1 - QA9-F224 portability: the gate tooling itself, installed under a path with a space, validates a valid fixture
+# pass 0
+# fail 1
+exit=1
+### QA9-F224 against new
+ok 1 - QA9-F224 portability: the gate tooling itself, installed under a path with a space, validates a valid fixture
+# pass 1
+# fail 0
+exit=0
+
+$ grep -rn "\.pathname" tools/ (new candidate)
+/tmp/review-qa-r10/tools/gates/lib/rules.mjs:38:const here = fileURLToPath(new URL(".", import.meta.url)); // not .pathname: that stays percent-encoded (F-DG0-224)
