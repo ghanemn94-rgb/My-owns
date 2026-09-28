@@ -1,0 +1,110 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-001",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 6c67698, the parent of fix 73c4854: REQ-PB-049 had final_gate DG5, so DG3 had no invalid-weight acceptance. In the candidate e11b5f0, REQ-PB-049 has final_gate DG3 and increments P3. Its acceptance says weights totalling 95% (or 105%) are rejected, a risk/compliance criterion at 10% creates weight-set version 2, and the REQ-S09-005 ranking history can name that version. The admin-default part is split out as REQ-PB-093 (DG5). stage-plan.md lists REQ-PB-049 under 'complete at DG3' (REQ-PB-045..057), and check_counts.py confirms the lists match the register (exit 0). This satisfies M0406 'invalid weights ... handled' at DG3.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-7/07-staging.log",
+        "docs/delivery/test-evidence/DG0/domain/round-7/09-analysis-tools.log",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-002",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 6c67698: REQ-PB-020 didn't reference T11 'Go-live / scale', the permissions matrix had no T11 Go-live / scale row, and SP had only V on the TOM row. In the candidate, the REQ-PB-020 acceptance says 'with the G5 approver configured to BO per T11 Go-live / scale, an SP approval returns 403 and a BO approval succeeds'. Its notes separate the transformation-level G5 from the initiative-level T11 decisions. The matrix has SP 'Rv (RACI C for Target Operating Model)' and an explicit T11 'Go-live / scale' row matching B0099 (Recommend initiative owner, Approve BO, Consult Risk/Tech/CX, Inform SteerCo). Rule 7 explains the distinction, and journey J2.5 step 5a uses it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+        "docs/analysis/permissions-matrix.md",
+        "docs/analysis/user-journeys.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-003",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 6c67698: the notes of REQ-PB-055, -085 and -088 carried 'no interpretation beyond the cited blocks'. In the candidate, none of them does. Each note now separates Playbook content, Master-prompt additions and Interpretations. REQ-PB-055 lists 'early becomes a hard rule before G4' as an interpretation, REQ-PB-085 lists the M0227 severity/persistence rule as an addition, and REQ-PB-088 lists M0339/M0348 as additions. check_pb_provenance.py: 93 REQ-PB rows, 0 problems, exit 0.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-7/09-analysis-tools.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-004",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 8c8757a, the parent of fix 6c67698: playbook.md had neither 'PRACTICAL EDITION' nor <br>. In the candidate, line 2 of playbook.md records '<!-- footer1: BUSINESS TRANSFORMATION PLAYBOOK  |  PRACTICAL EDITION -->', and multi-line cells use <br> (7 occurrences, including B0003 '6<br>PHASES' and B0150 'Score: ____ / 25<br>Top 3 actions'). My independent docx diff finds 1001 of 1001 paragraph segments present and in order, 49 tables and 239 rows with no missing cell, and the footer present. check_extraction.sh exits 0.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-7/01-extraction.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-005",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 6c67698: 'Journey' was 'رحلة العميل' and 'Modular mode' was 'النمط المعياري'. In the candidate, the glossary gives 'الرحلة (رحلة العميل أو رحلة العمل)' and 'النمط الجزئي المرن (الدخول عند المرحلة المناسبة)'. It keeps the old renderings in a 'Before' change table with rationale and keeps the pending-linguistic-review caveat. Both new terms preserve the English meaning.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+        "docs/analysis/glossary.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-006",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 18588e7, the parent of fix aa8fa37: REQ-PB-088 didn't cite M0348, and REQ-PB-068 filed the M0212 publication block under Interpretations. In the candidate, REQ-PB-088's source_ref includes M0348, the M0348 coverage row lists REQ-PB-088, and REQ-PB-068's notes read 'Master-prompt additions (§10 M0212): ... blocked from publication. Interpretations: none.' reg7.py reports 0 coverage back-reference problems.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-7/02-register-coverage.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-007",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at eaef1d0, the parent of fix bf7f5e2: agent-protocol.md lacked the G6/DG7 sentence. In the candidate, agent-protocol.md line 10 reads 'Product gate G6 (Sustain) never implies that engineering gate DG7 has passed, and DG7 never implies any G1–G6 business approval.' Line 9 states that no engineering agent grants a real business, Finance or IT approval. This matches the REQ-DLV-002 acceptance. The separate wording issue about agent definitions is raised as new finding F-DG0-011 and doesn't affect this closure.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-7/12-F-DG0-011.log",
+        "docs/delivery/agent-protocol.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-008",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at f0335fa, the parent of fix 613946f: M0288 content in REQ-PB-091 sat under Interpretations, REQ-PB-050 said 'Master-prompt additions: none', and REQ-PB-078 filed the M0150 canonical-dependency rule as an interpretation. In the candidate, REQ-PB-091 lists M0288 (top three actions required, reassessments tracked) under Master-prompt additions. REQ-PB-050 lists §5 M0135 and §9 M0178, M0180-M0183 as additions, with 'Interpretations: none'. REQ-PB-078 lists the M0150 canonical dependency record as an addition, with 'Interpretations: none'. check_pb_provenance.py (with R5-R7) exits 0.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-7/09-analysis-tools.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-009",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at d2630de, the parent of fix bcb8c61: check_test_refs.py reports T4 problems (declared tests missing from EXPECTED_TITLES) and exits 1. In the candidate e11b5f0 it reports '55 declared test titles derived from 3 test files; 42 quoted test title citation(s) in 411 register rows; 0 problem(s)' and exits 0. prefreeze.sh DG0 now runs every shipped analysis check, and all of them pass in a fresh clone.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-7/11-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-7/10-prefreeze-F-DG0-010.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-010",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on a fresh clone of the round-6 candidate a059b55. It tracks tools/agents/__pycache__/run_meta.cpython-311.pyc and tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc and has no .gitignore. prefreeze.sh DG0 exits 1 with 'FAIL uncommitted candidate changes: M ...pyc', and the recomputed candidate ID drifts from sha256:c13a4f8e...3ff68 to sha256:3cb9f538...61a23. On a fresh clone of the candidate e11b5f0, git ls-files tracks 0 .pyc files, .gitignore ignores __pycache__/ and *.py[cod], and the manifest covers 79 files (80 before). prefreeze.sh DG0 exits 0, with every check PASS, including 'runner metadata tests' and 'working-tree candidate equals HEAD'. Afterwards the regenerated __pycache__ directories show only as ignored (!!), and candidate.mjs still prints sha256:dee0316d...8cece. The fix is complete: the candidate is reproducible and the shipped checks pass on any fresh checkout.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-7/10-prefreeze-F-DG0-010.log",
+        "docs/delivery/test-evidence/DG0/domain/round-7/00-candidate.log",
+        ".gitignore",
+        "tools/gates/prefreeze.sh"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG0-011",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "REQ-DLV-002's procedure says every agent definition states that an engineering agent cannot grant a real business, Finance or IT approval, but no definition in .claude/agents states it directly",
+      "reproduction": "In a fresh clone at e11b5f08dfa8b6cbe8716964e3412e17697234aa, the REQ-DLV-002 procedure in docs/delivery/requirements.csv reads: 'project rules and every agent definition state that an engineering agent cannot grant a real business, Finance or IT approval'. Running grep -l -i -E 'never grants?|cannot grant|can never grant|no agent grants' .claude/agents/*.md matches none of the ten definitions. backend-workflow-engineer.md line 26 comes closest: business approvals are human actions and timers never approve. Every definition instead ends with 'Read docs/delivery/agent-protocol.md and CLAUDE.md before you start any assignment', and both of those files state the rule (CLAUDE.md line 13; agent-protocol.md lines 9-10).",
+      "expected": "Either each agent definition carries the one-line rule that an engineering agent never grants a real business, Finance or IT approval (and that product G6 never implies DG7), or the REQ-DLV-002 procedure says the definitions incorporate the rule through the mandatory reading of CLAUDE.md and agent-protocol.md.",
+      "actual": "The rule applies to every agent in substance, because each definition makes reading CLAUDE.md and agent-protocol.md mandatory, and REQ-DLV-002's acceptance criterion names only those two files. Only the register's procedure wording overstates where the rule is written. This is a wording inconsistency with no behavioural effect, and I would accept it as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-7/12-F-DG0-011.log",
+        "docs/delivery/requirements.csv (REQ-DLV-002)",
+        ".claude/agents/",
+        "CLAUDE.md",
+        "docs/delivery/agent-protocol.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-7/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T16:40:00Z",
+          "status": "OPEN",
+          "note": "Reported in the DG0 round-7 domain review. Wording only; I would accept it as an observation (Low, non-mandatory)."
+        }
+      ]
+    }
+  ]
+}
