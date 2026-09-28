@@ -278,8 +278,8 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
     if (!repoFile(repo, rel)) bad(`missing ${rel.split("/").pop()}`);
     else if (!meta[key] || sha256File(join(repo, rel)) !== meta[key]) bad(`${rel.split("/").pop()} does not match meta.${key}`);
   }
+  let lines = [];
   if (repoFile(repo, transcriptRel)) {
-    let lines = [];
     try {
       lines = gunzipSync(readFileSync(join(repo, transcriptRel))).toString("utf8").split("\n").filter(Boolean).map((l) => {
         try {
@@ -327,6 +327,12 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
       const authored = meta.tool_authored && typeof meta.tool_authored === "object" ? meta.tool_authored : {};
       if (authored[rel] === undefined) bad(`${rel} was not written by this run's file tools`);
       else if (authored[rel] !== meta.outputs[rel]) bad(`${rel} does not equal the content of this run's own Write/Edit calls`);
+      // Independently replay the hash-bound transcript rather than trusting meta.tool_authored (F-DG0-115).
+      if (lines.length && repoFile(repo, rel)) {
+        const replayed = replayToolContent(lines, meta.cwd, rel);
+        if (replayed === null) bad(`${rel} cannot be reconstructed from this run's own successful Write/Edit calls in its transcript`);
+        else if (!Buffer.from(replayed, "utf8").equals(readFileSync(join(repo, rel)))) bad(`${rel} differs from the replay of this run's transcript`);
+      }
     }
   }
 }
@@ -599,45 +605,106 @@ export function writeOncePaths(stageId) {
 }
 
 /**
- * Once committed, files under the write-once paths may never change (F-DG0-115, F-DG0-118). Root-cause design:
- * rather than inspecting diffs (which miss merge commits and index flags), every write-once path that was ever
- * added in HEAD's history (merges included) must still hold, in HEAD and on disk, the exact blob that first added it.
+ * Once committed, files under the write-once paths may never change (F-DG0-115, F-DG0-118). Design:
+ * - every add/modify/type-change event of a write-once path, against EVERY parent (merges included, `-m --raw`),
+ *   must carry one and the same blob, and no modify, type-change or delete event may exist at all, so neither
+ *   diff ordering nor committer dates can pick a "first" version (F-DG0-115 residual);
+ * - HEAD and the on-disk bytes (hashed directly, so skip-worktree cannot hide edits) must equal that blob;
+ * - no commit in HEAD's history may carry a committer date earlier than one of its parents (back-dating).
  */
 export function checkWriteOnce(repo, stageId, errors) {
   const specs = writeOncePaths(stageId).map((p) => `:(glob)${p}/**`);
   try {
-    const log = git(repo, ["log", "-m", "--full-history", "--no-renames", "--diff-filter=A", "--reverse", "--format=@%H", "--name-only", "--", ...specs]).toString();
-    const firstAdd = new Map(); // path -> commit that first added it
+    const raw = git(repo, ["log", "-m", "--full-history", "--no-renames", "--raw", "--no-abbrev", "--format=@%H", "--", ...specs]).toString();
+    const blobs = new Map(); // path -> Set of blobs introduced
     let commit = null;
-    for (const line of log.split("\n")) {
-      if (line.startsWith("@")) commit = line.slice(1);
-      else if (line && !firstAdd.has(line)) firstAdd.set(line, commit);
+    for (const line of raw.split("\n")) {
+      if (line.startsWith("@")) {
+        commit = line.slice(1);
+        continue;
+      }
+      const m = line.match(/^:(\d+) (\d+) ([0-9a-f]+) ([0-9a-f]+) ([A-Z])\d*\t(.+)$/);
+      if (!m) continue;
+      const [, , , , newBlob, status, path] = m;
+      if (status !== "A") errors.push(`write-once: ${path} has a ${status} event in ${commit.slice(0, 10)} (review evidence is append-only)`);
+      if (status === "D") continue;
+      if (!blobs.has(path)) blobs.set(path, new Set());
+      blobs.get(path).add(newBlob);
     }
-    if (!firstAdd.size) return;
     const head = new Map();
     const globs = writeOncePaths(stageId).map((p) => `${p}/**`);
     for (const line of git(repo, ["ls-tree", "-r", "--full-tree", "HEAD"]).toString().split("\n").filter(Boolean)) {
       const [meta, path] = line.split("\t");
       if (matchesAny(path, globs)) head.set(path, meta.split(" ")[2]);
     }
-    const input = [...firstAdd].map(([path, c]) => `${c}:${path}`).join("\n") + "\n";
-    const firstBlobs = execFileSync("git", ["-C", repo, "cat-file", "--batch-check=%(objectname)"], { input }).toString().split("\n");
-    const paths = [...firstAdd.keys()];
+    const paths = [...blobs.keys()];
     const onDisk = paths.filter((p) => repoFile(repo, p));
     const diskBlobs = onDisk.length
       ? execFileSync("git", ["-C", repo, "hash-object", "--no-filters", "--stdin-paths"], { input: onDisk.join("\n") + "\n" }).toString().split("\n")
       : [];
     const diskBlob = new Map(onDisk.map((p, i) => [p, diskBlobs[i]]));
-    paths.forEach((path, i) => {
-      const first = firstBlobs[i];
+    for (const path of paths) {
+      const set = blobs.get(path);
+      if (set.size !== 1) {
+        errors.push(`write-once: ${path} was committed with ${set.size} different contents (review evidence is append-only)`);
+        continue;
+      }
+      const [only] = set;
       if (!head.has(path)) errors.push(`write-once: ${path} was removed after it was committed (review evidence is append-only)`);
-      else if (head.get(path) !== first) errors.push(`write-once: ${path} in HEAD differs from the version first committed in ${firstAdd.get(path).slice(0, 10)} (review evidence is append-only)`);
+      else if (head.get(path) !== only) errors.push(`write-once: ${path} in HEAD differs from its committed content (review evidence is append-only)`);
       if (!diskBlob.has(path)) errors.push(`write-once: ${path} is missing from the working tree`);
-      else if (diskBlob.get(path) !== first) errors.push(`write-once: working-tree ${path} differs from the version first committed (edited locally, or hidden by skip-worktree/assume-unchanged)`);
-    });
+      else if (diskBlob.get(path) !== only) errors.push(`write-once: working-tree ${path} differs from its committed content (edited locally, or hidden by skip-worktree/assume-unchanged)`);
+    }
+    const history = git(repo, ["log", "--format=%H %ct %P"]).toString().split("\n").filter(Boolean);
+    const time = new Map(history.map((l) => [l.split(" ")[0], Number(l.split(" ")[1])]));
+    for (const l of history) {
+      const [c, t, ...parents] = l.split(" ");
+      for (const p of parents) if (time.has(p) && Number(t) < time.get(p)) errors.push(`history: commit ${c.slice(0, 10)} is back-dated before its parent ${p.slice(0, 10)}`);
+    }
   } catch (e) {
     errors.push(`write-once: cannot inspect git history (${e.message.split("\n")[0]})`);
   }
+}
+
+/**
+ * Defence in depth (F-DG0-115): recompute what a run's own SUCCESSFUL Write/Edit/MultiEdit calls produced for a path
+ * by replaying the hash-bound transcript, instead of trusting meta.tool_authored. Returns the text or null.
+ */
+export function replayToolContent(lines, runCwd, rel) {
+  const failed = new Set();
+  const uses = [];
+  for (const o of lines) {
+    const content = o && typeof o.message === "object" && o.message && Array.isArray(o.message.content) ? o.message.content : [];
+    for (const c of content) {
+      if (!c || typeof c !== "object") continue;
+      if (o.type === "assistant" && c.type === "tool_use" && ["Write", "Edit", "MultiEdit", "NotebookEdit"].includes(c.name)) uses.push(c);
+      if (o.type === "user" && c.type === "tool_result" && c.is_error) failed.add(c.tool_use_id);
+    }
+  }
+  const toRel = (fp) => {
+    if (typeof fp !== "string" || !fp) return null;
+    if (!fp.startsWith("/")) return fp.replace(/^\.\//, "");
+    return fp.startsWith(runCwd + "/") ? fp.slice(runCwd.length + 1) : null;
+  };
+  let state;
+  for (const c of uses) {
+    const inp = c.input && typeof c.input === "object" ? c.input : {};
+    if (toRel(inp.file_path || inp.notebook_path) !== rel || failed.has(c.id)) continue;
+    if (c.name === "Write") state = typeof inp.content === "string" ? inp.content : null;
+    else if ((c.name === "Edit" || c.name === "MultiEdit") && typeof state === "string") {
+      const edits = c.name === "Edit" ? [inp] : Array.isArray(inp.edits) ? inp.edits : [];
+      for (const e of edits) {
+        const oldS = e && e.old_string;
+        const newS = e && e.new_string;
+        if (typeof oldS !== "string" || typeof newS !== "string" || oldS === "" || !state.includes(oldS)) {
+          state = null;
+          break;
+        }
+        state = e.replace_all ? state.split(oldS).join(newS) : state.replace(oldS, () => newS);
+      }
+    } else state = null;
+  }
+  return typeof state === "string" ? state : null;
 }
 
 /** The committed, write-once manifest of a frozen candidate. */

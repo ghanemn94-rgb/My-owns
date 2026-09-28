@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { gzipSync } from "node:zlib";
+import { gzipSync, gunzipSync } from "node:zlib";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, symlinkSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -60,6 +60,7 @@ function stagesDoc() {
 
 let counter = 0;
 let freezeCommit = null; // the commit containing the frozen manifest; runs start from it
+const RUN_CWD = "/work/repo"; // the absolute working directory recorded for fixture runs
 /** Writes a realistic run directory: meta + result + gzipped stream transcript, with hashes, like run-agent.sh. */
 function makeRun(repo, role, { assignment, startedAt = T_RUN, task = "T-REV", stage = "DG0" } = {}) {
   counter++;
@@ -79,7 +80,7 @@ function makeRun(repo, role, { assignment, startedAt = T_RUN, task = "T-REV", st
   put(repo, `${base}/meta.json`, {
     run_id, role, stage, task, invocation_reference, model_requested: "claude-opus-5-5",
     assignment, assignment_sha256: sha(readFileSync(join(repo, assignment))),
-    started_at: startedAt, exit_code: 0, is_error: false, result_session_id: session_id, head_commit_at_start: freezeCommit,
+    started_at: startedAt, exit_code: 0, is_error: false, result_session_id: session_id, head_commit_at_start: freezeCommit, cwd: RUN_CWD,
     result_sha256: sha(result), transcript_sha256: sha(transcript),
   });
   return invocation_reference;
@@ -87,7 +88,19 @@ function makeRun(repo, role, { assignment, startedAt = T_RUN, task = "T-REV", st
 
 /** Records files as outputs written by a run's own file tools (what run-agent.sh derives from its snapshots). */
 function bindOutputs(repo, ref, rels) {
-  edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (m) => {
+  // Append the run's Write calls for these files to its transcript (before the final result line), as a real run would.
+  const base = `docs/delivery/runs/DG0/${ref.run_id}`;
+  const lines = gunzipSync(readFileSync(join(repo, `${base}/transcript.jsonl.gz`))).toString("utf8").split("\n").filter(Boolean);
+  const result = lines.pop();
+  for (const rel of rels) {
+    counter++;
+    lines.push(JSON.stringify({ type: "assistant", message: { content: [{ type: "tool_use", id: `tu-${counter}`, name: "Write", input: { file_path: `${RUN_CWD}/${rel}`, content: readFileSync(join(repo, rel), "utf8") } }] } }));
+  }
+  lines.push(result);
+  const gz = gzipSync(Buffer.from(lines.join("\n") + "\n"));
+  put(repo, `${base}/transcript.jsonl.gz`, gz);
+  edit(repo, `${base}/meta.json`, (m) => {
+    m.transcript_sha256 = sha(gz);
     m.outputs = { ...(m.outputs || {}) };
     m.written_by_tools = [...new Set([...(m.written_by_tools || []), ...rels])].sort();
     m.tool_authored = { ...(m.tool_authored || {}) };
@@ -615,7 +628,7 @@ test("F-DG0-115: reviewer artefacts cannot be edited after the run, committed or
   sh(a.repo, "add", "-A");
   sh(a.repo, "commit", "-qm", "rewrite round 1");
   const ea = validateGate(a.repo, "DG0");
-  expectError(ea, /write-once: docs\/delivery\/reviews\/DG0\/round-1\/code-security-reviewer\.findings\.json in HEAD differs from the version first committed/);
+  expectError(ea, /write-once: docs\/delivery\/reviews\/DG0\/round-1\/code-security-reviewer\.findings\.json (has a M event|was committed with 2 different contents)/);
   // (b) uncommitted in-place edit of a verification sidecar no longer matches what the run wrote
   const b = buildValidRepo();
   const v = "docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json";
@@ -627,7 +640,7 @@ test("F-DG0-115: reviewer artefacts cannot be edited after the run, committed or
   sh(c.repo, "commit", "-qm", "round evidence");
   edit(c.repo, c.records["qa-verifier"], (r) => (r.summary = "quietly changed"));
   const ec = validateGate(c.repo, "DG0");
-  expectError(ec, /write-once: working-tree docs\/delivery\/reviews\/DG0\/round-2\/qa-verifier\.json differs from the version first committed/);
+  expectError(ec, /write-once: working-tree docs\/delivery\/reviews\/DG0\/round-2\/qa-verifier\.json differs from its committed content/);
   expectError(ec, /qa-verifier\.json differs from what the run wrote/);
   // (d) a record the run's own tools did not write
   const d = buildValidRepo();
@@ -712,7 +725,7 @@ test("F-DG0-115 residual: an evil merge cannot rewrite committed evidence", () =
   edit(repo, v, (x) => (x.verifications[0].note = "rewritten inside a merge"));
   sh(repo, "add", "-A");
   sh(repo, "commit", "-qm", "evil merge");
-  expectError(validateGate(repo, "DG0"), /code-security-reviewer\.verifications\.json in HEAD differs from the version first committed/);
+  expectError(validateGate(repo, "DG0"), /code-security-reviewer\.verifications\.json (has a M event|was committed with 2 different contents)/);
 });
 
 test("F-DG0-118: skip-worktree / assume-unchanged cannot hide edited evidence", () => {
@@ -752,4 +765,38 @@ test("F-DG0-212: a round manifest must describe its source commit; runs start fr
   edit(b.repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (m) => (m.head_commit_at_start = b.head));
   expectError(validateGate(b.repo, "DG0"), /which does not contain docs\/delivery\/candidates\/DG0\//);
   assert.ok(cid);
+});
+
+test("F-DG0-115 residual: a back-dated side branch merged in cannot replace committed evidence", () => {
+  const { repo } = buildValidRepo();
+  const v = "docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json";
+  sh(repo, "add", "-A");
+  sh(repo, "commit", "-qm", "genuine round evidence");
+  const genuine = sh(repo, "rev-parse", "HEAD");
+  // Side commit from before the evidence, back-dated to 2001, adding a forged version of the same file.
+  sh(repo, "checkout", "-q", "-b", "forgery", freezeCommit);
+  put(repo, v, { verifications: [{ finding_id: "F-DG0-101", result: "PASS", status_after: "CLOSED_VERIFIED", note: "forged", evidence: [] }] });
+  sh(repo, "add", v);
+  execFileSync("git", ["-C", repo, "commit", "-qm", "forged"], { env: { ...process.env, GIT_COMMITTER_DATE: "2001-01-01T00:00:00Z", GIT_AUTHOR_DATE: "2001-01-01T00:00:00Z" } });
+  sh(repo, "checkout", "-q", "main");
+  try {
+    sh(repo, "merge", "-q", "--no-ff", "-X", "theirs", "-m", "merge forgery", "forgery");
+  } catch {
+    sh(repo, "checkout", "--theirs", v);
+    sh(repo, "add", v);
+    sh(repo, "commit", "-qm", "merge forgery");
+  }
+  assert.notEqual(sh(repo, "rev-parse", "HEAD"), genuine);
+  const errors = validateGate(repo, "DG0");
+  expectError(errors, /code-security-reviewer\.verifications\.json (was committed with 2 different contents|has a M event)/);
+  expectError(errors, /is back-dated before its parent/);
+});
+
+test("F-DG0-115 defence in depth: meta.tool_authored cannot vouch for content the transcript never wrote", () => {
+  const { repo, records } = buildValidRepo();
+  const rel = records["qa-verifier"];
+  const ref = get(repo, rel).invocation_reference;
+  edit(repo, rel, (r) => (r.summary = "rewritten, with meta re-pointed"));
+  edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (m) => (m.outputs[rel] = m.tool_authored[rel] = sha(readFileSync(join(repo, rel)))));
+  expectError(validateGate(repo, "DG0"), /qa-verifier\.json differs from the replay of this run's transcript/);
 });

@@ -22,6 +22,12 @@ run "pipeline state" node tools/gates/validate.mjs --pipeline
 for script in docs/analysis/tools/*.py; do
   [ -f "$script" ] && run "analysis check $(basename "$script")" python3 "$script"
 done
-dirty="$(git status --porcelain -- . ':(exclude)docs/delivery' ':(exclude)trading_agent' | grep -v '^??' || true)"
-if [ -n "$dirty" ]; then echo "FAIL  uncommitted candidate changes:"; echo "$dirty" | sed 's/^/      /'; fail=1; else echo "PASS  no uncommitted candidate changes"; fi
+# Same definition as the candidate itself (F-DG0-131): the working-tree candidate must equal HEAD's.
+wt="$(node tools/gates/candidate.mjs --stage "$STAGE" | python3 -c 'import json,sys;print(json.load(sys.stdin)["candidate_id"])')"
+hd="$(node tools/gates/candidate.mjs --stage "$STAGE" --ref HEAD | python3 -c 'import json,sys;print(json.load(sys.stdin)["candidate_id"])')"
+if [ -n "$wt" ] && [ "$wt" = "$hd" ]; then
+  echo "PASS  working-tree candidate equals HEAD ($hd)"
+else
+  echo "FAIL  working-tree candidate ($wt) differs from HEAD ($hd): uncommitted or untracked candidate changes"; fail=1
+fi
 exit $fail
