@@ -97,19 +97,27 @@ PY
 }
 snapshot > "$OUT/.pre-snapshot.json"
 
+# The prompt is sent as a stream-json user message and replayed by the CLI into the transcript (isReplay: true),
+# so the transcript itself records what this run was asked to do (D-022).
+user_message() {
+  python3 -c 'import json,sys; print(json.dumps({"type": "user", "message": {"role": "user", "content": sys.argv[1]}}))' "$1"
+}
+
 ATTEMPTS=0
 set +e
-( cd "$CWD" && claude -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
+( cd "$CWD" && user_message "$PROMPT" | claude -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
     --session-id "$SESSION_ID" --settings "$SETTINGS" \
-    --output-format stream-json --verbose "$PROMPT" < /dev/null ) > "$OUT/transcript.jsonl" 2> "$OUT/stderr.log"
+    --input-format stream-json --replay-user-messages \
+    --output-format stream-json --verbose ) > "$OUT/transcript.jsonl" 2> "$OUT/stderr.log"
 EXIT=$?
 while [[ $ATTEMPTS -lt $MAX_RESUMES ]] && classifier_outage "$OUT/transcript.jsonl"; do
   ATTEMPTS=$((ATTEMPTS + 1))
   echo "classifier outage detected; resuming session $SESSION_ID (attempt $ATTEMPTS) after ${RESUME_PAUSE}s" >> "$OUT/stderr.log"
   sleep "$RESUME_PAUSE"
-  ( cd "$CWD" && claude -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
+  ( cd "$CWD" && user_message "$RESUME_PROMPT" | claude -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
       --resume "$SESSION_ID" --settings "$SETTINGS" \
-      --output-format stream-json --verbose "$RESUME_PROMPT" < /dev/null ) >> "$OUT/transcript.jsonl" 2>> "$OUT/stderr.log"
+      --input-format stream-json --replay-user-messages \
+      --output-format stream-json --verbose ) >> "$OUT/transcript.jsonl" 2>> "$OUT/stderr.log"
   EXIT=$?
 done
 set -e

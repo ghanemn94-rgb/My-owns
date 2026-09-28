@@ -295,8 +295,18 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
       const init = lines.find((o) => o.type === "system" && o.subtype === "init");
       if (!init || init.session_id !== ref.session_id) bad("transcript has no init line for this session");
       else if (meta.model_requested && init.model !== meta.model_requested) bad(`transcript model ${init.model} != requested ${meta.model_requested}`);
-      const prompt = lines.find((o) => o.type === "user" && JSON.stringify(o.message || "").includes(`invoked as project agent '${role}'`));
-      if (!prompt || !JSON.stringify(prompt.message).includes(ref.run_id)) bad(`transcript does not contain the runner prompt for '${role}' and run ${ref.run_id}`);
+      // The CLI replays the prompt it received (isReplay: true, D-022). Only a replayed user message whose content is
+      // text counts; the same words inside a tool result (e.g. someone reading run-agent.sh) do not.
+      const promptText = (o) => {
+        const c = o && o.message && o.message.content;
+        if (typeof c === "string") return c;
+        return Array.isArray(c) && c.every((x) => x && x.type === "text") ? c.map((x) => x.text).join("") : null;
+      };
+      const prompt = lines.find((o) => o.type === "user" && o.isReplay === true && typeof promptText(o) === "string" &&
+        promptText(o).startsWith(`You are invoked as project agent '${role}' for stage ${stageId}`));
+      if (!prompt || !promptText(prompt).includes(`"run_id":"${ref.run_id}"`) || !promptText(prompt).includes(`"session_id":"${ref.session_id}"`)) {
+        bad(`transcript does not contain the CLI-replayed runner prompt for '${role}' and run ${ref.run_id}`);
+      }
       const results = lines.filter((o) => o.type === "result");
       const last = results[results.length - 1];
       if (!last || last.session_id !== ref.session_id || last.is_error) bad("transcript does not end in a successful result for this session");

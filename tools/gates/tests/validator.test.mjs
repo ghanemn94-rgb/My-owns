@@ -69,7 +69,7 @@ function makeRun(repo, role, { assignment, startedAt = T_RUN, task = "T-REV", st
   const base = `docs/delivery/runs/${stage}/${run_id}`;
   const lines = [
     { type: "system", subtype: "init", session_id, model: "claude-opus-5-5", tools: ["Read", "Bash", "Write"] },
-    { type: "user", message: { role: "user", content: `You are invoked as project agent '${role}' for stage ${stage}, task ${task}. Your invocation_reference is: {"run_id":"${run_id}"}` }, session_id },
+    { type: "user", isReplay: true, message: { role: "user", content: `You are invoked as project agent '${role}' for stage ${stage}, task ${task}. Your invocation_reference is: {"kind":"claude-code-cli-session","run_id":"${run_id}","session_id":"${session_id}"}` }, session_id },
     { type: "result", subtype: "success", is_error: false, session_id, result: "done" },
   ];
   const transcript = gzipSync(Buffer.from(lines.map((l) => JSON.stringify(l)).join("\n") + "\n"));
@@ -799,4 +799,19 @@ test("F-DG0-115 defence in depth: meta.tool_authored cannot vouch for content th
   edit(repo, rel, (r) => (r.summary = "rewritten, with meta re-pointed"));
   edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (m) => (m.outputs[rel] = m.tool_authored[rel] = sha(readFileSync(join(repo, rel)))));
   expectError(validateGate(repo, "DG0"), /qa-verifier\.json differs from the replay of this run's transcript/);
+});
+
+test("D-022: only a CLI-replayed prompt binds a transcript to its run; the same text in a tool result does not", () => {
+  const { repo, records } = buildValidRepo();
+  const ref = get(repo, records["domain-reviewer"]).invocation_reference;
+  const base = `docs/delivery/runs/DG0/${ref.run_id}`;
+  const lines = gunzipSync(readFileSync(join(repo, `${base}/transcript.jsonl.gz`))).toString("utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  const promptLine = lines.find((o) => o.isReplay);
+  // Move the prompt text into a tool_result (as when an agent reads run-agent.sh), dropping the replayed message.
+  const rewritten = lines.filter((o) => o !== promptLine);
+  rewritten.splice(1, 0, { type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: "x", content: promptLine.message.content }] } });
+  const gz = gzipSync(Buffer.from(rewritten.map((o) => JSON.stringify(o)).join("\n") + "\n"));
+  put(repo, `${base}/transcript.jsonl.gz`, gz);
+  edit(repo, `${base}/meta.json`, (m) => (m.transcript_sha256 = sha(gz)));
+  expectError(validateGate(repo, "DG0"), /does not contain the CLI-replayed runner prompt for 'domain-reviewer'/);
 });
