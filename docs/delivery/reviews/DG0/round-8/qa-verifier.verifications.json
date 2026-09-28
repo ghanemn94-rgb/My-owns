@@ -1,0 +1,18 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-222",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on the round-7 candidate e11b5f0: agents-md-vs-evidence.py reports 9 FAIL there (no --input-format stream-json / --replay-user-messages in the command block, prompt still positional, no replayed-prompt / F-DG0-133 / empty-transcript binding conditions, 'It' after the validator sentence), and QA8-S02 fails there. On candidate d662625 (90ad5271) the script reports 0 errors and QA8-S02 passes. The command block now shows the piped stream-json user message with --input-format stream-json --replay-user-messages, matching run-agent.sh lines 108-120 for both the first run and resumes. The binding list names the CLI-replayed prompt (isReplay: true, run_id, session_id), the assignment-in-prompt == meta rule (F-DG0-133) and the unconditional transcript checks (F-DG0-132), each matching a check in tools/gates/lib/rules.mjs. The runner is now the explicit subject of the snapshot/auto-commit sentences, and exit 70 appears in both. This run's own transcript carries the replayed prompt as described (17-live-own-transcript.log). The fix is complete and correct.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-8/15-agents-md-vs-evidence.log",
+        "docs/delivery/test-evidence/DG0/qa/round-8/10-qa8-negative-on-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-8/10b-qa8-cases-on-old.log",
+        "docs/delivery/test-evidence/DG0/qa/round-8/17-live-own-transcript.log",
+        "docs/delivery/test-evidence/DG0/qa/round-8/scripts/agents-md-vs-evidence.py",
+        "docs/delivery/agents.md"
+      ]
+    }
+  ]
+}

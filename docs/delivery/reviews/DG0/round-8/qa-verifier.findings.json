@@ -1,0 +1,32 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-223",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-026",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The F-DG0-133 prompt check cannot parse an assignment path that contains a space, so every genuine run from a checkout whose absolute path has a space is refused, while run-agent.sh accepts such paths",
+      "reproduction": "tools/gates/lib/rules.mjs checkInvocation matches the replayed prompt with /Your complete assignment is in the file (\\S+) \\(sha256 ([0-9a-f]{64})\\)/. tools/agents/run-agent.sh (line 56) writes ASSIGNMENT_ABS, an absolute path that includes the repository root, into that sentence, and it does not reject a REPO_ROOT, --cwd or --assignment containing a space (lines 34-45 validate stage, task, role and model only). With a root like '/home/Jane Doe/My Projects/repo', the regex finds no match and the validator reports 'the replayed prompt names no assignment file and sha256'. Automated: QA_REPO_ROOT=<candidate clone> node --test --test-name-pattern=QA8-F223 docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs -> not ok (exit 1); see docs/delivery/test-evidence/DG0/qa/round-8/18-f223-space-in-path.log.",
+      "expected": "A genuine runner-shaped prompt binds regardless of where the repository is checked out. Either the validator parses the path up to ' (sha256 ' (for example /in the file (.+?) \\(sha256 ([0-9a-f]{64})\\)/) or compares against meta.cwd + meta.assignment directly, or the runner refuses paths with whitespace up front with a clear error, so the failure isn't discovered only at gate validation.",
+      "actual": "The runner starts and completes the run, but the validator later refuses every review, audit and closure bound to it. It fails closed, so there's no integrity or security impact, and the current environment's path (/home/user/My-owns) has no space. It's a portability defect of the delivery tooling only. The reporter would accept it as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-8/18-f223-space-in-path.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r8.test.mjs",
+        "tools/gates/lib/rules.mjs",
+        "tools/agents/run-agent.sh"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-8/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T17:06:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-8 QA review of candidate 90ad5271 (d662625)."
+        }
+      ]
+    }
+  ]
+}
