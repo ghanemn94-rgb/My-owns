@@ -15,7 +15,7 @@ run() {
   fi
 }
 run "source extraction reproducible" tools/source/check_extraction.sh
-run "gate validator + guard tests" node --test tools/gates/tests/ tools/agents/tests/
+run "gate validator + guard tests" node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs
 run "runner metadata tests" python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'
 run "register rules ($STAGE)" node tools/gates/validate.mjs --register "$STAGE"
 run "pipeline state" node tools/gates/validate.mjs --pipeline
