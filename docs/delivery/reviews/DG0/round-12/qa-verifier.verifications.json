@@ -1,0 +1,38 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-226",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "I reproduced the original failure against the round-11 candidate 7e99163, using the runner end to end with a stub claude: QA11-R5 (settings.local.json hidden by .git/info/exclude) and QA11-R6 (planted in the worktree cwd) FAIL there with 'no trace'. Against 7f09967 all six QA11-R cases PASS: exit 71 and external_config_changed record the plant. The fix covers all three layers. (1) Not loaded: run-agent.sh now passes --setting-sources project (lines 141 and 150; old: project,local). (2) Not writable: agent_settings.py denies .claude, .git, CLAUDE*.md, .mcp.json and ignore files in the repository and every worktree. Live in my own sandboxed session, shell writes to .claude/settings.local.json and .git/info/exclude were refused with 'Read-only file system', and the Write tool was blocked by the guard. (3) Detected: config_snapshot uses find (ignored files included) over every worktree, plus .git/info/exclude and ~/.config/git/ignore. My new QA12-R7/R8/R9 (nested CLAUDE.md, nested .claude/settings.json, nested .gitignore) also exit 71. The orchestrator's live probe guard-live-20260928T182513Z is hash-consistent, and its part B shows the OS refusing the worktree .claude/settings.local.json and the .git/info/exclude writes. Limitation: I could not repeat the round-11 live CLI experiment, because this sandboxed shell has no network. The separate bytecode route I found this round is a new issue, raised as F-DG0-229, not a defect in this fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/09-f226-verification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-12/06-live-guard-and-sandbox-probe.log",
+        "docs/delivery/test-evidence/DG0/qa/round-12/08-qa12-new-cases.log#QA12-R7",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r11.test.mjs#QA11-R5",
+        "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z/probe.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-227",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on 7e99163: `python3 tools/agents/tests/test_run_meta.py -v` ran 5 tests and skipped both ExternalConfigTest tests, and discover ran the 5 base tests twice through inheritance (12 total). On 7f09967, script mode runs 7 tests including test_external_config_changes_are_recorded and test_no_change_records_an_empty_list. ExternalConfigTest now derives from _RunMetaBase, so there are no duplicate runs. Discover runs 14 tests: 7 run_meta and 7 new agent_settings, all OK. The __main__ guard is now at the end of the file.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/04-f227-verification.log",
+        "tools/agents/tests/test_run_meta.py#ExternalConfigTest"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-228",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The current live-probe evidence (guard-live-20260928T182513Z) names source commit e8758713, which is on the published branch (refs/heads and refs/remotes/origin) and an ancestor of the candidate 7f09967. `git diff e875871 7f09967` over guard-write.mjs, write-scopes.json, settings/, run-agent.sh, agent_settings.py, run_meta.py and probe-guard-live.sh is empty, so the probe exercised the candidate's exact tooling. The only later tools/ changes are the hermetic-git lines in four test files. Its transcript, result and settings hashes match meta.json. The README now marks the 57d23de and 0593fd7 runs as unpublished, unreachable and historical, 'not evidence for the current candidate'. Both still have no containing ref, which is correctly disclosed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/05-f228-verification.log",
+        "docs/delivery/test-evidence/DG0/orchestrator-probes/README.md",
+        "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z/meta.json"
+      ]
+    }
+  ]
+}

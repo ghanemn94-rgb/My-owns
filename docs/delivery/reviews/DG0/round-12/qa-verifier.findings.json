@@ -1,0 +1,117 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-229",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "D-025 sandbox escape without a trace: an analyst or implementer shell can plant gitignored Python bytecode (e.g. docs/analysis/tools/csv.pyc) that the orchestrator's unsandboxed tools/gates/prefreeze.sh then imports and executes, writing protected paths (.git/hooks, tools/gates, HOME configuration) while git status, the run snapshots, config_snapshot and the candidate all stay clean",
+      "reproduction": "Disposable clone of candidate 7f09967 (docs/delivery/test-evidence/DG0/qa/round-12/07-pyc-shadow-prefreeze.log). 1) agent_settings.build() for transformation-analyst and backend-workflow-engineer does not deny docs/analysis/tools/csv.pyc: the analyst's confined area and every implementer's area include docs/analysis. 2) Compile a small csv.py whose payload writes a file and then hands over to the real csv module, into docs/analysis/tools/csv.pyc as sourceless bytecode. .gitignore line 4 (*.py[cod]) ignores it, so `git status --porcelain --untracked-files=all` is empty. The runner's snapshot (`git ls-files --cached --others --exclude-standard`) doesn't list it, and the working-tree candidate ID is unchanged (sha256:21f142b8…). 3) `tools/gates/prefreeze.sh DG0` runs `python3 docs/analysis/tools/check_counts.py`. The script directory comes first on sys.path, so `import csv` loads the planted bytecode. Variant A writes tools/gates/QA12-PYC-MARKER.txt, and prefreeze's final candidate check catches it. Variant B writes .git/hooks/post-commit, which is outside the candidate: prefreeze prints PASS on all nine checks and exits 0, the hook file exists, and git status and the candidate ID are unchanged. 4) Runner end to end, with a stub `claude` performing the plant as a transformation-analyst run (QA12-P1 in docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs): the runner exits 0, external_config_changed is [], the pyc is not in meta.outputs, and git status shows only the run directory. QA12-P2 shows prefreeze executing the planted bytecode and exiting 0.",
+      "expected": "threat-model.md lists 'An agent writes a protected path with the shell' as mechanically prevented, and 'New untracked files where the sandbox leaves the working directory writable' as detected through git status and the runner snapshots. So an agent-writable file that the orchestrator later executes outside the sandbox should either (a) not be executed from the agent-writable tree: run prefreeze and the analysis checks in a fresh clone of HEAD or inside the same bubblewrap sandbox, and/or use `python3 -I -B` (or PYTHONSAFEPATH=1 PYTHONDONTWRITEBYTECODE=1) so the script directory isn't searched and bytecode isn't used; or (b) be detected: fail prefreeze and flag the run (exit 71 for confined roles) when `git ls-files --others --ignored --exclude-standard` lists any ignored file outside a known cache allow-list, or when *.pyc/__pycache__ appear in the run's snapshot including ignored files. The threat model should also disclose that the orchestrator executes implementer-authored code (tracked or not) outside the sandbox before review.",
+      "actual": "The plant is invisible to every detection layer. The only trace is the Bash command in the agent's transcript, which the auditor may or may not review. Executed by the orchestrator's documented pre-freeze step, the planted code runs with full orchestrator rights and can write exactly what D-025 denies the agent's shell: git metadata and hooks, gate and agent tooling, Claude configuration. I rate it Medium and non-mandatory, consistent with F-DG0-226. It needs a malicious or prompt-injected analyst or implementer, the file tools and the OS sandbox are intact, and the transcript-review residual still applies. But it is a way around a control the threat model lists as mechanically prevented, not a restatement of a disclosed residual. Related: my own round-7 case QA7-N82 established that ignored __pycache__ doesn't fail prefreeze. That is still correct for the candidate hash, but the same ignore rule makes the bytecode executable without a trace.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/07-pyc-shadow-prefreeze.log",
+        "docs/delivery/test-evidence/DG0/qa/round-12/08-qa12-new-cases.log#QA12-P1",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs#QA12-P2",
+        "tools/gates/prefreeze.sh",
+        "tools/agents/agent_settings.py#CONFINED",
+        "docs/delivery/threat-model.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:55:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-12 QA review of candidate 21f142b8 (7f09967)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-230",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-013",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The validator's D-025 requireSandbox check accepts a sandbox deny list rooted in any directory: it only tests that some denyWrite entry ends with '/<protected path>', not that the entries are under the run's own repository (meta.cwd or its worktree roots)",
+      "reproduction": "QA12-V2 in docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs: in the D-025-adapted independent fixture (QA12-V1 validates cleanly), the qa-verifier run's settings.json is replaced by a fully enforced sandbox whose denyWrite is /somewhere/else/{.git,.claude,tools/gates,tools/agents,docs/delivery/reviews,docs/delivery/runs}. meta.settings_sha256 is kept consistent and the change is amended into the evidence commit, as if the run had produced it. validateGate returns no errors. See tools/gates/lib/rules.mjs checkInvocation: `deny.some((d) => d.endsWith(`/${p}`))`.",
+      "expected": "A gate record binds only to a run whose sandbox denied the protected paths of the repository it actually ran in: every required entry equals <root>/<p> for meta.cwd's repository root (and worktrees). Optionally, also check meta.bash_sandbox and the wider COMMON_DENY set (docs/source, CLAUDE.md, .gitignore …).",
+      "actual": "Accepted. Exploiting it needs fabricated run evidence, which the sandbox (docs/delivery/runs is denied) and the disclosed self-hashed-evidence residual already cover, so this is hardening only. Low, and I'd accept it as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/08-qa12-new-cases.log#QA12-V2",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs#QA12-V2",
+        "tools/gates/lib/rules.mjs#checkInvocation"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:55:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-12 QA review of candidate 21f142b8 (7f09967)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-231",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-019",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Delivery docs drifted after D-025: agent-protocol.md tells sandboxed agents to `git clone <repo> /tmp/<name>`, and D-025 / agent_settings.py say sandboxed commands may write /tmp, but in a real sandboxed reviewer session /tmp is read-only (only $TMPDIR=/tmp/claude-0 is writable). Stale comments also remain in run-agent.sh ('--setting-sources project,local') and agents.md ('Bash writes aren't path-guarded')",
+      "reproduction": "In this run's own sandbox: `git clone -q . /tmp/qa12-probe-clone` fails with 'could not create work tree dir ... Read-only file system' (exit 128), and `touch /tmp/x-qa` fails the same way. `git clone . $TMPDIR/qa-r12/cand` works. Text: docs/delivery/agent-protocol.md line 79; docs/delivery/decisions.md D-025 ('by default a sandboxed command may write only its working directory and /tmp'); tools/agents/agent_settings.py docstring line 10; tools/agents/run-agent.sh line 82 comment '(--setting-sources project,local)' while lines 141/150 pass `project`; docs/delivery/agents.md load-check observation 'Bash writes aren't path-guarded'. Side effect: my round-11 case QA11-G4 now fails only because the test's own tmpdir() is /tmp/claude-0 (docs/delivery/test-evidence/DG0/qa/round-12/03-prior-qa-suites-regression.log).",
+      "expected": "The documented disposable-copy location works inside the agent sandbox (use $TMPDIR), and comments and docs describe the current controls.",
+      "actual": "Documentation only. The controls themselves behave as intended, and the stricter /tmp is safer. Low, and I'd accept it as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/06-live-guard-and-sandbox-probe.log",
+        "docs/delivery/agent-protocol.md",
+        "tools/agents/agent_settings.py",
+        "tools/agents/run-agent.sh#config_snapshot",
+        "docs/delivery/agents.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:55:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-12 QA review of candidate 21f142b8 (7f09967)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-232",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The register does not reflect D-025: REQ-DLV-007 (IMPLEMENTED) still describes shell writes as controlled only by 'the orchestrator checks git status after each run', and no register row cites tools/agents/agent_settings.py, tools/agents/tests/test_agent_settings.py or the validator's D-025 test",
+      "reproduction": "In the candidate clone: `grep -c 'agent_settings\\|D-025' docs/delivery/requirements.csv` prints 0. The REQ-DLV-007 procedure ends '…the orchestrator checks git status after each run for Bash writes', and its evidence lists only guard-write.mjs and write-scopes.json. `git diff --stat 7e99163 7f09967 -- docs/delivery/requirements.csv docs/analysis` is empty: the round-11 repair didn't touch the register.",
+      "expected": "REQ-DLV-007's procedure, evidence and acceptance, and the REQ-DLV-013/023 test citations where relevant, name the OS Bash sandbox (agent_settings.py and the per-run settings.json) and its tests, so the requirement-to-evidence trace covers the control that now enforces the shell scope.",
+      "actual": "The row isn't false: the guard and git status checks still exist. But it omits the main shell control. Traceability only; Low, and I'd accept it as an observation.",
+      "evidence": [
+        "docs/delivery/requirements.csv#REQ-DLV-007",
+        "docs/delivery/test-evidence/DG0/qa/round-12/10-register-integrity.log",
+        "tools/agents/agent_settings.py"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:55:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-12 QA review of candidate 21f142b8 (7f09967)."
+        }
+      ]
+    }
+  ]
+}

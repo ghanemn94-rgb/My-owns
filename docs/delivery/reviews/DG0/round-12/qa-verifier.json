@@ -1,0 +1,419 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 12,
+  "candidate_id": "sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c",
+  "source_commit": "7f09967ad36dc1a0d2a7065ae93f11bded29ccce",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-QA-R12-qa-verifier-20260928T183204Z-a5a09551",
+    "session_id": "a5a09551-d12c-4dbc-b00d-386c83d09eb2"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (qa-verifier) authored none of the DG0 implementation scope: analysis, register, agent definitions, runner, sandbox settings generator, guard, gate tooling or delivery records. I wrote only QA tests and evidence under docs/delivery/test-evidence/DG0/qa/ and my own round-12 review record and sidecars. I formed this verdict before reading any other round-12 review record. I have not opened the domain-reviewer or code-security-reviewer round-12 records, sidecars or evidence; I saw only their file names in git status and git diff --name-only."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-12/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-001",
+    "REQ-DLV-002",
+    "REQ-DLV-003",
+    "REQ-DLV-004",
+    "REQ-DLV-006",
+    "REQ-DLV-007",
+    "REQ-DLV-013",
+    "REQ-DLV-015",
+    "REQ-DLV-016",
+    "REQ-DLV-017",
+    "REQ-DLV-019",
+    "REQ-DLV-020",
+    "REQ-DLV-022",
+    "REQ-DLV-023",
+    "REQ-DLV-026",
+    "REQ-DLV-029",
+    "REQ-DLV-032",
+    "REQ-S20-024",
+    "REQ-S20-025"
+  ],
+  "checks_run": [
+    {
+      "id": "QA12-C00",
+      "procedure": "Confirm the frozen candidate: HEAD vs source commit, recomputed candidate ID in the working tree, at the source commit ref and in a fresh clone at the source commit; the manifest header; post-freeze commits touch only excluded metadata",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG0; node tools/gates/candidate.mjs --stage DG0 --ref 7f09967…; git clone . $TMPDIR/qa-r12/cand && git checkout 7f09967 && node tools/gates/candidate.mjs --stage DG0; git diff --name-only 7f09967 HEAD",
+      "environment": "/home/user/My-owns (HEAD 93b04b6 at start, later 56cfda1) and clone $TMPDIR/qa-r12/cand (= /tmp/claude-0/qa-r12/cand) @ 7f09967; node v22.22.2; Linux 6.18; bubblewrap sandbox",
+      "expected": "candidate_id sha256:21f142b8…b21c everywhere; the manifest names the same ID and source commit; post-freeze commits change only assignments, candidates, findings, stages, runs, reviews and test-evidence",
+      "actual": "All three computations print sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c (83 files). The manifest has the same ID, source_commit 7f09967 and frozen_at 18:31:37Z; my run started at 18:32:04Z. The post-freeze diff touches only excluded metadata: round-12 assignments, the manifest, findings.json, stages.json, the orchestrator-probes README and the code-security reviewer's auto-committed run and records.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-022",
+        "REQ-S20-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/00-candidate-confirmation.log",
+        "docs/delivery/candidates/DG0/21f142b863c445f6.manifest.json"
+      ]
+    },
+    {
+      "id": "QA12-K01",
+      "procedure": "Source extraction is reproducible (docx hash, 165 playbook blocks, 423 master-prompt blocks)",
+      "command": "tools/source/check_extraction.sh",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967; python3 3.11.15",
+      "expected": "PASS, exit 0",
+      "actual": "PASS source extraction reproducible (docx sha256 2584a352…548ad2; 165 playbook blocks; 423 master-prompt blocks), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-032"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/01-required-commands.log"
+      ]
+    },
+    {
+      "id": "QA12-K02",
+      "procedure": "Gate validator self-tests",
+      "command": "node --test tools/gates/tests/*.test.mjs",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967; node v22.22.2",
+      "expected": "all pass, exit 0",
+      "actual": "tests 43, pass 43, fail 0, exit 0 (includes the new 'D-025: gate records must come from Bash-sandboxed runs')",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-016",
+        "REQ-DLV-023",
+        "REQ-S20-024",
+        "REQ-S20-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/01-required-commands.log"
+      ]
+    },
+    {
+      "id": "QA12-K03",
+      "procedure": "Write guard tests",
+      "command": "node --test tools/agents/tests/*.test.mjs",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967; node v22.22.2",
+      "expected": "all pass, exit 0",
+      "actual": "tests 18, pass 18, fail 0, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-007"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/01-required-commands.log"
+      ]
+    },
+    {
+      "id": "QA12-K04",
+      "procedure": "Runner metadata and sandbox settings unit tests (the prefreeze and CI invocation form)",
+      "command": "python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967; python3 3.11.15",
+      "expected": "OK, exit 0",
+      "actual": "Ran 14 tests, OK, exit 0 (7 test_run_meta, 7 test_agent_settings)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-026",
+        "REQ-DLV-007"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/01-required-commands.log"
+      ]
+    },
+    {
+      "id": "QA12-K05",
+      "procedure": "Register rules at DG0",
+      "command": "node tools/gates/validate.mjs --register DG0",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967",
+      "expected": "PASS, exit 0",
+      "actual": "PASS register rules at DG0, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-020"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/01-required-commands.log"
+      ]
+    },
+    {
+      "id": "QA12-K06",
+      "procedure": "Pipeline state",
+      "command": "node tools/gates/validate.mjs --pipeline",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967",
+      "expected": "PASS with DG0 active and REVIEWING, exit 0",
+      "actual": "PASS pipeline (active stage: DG0 REVIEWING), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-015"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/01-required-commands.log"
+      ]
+    },
+    {
+      "id": "QA12-K07",
+      "procedure": "Reconcile report (durable checkpoint)",
+      "command": "node tools/gates/validate.mjs --reconcile",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967",
+      "expected": "a report of earlier rounds (STALE for current content), exit 0",
+      "actual": "Report printed, listing earlier rounds' verdicts marked STALE for current content, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/01-required-commands.log"
+      ]
+    },
+    {
+      "id": "QA12-K08",
+      "procedure": "Candidate ID in the clone",
+      "command": "node tools/gates/candidate.mjs --stage DG0",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967",
+      "expected": "sha256:21f142b8…b21c",
+      "actual": "sha256:21f142b863c445f69e437385c4118a93fcb84117a9b774fc1a3e659ee047b21c, 83 files, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-022"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/01-required-commands.log"
+      ]
+    },
+    {
+      "id": "QA12-K09",
+      "procedure": "Pre-freeze integration check in a fresh clone of the candidate commit",
+      "command": "git clone . $TMPDIR/qa-r12/pf && git checkout 7f09967 && tools/gates/prefreeze.sh DG0",
+      "environment": "fresh clone $TMPDIR/qa-r12/pf @ 7f09967",
+      "expected": "all PASS, exit 0",
+      "actual": "9/9 PASS (extraction, gate + guard tests, runner metadata tests, register, pipeline, 3 analysis checks, working-tree candidate equals HEAD sha256:21f142b8…), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-023"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/02-prefreeze-fresh-clone.log"
+      ]
+    },
+    {
+      "id": "QA12-K10",
+      "procedure": "Regression: every earlier QA suite (r2–r11 and the base suite) against the candidate; the r8/r9 suites re-run with the one fixture change D-025 requires (a sandboxed settings.json plus meta.settings_sha256 per synthetic run)",
+      "command": "for f in docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative*.test.mjs; do QA_REPO_ROOT=$TMPDIR/qa-r12/cand node --test $f; done; D-025-adapted copies of r8 and r9 under $TMPDIR/qa-r12/adapt",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967; TMPDIR=/tmp/claude-0; GIT_CONFIG_GLOBAL=/dev/null",
+      "expected": "Adapted r8 86/86 and r9 94/94. r10 8/8. r11 11/11 apart from sandbox-environment artefacts. r2–r7 and base: the same pre-existing drift as round 11.",
+      "actual": "Adapted r8 86/86 and r9 94/94 (exit 0). r10 8/8. r11 10/11: QA11-G4 fails only because this sandbox's TMPDIR=/tmp/claude-0 makes the test's own '/tmp/etc/gitconfig' a legitimate scratch path; the hook runs with TMPDIR unset. That's a test-design artefact, re-expressed in the r12 suite. Unadapted r8/r9 failures are all positive controls rejected with 'has no settings.json (runs before D-025 cannot bind a gate record)'. r2–r7 and base: failure lists identical to round 11.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S20-024",
+        "REQ-S20-025",
+        "REQ-DLV-016"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/03-prior-qa-suites-regression.log"
+      ]
+    },
+    {
+      "id": "QA12-K11",
+      "procedure": "A24/A25 negatives from the assignment: missing reviewer, reviewer who authored the scope, shared invocation, failed or blocked check, unresolved High finding, incomplete requirement, non-existent block anchor, SOURCE row without a playbook block, coverage matrix missing a block or mapping to a non-citing requirement, candidate change after freeze, tampered manifest; plus metadata invariance",
+      "command": "QA_REPO_ROOT=$TMPDIR/qa-r12/cand node --test $TMPDIR/qa-r12/adapt/r9-d025.test.mjs (promoted form: QA12-REG in dg0-gate-negative-r12.test.mjs)",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967; disposable git fixtures in $TMPDIR",
+      "expected": "each negative is rejected with its specific error; the controls validate; metadata leaves the candidate unchanged",
+      "actual": "QA5-A24 (15 cases, 33–47), QA5-M01, QA6-N60 and QA7-N82 and all controls ok; 94/94 overall",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S20-024",
+        "REQ-S20-025",
+        "REQ-DLV-016",
+        "REQ-DLV-020",
+        "REQ-DLV-022"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/13-a24-a25-assignment-negatives.log"
+      ]
+    },
+    {
+      "id": "QA12-K12",
+      "procedure": "New independent round-12 cases (19, none in tools/gates/tests or tools/agents/tests): validator D-025 binding (V1–V7), agent_settings confinement (A1–A3), runner end to end with a stub claude (R7–R12: nested CLAUDE.md, .claude and .gitignore plants give exit 71; pre-existing hooks never run in the auto-commit; no bwrap gives exit 65; per-run settings evidence), gitignored bytecode (P1, P2), and the r9 regression harness (REG)",
+      "command": "QA_REPO_ROOT=$TMPDIR/qa-r12/cand node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967; node v22.22.2; python3 3.11.15; bwrap present; hermetic git",
+      "expected": "all 19 pass",
+      "actual": "16 pass, 3 fail. QA12-V2: a deny list rooted in /somewhere/else is accepted (F-DG0-230). QA12-P1: an analyst run's gitignored csv.pyc leaves no trace (F-DG0-229). QA12-P2: prefreeze executes the planted bytecode and exits 0 (F-DG0-229).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-DLV-007",
+        "REQ-DLV-013",
+        "REQ-DLV-023",
+        "REQ-DLV-026"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/08-qa12-new-cases.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs"
+      ]
+    },
+    {
+      "id": "QA12-K13",
+      "procedure": "Live guard and sandbox probe in my own runner-launched session. Write tool: docs/source/QA-PROBE.txt and .claude/settings.local.json. Bash: 15 protected targets (sources, .claude, .git/info/exclude, .git/hooks, tools/gates, tools/agents, reviews, findings.json, requirements.csv, docs/analysis, CLAUDE.md, .gitignore, runs, ~/.claude/settings.json, ~/.gitconfig). Control: a write inside docs/delivery/test-evidence.",
+      "command": "Write tool calls, then: for t in …; do echo '# qa probe' >> $t; done (see log)",
+      "environment": "/home/user/My-owns, this session (runner-generated settings in docs/delivery/runs/DG0/DG0-T-DG0-REV-QA-R12-qa-verifier-20260928T183204Z-a5a09551/settings.json: enabled, failIfUnavailable, allowUnsandboxedCommands false, 31 deny entries)",
+      "expected": "Both Write calls are BLOCKED by the guard; all 15 shell writes are refused by the OS with targets unchanged; the control succeeds",
+      "actual": "Write: 'BLOCKED by write guard: qa-verifier may not write … (protected path)' twice. Bash: 15/15 'Read-only file system', exit 1, pre/post hashes unchanged; the control write exits 0 and was removed. No QA-PROBE file exists under docs/source.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-007",
+        "REQ-DLV-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/06-live-guard-and-sandbox-probe.log",
+        "docs/delivery/runs/DG0/DG0-T-DG0-REV-QA-R12-qa-verifier-20260928T183204Z-a5a09551/settings.json"
+      ]
+    },
+    {
+      "id": "QA12-K14",
+      "procedure": "Sandbox escape through gitignored bytecode: plant docs/analysis/tools/csv.pyc (writable by the analyst and implementer sandboxes), check git status, the snapshot and the candidate, then run prefreeze.sh",
+      "command": "python3 -c 'py_compile.compile(src, cfile=\"docs/analysis/tools/csv.pyc\")'; git status --porcelain --untracked-files=all; node tools/gates/candidate.mjs --stage DG0; tools/gates/prefreeze.sh DG0",
+      "environment": "disposable clone $TMPDIR/qa-r12/pyc @ 7f09967",
+      "expected": "the plant is detected, or prefreeze does not execute agent-planted ignored bytecode",
+      "actual": "git status is empty and the candidate is unchanged. Prefreeze imports the bytecode. In variant B the payload writes .git/hooks/post-commit, prefreeze prints 9/9 PASS and exits 0, and git status stays clean. See F-DG0-229.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-DLV-007",
+        "REQ-DLV-023"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/07-pyc-shadow-prefreeze.log"
+      ]
+    },
+    {
+      "id": "QA12-K15",
+      "procedure": "Independent register integrity (own RFC 4180 parser): columns, no VERIFIED status, IMPLEMENTED DLV evidence paths exist, A01–A28 coverage, final_gate/increments consistency, counts per class, area and gate, exact coverage matrices. Opened the IMPLEMENTED DLV evidence that changed this round (run-agent.sh, agent_settings.py, run_meta.py, rules.mjs, validator and settings tests, threat-model.md, agents.md, decisions.md D-025).",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/register-integrity.mjs $TMPDIR/qa-r12/cand",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967",
+      "expected": "0 integrity errors; 19 DG0 rows IMPLEMENTED with existing evidence; the matrices complete, with no reverse gaps",
+      "actual": "411 rows (SOURCE 93, ENGINEERING 130, USER 188); DG0 19 IMPLEMENTED, 392 SPECIFIED, 0 VERIFIED; all 28 scenarios referenced; source coverage 165 blocks and master-prompt coverage 423 blocks, 0 reverse gaps; 0 errors; RESULT PASS. The notes are the known delivery-metadata evidence references. Opening the evidence showed REQ-DLV-007 doesn't reflect D-025 (F-DG0-232, Low).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-020",
+        "REQ-DLV-032"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/10-register-integrity.log"
+      ]
+    },
+    {
+      "id": "QA12-K16",
+      "procedure": "Agent setup from raw evidence: the ten T-DG0-LOAD runs (meta.json, result.json, transcript.jsonl.gz) show distinct sessions, the orchestrator's model, the agent reported its own role, and the out-of-scope write was blocked; docs/delivery/agents.md claims compared with the raw evidence",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/agent-load-evidence.mjs; ls docs/source | grep -ci probe; sed -n 60,96p docs/delivery/agents.md",
+      "environment": "/home/user/My-owns (run evidence is delivery metadata)",
+      "expected": "10/10 PASS, 10 distinct sessions, init model claude-opus-5-5, a guard block for each, no probe file in docs/source; agents.md matches",
+      "actual": "10/10 PASS, 10 distinct sessions, all claude-opus-5-5, each blocked on docs/source/LOAD-PROBE-<role>.txt, 0 probe files in docs/source, the in-scope probe files present. The agents.md table matches the raw run IDs and sessions. Its load-check observation 'Bash writes aren't path-guarded' is stale since D-025 (F-DG0-231, Low).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-004",
+        "REQ-DLV-006",
+        "REQ-DLV-026"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/11-agent-load-evidence.log",
+        "docs/delivery/agents.md"
+      ]
+    },
+    {
+      "id": "QA12-K17",
+      "procedure": "Feasibility: acceptance-map.md and stage-plan.md give every A01–A28 scenario a concrete test level, a first stage and a proving gate, with each backed by register rows",
+      "command": "(cd $TMPDIR/qa-r12/cand && node docs/delivery/test-evidence/DG0/qa/tests/acceptance-feasibility.mjs)",
+      "environment": "clone $TMPDIR/qa-r12/cand @ 7f09967",
+      "expected": "28/28 scenarios with a level, stage and gate; 0 errors",
+      "actual": "28/28 scenarios mapped (e.g. A24 unit and CI, P0, DG0; A25 unit, P0, DG0; A28 ops sealing check, P7, DG7), proving rows equal citing rows for each, 0 errors, RESULT PASS",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-032"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/12-acceptance-feasibility.log"
+      ]
+    },
+    {
+      "id": "QA12-K18",
+      "procedure": "Verify my FIXED_PENDING_VERIFICATION findings F-DG0-226, 227 and 228: reproduce each on the round-11 candidate 7e99163 and re-check on 7f09967",
+      "command": "QA_REPO_ROOT=<old|cand> node --test --test-name-pattern QA11-R …r11.test.mjs; python3 tools/agents/tests/test_run_meta.py -v; git for-each-ref --contains; git merge-base --is-ancestor; git diff e875871 7f09967 -- tools/agents/…",
+      "environment": "clones $TMPDIR/qa-r12/old @ 7e99163 and $TMPDIR/qa-r12/cand @ 7f09967",
+      "expected": "failures reproduce on 7e99163 and are fixed on 7f09967",
+      "actual": "F-DG0-226: QA11-R5 and R6 fail on the old candidate and pass on the new one; not loaded, not writable (live) and detected. F-DG0-227: 5 tests become 7 in script mode, with no duplicate runs. F-DG0-228: the current probe names published ancestor e875871, with the probed tooling byte-identical to the candidate. All three CLOSED_VERIFIED.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-007",
+        "REQ-DLV-026"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/09-f226-verification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-12/04-f227-verification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-12/05-f228-verification.log"
+      ]
+    },
+    {
+      "id": "QA12-K19",
+      "procedure": "Repeat the round-11 live CLI experiment (a real `claude -p` with a planted settings.local.json under the runner's flags) against the new candidate",
+      "command": "claude -p --settings … --setting-sources project (not executed)",
+      "environment": "this sandboxed shell has no network access (D-025), so a nested live CLI session cannot reach the API",
+      "expected": "the guard still fires with the local settings present",
+      "actual": "BLOCKED: no network in the agent sandbox. The remaining verification is the source change to --setting-sources project, my own session's live Write/Bash refusals (QA12-K13) and the orchestrator's hash-consistent live probe guard-live-20260928T182513Z (part A with user-level disableAllHooks still produced 5 guard blocks).",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "requirements": [
+        "REQ-DLV-007"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-12/09-f226-verification.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG0-229",
+    "F-DG0-230",
+    "F-DG0-231",
+    "F-DG0-232"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/qa/round-12/00-candidate-confirmation.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/01-required-commands.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/02-prefreeze-fresh-clone.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/03-prior-qa-suites-regression.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/04-f227-verification.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/05-f228-verification.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/06-live-guard-and-sandbox-probe.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/07-pyc-shadow-prefreeze.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/08-qa12-new-cases.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/09-f226-verification.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/10-register-integrity.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/11-agent-load-evidence.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/12-acceptance-feasibility.log",
+    "docs/delivery/test-evidence/DG0/qa/round-12/13-a24-a25-assignment-negatives.log",
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r12.test.mjs",
+    "docs/delivery/reviews/DG0/round-12/qa-verifier.findings.json",
+    "docs/delivery/reviews/DG0/round-12/qa-verifier.verifications.json"
+  ],
+  "reviewed_at": "2026-09-28T18:56:00Z",
+  "summary": "FAIL. The round-11 repairs work as designed, and I closed F-DG0-226, 227 and 228 as CLOSED_VERIFIED. Every required command passes, as does prefreeze in a fresh clone. The A24/A25 negatives pass 94/94 once the fixtures carry the settings.json that D-025 now requires. Register integrity, agent-load evidence and feasibility pass. The live guard and OS sandbox refused all 17 protected writes from my own session. One new Medium finding blocks: F-DG0-229. An analyst or implementer shell can plant gitignored bytecode that the orchestrator's unsandboxed prefreeze executes, a traceless way around the D-025 shell sandbox. There are also three Low findings, which I'd accept as observations: F-DG0-230 (validator deny-list root check), F-DG0-231 (docs drift, e.g. /tmp is read-only in the sandbox), F-DG0-232 (the register doesn't reflect D-025). One check is BLOCKED because the sandbox has no network: the round-11 live CLI experiment couldn't be repeated, and the other layers cover it."
+}
