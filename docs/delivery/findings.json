@@ -4041,6 +4041,11 @@
           "at": "2026-09-28T18:56:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 12: PASS"
+        },
+        {
+          "at": "2026-09-28T22:30:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 13: PASS"
         }
       ],
       "fix_revision": "d1352f4817677d408dc65f16adebb946a1f647e4",
@@ -4049,19 +4054,18 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R12-qa-verifier-20260928T183204Z-a5a09551",
-          "session_id": "a5a09551-d12c-4dbc-b00d-386c83d09eb2"
+          "run_id": "DG0-T-DG0-REV-QA-R13-qa-verifier-20260928T215437Z-64831320",
+          "session_id": "64831320-ede5-4a45-80dd-c082d880bfdf"
         },
-        "at": "2026-09-28T18:56:00Z",
+        "at": "2026-09-28T22:30:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-12/09-f226-verification.log",
-          "docs/delivery/test-evidence/DG0/qa/round-12/06-live-guard-and-sandbox-probe.log",
-          "docs/delivery/test-evidence/DG0/qa/round-12/08-qa12-new-cases.log#QA12-R7",
+          "docs/delivery/test-evidence/DG0/qa/round-13/11-f226-f227-verification.log",
+          "docs/delivery/test-evidence/DG0/qa/round-13/08-live-guard-probe.log",
           "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r11.test.mjs#QA11-R5",
-          "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z/probe.log"
+          "tools/agents/run-agent.sh"
         ],
-        "note": "I reproduced the original failure against the round-11 candidate 7e99163, using the runner end to end with a stub claude: QA11-R5 (settings.local.json hidden by .git/info/exclude) and QA11-R6 (planted in the worktree cwd) FAIL there with 'no trace'. Against 7f09967 all six QA11-R cases PASS: exit 71 and external_config_changed record the plant. The fix covers all three layers. (1) Not loaded: run-agent.sh now passes --setting-sources project (lines 141 and 150; old: project,local). (2) Not writable: agent_settings.py denies .claude, .git, CLAUDE*.md, .mcp.json and ignore files in the repository and every worktree. Live in my own sandboxed session, shell writes to .claude/settings.local.json and .git/info/exclude were refused with 'Read-only file system', and the Write tool was blocked by the guard. (3) Detected: config_snapshot uses find (ignored files included) over every worktree, plus .git/info/exclude and ~/.config/git/ignore. My new QA12-R7/R8/R9 (nested CLAUDE.md, nested .claude/settings.json, nested .gitignore) also exit 71. The orchestrator's live probe guard-live-20260928T182513Z is hash-consistent, and its part B shows the OS refusing the worktree .claude/settings.local.json and the .git/info/exclude writes. Limitation: I could not repeat the round-11 live CLI experiment, because this sandboxed shell has no network. The separate bytecode route I found this round is a new issue, raised as F-DG0-229, not a defect in this fix."
+        "note": "Fresh re-verification in round 13; the round-12 closure did not bind because that run ended with is_error. Original failure reproduced on the round-11 candidate 7e99163 with the runner end to end and a stub claude (hermetic git): QA11-R5 (settings.local.json hidden by .git/info/exclude) and QA11-R6 (planted in the worktree cwd) FAIL there with 'no trace', while R1 to R4 pass. On the candidate 6c61f2e all six QA11-R cases PASS. The three layers hold. (1) Not loaded: run-agent.sh lines 150 and 159 pass --setting-sources project (old: project,local). (2) Not writable: live in this run's own sandbox, shell writes to .claude/settings.local.json and .git/info/exclude fail with 'Read-only file system', and the Write tool is blocked by the guard. (3) Detected: QA12-R7/R8/R9 (nested CLAUDE.md, .claude/settings.json, .gitignore) exit 71 on the candidate. Side note: the first, non-hermetic attempt failed every case, including the control, at the fixture's own git commit, because of host commit signing without network; that's a harness artefact, recorded in the log. The separate removal/truncation gap is raised as F-DG0-234 and does not affect this fix."
       }
     },
     {
@@ -4097,6 +4101,11 @@
           "at": "2026-09-28T18:56:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 12: PASS"
+        },
+        {
+          "at": "2026-09-28T22:30:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 13: PASS"
         }
       ],
       "fix_revision": "d1352f4817677d408dc65f16adebb946a1f647e4",
@@ -4105,16 +4114,16 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R12-qa-verifier-20260928T183204Z-a5a09551",
-          "session_id": "a5a09551-d12c-4dbc-b00d-386c83d09eb2"
+          "run_id": "DG0-T-DG0-REV-QA-R13-qa-verifier-20260928T215437Z-64831320",
+          "session_id": "64831320-ede5-4a45-80dd-c082d880bfdf"
         },
-        "at": "2026-09-28T18:56:00Z",
+        "at": "2026-09-28T22:30:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-12/04-f227-verification.log",
+          "docs/delivery/test-evidence/DG0/qa/round-13/11-f226-f227-verification.log",
           "tools/agents/tests/test_run_meta.py#ExternalConfigTest"
         ],
-        "note": "Reproduced on 7e99163: `python3 tools/agents/tests/test_run_meta.py -v` ran 5 tests and skipped both ExternalConfigTest tests, and discover ran the 5 base tests twice through inheritance (12 total). On 7f09967, script mode runs 7 tests including test_external_config_changes_are_recorded and test_no_change_records_an_empty_list. ExternalConfigTest now derives from _RunMetaBase, so there are no duplicate runs. Discover runs 14 tests: 7 run_meta and 7 new agent_settings, all OK. The __main__ guard is now at the end of the file."
+        "note": "Fresh re-verification. On 7e99163, `python3 -B tools/agents/tests/test_run_meta.py -v` runs 5 tests and skips both ExternalConfigTest tests, and discover runs 12 (the base tests twice). On the candidate, script mode runs 7 tests including test_external_config_changes_are_recorded and test_no_change_records_an_empty_list. Discover runs 14 (7 run_meta, 7 agent_settings), all OK. ExternalConfigTest and RunMetaTest both derive from _RunMetaBase, and the __main__ guard is the last statement in the file."
       }
     },
     {
@@ -4151,6 +4160,11 @@
           "at": "2026-09-28T18:56:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by qa-verifier round 12: PASS"
+        },
+        {
+          "at": "2026-09-28T22:30:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 13: PASS"
         }
       ],
       "fix_revision": "d1352f4817677d408dc65f16adebb946a1f647e4",
@@ -4159,17 +4173,17 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-QA-R12-qa-verifier-20260928T183204Z-a5a09551",
-          "session_id": "a5a09551-d12c-4dbc-b00d-386c83d09eb2"
+          "run_id": "DG0-T-DG0-REV-QA-R13-qa-verifier-20260928T215437Z-64831320",
+          "session_id": "64831320-ede5-4a45-80dd-c082d880bfdf"
         },
-        "at": "2026-09-28T18:56:00Z",
+        "at": "2026-09-28T22:30:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/qa/round-12/05-f228-verification.log",
+          "docs/delivery/test-evidence/DG0/qa/round-13/12-f228-verification.log",
           "docs/delivery/test-evidence/DG0/orchestrator-probes/README.md",
-          "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T182513Z/meta.json"
+          "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T215218Z/meta.json"
         ],
-        "note": "The current live-probe evidence (guard-live-20260928T182513Z) names source commit e8758713, which is on the published branch (refs/heads and refs/remotes/origin) and an ancestor of the candidate 7f09967. `git diff e875871 7f09967` over guard-write.mjs, write-scopes.json, settings/, run-agent.sh, agent_settings.py, run_meta.py and probe-guard-live.sh is empty, so the probe exercised the candidate's exact tooling. The only later tools/ changes are the hermetic-git lines in four test files. Its transcript, result and settings hashes match meta.json. The README now marks the 57d23de and 0593fd7 runs as unpublished, unreachable and historical, 'not evidence for the current candidate'. Both still have no containing ref, which is correctly disclosed."
+        "note": "Fresh re-verification. The current live-probe evidence guard-live-20260928T215218Z names source commit c1aaa42, which is on refs/heads and refs/remotes/origin. The candidate 6c61f2e is its ancestor, `git diff 6c61f2e c1aaa42 -- tools .claude docs/source CLAUDE.md` is empty, and candidate.mjs --ref c1aaa42 prints the candidate ID c3364ac2. So the probe exercised exactly the candidate's tooling. Its settings, result and transcript hashes match meta.json, and so do those of the round-12 probe guard-live-20260928T182513Z (source e875871). The README still marks 57d23de and 0593fd7 as unpublished and historical; both still have no containing ref, which is correctly disclosed."
       }
     },
     {
@@ -4195,7 +4209,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-12/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T18:40:00Z",
@@ -4206,10 +4220,33 @@
           "at": "2026-09-28T21:39:10Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1a8658299a8f37e431a4dd93d25079cb64d67e61"
+        },
+        {
+          "at": "2026-09-28T22:06:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 13: PASS"
         }
       ],
       "fix_revision": "1a8658299a8f37e431a4dd93d25079cb64d67e61",
-      "fix_summary": "run-agent.sh runs every Python helper as python3 -I -B (isolated: no cwd or script dir on sys.path, no PYTHON* env, no bytecode) and changes to / after resolving its inputs; only the claude process runs in the agent's cwd. Regression test tools/agents/tests/runner.test.mjs plants json.py/uuid.py/hashlib.py in the repository root and fails on the previous runner (D-026)."
+      "fix_summary": "run-agent.sh runs every Python helper as python3 -I -B (isolated: no cwd or script dir on sys.path, no PYTHON* env, no bytecode) and changes to / after resolving its inputs; only the claude process runs in the agent's cwd. Regression test tools/agents/tests/runner.test.mjs plants json.py/uuid.py/hashlib.py in the repository root and fails on the previous runner (D-026).",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R13-code-security-reviewer-20260928T215437Z-f8de01f5",
+          "session_id": "f8de01f5-802f-40ed-9d75-eeab75df786f"
+        },
+        "at": "2026-09-28T22:06:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-13/repro-r13-f140-shadow.sh",
+          "docs/delivery/test-evidence/DG0/code-security/round-13/01-f140-shadow.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-13/04-test-suites.log",
+          "tools/agents/run-agent.sh#L48",
+          "tools/agents/tests/runner.test.mjs#F-DG0-140"
+        ],
+        "note": "Reproduced against the old and new commits with my own script, repro-r13-f140-shadow.sh (disposable clones, stub claude that plants json/uuid/hashlib/subprocess/os/sys/sitecustomize/usercustomize/site/encodings modules and a .pth in the agent cwd). On round-12 commit 7f09967, unsandboxed runner helpers imported the planted json, hashlib and subprocess modules (argv '-c' and '-'), and uuid in the --cwd variant. On candidate 6c61f2e, zero shadow imports occurred in both the root-cwd and --cwd-subdirectory variants, and the runner exited 0. Code review of run-agent.sh: 'cd /' at L48 after inputs are resolved (ASSIGNMENT_ABS and CWD made absolute first); every Python helper runs as 'python3 -I -B' (L52, 61, 70, 116, 144, 172, 176, 191, 207); git always uses -C; only the claude process runs in the agent cwd. The regression test 'F-DG0-140: modules planted in the repository root are never imported by the runner's helpers' passes (04-test-suites.log). The Node gate tools import only node: built-ins and relative tools/ files (grep checked). The fix is complete for the runner. The new pre-freeze sandbox wrapper has a separate escape of its own, raised as F-DG0-141."
+      }
     },
     {
       "id": "F-DG0-229",
@@ -4232,7 +4269,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T18:55:00Z",
@@ -4243,10 +4280,35 @@
           "at": "2026-09-28T21:39:10Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1a8658299a8f37e431a4dd93d25079cb64d67e61"
+        },
+        {
+          "at": "2026-09-28T22:30:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 13: PASS"
         }
       ],
       "fix_revision": "1a8658299a8f37e431a4dd93d25079cb64d67e61",
-      "fix_summary": "prefreeze.sh runs every check that executes candidate code through tools/gates/sandbox-run.sh: a fresh clone of the committed HEAD (no ignored or untracked files such as planted .pyc) under bubblewrap with a read-only root, private /tmp, no network, clean env (PYTHONSAFEPATH=1, PYTHONDONTWRITEBYTECODE=1); only protected tools/gates code runs outside, from /. Tests: tools/gates/tests/sandbox.test.mjs (D-026)."
+      "fix_summary": "prefreeze.sh runs every check that executes candidate code through tools/gates/sandbox-run.sh: a fresh clone of the committed HEAD (no ignored or untracked files such as planted .pyc) under bubblewrap with a read-only root, private /tmp, no network, clean env (PYTHONSAFEPATH=1, PYTHONDONTWRITEBYTECODE=1); only protected tools/gates code runs outside, from /. Tests: tools/gates/tests/sandbox.test.mjs (D-026).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R13-qa-verifier-20260928T215437Z-64831320",
+          "session_id": "64831320-ede5-4a45-80dd-c082d880bfdf"
+        },
+        "at": "2026-09-28T22:30:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-13/03-f229-verification.log",
+          "docs/delivery/test-evidence/DG0/qa/round-13/repro-f229-pyc-plant.sh",
+          "docs/delivery/test-evidence/DG0/qa/round-13/04-qa13-new-cases.log#QA13-S6",
+          "docs/delivery/test-evidence/DG0/qa/round-13/02-prefreeze-fresh-clone.log",
+          "docs/delivery/test-evidence/DG0/qa/round-13/06-prior-qa-suites-regression.log#QA12-P2",
+          "tools/gates/sandbox-run.sh",
+          "tools/gates/prefreeze.sh"
+        ],
+        "note": "Original failure reproduced on the round-12 candidate 7f09967 (repro-f229-pyc-plant.sh). I planted gitignored sourceless docs/analysis/tools/csv.pyc and __pycache__/csv.cpython-311.pyc, invisible to git status, with a payload that writes .git/hooks/post-commit and exits 42. The old prefreeze imported it: all three analysis checks FAIL with the payload's exit, and .git/hooks/post-commit was written with orchestrator rights. On the candidate 6c61f2e the same plant is inert: prefreeze prints 10/10 PASS (every candidate-executing check '(sandboxed)'), exits 0, and no hook is written. My regression QA13-S6 passes, and my round-12 QA12-P2 now passes. Mechanism: sandbox-run.sh clones the committed HEAD (ignored and untracked files absent), then runs under bwrap with a read-only root, private /tmp, no network and env -i with PYTHONSAFEPATH=1 and PYTHONDONTWRITEBYTECODE=1. Only tools/gates code (relative and node: imports only) and `python3 -I -B -c` run outside, from /. New independent cases confirm it. QA13-S1: an uncommitted tracked edit never reaches the command. QA13-S2: BASH_ENV, NODE_OPTIONS, PYTHONPATH and PYTHONSTARTUP don't reach the sandboxed command; BASH_ENV runs once, for sandbox-run.sh itself, in the caller's own environment. QA13-S3: source-repository hooks don't run. QA13-S4: an unknown revision fails before the command runs. QA13-S5: the command can write neither the source .git nor HOME. QA13-S7: the final check catches uncommitted drift. The finding's expected result allowed either (a) no execution or (b) detection. The fix implements (a), so QA12-P1 (no runner trace of the plant) still fails, by design. The threat model now discloses the orchestrator constraint (D-026)."
+      }
     },
     {
       "id": "F-DG0-230",
@@ -4266,7 +4328,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T18:55:00Z",
@@ -4277,10 +4339,32 @@
           "at": "2026-09-28T21:39:10Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1a8658299a8f37e431a4dd93d25079cb64d67e61"
+        },
+        {
+          "at": "2026-09-28T22:30:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 13: PASS"
         }
       ],
       "fix_revision": "1a8658299a8f37e431a4dd93d25079cb64d67e61",
-      "fix_summary": "requireSandbox now requires each protected path to be denied exactly as ${meta.cwd}/<path> (docs/source added to the required list); a deny list rooted in another directory fails. Validator test 'F-DG0-230' added."
+      "fix_summary": "requireSandbox now requires each protected path to be denied exactly as ${meta.cwd}/<path> (docs/source added to the required list); a deny list rooted in another directory fails. Validator test 'F-DG0-230' added.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R13-qa-verifier-20260928T215437Z-64831320",
+          "session_id": "64831320-ede5-4a45-80dd-c082d880bfdf"
+        },
+        "at": "2026-09-28T22:30:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-13/07-f230-verification.log",
+          "docs/delivery/test-evidence/DG0/qa/round-13/04-qa13-new-cases.log#QA13-V2",
+          "tools/gates/lib/rules.mjs#checkInvocation",
+          "tools/gates/tests/validator.test.mjs#F-DG0-230"
+        ],
+        "note": "Original failure reproduced: on 7f09967, QA12-V2 (a deny list rooted in /somewhere/else, with settings_sha256 consistent) is accepted, and the candidate's own 'F-DG0-230' validator test, copied into the old tree, FAILS there. On the candidate, that test passes, and rules.mjs requires every one of .git, .claude, tools/gates, tools/agents, docs/source, docs/delivery/reviews and docs/delivery/runs to appear exactly as <meta.cwd>/<path>. My independent cases pass: QA13-V1 control clean; V2 a deny list without docs/source rejected; V3 no meta.cwd rejected ('<unknown cwd>'); V4 non-normalised <cwd>/./x entries rejected (fails closed). This run's own settings.json satisfies the rule for /home/user/My-owns. That is what the finding's expected result asked for. A residual remains: meta.cwd itself isn't bound to the transcript (QA13-V5 accepts a forged meta.cwd plus a matching deny list). It needs forged run evidence (threat-model residual 1), and I raise it separately as Low F-DG0-233."
+      }
     },
     {
       "id": "F-DG0-231",
@@ -4302,7 +4386,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-09-28T18:55:00Z",
@@ -4313,10 +4397,32 @@
           "at": "2026-09-28T21:39:10Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1a8658299a8f37e431a4dd93d25079cb64d67e61"
+        },
+        {
+          "at": "2026-09-28T22:30:00Z",
+          "status": "OPEN",
+          "note": "verified by qa-verifier round 13: FAIL"
         }
       ],
       "fix_revision": "1a8658299a8f37e431a4dd93d25079cb64d67e61",
-      "fix_summary": "agent-protocol.md now says git clone <repo> \"$TMPDIR/<name>\" and that /tmp is read-only in the sandbox; agent_settings.py docstring and D-025 corrected to $TMPDIR; run-agent.sh comment now says --setting-sources project; agents.md no longer says Bash writes are unguarded (D-025 sandbox)."
+      "fix_summary": "agent-protocol.md now says git clone <repo> \"$TMPDIR/<name>\" and that /tmp is read-only in the sandbox; agent_settings.py docstring and D-025 corrected to $TMPDIR; run-agent.sh comment now says --setting-sources project; agents.md no longer says Bash writes are unguarded (D-025 sandbox).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R13-qa-verifier-20260928T215437Z-64831320",
+          "session_id": "64831320-ede5-4a45-80dd-c082d880bfdf"
+        },
+        "at": "2026-09-28T22:30:00Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-13/09-f231-verification.log",
+          "docs/delivery/agents.md",
+          ".claude/agents/qa-verifier.md",
+          "docs/delivery/agent-protocol.md"
+        ],
+        "note": "Partly fixed. Fixed: agent-protocol.md now says git clone <repo> \"$TMPDIR/<name>\" and that /tmp is read-only; agent_settings.py's docstring and D-025 say $TMPDIR; the run-agent.sh comment says --setting-sources project; agents.md no longer says Bash writes aren't path-guarded. Not fixed, against the finding's expected result ('the documented disposable-copy location works inside the agent sandbox ... comments and docs describe the current controls'): (1) docs/delivery/agents.md line 28, the current invocation-mechanism description, still says 'The runner starts agents with `--setting-sources project,local`', while run-agent.sh lines 150 and 159 pass `project`. (2) The three reviewer agent definitions (.claude/agents/{domain-reviewer,code-security-reviewer,qa-verifier}.md) still prescribe `git worktree add /tmp/review-<id> <commit>`. In this sandbox that fails live with 'could not create leading directories of .git/worktrees/...: Read-only file system', and /tmp is read-only too. (D-024 still quoting project,local is a dated decision record, which is acceptable.) Still Low and non-mandatory, documentation only; I'd accept it as an observation."
+      }
     },
     {
       "id": "F-DG0-232",
@@ -4336,12 +4442,179 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-12/qa-verifier.json",
       "owner": "transformation-analyst",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T18:55:00Z",
           "status": "OPEN",
           "note": "Raised in the DG0 round-12 QA review of candidate 21f142b8 (7f09967)."
+        },
+        {
+          "at": "2026-09-28T22:30:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 13: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R13-qa-verifier-20260928T215437Z-64831320",
+          "session_id": "64831320-ede5-4a45-80dd-c082d880bfdf"
+        },
+        "at": "2026-09-28T22:30:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-13/10-f232-verification.log",
+          "docs/delivery/requirements.csv#REQ-DLV-007",
+          "docs/delivery/test-evidence/DG0/qa/round-13/02-prefreeze-fresh-clone.log"
+        ],
+        "note": "On 7f09967, `grep -cE 'agent_settings|D-025|D-026|sandbox-run' requirements.csv` is 0; on the candidate it is 7. REQ-DLV-007 now describes both layers: the file-tool guard and the OS Bash sandbox generated by agent_settings.py (bubblewrap, enabled, failIfUnavailable, allowUnsandboxedCommands false, the deny list, analyst and reviewer confinement, --setting-sources project). It also covers the validator's exact <meta.cwd> anchoring (F-DG0-230) and the D-026 stub rule. It cites the agent_settings tests, 'D-025: gate records must come from Bash-sandboxed runs', 'F-DG0-230: ...' and both D-026 runner tests, and all 17 evidence files exist. REQ-DLV-006/013/023/026 were updated consistently. The candidate's check_test_refs (run sandboxed in prefreeze) reports 0 problems across 74 quoted test titles, and the 7 agent_settings tests pass. The pre-freeze now also proves the register equals the merge of docs/analysis/parts."
+      }
+    },
+    {
+      "id": "F-DG0-012",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The runner's config scan reports only added or changed lines, so a non-empty untracked Claude configuration file that is deleted, or (since the D-026 stub rule) truncated to zero bytes, leaves no trace in external_config_changed",
+      "reproduction": "docs/delivery/test-evidence/DG0/domain/round-13/06-stub-rule-probe.sh extracts config_snapshot() verbatim from tools/agents/run-agent.sh at the candidate commit 6c61f2e, runs it before and after a change in a disposable clone (HOME redirected to $TMPDIR), and applies the runner's own filter (diff pre post | grep '^>'). Case D: an untracked CLAUDE.local.md containing 'local rule' is truncated to zero bytes, and nothing is reported. Case E: the same file is deleted, and nothing is reported. The controls behave as intended: case A (a new zero-length stub) is ignored; B (new content), C (a stub gaining content) and F (a tracked .gitignore truncated) are all reported.",
+      "expected": "threat-model.md 'Detected, not prevented' says that a process outside the sandbox changing 'Claude configuration and ignore files anywhere in the repository and worktrees' is detected by the before/after config_snapshot. D-026 says the stub rule ignores only files that 'carry no configuration'. The removal of configuration content (deletion, or truncation of a file that had content before the run) is also a configuration change, so it should appear in external_config_changed. One way to do this: report '<' lines as well, and skip a zero-length untracked entry only when the file was absent or zero-length before the run.",
+      "actual": "Deletion of an untracked, non-empty config file was never reported, because the runner keeps only '>' lines. Since D-026, truncation to zero bytes is also unreported, because the post-run scan skips the now-empty untracked file. Neither leaves any git trace, since the file is untracked. Impact is limited. Inside a run, the agent's Bash sandbox denyWrite already covers .claude, CLAUDE*.md and .mcp.json (D-025), and the write guard covers file tools, so an agent cannot do this itself. The gap applies only to the 'process outside the sandbox' row, and only to removing configuration, not adding it. I would accept this as a Low observation for DG0 if the orchestrator documents it in threat-model.md, or fixes it in a later stage.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-13/06-stub-rule-probe.sh",
+        "docs/delivery/test-evidence/DG0/domain/round-13/06-stub-rule-probe.log",
+        "tools/agents/run-agent.sh#L89-L112",
+        "tools/agents/run-agent.sh#L168",
+        "docs/delivery/threat-model.md#detected-not-prevented",
+        "docs/delivery/decisions.md#D-026"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-13/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T22:00:00Z",
+          "status": "OPEN",
+          "note": "raised by domain-reviewer in DG0 round 13 (Low; acceptable as an observation)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-141",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "D-026 sandbox escape via tools/gates/sandbox-run.sh: the work clone is created under /tmp/claude-0 (the $TMPDIR every sandboxed agent shell may write), and the orchestrator runs 'git checkout' in it OUTSIDE bubblewrap. A concurrently running agent plants a git smudge filter (or fsmonitor) in the fresh clone's .git/config and .git/info/attributes; the checkout executes it with the orchestrator's privileges.",
+      "reproduction": "sandbox-run.sh:19 WORK=$(mktemp -d /tmp/claude-0/sbxrun.XXXXXX); sandbox-run.sh:21 git clone --no-checkout into $WORK/repo; sandbox-run.sh:22 git -C $WORK/repo checkout, run BEFORE and OUTSIDE the bwrap call at sandbox-run.sh:25-28. /tmp/claude-0 is the D-025 sandbox's writable $TMPDIR for every agent (agent_settings.py docstring lines 10-11; D-025 'Verified'; confirmed writable from my own reviewer sandbox), and every process runs as uid 0, so mktemp's 0700 mode does not isolate it. Script docs/delivery/test-evidence/DG0/code-security/round-13/repro-r13-sandbox-run-tmp-race.sh (disposable clone of 6c61f2e as stand-in REPO_ROOT): a background watcher, which is exactly what a sandboxed agent shell can run (run_in_background, writes only to $TMPDIR), polls /tmp/claude-0/sbxrun.*/repo/.git/config and (re-)appends '[filter \"x\"] smudge=<payload>' plus '* filter=x' in .git/info/attributes. The orchestrator-side call 'sandbox-run.sh HEAD -- ...' (as used by prefreeze.sh:23-34) then checks out. Log 03-sandbox-run-tmp-race.log: in 3 of 3 attempts the payload ran 1154 times with cwd=/tmp/claude-0/sbxrun.*/repo, outside bwrap. It wrote REPO_ROOT/tools/gates/PWNED-by-sandbox-run-race.txt, a path the same log shows is read-only inside the bwrap stage. Second, trace-free variant using the same weakness: for the whole bwrap run (about 20 s for the test suite), $WORK/repo stays writable from outside, so a concurrent agent can swap test or check files in the clone and make prefreeze report PASS for content that is not the committed HEAD. The final 'working tree equals HEAD' check does not look at the clone.",
+      "expected": "threat-model.md 'Mechanically prevented' row 3 / D-026: the orchestrator never executes agent-planted code with its own privileges, and pre-freeze checks run on a fresh clone of the committed revision that nothing else can alter. The sandbox-run work directory must not be writable by any agent sandbox: for example, create it under a path in every agent's denyWrite (such as $REPO_ROOT/.git/mth-sbx), or inside bwrap on a private tmpfs. The clone and checkout must also happen inside the sandbox, or with hermetic git options (-c core.fsmonitor=false, -c filter.*, GIT_ATTR_NOSYSTEM, no info/attributes). Add a regression test in which a concurrent writer plants a filter or fsmonitor and swaps a file during the run.",
+      "actual": "Any agent that is running while the orchestrator runs prefreeze.sh or sandbox-run.sh (parallel implementers or reviewers are the normal operating mode; the round-13 reviewers started in the same second) can execute arbitrary code as the orchestrator, outside every sandbox. That code can rewrite tools/gates, forge records, or plant .git hooks. It is the same trust-boundary escape class as F-DG0-140, reintroduced by the D-026 fix itself. The precondition (concurrency, plus a polling loop) makes it High rather than Critical. Separately, and without any code execution, the pre-freeze results can be falsified.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-13/repro-r13-sandbox-run-tmp-race.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-13/03-sandbox-run-tmp-race.log",
+        "tools/gates/sandbox-run.sh#L19-L22",
+        "tools/gates/prefreeze.sh#L23-L34",
+        "tools/agents/agent_settings.py#L10-L11",
+        "docs/delivery/threat-model.md#mechanically-prevented"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-13/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T22:03:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 13; reproduced 3/3 in a disposable clone of the frozen candidate commit"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-142",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Threat model inconsistency (forward-looking): D-026 says the orchestrator never executes agent-writable code outside a sandbox, but residual #3 and D-025 make dependency installation an unsandboxed orchestrator step. From P1, installing dependencies declared in agent-written package.json or lockfiles runs install scripts from agent-writable content outside the sandbox.",
+      "reproduction": "Documentation review only; nothing is exercised at DG0 (there is no package.json in the candidate). threat-model.md:48 (residual #3): 'Dependency installation is an orchestrator step, outside the sandbox (D-025)'. threat-model.md:29 and decisions.md D-026: the orchestrator never executes agent-writable code outside a sandbox. Scenario at P1: an implementer adds \"postinstall\": \"<payload>\" to package.json, or a git/tarball dependency, or an .npmrc in its scope; the orchestrator runs 'npm install' or 'npm ci' unsandboxed, and the payload runs as the orchestrator. prefreeze.sh:8-9 says only that later stages add build commands 'to the sandboxed list'. It says nothing about installation.",
+      "expected": "Before P1: the threat model and D-026 say how dependency installation is contained. For example: install with --ignore-scripts from a reviewed lockfile, then run lifecycle scripts only inside sandbox-run.sh; or run installation in a sandbox with a registry-only network allowlist. Alternatively, list it as a residual that explicitly qualifies the D-026 claim.",
+      "actual": "The two statements contradict each other, and the residual is larger than disclosed: it covers code execution, not just network access. I would accept this as an observation at DG0 (Low, not exercised yet), provided it is resolved before the first P1 dependency installation.",
+      "evidence": [
+        "docs/delivery/threat-model.md#disclosed-residuals",
+        "docs/delivery/decisions.md#D-026",
+        "tools/gates/prefreeze.sh#L8-L9"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-13/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T22:03:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 13 (documentation review)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-233",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-013",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Residual of F-DG0-230: the exact-cwd sandbox check trusts meta.cwd, which is not bound to the transcript's init cwd or to the replayed prompt's 'Your working directory is ...', so a run whose meta.cwd and deny list both name a foreign root still binds a gate record",
+      "reproduction": "QA13-V5 in docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r13.test.mjs, run against a disposable clone of candidate 6c61f2e (QA_REPO_ROOT=<clone>). The independent round-9 fixture is adapted to D-026 run evidence (meta.cwd plus a 7-path deny list anchored at meta.cwd; control QA13-V1 validates cleanly). For the qa-verifier run only, meta.cwd is set to /somewhere/else, and settings.json denies /somewhere/else/{.git,.claude,tools/gates,tools/agents,docs/source,docs/delivery/reviews,docs/delivery/runs}, with meta.settings_sha256 consistent. The forgery is part of the run evidence as first committed, so write-once history has nothing to catch. The transcript's replayed prompt still says 'Your working directory is /work/repo'. validateGate returns [] (docs/delivery/test-evidence/DG0/qa/round-13/04-qa13-new-cases.log, 'QA13-V5 errors: []'). Real transcripts record the working directory in the init event: e.g. the round-12 QA run's init line has cwd=/home/user/My-owns, equal to its meta.cwd. rules.mjs uses meta.cwd for the deny-list anchor (line 338) and for replay path mapping (line 371), and checks it against nothing.",
+      "expected": "REQ-DLV-013/007 say the deny list must name the protected paths 'under the run's own working directory'. The validator should take that directory from, or cross-check it against, evidence the run itself produced: the transcript init event's cwd and/or the replayed prompt's 'Your working directory is <cwd>'. Then relabelling meta.cwd alone doesn't re-anchor the check.",
+      "actual": "Accepted. Exploiting it needs fabricated run evidence (meta.json plus settings.json), which is disclosed residual 1 in docs/delivery/threat-model.md (self-hashed evidence), and the same forgery class already needed for the original F-DG0-230 attack. So this is hardening only: Low and non-mandatory. I'd accept it as an observation. The F-DG0-230 fix itself does what that finding asked (exact <meta.cwd>/<path>, docs/source added) and is verified.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r13.test.mjs#QA13-V5",
+        "docs/delivery/test-evidence/DG0/qa/round-13/04-qa13-new-cases.log#QA13-V5",
+        "docs/delivery/test-evidence/DG0/qa/round-13/07-f230-verification.log",
+        "tools/gates/lib/rules.mjs#checkInvocation",
+        "docs/delivery/threat-model.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-13/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T22:25:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-13 QA review of candidate c3364ac2 (6c61f2e)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-234",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The runner's configuration scan never reports removals, and the D-026 zero-length stub rule turns 'truncate an ignored configuration file to zero' into a removal: deleting or emptying an ignored .claude/settings.local.json during a run leaves no trace (exit 0, external_config_changed [])",
+      "reproduction": "Runner end to end with a stub claude (dg0-gate-negative-r13.test.mjs; logs docs/delivery/test-evidence/DG0/qa/round-13/04-qa13-new-cases.log and 05-stub-rule-old-vs-new.log). A fixture repository ignores .claude/settings.local.json, which holds '{\"permissions\":{\"deny\":[\"Bash(curl:*)\"]}}' before the run. QA13-R1b: the 'agent' truncates it to zero bytes. The round-12 runner (7f09967) exits 71 and records it. The candidate exits 0 with external_config_changed [] and nothing in outputs, because config_snapshot now skips the zero-length untracked file, so it is simply absent after the run. QA13-R2: the 'agent' deletes it. Both versions exit 0 with no trace, because run-agent.sh keeps only added lines: `diff pre post | grep '^>'`. A file that vanishes from the find-based scan (Claude configuration, ignore and attribute files, hooks) is never reported. QA13-R1 (a non-ignored untracked CLAUDE.local.md truncated) is still traced, through meta.outputs. QA13-R3 confirms the intended direction: new zero-length stubs are ignored, and the same files with content still give exit 71.",
+      "expected": "docs/delivery/threat-model.md (Detected: 'A process outside the sandbox changes configuration ... whether or not git ignores them') and REQ-DLV-007 ('records changes as external_config_changed') imply that every change to a scanned configuration file is reported. Either also report removed entries (for example lines only in the pre-snapshot, or a pre-existing path that became zero-length or disappeared), or state in the threat model that removal and truncation of untracked or ignored configuration are not detected.",
+      "actual": "Undetected. Impact is minimal. Only a process outside the agent sandbox can write these paths (the sandbox denies them: 08-live-guard-probe.log). Removing configuration can't add capability. User and local settings aren't loaded (--setting-sources project), and tracked files are always reported, even when truncated. So the stub rule cannot hide added or altered configuration with content, which answers the assignment's question. It can only hide a removal of content, which was already invisible as a deletion. Low and non-mandatory; I'd accept it as an observation. Judgement: docs/delivery/test-evidence/DG0/qa/round-13/17-stub-rule-judgement.md.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-13/17-stub-rule-judgement.md",
+        "docs/delivery/test-evidence/DG0/qa/round-13/05-stub-rule-old-vs-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-13/04-qa13-new-cases.log#QA13-R1b",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r13.test.mjs#QA13-R2",
+        "tools/agents/run-agent.sh#config_snapshot",
+        "docs/delivery/threat-model.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-13/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T22:25:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-13 QA review of candidate c3364ac2 (6c61f2e)."
         }
       ]
     }
