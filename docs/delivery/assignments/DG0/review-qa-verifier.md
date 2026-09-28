@@ -12,7 +12,7 @@ Read `docs/delivery/assignments/DG0/review-common.md` first. Task ID: `T-DG0-REV
    - `node tools/gates/validate.mjs --pipeline`
    - `node tools/gates/validate.mjs --reconcile`
    - `node tools/gates/candidate.mjs --stage DG0`
-2. **Independent negative tests (A24/A25).** Write your own tests under `tests/qa/dg0/` (Node's built-in `node:test`, no dependencies) that build disposable fixtures and prove the validator rejects:
+2. **Independent negative tests (A24/A25).** Write your own tests under `docs/delivery/test-evidence/DG0/qa/tests/` (Node's built-in `node:test`, no dependencies). **Do not write them under `tests/qa/` during this review.** New files there would change the frozen candidate. The orchestrator promotes your tests into `tests/qa/dg0/` in the next stage's candidate, as regression tests that build disposable fixtures and prove the validator rejects:
    - a missing reviewer;
    - a reviewer who authored the scope;
    - a shared invocation;

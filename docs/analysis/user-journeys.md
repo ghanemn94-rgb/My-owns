@@ -8,7 +8,7 @@
   - "Audit" means that every mutation writes an audit event with actor, action, timestamp, record ID, prior/new version and reason (§16, AN-03).
   - Every mutation also uses optimistic concurrency. A conflicting save shows a recoverable conflict (A14).
 
-Screen and API names are planned names, pending the P1 ADRs. Demo walk-throughs run only in the separate demo environment, on synthetic data (REQ-S02-007, REQ-PB-088/089). A demo Sponsor approval approves nothing real.
+Screen and API names are planned names, pending the P1 ADRs. Demo walk-throughs run only in the separate demo environment, on synthetic data (REQ-S18-001, REQ-PB-088/089). A demo Sponsor approval approves nothing real.
 
 ---
 
@@ -29,7 +29,7 @@ Requirements: REQ-S03-008, REQ-S12-005, REQ-S12-023, REQ-S12-025, REQ-S07-017 an
 
 ## J2. Phase journeys with their gates (End-to-End mode)
 
-Common gate mechanics (REQ-S04-002, REQ-S04-009…014, REQ-S12-008…010):
+Common gate mechanics (REQ-S04-002, REQ-S04-009…014, REQ-S12-009…010; REQ-S04-012 absorbs the former starter automation REQ-S12-008):
 
 | # | Actor | Step | Screen | Record | Guard condition |
 |---|---|---|---|---|---|
@@ -171,7 +171,7 @@ Common gate mechanics (REQ-S04-002, REQ-S04-009…014, REQ-S12-008…010):
 
 ---
 
-## J7. BAU handover (WL, TL → BO; REQ-PB-083, REQ-S11-005, REQ-S12-017, A11)
+## J7. BAU handover (WL, TL → BO; REQ-PB-083 (absorbs former REQ-S12-017), REQ-S11-005, A11)
 
 | # | Actor | Step | Screen | Record | Guard condition |
 |---|---|---|---|---|---|

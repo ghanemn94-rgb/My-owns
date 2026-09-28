@@ -1,0 +1,168 @@
+# Analysis artefacts: index
+
+Maintained by transformation-analyst. Last integration: T-DG0-AN-04 (stage P0 / DG0). All counts below come from the merged `docs/delivery/requirements.csv` and the two coverage matrices at the time of writing. The register is authoritative; re-run the merge and `node tools/gates/validate.mjs --register DG0` after any part-file change.
+
+The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, with custom extensions. Neither the playbook nor this product is an official PMI standard or a certified product. `#0078FF` is a provisional brand token.
+
+## Artefacts
+
+| Artefact | Purpose | Producer |
+|---|---|---|
+| `docs/delivery/requirements.csv` | The requirement register (410 rows). Generated only by `tools/source/merge_register.py` from `parts/req-*.csv` and `parts/ref-additions-*.csv`. | AN-01..AN-04 (merge AN-04) |
+| `docs/analysis/source-coverage.csv` | One disposition per playbook block B0001–B0165 (165 rows). | AN-01 |
+| `docs/analysis/master-prompt-coverage.csv` | One disposition per master-prompt block M0001–M0423 (423 rows). Generated from `parts/mp-coverage-*.csv`. | AN-02, AN-03 (merge AN-04) |
+| `docs/analysis/parts/` | The editable sources of the register and master-prompt coverage: `req-pb.csv`, `req-s01-s13.csv`, `req-dlv-s14-s21.csv`, `mp-coverage-s01-s13.csv`, `mp-coverage-p0-s14-s21.csv`, `ref-additions-an02.csv`, `ref-additions-an03.csv`. | AN-01..AN-04 |
+| `docs/analysis/glossary.md` | Domain glossary, English and Arabic. The Arabic terms are proposals pending native-speaker review. | AN-01 |
+| `docs/analysis/field-inventory.md` | Fields of every template (T01–T16, charter, TOM canvas, business case, launch plan, health check, roaming example) and first-class record, with the source column names kept verbatim. | AN-01 |
+| `docs/analysis/user-journeys.md` | Journeys J1–J8 per role. | AN-02 (ID references updated by AN-04) |
+| `docs/analysis/permissions-matrix.md` | Role × record × action matrix, scope rules, separation of duties. | AN-02 (ID references updated by AN-04) |
+| `docs/analysis/acceptance-map.md` | A01–A28: executable-test row, requirements proved, test level, first delivery, gate, and the gate ordering of scenario suites. | AN-03 (proves lists regenerated for all areas by AN-04) |
+| `docs/analysis/stage-plan.md` | P0–P7: owners, outputs, evidence, dependencies, and the IDs completing or partially delivered per stage. | AN-03 (ID lists regenerated for all areas by AN-04) |
+
+## Register counts
+
+### By class
+
+| Class | Rows |
+|---|---|
+| SOURCE | 92 |
+| USER | 188 |
+| ENGINEERING | 130 |
+| Total | 410 |
+
+Every SOURCE row cites at least one playbook block. USER and ENGINEERING rows cite master-prompt blocks. Master-prompt details that the playbook lacks are labelled `implementation-assumption` or `extension` in `notes`. An example is the Yes=1/No=0 health-check scoring (REQ-S14-001, D-010).
+
+### By final gate
+
+| Final gate | DG0 | DG1 | DG2 | DG3 | DG4 | DG5 | DG6 | DG7 | Total |
+|---|---|---|---|---|---|---|---|---|---|
+| Rows | 19 | 11 | 32 | 31 | 137 | 76 | 50 | 54 | 410 |
+
+### Class × final gate
+
+| Class | DG0 | DG1 | DG2 | DG3 | DG4 | DG5 | DG6 | DG7 |
+|---|---|---|---|---|---|---|---|---|
+| SOURCE | 0 | 0 | 24 | 20 | 36 | 12 | 0 | 0 |
+| USER | 0 | 3 | 6 | 7 | 76 | 55 | 19 | 22 |
+| ENGINEERING | 19 | 8 | 2 | 4 | 25 | 9 | 31 | 32 |
+
+### By area
+
+| Area | SOURCE | USER | ENGINEERING | Total | DG0 | DG1 | DG2 | DG3 | DG4 | DG5 | DG6 | DG7 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| PB | 92 | 0 | 0 | 92 |  |  | 24 | 20 | 36 | 12 |  |  |
+| DLV | 0 | 0 | 41 | 41 | 17 | 2 | 1 | 1 | 1 | 1 | 1 | 17 |
+| S01 | 0 | 5 | 1 | 6 |  |  |  |  |  | 3 | 1 | 2 |
+| S02 | 0 | 3 | 2 | 5 |  |  |  |  |  | 2 | 1 | 2 |
+| S03 | 0 | 11 | 0 | 11 |  |  |  |  | 9 | 2 |  |  |
+| S04 | 0 | 14 | 0 | 14 |  |  | 3 | 1 | 9 | 1 |  |  |
+| S05 | 0 | 5 | 0 | 5 |  |  | 1 | 1 |  | 3 |  |  |
+| S06 | 0 | 9 | 1 | 10 |  |  |  |  |  | 10 |  |  |
+| S07 | 0 | 11 | 6 | 17 |  |  |  |  | 16 | 1 |  |  |
+| S08 | 0 | 14 | 4 | 18 |  |  |  | 1 | 15 | 2 |  |  |
+| S09 | 0 | 8 | 2 | 10 |  |  |  | 6 | 3 | 1 |  |  |
+| S10 | 0 | 18 | 1 | 19 |  |  | 1 |  | 14 | 2 | 2 |  |
+| S11 | 0 | 8 | 0 | 8 |  |  |  |  | 8 |  |  |  |
+| S12 | 0 | 18 | 4 | 22 |  |  |  |  | 7 | 10 | 5 |  |
+| S13 | 0 | 10 | 3 | 13 |  |  | 1 |  | 3 | 7 | 2 |  |
+| S14 | 0 | 4 | 0 | 4 |  |  |  |  |  | 4 |  |  |
+| S15 | 0 | 14 | 0 | 14 |  | 3 |  |  | 1 | 1 | 9 |  |
+| S16 | 0 | 0 | 32 | 32 |  | 4 | 1 | 1 | 8 | 4 | 9 | 5 |
+| S17 | 0 | 4 | 7 | 11 |  |  |  |  |  |  | 10 | 1 |
+| S18 | 0 | 4 | 0 | 4 |  |  |  |  |  | 4 |  |  |
+| S19 | 0 | 17 | 2 | 19 |  | 2 |  |  |  |  |  | 17 |
+| S20 | 0 | 9 | 22 | 31 | 2 |  |  |  | 7 | 5 | 10 | 7 |
+| S21 | 0 | 2 | 2 | 4 |  |  |  |  |  | 1 |  | 3 |
+
+### By status
+
+| Status | Rows |
+|---|---|
+| IMPLEMENTED | 19 |
+| SPECIFIED | 391 |
+
+`VERIFIED` is never written to the register. Verification is derived by the validator from PASS review records.
+
+## Coverage dispositions
+
+| Matrix | Blocks | REQUIREMENT | CONTEXT | NON-REQUIREMENT |
+|---|---|---|---|---|
+| Playbook (source-coverage.csv) | 165 | 129 | 29 | 7 |
+| Master prompt (master-prompt-coverage.csv) | 423 | 367 | 49 | 7 |
+
+## Acceptance scenario coverage
+
+All 28 scenarios are referenced. "Rows citing" counts the register rows whose `acceptance` column names the scenario, including the scenario's own test row.
+
+| ID | Scenario | Test row | Must pass at | Rows citing |
+|---|---|---|---|---|
+| A01 | Source coverage | REQ-S20-001 | DG6 | 83 |
+| A02 | Complete lifecycle | REQ-S20-002 | DG5 | 27 |
+| A03 | Modular entry | REQ-S20-003 | DG4 | 5 |
+| A04 | KPI propagation | REQ-S20-004 | DG4 | 18 |
+| A05 | Calculation correctness | REQ-S20-005 | DG4 | 30 |
+| A06 | Configuration change | REQ-S20-006 | DG5 | 23 |
+| A07 | Historical integrity | REQ-S20-007 | DG5 | 20 |
+| A08 | Gate controls | REQ-S20-008 | DG4 | 41 |
+| A09 | Decision escalation | REQ-S20-009 | DG4 | 16 |
+| A10 | Benefit integrity | REQ-S20-010 | DG4 | 28 |
+| A11 | Adoption and sustainment | REQ-S20-011 | DG4 | 29 |
+| A12 | Permissions | REQ-S20-012 | DG6 | 40 |
+| A13 | Durable automation | REQ-S20-013 | DG6 | 28 |
+| A14 | Concurrent editing | REQ-S20-014 | DG6 | 9 |
+| A15 | Reporting | REQ-S20-015 | DG5 | 14 |
+| A16 | Health and launch | REQ-S20-016 | DG5 | 12 |
+| A17 | Import and integration | REQ-S20-017 | DG6 | 11 |
+| A18 | Independent deployment | REQ-S20-018 | DG7 | 32 |
+| A19 | Backup and recovery | REQ-S20-019 | DG7 | 6 |
+| A20 | UX and branding | REQ-S20-020 | DG6 | 20 |
+| A21 | No-AI operation | REQ-S20-021 | DG6 | 8 |
+| A22 | Operational readiness | REQ-S20-022 | DG6 | 15 |
+| A23 | Real independent stage reviews | REQ-S20-023 | DG7 | 29 |
+| A24 | Enforced advancement | REQ-S20-024 | DG0 | 15 |
+| A25 | Candidate integrity | REQ-S20-025 | DG0 | 3 |
+| A26 | Repair and re-review | REQ-S20-026 | DG7 | 7 |
+| A27 | Reliable resumption | REQ-S20-027 | DG7 | 10 |
+| A28 | Final package integrity | REQ-S20-028 | DG7 | 14 |
+
+## AN-04 consistency pass
+
+### Consolidated (deleted) IDs
+
+IDs are not renumbered, so the gaps remain. Each keeper row carries the union of the `source_ref` anchors and acceptance conditions, plus a note naming the former ID. Coverage rows were remapped to the keeper.
+
+| Deleted ID | Consolidated into | Reason |
+|---|---|---|
+| REQ-S16-028 | REQ-S10-004 | Same capability: authorization scopes for exports and search indexes (M0330) are a subset of the server-side permission enforcement for records, files, APIs, exports, search and AI retrieval (M0188). |
+| REQ-S02-002 | REQ-DLV-020 | Same capability: the requirements traceability register (M0084-M0087) is the register maintained under §0.5 (M0058). The S02 row sat at DG7 while the same register must be complete at DG0. |
+| REQ-S09-002 | REQ-PB-049 | Same capability: configurable, versioned rubrics and weights (M0176). REQ-PB-049 already specified versioned weight sets. |
+| REQ-S12-008 | REQ-S04-012 | Same behaviour: block gate submission while mandatory evidence is missing (M0228 starter automation, M0125 rule). |
+| REQ-S12-007 | REQ-PB-085 | Same behaviour: a KPI or benefit off track creates or updates one corrective-action case (M0227; B0121, B0093). |
+| REQ-S12-013 | REQ-PB-082 | Same behaviour: a blocker Red across the configured cycles requires one executive ask (M0233; B0131). REQ-PB-082 already cited M0233 and the no-duplicate rule. |
+| REQ-S12-017 | REQ-PB-083 | Same behaviour: accepted BAU handover transfers ownership and activates recurring reviews (M0237). REQ-PB-083 already cited M0237. |
+| REQ-S02-007 | REQ-S18-001 | Same capability: demo data marked synthetic and isolated from production (M0090, M0339). The production-initialization clause is covered by REQ-S18-003. |
+| REQ-S05-004 | REQ-PB-042 | Same capability: the 90-120-minute TOM canvas workshop with conversion of unresolved items (B0063, M0147). Agenda and action conversion are labelled as master-prompt additions in the notes. |
+| REQ-S11-003 | REQ-PB-069 | Same capability: adoption tracked as an outcome against trajectory, with one intervention created when there is a gap (B0105, M0216). |
+| REQ-S08-012 | REQ-PB-058 | Same capability: double-counting prevention, where a shared benefit rolls up once (B0088, M0173). The canonical-register mechanism is labelled as master prompt §8. |
+
+### Gate and increment corrections
+
+Rule applied: a requirement needed by the verbatim pass condition of a scenario, or by a dependent row, must not complete after that scenario's or dependent's gate. Partial earlier increments are allowed and are listed in `stage-plan.md`.
+
+| ID | Before (increments / gate) | After | Reason |
+|---|---|---|---|
+| REQ-S12-009 | P2;P5 / DG5 | P2;P3;P4 / DG4 | Routing the evidence snapshot to approvers is needed by A08 (DG4) and every product gate. |
+| REQ-S12-010 | P2;P5 / DG5 | P2;P3;P4 / DG4 | Enabling the authorized next phase is needed by REQ-S03-004 and the gate controls at DG4. |
+| REQ-S12-011 | P4;P5 / DG5 | P4 / DG4 | A09 (DG4) is a working-day SLA escalation. |
+| REQ-S12-014 | P4;P5 / DG5 | P4 / DG4 | A10 (DG4) and the P4 Finance-validation evidence need the Finance queue. |
+| REQ-S12-016 | P4;P5 / DG5 | P4 / DG4 | A11 (DG4): poor adoption triggers an intervention. |
+| REQ-S18-003 | P5;P7 / DG7 | P5 / DG5 | A22 (DG6) and REQ-PB-088 (DG5) need production/demo separation. The P7 package re-verifies it under A18/A28. |
+
+Starter-automation configurability in the rule builder stays at DG5 under REQ-S12-001 and REQ-S12-002. REQ-S12-001 now names every consolidated starter automation.
+
+### Semantic resolutions (recorded in `notes`)
+
+- **REQ-S07-007 vs REQ-PB-063.** Trajectory-based RAG, which never uses task completion, governs KPIs and the T10 Outcomes area. The other T10 areas keep the playbook's area-specific logic: validated benefit gap, milestone plus outcome risk, decision date or critical path, and adoption curve. The playbook wins for SOURCE content.
+- **REQ-S10-012 vs REQ-PB-081.** The executive-ask fields map onto the verbatim T16 columns, for example Required date → Decision date.
+- **REQ-PB-091 vs REQ-S14-001/002.** The incomplete-assessment rule and Yes=1/No=0 scoring are implementation assumptions (D-010), specified in the S14 rows.
+- **Class review (AN-02 gap 1).** No S01–S13 row was reclassified as SOURCE. Every S row that shares a master-prompt block with a REQ-PB row now names the related SOURCE rows in `notes`. Where an S row's playbook-grounded substance duplicated a REQ-PB row, it was consolidated into that SOURCE row instead (see above), with the master-prompt additions labelled.

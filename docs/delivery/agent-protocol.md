@@ -68,6 +68,8 @@ A severity label never overrides the mandatory-requirement rule. An author never
 
 - Reviewers write only review records and evidence.
 - `qa-verifier` may also write tests under `tests/qa/**` and `e2e/**`.
+  - **Before the candidate freezes:** test-first acceptance tests go there and become part of the candidate.
+  - **During a review of a frozen candidate:** new tests go under `docs/delivery/test-evidence/<DGx>/qa/tests/`, so they don't alter the candidate. The orchestrator promotes them into `tests/qa/` in the next stage.
 - Implementers cannot write gate rules, agent definitions, source documents, reviews, gate records or `stages.json`.
 
 Bash is not path-guarded. Using Bash to write outside your scope is a protocol violation, and the orchestrator checks `git status` after every run. Reviewers who execute code must do so in a disposable copy: a temporary clone or worktree, or a throwaway database or container. Never do it in the candidate tree.

@@ -43,7 +43,7 @@ The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, wit
 
    Unauthorized reads return 404 or 403 without leaking titles.
 5. **Background jobs and connectors** act under the initiating user or a constrained service identity scoped to the rule (REQ-S12-003). A service identity never holds approval rights.
-6. **Demo environment** users see only demo data. Production has no demo users (REQ-S02-007).
+6. **Demo environment** users see only demo data. Production has no demo users (REQ-S18-001, REQ-S18-003; former REQ-S02-007 was consolidated into REQ-S18-001 in AN-04).
 
 ## 3. Action codes
 
