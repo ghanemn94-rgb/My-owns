@@ -1,0 +1,18 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-224",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced on the round-9 candidate cbc755d, cloned to '/tmp/qa10 space dir/مستخدم/old': validate.mjs --pipeline, --reconcile and --stage DG0 each crash with ENOENT on '/tmp/qa10%20space%20dir/%D9%85.../tools/gates/schemas/stages.schema.json' (exit 1). My round-9 regression test QA9-F224 fails there (exit 1). On the new candidate 85a0efa (1e959f25), rules.mjs line 38 uses fileURLToPath(new URL('.', import.meta.url)). In a clone at the same space/Arabic path, --pipeline, --reconcile and --register DG0 pass (exit 0), all 56 gate and agent self-tests pass, and tools/gates/prefreeze.sh DG0 exits 0 there. QA9-F224 passes. My new QA10-7 shows the candidate ID is identical in a plain clone and in a clone under 'qa10 مسار غريب .../My Projects/repo', unchanged by review metadata and changed by a source edit. QA10-8 shows every validator mode runs under such a path, and that a broken register (B9999) is rejected with a diagnostic, not a crash. QA10-8 fails on cbc755d and passes on 85a0efa. QA10-7 passes on both, as expected, because candidate.mjs already used fileURLToPath. No other URL.pathname use remains under tools/. The orchestrator's regression test 'F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters' passes. The fix is complete and correct.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-10/03-f224-verification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-10/05-qa10-new-cases.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r10.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs#QA9-F224",
+        "tools/gates/lib/rules.mjs#L38",
+        "tools/gates/tests/validator.test.mjs#F-DG0-224"
+      ]
+    }
+  ]
+}

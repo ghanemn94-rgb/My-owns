@@ -1,0 +1,33 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-225",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-026",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-023 and the F-DG0-134 fix summary cite a post-fix live worktree probe ('a backend-workflow-engineer run in a worktree had all three writes blocked') that isn't recorded anywhere in the repository",
+      "reproduction": "docs/delivery/decisions.md row D-023 says: 'Verified live: a backend-workflow-engineer run in a worktree had all three writes blocked (two absolute paths into the main repository's protected files, one relative path inside the worktree).' The findings.json fix_summary for F-DG0-134 ends 'live worktree probe blocked', and the round-10 common assignment says 'The regression tests and a recorded live worktree probe back both.' Search: `ls docs/delivery/runs/DG0` has only the round-0 LOAD run for backend-workflow-engineer (DG0-T-DG0-LOAD-backend-workflow-engineer-20260928T115301Z), and no run exists outside the REV/LOAD/AN series. `git show --stat c24ec04 85a0efa` (the fix and record-import commits) adds no run directory and no test-evidence file for the post-fix probe; the only probe logs in them are the round-9 code-security pre-fix reproductions and my own round-9 probe. See docs/delivery/test-evidence/DG0/qa/round-10/10-d023-probe-evidence-search.log.",
+      "expected": "A 'Verified live' claim in a delivery decision cites preserved evidence: the probe run's directory (meta.json, result.json, transcript.jsonl.gz), or at least a test-evidence log with the command, environment and blocked-write output. Otherwise it's reworded so it cites only what's recorded, the regression tests in tools/agents/tests/guard.test.mjs.",
+      "actual": "The claim can't be traced to any recorded artefact. The behaviour itself is correct: I independently verified it with 8 new hook-level cases (QA10-1 to QA10-6 cover worktrees, a tampered worktree guard copy, fail-closed on a missing or empty MTH_GUARD_ROOT, and space/Arabic worktree paths), and with a live probe through this session's own Write tool into my linked worktree /tmp/review-qa-r10 (blocked). So the impact is traceability of one decision-log sentence, not a control gap. Low and non-mandatory. I'd accept it as an observation, but the orchestrator should either attach the probe evidence or reword D-023 in the next candidate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-10/10-d023-probe-evidence-search.log",
+        "docs/delivery/decisions.md#D-023",
+        "docs/delivery/findings.json#F-DG0-134",
+        "docs/delivery/test-evidence/DG0/qa/round-10/09-live-guard-probe.log",
+        "docs/delivery/test-evidence/DG0/qa/round-10/05-qa10-new-cases.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-10/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T17:39:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-10 QA review of candidate 1e959f25 (85a0efa)."
+        }
+      ]
+    }
+  ]
+}
