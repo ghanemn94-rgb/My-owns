@@ -67,3 +67,4 @@ Purpose: section 0.1 of the master prompt. This records what the build environme
 | Date | Change | Reason |
 |---|---|---|
 | 2026-09-28 | Installed `bubblewrap` 0.9.0 and `socat` with apt | They're required by the Claude Code Bash sandbox (D-025). The container has no unprivileged user namespaces, so agents run with `enableWeakerNestedSandbox`. Sandboxed agent shells have no network access. |
+| 2026-09-28 | Claude Code created `~/.config/git/ignore` containing `**/.claude/.cc-writes/` the first time a sandboxed session ran (18:09 UTC). | This is Claude Code's own bookkeeping, a global git exclude for its `.claude/.cc-writes` directory. It's benign. The runner's config scan watches the file, and the live probe's temporary `HOME` pre-creates it so the environment is mirrored. |
