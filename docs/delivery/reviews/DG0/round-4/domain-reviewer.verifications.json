@@ -1,0 +1,87 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-001",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 26642c7 and 6c67698 (parent of fix 73c4854): REQ-PB-049 final_gate DG5, no REQ-PB-093. At the frozen candidate 53f5d17, REQ-PB-049 is final_gate DG3 and its acceptance rejects weights totalling 95%/105%, versions weight sets and names the REQ-S09-005 ranking history. The Studio default is split into REQ-PB-093 (DG5). The stage-plan lists match the register (check_counts exit 0). This satisfies M0406's DG3 evidence 'invalid weights … handled'.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-4/13-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-4/10-staging.log",
+        "docs/delivery/test-evidence/DG0/domain/round-4/11-check_counts.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-002",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 26642c7 and 6c67698: REQ-PB-020 had no T11 reference, the matrix had no T11 Go-live / scale row and SP had only V on the TOM row. At 53f5d17, REQ-PB-020 states SP by default, configurable to BO per T11 'Go-live / scale'. Matrix rule 7 distinguishes the transformation-level G5 from initiative-level T11 decisions, a T11 'Go-live / scale' row exists (Recommend initiative owner, Approve BO, Consult Risk/Tech/CX, Inform SteerCo), and SP has Rv (RACI C) on the TOM row, all consistent with B0099 and B0101.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-4/13-verifications.log",
+        "docs/analysis/permissions-matrix.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-003",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 26642c7 and 6c67698: REQ-PB-055, -085 and -088 carried 'no interpretation beyond the cited blocks'. At 53f5d17 none carries it. Every REQ-PB note separates Playbook, Master-prompt additions and Interpretations, which I read by hand for all 46 rows with a non-empty Interpretations clause. check_pb_provenance.py exits 0.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-4/13-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-4/06-interp.txt",
+        "docs/delivery/test-evidence/DG0/domain/round-4/11-check_pb_provenance.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-004",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 26642c7 and 8c8757a (parent of fix 6c67698): no 'PRACTICAL EDITION' footer and 0 <br> in playbook.md. At 53f5d17, the footer is recorded as '<!-- footer1: BUSINESS TRANSFORMATION PLAYBOOK  |  PRACTICAL EDITION -->' and multi-line cells use <br> (34 occurrences). An independent ElementTree comparison shows 49 of 49 tables and 239 rows equal (whitespace-insensitive), and check_extraction.sh passes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-4/13-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-4/01-extraction.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-005",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 26642c7 and 6c67698: Journey 'رحلة العميل' and Modular mode 'النمط المعياري (الدخول الجزئي)'. At 53f5d17, Journey is 'الرحلة (رحلة العميل أو رحلة العمل)' and Modular mode is 'النمط الجزئي المرن (الدخول عند المرحلة المناسبة)'. Both preserve the English meaning, and the earlier values remain in the glossary's revision table.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-4/13-verifications.log",
+        "docs/analysis/glossary.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-006",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at 18588e7 (parent of fix aa8fa37): REQ-PB-088 did not cite M0348, the M0348 coverage row did not list REQ-PB-088, and the REQ-PB-068 additions did not name M0212. At 53f5d17 all three hold: M0348 is in the PB-088 source_ref, the M0348 coverage row lists REQ-PB-088 (confirmed in my 78-block master-prompt sample), and the PB-068 'Master-prompt additions' names M0212.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-4/13-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-4/09b.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-007",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at eaef1d0 (parent of fix bf7f5e2): agent-protocol.md had no G6/DG7 sentence. At 53f5d17, agent-protocol.md line 10 says 'Product gate G6 (Sustain) never implies that engineering gate DG7 has passed, and DG7 never implies any G1–G6 business approval', and CLAUDE.md line 13 still has 'Product gate G6 never implies DG7'. This matches the REQ-DLV-002 acceptance.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-4/13-verifications.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-008",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced at the round-3 candidate 540b3c6. REQ-PB-050 had 'Master-prompt additions: none' and the interpretation 'initiatives are assigned to waves with dates' (M0135/M0178). REQ-PB-078 filed the canonical-dependency rule (M0150) as an interpretation. REQ-PB-091 filed 'top three actions required, reassessments tracked' (M0288) as an interpretation. At 53f5d17 all three list this content under 'Master-prompt additions' with anchors (PB-050: M0135, M0178, M0180-M0183, Interpretations none; PB-078: M0150, Interpretations none; PB-091: M0262, M0288, keeping only the genuine enforcement reading as an interpretation). The tooling gap is also closed: the candidate's check_pb_provenance.py (new R5-R7) exits 0 on the candidate, and run against the round-3 register it exits 1, flagging PB-050/M0135, PB-078/M0150 and PB-091/M0288 (plus R6 for PB-050). I spot-checked its 10 reviewed R5 false positives and they are genuine. My manual read of every remaining Interpretations clause found no other restated master-prompt content.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-4/13-verifications.log",
+        "docs/delivery/test-evidence/DG0/domain/round-4/13b-r5-on-old.log",
+        "docs/delivery/test-evidence/DG0/domain/round-4/11-check_pb_provenance.log",
+        "docs/delivery/test-evidence/DG0/domain/round-4/06-interp.txt"
+      ]
+    }
+  ]
+}
