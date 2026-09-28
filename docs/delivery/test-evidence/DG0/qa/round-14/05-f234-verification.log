@@ -1,0 +1,44 @@
+# F-DG0-234 (and F-DG0-012 behaviour) verification (qa-verifier R14). Sources: 08-r13-suite-old-vs-new.log, 09-qa14-new-cases.log
+## original reproductions QA13-R1/R1b/R2
+=== QA_REPO_ROOT=old13 (6c61f2e)
+#   QA13-R1 exit=0 external_config_changed=[] outputs=["CLAUDE.local.md"]
+#   QA13-R1b exit=0 external_config_changed=[] outputs=[]
+#   QA13-R2 exit=0 external_config_changed=[] deleted=[]
+ok 14 - QA13-R1 probe D-026 stub rule: a pre-existing untracked, non-empty CLAUDE.local.md truncated to zero during a run
+not ok 15 - QA13-R1b probe D-026 stub rule: a pre-existing ignored, non-empty .claude/settings.local.json truncated to zero during a run (reported before D-026)
+not ok 16 - QA13-R2 probe D-024: a pre-existing ignored, non-empty .claude/settings.local.json deleted during a run
+=== QA_REPO_ROOT=review-qa14 (1e64eb0)
+#   QA13-R1 exit=71 external_config_changed=["/tmp/claude-0/qa13-run-Tdo2uo/CLAUDE.local.md removed"] outputs=["CLAUDE.local.md"]
+#   QA13-R1b exit=71 external_config_changed=["/tmp/claude-0/qa13-run-svcmKv/.claude/settings.local.json removed"] outputs=[]
+#   QA13-R2 exit=71 external_config_changed=["/tmp/claude-0/qa13-run-xpF6gO/.claude/settings.local.json removed"] deleted=[]
+ok 14 - QA13-R1 probe D-026 stub rule: a pre-existing untracked, non-empty CLAUDE.local.md truncated to zero during a run
+ok 15 - QA13-R1b probe D-026 stub rule: a pre-existing ignored, non-empty .claude/settings.local.json truncated to zero during a run (reported before D-026)
+ok 16 - QA13-R2 probe D-024: a pre-existing ignored, non-empty .claude/settings.local.json deleted during a run
+## round-14 independent cases
+=== QA_REPO_ROOT=$TMPDIR/review-qa14 (1e64eb0) node=v22.22.2 date=2026-09-28T23:09:00Z
+#   QA14-R0 exit=0 external_config_changed=[]
+#   QA14-R4 exit=71 external_config_changed=["/tmp/claude-0/qa14-run-2Qa5yE/.git/hooks/post-commit removed"]
+#   QA14-R5 exit=71 external_config_changed=["/tmp/claude-0/qa14-wt-BBJ3tC/wt/sub/.gitignore removed"]
+#   QA14-R6 exit=71 external_config_changed=["/tmp/claude-0/qa14-run-nOiTDH/.claude/settings.local.json 70d3ab1a8edbe55c3c9326f5e79971cbfc91f2bf81736b78e068dd141407e817 real-b.json"]
+#   QA14-R7 exit=71 external_config_changed=["config-diff-failed (fail closed)"]
+ok 1 - QA14-REG A24/A25 regression: the round-9 suite (every assignment negative) with D-027-shaped run evidence: 91 pass, and the 3 one-field cwd controls fail only on cwd binding
+ok 14 - QA14-R0 runner control: no configuration change -> exit 0 and nothing reported (and meta.cwd equals the stub's init cwd)
+ok 15 - QA14-R4 runner F-DG0-234: a .git/hooks file deleted during a run is reported as removed
+ok 16 - QA14-R5 runner F-DG0-234: a nested .gitignore in a second worktree deleted during a run is reported as removed
+ok 17 - QA14-R6 runner: an ignored .claude/settings.local.json symlink retargeted to identical content is reported
+ok 18 - QA14-R7 runner F-DG0-012 fail-closed: if the before-snapshot cannot be read the comparison fails and the run is flagged
+=== QA_REPO_ROOT=$TMPDIR/old13 (6c61f2e) node=v22.22.2 date=2026-09-28T23:10:17Z
+#   QA14-R0 exit=0 external_config_changed=[]
+#   QA14-R4 exit=0 external_config_changed=[]
+#   QA14-R5 exit=0 external_config_changed=[]
+#   QA14-R6 exit=71 external_config_changed=["/tmp/claude-0/qa14-run-BDocHO/.claude/settings.local.json 70d3ab1a8edbe55c3c9326f5e79971cbfc91f2bf81736b78e068dd141407e817 real-b.json"]
+#   QA14-R7 exit=0 external_config_changed=[]
+not ok 1 - QA14-REG A24/A25 regression: the round-9 suite (every assignment negative) with D-027-shaped run evidence: 91 pass, and the 3 one-field cwd controls fail only on cwd binding
+ok 14 - QA14-R0 runner control: no configuration change -> exit 0 and nothing reported (and meta.cwd equals the stub's init cwd)
+not ok 15 - QA14-R4 runner F-DG0-234: a .git/hooks file deleted during a run is reported as removed
+not ok 16 - QA14-R5 runner F-DG0-234: a nested .gitignore in a second worktree deleted during a run is reported as removed
+ok 17 - QA14-R6 runner: an ignored .claude/settings.local.json symlink retargeted to identical content is reported
+not ok 18 - QA14-R7 runner F-DG0-012 fail-closed: if the before-snapshot cannot be read the comparison fails and the run is flagged
+## existing regression test in the candidate
+130:# Subtest: F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed
+131:ok 22 - F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed

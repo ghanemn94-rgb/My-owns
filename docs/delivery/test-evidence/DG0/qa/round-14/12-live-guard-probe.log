@@ -1,0 +1,31 @@
+# live guard probe, qa-verifier R14 run 0634a37b, date=2026-09-28T23:06:08Z
+## 1. Write tool -> docs/source/QA-PROBE.txt: see transcript of this run (tool_result recorded there)
+## 2. Bash shell writes
+$ sh -c 'echo x > docs/source/QA-PROBE.txt'
+sh: 1: cannot create docs/source/QA-PROBE.txt: Read-only file system
+exit=2
+$ sh -c 'echo x > tools/gates/QA-PROBE.txt'
+sh: 1: cannot create tools/gates/QA-PROBE.txt: Read-only file system
+exit=2
+$ sh -c 'echo x > .claude/QA-PROBE.txt'
+sh: 1: cannot create .claude/QA-PROBE.txt: Read-only file system
+exit=2
+$ sh -c 'echo x > docs/delivery/reviews/DG0/round-14/QA-PROBE.txt'
+sh: 1: cannot create docs/delivery/reviews/DG0/round-14/QA-PROBE.txt: Read-only file system
+exit=2
+$ sh -c 'echo x > docs/delivery/requirements.csv.qa-probe'
+exit=0
+$ sh -c 'echo x > .git/QA-PROBE'
+sh: 1: cannot create .git/QA-PROBE: Read-only file system
+exit=2
+## 3. existence after probe
+ls: cannot access 'docs/source/QA-PROBE.txt': No such file or directory
+ls: cannot access 'tools/gates/QA-PROBE.txt': No such file or directory
+ls: cannot access '.claude/QA-PROBE.txt': No such file or directory
+ls: cannot access '.git/QA-PROBE': No such file or directory
+## 4. allowed control
+evidence write ok exit=0
+## 5. judgement
+Write tool: BLOCKED by write guard (protected path) - PASS.
+Bash: docs/source, tools/gates, .claude, reviews/DG0/round-14, .git refused (Read-only file system) - PASS.
+Bash: a NEW file next to docs/delivery/requirements.csv was creatable (exit 0); removed immediately (rm exit 0). This is the disclosed residual in docs/delivery/threat-model.md line 42 ('New untracked files where the sandbox leaves the working directory writable'; detected by git status and the runner's snapshots), not a breach of a mechanically prevented control. Existing tracked files are refused (see requirements.csv is untouched: git status clean for it).

@@ -1,0 +1,38 @@
+=== old13 (6c61f2e)
+$ grep -n 'setting-sources' docs/delivery/agents.md | grep -o 'setting-sources [^ ]*'
+28: setting-sources project,local 104: setting-sources project
+$ grep -o 'disposable copy ([^)]*)' .claude/agents/{domain-reviewer,code-security-reviewer,qa-verifier}.md
+.claude/agents/qa-verifier.md:disposable copy (for example `git worktree add /tmp/review-<id> <commit>`, or a throwaway database)
+.claude/agents/domain-reviewer.md:disposable copy (for example `git worktree add /tmp/review-<id> <commit>`, or a throwaway database)
+.claude/agents/code-security-reviewer.md:disposable copy (for example `git worktree add /tmp/review-<id> <commit>`, or a throwaway database)
+$ grep -n 'worktree add\|/tmp/review\|clone <repo> /tmp' docs/delivery/agent-protocol.md docs/delivery/agents.md .claude/agents/*.md tools/agents/agent_settings.py tools/agents/run-agent.sh
+.claude/agents/code-security-reviewer.md:33:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an o
+docs/delivery/agent-protocol.md:79:Your Bash commands run in an OS sandbox (bubblewrap; D-025). Shell writes to protected paths fail with "Read-only file system": git metadata, Claude configuration, g
+.claude/agents/qa-verifier.md:31:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional nar
+.claude/agents/domain-reviewer.md:33:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional
+$ grep -n 'project,local' docs/delivery/decisions.md tools/agents/run-agent.sh docs/delivery/agents.md | cut -c1-160
+docs/delivery/agents.md:28:No role may write a `.git` path segment.
+ never is. The runner starts agents with `--setting-sources project,local` and detects changes to configuration outside the candidate (D-024). It checks 
+docs/delivery/decisions.md:30:| D-024 | 2026-09-28 | delivery-orchestr
+cked.<br>• The runner starts agents with `--setting-sources project,local`, so user-level settings (for example `disableAllHooks`) can't switch the guard
+=== review-qa14 (1e64eb0)
+$ grep -n 'setting-sources' docs/delivery/agents.md | grep -o 'setting-sources [^ ]*'
+28: setting-sources project 104: setting-sources project
+$ grep -o 'disposable copy ([^)]*)' .claude/agents/{domain-reviewer,code-security-reviewer,qa-verifier}.md
+.claude/agents/domain-reviewer.md:disposable copy (for example `git clone <repo> "$TMPDIR/review-<id>"` and check out the commit, or a throwaway database)
+.claude/agents/qa-verifier.md:disposable copy (for example `git clone <repo> "$TMPDIR/review-<id>"` and check out the commit, or a throwaway database)
+.claude/agents/code-security-reviewer.md:disposable copy (for example `git clone <repo> "$TMPDIR/review-<id>"` and check out the commit, or a throwaway database)
+$ grep -n 'worktree add\|/tmp/review\|clone <repo> /tmp' docs/delivery/agent-protocol.md docs/delivery/agents.md .claude/agents/*.md tools/agents/agent_settings.py tools/agents/run-agent.sh
+docs/delivery/agent-protocol.md:79:Your Bash commands run in an OS sandbox (bubblewrap; D-025). Shell writes to protected paths fail with "Read-only file system": git metadata, Claude configuration, g
+.claude/agents/qa-verifier.md:31:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional nar
+.claude/agents/code-security-reviewer.md:33:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an o
+.claude/agents/domain-reviewer.md:33:Follow `docs/delivery/agent-protocol.md` exactly. Write your JSON review record (it must validate against `tools/gates/schemas/review.schema.json`) and an optional
+$ grep -n 'project,local' docs/delivery/decisions.md tools/agents/run-agent.sh docs/delivery/agents.md | cut -c1-160
+docs/delivery/decisions.md:30:| D-024 | 2026-09-28 | delivery-orchestr
+cked.<br>• The runner starts agents with `--setting-sources project,local` (superseded by D-025: `project` only), so user-level settings (for example `di
+docs/delivery/decisions.md:33:| D-027 | 2026-09-28 | delivery-orchestr
+e reviewer definitions no longer mention `--setting-sources project,local` or `git worktree add /tmp`. | Found in round 13 by code-security (F-DG0-141, r
+=== live: git worktree add in this sandbox (the old instruction)
+fatal: could not create leading directories of '.git/worktrees/review-qa14-probe': Read-only file system
+exit=128
+=== live: git clone to $TMPDIR (the new instruction) worked: see 01..07 logs (cwd=/tmp/claude-0/review-qa14)

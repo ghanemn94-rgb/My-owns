@@ -1,0 +1,145 @@
+$ sh -c node --test tools/agents/tests/*.test.mjs
+# cwd=/tmp/claude-0/review-qa14 node=v22.22.2 date=2026-09-28T22:42:45Z
+TAP version 13
+# Subtest: reviewers may write only review records and evidence
+ok 1 - reviewers may write only review records and evidence
+  ---
+  duration_ms: 44.368311
+  type: 'test'
+  ...
+# Subtest: qa-verifier may add tests under tests/qa and e2e but not product code
+ok 2 - qa-verifier may add tests under tests/qa and e2e but not product code
+  ---
+  duration_ms: 11.008042
+  type: 'test'
+  ...
+# Subtest: implementers cannot edit gate rules, agent definitions, sources or gate records
+ok 3 - implementers cannot edit gate rules, agent definitions, sources or gate records
+  ---
+  duration_ms: 212.123358
+  type: 'test'
+  ...
+# Subtest: release-auditor writes gate decisions but not implementation
+ok 4 - release-auditor writes gate decisions but not implementation
+  ---
+  duration_ms: 11.487154
+  type: 'test'
+  ...
+# Subtest: transformation-analyst is limited to analysis outputs and the register
+ok 5 - transformation-analyst is limited to analysis outputs and the register
+  ---
+  duration_ms: 11.482514
+  type: 'test'
+  ...
+# Subtest: unknown roles are denied and scratch space outside a repo is allowed
+ok 6 - unknown roles are denied and scratch space outside a repo is allowed
+  ---
+  duration_ms: 8.310755
+  type: 'test'
+  ...
+# Subtest: the hook entry point blocks with exit code 2 and allows with 0
+ok 7 - the hook entry point blocks with exit code 2 and allows with 0
+  ---
+  duration_ms: 167.146106
+  type: 'test'
+  ...
+# Subtest: implementers cannot write reviewer test evidence
+ok 8 - implementers cannot write reviewer test evidence
+  ---
+  duration_ms: 8.872254
+  type: 'test'
+  ...
+# Subtest: F-DG0-105: Claude configuration surfaces and the unrelated project are protected from implementers
+ok 9 - F-DG0-105: Claude configuration surfaces and the unrelated project are protected from implementers
+  ---
+  duration_ms: 85.309338
+  type: 'test'
+  ...
+# Subtest: F-DG0-105: writes through a symlink into a protected path are blocked
+ok 10 - F-DG0-105: writes through a symlink into a protected path are blocked
+  ---
+  duration_ms: 13.040839
+  type: 'test'
+  ...
+# Subtest: F-DG0-105: protected-path matching is case-insensitive
+ok 11 - F-DG0-105: protected-path matching is case-insensitive
+  ---
+  duration_ms: 6.800055
+  type: 'test'
+  ...
+# Subtest: F-DG0-111: a planted nested .git cannot move the guarded root; .git paths are never writable
+ok 12 - F-DG0-111: a planted nested .git cannot move the guarded root; .git paths are never writable
+  ---
+  duration_ms: 31.205405
+  type: 'test'
+  ...
+# Subtest: the production guard root is this repository
+ok 13 - the production guard root is this repository
+  ---
+  duration_ms: 7.738722
+  type: 'test'
+  ...
+# Subtest: F-DG0-134: the repository's worktrees are guarded too, from any working directory
+ok 14 - F-DG0-134: the repository's worktrees are guarded too, from any working directory
+  ---
+  duration_ms: 230.979121
+  type: 'test'
+  ...
+# Subtest: F-DG0-134: every role's hook command takes the guard from MTH_GUARD_ROOT and fails closed without it
+ok 15 - F-DG0-134: every role's hook command takes the guard from MTH_GUARD_ROOT and fails closed without it
+  ---
+  duration_ms: 42.050306
+  type: 'test'
+  ...
+# Subtest: F-DG0-135: the guard fails closed when the guarded roots cannot be determined
+ok 16 - F-DG0-135: the guard fails closed when the guarded roots cannot be determined
+  ---
+  duration_ms: 44.946468
+  type: 'test'
+  ...
+# Subtest: F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable
+ok 17 - F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable
+  ---
+  duration_ms: 178.157535
+  type: 'test'
+  ...
+# Subtest: F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory
+ok 18 - F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory
+  ---
+  duration_ms: 172.002072
+  type: 'test'
+  ...
+# Subtest: F-DG0-140: modules planted in the repository root are never imported by the runner's helpers
+ok 19 - F-DG0-140: modules planted in the repository root are never imported by the runner's helpers
+  ---
+  duration_ms: 691.382947
+  type: 'test'
+  ...
+# Subtest: D-026: zero-length untracked sandbox stubs are not reported as configuration changes
+ok 20 - D-026: zero-length untracked sandbox stubs are not reported as configuration changes
+  ---
+  duration_ms: 683.48131
+  type: 'test'
+  ...
+# Subtest: D-026: configuration with content, a symlink, or a truncated tracked file is still reported (exit 71, no auto-commit)
+ok 21 - D-026: configuration with content, a symlink, or a truncated tracked file is still reported (exit 71, no auto-commit)
+  ---
+  duration_ms: 588.972474
+  type: 'test'
+  ...
+# Subtest: F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed
+ok 22 - F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed
+  ---
+  duration_ms: 615.798208
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2684.602318
+exit=0

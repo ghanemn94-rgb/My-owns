@@ -1,0 +1,75 @@
+# F-DG0-233 verification (qa-verifier R14). Sources: 08-r13-suite-old-vs-new.log, 09-qa14-new-cases.log, 10-real-runs-cwd-binding.log
+## original reproduction QA13-V5 with the round-13 fixture (its transcripts have no init cwd, so on 1e64eb0 every run also fails 'init cwd undefined'; the clean repro is QA14-V12 below)
+=== QA_REPO_ROOT=old13 (6c61f2e)
+#   QA13-V5 errors: []
+not ok 6 - QA13-V5 F-DG0-230 residual: a run whose meta.cwd is forged to the foreign root its deny list protects (transcript init/prompt say /work/repo) should not bind
+=== QA_REPO_ROOT=review-qa14 (1e64eb0)
+#   QA13-V5 errors: ["review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): invocation DG0-T-DG0-REV-R2-domain-reviewer-20260928T133000Z-00000022: transcript init cwd undefined != meta.cwd /work/repo","review code-security-reviewer (docs/delivery/reviews/DG0/round-2/code-security-reviewer.json): invocation DG0-T-DG0-REV-R2-code-security-reviewer-20260928T133000Z-00000023
+ok 6 - QA13-V5 F-DG0-230 residual: a run whose meta.cwd is forged to the foreign root its deny list protects (transcript init/prompt say /work/repo) should not bind
+## round-14 independent cases (new candidate first, then 6c61f2e)
+=== QA_REPO_ROOT=$TMPDIR/review-qa14 (1e64eb0) node=v22.22.2 date=2026-09-28T23:09:00Z
+#   QA14-V9 errors: []
+#   QA14-V10 errors: []
+#   QA14-V11 errors: ["review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000014: docs/delivery/reviews/DG0/round-2/qa-verifier.json cannot be reconstructed from this run's own successful Write/Edit calls in its transcript","finding F-DG0-201 (Mediu
+#   QA14-V1 errors: []
+#   QA14-V2 errors: ["review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000024: transcript init cwd undefined != meta.cwd /work/repo","finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-0000
+#   QA14-V3 errors: ["review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000029: the replayed prompt names working directory /work/repo, not meta.cwd /somewhere/else","finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R2-q
+#   QA14-V12 errors: ["review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000034: transcript init cwd /work/repo != meta.cwd /somewhere/else","review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-ve
+#   QA14-V4 errors: ["review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000039: the replayed prompt names working directory <none>, not meta.cwd /work/repo","finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R2-qa-verifie
+#   QA14-V5 errors: ["review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000044: transcript init cwd /work/repo != meta.cwd /work/repo/","review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifie
+#   QA14-V6 errors: []
+#   QA14-V6 accepted=true
+#   QA14-V7 errors: []
+#   QA14-V7 accepted=true
+#   QA14-V8 errors: []
+ok 2 - QA14-V9 positive (consistent QA9-C01): a path with spaces, parentheses and Arabic characters binds when all agree
+ok 3 - QA14-V10 positive (consistent QA7-N77): Write tool paths that are absolute under a consistent meta.cwd bind
+ok 4 - QA14-V11 negative: absolute Write paths under /fake/cwd while meta/init/prompt say /work/repo do not count as authored
+ok 5 - QA14-V1 control: init.cwd = meta.cwd = prompt cwd = deny-list root validates cleanly
+ok 6 - QA14-V2 F-DG0-233: an init line without a cwd field cannot bind
+ok 7 - QA14-V3 F-DG0-233: meta.cwd and init.cwd forged consistently to the deny-list root, prompt still /work/repo -> rejected
+ok 8 - QA14-V12 F-DG0-233 original repro (QA13-V5) on the init-cwd fixture: meta.cwd + deny list forged, init and prompt say /work/repo -> rejected by both checks
+ok 9 - QA14-V4 F-DG0-233: a replayed prompt with no working-directory sentence cannot bind
+ok 10 - QA14-V5 F-DG0-233: meta.cwd '/work/repo/' (trailing slash) does not equal the transcript's /work/repo (strict, fails closed)
+ok 11 - QA14-V6 limit probe (disclosed residual 1): meta, init, prompt and deny list all consistently name a foreign root
+ok 12 - QA14-V7 limit probe: a resume init line (same session) naming a different cwd
+ok 13 - QA14-V8 positive: a working directory with spaces binds when meta, init, prompt and deny list agree
+=== QA_REPO_ROOT=$TMPDIR/old13 (6c61f2e) node=v22.22.2 date=2026-09-28T23:10:17Z
+#   QA14-V9 errors: []
+#   QA14-V10 errors: []
+#   QA14-V11 errors: ["review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000014: docs/delivery/reviews/DG0/round-2/qa-verifier.json cannot be reconstructed from this run's own successful Write/Edit calls in its transcript","finding F-DG0-201 (Mediu
+#   QA14-V1 errors: []
+#   QA14-V2 errors: []
+#   QA14-V3 errors: []
+#   QA14-V12 errors: []
+#   QA14-V4 errors: []
+#   QA14-V5 errors: []
+#   QA14-V6 errors: []
+#   QA14-V6 accepted=true
+#   QA14-V7 errors: []
+#   QA14-V7 accepted=true
+#   QA14-V8 errors: []
+ok 2 - QA14-V9 positive (consistent QA9-C01): a path with spaces, parentheses and Arabic characters binds when all agree
+ok 3 - QA14-V10 positive (consistent QA7-N77): Write tool paths that are absolute under a consistent meta.cwd bind
+ok 4 - QA14-V11 negative: absolute Write paths under /fake/cwd while meta/init/prompt say /work/repo do not count as authored
+ok 5 - QA14-V1 control: init.cwd = meta.cwd = prompt cwd = deny-list root validates cleanly
+not ok 6 - QA14-V2 F-DG0-233: an init line without a cwd field cannot bind
+not ok 7 - QA14-V3 F-DG0-233: meta.cwd and init.cwd forged consistently to the deny-list root, prompt still /work/repo -> rejected
+not ok 8 - QA14-V12 F-DG0-233 original repro (QA13-V5) on the init-cwd fixture: meta.cwd + deny list forged, init and prompt say /work/repo -> rejected by both checks
+not ok 9 - QA14-V4 F-DG0-233: a replayed prompt with no working-directory sentence cannot bind
+not ok 10 - QA14-V5 F-DG0-233: meta.cwd '/work/repo/' (trailing slash) does not equal the transcript's /work/repo (strict, fails closed)
+ok 11 - QA14-V6 limit probe (disclosed residual 1): meta, init, prompt and deny list all consistently name a foreign root
+ok 12 - QA14-V7 limit probe: a resume init line (same session) naming a different cwd
+ok 13 - QA14-V8 positive: a working directory with spaces binds when meta, init, prompt and deny list agree
+## existing regression test in the candidate
+298:# Subtest: F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the replayed prompt)
+299:ok 50 - F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the replayed prompt)
+## real recorded runs (10-real-runs-cwd-binding.log, HEAD 8c5a694)
+63 runs with a transcript: init cwd == meta.cwd for all 63 (0 init mismatches; every resume init line too).
+Replayed-prompt 'Your working directory is' == meta.cwd for all 26 runs that carry a string-content replayed prompt;
+the 37 others (LOAD, AN-01..10, reviews R1-R6) predate D-022 prompt replay and would already fail the pre-existing
+replayed-prompt check, so the new line changes nothing for them. 3 runs skipped as in progress / no transcript (this run; R5 QA/SEC).
+## judgement
+PASS: meta.cwd is now bound to both transcript-produced statements; one-field and two-field forgeries are rejected (QA13-V5, QA14-V2..V5).
+Limits (not findings; disclosed residual 1, self-hashed run evidence): QA14-V6 whole-evidence consistent forgery and
+QA14-V7 an extra resume init line with another cwd are accepted. Neither can be produced by the runner (single --cwd for all attempts).

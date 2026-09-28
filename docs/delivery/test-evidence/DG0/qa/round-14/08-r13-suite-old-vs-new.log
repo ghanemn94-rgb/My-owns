@@ -1,0 +1,52 @@
+=== QA_REPO_ROOT=old13 (6c61f2e)
+#   QA13-V5 errors: []
+#   QA13-R1 exit=0 external_config_changed=[] outputs=["CLAUDE.local.md"]
+#   QA13-R1b exit=0 external_config_changed=[] outputs=[]
+#   QA13-R2 exit=0 external_config_changed=[] deleted=[]
+ok 1 - QA13-REG A24/A25 regression: the 94-case round-9 suite (every assignment negative) passes against the candidate with D-026-shaped run evidence
+ok 2 - QA13-V1 control: the D-026-adapted fixture validates cleanly
+ok 3 - QA13-V2 F-DG0-230/D-026: a deny list without docs/source (the round-12 runner shape) is rejected
+ok 4 - QA13-V3 F-DG0-230: a run whose meta has no cwd cannot bind a record (the deny list cannot be anchored)
+ok 5 - QA13-V4 F-DG0-230: non-normalised deny entries (<cwd>/./x) are rejected; the check fails closed
+not ok 6 - QA13-V5 F-DG0-230 residual: a run whose meta.cwd is forged to the foreign root its deny list protects (transcript init/prompt say /work/repo) should not bind
+ok 7 - QA13-S1 sandbox-run: an uncommitted edit of a tracked file never reaches the command (it checks the committed revision)
+ok 8 - QA13-S2 sandbox-run: BASH_ENV, NODE_OPTIONS, PYTHONPATH and PYTHONSTARTUP from the caller do not reach the sandboxed command
+ok 9 - QA13-S3 sandbox-run: a hook planted in the source repository's .git/hooks never runs during clone/checkout
+ok 10 - QA13-S4 sandbox-run: an unknown revision fails before the command runs
+ok 11 - QA13-S5 sandbox-run: the command can write neither the source repository's .git nor the caller's HOME
+ok 12 - QA13-S6 F-DG0-229 regression: prefreeze never imports gitignored bytecode planted next to an analysis check
+ok 13 - QA13-S7 prefreeze: an uncommitted edit of a tracked candidate file fails (the sandboxed checks see HEAD only; the final check catches the drift)
+ok 14 - QA13-R1 probe D-026 stub rule: a pre-existing untracked, non-empty CLAUDE.local.md truncated to zero during a run
+not ok 15 - QA13-R1b probe D-026 stub rule: a pre-existing ignored, non-empty .claude/settings.local.json truncated to zero during a run (reported before D-026)
+not ok 16 - QA13-R2 probe D-024: a pre-existing ignored, non-empty .claude/settings.local.json deleted during a run
+ok 17 - QA13-R3 D-026 by design: zero-length untracked .gitattributes and nested .claude files are ignored; the same files with content are reported
+ok 18 - QA13-C1 A25: review metadata leaves the candidate unchanged; a new tests/qa file (or a mode change) changes it
+# tests 18
+# pass 15
+# fail 3
+=== QA_REPO_ROOT=review-qa14 (1e64eb0)
+#   QA13-V5 errors: ["review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): invocation DG0-T-DG0-REV-R2-domain-reviewer-20260928T133000Z-00000022: transcript init cwd undefined != meta.cwd /work/repo","review code-security-reviewer (docs/delivery/reviews/DG0/round-2/code-security-reviewer.json): invocation DG0-T-DG0-REV-R2-code-security-reviewer-20260928T133000Z-00000023: transcript init cwd undefined != meta.cwd /work/repo","review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000024: transcript init cwd undefined != meta.cwd /somewhere/else","review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000024: the replayed prompt names working directory /work/repo, not meta.cwd /somewhere/else","review release-auditor (docs/delivery/reviews/DG0/round-2/release-auditor.json): invocation DG0-T-DG0-REV-R2-release-auditor-20260928T133000Z-00000025: transcript init cwd undefined != meta.cwd /work/repo","finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000024: transcript init cwd undefined != meta.cwd /somewhere/else","finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000024: the replayed prompt names working directory /work/repo, not meta.cwd /somewhere/else"]
+#   QA13-R1 exit=71 external_config_changed=["/tmp/claude-0/qa13-run-Tdo2uo/CLAUDE.local.md removed"] outputs=["CLAUDE.local.md"]
+#   QA13-R1b exit=71 external_config_changed=["/tmp/claude-0/qa13-run-svcmKv/.claude/settings.local.json removed"] outputs=[]
+#   QA13-R2 exit=71 external_config_changed=["/tmp/claude-0/qa13-run-xpF6gO/.claude/settings.local.json removed"] deleted=[]
+not ok 1 - QA13-REG A24/A25 regression: the 94-case round-9 suite (every assignment negative) passes against the candidate with D-026-shaped run evidence
+not ok 2 - QA13-V1 control: the D-026-adapted fixture validates cleanly
+ok 3 - QA13-V2 F-DG0-230/D-026: a deny list without docs/source (the round-12 runner shape) is rejected
+ok 4 - QA13-V3 F-DG0-230: a run whose meta has no cwd cannot bind a record (the deny list cannot be anchored)
+ok 5 - QA13-V4 F-DG0-230: non-normalised deny entries (<cwd>/./x) are rejected; the check fails closed
+ok 6 - QA13-V5 F-DG0-230 residual: a run whose meta.cwd is forged to the foreign root its deny list protects (transcript init/prompt say /work/repo) should not bind
+ok 7 - QA13-S1 sandbox-run: an uncommitted edit of a tracked file never reaches the command (it checks the committed revision)
+ok 8 - QA13-S2 sandbox-run: BASH_ENV, NODE_OPTIONS, PYTHONPATH and PYTHONSTARTUP from the caller do not reach the sandboxed command
+ok 9 - QA13-S3 sandbox-run: a hook planted in the source repository's .git/hooks never runs during clone/checkout
+ok 10 - QA13-S4 sandbox-run: an unknown revision fails before the command runs
+ok 11 - QA13-S5 sandbox-run: the command can write neither the source repository's .git nor the caller's HOME
+ok 12 - QA13-S6 F-DG0-229 regression: prefreeze never imports gitignored bytecode planted next to an analysis check
+ok 13 - QA13-S7 prefreeze: an uncommitted edit of a tracked candidate file fails (the sandboxed checks see HEAD only; the final check catches the drift)
+ok 14 - QA13-R1 probe D-026 stub rule: a pre-existing untracked, non-empty CLAUDE.local.md truncated to zero during a run
+ok 15 - QA13-R1b probe D-026 stub rule: a pre-existing ignored, non-empty .claude/settings.local.json truncated to zero during a run (reported before D-026)
+ok 16 - QA13-R2 probe D-024: a pre-existing ignored, non-empty .claude/settings.local.json deleted during a run
+ok 17 - QA13-R3 D-026 by design: zero-length untracked .gitattributes and nested .claude files are ignored; the same files with content are reported
+ok 18 - QA13-C1 A25: review metadata leaves the candidate unchanged; a new tests/qa file (or a mode change) changes it
+# tests 18
+# pass 16
+# fail 2

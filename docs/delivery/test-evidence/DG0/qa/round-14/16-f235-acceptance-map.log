@@ -1,0 +1,24 @@
+# F-DG0-235 reproduction (qa-verifier R14), candidate clone 1e64eb0, date=2026-09-28T23:07:59Z
+$ python3 -c '<print REQ-DLV-042 acceptance/final_gate from docs/delivery/requirements.csv>'
+acceptance starts: A18;A23;A24: | increments: P1 | final_gate: DG1 | status: SPECIFIED
+$ grep -c 'REQ-DLV-042' docs/analysis/acceptance-map.md
+0
+$ grep -nE '^\| A(18|23|24) ' docs/analysis/acceptance-map.md
+45:| A18 | Independent deployment | REQ-S20-018 | ops drill | P1 | DG7 | REQ-DLV-039; REQ-S01-001, REQ-S01-006; REQ-S15-005; REQ-S16-004, REQ-S16-006..009, REQ-S16-031; REQ-S17-009; REQ-S18-003; REQ-S19-001..005, REQ-S19-007..011, REQ-S19-013..019; REQ-S21-003..004 |
+50:| A23 | Real independent stage reviews | REQ-S20-023 | unit (validator);ops (gate audit) | P0 (validator unit tests); gate evidence from DG0 | DG7 | REQ-DLV-001..002, REQ-DLV-004..014, REQ-DLV-021, REQ-DLV-026, REQ-DLV-028, REQ-DLV-031..039; REQ-S20-031; REQ-S21-002, REQ-S21-004 |
+51:| A24 | Enforced advancement | REQ-S20-024 | unit (validator);CI | P0 | DG0 | REQ-DLV-007, REQ-DLV-013, REQ-DLV-015..017, REQ-DLV-019..020, REQ-DLV-023..026, REQ-DLV-032, REQ-DLV-040; REQ-S02-005 |
+76:| A24 | DG0 | REQ-DLV-024 (DG7), REQ-DLV-025 (DG1), REQ-DLV-040 (DG7), REQ-S02-005 (DG7) |
+$ sed -n 5,12p docs/analysis/acceptance-map.md  (the map's own completeness rule)
+For each acceptance scenario, this map lists:
+- the executable-test requirement (`REQ-S20-###`);
+- the requirements whose `acceptance` column cites the scenario, which the test proves;
+- the test level;
+- the stage in which the executable test is first delivered;
+- the gate at which it must pass.
+
+Test levels follow M0399: unit for formulas and state rules, integration for persistence, authorization and jobs, end-to-end for business journeys, visual for both languages and report outputs, and ops drill for deployment, recovery and delivery-process scenarios.
+**AN-05 update.**
+$ git log --oneline -1 -- docs/analysis/acceptance-map.md   (last changed before AN-13 added REQ-DLV-042 in d753cfb)
+73c4854 DG0 repair: register and analysis fixes (F-DG0-001/002/003/005/203), runner outage resilience
+--- same independent check at round 13 (candidate 6c61f2e): docs/delivery/test-evidence/DG0/qa/round-13/15-acceptance-feasibility.log -> RESULT: PASS
+--- round 14: 15-acceptance-feasibility.log -> 3 errors (A18/A23/A24 omit REQ-DLV-042)

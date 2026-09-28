@@ -1,0 +1,16 @@
+$ git rev-parse HEAD; git log --oneline 1e64eb02..HEAD; git diff --stat 1e64eb02 HEAD -- . ':!docs/delivery/reviews' ':!docs/delivery/runs' ':!docs/delivery/test-evidence' ':!docs/delivery/assignments' ':!docs/delivery/candidates' ':!docs/delivery/stages.json' ':!docs/delivery/findings.json' ':!docs/delivery/progress.md' ':!docs/delivery/gates' ':!docs/delivery/handbacks'   # date=2026-09-28T23:07:47Z
+8c5a69493b5ad5bf6915696339e6e90a538460ae
+8c5a694 DG0 round 14: code-security test evidence incl. incident disclosure (hashes match the run outputs)
+6a5b858 run: DG0-T-DG0-REV-SEC-R14-code-security-reviewer-20260928T224157Z-da3ae857 (review evidence, auto-committed by run-agent.sh)
+662aa72 DG0 round 14: domain test evidence (hashes match the run outputs)
+1d874e5 run: DG0-T-DG0-REV-DOM-R14-domain-reviewer-20260928T224157Z-7988280f (review evidence, auto-committed by run-agent.sh)
+84d709c DG0: live guard probe against the round-14 candidate (PASS)
+c372d2b DG0: freeze round-14 candidate, round-14 assignments
+--- non-metadata diff since freeze (expect empty):
+--- end
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:a25db736652685e24073f8ddf6d7932d4df459b5c64efc04a6e5716c8f962552","files":86}
+exit=0
+expected: sha256:a25db736652685e24073f8ddf6d7932d4df459b5c64efc04a6e5716c8f962552 (docs/delivery/candidates/DG0/a25db736652685e2.manifest.json)
+$ sha256sum docs/delivery/assignments/DG0/round-14/review-qa-verifier.md
+d58ce9d9fd1ccb9d365ddfd127aa0d2554d6fa56ecc649c33216d975e79ec30c  docs/delivery/assignments/DG0/round-14/review-qa-verifier.md
