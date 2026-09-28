@@ -1,0 +1,66 @@
+{
+ "hooks": {
+  "PreToolUse": [
+   {
+    "matcher": "Write|Edit|NotebookEdit|MultiEdit",
+    "hooks": [
+     {
+      "type": "command",
+      "command": "if [ -z \"$MTH_GUARD_ROOT\" ]; then echo \"write guard: MTH_GUARD_ROOT is not set (run agents through tools/agents/run-agent.sh)\" >&2; exit 2; fi; g=\"$MTH_GUARD_ROOT/tools/agents/guard-write.mjs\"; if [ -f \"$g\" ]; then node \"$g\" backend-workflow-engineer; rc=$?; else echo \"write guard missing\" >&2; rc=2; fi; [ \"$rc\" -eq 0 ] || exit 2"
+     }
+    ]
+   }
+  ]
+ },
+ "sandbox": {
+  "enabled": true,
+  "failIfUnavailable": true,
+  "allowUnsandboxedCommands": false,
+  "autoAllowBashIfSandboxed": true,
+  "enableWeakerNestedSandbox": true,
+  "filesystem": {
+   "denyWrite": [
+    "/var/tmp/tmp.tUZTSSGEtn/clone/.claude",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/.git",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/.gitattributes",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/.github",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/.gitignore",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/.mcp.json",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/CLAUDE.local.md",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/CLAUDE.md",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/docs/delivery/assignments",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/docs/delivery/candidates",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/docs/delivery/findings.json",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/docs/delivery/gates",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/docs/delivery/reviews",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/docs/delivery/runs",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/docs/delivery/stages.json",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/docs/source",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/tools/agents",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/tools/gates",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/tools/source",
+    "/var/tmp/tmp.tUZTSSGEtn/clone/trading_agent",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/.claude",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/.git",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/.gitattributes",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/.github",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/.gitignore",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/.mcp.json",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/CLAUDE.local.md",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/CLAUDE.md",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/docs/delivery/assignments",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/docs/delivery/candidates",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/docs/delivery/findings.json",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/docs/delivery/gates",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/docs/delivery/reviews",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/docs/delivery/runs",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/docs/delivery/stages.json",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/docs/source",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/tools/agents",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/tools/gates",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/tools/source",
+    "/var/tmp/tmp.tUZTSSGEtn/worktree/trading_agent"
+   ]
+  }
+ }
+}
