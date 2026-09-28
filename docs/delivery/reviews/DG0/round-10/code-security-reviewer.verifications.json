@@ -1,0 +1,18 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-134",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed in c24ec04 (in candidate 85a0efa, sha256:1e959f25...0c54). Hook selection no longer depends on the hook's cwd. Every role's settings and frontmatter hook now runs $MTH_GUARD_ROOT/tools/agents/guard-write.mjs, and fails closed with exit 2 when MTH_GUARD_ROOT is unset. run-agent.sh:102 exports MTH_GUARD_ROOT=$REPO_ROOT, and the agent's Bash can't change the parent process environment. guard-write.mjs:44 takes GUARD_ROOT from it, and guardedRoots() adds every 'git worktree list' entry, with the deepest root winning. Differential reproduction with my own script (repro-r10-guard.sh), which runs the real hook commands. OLD cbc755d, section A: all 15 writes from cwd = worktree into the main repository's protected paths (rules.mjs, stages.json, .claude/settings.local.json, gates/DG1.json, write-scopes.json; roles backend-workflow-engineer, transformation-analyst, code-security-reviewer) return rc=0, ALLOWED. Section C, the Bash-cd nested repo with a planted allow-all guard: rc=0. NEW 85a0efa: all 15 return rc=2, and C returns rc=2. The worktree's own protected paths, absolute and relative, return rc=2. In-scope controls return rc=0. The live runner probe (05-live..., control run) confirms that the hook blocks under the real runner. The regression tests in guard.test.mjs (both F-DG0-134 tests) pass: 56/56 node tests. The defect reported here, the guard being chosen from the hook's cwd so that worktree mode left the main repository unguarded, is fully fixed. The fix introduced a separate fail-open path: on git errors, worktrees drop out of the guarded roots, where the old hook failed closed. It needs its own repair and regression test, so I raised it as new finding F-DG0-135 (Medium, mandatory), which keeps the gate blocked, rather than keeping this finding open.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-10/repro-r10-guard.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-10/03-guard-repro-old-cbc755d.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-10/04-guard-repro-new-85a0efa.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-10/05-live-user-settings-disable-hooks.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-10/01-existing-tests.log",
+        "tools/agents/tests/guard.test.mjs#F-DG0-134"
+      ]
+    }
+  ]
+}

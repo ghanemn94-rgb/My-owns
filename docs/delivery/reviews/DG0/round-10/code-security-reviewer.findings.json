@@ -1,0 +1,66 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-135",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Regression from the F-DG0-134 fix: guardedRoots() swallows git errors, so when 'git worktree list' fails the worktrees drop out of the guarded roots and their protected paths become writable. An agent can trigger the failure with one Write to ~/.gitconfig, which the guard allows as scratch",
+      "reproduction": "tools/agents/guard-write.mjs:47-54: guardedRoots() runs 'git -C <root> worktree list --porcelain' inside try { } catch { /* git unavailable: the root itself is still guarded */ }. On any git error, only MTH_GUARD_ROOT stays guarded. decideOne() (guard-write.mjs:98-99) then returns allow ('outside the guarded repository (scratch)') for every path inside a worktree that lies outside the main root. The documented concurrent-writer mode (D-004, run-agent.sh --cwd <worktree>) always uses such a worktree. Reproduction: docs/delivery/test-evidence/DG0/code-security/round-10/repro-r10-guard.sh. It runs each role's REAL hook command from tools/agents/settings/<role>.settings.json via sh -c, with cwd = the worktree and MTH_GUARD_ROOT = the main clone, as run-agent.sh:102 exports it. Section F sets HOME to a fake home whose .gitconfig is malformed ('[core' plus a garbage line), which makes 'git worktree list' exit 128. That is exactly what an agent's Write to $HOME/.gitconfig produces, and section E shows the guard allows that Write (rc=0, scratch). Results on the new candidate 85a0efa (04-guard-repro-new-85a0efa.log, section F), all rc=0 (ALLOWED) for backend-workflow-engineer: <worktree>/tools/gates/lib/rules.mjs, <worktree>/docs/source/playbook.md, <worktree>/.claude/settings.local.json, <worktree>/tools/agents/write-scopes.json, and the relative path tools/gates/lib/rules.mjs. Controls: the same targets with a well-formed .gitconfig give rc=2 (blocked), and the main-repo path gives rc=2 even with the malformed config. Section G shows git missing from PATH has the same effect: worktree path rc=0. On the OLD commit cbc755d (03-guard-repro-old-cbc755d.log, sections F and G), the same conditions gave rc=2 ('write guard missing'). The old hook located the guard with git rev-parse and failed CLOSED on any git error. So the fix turned a fail-closed path into a fail-open one. No regression test exercises guardedRoots() with git failing (08-static-residuals-and-cleanup.log).",
+      "expected": "The guard fails closed. If the set of guarded roots can't be determined (git missing, git erroring, unparsable output), every write is blocked, or at least every write outside the agent's known scratch areas. A worktree of the repository must never be reclassified as scratch because a tool call failed. Suggested fix: in guardedRoots(), on error, throw or return a sentinel that makes decide() block with 'cannot determine guarded roots'. Also consider having the runner pass the run's worktree (its --cwd) explicitly, for example as MTH_GUARD_EXTRA_ROOTS, so protection does not depend on git at hook time. Add a regression test that runs the hook with a malformed global git config (HOME or GIT_CONFIG_GLOBAL override) and with git absent from PATH, and expects exit 2 for worktree paths.",
+      "actual": "Any agent that can make git fail inside the hook process turns off protection of its own worktree's gate rules, agent tooling, Claude configuration and source documents: tools/gates/**, tools/agents/**, .claude/**, docs/source/**. The trigger is one file-tool Write outside the repository, for example $HOME/.gitconfig, which the guard allows. Because git would also be broken for the agent's own Bash commands, the agent could restore the file with a second Write after the protected writes. Mitigations: the protected-path changes land in the worktree, not the main repository, and would appear in the diff the orchestrator integrates and in the full-candidate reviews. This is the same compensating control as for F-DG0-134, which was classified Medium and mandatory, and this finding is classified the same way for consistency. At DG0, no run has used worktree mode yet.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-10/repro-r10-guard.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-10/04-guard-repro-new-85a0efa.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-10/03-guard-repro-old-cbc755d.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-10/08-static-residuals-and-cleanup.log",
+        "tools/agents/guard-write.mjs#L47-L54",
+        "tools/agents/run-agent.sh#L102"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-10/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T17:38:42Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 10"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-136",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "The runner loads user-level Claude settings ($HOME/.claude/settings.json), which the write guard treats as writable scratch. A {\"disableAllHooks\": true} there switches off the write guard for every later agent run, and the git-status compensating control can't see the change",
+      "reproduction": "run-agent.sh:112-115 and 121-124 start 'claude -p --agent <role> ... --settings <role>.settings.json' without '--setting-sources' and without an isolated CLAUDE_CONFIG_DIR, so user settings load in every run. The CLI (2.1.283) honours disableAllHooks from user settings; its bundle contains 'hooks are turned off in your settings (disableAllHooks)'. The guard classifies every path outside the repository and its worktrees as scratch (guard-write.mjs:98-99; write-scopes.json $comment). So a Write to $HOME/.claude/settings.json is allowed for every role: 04-guard-repro-new-85a0efa.log section E, rc=0 for backend-workflow-engineer and code-security-reviewer. LIVE reproduction with the real runner (05-live-user-settings-disable-hooks.log). Disposable clone at 85a0efa; role transformation-analyst; CLAUDE_CONFIG_DIR pointing at a throwaway directory, so the real home config was never touched. (1) Control, empty user settings: the Write to tools/gates/PROBE-ctl.txt was BLOCKED by the write guard. (2) User settings pre-seeded with {\"disableAllHooks\": true}, which is what an earlier run's allowed scratch Write leaves behind: the Write to tools/gates/PROBE-att.txt SUCCEEDED ('File created successfully'), and the file exists with content 'probe-att'. (3) Same-session attempt: the agent's Write of {\"disableAllHooks\": true} to the user settings file was refused only by the auto-mode permission classifier ('[Self-Modification]'), not by the write guard. The next Write, to tools/gates/PROBE-self.txt, was then blocked by the guard. An untested variant: an 'env' entry in user settings could redirect MTH_GUARD_ROOT to an agent-planted guard.",
+      "expected": "REQ-DLV-007 / D-020: file-tool writes outside a role's scope are mechanically blocked, and every Claude configuration surface that can disable or redirect the guard is protected, not only the in-repository ones (.claude/**, .mcp.json, CLAUDE.md). The runner should not let configuration outside its control weaken the guard. Suggested fix: run agents with '--setting-sources project' (or project,local, both protected) and/or a runner-owned, per-run CLAUDE_CONFIG_DIR. Add the user-config paths ($HOME/.claude/**, $CLAUDE_CONFIG_DIR/**, $HOME/.claude.json, and $HOME/.gitconfig / $XDG_CONFIG_HOME/git/** for F-DG0-135) to a deny list that applies outside the guarded roots. Disclose the residual in D-020/D-023. Add a live or harness regression test showing a pre-seeded user disableAllHooks no longer disables the guard.",
+      "actual": "One allowed Write to $HOME/.claude/settings.json, or one Bash command, which is unguarded by design, disables the write guard for every subsequent run on the machine: implementers and reviewers alike, main repository and worktrees. The disclosed compensating control for unguarded writes is the orchestrator's 'git status' after every run (D-020; agent-protocol 'Write scopes'). It cannot detect this, because the file is outside the repository, and nothing in run meta records it (the snapshot covers repository files only, run-agent.sh:79-96). In my live same-session attempt, the permission classifier happened to refuse the settings Write. That is a probabilistic control, not the mechanical guard REQ-DLV-007 requires, and the guard itself allowed it. Protected-path changes made in a later unguarded run would still show up in git status and in full-candidate review. That limits the impact to Medium, not High.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-10/05-live-user-settings-disable-hooks.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-10/04-guard-repro-new-85a0efa.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-10/repro-r10-guard.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-10/08-static-residuals-and-cleanup.log",
+        "tools/agents/run-agent.sh#L112-L124",
+        "tools/agents/guard-write.mjs#L97-L99",
+        "tools/agents/write-scopes.json",
+        "docs/delivery/decisions.md#D-020"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-10/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T17:38:42Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 10"
+        }
+      ]
+    }
+  ]
+}
