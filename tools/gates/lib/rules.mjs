@@ -310,7 +310,7 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
     bad(`transcript does not contain the CLI-replayed runner prompt for '${role}' and run ${ref.run_id}`);
   } else {
     // The assignment the prompt named is the transcript-bound statement of what the run executed (F-DG0-133).
-    const m = promptText(prompt).match(/Your complete assignment is in the file (\S+) \(sha256 ([0-9a-f]{64})\)/);
+    const m = promptText(prompt).match(/Your complete assignment is in the file (.+?) \(sha256 ([0-9a-f]{64})\)/); // paths may contain spaces (F-DG0-223)
     if (!m) bad("the replayed prompt names no assignment file and sha256");
     else if (!m[1].endsWith(`/${meta.assignment}`) || m[2] !== meta.assignment_sha256) bad(`the replayed prompt names assignment ${m[1]} (sha256 ${m[2].slice(0, 12)}…), not meta's ${meta.assignment}`);
   }

@@ -49,6 +49,7 @@ Reviewers write one JSON record to `docs/delivery/reviews/<DGx>/round-<N>/<role>
 - For your `invocation_reference`, copy exactly the value the orchestrator gives you. Never invent run IDs.
 - A reviewer must not have authored any implementation in the reviewed scope. If you did, declare it and return BLOCKED.
 - Anything you cannot check: record it as BLOCKED with the reason. Never write PASS by default.
+- Every evidence entry (in `evidence_paths`, a check's `evidence` or a verification's `evidence`) must be an existing regular file in the repository, optionally followed by `#fragment`. Directories and annotated strings are rejected by the validator.
 
 ## Findings contract
 

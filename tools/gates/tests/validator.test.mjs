@@ -844,3 +844,16 @@ test("F-DG0-133: the assignment named in the replayed prompt must be the one rec
   edit(repo, `${base}/meta.json`, (m) => (m.transcript_sha256 = sha(gz)));
   expectError(validateGate(repo, "DG0"), /the replayed prompt names assignment .*round-9\/other\.md/);
 });
+
+test("F-DG0-223: a genuine prompt binds when the checkout path contains spaces", () => {
+  const { repo, records } = buildValidRepo();
+  const ref = get(repo, records["qa-verifier"]).invocation_reference;
+  const base = `docs/delivery/runs/DG0/${ref.run_id}`;
+  const lines = gunzipSync(readFileSync(join(repo, `${base}/transcript.jsonl.gz`))).toString("utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  const p = lines.find((o) => o.isReplay);
+  p.message.content = p.message.content.replace(`in the file ${RUN_CWD}/`, "in the file /home/Jane Doe/My Projects/repo/");
+  const gz = gzipSync(Buffer.from(lines.map((o) => JSON.stringify(o)).join("\n") + "\n"));
+  put(repo, `${base}/transcript.jsonl.gz`, gz);
+  edit(repo, `${base}/meta.json`, (m) => (m.transcript_sha256 = sha(gz)));
+  assert.deepEqual(validateGate(repo, "DG0"), []);
+});

@@ -51,3 +51,6 @@ Early-stage rule (§0.2): check the actual specifications, contracts, agent setu
 - Put every check in `checks_run`, with the exact command, environment, expected result, actual result, `exit_status` and result.
 - Put the requirement IDs you actually verified in `requirements_checked`.
 - **Independence:** form your verdict before reading any other round-__ROUND__ review record.
+
+## Evidence format (enforced by the validator)
+Every entry in `evidence_paths`, in a verification's `evidence`, and in a check's `evidence` must be an **existing regular file inside the repository**, optionally followed by `#fragment`, for example `docs/delivery/requirements.csv#REQ-DLV-002` or `tools/gates/tests/validator.test.mjs#F-DG0-132`. Directories, globs, bare words and parenthetical annotations such as `file (REQ-X)` are rejected. Put annotations in the `#fragment` or in `note`.
