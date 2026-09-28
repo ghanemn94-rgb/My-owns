@@ -8,6 +8,7 @@ import { gzipSync, gunzipSync } from "node:zlib";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, symlinkSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { candidateId, manifestFromRef, manifestFromWorkingTree } from "../lib/candidate.mjs";
 import { validateGate, validatePipeline, reconcile, REGISTER_COLUMNS, STAGE_ORDER } from "../lib/rules.mjs";
 import { parseCsv } from "../lib/csv.mjs";
@@ -856,4 +857,13 @@ test("F-DG0-223: a genuine prompt binds when the checkout path contains spaces",
   put(repo, `${base}/transcript.jsonl.gz`, gz);
   edit(repo, `${base}/meta.json`, (m) => (m.transcript_sha256 = sha(gz)));
   assert.deepEqual(validateGate(repo, "DG0"), []);
+});
+
+test("F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters", () => {
+  const dir = mkdtempSync(join(tmpdir(), "gate tools é-"));
+  fixtures.push(dir);
+  execFileSync("cp", ["-r", join(dirname(fileURLToPath(import.meta.url)), ".."), join(dir, "gates")]);
+  const out = execFileSync("node", ["--input-type=module", "-e",
+    `import(${JSON.stringify(join(dir, "gates", "lib", "rules.mjs"))}).then((m) => console.log(Object.keys(m.schema("review").properties).length > 5))`]).toString().trim();
+  assert.equal(out, "true");
 });

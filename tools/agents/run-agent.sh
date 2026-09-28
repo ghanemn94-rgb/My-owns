@@ -97,6 +97,10 @@ PY
 }
 snapshot > "$OUT/.pre-snapshot.json"
 
+# The write-guard hook runs the main repository's guard and protects the repository and all of its worktrees,
+# whatever the agent's working directory (F-DG0-134). The agent's shell cannot change this process environment.
+export MTH_GUARD_ROOT="$REPO_ROOT"
+
 # The prompt is sent as a stream-json user message and replayed by the CLI into the transcript (isReplay: true),
 # so the transcript itself records what this run was asked to do (D-022).
 user_message() {

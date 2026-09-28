@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { gunzipSync } from "node:zlib";
 import { join, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import { validate } from "./schema.mjs";
 import { parseCsv } from "./csv.mjs";
 import { candidateId, manifestFromRef, manifestFromWorkingTree, diffManifests, specPolicyErrors, HASH_ALGORITHM, matchesAny } from "./candidate.mjs";
@@ -34,7 +35,7 @@ const TERMINAL_FINDING = new Set(["CLOSED_VERIFIED", "ACCEPTED_OBSERVATION", "RE
 // Fields a reviewer sets when raising a finding; the orchestrator may not alter them in findings.json.
 const IMMUTABLE_FINDING_FIELDS = ["stage_id", "requirement", "severity", "mandatory_violation", "title", "reported_by"];
 
-const here = new URL(".", import.meta.url).pathname;
+const here = fileURLToPath(new URL(".", import.meta.url)); // not .pathname: that stays percent-encoded (F-DG0-224)
 const schemaCache = {};
 export function schema(name) {
   if (!schemaCache[name]) schemaCache[name] = JSON.parse(readFileSync(join(here, "..", "schemas", `${name}.schema.json`), "utf8"));

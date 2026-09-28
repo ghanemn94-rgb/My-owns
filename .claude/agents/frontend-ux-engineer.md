@@ -9,7 +9,7 @@ hooks:
     - matcher: "Write|Edit|NotebookEdit|MultiEdit"
       hooks:
         - type: command
-          command: 'g="$(git rev-parse --show-toplevel 2>/dev/null)/tools/agents/guard-write.mjs"; if [ -f "$g" ]; then node "$g" frontend-ux-engineer; rc=$?; else echo "write guard missing" >&2; rc=2; fi; [ "$rc" -eq 0 ] || exit 2'
+          command: 'if [ -z "$MTH_GUARD_ROOT" ]; then echo "write guard: MTH_GUARD_ROOT is not set (run agents through tools/agents/run-agent.sh)" >&2; exit 2; fi; g="$MTH_GUARD_ROOT/tools/agents/guard-write.mjs"; if [ -f "$g" ]; then node "$g" frontend-ux-engineer; rc=$?; else echo "write guard missing" >&2; rc=2; fi; [ "$rc" -eq 0 ] || exit 2'
 ---
 
 You are **frontend-ux-engineer** for the Mobily Transformation Hub.

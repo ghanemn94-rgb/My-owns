@@ -5,6 +5,7 @@
 // Both the lexical target and its symlink-resolved real path must pass. Deny rules match case-insensitively
 // (so case-insensitive filesystems cannot bypass them); allow rules match exactly.
 import { readFileSync, existsSync, realpathSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -37,23 +38,41 @@ export function matches(path, patterns, flags = "") {
   return patterns.some((p) => globToRegExp(p, flags).test(path));
 }
 
-// The repository this guard belongs to: fixed at the guard's own location (tools/agents/ -> repo root), so a
-// planted nested '.git' cannot move the root and un-protect paths (F-DG0-111).
-export const GUARD_ROOT = resolve(here, "..", "..");
+// The repository this guard protects. The runner exports MTH_GUARD_ROOT (the main repository) into the agent's
+// process environment, which the agent's shell commands cannot change; the hook is always this repository's guard,
+// wherever the agent's working directory is (F-DG0-134). Without it, the guard's own location decides (F-DG0-111).
+export const GUARD_ROOT = process.env.MTH_GUARD_ROOT ? resolve(process.env.MTH_GUARD_ROOT) : resolve(here, "..", "..");
 
-/** Root used to scope a path: the guard's repository, or (for other trees, e.g. reviewer scratch clones) null. */
-export function repoRootOf(filePath, root = GUARD_ROOT) {
-  const abs = resolve(filePath);
-  let realRoot = root;
+/** The guarded roots: the repository plus every git worktree attached to it (agents may run in worktrees). */
+export function guardedRoots(root = GUARD_ROOT) {
+  const roots = [resolve(root)];
   try {
-    realRoot = realpathSync(root);
+    const out = execFileSync("git", ["-C", root, "worktree", "list", "--porcelain"], { stdio: ["ignore", "pipe", "ignore"] }).toString();
+    for (const line of out.split("\n")) if (line.startsWith("worktree ")) roots.push(resolve(line.slice(9)));
   } catch {
-    /* keep lexical */
+    /* not a git repository or git unavailable: the root itself is still guarded */
   }
-  for (const r of new Set([root, realRoot])) {
-    if (abs === r || abs.startsWith(r + sep)) return r;
+  const all = new Set();
+  for (const r of roots) {
+    all.add(r);
+    try {
+      all.add(realpathSync(r));
+    } catch {
+      /* keep lexical */
+    }
   }
-  return null;
+  return [...all];
+}
+
+/** The deepest guarded root containing the path (a worktree nested inside the repository wins), or null. */
+export function repoRootOf(filePath, roots = guardedRoots()) {
+  const abs = resolve(filePath);
+  const list = Array.isArray(roots) ? roots : [roots];
+  let best = null;
+  for (const r of list) {
+    if ((abs === r || abs.startsWith(r + sep)) && (!best || r.length > best.length)) best = r;
+  }
+  return best;
 }
 
 /** Resolves symlinks on the deepest existing ancestor, then re-appends the not-yet-existing remainder. */
@@ -75,8 +94,8 @@ export function canonicalPath(filePath) {
   return rest.length ? join(real, ...rest) : real;
 }
 
-function decideOne(scopes, cfg, roleName, filePath, root) {
-  const repo = repoRootOf(filePath, root);
+function decideOne(scopes, cfg, roleName, filePath, roots) {
+  const repo = repoRootOf(filePath, roots);
   if (!repo) return { allow: true, reason: "outside the guarded repository (scratch)" };
   const rel = relative(repo, resolve(filePath)).split(sep).join("/");
   if (rel.split("/").some((seg) => seg.toLowerCase() === ".git")) return { allow: false, reason: `${roleName} may not write '${rel}' (git metadata)` };
@@ -86,14 +105,16 @@ function decideOne(scopes, cfg, roleName, filePath, root) {
   return { allow: true, reason: "within scope" };
 }
 
-export function decide(scopes, roleName, filePath, root = GUARD_ROOT) {
+export function decide(scopes, roleName, filePath, root = null) {
+  // root: a repository path (its worktrees are guarded too) or an explicit list of roots; default: GUARD_ROOT.
+  const roots = Array.isArray(root) ? root : guardedRoots(root || GUARD_ROOT);
   const cfg = scopes.roles[roleName];
   if (!cfg) return { allow: false, reason: `unknown role '${roleName}' has no write scope` };
-  const lexical = decideOne(scopes, cfg, roleName, filePath, root);
+  const lexical = decideOne(scopes, cfg, roleName, filePath, roots);
   if (!lexical.allow) return lexical;
   const real = canonicalPath(filePath);
   if (real !== resolve(filePath)) {
-    const viaLink = decideOne(scopes, cfg, roleName, real, root);
+    const viaLink = decideOne(scopes, cfg, roleName, real, roots);
     if (!viaLink.allow) return { allow: false, reason: `${viaLink.reason} (reached through a symlink)` };
   }
   return lexical;

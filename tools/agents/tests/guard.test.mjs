@@ -126,3 +126,36 @@ test("the production guard root is this repository", () => {
   assert.equal(decideAt(scopes, "domain-reviewer", join(GUARD_ROOT, "tools", "gates", "validate.mjs")).allow, false);
   assert.equal(decideAt(scopes, "domain-reviewer", join(GUARD_ROOT, "docs", "delivery", "reviews", "DG1", "x.json")).allow, true);
 });
+
+test("F-DG0-134: the repository's worktrees are guarded too, from any working directory", () => {
+  const r = mkdtempSync(join(tmpdir(), "guard-wt-"));
+  execFileSync("git", ["init", "-q", "-b", "main", r]);
+  execFileSync("git", ["-C", r, "-c", "user.email=t@e", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "c"]);
+  const w = mkdtempSync(join(tmpdir(), "guard-wt-sibling-"));
+  execFileSync("git", ["-C", r, "worktree", "add", "-q", join(w, "wt")]);
+  execFileSync("git", ["-C", r, "worktree", "add", "-q", join(r, ".wt", "nested")]);
+  for (const target of [join(r, "tools/gates/x.mjs"), join(w, "wt", "tools/gates/x.mjs"), join(r, ".wt", "nested", "docs/source/p.md")]) {
+    assert.equal(decide(scopes, "backend-workflow-engineer", target, r).allow, false, `must block ${target}`);
+  }
+  assert.equal(decide(scopes, "transformation-analyst", join(w, "wt", "docs/analysis/a.md"), r).allow, true);
+  // The hook entry point: root from MTH_GUARD_ROOT, agent working in the worktree, relative and absolute paths.
+  const script = join(here, "..", "guard-write.mjs");
+  const env = { ...process.env, MTH_GUARD_ROOT: r };
+  for (const fp of ["tools/gates/lib/rules.mjs", join(r, "docs/source/playbook.md")]) {
+    const res = spawnSync("node", [script, "backend-workflow-engineer"], { cwd: join(w, "wt"), env, input: JSON.stringify({ tool_input: { file_path: fp } }) });
+    assert.equal(res.status, 2, `hook must block ${fp}`);
+  }
+  const ok = spawnSync("node", [script, "backend-workflow-engineer"], { cwd: join(w, "wt"), env, input: JSON.stringify({ tool_input: { file_path: "apps/api/x.ts" } }) });
+  assert.equal(ok.status, 0);
+});
+
+test("F-DG0-134: every role's hook command takes the guard from MTH_GUARD_ROOT and fails closed without it", () => {
+  for (const role of Object.keys(scopes.roles)) {
+    const cfg = JSON.parse(readFileSync(join(here, "..", "settings", `${role}.settings.json`), "utf8"));
+    const cmd = cfg.hooks.PreToolUse[0].hooks[0].command;
+    assert.match(cmd, /\$MTH_GUARD_ROOT\/tools\/agents\/guard-write\.mjs/);
+    assert.doesNotMatch(cmd, /rev-parse/);
+    const res = spawnSync("sh", ["-c", cmd], { env: { ...process.env, MTH_GUARD_ROOT: "" }, input: "{}" });
+    assert.equal(res.status, 2, `${role} hook must fail closed without MTH_GUARD_ROOT`);
+  }
+});

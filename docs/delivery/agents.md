@@ -25,7 +25,7 @@ The paths protected from implementers are:
 - the delivery records: `docs/delivery/{reviews,gates,runs,candidates,test-evidence}/**`, `docs/delivery/stages.json` and `docs/delivery/findings.json`;
 - the gate CI workflow: `.github/workflows/delivery-gates.yml`.
 
-No role may write a `.git` path segment. The guard scopes every path from its own fixed repository root, so a planted nested `.git` can't move the root. It checks the symlink-resolved real path as well as the lexical one, and deny rules match case-insensitively (D-020, F-DG0-111). The source of truth is `tools/agents/write-scopes.json`, and the tests are `tools/agents/tests/guard.test.mjs`.
+No role may write a `.git` path segment. The runner exports `MTH_GUARD_ROOT` (the main repository), and every hook runs that repository's guard. The guard protects the repository **and all of its git worktrees**, scoping each path from the deepest containing root, so neither a planted nested `.git` nor a worktree working directory can move the root (D-023). It checks the symlink-resolved real path as well as the lexical one, and deny rules match case-insensitively (D-020, F-DG0-111). The source of truth is `tools/agents/write-scopes.json`, and the tests are `tools/agents/tests/guard.test.mjs`.
 
 ## Invocation mechanism (decision D-003)
 
