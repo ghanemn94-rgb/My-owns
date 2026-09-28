@@ -1,0 +1,73 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-201",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-013",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Gate validator accepts a review whose invocation_reference points at an unrelated run of the same role (e.g. the T-DG0-LOAD load check)",
+      "reproduction": "QA_REPO_ROOT=<repo> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative.test.mjs --test-name-pattern QA-N27. The fixture builds a valid DG0 gate, then adds a second, successful qa-verifier run whose meta.json has task T-DG0-LOAD, assignment docs/delivery/assignments/DG0/T-DG0-LOAD.md and started_at before the candidate froze. It then points the qa-verifier review record's invocation_reference at that run. validateGate() returns no errors. In the real repository, successful LOAD runs exist for all four review roles (docs/delivery/runs/DG0/DG0-T-DG0-LOAD-{domain-reviewer,code-security-reviewer,qa-verifier,release-auditor}-*), so a complete DG0 gate could validate with no review invocation ever having run. checkInvocation() in tools/gates/lib/rules.mjs compares only role, session_id and exit status.",
+      "expected": "The validator (A24: rejects missing or invalid evidence; A23: separate actual review evidence) rejects a review or audit record whose run is not bound to it: the run's meta.assignment/task must match the record's assignment/review task, and the run must start after the candidate froze (meta.started_at >= stage candidate.frozen_at, or meta.head_commit_at_start containing the frozen commit). A regression test must cover this.",
+      "actual": "The validator accepts the record. validateGate returns [] (test QA-N27 fails with 'validator accepted an invalid gate (no errors)'). The meta.json fields that would bind a run to a review (task, assignment, assignment_sha256, started_at, head_commit_at_start) are recorded but never checked.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/10-qa-negative-tests.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [{ "at": "2026-09-28T12:45:00Z", "status": "OPEN" }]
+    },
+    {
+      "id": "F-DG0-202",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-020",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register evidence entries without a '/' are never existence-checked, so a bare non-existent file name satisfies an IMPLEMENTED row",
+      "reproduction": "QA_REPO_ROOT=<repo> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative.test.mjs --test-name-pattern QA-N28. It sets REQ-DLV-001 (final_gate DG0, IMPLEMENTED) evidence to 'NO-SUCH-EVIDENCE.md'. checkRegister() reports no error because rules.mjs only checks paths where ev.includes('/'). Real rows REQ-DLV-002 and REQ-DLV-019 cite 'CLAUDE.md', which exists but is checked only by luck.",
+      "expected": "requirements-spec.md: 'every row with final_gate <= DGn is IMPLEMENTED with non-empty evidence, and every evidence path exists'. Either every evidence entry that isn't an explicit test-ID token (for example a defined prefix such as 'test:') is existence-checked, or the spec defines the test-ID syntax that is exempt.",
+      "actual": "A bare file name is silently treated as a non-path token and accepted. I would accept this as a Low observation if it is tracked, but I recommend fixing it together with F-DG0-201.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/10-qa-negative-tests.log",
+        "docs/delivery/test-evidence/DG0/qa/11-register-integrity.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [{ "at": "2026-09-28T12:45:00Z", "status": "OPEN" }]
+    },
+    {
+      "id": "F-DG0-203",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-032",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Stage plan puts acceptance-test authorship for A01-A22 in P6, but acceptance-map requires A03-A05 and A08-A11 to pass at DG4 and A02, A06, A07, A15 and A16 at DG5",
+      "reproduction": "Read docs/analysis/stage-plan.md line 122 (P6: 'qa-verifier authors A01–A22 tests under tests/qa/** and e2e/**') and compare it with docs/analysis/acceptance-map.md rows A02-A16 ('Must pass at' DG4/DG5). Sections P2-P5 of the stage plan name no owner for the executable REQ-S20-00x acceptance tests that must pass at those gates.",
+      "expected": "Every scenario has a concrete owner and stage for its executable test, consistent with the gate at which it must pass. For example, the stage plan says that the executable A-tests for DG2-DG5 are authored in P2-P5 (by the implementers, or by qa-verifier test-first before freeze), and that P6 extends and re-runs them.",
+      "actual": "The acceptance map is internally consistent: every scenario has a test level, a first-delivered stage and a gate (independent check 14-acceptance-feasibility.log, 0 errors). The stage plan's only authorship statement is in P6, which reads as later than the gates it must serve. This is feasible but ambiguous. I would accept it as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/14-acceptance-feasibility.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [{ "at": "2026-09-28T12:45:00Z", "status": "OPEN" }]
+    }
+  ]
+}

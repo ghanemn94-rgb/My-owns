@@ -1,4 +1,459 @@
 {
   "schema_version": 1,
-  "findings": []
+  "findings": [
+    {
+      "id": "F-DG0-001",
+      "stage_id": "DG0",
+      "requirement": "REQ-PB-049",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Invalid-weight handling (T06) is staged to DG5 although master prompt §21 requires it as DG3 approval evidence",
+      "reproduction": "Read master prompt M0406 (§21 row P3): the DG3 evidence required before approval includes 'invalid weights/cycles/capacity conflicts handled'. In docs/delivery/requirements.csv, the only row whose acceptance tests invalid weights ('saving weights totalling 95% is rejected') is REQ-PB-049, with final_gate DG5 (increments P3;P5). REQ-PB-048 (DG3) tests out-of-range scores only, not weights. REQ-S09-005 (final_gate DG3) has the acceptance 'the history shows weight version 2 as the cause of a rank change', which depends on the versioned weight sets in REQ-PB-049 (DG5). docs/analysis/stage-plan.md lists REQ-PB-049 under 'complete at DG5' and states that AN-04 checked that no row needed complete by an earlier gate's acceptance scenario completes later.",
+      "expected": "The DG3 final-gate scope contains a requirement whose acceptance proves invalid weights are rejected, for example weights not totalling 100% rejected, with a versioned weight set usable by REQ-S09-005. Only the Studio/admin default-configuration part stays at DG5. One fix is to split REQ-PB-049 into a DG3 row (per-transformation weight adjustment, 100% validation, versioning) and a DG5 row (admin-configured defaults in Studio), then update the stage plan and acceptance map.",
+      "actual": "REQ-PB-049 final_gate=DG5. The DG3 gate's final_gate_ids therefore do not include any invalid-weight acceptance, and DG3-final REQ-S09-005 depends on a capability that is only complete at DG5.",
+      "evidence": [
+        "docs/source/master-prompt.anchored.md#M0406",
+        "docs/delivery/requirements.csv (REQ-PB-048, REQ-PB-049, REQ-S09-005)",
+        "docs/analysis/stage-plan.md (P3 and P5 lists)"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:37:24Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round 1 domain review."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-002",
+      "stage_id": "DG0",
+      "requirement": "REQ-PB-020",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "G5 approver and a RACI Consult cell are inconsistent between the register and the permissions matrix",
+      "reproduction": "(1) docs/analysis/permissions-matrix.md §5 rule 7 says gate approvals default to SP 'except where T11 names another approver'. T11 (B0099) names Business owner as the approver for 'Go-live / scale'. REQ-PB-020 (G5 Scale) sets 'approve:SP' with no reference to T11, while REQ-PB-018 (G3) does reference T11 ('SP or BO per T11 Target-state design'). The matrix has no explicit row for the T11 'Go-live / scale' decision. (2) The T12 RACI (B0101) gives Sponsor 'C' for Target Operating Model, but the matrix row 'TOM canvas, T03 gaps, ...' gives SP only 'V', whereas every other RACI 'C' maps to Rv.",
+      "expected": "Either REQ-PB-020 states 'approve: SP (default) or BO per T11 Go-live / scale, configurable', or rule 7 explicitly says G5 is a transformation-level gate distinct from the initiative-level T11 decision. The matrix includes a T11 Go-live / scale decision row (Recommend: Initiative owner; Approve: Business owner; Consult: Risk/Tech/CX; Inform: SteerCo), and SP has Rv on the TOM row.",
+      "actual": "The two artefacts give ambiguous approval authority for G5. SP's Consult role on the TOM is rendered as view-only.",
+      "evidence": [
+        "docs/analysis/permissions-matrix.md",
+        "docs/delivery/requirements.csv (REQ-PB-018, REQ-PB-020)",
+        "docs/source/playbook.md B0099, B0101"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:37:24Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round 1 domain review. Defaults are configurable; I would accept this as an observation if it is not fixed in this round, but it should be clarified before DG2/DG4 implementation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-003",
+      "stage_id": "DG0",
+      "requirement": "REQ-PB-085",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Some SOURCE rows claim 'no interpretation beyond the cited blocks' while carrying interpretations or master-prompt additions",
+      "reproduction": "In docs/delivery/requirements.csv: (a) REQ-PB-085's notes start 'Source-grounded; no interpretation beyond the cited blocks', but its acceptance includes the master prompt §12 severity/persistence rule absorbed from REQ-S12-007 (M0227). (b) REQ-PB-055 maps the source's 'early—not after delivery' (B0084) to a hard 'before G4' block, which is an interpretation, yet it is labelled no-interpretation. (c) REQ-PB-088's acceptance 'the production initialization contains no demo records' comes from M0348 (§18), not the playbook, under the same label.",
+      "expected": "Each note separates the playbook content from the master-prompt additions and interpretations, as REQ-PB-042, -058, -069 and -083 already do.",
+      "actual": "Three rows carry the boilerplate no-interpretation note despite containing non-source behaviour. The substance is still correctly anchored in source_ref, so this is a labelling problem only.",
+      "evidence": [
+        "docs/delivery/requirements.csv (REQ-PB-055, REQ-PB-085, REQ-PB-088)"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:37:24Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round 1 domain review. Labelling only; I would accept it as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-004",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-032",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "playbook.md omits the docx page footer text, and table cells with line breaks do not render as Markdown tables",
+      "reproduction": "Unzip docs/source/Business_Transformation_Playbook.docx and read word/footer1.xml: it contains 'BUSINESS TRANSFORMATION PLAYBOOK  |  PRACTICAL EDITION'. grep for 'PRACTICAL EDITION' in docs/source/playbook.md finds nothing. Separately, B0003, B0062 and B0150 have raw newlines inside table cells, so those Markdown tables break when rendered. The content is intact in playbook.blocks.json.",
+      "expected": "The footer is recorded, at least as a note, since it is a running label with no requirement substance. Multi-line cells use <br> or an equivalent so the reader view renders.",
+      "actual": "All 1027 body text segments of word/document.xml are present in playbook.md, and all 49 tables and 239 rows match. Only the footer is missing, and some tables render poorly.",
+      "evidence": [
+        "docs/source/playbook.md",
+        "docs/source/Business_Transformation_Playbook.docx (word/footer1.xml)"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:37:24Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round 1 domain review. Cosmetic; no requirement substance is lost. I would accept it as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-005",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-032",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Two proposed Arabic glossary terms are narrower than, or ambiguous against, the English meaning",
+      "reproduction": "In docs/analysis/glossary.md: (1) 'Journey' is rendered 'رحلة العميل' (customer journey), but the definition is 'End-to-end customer or process path' and the source uses 'journeys/processes' generally; 'الرحلة' or 'رحلة العمل/العميل' would fit better. (2) 'Modular mode' is rendered 'النمط المعياري', where 'معياري' commonly reads as 'standard/normative'. The parenthetical '(الدخول الجزئي)' helps, but a term such as 'النمط المرن/الجزئي (حسب الحاجة)' would be less ambiguous.",
+      "expected": "Arabic terms that preserve the English meaning without ambiguity.",
+      "actual": "Two terms are narrower or ambiguous. The glossary already states that its terms are proposed and need review by a Mobily Arabic-language owner.",
+      "evidence": [
+        "docs/analysis/glossary.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:37:24Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round 1 domain review. I would accept it as an observation, given the glossary's explicit pending-linguistic-review caveat."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-101",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Unresolved findings escape the gate: stage_id relabelling and dropped findings are not detected",
+      "reproduction": "tools/gates/lib/rules.mjs:278 evaluates the terminal-state rule only for findings whose stage_id === the gate's stage; rules.mjs:275-277 only cross-checks finding IDs listed by the gate's final PASS records; stages.json review_rounds[].records and the <role>.findings.json sidecars of earlier (FAIL) rounds are never consulted; tools/gates/import-findings.mjs:42-51 imports sidecar findings without checking f.stage_id against --stage. Scenario A: round-1 code-security FAIL raises F-DG0-1xx (High, mandatory, OPEN); its stage_id is set (or imported) as 'DG1' -> validate.mjs --stage DG0 PASSes with the finding still OPEN. Scenario B: the OPEN finding is simply never imported / removed from findings.json; the round-2 PASS records do not list it -> the gate PASSes. Reproduction script (static, not executed - Bash unavailable in this run): docs/delivery/test-evidence/DG0/code-security/repro.test.mjs tests R1a and R1b.",
+      "expected": "Every finding raised in any review round of the stage (all review_rounds records and their findings sidecars) must exist in findings.json with stage_id equal to the stage and be in a terminal state with independent verification; a finding cannot be deferred to another stage by relabelling without an explicit, audited transfer.",
+      "actual": "A High mandatory-violation finding raised at DG0 can remain OPEN (relabelled stage_id) or be absent from findings.json and validate.mjs --stage DG0 still exits 0, bypassing the 'zero unresolved Critical/High and mandatory findings' gate condition.",
+      "evidence": [
+        "tools/gates/lib/rules.mjs:264-312",
+        "tools/gates/import-findings.mjs:36-51",
+        "docs/delivery/test-evidence/DG0/code-security/repro.test.mjs"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:32:32Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer round 1 (static analysis)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-102",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-026",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Invocation provenance is satisfied by a fabricated 4-field meta.json; transcript and result are never checked",
+      "reproduction": "tools/gates/lib/rules.mjs:225-235 (checkInvocation) reads only runs/<stage>/<run_id>/meta.json and checks role, invocation_reference.session_id, exit_code and is_error. It does not require transcript.jsonl.gz or result.json to exist, does not compare meta.result_session_id (written by run-agent.sh:77) to the requested session, does not bind the record's 'assignment' to meta.assignment/assignment_sha256, does not check meta.task/stage or that the run started after candidate.frozen_at, and run-agent.sh:66-89 records no hash of the transcript. The validator's own fixture (tools/gates/tests/validator.test.mjs:60-67) proves a hand-written {run_id, role, invocation_reference:{session_id}, exit_code:0, is_error:false} passes. Scenario: anyone with repo write access (Bash is unguarded for every role) writes docs/delivery/runs/DG0/DG0-x/meta.json for each role plus four PASS review records and a gate record -> validate.mjs --stage DG0 and --pipeline (historical) exit 0 with no agent ever invoked. Historical mode (rules.mjs:341-395) re-reads these mutable, candidate-excluded files from the working tree, so approvals can also be rewritten after the fact. Repro: docs/delivery/test-evidence/DG0/code-security/repro.test.mjs R0 (not executed in this run).",
+      "expected": "The validator refuses a review/audit/verification unless the referenced run has transcript.jsonl.gz and result.json present, meta records a SHA-256 of the transcript that matches, the transcript's init/result lines carry the same session_id, result_session_id equals the requested session_id, the run's assignment path/SHA matches the record's assignment file, meta.stage equals the gate stage, and the run started after the candidate froze.",
+      "actual": "Provenance (DG0 approval condition 'required stage agents actually invoked', A23/A24) can be satisfied entirely with fabricated metadata; the check does not raise the cost of forgery beyond writing one small JSON file.",
+      "evidence": [
+        "tools/gates/lib/rules.mjs:225-235",
+        "tools/gates/tests/validator.test.mjs:60-67",
+        "tools/agents/run-agent.sh:54-92",
+        "docs/delivery/test-evidence/DG0/code-security/repro.test.mjs"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:32:32Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer round 1 (static analysis)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-103",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Symlinks and submodule gitlinks are silently excluded from the candidate identity, contrary to D-005",
+      "reproduction": "tools/gates/lib/candidate.mjs:70 skips any working-tree path that is not a regular file (lstat, so symlinks are dropped) and candidate.mjs:83 skips tree entries with mode 120000 (symlink) and all non-blob entries (gitlinks/submodules). D-005 defines the candidate as 'every tracked and untracked-not-ignored file'. Scenario: a committed symlink src/entry.txt -> app.txt is part of the approved deliverable; after approval it is repointed to ../docs/delivery/test-evidence/DG0/payload.txt (excluded metadata, writable by reviewers) or to any other target -> manifestFromWorkingTree hashes identically and validate.mjs --stage DG0 still PASSes although the effective deliverable changed; the frozen manifest never lists the symlink so reviewers cannot see it. Repro: repro.test.mjs R2 (not executed in this run).",
+      "expected": "Symlinks are hashed by their link target string (e.g. entry 'symlink:<target>') and gitlinks by their commit OID, or their presence fails candidate computation; the manifest lists them.",
+      "actual": "Any symlink or submodule in the tree is invisible to candidate identity and to the change detection that A25 relies on.",
+      "evidence": [
+        "tools/gates/lib/candidate.mjs:58-89",
+        "docs/delivery/decisions.md:11",
+        "docs/delivery/test-evidence/DG0/code-security/repro.test.mjs"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:32:32Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer round 1 (static analysis)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-104",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The frozen manifest's spec is not bound to stages.json candidate_spec or to the D-005 exclusion policy",
+      "reproduction": "rules.mjs:315-331 recomputes the candidate using manifest.spec, read from docs/delivery/candidates/<DGx>.manifest.json (itself candidate-excluded metadata). Nothing checks manifest.spec against stages.json candidate_spec, and nothing restricts exclude globs to the D-005 set (trading_agent/** + META_EXCLUDES). stages.json candidate_spec is also excluded metadata, so changing it never changes any candidate. Scenario: a manifest frozen with spec.exclude ['src/**'] (or 'apps/**') -> later edits and new files under src/ never change the recomputed ID and validate.mjs --stage keeps PASSing. Repro: repro.test.mjs R3 (not executed in this run).",
+      "expected": "The validator requires manifest.spec to equal the stage's candidate_spec and rejects exclude patterns beyond the approved policy (or requires a decision record for each), so exclusions cannot silently hide deliverables.",
+      "actual": "Arbitrary exclusions in the manifest are accepted; the only safeguard is a human reviewer noticing the spec.",
+      "evidence": [
+        "tools/gates/lib/rules.mjs:315-338",
+        "tools/gates/candidate.mjs:27",
+        "docs/delivery/test-evidence/DG0/code-security/repro.test.mjs"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:32:32Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer round 1 (static analysis)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-105",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Write guard: protected list omits Claude configuration surfaces and trading_agent/, and paths are checked lexically (symlinks followed)",
+      "reproduction": "(1) tools/agents/write-scopes.json:3-17 protects .claude/settings.json but not .claude/settings.local.json, .mcp.json, .claude/hooks/** or .claude/commands/**, and does not protect trading_agent/** (CLAUDE.md: 'Do not modify it'; also excluded from every candidate, so edits there are invisible to gates). An implementer (allow '**') may Write .claude/settings.local.json, which Claude Code loads into every later project session, including guarded agent runs; per Claude Code settings documentation a 'disableAllHooks': true there would disable the PreToolUse guard for all later runs (not reproduced end-to-end: running claude is out of scope for this review). (2) guard-write.mjs:52-54 resolves the target lexically with path.resolve and never calls realpath, so a Write to docs/analysis/lnk/lib/rules.mjs, where docs/analysis/lnk -> ../../tools/gates, is ALLOWED for transformation-analyst while it lands in tools/gates. (3) Matching is case-sensitive: on case-insensitive filesystems (macOS/Windows) 'Tools/Gates/x' bypasses the deny list. Policy context: Bash is not path-guarded for any role (all ten definitions include Bash); this is disclosed in agent-protocol.md:75, agents.md:69 and D-009, and the compensating control is the orchestrator's git status check. Repro: repro.test.mjs R6 (not executed in this run).",
+      "expected": "Deny list includes .claude/** (except none), .mcp.json and trading_agent/** for implementers; the guard canonicalises the target with fs.realpathSync on the deepest existing ancestor and denies if either the lexical or the real path is protected; comparisons are case-folded on case-insensitive platforms.",
+      "actual": "Implementers can write Claude configuration that governs later guarded sessions and the unrelated user project; symlinked paths bypass deny rules.",
+      "evidence": [
+        "tools/agents/write-scopes.json:3-17",
+        "tools/agents/guard-write.mjs:49-64",
+        "docs/delivery/test-evidence/DG0/code-security/repro.test.mjs"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:32:32Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer round 1 (static analysis)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-106",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Evidence-existence checks accept directories, '#fragment' and non-path strings; gate tests[] may be empty",
+      "reproduction": "rules.mjs:255-258 and :391 use existsSync(join(repo, ev.split('#')[0])): '#x' and '.' resolve to the repo root and pass; a directory passes as evidence. rules.mjs:190-191 only checks register evidence entries that contain '/', so evidence 'done' passes for an IMPLEMENTED DG0 row. rules.mjs:258 accepts assignment '.'. gate.schema.json:97 has no minItems on tests, so a gate with zero recorded tests passes. Repro: repro.test.mjs R0/R4 (not executed in this run).",
+      "expected": "Evidence and assignment must resolve to an existing regular file inside the repo (not the root, not outside it); register evidence tokens must be paths or explicitly typed references; a gate records at least the stage's required checks.",
+      "actual": "Placeholder evidence satisfies the 'linked evidence' condition.",
+      "evidence": [
+        "tools/gates/lib/rules.mjs:189-192",
+        "tools/gates/lib/rules.mjs:255-258",
+        "tools/gates/lib/rules.mjs:389-392",
+        "tools/gates/schemas/gate.schema.json:97-130"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:32:32Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer round 1 (static analysis); would accept as observation if not fixed"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-107",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-020",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "CSV handling silently accepts malformed input (text after closing quote; extra cells dropped by merge)",
+      "reproduction": "tools/gates/lib/csv.mjs:13-22: after a closing quote, following characters are appended to the field, so '\"x\"y,z' parses as 'xy' instead of being rejected as non-RFC-4180. tools/source/merge_register.py:27/43: csv.DictReader stores surplus cells under key None and DictWriter writes only header keys, so a part-file row with an unquoted comma loses its trailing cells silently (short rows become empty strings). The validator's empty-column rule catches only non-optional columns. Repro: repro.test.mjs R5 (not executed in this run).",
+      "expected": "Parser throws on characters between a closing quote and the next delimiter; merge fails on rows whose cell count differs from the header.",
+      "actual": "Malformed rows are accepted with altered content.",
+      "evidence": [
+        "tools/gates/lib/csv.mjs:10-38",
+        "tools/source/merge_register.py:25-45"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:32:32Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer round 1 (static analysis); would accept as observation if not fixed"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-108",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-006",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Runner hygiene: unvalidated --stage/--task/--role, second-resolution run IDs can overwrite evidence",
+      "reproduction": "tools/agents/run-agent.sh:17-39: STAGE, TASK and ROLE are used unvalidated in filesystem paths (OUT=runs/$STAGE/$RUN_ID; a --stage containing '../' writes evidence outside runs/) and in RUN_ID, which may then not match the schema pattern ^DG[0-7]-[A-Za-z0-9._-]+$. RUN_ID has one-second resolution and 'mkdir -p' reuses an existing directory, so two runs of the same role/task started in the same second overwrite each other's transcript/meta. No shell injection found: all values are quoted and passed to python via argv with a quoted heredoc; the prompt is a single argument.",
+      "expected": "Validate --stage against ^DG[0-7]$ and --task/--role against a safe charset; include the session UUID (or a mkdir without -p that fails on existence) in the run directory.",
+      "actual": "Evidence directories can collide or be misplaced by argument mistakes.",
+      "evidence": [
+        "tools/agents/run-agent.sh:17-43"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:32:32Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer round 1 (static analysis); would accept as observation if not fixed"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-109",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "CI actions pinned to mutable major tags rather than commit SHAs",
+      "reproduction": ".github/workflows/delivery-gates.yml:18 'actions/checkout@v4' and :21 'actions/setup-node@v4' resolve to whatever the tag points to at run time; a moved tag changes the code that runs the gate job. Otherwise the workflow is sound: permissions contents: read, fetch-depth: 0 for historical checks, no secrets referenced, and every step's non-zero exit fails the job.",
+      "expected": "Third-party actions pinned by full commit SHA (with the tag in a comment).",
+      "actual": "Tag-pinned actions.",
+      "evidence": [
+        ".github/workflows/delivery-gates.yml:17-23"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:32:32Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer round 1 (static analysis); would accept as observation if not fixed"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-201",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-013",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Gate validator accepts a review whose invocation_reference points at an unrelated run of the same role (e.g. the T-DG0-LOAD load check)",
+      "reproduction": "QA_REPO_ROOT=<repo> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative.test.mjs --test-name-pattern QA-N27. The fixture builds a valid DG0 gate, then adds a second, successful qa-verifier run whose meta.json has task T-DG0-LOAD, assignment docs/delivery/assignments/DG0/T-DG0-LOAD.md and started_at before the candidate froze. It then points the qa-verifier review record's invocation_reference at that run. validateGate() returns no errors. In the real repository, successful LOAD runs exist for all four review roles (docs/delivery/runs/DG0/DG0-T-DG0-LOAD-{domain-reviewer,code-security-reviewer,qa-verifier,release-auditor}-*), so a complete DG0 gate could validate with no review invocation ever having run. checkInvocation() in tools/gates/lib/rules.mjs compares only role, session_id and exit status.",
+      "expected": "The validator (A24: rejects missing or invalid evidence; A23: separate actual review evidence) rejects a review or audit record whose run is not bound to it: the run's meta.assignment/task must match the record's assignment/review task, and the run must start after the candidate froze (meta.started_at >= stage candidate.frozen_at, or meta.head_commit_at_start containing the frozen commit). A regression test must cover this.",
+      "actual": "The validator accepts the record. validateGate returns [] (test QA-N27 fails with 'validator accepted an invalid gate (no errors)'). The meta.json fields that would bind a run to a review (task, assignment, assignment_sha256, started_at, head_commit_at_start) are recorded but never checked.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/10-qa-negative-tests.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [
+        {
+          "at": "2026-09-28T12:45:00Z",
+          "status": "OPEN"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-202",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-020",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register evidence entries without a '/' are never existence-checked, so a bare non-existent file name satisfies an IMPLEMENTED row",
+      "reproduction": "QA_REPO_ROOT=<repo> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative.test.mjs --test-name-pattern QA-N28. It sets REQ-DLV-001 (final_gate DG0, IMPLEMENTED) evidence to 'NO-SUCH-EVIDENCE.md'. checkRegister() reports no error because rules.mjs only checks paths where ev.includes('/'). Real rows REQ-DLV-002 and REQ-DLV-019 cite 'CLAUDE.md', which exists but is checked only by luck.",
+      "expected": "requirements-spec.md: 'every row with final_gate <= DGn is IMPLEMENTED with non-empty evidence, and every evidence path exists'. Either every evidence entry that isn't an explicit test-ID token (for example a defined prefix such as 'test:') is existence-checked, or the spec defines the test-ID syntax that is exempt.",
+      "actual": "A bare file name is silently treated as a non-path token and accepted. I would accept this as a Low observation if it is tracked, but I recommend fixing it together with F-DG0-201.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/10-qa-negative-tests.log",
+        "docs/delivery/test-evidence/DG0/qa/11-register-integrity.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [
+        {
+          "at": "2026-09-28T12:45:00Z",
+          "status": "OPEN"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-203",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-032",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Stage plan puts acceptance-test authorship for A01-A22 in P6, but acceptance-map requires A03-A05 and A08-A11 to pass at DG4 and A02, A06, A07, A15 and A16 at DG5",
+      "reproduction": "Read docs/analysis/stage-plan.md line 122 (P6: 'qa-verifier authors A01–A22 tests under tests/qa/** and e2e/**') and compare it with docs/analysis/acceptance-map.md rows A02-A16 ('Must pass at' DG4/DG5). Sections P2-P5 of the stage plan name no owner for the executable REQ-S20-00x acceptance tests that must pass at those gates.",
+      "expected": "Every scenario has a concrete owner and stage for its executable test, consistent with the gate at which it must pass. For example, the stage plan says that the executable A-tests for DG2-DG5 are authored in P2-P5 (by the implementers, or by qa-verifier test-first before freeze), and that P6 extends and re-runs them.",
+      "actual": "The acceptance map is internally consistent: every scenario has a test level, a first-delivered stage and a gate (independent check 14-acceptance-feasibility.log, 0 errors). The stage plan's only authorship statement is in P6, which reads as later than the gates it must serve. This is feasible but ambiguous. I would accept it as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/14-acceptance-feasibility.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [
+        {
+          "at": "2026-09-28T12:45:00Z",
+          "status": "OPEN"
+        }
+      ]
+    }
+  ]
 }

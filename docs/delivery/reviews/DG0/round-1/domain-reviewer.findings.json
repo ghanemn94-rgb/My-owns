@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG0-001",
+      "stage_id": "DG0",
+      "requirement": "REQ-PB-049",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Invalid-weight handling (T06) is staged to DG5 although master prompt §21 requires it as DG3 approval evidence",
+      "reproduction": "Read master prompt M0406 (§21 row P3): the DG3 evidence required before approval includes 'invalid weights/cycles/capacity conflicts handled'. In docs/delivery/requirements.csv, the only row whose acceptance tests invalid weights ('saving weights totalling 95% is rejected') is REQ-PB-049, with final_gate DG5 (increments P3;P5). REQ-PB-048 (DG3) tests out-of-range scores only, not weights. REQ-S09-005 (final_gate DG3) has the acceptance 'the history shows weight version 2 as the cause of a rank change', which depends on the versioned weight sets in REQ-PB-049 (DG5). docs/analysis/stage-plan.md lists REQ-PB-049 under 'complete at DG5' and states that AN-04 checked that no row needed complete by an earlier gate's acceptance scenario completes later.",
+      "expected": "The DG3 final-gate scope contains a requirement whose acceptance proves invalid weights are rejected, for example weights not totalling 100% rejected, with a versioned weight set usable by REQ-S09-005. Only the Studio/admin default-configuration part stays at DG5. One fix is to split REQ-PB-049 into a DG3 row (per-transformation weight adjustment, 100% validation, versioning) and a DG5 row (admin-configured defaults in Studio), then update the stage plan and acceptance map.",
+      "actual": "REQ-PB-049 final_gate=DG5. The DG3 gate's final_gate_ids therefore do not include any invalid-weight acceptance, and DG3-final REQ-S09-005 depends on a capability that is only complete at DG5.",
+      "evidence": [
+        "docs/source/master-prompt.anchored.md#M0406",
+        "docs/delivery/requirements.csv (REQ-PB-048, REQ-PB-049, REQ-S09-005)",
+        "docs/analysis/stage-plan.md (P3 and P5 lists)"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:37:24Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round 1 domain review."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-002",
+      "stage_id": "DG0",
+      "requirement": "REQ-PB-020",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "G5 approver and a RACI Consult cell are inconsistent between the register and the permissions matrix",
+      "reproduction": "(1) docs/analysis/permissions-matrix.md §5 rule 7 says gate approvals default to SP 'except where T11 names another approver'. T11 (B0099) names Business owner as the approver for 'Go-live / scale'. REQ-PB-020 (G5 Scale) sets 'approve:SP' with no reference to T11, while REQ-PB-018 (G3) does reference T11 ('SP or BO per T11 Target-state design'). The matrix has no explicit row for the T11 'Go-live / scale' decision. (2) The T12 RACI (B0101) gives Sponsor 'C' for Target Operating Model, but the matrix row 'TOM canvas, T03 gaps, ...' gives SP only 'V', whereas every other RACI 'C' maps to Rv.",
+      "expected": "Either REQ-PB-020 states 'approve: SP (default) or BO per T11 Go-live / scale, configurable', or rule 7 explicitly says G5 is a transformation-level gate distinct from the initiative-level T11 decision. The matrix includes a T11 Go-live / scale decision row (Recommend: Initiative owner; Approve: Business owner; Consult: Risk/Tech/CX; Inform: SteerCo), and SP has Rv on the TOM row.",
+      "actual": "The two artefacts give ambiguous approval authority for G5. SP's Consult role on the TOM is rendered as view-only.",
+      "evidence": [
+        "docs/analysis/permissions-matrix.md",
+        "docs/delivery/requirements.csv (REQ-PB-018, REQ-PB-020)",
+        "docs/source/playbook.md B0099, B0101"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:37:24Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round 1 domain review. Defaults are configurable; I would accept this as an observation if it is not fixed in this round, but it should be clarified before DG2/DG4 implementation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-003",
+      "stage_id": "DG0",
+      "requirement": "REQ-PB-085",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Some SOURCE rows claim 'no interpretation beyond the cited blocks' while carrying interpretations or master-prompt additions",
+      "reproduction": "In docs/delivery/requirements.csv: (a) REQ-PB-085's notes start 'Source-grounded; no interpretation beyond the cited blocks', but its acceptance includes the master prompt §12 severity/persistence rule absorbed from REQ-S12-007 (M0227). (b) REQ-PB-055 maps the source's 'early—not after delivery' (B0084) to a hard 'before G4' block, which is an interpretation, yet it is labelled no-interpretation. (c) REQ-PB-088's acceptance 'the production initialization contains no demo records' comes from M0348 (§18), not the playbook, under the same label.",
+      "expected": "Each note separates the playbook content from the master-prompt additions and interpretations, as REQ-PB-042, -058, -069 and -083 already do.",
+      "actual": "Three rows carry the boilerplate no-interpretation note despite containing non-source behaviour. The substance is still correctly anchored in source_ref, so this is a labelling problem only.",
+      "evidence": [
+        "docs/delivery/requirements.csv (REQ-PB-055, REQ-PB-085, REQ-PB-088)"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:37:24Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round 1 domain review. Labelling only; I would accept it as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-004",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-032",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "playbook.md omits the docx page footer text, and table cells with line breaks do not render as Markdown tables",
+      "reproduction": "Unzip docs/source/Business_Transformation_Playbook.docx and read word/footer1.xml: it contains 'BUSINESS TRANSFORMATION PLAYBOOK  |  PRACTICAL EDITION'. grep for 'PRACTICAL EDITION' in docs/source/playbook.md finds nothing. Separately, B0003, B0062 and B0150 have raw newlines inside table cells, so those Markdown tables break when rendered. The content is intact in playbook.blocks.json.",
+      "expected": "The footer is recorded, at least as a note, since it is a running label with no requirement substance. Multi-line cells use <br> or an equivalent so the reader view renders.",
+      "actual": "All 1027 body text segments of word/document.xml are present in playbook.md, and all 49 tables and 239 rows match. Only the footer is missing, and some tables render poorly.",
+      "evidence": [
+        "docs/source/playbook.md",
+        "docs/source/Business_Transformation_Playbook.docx (word/footer1.xml)"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:37:24Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round 1 domain review. Cosmetic; no requirement substance is lost. I would accept it as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-005",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-032",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Two proposed Arabic glossary terms are narrower than, or ambiguous against, the English meaning",
+      "reproduction": "In docs/analysis/glossary.md: (1) 'Journey' is rendered 'رحلة العميل' (customer journey), but the definition is 'End-to-end customer or process path' and the source uses 'journeys/processes' generally; 'الرحلة' or 'رحلة العمل/العميل' would fit better. (2) 'Modular mode' is rendered 'النمط المعياري', where 'معياري' commonly reads as 'standard/normative'. The parenthetical '(الدخول الجزئي)' helps, but a term such as 'النمط المرن/الجزئي (حسب الحاجة)' would be less ambiguous.",
+      "expected": "Arabic terms that preserve the English meaning without ambiguity.",
+      "actual": "Two terms are narrower or ambiguous. The glossary already states that its terms are proposed and need review by a Mobily Arabic-language owner.",
+      "evidence": [
+        "docs/analysis/glossary.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T12:37:24Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round 1 domain review. I would accept it as an observation, given the glossary's explicit pending-linguistic-review caveat."
+        }
+      ]
+    }
+  ]
+}

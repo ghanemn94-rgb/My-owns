@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 1,
+  "candidate_id": "sha256:dea5e75a8c5fe118a9390b8768afb73cf08429d7ed4bdbde37054701eab660af",
+  "source_commit": "26642c72e72c22bff6472dacb0093b8efabbe7e3",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-SEC-R1-code-security-reviewer-20260928T123232Z",
+    "session_id": "3e091025-f73d-4040-b468-a9046c0b41a5"
+  },
+  "implementation_author": ["transformation-analyst", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer, this invocation) authored no implementation in the DG0 scope. I formed this verdict from direct source reading before reading any other round-1 review record; I have not opened any other reviewer's record."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-1/review-code-security-reviewer.md",
+  "requirements_checked": [],
+  "checks_run": [
+    {
+      "id": "C01-head",
+      "procedure": "Confirm the workspace HEAD equals the frozen source commit (read .git/HEAD and the branch ref directly, because Bash was unavailable)",
+      "command": "Read .git/HEAD; Read .git/refs/heads/claude/mobily-transformation-platform-kwcc4i; Read .git/logs/HEAD",
+      "environment": "/home/user/My-owns working tree, Read tool only",
+      "expected": "HEAD == 26642c72e72c22bff6472dacb0093b8efabbe7e3, or else candidate.mjs reproduces the candidate ID (C02)",
+      "actual": "HEAD == 4f493c34cdd72aa3145ce8921bd91523bad01c1e. The reflog shows it is one commit after 26642c7, titled 'DG0: freeze candidate sha256:dea5e75a (commit 26642c7), round-1 review assignments'. The message suggests a metadata-only commit, but that is unverified without C02.",
+      "exit_status": null,
+      "result": "FAIL"
+    },
+    {
+      "id": "C02-candidate-id",
+      "procedure": "Recompute the working-tree candidate ID and compare it with the frozen ID",
+      "command": "node tools/gates/candidate.mjs --stage DG0",
+      "environment": "/home/user/My-owns, Bash tool (auto permission mode)",
+      "expected": "candidate_id sha256:dea5e75a8c5fe118a9390b8768afb73cf08429d7ed4bdbde37054701eab660af",
+      "actual": "Not executed. Every Bash call in this invocation (9 attempts) was refused: 'The server-side auto mode classifier gave no verdict (error)'. The candidate identity could not be confirmed.",
+      "exit_status": null,
+      "result": "BLOCKED"
+    },
+    {
+      "id": "C03-existing-tests",
+      "procedure": "Run the gate validator self-tests and the write-guard tests",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+      "environment": "intended: disposable worktree /tmp/dg0-sec at 26642c7, Node 22",
+      "expected": "all tests pass",
+      "actual": "Not executed: Bash unavailable (classifier gave no verdict).",
+      "exit_status": null,
+      "result": "BLOCKED"
+    },
+    {
+      "id": "C04-repro",
+      "procedure": "Execute the reviewer's bypass reproductions R0-R6 against disposable git fixtures",
+      "command": "git worktree add /tmp/dg0-sec 26642c72e72c22bff6472dacb0093b8efabbe7e3 && GATE_TOOLS=/tmp/dg0-sec node --test docs/delivery/test-evidence/DG0/code-security/repro.test.mjs && git worktree remove /tmp/dg0-sec",
+      "environment": "intended: disposable worktree plus mkdtemp fixtures, Node 22",
+      "expected": "each test passes, which would demonstrate the corresponding bypass",
+      "actual": "Script written but NOT executed: Bash unavailable. The findings rest on static source analysis only; no runtime result is claimed.",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/repro.test.mjs"]
+    },
+    {
+      "id": "C05-validator-static",
+      "procedure": "Full-file source review of tools/gates/validate.mjs, candidate.mjs, lib/{rules,candidate,schema,csv}.mjs, import-findings.mjs, schemas/*.json and tests/validator.test.mjs for gate bypasses",
+      "command": "Read tool over each file",
+      "environment": "/home/user/My-owns working tree (content not hash-verified against the manifest; see C02)",
+      "expected": "no way to make validate.mjs pass a gate that should fail",
+      "actual": "Bypasses found: F-DG0-101 (findings escape via stage_id / dropped earlier-round findings), F-DG0-102 (fabricated meta.json satisfies provenance), F-DG0-103 (symlinks/gitlinks excluded from candidate), F-DG0-104 (manifest spec unbound), F-DG0-106 (weak evidence checks), F-DG0-107 (CSV leniency). No problems found in: exit codes (finish() exits 1 on any error), the schema validator (additionalProperties, $ref, required), the transition table, the pipeline advancement rule, the audit/gate invocation binding, or session-uniqueness.",
+      "exit_status": null,
+      "result": "FAIL"
+    },
+    {
+      "id": "C06-guard-static",
+      "procedure": "Source review of tools/agents/guard-write.mjs, write-scopes.json, settings/*.settings.json (hook command) and .claude/agents frontmatter (sampled transformation-analyst, code-security-reviewer)",
+      "command": "Read tool over each file",
+      "environment": "/home/user/My-owns working tree",
+      "expected": "the guard fails closed and covers all write-capable tools and protected paths",
+      "actual": "The hook command fails closed: git missing or the guard missing gives rc=2, any non-zero guard exit becomes exit 2, and an unparseable payload exits 2. The matcher covers Write|Edit|NotebookEdit|MultiEdit, and '..' is normalised by resolve(). Gaps are in F-DG0-105: settings.local.json, .mcp.json and trading_agent/ are unprotected; symlinks are followed lexically; matching is case-sensitive. Bash is unguarded for all roles; this is disclosed in agent-protocol.md:75, agents.md:69 and D-009.",
+      "exit_status": null,
+      "result": "FAIL"
+    },
+    {
+      "id": "C07-runner-static",
+      "procedure": "Source review of tools/agents/run-agent.sh for injection, permission mode, session uniqueness, model pinning, evidence integrity and exit-code propagation",
+      "command": "Read tool",
+      "environment": "/home/user/My-owns working tree",
+      "expected": "no injection; auto permission mode; a fresh UUID session; an explicit model; complete evidence; the claude exit code propagated",
+      "actual": "No shell injection (quoted variables, argv to python, quoted heredoc). Permission mode is auto, uuid4 per run, --model explicit, and exit $EXIT is propagated. Evidence integrity is weak: there is no transcript hash and result_session_id is not compared (part of F-DG0-102). Hygiene issues are in F-DG0-108.",
+      "exit_status": null,
+      "result": "FAIL"
+    },
+    {
+      "id": "C08-ci-static",
+      "procedure": "Review .github/workflows/delivery-gates.yml",
+      "command": "Read tool",
+      "environment": "/home/user/My-owns working tree",
+      "expected": "least privilege, fetch-depth 0, pinned actions, no secrets, gate failure fails the job",
+      "actual": "permissions: contents: read; fetch-depth: 0; no secrets; each step's non-zero exit fails the job. Actions are pinned to mutable tags (Low F-DG0-109). Not executed on GitHub.",
+      "exit_status": null,
+      "result": "PASS"
+    },
+    {
+      "id": "C09-secrets",
+      "procedure": "Scan the candidate for credentials and personal data",
+      "command": "git grep -nIE '(api[_-]?key|secret|token|password|BEGIN .*PRIVATE KEY|ghp_|sk-)' 26642c7 (intended)",
+      "environment": "/home/user/My-owns",
+      "expected": "no credentials",
+      "actual": "Not executed: Bash unavailable. None of the ~35 files read in full contained credentials, but that is not a repository-wide scan.",
+      "exit_status": null,
+      "result": "BLOCKED"
+    },
+    {
+      "id": "C10-source-tools",
+      "procedure": "Review tools/source/{extract_docx.py, split_master_prompt.py, merge_register.py, check_extraction.sh} and run the reproducibility check",
+      "command": "tools/source/check_extraction.sh (intended); Read tool for the source review",
+      "environment": "/home/user/My-owns",
+      "expected": "deterministic, fail-closed extraction and merge",
+      "actual": "Source reviewed. check_extraction.sh is fail-closed (set -e, pinned docx SHA, diff -q). merge_register.py silently drops surplus cells (F-DG0-107). extract_docx.py iterates only top-level w:p/w:tbl, so body-level w:sdt content controls, headers, footers and footnotes would be dropped; I could not check whether the docx contains any. The reproducibility script was not run (Bash unavailable).",
+      "exit_status": null,
+      "result": "BLOCKED"
+    }
+  ],
+  "findings": ["F-DG0-101", "F-DG0-102", "F-DG0-103", "F-DG0-104", "F-DG0-105", "F-DG0-106", "F-DG0-107", "F-DG0-108", "F-DG0-109"],
+  "verdict": "BLOCKED",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG0/round-1/code-security-reviewer.md",
+    "docs/delivery/test-evidence/DG0/code-security/repro.test.mjs"
+  ],
+  "reviewed_at": "2026-09-28T12:32:32Z",
+  "summary": "BLOCKED. The candidate identity could not be confirmed: HEAD is 4f493c3, not 26642c7, and candidate.mjs could not run because every Bash call was refused (the auto-mode classifier gave no verdict). No tests or reproductions were executed. Static full-file review of the DG0 delivery tooling found 2 High (mandatory), 3 Medium (1 mandatory) and 4 Low findings, which also require FAIL-level repair: F-DG0-101 and F-DG0-102 are gate bypasses. requirements_checked is empty because no requirement could be verified on a confirmed candidate. Requirements examined statically: REQ-DLV-006, REQ-DLV-007, REQ-DLV-013, REQ-DLV-015, REQ-DLV-016, REQ-DLV-017, REQ-DLV-022, REQ-DLV-023, REQ-DLV-026, REQ-DLV-029. reviewed_at is the invocation start time (from run_id), because no clock was readable without Bash."
+}
