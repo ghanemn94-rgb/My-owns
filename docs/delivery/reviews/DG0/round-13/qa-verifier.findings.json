@@ -1,0 +1,63 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-233",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-013",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Residual of F-DG0-230: the exact-cwd sandbox check trusts meta.cwd, which is not bound to the transcript's init cwd or to the replayed prompt's 'Your working directory is ...', so a run whose meta.cwd and deny list both name a foreign root still binds a gate record",
+      "reproduction": "QA13-V5 in docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r13.test.mjs, run against a disposable clone of candidate 6c61f2e (QA_REPO_ROOT=<clone>). The independent round-9 fixture is adapted to D-026 run evidence (meta.cwd plus a 7-path deny list anchored at meta.cwd; control QA13-V1 validates cleanly). For the qa-verifier run only, meta.cwd is set to /somewhere/else, and settings.json denies /somewhere/else/{.git,.claude,tools/gates,tools/agents,docs/source,docs/delivery/reviews,docs/delivery/runs}, with meta.settings_sha256 consistent. The forgery is part of the run evidence as first committed, so write-once history has nothing to catch. The transcript's replayed prompt still says 'Your working directory is /work/repo'. validateGate returns [] (docs/delivery/test-evidence/DG0/qa/round-13/04-qa13-new-cases.log, 'QA13-V5 errors: []'). Real transcripts record the working directory in the init event: e.g. the round-12 QA run's init line has cwd=/home/user/My-owns, equal to its meta.cwd. rules.mjs uses meta.cwd for the deny-list anchor (line 338) and for replay path mapping (line 371), and checks it against nothing.",
+      "expected": "REQ-DLV-013/007 say the deny list must name the protected paths 'under the run's own working directory'. The validator should take that directory from, or cross-check it against, evidence the run itself produced: the transcript init event's cwd and/or the replayed prompt's 'Your working directory is <cwd>'. Then relabelling meta.cwd alone doesn't re-anchor the check.",
+      "actual": "Accepted. Exploiting it needs fabricated run evidence (meta.json plus settings.json), which is disclosed residual 1 in docs/delivery/threat-model.md (self-hashed evidence), and the same forgery class already needed for the original F-DG0-230 attack. So this is hardening only: Low and non-mandatory. I'd accept it as an observation. The F-DG0-230 fix itself does what that finding asked (exact <meta.cwd>/<path>, docs/source added) and is verified.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r13.test.mjs#QA13-V5",
+        "docs/delivery/test-evidence/DG0/qa/round-13/04-qa13-new-cases.log#QA13-V5",
+        "docs/delivery/test-evidence/DG0/qa/round-13/07-f230-verification.log",
+        "tools/gates/lib/rules.mjs#checkInvocation",
+        "docs/delivery/threat-model.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-13/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T22:25:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-13 QA review of candidate c3364ac2 (6c61f2e)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-234",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The runner's configuration scan never reports removals, and the D-026 zero-length stub rule turns 'truncate an ignored configuration file to zero' into a removal: deleting or emptying an ignored .claude/settings.local.json during a run leaves no trace (exit 0, external_config_changed [])",
+      "reproduction": "Runner end to end with a stub claude (dg0-gate-negative-r13.test.mjs; logs docs/delivery/test-evidence/DG0/qa/round-13/04-qa13-new-cases.log and 05-stub-rule-old-vs-new.log). A fixture repository ignores .claude/settings.local.json, which holds '{\"permissions\":{\"deny\":[\"Bash(curl:*)\"]}}' before the run. QA13-R1b: the 'agent' truncates it to zero bytes. The round-12 runner (7f09967) exits 71 and records it. The candidate exits 0 with external_config_changed [] and nothing in outputs, because config_snapshot now skips the zero-length untracked file, so it is simply absent after the run. QA13-R2: the 'agent' deletes it. Both versions exit 0 with no trace, because run-agent.sh keeps only added lines: `diff pre post | grep '^>'`. A file that vanishes from the find-based scan (Claude configuration, ignore and attribute files, hooks) is never reported. QA13-R1 (a non-ignored untracked CLAUDE.local.md truncated) is still traced, through meta.outputs. QA13-R3 confirms the intended direction: new zero-length stubs are ignored, and the same files with content still give exit 71.",
+      "expected": "docs/delivery/threat-model.md (Detected: 'A process outside the sandbox changes configuration ... whether or not git ignores them') and REQ-DLV-007 ('records changes as external_config_changed') imply that every change to a scanned configuration file is reported. Either also report removed entries (for example lines only in the pre-snapshot, or a pre-existing path that became zero-length or disappeared), or state in the threat model that removal and truncation of untracked or ignored configuration are not detected.",
+      "actual": "Undetected. Impact is minimal. Only a process outside the agent sandbox can write these paths (the sandbox denies them: 08-live-guard-probe.log). Removing configuration can't add capability. User and local settings aren't loaded (--setting-sources project), and tracked files are always reported, even when truncated. So the stub rule cannot hide added or altered configuration with content, which answers the assignment's question. It can only hide a removal of content, which was already invisible as a deletion. Low and non-mandatory; I'd accept it as an observation. Judgement: docs/delivery/test-evidence/DG0/qa/round-13/17-stub-rule-judgement.md.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-13/17-stub-rule-judgement.md",
+        "docs/delivery/test-evidence/DG0/qa/round-13/05-stub-rule-old-vs-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-13/04-qa13-new-cases.log#QA13-R1b",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r13.test.mjs#QA13-R2",
+        "tools/agents/run-agent.sh#config_snapshot",
+        "docs/delivery/threat-model.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-13/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T22:25:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-13 QA review of candidate c3364ac2 (6c61f2e)."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-226",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fresh re-verification in round 13; the round-12 closure did not bind because that run ended with is_error. Original failure reproduced on the round-11 candidate 7e99163 with the runner end to end and a stub claude (hermetic git): QA11-R5 (settings.local.json hidden by .git/info/exclude) and QA11-R6 (planted in the worktree cwd) FAIL there with 'no trace', while R1 to R4 pass. On the candidate 6c61f2e all six QA11-R cases PASS. The three layers hold. (1) Not loaded: run-agent.sh lines 150 and 159 pass --setting-sources project (old: project,local). (2) Not writable: live in this run's own sandbox, shell writes to .claude/settings.local.json and .git/info/exclude fail with 'Read-only file system', and the Write tool is blocked by the guard. (3) Detected: QA12-R7/R8/R9 (nested CLAUDE.md, .claude/settings.json, .gitignore) exit 71 on the candidate. Side note: the first, non-hermetic attempt failed every case, including the control, at the fixture's own git commit, because of host commit signing without network; that's a harness artefact, recorded in the log. The separate removal/truncation gap is raised as F-DG0-234 and does not affect this fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-13/11-f226-f227-verification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-13/08-live-guard-probe.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r11.test.mjs#QA11-R5",
+        "tools/agents/run-agent.sh"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-227",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fresh re-verification. On 7e99163, `python3 -B tools/agents/tests/test_run_meta.py -v` runs 5 tests and skips both ExternalConfigTest tests, and discover runs 12 (the base tests twice). On the candidate, script mode runs 7 tests including test_external_config_changes_are_recorded and test_no_change_records_an_empty_list. Discover runs 14 (7 run_meta, 7 agent_settings), all OK. ExternalConfigTest and RunMetaTest both derive from _RunMetaBase, and the __main__ guard is the last statement in the file.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-13/11-f226-f227-verification.log",
+        "tools/agents/tests/test_run_meta.py#ExternalConfigTest"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-228",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fresh re-verification. The current live-probe evidence guard-live-20260928T215218Z names source commit c1aaa42, which is on refs/heads and refs/remotes/origin. The candidate 6c61f2e is its ancestor, `git diff 6c61f2e c1aaa42 -- tools .claude docs/source CLAUDE.md` is empty, and candidate.mjs --ref c1aaa42 prints the candidate ID c3364ac2. So the probe exercised exactly the candidate's tooling. Its settings, result and transcript hashes match meta.json, and so do those of the round-12 probe guard-live-20260928T182513Z (source e875871). The README still marks 57d23de and 0593fd7 as unpublished and historical; both still have no containing ref, which is correctly disclosed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-13/12-f228-verification.log",
+        "docs/delivery/test-evidence/DG0/orchestrator-probes/README.md",
+        "docs/delivery/test-evidence/DG0/orchestrator-probes/guard-live-20260928T215218Z/meta.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-229",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original failure reproduced on the round-12 candidate 7f09967 (repro-f229-pyc-plant.sh). I planted gitignored sourceless docs/analysis/tools/csv.pyc and __pycache__/csv.cpython-311.pyc, invisible to git status, with a payload that writes .git/hooks/post-commit and exits 42. The old prefreeze imported it: all three analysis checks FAIL with the payload's exit, and .git/hooks/post-commit was written with orchestrator rights. On the candidate 6c61f2e the same plant is inert: prefreeze prints 10/10 PASS (every candidate-executing check '(sandboxed)'), exits 0, and no hook is written. My regression QA13-S6 passes, and my round-12 QA12-P2 now passes. Mechanism: sandbox-run.sh clones the committed HEAD (ignored and untracked files absent), then runs under bwrap with a read-only root, private /tmp, no network and env -i with PYTHONSAFEPATH=1 and PYTHONDONTWRITEBYTECODE=1. Only tools/gates code (relative and node: imports only) and `python3 -I -B -c` run outside, from /. New independent cases confirm it. QA13-S1: an uncommitted tracked edit never reaches the command. QA13-S2: BASH_ENV, NODE_OPTIONS, PYTHONPATH and PYTHONSTARTUP don't reach the sandboxed command; BASH_ENV runs once, for sandbox-run.sh itself, in the caller's own environment. QA13-S3: source-repository hooks don't run. QA13-S4: an unknown revision fails before the command runs. QA13-S5: the command can write neither the source .git nor HOME. QA13-S7: the final check catches uncommitted drift. The finding's expected result allowed either (a) no execution or (b) detection. The fix implements (a), so QA12-P1 (no runner trace of the plant) still fails, by design. The threat model now discloses the orchestrator constraint (D-026).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-13/03-f229-verification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-13/repro-f229-pyc-plant.sh",
+        "docs/delivery/test-evidence/DG0/qa/round-13/04-qa13-new-cases.log#QA13-S6",
+        "docs/delivery/test-evidence/DG0/qa/round-13/02-prefreeze-fresh-clone.log",
+        "docs/delivery/test-evidence/DG0/qa/round-13/06-prior-qa-suites-regression.log#QA12-P2",
+        "tools/gates/sandbox-run.sh",
+        "tools/gates/prefreeze.sh"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-230",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original failure reproduced: on 7f09967, QA12-V2 (a deny list rooted in /somewhere/else, with settings_sha256 consistent) is accepted, and the candidate's own 'F-DG0-230' validator test, copied into the old tree, FAILS there. On the candidate, that test passes, and rules.mjs requires every one of .git, .claude, tools/gates, tools/agents, docs/source, docs/delivery/reviews and docs/delivery/runs to appear exactly as <meta.cwd>/<path>. My independent cases pass: QA13-V1 control clean; V2 a deny list without docs/source rejected; V3 no meta.cwd rejected ('<unknown cwd>'); V4 non-normalised <cwd>/./x entries rejected (fails closed). This run's own settings.json satisfies the rule for /home/user/My-owns. That is what the finding's expected result asked for. A residual remains: meta.cwd itself isn't bound to the transcript (QA13-V5 accepts a forged meta.cwd plus a matching deny list). It needs forged run evidence (threat-model residual 1), and I raise it separately as Low F-DG0-233.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-13/07-f230-verification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-13/04-qa13-new-cases.log#QA13-V2",
+        "tools/gates/lib/rules.mjs#checkInvocation",
+        "tools/gates/tests/validator.test.mjs#F-DG0-230"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-231",
+      "result": "FAIL",
+      "status_after": "OPEN",
+      "note": "Partly fixed. Fixed: agent-protocol.md now says git clone <repo> \"$TMPDIR/<name>\" and that /tmp is read-only; agent_settings.py's docstring and D-025 say $TMPDIR; the run-agent.sh comment says --setting-sources project; agents.md no longer says Bash writes aren't path-guarded. Not fixed, against the finding's expected result ('the documented disposable-copy location works inside the agent sandbox ... comments and docs describe the current controls'): (1) docs/delivery/agents.md line 28, the current invocation-mechanism description, still says 'The runner starts agents with `--setting-sources project,local`', while run-agent.sh lines 150 and 159 pass `project`. (2) The three reviewer agent definitions (.claude/agents/{domain-reviewer,code-security-reviewer,qa-verifier}.md) still prescribe `git worktree add /tmp/review-<id> <commit>`. In this sandbox that fails live with 'could not create leading directories of .git/worktrees/...: Read-only file system', and /tmp is read-only too. (D-024 still quoting project,local is a dated decision record, which is acceptable.) Still Low and non-mandatory, documentation only; I'd accept it as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-13/09-f231-verification.log",
+        "docs/delivery/agents.md",
+        ".claude/agents/qa-verifier.md",
+        "docs/delivery/agent-protocol.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-232",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "On 7f09967, `grep -cE 'agent_settings|D-025|D-026|sandbox-run' requirements.csv` is 0; on the candidate it is 7. REQ-DLV-007 now describes both layers: the file-tool guard and the OS Bash sandbox generated by agent_settings.py (bubblewrap, enabled, failIfUnavailable, allowUnsandboxedCommands false, the deny list, analyst and reviewer confinement, --setting-sources project). It also covers the validator's exact <meta.cwd> anchoring (F-DG0-230) and the D-026 stub rule. It cites the agent_settings tests, 'D-025: gate records must come from Bash-sandboxed runs', 'F-DG0-230: ...' and both D-026 runner tests, and all 17 evidence files exist. REQ-DLV-006/013/023/026 were updated consistently. The candidate's check_test_refs (run sandboxed in prefreeze) reports 0 problems across 74 quoted test titles, and the 7 agent_settings tests pass. The pre-freeze now also proves the register equals the merge of docs/analysis/parts.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-13/10-f232-verification.log",
+        "docs/delivery/requirements.csv#REQ-DLV-007",
+        "docs/delivery/test-evidence/DG0/qa/round-13/02-prefreeze-fresh-clone.log"
+      ]
+    }
+  ]
+}
