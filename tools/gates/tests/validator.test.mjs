@@ -84,6 +84,15 @@ function makeRun(repo, role, { assignment, startedAt = T_RUN, task = "T-REV", st
   return invocation_reference;
 }
 
+/** Records files as outputs written by a run's own file tools (what run-agent.sh derives from its snapshots). */
+function bindOutputs(repo, ref, rels) {
+  edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (m) => {
+    m.outputs = { ...(m.outputs || {}) };
+    m.written_by_tools = [...new Set([...(m.written_by_tools || []), ...rels])].sort();
+    for (const rel of rels) m.outputs[rel] = sha(readFileSync(join(repo, rel)));
+  });
+}
+
 /** Builds a repository whose DG0 gate is fully valid (a round-1 FAIL with one fixed finding, round-2 PASS). */
 function buildValidRepo() {
   const repo = mkdtempSync(join(tmpdir(), "gate-fixture-"));
@@ -115,8 +124,9 @@ function buildValidRepo() {
   const spec = doc.stages[0].candidate_spec;
   const entries = manifestFromRef(repo, head, spec);
   const cid = candidateId(entries);
-  put(repo, "docs/delivery/candidates/DG0.manifest.json", { stage_id: "DG0", candidate_id: cid, source_commit: head, frozen_at: T_FREEZE, spec, entries });
-  doc.stages[0].candidate = { candidate_id: cid, source_commit: head, frozen_at: T_FREEZE, manifest_path: "docs/delivery/candidates/DG0.manifest.json" };
+  const mpath = `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`;
+  put(repo, mpath, { stage_id: "DG0", candidate_id: cid, hash_algorithm: "mth-candidate-v2", source_commit: head, frozen_at: T_FREEZE, spec, entries });
+  doc.stages[0].candidate = { candidate_id: cid, source_commit: head, frozen_at: T_FREEZE, manifest_path: mpath };
   put(repo, "docs/delivery/stages.json", doc);
   put(repo, "docs/delivery/test-evidence/DG0/validator.txt", "PASS\n");
   const record = (role, round, extra = {}) => {
@@ -133,6 +143,7 @@ function buildValidRepo() {
       findings: [], verdict: "PASS", evidence_paths: ["docs/delivery/test-evidence/DG0/validator.txt"], reviewed_at: T_RUN, ...extra,
     };
     put(repo, rel, rec);
+    bindOutputs(repo, rec.invocation_reference, [rel]);
     return rel;
   };
   // Round 1: code-security raises a High finding (FAIL).
@@ -144,6 +155,7 @@ function buildValidRepo() {
   };
   record("code-security-reviewer", 1, { verdict: "FAIL", findings: ["F-DG0-101"] });
   put(repo, "docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json", { findings: [finding] });
+  bindOutputs(repo, get(repo, "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json").invocation_reference, ["docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json"]);
   // Round 2: all PASS; code-security verifies the fix.
   const records = {};
   for (const role of ROLES) records[role] = record(role, 2);
@@ -152,6 +164,7 @@ function buildValidRepo() {
   put(repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json", {
     verifications: [{ finding_id: "F-DG0-101", result: "PASS", status_after: "CLOSED_VERIFIED", note: "fixed", evidence: [] }],
   });
+  bindOutputs(repo, csRec.invocation_reference, ["docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json"]);
   edit(repo, "docs/delivery/stages.json", (d) => {
     const recs = (round) => Object.fromEntries(REQUIRED.map((r) => [r, `docs/delivery/reviews/DG0/round-${round}/${r}.json`]));
     d.stages[0].review_rounds = [
@@ -169,7 +182,7 @@ function buildValidRepo() {
   });
   put(repo, "docs/delivery/gates/DG0.json", {
     schema_version: 1, stage_id: "DG0", decision: "APPROVED", candidate_id: cid, source_commit: head,
-    manifest_path: "docs/delivery/candidates/DG0.manifest.json", previous_gate: null,
+    manifest_path: mpath, previous_gate: null,
     reviews: { "domain-reviewer": records["domain-reviewer"], "code-security-reviewer": records["code-security-reviewer"], "qa-verifier": records["qa-verifier"] },
     release_audit: records["release-auditor"], requirements: { final_gate_ids: ["REQ-DLV-001"] },
     tests: [{ name: "validator self-test", command: "node --test", result: "PASS", evidence: ["docs/delivery/test-evidence/DG0/validator.txt"] }],
@@ -401,7 +414,7 @@ test("A25 / F-DG0-103: symlinks are part of the candidate identity; submodules a
 
 test("F-DG0-104: the manifest spec must equal the stage spec and the approved policy", () => {
   const a = buildValidRepo();
-  edit(a.repo, "docs/delivery/candidates/DG0.manifest.json", (m) => (m.spec = { include: ["**"], exclude: ["trading_agent/**", "src/**"] }));
+  edit(a.repo, get(a.repo, "docs/delivery/gates/DG0.json").manifest_path, (m) => (m.spec = { include: ["**"], exclude: ["trading_agent/**", "src/**"] }));
   const errs = validateGate(a.repo, "DG0");
   expectError(errs, /spec differs from the stage's candidate_spec/);
   expectError(errs, /exclude must be/);
@@ -412,7 +425,7 @@ test("F-DG0-104: the manifest spec must equal the stage spec and the approved po
 
 test("A25: a tampered manifest or a stale review candidate is detected", () => {
   const a = buildValidRepo();
-  edit(a.repo, "docs/delivery/candidates/DG0.manifest.json", (m) => (m.entries[0].sha256 = "0".repeat(64)));
+  edit(a.repo, get(a.repo, "docs/delivery/gates/DG0.json").manifest_path, (m) => (m.entries[0].sha256 = "0".repeat(64)));
   expectError(validateGate(a.repo, "DG0"), /tampered/);
   const b = buildValidRepo();
   edit(b.repo, b.records["qa-verifier"], (r) => (r.candidate_id = "sha256:" + "a".repeat(64)));
@@ -545,7 +558,7 @@ test("F-DG0-101 residual: deleting an earlier review round is detected", () => {
   edit(c.repo, "docs/delivery/findings.json", (d) => (d.findings = []));
   sh(c.repo, "add", "-A");
   sh(c.repo, "commit", "-qm", "hide round 1");
-  expectError(validateGate(c.repo, "DG0"), /was deleted from git history/);
+  expectError(validateGate(c.repo, "DG0"), /write-once: D docs\/delivery\/reviews\/DG0\/round-1/);
 });
 
 test("F-DG0-205: evidence that is a symlink to a file outside the repository is rejected", () => {
@@ -577,4 +590,99 @@ test("F-DG0-112 / F-DG0-206: file mode and entry type are part of the candidate 
   unlinkSync(join(r2, "entry.txt"));
   put(r2, "entry.txt", "symlink:app.txt");
   assert.notEqual(candidateId(manifestFromWorkingTree(r2, spec)), asLink);
+});
+
+test("F-DG0-115: reviewer artefacts cannot be edited after the run, committed or not", () => {
+  // (a) committed round-1 findings sidecar rewritten in a later commit
+  const a = buildValidRepo();
+  sh(a.repo, "add", "-A");
+  sh(a.repo, "commit", "-qm", "round evidence");
+  const side = "docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json";
+  put(a.repo, side, { findings: [] });
+  edit(a.repo, "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json", (r) => (r.findings = []));
+  edit(a.repo, "docs/delivery/findings.json", (d) => (d.findings = []));
+  sh(a.repo, "add", "-A");
+  sh(a.repo, "commit", "-qm", "rewrite round 1");
+  const ea = validateGate(a.repo, "DG0");
+  expectError(ea, /write-once: M docs\/delivery\/reviews\/DG0\/round-1\/code-security-reviewer\.findings\.json/);
+  // (b) uncommitted in-place edit of a verification sidecar no longer matches what the run wrote
+  const b = buildValidRepo();
+  const v = "docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json";
+  edit(b.repo, v, (x) => (x.verifications[0].note = "edited by someone else"));
+  expectError(validateGate(b.repo, "DG0"), /code-security-reviewer\.verifications\.json differs from what the run wrote/);
+  // (c) a FAIL record flipped to PASS after commit
+  const c = buildValidRepo();
+  sh(c.repo, "add", "-A");
+  sh(c.repo, "commit", "-qm", "round evidence");
+  edit(c.repo, c.records["qa-verifier"], (r) => (r.summary = "quietly changed"));
+  const ec = validateGate(c.repo, "DG0");
+  expectError(ec, /write-once: uncommitted change to committed evidence/);
+  expectError(ec, /qa-verifier\.json differs from what the run wrote/);
+  // (d) a record the run's own tools did not write
+  const d = buildValidRepo();
+  edit(d.repo, `docs/delivery/runs/DG0/${get(d.repo, d.records["domain-reviewer"]).invocation_reference.run_id}/meta.json`, (m) => (m.written_by_tools = []));
+  expectError(validateGate(d.repo, "DG0"), /was not written by this run's file tools/);
+});
+
+test("F-DG0-208: round metadata must match the committed manifest of its candidate", () => {
+  const { repo } = buildValidRepo();
+  edit(repo, "docs/delivery/stages.json", (d) => (d.stages[0].review_rounds[0].frozen_at = "2026-09-28T10:00:00Z"));
+  expectError(validateGate(repo, "DG0"), /round 1 frozen_at\/source_commit differ from its committed manifest/);
+});
+
+test("F-DG0-102 residual: a verifying record must be the round's listed, schema-valid record", () => {
+  const a = buildValidRepo();
+  edit(a.repo, "docs/delivery/stages.json", (d) => delete d.stages[0].review_rounds[1].records["code-security-reviewer"]);
+  expectError(validateGate(a.repo, "DG0"), /record for round-2 is not listed in stages\.json review_rounds/);
+  const b = buildValidRepo();
+  edit(b.repo, b.records["code-security-reviewer"], (r) => delete r.assignment);
+  expectError(validateGate(b.repo, "DG0"), /not a valid review record/);
+});
+
+test("F-DG0-117: observations are accepted only through specialist and auditor sidecars", () => {
+  const make = () => {
+    const x = buildValidRepo();
+    const side = "docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json";
+    edit(x.repo, side, (s) => Object.assign(s.findings[0], { severity: "Low", mandatory_violation: false }));
+    bindOutputs(x.repo, get(x.repo, "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json").invocation_reference, [side]);
+    edit(x.repo, "docs/delivery/findings.json", (d) => Object.assign(d.findings[0], {
+      severity: "Low", mandatory_violation: false, status: "ACCEPTED_OBSERVATION", verification: null,
+      acceptance: { rationale: "cosmetic only, tracked", owner: "delivery-orchestrator", accepted_by: ["code-security-reviewer", "release-auditor"] },
+    }));
+    edit(x.repo, "docs/delivery/gates/DG0.json", (g) => (g.accepted_observations = ["F-DG0-101"]));
+    return x;
+  };
+  // Only typed into findings.json: rejected.
+  const a = make();
+  const cs = "docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json";
+  put(a.repo, cs, { verifications: [] });
+  bindOutputs(a.repo, get(a.repo, a.records["code-security-reviewer"]).invocation_reference, [cs]);
+  const ea = validateGate(a.repo, "DG0");
+  expectError(ea, /no release-auditor sidecar accepts it/);
+  expectError(ea, /no specialist reviewer sidecar accepts it/);
+  // Accepted by the specialist and the auditor through their own bound sidecars: passes.
+  const b = make();
+  const entry = { finding_id: "F-DG0-101", result: "PASS", status_after: "ACCEPTED_OBSERVATION", note: "accept as cosmetic", evidence: [] };
+  put(b.repo, cs, { verifications: [entry] });
+  bindOutputs(b.repo, get(b.repo, b.records["code-security-reviewer"]).invocation_reference, [cs]);
+  const au = "docs/delivery/reviews/DG0/round-2/release-auditor.verifications.json";
+  put(b.repo, au, { verifications: [entry] });
+  bindOutputs(b.repo, get(b.repo, b.records["release-auditor"]).invocation_reference, [au]);
+  edit(b.repo, "docs/delivery/stages.json", (d) => (d.stages[0].review_rounds[1].records["release-auditor"] = b.records["release-auditor"]));
+  assert.deepEqual(validateGate(b.repo, "DG0"), []);
+});
+
+test("F-DG0-116: with core.fileMode=false tracked modes come from the index", () => {
+  const repo = mkdtempSync(join(tmpdir(), "cand-fm-"));
+  fixtures.push(repo);
+  sh(repo, "init", "-q", "-b", "main");
+  put(repo, "run.sh", "echo hi\n");
+  execFileSync("chmod", ["+x", join(repo, "run.sh")]);
+  sh(repo, "-c", "user.email=t@e", "-c", "user.name=t", "add", "-A");
+  sh(repo, "-c", "user.email=t@e", "-c", "user.name=t", "commit", "-qm", "c");
+  const spec = { include: ["**"], exclude: ["trading_agent/**"] };
+  const committed = candidateId(manifestFromRef(repo, "HEAD", spec));
+  sh(repo, "config", "core.fileMode", "false");
+  execFileSync("chmod", ["-x", join(repo, "run.sh")]); // e.g. a filesystem without exec bits
+  assert.equal(candidateId(manifestFromWorkingTree(repo, spec)), committed);
 });

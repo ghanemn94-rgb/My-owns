@@ -8,7 +8,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { candidateId, diffManifests, manifestFromRef, manifestFromWorkingTree, specPolicyErrors } from "./lib/candidate.mjs";
+import { candidateId, diffManifests, manifestFromRef, manifestFromWorkingTree, specPolicyErrors, HASH_ALGORITHM } from "./lib/candidate.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const args = process.argv.slice(2);
@@ -56,11 +56,16 @@ if (args.includes("--freeze")) {
     console.error(`refusing to freeze: uncommitted candidate changes (${JSON.stringify(d)})`);
     process.exit(1);
   }
-  const rel = `docs/delivery/candidates/${stageId}.manifest.json`;
+  // One write-once manifest per freeze (D-021): rounds are cross-checked against these committed files.
+  const rel = `docs/delivery/candidates/${stageId}/${idHead.slice(7, 23)}.manifest.json`;
+  if (existsSync(join(repo, rel))) {
+    console.error(`refusing to freeze: ${rel} already exists (this candidate was frozen before)`);
+    process.exit(1);
+  }
   mkdirSync(dirname(join(repo, rel)), { recursive: true });
   const frozenAt = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
   writeFileSync(join(repo, rel), JSON.stringify({
-    stage_id: stageId, candidate_id: idHead, source_commit: head, frozen_at: frozenAt, spec,
+    stage_id: stageId, candidate_id: idHead, hash_algorithm: HASH_ALGORITHM, source_commit: head, frozen_at: frozenAt, spec,
     meta_excluded: "see tools/gates/lib/candidate.mjs META_EXCLUDES", entries: fromHead,
   }, null, 1) + "\n");
   stage.candidate = { candidate_id: idHead, source_commit: head, frozen_at: frozenAt, manifest_path: rel };

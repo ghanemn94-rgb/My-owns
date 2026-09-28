@@ -75,6 +75,28 @@ sys.exit(0 if stopped or marked else 1)
 PY
 }
 
+# Snapshot of every non-ignored file (path -> sha256) before the run; the diff after the run is the run's outputs.
+snapshot() {
+  python3 - "$REPO_ROOT" <<'PY'
+import hashlib, json, os, subprocess, sys
+root = sys.argv[1]
+paths = subprocess.run(["git", "-C", root, "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+                       capture_output=True, check=True).stdout.decode().split("\0")
+out = {}
+for p in paths:
+    if not p or p.startswith("docs/delivery/runs/"):
+        continue
+    full = os.path.join(root, p)
+    if os.path.islink(full):
+        out[p] = "symlink:" + os.readlink(full)
+    elif os.path.isfile(full):
+        with open(full, "rb") as f:
+            out[p] = hashlib.sha256(f.read()).hexdigest()
+json.dump(out, sys.stdout)
+PY
+}
+snapshot > "$OUT/.pre-snapshot.json"
+
 ATTEMPTS=0
 set +e
 ( cd "$CWD" && claude -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
@@ -92,11 +114,12 @@ while [[ $ATTEMPTS -lt $MAX_RESUMES ]] && classifier_outage "$OUT/transcript.jso
 done
 set -e
 FINISHED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+snapshot > "$OUT/.post-snapshot.json"
 gzip -n "$OUT/transcript.jsonl"
 
-python3 - "$OUT" "$RUN_ID" "$ROLE" "$STAGE" "$TASK" "$SESSION_ID" "$MODEL" "$CWD" "$HEAD_COMMIT" "$ASSIGN_REL" "$ASSIGN_SHA" "$STARTED" "$FINISHED" "$EXIT" "$ATTEMPTS" <<'PY'
+python3 - "$OUT" "$RUN_ID" "$ROLE" "$STAGE" "$TASK" "$SESSION_ID" "$MODEL" "$CWD" "$HEAD_COMMIT" "$ASSIGN_REL" "$ASSIGN_SHA" "$STARTED" "$FINISHED" "$EXIT" "$ATTEMPTS" "$REPO_ROOT" <<'PY'
 import gzip, hashlib, json, sys
-out, run_id, role, stage, task, sid, model, cwd, head, arel, asha, started, finished, code, resumes = sys.argv[1:]
+out, run_id, role, stage, task, sid, model, cwd, head, arel, asha, started, finished, code, resumes, repo_root_arg = sys.argv[1:]
 result = None
 with gzip.open(f"{out}/transcript.jsonl.gz", "rt", encoding="utf-8", errors="replace") as f:
     for line in f:
@@ -127,6 +150,37 @@ if result:
 else:
     meta["is_error"] = True
     meta["subtype"] = "no-result-line"
+# Files created, changed or deleted in the tree during the run window (concurrent runs may overlap), and the
+# repository paths this agent itself wrote through its file tools (Write/Edit/MultiEdit/NotebookEdit).
+import os
+pre = json.load(open(f"{out}/.pre-snapshot.json"))
+post = json.load(open(f"{out}/.post-snapshot.json"))
+os.remove(f"{out}/.pre-snapshot.json")
+os.remove(f"{out}/.post-snapshot.json")
+outputs = {p: h for p, h in post.items() if pre.get(p) != h}
+deleted = sorted(p for p in pre if p not in post)
+repo_root = os.path.realpath(repo_root_arg)
+written = set()
+with gzip.open(f"{out}/transcript.jsonl.gz", "rt", encoding="utf-8", errors="replace") as f:
+    for line in f:
+        try:
+            o = json.loads(line)
+        except ValueError:
+            continue
+        if o.get("type") != "assistant":
+            continue
+        for c in (o.get("message") or {}).get("content") or []:
+            if isinstance(c, dict) and c.get("type") == "tool_use" and c.get("name") in ("Write", "Edit", "MultiEdit", "NotebookEdit"):
+                fp = (c.get("input") or {}).get("file_path") or (c.get("input") or {}).get("notebook_path")
+                if fp:
+                    ap = os.path.realpath(fp if os.path.isabs(fp) else os.path.join(cwd, fp))
+                    for base in (repo_root, os.path.realpath(cwd)):
+                        if ap.startswith(base + os.sep):
+                            written.add(os.path.relpath(ap, base).replace(os.sep, "/"))
+                            break
+meta["outputs"] = dict(sorted(outputs.items()))
+meta["deleted"] = deleted
+meta["written_by_tools"] = sorted(written)
 with open(f"{out}/result.json", "w", encoding="utf-8") as f:
     json.dump({"result": (result or {}).get("result")}, f, ensure_ascii=False, indent=1)
 for name, key in (("result.json", "result_sha256"), ("transcript.jsonl.gz", "transcript_sha256")):
@@ -134,6 +188,28 @@ for name, key in (("result.json", "result_sha256"), ("transcript.jsonl.gz", "tra
         meta[key] = hashlib.sha256(f.read()).hexdigest()
 with open(f"{out}/meta.json", "w", encoding="utf-8") as f:
     json.dump(meta, f, indent=1)
-print(json.dumps(meta))
+print(json.dumps({k: meta[k] for k in ("run_id", "role", "exit_code", "is_error", "subtype", "num_turns", "classifier_outage_resumes") if k in meta}))
 PY
+
+# Review roles: commit the run evidence and the reviewer-authored files immediately, so they are write-once in git
+# history from the moment the run ends (D-021). Implementer output is integrated by the orchestrator instead.
+case "$ROLE" in
+  domain-reviewer|code-security-reviewer|qa-verifier|release-auditor)
+    python3 - "$OUT/meta.json" "$REPO_ROOT" > "$OUT/../.commit-list-$RUN_ID" <<'PY'
+import json, os, sys
+meta = json.load(open(sys.argv[1]))
+root = sys.argv[2]
+for p in meta.get("written_by_tools", []):
+    if p in meta.get("outputs", {}) and os.path.exists(os.path.join(root, p)):
+        print(p)
+PY
+    (
+      flock 9
+      git -C "$REPO_ROOT" add -- "docs/delivery/runs/$STAGE/$RUN_ID" $(cat "$OUT/../.commit-list-$RUN_ID")
+      git -C "$REPO_ROOT" commit -q -m "run: $RUN_ID (review evidence, auto-committed by run-agent.sh)" \
+        -- "docs/delivery/runs/$STAGE/$RUN_ID" $(cat "$OUT/../.commit-list-$RUN_ID") || true
+    ) 9> "$REPO_ROOT/.git/mth-commit.lock"
+    rm -f "$OUT/../.commit-list-$RUN_ID"
+    ;;
+esac
 exit "$EXIT"

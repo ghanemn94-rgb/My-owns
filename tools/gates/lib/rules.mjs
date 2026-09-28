@@ -6,7 +6,7 @@ import { gunzipSync } from "node:zlib";
 import { join, resolve, sep } from "node:path";
 import { validate } from "./schema.mjs";
 import { parseCsv } from "./csv.mjs";
-import { candidateId, manifestFromRef, manifestFromWorkingTree, diffManifests, specPolicyErrors } from "./candidate.mjs";
+import { candidateId, manifestFromRef, manifestFromWorkingTree, diffManifests, specPolicyErrors, HASH_ALGORITHM } from "./candidate.mjs";
 
 export const STAGE_ORDER = ["DG0", "DG1", "DG2", "DG3", "DG4", "DG5", "DG6", "DG7"];
 export const REQUIRED_REVIEWERS = ["domain-reviewer", "code-security-reviewer", "qa-verifier"];
@@ -303,11 +303,20 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
     }
   }
   if (binding) {
-    if (binding.assignment !== undefined) {
-      if (meta.assignment !== binding.assignment) bad(`ran assignment ${meta.assignment}, record cites ${binding.assignment}`);
-      else if (!repoFile(repo, binding.assignment) || sha256File(join(repo, binding.assignment)) !== meta.assignment_sha256) bad("assignment file changed since the run (sha256 mismatch)");
-    }
+    if (typeof binding.assignment !== "string" || !binding.assignment) bad("the record names no assignment to bind the run to");
+    else if (meta.assignment !== binding.assignment) bad(`ran assignment ${meta.assignment}, record cites ${binding.assignment}`);
+    else if (!repoFile(repo, binding.assignment) || sha256File(join(repo, binding.assignment)) !== meta.assignment_sha256) bad("assignment file changed since the run (sha256 mismatch)");
     if (binding.notBefore && !(meta.started_at >= binding.notBefore)) bad(`started ${meta.started_at}, before the candidate froze at ${binding.notBefore}`);
+    for (const rel of binding.outputs || []) {
+      // The file must be exactly what this run wrote with its own file tools (D-021).
+      if (!meta.outputs || typeof meta.outputs !== "object") {
+        bad(`records no outputs, so ${rel} cannot be bound to it`);
+        continue;
+      }
+      if (!repoFile(repo, rel)) bad(`output ${rel} is missing`);
+      else if (meta.outputs[rel] !== sha256File(join(repo, rel))) bad(`${rel} differs from what the run wrote (edited after the run?)`);
+      if (!Array.isArray(meta.written_by_tools) || !meta.written_by_tools.includes(rel)) bad(`${rel} was not written by this run's file tools`);
+    }
   }
 }
 
@@ -333,9 +342,11 @@ export function checkReview(repo, rel, { stage, role, candidate }, errors) {
     if (!repoFile(repo, ev)) errors.push(`${label}: evidence path is not an existing repository file: ${ev}`);
   }
   if (!repoFile(repo, rec.assignment)) errors.push(`${label}: assignment file not found: ${rec.assignment}`);
+  const sidecar = rel.replace(/\.json$/, ".findings.json");
   checkInvocation(repo, stage.id, rec.invocation_reference, role, errors, label, {
     assignment: rec.assignment,
     notBefore: stage.candidate.frozen_at,
+    outputs: [rel, ...(repoFile(repo, sidecar) ? [sidecar] : [])],
   });
   return rec;
 }
@@ -415,12 +426,23 @@ export function checkFindings(repo, stage, reviewRecords, gate, errors) {
     }
     if (f.status === "ACCEPTED_OBSERVATION") {
       if (f.severity !== "Low" || f.mandatory_violation) errors.push(`${where}: only Low, non-mandatory findings may be accepted as observations`);
-      const acc = f.acceptance;
-      if (!acc) errors.push(`${where}: accepted without acceptance record`);
-      else {
-        if (!acc.accepted_by.includes(AUDITOR)) errors.push(`${where}: acceptance lacks release-auditor agreement`);
-        if (!acc.accepted_by.some((r) => REQUIRED_REVIEWERS.includes(r))) errors.push(`${where}: acceptance lacks a specialist reviewer's agreement`);
+      // Acceptance is read from reviewer-authored sidecars (status_after ACCEPTED_OBSERVATION), latest entry per role.
+      const latestByRole = new Map();
+      for (const e of (verifications.all && verifications.all.get(f.id)) || []) {
+        const prev = latestByRole.get(e.role);
+        if (!prev || e.round > prev.round) latestByRole.set(e.role, e);
       }
+      const accepting = [...latestByRole.values()].filter((e) => e.result === "PASS" && e.status_after === "ACCEPTED_OBSERVATION");
+      for (const e of accepting) {
+        const round = roundEntry(stage, e.roundDir);
+        checkInvocation(repo, stage.id, e.record.invocation_reference, e.role, errors, `${where} acceptance by ${e.role}`, {
+          assignment: e.record.assignment, notBefore: round && round.frozen_at, outputs: [e.recordPath, e.sidecar],
+        });
+      }
+      const roles = accepting.map((e) => e.role).sort();
+      if (!roles.includes(AUDITOR)) errors.push(`${where}: no release-auditor sidecar accepts it`);
+      if (!roles.some((r) => REQUIRED_REVIEWERS.includes(r))) errors.push(`${where}: no specialist reviewer sidecar accepts it`);
+      if (!f.acceptance || JSON.stringify([...f.acceptance.accepted_by].sort()) !== JSON.stringify(roles)) errors.push(`${where}: findings.json accepted_by does not mirror the accepting sidecars (${roles.join(", ") || "none"})`);
       if (gate && !gate.accepted_observations.includes(f.id)) errors.push(`${where}: not listed in the gate's accepted_observations`);
     }
   }
@@ -462,18 +484,31 @@ export function collectVerifications(repo, stage, errors) {
       if (!m) continue;
       const role = m[1];
       const rel = `docs/delivery/reviews/${stage.id}/${round}/${file}`;
-      const recRel = `docs/delivery/reviews/${stage.id}/${round}/${role}.json`;
+      const entryForRound = roundEntry(stage, round);
+      const recRel = entryForRound && entryForRound.records[role];
+      if (!recRel || recRel !== `docs/delivery/reviews/${stage.id}/${round}/${role}.json`) {
+        errors.push(`${rel}: ${role}'s record for ${round} is not listed in stages.json review_rounds`);
+        continue;
+      }
       const data = readJson(repo, rel, errors, "verifications sidecar");
       const rec = readJson(repo, recRel, errors, `verifications sidecar ${rel} record`);
       if (!data || !rec) continue;
-      if (!REVIEW_ROLES.includes(role) || rec.reviewer_role !== role) {
-        errors.push(`${rel}: sidecar role ${role} does not match its record`);
+      const schemaErrors = validate(schema("review"), rec);
+      if (schemaErrors.length) {
+        errors.push(`${rel}: its record ${recRel} is not a valid review record (${schemaErrors[0]})`);
+        continue;
+      }
+      if (!REVIEW_ROLES.includes(role) || rec.reviewer_role !== role || rec.round !== Number(round.slice(6))) {
+        errors.push(`${rel}: sidecar role/round does not match its record`);
         continue;
       }
       for (const v of data.verifications || []) {
-        const prev = out.get(v.finding_id);
         const entry = { ...v, role, round: Number(round.slice(6)), roundDir: round, record: rec, recordPath: recRel, sidecar: rel };
+        const prev = out.get(v.finding_id);
         if (!prev || entry.round > prev.round || (entry.round === prev.round && v.result === "FAIL")) out.set(v.finding_id, entry);
+        const all = out.all || (out.all = new Map());
+        if (!all.has(v.finding_id)) all.set(v.finding_id, []);
+        all.get(v.finding_id).push(entry);
       }
     }
   }
@@ -503,6 +538,7 @@ function checkClosure(repo, stage, gate, f, v, where, errors) {
   checkInvocation(repo, stage.id, v.record.invocation_reference, v.role, errors, `${where} verification`, {
     assignment: v.record.assignment,
     notBefore: round.frozen_at,
+    outputs: [v.recordPath, v.sidecar],
   });
   if (f.status === "CLOSED_VERIFIED") {
     if (!f.fix_revision || !/^[0-9a-f]{40}$/.test(f.fix_revision)) errors.push(`${where}: CLOSED_VERIFIED needs a full fix_revision commit id`);
@@ -523,10 +559,16 @@ export function checkReviewRounds(repo, stage, errors) {
   const recorded = new Set(stage.review_rounds.map((r) => `round-${r.round}`));
   for (const d of onDisk) if (!recorded.has(d)) errors.push(`review rounds: ${stage.id}/${d} exists but is not recorded in stages.json`);
   for (const r of stage.review_rounds) {
+    const manifest = findManifest(repo, stage.id, r.candidate_id, errors, `review rounds: ${stage.id} round ${r.round}`);
+    if (manifest && (manifest.frozen_at !== r.frozen_at || manifest.source_commit !== r.source_commit)) {
+      errors.push(`review rounds: ${stage.id} round ${r.round} frozen_at/source_commit differ from its committed manifest`);
+    }
     for (const [role, rel] of Object.entries(r.records)) {
       const label = `review rounds: ${stage.id} round ${r.round} ${role}`;
+      if (rel !== `docs/delivery/reviews/${stage.id}/round-${r.round}/${role}.json`) errors.push(`${label}: record path must be docs/delivery/reviews/${stage.id}/round-${r.round}/${role}.json`);
       const rec = readJson(repo, rel, errors, label);
       if (!rec) continue;
+      for (const e of validate(schema("review"), rec)) errors.push(`${label}: ${e}`);
       if (rec.reviewer_role !== role || rec.round !== r.round || rec.stage_id !== stage.id) errors.push(`${label}: record does not match its round entry`);
       if (rec.candidate_id !== r.candidate_id) errors.push(`${label}: record reviewed ${rec.candidate_id}, round candidate is ${r.candidate_id}`);
       if (rec.findings && rec.findings.length && !repoFile(repo, rel.replace(/\.json$/, ".findings.json"))) {
@@ -534,21 +576,54 @@ export function checkReviewRounds(repo, stage, errors) {
       }
     }
   }
+  checkWriteOnce(repo, stage.id, errors);
+}
+
+/** Paths whose committed files are write-once: reviewer output, run evidence, frozen manifests, round assignments. */
+export function writeOncePaths(stageId) {
+  return [`docs/delivery/reviews/${stageId}`, `docs/delivery/runs/${stageId}`, `docs/delivery/candidates/${stageId}`, `docs/delivery/assignments/${stageId}/round-*`];
+}
+
+/** Once committed, files under the write-once paths may never be modified or deleted, in history or working tree. */
+export function checkWriteOnce(repo, stageId, errors) {
+  const paths = writeOncePaths(stageId).map((p) => `:(glob)${p}/**`);
   try {
-    const deleted = git(repo, ["log", "--no-renames", "--diff-filter=D", "--name-only", "--format=", "--",
-      `docs/delivery/reviews/${stage.id}`, `docs/delivery/runs/${stage.id}`]).toString().split("\n").filter(Boolean);
-    for (const p of [...new Set(deleted)]) errors.push(`review rounds: ${p} was deleted from git history; review evidence is append-only`);
-  } catch {
-    /* not a git repository with history: nothing to check */
+    const changed = git(repo, ["log", "--no-renames", "--diff-filter=MDT", "--name-status", "--format=", "--", ...paths]).toString().split("\n").filter(Boolean);
+    for (const line of [...new Set(changed)]) errors.push(`write-once: ${line.replace("\t", " ")} after it was committed (review evidence is append-only)`);
+    const status = git(repo, ["status", "--porcelain=v1", "--", ...paths]).toString().split("\n").filter(Boolean);
+    for (const line of status) if (!line.startsWith("??")) errors.push(`write-once: uncommitted change to committed evidence: ${line.trim()}`);
+  } catch (e) {
+    errors.push(`write-once: cannot inspect git history (${e.message.split("\n")[0]})`);
   }
+}
+
+/** The committed, write-once manifest of a frozen candidate. */
+export function manifestPathFor(stageId, cid) {
+  return `docs/delivery/candidates/${stageId}/${String(cid).slice(7, 23)}.manifest.json`;
+}
+
+export function findManifest(repo, stageId, cid, errors, label) {
+  const rel = manifestPathFor(stageId, cid);
+  const m = readJson(repo, rel, errors, `${label} manifest`);
+  if (!m) return null;
+  let id = null;
+  try {
+    id = candidateId(m.entries || [], m.hash_algorithm || "mth-candidate-v1");
+  } catch (e) {
+    errors.push(`${label} manifest: ${e.message}`);
+  }
+  if (m.candidate_id !== cid || id !== cid || m.stage_id !== stageId) errors.push(`${label} manifest ${rel} does not hash to ${cid}`);
+  return m;
 }
 
 // ---------- candidate ----------
 export function checkCandidate(repo, stage, gate, mode, errors) {
+  if (gate.manifest_path !== manifestPathFor(stage.id, gate.candidate_id)) errors.push(`candidate manifest: path must be ${manifestPathFor(stage.id, gate.candidate_id)}`);
   const manifest = readJson(repo, gate.manifest_path, errors, "candidate manifest");
   if (!manifest) return;
   if (manifest.stage_id !== stage.id) errors.push(`candidate manifest: stage_id ${manifest.stage_id} != ${stage.id}`);
   if (manifest.candidate_id !== gate.candidate_id) errors.push(`candidate manifest: id ${manifest.candidate_id} != gate ${gate.candidate_id}`);
+  if (manifest.hash_algorithm !== HASH_ALGORITHM) errors.push(`candidate manifest: a gate candidate must use ${HASH_ALGORITHM}`);
   let manifestHash = null;
   try {
     manifestHash = Array.isArray(manifest.entries) ? candidateId(manifest.entries) : null;

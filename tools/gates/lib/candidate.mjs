@@ -73,9 +73,19 @@ export function selectPaths(paths, spec) {
 export function manifestFromWorkingTree(repo, spec) {
   const staged = git(repo, ["ls-files", "-z", "--stage"]).toString("utf8").split("\0").filter(Boolean);
   const gitlinks = new Set();
+  const indexMode = new Map();
   for (const line of staged) {
     const [meta, path] = line.split("\t");
     if (meta.startsWith("160000 ")) gitlinks.add(path);
+    indexMode.set(path, meta.split(" ")[0]);
+  }
+  // Where git ignores the executable bit (core.fileMode=false, e.g. NTFS), tracked files take their mode from the
+  // index so a clean checkout reproduces the committed candidate (F-DG0-116).
+  let trustFsMode = true;
+  try {
+    trustFsMode = git(repo, ["config", "--bool", "core.fileMode"]).toString().trim() !== "false";
+  } catch {
+    /* unset: git's default is true */
   }
   const listed = git(repo, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
     .toString("utf8").split("\0").filter(Boolean);
@@ -89,7 +99,11 @@ export function manifestFromWorkingTree(repo, spec) {
       continue; // deleted in working tree but still in index
     }
     if (st.isSymbolicLink()) entries.push({ path: p, sha256: symlinkHash(readlinkSync(join(repo, p))), mode: "120000" });
-    else if (st.isFile()) entries.push({ path: p, sha256: sha256(readFileSync(join(repo, p))), mode: st.mode & 0o111 ? "100755" : "100644" });
+    else if (st.isFile()) {
+      const fsMode = st.mode & 0o111 ? "100755" : "100644";
+      const mode = !trustFsMode && ["100644", "100755"].includes(indexMode.get(p)) ? indexMode.get(p) : fsMode;
+      entries.push({ path: p, sha256: sha256(readFileSync(join(repo, p))), mode });
+    }
     else if (st.isDirectory()) throw new Error(`'${p}' is a directory (nested repository?) and cannot be part of a candidate`);
   }
   return entries;
@@ -115,11 +129,17 @@ export function manifestFromRef(repo, ref, spec) {
   });
 }
 
-export function candidateId(entries) {
+// v2 (current): "<sha256>  <git mode>  <path>". v1 (historical DG0 rounds 1-3 only): "<sha256>  <path>".
+// New freezes and every gate decision must use v2 (F-DG0-112/206); v1 exists solely to re-verify old manifests.
+export const HASH_ALGORITHM = "mth-candidate-v2";
+
+export function candidateId(entries, algorithm = HASH_ALGORITHM) {
+  if (algorithm !== HASH_ALGORITHM && algorithm !== "mth-candidate-v1") throw new Error(`unknown candidate hash algorithm ${algorithm}`);
   const canonical = entries
     .slice()
     .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
     .map((e) => {
+      if (algorithm === "mth-candidate-v1") return `${e.sha256}  ${e.path}\n`;
       // The git mode (100644 / 100755 / 120000) is part of identity: exec-bit changes and file/symlink swaps count.
       if (!["100644", "100755", "120000"].includes(e.mode)) throw new Error(`manifest entry '${e.path}' lacks a valid mode`);
       return `${e.sha256}  ${e.mode}  ${e.path}\n`;

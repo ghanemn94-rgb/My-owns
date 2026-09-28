@@ -42,7 +42,7 @@ Never report a check as passed if you did not run it. If a tool, credential or s
 
 ## Review record contract (reviewers and auditor)
 
-Reviewers write one JSON record to `docs/delivery/reviews/<DGx>/round-<N>/<role>.json` that conforms to `tools/gates/schemas/review.schema.json`, plus an optional Markdown narrative next to it. Required fields: `stage_id`, `candidate_id`, `source_commit`, `reviewer_role`, `invocation_reference`, `implementation_author`, `independence_declaration`, `requirements_checked`, `checks_run[]` (each with `procedure`, `command` where applicable, `environment`, `expected`, `actual`, `exit_status`, `result`), `findings[]` (finding IDs), `verdict` (PASS/FAIL/BLOCKED), `evidence_paths[]`, `reviewed_at`.
+Reviewers write one JSON record to `docs/delivery/reviews/<DGx>/round-<N>/<role>.json`. Create it and your sidecars **only with the Write/Edit tools**, never through the shell: the validator binds each of them to the exact bytes your run wrote with its file tools (D-021). They're write-once, so never edit a file from an earlier round. The record goes that conforms to `tools/gates/schemas/review.schema.json`, plus an optional Markdown narrative next to it. Required fields: `stage_id`, `candidate_id`, `source_commit`, `reviewer_role`, `invocation_reference`, `implementation_author`, `independence_declaration`, `requirements_checked`, `checks_run[]` (each with `procedure`, `command` where applicable, `environment`, `expected`, `actual`, `exit_status`, `result`), `findings[]` (finding IDs), `verdict` (PASS/FAIL/BLOCKED), `evidence_paths[]`, `reviewed_at`.
 
 - Inspect the frozen candidate directly: source, diffs, rendered screens, running behaviour. An implementer's summary is not evidence.
 - Form your verdict **before** reading any other reviewer's conclusions for the same round.
@@ -63,7 +63,7 @@ Each finding gets a stable ID `F-<DGx>-<NNN>` (the orchestrator allocates number
 
 A severity label never overrides the mandatory-requirement rule. An author never closes their own finding. Only the originating reviewer or another qualified non-author verifies a fix.
 
-A finding closes only through a reviewer-authored `<role>.verifications.json` sidecar in a review round. The sidecar's **latest** entry for the finding decides, and it's bound to that reviewer's own run for the round. The orchestrator mirrors it into `findings.json` with `tools/gates/import-findings.mjs`, and the validator checks that the two match (D-018).
+A finding closes only through a reviewer-authored `<role>.verifications.json` sidecar in a review round. A Low, non-mandatory finding can be accepted as an observation only when both the reporting specialist (or another specialist) and the release-auditor add an entry `{"finding_id", "result": "PASS", "status_after": "ACCEPTED_OBSERVATION", "note": "<rationale>"}` to their own sidecars. The sidecar's **latest** entry for the finding decides, and it's bound to that reviewer's own run for the round. The orchestrator mirrors it into `findings.json` with `tools/gates/import-findings.mjs`, and the validator checks that the two match (D-018).
 
 ## Write scopes (mechanically enforced)
 
