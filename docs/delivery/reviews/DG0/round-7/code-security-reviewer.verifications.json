@@ -1,0 +1,253 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-101",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced in this run on 26642c72: r1 R1a (an OPEN High mandatory finding relabelled to DG1 escapes) and R1b (a dropped finding) pass the gate (15-r1). Fixed on e11b5f08: carried test 16 rejects a relabel to DG1, a sidecar relabel, a drop, and deleting round 1. The round-4/6 variants (tests 3-7, which rewrite committed sidecars to drop findings) are all rejected by write-once (04-carried-neutral-on-e11b5f0). The candidate's own tests pass (05).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/05-existing-tests.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-102",
+      "result": "FAIL",
+      "status_after": "OPEN",
+      "note": "Not fully fixed. Original reproduced on 26642c72: r1 R0 passes DG0 with fabricated 5-field run records and no transcripts (15-r1). On e11b5f08 the narrower vectors are rejected: a 4-field meta without transcript/result, a mismatched transcript hash, and a verifying record without an assignment (carried tests 14-15, 04-carried-neutral-on-e11b5f0). However, the finding's expected behaviour (the transcript's init/prompt/result lines must be present and carry the session) is not enforced when the transcript is valid gzip of '' or of newlines. rules.mjs:294 wraps every transcript check in 'if (lines.length)', so a fabricated meta.json + result.json + empty transcript passes validateGate in current and historical mode (repro-r7 tests 3-7, 01-repro-r7-on-e11b5f0). This is the original forgery cost again. Raised as F-DG0-132; fixing F-DG0-132 closes this finding too.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/01-repro-r7-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/repro-r7.test.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-103",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced on 26642c72: r1 R2 shows symlinks silently excluded and repointable after approval (15-r1). Fixed on e11b5f08: carried test 19 shows that a symlink repoint and a file/symlink swap change the committed candidate, and that gitlinks are refused (04-carried-neutral-on-e11b5f0). candidate.mjs:101 and :126 hash symlinks as 'symlink:<target>' with mode 120000.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-104",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced on 26642c72: r1 R3 shows that an exclude added to the frozen manifest spec hides deliverables (15-r1). Fixed on e11b5f08: carried test 20 rejects an extra exclude in the manifest spec or in stages.json (04-carried-neutral-on-e11b5f0). specPolicyErrors pins include ['**'] and exclude ['trading_agent/**'], and checkCandidate (rules.mjs:761-762) binds manifest.spec to candidate_spec. The real manifest dee0316d has that spec (11-validators-at-head).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/11-validators-at-head.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-105",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced on 26642c72: r1 R6 shows the guard following no symlinks and leaving settings.local.json, .mcp.json and trading_agent writable (15-r1). Fixed on e11b5f08, tested end to end through the real per-role hook commands (07-guard-e2e). For the implementer, all of the following are blocked with exit 2: .claude/settings.local.json, .mcp.json, sub/CLAUDE.md, trading_agent/x.py, tools/gates/**, write-scopes.json, stages.json, docs/source, reviews, the '..' segment, the upper-case path, MultiEdit, NotebookEdit and a symlinked directory. src/ok.ts is allowed. A garbage payload is blocked. With git absent, the guard fails closed (08-guard-no-git). The Bash gap is disclosed in agent-protocol.md:78 and D-020 (13-static-checks, 14-doc-drift).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/07-guard-e2e.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/08-guard-no-git.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-106",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced on 26642c72: r1 R4 shows '#', '.' and non-path evidence accepted (15-r1). Fixed on e11b5f08: carried test 21 rejects '#', '.', a directory and a bare token as evidence, and rejects empty gate tests[] (04-carried-neutral-on-e11b5f0). repoFile (rules.mjs:49-64) requires a regular file whose real path is inside the repository.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-107",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced on 26642c72: r1 R5 shows the CSV parser accepting text after a closing quote (15-r1). Fixed on e11b5f08: carried test 22 shows that text after a quote, ragged rows, a stray quote and an unterminated quote all throw (04-carried-neutral-on-e11b5f0). The candidate's validator tests pass (05).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r1-original-on-26642c72.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/05-existing-tests.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-108",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original shown statically on 26642c72: no --stage/--task/--role/--model validation, RUN_ID without a session suffix, and 'mkdir -p' reuses directories (17-runner-ci-originals). Fixed on e11b5f08 (run-agent.sh:35-38, 48, 51). Executed: '--stage DG9', '--stage DG0;id', '--task ../../x', '--task $(id)', '--role ../x' and '--model x;id' exit 64, and '--assignment /etc/passwd' exits 66. No run directory with ';' or '..' is created. Session IDs are unique across 10 runs. An assignment path containing $(...) and backticks is passed as data (no PWNED file), and the replayed prompt carries the literal path (09-runner-e2e, 16-runner-on-e11b5f08).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/17-runner-ci-originals.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/09-runner-e2e.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/16-runner-on-e11b5f08.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-109",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original shown on 26642c72: actions/checkout@v4 and actions/setup-node@v4 are mutable tags (17-runner-ci-originals). Fixed on e11b5f08: both actions are pinned to 40-hex commit SHAs with version comments. permissions is contents: read, fetch-depth is 0, and the workflow has no secrets, continue-on-error or '|| true' (13-static-checks). Every step is a plain command, so a failing validator exits non-zero and fails the job.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/17-runner-ci-originals.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/13-static-checks.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-110",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced on 83860be3: r2 N1a, N1b and N1c pass. A closure can cite a pre-freeze unrelated run, findings.json can say CLOSED_VERIFIED while the reporter's sidecar says FAIL, and evidence and fix_revision are unchecked (15-r2). Fixed on e11b5f08: carried test 17 rejects CLOSED_VERIFIED against a latest FAIL sidecar, a foreign fix_revision and '#' evidence. Carried test 2 (a genuine FAIL keeps the gate closed) passes (04-carried-neutral-on-e11b5f0). Note: the closure's run binding inherits the F-DG0-132 empty-transcript gap, which is tracked there.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r2-original-on-83860be3.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-111",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced on 83860be3: r2 N3 shows that an implementer can plant tools/.git or docs/.git and then write protected gate files (15-r2). Fixed on e11b5f08. GUARD_ROOT is fixed at the guard's own location (guard-write.mjs:42), and any '.git' segment is refused (:82). End to end, writes to tools/.git and docs/.git are blocked. With planted tools/.git and docs/.git files present, writes to rules.mjs, write-scopes.json and stages.json are still blocked with exit 2 (07-guard-e2e).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r2-original-on-83860be3.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/07-guard-e2e.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-112",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced on 83860be3: r2 N4 (a file containing 'symlink:<t>' collides with a symlink) and N5 (the exec bit is not part of identity) (15-r2). Fixed on e11b5f08: mth-candidate-v2 hashes '<sha256>  <mode>  <path>' (candidate.mjs:136-149). Carried test 19 shows that an exec-bit change and a file/symlink swap change the candidate (04-carried-neutral-on-e11b5f0). The real manifest uses mth-candidate-v2 (11-validators-at-head).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r2-original-on-83860be3.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/11-validators-at-head.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-113",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced in this run on 83860be3: with core.autocrlf=true, 195 files are checked out CRLF, and the working-tree candidate (9c13ca68...) differs from HEAD's (d47b51ca...) (18-prefreeze-crlf-old-vs-new). Also r2 N6 (15-r2). Fixed on e11b5f08 by .gitattributes '* -text'. An autocrlf=true checkout reproduces sha256:dee0316d... exactly (18). git ls-files --eol shows attr/-text (13-static-checks).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/18-prefreeze-crlf-old-vs-new.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r2-original-on-83860be3.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/13-static-checks.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-114",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "All three drift items are fixed on e11b5f08 (14-doc-drift). (1) Verifications are now bound: checkClosure calls checkInvocation with assignment, notBefore, manifestPath and outputs (rules.mjs:567). (2) D-019, agents.md and run-agent.sh all say 6 resumes. The agent-protocol's 'up to 3 times' is the separate per-command retry rule. (3) agents.md:23 lists .claude/**, .mcp.json and CLAUDE.md/CLAUDE.local.md at any depth, matching write-scopes.json. New drift is covered by F-DG0-132: D-016 and D-022 describe the transcript checks as unconditional, which they are not for empty transcripts.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/14-doc-drift.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-115",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Originals reproduced in this run. On 540b3c69, r3 tests 4-6 edit committed sidecars and records to drop a High finding, flip a FAIL verification and flip a FAIL verdict (15-r3). On 53f5d176, r4 N1/N1b hide the edit in an evil merge (15-r4). On a059b55 (the round-6 residual), carried tests 10-11 (N4/N4b), a back-dated side branch plus merge, still pass the gate (04-carried-neutral-on-a059b55). On e11b5f08 all are rejected: carried tests 3-9 FIXED, and N4/N4b now fail. The errors are 'was committed with 2 different contents', 'has a M event' and 'is back-dated before its parent' (04-carried-neutral-on-e11b5f0; message-wording-only differences explained in 03-carried-on-e11b5f0). Real repository history passes the new checks (12-real-history-writeonce: checkWriteOnce []). I found no way around the single-blob rule. Colour config does not affect --raw, and log.showRoot=false only hides root-commit adds. The runner commits a review's outputs immediately (16-runner-on-e11b5f08). Scope note: the defence-in-depth transcript replay advertised with this fix is skipped for empty transcripts. That only matters for fabricated or uncommitted run directories, which are F-DG0-102/F-DG0-132 territory and tracked there, not the in-place-edit problem this finding describes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r3-original-on-540b3c69.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r4-original-on-53f5d176.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-a059b55.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/03-carried-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/12-real-history-writeonce.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/repro-r7-carried-neutral.test.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-116",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced on 540b3c69: r3 test 9 shows that with core.fileMode=false the working-tree mode disagrees with git (15-r3). Fixed on e11b5f08 (candidate.mjs:84-105): carried test 23 shows tracked modes taken from the index when core.fileMode=false (04-carried-neutral-on-e11b5f0).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r3-original-on-540b3c69.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-117",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced on 540b3c69: r3 test 10 shows ACCEPTED_OBSERVATION accepted on role names typed into findings.json (15-r3). Fixed on e11b5f08: carried test 18 rejects an acceptance typed only into findings.json (04-carried-neutral-on-e11b5f0). rules.mjs:455-476 require bound sidecar entries from a specialist and from the release-auditor.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r3-original-on-540b3c69.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-118",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced on 53f5d176: r4 N2 shows skip-worktree hiding a working-tree forgery (15-r4). Fixed on e11b5f08: carried test 8 (wording-neutral variant, which also flags the run transcript that the new fixture rewrites) sets skip-worktree and assume-unchanged, leaves git status empty, and the validator still reports 'working-tree ... differs'. checkWriteOnce hashes disk bytes with hash-object --no-filters (04-carried-neutral-on-e11b5f0).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r4-original-on-53f5d176.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/repro-r7-carried-neutral.test.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-119",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced in this run on 53f5d176 with a stub CLI. A write the hook denied (then written by someone else) and a Bash-edited record are both recorded as outputs and auto-committed, with no tool_authored field (16-runner-on-53f5d176). Fixed on e11b5f08: the denied and shelledit runs give tool_authored [] and nothing is committed besides the run directory (16-runner-on-e11b5f08). checkInvocation rejects them ('not written by this run's file tools', 'differs from the replay'), while honest Write, Edit and MultiEdit runs bind cleanly (09-runner-e2e). Carried test 12 covers the validator side (04-carried-neutral-on-e11b5f0).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/16-runner-on-53f5d176.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/16-runner-on-e11b5f08.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/09-runner-e2e.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/fake-claude-r7.py"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-120",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced in this run on 53f5d176: a Write to '<dir>/x*' makes the auto-commit also commit the unrelated, externally modified <dir>/xy.md (M xy.md in the run commit) (16-runner-on-53f5d176). Fixed on e11b5f08: only 'x*' is committed, literally (GIT_LITERAL_PATHSPECS and NUL pathspec file). A held index.lock makes the runner exit 70 with an explicit 'FAILED to auto-commit' message (16-runner-on-e11b5f08). A path with a space is committed literally (09-runner-e2e).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/16-runner-on-53f5d176.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/16-runner-on-e11b5f08.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/09-runner-e2e.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-121",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced on 53f5d176: r4 test 20 (N3) shows the gate record's content not bound to the auditor run (15-r4). Fixed on e11b5f08: carried test 13 rejects editing the gate record's tests[] after the auditor wrote it (04-carried-neutral-on-e11b5f0). validateGate passes stage.gate_record as an extra bound output of the audit run (rules.mjs:866). This binding inherits the F-DG0-132 empty-transcript gap, which is tracked there.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/15-r4-original-on-53f5d176.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/04-carried-neutral-on-e11b5f0.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-130",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced in this run in a fresh clone of a059b55. The candidate's own unittest step rewrites the two tracked .pyc files, and prefreeze prints 'FAIL uncommitted candidate changes: M ...pyc'. The candidate ID drifts from c13a4f8e... to 01a6976f... (18-prefreeze-crlf-old-vs-new; the 'prefreeze exit=0' printed there is a harness artefact that I annotated in the log). Fixed on e11b5f08: no .pyc is tracked, and .gitignore has __pycache__/ and *.py[cod] (13-static-checks). In a fresh clone the full prefreeze passes (exit 0), and the candidate is sha256:dee0316d... before and after, with a clean status (06-prefreeze-fresh-clone). After the test run, generated bytecode shows as ignored (05-existing-tests).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/18-prefreeze-crlf-old-vs-new.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/06-prefreeze-fresh-clone.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/05-existing-tests.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/13-static-checks.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-131",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Original reproduced in this run in a fresh clone of a059b55 (PYTHONDONTWRITEBYTECODE=1). With docs/delivery/requirements-spec.md modified and an untracked tools/gates/u.mjs, prefreeze prints 'PASS no uncommitted candidate changes' and exits 0, while candidate --freeze refuses (18-prefreeze-crlf-old-vs-new). Fixed on e11b5f08: prefreeze.sh:263-269 compares the working-tree and HEAD candidate IDs. The same probe gives FAIL, exit 1 (18 and 06). Ignored bytecode alone still passes (06 probe C). A broken candidate.mjs makes the check FAIL, not PASS (06 probe D).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/18-prefreeze-crlf-old-vs-new.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/06-prefreeze-fresh-clone.log"
+      ]
+    }
+  ]
+}

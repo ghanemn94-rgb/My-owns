@@ -1,0 +1,49 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-132",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-013",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "An empty (or newline-only) transcript.jsonl.gz skips every transcript check: init line, D-022 replayed prompt, final result and the D-021 transcript replay are all bypassed",
+      "reproduction": "tools/gates/lib/rules.mjs:281-314 (checkInvocation, candidate e11b5f08): lines = gunzip(transcript).split('\\n').filter(Boolean). The init-line check (295-297), the D-022 CLI-replayed prompt check (300-309) and the successful-result check (310-312) all sit inside 'if (lines.length) { ... }' (294). The D-021 independent replay of the run's Write/Edit calls (341-345) is also guarded by 'if (lines.length && ...)'. A transcript that is valid gzip of '' or of '\\n\\n\\n' gives lines = [], so none of these checks runs and no error is pushed. The only transcript requirement left is that its SHA-256 equals meta.transcript_sha256, and the forger writes that field. Reproduction (docs/delivery/test-evidence/DG0/code-security/round-7/repro-r7.test.mjs, log 01-repro-r7-on-e11b5f0.log), all against the e11b5f08 validator. Control 2: a transcript of unparsable lines is rejected ('no init line'). Tests 3/4: replacing a reviewer's transcript with gzip('') or gzip('\\n\\n\\n') and re-hashing it in meta gives validateGate(...) === []. Test 5: a qa-verifier record is rewritten after its run and meta.outputs/tool_authored are re-pointed. With the real transcript, the round-7 replay rejects it ('differs from the replay of this run's transcript'). After the transcript is emptied, validateGate returns []. Test 6: the verifying run that closes High F-DG0-101 has an empty transcript and the closure is accepted. Test 7: the same forgery committed and approved passes validateGate(historical). The gap is older than round 7: tests 3, 4, 6, 7 and 8 pass on a059b55 as well (02-repro-r7-on-a059b55.log). Scenario: anyone with repo write access (Bash is unguarded for every role) writes docs/delivery/runs/DG0/<id>/{meta.json,result.json,transcript.jsonl.gz(empty)} with self-consistent hashes, the fields checkInvocation reads (role, stage, session, exit_code 0, assignment + sha, started_at after the freeze, head_commit_at_start containing the manifest, outputs/tool_authored hashes), plus PASS records, sidecars and a gate record. They commit it as ordinary new history with current dates, so write-once and back-dating are satisfied. validate.mjs --stage DG0, --historical and --pipeline then exit 0 with no agent ever invoked.",
+      "expected": "D-016 and D-022 describe the transcript checks as unconditional. A run whose transcript has no init line for the session, no CLI-replayed runner prompt (isReplay: true, carrying run_id and session_id) or no final successful result for the session is rejected. Every bound output must be reconstructible from the transcript's own successful Write/Edit calls. Fix: treat an empty parsed transcript as an error ('transcript is empty'), and run the init, prompt, result and replay checks unconditionally whenever the transcript file exists (a replay result of null must be an error, not skipped). Add regression tests for gzip('') and gzip('\\n').",
+      "actual": "The init, CLI-replayed-prompt, final-result and D-021 replay checks are all skipped for an empty transcript. A fabricated run directory then needs only meta.json, result.json and an empty gzip. That is the same cost as the original F-DG0-102 forgery (one small JSON file plus two trivial files), not the 'complete, internally consistent run directory' that D-021 discloses as the residual. The D-022 and D-021 replay repairs in this round do not hold against it. Mandatory: it lets the gate validator accept invalid provenance evidence (DG0 approval condition: the review protocol and gate validator reject missing/invalid evidence; A23/A24).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/repro-r7.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/01-repro-r7-on-e11b5f0.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/02-repro-r7-on-a059b55.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-7/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        { "at": "2026-09-28T16:50:00Z", "status": "OPEN" }
+      ]
+    },
+    {
+      "id": "F-DG0-133",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-026",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The CLI-replayed prompt is not cross-checked with meta.assignment / assignment_sha256, so 'executed exactly the cited assignment' rests on unanchored meta fields",
+      "reproduction": "tools/gates/lib/rules.mjs:305-309 require the replayed prompt only to start with \"You are invoked as project agent '<role>' for stage <DGx>\" and to contain the run_id and session_id. The assignment binding (315-318) compares the record's 'assignment' with meta.assignment and the file's SHA-256 with meta.assignment_sha256. It never compares either with the path and 'sha256 ...' that run-agent.sh:56 writes into the prompt, which is the only assignment statement bound by the transcript hash. Reproduction: repro-r7.test.mjs test 8 (01-repro-r7-on-e11b5f0.log). The replayed prompt of a qa-verifier run is extended with 'Your complete assignment is in the file .../round-9/some-other.md (sha256 000...0)', and validateGate still returns []. The validator's own fixture prompt (validator.test.mjs makeRun) names no assignment at all and passes.",
+      "expected": "D-016 says a run is accepted only if it 'executed exactly the assignment the record cites (path and SHA-256)'. The validator extracts the assignment path (relative to meta.cwd) and the sha256 from the replayed prompt and requires them to equal meta.assignment / meta.assignment_sha256 (and therefore the record's assignment).",
+      "actual": "meta.json is not hash-bound by anything, so an edited or fabricated meta can re-point a genuine transcript at a different assignment. Impact is limited: committed meta.json files are write-once, and fabricating a new run directory is the disclosed D-021 residual. I would accept this as a Low observation once F-DG0-132 is fixed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-7/repro-r7.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-7/01-repro-r7-on-e11b5f0.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-7/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        { "at": "2026-09-28T16:50:00Z", "status": "OPEN" }
+      ]
+    }
+  ]
+}
