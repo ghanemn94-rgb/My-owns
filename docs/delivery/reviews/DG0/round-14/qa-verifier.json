@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 14,
+  "candidate_id": "sha256:a25db736652685e24073f8ddf6d7932d4df459b5c64efc04a6e5716c8f962552",
+  "source_commit": "1e64eb02caf8a8c8c5d59d0c6aad390c70e5b7c5",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-QA-R14-qa-verifier-20260928T224157Z-0634a37b",
+    "session_id": "0634a37b-ac99-483d-ad58-c23b005f5b9f"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (qa-verifier) authored no implementation in the reviewed DG0 scope. The analysis, register and acceptance map are by transformation-analyst. The agent definitions, runner, guard, sandbox-run, prefreeze, gate tooling, CI and delivery records are by delivery-orchestrator. My only writes are test evidence under docs/delivery/test-evidence/DG0/qa/ and this record and its sidecars. I opened no other round-14 review record or findings file. Disclosure: the `validate.mjs --reconcile` output at HEAD 8c5a694, which I ran for check QA14-C06b, prints one status line per existing round-14 record. So I saw the other reviewers' verdict words, but no content, findings or reasoning. By then my own checks and finding F-DG0-235 were already complete, and that line did not change my verdict."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-14/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-001",
+    "REQ-DLV-002",
+    "REQ-DLV-003",
+    "REQ-DLV-004",
+    "REQ-DLV-006",
+    "REQ-DLV-007",
+    "REQ-DLV-013",
+    "REQ-DLV-015",
+    "REQ-DLV-016",
+    "REQ-DLV-017",
+    "REQ-DLV-019",
+    "REQ-DLV-020",
+    "REQ-DLV-022",
+    "REQ-DLV-023",
+    "REQ-DLV-026",
+    "REQ-DLV-029",
+    "REQ-DLV-032",
+    "REQ-DLV-042",
+    "REQ-S20-024",
+    "REQ-S20-025"
+  ],
+  "checks_run": [
+    {
+      "id": "QA14-C00",
+      "procedure": "Confirm the frozen candidate before reviewing: HEAD, the post-freeze commits (must be metadata-only), the working-tree candidate ID, and the assignment SHA-256",
+      "command": "git rev-parse HEAD; git log --oneline 1e64eb02..HEAD; git diff --stat 1e64eb02 HEAD -- . ':!<metadata paths>'; node tools/gates/candidate.mjs --stage DG0; sha256sum docs/delivery/assignments/DG0/round-14/review-qa-verifier.md",
+      "environment": "repository /home/user/My-owns (read-only use), node v22.22.2, agent OS sandbox",
+      "expected": "candidate sha256:a25db736...; only metadata commits after 1e64eb0; assignment sha d58ce9d9...",
+      "actual": "HEAD was 84d709c at start and 8c5a694 later. The later commits are the freeze, the live probe, and the other reviewers' auto-committed evidence. The non-metadata diff since 1e64eb0 is empty. The candidate ID is sha256:a25db736652685e24073f8ddf6d7932d4df459b5c64efc04a6e5716c8f962552 (86 files) in the working tree, in the clone at 1e64eb0 and in the clone at HEAD. The assignment sha256 matches.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/00-candidate-confirmation.log",
+        "docs/delivery/test-evidence/DG0/qa/round-14/07-candidate.log"
+      ]
+    },
+    {
+      "id": "QA14-C01",
+      "procedure": "Source extraction is reproducible",
+      "command": "bash tools/source/check_extraction.sh",
+      "environment": "disposable clone $TMPDIR/review-qa14 at 1e64eb0, node v22.22.2",
+      "expected": "PASS, with docx sha 2584a352...548ad2, 165 playbook blocks and 423 master-prompt blocks",
+      "actual": "PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/01-check-extraction.log"
+      ]
+    },
+    {
+      "id": "QA14-C02",
+      "procedure": "Gate tooling self-tests",
+      "command": "node --test tools/gates/tests/*.test.mjs",
+      "environment": "disposable clone $TMPDIR/review-qa14 at 1e64eb0, node v22.22.2, nested bubblewrap available",
+      "expected": "all pass",
+      "actual": "tests 50, pass 50, fail 0. Includes 'F-DG0-141: the clone, checkout and command run inside the sandbox...' and 'F-DG0-233: meta.cwd is bound to the transcript...'",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/02-gates-tests.log"
+      ]
+    },
+    {
+      "id": "QA14-C03",
+      "procedure": "Agent runner and guard tests",
+      "command": "node --test tools/agents/tests/*.test.mjs",
+      "environment": "disposable clone $TMPDIR/review-qa14 at 1e64eb0, node v22.22.2",
+      "expected": "all pass",
+      "actual": "tests 22, pass 22, fail 0. Includes 'F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed'",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/03-agents-tests.log"
+      ]
+    },
+    {
+      "id": "QA14-C04",
+      "procedure": "Register rules at DG0",
+      "command": "node tools/gates/validate.mjs --register DG0",
+      "environment": "disposable clone $TMPDIR/review-qa14 at 1e64eb0",
+      "expected": "PASS",
+      "actual": "PASS register rules at DG0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/04-register.log"
+      ]
+    },
+    {
+      "id": "QA14-C05",
+      "procedure": "Pipeline state and reconcile at the candidate commit",
+      "command": "node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --reconcile",
+      "environment": "disposable clone $TMPDIR/review-qa14 at 1e64eb0 (stages.json as of that commit: DG0 FIXING)",
+      "expected": "PASS for both",
+      "actual": "PASS pipeline (active stage: DG0 FIXING). PASS reconcile (structure). The earlier rounds' records are reported STALE for the current content, as expected at the pre-freeze commit.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/05-pipeline.log",
+        "docs/delivery/test-evidence/DG0/qa/round-14/06-reconcile.log"
+      ]
+    },
+    {
+      "id": "QA14-C06b",
+      "procedure": "Pipeline and reconcile at the current HEAD, after the freeze",
+      "command": "node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --reconcile | grep -v STALE",
+      "environment": "disposable clone $TMPDIR/head14 at HEAD 8c5a694",
+      "expected": "PASS; frozen candidate equals the working tree",
+      "actual": "PASS pipeline (active stage: DG0 REVIEWING). Reconcile: the frozen candidate sha256:a25db736... matches the working tree; PASS reconcile (structure).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/06b-pipeline-reconcile-at-head.log"
+      ]
+    },
+    {
+      "id": "QA14-C07",
+      "procedure": "Candidate ID recomputed in a disposable clone of the candidate commit",
+      "command": "node tools/gates/candidate.mjs --stage DG0",
+      "environment": "disposable clone $TMPDIR/review-qa14 at 1e64eb0",
+      "expected": "sha256:a25db736652685e24073f8ddf6d7932d4df459b5c64efc04a6e5716c8f962552",
+      "actual": "sha256:a25db736652685e24073f8ddf6d7932d4df459b5c64efc04a6e5716c8f962552, 86 files",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/07-candidate.log"
+      ]
+    },
+    {
+      "id": "QA14-C08",
+      "procedure": "Run my round-13 independent suite on both the round-13 commit and the round-14 candidate, to reproduce the original F-DG0-233/234 failures and show the change",
+      "command": "QA_REPO_ROOT=$TMPDIR/{old13,review-qa14} node --test --test-reporter=tap docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r13.test.mjs",
+      "environment": "disposable clones at 6c61f2e and 1e64eb0, hermetic git, stub claude for runner cases, nested bubblewrap",
+      "expected": "On 6c61f2e: QA13-V5, R1b and R2 fail (the original findings). On 1e64eb0 they pass. The round-13 fixture has no init cwd, so REG and V1 are expected to fail there on the new cwd rule.",
+      "actual": "6c61f2e: 15 of 18 pass. V5 gives errors [], R1b and R2 give exit 0 with []. 1e64eb0: V5, R1, R1b and R2 pass (exit 71, '<path> removed'). REG and V1 fail only because the old fixture has no init cwd ('transcript init cwd undefined != meta.cwd'). The fixture is corrected in the round-14 suite (QA14-C09).",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/08-r13-suite-old-vs-new.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r13.test.mjs"
+      ]
+    },
+    {
+      "id": "QA14-C09",
+      "procedure": "Independent A24/A25 negative and regression tests for round 14 (18 cases; the ones not in tools/gates/tests or tools/agents/tests are listed in the file header). REG re-runs the round-9 suite, which covers every negative the assignment lists: missing reviewer, reviewer-author, shared invocation, failed or blocked check, unresolved High, incomplete requirement, non-existent anchor, SOURCE row without a playbook block, coverage gaps, candidate change after freeze, tampered manifest, and review metadata leaving the candidate unchanged. It uses D-027-shaped run evidence (init cwd). The other cases are V2-V5 and V12 (cwd forgeries), V8-V10 (positive controls), V11, V6/V7 (limit probes), and R0/R4-R7 (runner removal and fail-closed).",
+      "command": "QA_REPO_ROOT=$TMPDIR/review-qa14 node --test --test-reporter=tap docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r14.test.mjs (then the same against $TMPDIR/old13 as the before state)",
+      "environment": "disposable clones at 1e64eb0 and 6c61f2e, node v22.22.2, hermetic git, stub claude, nested bubblewrap",
+      "expected": "All pass on 1e64eb0; the F-DG0-233/234 cases fail on 6c61f2e",
+      "actual": "1e64eb0: 18 pass, 0 fail. The round-9 suite passes 91 of 94; the 3 one-field-only cwd fixtures (QA7-N77, QA8-F223, QA9-C01) fail only with cwd-binding errors, and their consistent equivalents V9 and V10 bind. 6c61f2e: 9 fail (REG, V2, V3, V12, V4, V5, R4, R5, R7). Limit probes V6 (all evidence consistently forged) and V7 (an extra resume init with another cwd) are accepted on both commits. Both depend on disclosed residual 1 (self-hashed run evidence), and the runner cannot produce either, so they are not findings.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/09-qa14-new-cases.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r14.test.mjs"
+      ]
+    },
+    {
+      "id": "QA14-C10",
+      "procedure": "Real run evidence: for every recorded run, compare meta.cwd with the transcript's init cwd (all init lines) and with the replayed prompt's working directory",
+      "command": "node <inline script over docs/delivery/runs/*/*/meta.json + transcript.jsonl.gz> (in the log)",
+      "environment": "repository at HEAD 8c5a694 (read-only)",
+      "expected": "no init mismatch; no prompt mismatch where a string-content replayed prompt exists",
+      "actual": "63 runs with a transcript. 0 init mismatches, including resume inits. 26 of 26 replayed prompts match. The 37 without a string replayed prompt predate D-022 (LOAD, AN-01..10, reviews R1-R6). 3 were skipped as in progress or without a transcript.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/10-real-runs-cwd-binding.log"
+      ]
+    },
+    {
+      "id": "QA14-C11",
+      "procedure": "Pre-freeze checks in a fresh clone of the candidate commit",
+      "command": "tools/gates/prefreeze.sh DG0",
+      "environment": "fresh clone $TMPDIR/pf14 at 1e64eb0, nested bubblewrap",
+      "expected": "all PASS, exit 0",
+      "actual": "10 of 10 PASS: extraction, gate and guard tests, runner tests, register DG0, register equals the parts merge, pipeline, the three analysis checks, and working-tree candidate equals HEAD (a25db736...). Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/11-prefreeze-fresh-clone.log"
+      ]
+    },
+    {
+      "id": "QA14-C12",
+      "procedure": "Live guard probe from this run. Write tool to docs/source/QA-PROBE.txt, then Bash writes to protected paths. Control: an evidence write.",
+      "command": "Write docs/source/QA-PROBE.txt; sh -c 'echo x > <path>' for docs/source, tools/gates, .claude, docs/delivery/reviews/DG0/round-14, .git and a new file under docs/delivery",
+      "environment": "this qa-verifier run (0634a37b), write guard hook plus the D-025 Bash sandbox",
+      "expected": "The Write tool is BLOCKED and protected Bash writes are refused. Evidence writes work.",
+      "actual": "Write: 'BLOCKED by write guard: qa-verifier may not write docs/source/QA-PROBE.txt (protected path)'. Bash: all five protected paths are refused with 'Read-only file system', and none exists afterwards. A new file next to requirements.csv could be created. I removed it immediately. That is the disclosed residual 'New untracked files where the sandbox leaves the working directory writable' (threat-model.md line 42), not a breach. The evidence write works.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/12-live-guard-probe.log",
+        "docs/delivery/threat-model.md#L42"
+      ]
+    },
+    {
+      "id": "QA14-C13",
+      "procedure": "Independent register integrity check. It covers columns, no VERIFIED status, the IMPLEMENTED DLV evidence paths, A01-A28 coverage, final_gate/increments consistency, counts by class, area and gate, and exact coverage matrices. I also read the changed REQ-DLV-007/013/023 rows against the implementation and the tests they cite.",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/register-integrity.mjs $TMPDIR/review-qa14; git diff 6c61f2e1..1e64eb02 --word-diff -- docs/delivery/requirements.csv",
+      "environment": "disposable clone at 1e64eb0",
+      "expected": "0 errors. Changed rows describe what the code does, and the tests they cite exist and pass.",
+      "actual": "RESULT: PASS, 0 errors. 412 rows (SOURCE 93, ENGINEERING 131, USER 188; DLV 42). By gate: DG0 19, DG1 12, DG2 32, DG3 32, DG4 137, DG5 78, DG6 48, DG7 54. Status: 19 IMPLEMENTED, 393 SPECIFIED, none VERIFIED. Both coverage matrices are exact, with 0 reverse gaps. REQ-DLV-007/013/023 now describe the D-027 behaviour I exercised (in-sandbox clone, removal reporting and fail-closed, cwd binding). The tests they cite pass (C02, C03). REQ-DLV-042 is new: P1, DG1, SPECIFIED, with testable acceptance.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/13-register-integrity.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/register-integrity.mjs",
+        "docs/delivery/requirements.csv#REQ-DLV-042"
+      ]
+    },
+    {
+      "id": "QA14-C14",
+      "procedure": "Agent setup (§0.1/§0.2) from the recorded load evidence: ten agents loaded, as distinct sessions, using the orchestrator's model, with out-of-scope writes blocked. Compared with docs/delivery/agents.md.",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/agent-load-evidence.mjs $TMPDIR/review-qa14",
+      "environment": "disposable clone at 1e64eb0; docs/delivery/runs/DG0/DG0-T-DG0-LOAD-*",
+      "expected": "10 runs, 10 distinct sessions, model claude-opus-5-5, the probe write blocked in each",
+      "actual": "runs: 10, distinct sessions: 10, overall: PASS. Every run used init model claude-opus-5-5 (my own model too), ended in success, and has a blocked docs/source/LOAD-PROBE-<role>.txt write. The agents.md load table matches the session IDs and the BLOCKED result.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/14-agent-load-evidence.log",
+        "docs/delivery/agents.md"
+      ]
+    },
+    {
+      "id": "QA14-C15",
+      "procedure": "Feasibility. The acceptance map and stage plan assign every A01-A28 scenario to a test level, a first stage and a gate. The map's 'proves' lists equal the register rows that cite each scenario.",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/acceptance-feasibility.mjs $TMPDIR/review-qa14",
+      "environment": "disposable clone at 1e64eb0",
+      "expected": "Assignment criterion: every A01-A28 scenario has a concrete test level and stage, and none is untestable. Consistency: the script reports 0 errors. Any consistency drift becomes a finding.",
+      "actual": "The assignment criterion is met. All 28 scenarios have a concrete level, a first stage no later than their must-pass gate, a gate, and an executable-test row in the register, so none is untestable. The script exits 1 with 3 consistency errors: the new REQ-DLV-042 cites A18, A23 and A24, but the map omits it there, and from the A24 later-gate table. The same script passed on the round-13 candidate. I raised this as F-DG0-235 (Low, not mandatory, acceptable as an observation), in line with how rounds 7-10 recorded Low observations. The check itself is recorded as PASS against its criterion.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/15-acceptance-feasibility.log",
+        "docs/delivery/test-evidence/DG0/qa/round-14/16-f235-acceptance-map.log"
+      ]
+    },
+    {
+      "id": "QA14-C16",
+      "procedure": "Verify my own FIXED_PENDING_VERIFICATION findings F-DG0-231, F-DG0-233 and F-DG0-234: reproduce each on 6c61f2e, then show the fix on 1e64eb0",
+      "command": "grep checks of the docs and agent definitions on both commits, plus a live 'git worktree add /tmp/...' (F-DG0-231); QA13/QA14 suites on both commits (F-DG0-233/234)",
+      "environment": "disposable clones at 6c61f2e and 1e64eb0; this run's sandbox",
+      "expected": "Each original failure reproduces on 6c61f2e and is gone on 1e64eb0",
+      "actual": "F-DG0-231: stale 'project,local' in agents.md and 'git worktree add /tmp' in three definitions on 6c61f2e. The old instruction fails live, exit 128. Both are fixed on 1e64eb0. F-DG0-233: fixed (QA14-V12 and V2-V5). F-DG0-234: fixed (QA13-R1b/R2, QA14-R4/R5/R7). All three are CLOSED_VERIFIED in the sidecar.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/03-f231-verification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-14/04-f233-verification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-14/05-f234-verification.log",
+        "docs/delivery/reviews/DG0/round-14/qa-verifier.verifications.json"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG0-235"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/qa/round-14/00-candidate-confirmation.log",
+    "docs/delivery/test-evidence/DG0/qa/round-14/09-qa14-new-cases.log",
+    "docs/delivery/test-evidence/DG0/qa/round-14/11-prefreeze-fresh-clone.log",
+    "docs/delivery/test-evidence/DG0/qa/round-14/12-live-guard-probe.log",
+    "docs/delivery/test-evidence/DG0/qa/round-14/13-register-integrity.log",
+    "docs/delivery/test-evidence/DG0/qa/round-14/15-acceptance-feasibility.log",
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r14.test.mjs",
+    "docs/delivery/reviews/DG0/round-14/qa-verifier.findings.json",
+    "docs/delivery/reviews/DG0/round-14/qa-verifier.verifications.json"
+  ],
+  "reviewed_at": "2026-09-28T23:15:00Z",
+  "summary": "PASS with one Low observation. Every required command passes: extraction, 50/50 gate tests, 22/22 runner and guard tests, register DG0, pipeline, reconcile, candidate a25db736, and prefreeze 10/10 in a fresh clone. My independent round-14 suite passes 18/18 on the candidate, and 9 of its cases fail on the round-13 commit. The live guard blocks protected writes. Register integrity and agent-load evidence pass. My findings F-DG0-231, F-DG0-233 and F-DG0-234 are CLOSED_VERIFIED. The new finding F-DG0-235 (Low, not mandatory, acceptable as an observation) is that acceptance-map.md does not list the new REQ-DLV-042 under A18, A23 or A24. My feasibility script exits 1 on that drift. QA14-C15's criterion is still met, because every scenario is assigned and testable."
+}

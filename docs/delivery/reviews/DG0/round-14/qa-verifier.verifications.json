@@ -1,0 +1,45 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-231",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "I reproduced both round-13 residuals on the old commit 6c61f2e. (1) docs/delivery/agents.md line 28 said '--setting-sources project,local'. (2) All three reviewer definitions prescribed 'git worktree add /tmp/review-<id> <commit>', and that instruction still fails live in this sandbox: 'could not create leading directories of .git/worktrees/...: Read-only file system', exit 128. On candidate 1e64eb0: agents.md lines 28 and 104 both say 'setting-sources project', matching run-agent.sh lines 150 and 159. The domain-reviewer, code-security-reviewer and qa-verifier definitions say 'git clone <repo> \"$TMPDIR/review-<id>\" and check out the commit'. That is exactly what I did for this whole review ($TMPDIR/review-qa14, $TMPDIR/pf14, $TMPDIR/head14), and it works. agent-protocol.md line 79 now mentions worktree add only to say it is denied. D-024's historical 'project,local' is marked as superseded by D-025. No current doc, definition, runner comment or agent_settings docstring still gives the stale instruction. The expected result of the finding is met.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/03-f231-verification.log",
+        "docs/delivery/agents.md#L28",
+        ".claude/agents/qa-verifier.md",
+        ".claude/agents/domain-reviewer.md",
+        ".claude/agents/code-security-reviewer.md",
+        "docs/delivery/agent-protocol.md#L79"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-233",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "I reproduced the original failure on 6c61f2e: QA13-V5 (meta.cwd and the deny list forged to /somewhere/else while the transcript says /work/repo) gives validateGate [] there. On 1e64eb0 that old fixture is rejected, but only partly for the right reason: it has no init cwd at all (08-r13-suite-old-vs-new.log). So my independent round-14 cases use a fixture whose init line carries cwd, like real transcripts. All 18 pass on 1e64eb0, and 9 fail on 6c61f2e (09-qa14-new-cases.log). QA14-V12 is the exact original forgery (meta.cwd and deny list set to /somewhere/else, init and prompt at /work/repo). It returns [] on 6c61f2e. On 1e64eb0 it is rejected by both the init check and the prompt check, and only for the forged run. V2 to V5 also fail on 6c61f2e: V2 (init without cwd), V3 (meta and init forged consistently, only the prompt still says /work/repo, rejected by the prompt check alone), V4 (prompt with no working-directory sentence) and V5 (trailing-slash meta.cwd, strict). Positive controls V1, V8, V9 and V10 bind: spaces, parentheses, Arabic, and absolute Write paths under a consistent cwd. The round-9 suite still passes 91 of 94. The 3 others are one-field-only cwd fixtures (QA7-N77, QA8-F223, QA9-C01), and they now fail only with cwd-binding errors, as they should. Every one of the 63 real recorded runs has init cwd equal to meta.cwd, and so do all 26 runs with a string replayed prompt. The existing candidate test 'F-DG0-233: meta.cwd is bound to the transcript' passes. Limits I recorded, not findings: a whole-evidence consistent forgery (V6), and an extra resume init line naming another cwd (V7, only the first init is compared), are still accepted. Both need fabricated self-hashed run evidence, which is disclosed residual 1. The runner uses one $CWD for every attempt (run-agent.sh lines 150 and 159), so it cannot produce either.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/04-f233-verification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-14/08-r13-suite-old-vs-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-14/09-qa14-new-cases.log",
+        "docs/delivery/test-evidence/DG0/qa/round-14/10-real-runs-cwd-binding.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r14.test.mjs",
+        "tools/gates/lib/rules.mjs#checkInvocation"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-234",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "I reproduced the original failure on 6c61f2e with the runner end to end and a stub claude. QA13-R1b (an ignored .claude/settings.local.json truncated to zero) and QA13-R2 (the same file deleted) both give exit 0 with external_config_changed [] there. On 1e64eb0 both give exit 71 with '<path> removed', and QA13-R1 (an untracked CLAUDE.local.md truncated) is now reported too. QA13-R3 is unchanged: new zero-length stubs are still ignored and content is still reported. My independent round-14 cases pass on 1e64eb0, and R4, R5 and R7 fail on 6c61f2e. R0 is a control: no change gives exit 0 and []. R4: a deleted .git/hooks file is reported as removed. R5: a nested .gitignore deleted in a second worktree is reported as removed. R6: a symlink retargeted to identical content is reported, because the link target is part of the entry. R7 checks fail-closed: when the before-snapshot is missing, the comparison fails, and the run records 'config-diff-failed (fail closed)' and exits 71. The existing candidate test 'F-DG0-012/F-DG0-234 ...' passes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/05-f234-verification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-14/08-r13-suite-old-vs-new.log",
+        "docs/delivery/test-evidence/DG0/qa/round-14/09-qa14-new-cases.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r14.test.mjs",
+        "tools/agents/run-agent.sh#L166-L190"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-235",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-032",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Acceptance map drifted after AN-13: the new REQ-DLV-042 cites A18, A23 and A24 in its acceptance column, but docs/analysis/acceptance-map.md lists it under none of them, and not in the A24 'rows adding cases later' table",
+      "reproduction": "Independent script docs/delivery/test-evidence/DG0/qa/tests/acceptance-feasibility.mjs, run against a disposable clone of candidate 1e64eb0 (docs/delivery/test-evidence/DG0/qa/round-14/15-acceptance-feasibility.log). It reports 3 errors: 'A18: register rows cite A18 but map omits: REQ-DLV-042', and the same for A23 and A24. The same script passed on the round-13 candidate 6c61f2e (docs/delivery/test-evidence/DG0/qa/round-13/15-acceptance-feasibility.log). Details are in docs/delivery/test-evidence/DG0/qa/round-14/16-f235-acceptance-map.log. The register row REQ-DLV-042 (P1, DG1, SPECIFIED) has acceptance 'A18;A23;A24: ...', but `grep -c REQ-DLV-042 docs/analysis/acceptance-map.md` returns 0. acceptance-map.md was last changed in 73c4854, before AN-13 (d753cfb) added the row. The AN-13 handback lists coverage, stage-plan and README updates, but not the acceptance map.",
+      "expected": "acceptance-map.md lines 5-7 say that, for each scenario, the map lists 'the requirements whose acceptance column cites the scenario, which the test proves'. REQ-DLV-042 should appear in the A18, A23 and A24 'proves' lists. Because its final gate (DG1) is later than A24's must-pass gate (DG0), it should also appear in the A24 row of 'Gate ordering of scenario suites' (as REQ-DLV-025 (DG1) already does).",
+      "actual": "It is missing from all four places. Impact is limited to traceability. The register (the authoritative record) is correct, the coverage matrices are exact, every scenario still has a test level, a first stage and a gate, and REQ-DLV-042 is a DG1 requirement, so nothing at DG0 depends on it. The scenario suite authors for A18/A23/A24 could miss the dependency-install wrapper cases if they read only the map. Low and non-mandatory. I would accept it as an observation for DG0, provided the analyst fixes the map before the DG1 candidate freezes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-14/15-acceptance-feasibility.log",
+        "docs/delivery/test-evidence/DG0/qa/round-14/16-f235-acceptance-map.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/acceptance-feasibility.mjs",
+        "docs/analysis/acceptance-map.md#L45-L51",
+        "docs/delivery/requirements.csv#REQ-DLV-042"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-14/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T23:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-14 QA review of candidate a25db736 (1e64eb0). Low; I would accept it as an observation."
+        }
+      ]
+    }
+  ]
+}
