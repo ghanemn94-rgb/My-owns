@@ -1,0 +1,60 @@
+### cwd=/tmp/claude-0/-home-user-My-owns/b93c74f1-cd8a-4f00-af08-2444a16f1912/scratchpad/qa9 space dir/My Projects/repo commit=cbc755d035b47bb783ffedb4045df5faae40e4d7
+$ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+# exit=0
+$ node tools/gates/validate.mjs --pipeline
+node:fs:440
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+# exit=1
+$ node tools/gates/validate.mjs --reconcile
+node:fs:440
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+# exit=1
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:fc0bd2a2f2019ca436e586bdd5fb4d636b9bc6025f06321db7a7ac38cab18998","files":79}
+# exit=0
+### cwd=/tmp/claude-0/-home-user-My-owns/b93c74f1-cd8a-4f00-af08-2444a16f1912/scratchpad/qa9-مستخدم/repo commit=cbc755d035b47bb783ffedb4045df5faae40e4d7
+$ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+# exit=0
+$ node tools/gates/validate.mjs --pipeline
+node:fs:440
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+# exit=1
+$ node tools/gates/validate.mjs --reconcile
+node:fs:440
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+# exit=1
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:fc0bd2a2f2019ca436e586bdd5fb4d636b9bc6025f06321db7a7ac38cab18998","files":79}
+# exit=0
+### cwd=/tmp/claude-0/-home-user-My-owns/b93c74f1-cd8a-4f00-af08-2444a16f1912/scratchpad/qa9-cand commit=cbc755d035b47bb783ffedb4045df5faae40e4d7
+$ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+# exit=0
+$ node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+# exit=0
+$ node tools/gates/validate.mjs --reconcile
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:90ad5271429719ba975cc900c61f0a611120045c1b72040ad50c94359c5178e0
+working tree:     sha256:fc0bd2a2f2019ca436e586bdd5fb4d636b9bc6025f06321db7a7ac38cab18998 (differs: 3 changed, 0 added, 0 removed)
+round 1 domain-reviewer: FAIL (STALE for current content)
+# exit=0
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:fc0bd2a2f2019ca436e586bdd5fb4d636b9bc6025f06321db7a7ac38cab18998","files":79}
+# exit=0
+### root-cause line in candidate and round-8 candidate:
+37:const here = new URL(".", import.meta.url).pathname;
+8825dca 2026-09-28 P0: gate validator, candidate hashing, CI job, agent load verification, delivery records
+37:const here = new URL(".", import.meta.url).pathname;
+### node semantics:
+/a%20b/ /a b/

@@ -1,0 +1,8 @@
+== A. git binary absent from PATH (only node/bash/dirname/cat/head): expect block (rc 2)
+rc=2 :: cwd=/tmp/claude-0/-home-user-My-owns/f9934ae4-0088-4015-925a-3e8548a4f489/scratchpad/dg0-sec :: {"tool_name":"Write","tool_input":{"file_path":"/tmp/claude-0/-home-user-My-owns/f9934ae4-0088-4015-925a-3e8548a4f489/scratchpad/dg0-sec/docs/delivery/reviews/DG0/x.json"}} :: write guard missing
+rc=2 :: cwd=/tmp/claude-0/-home-user-My-owns/f9934ae4-0088-4015-925a-3e8548a4f489/scratchpad/dg0-sec :: {"tool_name":"Write","tool_input":{"file_path":"/tmp/claude-0/-home-user-My-owns/f9934ae4-0088-4015-925a-3e8548a4f489/scratchpad/dg0-sec/tools/gates/x.mjs"}} :: write guard missing
+== B. hook cwd inside a nested git repository that is NOT the guarded repo (simulation of the hook command only)
+-- B1: nested repo carries an unmodified copy of the guard: main-repo protected path from cwd=nested
+rc=0 :: cwd=/tmp/claude-0/-home-user-My-owns/f9934ae4-0088-4015-925a-3e8548a4f489/scratchpad/dg0-sec/docs/delivery/test-evidence/nested :: {"tool_name":"Write","tool_input":{"file_path":"/tmp/claude-0/-home-user-My-owns/f9934ae4-0088-4015-925a-3e8548a4f489/scratchpad/dg0-sec/tools/gates/lib/rules.mjs"}} :: 
+-- B2: nested repo has no guard at all: expect block ('write guard missing')
+rc=2 :: cwd=/tmp/claude-0/-home-user-My-owns/f9934ae4-0088-4015-925a-3e8548a4f489/scratchpad/dg0-sec/docs/delivery/test-evidence/nested :: {"tool_name":"Write","tool_input":{"file_path":"/tmp/claude-0/-home-user-My-owns/f9934ae4-0088-4015-925a-3e8548a4f489/scratchpad/dg0-sec/tools/gates/lib/rules.mjs"}} :: write guard missing

@@ -1,0 +1,38 @@
+== 1. secret / credential patterns over the candidate files at cbc755d (git grep)
+matches exit=0 (1 = none)
+== 2. e-mail addresses in candidate paths
+      1 cbc755d035b47bb783ffedb4045df5faae40e4d7:tools/gates/tests/validator.test.mjs:116:t@example.com
+      1 cbc755d035b47bb783ffedb4045df5faae40e4d7:docs/delivery/environment.md:15:noreply@anthropic.com
+== 3. public CDN / builder-hosted references in candidate
+exit=0
+== 4. agent frontmatter
+backend-workflow-engineer name_ok=True model=inherit tools=Read, Grep, Glob, Write, Edit, Bash hooks_in_fm=True desc=250 chars
+code-security-reviewer name_ok=True model=inherit tools=Read, Grep, Glob, Bash, Write hooks_in_fm=True desc=322 chars
+devops-engineer name_ok=True model=inherit tools=Read, Grep, Glob, Write, Edit, Bash hooks_in_fm=True desc=276 chars
+domain-reviewer name_ok=True model=inherit tools=Read, Grep, Glob, Bash, Write hooks_in_fm=True desc=282 chars
+frontend-ux-engineer name_ok=True model=inherit tools=Read, Grep, Glob, Write, Edit, Bash hooks_in_fm=True desc=206 chars
+kpi-benefits-engineer name_ok=True model=inherit tools=Read, Grep, Glob, Write, Edit, Bash hooks_in_fm=True desc=292 chars
+qa-verifier name_ok=True model=inherit tools=Read, Grep, Glob, Bash, Write, Edit hooks_in_fm=True desc=268 chars
+release-auditor name_ok=True model=inherit tools=Read, Grep, Glob, Bash, Write hooks_in_fm=True desc=323 chars
+solution-architect name_ok=True model=inherit tools=Read, Grep, Glob, Write, Edit, Bash hooks_in_fm=True desc=277 chars
+transformation-analyst name_ok=True model=inherit tools=Read, Grep, Glob, Write, Edit, Bash hooks_in_fm=True desc=264 chars
+== 5. per-role settings: identical hook except role name, matcher covers Write|Edit|NotebookEdit|MultiEdit
+backend-workflow-engineer 1 Write|Edit|NotebookEdit|MultiEdit ["hooks"] true
+code-security-reviewer 1 Write|Edit|NotebookEdit|MultiEdit ["hooks"] true
+devops-engineer 1 Write|Edit|NotebookEdit|MultiEdit ["hooks"] true
+domain-reviewer 1 Write|Edit|NotebookEdit|MultiEdit ["hooks"] true
+frontend-ux-engineer 1 Write|Edit|NotebookEdit|MultiEdit ["hooks"] true
+kpi-benefits-engineer 1 Write|Edit|NotebookEdit|MultiEdit ["hooks"] true
+qa-verifier 1 Write|Edit|NotebookEdit|MultiEdit ["hooks"] true
+release-auditor 1 Write|Edit|NotebookEdit|MultiEdit ["hooks"] true
+solution-architect 1 Write|Edit|NotebookEdit|MultiEdit ["hooks"] true
+transformation-analyst 1 Write|Edit|NotebookEdit|MultiEdit ["hooks"] true
+== 6. CI workflow
+11:permissions:
+12:  contents: read
+18:      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+20:          fetch-depth: 0 # historical gate verification recomputes candidates from recorded commits
+21:      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+== 7. source scripts: subprocess/eval/network use
+tools/source/extract_docx.py:14:W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+exit=0

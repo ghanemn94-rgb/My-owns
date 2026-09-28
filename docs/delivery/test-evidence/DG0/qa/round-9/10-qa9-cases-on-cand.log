@@ -1,0 +1,99 @@
+$ QA_REPO_ROOT=/tmp/claude-0/-home-user-My-owns/b93c74f1-cd8a-4f00-af08-2444a16f1912/scratchpad/qa9-cand node --test --test-name-pattern=QA9- docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs
+# tooling commit=cbc755d035b47bb783ffedb4045df5faae40e4d7 node=v22.22.2 2026-09-28T17:19:26Z
+TAP version 13
+# \# QA9-C01 errors (0):
+# \# QA9-N93 errors (1):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000012: the replayed prompt names assignment /home/Jane Doe/My Projects/repo/docs/delivery/assignments/DG0/round-3/review-qa-verifier.md (sha256 d7cd80d793c3…), not meta's docs/delivery/assignments/DG0/round-3/review-qa-verifier.md
+# \# QA9-N94 errors (1):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000018: the replayed prompt names assignment /home/Jane Doe/My Projects/repo/docs/delivery/assignments/DG0/round-2/review-qa-verifier.md (sha256 913f99e7f5b9…), not meta's docs/delivery/assignments/DG0/round-3/review-qa-verifier.md
+# \# QA9-N95 errors (1):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000024: the replayed prompt names assignment /home/Jane Doe/My Projects/repo/ docs/delivery/assignments/DG0/round-3/review-qa-verifier.md (sha256 5d4da82f0631…), not meta's docs/delivery/assignments/DG0/round-3/review-qa-verifier.md
+# \# QA9-N96 errors (1):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000030: the replayed prompt names assignment /home/Jane Doe/My Projects/repo/docs/delivery/assignments/DG0/round-3/review-qa-verifier.md.bak (sha256 5d4da82f0631…), not meta's docs/delivery/assignments/DG0/round-3/review-qa-verifier.md
+# \# QA9-N97 errors (1):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000036: the replayed prompt names assignment /home/Jane Doe/My Projects/repo/docs/delivery/assignments/DG0/round-2/review-qa-verifier.md (sha256 913f99e7f5b9…), not meta's docs/delivery/assignments/DG0/round-3/review-qa-verifier.md
+# \# QA9-N98 errors (1):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000042: the replayed prompt names no assignment file and sha256
+# \# QA9-F224 exit=1
+# \# stdout: 
+# \# stderr: Error: ENOENT: no such file or directory, open '/tmp/qa9%20tooling%20TAIuos/My%20Projects/repo/tools/gates/schemas/stages.schema.json'
+# Subtest: QA9-C01 control (F-DG0-223): a path with spaces, parentheses and Arabic characters binds
+ok 1 - QA9-C01 control (F-DG0-223): a path with spaces, parentheses and Arabic characters binds
+  ---
+  duration_ms: 921.425669
+  type: 'test'
+  ...
+# Subtest: QA9-N93 F-DG0-223: the widened regex keeps the sha binding (spaced path with another content's sha256 is rejected)
+ok 2 - QA9-N93 F-DG0-223: the widened regex keeps the sha binding (spaced path with another content's sha256 is rejected)
+  ---
+  duration_ms: 865.683144
+  type: 'test'
+  ...
+# Subtest: QA9-N94 F-DG0-223: a spaced path naming another real assignment of the role, with its correct sha256, is rejected
+ok 3 - QA9-N94 F-DG0-223: a spaced path naming another real assignment of the role, with its correct sha256, is rejected
+  ---
+  duration_ms: 892.62899
+  type: 'test'
+  ...
+# Subtest: QA9-N95 F-DG0-223: a space before the relative path ("…/repo/ docs/…") is not a path boundary and is rejected
+ok 4 - QA9-N95 F-DG0-223: a space before the relative path ("…/repo/ docs/…") is not a path boundary and is rejected
+  ---
+  duration_ms: 959.682093
+  type: 'test'
+  ...
+# Subtest: QA9-N96 F-DG0-223: a spaced path with a trailing suffix ("….md.bak") is rejected
+ok 5 - QA9-N96 F-DG0-223: a spaced path with a trailing suffix ("….md.bak") is rejected
+  ---
+  duration_ms: 1020.777581
+  type: 'test'
+  ...
+# Subtest: QA9-N97 F-DG0-223: a second, appended assignment clause cannot override the first (first clause names another assignment)
+ok 6 - QA9-N97 F-DG0-223: a second, appended assignment clause cannot override the first (first clause names another assignment)
+  ---
+  duration_ms: 952.211377
+  type: 'test'
+  ...
+# Subtest: QA9-N98 F-DG0-223: a newline inside the path (the lazy capture must not span lines) is rejected
+ok 7 - QA9-N98 F-DG0-223: a newline inside the path (the lazy capture must not span lines) is rejected
+  ---
+  duration_ms: 1072.264884
+  type: 'test'
+  ...
+# Subtest: QA9-F224 portability: the gate tooling itself, installed under a path with a space, validates a valid fixture
+not ok 8 - QA9-F224 portability: the gate tooling itself, installed under a path with a space, validates a valid fixture
+  ---
+  duration_ms: 547.076724
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs:1191:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    the validator crashes when its own path contains a space (schema dir is percent-encoded)
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs:1200:12
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs:247:12)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs:1191:125)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 7
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7377.285122
+# exit=1

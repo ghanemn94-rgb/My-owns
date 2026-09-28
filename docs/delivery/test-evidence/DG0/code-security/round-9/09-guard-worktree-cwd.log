@@ -1,0 +1,44 @@
+Setup: 'main' checkout = /tmp/claude-0/-home-user-My-owns/f9934ae4-0088-4015-925a-3e8548a4f489/scratchpad/dg0-sec (plays the role of the orchestrator's repository, REPO_ROOT).
+       worktree       = /tmp/claude-0/-home-user-My-owns/f9934ae4-0088-4015-925a-3e8548a4f489/scratchpad/wt-impl, created with 'git worktree add' at cbc755d (D-004: concurrent writers run with --cwd <worktree>).
+run-agent.sh runs: ( cd "$CWD" && claude ... --settings "$REPO_ROOT/tools/agents/settings/<role>.settings.json" ), so the hook runs with cwd = worktree.
+Hook command (identical in every role's settings): g="$(git rev-parse --show-toplevel 2>/dev/null)/tools/agents/guard-write.mjs"; if [ -f "$g" ]; then node "$g" backend-workflow-engineer; rc=$?; else echo "write guard missing" >&2; rc=2; fi; [ "$rc" -eq 0 ] || exit 2
+rc=2 means BLOCKED, rc=0 means allowed.
+== role backend-workflow-engineer
+rc=2 role=backend-workflow-engineer cwd=dg0-sec target=dg0-sec/tools/gates/lib/rules.mjs :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/gates/lib/rules.mjs' (protected path)
+rc=0 role=backend-workflow-engineer cwd=wt-impl target=dg0-sec/tools/gates/lib/rules.mjs :: 
+rc=2 role=backend-workflow-engineer cwd=dg0-sec target=dg0-sec/docs/delivery/stages.json :: BLOCKED by write guard: backend-workflow-engineer may not write 'docs/delivery/stages.json' (protected path)
+rc=0 role=backend-workflow-engineer cwd=wt-impl target=dg0-sec/docs/delivery/stages.json :: 
+rc=2 role=backend-workflow-engineer cwd=dg0-sec target=dg0-sec/.claude/settings.local.json :: BLOCKED by write guard: backend-workflow-engineer may not write '.claude/settings.local.json' (protected path)
+rc=0 role=backend-workflow-engineer cwd=wt-impl target=dg0-sec/.claude/settings.local.json :: 
+rc=2 role=backend-workflow-engineer cwd=dg0-sec target=dg0-sec/docs/delivery/gates/DG1.json :: BLOCKED by write guard: backend-workflow-engineer may not write 'docs/delivery/gates/DG1.json' (protected path)
+rc=0 role=backend-workflow-engineer cwd=wt-impl target=dg0-sec/docs/delivery/gates/DG1.json :: 
+rc=2 role=backend-workflow-engineer cwd=dg0-sec target=dg0-sec/tools/agents/write-scopes.json :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/agents/write-scopes.json' (protected path)
+rc=0 role=backend-workflow-engineer cwd=wt-impl target=dg0-sec/tools/agents/write-scopes.json :: 
+-- control: the worktree's own protected path from cwd=worktree
+rc=2 role=backend-workflow-engineer cwd=wt-impl target=wt-impl/tools/gates/lib/rules.mjs :: BLOCKED by write guard: backend-workflow-engineer may not write 'tools/gates/lib/rules.mjs' (protected path)
+== role transformation-analyst
+rc=2 role=transformation-analyst cwd=dg0-sec target=dg0-sec/tools/gates/lib/rules.mjs :: BLOCKED by write guard: transformation-analyst may not write 'tools/gates/lib/rules.mjs' (protected path)
+rc=0 role=transformation-analyst cwd=wt-impl target=dg0-sec/tools/gates/lib/rules.mjs :: 
+rc=2 role=transformation-analyst cwd=dg0-sec target=dg0-sec/docs/delivery/stages.json :: BLOCKED by write guard: transformation-analyst may not write 'docs/delivery/stages.json' (outside role write scope)
+rc=0 role=transformation-analyst cwd=wt-impl target=dg0-sec/docs/delivery/stages.json :: 
+rc=2 role=transformation-analyst cwd=dg0-sec target=dg0-sec/.claude/settings.local.json :: BLOCKED by write guard: transformation-analyst may not write '.claude/settings.local.json' (protected path)
+rc=0 role=transformation-analyst cwd=wt-impl target=dg0-sec/.claude/settings.local.json :: 
+rc=2 role=transformation-analyst cwd=dg0-sec target=dg0-sec/docs/delivery/gates/DG1.json :: BLOCKED by write guard: transformation-analyst may not write 'docs/delivery/gates/DG1.json' (outside role write scope)
+rc=0 role=transformation-analyst cwd=wt-impl target=dg0-sec/docs/delivery/gates/DG1.json :: 
+rc=2 role=transformation-analyst cwd=dg0-sec target=dg0-sec/tools/agents/write-scopes.json :: BLOCKED by write guard: transformation-analyst may not write 'tools/agents/write-scopes.json' (protected path)
+rc=0 role=transformation-analyst cwd=wt-impl target=dg0-sec/tools/agents/write-scopes.json :: 
+-- control: the worktree's own protected path from cwd=worktree
+rc=2 role=transformation-analyst cwd=wt-impl target=wt-impl/tools/gates/lib/rules.mjs :: BLOCKED by write guard: transformation-analyst may not write 'tools/gates/lib/rules.mjs' (protected path)
+== role code-security-reviewer
+rc=2 role=code-security-reviewer cwd=dg0-sec target=dg0-sec/tools/gates/lib/rules.mjs :: BLOCKED by write guard: code-security-reviewer may not write 'tools/gates/lib/rules.mjs' (protected path)
+rc=0 role=code-security-reviewer cwd=wt-impl target=dg0-sec/tools/gates/lib/rules.mjs :: 
+rc=2 role=code-security-reviewer cwd=dg0-sec target=dg0-sec/docs/delivery/stages.json :: BLOCKED by write guard: code-security-reviewer may not write 'docs/delivery/stages.json' (outside role write scope)
+rc=0 role=code-security-reviewer cwd=wt-impl target=dg0-sec/docs/delivery/stages.json :: 
+rc=2 role=code-security-reviewer cwd=dg0-sec target=dg0-sec/.claude/settings.local.json :: BLOCKED by write guard: code-security-reviewer may not write '.claude/settings.local.json' (protected path)
+rc=0 role=code-security-reviewer cwd=wt-impl target=dg0-sec/.claude/settings.local.json :: 
+rc=2 role=code-security-reviewer cwd=dg0-sec target=dg0-sec/docs/delivery/gates/DG1.json :: BLOCKED by write guard: code-security-reviewer may not write 'docs/delivery/gates/DG1.json' (outside role write scope)
+rc=0 role=code-security-reviewer cwd=wt-impl target=dg0-sec/docs/delivery/gates/DG1.json :: 
+rc=2 role=code-security-reviewer cwd=dg0-sec target=dg0-sec/tools/agents/write-scopes.json :: BLOCKED by write guard: code-security-reviewer may not write 'tools/agents/write-scopes.json' (protected path)
+rc=0 role=code-security-reviewer cwd=wt-impl target=dg0-sec/tools/agents/write-scopes.json :: 
+-- control: the worktree's own protected path from cwd=worktree
+rc=2 role=code-security-reviewer cwd=wt-impl target=wt-impl/tools/gates/lib/rules.mjs :: BLOCKED by write guard: code-security-reviewer may not write 'tools/gates/lib/rules.mjs' (protected path)

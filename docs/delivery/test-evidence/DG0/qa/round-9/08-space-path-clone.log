@@ -1,0 +1,47 @@
+# cwd=/tmp/claude-0/-home-user-My-owns/b93c74f1-cd8a-4f00-af08-2444a16f1912/scratchpad/qa9 space dir/My Projects/repo (path contains spaces) commit=cbc755d035b47bb783ffedb4045df5faae40e4d7
+$ node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs
+not ok 14 - a fully evidenced DG0 gate passes in current and historical mode
+not ok 15 - A24: a missing specialist reviewer fails the gate
+not ok 16 - A23: a reviewer who authored the scope, or who is an owner, is rejected
+not ok 17 - A23: reviewers sharing one invocation are not independent
+not ok 18 - A24 / F-DG0-102: fabricated or incomplete provenance is rejected
+not ok 19 - F-DG0-201: a review bound to an unrelated run of the same role is rejected
+not ok 20 - A24: failed or BLOCKED checks and non-PASS verdicts fail the gate
+not ok 21 - A24: unresolved blocking findings fail the gate; owners cannot verify their own fix
+not ok 22 - F-DG0-101: findings cannot escape by relabelling, dropping or downgrading
+not ok 23 - A24 / F-DG0-106 / F-DG0-202: incomplete requirements, placeholder evidence and coverage gaps fail
+not ok 24 - A25: a source change invalidates the approval; review metadata does not
+not ok 26 - F-DG0-104: the manifest spec must equal the stage spec and the approved policy
+not ok 27 - A25: a tampered manifest or a stale review candidate is detected
+not ok 28 - F-DG0-102: approval records are immutable after approval (historical mode)
+not ok 29 - the gate record must be written by the audited release-auditor invocation
+not ok 30 - A24: the pipeline cannot advance past a gate that is not APPROVED
+not ok 31 - illegal stage transitions are rejected
+not ok 32 - an APPROVED gate with a BLOCKED decision or blocking conditions fails
+not ok 34 - F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification sidecar and bound run
+not ok 35 - F-DG0-101 residual: deleting an earlier review round is detected
+not ok 36 - F-DG0-205: evidence that is a symlink to a file outside the repository is rejected
+not ok 38 - F-DG0-115: reviewer artefacts cannot be edited after the run, committed or not
+not ok 39 - F-DG0-208: round metadata must match the committed manifest of its candidate
+not ok 40 - F-DG0-102 residual: a verifying record must be the round's listed, schema-valid record
+not ok 41 - F-DG0-117: observations are accepted only through specialist and auditor sidecars
+not ok 43 - F-DG0-115 residual: an evil merge cannot rewrite committed evidence
+not ok 44 - F-DG0-118: skip-worktree / assume-unchanged cannot hide edited evidence
+not ok 45 - F-DG0-119: only content replayed from the run's own successful Write/Edit calls is bound
+not ok 46 - F-DG0-121 / F-DG0-211: the gate file must be what the auditor run wrote
+not ok 47 - F-DG0-212: a round manifest must describe its source commit; runs start from a commit containing it
+not ok 48 - F-DG0-115 residual: a back-dated side branch merged in cannot replace committed evidence
+not ok 49 - F-DG0-115 defence in depth: meta.tool_authored cannot vouch for content the transcript never wrote
+not ok 50 - D-022: only a CLI-replayed prompt binds a transcript to its run; the same text in a tool result does not
+not ok 51 - F-DG0-132: an empty or newline-only transcript fails every transcript check
+not ok 52 - F-DG0-133: the assignment named in the replayed prompt must be the one recorded in meta
+not ok 53 - F-DG0-223: a genuine prompt binds when the checkout path contains spaces
+# tests 53
+# pass 17
+# fail 36
+# exit=1
+$ bash tools/gates/prefreeze.sh DG0
+PASS  analysis check check_pb_provenance.py :: checked 93 REQ-PB rows; 0 problem(s); 10 reviewed R5 false positive(s) accepted
+PASS  analysis check check_test_refs.py :: 58 declared test titles derived from 3 test files; 42 quoted test title citation(s) in 411 register rows; 0 problem(s)
+PASS  working-tree candidate equals HEAD (sha256:fc0bd2a2f2019ca436e586bdd5fb4d636b9bc6025f06321db7a7ac38cab18998)
+# exit=1

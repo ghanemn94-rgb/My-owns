@@ -3254,6 +3254,11 @@
           "at": "2026-09-28T17:03:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by domain-reviewer round 8: PASS"
+        },
+        {
+          "at": "2026-09-28T17:19:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 9: PASS"
         }
       ],
       "fix_revision": "51f5b9cf40790f54016e8b363959279eda1bfaab",
@@ -3262,17 +3267,20 @@
         "by_role": "domain-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-DOM-R8-domain-reviewer-20260928T165738Z-6f35e04e",
-          "session_id": "6f35e04e-ab4d-4373-94d3-05eac4922e3c"
+          "run_id": "DG0-T-DG0-REV-DOM-R9-domain-reviewer-20260928T171212Z-052489d4",
+          "session_id": "052489d4-bf56-472e-a1c5-bcad5bcb25a0"
         },
-        "at": "2026-09-28T17:03:00Z",
+        "at": "2026-09-28T17:19:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/domain/round-8/checks.log",
-          ".claude/agents/",
-          "docs/delivery/requirements.csv (REQ-DLV-002)"
+          "docs/delivery/test-evidence/DG0/domain/round-9/checks.log#13",
+          ".claude/agents/domain-reviewer.md",
+          ".claude/agents/transformation-analyst.md",
+          "docs/delivery/requirements.csv#REQ-DLV-002",
+          "CLAUDE.md",
+          "docs/delivery/agent-protocol.md"
         ],
-        "note": "Reproduced the original failure at e11b5f08: none of the ten .claude/agents/*.md definitions contained the no-real-approval rule or the G6/DG7 rule (grep counts 0 for both in every file). At the candidate d6626258 (fix 51f5b9c), every one of the ten definitions contains the line 'You are an engineering agent: you never grant a real business, Finance or IT approval. Product gates G1–G6 are business approvals inside the product, and product gate G6 never implies engineering gate DG7 (or the reverse).' (grep counts 1 and 1 in each file). The REQ-DLV-002 procedure, which says every agent definition states the rule, is now literally true, and the expected result in the finding (rule plus G6/DG7 in each definition) is met in full."
+        "note": "Re-verified in round 9, with valid evidence paths, against the frozen candidate cbc755d (sha256:fc0bd2a2…8998). In a fresh clone, running git show on each .claude/agents/*.md at the original commit e11b5f08 reproduces the failure: none of the ten definitions contains the no-real-approval rule or the G6/DG7 rule (grep counts 0 and 0 in every file). At cbc755d, each of the ten definitions contains the rule exactly once, for example .claude/agents/domain-reviewer.md line 35: 'You are an engineering agent: you never grant a real business, Finance or IT approval. Product gates G1–G6 are business approvals inside the product, and product gate G6 never implies engineering gate DG7 (or the reverse).' The REQ-DLV-002 procedure ('project rules and every agent definition state that an engineering agent cannot grant a real business, Finance or IT approval') is therefore literally true, and the expected result in the finding is met in full. The agent definitions, CLAUDE.md and the register are byte-identical between the round-8 candidate d6626258 and cbc755d."
       }
     },
     {
@@ -3463,7 +3471,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-8/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T17:06:00Z",
@@ -3474,10 +3482,113 @@
           "at": "2026-09-28T17:11:07Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at a42b343ff7d70dd84efaa4693311f7484633d45e"
+        },
+        {
+          "at": "2026-09-28T17:24:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 9: PASS"
         }
       ],
       "fix_revision": "a42b343ff7d70dd84efaa4693311f7484633d45e",
-      "fix_summary": "Fixed in a42b343ff7d70dd84efaa4693311f7484633d45e: prompt regex accepts paths with spaces; regression test added"
+      "fix_summary": "Fixed in a42b343ff7d70dd84efaa4693311f7484633d45e: prompt regex accepts paths with spaces; regression test added",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R9-qa-verifier-20260928T171212Z-b93c74f1",
+          "session_id": "b93c74f1-cd8a-4f00-af08-2444a16f1912"
+        },
+        "at": "2026-09-28T17:24:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-9/06-f223-repro-old.log",
+          "docs/delivery/test-evidence/DG0/qa/round-9/06-f223-repro-cand.log",
+          "docs/delivery/test-evidence/DG0/qa/round-9/06c-orchestrator-regression-on-old.log",
+          "docs/delivery/test-evidence/DG0/qa/round-9/07-qa8-suite-on-candidate.log",
+          "docs/delivery/test-evidence/DG0/qa/round-9/10-qa9-cases-on-cand.log",
+          "docs/delivery/test-evidence/DG0/qa/round-9/10-qa9-cases-on-old.log",
+          "docs/delivery/test-evidence/DG0/qa/round-9/17-live-own-transcript.log",
+          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs#QA9-C01",
+          "tools/gates/lib/rules.mjs#L313",
+          "tools/gates/tests/validator.test.mjs#F-DG0-223"
+        ],
+        "note": "Reproduced on the round-8 candidate d662625: QA8-F223 fails there with 'the replayed prompt names no assignment file and sha256'. The orchestrator's new test 'F-DG0-223: a genuine prompt binds when the checkout path contains spaces' also fails against the d662625 validator, so it discriminates. On candidate cbc755d (fc0bd2a2), rules.mjs line 313 uses the lazy /in the file (.+?) \\(sha256 ([0-9a-f]{64})\\)/ and both tests pass. The full round-8 suite passes 86/86 and the gate self-tests pass 40/40. My new QA9 cases show the widening binds genuine paths with spaces, parentheses and Arabic characters (QA9-C01), and doesn't loosen the binding. The validator still rejects a spaced path with another content's sha256 (N93), another real assignment with its own correct sha256 (N94), a space instead of a path separator (N95), a trailing suffix (N96), an appended second clause (N97; the old \\S+ regex actually accepted it) and a newline in the path (N98). This run's own replayed prompt matches the new regex with the right assignment path and sha256. The runner quotes every path, and the guard hook quotes its path and fails closed. The defect this finding describes, the prompt check being unable to parse a path with a space, is fixed completely and correctly. A separate, pre-existing root cause (rules.mjs:37 URL.pathname) still stops the validator from running at all in such a checkout. That is not this regex, so I raised it as new finding F-DG0-224 (Low) rather than keeping this finding open."
+      }
+    },
+    {
+      "id": "F-DG0-134",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "The write-guard hook selects which guard to run from the hook's cwd (git rev-parse --show-toplevel), so in the documented '--cwd <worktree>' mode (and after a Bash cd into any nested repo) Write/Edit to the main repository's protected paths are allowed",
+      "reproduction": "Every tools/agents/settings/<role>.settings.json:9 runs g=\"$(git rev-parse --show-toplevel)/tools/agents/guard-write.mjs\"; node \"$g\" <role>. The guard found this way pins GUARD_ROOT to its own location (guard-write.mjs:42) and allows any path outside that root as 'scratch' (guard-write.mjs:80). run-agent.sh:108/117 start claude with 'cd \"$CWD\"' and --settings from the main repository (run-agent.sh:40), and agents.md:96 / D-004 prescribe '--cwd <worktree>' for concurrent writers. (1) Worktree mode, file tools only, no Bash: see 09-guard-worktree-cwd.log. A 'git worktree add' of the candidate is created, then the real hook command is run with cwd = worktree and a Write payload for the MAIN checkout. For backend-workflow-engineer, transformation-analyst and code-security-reviewer, tools/gates/lib/rules.mjs, docs/delivery/stages.json, .claude/settings.local.json, docs/delivery/gates/DG1.json and tools/agents/write-scopes.json all return rc=0 (allowed). The same payloads from cwd = main checkout return rc=2 (blocked). (2) Live confirmation that Claude Code runs the PreToolUse hook in the session's current cwd: see 08-hookcwd-live-probe.log. After a Bash 'cd' into a nested git repo whose tools/agents/guard-write.mjs only logs, an in-scope Write in this very session executed that nested file (hook_process_cwd = the nested repo), not the real guard. So an agent can also replace the guard by planting any guard-write.mjs in a nested repo and cd-ing into it. With an unmodified guard copy in the nested repo, every main-repo path is allowed (07-guard-nogit-and-nested-cwd.log B1).",
+      "expected": "REQ-DLV-007's procedure and agents.md:28 / D-020 say the guard 'fix[es] the guarded root to this repository', so a nested .git 'can't move the root'. In every supported run mode, including '--cwd <worktree>', Write/Edit/MultiEdit/NotebookEdit to the orchestrator repository's protected paths must be blocked for implementers and reviewers. Fix sketch: the hook command should invoke a fixed guard path, for example the absolute path of the main repository's tools/agents/guard-write.mjs, written into the settings by run-agent.sh so it does not depend on the hook's cwd. That guard must protect both REPO_ROOT and the run's worktree (or treat any path inside any checkout of this repository as guarded), rather than allowing everything outside its own root. Add a regression test that runs the hook entry point from a worktree and from a nested repository.",
+      "actual": "The guard in force is whichever guard-write.mjs sits at the git toplevel of the hook's cwd. In the sanctioned worktree mode, that guard protects only the worktree, and the main repository (gate rules, agent definitions, Claude configuration, stages.json, gate records) is writable through plain file tools. Mitigations: the orchestrator's git-status check and full-candidate review would surface committed changes. But REQ-DLV-007 makes the mechanical file-tool guard the control, and the git-status check is documented only as the compensating control for Bash. The Bash-cd variant needs a Bash step, which is already disclosed as unguarded. The worktree variant needs none. Every recorded DG0 run so far used cwd = the repository root (12-run-cwds.log), so the worktree variant has not been exercised. It is, however, the mode D-004 prescribes for concurrent writers from P1 onward. I did not audit past transcripts for the Bash-cd variant.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-9/09-guard-worktree-cwd.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-9/08-hookcwd-live-probe.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-9/07-guard-nogit-and-nested-cwd.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-9/12-run-cwds.log",
+        "tools/agents/settings/backend-workflow-engineer.settings.json",
+        "tools/agents/guard-write.mjs",
+        "tools/agents/run-agent.sh",
+        "docs/delivery/agents.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-9/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "FIXED_PENDING_VERIFICATION",
+      "history": [
+        {
+          "at": "2026-09-28T17:25:14Z",
+          "status": "OPEN",
+          "note": "imported from code-security-reviewer round 9"
+        },
+        {
+          "at": "2026-09-28T17:28:53Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at c24ec0420dea5cef8d54479e54aeab6ce800bf2c"
+        }
+      ],
+      "fix_revision": "c24ec0420dea5cef8d54479e54aeab6ce800bf2c",
+      "fix_summary": "Fixed in c24ec0420dea5cef8d54479e54aeab6ce800bf2c (D-023); regression tests in tools/agents/tests/guard.test.mjs and tools/gates/tests/validator.test.mjs; live worktree probe blocked"
+    },
+    {
+      "id": "F-DG0-224",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The gate validator cannot load its own schemas when the repository path contains a space or non-ASCII characters (rules.mjs uses URL.pathname, which stays percent-encoded), so the F-DG0-223 portability goal is still not met end to end",
+      "reproduction": "tools/gates/lib/rules.mjs line 37: `const here = new URL(\".\", import.meta.url).pathname;` then schema() reads join(here, \"..\", \"schemas\", ...). URL.pathname keeps percent-encoding (node -e: new URL('.', 'file:///a%20b/x.mjs').pathname -> '/a%20b/'), unlike fileURLToPath, which candidate.mjs, validate.mjs, import-findings.mjs and guard-write.mjs use. Clone cbc755d into '<tmp>/qa9 space dir/My Projects/repo' or '<tmp>/qa9-مستخدم/repo' and run `node tools/gates/validate.mjs --pipeline` (or --reconcile, or --stage DG0): uncaught ENOENT on '.../qa9%20space%20dir/My%20Projects/repo/tools/gates/schemas/stages.schema.json', exit 1. `node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs` there: 36 of 53 fail (including the new 'F-DG0-223: a genuine prompt binds when the checkout path contains spaces'), and `tools/gates/prefreeze.sh DG0` exits 1. The same clone at a path without spaces passes everything. Automated: QA_REPO_ROOT=<candidate clone> node --test --test-name-pattern=QA9-F224 docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs -> not ok (exit 1). The line is unchanged since 8825dca and is also present in the round-8 candidate d662625.",
+      "expected": "The validator, its self-tests and prefreeze run from any checkout location, as the other gate entry points do. Derive the schema directory with fileURLToPath (for example `dirname(fileURLToPath(import.meta.url))`), and add a regression test that installs the tooling under a path with a space and a non-ASCII character. The F-DG0-223 regression test only rewrites the prompt text inside a fixture while the tooling itself runs from a path without spaces, so it can't catch this.",
+      "actual": "Under a path containing a space or non-ASCII characters (for example an Arabic home directory), every validator mode that loads a schema crashes with ENOENT, and the gate self-tests and prefreeze fail. This fails closed, with a crash and non-zero exit, so there is no integrity or security impact and no gate can be wrongly approved. The current environment (/home/user/My-owns) and the GitHub Actions workspace have no such characters. It's a portability defect of the delivery tooling only, not of the product deployment. So I classify it Low and non-mandatory, consistent with F-DG0-223, and I'd accept it as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-9/09-f224-percent-encoded-path.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/08-space-path-clone.log",
+        "docs/delivery/test-evidence/DG0/qa/round-9/10-qa9-cases-on-cand.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs#QA9-F224",
+        "tools/gates/lib/rules.mjs#L37"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-9/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "FIXED_PENDING_VERIFICATION",
+      "history": [
+        {
+          "at": "2026-09-28T17:22:30Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-9 QA review of candidate fc0bd2a2 (cbc755d)."
+        },
+        {
+          "at": "2026-09-28T17:28:53Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at c24ec0420dea5cef8d54479e54aeab6ce800bf2c"
+        }
+      ],
+      "fix_revision": "c24ec0420dea5cef8d54479e54aeab6ce800bf2c",
+      "fix_summary": "Fixed in c24ec0420dea5cef8d54479e54aeab6ce800bf2c (D-023); regression tests in tools/agents/tests/guard.test.mjs and tools/gates/tests/validator.test.mjs; live worktree probe blocked"
     }
   ]
 }

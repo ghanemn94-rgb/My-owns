@@ -1,0 +1,46 @@
+$ QA_REPO_ROOT=/tmp/claude-0/-home-user-My-owns/b93c74f1-cd8a-4f00-af08-2444a16f1912/scratchpad/qa9-old node --test --test-name-pattern=QA8-F223 dg0-gate-negative-r8.test.mjs
+# tooling commit=d6626258cf76cd3726d082f9d3cc3cd0a49745dc
+TAP version 13
+# \# QA8-F223 errors (1):
+# \#   finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000006: the replayed prompt names no assignment file and sha256
+# Subtest: QA8-F223 portability: a genuine runner-shaped prompt from a checkout whose absolute path contains a space binds
+not ok 1 - QA8-F223 portability: a genuine runner-shaped prompt from a checkout whose absolute path contains a space binds
+  ---
+  duration_ms: 1122.928325
+  type: 'test'
+  location: '/tmp/claude-0/-home-user-My-owns/b93c74f1-cd8a-4f00-af08-2444a16f1912/scratchpad/r8.test.mjs:1128:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    a genuine run from a path with a space is refused
+    + actual - expected
+    
+    + [
+    +   'finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000006: the replayed prompt names no assignment file and sha256'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000006: the replayed prompt names no assignment file and sha256'
+  operator: 'deepStrictEqual'
+  stack: |-
+    file:///tmp/claude-0/-home-user-My-owns/b93c74f1-cd8a-4f00-af08-2444a16f1912/scratchpad/r8.test.mjs:1131:10
+    withFixture (file:///tmp/claude-0/-home-user-My-owns/b93c74f1-cd8a-4f00-af08-2444a16f1912/scratchpad/r8.test.mjs:244:12)
+    TestContext.<anonymous> (file:///tmp/claude-0/-home-user-My-owns/b93c74f1-cd8a-4f00-af08-2444a16f1912/scratchpad/r8.test.mjs:1128:127)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1279.237067
+# exit=1
