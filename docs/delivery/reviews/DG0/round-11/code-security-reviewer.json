@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 11,
+  "candidate_id": "sha256:1a73d6f015807d383ca41c9cc322bcfca157f6217e3f0d2f56b42ab6543a57c1",
+  "source_commit": "7e99163db57d1c2e62aca6d376b024927613a3f6",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-SEC-R11-code-security-reviewer-20260928T174936Z-c0211f6d",
+    "session_id": "c0211f6d-d1e7-419b-a401-46a3a12c0b50"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer) authored no implementation in the DG0 scope. The authors are transformation-analyst and delivery-orchestrator. I formed this verdict before reading any other round-11 review record, and I did not open any other reviewer's round-11 files."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-11/review-code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-004",
+    "REQ-DLV-006",
+    "REQ-DLV-007",
+    "REQ-DLV-015",
+    "REQ-DLV-016",
+    "REQ-DLV-022",
+    "REQ-DLV-023",
+    "REQ-DLV-026"
+  ],
+  "checks_run": [
+    {
+      "id": "C01-candidate-identity",
+      "procedure": "Confirm the frozen candidate. The assignment's SHA-256 (fcba8a9b...1443) matches. Main-checkout HEAD at start was 50e0d87, a post-freeze commit whose diff against 7e99163 touches only round-11 assignments, the candidate manifest and stages.json, all metadata. Recompute the candidate ID from the working tree and from --ref 7e99163.",
+      "command": "sha256sum <assignment>; git rev-parse HEAD; git diff --name-only 7e99163..HEAD; node tools/gates/candidate.mjs --stage DG0; node tools/gates/candidate.mjs --stage DG0 --ref 7e99163db57d1c2e62aca6d376b024927613a3f6",
+      "environment": "main checkout /home/user/My-owns (read-only use); node; git",
+      "expected": "candidate_id sha256:1a73d6f015807d383ca41c9cc322bcfca157f6217e3f0d2f56b42ab6543a57c1 for both",
+      "actual": "Both print sha256:1a73d6f015807d383ca41c9cc322bcfca157f6217e3f0d2f56b42ab6543a57c1 (80 files). The post-freeze commit is metadata only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-11/00-candidate-identity.log"]
+    },
+    {
+      "id": "C02-existing-tests",
+      "procedure": "Run the shipped gate, guard and runner-metadata test suites in a disposable worktree of the candidate commit.",
+      "command": "git worktree add --detach /tmp/dg0-sec 7e99163; node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs; python3 -m unittest discover -s tools/agents/tests -p 'test_*.py' -v",
+      "environment": "disposable worktree /tmp/dg0-sec @7e99163 (removed afterwards); node; python3",
+      "expected": "all tests pass, including the new F-DG0-135, F-DG0-136 and D-024 tests",
+      "actual": "node: 60/60 pass (includes 'F-DG0-135: the guard fails closed...', both F-DG0-136 tests and 'D-024: a run that changed configuration outside the candidate is rejected'). python: 12/12 OK (includes ExternalConfigTest).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007", "REQ-DLV-016", "REQ-DLV-023", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-11/01-existing-tests.log"]
+    },
+    {
+      "id": "C03-guard-differential-old",
+      "procedure": "Run my reproduction script, which uses each role's real hook command, sh -c, the Write payload on stdin and MTH_GUARD_ROOT = main clone, against the round-10 candidate 85a0efa, to confirm the original F-DG0-135 and F-DG0-136 failures reproduce.",
+      "command": "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-guard.sh 85a0efac57008884109e40e4bea56f14c5c892aa /tmp/dg0-sec-r11-old",
+      "environment": "disposable clone and worktree under /tmp/dg0-sec-r11-old (removed); fake HOME inside it",
+      "expected": "the old defects reproduce: worktree writes are allowed when git fails, and HOME writes are allowed",
+      "actual": "Reproduced. With a malformed ~/.gitconfig, all 7 worktree writes return rc=0, including protected paths. With git absent from PATH, the worktree's protected path returns rc=0. With a non-repository MTH_GUARD_ROOT, rc=0. Every HOME write (settings.json, .gitconfig, .claude.json, ...) returns rc=0 for all four roles.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-11/02-guard-repro-old-85a0efa.log", "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-guard.sh"]
+    },
+    {
+      "id": "C04-guard-differential-new",
+      "procedure": "Same script against the candidate 7e99163, plus bypass attempts on the new scratch and home rules: a symlink from scratch into HOME, '..' segments, a trailing slash in HOME, a symlinked HOME, non-temp system paths, and controls that must stay allowed.",
+      "command": "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-guard.sh 7e99163db57d1c2e62aca6d376b024927613a3f6 /tmp/dg0-sec-r11-new",
+      "environment": "disposable clone and worktree under /tmp/dg0-sec-r11-new (removed); fake HOME inside /tmp",
+      "expected": "rc=2 for every case in sections F, G, G2, E, H, H2, H3 and I; rc=0 for the controls in J and the in-scope path with a well-formed config",
+      "actual": "As expected. F, G and G2 all return rc=2 with 'cannot determine the guarded repository roots'. E returns rc=2 for 28/28 HOME targets across 4 roles. H, H2 and H3 return rc=2 (symlink, '..', trailing slash, symlinked HOME). I returns rc=2 for /var/tmp, /dev/shm, /etc/claude-code, /etc/gitconfig, /usr/local/bin and /root/.claude. J returns rc=0 for temp scratch, the reviewer's evidence path and the implementer's in-scope path.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-11/03-guard-repro-new-7e99163.log"]
+    },
+    {
+      "id": "C05-live-user-settings",
+      "procedure": "LIVE differential with the real runner and CLI 2.1.283. In a disposable clone, the transformation-analyst role is asked to Write tools/gates/PROBE-att.txt while the user settings (a throwaway CLAUDE_CONFIG_DIR) contain {\"disableAllHooks\": true}. Run on the candidate and on 85a0efa as the control.",
+      "command": "docs/delivery/test-evidence/DG0/code-security/round-11/live-r11-user-settings.sh <7e99163 | 85a0efa> /tmp/dg0-sec-r11-live-<new|old>",
+      "environment": "disposable clones under /tmp (removed); real claude CLI 2.1.283; real home config untouched",
+      "expected": "new: the Write is BLOCKED by the write guard. old: the Write succeeds (the F-DG0-136 reproduction).",
+      "actual": "new 7e99163: 'BLOCKED by write guard: transformation-...', the file is absent, runner exit 0, external_config_changed []. old 85a0efa: 'File created successfully', the file exists with content probe-att.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007", "REQ-DLV-006"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-11/04-live-user-settings-new-7e99163.log", "docs/delivery/test-evidence/DG0/code-security/round-11/05-live-user-settings-old-85a0efa.log", "docs/delivery/test-evidence/DG0/code-security/round-11/live-r11-user-settings.sh"]
+    },
+    {
+      "id": "C06-config-snapshot-coverage",
+      "procedure": "Extract config_snapshot() and the diff step verbatim from run-agent.sh at 7e99163 and apply a set of tampering actions between the pre and post snapshots in a disposable repo with a fake HOME.",
+      "command": "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-config-snapshot.sh 7e99163db57d1c2e62aca6d376b024927613a3f6 /tmp/dg0-sec-r11-cfg",
+      "environment": "disposable clone /tmp/dg0-sec-r11-cfg (removed); fake HOME",
+      "expected": "every tampering with a surface D-024 lists (user settings, git config, .git/config, .git/hooks) is detected",
+      "actual": "Detected: user settings, ~/.gitconfig, .git/config and a regular-file hook. NOT DETECTED: a symlinked .git/hooks/pre-commit, which git then runs on commit ('SYMLINKED-HOOK-RAN'). Also not detected: .git/info/exclude, ~/.claude.json and ~/.claude/agents (F-DG0-137, F-DG0-138).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-007", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-11/06-config-snapshot-harness.log", "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-config-snapshot.sh"]
+    },
+    {
+      "id": "C07-hook-smuggle-autocommit",
+      "procedure": "Reproduce the runner's exact auto-commit sequence (GIT_LITERAL_PATHSPECS=1; git add and commit with --pathspec-from-file and --pathspec-file-nul) with a symlinked pre-commit hook that stages another file.",
+      "command": "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-hook-smuggle.sh /tmp/dg0-sec-r11-smuggle",
+      "environment": "disposable git repo /tmp/dg0-sec-r11-smuggle (removed)",
+      "expected": "the auto-commit contains only the listed run directory",
+      "actual": "The commit contains docs/delivery/runs/DG0/RUN/meta.json AND tools/gates/rules.mjs. git status afterwards shows 'MM tools/gates/rules.mjs' (F-DG0-138).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-11/07-hook-smuggle.log", "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-hook-smuggle.sh"]
+    },
+    {
+      "id": "C08-prefreeze-fresh-clone",
+      "procedure": "Run the orchestrator pre-freeze check in a fresh clone of the candidate commit, as the assignment requires.",
+      "command": "git clone /home/user/My-owns /tmp/dg0-sec-r11-fresh && git checkout 7e99163 && tools/gates/prefreeze.sh DG0",
+      "environment": "fresh clone /tmp/dg0-sec-r11-fresh (removed)",
+      "expected": "all PASS, exit 0",
+      "actual": "PASS: source extraction reproducible (docx sha256 2584a352...548ad2; 165/423 blocks); validator and guard tests; runner metadata tests; register rules DG0; pipeline (DG0 REVIEWING); 3 analysis checks; working-tree candidate equals HEAD (sha256:1a73d6f0...57c1). exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022", "REQ-DLV-023"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-11/08-prefreeze-fresh-clone.log"]
+    },
+    {
+      "id": "C09-validator-modes",
+      "procedure": "Exercise the validator CLI modes and exit codes in the fresh clone. No gate record exists yet, so --stage must fail.",
+      "command": "node tools/gates/validate.mjs --stage DG0 | --pipeline | --register DG0 | --stage DG0 --historical | (no args)",
+      "environment": "fresh clone /tmp/dg0-sec-r11-fresh @7e99163",
+      "expected": "--stage and --historical fail non-zero without a gate record; pipeline and register pass; no arguments gives usage with exit 64",
+      "actual": "--stage DG0: FAIL, gate record not found, exit 1. --historical: FAIL, exit 1. --pipeline: PASS, exit 0. --register DG0: PASS, exit 0. No arguments: usage, exit 64. Reading rules.mjs:278-279, a run with a non-empty external_config_changed list is rejected; the validator test covers this.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-023"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-11/09-validator-modes.log"]
+    },
+    {
+      "id": "C10-static-secrets-ci-agents",
+      "procedure": "Static checks. Scan tracked files and committed transcripts for secret patterns and personal e-mail. Confirm the CI workflow's least privilege, pinned actions and fetch-depth, and that it is unchanged since round 10. Check the agent frontmatter tools, the write-scopes $comment, the config_snapshot hook listing and the auto-commit hook handling. Review the orchestrator's probe evidence (probe-guard-live.sh and its logs).",
+      "command": "git ls-files -z | xargs -0 grep -IlE '<secret regex>'; zcat committed transcripts | grep token patterns; grep gmail.com; grep -n permissions/uses/fetch-depth .github/workflows/delivery-gates.yml; git diff --stat 85a0efa 7e99163 -- .github .claude tools/source tools/gates/schemas ...",
+      "environment": "fresh clone /tmp/dg0-sec-r11-fresh @7e99163",
+      "expected": "no credentials or personal e-mail; CI with permissions contents: read, SHA-pinned actions and fetch-depth 0; unchanged surfaces as in round 10",
+      "actual": "No credential values: every pattern hit in a transcript is a reviewer's own grep regex. No gmail address in tracked files or transcripts; 'ghanem' occurs only as the repo slug. CI: contents: read, both actions pinned by SHA, fetch-depth 0, failed steps fail the job; unchanged since round 10, as are .claude/agents, tools/source and the schemas. Frontmatter: 10 agents, reviewers without Edit except qa-verifier. write-scopes.json:2 $comment is stale (F-DG0-139). The config_snapshot hook listing uses -type f, and the auto-commit has no --no-verify (F-DG0-138). Orchestrator probe: the PASS log's source commit 0593fd7 is not an ancestor of the candidate (a rewritten wip commit). Its tools/ tree differs from 7e99163 only in the probe script's grep line, so I relied on my own live probes (C05, C11) instead.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-004", "REQ-DLV-007", "REQ-DLV-023", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-11/10-static-checks.log"]
+    },
+    {
+      "id": "C11-live-local-settings-exclude",
+      "procedure": "LIVE bypass attempt against the candidate runner. In a disposable clone of 7e99163, simulate one earlier-agent shell command that appends .claude/settings.local.json to .git/info/exclude and writes {\"disableAllHooks\": true} into it. Check git status, then run an ordinary later transformation-analyst run asked to Write tools/gates/PROBE-loc.txt. Variant: the same files hidden with ~/.config/git/ignore, checked against config_snapshot, git status and the runner snapshot.",
+      "command": "docs/delivery/test-evidence/DG0/code-security/round-11/live-r11-local-settings-exclude.sh 7e99163db57d1c2e62aca6d376b024927613a3f6 /tmp/dg0-sec-r11-live-loc; docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-global-ignore.sh 7e99163db57d1c2e62aca6d376b024927613a3f6 /tmp/dg0-sec-r11-gi",
+      "environment": "disposable clones under /tmp (removed); real claude CLI 2.1.283; main checkout's .git/info/exclude and .claude untouched (13-cleanup.log)",
+      "expected": "the later run's protected Write is BLOCKED, or the runner detects the planted configuration (external_config_changed or refusal)",
+      "actual": "Guard bypassed. After step 1, git status --porcelain is empty. The later run's Write returned 'File created successfully', and tools/gates/PROBE-loc.txt exists. meta.external_config_changed = []. Variant: config_snapshot diff empty, git status empty, and the planted files are absent from the runner snapshot (F-DG0-137).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-11/11-live-local-settings-exclude.log", "docs/delivery/test-evidence/DG0/code-security/round-11/live-r11-local-settings-exclude.sh", "docs/delivery/test-evidence/DG0/code-security/round-11/12-global-ignore-variant.log", "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-global-ignore.sh"]
+    },
+    {
+      "id": "C12-cleanup",
+      "procedure": "Remove every disposable worktree, clone and temp file, and confirm that the main checkout holds only my evidence plus other processes' run directories.",
+      "command": "git worktree remove --force /tmp/dg0-sec; git worktree prune; rm -rf /tmp/dg0-sec-r11-*; git worktree list; git status --porcelain",
+      "environment": "main checkout /home/user/My-owns",
+      "expected": "only the main worktree remains; no changes by me outside docs/delivery/test-evidence/DG0/code-security/round-11/ and my review files",
+      "actual": "Only the main worktree remains. git status shows my round-11 evidence directory, plus other runs' files that I didn't create (progress.md, the QA run directory and QA test evidence). .git/info/exclude and .claude are untouched.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-11/13-cleanup.log"]
+    }
+  ],
+  "findings": [
+    "F-DG0-137",
+    "F-DG0-138",
+    "F-DG0-139"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/code-security/round-11/00-candidate-identity.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/01-existing-tests.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/02-guard-repro-old-85a0efa.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/03-guard-repro-new-7e99163.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/04-live-user-settings-new-7e99163.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/05-live-user-settings-old-85a0efa.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/06-config-snapshot-harness.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/07-hook-smuggle.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/08-prefreeze-fresh-clone.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/09-validator-modes.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/10-static-checks.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/11-live-local-settings-exclude.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/12-global-ignore-variant.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/13-cleanup.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-guard.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/live-r11-user-settings.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-config-snapshot.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-hook-smuggle.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/live-r11-local-settings-exclude.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-global-ignore.sh",
+    "docs/delivery/reviews/DG0/round-11/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG0/round-11/code-security-reviewer.verifications.json"
+  ],
+  "reviewed_at": "2026-09-28T18:06:00Z",
+  "summary": "FAIL. F-DG0-135 and F-DG0-136 are CLOSED_VERIFIED. When git fails, the guard now blocks every write (on the old commit, the worktree writes were allowed). HOME, /var/tmp and /etc are no longer scratch. In a live test, pre-seeded user settings with disableAllHooks no longer disable the guard: the new candidate blocked the write, and the same test on the old commit let it through. New: F-DG0-137 (Medium, mandatory). One shell command hides a disableAllHooks local settings file behind .git/info/exclude, and the runner still loads it (--setting-sources project,local). In a live test, a later run's protected Write succeeded, while git status stayed clean and external_config_changed was empty. F-DG0-138 (Low): the config snapshot misses symlinked git hooks, and the auto-commit runs hooks, which can add extra files to the commit. F-DG0-139 (Low): the $comment in write-scopes.json is stale. Tests (60/60 and 12/12), prefreeze in a fresh clone, candidate identity, validator modes, CI and the secrets scan all pass."
+}

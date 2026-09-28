@@ -1,0 +1,98 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-137",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "One shell command persistently and invisibly disables the write guard for every later run: {\"disableAllHooks\": true} in .claude/settings.local.json, a setting source the runner still loads, hidden through .git/info/exclude or ~/.config/git/ignore. Neither git status nor the runner's snapshot or config_snapshot sees it",
+      "reproduction": "run-agent.sh:126 and :135 start every agent with '--setting-sources project,local', so the 'local' source (.claude/settings.local.json in the working directory's project) is still loaded. D-024 relies on 'Project and local settings are protected in-repository paths', but that protection covers only file tools. Bash is unguarded by design (D-009/D-020/D-024), and its compensating controls are the orchestrator's 'git status' and, since D-024, the runner's config_snapshot and external_config_changed. An ignore rule defeats both. (a) config_snapshot() (run-agent.sh:80-88) hashes 8 fixed files plus the regular files in .git/hooks. It does not include .git/info/exclude, the worktrees' info/exclude, the global excludes file (core.excludesFile, default ~/.config/git/ignore), or the project's .claude/settings.local.json / CLAUDE.local.md. (b) snapshot() (run-agent.sh:91-96) lists files with 'git ls-files --cached --others --exclude-standard', which omits ignored files. (c) 'git status' omits ignored files. LIVE reproduction with the real candidate runner and CLI 2.1.283, in a disposable clone of 7e99163 plus a probe-assignment commit (11-live-local-settings-exclude.log). Step 1 simulates an earlier agent's single Bash command: printf \".claude/settings.local.json\\n\" >> .git/info/exclude && printf '{\"disableAllHooks\": true}' > .claude/settings.local.json. Afterwards 'git status --porcelain' is EMPTY. Step 2 is a later, ordinary transformation-analyst run through tools/agents/run-agent.sh, asked to Write tools/gates/PROBE-loc.txt. Result: 'File created successfully', the file exists with content probe-loc, and meta.external_config_changed = []. Control on the same runner and commit without step 1: the identical Write is BLOCKED by the write guard (04-live-user-settings-new-7e99163.log). Variant (12-global-ignore-variant.log): the same two files hidden through ~/.config/git/ignore are invisible to config_snapshot, git status and the runner snapshot. Harness 06-config-snapshot-harness.log, step f: an .git/info/exclude change is NOT DETECTED.",
+      "expected": "REQ-DLV-007 / D-024: a Claude configuration surface that can switch off the guard must not be loaded unless the runner's controls can see it. Suggested fix, any of: (1) start agents with '--setting-sources project' only, because nothing legitimate needs local settings; (2) before and after each run, fail closed (for example exit 71) if an untracked or ignored .claude/settings.local.json, CLAUDE.local.md or .mcp.json exists at any depth in REPO_ROOT or in the run's --cwd, found with 'git ls-files --others --ignored --exclude-standard' over the protected globs; (3) add .git/info/exclude, .git/worktrees/*/info/exclude and the resolved core.excludesFile (default $XDG_CONFIG_HOME/git/ignore or ~/.config/git/ignore) to config_snapshot, and snapshot ignored files under protected paths. Narrow D-024's wording, and add a regression test: a planted, ignored local settings file makes the runner refuse to run or flags external_config_changed.",
+      "actual": "A single Bash command in any run, by any role, switches the write guard off for all later runs of every role. It is invisible to both compensating controls: git status is clean, meta.external_config_changed is empty, and meta.outputs lists only the later protected write, not its cause. The same mechanism can hide a planted CLAUDE.local.md, which would inject instructions into later agents. I did not test that one live. Mitigations, which is why this is Medium and not High: the trigger is a protocol-violating Bash command; the protected writes that later runs make are still visible in git status ('?? tools/gates/PROBE-loc.txt' in the probe) and in full-candidate review; and at DG0 no implementer run has happened since the fix. This is the same class and classification as F-DG0-136, which was Medium and mandatory. F-DG0-136's reported vector, user-level settings, is fixed (see its verification); this is a different, in-repository vector that the D-024 controls do not cover.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-11/live-r11-local-settings-exclude.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/11-live-local-settings-exclude.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/04-live-user-settings-new-7e99163.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-global-ignore.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/12-global-ignore-variant.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-config-snapshot.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/06-config-snapshot-harness.log",
+        "tools/agents/run-agent.sh#L80-L96",
+        "tools/agents/run-agent.sh#L126",
+        "docs/delivery/decisions.md#D-024"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-11/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:06:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 11"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-138",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-026",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The config_snapshot tamper check misses symlinked git hooks, and the review-evidence auto-commit runs hooks. A symlinked pre-commit hook runs after the post-run snapshot and can add extra files, for example tools/gates/*, to the 'run: ... review evidence' commit. Other surfaces are also unmonitored",
+      "reproduction": "run-agent.sh:87 lists hooks with 'find \"$REPO_ROOT/.git/hooks\" -type f', which skips symlinks. The auto-commit at run-agent.sh:169-180 runs 'git commit' without --no-verify or '-c core.hooksPath=/dev/null'. Harness 06-config-snapshot-harness.log, extracting config_snapshot() and the diff step verbatim from 7e99163: a regular .git/hooks/pre-commit is DETECTED (step d), but a pre-commit SYMLINK to a script outside the repository is NOT DETECTED (step e), and git then runs it on commit ('YES: SYMLINKED-HOOK-RAN'). 07-hook-smuggle.log reproduces the runner's exact add and commit sequence (GIT_LITERAL_PATHSPECS=1, --pathspec-from-file, --pathspec-file-nul, one run directory in the list). A pre-commit hook that runs 'git add tools/gates/rules.mjs' puts that file in the auto-commit next to the run's meta.json. Also not monitored (06 steps g and h): ~/.claude.json (user MCP servers), ~/.claude/agents/**, and $CLAUDE_CONFIG_DIR, because the snapshot is hard-wired to $HOME/.claude. And rules.mjs:278-279 ignores a present but non-array external_config_changed value, because only Array.isArray values are checked.",
+      "expected": "D-024 states that the runner detects changes to .git/hooks and refuses to auto-commit, so that no code runs during the auto-commit. The hook listing should include symlinks, hashing the link and its target (for example 'find -type f -o -type l'). The auto-commit should run hooks off ('git -c core.hooksPath=/dev/null commit --no-verify') and check that the commit's file list equals the pathspec list. The snapshot should honour CLAUDE_CONFIG_DIR and include ~/.claude.json. The validator should reject a non-array external_config_changed.",
+      "actual": "An agent that has already misused Bash can run code in the runner's context at auto-commit time, undetected by external_config_changed. That code can put extra changes into a commit labelled as review evidence. This is Low, and not a mandatory violation, because it needs the disclosed, unguarded Bash channel, which could also commit directly during the session. The smuggled change is still visible in the commit diff, and 'git status' still showed 'MM' for the file in my reproduction. The validator's candidate recomputation and prefreeze's working-tree check would also flag candidate drift. I would accept this as an observation if D-024's detection claim is narrowed to what the snapshot actually covers. The fix is small.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-config-snapshot.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/06-config-snapshot-harness.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-hook-smuggle.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/07-hook-smuggle.log",
+        "tools/agents/run-agent.sh#L87",
+        "tools/agents/run-agent.sh#L169-L180",
+        "tools/gates/lib/rules.mjs#L278-L279",
+        "docs/delivery/decisions.md#D-024"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-11/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:06:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 11"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-139",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "write-scopes.json's $comment still says 'Files outside any git work tree (scratch space) are always allowed', which contradicts the D-024 guard (only the temp directory is scratch, and home never is)",
+      "reproduction": "tools/agents/write-scopes.json:2 ($comment) says: 'Files outside any git work tree (scratch space) are always allowed.' Since d1bb586 (D-024), guard-write.mjs:124-128 allows a path outside the guarded roots only if it lies in the OS temp directory and not in HOME. It blocks /var/tmp, /dev/shm, /etc and home paths (03-guard-repro-new-7e99163.log, sections E, H and I). The file declares itself the source of truth for write scopes (docs/delivery/agents.md).",
+      "expected": "The scope file's description matches the enforced rule: outside the guarded repository and its worktrees, only the OS temp directory is scratch, and the home directory never is.",
+      "actual": "Stale documentation in a gate-rule file. It could lead a maintainer to 'restore' the fail-open behaviour that F-DG0-136 removed. The enforcement itself is correct. I would accept this as an observation.",
+      "evidence": [
+        "tools/agents/write-scopes.json#L2",
+        "tools/agents/guard-write.mjs#L124-L128",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/03-guard-repro-new-7e99163.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/10-static-checks.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-11/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T18:06:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 11"
+        }
+      ]
+    }
+  ]
+}

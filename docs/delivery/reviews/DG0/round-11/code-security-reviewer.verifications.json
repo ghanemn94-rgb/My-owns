@@ -1,0 +1,35 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-135",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed in d1bb586, which is in candidate 7e99163 (sha256:1a73d6f0...57c1). guardedRoots() (guard-write.mjs:51-55) no longer catches git errors. It throws when 'git worktree list' fails or returns no worktree, and decide() (guard-write.mjs:140-145) turns that into a block ('cannot determine the guarded repository roots ... blocking to fail safe'). Differential reproduction with my own script repro-r11-guard.sh, which runs each role's real hook command with cwd = worktree and MTH_GUARD_ROOT = main clone. OLD 85a0efa (02-guard-repro-old-85a0efa.log): with a malformed ~/.gitconfig ('git worktree list' exit 128), all 7 worktree writes, including protected tools/gates, docs/source, .claude and write-scopes.json, absolute and relative, return rc=0 (ALLOWED). With git missing from PATH, the worktree's protected path returns rc=0. With MTH_GUARD_ROOT pointing at a non-repository, rc=0. NEW 7e99163 (03-guard-repro-new-7e99163.log): every one of those cases returns rc=2, including in-scope paths, which is correct fail-closed behaviour. The well-formed-config controls return rc=2 for protected paths and rc=0 for in-scope paths. The trigger in the original finding, a Write to ~/.gitconfig, is now blocked as well (section E). The regression test 'F-DG0-135: the guard fails closed when the guarded roots cannot be determined' passes (60/60 node tests, 01-existing-tests.log), as does prefreeze in a fresh clone (08). The fix is complete and correct.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-11/repro-r11-guard.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/02-guard-repro-old-85a0efa.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/03-guard-repro-new-7e99163.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/01-existing-tests.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/08-prefreeze-fresh-clone.log",
+        "tools/agents/guard-write.mjs#L51-L55",
+        "tools/agents/tests/guard.test.mjs#F-DG0-135"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-136",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed in d1bb586, which is in candidate 7e99163. Both halves of the reported vector are closed. (1) Guard: outside the guarded roots only the OS temp directory is scratch, and HOME is never scratch (guard-write.mjs:122-129). In 03-guard-repro-new-7e99163.log, Writes to HOME/.claude/settings.json, settings.local.json, .gitconfig, .claude.json, .claude/agents/x.md, .bashrc and .config/git/config return rc=2 for four roles, including a HOME inside /tmp (section E). A symlink from the scratch area into HOME, '..' segments, a trailing slash in HOME and a symlinked HOME are all blocked (H, H2, H3), as are /var/tmp, /dev/shm and /etc (I). Temp scratch and in-scope repository writes remain allowed (J). The old commit 85a0efa allowed every E-section write (02-...log). (2) Runner: run-agent.sh:126 and :135 pass '--setting-sources project,local'. LIVE differential with the real runner, the same probe on both commits, and user settings pre-seeded with {\"disableAllHooks\": true} in a throwaway CLAUDE_CONFIG_DIR. On OLD 85a0efa (05-live-user-settings-old-85a0efa.log), the transformation-analyst Write to tools/gates/PROBE-att.txt SUCCEEDED and the file exists. On NEW 7e99163 (04-live-user-settings-new-7e99163.log), the identical Write was BLOCKED by the write guard, the file is absent, and external_config_changed = []. The config snapshot detects changes to user settings and ~/.gitconfig (06, steps a and b), and the validator rejects a run with a non-empty list (validator test 'D-024: ...', passing). This closes the finding as reported. A different vector, in-repository local settings hidden with .git/info/exclude, which the D-024 controls do not see, is raised separately as F-DG0-137. Gaps in the snapshot's coverage are raised as F-DG0-138.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-11/live-r11-user-settings.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/04-live-user-settings-new-7e99163.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/05-live-user-settings-old-85a0efa.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/03-guard-repro-new-7e99163.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/02-guard-repro-old-85a0efa.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-11/06-config-snapshot-harness.log",
+        "tools/agents/run-agent.sh#L126",
+        "tools/agents/guard-write.mjs#L122-L129"
+      ]
+    }
+  ]
+}
