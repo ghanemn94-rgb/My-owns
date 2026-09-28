@@ -1,0 +1,28 @@
+$ git diff --stat <old>..a059b55 for the documents behind F-DG0-203/207/209/210/213
+## since d141d303
+ docs/analysis/tools/check_test_refs.py | 151 +++++++++++++++++----------------
+ docs/delivery/requirements.csv         |  14 +--
+ 2 files changed, 86 insertions(+), 79 deletions(-)
+## since 53f5d176
+ docs/analysis/tools/check_test_refs.py | 151 +++++++++++++++++----------------
+ docs/delivery/decisions.md             |   2 +-
+ docs/delivery/requirements.csv         |  14 +--
+ tools/gates/lib/candidate.mjs          |   2 +-
+ 4 files changed, 88 insertions(+), 81 deletions(-)
+## current texts
+resumes the same session up to 6 times (D-019)
+132:// v2 (current): "<sha256>  <git mode>  <path>". v1 (historical DG0 rounds 1-2 only): "<sha256>  <path>".
+D-005 | 2026-09-28 | delivery-orchestrator | **Candidate identity** = `sha256:` + SHA-256 of the sorted lines `"<sha256>  <git mode>  <path>\n"` (algorithm `mth-candidate-v2`; historical DG0 rounds 1–2 used `mth-candidate-v1`, `"<sha256>  <path>\n"`) over every tracked and untracked-not-ignored file. The only exclusions are `trading_a
+computes sha256 over the sorted lines '<sha256>  <git mode>  <path>' (algorithm mth-candidate-v2; a symlink hashes its target string, gitlinks are refused; mth-candidate-v1 '<sha256>  <path>' is kept only to re-verify the historical DG0 round-1 and round-2 manifests); --freeze requires committed c
+## check_test_refs.py on candidate
+52 declared test titles derived from 3 test files; 42 quoted test title citation(s) in 411 register rows; 0 problem(s)
+exit=0
+## run-agent.sh resume default (grep -F)
+22:MAX_RESUMES="${MTH_MAX_RESUMES:-6}" RESUME_PAUSE="${MTH_RESUME_PAUSE_SECONDS:-120}"
+## hash_algorithm per DG0 manifest (absent = mth-candidate-v1 default, rules.mjs:654)
+docs/delivery/candidates/DG0/0be571eaa8443860.manifest.json mth-candidate-v2 53f5d176
+docs/delivery/candidates/DG0/31fd0843977d30af.manifest.json mth-candidate-v2 540b3c69
+docs/delivery/candidates/DG0/4a8b14fd05013c17.manifest.json mth-candidate-v2 d141d303
+docs/delivery/candidates/DG0/c13a4f8e93cad95a.manifest.json mth-candidate-v2 a059b55a
+docs/delivery/candidates/DG0/d47b51caa83c28b0.manifest.json (absent -> v1) 83860be3
+docs/delivery/candidates/DG0/dea5e75a8c5fe118.manifest.json (absent -> v1) 26642c72

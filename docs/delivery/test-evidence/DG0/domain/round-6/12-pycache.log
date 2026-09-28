@@ -1,0 +1,38 @@
+## tracked pyc
+tools/agents/__pycache__/run_meta.cpython-311.pyc
+tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc
+## in frozen manifest?
+243:   "path": "tools/agents/__pycache__/run_meta.cpython-311.pyc",
+313:   "path": "tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc",
+## candidate id after running tests in worktree
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:e4008b07a362bda9897d7d161874a039c196f88e6425c2e1a809cb58b5a7190e","files":80}
+## .gitignore
+## git log adding pyc
+d2630de DG0: fix runner metadata crash (run_meta.py + tests), pre-freeze check, orphan failed round-5 attempts
+## git diff --stat
+ tools/agents/__pycache__/run_meta.cpython-311.pyc   | Bin 13675 -> 13740 bytes
+ .../tests/__pycache__/test_run_meta.cpython-311.pyc | Bin 10183 -> 10248 bytes
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+## (dirty pyc) node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+exit 0
+## reset pyc, then re-run unittest twice, check determinism
+OK
+ tools/agents/__pycache__/run_meta.cpython-311.pyc   | Bin 13675 -> 13740 bytes
+ .../tests/__pycache__/test_run_meta.cpython-311.pyc | Bin 10183 -> 10248 bytes
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]
+## grep CI order
+25:        run: tools/source/check_extraction.sh
+27:        run: node --test tools/gates/tests/*.test.mjs
+29:        run: node --test tools/agents/tests/*.test.mjs
+31:        run: python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'
+33:        run: node tools/gates/validate.mjs --pipeline
+35:        run: node tools/gates/validate.mjs --reconcile
+## fresh git clone at a059b55
+tools/agents/__pycache__/run_meta.cpython-311.pyc flags 0 recorded source mtime 1790608540 2026-09-28T15:15:40Z size 7123 | checkout mtime 1790609371 size 7123
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:c13a4f8e93cad95a0741d49001bb170361aface2117bf3712391ea772da3ff68","files":80}
+OK
+ M tools/agents/__pycache__/run_meta.cpython-311.pyc
+ M tools/agents/tests/__pycache__/test_run_meta.cpython-311.pyc
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:1d672b48e6294b8611fc6c4f66127a9975d28597d74b40c781d77fbc04dbbf33","files":80}

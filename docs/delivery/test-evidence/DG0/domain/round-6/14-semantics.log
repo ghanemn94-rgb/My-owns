@@ -1,0 +1,28 @@
+REQ-S07-007 DG4 | Compute RAG from the approved expected trajectory with configurable thresholds and never from project task completion 
+   A: A04;A05: with all tasks complete and actual below the red threshold the KPI is Red; changing the threshold version recomputes RAG
+REQ-PB-063 DG4 | Apply the area-specific T10 RAG logic 
+   A: A04;A05: an outcome whose tasks are 100% complete but KPI is below trajectory is Red/Amber, not Green; a KPI with no actual shows Unknown
+REQ-S03-003 DG4 | Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses 
+   A: A11: setting delivery to Complete leaves adoption, validated value and closure unchanged; the API rejects a closure request while validated value is pending unless a transition decision exists
+REQ-S11-006 DG4 | Show delivery complete, value validation pending and BAU accepted as separate states so success is never inferred from initiative completion 
+   A: A11: with all initiatives complete and value pending, the transformation shows 'Delivery complete - value validation pending', not successful
+REQ-S08-001 DG4 | Track planned, forecast, measured, submitted-for-validation, validated, rejected and sustained benefit values separately 
+   A: A10: a forecast amount never appears in the validated total; a rejected measurement is retained and shown as rejected
+REQ-S08-016 DG4 | Keep measure-only submissions out of the validated total until approved 
+   A: A10: submitting a measurement leaves the validated total unchanged; approval increases it by exactly the approved amount
+REQ-PB-013 DG4 | Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role 
+   A: A10;A12: a Business Owner calling the validate endpoint receives 403; a Finance user succeeds and the audit event records validator identity
+REQ-S10-010 DG4 | Support authorized delegation with effective dates, absence handling and preserved audit identity, never creating approval loops 
+   A: A12: A delegating to B and B to A is rejected; an approval by B shows 'B on behalf of A' in audit; after expiry B loses the capability
+REQ-PB-058 DG4 | Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link 
+   A: A10: a benefit with two owners is rejected; a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the portfolio total
+REQ-S08-013 DG4 | Reject allocations over 100% and show any share below 100% as unallocated 
+   A: A10: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated
+REQ-S04-002 DG4 | Make gates explicit approval records tied to a versioned, immutable evidence snapshot, never inferred from task completion 
+   A: A07;A08: completing every phase task leaves the gate Draft; editing a record after submission does not change the snapshot content shown to approvers
+REQ-PB-015 DG4 | Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required 
+   A: A08: submission with missing mandatory evidence is rejected; approval by a non-approver returns 403; approval of a stale submission version is rejected
+REQ-DLV-002 DG0 | Keep engineering delivery gates DG0-DG7 separate from product business approvals G1-G6 in records, authority and meaning 
+   A: A23;A28: gate records validate only with stage_id DG0-DG7; CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval
+REQ-S21-001 DG5 | Label product gates, phases and demo approvals so that product gate G6 never implies engineering release DG7, and a demo Sponsor approval never approv 
+   A: A28;A22: a text scan of UI strings and export templates finds no DG0-DG7 references; demo G-approvals display 'Synthetic demonstration - approves nothing real'

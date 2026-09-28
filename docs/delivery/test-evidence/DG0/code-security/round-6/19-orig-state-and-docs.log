@@ -1,0 +1,35 @@
+## F-DG0-108/109 original state at 26642c72
+18:      - uses: actions/checkout@v4
+21:      - uses: actions/setup-node@v4
+37:RUN_ID="${STAGE}-${TASK}-${ROLE}-$(date -u +%Y%m%dT%H%M%SZ)"
+39:mkdir -p "$OUT"
+(no --stage/--task/--role/--model validation lines, second-resolution RUN_ID, mkdir -p OUT)
+## a059b55 state
+35:[[ "$STAGE" =~ ^DG[0-7]$ ]] || { echo "invalid --stage '$STAGE' (expected DG0-DG7)" >&2; exit 64; }
+36:[[ "$TASK" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "invalid --task '$TASK' (allowed: A-Z a-z 0-9 . _ -)" >&2; exit 64; }
+37:[[ "$ROLE" =~ ^[a-z][a-z-]*$ ]] || { echo "invalid --role '$ROLE'" >&2; exit 64; }
+38:[[ "$MODEL" =~ ^[A-Za-z0-9._:-]+$ ]] || { echo "invalid --model '$MODEL'" >&2; exit 64; }
+48:RUN_ID="${STAGE}-${TASK}-${ROLE}-$(date -u +%Y%m%dT%H%M%SZ)-${SESSION_ID:0:8}"
+51:mkdir "$OUT" # fails if the directory exists: evidence is never overwritten
+18:      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+21:      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+
+## F-DG0-114 documentation consistency at a059b55
+-- resume count statements:
+  docs/delivery/decisions.md:10:at most 4
+  docs/delivery/decisions.md:25:up to 6 times
+  docs/delivery/agents.md:40:up to 6 times
+  docs/delivery/agents.md:81:At most 4
+  docs/delivery/agent-protocol.md:91:up to 3 times
+  docs/delivery/agent-protocol.md:92:up to 6 times
+  tools/agents/run-agent.sh:13:MTH_MAX_RESUMES times (default 6
+-- run-agent.sh default: MTH_MAX_RESUMES:-6
+-- D-016 text (first 600 chars):
+22:| D-016 | 2026-09-28 | delivery-orchestrator | **Provenance binding** (F-DG0-102, F-DG0-201). The validator accepts a review, audit or finding verification only when its run:<br>• has `meta.json`, `result.json` and `transcript.jsonl.gz`, with SHA-256 hashes recorded in meta that match;<br>• has an init line, a runner prompt (role and run ID) and a final successful result line for the same session in its transcript;<br>• has a requested model that matches the transcript;<br>• has the same stage and role as the record;<br>• executed exactly the assignment the record cites (path and 
+-- protected paths: write-scopes.json protected_for_implementers vs agents.md
+scope key: protected_for_implementers entries: 20
+entries not mentioned verbatim in agents.md: ["docs/delivery/runs/**","docs/delivery/candidates/**","**/.claude/**","**/.mcp.json","**/CLAUDE.md","**/CLAUDE.local.md"]
+-- reviewer interpretation: decisions.md:10 'at most 4' and agents.md:81 'At most 4' are about active workers (D-004), not resumes;
+   agent-protocol.md:91 'up to 3 times' is the in-agent command retry, :92 'up to 6 times' the runner resume, matching MTH_MAX_RESUMES:-6.
+   The six protected entries not found verbatim are covered in agents.md:20-26 by brace/any-depth forms:
+   'docs/delivery/{reviews,gates,runs,candidates,test-evidence}/**', '.claude/**', '.mcp.json', 'CLAUDE.md/CLAUDE.local.md at any depth'.

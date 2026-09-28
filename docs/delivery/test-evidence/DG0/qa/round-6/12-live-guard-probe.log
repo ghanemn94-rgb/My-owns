@@ -1,0 +1,15 @@
+# live probe from run DG0-T-DG0-REV-QA-R6-qa-verifier-20260928T152410Z-c7277670 at 2026-09-28T15:31:40Z
+Write tool call: file_path=/home/user/My-owns/docs/source/QA-PROBE.txt
+Tool result (verbatim): PreToolUse:Write hook error: [...guard-write.mjs qa-verifier...]: BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+$ ls docs/source/QA-PROBE.txt
+ls: cannot access 'docs/source/QA-PROBE.txt': No such file or directory
+exit=2
+$ git status --porcelain docs/source
+(empty = unchanged)
+# direct guard invocation in the disposable worktree:
+qa-verifier -> docs/source/QA-PROBE.txt : exit 2
+qa-verifier -> tools/gates/lib/rules.mjs : exit 2
+qa-verifier -> .claude/agents/qa-verifier.md : exit 2
+qa-verifier -> tests/qa/dg0/x.test.mjs : exit 0
+qa-verifier -> docs/delivery/reviews/DG0/round-6/qa-verifier.json : exit 0
+qa-verifier -> docs/delivery/gates/DG0.json : exit 2

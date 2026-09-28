@@ -1,0 +1,46 @@
+# QA_REPO_ROOT=/tmp/review-qa6-540b3c69 (540b3c6) node=v22.22.2 date=2026-09-28T15:30:23Z
+$ node --test --test-name-pattern 'control|QA3-N20' docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs
+TAP version 13
+# \# QA3-N20 errors (0):
+# \#   
+# Subtest: control: the independent round-3 fixture is accepted (API and CLI exit 0)
+ok 1 - control: the independent round-3 fixture is accepted (API and CLI exit 0)
+  ---
+  duration_ms: 394.445155
+  type: 'test'
+  ...
+# Subtest: QA3-N20 findings: rewriting an older round's frozen_at to legitimise a LOAD-run verification — probe
+not ok 2 - QA3-N20 findings: rewriting an older round's frozen_at to legitimise a LOAD-run verification — probe # TODO F-DG0-208
+  ---
+  duration_ms: 313.244469
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs:263:1'
+  failureType: 'testCodeFailure'
+  error: "validator accepted a closure bound to a LOAD run after the round's frozen_at was rewritten"
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs:276:10
+    withFixture (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs:197:5)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r3.test.mjs:263:139)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    node:internal/test_runner/test:981:31
+    node:internal/process/task_queues:149:7
+    AsyncResource.runInAsyncScope (node:async_hooks:214:14)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 1
+# duration_ms 825.53604
+exit=0

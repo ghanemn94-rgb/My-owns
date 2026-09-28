@@ -1,0 +1,40 @@
+# validators on the main repository, HEAD b6fa2c28bc62e98a99b9932f8beab023f57cd4d7
+== validate.mjs --register DG0
+PASS register rules at DG0
+exit=0
+== validate.mjs --pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+exit=0
+== validate.mjs --reconcile
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:c13a4f8e93cad95a0741d49001bb170361aface2117bf3712391ea772da3ff68
+working tree:     sha256:c13a4f8e93cad95a0741d49001bb170361aface2117bf3712391ea772da3ff68 (matches)
+round 1 domain-reviewer: FAIL (STALE for current content)
+round 1 code-security-reviewer: BLOCKED (STALE for current content)
+round 1 qa-verifier: FAIL (STALE for current content)
+round 2 domain-reviewer: PASS (STALE for current content)
+round 2 code-security-reviewer: FAIL (STALE for current content)
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: PASS (STALE for current content)
+round 3 code-security-reviewer: FAIL (STALE for current content)
+round 3 qa-verifier: PASS (STALE for current content)
+round 4 domain-reviewer: PASS (STALE for current content)
+round 4 code-security-reviewer: FAIL (STALE for current content)
+round 4 qa-verifier: PASS (STALE for current content)
+round 5 domain-reviewer: FAIL (STALE for current content)
+round 6 domain-reviewer: FAIL (current)
+round 6 code-security-reviewer: missing (STALE for current content)
+round 6 qa-verifier: missing (STALE for current content)
+PASS reconcile (structure)
+exit=0
+== validate.mjs --stage DG0
+FAIL gate DG0 (current) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+exit=1
+== validate.mjs --stage DG0 --historical
+FAIL gate DG0 (historical) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+exit=1
+== candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:c13a4f8e93cad95a0741d49001bb170361aface2117bf3712391ea772da3ff68","files":80}
+exit=0

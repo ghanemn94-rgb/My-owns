@@ -1,0 +1,11 @@
+# 2026-09-28T15:32:44Z main tree
+$ git rev-parse HEAD
+b6fa2c28bc62e98a99b9932f8beab023f57cd4d7
+$ git log --oneline a059b55..HEAD
+b6fa2c2 run: DG0-T-DG0-REV-DOM-R6-domain-reviewer-20260928T152410Z-253a6c23 (review evidence, auto-committed by run-agent.sh)
+c9b8135 DG0: freeze round-6 candidate, round-6 assignments
+$ git diff --stat a059b55..HEAD -- . ':(exclude)docs/delivery'
+(empty = only delivery metadata changed after the freeze)
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:c13a4f8e93cad95a0741d49001bb170361aface2117bf3712391ea772da3ff68","files":80}
+exit=0

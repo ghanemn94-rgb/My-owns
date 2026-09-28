@@ -1,0 +1,28 @@
+## CI workflow @ a059b55
+uses lines:
+18:      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+21:      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+40-hex pinned: 2 of 2
+permissions:
+11:permissions:
+12-  contents: read
+fetch-depth: 20:          fetch-depth: 0 # historical gate verification recomputes candidates from recorded commits
+secrets refs: 0
+continue-on-error / '|| true' / 'set +e': 0
+pull_request_target: 0
+persist-credentials set: 0
+Every run step is a single command; GitHub's default bash shell for run: is 'bash -e {0}', so a non-zero validator exit fails the step and job.
+Diff d141d303..a059b55 of the workflow:
+diff --git a/.github/workflows/delivery-gates.yml b/.github/workflows/delivery-gates.yml
+index f693fdf..48f9fe0 100644
+--- a/.github/workflows/delivery-gates.yml
++++ b/.github/workflows/delivery-gates.yml
+@@ -27,6 +27,8 @@ jobs:
+         run: node --test tools/gates/tests/*.test.mjs
+       - name: Write-guard tests
+         run: node --test tools/agents/tests/*.test.mjs
++      - name: Runner metadata tests
++        run: python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'
+       - name: Pipeline gate state (approved gates re-verified; no stage advanced past an unapproved gate)
+         run: node tools/gates/validate.mjs --pipeline
+       - name: Resumption reconciliation report
