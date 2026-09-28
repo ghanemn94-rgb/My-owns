@@ -19,7 +19,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T12:37:24Z",
@@ -30,10 +30,33 @@
           "at": "2026-09-28T13:26:55Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 73c485466a17cbb785e8f4ecee9bd967fe8333be"
+        },
+        {
+          "at": "2026-09-28T13:36:15Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "73c485466a17cbb785e8f4ecee9bd967fe8333be",
-      "fix_summary": "Fixed by transformation-analyst in T-DG0-AN-05/06/07, integrated in 73c485466a17cbb785e8f4ecee9bd967fe8333be; see docs/delivery/handbacks/DG0/T-DG0-AN-05-transformation-analyst.md and T-DG0-AN-07"
+      "fix_summary": "Fixed by transformation-analyst in T-DG0-AN-05/06/07, integrated in 73c485466a17cbb785e8f4ecee9bd967fe8333be; see docs/delivery/handbacks/DG0/T-DG0-AN-05-transformation-analyst.md and T-DG0-AN-07",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-DOM-R2-domain-reviewer-20260928T132727Z-b360b6de",
+          "session_id": "b360b6de-1a04-487f-a579-b925517f63a3"
+        },
+        "at": "2026-09-28T13:36:15Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/requirements.csv (REQ-PB-049, REQ-PB-093, REQ-S09-005)",
+          "docs/analysis/stage-plan.md (§21 evidence recheck, DG3 row)",
+          "docs/analysis/source-coverage.csv (B0077)",
+          "docs/analysis/master-prompt-coverage.csv (M0176)",
+          "docs/analysis/user-journeys.md (J2.4)"
+        ],
+        "note": "Reproduced on the old candidate 26642c7: REQ-PB-049 had increments P3;P5 and final_gate DG5. On 83860be REQ-PB-049 is P3/DG3. It covers per-transformation weight sets, risk/compliance replacing part of the weighting, a server-side 100% total check (95% and 105% rejected) and immutable weight-set versions, and it names 'weight version 2' as a rank-change cause for REQ-S09-005 (DG3). The Studio default-weights and rubric part is the new REQ-PB-093 (P5/DG5, ADM configure-default only, never approving a transformation's weights). B0077 and M0176 coverage rows list both rows. The field inventory, acceptance map (A07 first delivered in P3), user journey J2.4 step 4 and the stage-plan §21 recheck (DG3 row names REQ-PB-049) are updated. check_counts.py reports all stage-plan lists match, and validate.mjs --register DG0 passes."
+      }
     },
     {
       "id": "F-DG0-002",
@@ -53,7 +76,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T12:37:24Z",
@@ -64,10 +87,32 @@
           "at": "2026-09-28T13:26:55Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 73c485466a17cbb785e8f4ecee9bd967fe8333be"
+        },
+        {
+          "at": "2026-09-28T13:36:15Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "73c485466a17cbb785e8f4ecee9bd967fe8333be",
-      "fix_summary": "Fixed by transformation-analyst in T-DG0-AN-05/06/07, integrated in 73c485466a17cbb785e8f4ecee9bd967fe8333be; see docs/delivery/handbacks/DG0/T-DG0-AN-05-transformation-analyst.md and T-DG0-AN-07"
+      "fix_summary": "Fixed by transformation-analyst in T-DG0-AN-05/06/07, integrated in 73c485466a17cbb785e8f4ecee9bd967fe8333be; see docs/delivery/handbacks/DG0/T-DG0-AN-05-transformation-analyst.md and T-DG0-AN-07",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-DOM-R2-domain-reviewer-20260928T132727Z-b360b6de",
+          "session_id": "b360b6de-1a04-487f-a579-b925517f63a3"
+        },
+        "at": "2026-09-28T13:36:15Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/analysis/permissions-matrix.md (§4 TOM row and T11 Go-live / scale row; §5 rule 7)",
+          "docs/delivery/requirements.csv (REQ-PB-020, REQ-S04-007)",
+          "docs/analysis/user-journeys.md (J2.5)",
+          "docs/source/playbook.md B0099, B0101"
+        ],
+        "note": "Reproduced on 26642c7: REQ-PB-020 had 'approve:SP' with no T11 reference, the matrix had no T11 Go-live / scale row, and SP had V on the TOM row. On 83860be: REQ-PB-020 and REQ-S04-007 give 'approve:SP (default) or BO per T11 Go-live / scale (configurable per gate)', with a concrete acceptance (SP gets 403 when G5 is configured to BO). Permissions-matrix rule 7 explains that B0023 names no approver and distinguishes the transformation-level G5 from initiative-level T11 decisions. A new matrix row mirrors B0099 exactly (Recommend initiative owner, Approve BO, Consult Risk/Tech/CX, Inform SteerCo), with the role mapping labelled as an implementation assumption. SP now has Rv on the TOM row (RACI C, B0101). Journey J2.5 step 5a adds the per-initiative T11 decision."
+      }
     },
     {
       "id": "F-DG0-003",
@@ -85,7 +130,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T12:37:24Z",
@@ -96,10 +141,29 @@
           "at": "2026-09-28T13:26:55Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 73c485466a17cbb785e8f4ecee9bd967fe8333be"
+        },
+        {
+          "at": "2026-09-28T13:36:15Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "73c485466a17cbb785e8f4ecee9bd967fe8333be",
-      "fix_summary": "Fixed by transformation-analyst in T-DG0-AN-05/06/07, integrated in 73c485466a17cbb785e8f4ecee9bd967fe8333be; see docs/delivery/handbacks/DG0/T-DG0-AN-05-transformation-analyst.md and T-DG0-AN-07"
+      "fix_summary": "Fixed by transformation-analyst in T-DG0-AN-05/06/07, integrated in 73c485466a17cbb785e8f4ecee9bd967fe8333be; see docs/delivery/handbacks/DG0/T-DG0-AN-05-transformation-analyst.md and T-DG0-AN-07",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-DOM-R2-domain-reviewer-20260928T132727Z-b360b6de",
+          "session_id": "b360b6de-1a04-487f-a579-b925517f63a3"
+        },
+        "at": "2026-09-28T13:36:15Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/requirements.csv (REQ-PB-055, REQ-PB-085, REQ-PB-088; all SOURCE rows)"
+        ],
+        "note": "Reproduced on 26642c7: REQ-PB-055, -085 and -088 had 'Source-grounded; no interpretation beyond the cited blocks'. Across all SOURCE rows, 49 had that boilerplate and 48 cited M blocks without a master-prompt label. On 83860be, 0 SOURCE rows carry the boilerplate and 0 cite M blocks without a label. Each note uses the 'Playbook (...) / Master-prompt additions / Interpretations' structure. PB-055 labels the hard 'before G4' rule as an interpretation, and PB-085 and PB-088 name their §12 and §18 additions. Two small residual label inconsistencies (PB-088's M0348 attribution is not cited in source_ref; PB-068 calls an M0212 rule an interpretation) are raised separately as Low F-DG0-006. They don't reopen this finding, whose three named rows are fixed."
+      }
     },
     {
       "id": "F-DG0-004",
@@ -118,7 +182,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T12:37:24Z",
@@ -129,10 +193,31 @@
           "at": "2026-09-28T12:54:13Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6c676980acb91b91bb535e800e3a530b8f5016d8"
+        },
+        {
+          "at": "2026-09-28T13:36:15Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
-      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
+      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-DOM-R2-domain-reviewer-20260928T132727Z-b360b6de",
+          "session_id": "b360b6de-1a04-487f-a579-b925517f63a3"
+        },
+        "at": "2026-09-28T13:36:15Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/source/playbook.md",
+          "tools/source/extract_docx.py",
+          "tools/source/check_extraction.sh"
+        ],
+        "note": "Reproduced on 26642c7: 'PRACTICAL EDITION' occurred 0 times in playbook.md, and 6 table lines were broken by raw newlines in cells. On 83860be: the extractor records running headers/footers as an HTML comment ('footer1: BUSINESS TRANSFORMATION PLAYBOOK  |  PRACTICAL EDITION'), cells use <br>, and 0 table lines are broken. playbook.blocks.json and the master-prompt files are byte-identical to the round-1 candidate, so block IDs B0001-B0165 are unchanged. tools/source/check_extraction.sh passes, reproducing playbook.md from the docx (sha256 2584a352…548ad2). My independent extraction finds all 1001 body paragraph segments and 885 table cells (49 tables, 239 rows) of word/document.xml, plus the footer text, in playbook.md."
+      }
     },
     {
       "id": "F-DG0-005",
@@ -150,7 +235,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T12:37:24Z",
@@ -161,10 +246,29 @@
           "at": "2026-09-28T13:26:56Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 73c485466a17cbb785e8f4ecee9bd967fe8333be"
+        },
+        {
+          "at": "2026-09-28T13:36:15Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "73c485466a17cbb785e8f4ecee9bd967fe8333be",
-      "fix_summary": "Fixed by transformation-analyst in T-DG0-AN-05/06/07, integrated in 73c485466a17cbb785e8f4ecee9bd967fe8333be; see docs/delivery/handbacks/DG0/T-DG0-AN-05-transformation-analyst.md and T-DG0-AN-07"
+      "fix_summary": "Fixed by transformation-analyst in T-DG0-AN-05/06/07, integrated in 73c485466a17cbb785e8f4ecee9bd967fe8333be; see docs/delivery/handbacks/DG0/T-DG0-AN-05-transformation-analyst.md and T-DG0-AN-07",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-DOM-R2-domain-reviewer-20260928T132727Z-b360b6de",
+          "session_id": "b360b6de-1a04-487f-a579-b925517f63a3"
+        },
+        "at": "2026-09-28T13:36:15Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/analysis/glossary.md"
+        ],
+        "note": "Reproduced on 26642c7: Journey was 'رحلة العميل' and Modular mode 'النمط المعياري (الدخول الجزئي)'. On 83860be: Journey is 'الرحلة (رحلة العميل أو رحلة العمل)' and Modular mode 'النمط الجزئي المرن (الدخول عند المرحلة المناسبة)'. Both preserve the English meaning. The analyst also fixed nine other terms with sound reasons: 'مناصر التغيير' for Champion (B0116), 'فحص معقولية النطاق' (no clash with the Health Check term), an attach-rate term that conveys add-on uptake, and an SLA term that covers non-duration SLAs (B0099). The old terms now appear only in the revision table's 'Before' column, and nowhere in the register or other analysis files. The pending Mobily Arabic-language-owner review caveat is kept."
+      }
     },
     {
       "id": "F-DG0-101",
@@ -184,7 +288,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-09-28T12:32:32Z",
@@ -195,10 +299,32 @@
           "at": "2026-09-28T12:54:13Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6c676980acb91b91bb535e800e3a530b8f5016d8"
+        },
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 2: FAIL"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
-      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
+      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R2-code-security-reviewer-20260928T132727Z-12000182",
+          "session_id": "12000182-cac3-47f9-a5aa-d535bbc9f64b"
+        },
+        "at": "2026-09-28T13:38:41Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/02-round1-repro-old-vs-new.log"
+        ],
+        "note": "Partially fixed. The stated vectors are fixed and verified differentially (repro-r2 'FIXED F-DG0-101' passes on 83860be3 and fails on 26642c72): relabelling in findings.json or a sidecar, dropping a sidecar-raised finding, and downgrading. Still open (repro-r2 N2): deleting a whole earlier round (the round-N/<role>.json record plus its .findings.json sidecar) together with the findings.json entry passes validateGate in current AND historical mode and validatePipeline, even when stages.json review_rounds[].records still lists the deleted record. The original finding's expected result covered 'all review_rounds records and their findings sidecars'. loadStages (rules.mjs:89-113) never checks that review_rounds records exist, collectRaisedFindings (rules.mjs:342-367) only sees files currently on disk, and checkApprovalImmutable pins only the final-round records. Suggested fix: require every stages.json review_rounds[].records path (and its sidecar, if the record lists findings) to exist, and pin all review_rounds files in historical mode."
+      }
     },
     {
       "id": "F-DG0-102",
@@ -219,7 +345,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-09-28T12:32:32Z",
@@ -230,10 +356,31 @@
           "at": "2026-09-28T12:54:13Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6c676980acb91b91bb535e800e3a530b8f5016d8"
+        },
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 2: FAIL"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
-      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
+      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R2-code-security-reviewer-20260928T132727Z-12000182",
+          "session_id": "12000182-cac3-47f9-a5aa-d535bbc9f64b"
+        },
+        "at": "2026-09-28T13:38:41Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log"
+        ],
+        "note": "Partially fixed. Reviews and audits are now bound: meta/result/transcript present and hash-consistent, init/prompt/result session, stage, role, assignment path and SHA, and started_at >= frozen_at (repro-r2 'FIXED F-DG0-102'; the candidate's F-DG0-102/F-DG0-201 tests pass). Still open: the original expected result explicitly covered verifications ('refuses a review/audit/verification unless … the run's assignment … matches … and the run started after the candidate froze'), and D-016 claims the same. rules.mjs:417 calls checkInvocation for finding verifications with binding=null. repro-r2 N1a: a CLOSED_VERIFIED High finding whose verification cites a code-security-reviewer LOAD-check run that started before the freeze, with an unrelated assignment, passes validateGate. Residual (accepted as a design limit, disclosed in D-016): run evidence is self-hashed, not attested, so a fully forged consistent transcript set still passes; historical immutability (D-017) limits after-the-fact rewriting."
+      }
     },
     {
       "id": "F-DG0-103",
@@ -253,7 +400,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T12:32:32Z",
@@ -264,10 +411,32 @@
           "at": "2026-09-28T12:54:13Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6c676980acb91b91bb535e800e3a530b8f5016d8"
+        },
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
-      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
+      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R2-code-security-reviewer-20260928T132727Z-12000182",
+          "session_id": "12000182-cac3-47f9-a5aa-d535bbc9f64b"
+        },
+        "at": "2026-09-28T13:38:41Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/01-existing-tests.log"
+        ],
+        "note": "Symlinks are now hashed by target in both working-tree and ref manifests; gitlinks and nested repositories throw. repro-r2 'FIXED F-DG0-103' (repointing a committed symlink changes the candidate) passes on 83860be3 and fails on 26642c72. The candidate's test 'A25 / F-DG0-103' passes. A new Low weakness in the chosen encoding (type/mode not in the canonical line) is raised separately as F-DG0-112."
+      }
     },
     {
       "id": "F-DG0-104",
@@ -287,7 +456,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T12:32:32Z",
@@ -298,10 +467,31 @@
           "at": "2026-09-28T12:54:13Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6c676980acb91b91bb535e800e3a530b8f5016d8"
+        },
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
-      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
+      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R2-code-security-reviewer-20260928T132727Z-12000182",
+          "session_id": "12000182-cac3-47f9-a5aa-d535bbc9f64b"
+        },
+        "at": "2026-09-28T13:38:41Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log"
+        ],
+        "note": "checkCandidate requires manifest.spec == stage candidate_spec, and specPolicyErrors pins both to APPROVED_SPEC; loadStages applies the policy to every stage and candidate.mjs --freeze refuses a non-policy spec. repro-r2 'FIXED F-DG0-104' passes on the candidate and fails on 26642c72."
+      }
     },
     {
       "id": "F-DG0-105",
@@ -321,7 +511,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T12:32:32Z",
@@ -332,10 +522,32 @@
           "at": "2026-09-28T12:54:13Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6c676980acb91b91bb535e800e3a530b8f5016d8"
+        },
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
-      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
+      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R2-code-security-reviewer-20260928T132727Z-12000182",
+          "session_id": "12000182-cac3-47f9-a5aa-d535bbc9f64b"
+        },
+        "at": "2026-09-28T13:38:41Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/06-runner-and-hook.log"
+        ],
+        "note": "The three reported vectors are fixed: symlink real-path check, case-insensitive deny, and .claude/**, .mcp.json, CLAUDE*.md at any depth and trading_agent/** protected. repro-r2 'FIXED F-DG0-105' passes on the candidate and fails on 26642c72. The hook fails closed on a missing guard, a missing node binary, no git repo and an unreadable payload (06-runner-and-hook.log). A different bypass vector (nested .git root shift) is raised separately as F-DG0-111."
+      }
     },
     {
       "id": "F-DG0-106",
@@ -356,7 +568,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T12:32:32Z",
@@ -367,10 +579,31 @@
           "at": "2026-09-28T12:54:14Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6c676980acb91b91bb535e800e3a530b8f5016d8"
+        },
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
-      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
+      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R2-code-security-reviewer-20260928T132727Z-12000182",
+          "session_id": "12000182-cac3-47f9-a5aa-d535bbc9f64b"
+        },
+        "at": "2026-09-28T13:38:41Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log"
+        ],
+        "note": "repoFile() requires a regular file strictly inside the repository; '#x', '.', a directory and a bare token are rejected as review evidence, register evidence and gate-test evidence; gate tests[] has minItems 1. repro-r2 'FIXED F-DG0-106' passes on the candidate and fails on 26642c72."
+      }
     },
     {
       "id": "F-DG0-107",
@@ -389,7 +622,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T12:32:32Z",
@@ -400,10 +633,32 @@
           "at": "2026-09-28T12:54:14Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6c676980acb91b91bb535e800e3a530b8f5016d8"
+        },
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
-      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
+      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R2-code-security-reviewer-20260928T132727Z-12000182",
+          "session_id": "12000182-cac3-47f9-a5aa-d535bbc9f64b"
+        },
+        "at": "2026-09-28T13:38:41Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/05-round2-repro-round1-commit.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-2/10-merge-register-ragged.log"
+        ],
+        "note": "The parser throws on text after a closing quote, on stray quotes and on ragged rows (repro-r2 'FIXED F-DG0-107'). merge_register.py rejects both over-long and short part-file rows with 'cell count different from the header', and an unmodified merge reproduces the committed register byte-for-byte (10-merge-register-ragged.log)."
+      }
     },
     {
       "id": "F-DG0-108",
@@ -421,7 +676,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T12:32:32Z",
@@ -432,10 +687,29 @@
           "at": "2026-09-28T12:54:14Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6c676980acb91b91bb535e800e3a530b8f5016d8"
+        },
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
-      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
+      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R2-code-security-reviewer-20260928T132727Z-12000182",
+          "session_id": "12000182-cac3-47f9-a5aa-d535bbc9f64b"
+        },
+        "at": "2026-09-28T13:38:41Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-2/06-runner-and-hook.log"
+        ],
+        "note": "run-agent.sh validates --stage ^DG[0-7]$, --task, --role and --model (each bad value exits 64), puts the session UUID prefix in RUN_ID, and uses mkdir without -p so an existing run directory aborts. Static review found no shell injection: all expansions are quoted, python receives values via argv with a quoted heredoc, and the prompt is a single argument (06-runner-and-hook.log)."
+      }
     },
     {
       "id": "F-DG0-109",
@@ -453,7 +727,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T12:32:32Z",
@@ -464,10 +738,29 @@
           "at": "2026-09-28T12:54:14Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6c676980acb91b91bb535e800e3a530b8f5016d8"
+        },
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
-      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
+      "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R2-code-security-reviewer-20260928T132727Z-12000182",
+          "session_id": "12000182-cac3-47f9-a5aa-d535bbc9f64b"
+        },
+        "at": "2026-09-28T13:38:41Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-2/07-secrets-extraction-ci-frontmatter.log"
+        ],
+        "note": "actions/checkout@3d3c42e5… and actions/setup-node@82076278… are full SHAs; git ls-remote confirms they are the commits of tags v7.0.1 and v7.0.0, matching the comments. permissions: contents: read; fetch-depth: 0; no secrets referenced (07-secrets-extraction-ci-frontmatter.log)."
+      }
     },
     {
       "id": "F-DG0-201",
@@ -486,9 +779,26 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-1/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
-      "verification": null,
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R2-qa-verifier-20260928T132727Z-633e04f1",
+          "session_id": "633e04f1-5e10-444e-ba13-066f798f1e13"
+        },
+        "at": "2026-09-28T13:47:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-on-r1.log",
+          "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-on-r2.log",
+          "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r1.log",
+          "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r2.log",
+          "docs/delivery/test-evidence/DG0/qa/round-2/02-gates-tests.log"
+        ],
+        "note": "Reproduced on the round-1 tooling (worktree @26642c7): QA-N27 fails with 'validator accepted an invalid gate', and QA2-R201/QA2-R201b fail. On the frozen candidate (@83860be), QA-N27 (round-1 test), QA2-R201 (review cites the pre-freeze T-DG0-LOAD run of the same role: rejected with 'ran assignment docs/delivery/assignments/DG0/T-DG0-LOAD.md' and 'before the candidate froze') and QA2-R201b (right assignment, run started before the freeze: rejected) all pass. The producer's regression test 'F-DG0-201: a review bound to an unrelated run of the same role is rejected' also passes (tools/gates/tests 20/20). checkReview passes the binding {assignment, notBefore: frozen_at} (rules.mjs:333-336). The fix is complete for review and audit records, which is the scope of F-DG0-201. The same binding is missing for finding verifications (rules.mjs:417); that is a separate path, raised as new finding F-DG0-204."
+      },
       "acceptance": null,
       "history": [
         {
@@ -499,6 +809,11 @@
           "at": "2026-09-28T12:54:14Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6c676980acb91b91bb535e800e3a530b8f5016d8"
+        },
+        {
+          "at": "2026-09-28T13:47:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
@@ -521,9 +836,24 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-1/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "fix_revision": "6c676980acb91b91bb535e800e3a530b8f5016d8",
-      "verification": null,
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R2-qa-verifier-20260928T132727Z-633e04f1",
+          "session_id": "633e04f1-5e10-444e-ba13-066f798f1e13"
+        },
+        "at": "2026-09-28T13:47:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-on-r1.log",
+          "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r2.log",
+          "docs/delivery/test-evidence/DG0/qa/round-2/11-register-integrity.log"
+        ],
+        "note": "Reproduced on round-1 tooling: QA-N28 (bare 'NO-SUCH-EVIDENCE.md') is accepted. On the frozen candidate, QA2-R202 is rejected with 'evidence is not an existing repository file: NO-SUCH-EVIDENCE.md'. QA2-N13 ('app/main.txt; ;docs/nope.md') also rejects the missing entry. The round-1 QA-N28 test fails on r2 only because the message wording changed (it expects 'evidence path not found'); the rejection itself happens. Every register evidence entry now goes through repoFile() (rules.mjs:217-219). My register-integrity script confirms all evidence entries of the 19 IMPLEMENTED DG0 rows are existing regular files. A residual symlink-escape edge case is raised separately as Low F-DG0-205."
+      },
       "acceptance": null,
       "history": [
         {
@@ -534,6 +864,11 @@
           "at": "2026-09-28T12:54:14Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 6c676980acb91b91bb535e800e3a530b8f5016d8"
+        },
+        {
+          "at": "2026-09-28T13:47:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_summary": "Fixed in 6c676980acb91b91bb535e800e3a530b8f5016d8; see commit message and regression tests in tools/gates/tests/validator.test.mjs, tools/agents/tests/guard.test.mjs"
@@ -554,9 +889,23 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-1/qa-verifier.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "fix_revision": "73c485466a17cbb785e8f4ecee9bd967fe8333be",
-      "verification": null,
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R2-qa-verifier-20260928T132727Z-633e04f1",
+          "session_id": "633e04f1-5e10-444e-ba13-066f798f1e13"
+        },
+        "at": "2026-09-28T13:47:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-2/14-acceptance-feasibility.log",
+          "docs/delivery/test-evidence/DG0/qa/round-2/acceptance-feasibility.py"
+        ],
+        "note": "docs/analysis/stage-plan.md now has the rule 'Executable acceptance tests (AN-05, finding F-DG0-203)', per-stage 'authored in Pn' tables for P1-P6, and the 'Executable acceptance-test ownership' table. My independent script (acceptance-feasibility.py, 0 errors) checks, for all 28 scenarios, that the table's first 'Authored in' stage equals acceptance-map 'First delivered', that its 'Must pass at' equals acceptance-map and the register final_gate of REQ-S20-0nn, that no scenario is first authored after its must-pass gate, that every scenario has a named author, and that the stage-plan section of the first-delivered stage mentions the scenario. P6 now reads 'extends ... re-runs', and only A17 (and the first A19 drill) are first authored in P6. docs/analysis/tools/check_counts.py reports STAGE-PLAN LISTS ALL MATCH."
+      },
       "acceptance": null,
       "history": [
         {
@@ -567,9 +916,330 @@
           "at": "2026-09-28T13:26:56Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 73c485466a17cbb785e8f4ecee9bd967fe8333be"
+        },
+        {
+          "at": "2026-09-28T13:47:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_summary": "Fixed by transformation-analyst in T-DG0-AN-05/06/07, integrated in 73c485466a17cbb785e8f4ecee9bd967fe8333be; see docs/delivery/handbacks/DG0/T-DG0-AN-05-transformation-analyst.md and T-DG0-AN-07"
+    },
+    {
+      "id": "F-DG0-006",
+      "stage_id": "DG0",
+      "requirement": "REQ-PB-088",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Two SOURCE rows have residual provenance-labelling inconsistencies after the F-DG0-003 relabelling",
+      "reproduction": "In docs/delivery/requirements.csv at 83860be: (a) the notes of REQ-PB-088 attribute the rule 'the production initialization contains no demo records' to master prompt '§18 M0339, M0348', but source_ref (B0143;B0145;B0162;M0083;M0339;M0341-M0346) does not cite M0348, and docs/analysis/master-prompt-coverage.csv maps M0348 only to REQ-S18-002;REQ-S18-003. (b) The notes of REQ-PB-068 say 'Master-prompt additions: none' and then 'Interpretations: an item missing any element is blocked from publication (master prompt §10)'. The hard publication block comes from M0212, which is already in source_ref, so it is a master-prompt addition rather than an interpretation.",
+      "expected": "REQ-PB-088 cites M0348 in source_ref (and the M0348 coverage row lists REQ-PB-088), or its notes drop the M0348 attribution and point to REQ-S18-003. REQ-PB-068 lists the M0212 publication block under 'Master-prompt additions'.",
+      "actual": "The substance is correct and traceable (REQ-S18-003 carries the empty production initialization; M0212 is cited on REQ-PB-068). Only the labels are slightly inconsistent. I would accept this as an observation.",
+      "evidence": [
+        "docs/delivery/requirements.csv (REQ-PB-068, REQ-PB-088)",
+        "docs/analysis/master-prompt-coverage.csv (M0348)",
+        "docs/source/master-prompt.anchored.md#M0212",
+        "docs/source/master-prompt.anchored.md#M0348"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:36:15Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round-2 domain review. Labelling only; I would accept it as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-007",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "agent-protocol.md does not state that product G6 never implies DG7, as REQ-DLV-002's acceptance says it does",
+      "reproduction": "The acceptance of REQ-DLV-002 in docs/delivery/requirements.csv reads: 'CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval'. Running grep -niE 'impl(y|ies)|G6' docs/delivery/agent-protocol.md finds only line 8 ('G1–G6 are business transformation approvals inside the product'). CLAUDE.md line 13 does contain 'Product gate G6 never implies DG7'.",
+      "expected": "agent-protocol.md's 'Two gate systems' section says that product gate G6 never implies DG7, or the REQ-DLV-002 acceptance names only CLAUDE.md for that sentence.",
+      "actual": "agent-protocol.md separates the two systems and forbids agent approvals, but lacks the explicit G6/DG7 sentence. Every agent definition requires reading CLAUDE.md, which has it, so the rule is available to every agent. I would accept this as an observation.",
+      "evidence": [
+        "docs/delivery/agent-protocol.md (lines 5-9)",
+        "CLAUDE.md (line 13)",
+        "docs/delivery/requirements.csv (REQ-DLV-002)"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:36:15Z",
+          "status": "OPEN",
+          "note": "Reported in DG0 round-2 domain review. Wording only; I would accept it as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-110",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Finding closure is taken from orchestrator-written findings.json; the reviewer's own verification sidecar, the verification evidence and the fix revision are never checked",
+      "reproduction": "tools/gates/lib/rules.mjs:408-418 accepts CLOSED_VERIFIED/REJECTED_INVALID when findings.json carries a verification object with result PASS, by_role != owner and a valid run. collectRaisedFindings (rules.mjs:342-367; filename filter at :360) never reads <role>.verifications.json, so the reviewer-authored verification is not the source of truth. verification.evidence paths and fix_revision (rules.mjs:416 only checks truthiness) are not checked. Reproduced with GATE_TOOLS=/tmp/dg0-sec-r2 node --test docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs: (N1b) on a fully valid gate, add round-2/code-security-reviewer.verifications.json {finding_id F-DG0-101, result FAIL, status_after OPEN} while findings.json says CLOSED_VERIFIED/PASS citing that reviewer's round-2 run. validateGate returns []. (N1c) Set fix_revision 'not-a-commit' and verification.evidence ['does/not/exist.log']. validateGate returns []. Precondition: whoever maintains findings.json (the orchestrator, D-008) writes the verification object directly instead of via import-findings.mjs. The reporter's final-round record can still be PASS, because nothing ties a PASS verdict to the absence of a FAIL verification.",
+      "expected": "A finding reaches CLOSED_VERIFIED/REJECTED_INVALID only if a reviewer-authored verifications sidecar in a round of this stage contains an entry for that finding with result PASS and a matching status_after. The sidecar belongs to a PASS or FAIL record whose run is bound (assignment and post-freeze, as for reviews). findings.json.verification must equal that entry. Verification evidence must be existing repository files, and fix_revision must be a commit that is an ancestor of the candidate's source_commit. A FAIL entry in a later round supersedes an earlier PASS.",
+      "actual": "The gate's 'zero unresolved Critical/High and mandatory findings' condition can be met by editing one object in findings.json, even when the reporting reviewer explicitly recorded the fix as FAIL.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "tools/gates/lib/rules.mjs:342-367",
+        "tools/gates/lib/rules.mjs:408-418"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-2 code-security review (reproduced: repro-r2 tests N1b, N1c)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-111",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Write guard: an implementer can plant a nested '.git' (tools/.git, docs/.git, .github/.git) that moves the guard's repo root and un-protects gate rules, sources and delivery records",
+      "reproduction": "tools/agents/guard-write.mjs:40-48 (repoRootOf) takes the nearest ancestor containing '.git' as the repository root, and :72 matches patterns against the path relative to that root. solution-architect/frontend/backend/kpi/devops have allow '**'. 'tools/.git', 'docs/.git' and '.github/.git' match no deny pattern, so a Write to them is allowed. After Write tools/.git ('gitdir: /nonexistent'), a Write to tools/gates/lib/rules.mjs is evaluated as 'gates/lib/rules.mjs' and ALLOWED. The same holds for tools/agents/write-scopes.json (via tools/.git), docs/delivery/stages.json and docs/source/playbook.md (via docs/.git), and .github/workflows/delivery-gates.yml (via .github/.git). Reproduced through decide() and end-to-end through the hook entry point (exit 0): repro-r2 test N3. The planted file is invisible in 'git status' (09-nested-git-visibility.log), so it persists silently for later sessions. Edits to tracked protected files still show as ' M' and change the candidate, so the orchestrator's git-status check and the candidate hash remain compensating controls. Bash remains unguarded (disclosed, D-009/D-020); this finding is about the Write-tool guard itself.",
+      "expected": "The guard uses a fixed repository root (for example the root of the tree containing tools/agents/guard-write.mjs, or `git rev-parse --show-toplevel` evaluated once by the hook) rather than the nearest '.git'. It also denies writes of any path segment named '.git' (the pattern '**/.git' and '**/.git/**') for every role.",
+      "actual": "Implementer roles can disable the write guard for protected paths with two Write calls, and the first one leaves no trace in git status.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/09-nested-git-visibility.log",
+        "tools/agents/guard-write.mjs:40-48",
+        "tools/agents/guard-write.mjs:69-77"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-2 code-security review (reproduced: repro-r2 test N3)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-112",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Candidate identity omits the entry type and the file mode: a file containing 'symlink:<t>' collides with a symlink to <t>, and chmod +x/-x does not change the candidate",
+      "reproduction": "tools/gates/lib/candidate.mjs:58-60 hashes a symlink as sha256('symlink:'+target). candidateId (:117-124) serialises only '<sha256>  <path>', dropping entry.type, so a regular file whose bytes are 'symlink:app.txt' hashes identically to a symlink -> app.txt (repro-r2 N4). The git mode (100644 vs 100755) is not hashed either, so removing the executable bit from tools/source/check_extraction.sh (which CI runs directly) or tools/agents/run-agent.sh leaves the candidate unchanged (repro-r2 N5).",
+      "expected": "The canonical line includes the type and the mode, e.g. '<sha256>  <mode>  <path>', with mode taken from git (100644/100755/120000) in both manifestFromRef and manifestFromWorkingTree.",
+      "actual": "Two distinct deliverables share one candidate ID; a behaviour-changing mode change is invisible to A25 change detection. Exploitation of the collision requires crafting a file whose content equals the link's marker string; impact is low. I would accept this as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "tools/gates/lib/candidate.mjs:58-60",
+        "tools/gates/lib/candidate.mjs:91-92",
+        "tools/gates/lib/candidate.mjs:117-124"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-2 code-security review (reproduced: repro-r2 tests N4, N5). Would accept as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-113",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Working-tree candidate depends on the platform's line-ending conversion; no .gitattributes pins it",
+      "reproduction": "manifestFromWorkingTree (tools/gates/lib/candidate.mjs:73-96) hashes on-disk bytes, while manifestFromRef hashes blobs. With core.autocrlf=true (the Git for Windows default), checked-out text files contain CRLF, so candidate.mjs --stage and validate.mjs --stage (current mode) compute a different ID from the frozen one (repro-r2 N6). The repository has no .gitattributes, and D-005 is silent on line endings. The effect is fail-closed (a false 'changed' result, not a bypass).",
+      "expected": "Either a committed .gitattributes ('* -text' or '* text=auto eol=lf') makes checkouts byte-identical to blobs on every platform, or current mode hashes the git-normalised content (git hash-object --path / the clean filter). D-005 states the rule.",
+      "actual": "Candidate identity is not platform-independent in current mode; a Windows reviewer or CI runner cannot reproduce the frozen ID.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-2/repro-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-2/04-round2-repro-candidate.log",
+        "tools/gates/lib/candidate.mjs:73-96",
+        "docs/delivery/decisions.md:11"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-2 code-security review (reproduced: repro-r2 test N6). Would accept as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-114",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-019",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Delivery documentation drift: D-016 claims bound finding verifications, D-019 says 3 resumes, agents.md lists a stale protected-path set",
+      "reproduction": "(1) docs/delivery/decisions.md:22 (D-016) says the validator accepts a finding verification only when its run executed the cited assignment and started after the freeze. rules.mjs:417 calls checkInvocation without a binding for verifications (see F-DG0-102 re-verification). (2) decisions.md:25 (D-019) says the runner resumes 'up to 3 times', while tools/agents/run-agent.sh:22 defaults MTH_MAX_RESUMES to 6 and its header says 6. (3) docs/delivery/agents.md:20 lists '.claude/agents/**, .claude/settings.json' as the protected Claude paths, while write-scopes.json now protects .claude/**, .mcp.json, CLAUDE*.md at any depth and trading_agent/** (D-020).",
+      "expected": "The decision records and agents.md describe the controls as implemented.",
+      "actual": "Three statements in the delivery records don't match the code.",
+      "evidence": [
+        "docs/delivery/decisions.md:22",
+        "docs/delivery/decisions.md:25",
+        "tools/agents/run-agent.sh:22",
+        "docs/delivery/agents.md:20"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-28T13:38:41Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round-2 code-security review. Would accept (2) and (3) as observations; (1) is resolved by fixing F-DG0-102."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-204",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-017",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "A finding's verification may cite any successful run of the verifying role, including a pre-freeze load-check run; the F-DG0-201 binding is not applied to verifications",
+      "reproduction": "QA_REPO_ROOT=<frozen worktree @83860be> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs --test-name-pattern QA2-N11. The disposable fixture builds a fully valid DG0 gate in which F-DG0-201 (Medium, mandatory) was raised by qa-verifier in round 1 and is CLOSED_VERIFIED in round 2. The test then adds a successful qa-verifier run for task T-DG0-LOAD (assignment docs/delivery/assignments/DG0/T-DG0-LOAD.md, started 11:00Z, before the 13:00Z freeze) and points findings.json F-DG0-201.verification.invocation_reference at it. validateGate() returns []. Cause: tools/gates/lib/rules.mjs:417 calls checkInvocation(repo, stageId, v.invocation_reference, v.by_role, errors, ...) without a binding argument, so the assignment/assignment_sha256 and notBefore checks at rules.mjs:302-308 are skipped for verifications. In this repository, successful LOAD runs exist for all four review roles (docs/delivery/runs/DG0/DG0-T-DG0-LOAD-*), so any finding in the stage could be closed with a verification that cites a run which never examined the fix. docs/delivery/agents.md line 32 (D-016) states the opposite: 'The validator refuses any review, audit or finding verification unless its run ... executed exactly the cited assignment, started after the candidate froze'.",
+      "expected": "A CLOSED_VERIFIED or REJECTED_INVALID finding's verification must be bound to a run that could have verified it. The run must start after the fix (at least after fix_revision was committed, or after the candidate the fix is in froze). It must have executed a review or verification assignment of this stage, for example the verifier's round-N assignment, whose record lists the finding in its <role>.verifications.json. A regression test must cover the pre-freeze LOAD-run case. Otherwise agents.md/D-016 must be corrected, but the gate condition 'independent verification' then remains unenforced.",
+      "actual": "validateGate returns no errors (test QA2-N11 fails with 'validator accepted an invalid gate (no errors)'). The round-2 re-verification of F-DG0-201 itself passed only for reviews (QA2-R201, QA2-R201b pass); the same defect class remains open for finding verifications.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r2.log",
+        "tools/gates/lib/rules.mjs:417",
+        "docs/delivery/agents.md:32"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [
+        {
+          "at": "2026-09-28T13:45:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round 2 QA review."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-205",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "repoFile() accepts an in-repository symlink whose target is outside the repository as existing evidence",
+      "reproduction": "QA_REPO_ROOT=<frozen worktree> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs --test-name-pattern QA2-N12. The test creates app/evidence-link.txt -> /tmp/qa2-outside-*/secret.txt and sets it as REQ-DLV-001 evidence. checkRegister() reports no error, because rules.mjs:49-61 checks containment lexically with path.resolve and then calls statSync, which follows the link. The same helper backs review evidence_paths, gate test evidence and assignments.",
+      "expected": "Evidence resolves (realpath) to a regular file inside the repository, so evidence content is under version control and part of what reviewers and auditors can inspect.",
+      "actual": "Evidence that lives outside the repository is accepted. The symlink itself is hashed into the candidate by its target string (F-DG0-103 fix), so a change of target is detected, but the target content is not. I would accept this as a Low observation if it is tracked.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r2.log",
+        "tools/gates/lib/rules.mjs:49-61"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [
+        {
+          "at": "2026-09-28T13:45:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round 2 QA review; acceptable as a Low observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-206",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Candidate identity ignores the file mode, so an executable-bit change after freeze does not invalidate the approval",
+      "reproduction": "QA2-N14 in docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r2.test.mjs runs 'chmod +x app/main.txt' on a validated fixture. It prints '# QA2-N14 exec-bit change detected by candidate: false' on both the round-1 and round-2 tooling. tools/gates/lib/candidate.mjs:91-92 and :111-113 hash content only; the git tree mode (100644/100755) is read at :104 but not included in the entry.",
+      "expected": "A25: 'A source/test/configuration change invalidates mismatched approval.' The executable bit of scripts that CI and the runner call directly (tools/source/check_extraction.sh, tools/agents/run-agent.sh) is configuration. Include the mode (for example 'file:100755') in each entry's hash, and add a regression test.",
+      "actual": "A mode-only change leaves the candidate ID unchanged. The impact is limited: it cannot change what code runs, only whether it can be executed directly. I would accept this as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-2/10-dg0-gate-negative-r2-on-r2.log",
+        "tools/gates/lib/candidate.mjs:85-115"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [
+        {
+          "at": "2026-09-28T13:45:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round 2 QA review; acceptable as a Low observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-207",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-013",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "REQ-DLV-013 and REQ-DLV-026 acceptance cite validator test names that do not exist",
+      "reproduction": "grep -cF 'a fabricated invocation reference (no recorded run) is rejected' tools/gates/tests/validator.test.mjs returns 0, and so does grep -cF 'a review citing a non-existent run is rejected'. Those strings are cited in the acceptance column of REQ-DLV-013 and REQ-DLV-026 in docs/delivery/requirements.csv. The behaviour is tested under a different name: 'A24 / F-DG0-102: fabricated or incomplete provenance is rejected' (first sub-case: no run directory, 'file not found'). The other six cited test names match exactly (docs/delivery/test-evidence/DG0/qa/round-2/12-dg0-acceptance-evidence.log).",
+      "expected": "Acceptance text names tests that exist, so that 'derived verification' from test names is traceable, or it cites the test by its current title.",
+      "actual": "Two acceptance clauses reference renamed tests. The substance is covered and passes (tools/gates/tests: 20/20). This is traceability only; I would accept it as a Low observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-2/12-dg0-acceptance-evidence.log",
+        "docs/delivery/requirements.csv (REQ-DLV-013, REQ-DLV-026)"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-2/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "fix_revision": null,
+      "verification": null,
+      "acceptance": null,
+      "history": [
+        {
+          "at": "2026-09-28T13:45:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round 2 QA review; acceptable as a Low observation."
+        }
+      ]
     }
   ]
 }

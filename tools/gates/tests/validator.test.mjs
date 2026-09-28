@@ -15,6 +15,7 @@ import { parseCsv } from "../lib/csv.mjs";
 const T_FREEZE = "2026-09-28T12:00:00Z";
 const T_RUN = "2026-09-28T12:30:00Z";
 const ROLES = ["domain-reviewer", "code-security-reviewer", "qa-verifier", "release-auditor"];
+const REQUIRED = ["domain-reviewer", "code-security-reviewer", "qa-verifier"];
 const fixtures = [];
 
 function sh(repo, ...args) {
@@ -147,11 +148,22 @@ function buildValidRepo() {
   const records = {};
   for (const role of ROLES) records[role] = record(role, 2);
   const csRec = get(repo, records["code-security-reviewer"]);
+  // The reporter verifies the fix in its own round-2 sidecar (the source of truth for closure).
+  put(repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json", {
+    verifications: [{ finding_id: "F-DG0-101", result: "PASS", status_after: "CLOSED_VERIFIED", note: "fixed", evidence: [] }],
+  });
+  edit(repo, "docs/delivery/stages.json", (d) => {
+    const recs = (round) => Object.fromEntries(REQUIRED.map((r) => [r, `docs/delivery/reviews/DG0/round-${round}/${r}.json`]));
+    d.stages[0].review_rounds = [
+      { round: 1, candidate_id: cid, frozen_at: T_FREEZE, source_commit: head, records: { "code-security-reviewer": "docs/delivery/reviews/DG0/round-1/code-security-reviewer.json" } },
+      { round: 2, candidate_id: cid, frozen_at: T_FREEZE, source_commit: head, records: recs(2) },
+    ];
+  });
   put(repo, "docs/delivery/findings.json", {
     schema_version: 1,
     findings: [{
       ...finding, status: "CLOSED_VERIFIED", fix_revision: head,
-      verification: { by_role: "code-security-reviewer", invocation_reference: csRec.invocation_reference, at: T_RUN, result: "PASS", evidence: [] },
+      verification: { by_role: "code-security-reviewer", invocation_reference: csRec.invocation_reference, at: T_RUN, result: "PASS", evidence: [], note: "fixed" },
       acceptance: null, history: [{ at: T_FREEZE, status: "OPEN" }, { at: T_RUN, status: "CLOSED_VERIFIED" }],
     }],
   });
@@ -352,7 +364,7 @@ test("A24 / F-DG0-106 / F-DG0-202: incomplete requirements, placeholder evidence
 
 test("A25: a source change invalidates the approval; review metadata does not", () => {
   const { repo } = buildValidRepo();
-  put(repo, "docs/delivery/reviews/DG0/round-3/notes.md", "late note\n");
+  put(repo, "docs/delivery/reviews/DG0/round-2/notes.md", "late note\n");
   put(repo, "docs/delivery/test-evidence/DG0/extra.log", "log\n");
   put(repo, "docs/delivery/progress.md", "checkpoint\n");
   put(repo, "trading_agent/unrelated.py", "print('edited unrelated project')\n");
@@ -376,7 +388,7 @@ test("A25 / F-DG0-103: symlinks are part of the candidate identity; submodules a
   symlinkSync("app.txt", join(repo, "entry.txt"));
   const spec = { include: ["**"], exclude: ["trading_agent/**"] };
   const before = candidateId(manifestFromWorkingTree(repo, spec));
-  assert.ok(manifestFromWorkingTree(repo, spec).some((e) => e.path === "entry.txt" && e.type === "symlink"));
+  assert.ok(manifestFromWorkingTree(repo, spec).some((e) => e.path === "entry.txt" && e.mode === "120000"));
   unlinkSync(join(repo, "entry.txt"));
   symlinkSync("other.txt", join(repo, "entry.txt"));
   assert.notEqual(candidateId(manifestFromWorkingTree(repo, spec)), before, "repointing a symlink must change the candidate");
@@ -475,4 +487,94 @@ test("F-DG0-107: the CSV parser rejects text after a closing quote and ragged ro
   assert.throws(() => parseCsv('a,b\n"x"y,z\n'), /after closing quote/);
   assert.throws(() => parseCsv("a,b\n1,2,3\n"), /has 3 fields, header has 2/);
   assert.deepEqual(parseCsv('a,b\n"x,1","y ""q"""\n').rows, [{ a: "x,1", b: 'y "q"' }]);
+});
+
+test("F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification sidecar and bound run", () => {
+  // A later FAIL verification keeps the finding open even if findings.json says closed.
+  const a = buildValidRepo();
+  put(a.repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json", {
+    verifications: [{ finding_id: "F-DG0-101", result: "FAIL", status_after: "OPEN", note: "still broken", evidence: [] }],
+  });
+  const ea = validateGate(a.repo, "DG0");
+  expectError(ea, /latest reviewer verification .* is FAIL/);
+  expectError(ea, /differs from the reviewer's status_after OPEN/);
+  // No sidecar at all.
+  const b = buildValidRepo();
+  unlinkSync(join(b.repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json"));
+  expectError(validateGate(b.repo, "DG0"), /no reviewer verifications sidecar verifies it/);
+  // findings.json cites a pre-freeze LOAD run instead of the verifier's own round run.
+  const c = buildValidRepo();
+  put(c.repo, "docs/delivery/assignments/DG0/T-DG0-LOAD.md", "load check\n");
+  const loadRef = makeRun(c.repo, "code-security-reviewer", { assignment: "docs/delivery/assignments/DG0/T-DG0-LOAD.md", task: "T-DG0-LOAD", startedAt: "2026-09-28T11:00:00Z" });
+  edit(c.repo, "docs/delivery/findings.json", (d) => (d.findings[0].verification.invocation_reference = loadRef));
+  expectError(validateGate(c.repo, "DG0"), /not the verifying reviewer's own run/);
+  // Verification evidence must exist; fix_revision must be a commit contained in the verified candidate.
+  const e = buildValidRepo();
+  put(e.repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json", {
+    verifications: [{ finding_id: "F-DG0-101", result: "PASS", status_after: "CLOSED_VERIFIED", note: "fixed", evidence: ["does/not/exist.log"] }],
+  });
+  edit(e.repo, "docs/delivery/findings.json", (d) => (d.findings[0].verification.evidence = ["does/not/exist.log"]));
+  expectError(validateGate(e.repo, "DG0"), /verification evidence is not an existing repository file/);
+  const f = buildValidRepo();
+  edit(f.repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = "not-a-commit"));
+  expectError(validateGate(f.repo, "DG0"), /needs a full fix_revision commit id/);
+  const g = buildValidRepo();
+  put(g.repo, "later.txt", "a fix committed after the candidate froze\n");
+  sh(g.repo, "add", "later.txt");
+  sh(g.repo, "commit", "-qm", "later fix");
+  const later = sh(g.repo, "rev-parse", "HEAD");
+  edit(g.repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = later));
+  expectError(validateGate(g.repo, "DG0"), /is not in the verified round-2 candidate/);
+});
+
+test("F-DG0-101 residual: deleting an earlier review round is detected", () => {
+  // Round directory on disk but not recorded, and recorded but missing.
+  const a = buildValidRepo();
+  put(a.repo, "docs/delivery/reviews/DG0/round-9/qa-verifier.json", { stray: true });
+  expectError(validateGate(a.repo, "DG0"), /round-9 exists but is not recorded/);
+  const b = buildValidRepo();
+  rmSync(join(b.repo, "docs/delivery/reviews/DG0/round-1"), { recursive: true, force: true });
+  edit(b.repo, "docs/delivery/findings.json", (d) => (d.findings = []));
+  expectError(validateGate(b.repo, "DG0"), /round 1 code-security-reviewer: file not found/);
+  // Deleting committed review evidence is visible in git history even if stages.json is rewritten too.
+  const c = buildValidRepo();
+  sh(c.repo, "add", "-A");
+  sh(c.repo, "commit", "-qm", "reviews recorded");
+  rmSync(join(c.repo, "docs/delivery/reviews/DG0/round-1"), { recursive: true, force: true });
+  edit(c.repo, "docs/delivery/stages.json", (d) => (d.stages[0].review_rounds = d.stages[0].review_rounds.filter((r) => r.round !== 1)));
+  edit(c.repo, "docs/delivery/findings.json", (d) => (d.findings = []));
+  sh(c.repo, "add", "-A");
+  sh(c.repo, "commit", "-qm", "hide round 1");
+  expectError(validateGate(c.repo, "DG0"), /was deleted from git history/);
+});
+
+test("F-DG0-205: evidence that is a symlink to a file outside the repository is rejected", () => {
+  const { repo, records } = buildValidRepo();
+  const outside = mkdtempSync(join(tmpdir(), "outside-"));
+  fixtures.push(outside);
+  writeFileSync(join(outside, "secret.txt"), "not under version control\n");
+  symlinkSync(join(outside, "secret.txt"), join(repo, "docs/delivery/test-evidence/DG0/link.txt"));
+  edit(repo, records["domain-reviewer"], (r) => r.evidence_paths.push("docs/delivery/test-evidence/DG0/link.txt"));
+  expectError(validateGate(repo, "DG0"), /evidence path is not an existing repository file: docs\/delivery\/test-evidence\/DG0\/link\.txt/);
+});
+
+test("F-DG0-112 / F-DG0-206: file mode and entry type are part of the candidate identity", () => {
+  const repo = mkdtempSync(join(tmpdir(), "cand-mode-"));
+  fixtures.push(repo);
+  sh(repo, "init", "-q", "-b", "main");
+  const spec = { include: ["**"], exclude: ["trading_agent/**"] };
+  put(repo, "run.sh", "echo hi\n");
+  const before = candidateId(manifestFromWorkingTree(repo, spec));
+  execFileSync("chmod", ["+x", join(repo, "run.sh")]);
+  assert.notEqual(candidateId(manifestFromWorkingTree(repo, spec)), before, "exec-bit change must change the candidate");
+  // A regular file whose bytes equal a symlink's canonical form no longer collides with the symlink.
+  const r2 = mkdtempSync(join(tmpdir(), "cand-type-"));
+  fixtures.push(r2);
+  sh(r2, "init", "-q", "-b", "main");
+  put(r2, "app.txt", "a\n");
+  symlinkSync("app.txt", join(r2, "entry.txt"));
+  const asLink = candidateId(manifestFromWorkingTree(r2, spec));
+  unlinkSync(join(r2, "entry.txt"));
+  put(r2, "entry.txt", "symlink:app.txt");
+  assert.notEqual(candidateId(manifestFromWorkingTree(r2, spec)), asLink);
 });

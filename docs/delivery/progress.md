@@ -4,20 +4,20 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 
 ## Current checkpoint
 
-- **Active stage:** P0 / DG0, state **FIXING** (after review round 1)
-- **Round-1 candidate:** `sha256:dea5e75a…` (commit `26642c7`), now superseded by the repairs
-- **Round 1 outcome:**
-  - domain-reviewer FAIL (5 findings: 1 Medium, 4 Low);
-  - code-security-reviewer BLOCKED (9 findings: 2 High mandatory, 3 Medium, 4 Low). A permission-classifier outage stopped most of its shell checks;
-  - qa-verifier FAIL (3 findings: 1 Medium mandatory, 2 Low).
-- **Repairs:**
-  - The 12 orchestrator-owned findings were fixed in `6c67698`, with regression tests (31/31 pass). They are FIXED_PENDING_VERIFICATION.
-  - The 5 analyst-owned findings (F-DG0-001/002/003/005/203) are being repaired in T-DG0-AN-05, a re-run after the classifier outage.
+- **Active stage:** P0 / DG0, state **REVIEWING** (round 2)
+- **Round-2 candidate:** `sha256:d47b51caa83c28b068da75895b530e9b59d12b7ddb3356bf4aa1d71ad23c76c3` (commit `83860be`, 71 files)
+- **Round 1** (candidate `sha256:dea5e75a…`, commit `26642c7`) raised 17 findings:
+  - 2 High, mandatory (validator bypasses: finding escape, fabricated provenance);
+  - 5 Medium;
+  - 10 Low.
+- **Repairs:** all 17 are fixed and pending independent verification.
+  - 12 tooling findings, fixed by the orchestrator in `6c67698`, with regression tests (31/31 pass).
+  - 5 analysis findings, fixed by transformation-analyst in AN-05/06/07.
+- **Environment issue (recurring):** the permission classifier intermittently returns no verdict for nested agent sessions. The runner now resumes the same session automatically (D-019), and agents can signal `CLASSIFIER-BLOCKED`.
 - **Next:**
-  1. Merge AN-05 and run `validate.mjs --register DG0`.
-  2. Freeze a new candidate.
-  3. Run review round 2: all three reviewers, each verifying its own findings.
-  4. Run the release audit.
+  1. Import the round-2 findings and verifications.
+  2. If all three reviewers PASS, run the release audit; otherwise repair and start round 3.
+  3. After DG0 is APPROVED, run `validate.mjs --stage DG0 --historical`, then start P1 with T-DG1-ARCH-01.
 
 ## Done in P0 so far
 

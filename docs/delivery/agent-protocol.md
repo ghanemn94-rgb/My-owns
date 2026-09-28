@@ -7,6 +7,7 @@ This file is mandatory reading for every project agent in `.claude/agents/`. It 
 - **DG0–DG7** are *software delivery gates* for the engineering team. Their records live in `docs/delivery/`.
 - **G1–G6** are *business transformation approvals inside the product* (Case for Change … Sustain). They are product features.
 - An engineering agent can never grant a real business, Finance or IT production approval. A demo Sponsor approval in seed data approves nothing real.
+- Product gate G6 (Sustain) never implies that engineering gate DG7 has passed, and DG7 never implies any G1–G6 business approval.
 
 ## Sources of truth
 
@@ -61,6 +62,8 @@ Each finding gets a stable ID `F-<DGx>-<NNN>` (the orchestrator allocates number
 | Low | Optional polish |
 
 A severity label never overrides the mandatory-requirement rule. An author never closes their own finding. Only the originating reviewer or another qualified non-author verifies a fix.
+
+A finding closes only through a reviewer-authored `<role>.verifications.json` sidecar in a review round. The sidecar's **latest** entry for the finding decides, and it's bound to that reviewer's own run for the round. The orchestrator mirrors it into `findings.json` with `tools/gates/import-findings.mjs`, and the validator checks that the two match (D-018).
 
 ## Write scopes (mechanically enforced)
 

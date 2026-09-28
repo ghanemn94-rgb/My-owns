@@ -37,14 +37,23 @@ export function matches(path, patterns, flags = "") {
   return patterns.some((p) => globToRegExp(p, flags).test(path));
 }
 
-export function repoRootOf(filePath) {
-  let dir = dirname(resolve(filePath));
-  while (true) {
-    if (existsSync(join(dir, ".git"))) return dir;
-    const parent = dirname(dir);
-    if (parent === dir) return null;
-    dir = parent;
+// The repository this guard belongs to: fixed at the guard's own location (tools/agents/ -> repo root), so a
+// planted nested '.git' cannot move the root and un-protect paths (F-DG0-111).
+export const GUARD_ROOT = resolve(here, "..", "..");
+
+/** Root used to scope a path: the guard's repository, or (for other trees, e.g. reviewer scratch clones) null. */
+export function repoRootOf(filePath, root = GUARD_ROOT) {
+  const abs = resolve(filePath);
+  let realRoot = root;
+  try {
+    realRoot = realpathSync(root);
+  } catch {
+    /* keep lexical */
   }
+  for (const r of new Set([root, realRoot])) {
+    if (abs === r || abs.startsWith(r + sep)) return r;
+  }
+  return null;
 }
 
 /** Resolves symlinks on the deepest existing ancestor, then re-appends the not-yet-existing remainder. */
@@ -66,24 +75,25 @@ export function canonicalPath(filePath) {
   return rest.length ? join(real, ...rest) : real;
 }
 
-function decideOne(scopes, cfg, roleName, filePath) {
-  const root = repoRootOf(filePath);
-  if (!root) return { allow: true, reason: "outside any git work tree (scratch)" };
-  const rel = relative(root, resolve(filePath)).split(sep).join("/");
+function decideOne(scopes, cfg, roleName, filePath, root) {
+  const repo = repoRootOf(filePath, root);
+  if (!repo) return { allow: true, reason: "outside the guarded repository (scratch)" };
+  const rel = relative(repo, resolve(filePath)).split(sep).join("/");
+  if (rel.split("/").some((seg) => seg.toLowerCase() === ".git")) return { allow: false, reason: `${roleName} may not write '${rel}' (git metadata)` };
   const expand = (list) => list.flatMap((p) => (p.startsWith("@") ? scopes[p.slice(1)] || [] : [p]));
   if (matches(rel, expand(cfg.deny), "i")) return { allow: false, reason: `${roleName} may not write '${rel}' (protected path)` };
   if (!matches(rel, expand(cfg.allow))) return { allow: false, reason: `${roleName} may not write '${rel}' (outside role write scope)` };
   return { allow: true, reason: "within scope" };
 }
 
-export function decide(scopes, roleName, filePath) {
+export function decide(scopes, roleName, filePath, root = GUARD_ROOT) {
   const cfg = scopes.roles[roleName];
   if (!cfg) return { allow: false, reason: `unknown role '${roleName}' has no write scope` };
-  const lexical = decideOne(scopes, cfg, roleName, filePath);
+  const lexical = decideOne(scopes, cfg, roleName, filePath, root);
   if (!lexical.allow) return lexical;
   const real = canonicalPath(filePath);
   if (real !== resolve(filePath)) {
-    const viaLink = decideOne(scopes, cfg, roleName, real);
+    const viaLink = decideOne(scopes, cfg, roleName, real, root);
     if (!viaLink.allow) return { allow: false, reason: `${viaLink.reason} (reached through a symlink)` };
   }
   return lexical;

@@ -1,5 +1,5 @@
 // Delivery gate rules (master prompt §0.4–§0.5). Pure checks over repository files; every check returns error strings.
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { gunzipSync } from "node:zlib";
@@ -54,7 +54,10 @@ export function repoFile(repo, ref) {
   const abs = resolve(root, rel);
   if (!abs.startsWith(root + sep)) return false;
   try {
-    return statSync(abs).isFile();
+    // Symlinks must resolve to a regular file that is itself inside the repository (F-DG0-205).
+    const realRoot = realpathSync(root);
+    const real = realpathSync(abs);
+    return real.startsWith(realRoot + sep) && statSync(real).isFile();
   } catch {
     return false;
   }
@@ -366,7 +369,8 @@ export function collectRaisedFindings(repo, stageId, errors) {
   return { raised, referenced };
 }
 
-export function checkFindings(repo, stageId, reviewRecords, gate, errors) {
+export function checkFindings(repo, stage, reviewRecords, gate, errors) {
+  const stageId = stage.id;
   const doc = readJson(repo, "docs/delivery/findings.json", errors, "findings.json");
   if (!doc) return;
   const before = errors.length;
@@ -378,6 +382,7 @@ export function checkFindings(repo, stageId, reviewRecords, gate, errors) {
     byId.set(f.id, f);
   }
   const { raised, referenced } = collectRaisedFindings(repo, stageId, errors);
+  const verifications = collectVerifications(repo, stage, errors);
   for (const [id, where] of referenced) {
     if (!byId.has(id)) errors.push(`${where}: lists finding ${id}, which is not in findings.json`);
     else if (!raised.has(id)) errors.push(`${where}: lists finding ${id}, which no reviewer sidecar raised`);
@@ -406,15 +411,7 @@ export function checkFindings(repo, stageId, reviewRecords, gate, errors) {
       continue;
     }
     if (f.status === "CLOSED_VERIFIED" || f.status === "REJECTED_INVALID") {
-      const v = f.verification;
-      if (!v) {
-        errors.push(`${where}: ${f.status} without independent verification`);
-        continue;
-      }
-      if (v.result !== "PASS") errors.push(`${where}: verification result ${v.result}`);
-      if (v.by_role === f.owner) errors.push(`${where}: verified by its own owner (${f.owner})`);
-      if (f.status === "CLOSED_VERIFIED" && !f.fix_revision) errors.push(`${where}: CLOSED_VERIFIED without fix_revision`);
-      checkInvocation(repo, stageId, v.invocation_reference, v.by_role, errors, `${where} verification`);
+      checkClosure(repo, stage, gate, f, verifications.get(f.id), where, errors);
     }
     if (f.status === "ACCEPTED_OBSERVATION") {
       if (f.severity !== "Low" || f.mandatory_violation) errors.push(`${where}: only Low, non-mandatory findings may be accepted as observations`);
@@ -435,13 +432,130 @@ export function checkFindings(repo, stageId, reviewRecords, gate, errors) {
   }
 }
 
+/** The review round entry (stages.json) for a round directory name such as "round-2". */
+function roundEntry(stage, roundDir) {
+  return stage.review_rounds.find((r) => `round-${r.round}` === roundDir);
+}
+
+function isAncestor(repo, maybeAncestor, commit) {
+  try {
+    execFileSync("git", ["-C", repo, "merge-base", "--is-ancestor", maybeAncestor, commit], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Reviewer-authored verification sidecars (<role>.verifications.json) are the source of truth for closing findings.
+ * Returns finding id -> the latest verification (highest round; a FAIL in the same round wins), with the
+ * provenance of the reviewer's own record for that round.
+ */
+export function collectVerifications(repo, stage, errors) {
+  const out = new Map();
+  const dir = join(repo, "docs/delivery/reviews", stage.id);
+  if (!existsSync(dir)) return out;
+  const rounds = readdirSync(dir).filter((d) => /^round-\d+$/.test(d)).sort((a, b) => Number(a.slice(6)) - Number(b.slice(6)));
+  for (const round of rounds) {
+    for (const file of readdirSync(join(dir, round)).sort()) {
+      const m = file.match(/^(.+)\.verifications\.json$/);
+      if (!m) continue;
+      const role = m[1];
+      const rel = `docs/delivery/reviews/${stage.id}/${round}/${file}`;
+      const recRel = `docs/delivery/reviews/${stage.id}/${round}/${role}.json`;
+      const data = readJson(repo, rel, errors, "verifications sidecar");
+      const rec = readJson(repo, recRel, errors, `verifications sidecar ${rel} record`);
+      if (!data || !rec) continue;
+      if (!REVIEW_ROLES.includes(role) || rec.reviewer_role !== role) {
+        errors.push(`${rel}: sidecar role ${role} does not match its record`);
+        continue;
+      }
+      for (const v of data.verifications || []) {
+        const prev = out.get(v.finding_id);
+        const entry = { ...v, role, round: Number(round.slice(6)), roundDir: round, record: rec, recordPath: recRel, sidecar: rel };
+        if (!prev || entry.round > prev.round || (entry.round === prev.round && v.result === "FAIL")) out.set(v.finding_id, entry);
+      }
+    }
+  }
+  return out;
+}
+
+/** A closed finding must be closed by the latest reviewer verification, bound to a post-freeze run that saw the fix. */
+function checkClosure(repo, stage, gate, f, v, where, errors) {
+  if (!v) return void errors.push(`${where}: ${f.status} but no reviewer verifications sidecar verifies it`);
+  if (v.result !== "PASS") errors.push(`${where}: latest reviewer verification (${v.sidecar}) is ${v.result}`);
+  if (v.status_after !== f.status) errors.push(`${where}: findings.json status ${f.status} differs from the reviewer's status_after ${v.status_after}`);
+  if (v.role === f.owner) errors.push(`${where}: verified by its own owner (${f.owner})`);
+  const recorded = f.verification;
+  if (!recorded) errors.push(`${where}: findings.json has no verification record`);
+  else {
+    if (recorded.by_role !== v.role) errors.push(`${where}: findings.json verification by ${recorded.by_role}, sidecar by ${v.role}`);
+    if (recorded.result !== v.result) errors.push(`${where}: findings.json verification result differs from the reviewer's sidecar`);
+    if (JSON.stringify(recorded.invocation_reference) !== JSON.stringify(v.record.invocation_reference)) {
+      errors.push(`${where}: verification invocation is not the verifying reviewer's own run for ${v.roundDir}`);
+    }
+    if (JSON.stringify(recorded.evidence || []) !== JSON.stringify(v.evidence || [])) errors.push(`${where}: findings.json verification evidence differs from the sidecar`);
+  }
+  for (const ev of v.evidence || []) if (!repoFile(repo, ev)) errors.push(`${where}: verification evidence is not an existing repository file: ${ev}`);
+  const round = roundEntry(stage, v.roundDir);
+  if (!round) return void errors.push(`${where}: verification round ${v.roundDir} is not recorded in stages.json review_rounds`);
+  if (v.record.candidate_id !== round.candidate_id) errors.push(`${where}: verifying record reviewed ${v.record.candidate_id}, not the ${v.roundDir} candidate`);
+  checkInvocation(repo, stage.id, v.record.invocation_reference, v.role, errors, `${where} verification`, {
+    assignment: v.record.assignment,
+    notBefore: round.frozen_at,
+  });
+  if (f.status === "CLOSED_VERIFIED") {
+    if (!f.fix_revision || !/^[0-9a-f]{40}$/.test(f.fix_revision)) errors.push(`${where}: CLOSED_VERIFIED needs a full fix_revision commit id`);
+    else {
+      if (!isAncestor(repo, f.fix_revision, round.source_commit)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verified ${v.roundDir} candidate (${round.source_commit.slice(0, 10)})`);
+      if (gate && !isAncestor(repo, f.fix_revision, gate.source_commit)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the gate candidate`);
+    }
+  }
+}
+
+/**
+ * Every review round recorded in stages.json must still exist with its records and sidecars, every round directory
+ * must be recorded, and nothing under the stage's reviews/ or runs/ may ever have been deleted from git history.
+ */
+export function checkReviewRounds(repo, stage, errors) {
+  const dir = join(repo, "docs/delivery/reviews", stage.id);
+  const onDisk = existsSync(dir) ? readdirSync(dir).filter((d) => /^round-\d+$/.test(d)) : [];
+  const recorded = new Set(stage.review_rounds.map((r) => `round-${r.round}`));
+  for (const d of onDisk) if (!recorded.has(d)) errors.push(`review rounds: ${stage.id}/${d} exists but is not recorded in stages.json`);
+  for (const r of stage.review_rounds) {
+    for (const [role, rel] of Object.entries(r.records)) {
+      const label = `review rounds: ${stage.id} round ${r.round} ${role}`;
+      const rec = readJson(repo, rel, errors, label);
+      if (!rec) continue;
+      if (rec.reviewer_role !== role || rec.round !== r.round || rec.stage_id !== stage.id) errors.push(`${label}: record does not match its round entry`);
+      if (rec.candidate_id !== r.candidate_id) errors.push(`${label}: record reviewed ${rec.candidate_id}, round candidate is ${r.candidate_id}`);
+      if (rec.findings && rec.findings.length && !repoFile(repo, rel.replace(/\.json$/, ".findings.json"))) {
+        errors.push(`${label}: record lists findings but its .findings.json sidecar is missing`);
+      }
+    }
+  }
+  try {
+    const deleted = git(repo, ["log", "--no-renames", "--diff-filter=D", "--name-only", "--format=", "--",
+      `docs/delivery/reviews/${stage.id}`, `docs/delivery/runs/${stage.id}`]).toString().split("\n").filter(Boolean);
+    for (const p of [...new Set(deleted)]) errors.push(`review rounds: ${p} was deleted from git history; review evidence is append-only`);
+  } catch {
+    /* not a git repository with history: nothing to check */
+  }
+}
+
 // ---------- candidate ----------
 export function checkCandidate(repo, stage, gate, mode, errors) {
   const manifest = readJson(repo, gate.manifest_path, errors, "candidate manifest");
   if (!manifest) return;
   if (manifest.stage_id !== stage.id) errors.push(`candidate manifest: stage_id ${manifest.stage_id} != ${stage.id}`);
   if (manifest.candidate_id !== gate.candidate_id) errors.push(`candidate manifest: id ${manifest.candidate_id} != gate ${gate.candidate_id}`);
-  if (!Array.isArray(manifest.entries) || candidateId(manifest.entries) !== manifest.candidate_id) errors.push("candidate manifest: entries do not hash to its candidate_id (tampered)");
+  let manifestHash = null;
+  try {
+    manifestHash = Array.isArray(manifest.entries) ? candidateId(manifest.entries) : null;
+  } catch (e) {
+    errors.push(`candidate manifest: ${e.message}`);
+  }
+  if (manifestHash !== manifest.candidate_id) errors.push("candidate manifest: entries do not hash to its candidate_id (tampered)");
   if (manifest.source_commit !== gate.source_commit) errors.push("candidate manifest: source_commit differs from the gate record");
   if (JSON.stringify(manifest.spec) !== JSON.stringify(stage.candidate_spec)) errors.push("candidate manifest: spec differs from the stage's candidate_spec");
   for (const e of specPolicyErrors(manifest.spec)) errors.push(`candidate manifest: spec ${e}`);
@@ -564,11 +678,22 @@ export function validateGate(repo, stageId, { mode = "current", stagesDoc = null
     if (t.result !== "PASS") errors.push(`gate ${stageId}: test '${t.name}' is ${t.result}`);
     for (const ev of t.evidence) if (!repoFile(repo, ev)) errors.push(`gate ${stageId}: test evidence is not an existing repository file: ${ev}`);
   }
-  checkFindings(repo, stageId, records, gate, errors);
+  checkReviewRounds(repo, stage, errors);
+  checkFindings(repo, stage, records, gate, errors);
   checkRegister(repo, stageId, errors, gate, records);
   if (mode === "historical") {
     const evidence = [gate.manifest_path, ...REQUIRED_REVIEWERS.map((r) => gate.reviews[r]).filter(Boolean), gate.release_audit];
     for (const rec of records) evidence.push(...runFiles(stageId, rec.invocation_reference.run_id));
+    const reviewDir = join(repo, "docs/delivery/reviews", stageId);
+    const walk = (abs, rel) => {
+      for (const name of readdirSync(abs)) {
+        const a = join(abs, name);
+        const r = `${rel}/${name}`;
+        if (statSync(a).isDirectory()) walk(a, r);
+        else evidence.push(r);
+      }
+    };
+    if (existsSync(reviewDir)) walk(reviewDir, `docs/delivery/reviews/${stageId}`);
     checkApprovalImmutable(repo, stage.gate_record, [...new Set(evidence)], stageId, errors);
   }
   return errors;

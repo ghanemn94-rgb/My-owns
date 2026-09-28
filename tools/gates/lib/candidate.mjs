@@ -88,8 +88,8 @@ export function manifestFromWorkingTree(repo, spec) {
     } catch {
       continue; // deleted in working tree but still in index
     }
-    if (st.isSymbolicLink()) entries.push({ path: p, sha256: symlinkHash(readlinkSync(join(repo, p))), type: "symlink" });
-    else if (st.isFile()) entries.push({ path: p, sha256: sha256(readFileSync(join(repo, p))), type: "file" });
+    if (st.isSymbolicLink()) entries.push({ path: p, sha256: symlinkHash(readlinkSync(join(repo, p))), mode: "120000" });
+    else if (st.isFile()) entries.push({ path: p, sha256: sha256(readFileSync(join(repo, p))), mode: st.mode & 0o111 ? "100755" : "100644" });
     else if (st.isDirectory()) throw new Error(`'${p}' is a directory (nested repository?) and cannot be part of a candidate`);
   }
   return entries;
@@ -108,9 +108,10 @@ export function manifestFromRef(repo, ref, spec) {
     const o = objects.get(p);
     if (o.type !== "blob") throw new Error(`submodule/gitlink '${p}' is not supported in a candidate`);
     const content = git(repo, ["cat-file", "blob", o.oid]);
+    if (!["100644", "100755", "120000"].includes(o.mode)) throw new Error(`'${p}' has unsupported git mode ${o.mode}`);
     return o.mode === "120000"
-      ? { path: p, sha256: symlinkHash(content.toString("utf8")), type: "symlink" }
-      : { path: p, sha256: sha256(content), type: "file" };
+      ? { path: p, sha256: symlinkHash(content.toString("utf8")), mode: o.mode }
+      : { path: p, sha256: sha256(content), mode: o.mode };
   });
 }
 
@@ -118,14 +119,18 @@ export function candidateId(entries) {
   const canonical = entries
     .slice()
     .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
-    .map((e) => `${e.sha256}  ${e.path}\n`)
+    .map((e) => {
+      // The git mode (100644 / 100755 / 120000) is part of identity: exec-bit changes and file/symlink swaps count.
+      if (!["100644", "100755", "120000"].includes(e.mode)) throw new Error(`manifest entry '${e.path}' lacks a valid mode`);
+      return `${e.sha256}  ${e.mode}  ${e.path}\n`;
+    })
     .join("");
   return "sha256:" + sha256(Buffer.from(canonical, "utf8"));
 }
 
 export function diffManifests(a, b) {
-  const ma = new Map(a.map((e) => [e.path, e.sha256]));
-  const mb = new Map(b.map((e) => [e.path, e.sha256]));
+  const ma = new Map(a.map((e) => [e.path, `${e.sha256}:${e.mode}`]));
+  const mb = new Map(b.map((e) => [e.path, `${e.sha256}:${e.mode}`]));
   const added = [...mb.keys()].filter((p) => !ma.has(p));
   const removed = [...ma.keys()].filter((p) => !mb.has(p));
   const changed = [...ma.keys()].filter((p) => mb.has(p) && ma.get(p) !== mb.get(p));

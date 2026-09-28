@@ -7,13 +7,15 @@ import { mkdtempSync, mkdirSync, readFileSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { decide } from "../guard-write.mjs";
+import { decide as decideAt, GUARD_ROOT } from "../guard-write.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const scopes = JSON.parse(readFileSync(join(here, "..", "write-scopes.json"), "utf8"));
 const repo = mkdtempSync(join(tmpdir(), "guard-fixture-"));
 execFileSync("git", ["init", "-q", repo]);
 const p = (rel) => join(repo, rel);
+// Tests use a fixture repository as the guarded root; production uses GUARD_ROOT (the guard's own repository).
+const decide = (sc, role, file, root = repo) => decideAt(sc, role, file, root);
 
 test("reviewers may write only review records and evidence", () => {
   for (const role of ["domain-reviewer", "code-security-reviewer"]) {
@@ -62,10 +64,10 @@ test("unknown roles are denied and scratch space outside a repo is allowed", () 
 
 test("the hook entry point blocks with exit code 2 and allows with 0", () => {
   const script = join(here, "..", "guard-write.mjs");
-  const block = spawnSync("node", [script, "domain-reviewer"], { input: JSON.stringify({ tool_input: { file_path: p("apps/api/x.ts") } }) });
+  const block = spawnSync("node", [script, "domain-reviewer"], { input: JSON.stringify({ tool_input: { file_path: join(GUARD_ROOT, "apps/api/x.ts") } }) });
   assert.equal(block.status, 2);
   assert.match(block.stderr.toString(), /BLOCKED by write guard/);
-  const allow = spawnSync("node", [script, "domain-reviewer"], { input: JSON.stringify({ tool_input: { file_path: p("docs/delivery/reviews/DG1/a.json") } }) });
+  const allow = spawnSync("node", [script, "domain-reviewer"], { input: JSON.stringify({ tool_input: { file_path: join(GUARD_ROOT, "docs/delivery/reviews/DG1/a.json") } }) });
   assert.equal(allow.status, 0);
   const garbage = spawnSync("node", [script, "domain-reviewer"], { input: "{not json" });
   assert.equal(garbage.status, 2, "unreadable payload must fail closed");
@@ -94,13 +96,33 @@ test("F-DG0-105: writes through a symlink into a protected path are blocked", ()
   mkdirSync(join(r, "tools", "gates", "lib"), { recursive: true });
   mkdirSync(join(r, "docs", "analysis"), { recursive: true });
   symlinkSync(join(r, "tools", "gates"), join(r, "docs", "analysis", "lnk"));
-  const verdict = decide(scopes, "transformation-analyst", join(r, "docs", "analysis", "lnk", "lib", "rules.mjs"));
+  const verdict = decide(scopes, "transformation-analyst", join(r, "docs", "analysis", "lnk", "lib", "rules.mjs"), r);
   assert.equal(verdict.allow, false);
   assert.match(verdict.reason, /symlink/);
-  assert.equal(decide(scopes, "transformation-analyst", join(r, "docs", "analysis", "real.md")).allow, true);
+  assert.equal(decide(scopes, "transformation-analyst", join(r, "docs", "analysis", "real.md"), r).allow, true);
 });
 
 test("F-DG0-105: protected-path matching is case-insensitive", () => {
   assert.equal(decide(scopes, "backend-workflow-engineer", p("Tools/Gates/lib/rules.mjs")).allow, false);
   assert.equal(decide(scopes, "backend-workflow-engineer", p("DOCS/SOURCE/playbook.md")).allow, false);
+});
+
+test("F-DG0-111: a planted nested .git cannot move the guarded root; .git paths are never writable", () => {
+  const r = mkdtempSync(join(tmpdir(), "guard-nested-"));
+  execFileSync("git", ["init", "-q", r]);
+  mkdirSync(join(r, "tools", "gates", "lib"), { recursive: true });
+  for (const planted of ["tools/.git", "docs/.git", ".github/.git", ".git/config", "apps/.GIT/x"]) {
+    assert.equal(decide(scopes, "backend-workflow-engineer", join(r, planted), r).allow, false, `must not write ${planted}`);
+  }
+  // Even if a nested .git exists, paths are scoped from the fixed root.
+  execFileSync("git", ["init", "-q", join(r, "tools")]);
+  const v = decide(scopes, "backend-workflow-engineer", join(r, "tools", "gates", "lib", "rules.mjs"), r);
+  assert.equal(v.allow, false);
+  assert.match(v.reason, /tools\/gates\/lib\/rules\.mjs/);
+});
+
+test("the production guard root is this repository", () => {
+  assert.ok(readFileSync(join(GUARD_ROOT, "tools", "agents", "write-scopes.json")));
+  assert.equal(decideAt(scopes, "domain-reviewer", join(GUARD_ROOT, "tools", "gates", "validate.mjs")).allow, false);
+  assert.equal(decideAt(scopes, "domain-reviewer", join(GUARD_ROOT, "docs", "delivery", "reviews", "DG1", "x.json")).allow, true);
 });
