@@ -1,0 +1,109 @@
+# DG0 round-10 domain review: consolidated check log (domain-reviewer)
+# Candidate sha256:1e959f250e6f2b6e622d56464aa7d8be450628805392633046621b60bbe90c54, commit 85a0efac57008884109e40e4bea56f14c5c892aa
+# Run DG0-T-DG0-REV-DOM-R10-domain-reviewer-20260928T172954Z-7ffa3050 (session 7ffa3050-bc0e-40fa-93ea-080efe082ed0)
+# Disposable tree: fresh `git clone` of /home/user/My-owns checked out at 85a0efa in the session scratchpad ("cand"); docx unzipped to scratchpad "docx". Removed after the review.
+# Scripts: copied unchanged from docs/delivery/test-evidence/DG0/domain/round-7/scripts/ (ext7.py, reg7.py, tpl7.py, deliv7.py); mp10.py = mp7.py with random.seed(10) (sed 's/random.seed(7)/random.seed(10)/'), a new sample that differs from rounds 7/8/9. Other checks are inline python heredocs, described below.
+
+## 00 candidate
+$ sha256sum docs/delivery/assignments/DG0/round-10/review-domain-reviewer.md -> 3e1a02c5bd9ababedb3899c4d61a320759b3cff747356e83de87b238ed0f52a6 (matches prompt)
+$ git rev-parse HEAD -> 474b8d70797579e70baee8a092f6cacbf10305de (metadata-only freeze commit after 85a0efa)
+$ git diff --stat 85a0efa..HEAD -> only docs/delivery/assignments/DG0/round-10/*, docs/delivery/candidates/DG0/1e959f250e6f2b6e.manifest.json, docs/delivery/stages.json (all excluded metadata)
+$ node tools/gates/candidate.mjs --stage DG0 (repo tree)              -> sha256:1e959f250e6f2b6e622d56464aa7d8be450628805392633046621b60bbe90c54, 79 files, exit 0
+$ node tools/gates/candidate.mjs --stage DG0 --ref 85a0efac...         -> same ID, exit 0
+$ node tools/gates/candidate.mjs --stage DG0 (fresh clone @85a0efa)    -> same ID, exit 0
+Candidate-scope diff cbc755d..85a0efa: .claude/agents/*.md hook line (MTH_GUARD_ROOT, fail closed), tools/agents/settings/*.settings.json (same), tools/agents/guard-write.mjs, tools/agents/run-agent.sh (+export MTH_GUARD_ROOT), tools/agents/tests/guard.test.mjs, tools/gates/lib/rules.mjs (fileURLToPath, F-DG0-224), tools/gates/tests/validator.test.mjs, docs/delivery/agents.md (1 paragraph), docs/delivery/decisions.md (+D-023).
+$ git diff --quiet cbc755d 85a0efa -- docs/analysis docs/delivery/requirements.csv docs/delivery/requirements-spec.md docs/source tools/source CLAUDE.md docs/delivery/agent-protocol.md -> exit 0 (domain artefacts byte-identical to round 9)
+The agent-definition change touches only the hook command; the role text (incl. the approval/G6-DG7 statement) is unchanged (see 10).
+
+## 01 extraction fidelity (fresh clone)
+$ sha256sum docs/source/Business_Transformation_Playbook.docx -> 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2
+$ unzip docx; python3 -B ext7.py <docx dir> docs/source/playbook.md
+paragraph segments 1001 missing 0
+tables 49 rows 239 rows with missing cells 0
+segments out of order 0
+footer1.xml 'BUSINESS TRANSFORMATION PLAYBOOK PRACTICAL EDITION' present
+blocks 165 B0001 B0165 contiguous True
+md anchors unique 165
+exit=0
+Independent second method (word multiset, inline python): all <w:t> text of word/document.xml (br/tab/cr as spaces, html-unescaped), tokenised [a-z0-9]+ NFKC lower-case, compared as a Counter against playbook.md with B-anchors stripped:
+docx tokens 3586 distinct 945 under-represented 0 []
+exit=0
+
+## 02 source/master-prompt coverage (python3 -B reg7.py, fresh clone)
+source-coverage.csv 165 {REQUIREMENT:129, CONTEXT:29, NON-REQUIREMENT:7} problems 0
+master-prompt-coverage.csv 423 {REQUIREMENT:367, CONTEXT:49, NON-REQUIREMENT:7}; the only flags are 367 empty rationale cells on REQUIREMENT rows (req_ids carries the mapping; every CONTEXT/NON-REQUIREMENT row has a rationale) -- same as rounds 7-9, not a defect
+classes {USER:188, ENGINEERING:130, SOURCE:93}
+SOURCE rows without B anchor []; non-SOURCE rows without M anchor []; REQ-PB not SOURCE []; empty acceptance []; reverse B refs not listed in coverage 0
+exit=0
+
+## 03 templates (python3 -B tpl7.py) -- identical output to round 9
+16 templates; 13 with every source column verbatim in FI and register. The 3 flagged are known script artefacts (re-confirmed in rounds 7-9 by reading):
+ T02 'Level/Definition/Example' = outcome-hierarchy table headers (B0048), inventoried under that deliverable.
+ T05 source is a Field/Fill-in table; its 14 row labels are the fields (FI 14 fields; REQ-PB-045 acceptance 'persists all 14 source fields').
+ T10 'Area/What to show/RAG logic' are header cells; six areas with their RAG rules are in REQ-PB-063/062/064.
+
+## 04 value lists (inline python regex over requirements.csv (reg) and field-inventory.md (FI))
+H/M/L reg 13 FI 5; Support/Neutral/Resist reg 2 FI 1; Decision/Tech/Data/Vendor reg 2 FI 1; Risk/Assumption/Issue/Dependency reg 1 FI 1; A/R reg 7 FI 2
+Waves 0-6 weeks reg 2 FI 1; 1-3 months 1/1; 3-9 months 1/1; 6-18 months 1/1
+T11 SLAs '5 working days' 2/1; '10 working days' 1/1; 'Next SteerCo' 5/2; 'Per release plan' 5/2
+Weights 25% 4/3, 20% 3/1, 15% 5/2 (REQ-PB-048 'default weights 25/25/20/15/15 with a 1-5 scale')
+Health bands 21-25 1/1, 16-20 2/1, 10-15 1/1
+(Decision/Tech/Data/Vendor count differs from round 9's 3 only because my regex differs; the files are byte-identical.)
+
+## 05 first-class deliverables (python3 -B deliv7.py) -- identical output to round 9
+Charter 14/14; scope checks 5; outcome hierarchy; TOM 10 dims; canvas 10 cells/20 prompts; business case 10 sections; lifecycle; 7 adoption indicators; 90-day plan; Day-90 test 6; health check 25 questions (+score line); bands; roaming example + traceability rows; modes; phases; gates; governance roles: missing-everywhere [] for all.
+Script artefacts (known, re-confirmed rounds 7-9): Thesis (B0037) four-part template in FI + REQ-PB-030; workshop '90-120 minute' in REQ-PB-042; 'Score: __ / 25' + 'Top 3 actions' in FI and REQ-PB-091; traceability chain (B0070) in REQ-PB-044 and glossary; principles/workstreams in REQ-PB-006..010, REQ-PB-023 (REQ-PB-023 acceptance 'six workstreams and their key questions are seeded verbatim').
+
+## 06 operating-logic semantics (inline python over requirements.csv)
+REQ-S07-007 (USER, DG4) RAG from approved trajectory, never task completion; A04/A05 'all tasks complete and actual below red threshold -> Red'
+REQ-PB-063 (SOURCE, DG4) T10 area RAG; 'tasks 100% complete but KPI below trajectory is Red/Amber, not Green; no actual shows Unknown'
+REQ-S03-003 separate delivery/adoption/validated value/closure statuses; REQ-S11-006 'Delivery complete - value validation pending', not successful
+REQ-S08-001 'a forecast amount never appears in the validated total'; REQ-S13-008 pending value labelled provisional; REQ-S07-014 pending when Finance validation required
+REQ-PB-013 BO -> 403 on validate, FIN succeeds; REQ-S08-003 accountable business owner + Finance validator; permissions-matrix.md rule 3 (line 130) FIN-exclusive even where BO stays accountable
+REQ-PB-058 10 million SAR shared benefit appears once; REQ-S08-013 60%+50% rejected, 60%+30% shows 10% unallocated
+REQ-S04-002 gates = explicit approval records on immutable evidence snapshot, never inferred from tasks; REQ-PB-015 stale version rejected
+REQ-DLV-002, REQ-S04-008 (G6 approval changes no DG record), REQ-S21-001 (no DG refs in UI; demo approvals 'approves nothing real')
+REQ-S10-003 + permissions-matrix.md:126 rule 2 'Technical administrators are not business approvers'
+
+## 06b provenance honesty
+grep -i -E 'official|certified|PMI standard|brand compliance' docs/analysis/*.md docs/delivery/requirements-spec.md CLAUDE.md, minus negated contexts -> 2 residual lines, both negations on reading: analysis/README.md:5 'Neither the playbook nor this product is an official PMI standard or a certified product'; glossary.md:8 'No term here implies official PMI status'.
+REQ-PB-001 (inspired-by wording, B0004 verbatim, scan for 'official PMI standard'), REQ-PB-002 custom-extension badge, REQ-S15-002 tokens provenance=provisional, REQ-S15-006 provisional text wordmark, no invented logo.
+REQ-S14-001 Yes=1/No=0 scoring is USER (M0262), shown in the UI as an implementation assumption; REQ-PB-091 notes cite D-010.
+
+## 07 staging (inline python over requirements.csv vs §21 M0403-M0410)
+final_gate {DG0:19, DG1:11, DG2:32, DG3:32, DG4:137, DG5:78, DG6:48, DG7:54}; all DG0 rows IMPLEMENTED; acceptance < 40 chars: none
+Templates' final gates: T01-T04 DG2; T05, T07-T09 DG3; T02 DG2+DG3; T06 DG3 (+REQ-PB-093 Studio weight config DG5); T10-T16 DG4
+G1 REQ-PB-016 DG2, G2 -017 DG2, G3 -018 DG2, G4 -019 DG3, G5 -020 DG4, G6 -021 DG4
+Studio titles DG5 x3; health check DG5 x6 (+1 DG7 = REQ-S19-010 infrastructure health checks); roaming DG5 x4; handover titles: DG7 x14 (IT handover REQ-S19-*), DG4 BAU handover (REQ-S11-005, REQ-S11-009, REQ-DLV-036), DG5 ones are demo/walkthrough/reports/procedures/entity group (REQ-S06-003, S13-004, S16-021, S18-002, S18-004) -- consistent with §21.
+
+## 08 master-prompt sample (python3 -B mp10.py, seed 10) -- 80 blocks, every section §preamble, §0-§21, incl. table rows
+M0001 M0002 M0006 M0007 M0025 M0031 M0036 M0038 M0040 M0064 M0066 M0067 M0068 M0075 M0076 M0082 M0087 M0095 M0102 M0104 M0110 M0121 M0125 M0134 M0135 M0140 M0147 M0152 M0153 M0158 M0162 M0168 M0172 M0182 M0184 M0186 M0187 M0198 M0204 M0215 M0219 M0226 M0227 M0229 M0231 M0235 M0237 M0246 M0255 M0260 M0276 M0283 M0284 M0286 M0297 M0299 M0302 M0310 M0312 M0318 M0331 M0333 M0334 M0338 M0345 M0352 M0358 M0359 M0372 M0374 M0376 M0385 M0389 M0390 M0391 M0393 M0403 M0405 M0406 M0414
+Each block read against its mapped requirement titles. Title/version blocks NON-REQUIREMENT; section headings and table header rows (M0198 T11, M0204 RACI, M0246 dashboard) CONTEXT naming the covering rows; REQUIREMENT blocks map to rows whose substance matches. Secondary mappings checked by reading the row notes: M0302 -> REQ-PB-064 (overdue evaluated in configured timezone) and REQ-PB-089 (badge in en and ar); M0125 -> REQ-PB-003/004/037/046 (waiver/reapproval/mandatory evidence); M0147 -> REQ-PB-024/025 (capability heatmaps, journey maps). No mis-mapping found.
+
+## 09 SOURCE grounding sample (inline python, random.seed(100), 8 SOURCE rows vs cited blocks from playbook.blocks.json)
+REQ-PB-019, -059, -023, -091, -051, -045, -056, -065: every substance is in the cited B block (B0023 G4 evidence; B0021/B0023/B0079 capacity; B0029 workstreams; B0150 25 questions; B0081 seven T08 columns + External; B0072 14 fields + '3-7 deliverables'; B0087 six columns, H/M/L; B0099 four rows with SLAs). Notes separate 'Playbook', 'Master-prompt additions' and 'Interpretations' correctly (e.g. REQ-PB-045 '3-7 is a guidance range, so warns'; REQ-PB-091 scoring as implementation assumption D-010).
+
+## 10 glossary / journeys / permissions / agent definitions
+Journeys (user-journeys.md): J1 My Work; J2.1-J2.6 six phases with G1-G6; J3 modular entry; J4 KPI update; J5 Finance validation; J6 committee workflow; J7 BAU handover; J8 admin publishing Draft->Preview/Test->Review->Publish; role summary.
+Glossary (191 lines): phases/gates/roles in sensible business Arabic (e.g. الراعي التنفيذي، قائد التحوّل، بوابة المرحلة، مبررات التغيير، التعبئة (حشد الموارد والتهيئة للتنفيذ)، تحقيق القيمة); the revision table explains each corrected term; 'Stage gate' definition separates G1-G6 from DG0-DG7.
+Permissions: T11 rows (Target-state design Ap BO; Go-live/scale Ap Business owner; funding SteerCo), RACI-derived cells, rule 2 ADM not business approvers, rule 3 FIN-only validation, rule 7 gate approver default SP, G3/G5 configurable to BO per T11, labelled as interpretation because B0023 names no approver.
+Agent definitions: for each of the ten .claude/agents/*.md: grep 'never grants? a real business, Finance or IT approval' = 1, 'G6 never implies engineering gate DG7' = 1, 'MTH_GUARD_ROOT' = 1 (the new hook).
+
+## 11 DG0 REQ-DLV rows in my scope (source extraction and analysis)
+REQ-DLV-001/002/020/032 IMPLEMENTED; evidence files exist (0 missing of 4/3/7/28); decisions.md D-001 (docx SHA-256) and D-002 (English edition executed) present.
+$ node tools/gates/validate.mjs --register DG0 (fresh clone) -> PASS register rules at DG0, exit 0
+
+## 12 prefreeze in fresh clone at 85a0efa: bash tools/gates/prefreeze.sh DG0
+PASS source extraction reproducible (docx sha256 2584a352...548ad2; 165 playbook blocks; 423 master-prompt blocks)
+PASS gate validator + guard tests
+PASS runner metadata tests
+PASS register rules (DG0)
+PASS pipeline state (active stage: DG0 REVIEWING)
+PASS analysis check check_counts.py (README COUNTS ALL MATCH)
+PASS analysis check check_pb_provenance.py (93 REQ-PB rows; 0 problems; 10 reviewed R5 false positives accepted)
+PASS analysis check check_test_refs.py (0 problems)
+PASS working-tree candidate equals HEAD (sha256:1e959f250e6f2b6e622d56464aa7d8be450628805392633046621b60bbe90c54)
+prefreeze-exit=0; git status --porcelain before 0 lines, after 0 lines
+
+## 13 earlier findings
+All domain-reviewer findings F-DG0-001..011 are CLOSED_VERIFIED in findings.json; none is FIXED_PENDING_VERIFICATION, so no verifications sidecar is needed this round. The artefacts behind them are byte-identical to round 9 (see 00), and the F-DG0-011 statement is still present in all ten agent definitions (see 10).
