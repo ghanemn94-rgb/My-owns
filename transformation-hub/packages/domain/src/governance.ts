@@ -1,6 +1,11 @@
 import Decimal from 'decimal.js';
 import { ruleViolation } from './errors';
-import type { CommitteeMemberRole, VoteChoice } from './enums';
+import type { ActionItemStatus, AGENDA_SCREENING_STATUSES, ATTENDANCE_STATUSES, CommitteeMemberRole, MeetingStatus, VoteChoice } from './enums';
+import type { Machine } from './workflows';
+
+// Local aliases (enums.ts exports the value lists only for these vocabularies).
+type AgendaScreeningStatus = (typeof AGENDA_SCREENING_STATUSES)[number];
+type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
 
 /**
  * Committee rules (spec §4): quorum, recusal, voting thresholds, ties, delegated authority, self-approval.
@@ -274,4 +279,153 @@ export function assertApprovalAllowed(input: {
     return;
   }
   throw ruleViolation('governance.approval.invalid_state', `Cannot approve a decision in state ${input.from}`);
+}
+
+// =============================================================================================================
+// P2 additions (governance module): meeting lifecycle, agenda screening, membership seats, outcome planning,
+// action / implementation guards. Pure rules — the API command services call these (spec §4.2).
+// =============================================================================================================
+
+/** Meeting lifecycle. Circulations are `meeting` rows flagged `is_circulation` and are opened directly `in_session`. */
+export type MeetingCommand = 'publish_agenda' | 'start_session' | 'close_session' | 'draft_minutes' | 'approve_minutes' | 'cancel';
+export const MEETING_MACHINE: Machine<MeetingStatus, MeetingCommand> = {
+  publish_agenda: { from: ['planned'], to: 'agenda_published', description: 'Numbered agenda published to members' },
+  start_session: { from: ['agenda_published'], to: 'in_session', description: 'Session opened (attendance, conflicts, votes)' },
+  close_session: { from: ['in_session'], to: 'held', description: 'Session closed' },
+  draft_minutes: {
+    from: ['held', 'minutes_draft', 'minutes_approved'],
+    to: 'minutes_draft',
+    description: 'Minutes drafted; a correction of approved minutes creates a new version with a reason',
+  },
+  approve_minutes: { from: ['minutes_draft'], to: 'minutes_approved', description: 'Minutes approved (immutable version)' },
+  cancel: { from: ['planned', 'agenda_published'], to: 'cancelled', description: 'Meeting cancelled' },
+};
+
+/** Secretariat screening of agenda requests. */
+export type AgendaScreeningCommand = 'accept' | 'return' | 'defer';
+export const AGENDA_SCREENING_MACHINE: Machine<AgendaScreeningStatus, AgendaScreeningCommand> = {
+  accept: { from: ['requested', 'deferred'], to: 'accepted', description: 'Accepted onto a numbered meeting agenda' },
+  return: { from: ['requested', 'deferred'], to: 'returned', description: 'Returned to the requester with reasons' },
+  defer: { from: ['requested'], to: 'deferred', description: 'Deferred to a later meeting' },
+};
+
+/** Seats that may carry a vote (charter §7): secretary, advisory members and guests never vote. */
+export const VOTING_SEAT_ROLES: readonly CommitteeMemberRole[] = ['chair', 'sponsor', 'voting_member'];
+
+export function assertMembershipSeat(input: { memberRole: CommitteeMemberRole; voting: boolean; validFrom: string; validTo?: string | null }): void {
+  if (input.voting && !VOTING_SEAT_ROLES.includes(input.memberRole)) {
+    throw ruleViolation('governance.membership.non_voting_role', `A ${input.memberRole} seat cannot carry a vote (only chair, sponsor and voting members)`);
+  }
+  if (input.validTo && input.validTo < input.validFrom) {
+    throw ruleViolation('governance.membership.invalid_term', 'Membership end date is before its start date');
+  }
+}
+
+/** Attendance statuses that count as present for quorum and voting (alternates/proxies are not modelled yet). */
+export const PRESENT_ATTENDANCE: readonly AttendanceStatus[] = ['present', 'remote'];
+
+export function presentUserIds(rows: { userId: string | null; status: AttendanceStatus }[]): string[] {
+  return [...new Set(rows.filter((r) => r.userId && PRESENT_ATTENDANCE.includes(r.status)).map((r) => r.userId!))];
+}
+
+/**
+ * Resolution by circulation (assumption, documented): the members who "attend" a circulation are the voting members
+ * who responded in the current round; the same quorum thresholds then apply to responders.
+ */
+export function circulationResponders(votes: { userId: string; round: number; viaCirculation: boolean }[], round: number): string[] {
+  return [...new Set(votes.filter((v) => v.round === round && v.viaCirculation).map((v) => v.userId))];
+}
+
+export type DecisionOutcomeCommand = 'record_approval' | 'record_recommendation' | 'record_rejection';
+
+export interface DecisionOutcomePlan {
+  /** Decision command to apply; `null` = the decision stays under review (tie escalated). */
+  command: DecisionOutcomeCommand | null;
+  authorityOutcome: 'within_mandate' | 'pending_external_authority' | 'not_assessed';
+  escalate: boolean;
+  escalateTo: string | null;
+  explanation: string;
+}
+
+/**
+ * Maps a server-computed tally + authority check to the decision command (AT-04, AT-05). No quorum and "no
+ * approve/reject votes" are rule violations; a passing vote outside the mandate becomes a recommendation.
+ */
+export function planDecisionOutcome(input: { tally: TallyResult; authority: AuthorityCheckResult; quorum: QuorumResult }): DecisionOutcomePlan {
+  const { tally, authority } = input;
+  switch (tally.outcome) {
+    case 'no_quorum':
+      throw ruleViolation('governance.outcome.no_quorum', input.quorum.explanation, { quorum: input.quorum });
+    case 'insufficient_votes':
+      throw ruleViolation('governance.outcome.insufficient_votes', 'No approve or reject votes were cast in the current round', { tally });
+    case 'approve':
+      if (authority.outcome === 'within_mandate') {
+        return { command: 'record_approval', authorityOutcome: 'within_mandate', escalate: false, escalateTo: null, explanation: `${tally.explanation} ${authority.reason}` };
+      }
+      return {
+        command: 'record_recommendation',
+        authorityOutcome: 'pending_external_authority',
+        escalate: true,
+        escalateTo: authority.escalateTo,
+        explanation: `${tally.explanation} Recommended — pending external authority: ${authority.reason}`,
+      };
+    case 'reject':
+      return { command: 'record_rejection', authorityOutcome: authority.outcome, escalate: false, escalateTo: null, explanation: tally.explanation };
+    case 'tie_escalate':
+      return {
+        command: null,
+        authorityOutcome: 'not_assessed',
+        escalate: true,
+        escalateTo: authority.escalateTo ?? 'Delegating authority — to be confirmed',
+        explanation: tally.explanation,
+      };
+  }
+}
+
+/** Votes are evaluated against the matrix version in force when they were cast; a changed matrix requires a new round. */
+export function assertVotesUnderMatrix(votes: { authorityMatrixVersionId: string | null }[], matrixVersionId: string): void {
+  if (votes.some((v) => v.authorityMatrixVersionId !== matrixVersionId)) {
+    throw ruleViolation(
+      'governance.outcome.matrix_changed',
+      'The authority matrix changed after votes were cast — defer and resume the decision to open a new voting round',
+    );
+  }
+}
+
+export interface ActionSnapshot {
+  status: ActionItemStatus;
+  ownerUserId: string | null;
+  dueDate: string | null;
+}
+
+/** Overdue = still open/in progress and the due date (project-timezone business date) is before today. */
+export function isActionOverdue(a: { status: ActionItemStatus; dueDate: string | null }, today: string): boolean {
+  return (a.status === 'open' || a.status === 'in_progress') && !!a.dueDate && a.dueDate < today;
+}
+
+/** Transition 10: implementation tracking needs at least one live action with one accountable owner and a due date. */
+export function assertImplementationStartable(actions: ActionSnapshot[]): void {
+  const live = actions.filter((a) => a.status !== 'cancelled');
+  if (!live.some((a) => a.ownerUserId && a.dueDate)) {
+    throw ruleViolation('governance.implementation.no_actions', 'Implementation tracking requires at least one action with an owner and a due date');
+  }
+}
+
+/**
+ * Transition 11 (approval ≠ implementation): every live linked action is verified closed with evidence, at least one
+ * exists, the verifier supplies an evidence note and owns none of the actions.
+ */
+export function assertImplementationVerifiable(input: { actions: ActionSnapshot[]; verifierUserId: string; evidenceNote: string | null | undefined }): void {
+  if (!input.evidenceNote?.trim()) {
+    throw ruleViolation('governance.implementation.evidence_required', 'An implementation evidence note is required to verify implementation');
+  }
+  const live = input.actions.filter((a) => a.status !== 'cancelled');
+  if (live.length === 0) throw ruleViolation('governance.implementation.no_actions', 'No implementation actions are linked to this decision');
+  const open = live.filter((a) => a.status !== 'verified_closed');
+  if (open.length > 0) {
+    throw ruleViolation('governance.implementation.actions_open', `${open.length} linked action(s) are not verified closed`, { openActions: open.length });
+  }
+  if (live.some((a) => a.ownerUserId === input.verifierUserId)) {
+    throw ruleViolation('governance.implementation.verifier_is_owner', 'An owner of the implementation actions cannot verify the implementation');
+  }
 }
