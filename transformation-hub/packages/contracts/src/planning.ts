@@ -833,8 +833,11 @@ export const MyWorkDto = z.object({ items: z.array(MyWorkItemDto), counts: z.rec
 // Routes
 
 const T = ['planning'];
-const cmd = <B extends z.ZodTypeAny>(id: string, path: string, summary: string, access: string, params: z.ZodTypeAny, body: B, response: z.ZodTypeAny = CommandResult) =>
-  defineRoute({ id, method: 'POST', path, summary, tags: T, access, command: true, params, body, response });
+function cmd<P extends z.ZodTypeAny, B extends z.ZodTypeAny>(id: string, path: string, summary: string, access: string, params: P, body: B): ReturnType<typeof defineRoute<P, z.ZodObject<{}>, B, typeof CommandResult>>;
+function cmd<P extends z.ZodTypeAny, B extends z.ZodTypeAny, Rs extends z.ZodTypeAny>(id: string, path: string, summary: string, access: string, params: P, body: B, response: Rs): ReturnType<typeof defineRoute<P, z.ZodObject<{}>, B, Rs>>;
+function cmd(id: string, path: string, summary: string, access: string, params: z.ZodTypeAny, body: z.ZodTypeAny, response: z.ZodTypeAny = CommandResult) {
+  return defineRoute({ id, method: 'POST', path, summary, tags: T, access, command: true, params, body, response });
+}
 
 const taskP = idP('taskId');
 const msP = idP('milestoneId');
