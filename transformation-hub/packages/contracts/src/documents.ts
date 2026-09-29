@@ -213,6 +213,16 @@ export const ProposedChangeDto = z.object({
   message: z.string(),
 });
 
+export const UploadPolicyDto = z.object({
+  maxUploadBytes: z.number().int(),
+  acceptedTypes: z.array(z.object({ type: z.enum(ALLOWED_FILE_TYPES), mime: z.string(), extensions: z.array(z.string()), textExtractable: z.boolean() })),
+  /** `enterprise: false` = only the built-in signature check runs; files are never reported "clean". */
+  scanner: z.object({ engine: z.string(), enterprise: z.boolean() }),
+  /** Whether `not_scanned` files may be downloaded / linked / indexed in this deployment (ADR-0010). */
+  allowUnscanned: z.boolean(),
+  storageStatus: z.enum(['configured', 'not_configured']),
+});
+
 const Confidence = z.string().regex(/^(0(\.\d{1,3})?|1(\.0{1,3})?)$/, 'Decimal between 0 and 1 (max 3 dp)');
 const Reason = RequiredText(1000);
 const DocIdOnly = z.object({ id: Uuid, version: z.number().int() });
@@ -240,6 +250,16 @@ export const documentsRoutes = registerRoutes({
     params: ProjectParams,
     query: z.object({ q: RequiredText(200), page: PageQuery.shape.page, pageSize: PageQuery.shape.pageSize }),
     response: paged(SearchHitDto),
+  }),
+  uploadPolicy: defineRoute({
+    id: 'documents.uploadPolicy',
+    method: 'GET',
+    path: '/api/v1/projects/:projectId/documents/upload-policy',
+    summary: 'Upload limits, accepted file types and the honest scanner / storage status (for upload screens)',
+    tags: T,
+    access: 'documents.document.read',
+    params: ProjectParams,
+    response: UploadPolicyDto,
   }),
   createDocument: defineRoute({
     id: 'documents.createDocument',

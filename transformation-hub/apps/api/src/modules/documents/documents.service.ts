@@ -17,6 +17,9 @@ import {
   assertDisposable,
   disposalAuthority,
   AllowedFileType,
+  ALLOWED_FILE_TYPES,
+  FILE_TYPE_INFO,
+  TEXT_EXTRACTABLE_TYPES,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
@@ -171,6 +174,17 @@ export class DocumentsService {
   }
 
   // ---------------------------------------------------------------------------------------------------- reads
+  /** Limits and honest scanner/storage status for upload screens (no secrets, no paths). */
+  uploadPolicy() {
+    return {
+      maxUploadBytes: this.config.storage.maxUploadBytes,
+      acceptedTypes: ALLOWED_FILE_TYPES.map((type) => ({ type, mime: FILE_TYPE_INFO[type].mime, extensions: [...FILE_TYPE_INFO[type].extensions], textExtractable: TEXT_EXTRACTABLE_TYPES.includes(type) })),
+      scanner: { engine: this.scanner.engine, enterprise: this.scanner.enterprise },
+      allowUnscanned: this.config.storage.allowUnscanned,
+      storageStatus: this.storage.status,
+    };
+  }
+
   async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; sort?: string; kind?: string; classification?: string }) {
     const tx = this.db.tx();
     const d = schema.document;

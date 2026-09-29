@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { schema } from '@hub/db';
@@ -20,7 +20,8 @@ import { OutboxService } from '../../platform/outbox.service';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { assertVersion, loadInProject, updateVersioned } from '../../platform/helpers';
-import { DocumentsService, LoadedDoc, UNUSABLE_SCAN_STATUSES } from './documents.service';
+import { APP_CONFIG, AppConfig } from '../../platform/config';
+import { DocumentsService, LoadedDoc, scanUsable } from './documents.service';
 
 type LinkRow = typeof schema.evidenceLink.$inferSelect;
 
@@ -56,6 +57,7 @@ export class EvidenceService {
     private readonly audit: AuditService,
     private readonly outbox: OutboxService,
     private readonly docs: DocumentsService,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
   /** The target must be a record of the same project that the caller can see (404 otherwise — never trust the id). */
@@ -167,7 +169,7 @@ export class EvidenceService {
         if (!loaded.doc.currentVersionId) throw ruleViolation('evidence.no_usable_version', 'The document has no usable version to link');
         v = await loadInProject(this.db, schema.documentVersion, projectId, loaded.doc.currentVersionId);
       }
-      if (UNUSABLE_SCAN_STATUSES.has(v.scanStatus)) throw ruleViolation('evidence.version_not_usable', `A ${v.scanStatus} version cannot be used as evidence`);
+      if (!scanUsable(v.scanStatus, this.config.storage.allowUnscanned)) throw ruleViolation('evidence.version_not_usable', `A ${v.scanStatus} version cannot be used as evidence`);
       versionId = v.id;
     } else {
       this.policy.assert(ctx, 'documents.evidence.link', { projectId });
