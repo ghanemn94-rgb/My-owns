@@ -9,6 +9,7 @@ import {
   ChartColumn,
   ChevronDown,
   FileText,
+  Flag,
   FolderOpen,
   Gauge,
   Handshake,
@@ -31,6 +32,7 @@ import { cx } from './ui';
 const ICONS: Record<SectionKey, LucideIcon> = {
   overview: Gauge,
   charter: FileText,
+  gates: Flag,
   committee: Landmark,
   plan: ListChecks,
   workstreams: Layers,

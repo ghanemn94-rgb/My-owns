@@ -1,6 +1,7 @@
 'use client';
 
-import { Flag } from 'lucide-react';
+import Link from 'next/link';
+import { ChevronRight, Flag } from 'lucide-react';
 import { ActivityHistory } from '@/components/ActivityHistory';
 import { MetricCard } from '@/components/MetricCard';
 import { NotImplementedYet } from '@/components/NotImplementedYet';
@@ -11,14 +12,52 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { card, cx } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { useProjectContext } from '@/lib/project-context';
+import { nextGate, useGates } from '@/lib/gates';
+import { BlockerList, GateStatusBadges } from './gates/_components/GateBits';
 import { sectionAppliesTo, sectionByKey, sectionHref, type SectionKey } from '@/lib/sections';
 
-const DIMENSION_SECTION: Record<string, SectionKey> = {
-  incorporation: 'newco',
-  perimeter_transfer: 'perimeter',
-  operational_readiness: 'readiness',
-  jv_transaction: 'jv',
-};
+/** The "next gate" tile from the live gate evaluation (status, RAG, blockers) when the caller can read gates. */
+function NextGateTile() {
+  const { t } = useI18n();
+  const { project, projectId, can } = useProjectContext();
+  const canGates = can('gates.gate.read');
+  const gates = useGates(projectId, canGates);
+  const live = gates.data ? nextGate(gates.data.items) : null;
+  if (canGates && live) {
+    return (
+      <div className="mt-3 space-y-2" data-testid="next-gate" data-gate-key={live.key}>
+        <p className="text-base font-semibold" dir="auto">
+          <Link href={`/projects/${projectId}/gates/${live.id}`} className="hover:underline">
+            <span dir="ltr">{live.key}</span> — {live.name}
+          </Link>
+        </p>
+        <GateStatusBadges gate={live} />
+        <BlockerList blockers={live.blockers} limit={2} />
+        <Link href={`/projects/${projectId}/gates/${live.id}`} className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline" data-testid="next-gate-link">
+          {t('gates.openGate', { key: live.key })}
+          <ChevronRight aria-hidden="true" className="size-4 rtl:rotate-180" />
+        </Link>
+        <p className="text-xs text-muted">{t('project.cockpit.gateHint')}</p>
+      </div>
+    );
+  }
+  if (project.nextGate) {
+    return (
+      <div className="mt-3 space-y-2" data-testid="next-gate">
+        <p className="text-base font-semibold" dir="auto">
+          <span dir="ltr">{project.nextGate.key}</span> — {project.nextGate.name}
+        </p>
+        <StatusBadge enumName="gateAssessmentStatuses" value={project.nextGate.status} size="md" />
+        <p className="text-xs text-muted">{t('project.cockpit.gateHint')}</p>
+      </div>
+    );
+  }
+  return (
+    <p className="mt-3 text-sm text-muted">
+      {EM_DASH} {t('portfolio.notVisible')}
+    </p>
+  );
+}
 
 export default function ProjectOverviewPage() {
   const { t, tStatus } = useI18n();
@@ -29,7 +68,6 @@ export default function ProjectOverviewPage() {
     const def = sectionByKey(key);
     return sectionAppliesTo(def, project.templateKind) && can(def.permissions);
   };
-  const linkIfAllowed = (key: SectionKey) => (canOpen(key) ? sectionHref(projectId, key) : null);
 
   const metrics: { key: string; label: string; value: number | null | undefined; section: SectionKey }[] = [
     { key: 'workstreams', label: t('project.metrics.workstreams'), value: project.counts.workstreams, section: 'workstreams' },
@@ -68,7 +106,7 @@ export default function ProjectOverviewPage() {
             {t('project.cockpit.dimensionsTitle')}
           </h2>
           <p className="mb-3 text-sm text-muted">{t('project.cockpit.dimensionsHint')}</p>
-          <DimensionCards dimensions={project.dimensions} hrefFor={(key) => (DIMENSION_SECTION[key] ? linkIfAllowed(DIMENSION_SECTION[key]!) : null)} />
+          <DimensionCards dimensions={project.dimensions} hrefFor={(key) => `/projects/${projectId}/dimensions/${key}`} linkLabel={t('gates.dimensions.openDetail')} />
         </section>
 
         <div className="grid gap-4 lg:grid-cols-3">
@@ -77,19 +115,7 @@ export default function ProjectOverviewPage() {
               <Flag aria-hidden="true" className="size-5 text-primary" />
               {t('portfolio.nextGate')}
             </h2>
-            {project.nextGate ? (
-              <div className="mt-3 space-y-2" data-testid="next-gate">
-                <p className="text-base font-semibold" dir="auto">
-                  <span dir="ltr">{project.nextGate.key}</span> — {project.nextGate.name}
-                </p>
-                <StatusBadge enumName="gateAssessmentStatuses" value={project.nextGate.status} size="md" />
-                <p className="text-xs text-muted">{t('project.cockpit.gateHint')}</p>
-              </div>
-            ) : (
-              <p className="mt-3 text-sm text-muted">
-                {EM_DASH} {t('portfolio.notVisible')}
-              </p>
-            )}
+            <NextGateTile />
           </section>
 
           <section aria-labelledby="phases-title" className={cx(card, 'p-4 lg:col-span-2')}>

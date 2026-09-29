@@ -1,0 +1,315 @@
+{
+  "title": "Business Gates",
+  "subtitle": "Gates G0–G7 with their criteria, evidence, decisions and exceptions. Each gate passes only on the server's evaluation.",
+  "taskHint": "Task completion never unlocks a gate: a gate passes only with evidence accepted by the criterion reviewer, approved exceptions and a final authorized decision.",
+  "empty": "This project has no gates.",
+  "openGate": "Open gate {key}",
+  "backToList": "All gates",
+  "cycle": "Cycle {cycle}",
+  "ragLabel": "Gate RAG: {rag}",
+  "rag": {
+    "green": "green",
+    "amber": "amber",
+    "red": "red"
+  },
+  "counts": "{met} met · {waived} waived · {na} not applicable · of {total} criteria",
+  "roles": {
+    "line": "Owner: {owner} · Reviewer: {reviewer} · Approver: {approver}"
+  },
+  "blockers": {
+    "title": "Blockers",
+    "none": "No blockers — the criteria and prerequisites are satisfied.",
+    "more": "and {count} more",
+    "criterion": "Criterion {ref} is not satisfied",
+    "prerequisite": "Prerequisite gate {ref} is not approved",
+    "evidence_conflict": "Conflicting evidence on {ref} — reassessment required",
+    "decision": "No final authorized decision backs this gate"
+  },
+  "prerequisites": {
+    "title": "Prerequisite gates",
+    "none": "No prerequisite gates.",
+    "missing": "not defined"
+  },
+  "reassessment": {
+    "badge": "Reassessment requested",
+    "title": "Controlled reassessment requested",
+    "body": "Evidence relied upon for {criteria} is now conflicting. The approval of this cycle is preserved; an authorized person decides whether to reopen the gate as a new cycle.",
+    "upstream": "Upstream gate approval under reassessment: {gates}. Review whether this gate still stands."
+  },
+  "actions": {
+    "start": "Start assessment",
+    "markReady": "Submit for decision",
+    "back": "Back to assessment",
+    "link": "Link decision",
+    "decide": "Record gate decision",
+    "recordDecision": "Record decision",
+    "reopen": "Reopen (new cycle)",
+    "approverOnly": "Only the gate approver ({role}) records this decision."
+  },
+  "commands": {
+    "start": {
+      "title": "Start assessment — {gate}",
+      "effect": "The current cycle moves to In assessment; criteria can be worked on.",
+      "parallel": "Starting an assessment does not require prerequisite gates to be approved (preparation may run in parallel).",
+      "done": "Assessment of {gate} started."
+    },
+    "markReady": {
+      "title": "Submit for decision — {gate}",
+      "effect": "The cycle moves to Ready for decision; the server re-checks every criterion, evidence and prerequisite now.",
+      "notReady": "The server will refuse: {count} blocker(s) remain.",
+      "frozen": "Criteria are frozen until the gate is sent back to assessment.",
+      "done": "{gate} is ready for decision."
+    },
+    "back": {
+      "title": "Back to assessment — {gate}",
+      "effect": "The cycle returns to In assessment so criteria can change.",
+      "done": "{gate} is back in assessment."
+    },
+    "link": {
+      "title": "Link governance decision — {gate}",
+      "effect": "The chosen committee decision is linked to this cycle.",
+      "blocked": "A recommendation pending external authority, or any decision that is not finally approved, keeps the gate blocked.",
+      "done": "Decision linked to {gate}."
+    },
+    "decide": {
+      "title": "Gate decision — {gate}",
+      "effect": {
+        "approve": "The gate is approved for this cycle.",
+        "approve_with_exceptions": "The gate is approved with its recorded waivers visible as exceptions.",
+        "reject": "The gate is rejected for this cycle."
+      },
+      "recheck": "The server re-evaluates criteria, evidence and prerequisites at decision time.",
+      "finalOnly": "An approval needs a final governance decision: approved within mandate, or approved by the authorized body.",
+      "done": {
+        "approve": "{gate} approved.",
+        "approve_with_exceptions": "{gate} approved with exceptions.",
+        "reject": "{gate} rejected."
+      }
+    },
+    "reopen": {
+      "title": "Controlled reopen — {gate}",
+      "effect": "A new assessment cycle {cycle} is created in status Reopened.",
+      "preserved": "Cycle {cycle}, its status, decision and evidence snapshot are preserved unchanged.",
+      "newDecision": "Passing the gate again requires a fresh review and a new final decision.",
+      "reason": "Reason (e.g. evidence found defective)",
+      "resetTitle": "Criteria to re-review",
+      "resetHint": "Selected criteria start the new cycle as Unmet; criteria with conflicting evidence start as Conflicting.",
+      "done": "{gate} reopened as cycle {cycle}."
+    }
+  },
+  "decide": {
+    "outcome": "Outcome",
+    "outcomes": {
+      "approve": "Approve",
+      "approve_with_exceptions": "Approve with exceptions (recorded waivers)",
+      "reject": "Reject"
+    },
+    "decision": "Governance decision",
+    "decisionHint": "Decisions raised for this gate and visible committee decisions. The server checks that it is final and belongs to this project.",
+    "chooseDecision": "Choose a decision",
+    "chosenState": "Decision state: {status} · Authority: {authority}",
+    "note": "Decision note"
+  },
+  "decision": {
+    "title": "Governance decision",
+    "none": "No decision is linked to the current cycle.",
+    "notVisible": "A decision is linked but you cannot view it.",
+    "final": "Final authorized decision — it can back the gate approval.",
+    "notFinal": "Not a final authorized decision — the gate stays blocked.",
+    "raisedForGate": "Decisions raised for this gate",
+    "rule": "The gate is decided by the {role}, who must not be the person who submitted it."
+  },
+  "criteria": {
+    "title": "Criteria",
+    "hint": "Mandatory criteria must be met with evidence accepted by the reviewer, waived by an approved waiver (only if waivable) or determined not applicable by the reviewer role."
+  },
+  "criterion": {
+    "mandatory": "Mandatory",
+    "optionalObservation": "Observation",
+    "blocking": "Blocking",
+    "nonWaivable": "Non-waivable",
+    "waivableBy": "Waivable by {role}",
+    "evidenceCounts": "Evidence: {active} active · {conflicting} conflicting",
+    "showDetails": "Show details and actions",
+    "hideDetails": "Hide details",
+    "owner": "Owner role",
+    "reviewer": "Reviewer role",
+    "evidenceType": "Required evidence",
+    "applicability": "Applicability",
+    "applicabilityProposed": "Proposed — specialist assessment pending",
+    "waivabilityBasis": "Waivability basis",
+    "assessedAt": "Last reviewed",
+    "note": "Note",
+    "frozen": "Criteria of this cycle cannot change in its current state.",
+    "actions": {
+      "addEvidence": "Add evidence",
+      "submit": "Submit evidence",
+      "met": "Accept as met",
+      "return": "Return as unmet",
+      "proposeNa": "Propose not applicable",
+      "approveNa": "Approve not applicable",
+      "rejectNa": "Reject not applicable",
+      "requestWaiver": "Request waiver",
+      "waivability": "Set waivability"
+    }
+  },
+  "evidenceTypes": {
+    "approved_document": "Approved document",
+    "committee_decision": "Committee decision",
+    "register_extract": "Register extract",
+    "regulatory_record": "Regulatory record",
+    "board_resolution": "Board resolution",
+    "test_report": "Test report",
+    "sign_off": "Sign-off",
+    "signed_agreement": "Signed agreement",
+    "reconciliation": "Reconciliation"
+  },
+  "na": {
+    "pending": "Not applicable — proposed, awaiting determination by the {role}. It does not count until approved.",
+    "approved": "Not applicable — determined by the {role}.",
+    "basis": "Basis"
+  },
+  "evidence": {
+    "title": "Evidence (Document & Evidence Center)",
+    "none": "No evidence linked yet.",
+    "unavailable": "Evidence is not available to you.",
+    "reviewed": "reviewed {at}",
+    "unreviewed": "not yet reviewed",
+    "conflict": "Conflict"
+  },
+  "cycles": {
+    "title": "Assessment cycles",
+    "hint": "A reopen creates a new cycle; earlier cycles and their decisions are never modified.",
+    "current": "Current",
+    "summary": "{met} of {total} criteria met",
+    "decidedAt": "decided {at}",
+    "reopenedReason": "Reopened because",
+    "decisionNote": "Decision note",
+    "showCriteria": "Criteria of this cycle"
+  },
+  "waivers": {
+    "title": "Exceptions register (waivers)",
+    "hint": "Every waiver records its basis, impact, approver authority and decision. Non-waivable criteria refuse waivers.",
+    "empty": "No waivers requested.",
+    "forCriterion": "Waivers",
+    "criterion": "Criterion",
+    "status": "Status",
+    "authority": "Waiver authority",
+    "basis": "Basis",
+    "impact": "Impact",
+    "expiresOn": "Expires",
+    "requestedAt": "Requested",
+    "effective": "Effective",
+    "yes": "Yes",
+    "no": "No",
+    "approve": "Approve waiver",
+    "reject": "Reject waiver"
+  },
+  "dialogs": {
+    "evidence": {
+      "title": "Add evidence — {criterion}",
+      "confirm": "Link evidence",
+      "effect": "The evidence is linked to the criterion in the Document & Evidence Center.",
+      "unverified": "It stays unverified until reviewed by someone other than you.",
+      "document": "Document",
+      "documentHint": "Only documents you can read are listed.",
+      "noDocument": "No document — note only",
+      "note": "Evidence note",
+      "purpose": "Purpose",
+      "done": "Evidence linked to {criterion}."
+    },
+    "submit": {
+      "title": "Submit evidence — {criterion}",
+      "effect": "The criterion moves to Evidence submitted (active evidence is required).",
+      "reviewer": "The {role} reviews it; you cannot accept your own evidence.",
+      "done": "Evidence submitted for {criterion}."
+    },
+    "met": {
+      "title": "Accept as met — {criterion}",
+      "effect": "The criterion is recorded as Met in this cycle.",
+      "rules": "Refused if there is no active evidence, if evidence conflicts, or if you added the evidence yourself.",
+      "done": "{criterion} accepted as met."
+    },
+    "return": {
+      "title": "Return as unmet — {criterion}",
+      "effect": "The criterion returns to Unmet and blocks the gate if it is mandatory.",
+      "done": "{criterion} returned as unmet."
+    },
+    "proposeNa": {
+      "title": "Propose not applicable — {criterion}",
+      "effect": "The criterion is proposed as not applicable with your basis.",
+      "determination": "It keeps blocking the gate until the {role} (not you) approves the determination.",
+      "basis": "Basis for not applicable",
+      "done": "Not-applicable proposal recorded for {criterion}."
+    },
+    "approveNa": {
+      "title": "Approve not applicable — {criterion}",
+      "effect": "The specialist determination is recorded and the criterion stops blocking.",
+      "rules": "Only the {role} may determine it, and not the proposer.",
+      "done": "Not applicable approved for {criterion}."
+    },
+    "rejectNa": {
+      "title": "Reject not applicable — {criterion}",
+      "effect": "The proposal is rejected and the criterion returns to Unmet.",
+      "done": "Not-applicable proposal rejected for {criterion}."
+    },
+    "waiver": {
+      "title": "Request waiver — {criterion}",
+      "confirm": "Request waiver",
+      "effect": "A waiver request is sent for approval by the {role}.",
+      "nonWaivable": "This criterion is non-waivable: the server refuses and logs the request, and the criterion stays unmet.",
+      "nonWaivableWarning": "Specialists determined that this criterion is non-waivable. An exception cannot override it; a request will be refused and logged.",
+      "notSelf": "You cannot approve your own waiver.",
+      "basis": "Basis and specialist assessment",
+      "impact": "Impact",
+      "impactHint": "Schedule, cost, risk and transaction impact.",
+      "conditions": "Conditions",
+      "expiresOn": "Expires on",
+      "done": "Waiver requested for {criterion}."
+    },
+    "waivability": {
+      "title": "Waivability determination — {criterion}",
+      "confirm": "Record determination",
+      "waivable": "The criterion becomes waivable; waivers need approval by the {role}.",
+      "nonWaivable": "The criterion becomes non-waivable; pending waivers can no longer be approved.",
+      "versioned": "The determination is versioned; the previous one stays in the history.",
+      "waivableLabel": "Waivable",
+      "authority": "Waiver authority role",
+      "chooseRole": "Choose a role",
+      "basis": "Specialist basis",
+      "basisHint": "Name the specialist assessment behind this determination.",
+      "done": "Waivability of {criterion} recorded."
+    },
+    "approveWaiver": {
+      "title": "Approve waiver — {criterion}",
+      "effect": "The criterion is recorded as Waived in this cycle and the gate shows the exception.",
+      "rules": "Only the {role} may approve, never the requester, and only while the criterion is waivable.",
+      "done": "Waiver for {criterion} approved."
+    },
+    "rejectWaiver": {
+      "title": "Reject waiver — {criterion}",
+      "effect": "The waiver is rejected and the criterion stays as it is.",
+      "done": "Waiver for {criterion} rejected."
+    }
+  },
+  "dimensions": {
+    "eyebrow": "Independent status dimension",
+    "back": "Back to the cockpit",
+    "openDetail": "Explanation and records",
+    "independent": "Each dimension moves on its own evidence; one being complete never completes the carve-out.",
+    "explanation": "How the state was computed",
+    "explanationLanguage": "The computed explanation is provided by the server in English.",
+    "computed": "Computed {at} · version {version}",
+    "counts": "Records by state",
+    "complete": "All dimensions have reached their terminal state.",
+    "notComplete": "The carve-out is not complete: other dimensions are still pending.",
+    "records": "Contributing records",
+    "openRegister": "Open {register}",
+    "registerUnavailable": "The contributing register is not available to you.",
+    "relatedGates": "Related gates",
+    "recompute": "Recompute now",
+    "recomputeTitle": "Recompute status dimensions",
+    "recomputeEffect": "The four dimensions are recomputed from the registers now; changes are versioned.",
+    "recomputed": "Status dimensions recomputed."
+  }
+}

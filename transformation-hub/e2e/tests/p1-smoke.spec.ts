@@ -24,7 +24,7 @@ test.describe('P1 web foundation smoke', () => {
     await card.getByRole('link', { name: /Demo DC Carve-out/ }).click();
     await expect(page.getByText('DC Executive Cockpit')).toBeVisible();
     await expect(page.getByTestId('dimension-cards').locator('[data-dimension]')).toHaveCount(4);
-    await expect(page.getByTestId('next-gate')).toContainText('G0');
+    await expect(page.getByTestId('next-gate')).toContainText('G1');
     await page.screenshot({ path: join(SHOTS, 'en-project-overview.png'), fullPage: true });
 
     expect(problems(), problems().join('\n')).toEqual([]);

@@ -32,7 +32,16 @@ export function DimensionList({ dimensions, className }: { dimensions: Dimension
 }
 
 /** Cockpit cards: one card per dimension, each linking to the register that drives it. */
-export function DimensionCards({ dimensions, hrefFor }: { dimensions: Dimension[]; hrefFor: (key: Dimension['key']) => string | null }) {
+export function DimensionCards({
+  dimensions,
+  hrefFor,
+  linkLabel,
+}: {
+  dimensions: Dimension[];
+  hrefFor: (key: Dimension['key']) => string | null;
+  /** Link text (default: open the contributing register). */
+  linkLabel?: string;
+}) {
   const { t, tStatus } = useI18n();
   if (dimensions.length === 0) return <p className="text-sm text-muted">{t('portfolio.noDimensions')}</p>;
   return (
@@ -50,8 +59,8 @@ export function DimensionCards({ dimensions, hrefFor }: { dimensions: Dimension[
               </p>
             ) : null}
             {href ? (
-              <Link href={href} className="mt-auto text-xs font-medium text-primary hover:underline">
-                {t('project.cockpit.openRegister')}
+              <Link href={href} className="mt-auto text-xs font-medium text-primary hover:underline" data-testid="dimension-link">
+                {linkLabel ?? t('project.cockpit.openRegister')}
               </Link>
             ) : null}
           </li>
