@@ -91,6 +91,18 @@ def nested_in_process_sandbox():
         return False
 
 
+def holds_cap_sys_admin():
+    """Whether this process may create namespaces itself (CAP_SYS_ADMIN in its own user namespace)."""
+    try:
+        with open("/proc/self/status", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("CapEff:"):
+                    return bool(int(line.split()[1], 16) >> 21 & 1)
+    except OSError:
+        pass
+    return False
+
+
 def worktree_root(cwd, roots):
     cwd = os.path.realpath(cwd)
     inside = [r for r in roots if cwd == r or cwd.startswith(r + os.sep)]
@@ -140,9 +152,11 @@ def plan(role, repo_root, cwd, stage, run_tmp, state_dir, claude_bin, home=None)
 
 
 def bwrap_args(p):
-    # Nested (see nested_in_process_sandbox): bind the enclosing /proc, and create a user namespace, because the caller
-    # there holds no capability to create the other namespaces itself.
-    proc = ["--proc", "/proc"] if p["proc"] == "private" else ["--bind", "/proc", "/proc", "--unshare-user"]
+    # Nested (see nested_in_process_sandbox): bind the enclosing /proc. A caller without CAP_SYS_ADMIN (directly inside
+    # the process sandbox) needs a user namespace of its own; a reviewer's shell already has one, with every capability
+    # in it, where the CLI's seccomp filter would stop a further one.
+    proc = ["--proc", "/proc"] if p["proc"] == "private" else \
+        ["--bind", "/proc", "/proc"] + ([] if holds_cap_sys_admin() else ["--unshare-user"])
     a = ["--die-with-parent", "--new-session", "--unshare-pid", "--unshare-ipc", "--setenv", "MTH_PROCESS_SANDBOX", "1",
          "--ro-bind", "/", "/", "--dev", "/dev", *proc, "--tmpfs", "/tmp", "--tmpfs", "/var/tmp"]
     # Repositories and a HOME under /tmp or /var/tmp (tests, the live probe) stay visible, read-only.

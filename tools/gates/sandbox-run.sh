@@ -31,7 +31,9 @@ GIT_COMMON="$(git -C "$REPO_ROOT" rev-parse --path-format=absolute --git-common-
 # nested_in_process_sandbox in tools/agents/agent_sandbox.py). At the top level a private procfs is always mounted.
 PROC=(--proc /proc) NESTED=()
 if [ "${MTH_PROCESS_SANDBOX:-}" = 1 ] && [ "$(cat /proc/1/comm 2>/dev/null)" = bwrap ]; then
-  PROC=(--bind /proc /proc --unshare-user) NESTED=(MTH_PROCESS_SANDBOX=1)
+  PROC=(--bind /proc /proc) NESTED=(MTH_PROCESS_SANDBOX=1)
+  # Without CAP_SYS_ADMIN (bit 21) in its own user namespace, bwrap needs to create one; a reviewer's shell has it.
+  (( 0x$(awk '/^CapEff:/ {print $2}' /proc/self/status) >> 21 & 1 )) || PROC+=(--unshare-user)
 fi
 exec env -i PATH="/usr/local/bin:/usr/bin:/bin" HOME=/tmp/home LANG=C.UTF-8 TMPDIR=/tmp \
   PYTHONDONTWRITEBYTECODE=1 PYTHONSAFEPATH=1 GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 \
