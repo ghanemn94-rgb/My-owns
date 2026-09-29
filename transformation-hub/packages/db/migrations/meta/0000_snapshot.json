@@ -1,5 +1,5 @@
 {
-  "id": "96ef6fcc-cf84-44f6-b4d0-028f7032d7dc",
+  "id": "c163c482-3e61-499a-a2e6-a96b476bb0fd",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -67,6 +67,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "account_type": {
+          "name": "account_type",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'internal'"
         },
         "is_demo": {
           "name": "is_demo",
@@ -184,7 +191,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "app_user_account_type_ck": {
+          "name": "app_user_account_type_ck",
+          "value": "\"app_user\".\"account_type\" in ('internal', 'external')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.org_role_assignment": {

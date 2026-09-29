@@ -37,6 +37,7 @@ import { newId } from '../../platform/ids';
 import type { RequestContext } from '../../platform/context';
 import { DecisionRow, GovernanceSupport, MeetingRow, amountOf, iso } from './governance.support';
 import { MeetingsService } from './meetings.service';
+import { likeContains } from '../../platform/helpers';
 
 type AuthorityOutcome = (typeof DECISION_AUTHORITY_OUTCOMES)[number];
 type Money = { amount: string; currency: string; unitScale: 1 | 1000 | 1000000 };
@@ -91,7 +92,7 @@ export class DecisionsService {
       q.meetingId ? eq(d.meetingId, q.meetingId) : undefined,
       q.status ? eq(d.status, q.status) : undefined,
       q.authorityOutcome ? eq(d.authorityOutcome, q.authorityOutcome) : undefined,
-      q.q ? or(ilike(d.title, `%${q.q}%`), ilike(d.code, `%${q.q}%`)) : undefined,
+      q.q ? or(ilike(d.title, likeContains(q.q)), ilike(d.code, likeContains(q.q))) : undefined,
     );
     const tx = this.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(d).where(where)) as [{ total: number }];
