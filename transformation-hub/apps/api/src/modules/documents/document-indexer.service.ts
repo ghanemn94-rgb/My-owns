@@ -9,7 +9,8 @@ import { AuditService } from '../../platform/audit.service';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { OBJECT_STORAGE, ObjectStorage } from './storage/object-storage';
-import { DocumentsService, UNUSABLE_SCAN_STATUSES } from './documents.service';
+import { DocumentsService, scanUsable } from './documents.service';
+import { APP_CONFIG, AppConfig } from '../../platform/config';
 import { extractText } from './files/text-extract';
 
 export interface IndexResult {
@@ -33,6 +34,7 @@ export class DocumentIndexer {
     private readonly audit: AuditService,
     private readonly docs: DocumentsService,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
   async reindex(ctx: RequestContext, projectId: string, documentId: string): Promise<IndexResult> {
@@ -54,7 +56,7 @@ export class DocumentIndexer {
     if (!doc.currentVersionId) return clear('no current version');
     const [v] = await tx.select().from(schema.documentVersion).where(and(eq(schema.documentVersion.id, doc.currentVersionId), eq(schema.documentVersion.projectId, projectId)));
     if (!v) return clear('current version missing');
-    if (UNUSABLE_SCAN_STATUSES.has(v.scanStatus)) return clear(`version is ${v.scanStatus}`);
+    if (!scanUsable(v.scanStatus, this.config.storage.allowUnscanned)) return clear(`version is ${v.scanStatus}`);
 
     let bytes: Buffer;
     try {

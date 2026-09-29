@@ -6,6 +6,7 @@ import { PolicyService } from '../../src/platform/policy.service';
 import { JobRegistry } from '../../src/platform/jobs/job-registry';
 import { registerPlatformJobs, PLATFORM_SCHEDULES } from '../../src/platform/jobs/platform.jobs';
 import { extraKeys } from '../../src/platform/response.interceptor';
+import { scanUsable } from '../../src/modules/documents/documents.service';
 import type { RequestContext } from '../../src/platform/context';
 
 /**
@@ -201,6 +202,52 @@ describe('ARCH-22 — room-only principals at the database layer', () => {
   });
 });
 
+describe('Clean team / partner rooms — document versions and evidence follow the document room', () => {
+  it('room-only principals see versions and evidence of their room only; moving the document cascades', async () => {
+    const cleanteam = await demoUserId('cleanteam');
+    const room = (await owner().query(`insert into partner_room (org_id, project_id, name, is_clean_team) values ($1,$2,'Clean team probe room (test)',true) returning id`, [orgId, dcId])).rows[0].id;
+    const grant = await owner().query(`insert into room_grant (org_id, project_id, room_id, user_id, role, reason, granted_by) values ($1,$2,$3,$4,'clean_team','test',$5) returning id`, [orgId, dcId, room, cleanteam, pmId]);
+    onTestFinished(async () => {
+      await owner().query(`update room_grant set revoked_at = now(), revoked_by = granted_by where id = $1`, [grant.rows[0].id]);
+    });
+    const c = await owner().connect();
+    let inRoom: { docId: string; versionId: string };
+    let outside: { docId: string; versionId: string };
+    try {
+      await c.query('begin');
+      inRoom = await newDoc(c, dcId, 'in-room doc (test)', pmId);
+      outside = await newDoc(c, dcId, 'outside doc (test)', pmId);
+      await c.query('update document set room_id = $2 where id = $1', [inRoom.docId, room]);
+      await c.query('commit');
+    } finally {
+      c.release();
+    }
+    const v = await owner().query('select id, room_id from document_version where id = any($1)', [[inRoom.versionId, outside.versionId]]);
+    expect(Object.fromEntries(v.rows.map((r) => [r.id, r.room_id]))).toEqual({ [inRoom.versionId]: room, [outside.versionId]: null });
+
+    const taskA = (await owner().query('select id from task where project_id = $1 limit 1', [dcId])).rows[0].id;
+    const ev = await owner().query(`insert into evidence_link (org_id, project_id, target_type, target_id, document_id, added_by) values ($1,$2,'task',$3,$4,$5) returning room_id`, [orgId, dcId, taskA, inRoom.docId, pmId]);
+    expect(ev.rows[0].room_id).toBe(room);
+    // a client-supplied room_id is ignored (derived from the document)
+    const forged = await owner().query(`insert into evidence_link (org_id, project_id, target_type, target_id, document_id, room_id, added_by) values ($1,$2,'task',$3,$4,$5,$6) returning room_id`, [orgId, dcId, taskA, outside.docId, room, pmId]);
+    expect(forged.rows[0].room_id).toBeNull();
+
+    await asRuntime({ org: orgId, user: cleanteam, projects: [dcId], full: [], rooms: [room] }, async (rc) => {
+      const versions = await rc.query('select id from document_version where id = any($1)', [[inRoom.versionId, outside.versionId]]);
+      expect(versions.rows.map((r) => r.id)).toEqual([inRoom.versionId]);
+      const links = await rc.query('select document_id from evidence_link where document_id = any($1)', [[inRoom.docId, outside.docId]]);
+      expect(links.rows.every((r) => r.document_id === inRoom.docId)).toBe(true);
+    });
+
+    // moving the document out of the room cascades to its versions and evidence
+    await owner().query('update document set room_id = null where id = $1', [inRoom.docId]);
+    const after = await owner().query('select room_id from document_version where id = $1', [inRoom.versionId]);
+    expect(after.rows[0].room_id).toBeNull();
+    const evAfter = await owner().query('select count(*)::int n from evidence_link where document_id = $1 and room_id is not null', [inRoom.docId]);
+    expect(evAfter.rows[0].n).toBe(0);
+  });
+});
+
 describe('ARCH-05 residual / ARCH-16 — audit checkpoints', () => {
   it('the runtime role cannot forge checkpoints or checkpoint another organization', async () => {
     await asRuntime({ org: orgId, user: pmId, projects: [dcId], full: [dcId], rooms: [] }, async (c) => {
@@ -264,6 +311,13 @@ describe('ARCH-07 / ARCH-10 / ARCH-14 / ARCH-18 / ARCH-19 — platform patterns'
     } as unknown as RequestContext;
     expect(policy.permissionReach(ctx, 'planning.plan.read', dcId)).toEqual({ all: false, workstreamIds: ['ws-1'] });
     expect(policy.permissionReach(ctx, 'governance.decision.read', dcId).all).toBe(false);
+  });
+
+  it('ADR-0010: not_scanned files are usable only when the deployment allows unscanned files (default off in production)', () => {
+    expect(scanUsable('not_scanned', false)).toBe(false);
+    expect(scanUsable('not_scanned', true)).toBe(true);
+    for (const s of ['quarantined', 'rejected', 'pending']) expect(scanUsable(s, true)).toBe(false);
+    expect(scanUsable('clean', false)).toBe(true);
   });
 
   it('response contract: undeclared fields are detected (and stripped)', () => {

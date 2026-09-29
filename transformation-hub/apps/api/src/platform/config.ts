@@ -19,6 +19,9 @@ const Env = z.object({
   HUB_STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
   HUB_STORAGE_LOCAL_DIR: z.string().default('.data/objects'),
   HUB_MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(512).default(25),
+  /** Files marked `not_scanned` (no enterprise malware scanner configured) may be downloaded/indexed. Default: true outside
+   *  production, false in production (ADR-0010). Setting it true in production is an explicit, documented risk acceptance. */
+  HUB_ALLOW_UNSCANNED_FILES: z.enum(['true', 'false']).optional(),
   HUB_OIDC_ISSUER: z.string().url().optional(),
   HUB_OIDC_CLIENT_ID: z.string().optional(),
   HUB_OIDC_CLIENT_SECRET: z.string().optional(),
@@ -75,7 +78,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     sessionIdleMinutes: e.HUB_SESSION_IDLE_MINUTES,
     sessionAbsoluteHours: e.HUB_SESSION_ABSOLUTE_HOURS,
     trustProxy: e.HUB_TRUST_PROXY === 'true',
-    storage: { driver: e.HUB_STORAGE_DRIVER, localDir: e.HUB_STORAGE_LOCAL_DIR, maxUploadBytes: e.HUB_MAX_UPLOAD_MB * 1024 * 1024 },
+    storage: {
+      driver: e.HUB_STORAGE_DRIVER,
+      localDir: e.HUB_STORAGE_LOCAL_DIR,
+      maxUploadBytes: e.HUB_MAX_UPLOAD_MB * 1024 * 1024,
+      allowUnscanned: e.HUB_ALLOW_UNSCANNED_FILES ? e.HUB_ALLOW_UNSCANNED_FILES === 'true' : e.NODE_ENV !== 'production',
+    },
     oidc: {
       issuer: e.HUB_OIDC_ISSUER ?? null,
       clientId: e.HUB_OIDC_CLIENT_ID ?? null,

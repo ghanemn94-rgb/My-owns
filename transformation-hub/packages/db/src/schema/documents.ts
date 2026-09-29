@@ -66,6 +66,8 @@ export const documentVersion = pgTable(
     orgId: orgIdCol(),
     projectId: projectIdCol().references(() => project.id),
     documentId: uuid('document_id').notNull(),
+    /** Derived from the parent document by trigger (never client-set) so room-only principals see only their room's versions. */
+    roomId: uuid('room_id'),
     versionNo: integer('version_no').notNull(),
     storageKey: text('storage_key').notNull(), // opaque key in object storage; never a public URL
     filename: text('filename').notNull(),
@@ -84,6 +86,7 @@ export const documentVersion = pgTable(
   (t) => [
     unique('document_version_pid_uq').on(t.projectId, t.id),
     projectFk('document_version_document_fk', t.projectId, t.documentId, (): FkTarget => document),
+    projectFk('document_version_room_fk', t.projectId, t.roomId, (): FkTarget => partnerRoom),
     uniqueIndex('document_version_uq').on(t.documentId, t.versionNo),
   ],
 );
@@ -99,6 +102,8 @@ export const evidenceLink = pgTable(
     targetId: uuid('target_id').notNull(),
     documentId: uuid('document_id'),
     documentVersionId: uuid('document_version_id'),
+    /** Derived from the linked document by trigger (null when no document is linked). */
+    roomId: uuid('room_id'),
     note: text('note'),
     purpose: text('purpose'),
     status: evidenceLinkStatus('status').notNull().default('active'),
@@ -115,6 +120,7 @@ export const evidenceLink = pgTable(
     unique('evidence_link_pid_uq').on(t.projectId, t.id),
     projectFk('evidence_link_document_fk', t.projectId, t.documentId, (): FkTarget => document),
     projectFk('evidence_link_version_fk', t.projectId, t.documentVersionId, (): FkTarget => documentVersion),
+    projectFk('evidence_link_room_fk', t.projectId, t.roomId, (): FkTarget => partnerRoom),
     index('evidence_link_target_idx').on(t.projectId, t.targetType, t.targetId),
   ],
 );

@@ -1882,6 +1882,7 @@ CREATE TABLE "document_version" (
 	"org_id" uuid NOT NULL,
 	"project_id" uuid NOT NULL,
 	"document_id" uuid NOT NULL,
+	"room_id" uuid,
 	"version_no" integer NOT NULL,
 	"storage_key" text NOT NULL,
 	"filename" text NOT NULL,
@@ -1907,6 +1908,7 @@ CREATE TABLE "evidence_link" (
 	"target_id" uuid NOT NULL,
 	"document_id" uuid,
 	"document_version_id" uuid,
+	"room_id" uuid,
 	"note" text,
 	"purpose" text,
 	"status" "evidence_link_status" DEFAULT 'active' NOT NULL,
@@ -2543,10 +2545,12 @@ ALTER TABLE "document_chunk" ADD CONSTRAINT "document_chunk_document_fk" FOREIGN
 ALTER TABLE "document_chunk" ADD CONSTRAINT "document_chunk_version_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_version" ADD CONSTRAINT "document_version_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_version" ADD CONSTRAINT "document_version_document_fk" FOREIGN KEY ("project_id","document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "document_version" ADD CONSTRAINT "document_version_room_fk" FOREIGN KEY ("project_id","room_id") REFERENCES "public"."partner_room"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "evidence_link" ADD CONSTRAINT "evidence_link_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "evidence_link" ADD CONSTRAINT "evidence_link_conflict_fk" FOREIGN KEY ("project_id","conflict_with_link_id") REFERENCES "public"."evidence_link"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "evidence_link" ADD CONSTRAINT "evidence_link_document_fk" FOREIGN KEY ("project_id","document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "evidence_link" ADD CONSTRAINT "evidence_link_version_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "evidence_link" ADD CONSTRAINT "evidence_link_room_fk" FOREIGN KEY ("project_id","room_id") REFERENCES "public"."partner_room"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_claim" ADD CONSTRAINT "source_claim_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_claim" ADD CONSTRAINT "source_claim_conflict_fk" FOREIGN KEY ("project_id","conflict_with_claim_id") REFERENCES "public"."source_claim"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_claim" ADD CONSTRAINT "source_claim_source_fk" FOREIGN KEY ("project_id","source_id") REFERENCES "public"."source_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

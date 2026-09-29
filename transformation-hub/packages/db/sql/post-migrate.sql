@@ -537,10 +537,46 @@ $$;
 DROP TRIGGER IF EXISTS hub_chunk_acl_sync ON document_chunk;
 CREATE TRIGGER hub_chunk_acl_sync BEFORE INSERT OR UPDATE ON document_chunk FOR EACH ROW EXECUTE FUNCTION hub_chunk_acl_sync();
 
+-- document_version / evidence_link: room derived from the (linked) document, so room-only principals (clean team /
+-- partner) can work with their room's versions and evidence under RLS and see nothing else.
+CREATE OR REPLACE FUNCTION hub_document_child_room_sync() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  j jsonb := to_jsonb(NEW);
+  doc_id uuid := nullif(j ->> 'document_id', '')::uuid;
+  ver_id uuid := nullif(j ->> 'document_version_id', '')::uuid;
+  d record;
+BEGIN
+  IF doc_id IS NULL AND ver_id IS NOT NULL THEN
+    SELECT v.document_id INTO doc_id FROM document_version v WHERE v.id = ver_id AND v.project_id = NEW.project_id;
+    IF doc_id IS NULL THEN
+      RAISE EXCEPTION 'cross_project_reference: document version is not a record of this project' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+  IF doc_id IS NULL THEN
+    NEW.room_id := NULL;
+    RETURN NEW;
+  END IF;
+  SELECT room_id, project_id INTO d FROM document WHERE id = doc_id;
+  IF d IS NULL OR d.project_id IS DISTINCT FROM NEW.project_id THEN
+    RAISE EXCEPTION 'cross_project_reference: document is not a record of this project' USING ERRCODE = 'P0001';
+  END IF;
+  NEW.room_id := d.room_id;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_document_child_room_sync ON document_version;
+CREATE TRIGGER hub_document_child_room_sync BEFORE INSERT OR UPDATE ON document_version FOR EACH ROW EXECUTE FUNCTION hub_document_child_room_sync();
+DROP TRIGGER IF EXISTS hub_document_child_room_sync ON evidence_link;
+CREATE TRIGGER hub_document_child_room_sync BEFORE INSERT OR UPDATE ON evidence_link FOR EACH ROW EXECUTE FUNCTION hub_document_child_room_sync();
+
 CREATE OR REPLACE FUNCTION hub_document_acl_cascade() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   IF NEW.room_id IS DISTINCT FROM OLD.room_id OR NEW.classification IS DISTINCT FROM OLD.classification THEN
     UPDATE document_chunk SET room_id = NEW.room_id, classification = NEW.classification WHERE document_id = NEW.id;
+  END IF;
+  IF NEW.room_id IS DISTINCT FROM OLD.room_id THEN
+    UPDATE document_version SET room_id = NEW.room_id WHERE document_id = NEW.id;
+    UPDATE evidence_link SET room_id = NEW.room_id WHERE document_id = NEW.id;
   END IF;
   RETURN NEW;
 END

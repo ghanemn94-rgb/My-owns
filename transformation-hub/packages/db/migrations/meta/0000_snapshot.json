@@ -1,5 +1,5 @@
 {
-  "id": "46e90a63-7f31-433f-bc1f-0b5d4d7cf738",
+  "id": "7ccc86bd-c1cb-4be4-9847-7891b90b19f5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -15811,6 +15811,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "version_no": {
           "name": "version_no",
           "type": "integer",
@@ -15952,6 +15958,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "document_version_room_fk": {
+          "name": "document_version_room_fk",
+          "tableFrom": "document_version",
+          "tableTo": "partner_room",
+          "columnsFrom": [
+            "project_id",
+            "room_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -16012,6 +16033,12 @@
         },
         "document_version_id": {
           "name": "document_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "room_id": {
+          "name": "room_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -16161,6 +16188,21 @@
           "columnsFrom": [
             "project_id",
             "document_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "evidence_link_room_fk": {
+          "name": "evidence_link_room_fk",
+          "tableFrom": "evidence_link",
+          "tableTo": "partner_room",
+          "columnsFrom": [
+            "project_id",
+            "room_id"
           ],
           "columnsTo": [
             "project_id",

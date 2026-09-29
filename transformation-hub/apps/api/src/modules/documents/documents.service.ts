@@ -41,6 +41,14 @@ export interface LoadedDoc {
 /** Versions that must never be served, linked or indexed. */
 export const UNUSABLE_SCAN_STATUSES = new Set(['quarantined', 'rejected', 'pending']);
 
+/** A version may be downloaded/indexed only when not quarantined/pending, and `not_scanned` only when the deployment allows
+ *  unscanned files (ADR-0010: default off in production, on in development/demo). */
+export function scanUsable(status: string, allowUnscanned: boolean): boolean {
+  if (UNUSABLE_SCAN_STATUSES.has(status)) return false;
+  if (status === 'not_scanned') return allowUnscanned;
+  return true;
+}
+
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
 
 /** Escape LIKE wildcards so user text is matched literally (C-47). */
@@ -120,7 +128,7 @@ export class DocumentsService {
       uploadedBy: v.uploadedBy,
       uploadedAt: v.uploadedAt.toISOString(),
       note: v.note,
-      downloadable: !UNUSABLE_SCAN_STATUSES.has(v.scanStatus),
+      downloadable: scanUsable(v.scanStatus, this.config.storage.allowUnscanned),
     };
   }
 
@@ -442,7 +450,7 @@ export class DocumentsService {
       .from(schema.documentVersion)
       .where(and(eq(schema.documentVersion.id, versionId), eq(schema.documentVersion.documentId, documentId), eq(schema.documentVersion.projectId, projectId)));
     if (!v) throw notFound();
-    if (UNUSABLE_SCAN_STATUSES.has(v.scanStatus)) {
+    if (!scanUsable(v.scanStatus, this.config.storage.allowUnscanned)) {
       await this.audit.recordDetached(ctx, { action: 'documents.document.download', entityType: 'document_version', entityId: v.id, projectId, outcome: 'rejected', reason: `version is ${v.scanStatus}` });
       throw ruleViolation('documents.version_not_downloadable', `This version is ${v.scanStatus} and cannot be downloaded`);
     }
