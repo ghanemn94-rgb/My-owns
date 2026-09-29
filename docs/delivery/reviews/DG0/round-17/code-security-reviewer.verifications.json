@@ -1,0 +1,36 @@
+{
+ "verifications": [
+  {
+   "finding_id": "F-DG0-148",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Fixed and verified. agent_sandbox.py:145 now passes --unshare-ipc. In a disposable fixture, the sandbox's /proc/self/ns/ipc (ipc:[4026532382]) differs from the host's (ipc:[4026532268]) with the round-17 code, and is identical with the round-16 code (4fd56d4). sandbox.json records unshare [\"ipc\"], and rules.mjs:368 requires it. The pre-freeze in a fresh clone, including the nested-bubblewrap sandbox tests, still passes, so the nested bwrap is unaffected. The D-031 copy-back concurrency fix also holds: a record another role commits to the real directory between prepare and finish gives exit 3 (false discard) with the round-16 code and exit 0 with no discard with the round-17 code, and scope enforcement (write-once, other roles, symlinks, top level) is unchanged. A new edge-case regression in the same change is raised separately as F-DG0-150 (Low).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-17/04-copyback-ipc-repro.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-17/r17-copyback-ipc-repro.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-17/03-prefreeze.log",
+    "tools/agents/agent_sandbox.py#L145"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-147",
+   "result": "PASS",
+   "status_after": "ACCEPTED_OBSERVATION",
+   "note": "Still reproduces with the round-17 code (case E: a new own-role file in round-1 is copied back, exit 0). I still judge it Low, non-mandatory and fail-closed for gate integrity: a record in an earlier round must reconstruct from that round's own run transcript, which a later run cannot satisfy. Accepted as an observation; pinning the accept pattern to the current round remains the recommended hardening.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-17/04-copyback-ipc-repro.log",
+    "tools/agents/agent_sandbox.py#L54-L67"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-149",
+   "result": "FAIL",
+   "status_after": "OPEN",
+   "note": "Not accepted as an observation in round 17. I could not complete the re-assessment of threat-model residual 7 (whether a file-tool write to a uid-0-writable /proc/sys entry stays within 'availability / host-tunable, not repository or gate integrity'): my analysis was stopped by the session's safety classifier, so I have no basis to confirm that the residual is no larger than stated. I am therefore not re-affirming my round-16 conclusion. The residual needs a fresh, human-supervised assessment. Separately, a read-only check this round shows /proc/sys/kernel/core_pattern on the host still reads 'test', the value the round-16 reproduction left behind, so the host tunable has not been restored and needs the user's attention.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-16/04-sandbox-probe.log",
+    "docs/delivery/threat-model.md#disclosed-residuals"
+   ]
+  }
+ ]
+}

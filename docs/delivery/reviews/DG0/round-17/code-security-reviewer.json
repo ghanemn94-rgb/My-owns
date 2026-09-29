@@ -1,0 +1,149 @@
+{
+ "schema_version": 1,
+ "stage_id": "DG0",
+ "round": 17,
+ "candidate_id": "sha256:34b06b8a8245250ff15d4dc1ad6453a59de4d07950d6d24668b30233b1af314e",
+ "source_commit": "f84eed411dfb93fbe3a72d3475ee8ff7eae68f94",
+ "reviewer_role": "code-security-reviewer",
+ "invocation_reference": {"kind": "claude-code-cli-session", "run_id": "DG0-T-DG0-REV-SEC-R17-code-security-reviewer-20260929T111538Z-5a9b1379", "session_id": "5a9b1379-0508-4ad8-ae25-9abf8c860685"},
+ "implementation_author": ["transformation-analyst", "delivery-orchestrator"],
+ "independence_declaration": {
+  "reviewer_authored_reviewed_scope": false,
+  "statement": "I (code-security-reviewer) authored none of the implementation in the reviewed scope. I formed this verdict before reading any other round-17 review record and read none. All code execution ran in disposable clones and fixtures inside this run's private $TMPDIR. No reproduction touched another agent's files or scratch, and none wrote to /proc/sys or any other host tunable in this round (read-only checks only)."
+ },
+ "assignment": "docs/delivery/assignments/DG0/round-17/review-code-security-reviewer.md",
+ "requirements_checked": ["REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-016", "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026"],
+ "checks_run": [
+  {
+   "id": "C1-candidate",
+   "procedure": "Confirm the frozen candidate: HEAD is a metadata-only commit after the freeze; recompute the candidate ID from the working tree and from the frozen commit",
+   "command": "git rev-parse HEAD; git diff --stat f84eed4..HEAD; node tools/gates/candidate.mjs --stage DG0; node tools/gates/candidate.mjs --stage DG0 --ref f84eed411dfb93fbe3a72d3475ee8ff7eae68f94",
+   "environment": "repository working tree, agent shell sandbox, node 22",
+   "expected": "candidate_id sha256:34b06b8a...af314e; HEAD..f84eed4 touches only excluded metadata",
+   "actual": "HEAD 9c9d086 adds only assignments, the candidate manifest and stages.json (all excluded); both computations give sha256:34b06b8a8245250ff15d4dc1ad6453a59de4d07950d6d24668b30233b1af314e (90 files)",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-022"]
+  },
+  {
+   "id": "C2-node-tests",
+   "procedure": "Run the gate validator and agent tooling test suites on the frozen commit in a fresh disposable clone",
+   "command": "git clone /home/user/My-owns $TMPDIR/dg0-sec && git checkout f84eed4 && node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+   "environment": "disposable clone under $TMPDIR, node 22, bwrap available (nested)",
+   "expected": "all tests pass",
+   "actual": "90 tests, 90 pass, 0 fail",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-016", "REQ-DLV-023"],
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-17/01-node-tests.log"]
+  },
+  {
+   "id": "C3-python-tests",
+   "procedure": "Run the runner metadata and settings Python tests in the disposable clone",
+   "command": "python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'",
+   "environment": "disposable clone under $TMPDIR, python3",
+   "expected": "all tests pass",
+   "actual": "Ran 22 tests, OK",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-026"],
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-17/02-python-tests.log"]
+  },
+  {
+   "id": "C4-prefreeze",
+   "procedure": "Run the pre-freeze in a fresh clone of the candidate commit",
+   "command": "bash tools/gates/prefreeze.sh DG0",
+   "environment": "disposable clone under $TMPDIR at f84eed4, nested bubblewrap",
+   "expected": "all pre-freeze checks PASS; working-tree candidate equals HEAD",
+   "actual": "all 11 checks PASS, including sandboxed source extraction, validator/guard tests, register, pipeline, and working-tree candidate = sha256:34b06b8a...af314e",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-022", "REQ-DLV-023"],
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-17/03-prefreeze.log"]
+  },
+  {
+   "id": "C5-diff-review",
+   "procedure": "Source review of the round-16 to round-17 implementation diff (agent_sandbox.py finish/prepare/bwrap_args, rules.mjs unshare check, tests, threat model) plus the full agent_sandbox.py, guard-write.mjs and the run-agent.sh finish handling",
+   "command": "git diff 4fd56d4d701ffe02586edaf2c0cc3966e6ff68a0..f84eed411dfb93fbe3a72d3475ee8ff7eae68f94 -- tools/ docs/delivery/threat-model.md",
+   "environment": "repository, read-only inspection",
+   "expected": "no new gate or write-guard bypass; confinement evidence stated correctly",
+   "actual": "The seed-based copy-back keeps scope enforcement, and the validator now requires unshare to include ipc. Found an edge-case unhandled exception on a same-path collision (F-DG0-150, Low, fail-closed) and a stale module docstring claiming a private PID namespace (F-DG0-151, Low).",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-007", "REQ-DLV-013"],
+   "evidence": ["tools/agents/agent_sandbox.py#L238-L285", "tools/gates/lib/rules.mjs#L365-L372"]
+  },
+  {
+   "id": "C6-copyback-ipc-repro",
+   "procedure": "Reproduce against the round-16 (4fd56d4) and round-17 (f84eed4) agent_sandbox.py in disposable fixtures: (A) IPC namespace, (B) another role's concurrent commit, (C) scope (write-once, other role, symlink, top level, deletion), (D) same-path collision, (E) backdated round (F-DG0-147)",
+   "command": "node docs/delivery/test-evidence/DG0/code-security/round-17/r17-copyback-ipc-repro.mjs <clone>/tools/agents (old and new clones)",
+   "environment": "fixtures under $TMPDIR, real bwrap and setpriv",
+   "expected": "new: private IPC ns; B exit 0 with no discard; C all out-of-scope writes discarded; D clean discard",
+   "actual": "A: old shares the host ipc ns, new is private (ipc:[4026532382] vs host ipc:[4026532268]). B: old exit 3 (false discard), new exit 0. C: identical discards in both, the real files are untouched, and the deletion is ignored in new. D: old exit 3 clean discard, new exit 1 with an unhandled FileExistsError and no sandbox.json (F-DG0-150). E: still copied back in both (F-DG0-147, fail-closed).",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-007"],
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-17/04-copyback-ipc-repro.log", "docs/delivery/test-evidence/DG0/code-security/round-17/r17-copyback-ipc-repro.mjs"]
+  },
+  {
+   "id": "C7-secrets-ci",
+   "procedure": "Scan tracked files for credential patterns; review the CI workflow for least privilege, pinned actions, fetch depth and failure propagation",
+   "command": "git grep -nIE '(AKIA...|sk-ant-...|ghp_...|BEGIN ... PRIVATE KEY|xox...)' at f84eed4; cat .github/workflows/delivery-gates.yml",
+   "environment": "disposable clone under $TMPDIR",
+   "expected": "no secrets; permissions contents:read; SHA-pinned actions; fetch-depth 0; gate steps fail the job",
+   "actual": "0 matches. The workflow has contents:read, SHA-pinned checkout and setup-node, fetch-depth 0, and plain run steps whose non-zero exits fail the job (validate.mjs --pipeline and --reconcile)",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-023"],
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-17/05-secrets-ci.log"]
+  },
+  {
+   "id": "C8-pipeline",
+   "procedure": "Pipeline gate state check in the disposable clone",
+   "command": "node tools/gates/validate.mjs --stage DG0 --pipeline",
+   "environment": "disposable clone under $TMPDIR at f84eed4",
+   "expected": "PASS pipeline with no stage advanced past an unapproved gate",
+   "actual": "PASS pipeline (active stage: DG0 FIXING at the frozen commit)",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-016"]
+  },
+  {
+   "id": "C9-residual-7",
+   "procedure": "Assign-required assessment of threat-model residual 7 (host procfs bound read-write; file-tool writes to uid-0-writable /proc/sys entries): does it stay within 'availability / host-tunable, not repository or gate integrity'?",
+   "environment": "agent session",
+   "expected": "a completed assessment, with a narrower mitigation if one exists",
+   "actual": "NOT COMPLETED. My analysis was stopped by the session's safety classifier, and I did not continue it. I cannot confirm that the residual is no larger than stated, so F-DG0-149 stays OPEN. A read-only check shows the host's /proc/sys/kernel/core_pattern still holds the value 'test' left by the round-16 reproduction; it has not been restored.",
+   "exit_status": null,
+   "result": "BLOCKED",
+   "requirements": ["REQ-DLV-007"],
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-16/04-sandbox-probe.log", "docs/delivery/threat-model.md#disclosed-residuals"]
+  },
+  {
+   "id": "C10-residual-8",
+   "procedure": "Assessment of threat-model residual 8 after D-031",
+   "command": "see C6 case A (readlink /proc/self/ns/ipc inside and outside the sandbox)",
+   "environment": "fixtures under $TMPDIR",
+   "expected": "IPC namespace private; PID sharing disclosed accurately",
+   "actual": "The IPC namespace is private. The shared PID namespace (cross-run signalling, availability) remains as disclosed in threat-model.md residual 8 and is no larger than stated. The only inaccuracy is the module docstring (F-DG0-151).",
+   "exit_status": 0,
+   "result": "PASS",
+   "requirements": ["REQ-DLV-007"],
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-17/04-copyback-ipc-repro.log"]
+  }
+ ],
+ "findings": ["F-DG0-150", "F-DG0-151"],
+ "verdict": "BLOCKED",
+ "summary": "BLOCKED. The candidate is confirmed. All tests (90 node, 22 python) and the pre-freeze pass in a fresh clone. F-DG0-148 is CLOSED_VERIFIED (private IPC namespace), and the D-031 copy-back concurrency fix holds. F-DG0-147 is accepted as an observation. New Low findings: F-DG0-150 (unhandled FileExistsError on a same-path collision; fail-closed) and F-DG0-151 (stale docstring). The required assessment of residual 7 (C9) could not be completed because the session's safety classifier stopped it, so F-DG0-149 stays OPEN and this review cannot PASS. Separately, the host's /proc/sys/kernel/core_pattern still holds the value left by the round-16 reproduction and needs to be restored by the user.",
+ "evidence_paths": [
+  "docs/delivery/test-evidence/DG0/code-security/round-17/01-node-tests.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-17/02-python-tests.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-17/03-prefreeze.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-17/04-copyback-ipc-repro.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-17/05-secrets-ci.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-17/r17-copyback-ipc-repro.mjs",
+  "docs/delivery/reviews/DG0/round-17/code-security-reviewer.findings.json",
+  "docs/delivery/reviews/DG0/round-17/code-security-reviewer.verifications.json"
+ ],
+ "reviewed_at": "2026-09-29T11:25:00Z"
+}

@@ -1,0 +1,51 @@
+{
+ "findings": [
+  {
+   "id": "F-DG0-150",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-007",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "D-031 copy-back regression: finish() raises an unhandled FileExistsError (exit 1, no sandbox.json, possible partial copy-back) when the same own-role path appears in the real directory during the run, where the round-16 code discarded it cleanly (fail-closed; observation)",
+   "reproduction": "tools/agents/agent_sandbox.py:259 tests `rel in seed` (the staging seed) instead of the live real directory, and line 266 then opens the destination with O_EXCL. If the real file was created after prepare (for example by a second concurrent run of the same role), the file is not in the seed, so the write-once discard branch is skipped and os.open raises FileExistsError. The loop is not wrapped, so the files sorted after it are not copied and sandbox.json is not written. Reproduced in a disposable fixture (docs/delivery/test-evidence/DG0/code-security/round-17/r17-copyback-ipc-repro.mjs, case D; log 04-copyback-ipc-repro.log): round-16 code: exit 3 with the entry discarded as 'existing file changed; review files are write-once'; round-17 code: exit 1 with a FileExistsError traceback and no sandbox.json. The real file is not overwritten.",
+   "expected": "A collision with an existing real file is reported as a discard (exit 3), sandbox.json is always written, and no partial copy-back occurs. For example, check os.path.lexists(dest) for the non-replace case, or catch FileExistsError and record a discard.",
+   "actual": "Unhandled exception. This fails closed: run-agent.sh:236-240 treats any non-zero finish status as exit 73 (not auto-committed) for confined roles, and the validator requires sandbox.json (rules.mjs:352-354), so gate integrity is not affected. But the runner's message wrongly says writes were 'discarded', evidence is missing, and earlier-sorted files may already have been copied back. It needs concurrent runs of the same role, which the protocol does not schedule. I would accept this as an observation.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-17/04-copyback-ipc-repro.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-17/r17-copyback-ipc-repro.mjs",
+    "tools/agents/agent_sandbox.py#L249-L270",
+    "tools/agents/run-agent.sh#L236-L241"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-17/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {"at": "2026-09-29T11:22:40Z", "status": "OPEN", "note": "raised by code-security-reviewer in DG0 round 17; reproduced against both the round-16 and round-17 agent_sandbox.py in disposable fixtures."}
+   ]
+  },
+  {
+   "id": "F-DG0-151",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-007",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "agent_sandbox.py module docstring misstates the confinement: it says 'the PID and IPC namespaces are private', but the PID namespace is shared with the host (threat-model residual 8)",
+   "reproduction": "tools/agents/agent_sandbox.py:23-25 (module docstring) states 'no_new_privs is set, the PID and IPC namespaces are private'. bwrap_args (line 145) passes only --unshare-ipc, with no --unshare-pid, and the code comment at lines 134-144, threat-model.md residual 8 and sandbox.json (unshare: [\"ipc\"]) all correctly say that the PID namespace is shared.",
+   "expected": "The docstring matches the implementation and the threat model: private IPC namespace; shared host PID namespace (disclosed residual 8).",
+   "actual": "The docstring overstates the isolation. This is documentation only: the machine-readable evidence (sandbox.json) and the threat model are correct. I would accept this as an observation.",
+   "evidence": [
+    "tools/agents/agent_sandbox.py#L23-L25",
+    "tools/agents/agent_sandbox.py#L145",
+    "docs/delivery/threat-model.md#disclosed-residuals"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-17/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {"at": "2026-09-29T11:22:40Z", "status": "OPEN", "note": "raised by code-security-reviewer in DG0 round 17 by source inspection."}
+   ]
+  }
+ ]
+}
