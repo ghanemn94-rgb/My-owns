@@ -237,6 +237,27 @@ describe('AT-09 — failed readiness test blocks go-live; contingency and decisi
     expect(v.status).toBe('ready_for_decision');
   });
 
+  it('REQ-RDY-002: the template checklist is instantiated per site (all 14 areas), idempotently; project-level defaults are recognised', async () => {
+    const site3 = await insertSite(projectId, 'S-AT09-C');
+    const first = await p.pm.post(`${P(projectId)}/readiness-checks/from-template`, { siteId: site3 });
+    expect(first.status, JSON.stringify(first.body)).toBe(201);
+    expect(first.body).toMatchObject({ created: 31, existing: 0, uncoveredAreas: [] });
+    expect(first.body.areas).toHaveLength(14);
+    const again = await p.pm.post(`${P(projectId)}/readiness-checks/from-template`, { siteId: site3 });
+    expect(again.body).toMatchObject({ created: 0, existing: 31 });
+    const projectLevel = await p.pm.post(`${P(projectId)}/readiness-checks/from-template`, {});
+    expect(projectLevel.body).toMatchObject({ created: 0, existing: 31 }); // the factory already created them
+    const list = (await p.pm.get(`${P(projectId)}/readiness-checks?siteId=${site3}&pageSize=100`).expect(200)).body;
+    expect(list.total).toBe(31);
+    expect(new Set(list.items.map((c: { area: string }) => c.area)).size).toBe(14);
+    expect(list.items.every((c: { templateKey: string | null; status: string }) => !!c.templateKey && c.status === 'not_started')).toBe(true);
+    // Idempotent for any holder of readiness.check.manage (for a create the actor is the creator — access-matrix §2.4).
+    const byContributor = await p.contributor.post(`${P(projectId)}/readiness-checks/from-template`, { siteId: site3 });
+    expect(byContributor.body).toMatchObject({ created: 0, existing: 31 });
+    // Roles without readiness.check.manage cannot run it.
+    expect((await p.sponsor.post(`${P(projectId)}/readiness-checks/from-template`, { siteId: site3 })).status).toBe(403);
+  });
+
   it('the project-wide Day-1 plan is gated by every unbound check, incl. the template defaults (REQ-RDY-002)', async () => {
     const day1 = await completePlan(p.pm, projectId, { accountableUserId: p.pm.userId, title: 'Day-1 go-live (synthetic)' });
     const v = await plan(p.pm, projectId, day1);
