@@ -1,0 +1,82 @@
+{{- if .Values.bootstrap.enabled }}
+{{- if eq .Values.app.mode "demo" }}{{ fail "bootstrap.enabled with app.mode=demo: the production bootstrap refuses demo mode" }}{{ end }}
+{{- if not .Values.bootstrap.orgName }}{{ fail "bootstrap.orgName is required when bootstrap.enabled=true" }}{{ end }}
+# PRODUCTION bootstrap (apps/api/src/cli/bootstrap.ts): organization, templates, platform schedules and — optionally —
+# the first administrator bound to an IdP identity. No passwords, no demo data. Idempotent; runs after install only.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "hub.fullname" . }}-bootstrap
+  labels:
+    {{- include "hub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: bootstrap
+  annotations:
+    helm.sh/hook: post-install
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        {{- include "hub.podLabels" (dict "ctx" . "component" "migrate") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: default
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "hub.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: bootstrap
+          image: {{ include "hub.apiImage" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["bootstrap"]
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.app.nodeEnv | quote }}
+            - name: HUB_MODE
+              value: {{ .Values.app.mode | quote }}
+            - name: HUB_ORG_SLUG
+              value: {{ .Values.app.orgSlug | quote }}
+            - name: HUB_ORG_NAME
+              value: {{ .Values.bootstrap.orgName | quote }}
+            {{- with .Values.bootstrap.adminEmail }}
+            - name: HUB_BOOTSTRAP_ADMIN_EMAIL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.bootstrap.adminName }}
+            - name: HUB_BOOTSTRAP_ADMIN_NAME
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.bootstrap.adminOidcIssuer }}
+            - name: HUB_BOOTSTRAP_ADMIN_OIDC_ISSUER
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.bootstrap.adminOidcSubject }}
+            - name: HUB_BOOTSTRAP_ADMIN_OIDC_SUBJECT
+              value: {{ . | quote }}
+            {{- end }}
+            - name: DATABASE_MIGRATION_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.migrationSecret.name }}
+                  key: {{ .Values.database.migrationSecret.key }}
+            {{- include "hub.caEnv" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.migrations.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- include "hub.caMount" . | nindent 12 }}
+      volumes:
+        - name: tmp
+          emptyDir: { sizeLimit: 64Mi }
+        {{- include "hub.caVolume" . | nindent 8 }}
+{{- end }}

@@ -317,7 +317,7 @@ else
 fi
 
 # Audit hash chain: verify every organization's chain and compare the head with the backup snapshot.
-AUDIT_FAIL=0; AUDIT_N=0
+AUDIT_N=0
 while IFS=$'\t' read -r org pos hash rows; do
   [ -n "$org" ] || continue
   AUDIT_N=$((AUDIT_N + 1))
@@ -326,7 +326,7 @@ while IFS=$'\t' read -r org pos hash rows; do
   if [ "$broken" = "0" ] && [ "$head" = "$pos"$'\t'"$hash"$'\t'"$rows" ]; then
     check "audit chain org ${org:0:8}…" PASS "hub_audit_verify: 0 breaks; head pos=$pos hash=${hash:0:12}… rows=$rows = backup"
   else
-    AUDIT_FAIL=1; check "audit chain org ${org:0:8}…" FAIL "breaks=$broken head=[$head] expected=[$pos $hash $rows]"
+    check "audit chain org ${org:0:8}…" FAIL "breaks=$broken head=[$head] expected=[$pos $hash $rows]"
   fi
 done <"$FROM/audit.heads"
 [ "$AUDIT_N" -gt 0 ] || check "audit chain" PASS "no audit events in backup"

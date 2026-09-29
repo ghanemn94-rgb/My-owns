@@ -11,6 +11,8 @@
 # Steps: (re)create both databases → migrate + DEMO seed into src → simulate in-flight work (running/queued jobs,
 # a 'sending' delivery, an overdue schedule, an undispatched outbox event, an active session, an audit checkpoint) →
 # write synthetic object files → backup.sh → restore.sh into dst (timed) → independent cross-checks src vs dst.
+# Roles/databases: scripts/dev/pg-init-roles.sh (local cluster), or scripts/ops/db-init-roles.sh when PGADMIN_URL is
+# set (CI PostgreSQL service container).
 # Prerequisites: local PostgreSQL 16 on 127.0.0.1:5432 (pnpm db:start), built packages and API
 # (pnpm build:packages && (cd apps/api && npx tsc -p tsconfig.build.json)).
 # Never point this script at a shared or production server: it refuses non-local hosts and other database names.
@@ -36,6 +38,8 @@ exec > >(tee -a "$LOG") 2>&1
 
 owner_url() { echo "postgres://hub_owner:${PW}@${HOST}:${PORT}/$1"; }
 app_url() { echo "postgres://hub_app:${PW}@${HOST}:${PORT}/$1"; }
+# Maintenance connection: the admin URL in CI (roles may not exist yet), otherwise the owner role.
+maint_url() { if [ -n "${PGADMIN_URL:-}" ]; then echo "$PGADMIN_URL"; else owner_url postgres; fi; }
 now() { date +%s.%N; }
 elapsed() { awk -v a="$1" -v b="$2" 'BEGIN { printf "%.2f", b - a }'; }
 step() { echo; echo "=== $* ($(date -u +%H:%M:%SZ))"; }
@@ -46,15 +50,20 @@ verdict() { if [ "$2" = PASS ]; then printf 'PASS  %-52s %s\n' "$1" "$3"; else p
 
 echo "Transformation Hub restore drill $TS (synthetic bulk rows: $BULK_ROWS, object files: $OBJECT_FILES)"
 echo "host: $(uname -srm); $(psql --version); $(pg_dump --version); node $(node --version)"
-echo "server: $(psql -X -At -d "$(owner_url postgres)" -c 'show server_version')"
+echo "server: $(psql -X -At -d "$(maint_url)" -c 'show server_version')"
 [ -f "$ROOT/apps/api/dist/cli/seed-demo.js" ] && [ -f "$ROOT/packages/db/dist/index.js" ] \
   || { echo "drill: build first: pnpm build:packages && (cd apps/api && npx tsc -p tsconfig.build.json)" >&2; exit 1; }
 
 step "1. recreate $SRC and $DST"
 for db in "$SRC" "$DST"; do
-  psql -X -q -v ON_ERROR_STOP=1 -d "$(owner_url postgres)" -c "DROP DATABASE IF EXISTS $db WITH (FORCE)"
+  psql -X -q -v ON_ERROR_STOP=1 -d "$(maint_url)" -c "DROP DATABASE IF EXISTS $db WITH (FORCE)"
 done
-HUB_DATABASES="$SRC $DST" bash "$ROOT/scripts/dev/pg-init-roles.sh"
+if [ -n "${PGADMIN_URL:-}" ]; then
+  # CI / remote test server: create roles and databases over TCP with an admin URL (scripts/ops/db-init-roles.sh)
+  HUB_DATABASES="$SRC $DST" HUB_OWNER_DB_PASSWORD="$PW" HUB_APP_DB_PASSWORD="$PW" bash "$ROOT/scripts/ops/db-init-roles.sh"
+else
+  HUB_DATABASES="$SRC $DST" bash "$ROOT/scripts/dev/pg-init-roles.sh"
+fi
 
 step "2. migrate + DEMO seed into $SRC (entrypoint 'migrate' command, then seed-demo.js)"
 T=$(now)
@@ -104,15 +113,15 @@ SQL
   echo "bulk synthetic volume: $BULK_ROWS dispatched outbox rows in $(elapsed "$T" "$(now)")s; database size $(psql_owner "$SRC" -c "select pg_size_pretty(pg_database_size(current_database()))")"
 fi
 
-step "4. synthetic object files ($OBJECT_FILES) in $WORK/src-objects"
-ORG="$(psql_owner "$SRC" -c 'select id from organization order by created_at limit 1')"
-mkdir -p "$WORK/src-objects/$ORG"
+step "4. object store: demo document objects written by the seed + $OBJECT_FILES synthetic volume files"
+echo "document objects written by the demo seed (documents|quarantine/<project>/<version>): $(find "$WORK/src-objects" -type f 2>/dev/null | wc -l)"
+echo "document_version rows: $(psql_owner "$SRC" -c 'select count(*) from document_version')"
+# Synthetic volume lives in its own area so it can never be mistaken for a document object.
+mkdir -p "$WORK/src-objects/drill-synthetic"
 for i in $(seq 1 "$OBJECT_FILES"); do
-  key="$(cat /proc/sys/kernel/random/uuid)"
-  mkdir -p "$WORK/src-objects/$ORG/${key:0:2}"
-  head -c $(( (i * 7919) % 262144 + 1024 )) /dev/urandom >"$WORK/src-objects/$ORG/${key:0:2}/$key"
+  head -c $(( (i * 7919) % 262144 + 1024 )) /dev/urandom >"$WORK/src-objects/drill-synthetic/$(cat /proc/sys/kernel/random/uuid)"
 done
-echo "objects: $(find "$WORK/src-objects" -type f | wc -l) files, $(du -sh "$WORK/src-objects" | cut -f1)"
+echo "objects total: $(find "$WORK/src-objects" -type f | wc -l) files, $(du -sh "$WORK/src-objects" | cut -f1)"
 
 step "5. backup ($SRC)"
 T=$(now)
@@ -187,7 +196,7 @@ echo "restore wall time (restore.sh): ${RESTORE_S}s   <- measured restore durati
 sed -n '/^Measured durations/,/TOTAL/p' "$WORK/restore-report.txt"
 echo "artifacts: $WORK"
 if [ "$CLEANUP" = 1 ]; then
-  for db in "$SRC" "$DST"; do psql -X -q -d "$(owner_url postgres)" -c "DROP DATABASE IF EXISTS $db WITH (FORCE)"; done
+  for db in "$SRC" "$DST"; do psql -X -q -d "$(maint_url)" -c "DROP DATABASE IF EXISTS $db WITH (FORCE)"; done
   echo "drill databases dropped"
 fi
 if [ "$RESULT" = 0 ]; then echo "DRILL RESULT: PASS"; else echo "DRILL RESULT: FAIL"; fi

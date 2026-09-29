@@ -1,0 +1,28 @@
+# Mode "Mobily Private — Approved AI Gateway" (master prompt §16): application and data hosted internally; an APPROVED
+# enterprise/external provider reached ONLY through Mobily's policy gateway (ADR-0009 adapter `anthropic` via gateway).
+# Preconditions (Mobily decisions, MQ-06/MQ-07): approved provider and processing locations, retention, contractual
+# terms, costs, and per-destination classification ceilings (project setting max_classification_to_provider; the
+# proposed ceiling for an external gateway is `internal`). Data sent through this flow LEAVES the environment (DF-07).
+# NOTE: the HUB_AI_* variables are PROPOSED names; the AI runtime reads them once implemented (P5).
+app:
+  privateMode: true
+  egressAllowlist:
+    - idp.example.internal          # REPLACE
+    - s3.example.internal           # REPLACE
+    - ai-gateway.example.internal   # REPLACE: the policy gateway host — never the provider's public host directly
+ai:
+  mode: anthropic
+  allowMock: false
+  baseUrl: https://ai-gateway.example.internal   # REPLACE
+  model: REPLACE_WITH_APPROVED_MODEL_ID
+  apiKeySecret:
+    name: hub-ai-gateway            # Secret with the gateway credential (rotated by Mobily)
+    key: HUB_AI_API_KEY
+networkPolicy:
+  enabled: true
+  egress:
+    aiGateway:                      # worker → policy gateway only; the gateway, not the pod, reaches the provider
+      enabled: true
+      ports: [{ port: 443, protocol: TCP }]
+      to:
+        - ipBlock: { cidr: 198.51.100.20/32 }  # REPLACE: documentation address (RFC 5737) — the gateway's IP/CIDR

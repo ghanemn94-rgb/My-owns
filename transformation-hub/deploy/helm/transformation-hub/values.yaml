@@ -1,0 +1,285 @@
+# =====================================================================================================================
+# Transformation Hub — Helm values. Every value marked REPLACE is an enterprise input from Mobily (handover checklist:
+# docs/deployment/handover-checklist.md). Secrets are never put in values: only the NAMES of pre-created Secrets.
+# Overlays for the deployment modes of master prompt §16: values-private-ai-off.yaml, values-private-local-ai.yaml,
+# values-private-ai-gateway.yaml.
+# =====================================================================================================================
+
+# OpenShift: no fixed UID/GID/fsGroup (the restricted-v2 SCC assigns an arbitrary UID), Route instead of Ingress,
+# OpenShift DNS port 5353 in the DNS egress rule.
+openshift: false
+
+nameOverride: ""
+# Resource names become hub-api / hub-worker / hub-web. The web image's /api rewrite fallback is fixed at build time
+# to http://hub-api:4000 (apps/web/Dockerfile HUB_API_URL); keep them consistent if you change either.
+fullnameOverride: hub
+
+# --- Images (PRIVATE registry; images are mirrored/pushed there by Mobily's pipeline) ---------------------------------
+image:
+  registry: registry.example.internal          # REPLACE: private registry host (no public registry at runtime)
+  pullPolicy: IfNotPresent
+  api:
+    repository: transformation-hub/api
+    tag: "0.1.0"
+    digest: ""                                  # sha256:… — when set, the digest is used instead of the tag (preferred)
+    # Optional PDF-rendering variant (apps/api/Dockerfile target api-chromium), used when chromium.enabled=true
+    chromiumRepository: transformation-hub/api-chromium
+    chromiumDigest: ""
+  web:
+    repository: transformation-hub/web
+    tag: "0.1.0"
+    digest: ""
+imagePullSecrets: []                            # e.g. [{ name: hub-registry-pull }]
+
+# --- Application configuration (non-secret; see docs/deployment/configuration.md) ------------------------------------
+app:
+  nodeEnv: production                           # production enables the unsafe-configuration guard in config.ts
+  mode: standard                                # HUB_MODE — "demo" is refused in production
+  orgSlug: mobily                               # REPLACE if different
+  appName: "Transformation & Transactions Hub"
+  publicUrl: https://hub.example.internal       # REPLACE: external URL (used for OIDC redirect and NOTES)
+  cookieSecure: true                            # HUB_COOKIE_SECURE — must stay true in production
+  trustProxy: true                              # HUB_TRUST_PROXY — required behind an ingress/route (ADR-0017)
+  privateMode: true                             # HUB_PRIVATE_MODE
+  egressAllowlist: []                           # HUB_EGRESS_ALLOWLIST host names the app may call (in-app guard)
+  logLevel: info
+  session:
+    idleMinutes: 60                             # proposal pending Mobily Cybersecurity (MQ-15)
+    absoluteHours: 12
+  maxUploadMb: 25
+  database:
+    poolMax: 20
+    statementTimeoutMs: 30000
+    lockTimeoutMs: 10000
+    idleTxTimeoutMs: 60000
+  rateLimits:                                   # per replica — add an ingress/gateway limiter (ADR-0017)
+    perMinute: 600
+    mutationsPerMinute: 120
+    publicPerMinute: 60
+  workerPollMs: 1000
+  extraEnv: []                                  # [{ name: X, value: y }] — never secrets
+
+# --- Database (Mobily-managed PostgreSQL 16; separate owner and runtime roles — ADR-0003) --------------------------
+database:
+  runtimeRole: hub_app
+  # Secret with the RUNTIME connection URL (role hub_app: NOSUPERUSER NOBYPASSRLS, not the table owner)
+  runtimeSecret:
+    name: hub-db-runtime                        # REPLACE if your Secret has another name
+    key: DATABASE_URL
+  # Secret with the OWNER connection URL (role hub_owner) — mounted ONLY into the migration/bootstrap Jobs
+  migrationSecret:
+    name: hub-db-migration
+    key: DATABASE_MIGRATION_URL
+
+# --- Object storage ---------------------------------------------------------------------------------------------------
+storage:
+  driver: s3                                    # production: s3 (the S3 adapter is "Not configured" at this commit)
+  s3:                                           # PROPOSED variable names (HUB_S3_*) for the S3-compatible adapter
+    endpoint: https://s3.example.internal       # REPLACE
+    bucket: hub-objects                         # REPLACE
+    region: us-east-1                           # placeholder required by most S3 SDKs; set per provider
+    forcePathStyle: true
+    credentialsSecret:
+      name: hub-object-storage
+      accessKeyIdKey: HUB_S3_ACCESS_KEY_ID
+      secretAccessKeyKey: HUB_S3_SECRET_ACCESS_KEY
+  local:                                        # DEVELOPMENT/EVALUATION clusters only (refused when nodeEnv=production)
+    existingClaim: ""                           # ReadWriteMany PVC shared by api + worker
+    mountPath: /data/objects
+
+# --- Identity (OIDC; SAML-only IdPs through an OIDC-capable broker) --------------------------------------------------
+oidc:
+  issuer: https://idp.example.internal/realms/hub   # REPLACE (https required in production)
+  clientId: transformation-hub                  # REPLACE
+  redirectUri: ""                               # default: <publicUrl>/api/v1/auth/oidc/callback (contract route)
+  linkByEmail: false
+  clientSecret:
+    name: hub-oidc
+    key: HUB_OIDC_CLIENT_SECRET
+  cookieSecret:                                 # HMAC key for short-lived signed cookies (>= 32 chars)
+    name: hub-oidc
+    key: HUB_COOKIE_SECRET
+
+# --- AI runtime (ADR-0009). Default OFF. Variable names HUB_AI_* are PROPOSED (not yet read by config.ts) ------------
+ai:
+  mode: "off"                                   # off | openai_compatible (local model) | anthropic (approved gateway)
+  allowMock: false                              # HUB_AI_ALLOW_MOCK — must be false in production
+  baseUrl: ""
+  model: ""
+  apiKeySecret:
+    name: ""                                    # optional Secret holding the endpoint/gateway credential
+    key: HUB_AI_API_KEY
+
+# --- PDF rendering (optional Chromium image variant) ------------------------------------------------------------------
+chromium:
+  enabled: false
+  path: /usr/local/bin/hub-chromium             # HUB_CHROMIUM_PATH inside the api-chromium image
+  shmSizeLimit: 256Mi
+
+# --- Outbound HTTP(S) proxy (Node honours these only with NODE_USE_ENV_PROXY=1 — set automatically) -------------------
+proxy:
+  httpProxy: ""                                 # e.g. http://proxy.example.internal:3128
+  httpsProxy: ""
+  noProxy: "localhost,127.0.0.1,.svc,.svc.cluster.local,.cluster.local"   # add DB/object-store/IdP hosts reached directly
+
+# --- Custom CA bundle (private PKI for IdP, object store, DB TLS, AI gateway) ----------------------------------------
+customCA:
+  enabled: false
+  configMapName: ""                             # existing ConfigMap with the PEM bundle (created by the platform team)
+  key: ca-bundle.crt
+  # OpenShift only: create a ConfigMap into which the cluster-wide trusted CA bundle is injected
+  # (label config.openshift.io/inject-trusted-cabundle=true). Ignored when configMapName is set.
+  openshiftInjectTrustedBundle: false
+
+# --- Observability (ADR-0016) — OTLP to an INTERNAL collector only ------------------------------------------------------
+otel:
+  enabled: false
+  endpoint: ""                                  # e.g. http://otel-collector.observability.svc:4318
+  protocol: http/protobuf
+  resourceAttributes: "deployment.environment=production"
+
+# --- Workloads ----------------------------------------------------------------------------------------------------------
+api:
+  replicas: 2
+  resources:
+    requests: { cpu: 250m, memory: 384Mi }
+    limits: { cpu: "1", memory: 1Gi }
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+  terminationGracePeriodSeconds: 30
+  service:
+    type: ClusterIP
+    port: 4000
+
+worker:
+  replicas: 1                                   # jobs are claimed with SKIP LOCKED; >1 replicas are safe (ADR-0004)
+  resources:
+    requests: { cpu: 200m, memory: 384Mi }
+    limits: { cpu: "1", memory: 1Gi }
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  terminationGracePeriodSeconds: 60             # the worker drains its in-flight iteration on SIGTERM
+
+web:
+  replicas: 2
+  probePath: /login
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: "1", memory: 768Mi }
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+  service:
+    type: ClusterIP
+    port: 3000
+
+# --- Security contexts --------------------------------------------------------------------------------------------------
+# openshift=false: fixed non-root UID/GID below. openshift=true: runAsUser/runAsGroup/fsGroup are omitted.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile: { type: RuntimeDefault }
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities: { drop: [ALL] }
+tmpSizeLimit: 256Mi
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+automountServiceAccountToken: false             # the application never calls the Kubernetes API
+
+# --- Database migrations (Helm hook, owner role) -------------------------------------------------------------------------
+migrations:
+  enabled: true
+  backoffLimit: 1
+  activeDeadlineSeconds: 900
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: "1", memory: 512Mi }
+
+# --- Production bootstrap (post-install hook; organization, templates, first admin bound to an IdP identity) -------------
+bootstrap:
+  enabled: false
+  orgName: ""                                   # REPLACE, e.g. the legal/organizational name approved by Mobily
+  adminEmail: ""                                # first administrator (authenticates at the IdP; no password exists)
+  adminName: ""
+  adminOidcIssuer: ""
+  adminOidcSubject: ""
+
+# --- Exposure -------------------------------------------------------------------------------------------------------------
+# /api/* goes straight to the API service; everything else to the web service (same origin — cookies and CSRF work
+# without CORS). /healthz and /readyz are not exposed.
+ingress:
+  enabled: true                                 # ignored when openshift=true and route.enabled=true
+  className: ""
+  host: hub.example.internal                    # REPLACE
+  annotations: {}                               # e.g. body size ≥ maxUploadMb, request rate limits, WAF
+  tls:
+    secretName: hub-tls                         # REPLACE: Secret with the certificate issued by Mobily's PKI
+route:
+  enabled: true                                 # used only when openshift=true
+  host: hub.example.internal                    # REPLACE
+  annotations: {}
+  tls:
+    termination: edge                           # edge | reencrypt
+    insecureEdgeTerminationPolicy: Redirect
+    externalCertificateSecret: ""               # OpenShift >= 4.16 (spec.tls.externalCertificate); else router default cert
+
+# --- Availability -------------------------------------------------------------------------------------------------------
+podDisruptionBudget:
+  enabled: true
+  maxUnavailable: 1
+autoscaling:
+  api: { enabled: false, minReplicas: 2, maxReplicas: 6, targetCPUUtilizationPercentage: 70 }
+  web: { enabled: false, minReplicas: 2, maxReplicas: 6, targetCPUUtilizationPercentage: 70 }
+
+# --- Network policies (AT-22): default deny; explicit egress only ------------------------------------------------------
+# Kubernetes NetworkPolicy matches IPs/pods, not host names: give CIDRs (or selectors) for each dependency. An empty
+# `to` list renders NO rule for that dependency, so the traffic stays blocked (fail closed).
+networkPolicy:
+  enabled: true
+  ingressController:                            # who may reach web:3000 and api:4000 from outside the namespace
+    namespaceSelector:
+      matchLabels: { kubernetes.io/metadata.name: ingress-nginx }   # REPLACE with your ingress controller namespace
+    openshiftNamespaceSelector:                 # used instead when openshift=true (router pods)
+      matchLabels: { policy-group.network.openshift.io/ingress: "" }
+  dns:
+    namespaceSelector:
+      matchLabels: { kubernetes.io/metadata.name: kube-system }
+    openshiftNamespaceSelector:
+      matchLabels: { kubernetes.io/metadata.name: openshift-dns }
+    ports: [{ port: 53, protocol: UDP }, { port: 53, protocol: TCP }]   # OpenShift adds 5353 (dns-default pods)
+  egress:
+    database:
+      ports: [{ port: 5432, protocol: TCP }]
+      to: []                                    # REPLACE, e.g. [{ ipBlock: { cidr: 10.10.20.0/24 } }]
+    objectStorage:
+      ports: [{ port: 443, protocol: TCP }]
+      to: []
+    idp:                                        # API only (OIDC discovery, token and JWKS endpoints)
+      ports: [{ port: 443, protocol: TCP }]
+      to: []
+    otelCollector:
+      ports: [{ port: 4317, protocol: TCP }, { port: 4318, protocol: TCP }]
+      to: []
+    proxy:                                      # corporate egress proxy, when outbound HTTPS goes through it
+      ports: [{ port: 3128, protocol: TCP }]
+      to: []
+    aiGateway:                                  # worker only; enable ONLY for an approved endpoint (MQ-06)
+      enabled: false
+      ports: [{ port: 443, protocol: TCP }]
+      to: []
+    extra: []                                   # further approved flows: [{ component: worker|api|web, ports: [...], to: [...] }]

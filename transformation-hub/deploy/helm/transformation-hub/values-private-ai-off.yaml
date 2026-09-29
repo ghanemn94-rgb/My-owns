@@ -1,0 +1,23 @@
+# Mode "Mobily Private — AI Off" (master prompt §16): application and data in the approved internal environment;
+# deterministic rules and alerts only; NO model provider. Project, committee and reporting functions must work
+# (AT-21) and no unapproved external traffic may leave (AT-22).
+#   helm upgrade --install hub deploy/helm/transformation-hub -f values-prod-inputs.yaml -f values-private-ai-off.yaml
+app:
+  privateMode: true
+  # Host names the application itself may call (in-app guard, defence in depth behind the NetworkPolicies).
+  egressAllowlist:
+    - idp.example.internal          # REPLACE: IdP (OIDC discovery/token/JWKS)
+    - s3.example.internal           # REPLACE: object storage endpoint
+ai:
+  mode: "off"
+  allowMock: false
+  baseUrl: ""
+  model: ""
+  apiKeySecret:
+    name: ""
+networkPolicy:
+  enabled: true
+  egress:
+    aiGateway:
+      enabled: false                # no AI egress at all
+      to: []

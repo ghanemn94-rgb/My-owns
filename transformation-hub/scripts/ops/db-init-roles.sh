@@ -20,25 +20,20 @@ set -euo pipefail
 DATABASES="${HUB_DATABASES:-hub}"
 RESET="${HUB_RESET_ROLE_PASSWORDS:-false}"
 
-admin() {
-  if [ -n "${PGADMIN_URL:-}" ]; then
-    psql -X -q -v ON_ERROR_STOP=1 -d "$PGADMIN_URL" "$@"
-  else
-    psql -X -q -v ON_ERROR_STOP=1 --username "${POSTGRES_USER:-postgres}" "$@"
-  fi
-}
-admin_db() { # admin_db <database> …  (same server, other database)
+# psql against database $1 on the admin connection (URL: its database part is replaced; socket: --dbname).
+admin_db() {
   local db="$1"; shift
   if [ -n "${PGADMIN_URL:-}" ]; then
-    local base="${PGADMIN_URL%%\?*}"; local query=""
+    local base="${PGADMIN_URL%%\?*}" query=""
     [ "$base" != "$PGADMIN_URL" ] && query="?${PGADMIN_URL#*\?}"
     psql -X -q -v ON_ERROR_STOP=1 -d "${base%/*}/${db}${query}" "$@"
   else
     psql -X -q -v ON_ERROR_STOP=1 --username "${POSTGRES_USER:-postgres}" --dbname "$db" "$@"
   fi
 }
+MAINT_DB="${HUB_ADMIN_MAINTENANCE_DB:-postgres}"
 
-admin -d postgres -v owner_pw="$HUB_OWNER_DB_PASSWORD" -v app_pw="$HUB_APP_DB_PASSWORD" -v reset="$RESET" <<'SQL' 2>/dev/null || admin -v owner_pw="$HUB_OWNER_DB_PASSWORD" -v app_pw="$HUB_APP_DB_PASSWORD" -v reset="$RESET" <<'SQL'
+admin_db "$MAINT_DB" -v owner_pw="$HUB_OWNER_DB_PASSWORD" -v app_pw="$HUB_APP_DB_PASSWORD" -v reset="$RESET" <<'SQL'
 SELECT format('CREATE ROLE hub_owner LOGIN NOSUPERUSER NOCREATEROLE PASSWORD %L', :'owner_pw')
  WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_owner') \gexec
 SELECT format('CREATE ROLE hub_app LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE PASSWORD %L', :'app_pw')
@@ -51,7 +46,7 @@ SQL
 
 for db in $DATABASES; do
   case "$db" in *[!A-Za-z0-9_]*|'') echo "db-init-roles: invalid database name '$db'" >&2; exit 1 ;; esac
-  admin -d postgres -v db="$db" <<'SQL'
+  admin_db "$MAINT_DB" -v db="$db" <<'SQL'
 SELECT format('CREATE DATABASE %I OWNER hub_owner', :'db') WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = :'db') \gexec
 SELECT format('REVOKE ALL ON DATABASE %I FROM PUBLIC', :'db') \gexec
 SELECT format('GRANT CONNECT ON DATABASE %I TO hub_app', :'db') \gexec
