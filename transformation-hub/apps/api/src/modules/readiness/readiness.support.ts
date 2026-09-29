@@ -7,10 +7,8 @@ import { PolicyService } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { Clock } from '../../platform/clock';
-import { JobQueue } from '../../platform/jobs/job-queue.service';
 import { RecordVersionService, activeEvidenceCount, loadInProject } from '../../platform/helpers';
 import type { RequestContext } from '../../platform/context';
-import { RECOMPUTE_DIMENSIONS_JOB } from '../gates/gates.service';
 
 export type ProjectRow = typeof schema.project.$inferSelect;
 export type DecisionRow = typeof schema.decision.$inferSelect;
@@ -32,7 +30,6 @@ export class ReadinessSupport {
     readonly audit: AuditService,
     readonly outbox: OutboxService,
     readonly clock: Clock,
-    readonly queue: JobQueue,
     readonly versions: RecordVersionService,
   ) {}
 
@@ -105,15 +102,20 @@ export class ReadinessSupport {
     return activeEvidenceCount(this.db, projectId, targetType, targetId);
   }
 
-  /** Status dimensions are owned by the gates module: enqueue its recompute job (idempotent per change). */
+  /**
+   * Status dimensions are owned by the gates module: emit `readiness.changed` (gates subscribes it to its recompute job).
+   * Deduplicated per change key (entity + version), so a retried command never emits twice.
+   */
   async enqueueDimensions(ctx: RequestContext, projectId: string, key: string) {
-    await this.queue.enqueue({
-      kind: RECOMPUTE_DIMENSIONS_JOB,
-      orgId: ctx.principal.orgId,
+    void ctx;
+    const [kind, id] = key.split(':');
+    await this.outbox.emit({
+      type: 'readiness.changed',
       projectId,
-      payload: { reason: `readiness:${key.split(':')[0]}` },
-      idempotencyKey: `${RECOMPUTE_DIMENSIONS_JOB}:readiness:${key}`,
-      requestedBy: ctx.principal.userId,
+      aggregateType: kind === 'tsa' ? 'tsa_service' : kind === 'check' ? 'readiness_check' : 'project',
+      aggregateId: (kind === 'tsa' || kind === 'check') && id ? id : projectId,
+      payload: { reason: `readiness:${kind}` },
+      dedupeKey: `readiness.changed:${projectId}:${key}`.slice(0, 200),
     });
   }
 
