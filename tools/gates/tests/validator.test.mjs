@@ -109,6 +109,7 @@ function processSandboxFor(role, stage) {
     staged: [{ area: `docs/delivery/reviews/${stage}`, accept: `round-[0-9]+/${esc(role)}\\.[^/]+`, replace: false, copied: null },
       ...(role === "release-auditor" ? [{ area: "docs/delivery/gates", accept: `${stage}\\.json`, replace: true, copied: null }] : [])],
     private_sessions: true, cgroup_api: null, capabilities: ["CAP_SETFCAP"], no_new_privs: true, unshare: ["ipc"],
+    landlock: { scoped: ["SIGNAL", "ABSTRACT_UNIX_SOCKET"], handled_access_fs: 0, handled_access_net: 0, per_run_domain: true },
     copied_back: [], discarded: [],
   };
 }
@@ -936,6 +937,11 @@ test("F-DG0-145/D-030: gate records must come from runs whose whole agent proces
   tamper((px) => (px.capabilities = ["CAP_SETFCAP", "CAP_SYS_ADMIN"]), /agent process was not confined by the process sandbox/);
   tamper((px) => (px.root = "/somewhere/else"), /agent process was not confined by the process sandbox/);
   tamper((px) => (px.procfs = "fresh"), /agent process was not confined by the process sandbox/);
+  // D-033 (F-DG0-152): the per-run scope-only Landlock domain is mandatory on a gate record's run.
+  tamper((px) => delete px.landlock, /per-run scope-only Landlock domain/);
+  tamper((px) => (px.landlock.per_run_domain = false), /per-run scope-only Landlock domain/);
+  tamper((px) => (px.landlock.scoped = ["SIGNAL"]), /per-run scope-only Landlock domain/);
+  tamper((px) => (px.landlock.handled_access_fs = 1), /per-run scope-only Landlock domain/);
   tamper((px) => px.writable_areas.push("docs/delivery/test-evidence/DG0/domain"), /process sandbox made .* writable, not the role's/);
   tamper((px) => (px.staged[0].accept = "round-[0-9]+/[^/]+"), /staged other directories or accepted other files/);
   tamper((px) => px.discarded.push("docs/delivery/reviews/DG0/round-1/domain-reviewer.json: outside the role's scope (not copied)"), /discarded out-of-scope writes/);

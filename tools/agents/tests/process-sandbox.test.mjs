@@ -2,7 +2,7 @@
 // Run: node --test tools/agents/tests/*.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -70,7 +70,16 @@ function sandbox(fx, role, { stage = "DG0" } = {}) {
     const r = spawnSync("python3", ["-I", "-B", join(fx.repo, "tools/agents/agent_sandbox.py"), "finish", state, out], { env, cwd: "/", encoding: "utf8" });
     return { status: r.status, summary: JSON.parse(readFileSync(join(out, "sandbox.json"), "utf8")) };
   };
-  return { run, finish, runTmp, state, plan: () => JSON.parse(readFileSync(join(state, "plan.json"), "utf8")) };
+  return { run, finish, runTmp, state, args, env, plan: () => JSON.parse(readFileSync(join(state, "plan.json"), "utf8")) };
+}
+
+/** The sandbox args with the per-run Landlock wrapper (…setpriv -- python -I -B landlock_exec.py --) removed: the
+ *  pre-D-033 (D-030-only) tail, used as the positive control that the cross-run /proc path is real without it. */
+function stripLandlock(args) {
+  const i = args.findIndex((x) => typeof x === "string" && x.endsWith("landlock_exec.py"));
+  assert.ok(i >= 3 && args[i - 1] === "-B" && args[i - 2] === "-I" && args[i - 4] === "--" && args[args.length - 1] === "--",
+    "unexpected Landlock wrapper shape in the sandbox args");
+  return args.slice(0, i - 3); // now ends at setpriv's own "--"
 }
 
 
@@ -333,4 +342,73 @@ test("F-DG0-150/238: an own-role file already present in the real tree is a writ
   assert.match(summary.discarded.join("\n"), /round-2\/code-security-reviewer\.json: already present in the real tree; write-once/);
   assert.equal(readFileSync(join(fx.repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json"), "utf8"), '{"verdict":"EARLIER"}\n'); // untouched
   rmSync(fx.base, { recursive: true, force: true });
+});
+
+test("F-DG0-152: a per-run Landlock domain stops a run reaching or signalling another run via /proc/<peer>/root|cwd (D-033)", (t) => {
+  requireTools();
+  const fx = fixture();
+  const victim = sandbox(fx, "qa-verifier");
+  const attacker = sandbox(fx, "code-security-reviewer");
+  // The victim is a long-lived sandboxed process; it publishes its PID as seen in the shared host PID namespace.
+  const vEnv = { ...process.env, HOME: fx.home, TMPDIR: victim.runTmp, MTH_RUN_TMP: victim.runTmp, MTH_GUARD_ROOT: fx.repo };
+  const v = spawn("bwrap", [...victim.args, "/bin/sh", "-c", `echo $$ > ${victim.runTmp}/pid; exec sleep 120`],
+    { env: vEnv, cwd: "/", stdio: ["ignore", "ignore", "ignore"] });
+  try {
+    for (let i = 0; i < 200 && !existsSync(join(victim.runTmp, "pid")); i++) spawnSync("sleep", ["0.05"]);
+    const vpid = readFileSync(join(victim.runTmp, "pid"), "utf8").trim();
+    assert.match(vpid, /^[0-9]+$/, "the victim run never published its pid");
+    const qaEv = `${fx.repo}/docs/delivery/test-evidence/DG0/qa`;
+    const targets = {
+      viaProcRoot: `/proc/${vpid}/root${qaEv}/via-proc-root.txt`, // the peer's own writable evidence dir
+      viaProcCwd: `/proc/${vpid}/cwd/docs/delivery/test-evidence/DG0/qa/via-proc-cwd.txt`,
+      viaProcRootTmp: `/proc/${vpid}/root${victim.runTmp}/planted.txt`, // the peer's private TMPDIR
+      ownEvidence: `${fx.repo}/docs/delivery/test-evidence/DG0/code-security/own.txt`, // must stay writable
+      ownTmp: `${attacker.runTmp}/own.txt`, // must stay writable
+    };
+    const script = [
+      ...Object.entries(targets).map(([l, p]) => `if (echo x > '${p}') 2>/dev/null; then echo '${l}:WROTE'; else echo '${l}:refused'; fi`),
+      `if kill -0 ${vpid} 2>/dev/null; then echo 'signal:allowed'; else echo 'signal:refused'; fi`,
+      // The pre-freeze needs a nested bwrap with a fresh --proc; the scope-only domain must not break it.
+      `if bwrap --unshare-user --unshare-pid --ro-bind / / --dev /dev --proc /proc -- /bin/sh -c 'test -r /proc/self/status' 2>/dev/null; then echo 'nested:works'; else echo 'nested:FAILED'; fi`,
+    ].join("\n");
+    const parse = (out) => Object.fromEntries(out.trim().split("\n").map((l) => { const i = l.indexOf(":"); return [l.slice(0, i), l.slice(i + 1)]; }));
+    const cleanup = () => { for (const p of [`${qaEv}/via-proc-root.txt`, `${qaEv}/via-proc-cwd.txt`, `${victim.runTmp}/planted.txt`]) rmSync(p, { force: true }); };
+
+    // Positive control: without the per-run Landlock domain (the D-030-only design) the cross-run path is real.
+    const ctl = spawnSync("bwrap", [...stripLandlock(attacker.args), "/bin/sh", "-c", script],
+      { env: { ...attacker.env, TMPDIR: attacker.runTmp, MTH_RUN_TMP: attacker.runTmp, MTH_GUARD_ROOT: fx.repo }, encoding: "utf8", cwd: "/", timeout: 240000 });
+    assert.equal(ctl.status, 0, ctl.stderr);
+    const before = parse(ctl.stdout);
+    t.diagnostic(`without Landlock: ${JSON.stringify(before)}`);
+    assert.equal(before.viaProcRoot, "WROTE", "the cross-run /proc/<peer>/root path is not reproduced; the test would prove nothing");
+    assert.equal(before.signal, "allowed");
+    assert.equal(existsSync(`${qaEv}/via-proc-root.txt`), true);
+    cleanup();
+
+    // With the per-run Landlock domain (the shipped design): every cross-run write and the signal are refused, the
+    // attacker's own areas stay writable, and a nested bwrap with a fresh --proc still works.
+    const r = attacker.run(script);
+    assert.equal(r.status, 0, r.stderr);
+    const after = parse(r.stdout);
+    t.diagnostic(`with Landlock: ${JSON.stringify(after)}`);
+    assert.equal(after.viaProcRoot, "refused");
+    assert.equal(after.viaProcCwd, "refused");
+    assert.equal(after.viaProcRootTmp, "refused");
+    assert.equal(after.ownEvidence, "WROTE");
+    assert.equal(after.ownTmp, "WROTE");
+    assert.equal(after.signal, "refused");
+    assert.equal(after.nested, "works");
+    assert.equal(existsSync(`${qaEv}/via-proc-root.txt`), false);
+    assert.equal(existsSync(`${qaEv}/via-proc-cwd.txt`), false);
+    assert.equal(existsSync(`${victim.runTmp}/planted.txt`), false);
+    // The finish summary records the per-run domain for the validator (rules.mjs).
+    const { summary } = attacker.finish();
+    assert.equal(summary.landlock.per_run_domain, true);
+    assert.deepEqual(summary.landlock.scoped.sort(), ["ABSTRACT_UNIX_SOCKET", "SIGNAL"]);
+    assert.equal(summary.landlock.handled_access_fs, 0);
+    assert.equal(summary.landlock.handled_access_net, 0);
+  } finally {
+    v.kill("SIGKILL");
+    rmSync(fx.base, { recursive: true, force: true });
+  }
 });

@@ -25,6 +25,10 @@ Inside the sandbox:
     NOT create a PID namespace -- sharing the host PID namespace is what lets a reviewer's own nested bwrap mount its
     procfs (D-030; threat-model residual 8). It DOES create its own IPC namespace (--unshare-ipc, D-031, F-DG0-148).
     The network is shared, because the CLI must reach the API (agent shells have no network via the Bash sandbox, D-025).
+  - Because the host PID namespace and a read-write host /proc are shared, each run also enters its own scope-only
+    Landlock domain (landlock_exec.py, applied after setpriv, before claude execs; D-033, F-DG0-152). Sibling domains
+    cannot ptrace each other, so one run's /proc/<peer>/root|cwd writes and its signals to another run are refused,
+    while the empty fs/net access masks leave the run's own areas and its nested bwrap working.
 
 Usage:
   agent_sandbox.py prepare ROLE REPO_ROOT CWD STAGE RUN_TMP STATE_DIR CLAUDE_BIN
@@ -123,6 +127,9 @@ def plan(role, repo_root, cwd, stage, run_tmp, state_dir, claude_bin, home=None)
             "staged": staged,
             "protected": protected, "run_tmp": os.path.realpath(run_tmp), "home": home,
             "sessions": os.path.join(state_dir, "projects"), "claude_bin": os.path.realpath(claude_bin),
+            # The per-run Landlock wrapper (D-033, F-DG0-152): the interpreter and the standalone script that enters a
+            # fresh scope-only Landlock domain before claude execs. Both live under the read-only root inside the sandbox.
+            "python": os.path.realpath(sys.executable), "landlock_exec": os.path.join(HERE, "landlock_exec.py"),
             "cgroup_api": CGROUP_API if os.path.isdir(CGROUP_API) else None}
 
 
@@ -177,7 +184,12 @@ def bwrap_args(p):
         a += ["--bind", p["cgroup_api"], p["cgroup_api"]]
     a += ["--chdir", p["cwd"], "--cap-drop", "ALL", "--cap-add", "CAP_SETFCAP", "--cap-add", "CAP_SETPCAP", "--",
           "setpriv", "--bounding-set", "-all,+setfcap", "--inh-caps", "-all,+setfcap", "--ambient-caps", "-all,+setfcap",
-          "--"]
+          # After the capabilities are pinned, enter this run's own scope-only Landlock domain, then exec the command
+          # (run-agent.sh appends "claude -p ..." after the final "--"). Every run enters its own sibling domain, so the
+          # kernel refuses one run's ptrace of another and thus its /proc/<peer>/root|cwd writes, and refuses cross-run
+          # signals -- while the empty fs/net access masks leave the run's own areas and its nested bwrap untouched
+          # (D-033, F-DG0-152). Fail-closed: if Landlock is unavailable the wrapper raises and claude never execs.
+          "--", p["python"], "-I", "-B", p["landlock_exec"], "--"]
     return a
 
 
@@ -285,6 +297,11 @@ def finish(argv):
                           for s in p["staged"]],
                "private_sessions": True, "cgroup_api": p["cgroup_api"],
                "capabilities": ["CAP_SETFCAP"], "no_new_privs": True, "unshare": ["ipc"],
+               # Per-run Landlock domain (D-033, F-DG0-152): a scope-only ruleset makes each run's domain a sibling, so
+               # the kernel refuses cross-run /proc/<peer>/root|cwd access and cross-run signals. Applied by
+               # landlock_exec.py after setpriv, before claude execs; fail-closed if Landlock is unavailable.
+               "landlock": {"scoped": ["SIGNAL", "ABSTRACT_UNIX_SOCKET"], "handled_access_fs": 0,
+                            "handled_access_net": 0, "per_run_domain": True},
                "copied_back": accepted, "discarded": discarded}
     with open(os.path.join(out_dir, "sandbox.json"), "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=1)

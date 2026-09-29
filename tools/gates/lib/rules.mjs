@@ -368,6 +368,13 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
         px.read_only_root === true && px.procfs === "host-bind" && Array.isArray(px.unshare) && px.unshare.includes("ipc") && px.private_sessions === true && px.no_new_privs === true &&
         JSON.stringify(px.capabilities) === JSON.stringify(["CAP_SETFCAP"]);
       if (!confined) bad("its agent process was not confined by the process sandbox (D-030)");
+      // Because the shared host PID namespace and read-write /proc leave a cross-run /proc/<peer>/root path, each run
+      // must also enter its own scope-only Landlock domain (D-033, F-DG0-152): SIGNAL + ABSTRACT_UNIX_SOCKET scoping,
+      // and no filesystem/network access restricted (so own areas and the nested bwrap keep working).
+      const ll = px.landlock;
+      const landlocked = ll && ll.per_run_domain === true && ll.handled_access_fs === 0 && ll.handled_access_net === 0 &&
+        Array.isArray(ll.scoped) && ll.scoped.includes("SIGNAL") && ll.scoped.includes("ABSTRACT_UNIX_SOCKET");
+      if (!landlocked) bad("its process sandbox did not enter a per-run scope-only Landlock domain to close the cross-run /proc path (D-033, F-DG0-152)");
       if (JSON.stringify(px.writable_areas) !== JSON.stringify(areas)) bad(`its process sandbox made ${JSON.stringify(px.writable_areas)} writable, not the role's ${JSON.stringify(areas)}`);
       if (JSON.stringify(px.staged) !== JSON.stringify(staged)) bad("its process sandbox staged other directories or accepted other files than the role's own review and gate records");
       if (!Array.isArray(px.discarded) || px.discarded.length) bad(`its process sandbox discarded out-of-scope writes: ${JSON.stringify(px.discarded)}`);
