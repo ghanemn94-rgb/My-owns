@@ -564,7 +564,8 @@ export class PerimeterService {
       isDemo: p.isDemo,
       createdBy: ctx.principal.userId,
     });
-    let item = await loadInProject(this.s.db, PI, projectId, id);
+    const item = await loadInProject(this.s.db, PI, projectId, id);
+    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: id, versionNo: 1, snapshot: item as unknown as Record<string, unknown>, reason: cc.requiresChangeRequest ? 'Created — held Pending under change control' : 'Created' });
     let changeRequest: { id: string; code: string; status: string; rebaseline: boolean } | null = null;
     let impactAssessmentId: string | null = null;
     let version = 1;
@@ -572,11 +573,10 @@ export class PerimeterService {
       const raised = await this.raiseChangeRequest(ctx, p, item, 'add', scopeOf(item), requested, cc, body.justification!.trim(), body.impactNarrative);
       const row = await updateVersioned(this.s.db, PI, { id, projectId, expectedVersion: 1 }, { pendingChangeRequestId: raised.cr.id });
       version = row['version'] as number;
-      item = row as unknown as Item;
       changeRequest = { id: raised.cr.id, code: raised.cr.code, status: raised.cr.status, rebaseline: cc.rebaseline };
       impactAssessmentId = raised.impactId;
+      await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: id, versionNo: version, snapshot: row, reason: `Change request ${raised.cr.code} raised (requested: ${requested.disposition})` });
     }
-    await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: id, versionNo: version, snapshot: item as unknown as Record<string, unknown>, reason: changeRequest ? `Added pending change request ${changeRequest.code}` : 'Created' });
     await this.audit.record({
       action: 'carveout.perimeter.create',
       entityType: 'perimeter_item',
