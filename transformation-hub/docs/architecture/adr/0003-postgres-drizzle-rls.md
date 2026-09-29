@@ -40,3 +40,16 @@
 - Foreign-key and trigger checks run with the privileges of the table owner/invoker as PostgreSQL defines; FK checks are
   not subject to RLS.
 - The owner role (`hub_owner`) bypasses RLS (it is not used at runtime) and can disable triggers; see ADR-0014.
+
+## Amendments after the P0 architecture RE-review (ARCH-21, ARCH-22, ARCH-23, ARCH-15b)
+- `project_id` and `org_id` are immutable on every table (trigger `hub_scope_immutable`); moving a record between
+  projects is a re-create, so existing references can never silently become cross-project links.
+- `(org_id, project_id)` on every project table references `project(org_id, id)`; every user reference (`*_user_id`,
+  `*_by`) references `app_user(org_id, id)` — generated in `post-migrate.sql`, so new module columns are covered.
+- `document.current_version_id` is checked by a deferred constraint trigger (INSERT and UPDATE);
+  `diligence_request.evidence_document_ids` elements must be same-project documents; votes are bound to the member of
+  the deciding committee; notification sources are same-project.
+- Exceptions to "project tables require full membership": `project_membership` (everyone sees their OWN rows; full
+  members see the team) and `room_grant` (room-only principals see their own grants; only full members write grants).
+- The API refuses to start in production when its database role is superuser, BYPASSRLS or owns tables (`DbService`
+  self-check); elsewhere it logs a security warning.

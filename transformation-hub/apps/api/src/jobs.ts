@@ -1,5 +1,6 @@
 import type { INestApplicationContext } from '@nestjs/common';
 import { JobRegistry } from './platform/jobs/job-registry';
+import { registerPlatformJobs } from './platform/jobs/platform.jobs';
 import { registerDocumentsJobs } from './modules/documents/documents.jobs';
 import { registerGovernanceJobs } from './modules/governance/governance.jobs';
 import { registerPlanningJobs } from './modules/planning/planning.jobs';
@@ -20,6 +21,7 @@ import { registerConfigJobs } from './modules/config/config.jobs';
 export function registerJobHandlers(app: INestApplicationContext) {
   const registry = app.get(JobRegistry);
   if (!registry.handler('system.noop')) registry.register('system.noop', async () => ({ ok: true }));
+  if (!registry.handler('platform.audit.checkpoint')) registerPlatformJobs(app);
   registerDocumentsJobs(app);
   registerGovernanceJobs(app);
   registerPlanningJobs(app);

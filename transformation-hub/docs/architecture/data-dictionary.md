@@ -1,7 +1,7 @@
 # Data dictionary
 
 > Generated from the live PostgreSQL schema by `packages/db/src/cli/data-dictionary.ts` — do not edit by hand.
-> Tables: 103. RLS enabled: 98.
+> Tables: 104. RLS enabled: 99.
 
 ## Spec §14 entity coverage
 
@@ -707,7 +707,7 @@ Foreign keys:
 
 ### `dependency`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_predecessor, hub_same_project_successor
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -752,7 +752,7 @@ Foreign keys:
 
 ### `raci_assignment`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_entity
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -795,11 +795,12 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `baseline_change_request_fk`: (project_id,change_request_id) → `change_request`(project_id,id) — composite project-scoped FK
 - `baseline_version_project_id_project_id_fk`: (project_id) → `project`(id)
 
 ### `change_request`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_subject
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -829,6 +830,7 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `change_request_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
 - `change_request_project_id_project_id_fk`: (project_id) → `project`(id)
 
 ### `risk`
@@ -1005,7 +1007,7 @@ Foreign keys:
 
 ### `rag_override`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_entity
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1057,6 +1059,7 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `committee_charter_doc_fk`: (project_id,charter_document_id) → `document`(project_id,id) — composite project-scoped FK
 - `committee_program_id_program_id_fk`: (program_id) → `program`(id)
 - `committee_project_id_project_id_fk`: (project_id) → `project`(id)
 
@@ -1084,6 +1087,7 @@ RLS: enabled (hub_project_isolation)
 Foreign keys:
 
 - `committee_membership_committee_fk`: (project_id,committee_id) → `committee`(project_id,id) — composite project-scoped FK
+- `committee_membership_delegate_fk`: (project_id,delegate_of_membership_id) → `committee_membership`(project_id,id) — composite project-scoped FK
 - `committee_membership_project_id_project_id_fk`: (project_id) → `project`(id)
 - `committee_membership_user_id_app_user_id_fk`: (user_id) → `app_user`(id)
 
@@ -1146,6 +1150,8 @@ RLS: enabled (hub_project_isolation)
 Foreign keys:
 
 - `meeting_committee_fk`: (project_id,committee_id) → `committee`(project_id,id) — composite project-scoped FK
+- `meeting_matrix_fk`: (project_id,authority_matrix_version_id) → `authority_matrix_version`(project_id,id) — composite project-scoped FK
+- `meeting_pack_fk`: (project_id,pack_snapshot_id) → `report_snapshot`(project_id,id) — composite project-scoped FK
 - `meeting_project_id_project_id_fk`: (project_id) → `project`(id)
 
 ### `agenda_item`
@@ -1184,7 +1190,7 @@ Foreign keys:
 
 ### `attendance`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_attendance_guard
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1206,7 +1212,7 @@ Foreign keys:
 
 ### `recusal`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_append_only
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1306,6 +1312,8 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_append_only
 Foreign keys:
 
 - `vote_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
+- `vote_matrix_fk`: (project_id,authority_matrix_version_id) → `authority_matrix_version`(project_id,id) — composite project-scoped FK
+- `vote_meeting_fk`: (project_id,meeting_id) → `meeting`(project_id,id) — composite project-scoped FK
 - `vote_membership_fk`: (project_id,membership_id) → `committee_membership`(project_id,id) — composite project-scoped FK
 - `vote_project_id_project_id_fk`: (project_id) → `project`(id)
 
@@ -1340,13 +1348,14 @@ RLS: enabled (hub_project_isolation)
 Foreign keys:
 
 - `action_item_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
+- `action_item_issue_fk`: (project_id,issue_id) → `issue`(project_id,id) — composite project-scoped FK
 - `action_item_meeting_fk`: (project_id,meeting_id) → `meeting`(project_id,id) — composite project-scoped FK
 - `action_item_owner_user_id_app_user_id_fk`: (owner_user_id) → `app_user`(id)
 - `action_item_project_id_project_id_fk`: (project_id) → `project`(id)
 
 ### `escalation`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_source
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1372,11 +1381,13 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `escalation_committee_fk`: (project_id,raised_to_committee_id) → `committee`(project_id,id) — composite project-scoped FK
 - `escalation_project_id_project_id_fk`: (project_id) → `project`(id)
+- `escalation_resolution_fk`: (project_id,resolution_decision_id) → `decision`(project_id,id) — composite project-scoped FK
 
 ### `approval_request`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_subject
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1511,8 +1522,10 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `gate_assessment_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
 - `gate_assessment_gate_fk`: (project_id,gate_id) → `gate_definition`(project_id,id) — composite project-scoped FK
 - `gate_assessment_project_id_project_id_fk`: (project_id) → `project`(id)
+- `gate_assessment_supersedes_fk`: (project_id,supersedes_assessment_id) → `gate_assessment`(project_id,id) — composite project-scoped FK
 
 ### `criterion_assessment`
 
@@ -1542,10 +1555,11 @@ Foreign keys:
 - `criterion_assessment_assessment_fk`: (project_id,assessment_id) → `gate_assessment`(project_id,id) — composite project-scoped FK
 - `criterion_assessment_criterion_fk`: (project_id,criterion_id) → `gate_criterion`(project_id,id) — composite project-scoped FK
 - `criterion_assessment_project_id_project_id_fk`: (project_id) → `project`(id)
+- `criterion_assessment_waiver_fk`: (project_id,waiver_id) → `waiver`(project_id,id) — composite project-scoped FK
 
 ### `waiver`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_target
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1703,6 +1717,7 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `agreement_executed_doc_fk`: (project_id,executed_document_id) → `document`(project_id,id) — composite project-scoped FK
 - `agreement_legal_reviewer_user_id_app_user_id_fk`: (legal_reviewer_user_id) → `app_user`(id)
 - `agreement_owner_user_id_app_user_id_fk`: (owner_user_id) → `app_user`(id)
 - `agreement_project_id_project_id_fk`: (project_id) → `project`(id)
@@ -1835,6 +1850,8 @@ RLS: enabled (hub_project_isolation)
 Foreign keys:
 
 - `tsa_service_agreement_fk`: (project_id,agreement_id) → `agreement`(project_id,id) — composite project-scoped FK
+- `tsa_service_escalation_fk`: (project_id,escalation_id) → `escalation`(project_id,id) — composite project-scoped FK
+- `tsa_service_extension_decision_fk`: (project_id,extension_decision_id) → `decision`(project_id,id) — composite project-scoped FK
 - `tsa_service_owner_user_id_app_user_id_fk`: (owner_user_id) → `app_user`(id)
 - `tsa_service_project_id_project_id_fk`: (project_id) → `project`(id)
 - `tsa_service_provider_entity_id_legal_entity_id_fk`: (provider_entity_id) → `legal_entity`(id)
@@ -1879,6 +1896,7 @@ Foreign keys:
 - `readiness_check_cutover_fk`: (project_id,cutover_plan_id) → `cutover_plan`(project_id,id) — composite project-scoped FK
 - `readiness_check_project_id_project_id_fk`: (project_id) → `project`(id)
 - `readiness_check_site_fk`: (project_id,site_id) → `site`(project_id,id) — composite project-scoped FK
+- `readiness_check_waiver_fk`: (project_id,waiver_id) → `waiver`(project_id,id) — composite project-scoped FK
 - `readiness_check_ws_fk`: (project_id,workstream_id) → `workstream`(project_id,id) — composite project-scoped FK
 
 ### `readiness_test_run`
@@ -1929,6 +1947,7 @@ RLS: enabled (hub_project_isolation)
 | `go_no_go_decided_by` | uuid | yes |  |
 | `go_no_go_decided_at` | timestamp with time zone | yes |  |
 | `go_no_go_rationale` | text | yes |  |
+| `go_decision_id` | uuid | yes |  |
 | `status` | enum cutover_status | no | `'planning'::cutover_status` |
 | `post_transition_accepted` | boolean | no | `false` |
 | `post_transition_accepted_by` | uuid | yes |  |
@@ -1941,7 +1960,9 @@ RLS: enabled (hub_project_isolation)
 Foreign keys:
 
 - `cutover_plan_accountable_user_id_app_user_id_fk`: (accountable_user_id) → `app_user`(id)
+- `cutover_plan_go_decision_fk`: (project_id,go_decision_id) → `decision`(project_id,id) — composite project-scoped FK
 - `cutover_plan_project_id_project_id_fk`: (project_id) → `project`(id)
+- `cutover_plan_runbook_fk`: (project_id,runbook_document_id) → `document`(project_id,id) — composite project-scoped FK
 - `cutover_plan_site_fk`: (project_id,site_id) → `site`(project_id,id) — composite project-scoped FK
 
 ## Finance
@@ -1978,6 +1999,7 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `financial_snapshot_doc_fk`: (project_id,source_document_id) → `document`(project_id,id) — composite project-scoped FK
 - `financial_snapshot_project_id_project_id_fk`: (project_id) → `project`(id)
 - `financial_snapshot_ws_fk`: (project_id,workstream_id) → `workstream`(project_id,id) — composite project-scoped FK
 
@@ -2045,6 +2067,7 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `financial_model_doc_fk`: (project_id,source_document_id) → `document`(project_id,id) — composite project-scoped FK
 - `financial_model_version_project_id_project_id_fk`: (project_id) → `project`(id)
 
 ### `benefit`
@@ -2360,6 +2383,7 @@ Foreign keys:
 
 - `diligence_finding_partner_fk`: (project_id,partner_id) → `partner`(project_id,id) — composite project-scoped FK
 - `diligence_finding_project_id_project_id_fk`: (project_id) → `project`(id)
+- `diligence_finding_risk_fk`: (project_id,risk_id) → `risk`(project_id,id) — composite project-scoped FK
 
 ### `closing`
 
@@ -2389,6 +2413,7 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `closing_decision_fk`: (project_id,confirmation_decision_id) → `decision`(project_id,id) — composite project-scoped FK
 - `closing_partner_fk`: (project_id,partner_id) → `partner`(project_id,id) — composite project-scoped FK
 - `closing_project_id_project_id_fk`: (project_id) → `project`(id)
 
@@ -2430,6 +2455,7 @@ Foreign keys:
 - `closing_condition_closing_fk`: (project_id,closing_id) → `closing`(project_id,id) — composite project-scoped FK
 - `closing_condition_owner_user_id_app_user_id_fk`: (owner_user_id) → `app_user`(id)
 - `closing_condition_project_id_project_id_fk`: (project_id) → `project`(id)
+- `closing_condition_waiver_fk`: (project_id,waiver_id) → `waiver`(project_id,id) — composite project-scoped FK
 
 ### `closing_deliverable`
 
@@ -2457,6 +2483,7 @@ RLS: enabled (hub_project_isolation)
 Foreign keys:
 
 - `closing_deliverable_closing_fk`: (project_id,closing_id) → `closing`(project_id,id) — composite project-scoped FK
+- `closing_deliverable_doc_fk`: (project_id,document_id) → `document`(project_id,id) — composite project-scoped FK
 - `closing_deliverable_owner_user_id_app_user_id_fk`: (owner_user_id) → `app_user`(id)
 - `closing_deliverable_project_id_project_id_fk`: (project_id) → `project`(id)
 
@@ -2523,7 +2550,7 @@ Foreign keys:
 
 ### `document`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_document_guard
+RLS: enabled (hub_project_isolation) · Triggers: hub_document_acl_cascade, hub_document_guard
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -2555,7 +2582,7 @@ Foreign keys:
 
 ### `document_version`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_document_version_guard
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -2585,7 +2612,7 @@ Foreign keys:
 
 ### `evidence_link`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_target
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -2609,6 +2636,7 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `evidence_link_conflict_fk`: (project_id,conflict_with_link_id) → `evidence_link`(project_id,id) — composite project-scoped FK
 - `evidence_link_document_fk`: (project_id,document_id) → `document`(project_id,id) — composite project-scoped FK
 - `evidence_link_project_id_project_id_fk`: (project_id) → `project`(id)
 - `evidence_link_version_fk`: (project_id,document_version_id) → `document_version`(project_id,id) — composite project-scoped FK
@@ -2646,10 +2674,11 @@ Foreign keys:
 
 - `source_record_docver_fk`: (project_id,document_version_id) → `document_version`(project_id,id) — composite project-scoped FK
 - `source_record_project_id_project_id_fk`: (project_id) → `project`(id)
+- `source_record_supersedes_fk`: (project_id,supersedes_source_id) → `source_record`(project_id,id) — composite project-scoped FK
 
 ### `source_claim`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_target
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -2680,12 +2709,13 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `source_claim_conflict_fk`: (project_id,conflict_with_claim_id) → `source_claim`(project_id,id) — composite project-scoped FK
 - `source_claim_project_id_project_id_fk`: (project_id) → `project`(id)
 - `source_claim_source_fk`: (project_id,source_id) → `source_record`(project_id,id) — composite project-scoped FK
 
 ### `document_chunk`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_chunk_acl_sync
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -2708,6 +2738,7 @@ Foreign keys:
 
 - `document_chunk_document_fk`: (project_id,document_id) → `document`(project_id,id) — composite project-scoped FK
 - `document_chunk_project_id_project_id_fk`: (project_id) → `project`(id)
+- `document_chunk_room_fk`: (project_id,room_id) → `partner_room`(project_id,id) — composite project-scoped FK
 - `document_chunk_version_fk`: (project_id,document_version_id) → `document_version`(project_id,id) — composite project-scoped FK
 
 ## Reporting & imports
@@ -2741,6 +2772,8 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_append_only
 
 Foreign keys:
 
+- `report_snapshot_baseline_fk`: (project_id,baseline_version_id) → `baseline_version`(project_id,id) — composite project-scoped FK
+- `report_snapshot_previous_fk`: (project_id,previous_snapshot_id) → `report_snapshot`(project_id,id) — composite project-scoped FK
 - `report_snapshot_project_id_project_id_fk`: (project_id) → `project`(id)
 
 ### `report_export`
@@ -2796,11 +2829,13 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `import_batch_docver_fk`: (project_id,document_version_id) → `document_version`(project_id,id) — composite project-scoped FK
 - `import_batch_project_id_project_id_fk`: (project_id) → `project`(id)
+- `import_batch_source_fk`: (project_id,source_id) → `source_record`(project_id,id) — composite project-scoped FK
 
 ### `import_row`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_target
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3084,7 +3119,7 @@ Foreign keys:
 
 ### `ai_proposal`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_target
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3162,9 +3197,22 @@ Foreign keys:
 
 ## Other
 
+### `audit_checkpoint`
+
+RLS: enabled (hub_org_isolation) · Triggers: hub_append_only
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | no | `gen_random_uuid()` |
+| `org_id` | uuid | no |  |
+| `chain_pos` | bigint | no |  |
+| `hash` | character varying | no |  |
+| `row_count` | bigint | no |  |
+| `created_at` | timestamp with time zone | no | `now()` |
+
 ### `conflict_declaration`
 
-RLS: enabled (hub_project_isolation)
+RLS: enabled (hub_project_isolation) · Triggers: hub_append_only
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3244,4 +3292,5 @@ RLS: enabled (hub_project_isolation)
 
 Foreign keys:
 
+- `operating_model_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
 - `operating_model_definition_project_id_project_id_fk`: (project_id) → `project`(id)

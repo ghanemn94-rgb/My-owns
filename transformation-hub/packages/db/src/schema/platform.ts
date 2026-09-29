@@ -15,8 +15,11 @@ import {
   integrationStatus,
   jobStatus,
   actorKind,
+  projectFk,
+  type FkTarget,
 } from './_common';
 import { organization } from './identity';
+import { aiProposal } from './ai';
 
 /** In-app notification (and delivery record for other channels). Channels other than in_app default disabled. */
 export const notification = pgTable(
@@ -41,6 +44,7 @@ export const notification = pgTable(
   },
   (t) => [
     index('notification_user_idx').on(t.userId, t.readAt),
+    projectFk('notification_ai_proposal_fk', t.projectId, t.aiProposalId, (): FkTarget => aiProposal),
     uniqueIndex('notification_dedupe_uq').on(t.userId, t.dedupeKey).where(sql`${t.dedupeKey} is not null`),
   ],
 );

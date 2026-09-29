@@ -98,7 +98,12 @@ pnpm db:start                    # start local PostgreSQL 16 cluster (dev helper
 pnpm db:migrate                  # apply SQL migrations + post-migrate RLS/audit SQL
 pnpm db:seed:demo                # load clearly-labelled Demo sandbox data
 pnpm dev                         # api (:4000) + worker + web (:3000)
-pnpm test                        # unit + integration tests (needs PostgreSQL)
+pnpm test                        # unit + integration tests (needs PostgreSQL; resets ONLY the hub_test database)
+# Parallel agents/reviewers: point integration tests at your own database, e.g.
+#   TEST_DATABASE_URL=postgres://hub_app:hub_dev_only@127.0.0.1:5432/hub_test_<you> \
+#   TEST_DATABASE_MIGRATION_URL=postgres://hub_owner:hub_dev_only@127.0.0.1:5432/hub_test_<you> pnpm --filter @hub/api test
+#   (create it with: HUB_DATABASES=hub_test_<you> bash scripts/dev/pg-init-roles.sh)
+python3 scripts/requirements/render_traceability.py   # regenerate docs/requirements/requirements-traceability.md
 pnpm test:e2e                    # Playwright E2E (needs running stack)
 pnpm typecheck && pnpm lint
 ```

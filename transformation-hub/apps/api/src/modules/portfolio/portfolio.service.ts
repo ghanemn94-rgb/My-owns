@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, asc, count, desc, eq, ilike, inArray, isNull, lt, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
   POLICY_MATRIX,
@@ -124,11 +124,25 @@ export class PortfolioService {
     const pid = r.p.id;
     const dims = await tx.select().from(schema.statusDimension).where(eq(schema.statusDimension.projectId, pid));
     const canPlan = this.policy.canInProject(ctx, 'planning.plan.read', pid);
-    const canGov = this.policy.canInProject(ctx, 'governance.decision.read', pid);
+    // Governance records are committee-level (no workstream): only a project-wide grant sees their counts (ARCH-14).
+    const canGov = this.policy.permissionReach(ctx, 'governance.decision.read', pid).all;
     const canGates = this.policy.canInProject(ctx, 'gates.gate.read', pid);
     const today = this.clock.today(r.p.timezone);
     const openRisks = canPlan
-      ? Number((await tx.select({ n: count() }).from(schema.risk).where(and(eq(schema.risk.projectId, pid), inArray(schema.risk.status, ['open', 'monitoring', 'escalated']))))[0]!.n)
+      ? Number(
+          (
+            await tx
+              .select({ n: count() })
+              .from(schema.risk)
+              .where(
+                and(
+                  eq(schema.risk.projectId, pid),
+                  inArray(schema.risk.status, ['open', 'monitoring', 'escalated']),
+                  this.policy.reachSql(ctx, 'planning.plan.read', pid, schema.risk.workstreamId),
+                ),
+              )
+          )[0]!.n,
+        )
       : null;
     const overdueActions = canGov
       ? Number(
@@ -199,11 +213,13 @@ export class PortfolioService {
       .where(eq(schema.projectEntity.projectId, projectId));
     const counts: Record<string, number> = {};
     if (this.policy.canInProject(ctx, 'planning.plan.read', projectId)) {
+      // Counts honour the permission's reach: workstream-scoped users count only their workstreams (ARCH-14).
+      const reach = (col: SQL) => this.policy.reachSql(ctx, 'planning.plan.read', projectId, col);
       const c = await tx.execute<{ workstreams: number; tasks: number; milestones: number; deliverables: number }>(sql`
-        select (select count(*) from workstream where project_id = ${projectId})::int as workstreams,
-               (select count(*) from task where project_id = ${projectId})::int as tasks,
-               (select count(*) from milestone where project_id = ${projectId})::int as milestones,
-               (select count(*) from deliverable where project_id = ${projectId})::int as deliverables`);
+        select (select count(*) from workstream where project_id = ${projectId} and ${reach(sql`id`)})::int as workstreams,
+               (select count(*) from task where project_id = ${projectId} and ${reach(sql`workstream_id`)})::int as tasks,
+               (select count(*) from milestone where project_id = ${projectId} and ${reach(sql`workstream_id`)})::int as milestones,
+               (select count(*) from deliverable where project_id = ${projectId} and ${reach(sql`workstream_id`)})::int as deliverables`);
       Object.assign(counts, c.rows[0]);
     }
     return {
@@ -487,14 +503,14 @@ export class PortfolioService {
       .select({ w: schema.workstream, leadName: schema.appUser.displayName })
       .from(schema.workstream)
       .leftJoin(schema.appUser, eq(schema.appUser.id, schema.workstream.leadUserId))
-      .where(eq(schema.workstream.projectId, projectId))
+      .where(and(eq(schema.workstream.projectId, projectId), this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.workstream.id)))
       .orderBy(asc(schema.workstream.sortOrder));
     const counts = await this.db.tx().execute<{ workstream_id: string; tasks: number; risks: number; deliverables: number }>(sql`
       select w.id as workstream_id,
         (select count(*) from task t where t.workstream_id = w.id)::int as tasks,
         (select count(*) from risk r where r.workstream_id = w.id and r.status in ('open','monitoring','escalated'))::int as risks,
         (select count(*) from deliverable d where d.workstream_id = w.id)::int as deliverables
-      from workstream w where w.project_id = ${projectId}`);
+      from workstream w where w.project_id = ${projectId} and ${this.policy.reachSql(ctx, 'planning.plan.read', projectId, sql`w.id`)}`);
     const cm = new Map(counts.rows.map((c) => [c.workstream_id, c]));
     return {
       items: rows.map(({ w, leadName }) => ({
@@ -522,6 +538,13 @@ export class PortfolioService {
     this.policy.assert(ctx, 'planning.ownership.reassign', { projectId, workstreamId });
     const [u] = await tx.select().from(schema.appUser).where(and(eq(schema.appUser.id, userId), eq(schema.appUser.isActive, true)));
     if (!u) throw invalid('workstream.user_not_found', 'User not found or inactive');
+    // The lead must be an active member of this project (ARCH-19): grant the membership first.
+    const [m] = await tx
+      .select({ id: schema.projectMembership.id })
+      .from(schema.projectMembership)
+      .where(and(eq(schema.projectMembership.projectId, projectId), eq(schema.projectMembership.userId, userId), isNull(schema.projectMembership.revokedAt), sql`(${schema.projectMembership.validTo} is null or ${schema.projectMembership.validTo} > now())`))
+      .limit(1);
+    if (!m) throw ruleViolation('workstream.lead_not_member', 'The workstream lead must be an active member of this project — grant a project role first');
     const res = await tx
       .update(schema.workstream)
       .set({ leadUserId: userId, updatedAt: new Date(), version: sql`${schema.workstream.version} + 1` })
