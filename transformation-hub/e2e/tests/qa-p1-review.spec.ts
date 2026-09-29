@@ -149,7 +149,14 @@ test.describe('QA P1 review — AT-02 wizard creation (en/ar), AT-03 isolation, 
     await expect(page.locator(`[data-project-code="QA-XSS-${RUN}"]`)).toBeVisible();
     await page.screenshot({ path: join(SHOTS, 'en-portfolio-pm-after-wizard.png'), fullPage: true });
 
-    for (const seg of ['committee', 'plan', 'raid', 'perimeter', 'newco', 'readiness', 'finance', 'jv', 'documents', 'ai', 'reports']) {
+    // P2: plan, raid (Screens 5 and 12) and documents (Screen 13) are delivered — they show this project's own records,
+    // never demo data and never the placeholder.
+    for (const seg of ['plan', 'raid', 'documents']) {
+      await page.goto(`/projects/${arProjectId}/${seg}`);
+      await expect(page.getByTestId('not-implemented'), `section ${seg}`).toHaveCount(0);
+      await expect(page.getByTestId('demo-badge'), `section ${seg} shows no demo records`).toHaveCount(0);
+    }
+    for (const seg of ['committee', 'perimeter', 'newco', 'readiness', 'finance', 'jv', 'ai', 'reports']) {
       await page.goto(`/projects/${arProjectId}/${seg}`);
       await expect(page.getByTestId('not-implemented'), `section ${seg}`).toBeVisible();
       await expect(page.locator('table'), `section ${seg} has no data table`).toHaveCount(0);

@@ -264,10 +264,11 @@ jobs:
       - name: Vulnerability report (grype) — report only; triage per docs/deployment/supply-chain.md
         uses: anchore/scan-action@v6
         id: scan
-        with: { image: "transformation-hub/api:ci", fail-build: false, severity-cutoff: critical, output-format: json }
+        with: { image: "transformation-hub/api:ci", fail-build: false, severity-cutoff: critical, output-format: json, output-file: vulnerability-report-api.json }
       - uses: actions/upload-artifact@v4
         if: always()
-        with: { name: vulnerability-report-api, path: "${{ steps.scan.outputs.json }}" }
+        # explicit file (the action's `json` output is not always set) — CI run 2 failed on an empty `path`
+        with: { name: vulnerability-report-api, path: vulnerability-report-api.json, if-no-files-found: warn }
 
   sbom:
     name: Source SBOM (syft, CycloneDX)

@@ -305,8 +305,8 @@ export class ChangeControlService {
     }
     await this.audit.record({ action: 'planning.baseline.approve', entityType: 'baseline_version', entityId: baselineId, projectId, before: { status: b.status }, after: { status: to, versionNo: b.versionNo, snapshotHash: b.snapshotHash, supersedes: previous?.id ?? null, weightsApproved }, reason: body.note ?? null });
     await this.versions.snapshot({ projectId, entityType: 'baseline_version', entityId: baselineId, versionNo: row['version'] as number, snapshot: { status: to, snapshotHash: b.snapshotHash, approvedBy: ctx.principal.userId }, reason: 'approved' });
-    // Perimeter items' baseline membership changed → carve-out / gates recompute (no dedicated baseline event yet).
-    await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'baseline_version', aggregateId: baselineId, payload: { reason: 'baseline_approved', versionNo: b.versionNo }, dedupeKey: `baseline-approved:${baselineId}` });
+    // Other modules react (carve-out: perimeter items' baseline membership; gates: dimension recompute).
+    await this.outbox.emit({ type: 'baseline.approved', projectId, aggregateType: 'baseline_version', aggregateId: baselineId, payload: { versionNo: b.versionNo, supersedes: previous?.id ?? null, changeRequestId: b.changeRequestId }, dedupeKey: `baseline-approved:${baselineId}` });
     return { id: baselineId, status: to as string, version: row['version'] as number };
   }
 
@@ -541,8 +541,8 @@ export class ChangeControlService {
     const row = await updateVersioned(this.s.db, schema.changeRequest, { id, projectId, expectedVersion: body.expectedVersion }, { ...extra, status: to });
     await this.audit.record({ action: `planning.change_request.${command}`, entityType: 'change_request', entityId: id, projectId, before: { status: c.status }, after: { status: to }, reason: body.reason ?? body.note ?? null });
     if (command === 'submit') await this.outbox.emit({ type: 'approval.pending', projectId, aggregateType: 'change_request', aggregateId: id, payload: { kind: 'change_request_review' } });
-    if ((command === 'approve' || command === 'reject') && c.subjectType === 'perimeter_item') {
-      await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'change_request', aggregateId: id, payload: { reason: `change_request_${to}`, subjectId: c.subjectId } });
+    if (command === 'approve' || command === 'reject') {
+      await this.outbox.emit({ type: 'change_request.decided', projectId, aggregateType: 'change_request', aggregateId: id, payload: { status: to, subjectType: c.subjectType, subjectId: c.subjectId, rebaseline: c.rebaseline } });
     }
     return { id, status: to as string, version: row['version'] as number };
   }

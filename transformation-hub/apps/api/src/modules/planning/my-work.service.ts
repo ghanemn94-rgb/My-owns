@@ -92,13 +92,13 @@ export class MyWorkService {
     for (const o of pendO) {
       if (!can('planning.rag_override.review', o.projectId, { workstreamId: o.entityType === 'workstream' ? o.entityId : null, requesterUserId: o.requestedBy })) continue;
       const label = o.entityType === 'workstream' ? (wsCodes.get(o.entityId) ?? 'Workstream') : 'Project';
-      push(byId.get(o.projectId)!, { type: 'rag_override_review', entityId: o.id, code: label, title: `RAG override to ${o.overrideStatus} (calculated ${o.calculatedStatus}) — ${label}`, status: 'pending', dueDate: o.expiresOn, overdue: false, linkPath: `/projects/${o.projectId}/plan/health?override=${o.id}` }, o.isDemo);
+      push(byId.get(o.projectId)!, { type: 'rag_override_review', entityId: o.id, code: label, title: `RAG override to ${o.overrideStatus} (calculated ${o.calculatedStatus}) — ${label}`, status: 'pending', dueDate: o.expiresOn, overdue: false, linkPath: `/projects/${o.projectId}/plan?tab=health` }, o.isDemo);
     }
     // Change requests to assess / approve
     const C = schema.changeRequest;
     const crs = await tx.select().from(C).where(and(inArray(C.projectId, pids), inArray(C.status, ['submitted', 'under_review'])));
     for (const c of crs) {
-      const link = `/projects/${c.projectId}/plan/changes/${c.id}`;
+      const link = `/projects/${c.projectId}/raid/changes/${c.id}`;
       if (can('planning.change_request.assess', c.projectId)) push(byId.get(c.projectId)!, { type: 'change_request_assess', entityId: c.id, code: c.code, title: c.title, status: c.status, dueDate: null, overdue: false, linkPath: link }, c.isDemo);
       if (c.status === 'under_review' && can('planning.change_request.approve', c.projectId, { requesterUserId: c.requestedBy })) push(byId.get(c.projectId)!, { type: 'change_request_approve', entityId: c.id, code: c.code, title: c.title, status: c.status, dueDate: null, overdue: false, linkPath: link }, c.isDemo);
     }

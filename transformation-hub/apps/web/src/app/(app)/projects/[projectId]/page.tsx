@@ -5,6 +5,7 @@ import { ChevronRight, Flag } from 'lucide-react';
 import { ActivityHistory } from '@/components/ActivityHistory';
 import { MetricCard } from '@/components/MetricCard';
 import { NotImplementedYet } from '@/components/NotImplementedYet';
+import { DelayImpactTile } from '@/components/planning/DelayImpactTile';
 import { PageHeader } from '@/components/PageHeader';
 import { ProjectBadges } from '@/components/ProjectBadges';
 import { DimensionCards } from '@/components/ProjectDimensions';
@@ -188,7 +189,7 @@ export default function ProjectOverviewPage() {
             {t('project.cockpit.laterTitle')}
           </h2>
           <div className="grid gap-3 md:grid-cols-3">
-            <NotImplementedYet compact phase="P2" feature={t('project.cockpit.delayImpact')} />
+            {can('planning.plan.read') ? <DelayImpactTile /> : <NotImplementedYet compact phase="P2" feature={t('project.cockpit.delayImpact')} />}
             <NotImplementedYet compact phase="P2" feature={t('project.cockpit.topDecisions')} />
             <NotImplementedYet compact phase="P2" feature={t('project.cockpit.committeeAsks')} />
           </div>
