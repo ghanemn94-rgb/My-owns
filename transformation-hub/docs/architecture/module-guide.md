@@ -62,9 +62,10 @@ Enum values already exist in `packages/domain/src/enums.ts` for all modules — 
 `task.overdue, source.updated, approval.pending, cp.changed, tsa.expiring, gate.blocked, decision.status_changed,
 evidence.changed, perimeter.changed, permission.changed, document.changed, report.generated`. Emit them from your
 commands; subscribe in `<module>.jobs.ts` (`registry.subscribe(eventType, jobKind)`; `registry.register(jobKind, handler)`).
-Job handlers receive ids only and must open their own context: `db.run(serviceCtx, ...)` with
-`scopes.servicePrincipal(orgId, projectId, 'svc-<module>')`; anything user-facing must be re-authorized for the human
-principal at execution time (AT-19).
+Job handlers receive ids only and must open their own context through `JobContextFactory` (never build a principal by
+hand): `db.run(jobs.forService(job, 'svc-<module>', ['<permission>', ...]), ...)` — a service principal is **deny-all
+except the listed permissions** — or `jobs.forUser(userId, projectId)` for anything user-facing, which re-authorizes the
+human principal at execution time and returns `null` when access was revoked (AT-19).
 
 ### Cross-module contracts
 - Evidence: the documents module owns `evidence_link` writes (`POST /api/v1/projects/:pid/evidence`); other modules read
@@ -90,6 +91,29 @@ principal at execution time (AT-19).
   permission allowlist), `forUser(userId, projectId)` for anything user-facing (returns null if access was revoked → skip
   and record). Long jobs call `queue.extendLease(job, ms)`. External deliveries go through `DeliveryService`.
 - Denied/rejected mutations are audited automatically by the problem filter; do not swallow domain errors.
+- **Workstream-scoped reach:** when a list or count is structured by workstream, filter it with
+  `policy.reachSql(ctx, '<permission>', projectId, table.workstreamId)` — a workstream-only role (e.g. a lead without a
+  project role) sees only its workstreams; `policy.permissionReach(...)` tells you whether the grant is project-wide.
+- **Raw SQL inside a request** goes through `db.query(text, params)` (runs on the request transaction) or `db.tx()`;
+  never `db.pool` (that is autocommit, outside the RLS context and outside the atomic change + audit + outbox unit).
+  Do not keep a `tx` handle beyond the request: it throws once the transaction has finished.
+- **Response contracts are strict:** fields not declared in the route's `response` schema are stripped in every mode
+  and fail tests (`contract.response_mismatch: undeclared field(s) …`). Declare what the screen needs; nothing more.
+
+### Conventions the DATABASE enforces (post-migrate.sql — your tests will fail if you ignore them)
+- `project_id` and `org_id` are **immutable** after insert (`immutable_scope`). Moving a record between projects is a
+  re-create command, never an UPDATE.
+- A uuid column named `*_user_id` or `*_by` **is a user reference**: it automatically gets a composite FK
+  `(org_id, col) → app_user(org_id, id)`. Tests must use real user ids (e.g. `demoUserId('pm')`), not random uuids.
+  Name record references `*_id` (e.g. `superseded_by_id` is a record, `superseded_by` would be treated as a user).
+- Every `(org_id, project_id)` must match the project's organization (composite FK to `project(org_id, id)`).
+- Avoid id lists (jsonb / uuid[]); use a child table with composite FKs. If unavoidable, ask the lead to register the
+  column in section 16 of `post-migrate.sql` (every element must be a same-project record).
+- `document.current_version_id` must be a version of the same document (deferred check at COMMIT, so insert order
+  inside one transaction does not matter).
+- `vote.user_id` must be the user of `vote.membership_id`, and the membership must belong to the decision's committee.
+- Room-only principals (clean team / external partner) see only their own `project_membership` and `room_grant` rows
+  and can never write grants; full membership is required to administer rooms.
 
 ## 3. Database changes
 Edit only your schema file. For local testing run, in your worktree:

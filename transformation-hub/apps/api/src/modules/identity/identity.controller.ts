@@ -6,12 +6,18 @@ import type { RequestContext } from '../../platform/context';
 import { IdentityService } from './identity.service';
 import { SessionService } from '../../platform/auth/session.service';
 import { APP_CONFIG, AppConfig } from '../../platform/config';
+import { OidcService } from './oidc.service';
+import { AuditService } from '../../platform/audit.service';
+import { DbService } from '../../platform/db.service';
 
 @Controller()
 export class IdentityController {
   constructor(
     private readonly svc: IdentityService,
     private readonly sessions: SessionService,
+    private readonly oidc: OidcService,
+    private readonly audit: AuditService,
+    private readonly db: DbService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -43,10 +49,42 @@ export class IdentityController {
   authConfig() {
     return {
       demoLogin: this.config.demoMode,
-      oidc: this.config.oidc.issuer
-        ? { status: 'configured_unverified', loginUrl: '/api/v1/auth/oidc/login' }
-        : { status: 'not_configured', loginUrl: null },
+      // Honest status: "verified" only after a successful discovery against the IdP in this process.
+      oidc: this.oidc.enabled ? { status: this.oidc.status, loginUrl: '/api/v1/auth/oidc/login' } : { status: 'not_configured', loginUrl: null },
     };
+  }
+
+  @ApiRoute(R.oidcLogin)
+  async oidcLogin(@Res() res: Response) {
+    const { url, cookie } = await this.oidc.begin();
+    res.cookie(OidcService.STATE_COOKIE, cookie, { httpOnly: true, sameSite: 'lax', secure: this.config.cookieSecure, path: '/api/v1/auth/oidc', maxAge: 10 * 60_000 });
+    res.redirect(302, url);
+  }
+
+  @ApiRoute(R.oidcCallback)
+  async oidcCallback(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.oidcCallback>, @Req() req: Request, @Res() res: Response) {
+    if (i.query.error) {
+      res.clearCookie(OidcService.STATE_COOKIE, { path: '/api/v1/auth/oidc' });
+      res.redirect(302, `/login?sso_error=${encodeURIComponent(i.query.error)}`);
+      return;
+    }
+    const current = new URL(`${this.config.oidc.redirectUri}${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`);
+    try {
+      const s = await this.oidc.complete(current, req.cookies?.[OidcService.STATE_COOKIE], { ip: req.ip ?? null, userAgent: req.headers['user-agent'] ?? null });
+      res.clearCookie(OidcService.STATE_COOKIE, { path: '/api/v1/auth/oidc' });
+      this.setCookies(res, s.token, s.csrf);
+      res.cookie('hub_locale', s.locale, { sameSite: 'lax', secure: this.config.cookieSecure, path: '/' });
+      await this.audit.recordDetached({ ...ctx, principal: { ...ctx.principal, userId: s.userId, orgId: s.orgId } }, { action: 'identity.login', entityType: 'app_user', entityId: s.userId, reason: 'OIDC login' });
+      // The session row is written in the request transaction: redirect only after it has committed, so the browser's
+      // next request can already see it.
+      if (this.db.inTx()) this.db.afterCommit(() => void res.redirect(302, '/'));
+      else res.redirect(302, '/');
+    } catch (e) {
+      res.clearCookie(OidcService.STATE_COOKIE, { path: '/api/v1/auth/oidc' });
+      const code = (e as { code?: string }).code ?? 'oidc.failed';
+      await this.audit.recordDetached(ctx, { action: 'identity.login', outcome: 'denied', entityType: 'request', reason: `OIDC login failed: ${code}` });
+      res.redirect(302, `/login?sso_error=${encodeURIComponent(code)}`);
+    }
   }
 
   @ApiRoute(R.demoUsers)

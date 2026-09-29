@@ -69,7 +69,7 @@ export class SessionService {
     const token = randomToken(32);
     const csrf = randomToken(24);
     const now = this.clock.now();
-    await this.db.pool.query(
+    await this.db.query(
       `insert into session (id, token_hash, csrf_hash, user_id, org_id, auth_method, idle_expires_at, absolute_expires_at, ip, user_agent)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
       [
@@ -91,16 +91,16 @@ export class SessionService {
   /** Issue a fresh CSRF token for an existing session (e.g. after page reload). */
   async rotateCsrf(sessionId: string): Promise<string> {
     const csrf = randomToken(24);
-    await this.db.pool.query(`update session set csrf_hash = $2 where id = $1`, [sessionId, sha256Hex(csrf)]);
+    await this.db.query(`update session set csrf_hash = $2 where id = $1`, [sessionId, sha256Hex(csrf)]);
     return csrf;
   }
 
   async revoke(sessionId: string, reason: string) {
-    await this.db.pool.query(`update session set revoked_at = now(), revoked_reason = $2 where id = $1 and revoked_at is null`, [sessionId, reason]);
+    await this.db.query(`update session set revoked_at = now(), revoked_reason = $2 where id = $1 and revoked_at is null`, [sessionId, reason]);
   }
 
   async revokeAllForUser(userId: string, reason: string) {
-    await this.db.pool.query(`update session set revoked_at = now(), revoked_reason = $2 where user_id = $1 and revoked_at is null`, [userId, reason]);
+    await this.db.query(`update session set revoked_at = now(), revoked_reason = $2 where user_id = $1 and revoked_at is null`, [userId, reason]);
   }
 
   static readonly COOKIE = 'hub_session';

@@ -1,6 +1,6 @@
-import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { Pool, PoolClient } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { schema } from '@hub/db';
 import { APP_CONFIG, AppConfig } from './config';
@@ -27,15 +27,48 @@ function scopeKey(ctx: RequestContext): string {
  * The transaction is stored in AsyncLocalStorage so services call `db.tx()` without threading it through.
  */
 @Injectable()
-export class DbService implements OnModuleDestroy {
+export class DbService implements OnModuleInit, OnModuleDestroy {
   readonly pool: Pool;
   private readonly als = new AsyncLocalStorage<TxStore>();
 
   private readonly timeouts: { statementMs: number; lockMs: number; idleMs: number };
+  private readonly log = new Logger('db');
 
-  constructor(@Inject(APP_CONFIG) config: AppConfig) {
-    this.pool = new Pool({ connectionString: config.databaseUrl, max: config.databasePoolMax, application_name: 'hub-api' });
+  constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {
+    this.pool = new Pool({ connectionString: config.databaseUrl, max: config.databasePoolMax, application_name: 'hub-api', connectionTimeoutMillis: 10_000 });
     this.timeouts = config.dbTimeouts;
+  }
+
+  /**
+   * Start-up self-check (ARCH-04): the runtime role must not be superuser, BYPASSRLS, or the owner of the tables —
+   * otherwise row-level security would silently not apply. Fatal in production, a loud warning elsewhere.
+   */
+  async onModuleInit() {
+    let problem: string | null = null;
+    try {
+      const { rows } = await this.pool.query<{ rolsuper: boolean; rolbypassrls: boolean; owned: number }>(
+        `select r.rolsuper, r.rolbypassrls,
+                (select count(*)::int from pg_tables t where t.schemaname = 'public' and t.tableowner = current_user) as owned
+           from pg_roles r where r.rolname = current_user`,
+      );
+      const r = rows[0];
+      if (r && (r.rolsuper || r.rolbypassrls || r.owned > 0)) {
+        problem = `runtime database role ${r.rolsuper ? 'is superuser' : r.rolbypassrls ? 'has BYPASSRLS' : `owns ${r.owned} table(s)`} — row-level security would not isolate projects`;
+      }
+    } catch (e) {
+      this.log.warn(`database self-check skipped: ${(e as Error).message}`);
+      return;
+    }
+    if (!problem) return;
+    if (this.config.nodeEnv === 'production') throw new Error(`Refusing to start: ${problem}. Use the non-owner runtime role (hub_app).`);
+    this.log.warn(`SECURITY WARNING: ${problem} (allowed outside production only)`);
+  }
+
+  /** Raw SQL on the current transaction's connection when inside run(); otherwise on the pool (autocommit). */
+  async query<R extends QueryResultRow = QueryResultRow>(text: string, params?: unknown[]): Promise<QueryResult<R>> {
+    const s = this.als.getStore();
+    if (s && !s.closed) return s.client.query<R>(text, params);
+    return this.pool.query<R>(text, params);
   }
 
   async onModuleDestroy() {
@@ -78,7 +111,16 @@ export class DbService implements OnModuleDestroy {
       return fn();
     }
     const client = await this.pool.connect();
-    const store: TxStore = { tx: drizzle(client, { schema }), client, ctx, afterCommit: [], closed: false };
+    const store: TxStore = { tx: undefined as unknown as Tx, client, ctx, afterCommit: [], closed: false };
+    // A captured `tx` that outlives its request fails loudly instead of running on a released connection (ARCH-07).
+    store.tx = new Proxy(drizzle(client, { schema }), {
+      get(target, prop, receiver) {
+        if (prop === 'then') return undefined; // not a thenable (returning the handle from an async fn must not trip the guard)
+        if (store.closed) throw new Error('Transaction already finished — a continuation outlived its request (ARCH-07)');
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+    let broken: Error | undefined;
     try {
       await client.query('BEGIN');
       await this.applyContext(client, ctx);
@@ -97,13 +139,13 @@ export class DbService implements OnModuleDestroy {
       store.closed = true;
       try {
         await client.query('ROLLBACK');
-      } catch {
-        /* ignore */
+      } catch (rb) {
+        broken = rb as Error; // connection state unknown → destroy it instead of returning it to the pool
       }
       throw e;
     } finally {
       store.closed = true;
-      client.release();
+      client.release(broken);
     }
   }
 
@@ -118,6 +160,7 @@ export class DbService implements OnModuleDestroy {
   /** Autonomous transaction (separate connection) — used to persist audit of DENIED actions whose main tx rolls back. */
   async runDetached<T>(ctx: RequestContext, fn: (tx: Tx) => Promise<T>): Promise<T> {
     const client = await this.pool.connect();
+    let broken: Error | undefined;
     try {
       await client.query('BEGIN');
       await this.applyContext(client, ctx);
@@ -125,10 +168,12 @@ export class DbService implements OnModuleDestroy {
       await client.query('COMMIT');
       return r;
     } catch (e) {
-      await client.query('ROLLBACK').catch(() => undefined);
+      await client.query('ROLLBACK').catch((rb: Error) => {
+        broken = rb;
+      });
       throw e;
     } finally {
-      client.release();
+      client.release(broken);
     }
   }
 

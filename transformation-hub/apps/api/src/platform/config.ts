@@ -23,6 +23,9 @@ const Env = z.object({
   HUB_OIDC_CLIENT_ID: z.string().optional(),
   HUB_OIDC_CLIENT_SECRET: z.string().optional(),
   HUB_OIDC_REDIRECT_URI: z.string().url().optional(),
+  HUB_OIDC_LINK_BY_EMAIL: z.enum(['true', 'false']).default('false'),
+  /** HMAC key for short-lived signed cookies (OIDC login state). Required when OIDC is enabled. */
+  HUB_COOKIE_SECRET: z.string().min(32).optional(),
   HUB_AI_ALLOW_MOCK: z.enum(['true', 'false']).default('true'),
   HUB_PRIVATE_MODE: z.enum(['true', 'false']).default('true'),
   HUB_EGRESS_ALLOWLIST: z.string().default(''),
@@ -56,6 +59,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     if (/:\/\/hub_owner[:@]/.test(e.DATABASE_URL)) problems.push('DATABASE_URL must use the runtime role, not the owner role');
     if (e.HUB_STORAGE_DRIVER === 'local') problems.push('Local filesystem storage is for development only; configure s3-compatible storage');
     if (!e.HUB_OIDC_ISSUER) problems.push('OIDC issuer must be configured in production (no password login exists)');
+    if (e.HUB_OIDC_ISSUER && !e.HUB_COOKIE_SECRET) problems.push('HUB_COOKIE_SECRET (>= 32 chars) is required when OIDC is enabled');
+    if (e.HUB_OIDC_ISSUER && !e.HUB_OIDC_ISSUER.startsWith('https://')) problems.push('OIDC issuer must use https in production');
   }
   if (problems.length) throw new Error(`Unsafe configuration rejected: ${problems.join('; ')}`);
   return {
@@ -76,7 +81,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
       clientId: e.HUB_OIDC_CLIENT_ID ?? null,
       clientSecret: e.HUB_OIDC_CLIENT_SECRET ?? null,
       redirectUri: e.HUB_OIDC_REDIRECT_URI ?? null,
+      linkByEmail: e.HUB_OIDC_LINK_BY_EMAIL === 'true',
     },
+    cookieSecret: e.HUB_COOKIE_SECRET ?? null,
     ai: { allowMock: e.HUB_AI_ALLOW_MOCK === 'true' },
     privateMode: e.HUB_PRIVATE_MODE === 'true',
     egressAllowlist: e.HUB_EGRESS_ALLOWLIST.split(',').map((s) => s.trim()).filter(Boolean),
