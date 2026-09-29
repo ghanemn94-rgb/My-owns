@@ -1,0 +1,35 @@
+{
+  "name": "transformation-hub",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Mobily Transformation & Transactions Hub (working name) — program, project and committee management platform",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.12 <23"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter ./packages/** run build && pnpm --filter @hub/api run build && pnpm --filter @hub/web run build",
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm test:unit && pnpm test:integration",
+    "test:unit": "pnpm --filter @hub/domain --filter @hub/contracts run test",
+    "test:integration": "pnpm --filter @hub/api run test",
+    "test:e2e": "pnpm --filter @hub/e2e run test",
+    "db:start": "bash scripts/dev/pg-start.sh",
+    "db:stop": "bash scripts/dev/pg-stop.sh",
+    "db:migrate": "pnpm --filter @hub/db run migrate",
+    "db:generate": "pnpm --filter @hub/db run generate",
+    "db:seed:demo": "pnpm --filter @hub/db run seed:demo",
+    "db:bootstrap": "pnpm --filter @hub/db run bootstrap",
+    "db:reset:dev": "pnpm --filter @hub/db run reset:dev",
+    "dev": "bash scripts/dev/dev.sh",
+    "openapi": "pnpm --filter @hub/api run openapi"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "@types/node": "22.20.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@swc/core", "esbuild", "unrs-resolver", "sharp"]
+  }
+}

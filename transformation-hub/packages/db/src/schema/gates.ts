@@ -1,0 +1,172 @@
+import { pgTable, uuid, text, integer, jsonb, varchar, boolean, unique, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import {
+  pk,
+  orgIdCol,
+  projectIdCol,
+  createdAt,
+  updatedAt,
+  createdBy,
+  versionCol,
+  ts,
+  projectFk,
+  roleKey,
+  gateAssessmentStatus,
+  criterionStatus,
+  waiverStatus,
+  statusDimensionKey,
+} from './_common';
+import { project } from './portfolio';
+
+/** Business gate (G0–G7 for the DC template) instantiated per project from its template version. */
+export const gateDefinition = pgTable(
+  'gate_definition',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    key: varchar('key', { length: 16 }).notNull(),
+    sortOrder: integer('sort_order').notNull(),
+    name: text('name').notNull(),
+    nameAr: text('name_ar'),
+    purpose: text('purpose'),
+    prerequisiteGateKeys: jsonb('prerequisite_gate_keys').$type<string[]>().notNull().default([]),
+    ownerRole: roleKey('owner_role').notNull(),
+    reviewerRole: roleKey('reviewer_role').notNull(),
+    approverRole: roleKey('approver_role').notNull(),
+    createdAt: createdAt(),
+    version: versionCol(),
+  },
+  (t) => [unique('gate_definition_pid_uq').on(t.projectId, t.id), uniqueIndex('gate_definition_key_uq').on(t.projectId, t.key)],
+);
+
+export const gateCriterion = pgTable(
+  'gate_criterion',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    gateId: uuid('gate_id').notNull(),
+    key: varchar('key', { length: 32 }).notNull(),
+    description: text('description').notNull(),
+    descriptionAr: text('description_ar'),
+    mandatory: boolean('mandatory').notNull(),
+    blocking: boolean('blocking').notNull(),
+    /** Waivability is set by authorized specialists; defaults to false. */
+    waivable: boolean('waivable').notNull().default(false),
+    waiverAuthorityRole: roleKey('waiver_authority_role'),
+    waivabilityBasis: text('waivability_basis'),
+    evidenceRequired: boolean('evidence_required').notNull().default(true),
+    evidenceType: varchar('evidence_type', { length: 32 }),
+    ownerRole: roleKey('owner_role').notNull(),
+    reviewerRole: roleKey('reviewer_role').notNull(),
+    applicability: varchar('applicability', { length: 24 }).notNull().default('proposed'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    version: versionCol(),
+  },
+  (t) => [
+    unique('gate_criterion_pid_uq').on(t.projectId, t.id),
+    projectFk('gate_criterion_gate_fk', t.projectId, t.gateId, gateDefinition),
+    uniqueIndex('gate_criterion_key_uq').on(t.projectId, t.key),
+  ],
+);
+
+/**
+ * One assessment cycle for a gate. Reopening creates a NEW assessment linked via `supersedesAssessmentId`;
+ * the prior assessment and its decision are preserved (spec §3).
+ */
+export const gateAssessment = pgTable(
+  'gate_assessment',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    gateId: uuid('gate_id').notNull(),
+    cycle: integer('cycle').notNull().default(1),
+    status: gateAssessmentStatus('status').notNull().default('not_started'),
+    evaluation: jsonb('evaluation').$type<Record<string, unknown>>(),
+    decisionNote: text('decision_note'),
+    decidedBy: uuid('decided_by'),
+    decidedAt: ts('decided_at'),
+    decisionId: uuid('decision_id'), // committee decision backing the gate approval
+    reopenedReason: text('reopened_reason'),
+    supersedesAssessmentId: uuid('supersedes_assessment_id'),
+    isCurrent: boolean('is_current').notNull().default(true),
+    createdAt: createdAt(),
+    createdBy: createdBy(),
+    updatedAt: updatedAt(),
+    version: versionCol(),
+  },
+  (t) => [
+    unique('gate_assessment_pid_uq').on(t.projectId, t.id),
+    projectFk('gate_assessment_gate_fk', t.projectId, t.gateId, gateDefinition),
+    index('gate_assessment_gate_idx').on(t.gateId),
+  ],
+);
+
+export const criterionAssessment = pgTable(
+  'criterion_assessment',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    assessmentId: uuid('assessment_id').notNull(),
+    criterionId: uuid('criterion_id').notNull(),
+    status: criterionStatus('status').notNull().default('unmet'),
+    note: text('note'),
+    assessedBy: uuid('assessed_by'),
+    assessedAt: ts('assessed_at'),
+    waiverId: uuid('waiver_id'),
+    updatedAt: updatedAt(),
+    version: versionCol(),
+  },
+  (t) => [
+    unique('criterion_assessment_pid_uq').on(t.projectId, t.id),
+    projectFk('criterion_assessment_assessment_fk', t.projectId, t.assessmentId, gateAssessment),
+    projectFk('criterion_assessment_criterion_fk', t.projectId, t.criterionId, gateCriterion),
+    uniqueIndex('criterion_assessment_uq').on(t.assessmentId, t.criterionId),
+  ],
+);
+
+/**
+ * Waiver for a gate criterion or closing condition. Non-waivable targets are rejected server-side (AT-13).
+ */
+export const waiver = pgTable(
+  'waiver',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    targetType: varchar('target_type', { length: 32 }).notNull(), // gate_criterion | closing_condition
+    targetId: uuid('target_id').notNull(),
+    basis: text('basis').notNull(),
+    impact: text('impact').notNull(),
+    status: waiverStatus('status').notNull().default('requested'),
+    requestedBy: uuid('requested_by').notNull(),
+    decidedBy: uuid('decided_by'),
+    decidedAt: ts('decided_at'),
+    decisionNote: text('decision_note'),
+    authorityRole: roleKey('authority_role'),
+    createdAt: createdAt(),
+    version: versionCol(),
+  },
+  (t) => [unique('waiver_pid_uq').on(t.projectId, t.id), index('waiver_target_idx').on(t.projectId, t.targetType, t.targetId)],
+);
+
+/** Latest computed state of each independent status dimension, with history via record_version. */
+export const statusDimension = pgTable(
+  'status_dimension',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    key: statusDimensionKey('key').notNull(),
+    state: varchar('state', { length: 48 }).notNull(),
+    explanation: text('explanation'),
+    counts: jsonb('counts').$type<Record<string, number>>(),
+    computedAt: ts('computed_at').notNull().defaultNow(),
+    version: versionCol(),
+  },
+  (t) => [uniqueIndex('status_dimension_uq').on(t.projectId, t.key)],
+);
