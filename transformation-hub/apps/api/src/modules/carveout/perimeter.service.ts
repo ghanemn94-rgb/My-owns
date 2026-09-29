@@ -357,7 +357,7 @@ export class PerimeterService {
    * Whether a scope change needs a change request. Existence of an approved baseline is read directly; when one exists,
    * the authoritative membership check is ChangeControlService.isInApprovedBaseline / currentBaseline (planning).
    */
-  private async changeControlFor(ctx: RequestContext, p: CarveoutProject, item: Item | null, toDisposition: PerimeterDisposition) {
+  private async changeControlFor(ctx: RequestContext, p: CarveoutProject, item: Item | null, toDisposition: PerimeterDisposition, newItemWorkstreamId: string | null = null) {
     const scope = await this.s.baselineScope(p.id);
     let planningApproved = false;
     let inPlanning = false;
@@ -367,7 +367,8 @@ export class PerimeterService {
         planningApproved = r.baselineExists;
         inPlanning = r.inBaseline;
       } else {
-        planningApproved = !!(await this.changeControl.currentBaseline(ctx, p.id)).baseline;
+        // A new item: read the baseline through the item's workstream (workstream-scoped leads — planning reach).
+        planningApproved = !!(await this.changeControl.currentBaseline(ctx, p.id, { workstreamId: newItemWorkstreamId })).baseline;
       }
     }
     const inVersion = !!item && !!scope.perimeterVersion?.itemIds.has(item.id);
@@ -521,7 +522,7 @@ export class PerimeterService {
     if (body.referenceValue && !this.canSeeReferenceValues(ctx, projectId)) {
       throw forbidden('carveout.reference_value_restricted', 'Reference values are recorded by holders of finance.record.read');
     }
-    const cc = await this.changeControlFor(ctx, p, null, body.disposition);
+    const cc = await this.changeControlFor(ctx, p, null, body.disposition, body.workstreamId ?? null);
     if (cc.requiresChangeRequest && !body.justification?.trim()) {
       throw ruleViolation('perimeter.justification_required', 'An approved baseline exists: adding an item raises a change request — state the justification');
     }

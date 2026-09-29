@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { and, asc, count, desc, eq, ilike, inArray, isNotNull, notInArray, or, sql, SQL } from 'drizzle-orm';
-import type { PgTable } from 'drizzle-orm/pg-core';
+import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { schema } from '@hub/db';
 import {
   BASELINE_MACHINE,
@@ -12,6 +12,7 @@ import {
   ruleViolation,
   conflict,
   invalid,
+  notFound,
   clearanceAllows,
   Classification,
 } from '@hub/domain';
@@ -134,9 +135,20 @@ export class ChangeControlService {
     };
   }
 
-  private async baselineDto(b: Baseline) {
+  private async baselineDto(b: Baseline, scope?: { workstreamId: string; perimeterItemIds: string[] }) {
     const names = await this.s.userNames([b.proposedBy]);
-    const snap = b.snapshot as unknown as BaselineSnapshot;
+    const full = b.snapshot as unknown as BaselineSnapshot;
+    // A workstream-scoped caller sees the baseline through its workstream only (counts included — ARCH-14).
+    const snap: BaselineSnapshot = scope
+      ? {
+          ...full,
+          tasks: (full.tasks ?? []).filter((t) => t.workstreamId === scope.workstreamId),
+          milestones: (full.milestones ?? []).filter((m) => m.workstreamId === scope.workstreamId),
+          deliverables: (full.deliverables ?? []).filter((d) => d.workstreamId === scope.workstreamId),
+          budgetLines: await this.budgetLinesOfWorkstream(b.projectId, full.budgetLines ?? [], scope.workstreamId),
+          perimeterItemIds: scope.perimeterItemIds,
+        }
+      : full;
     return {
       id: b.id,
       versionNo: b.versionNo,
@@ -202,25 +214,68 @@ export class ChangeControlService {
 
   /**
    * Current approved baseline for other modules (AT-07: the carve-out module calls this to decide whether adding or
-   * changing a perimeter item needs a change request). Authorization: planning.plan.read in the project.
+   * changing a perimeter item needs a change request). Authorization: planning.plan.read project-wide — or, for a
+   * workstream-scoped caller (e.g. a workstream lead without a project role), planning.plan.read on `opts.workstreamId`;
+   * that caller then sees the baseline through its workstream only (counts and perimeter ids of that workstream).
    */
-  async currentBaseline(ctx: RequestContext, projectId: string) {
+  async currentBaseline(ctx: RequestContext, projectId: string, opts: { workstreamId?: string | null } = {}) {
     const p = await this.s.project(ctx, projectId);
-    this.s.assertProjectRead(ctx, p);
+    const projectWide = this.s.policy.permissionReach(ctx, 'planning.plan.read', projectId).all;
+    const wsScope = !projectWide && opts.workstreamId ? opts.workstreamId : null;
+    if (wsScope) this.s.assert(ctx, 'planning.plan.read', p, { workstreamId: wsScope });
+    else this.s.assertProjectRead(ctx, p);
     const b = await this.s.currentBaselineRow(projectId);
     if (!b) return { baseline: null, perimeterItemIds: [] as string[] };
-    return { baseline: await this.baselineDto(b), perimeterItemIds: (b.snapshot as unknown as BaselineSnapshot).perimeterItemIds ?? [] };
+    const all = (b.snapshot as unknown as BaselineSnapshot).perimeterItemIds ?? [];
+    if (!wsScope) return { baseline: await this.baselineDto(b), perimeterItemIds: all };
+    const mine = all.length
+      ? (
+          await this.tx
+            .select({ id: schema.perimeterItem.id })
+            .from(schema.perimeterItem)
+            .where(and(eq(schema.perimeterItem.projectId, projectId), inArray(schema.perimeterItem.id, all), eq(schema.perimeterItem.workstreamId, wsScope)))
+        ).map((r) => r.id)
+      : [];
+    const perimeterItemIds = all.filter((id) => mine.includes(id));
+    return { baseline: await this.baselineDto(b, { workstreamId: wsScope, perimeterItemIds }), perimeterItemIds };
   }
 
-  /** Cross-module helper: is a record frozen into the current approved baseline? */
+  /**
+   * Cross-module helper: is a record frozen into the current approved baseline? The caller needs planning.plan.read
+   * project-wide or on the record's own workstream (derived from the record — never from the caller).
+   */
   async isInApprovedBaseline(ctx: RequestContext, projectId: string, subjectType: 'perimeter_item' | 'task' | 'milestone' | 'deliverable', subjectId: string): Promise<{ baselineExists: boolean; inBaseline: boolean; baselineId: string | null }> {
-    const cur = await this.currentBaseline(ctx, projectId);
+    const workstreamId = await this.subjectWorkstream(projectId, subjectType, subjectId);
+    const cur = await this.currentBaseline(ctx, projectId, { workstreamId });
     if (!cur.baseline) return { baselineExists: false, inBaseline: false, baselineId: null };
     const b = await this.s.currentBaselineRow(projectId);
     const snap = b!.snapshot as unknown as BaselineSnapshot;
     const ids =
       subjectType === 'perimeter_item' ? snap.perimeterItemIds : subjectType === 'task' ? snap.tasks.map((t) => t.id) : subjectType === 'milestone' ? snap.milestones.map((m) => m.id) : snap.deliverables.map((d) => d.id);
     return { baselineExists: true, inBaseline: ids.includes(subjectId), baselineId: cur.baseline.id };
+  }
+
+  /** Workstream of a change-request subject, read from the record itself (null when the record has no workstream). */
+  private async subjectWorkstream(projectId: string, subjectType: string | null | undefined, subjectId: string | null | undefined): Promise<string | null> {
+    if (!subjectType || !subjectId) return null;
+    if (subjectType === 'workstream') return subjectId;
+    const table = SUBJECT_TABLES[subjectType] as (PgTable & { id: PgColumn; projectId: PgColumn; workstreamId?: PgColumn }) | undefined;
+    if (!table?.workstreamId) return null;
+    const [r] = await this.tx
+      .select({ ws: table.workstreamId })
+      .from(table)
+      .where(and(eq(table.id, subjectId), eq(table.projectId, projectId)));
+    return (r?.ws as string | null | undefined) ?? null;
+  }
+
+  private async budgetLinesOfWorkstream(projectId: string, lines: BaselineSnapshot['budgetLines'], workstreamId: string) {
+    if (lines.length === 0) return lines;
+    const rows = await this.tx
+      .select({ id: schema.budgetLine.id })
+      .from(schema.budgetLine)
+      .where(and(eq(schema.budgetLine.projectId, projectId), inArray(schema.budgetLine.id, lines.map((l) => l.id)), eq(schema.budgetLine.workstreamId, workstreamId)));
+    const ids = new Set(rows.map((r) => r.id));
+    return lines.filter((l) => ids.has(l.id));
   }
 
   /** Domain command proposeBaselineChange: freeze the plan as a proposed baseline (re-baseline needs an approved CR). */
@@ -376,10 +431,19 @@ export class ChangeControlService {
     return pageOf(await this.crDtos(rows, projectId), Number(n), q);
   }
 
+  /**
+   * Change request detail: project-wide readers see every request; a workstream-scoped reader sees the requests whose
+   * subject record belongs to one of its workstreams (derived from the record); anything else is 404.
+   */
   async getChangeRequest(ctx: RequestContext, projectId: string, id: string) {
     const p = await this.s.project(ctx, projectId);
-    this.s.assertProjectRead(ctx, p);
+    const reach = this.s.policy.permissionReach(ctx, 'planning.plan.read', projectId);
+    if (reach.all) this.s.assertProjectRead(ctx, p);
     const c = await loadInProject(this.s.db, schema.changeRequest, projectId, id);
+    if (!reach.all) {
+      const ws = await this.subjectWorkstream(projectId, c.subjectType, c.subjectId);
+      if (!ws || !reach.workstreamIds.includes(ws) || !this.s.can(ctx, 'planning.plan.read', p, { workstreamId: ws })) throw notFound();
+    }
     return (await this.crDtos([c], projectId))[0]!;
   }
 
@@ -444,7 +508,9 @@ export class ChangeControlService {
     },
   ): Promise<{ id: string; code: string; status: ChangeRequestStatus; version: number }> {
     const p = await this.s.project(ctx, input.projectId);
-    this.s.assert(ctx, 'planning.change_request.create', p);
+    // A workstream-scoped requester (RACI: the WS lead is Responsible for perimeter changes) may raise a request about a
+    // record of its own workstream; the workstream is read from the subject record, never taken from the caller.
+    this.s.assert(ctx, 'planning.change_request.create', p, { workstreamId: await this.subjectWorkstream(p.id, input.subjectType, input.subjectId) });
     const created = await this.insertChangeRequest(ctx, p, {
       title: input.title ?? `Change to ${input.subjectType.replace(/_/g, ' ')} after baseline`,
       rationale: input.rationale,
@@ -497,13 +563,14 @@ export class ChangeControlService {
     const p = await this.s.project(ctx, projectId);
     const c = await this.s.lockInProject(schema.changeRequest, projectId, id);
     const extra: Partial<typeof schema.changeRequest.$inferInsert> = {};
+    const subjectWs = command === 'submit' || command === 'withdraw' ? await this.subjectWorkstream(projectId, c.subjectType, c.subjectId) : null;
     switch (command) {
       case 'submit':
-        this.s.assert(ctx, 'planning.change_request.create', p);
+        this.s.assert(ctx, 'planning.change_request.create', p, { workstreamId: subjectWs });
         this.assertRequesterOrAssessor(ctx, p, c);
         break;
       case 'withdraw':
-        this.s.assert(ctx, 'planning.change_request.create', p);
+        this.s.assert(ctx, 'planning.change_request.create', p, { workstreamId: subjectWs });
         this.assertRequesterOrAssessor(ctx, p, c);
         extra.decisionNote = body.reason ?? null;
         break;
