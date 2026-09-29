@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { writeFile } from 'node:fs/promises';
 import { CronExpressionParser } from 'cron-parser';
 import { APP_CONFIG, AppConfig } from '../config';
 import { DbService } from '../db.service';
@@ -33,6 +34,9 @@ export class WorkerService {
       try {
         this.inFlight = this.tick();
         await this.inFlight;
+        // Liveness heartbeat for the container probe (deploy/docker/api-entrypoint.cjs) — written only after a good tick.
+        const hb = process.env.HUB_WORKER_HEARTBEAT_FILE;
+        if (hb) await writeFile(hb, new Date().toISOString()).catch((e: Error) => this.log.warn(`heartbeat write failed: ${e.message}`));
       } catch (e) {
         this.log.error(`tick failed: ${(e as Error).message}`);
       } finally {

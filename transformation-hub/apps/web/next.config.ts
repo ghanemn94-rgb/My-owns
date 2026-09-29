@@ -5,7 +5,9 @@ import type { NextConfig } from 'next';
  * Web client configuration.
  *
  * - The API is proxied same-origin through a rewrite so the session cookie (`hub_session`, httpOnly) and the
- *   CSRF double-submit cookie (`hub_csrf`) work without CORS. `HUB_API_URL` is read when the server starts.
+ *   CSRF double-submit cookie (`hub_csrf`) work without CORS. `HUB_API_URL` is read at BUILD time (rewrites are compiled
+ *   into the routes manifest of the standalone output); in containers the ingress/route sends `/api` straight to the API
+ *   service (see deploy/helm), so the baked-in target is only used for local development.
  * - Security headers are static. The CSP allows `'unsafe-inline'` scripts because the App Router inlines its
  *   flight payload; a nonce-based CSP (via `proxy.ts`) is a documented follow-up (see apps/web/README.md).
  * - Telemetry: run with `NEXT_TELEMETRY_DISABLED=1` (private mode) — see README.
