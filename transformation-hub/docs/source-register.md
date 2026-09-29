@@ -34,8 +34,9 @@ claims changes any current project status in the platform (AT-01).
 
 - CLM-001…CLM-008 shaped the **proposed** DC Carve-out template (gates G0–G7, 12 workstreams, WBS) — every generated
   activity carries `status = draft`, `verificationStatus = proposed`.
-- CLM-009 is represented in the demo sandbox as a `source_claim` with `verification_status = historical_unverified`
-  that is **not applied** to any record (acceptance test AT-01).
+- CLM-009 will be represented in the demo sandbox as a `source_claim` with `verification_status = historical_unverified`
+  that is **not applied** to any record (acceptance test AT-01) — **planned**: implemented by the documents module seed
+  (P2); this line is updated when the seed and the AT-01 test exist and pass.
 - No person, partner, site, date, figure or percentage from the image was used.
 
 ## Next steps when real sources become available (runtime procedure)
