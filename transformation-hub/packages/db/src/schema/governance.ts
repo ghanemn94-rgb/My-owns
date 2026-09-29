@@ -63,6 +63,10 @@ export const committee = pgTable(
       .notNull()
       .default({}),
     charterDocumentId: uuid('charter_document_id'),
+    /** Current (working) charter version; every charter change is snapshotted in record_version (committee_charter). */
+    charterVersionNo: integer('charter_version_no').notNull().default(1),
+    /** Charter version that was approved (null = never approved; < charterVersionNo = amendment pending approval). */
+    charterApprovedVersionNo: integer('charter_approved_version_no'),
     charterApprovedBy: uuid('charter_approved_by'),
     charterApprovedAt: ts('charter_approved_at'),
     classification: classification('classification').notNull().default('confidential'),
@@ -144,9 +148,13 @@ export const meeting = pgTable(
     location: text('location'),
     status: meetingStatus('status').notNull().default('planned'),
     isCirculation: boolean('is_circulation').notNull().default(false),
+    /** Resolution by circulation: response deadline (business date, project timezone). */
+    responseDeadline: date('response_deadline', { mode: 'string' }),
     quorumSnapshot: jsonb('quorum_snapshot').$type<Record<string, unknown>>(),
     packSnapshotId: uuid('pack_snapshot_id'),
     minutesText: text('minutes_text'),
+    /** Drafter of the current minutes version (separation of duties for minutes approval). */
+    minutesDraftedBy: uuid('minutes_drafted_by'),
     minutesApprovedBy: uuid('minutes_approved_by'),
     minutesApprovedAt: ts('minutes_approved_at'),
     authorityMatrixVersionId: uuid('authority_matrix_version_id'),
@@ -200,6 +208,9 @@ export const decision = pgTable(
     outcomeRecordedBy: uuid('outcome_recorded_by'),
     tallySnapshot: jsonb('tally_snapshot').$type<Record<string, unknown>>(),
     supersededByDecisionId: uuid('superseded_by_decision_id'),
+    /** Who started implementation tracking (the verifier of the implementation must be a different person). */
+    implementationStartedBy: uuid('implementation_started_by'),
+    implementationStartedAt: ts('implementation_started_at'),
     implementationEvidenceNote: text('implementation_evidence_note'),
     implementationVerifiedBy: uuid('implementation_verified_by'),
     implementationVerifiedAt: ts('implementation_verified_at'),
@@ -364,8 +375,13 @@ export const escalation = pgTable(
     decisionDeadline: date('decision_deadline', { mode: 'string' }),
     options: jsonb('options').$type<{ title: string; impact?: string }[]>().notNull().default([]),
     raisedToCommitteeId: uuid('raised_to_committee_id'),
+    /** Escalation target body (e.g. the authority matrix `escalateTo`), free text until bodies are modelled. */
+    target: text('target'),
     status: escalationStatus('status').notNull().default('open'),
     resolutionDecisionId: uuid('resolution_decision_id'),
+    resolutionNote: text('resolution_note'),
+    resolvedBy: uuid('resolved_by'),
+    resolvedAt: ts('resolved_at'),
     raisedBy: uuid('raised_by'),
     isSystemGenerated: boolean('is_system_generated').notNull().default(false),
     isDemo: isDemo(),
