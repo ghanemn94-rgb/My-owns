@@ -56,6 +56,10 @@ OUT="$REPO_ROOT/docs/delivery/runs/$STAGE/$RUN_ID"
 mkdir -p "$REPO_ROOT/docs/delivery/runs/$STAGE"
 mkdir "$OUT" # fails if the directory exists: evidence is never overwritten
 HEAD_COMMIT="$(git -C "$CWD" rev-parse HEAD 2>/dev/null || echo unknown)"
+# Every reviewer's evidence directory for the stage, and the gate-record directory, exist before any agent starts, so a
+# concurrently running agent's sandbox never places a read-only mount stub where a reviewer or the auditor must create
+# them (F-DG0-236). Empty directories are not tracked by git and are not part of any candidate.
+mkdir -p "$REPO_ROOT/docs/delivery/gates" "$REPO_ROOT/docs/delivery/test-evidence/$STAGE"/{domain,code-security,qa,audit}
 # Per-run settings: the role's write-guard hook plus the OS Bash sandbox deny list (D-025), kept as run evidence.
 SETTINGS="$OUT/settings.json"
 python3 -I -B "$REPO_ROOT/tools/agents/agent_settings.py" "$ROLE" "$REPO_ROOT" "$CWD" "$STAGE" > "$SETTINGS"

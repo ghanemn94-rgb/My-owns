@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -178,4 +178,15 @@ test("F-DG0-144: every run gets its own private TMPDIR, exported to the agent an
     rmSync(repo, { recursive: true, force: true });
   }
   assert.notEqual(seen[0], seen[1]);
+});
+
+test("F-DG0-236: the runner pre-creates the stage's evidence directories and the gate-record directory", () => {
+  if (spawnSync("sh", ["-c", "command -v bwrap"]).status !== 0) assert.fail("bwrap is required by run-agent.sh (D-025)");
+  const repo = stubRepo();
+  const { res } = runWith(repo, []);
+  assert.equal(res.status, 0, res.stderr);
+  for (const rel of ["docs/delivery/gates", ...["domain", "code-security", "qa", "audit"].map((k) => `docs/delivery/test-evidence/DG0/${k}`)]) {
+    assert.ok(statSync(join(repo, rel)).isDirectory(), `${rel} must exist as a directory`);
+  }
+  rmSync(repo, { recursive: true, force: true });
 });

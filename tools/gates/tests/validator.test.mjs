@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { gzipSync, gunzipSync } from "node:zlib";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, symlinkSync, unlinkSync } from "node:fs";
+import { chmodSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, symlinkSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -931,5 +931,36 @@ test("F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the 
     }
     const errs = validateGate(repo, "DG0");
     expectError(errs, tamper === "prompt" ? /replayed prompt names working directory \/foreign\/root/ : /init cwd/);
+  }
+});
+
+test("F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does", () => {
+  const repo = mkdtempSync(join(tmpdir(), "cand-stub-"));
+  fixtures.push(repo);
+  sh(repo, "init", "-q", "-b", "main");
+  put(repo, "app.txt", "a\n");
+  put(repo, "tracked-empty.txt", "");
+  sh(repo, "-c", "user.email=t@e", "-c", "user.name=t", "add", "-A");
+  sh(repo, "-c", "user.email=t@e", "-c", "user.name=t", "commit", "-qm", "c");
+  const spec = { include: ["**"], exclude: ["trading_agent/**"] };
+  const head = candidateId(manifestFromRef(repo, "HEAD", spec));
+  const stub = (rel) => { mkdirSync(dirname(join(repo, rel)), { recursive: true }); writeFileSync(join(repo, rel), ""); chmodSync(join(repo, rel), 0o444); };
+  // What bubblewrap leaves while another agent's sandboxed command runs: empty, read-only, untracked regular files.
+  for (const rel of [".bashrc", ".mcp.json", "CLAUDE.local.md", "docs/new-area/.gitmodules"]) stub(rel);
+  assert.equal(candidateId(manifestFromWorkingTree(repo, spec)), head, "sandbox stubs must not change the working-tree candidate");
+  // Everything else still counts: an empty writable untracked file, a non-empty read-only one, a truncated tracked one.
+  for (const [label, act] of [
+    ["empty writable untracked file", () => writeFileSync(join(repo, "empty.txt"), "")],
+    ["non-empty read-only untracked file", () => { writeFileSync(join(repo, "ro.txt"), "x"); chmodSync(join(repo, "ro.txt"), 0o444); }],
+    ["tracked file truncated and made read-only", () => { writeFileSync(join(repo, "app.txt"), ""); chmodSync(join(repo, "app.txt"), 0o444); }],
+    ["tracked empty file removed", () => rmSync(join(repo, "tracked-empty.txt"))],
+  ]) {
+    act();
+    assert.notEqual(candidateId(manifestFromWorkingTree(repo, spec)), head, `${label} must change the working-tree candidate`);
+    sh(repo, "checkout", "-q", "--", ".");
+    for (const f of ["empty.txt", "ro.txt"]) rmSync(join(repo, f), { force: true });
+    chmodSync(join(repo, "app.txt"), 0o644);
+    sh(repo, "checkout", "-q", "--", ".");
+    assert.equal(candidateId(manifestFromWorkingTree(repo, spec)), head);
   }
 });

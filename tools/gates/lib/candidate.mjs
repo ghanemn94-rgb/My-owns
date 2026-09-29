@@ -69,6 +69,17 @@ export function selectPaths(paths, spec) {
   return paths.filter((p) => matchesAny(p, include) && !matchesAny(p, exclude)).sort();
 }
 
+/**
+ * A transient mount stub of a concurrently running agent's OS sandbox (F-DG0-146, F-DG0-236): bubblewrap creates an
+ * empty, read-only (0444) regular file where it mounts over a denied path that does not exist, and removes nothing
+ * visible afterwards until the command ends. Such a file is untracked, zero-length and unwritable. It is skipped by the
+ * working-tree manifest only: a frozen candidate always comes from committed content (manifestFromRef), so skipping an
+ * untracked empty file can never change what is frozen or approved.
+ */
+function isSandboxStub(st, tracked) {
+  return !tracked && st.isFile() && st.size === 0 && (st.mode & 0o222) === 0;
+}
+
 /** Files from the working tree: tracked + untracked-not-ignored, content read from disk. */
 export function manifestFromWorkingTree(repo, spec) {
   const staged = git(repo, ["ls-files", "-z", "--stage"]).toString("utf8").split("\0").filter(Boolean);
@@ -98,6 +109,7 @@ export function manifestFromWorkingTree(repo, spec) {
     } catch {
       continue; // deleted in working tree but still in index
     }
+    if (isSandboxStub(st, indexMode.has(p))) continue;
     if (st.isSymbolicLink()) entries.push({ path: p, sha256: symlinkHash(readlinkSync(join(repo, p))), mode: "120000" });
     else if (st.isFile()) {
       const fsMode = st.mode & 0o111 ? "100755" : "100644";
