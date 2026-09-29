@@ -1,5 +1,5 @@
 {
-  "id": "00071112-dc1b-46ab-8c08-d86da39a173e",
+  "id": "46e90a63-7f31-433f-bc1f-0b5d4d7cf738",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2560,32 +2560,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "rejected_by": {
-          "name": "rejected_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "rejected_at": {
-          "name": "rejected_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "superseded_at": {
-          "name": "superseded_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
         "note": {
           "name": "note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "decision_note": {
-          "name": "decision_note",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -2623,38 +2599,6 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "baseline_one_proposed_uq": {
-          "name": "baseline_one_proposed_uq",
-          "columns": [
-            {
-              "expression": "project_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "status = 'proposed'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "baseline_one_approved_uq": {
-          "name": "baseline_one_approved_uq",
-          "columns": [
-            {
-              "expression": "project_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "status = 'approved'",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -3132,36 +3076,6 @@
         },
         "accepted_at": {
           "name": "accepted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "submitted_by": {
-          "name": "submitted_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "submitted_at": {
-          "name": "submitted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "weight_set_by": {
-          "name": "weight_set_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "weight_approved_by": {
-          "name": "weight_approved_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "weight_approved_at": {
-          "name": "weight_approved_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
@@ -3784,30 +3698,6 @@
           "notNull": true,
           "default": "'proposed'"
         },
-        "reported_by": {
-          "name": "reported_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reported_at": {
-          "name": "reported_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "verified_by": {
-          "name": "verified_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "verified_at": {
-          "name": "verified_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
         "is_demo": {
           "name": "is_demo",
           "type": "boolean",
@@ -4141,19 +4031,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "review_note": {
-          "name": "review_note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_demo": {
-          "name": "is_demo",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -4169,36 +4046,7 @@
           "default": 1
         }
       },
-      "indexes": {
-        "rag_override_pending_uq": {
-          "name": "rag_override_pending_uq",
-          "columns": [
-            {
-              "expression": "project_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "entity_type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "entity_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "reviewed_at is null",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "rag_override_project_id_project_id_fk": {
           "name": "rag_override_project_id_project_id_fk",
@@ -5059,24 +4907,6 @@
         "accepted_at": {
           "name": "accepted_at",
           "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "submitted_by": {
-          "name": "submitted_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "submitted_at": {
-          "name": "submitted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "blocked_reason": {
-          "name": "blocked_reason",
-          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -6384,6 +6214,19 @@
           "primaryKey": false,
           "notNull": false
         },
+        "charter_version_no": {
+          "name": "charter_version_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "charter_approved_version_no": {
+          "name": "charter_approved_version_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "charter_approved_by": {
           "name": "charter_approved_by",
           "type": "uuid",
@@ -7033,6 +6876,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "implementation_started_by": {
+          "name": "implementation_started_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "implementation_started_at": {
+          "name": "implementation_started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "implementation_evidence_note": {
           "name": "implementation_evidence_note",
           "type": "text",
@@ -7304,6 +7159,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "target": {
+          "name": "target",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "status": {
           "name": "status",
           "type": "escalation_status",
@@ -7315,6 +7176,24 @@
         "resolution_decision_id": {
           "name": "resolution_decision_id",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resolution_note": {
+          "name": "resolution_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resolved_by": {
+          "name": "resolved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -7511,6 +7390,12 @@
           "notNull": true,
           "default": false
         },
+        "response_deadline": {
+          "name": "response_deadline",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
         "quorum_snapshot": {
           "name": "quorum_snapshot",
           "type": "jsonb",
@@ -7526,6 +7411,12 @@
         "minutes_text": {
           "name": "minutes_text",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "minutes_drafted_by": {
+          "name": "minutes_drafted_by",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
