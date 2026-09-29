@@ -1,0 +1,33 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-236",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced before/after with my own tests QA17-C1 (stubs created by a REAL bubblewrap mount: --ro-bind /dev/null over missing .bashrc, CLAUDE.local.md and docs/delivery/gates, plus a directory bind over .idea) and QA17-C2 (boundary). At the round-15 candidate commit 7fab49c both FAIL: the real 0444 zero-length stubs change the working-tree candidate ID. At f84eed4 both PASS: isSandboxStub() in tools/gates/lib/candidate.mjs skips only untracked, zero-length, regular files with no write bit; writable empty files (0644/0600), non-empty read-only files, tracked files and a read-only empty file once STAGED in the index all still count. A bwrap directory stub is an empty directory that git never lists, so it cannot perturb the ID. Frozen candidates always come from committed content (manifestFromRef), so skipping can never change what is approved. Part (c) of my proposal is in place: run-agent.sh line 71 pre-creates docs/delivery/gates, docs/delivery/reviews/<stage> and test-evidence/<stage>/{domain,code-security,qa,audit} in both REPO_ROOT and CWD_ROOT (absent at 7fab49c), and docs/delivery/gates is a directory in the shared tree now. Part (a): review-common round 17 allows confirming via HEAD or candidate.mjs; live in this round the shared tree held stub-shaped entries (.bash_profile, .idea, CLAUDE.local.md ...) while other reviewers ran, and candidate.mjs --stage DG0 still printed 34b06b8a (90 files) both times I ran it there (11:15Z and about 11:24Z, the second time after two other reviewers' runs had committed), and matched the fresh clone and --ref f84eed4. The shipped validator test 'F-DG0-146/F-DG0-236' and runner test 'F-DG0-236: the runner pre-creates...' pass (53/53 and 37/37). Characterisation, not a defect: 0400/0555 untracked empty files are also skipped (the rule is 'no write bit'; D-029 says 'unwritable (mode 0444)').",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-17/17-F-DG0-236-before-after.log",
+        "docs/delivery/test-evidence/DG0/qa/round-17/11-qa17-new-tests.log#QA17-C1",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r17.test.mjs#QA17-C2",
+        "docs/delivery/test-evidence/DG0/qa/round-17/07-candidate.log",
+        "docs/delivery/test-evidence/DG0/qa/round-17/02-gates-selftests.log",
+        "docs/delivery/test-evidence/DG0/qa/round-17/03-agents-tests.log",
+        "tools/gates/lib/candidate.mjs#isSandboxStub",
+        "tools/agents/run-agent.sh#F-DG0-236"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-237",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "threat-model.md row 43 now says, for confined roles, that a new top-level path is created in the process sandbox's throwaway tmpfs and never reaches the real tree, and every other new path outside the role's areas has a read-only parent. My round-15 text quoted 'on the path to its own areas, for example at the repository root' (git show 7fab49c). Re-probed live in this run (D-030 process sandbox): new paths src/__pycache__ and __pycache__ at the top level were created on the tmpfs mounted over the repository root (findmnt: tmpfs rw over ext4 ro) and removed at once; docs/architecture/__pycache__, tests/unit/__pycache__, docs/delivery/__pycache__, docs/analysis/__pycache__ and tools/__pycache__ were all refused with 'Read-only file system'. In round 15 the three deeper ones were creatable. That the top-level tmpfs never reaches the real tree is covered by the shipped test 'F-DG0-145: a confined reviewer's whole process writes only its own evidence...' (repoRootThrowaway), which passes. The documented scope now matches the observed scope.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-17/18-F-DG0-237-scope-probe.log",
+        "docs/delivery/test-evidence/DG0/qa/round-15/14-new-path-scope-probe.log",
+        "docs/delivery/threat-model.md",
+        "tools/agents/tests/process-sandbox.test.mjs#repoRootThrowaway",
+        "docs/delivery/test-evidence/DG0/qa/round-17/03-agents-tests.log"
+      ]
+    }
+  ]
+}
