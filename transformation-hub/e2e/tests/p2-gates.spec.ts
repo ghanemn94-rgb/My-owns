@@ -12,11 +12,23 @@ const P = {
   pm: 'Demo Project Manager',
   legal: 'Demo Legal Member',
   chair: 'Demo Committee Chair',
+  contributor: 'Demo Contributor',
 } as const;
+/** Demo persona holding each designated reviewer role in DEMO-DC (only that role may accept a criterion). */
+const REVIEWER: Record<string, string> = {
+  project_manager: 'Demo Project Manager',
+  finance_restricted: 'Demo Finance Member',
+  legal_restricted: 'Demo Legal Member',
+  functional_approver: 'Demo Functional Approver',
+  secretary_cpmo: 'Demo Secretary / CPMO',
+  sponsor: 'Demo Sponsor',
+  workstream_lead: 'Demo Technology Lead',
+};
 
 interface Criterion {
   id: string;
   key: string;
+  reviewerRole: string;
   mandatory: boolean;
   assessment: { status: string; version: number };
   evidence: { active: number; conflicting: number };
@@ -107,7 +119,8 @@ test.describe('P2 business gates', () => {
     await r.getByTestId('criterion-action-submit').click();
     await page.getByRole('dialog').getByRole('button', { name: 'Submit evidence' }).click();
     await expect(row(page, key)).toHaveAttribute('data-criterion-status', 'evidence_submitted');
-    await expect(row(page, key).getByTestId('criterion-action-met')).toHaveCount(0); // the PM is not a reviewer
+    // the PM holds gates.assessment.review, but is not this criterion's designated reviewer (functional approver)
+    await expect(row(page, key).getByTestId('criterion-action-met')).toHaveCount(0);
 
     await loginAs(page, P.legal);
     await page.goto(`/projects/${pid}/gates/${g2.id}`);
@@ -150,14 +163,22 @@ test.describe('P2 business gates', () => {
 
   test('(d) a gate cannot be approved with a recommendation pending external authority (AT-04)', async ({ page, baseURL }) => {
     const problems = watchConsole(page);
-    // Fixture: make G1 ready for decision through the API (PM links evidence, Legal reviews, PM submits).
+    // Fixture: make G1 ready for decision through the API. Evidence is linked by the PM (by the contributor on
+    // PM-designated criteria), each criterion is accepted by its designated reviewer, and the PM submits.
     const pm = await apiSessionAs(baseURL!, P.pm);
-    const legal = await apiSessionAs(baseURL!, P.legal);
+    const sessions = new Map<string, APIRequestContext>([[P.pm, pm]]);
+    const as = async (persona: string) => {
+      if (!sessions.has(persona)) sessions.set(persona, await apiSessionAs(baseURL!, persona));
+      return sessions.get(persona)!;
+    };
     let g1 = await gateByKey(pm, pid, 'G1');
     if (g1.assessment.status === 'in_assessment') {
       for (const c of g1.criteria.filter((x) => x.mandatory && x.assessment.status !== 'met')) {
-        if (c.evidence.active === 0) await post(pm, `/api/v1/projects/${pid}/evidence`, { targetType: 'gate_criterion', targetId: c.id, note: `E2E synthetic evidence for ${c.key}` });
-        await post(legal, `/api/v1/projects/${pid}/gates/${g1.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'met' });
+        const reviewer = REVIEWER[c.reviewerRole];
+        expect(reviewer, `a demo persona holds reviewer role ${c.reviewerRole}`).toBeTruthy();
+        const adder = c.reviewerRole === 'project_manager' ? P.contributor : P.pm;
+        if (c.evidence.active === 0) await post(await as(adder), `/api/v1/projects/${pid}/evidence`, { targetType: 'gate_criterion', targetId: c.id, note: `E2E synthetic evidence for ${c.key}` });
+        await post(await as(reviewer!), `/api/v1/projects/${pid}/gates/${g1.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'met' });
       }
       g1 = await gateByKey(pm, pid, 'G1');
       await post(pm, `/api/v1/projects/${pid}/gates/${g1.id}/assessment/mark-ready`, { expectedVersion: g1.assessment.version });
@@ -165,8 +186,7 @@ test.describe('P2 business gates', () => {
     const decisions = await (await pm.get(`/api/v1/projects/${pid}/decisions?status=recommended`)).json();
     const recommended = (decisions.items as { id: string; code: string }[])[0]!;
     expect(recommended, 'demo seed has a recommendation pending external authority').toBeTruthy();
-    await legal.dispose();
-    await pm.dispose();
+    for (const s of sessions.values()) await s.dispose();
 
     // The PM links the committee recommendation to G1.
     await loginAs(page, P.pm);

@@ -100,6 +100,15 @@ export function holdsRole(roles: readonly RoleKey[] | undefined, role: RoleKey):
   return Boolean(roles?.includes(role));
 }
 
+/**
+ * Whether the caller is the criterion's DESIGNATED reviewer (mirrors the server rule, which stays authoritative):
+ * a project-wide role, or, for `workstream_lead`, a workstream lead role on any workstream of the project.
+ */
+export function isDesignatedReviewer(access: { roles: readonly RoleKey[]; workstreamRoles: readonly { role: RoleKey }[] } | undefined, reviewerRole: RoleKey): boolean {
+  if (!access) return false;
+  return access.roles.includes(reviewerRole) || (reviewerRole === 'workstream_lead' && access.workstreamRoles.some((w) => w.role === 'workstream_lead'));
+}
+
 /** First gate (template order) whose current cycle is not approved — the cockpit's "next gate". */
 export function nextGate(gates: GateSummary[]): GateSummary | null {
   return [...gates].sort((a, b) => a.sortOrder - b.sortOrder).find((g) => g.assessment.status !== 'approved' && g.assessment.status !== 'approved_with_exceptions') ?? null;

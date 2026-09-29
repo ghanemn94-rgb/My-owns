@@ -14,8 +14,9 @@ import { useToast } from '@/components/Toast';
 import { btn, card, cx } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
-import { useCriterionEvidence, useDocumentOptions, useInvalidateGates, gatesQk, type GateCriterion, type GateDetail, type GateWaiver } from '@/lib/gates';
+import { useCriterionEvidence, useDocumentOptions, useInvalidateGates, gatesQk, isDesignatedReviewer, type GateCriterion, type GateDetail, type GateWaiver } from '@/lib/gates';
 import { useProjectContext } from '@/lib/project-context';
+import { projectAccess } from '@/lib/queries';
 import { useQueryClient } from '@tanstack/react-query';
 
 type Dlg =
@@ -83,13 +84,14 @@ function EvidenceList({ projectId, criterionId }: { projectId: string; criterion
 
 function CriterionRow({ gate, c, onAction, expanded, onToggle }: { gate: GateDetail; c: GateCriterion; onAction: (d: Dlg) => void; expanded: boolean; onToggle: () => void }) {
   const { t, tStatus, formatNumber, formatDateTime } = useI18n();
-  const { projectId, can } = useProjectContext();
+  const { projectId, can, me } = useProjectContext();
   const s = c.assessment.status;
   const na = c.assessment.notApplicable;
   const editable = EDITABLE.includes(gate.assessment.status);
   const decided = DECIDED.includes(gate.assessment.status);
   const canAttach = can('gates.evidence.attach');
-  const canReview = can('gates.assessment.review');
+  // Only the criterion's designated reviewer role accepts, returns or determines N/A (the server enforces it).
+  const canReview = can('gates.assessment.review') && isDesignatedReviewer(projectAccess(me, projectId), c.reviewerRole);
   const waivers = gate.waivers.filter((w) => w.targetId === c.id);
   const panelId = `criterion-panel-${c.id}`;
 
