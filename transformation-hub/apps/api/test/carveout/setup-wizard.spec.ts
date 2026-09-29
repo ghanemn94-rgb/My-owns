@@ -1,13 +1,15 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools } from '../helpers';
 import { gateDecision, setupGovernance } from '../gates/gate-test-kit';
-import { Personas, approveChangeRequest, base, carveoutProject, createItem, item, ok, workstreamId } from './carveout-kit';
+import { Personas, approveChangeRequest, base, carveoutProject, createItem, item, newcoId, ok, workstreamId } from './carveout-kit';
 
 /**
- * REQ-SET-012 (setup wizard step 4): the perimeter, workstreams and owners are frozen as a perimeter version proposed by
+ * REQ-SET-010 (setup wizard step 2): NewCo status with evidence. REQ-SET-012 (setup wizard step 4): the perimeter, workstreams and owners are frozen as a perimeter version proposed by
  * the PM and approved by the sponsor with a FINAL governance decision; the approved version is a baseline perimeter for
  * change control (AT-07); a snapshot that changed after the proposal cannot be approved.
  */
+const pvRef = {} as { id: string; p: Personas };
+
 afterAll(async () => {
   await closeApp();
   await closePools();
@@ -19,7 +21,9 @@ describe('Perimeter version — setup wizard step 4 [REQ-SET-012]', () => {
   let gov: Awaited<ReturnType<typeof setupGovernance>>;
   let excludedId: string;
   it('pending dispositions or in-scope items without workstream/owner block the proposal', async () => {
-    ({ projectId: pv, p: q } = await carveoutProject('CO-PV'));
+    ({ projectId: pv, p: q } = await carveoutProject('CO-SETUP'));
+    pvRef.id = pv;
+    pvRef.p = q;
     const ws = await workstreamId(q.pm, pv, 'WS05');
     await createItem(q.pm, pv, { type: 'site', name: 'PV site (synthetic)', disposition: 'included', workstreamId: ws, ownerUserId: q.pm.userId });
     const noOwner = await createItem(q.pm, pv, { type: 'asset', name: 'PV asset without owner (synthetic)', disposition: 'included', workstreamId: ws });
@@ -72,5 +76,25 @@ describe('Perimeter version — setup wizard step 4 [REQ-SET-012]', () => {
     const versions = (await q.pm.get(`${base(pv)}/perimeter/versions`).expect(200)).body.items;
     expect(versions.map((x: { status: string }) => x.status)).toEqual(['proposed', 'approved']);
     await ok(q.sponsor.post(`${base(pv)}/perimeter/versions/${v2.id}/reject`, { expectedVersion: 1, reason: 'Register changed (test)' }));
+  });
+});
+
+describe('REQ-SET-010 — setup wizard step 2: NewCo status with evidence', () => {
+  it('"incorporated" without evidence is rejected; with evidence it is recorded as proposed; one NewCo per project', async () => {
+    const pid2 = pvRef.id;
+    const p2 = pvRef.p;
+    const ent2 = await newcoId(p2.pm, pid2);
+    const bad = await p2.pm.post(`${base(pid2)}/setup/steps/newco-status`, { mode: 'existing', legalEntityId: ent2, status: 'incorporated' });
+    expect(bad.status).toBe(422);
+    expect(bad.body.code).toBe('newco.incorporation.evidence_required');
+    const good = await ok<{ status: string; verification: string; statusDimensions: { carveOutComplete: boolean } }>(
+      p2.pm.post(`${base(pid2)}/setup/steps/newco-status`, { mode: 'existing', legalEntityId: ent2, status: 'incorporation_in_progress', evidence: { note: 'Application reference (synthetic)' } }),
+    );
+    expect(good).toMatchObject({ status: 'incorporation_in_progress', verification: 'proposed' });
+    expect(good.statusDimensions.carveOutComplete).toBe(false);
+    const links = (await p2.pm.get(`${base(pid2)}/evidence?targetType=legal_entity&targetId=${ent2}`).expect(200)).body;
+    expect(links.total).toBe(1);
+    const dup = await p2.pm.post(`${base(pid2)}/setup/steps/newco-status`, { mode: 'new', name: 'Second NewCo (test)', status: 'unconfirmed' });
+    expect(dup.status).toBe(409);
   });
 });

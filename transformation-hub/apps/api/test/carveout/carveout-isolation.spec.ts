@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, loginAs, owner, projectIdByCode, runtimePool, DC } from '../helpers';
-import { Personas, base, carveoutProject, createItem, newcoId, ok } from './carveout-kit';
+import { Personas, base, carveoutProject, createItem, newcoId } from './carveout-kit';
 
 /**
  * AT-03 for the carve-out / NewCo registers: another project's records, ids and counts never leak; submitted foreign ids
@@ -15,10 +15,11 @@ let siteB: string;
 
 beforeAll(async () => {
   ({ projectId: a, p } = await carveoutProject('CO-ISO-A'));
-  ({ projectId: b } = await carveoutProject('CO-ISO-B'));
+  // Project B = the demo DC project (its seeded records are only read here — no project is created for B).
+  b = await projectIdByCode(DC);
   itemA = (await createItem(p.pm, a, { type: 'site', name: 'Isolation A site (synthetic)', disposition: 'included' })).id;
-  itemB = (await createItem(p.pm, b, { type: 'site', name: 'Isolation B site (synthetic)', disposition: 'included' })).id;
-  siteB = (await ok<{ id: string }>(p.pm.post(`${base(b)}/sites`, { name: 'Isolation B physical site (synthetic)' }))).id;
+  itemB = (await p.pm.get(`${base(b)}/perimeter-items`).expect(200)).body.items[0].id;
+  siteB = (await p.pm.get(`${base(b)}/sites`).expect(200)).body.items[0].id;
 });
 afterAll(async () => {
   await closeApp();
@@ -28,7 +29,6 @@ afterAll(async () => {
 describe('Carve-out / NewCo isolation [AT-03, REQ-PER-003, REQ-PER-006]', () => {
   it('a Project-B-only user gets 404 on every carve-out and NewCo route of another project', async () => {
     const pmB = await loginAs('pm.b');
-    const dc = await projectIdByCode(DC);
     for (const path of [
       `${base(a)}/perimeter-items`,
       `${base(a)}/perimeter-items/${itemA}`,
@@ -39,7 +39,7 @@ describe('Carve-out / NewCo isolation [AT-03, REQ-PER-003, REQ-PER-006]', () => 
       `${base(a)}/transfers`,
       `${base(a)}/legal-entities`,
       `${base(a)}/regulatory-requirements`,
-      `${base(dc)}/perimeter-items`,
+      `${base(b)}/perimeter-items`,
     ]) {
       expect((await pmB.get(path)).status, path).toBe(404);
     }

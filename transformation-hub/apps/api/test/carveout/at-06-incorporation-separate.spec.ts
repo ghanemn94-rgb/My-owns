@@ -111,25 +111,3 @@ describe('AT-06 — incorporation confirmed, carve-out not complete [AT-06, REQ-
     expect(g.carveOutComplete).toBe(false);
   });
 });
-
-describe('REQ-SET-010 — setup wizard step 2: NewCo status with evidence', () => {
-  it('"incorporated" without evidence is rejected; with evidence it is recorded as proposed', async () => {
-    const e = (await p.pm.get(`${base(pid)}/legal-entities/${entityId}`).expect(200)).body;
-    void e;
-    const { projectId: pid2, p: p2 } = await carveoutProject('CO-AT06-W');
-    const ent2 = await newcoId(p2.pm, pid2);
-    const bad = await p2.pm.post(`${base(pid2)}/setup/steps/newco-status`, { mode: 'existing', legalEntityId: ent2, status: 'incorporated' });
-    expect(bad.status).toBe(422);
-    expect(bad.body.code).toBe('newco.incorporation.evidence_required');
-    const good = await ok<{ status: string; verification: string; statusDimensions: { carveOutComplete: boolean } }>(
-      p2.pm.post(`${base(pid2)}/setup/steps/newco-status`, { mode: 'existing', legalEntityId: ent2, status: 'incorporation_in_progress', evidence: { note: 'Application reference (synthetic)' } }),
-    );
-    expect(good).toMatchObject({ status: 'incorporation_in_progress', verification: 'proposed' });
-    expect(good.statusDimensions.carveOutComplete).toBe(false);
-    const links = (await p2.pm.get(`${base(pid2)}/evidence?targetType=legal_entity&targetId=${ent2}`).expect(200)).body;
-    expect(links.total).toBe(1);
-    // A second NewCo for the same project is refused (one NewCo dimension per project).
-    const dup = await p2.pm.post(`${base(pid2)}/setup/steps/newco-status`, { mode: 'new', name: 'Second NewCo (test)', status: 'unconfirmed' });
-    expect(dup.status).toBe(409);
-  });
-});
