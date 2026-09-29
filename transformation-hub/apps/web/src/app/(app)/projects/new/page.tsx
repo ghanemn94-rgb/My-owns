@@ -3,9 +3,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { CreateProjectBody, portfolioRoutes, type RouteBody, type RouteResponse } from '@hub/contracts';
-import { CLASSIFICATIONS, type Classification } from '@hub/domain';
+import { CLASSIFICATIONS, clearanceAllows, type Classification } from '@hub/domain';
 import { ApiErrorNotice } from '@/components/ApiErrorNotice';
 import { SelectField, TextAreaField, TextField } from '@/components/Field';
 import { ErrorState } from '@/components/ErrorState';
@@ -92,6 +92,13 @@ export default function NewProjectPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
+  // Only classifications within the creator's clearance are offered (the API refuses higher ones — QA-P1-05); the
+  // default is "confidential" when the creator may use it, otherwise the creator's own clearance.
+  const myClearance = me.data?.user.clearance as Classification | undefined;
+  const allowedClassifications = myClearance ? CLASSIFICATIONS.filter((c) => clearanceAllows(myClearance, c)) : CLASSIFICATIONS;
+  useEffect(() => {
+    if (myClearance && !clearanceAllows(myClearance, form.classification)) setForm((f) => ({ ...f, classification: myClearance }));
+  }, [myClearance, form.classification]);
 
   if (me.isLoading) return <Main><LoadingState /></Main>;
   if (!allowed) return <Main><RestrictedState /></Main>;
@@ -282,7 +289,7 @@ export default function NewProjectPage() {
               onChange={(e) => set('classification', e.target.value as Classification)}
               hint={t('portfolio.wizard.classificationHint')}
             >
-              {CLASSIFICATIONS.map((c) => (
+              {allowedClassifications.map((c) => (
                 <option key={c} value={c}>
                   {tStatus('classifications', c)}
                 </option>
