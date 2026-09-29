@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { PoolClient } from 'pg';
 import { closeApp, closePools, loginAs, owner, projectIdByCode, runtimePool, Client, GEN } from '../helpers';
 import { insertDecisionRow } from '../gates/gate-test-kit';
-import { P, completePlan, createCheck, grantWorkstreamRole, insertSite, orgOf, plusDays, setupProject, workstreamId, Personas } from './readiness-kit';
+import { P, completePlan, createCheck, grantWorkstreamRole, insertSite, orgOf, plusDays, setupProject, workstreamId, Personas, drainWorker } from './readiness-kit';
 
 /**
  * Project isolation and scoped reads for readiness / cutover / TSA (AT-03, ARCH-02/14): other-project users get 404,
@@ -50,6 +50,7 @@ beforeAll(async () => {
   await grantWorkstreamRole(projectId, 'tech.lead', 'workstream_lead', ws07);
 });
 afterAll(async () => {
+  await drainWorker(); // leave no queued job of this spec behind (full handler registry)
   await closeApp();
   await closePools();
 });

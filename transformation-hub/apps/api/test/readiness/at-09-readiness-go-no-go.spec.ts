@@ -16,8 +16,7 @@ import {
   setupProject,
   workstreamId,
   Gov,
-  Personas,
-} from './readiness-kit';
+  Personas, drainWorker } from './readiness-kit';
 
 /**
  * AT-09: a failed connectivity / access / incident-response readiness test blocks go-live according to the blocker, and
@@ -43,6 +42,7 @@ beforeAll(async () => {
   goDecisionId = (await decisionOfType(projectId, p, gov, 'day1_go_no_go')).id;
 });
 afterAll(async () => {
+  await drainWorker(); // leave no queued job of this spec behind (full handler registry)
   await closeApp();
   await closePools();
 });

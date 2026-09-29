@@ -34,6 +34,7 @@ beforeAll(async () => {
   tsaDecisionId = (await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension')).id;
 });
 afterAll(async () => {
+  await drainWorker(); // leave no queued job of this spec behind (full handler registry)
   (await clock()).setFixed(null);
   await closeApp();
   await closePools();

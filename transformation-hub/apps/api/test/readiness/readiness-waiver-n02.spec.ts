@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, owner } from '../helpers';
-import { P, check, completePlan, createCheck, insertSite, plan, setupProject, Personas } from './readiness-kit';
+import { P, check, completePlan, createCheck, insertSite, plan, setupProject, Personas, drainWorker } from './readiness-kit';
 
 /**
  * Readiness waivers through the gates module's generic WaiverService (no second waiver engine):
@@ -20,6 +20,7 @@ beforeAll(async () => {
   blockerId = await createCheck(p.pm, projectId, { area: 'noc', title: 'NOC monitoring coverage verified (test)', mandatory: true, blocker: true, signoffRole: 'functional_approver', cutoverPlanId: planId });
 });
 afterAll(async () => {
+  await drainWorker(); // leave no queued job of this spec behind (full handler registry)
   await closeApp();
   await closePools();
 });
