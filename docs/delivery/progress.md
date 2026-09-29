@@ -4,8 +4,14 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 
 ## Current checkpoint
 
-- **Active stage:** P0 / DG0, state **FIXING** (round 15 complete and imported). **Blocked on a user decision for F-DG0-145; see below.**
-- **Round-15 candidate:** `sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e` (commit `7fab49c`)
+- **Active stage:** P0 / DG0, state **FIXING**. Round 16 has **not** started: no candidate frozen, no reviewer run.
+- **Last reviewed candidate (round 15):** `sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e` (commit `7fab49c`)
+- **F-DG0-145 (High): fixed at `5c003c0`, pending verification** (D-030, user-chosen option 1). The whole `claude` process runs in a bubblewrap process sandbox (`tools/agents/agent_sandbox.py`). The in-sandbox race reproduction shows 0 of 336 redirected writes landing, against 64 of 69 escapes without it.
+- **Two blockers found before freezing (waiting for the user, 2026-09-29):**
+  1. **Nested sandboxes fail inside an agent's shell.** bwrap reads `/proc/<child-pid>/ns`, but the CLI's Bash sandbox (`apply-seccomp`) runs commands in a newer PID namespace without its own `/proc`. In a real QA-agent probe, 20 sandbox tests and every sandboxed pre-freeze check failed with `bwrap: open /proc/<pid>/ns/ns failed`. In round 15 this worked only because the host `/proc` happened to contain those PIDs. Reviewers could not run the pre-freeze or the sandbox tests, so round 16 would come back BLOCKED.
+  2. **Security: `/proc/sys` accepts writes inside the process sandbox and from a nested user namespace.** bwrap running as root does not cover `/proc/sys`, and sysctl write permission depends on the effective UID, not on capabilities. This was checked with a same-value rewrite of `vm.swappiness` only; experiments stopped there. It needs a new finding and a defensive fix: `/proc/sys` read-only in the process sandbox. It must also be checked whether the pre-D-030 shell sandbox (D-025) was affected.
+- **Next action:** once the user decides, fix both blockers, re-run the suites, the pre-freeze and a real-agent nested probe, then freeze and start round 16 (drafted assignments: the orchestrator's scratchpad `r16/make.py`).
+- **Findings:** 77 closed and verified. F-DG0-145, 146, 236 and 237 are fixed and pending verification. The `/proc/sys` issue is not yet recorded.
 
 **Review history**
 

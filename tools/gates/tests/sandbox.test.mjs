@@ -74,7 +74,10 @@ test("F-DG0-141: the clone, checkout and command run inside the sandbox, in a wo
   let out = "";
   const exited = new Promise((resolve) => child.on("exit", (code) => resolve(code)));
   const ready = new Promise((resolve) => child.stdout.on("data", (d) => { out += d; if (out.includes("READY")) resolve(); }));
-  await Promise.race([ready, exited.then(() => { throw new Error(`sandbox-run exited before READY: ${out}`); })]);
+  let timer;
+  const deadline = new Promise((_, reject) => { timer = setTimeout(() => { child.kill("SIGKILL"); reject(new Error(`sandbox-run did not start within 120s: ${out}`)); }, 120000); });
+  await Promise.race([ready, deadline, exited.then(() => { throw new Error(`sandbox-run exited before READY: ${out}`); })]);
+  clearTimeout(timer);
   const roots = [...new Set([tmpdir(), "/tmp", "/var/tmp"])];
   const found = spawnSync("find", [...roots, "-name", tag], { encoding: "utf8" }).stdout.trim();
   const code = await exited;
