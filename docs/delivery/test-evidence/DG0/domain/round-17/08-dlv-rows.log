@@ -1,0 +1,11 @@
+$ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+exit=0
+$ bash tools/source/check_extraction.sh
+PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)
+exit=0
+$ grep D-001/D-002/D-010/D-031 decisions.md
+7:| D-001 | 2026-09-28 | delivery-orchestrator | The uploaded `Business_Transformation_Playbook(2).docx` (SHA-256 `2584a352…548ad2`) is the authoritative methodology source. It's committed at `docs/
+8:| D-002 | 2026-09-28 | delivery-orchestrator | The Arabic edition of the master prompt isn't present. The English edition v2.0 is executed. | Master prompt header: "The Arabic edition is an equivale
+16:| D-010 | 2026-09-28 | delivery-orchestrator | **Health-check scoring.** Yes = 1, No = 0, and unanswered means incomplete. This is an implementation assumption. The playbook only provides checkboxe
+38:| D-031 | 2026-09-29 | delivery-orchestrator | **Round-16 repairs to the process sandbox: the copy-back is bound to the staging seed (concurrency), and the IPC namespace is unshared** (F-DG0-148 an
