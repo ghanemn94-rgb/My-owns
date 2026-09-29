@@ -118,6 +118,11 @@ export const criterionAssessment = pgTable(
     assessedBy: uuid('assessed_by'),
     assessedAt: ts('assessed_at'),
     waiverId: uuid('waiver_id'),
+    /** "Not applicable" determination by the specialist reviewer role (P0 review D-01). */
+    naBasis: text('na_basis'),
+    naProposedBy: uuid('na_proposed_by'),
+    naDeterminedBy: uuid('na_determined_by'),
+    naApproved: boolean('na_approved').notNull().default(false),
     updatedAt: updatedAt(),
     version: versionCol(),
   },
@@ -138,7 +143,7 @@ export const waiver = pgTable(
     id: pk(),
     orgId: orgIdCol(),
     projectId: projectIdCol().references(() => project.id),
-    targetType: varchar('target_type', { length: 32 }).notNull(), // gate_criterion | closing_condition
+    targetType: varchar('target_type', { length: 32 }).notNull(), // gate_criterion | closing_condition | readiness_check
     targetId: uuid('target_id').notNull(),
     basis: text('basis').notNull(),
     impact: text('impact').notNull(),

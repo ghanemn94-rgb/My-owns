@@ -17,6 +17,11 @@ export interface CriterionState {
   conflictingEvidenceCount: number;
   /** Set when status = waived: the approved waiver id. */
   approvedWaiverId?: string | null;
+  /**
+   * Set when status = not_applicable: the recorded specialist determination (who, basis, approved). Without an
+   * approved determination "not applicable" does NOT satisfy the criterion (P0 review D-01).
+   */
+  naDetermination?: { approved: boolean; basis: string; byUserId: string } | null;
 }
 
 export interface GateEvaluationInput {
@@ -50,17 +55,22 @@ export function evaluateGate(input: GateEvaluationInput): GateEvaluation {
       case 'met':
         if (c.evidenceRequired && c.activeEvidenceCount === 0) {
           unmet++;
-          if (c.mandatory) blockers.push({ kind: 'criterion', ref: c.key, message: `Criterion ${c.key} is marked met but has no active evidence` });
+          if (c.mandatory || c.blocking) blockers.push({ kind: 'criterion', ref: c.key, message: `Criterion ${c.key} is marked met but has no active evidence` });
         } else met++;
         break;
       case 'waived':
         if (!c.waivable || !c.approvedWaiverId) {
           unmet++;
-          if (c.mandatory) blockers.push({ kind: 'criterion', ref: c.key, message: `Criterion ${c.key} waiver is not valid` });
+          if (c.mandatory || c.blocking) blockers.push({ kind: 'criterion', ref: c.key, message: `Criterion ${c.key} waiver is not valid` });
         } else waived++;
         break;
       case 'not_applicable':
-        na++;
+        if (!c.naDetermination?.approved || !c.naDetermination.basis.trim()) {
+          unmet++;
+          if (c.mandatory || c.blocking) {
+            blockers.push({ kind: 'criterion', ref: c.key, message: `Criterion ${c.key} is marked not applicable without an approved specialist determination` });
+          }
+        } else na++;
         break;
       default:
         unmet++;
@@ -110,4 +120,37 @@ export function assertWaiverAllowed(input: {
   if (!input.basis.trim() || !input.impact.trim()) {
     throw ruleViolation('gates.waiver.missing_basis', 'A waiver requires a documented basis and impact');
   }
+}
+
+/**
+ * "Not applicable" is a specialist determination distinct from a waiver: it needs a documented basis, must be made by
+ * the criterion's reviewer role, and cannot be made by the person who proposed it (P0 review D-01).
+ */
+export function assertNotApplicableAllowed(input: {
+  criterionKey: string;
+  reviewerRole: string;
+  determinerRoles: string[];
+  determinerUserId: string;
+  proposerUserId: string;
+  basis: string;
+}): void {
+  if (!input.basis.trim()) throw ruleViolation('gates.na.missing_basis', 'A not-applicable determination requires a documented basis');
+  if (!input.determinerRoles.includes(input.reviewerRole)) {
+    throw ruleViolation('gates.na.unauthorized', `Only the ${input.reviewerRole} role may determine ${input.criterionKey} not applicable`);
+  }
+  if (input.determinerUserId === input.proposerUserId) {
+    throw ruleViolation('gates.na.self_approval', 'The proposer cannot approve their own not-applicable determination');
+  }
+}
+
+/**
+ * Controlled reopen (spec §3, P0 review D-09): the approved/rejected assessment is NEVER modified; a new assessment
+ * cycle is created in status "reopened" that supersedes it.
+ */
+export function planReopen(prev: { id: string; cycle: number; status: string }, reason: string) {
+  if (!['approved', 'approved_with_exceptions', 'rejected'].includes(prev.status)) {
+    throw ruleViolation('gates.reopen.invalid_state', `Only decided assessments can be reopened (current: ${prev.status})`);
+  }
+  if (!reason.trim()) throw ruleViolation('gates.reopen.missing_reason', 'Reopening requires a reason (e.g. evidence found defective)');
+  return { cycle: prev.cycle + 1, supersedesAssessmentId: prev.id, status: 'reopened' as const, reason };
 }

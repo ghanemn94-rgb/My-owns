@@ -95,7 +95,10 @@ export const perimeterItem = pgTable(
     consentRequired: boolean('consent_required').notNull().default(false),
     dependencies: text('dependencies'),
     risks: text('risks'),
+    /** Legal transfer status. */
     transferStatus: transferStatus('transfer_status').notNull().default('not_started'),
+    /** Economic transfer (beneficial ownership / economics) tracked separately (P0 review D-05). */
+    economicTransferStatus: transferStatus('economic_transfer_status').notNull().default('not_started'),
     acceptanceEvidenceNote: text('acceptance_evidence_note'),
     inApprovedBaseline: boolean('in_approved_baseline').notNull().default(false),
     verificationStatus: verificationStatus('verification_status').notNull().default('proposed'),
@@ -238,6 +241,9 @@ export const tsaService = pgTable(
     isEnduringArrangement: boolean('is_enduring_arrangement').notNull().default(false),
     status: tsaStatus('status').notNull().default('proposed'),
     escalationId: uuid('escalation_id'),
+    /** Approved decision authorizing an extension (never automatic — P0 review D-06). */
+    extensionDecisionId: uuid('extension_decision_id'),
+    continuityPlan: text('continuity_plan'),
     isDemo: isDemo(),
     createdAt: createdAt(),
     createdBy: createdBy(),
@@ -307,6 +313,10 @@ export const readinessCheck = pgTable(
     cutoverPlanId: uuid('cutover_plan_id'),
     mandatory: boolean('mandatory').notNull().default(true),
     blocker: boolean('blocker').notNull().default(false),
+    /** Waivability set by a specialist; a waiver needs an approved `waiver` row (P0 review D-02). */
+    waivable: boolean('waivable').notNull().default(false),
+    waiverAuthorityRole: roleKey('waiver_authority_role'),
+    waiverId: uuid('waiver_id'),
     status: readinessStatus('status').notNull().default('not_started'),
     signoffRole: roleKey('signoff_role'),
     signedOffBy: uuid('signed_off_by'),
@@ -344,4 +354,31 @@ export const readinessTestRun = pgTable(
     seq: integer('seq').notNull().default(1),
   },
   (t) => [projectFk('readiness_test_run_check_fk', t.projectId, t.readinessCheckId, readinessCheck)],
+);
+
+/**
+ * Approved definition of operational independence / target operating model (spec §3: "effect on the approved
+ * definition of independence"). Versioned; approval is a human decision.
+ */
+export const operatingModelDefinition = pgTable(
+  'operating_model_definition',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    versionLabel: varchar('version_label', { length: 32 }).notNull(),
+    definition: text('definition').notNull(),
+    independenceCriteria: jsonb('independence_criteria').$type<{ key: string; description: string }[]>().notNull().default([]),
+    permittedEnduringArrangements: text('permitted_enduring_arrangements'),
+    status: varchar('status', { length: 16 }).notNull().default('proposed'), // proposed | approved | superseded
+    approvedBy: uuid('approved_by'),
+    approvedAt: ts('approved_at'),
+    decisionId: uuid('decision_id'),
+    isDemo: isDemo(),
+    createdAt: createdAt(),
+    createdBy: createdBy(),
+    updatedAt: updatedAt(),
+    version: versionCol(),
+  },
+  (t) => [unique('operating_model_definition_pid_uq').on(t.projectId, t.id), uniqueIndex('operating_model_definition_uq').on(t.projectId, t.versionLabel)],
 );

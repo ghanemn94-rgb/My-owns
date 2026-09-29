@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateGate, assertWaiverAllowed, CriterionState } from './gates';
+import { evaluateGate, assertWaiverAllowed, assertNotApplicableAllowed, planReopen, CriterionState } from './gates';
 import { weightedProgress, calculateRag, aggregateRag, effectiveRag } from './measurement';
 import { sumMoney, parseMoney, detectValueBasisConfusion } from './money';
 import {
@@ -11,6 +11,9 @@ import {
   assertGoAllowed,
   assessTsaExpiry,
   assertTsaExitAcceptable,
+  assertTsaExtensionAllowed,
+  assertReadinessWaiverAllowed,
+  combinedTransferStatus,
   partnerMayAccessRoom,
   closingBlockers,
 } from './carveout';
@@ -49,6 +52,21 @@ describe('gate evaluation — task completion is not an input', () => {
     expect(r.ready).toBe(false);
     expect(r.blockers.some((b) => b.kind === 'evidence_conflict')).toBe(true);
   });
+  it('D-01: not applicable counts only with an approved specialist determination', () => {
+    expect(evaluateGate({ criteria: [crit({ status: 'not_applicable' })], prerequisites: [] }).ready).toBe(false);
+    expect(evaluateGate({ criteria: [crit({ status: 'not_applicable', naDetermination: { approved: false, basis: 'x', byUserId: 'u' } })], prerequisites: [] }).ready).toBe(false);
+    expect(evaluateGate({ criteria: [crit({ status: 'not_applicable', naDetermination: { approved: true, basis: 'Legal: licence not required for this perimeter (demo)', byUserId: 'legal' } })], prerequisites: [] }).ready).toBe(true);
+    expect(() => assertNotApplicableAllowed({ criterionKey: 'G2-C03', reviewerRole: 'legal_restricted', determinerRoles: ['project_manager'], determinerUserId: 'a', proposerUserId: 'b', basis: 'x' })).toThrow(/Only the legal_restricted/);
+    expect(() => assertNotApplicableAllowed({ criterionKey: 'G2-C03', reviewerRole: 'legal_restricted', determinerRoles: ['legal_restricted'], determinerUserId: 'a', proposerUserId: 'a', basis: 'x' })).toThrow(/proposer/);
+  });
+  it('D-04: a blocking (non-mandatory) criterion marked met without evidence blocks', () => {
+    expect(evaluateGate({ criteria: [crit({ mandatory: false, blocking: true, status: 'met' })], prerequisites: [] }).ready).toBe(false);
+  });
+  it('D-09: reopen creates a new cycle and never mutates the decided assessment', () => {
+    const prev = Object.freeze({ id: 'a1', cycle: 1, status: 'approved' });
+    expect(planReopen(prev, 'Evidence found defective')).toEqual({ cycle: 2, supersedesAssessmentId: 'a1', status: 'reopened', reason: 'Evidence found defective' });
+    expect(() => planReopen({ id: 'a2', cycle: 1, status: 'in_assessment' }, 'x')).toThrow(/decided assessments/);
+  });
   it('invalid waivers do not satisfy a criterion', () => {
     expect(evaluateGate({ criteria: [crit({ status: 'waived', waivable: false, approvedWaiverId: 'w1' })], prerequisites: [] }).ready).toBe(false);
     expect(evaluateGate({ criteria: [crit({ status: 'waived', waivable: true, approvedWaiverId: 'w1' })], prerequisites: [] }).ready).toBe(true);
@@ -77,6 +95,9 @@ describe('measurement rules', () => {
     expect(r.numeratorWeight).toBe(6);
     expect(r.percent).toBe(60);
     expect(r.exclusions).toEqual([{ id: 'd4', label: undefined, reason: 'Cancelled' }]);
+  });
+  it('D-10: an open blocker is red even when the update is stale', () => {
+    expect(calculateRag({ baselineFinish: '2026-10-01', forecastFinish: '2026-10-01', lastUpdatedOn: '2026-08-01', today: '2026-09-29', hasOpenBlocker: true }).status).toBe('red');
   });
   it('unknown / stale / not updated are never green', () => {
     expect(calculateRag({ baselineFinish: null, forecastFinish: null, lastUpdatedOn: null, today: '2026-09-29', hasOpenBlocker: false }).status).toBe('not_updated');
@@ -168,8 +189,34 @@ describe('AT-07 / AT-08 / AT-09 / AT-10 — carve-out rules', () => {
     expect(f.map((x) => `${x.code}:${x.issue}`).sort()).toEqual(['P1:consent_outstanding', 'P1:no_transfer_plan', 'P2:no_evidence']);
   });
   it('AT-08: a non-transferable contract needs interim arrangement, accountable owners and remediation', () => {
-    const r = assertDay1ContractPosition({ transferClass: 'consent_required', consentGranted: false, interimArrangement: null, serviceAccountableOwner: null, billingAccountableOwner: 'u', slaAccountableOwner: null, remediationPlan: '' });
+    const r = assertDay1ContractPosition({ transferClass: 'consent_required', classAssessedBy: 'Legal (demo)', consentGranted: false, interimArrangement: null, serviceAccountableOwner: null, billingAccountableOwner: 'u', slaAccountableOwner: null, remediationPlan: '' });
     expect(r).toEqual({ ok: false, missing: ['interimArrangement', 'serviceAccountableOwner', 'slaAccountableOwner', 'remediationPlan'] });
+  });
+  it('D-17: a "transferable" class without specialist assessment is not accepted', () => {
+    const r = assertDay1ContractPosition({ transferClass: 'transferable', classAssessedBy: null, consentGranted: false, interimArrangement: null, serviceAccountableOwner: null, billingAccountableOwner: null, slaAccountableOwner: null, remediationPlan: null });
+    expect(r.ok).toBe(false);
+    expect(assertDay1ContractPosition({ transferClass: 'transferable', classAssessedBy: 'Legal (demo)', consentGranted: false, interimArrangement: null, serviceAccountableOwner: null, billingAccountableOwner: null, slaAccountableOwner: null, remediationPlan: null }).ok).toBe(true);
+  });
+  it('D-02: a waived blocker clears GO only when waivable with an approved waiver', () => {
+    const cut = { hasRunbook: true, hasRollbackPlan: true, communicationsApproved: true, hasWindow: true, hasServiceImpact: true, hasAccountableOwner: true, testingDone: true };
+    expect(() => assertGoAllowed([{ id: 'c', title: 'NOC handover', mandatory: true, blocker: true, status: 'waived' }], cut)).toThrow(/GO decision is blocked/);
+    expect(() => assertGoAllowed([{ id: 'c', title: 'NOC handover', mandatory: true, blocker: true, status: 'waived', waivable: true, hasApprovedWaiver: true }], cut)).not.toThrow();
+    expect(() => assertReadinessWaiverAllowed({ waivable: false, blocker: true, approverUserId: 'a', requesterUserId: 'b', basis: 'x' })).toThrow(/not waivable/);
+  });
+  it('D-14: GO also requires window, service impact, accountable owner and testing', () => {
+    expect(() => assertGoAllowed([], { hasRunbook: true, hasRollbackPlan: true, communicationsApproved: true, hasWindow: false, hasServiceImpact: true, hasAccountableOwner: true, testingDone: false })).toThrow(/GO decision is blocked/);
+  });
+  it('D-05: legal and economic transfer combine to the least advanced', () => {
+    expect(combinedTransferStatus('transferred_verified', 'in_progress')).toBe('in_progress');
+    expect(combinedTransferStatus('not_applicable', 'transferred_verified')).toBe('transferred_verified');
+    const dims = computeStatusDimensions({ newcoIncorporation: null, perimeter: [{ disposition: 'included', transferStatus: 'transferred_verified', economicTransferStatus: 'planned' }], readiness: [], standaloneAccepted: false, closings: [] });
+    expect(dims.find((d) => d.key === 'perimeter_transfer')!.state).not.toBe('transferred_verified');
+  });
+  it('D-15: breached/expired TSAs block operational readiness; enduring arrangements are reported', () => {
+    const dims = computeStatusDimensions({ newcoIncorporation: null, perimeter: [], readiness: [{ mandatory: true, blocker: false, status: 'passed' }], standaloneAccepted: false, closings: [], tsas: [{ status: 'expired_unresolved', isEnduringArrangement: false }, { status: 'active', isEnduringArrangement: true }] });
+    const ops = dims.find((d) => d.key === 'operational_readiness')!;
+    expect(ops.state).toBe('blocked');
+    expect(ops.explanation).toMatch(/enduring/);
   });
   it('AT-09: a failed blocker readiness test blocks GO', () => {
     expect(() =>
@@ -185,6 +232,7 @@ describe('AT-07 / AT-08 / AT-09 / AT-10 — carve-out rules', () => {
     expect(() => assertTsaExitAcceptable({ replacementAccepted: false, acceptanceEvidenceCount: 0 })).toThrow(/not an exit/);
     // No automatic extension: extension is an explicit command from specific states only
     expect(transition('tsa', TSA_MACHINE, 'expired_unresolved', 'record_extension')).toBe('extended');
+    expect(() => assertTsaExtensionAllowed({ extensionDecisionApproved: false, newEndDate: '2027-03-31', continuityPlan: 'x' })).toThrow(/approved decision/);
     expect(() => transition('tsa', TSA_MACHINE, 'proposed', 'accept_exit')).toThrow();
   });
 });
@@ -208,6 +256,16 @@ describe('AT-11 / AT-12 — partner access and closing', () => {
       deliverables: [{ id: 'd1', title: 'Share transfer instrument', status: 'verified' }],
     });
     expect(b).toEqual([{ ref: 'CP-02', message: 'Blocking condition CP-02 is open' }]);
+  });
+  it('D-07: a verified CP whose validity lapsed, or verified without evidence, blocks closing', () => {
+    const b = closingBlockers({
+      kind: 'closing', signingConfirmed: true, today: '2026-09-29', deliverables: [],
+      conditions: [
+        { id: 'c1', reference: 'CP-10', blocking: true, waivable: false, status: 'verified', hasValidWaiver: false, longStopDate: null, validTo: '2026-09-01', evidenceCount: 1 },
+        { id: 'c2', reference: 'CP-11', blocking: true, waivable: false, status: 'verified', hasValidWaiver: false, longStopDate: null, evidenceCount: 0 },
+      ],
+    });
+    expect(b.map((x) => x.ref)).toEqual(['CP-10', 'CP-11']);
   });
   it('closing requires confirmed signing (separate events)', () => {
     expect(closingBlockers({ kind: 'closing', signingConfirmed: false, today: '2026-09-29', conditions: [], deliverables: [] })[0]!.ref).toBe('signing');

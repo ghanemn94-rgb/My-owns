@@ -795,6 +795,8 @@ CREATE TABLE "authority_matrix_version" (
 	"is_demo_policy" boolean DEFAULT false NOT NULL,
 	"policy" jsonb NOT NULL,
 	"policy_hash" text NOT NULL,
+	"effective_from" date,
+	"effective_to" date,
 	"approved_by" uuid,
 	"approved_at" timestamp with time zone,
 	"approval_reference" text,
@@ -842,6 +844,20 @@ CREATE TABLE "committee_membership" (
 	CONSTRAINT "committee_membership_pid_uq" UNIQUE("project_id","id")
 );
 --> statement-breakpoint
+CREATE TABLE "conflict_declaration" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"committee_id" uuid NOT NULL,
+	"meeting_id" uuid,
+	"decision_id" uuid,
+	"user_id" uuid NOT NULL,
+	"declaration" varchar(24) NOT NULL,
+	"description" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"recorded_by" uuid
+);
+--> statement-breakpoint
 CREATE TABLE "decision" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"org_id" uuid NOT NULL,
@@ -864,6 +880,8 @@ CREATE TABLE "decision" (
 	"required_authority" text,
 	"requester_user_id" uuid,
 	"status" "decision_status" DEFAULT 'draft' NOT NULL,
+	"vote_round" integer DEFAULT 1 NOT NULL,
+	"recommendation_recorded_by" uuid,
 	"authority_outcome" "decision_authority_outcome" DEFAULT 'not_assessed' NOT NULL,
 	"authority_reason" text,
 	"escalated_to" text,
@@ -954,6 +972,7 @@ CREATE TABLE "vote" (
 	"meeting_id" uuid,
 	"user_id" uuid NOT NULL,
 	"membership_id" uuid NOT NULL,
+	"round" integer DEFAULT 1 NOT NULL,
 	"member_role_at_vote" "committee_member_role" NOT NULL,
 	"choice" "vote_choice" NOT NULL,
 	"comment" text,
@@ -973,6 +992,10 @@ CREATE TABLE "criterion_assessment" (
 	"assessed_by" uuid,
 	"assessed_at" timestamp with time zone,
 	"waiver_id" uuid,
+	"na_basis" text,
+	"na_proposed_by" uuid,
+	"na_determined_by" uuid,
+	"na_approved" boolean DEFAULT false NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	CONSTRAINT "criterion_assessment_pid_uq" UNIQUE("project_id","id")
@@ -1167,6 +1190,26 @@ CREATE TABLE "cutover_plan" (
 	CONSTRAINT "cutover_plan_pid_uq" UNIQUE("project_id","id")
 );
 --> statement-breakpoint
+CREATE TABLE "operating_model_definition" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"version_label" varchar(32) NOT NULL,
+	"definition" text NOT NULL,
+	"independence_criteria" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"permitted_enduring_arrangements" text,
+	"status" varchar(16) DEFAULT 'proposed' NOT NULL,
+	"approved_by" uuid,
+	"approved_at" timestamp with time zone,
+	"decision_id" uuid,
+	"is_demo" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "operating_model_definition_pid_uq" UNIQUE("project_id","id")
+);
+--> statement-breakpoint
 CREATE TABLE "perimeter_item" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"org_id" uuid NOT NULL,
@@ -1195,6 +1238,7 @@ CREATE TABLE "perimeter_item" (
 	"dependencies" text,
 	"risks" text,
 	"transfer_status" "transfer_status" DEFAULT 'not_started' NOT NULL,
+	"economic_transfer_status" "transfer_status" DEFAULT 'not_started' NOT NULL,
 	"acceptance_evidence_note" text,
 	"in_approved_baseline" boolean DEFAULT false NOT NULL,
 	"verification_status" "verification_status" DEFAULT 'proposed' NOT NULL,
@@ -1220,6 +1264,9 @@ CREATE TABLE "readiness_check" (
 	"cutover_plan_id" uuid,
 	"mandatory" boolean DEFAULT true NOT NULL,
 	"blocker" boolean DEFAULT false NOT NULL,
+	"waivable" boolean DEFAULT false NOT NULL,
+	"waiver_authority_role" "role_key",
+	"waiver_id" uuid,
 	"status" "readiness_status" DEFAULT 'not_started' NOT NULL,
 	"signoff_role" "role_key",
 	"signed_off_by" uuid,
@@ -1323,6 +1370,8 @@ CREATE TABLE "tsa_service" (
 	"is_enduring_arrangement" boolean DEFAULT false NOT NULL,
 	"status" "tsa_status" DEFAULT 'proposed' NOT NULL,
 	"escalation_id" uuid,
+	"extension_decision_id" uuid,
+	"continuity_plan" text,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
@@ -1437,6 +1486,32 @@ CREATE TABLE "financial_snapshot" (
 	"version" integer DEFAULT 1 NOT NULL,
 	CONSTRAINT "financial_snapshot_pid_uq" UNIQUE("project_id","id"),
 	CONSTRAINT "financial_snapshot_scale_chk" CHECK ("financial_snapshot"."unit_scale" in (1, 1000, 1000000))
+);
+--> statement-breakpoint
+CREATE TABLE "intercompany_reconciliation" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"code" varchar(32) NOT NULL,
+	"counterparty_label" text NOT NULL,
+	"period" varchar(16) NOT NULL,
+	"our_balance" numeric(20, 4) NOT NULL,
+	"their_balance" numeric(20, 4),
+	"currency" varchar(3) NOT NULL,
+	"unit_scale" integer DEFAULT 1 NOT NULL,
+	"status" varchar(16) DEFAULT 'open' NOT NULL,
+	"explanation" text,
+	"source_ref" text,
+	"reviewer_user_id" uuid,
+	"reviewed_at" timestamp with time zone,
+	"classification" "classification" DEFAULT 'restricted' NOT NULL,
+	"is_demo" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "intercompany_reconciliation_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "intercompany_reconciliation_scale_chk" CHECK ("intercompany_reconciliation"."unit_scale" in (1, 1000, 1000000))
 );
 --> statement-breakpoint
 CREATE TABLE "kpi" (
@@ -2307,6 +2382,10 @@ ALTER TABLE "committee" ADD CONSTRAINT "committee_program_id_program_id_fk" FORE
 ALTER TABLE "committee_membership" ADD CONSTRAINT "committee_membership_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee_membership" ADD CONSTRAINT "committee_membership_user_id_app_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee_membership" ADD CONSTRAINT "committee_membership_committee_fk" FOREIGN KEY ("project_id","committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conflict_declaration" ADD CONSTRAINT "conflict_declaration_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conflict_declaration" ADD CONSTRAINT "conflict_declaration_committee_fk" FOREIGN KEY ("project_id","committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conflict_declaration" ADD CONSTRAINT "conflict_declaration_meeting_fk" FOREIGN KEY ("project_id","meeting_id") REFERENCES "public"."meeting"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "conflict_declaration" ADD CONSTRAINT "conflict_declaration_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "decision" ADD CONSTRAINT "decision_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "decision" ADD CONSTRAINT "decision_requester_user_id_app_user_id_fk" FOREIGN KEY ("requester_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "decision" ADD CONSTRAINT "decision_committee_fk" FOREIGN KEY ("project_id","committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2342,6 +2421,7 @@ ALTER TABLE "consent" ADD CONSTRAINT "consent_agreement_fk" FOREIGN KEY ("projec
 ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_accountable_user_id_app_user_id_fk" FOREIGN KEY ("accountable_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_site_fk" FOREIGN KEY ("project_id","site_id") REFERENCES "public"."site"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "operating_model_definition" ADD CONSTRAINT "operating_model_definition_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "perimeter_item" ADD CONSTRAINT "perimeter_item_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "perimeter_item" ADD CONSTRAINT "perimeter_item_current_entity_id_legal_entity_id_fk" FOREIGN KEY ("current_entity_id") REFERENCES "public"."legal_entity"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "perimeter_item" ADD CONSTRAINT "perimeter_item_target_entity_id_legal_entity_id_fk" FOREIGN KEY ("target_entity_id") REFERENCES "public"."legal_entity"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2371,6 +2451,7 @@ ALTER TABLE "budget_line" ADD CONSTRAINT "budget_line_ws_fk" FOREIGN KEY ("proje
 ALTER TABLE "financial_model_version" ADD CONSTRAINT "financial_model_version_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "intercompany_reconciliation" ADD CONSTRAINT "intercompany_reconciliation_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "kpi" ADD CONSTRAINT "kpi_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "kpi" ADD CONSTRAINT "kpi_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "kpi_observation" ADD CONSTRAINT "kpi_observation_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2470,7 +2551,7 @@ CREATE INDEX "decision_status_idx" ON "decision" USING btree ("project_id","stat
 CREATE UNIQUE INDEX "escalation_code_uq" ON "escalation" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "meeting_number_uq" ON "meeting" USING btree ("committee_id","number");--> statement-breakpoint
 CREATE UNIQUE INDEX "recusal_uq" ON "recusal" USING btree ("decision_id","user_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "vote_uq" ON "vote" USING btree ("decision_id","user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "vote_uq" ON "vote" USING btree ("decision_id","user_id","round");--> statement-breakpoint
 CREATE UNIQUE INDEX "criterion_assessment_uq" ON "criterion_assessment" USING btree ("assessment_id","criterion_id");--> statement-breakpoint
 CREATE INDEX "gate_assessment_gate_idx" ON "gate_assessment" USING btree ("gate_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "gate_criterion_key_uq" ON "gate_criterion" USING btree ("project_id","key");--> statement-breakpoint
@@ -2480,6 +2561,7 @@ CREATE INDEX "waiver_target_idx" ON "waiver" USING btree ("project_id","target_t
 CREATE UNIQUE INDEX "agreement_code_uq" ON "agreement" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "consent_code_uq" ON "consent" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "cutover_plan_code_uq" ON "cutover_plan" USING btree ("project_id","code");--> statement-breakpoint
+CREATE UNIQUE INDEX "operating_model_definition_uq" ON "operating_model_definition" USING btree ("project_id","version_label");--> statement-breakpoint
 CREATE UNIQUE INDEX "perimeter_item_code_uq" ON "perimeter_item" USING btree ("project_id","code");--> statement-breakpoint
 CREATE INDEX "perimeter_item_status_idx" ON "perimeter_item" USING btree ("project_id","transfer_status");--> statement-breakpoint
 CREATE UNIQUE INDEX "readiness_check_code_uq" ON "readiness_check" USING btree ("project_id","code");--> statement-breakpoint
@@ -2490,6 +2572,7 @@ CREATE UNIQUE INDEX "benefit_code_uq" ON "benefit" USING btree ("project_id","co
 CREATE UNIQUE INDEX "budget_line_code_uq" ON "budget_line" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "financial_model_uq" ON "financial_model_version" USING btree ("project_id","kind","version_label","model_case");--> statement-breakpoint
 CREATE UNIQUE INDEX "financial_snapshot_line_uq" ON "financial_snapshot" USING btree ("project_id","kind","line_ref","period");--> statement-breakpoint
+CREATE UNIQUE INDEX "intercompany_reconciliation_code_uq" ON "intercompany_reconciliation" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "kpi_key_uq" ON "kpi" USING btree ("project_id","key");--> statement-breakpoint
 CREATE INDEX "kpi_observation_idx" ON "kpi_observation" USING btree ("kpi_id","period");--> statement-breakpoint
 CREATE UNIQUE INDEX "closing_seq_uq" ON "closing" USING btree ("project_id","kind","sequence");--> statement-breakpoint

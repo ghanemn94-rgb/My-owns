@@ -17,10 +17,16 @@ import type {
 
 export interface DimensionInput {
   newcoIncorporation: { status: IncorporationStatus; evidenceVerified: boolean } | null;
-  perimeter: { disposition: PerimeterDisposition; transferStatus: TransferStatus }[];
-  readiness: { mandatory: boolean; blocker: boolean; status: ReadinessStatus }[];
+  /** Legal transfer status + economic transfer status (spec §3 "legal/economic transfer", P0 review D-05). */
+  perimeter: { disposition: PerimeterDisposition; transferStatus: TransferStatus; economicTransferStatus?: TransferStatus }[];
+  /** `waivedValid` = waivable check with an approved waiver (a bare "waived" status does not count — D-02). */
+  readiness: { mandatory: boolean; blocker: boolean; status: ReadinessStatus; waivedValid?: boolean }[];
   standaloneAccepted: boolean; // G4 approved
   closings: { kind: ClosingKind; status: ClosingStatus }[];
+  /** TSAs and approved enduring arrangements affect the independence picture (spec §3, D-15). */
+  tsas?: { status: TsaStatus; isEnduringArrangement: boolean }[];
+  /** Whether the approved definition of operational independence exists (spec §3). */
+  independenceDefinitionApproved?: boolean;
 }
 
 export interface DimensionState {
@@ -28,6 +34,23 @@ export interface DimensionState {
   state: string;
   explanation: string;
   counts?: Record<string, number>;
+}
+
+const TRANSFER_RANK: Record<TransferStatus, number> = {
+  blocked: 0,
+  not_started: 1,
+  planned: 2,
+  in_progress: 3,
+  transferred_pending_evidence: 4,
+  transferred_verified: 5,
+  not_applicable: 6,
+};
+
+/** Legal + economic transfer combine to the LEAST advanced of the two (blocked dominates). */
+export function combinedTransferStatus(legal: TransferStatus, economic: TransferStatus): TransferStatus {
+  if (legal === 'not_applicable') return economic;
+  if (economic === 'not_applicable') return legal;
+  return TRANSFER_RANK[legal] <= TRANSFER_RANK[economic] ? legal : economic;
 }
 
 export function computeStatusDimensions(input: DimensionInput): DimensionState[] {
@@ -39,7 +62,9 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
     return { key: 'incorporation', state: status, explanation: `Incorporation status: ${status}.` };
   })();
 
-  const inScope = input.perimeter.filter((p) => p.disposition === 'included' || p.disposition === 'shared');
+  const inScope = input.perimeter
+    .filter((p) => p.disposition === 'included' || p.disposition === 'shared')
+    .map((p) => ({ ...p, transferStatus: combinedTransferStatus(p.transferStatus, p.economicTransferStatus ?? p.transferStatus) }));
   const counts: Record<string, number> = {};
   for (const p of inScope) counts[p.transferStatus] = (counts[p.transferStatus] ?? 0) + 1;
   const pending = input.perimeter.filter((p) => p.disposition === 'pending').length;
@@ -56,15 +81,24 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
     return { key: 'perimeter_transfer', state: 'not_started', explanation: `${inScope.length} in-scope items; none transferred.`, counts };
   })();
 
-  const mandatory = input.readiness.filter((r) => r.mandatory && r.status !== 'not_applicable');
-  const failedBlockers = input.readiness.filter((r) => r.blocker && r.status === 'failed').length;
-  const passed = mandatory.filter((r) => r.status === 'passed' || r.status === 'waived').length;
+  // Blockers count even when not flagged mandatory (D-15b); "waived" counts only as a valid waiver (D-02).
+  const required = input.readiness.filter((r) => (r.mandatory || r.blocker) && r.status !== 'not_applicable');
+  const cleared = (r: DimensionInput['readiness'][number]) => r.status === 'passed' || (r.status === 'waived' && r.waivedValid === true);
+  const failedBlockers = input.readiness.filter((r) => r.blocker && (r.status === 'failed' || (r.status === 'waived' && r.waivedValid !== true))).length;
+  const passed = required.filter(cleared).length;
+  const tsas = input.tsas ?? [];
+  const tsaProblems = tsas.filter((t) => t.status === 'breached' || t.status === 'expired_unresolved').length;
+  const tsaActive = tsas.filter((t) => !t.isEnduringArrangement && ['approved', 'active', 'exit_in_progress', 'extended', 'breached', 'expired_unresolved'].includes(t.status)).length;
+  const enduring = tsas.filter((t) => t.isEnduringArrangement).length;
+  const depNote = tsas.length ? ` Dependencies: ${tsaActive} transitional service(s) not yet exited, ${enduring} approved enduring arrangement(s).` : '';
+  const defNote = input.independenceDefinitionApproved === false ? ' The definition of operational independence is not yet approved.' : '';
   const ops: DimensionState = (() => {
-    if (input.standaloneAccepted) return { key: 'operational_readiness', state: 'standalone_accepted', explanation: 'Standalone operations accepted (G4).' };
-    if (mandatory.length === 0) return { key: 'operational_readiness', state: 'not_assessed', explanation: 'No mandatory readiness checks defined.' };
-    if (failedBlockers > 0) return { key: 'operational_readiness', state: 'blocked', explanation: `${failedBlockers} blocking readiness check(s) failed.` };
-    if (passed === mandatory.length) return { key: 'operational_readiness', state: 'day1_ready', explanation: 'All mandatory readiness checks passed.' };
-    return { key: 'operational_readiness', state: 'in_progress', explanation: `${passed} of ${mandatory.length} mandatory checks passed.` };
+    if (input.standaloneAccepted) return { key: 'operational_readiness', state: 'standalone_accepted', explanation: `Standalone operations accepted (G4).${depNote}` };
+    if (tsaProblems > 0) return { key: 'operational_readiness', state: 'blocked', explanation: `${tsaProblems} TSA(s) breached or expired without an accepted exit.${depNote}` };
+    if (required.length === 0) return { key: 'operational_readiness', state: 'not_assessed', explanation: `No mandatory readiness checks defined.${depNote}${defNote}` };
+    if (failedBlockers > 0) return { key: 'operational_readiness', state: 'blocked', explanation: `${failedBlockers} blocking readiness check(s) failed or improperly waived.${depNote}` };
+    if (passed === required.length) return { key: 'operational_readiness', state: 'day1_ready', explanation: `All mandatory readiness checks passed.${depNote}${defNote}` };
+    return { key: 'operational_readiness', state: 'in_progress', explanation: `${passed} of ${required.length} mandatory/blocking checks cleared.${depNote}${defNote}` };
   })();
 
   const signing = input.closings.filter((c) => c.kind === 'signing');
@@ -145,6 +179,8 @@ export function perimeterChangeRequiresChangeRequest(opts: { baselineApproved: b
 
 export function assertDay1ContractPosition(c: {
   transferClass: ContractTransferClass;
+  /** Specialist who assessed the class; unassessed classes are not accepted (P0 review D-17). */
+  classAssessedBy?: string | null;
   consentGranted: boolean;
   interimArrangement: string | null;
   serviceAccountableOwner: string | null;
@@ -152,9 +188,11 @@ export function assertDay1ContractPosition(c: {
   slaAccountableOwner: string | null;
   remediationPlan: string | null;
 }): { ok: true } | { ok: false; missing: string[] } {
-  if (c.transferClass === 'transferable' || c.transferClass === 'retain') return { ok: true };
-  if ((c.transferClass === 'consent_required' || c.transferClass === 'novation_required') && c.consentGranted) return { ok: true };
+  const assessed = !!c.classAssessedBy?.trim() && c.transferClass !== 'unknown';
+  if (assessed && (c.transferClass === 'transferable' || c.transferClass === 'retain')) return { ok: true };
+  if (assessed && (c.transferClass === 'consent_required' || c.transferClass === 'novation_required') && c.consentGranted) return { ok: true };
   const missing: string[] = [];
+  if (!assessed) missing.push('specialistClassification');
   if (!c.interimArrangement?.trim()) missing.push('interimArrangement');
   if (!c.serviceAccountableOwner) missing.push('serviceAccountableOwner');
   if (!c.billingAccountableOwner) missing.push('billingAccountableOwner');
@@ -166,24 +204,50 @@ export function assertDay1ContractPosition(c: {
 // ---------------------------------------------------------------------------------------------------------
 // Day-1 go/no-go (AT-09)
 
-export function goDecisionBlockers(checks: { id: string; title: string; mandatory: boolean; blocker: boolean; status: ReadinessStatus }[]) {
+export function goDecisionBlockers(
+  checks: { id: string; title: string; mandatory: boolean; blocker: boolean; status: ReadinessStatus; waivable?: boolean; hasApprovedWaiver?: boolean }[],
+) {
+  const cleared = (c: (typeof checks)[number]) =>
+    c.status === 'passed' || c.status === 'not_applicable' || (c.status === 'waived' && c.waivable === true && c.hasApprovedWaiver === true);
   return checks
-    .filter((c) => (c.blocker || c.mandatory) && !['passed', 'waived', 'not_applicable'].includes(c.status))
+    .filter((c) => (c.blocker || c.mandatory) && !cleared(c))
     .map((c) => ({ id: c.id, title: c.title, status: c.status, blocker: c.blocker }));
 }
 
-export function assertGoAllowed(checks: Parameters<typeof goDecisionBlockers>[0], cutover: { hasRunbook: boolean; hasRollbackPlan: boolean; communicationsApproved: boolean }) {
+export interface CutoverPrerequisites {
+  hasRunbook: boolean;
+  hasRollbackPlan: boolean;
+  communicationsApproved: boolean;
+  /** §7.4: window, service-impact assessment, accountable owner and testing are also mandatory (D-14). */
+  hasWindow?: boolean;
+  hasServiceImpact?: boolean;
+  hasAccountableOwner?: boolean;
+  testingDone?: boolean;
+}
+
+export function assertGoAllowed(checks: Parameters<typeof goDecisionBlockers>[0], cutover: CutoverPrerequisites) {
   const blockers = goDecisionBlockers(checks);
   const missing: string[] = [];
   if (!cutover.hasRunbook) missing.push('runbook');
   if (!cutover.hasRollbackPlan) missing.push('contingency/rollback plan');
   if (!cutover.communicationsApproved) missing.push('approved communications');
+  if (cutover.hasWindow === false) missing.push('transition window');
+  if (cutover.hasServiceImpact === false) missing.push('service-impact assessment');
+  if (cutover.hasAccountableOwner === false) missing.push('accountable owner');
+  if (cutover.testingDone === false) missing.push('testing / rehearsal');
   if (blockers.length > 0 || missing.length > 0) {
     throw ruleViolation('readiness.go_blocked', 'A GO decision is blocked by open readiness blockers or missing cutover prerequisites', {
       blockers,
       missing,
     });
   }
+}
+
+/** Readiness checks may be waived only if flagged waivable (by a specialist) and approved by a different person. */
+export function assertReadinessWaiverAllowed(c: { waivable: boolean; blocker: boolean; approverUserId: string; requesterUserId: string; basis: string }) {
+  if (!c.waivable) throw ruleViolation('readiness.waiver.non_waivable', 'This readiness check is not waivable');
+  if (c.approverUserId === c.requesterUserId) throw ruleViolation('readiness.waiver.self_approval', 'A waiver cannot be approved by its requester');
+  if (!c.basis.trim()) throw ruleViolation('readiness.waiver.missing_basis', 'A waiver requires a documented basis and impact');
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -210,6 +274,13 @@ export function assessTsaExpiry(i: TsaExpiryInput): TsaExpiryAssessment {
   return { kind: 'ok' };
 }
 
+/** No automatic extension: an extension needs an approved decision reference (P0 review D-06). */
+export function assertTsaExtensionAllowed(t: { extensionDecisionApproved: boolean; newEndDate: string | null; continuityPlan: string | null }) {
+  if (!t.extensionDecisionApproved) throw ruleViolation('tsa.extension_requires_decision', 'A TSA extension requires an approved decision; it is never automatic');
+  if (!t.newEndDate) throw ruleViolation('tsa.extension_requires_end_date', 'An extension must state the new end date');
+  if (!t.continuityPlan?.trim()) throw ruleViolation('tsa.extension_requires_continuity_plan', 'An extension must reference the continuity plan');
+}
+
 export function assertTsaExitAcceptable(t: { replacementAccepted: boolean; acceptanceEvidenceCount: number }) {
   if (!t.replacementAccepted || t.acceptanceEvidenceCount === 0) {
     throw ruleViolation('tsa.exit_not_evidenced', 'TSA exit requires an accepted replacement service with acceptance evidence; reaching the end date is not an exit');
@@ -233,7 +304,19 @@ export function partnerMayAccessRoom(p: { stage: PartnerStage; ndaStatus: string
 
 export interface ClosingReadinessInput {
   kind: ClosingKind;
-  conditions: { id: string; reference: string; blocking: boolean; waivable: boolean; status: ConditionStatus; hasValidWaiver: boolean; longStopDate: string | null }[];
+  conditions: {
+    id: string;
+    reference: string;
+    blocking: boolean;
+    waivable: boolean;
+    status: ConditionStatus;
+    hasValidWaiver: boolean;
+    longStopDate: string | null;
+    /** Validity end of the satisfying approval/consent (D-07). */
+    validTo?: string | null;
+    /** Active evidence supporting a verified condition (D-07). */
+    evidenceCount?: number;
+  }[];
   deliverables: { id: string; title: string; status: 'pending' | 'delivered' | 'verified' | 'not_required' }[];
   signingConfirmed: boolean;
   today: string;
@@ -244,8 +327,15 @@ export function closingBlockers(i: ClosingReadinessInput): { ref: string; messag
   if (i.kind === 'closing' && !i.signingConfirmed) out.push({ ref: 'signing', message: 'Signing has not been confirmed' });
   for (const c of i.conditions) {
     if (!c.blocking) continue;
-    const satisfied = c.status === 'verified' || (c.status === 'waived' && c.waivable && c.hasValidWaiver);
-    if (!satisfied) out.push({ ref: c.reference, message: `Blocking condition ${c.reference} is ${c.status}` });
+    const verifiedWithEvidence = c.status === 'verified' && (c.evidenceCount === undefined || c.evidenceCount > 0);
+    const satisfied = verifiedWithEvidence || (c.status === 'waived' && c.waivable && c.hasValidWaiver);
+    if (!satisfied) {
+      out.push({
+        ref: c.reference,
+        message: c.status === 'verified' ? `Blocking condition ${c.reference} is verified without active evidence` : `Blocking condition ${c.reference} is ${c.status}`,
+      });
+    }
+    if (satisfied && c.validTo && c.validTo < i.today) out.push({ ref: c.reference, message: `Validity of ${c.reference} lapsed on ${c.validTo}` });
     if (c.longStopDate && c.longStopDate < i.today && !satisfied) out.push({ ref: c.reference, message: `Long-stop date passed for ${c.reference}` });
   }
   for (const d of i.deliverables) {

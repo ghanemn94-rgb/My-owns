@@ -79,7 +79,8 @@ export const DECISION_MACHINE: Machine<DecisionStatus, DecisionCommand> = {
   record_approval: {
     from: ['under_review', 'recommended'],
     to: 'approved',
-    description: 'Approved within mandate (vote/circulation) or by the external authority for a recommendation',
+    description:
+      'Approved within mandate (vote/circulation) or by the external authority for a recommendation — guarded by governance.assertApprovalAllowed',
   },
   record_rejection: { from: ['under_review', 'recommended'], to: 'rejected', description: 'Rejected' },
   defer: { from: ['submitted', 'under_review', 'recommended'], to: 'deferred', description: 'Deferred' },
@@ -166,7 +167,8 @@ export const STATUS_UPDATE_MACHINE: Machine<UpdateStatus, UpdateCommand> = {
   accept: { from: ['submitted'], to: 'accepted', description: 'Accepted (frozen)' },
 };
 
-export type GateCommand = 'start_assessment' | 'mark_ready' | 'approve' | 'approve_with_exceptions' | 'reject' | 'reopen' | 'back_to_assessment';
+/** Reopen is NOT a transition: a new assessment row is created in status `reopened` (see gates.ts planReopen). */
+export type GateCommand = 'start_assessment' | 'mark_ready' | 'approve' | 'approve_with_exceptions' | 'reject' | 'back_to_assessment';
 export const GATE_ASSESSMENT_MACHINE: Machine<GateAssessmentStatus, GateCommand> = {
   start_assessment: { from: ['not_started', 'reopened'], to: 'in_assessment', description: 'Assessment started' },
   mark_ready: { from: ['in_assessment'], to: 'ready_for_decision', description: 'All mandatory criteria met/waived — ready for decision' },
@@ -174,11 +176,6 @@ export const GATE_ASSESSMENT_MACHINE: Machine<GateAssessmentStatus, GateCommand>
   approve: { from: ['ready_for_decision'], to: 'approved', description: 'Gate approved' },
   approve_with_exceptions: { from: ['ready_for_decision'], to: 'approved_with_exceptions', description: 'Approved with recorded waivers' },
   reject: { from: ['ready_for_decision', 'in_assessment'], to: 'rejected', description: 'Gate rejected' },
-  reopen: {
-    from: ['approved', 'approved_with_exceptions', 'rejected'],
-    to: 'reopened',
-    description: 'Controlled reopen (e.g. evidence found defective) preserving the prior decision',
-  },
 };
 
 // TSA (spec §7.3). End date ≠ exit. No automatic extension.
@@ -205,7 +202,7 @@ export const TSA_MACHINE: Machine<TsaStatus, TsaCommand> = {
   record_extension: {
     from: ['active', 'exit_in_progress', 'expired_unresolved', 'breached'],
     to: 'extended',
-    description: 'Extension approved by an authorized decision (never automatic)',
+    description: 'Extension recorded ONLY with an approved decision (guard: assertTsaExtensionAllowed); never automatic',
   },
   record_breach: { from: ['active', 'extended', 'exit_in_progress'], to: 'breached', description: 'SLA/contract breach recorded' },
   remedy_breach: { from: ['breached'], to: 'active', description: 'Breach remedied' },

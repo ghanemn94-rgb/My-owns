@@ -209,3 +209,36 @@ export const kpiObservation = pgTable(
   },
   (t) => [projectFk('kpi_observation_kpi_fk', t.projectId, t.kpiId, kpi), index('kpi_observation_idx').on(t.kpiId, t.period)],
 );
+
+/** Intercompany reconciliation between the parent and NewCo (spec §7.5; P0 review D-16). */
+export const intercompanyReconciliation = pgTable(
+  'intercompany_reconciliation',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    code: varchar('code', { length: 32 }).notNull(),
+    counterpartyLabel: text('counterparty_label').notNull(),
+    period: varchar('period', { length: 16 }).notNull(),
+    ourBalance: numeric('our_balance', { precision: 20, scale: 4 }).notNull(),
+    theirBalance: numeric('their_balance', { precision: 20, scale: 4 }),
+    currency: varchar('currency', { length: 3 }).notNull(),
+    unitScale: integer('unit_scale').notNull().default(1),
+    status: varchar('status', { length: 16 }).notNull().default('open'), // open | reconciled | disputed
+    explanation: text('explanation'),
+    sourceRef: text('source_ref'),
+    reviewerUserId: uuid('reviewer_user_id'),
+    reviewedAt: ts('reviewed_at'),
+    classification: classification('classification').notNull().default('restricted'),
+    isDemo: isDemo(),
+    createdAt: createdAt(),
+    createdBy: createdBy(),
+    updatedAt: updatedAt(),
+    version: versionCol(),
+  },
+  (t) => [
+    unique('intercompany_reconciliation_pid_uq').on(t.projectId, t.id),
+    uniqueIndex('intercompany_reconciliation_code_uq').on(t.projectId, t.code),
+    check('intercompany_reconciliation_scale_chk', sql`${t.unitScale} in (1, 1000, 1000000)`),
+  ],
+);

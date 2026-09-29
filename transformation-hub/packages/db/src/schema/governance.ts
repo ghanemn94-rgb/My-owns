@@ -109,6 +109,9 @@ export const authorityMatrixVersion = pgTable(
     isDemoPolicy: boolean('is_demo_policy').notNull().default(false),
     policy: jsonb('policy').$type<Record<string, unknown>>().notNull(),
     policyHash: text('policy_hash').notNull(),
+    /** Delegation validity window (P0 review D-12). */
+    effectiveFrom: date('effective_from', { mode: 'string' }),
+    effectiveTo: date('effective_to', { mode: 'string' }),
     approvedBy: uuid('approved_by'),
     approvedAt: ts('approved_at'),
     approvalReference: text('approval_reference'),
@@ -176,6 +179,9 @@ export const decision = pgTable(
     requiredAuthority: text('required_authority'),
     requesterUserId: uuid('requester_user_id').references(() => appUser.id),
     status: decisionStatus('status').notNull().default('draft'),
+    /** Voting round; incremented when a deferred decision is resumed (P0 review D-11). */
+    voteRound: integer('vote_round').notNull().default(1),
+    recommendationRecordedBy: uuid('recommendation_recorded_by'),
     authorityOutcome: decisionAuthorityOutcome('authority_outcome').notNull().default('not_assessed'),
     authorityReason: text('authority_reason'),
     escalatedTo: text('escalated_to'),
@@ -285,6 +291,7 @@ export const vote = pgTable(
     meetingId: uuid('meeting_id'),
     userId: uuid('user_id').notNull(),
     membershipId: uuid('membership_id').notNull(),
+    round: integer('round').notNull().default(1),
     memberRoleAtVote: committeeMemberRole('member_role_at_vote').notNull(),
     choice: voteChoice('choice').notNull(),
     comment: text('comment'),
@@ -295,7 +302,7 @@ export const vote = pgTable(
   (t) => [
     projectFk('vote_decision_fk', t.projectId, t.decisionId, decision),
     projectFk('vote_membership_fk', t.projectId, t.membershipId, committeeMembership),
-    uniqueIndex('vote_uq').on(t.decisionId, t.userId),
+    uniqueIndex('vote_uq').on(t.decisionId, t.userId, t.round),
   ],
 );
 
@@ -401,4 +408,30 @@ export const approvalRecord = pgTable(
     recordedAt: createdAt(),
   },
   (t) => [projectFk('approval_record_request_fk', t.projectId, t.approvalRequestId, approvalRequest)],
+);
+
+/**
+ * Conflict-of-interest declaration per member and meeting/decision ("no conflict", "interest declared", "recused"),
+ * evidencing the conflict check step of the workflow (P0 review D-13).
+ */
+export const conflictDeclaration = pgTable(
+  'conflict_declaration',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    committeeId: uuid('committee_id').notNull(),
+    meetingId: uuid('meeting_id'),
+    decisionId: uuid('decision_id'),
+    userId: uuid('user_id').notNull(),
+    declaration: varchar('declaration', { length: 24 }).notNull(), // no_conflict | interest_declared | recused
+    description: text('description'),
+    declaredAt: createdAt(),
+    recordedBy: uuid('recorded_by'),
+  },
+  (t) => [
+    projectFk('conflict_declaration_committee_fk', t.projectId, t.committeeId, committee),
+    projectFk('conflict_declaration_meeting_fk', t.projectId, t.meetingId, meeting),
+    projectFk('conflict_declaration_decision_fk', t.projectId, t.decisionId, decision),
+  ],
 );

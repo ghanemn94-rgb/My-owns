@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeQuorum, assertMayVote, tallyVotes, checkAuthority, missingDecisionPaperFields, AuthorityPolicy, MemberSnapshot } from './governance';
+import { computeQuorum, assertMayVote, tallyVotes, checkAuthority, missingDecisionPaperFields, assertApprovalAllowed, matrixUsable, AuthorityPolicy, MemberSnapshot, MatrixState } from './governance';
 import { transition, DECISION_MACHINE, allowedCommands } from './workflows';
 
 const policy: AuthorityPolicy = {
@@ -107,13 +107,39 @@ describe('decision lifecycle — approval ≠ implementation', () => {
     const s1 = transition('decision', DECISION_MACHINE, 'approved', 'start_implementation');
     expect(transition('decision', DECISION_MACHINE, s1, 'verify_implementation')).toBe('implemented_verified');
   });
-  it('recommended (beyond mandate) decisions can only be approved via a recorded outcome', () => {
+  it('the state machine only allows record_approval from under_review / recommended (guards are separate)', () => {
     expect(transition('decision', DECISION_MACHINE, 'recommended', 'record_approval')).toBe('approved');
     expect(() => transition('decision', DECISION_MACHINE, 'draft', 'record_approval')).toThrow();
   });
-  it('requires a complete decision paper', () => {
-    expect(missingDecisionPaperFields({ issue: 'x' })).toEqual(
-      expect.arrayContaining(['whyNow', 'alternatives', 'recommendation', 'impacts', 'risks', 'latestSafeDate', 'decisionTypeKey']),
+  it('requires a complete decision paper incl. all three impacts, dependencies, authority and requester', () => {
+    expect(missingDecisionPaperFields({ issue: 'x', impacts: { financial: 'none' } })).toEqual(
+      expect.arrayContaining(['whyNow', 'alternatives', 'recommendation', 'impacts.operational', 'impacts.schedule', 'risks', 'dependencies', 'latestSafeDate', 'requiredAuthority', 'decisionTypeKey', 'requesterUserId']),
     );
+    expect(missingDecisionPaperFields({ issue: 'x' })).not.toContain('issue');
+  });
+});
+
+describe('AT-04 — approval guard ties the outcome to delegated authority (P0 review D-03)', () => {
+  const approved: MatrixState = { status: 'approved', isDemoPolicy: false, effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31' };
+  const base = { projectIsDemo: false, onDate: '2026-09-29', recorderUserId: 'sec' };
+  it('rejects approval outside the mandate', () => {
+    expect(() => assertApprovalAllowed({ ...base, from: 'under_review', authorityOutcome: 'pending_external_authority', matrix: approved })).toThrow(/outside the committee/);
+  });
+  it('rejects approval without an approved, effective matrix', () => {
+    expect(() => assertApprovalAllowed({ ...base, from: 'under_review', authorityOutcome: 'within_mandate', matrix: null })).toThrow(/not active/);
+    expect(() => assertApprovalAllowed({ ...base, from: 'under_review', authorityOutcome: 'within_mandate', matrix: { ...approved, status: 'draft' } })).toThrow(/draft/);
+    expect(() => assertApprovalAllowed({ ...base, from: 'under_review', authorityOutcome: 'within_mandate', matrix: { ...approved, effectiveTo: '2026-06-30' } })).toThrow(/expired/);
+  });
+  it('a demo policy never authorizes a non-demo project', () => {
+    expect(() => assertApprovalAllowed({ ...base, from: 'under_review', authorityOutcome: 'within_mandate', matrix: { ...approved, isDemoPolicy: true } })).toThrow(/demo policy/);
+    expect(() => assertApprovalAllowed({ ...base, projectIsDemo: true, from: 'under_review', authorityOutcome: 'within_mandate', matrix: { ...approved, isDemoPolicy: true } })).not.toThrow();
+  });
+  it('approving a recommendation needs an external reference recorded by a different person', () => {
+    expect(() => assertApprovalAllowed({ ...base, from: 'recommended', authorityOutcome: 'pending_external_authority', matrix: approved })).toThrow(/external authority approval reference/);
+    expect(() => assertApprovalAllowed({ ...base, from: 'recommended', authorityOutcome: 'pending_external_authority', matrix: approved, externalReference: 'BoD resolution (demo)', recommendationRecordedBy: 'sec' })).toThrow(/cannot also record/);
+    expect(() => assertApprovalAllowed({ ...base, from: 'recommended', authorityOutcome: 'pending_external_authority', matrix: approved, externalReference: 'BoD resolution (demo)', recommendationRecordedBy: 'chair' })).not.toThrow();
+  });
+  it('matrixUsable explains why', () => {
+    expect(matrixUsable(approved, '2026-09-29', false)).toEqual({ usable: true, reason: 'Approved authority matrix in force' });
   });
 });

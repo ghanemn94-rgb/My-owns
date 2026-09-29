@@ -85,12 +85,13 @@ export interface RagResult {
 export function calculateRag(input: RagInput): RagResult {
   const t = input.thresholds ?? DEFAULT_RAG_THRESHOLDS;
   const cal = input.calendar ?? DEFAULT_CALENDAR;
+  // A known open blocker is always red — data-quality labels must never hide it (P0 review D-10).
+  if (input.hasOpenBlocker) return { status: 'red', explanation: 'An open blocker is recorded.', slipDays: null };
   if (!input.lastUpdatedOn) return { status: 'not_updated', explanation: 'No accepted update has been recorded.', slipDays: null };
   const ageDays = Math.round((Date.parse(input.today) - Date.parse(input.lastUpdatedOn)) / 86_400_000);
   if (ageDays > t.staleAfterDays) {
     return { status: 'stale', explanation: `Last accepted update is ${ageDays} days old (stale after ${t.staleAfterDays}).`, slipDays: null };
   }
-  if (input.hasOpenBlocker) return { status: 'red', explanation: 'An open blocker is recorded.', slipDays: null };
   if (!input.baselineFinish || !input.forecastFinish) {
     return { status: 'unknown', explanation: 'Baseline or forecast finish is missing.', slipDays: null };
   }

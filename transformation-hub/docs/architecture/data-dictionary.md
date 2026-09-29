@@ -1,7 +1,7 @@
 # Data dictionary
 
 > Generated from the live PostgreSQL schema by `packages/db/src/cli/data-dictionary.ts` — do not edit by hand.
-> Tables: 100. RLS enabled: 95.
+> Tables: 103. RLS enabled: 98.
 
 ## Spec §14 entity coverage
 
@@ -160,7 +160,7 @@
 | `scope_type` | organization, portfolio, project, workstream, partner_room |
 | `source_type` | image, excel, csv, minutes, pdf, docx, manual_entry, system |
 | `status_dimension_key` | incorporation, perimeter_transfer, operational_readiness, jv_transaction |
-| `task_status` | not_started, in_progress, blocked, submitted_for_acceptance, accepted, done, cancelled |
+| `task_status` | draft, not_started, in_progress, blocked, submitted_for_acceptance, accepted, done, cancelled |
 | `template_kind` | dc_carveout, general_transformation, strategy, technology, transaction_other |
 | `template_migration_status` | proposed, approved, applied, rejected |
 | `template_version_status` | draft, published, retired |
@@ -596,7 +596,7 @@ RLS: enabled (hub_project_isolation)
 | `title` | text | no |  |
 | `title_ar` | text | yes |  |
 | `description` | text | yes |  |
-| `status` | enum task_status | no | `'not_started'::task_status` |
+| `status` | enum task_status | no | `'draft'::task_status` |
 | `accountable_user_id` | uuid | yes |  |
 | `proposed_owner_function` | text | yes |  |
 | `output` | text | yes |  |
@@ -1102,6 +1102,8 @@ RLS: enabled (hub_project_isolation)
 | `is_demo_policy` | boolean | no | `false` |
 | `policy` | jsonb | no |  |
 | `policy_hash` | text | no |  |
+| `effective_from` | date | yes |  |
+| `effective_to` | date | yes |  |
 | `approved_by` | uuid | yes |  |
 | `approved_at` | timestamp with time zone | yes |  |
 | `approval_reference` | text | yes |  |
@@ -1249,6 +1251,8 @@ RLS: enabled (hub_project_isolation)
 | `required_authority` | text | yes |  |
 | `requester_user_id` | uuid | yes |  |
 | `status` | enum decision_status | no | `'draft'::decision_status` |
+| `vote_round` | integer | no | `1` |
+| `recommendation_recorded_by` | uuid | yes |  |
 | `authority_outcome` | enum decision_authority_outcome | no | `'not_assessed'::decision_authority_outcome` |
 | `authority_reason` | text | yes |  |
 | `escalated_to` | text | yes |  |
@@ -1291,6 +1295,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_append_only
 | `meeting_id` | uuid | yes |  |
 | `user_id` | uuid | no |  |
 | `membership_id` | uuid | no |  |
+| `round` | integer | no | `1` |
 | `member_role_at_vote` | enum committee_member_role | no |  |
 | `choice` | enum vote_choice | no |  |
 | `comment` | text | yes |  |
@@ -1525,6 +1530,10 @@ RLS: enabled (hub_project_isolation)
 | `assessed_by` | uuid | yes |  |
 | `assessed_at` | timestamp with time zone | yes |  |
 | `waiver_id` | uuid | yes |  |
+| `na_basis` | text | yes |  |
+| `na_proposed_by` | uuid | yes |  |
+| `na_determined_by` | uuid | yes |  |
+| `na_approved` | boolean | no | `false` |
 | `updated_at` | timestamp with time zone | no | `now()` |
 | `version` | integer | no | `1` |
 
@@ -1615,6 +1624,7 @@ RLS: enabled (hub_project_isolation)
 | `dependencies` | text | yes |  |
 | `risks` | text | yes |  |
 | `transfer_status` | enum transfer_status | no | `'not_started'::transfer_status` |
+| `economic_transfer_status` | enum transfer_status | no | `'not_started'::transfer_status` |
 | `acceptance_evidence_note` | text | yes |  |
 | `in_approved_baseline` | boolean | no | `false` |
 | `verification_status` | enum verification_status | no | `'proposed'::verification_status` |
@@ -1814,6 +1824,8 @@ RLS: enabled (hub_project_isolation)
 | `is_enduring_arrangement` | boolean | no | `false` |
 | `status` | enum tsa_status | no | `'proposed'::tsa_status` |
 | `escalation_id` | uuid | yes |  |
+| `extension_decision_id` | uuid | yes |  |
+| `continuity_plan` | text | yes |  |
 | `is_demo` | boolean | no | `false` |
 | `created_at` | timestamp with time zone | no | `now()` |
 | `created_by` | uuid | yes |  |
@@ -1846,6 +1858,9 @@ RLS: enabled (hub_project_isolation)
 | `cutover_plan_id` | uuid | yes |  |
 | `mandatory` | boolean | no | `true` |
 | `blocker` | boolean | no | `false` |
+| `waivable` | boolean | no | `false` |
+| `waiver_authority_role` | enum role_key | yes |  |
+| `waiver_id` | uuid | yes |  |
 | `status` | enum readiness_status | no | `'not_started'::readiness_status` |
 | `signoff_role` | enum role_key | yes |  |
 | `signed_off_by` | uuid | yes |  |
@@ -2199,6 +2214,7 @@ RLS: enabled (hub_project_isolation)
 | `room_id` | uuid | no |  |
 | `user_id` | uuid | no |  |
 | `access_level` | character varying | no | `'read'::character varying` |
+| `role` | enum role_key | yes |  |
 | `reason` | text | no |  |
 | `granted_by` | uuid | no |  |
 | `created_at` | timestamp with time zone | no | `now()` |
@@ -2811,7 +2827,7 @@ Foreign keys:
 
 ### `notification`
 
-RLS: enabled (hub_notification_update, hub_notification_write, hub_notification_read)
+RLS: enabled (hub_notification_write, hub_notification_update, hub_notification_read)
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3143,3 +3159,89 @@ RLS: enabled (hub_project_isolation)
 Foreign keys:
 
 - `ai_derived_artifact_project_id_project_id_fk`: (project_id) → `project`(id)
+
+## Other
+
+### `conflict_declaration`
+
+RLS: enabled (hub_project_isolation)
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | no | `gen_random_uuid()` |
+| `org_id` | uuid | no |  |
+| `project_id` | uuid | no |  |
+| `committee_id` | uuid | no |  |
+| `meeting_id` | uuid | yes |  |
+| `decision_id` | uuid | yes |  |
+| `user_id` | uuid | no |  |
+| `declaration` | character varying | no |  |
+| `description` | text | yes |  |
+| `created_at` | timestamp with time zone | no | `now()` |
+| `recorded_by` | uuid | yes |  |
+
+Foreign keys:
+
+- `conflict_declaration_committee_fk`: (project_id,committee_id) → `committee`(project_id,id) — composite project-scoped FK
+- `conflict_declaration_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
+- `conflict_declaration_meeting_fk`: (project_id,meeting_id) → `meeting`(project_id,id) — composite project-scoped FK
+- `conflict_declaration_project_id_project_id_fk`: (project_id) → `project`(id)
+
+### `intercompany_reconciliation`
+
+RLS: enabled (hub_project_isolation)
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | no | `gen_random_uuid()` |
+| `org_id` | uuid | no |  |
+| `project_id` | uuid | no |  |
+| `code` | character varying | no |  |
+| `counterparty_label` | text | no |  |
+| `period` | character varying | no |  |
+| `our_balance` | numeric | no |  |
+| `their_balance` | numeric | yes |  |
+| `currency` | character varying | no |  |
+| `unit_scale` | integer | no | `1` |
+| `status` | character varying | no | `'open'::character varying` |
+| `explanation` | text | yes |  |
+| `source_ref` | text | yes |  |
+| `reviewer_user_id` | uuid | yes |  |
+| `reviewed_at` | timestamp with time zone | yes |  |
+| `classification` | enum classification | no | `'restricted'::classification` |
+| `is_demo` | boolean | no | `false` |
+| `created_at` | timestamp with time zone | no | `now()` |
+| `created_by` | uuid | yes |  |
+| `updated_at` | timestamp with time zone | no | `now()` |
+| `version` | integer | no | `1` |
+
+Foreign keys:
+
+- `intercompany_reconciliation_project_id_project_id_fk`: (project_id) → `project`(id)
+
+### `operating_model_definition`
+
+RLS: enabled (hub_project_isolation)
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | no | `gen_random_uuid()` |
+| `org_id` | uuid | no |  |
+| `project_id` | uuid | no |  |
+| `version_label` | character varying | no |  |
+| `definition` | text | no |  |
+| `independence_criteria` | jsonb | no | `'[]'::jsonb` |
+| `permitted_enduring_arrangements` | text | yes |  |
+| `status` | character varying | no | `'proposed'::character varying` |
+| `approved_by` | uuid | yes |  |
+| `approved_at` | timestamp with time zone | yes |  |
+| `decision_id` | uuid | yes |  |
+| `is_demo` | boolean | no | `false` |
+| `created_at` | timestamp with time zone | no | `now()` |
+| `created_by` | uuid | yes |  |
+| `updated_at` | timestamp with time zone | no | `now()` |
+| `version` | integer | no | `1` |
+
+Foreign keys:
+
+- `operating_model_definition_project_id_project_id_fk`: (project_id) → `project`(id)

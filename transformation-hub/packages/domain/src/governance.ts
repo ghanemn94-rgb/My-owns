@@ -185,7 +185,10 @@ export function checkAuthority(input: AuthorityCheckInput): AuthorityCheckResult
   return { outcome: 'within_mandate', escalateTo: null, reason: 'Within delegated authority.' };
 }
 
-/** Decision paper completeness (spec §4.2) before submission. Returns missing field names. */
+/**
+ * Decision paper completeness (spec §4.2) before submission. Returns missing field names. Impacts must state the
+ * financial, operational AND schedule impact (use "None identified" explicitly rather than leaving one out).
+ */
 export function missingDecisionPaperFields(paper: {
   issue?: string | null;
   whyNow?: string | null;
@@ -193,18 +196,77 @@ export function missingDecisionPaperFields(paper: {
   recommendation?: string | null;
   impacts?: Record<string, unknown> | null;
   risks?: string | null;
+  dependencies?: string | null;
   latestSafeDate?: string | null;
   requiredAuthority?: string | null;
   decisionTypeKey?: string | null;
+  requesterUserId?: string | null;
 }): string[] {
   const missing: string[] = [];
-  if (!paper.issue?.trim()) missing.push('issue');
-  if (!paper.whyNow?.trim()) missing.push('whyNow');
+  const txt = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
+  if (!txt(paper.issue)) missing.push('issue');
+  if (!txt(paper.whyNow)) missing.push('whyNow');
   if (!paper.alternatives || paper.alternatives.length === 0) missing.push('alternatives');
-  if (!paper.recommendation?.trim()) missing.push('recommendation');
-  if (!paper.impacts || Object.keys(paper.impacts).length === 0) missing.push('impacts');
-  if (!paper.risks?.trim()) missing.push('risks');
+  if (!txt(paper.recommendation)) missing.push('recommendation');
+  for (const k of ['financial', 'operational', 'schedule']) if (!txt(paper.impacts?.[k])) missing.push(`impacts.${k}`);
+  if (!txt(paper.risks)) missing.push('risks');
+  if (!txt(paper.dependencies)) missing.push('dependencies');
   if (!paper.latestSafeDate) missing.push('latestSafeDate');
+  if (!txt(paper.requiredAuthority)) missing.push('requiredAuthority');
   if (!paper.decisionTypeKey) missing.push('decisionTypeKey');
+  if (!paper.requesterUserId) missing.push('requesterUserId');
   return missing;
+}
+
+export interface MatrixState {
+  status: 'draft' | 'approved' | 'superseded';
+  isDemoPolicy: boolean;
+  effectiveFrom: string | null;
+  effectiveTo: string | null;
+}
+
+/** An authority matrix is usable on a date only if approved, in its effective window, and demo policies only on demo projects. */
+export function matrixUsable(m: MatrixState | null, onDate: string, projectIsDemo: boolean): { usable: boolean; reason: string } {
+  if (!m) return { usable: false, reason: 'No authority matrix exists for this committee' };
+  if (m.status !== 'approved') return { usable: false, reason: `Authority matrix is ${m.status}` };
+  if (m.effectiveFrom && m.effectiveFrom > onDate) return { usable: false, reason: 'Authority matrix not yet effective' };
+  if (m.effectiveTo && m.effectiveTo < onDate) return { usable: false, reason: 'Authority matrix (delegation) has expired' };
+  if (m.isDemoPolicy && !projectIsDemo) return { usable: false, reason: 'A demo policy cannot authorize decisions on a non-demo project' };
+  return { usable: true, reason: 'Approved authority matrix in force' };
+}
+
+/**
+ * Guard for `record_approval` (P0 review D-03, AT-04):
+ *  - from `under_review`: the vote/circulation outcome must be within the committee mandate under a usable matrix;
+ *  - from `recommended`: an external-authority approval reference is required and must be recorded by a different
+ *    person than the one who recorded the recommendation.
+ */
+export function assertApprovalAllowed(input: {
+  from: 'under_review' | 'recommended' | string;
+  authorityOutcome: 'within_mandate' | 'pending_external_authority' | 'not_assessed';
+  matrix: MatrixState | null;
+  projectIsDemo: boolean;
+  onDate: string;
+  externalReference?: string | null;
+  recorderUserId: string;
+  recommendationRecordedBy?: string | null;
+}): void {
+  if (input.from === 'under_review') {
+    if (input.authorityOutcome !== 'within_mandate') {
+      throw ruleViolation('governance.approval.outside_mandate', 'The decision is outside the committee delegated authority — record it as a recommendation pending the authorized body');
+    }
+    const m = matrixUsable(input.matrix, input.onDate, input.projectIsDemo);
+    if (!m.usable) throw ruleViolation('governance.approval.no_usable_matrix', `${m.reason} — production approval authority is not active`);
+    return;
+  }
+  if (input.from === 'recommended') {
+    if (!input.externalReference?.trim()) {
+      throw ruleViolation('governance.approval.missing_external_reference', 'Approval of a recommendation requires the external authority approval reference');
+    }
+    if (input.recommendationRecordedBy && input.recommendationRecordedBy === input.recorderUserId) {
+      throw ruleViolation('governance.approval.same_recorder', 'The person who recorded the recommendation cannot also record its external approval');
+    }
+    return;
+  }
+  throw ruleViolation('governance.approval.invalid_state', `Cannot approve a decision in state ${input.from}`);
 }

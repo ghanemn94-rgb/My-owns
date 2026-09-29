@@ -555,11 +555,12 @@ erDiagram
     bool is_demo_policy
     jsonb policy
     text policy_hash
+    date effective_from
+    date effective_to
     uuid approved_by
     timestamptz approved_at
     text approval_reference
-    timestamptz created_at
-    uuid created_by
+    more more_columns
   }
   meeting {
     uuid id
@@ -641,6 +642,7 @@ erDiagram
     uuid meeting_id
     uuid user_id
     uuid membership_id
+    int4 round
     committee_member_role member_role_at_vote
     vote_choice choice
     text comment
@@ -799,8 +801,11 @@ erDiagram
     uuid assessed_by
     timestamptz assessed_at
     uuid waiver_id
-    timestamptz updated_at
-    int4 version
+    text na_basis
+    uuid na_proposed_by
+    uuid na_determined_by
+    bool na_approved
+    more more_columns
   }
   waiver {
     uuid id
@@ -951,8 +956,8 @@ erDiagram
     uuid cutover_plan_id
     bool mandatory
     bool blocker
-    readiness_status status
-    role_key signoff_role
+    bool waivable
+    role_key waiver_authority_role
     more more_columns
   }
   readiness_test_run {
@@ -1160,6 +1165,7 @@ erDiagram
     uuid room_id
     uuid user_id
     varchar access_level
+    role_key role
     text reason
     uuid granted_by
     timestamptz created_at
@@ -1742,4 +1748,60 @@ erDiagram
   }
   ai_run ||--o{ ai_proposal : "run_id"
   ai_proposal ||--o{ ai_action_approval : "proposal_id"
+```
+
+## Other
+
+```mermaid
+erDiagram
+  conflict_declaration {
+    uuid id
+    uuid org_id
+    uuid project_id
+    uuid committee_id
+    uuid meeting_id
+    uuid decision_id
+    uuid user_id
+    varchar declaration
+    text description
+    timestamptz created_at
+    uuid recorded_by
+  }
+  intercompany_reconciliation {
+    uuid id
+    uuid org_id
+    uuid project_id
+    varchar code
+    text counterparty_label
+    varchar period
+    numeric our_balance
+    numeric their_balance
+    varchar currency
+    int4 unit_scale
+    varchar status
+    text explanation
+    text source_ref
+    uuid reviewer_user_id
+    more more_columns
+  }
+  operating_model_definition {
+    uuid id
+    uuid org_id
+    uuid project_id
+    varchar version_label
+    text definition
+    jsonb independence_criteria
+    text permitted_enduring_arrangements
+    varchar status
+    uuid approved_by
+    timestamptz approved_at
+    uuid decision_id
+    bool is_demo
+    timestamptz created_at
+    uuid created_by
+    more more_columns
+  }
+  committee ||--o{ conflict_declaration : "committee_id"
+  decision ||--o{ conflict_declaration : "decision_id"
+  meeting ||--o{ conflict_declaration : "meeting_id"
 ```
