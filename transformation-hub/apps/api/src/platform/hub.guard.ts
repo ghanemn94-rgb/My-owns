@@ -121,7 +121,14 @@ export class HubGuard implements CanActivate {
   private validate(route: RouteDef, req: HubRequest) {
     const params = route.params.parse(req.params ?? {});
     const query = route.query.parse(req.query ?? {});
-    const body = route.method === 'GET' ? route.body.parse({}) : route.body.parse(req.body ?? {});
+    let body: unknown;
+    if (route.upload) {
+      if (!Buffer.isBuffer(req.body)) throw new HttpException({ message: 'Expected application/octet-stream body', code: 'upload.content_type' }, 415);
+      (req as HubRequest).hubRaw = req.body as Buffer;
+      body = {};
+    } else {
+      body = route.method === 'GET' ? route.body.parse({}) : route.body.parse(req.body ?? {});
+    }
     req.hubInput = { params, query, body } as HubRequest['hubInput'];
   }
 }

@@ -31,6 +31,8 @@ export interface RouteDef<
   command?: boolean;
   /** Response is a file stream rather than JSON. */
   binary?: boolean;
+  /** Request body is raw bytes (application/octet-stream) — e.g. document upload; `body` schema is not applied. */
+  upload?: boolean;
 }
 
 const EmptyObject = z.object({}).strict();
@@ -53,6 +55,7 @@ export function defineRoute<
   response: R;
   command?: boolean;
   binary?: boolean;
+  upload?: boolean;
 }): RouteDef<P, Q, B, R> {
   return {
     ...def,

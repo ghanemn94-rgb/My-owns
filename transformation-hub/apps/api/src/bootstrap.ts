@@ -16,6 +16,8 @@ export async function createApp(opts: { logger?: false } = {}) {
   app.use(helmet({ contentSecurityPolicy: { directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } } }));
   app.use(cookieParser());
   app.useBodyParser('json', { limit: '1mb' });
+  // Raw uploads (documents/imports): only application/octet-stream, bounded by HUB_MAX_UPLOAD_MB.
+  app.useBodyParser('raw', { type: 'application/octet-stream', limit: config.storage.maxUploadBytes });
   await app.init();
   const c = checkContracts(app);
   if (config.nodeEnv !== 'production' && (c.missing.length || c.unbound.length)) {

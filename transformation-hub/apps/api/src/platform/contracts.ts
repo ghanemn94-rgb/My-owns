@@ -22,7 +22,7 @@ export function routeOf(handler: object): RouteDef | undefined {
   return Reflect.getMetadata(ROUTE_META, handler) as RouteDef | undefined;
 }
 
-type HubRequest = Request & { hubCtx?: RequestContext; hubInput?: RouteInput<RouteDef>; hubRouteId?: string };
+type HubRequest = Request & { hubCtx?: RequestContext; hubInput?: RouteInput<RouteDef>; hubRouteId?: string; hubRaw?: Buffer };
 
 /** Validated input (params/query/body) — populated by the ContractGuard. */
 export const Input = createParamDecorator((_: unknown, ctx: ExecutionContext) => {
@@ -39,3 +39,10 @@ export const Ctx = createParamDecorator((_: unknown, ctx: ExecutionContext) => {
 });
 
 export type { HubRequest };
+
+/** Raw uploaded bytes for routes declared with `upload: true` (size-limited by the raw body parser). */
+export const RawBody = createParamDecorator((_: unknown, ctx: ExecutionContext) => {
+  const req = ctx.switchToHttp().getRequest<HubRequest>();
+  if (!req.hubRaw) throw new Error('No raw body (route not declared with upload: true?)');
+  return req.hubRaw;
+});
