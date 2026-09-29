@@ -118,8 +118,8 @@ export class JobQueue {
     const base = Math.min(15 * 60_000, 2 ** job.attempts * 1000);
     const delayMs = Math.round(base * (0.75 + Math.random() * 0.5));
     const r = await this.db.pool.query(
-      `update job set status = $4, last_error = $5, run_at = now() + ($6::int * interval '1 millisecond'),
-              locked_by = null, locked_until = null, updated_at = now(), finished_at = case when $4 = 'dead' then now() else null end
+      `update job set status = $4::job_status, last_error = $5, run_at = now() + ($6::int * interval '1 millisecond'),
+              locked_by = null, locked_until = null, updated_at = now(), finished_at = case when $4::text = 'dead' then now() else null end
         where id = $1 and locked_by = $2 and attempts = $3 and status = 'running'`,
       [job.id, job.locked_by, job.attempts, dead ? 'dead' : 'queued', error.slice(0, 2000), delayMs],
     );

@@ -11,11 +11,11 @@ import {
   drivingNetwork,
   latestDate,
   updateFreshnessDate,
-  canonicalJson,
 } from './planning';
 import { transition } from './workflows';
 import { weightedProgress, calculateRag } from './measurement';
 import { delayImpact } from './schedule';
+import { canonicalJson } from './canonical';
 
 describe('RAID lifecycle [REQ-PLN-012]', () => {
   it('allows escalation, closure and reopen; rejects closing a cancelled item', () => {

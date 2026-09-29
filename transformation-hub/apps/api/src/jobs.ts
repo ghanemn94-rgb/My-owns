@@ -20,8 +20,10 @@ import { registerConfigJobs } from './modules/config/config.jobs';
 /** Central registration of job handlers and outbox subscriptions (each module owns its registrar). */
 export function registerJobHandlers(app: INestApplicationContext) {
   const registry = app.get(JobRegistry);
-  if (!registry.handler('system.noop')) registry.register('system.noop', async () => ({ ok: true }));
-  if (!registry.handler('platform.audit.checkpoint')) registerPlatformJobs(app);
+  // Idempotent: a context registers its handlers once (tests may call this for the same app several times).
+  if (registry.handler('system.noop')) return;
+  registry.register('system.noop', async () => ({ ok: true }));
+  registerPlatformJobs(app);
   registerDocumentsJobs(app);
   registerGovernanceJobs(app);
   registerPlanningJobs(app);

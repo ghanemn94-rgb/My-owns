@@ -7,6 +7,7 @@ export * from './workflows';
 export * from './governance';
 export * from './gates';
 export * from './measurement';
+export * from './canonical';
 export * from './planning';
 export * from './carveout';
 export * from './ai';

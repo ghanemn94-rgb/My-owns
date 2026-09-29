@@ -22,6 +22,7 @@ export const PLATFORM_SCHEDULES = [
 
 export function registerPlatformJobs(app: INestApplicationContext) {
   const registry = app.get(JobRegistry);
+  if (registry.handler('platform.audit.checkpoint')) return; // idempotent
   const db = app.get(DbService);
   const contexts = app.get(JobContextFactory);
   const delivery = app.get(DeliveryService);

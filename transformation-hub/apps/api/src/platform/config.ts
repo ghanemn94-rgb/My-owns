@@ -31,6 +31,9 @@ const Env = z.object({
   /** HMAC key for short-lived signed cookies (OIDC login state). Required when OIDC is enabled. */
   HUB_COOKIE_SECRET: z.string().min(32).optional(),
   HUB_AI_ALLOW_MOCK: z.enum(['true', 'false']).default('true'),
+  /** Model endpoints (Not configured unless set): a licensed self-hosted OpenAI-compatible endpoint, or an approved gateway. */
+  HUB_AI_OPENAI_BASE_URL: z.string().url().optional(),
+  HUB_AI_ANTHROPIC_GATEWAY_URL: z.string().url().optional(),
   HUB_PRIVATE_MODE: z.enum(['true', 'false']).default('true'),
   HUB_EGRESS_ALLOWLIST: z.string().default(''),
   HUB_WORKER_ID: z.string().default(`worker-${process.pid}`),
@@ -83,6 +86,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     if (e.HUB_OIDC_ISSUER && (!e.HUB_OIDC_CLIENT_ID || !e.HUB_OIDC_REDIRECT_URI)) problems.push('OIDC requires HUB_OIDC_CLIENT_ID and HUB_OIDC_REDIRECT_URI (otherwise nobody can sign in)');
     if (e.HUB_OIDC_REDIRECT_URI && !e.HUB_OIDC_REDIRECT_URI.startsWith('https://')) problems.push('HUB_OIDC_REDIRECT_URI must use https in production');
     if (e.HUB_COOKIE_SECRET && weakSecret(e.HUB_COOKIE_SECRET)) problems.push('HUB_COOKIE_SECRET is too weak (use >= 32 random characters, e.g. openssl rand -base64 48)');
+    // Model endpoints: https only, and the host must be on the egress allowlist (private mode / ADR on AI egress).
+    const allow = e.HUB_EGRESS_ALLOWLIST.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+    for (const [name, url] of [['HUB_AI_OPENAI_BASE_URL', e.HUB_AI_OPENAI_BASE_URL], ['HUB_AI_ANTHROPIC_GATEWAY_URL', e.HUB_AI_ANTHROPIC_GATEWAY_URL]] as const) {
+      if (!url) continue;
+      const u = new URL(url);
+      if (u.protocol !== 'https:') problems.push(`${name} must use https in production`);
+      if (!allow.includes(u.hostname.toLowerCase())) problems.push(`${name} host ${u.hostname} is not on HUB_EGRESS_ALLOWLIST`);
+    }
   }
   if (problems.length) throw new Error(`Unsafe configuration rejected: ${problems.join('; ')}`);
   return {

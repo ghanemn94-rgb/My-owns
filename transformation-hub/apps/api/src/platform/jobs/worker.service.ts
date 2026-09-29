@@ -66,8 +66,8 @@ export class WorkerService {
     const client = await this.db.pool.connect();
     try {
       await client.query('BEGIN');
-      const { rows } = await client.query<{ id: string; org_id: string; project_id: string | null; type: string; aggregate_id: string | null; payload: Record<string, unknown> }>(
-        `select id, org_id, project_id, type, aggregate_id, payload from outbox_event
+      const { rows } = await client.query<{ id: string; org_id: string; project_id: string | null; type: string; aggregate_type: string | null; aggregate_id: string | null; payload: Record<string, unknown> }>(
+        `select id, org_id, project_id, type, aggregate_type, aggregate_id, payload from outbox_event
           where dispatched_at is null order by created_at limit $1 for update skip locked`,
         [limit],
       );
@@ -76,7 +76,7 @@ export class WorkerService {
           await client.query(
             `insert into job (id, org_id, project_id, kind, payload, idempotency_key)
              values (gen_random_uuid(), $1, $2, $3, $4, $5) on conflict (idempotency_key) do nothing`,
-            [ev.org_id, ev.project_id, kind, JSON.stringify({ ...ev.payload, eventId: ev.id, eventType: ev.type, aggregateId: ev.aggregate_id }), `outbox:${ev.id}:${kind}`],
+            [ev.org_id, ev.project_id, kind, JSON.stringify({ ...ev.payload, eventId: ev.id, eventType: ev.type, aggregateType: ev.aggregate_type, aggregateId: ev.aggregate_id }), `outbox:${ev.id}:${kind}`],
           );
         }
         await client.query(`update outbox_event set dispatched_at = now(), attempts = attempts + 1 where id = $1`, [ev.id]);

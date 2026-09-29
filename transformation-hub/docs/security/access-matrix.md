@@ -494,7 +494,7 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
 | `ai.assistant.use` | C,R,T | – |  |  | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  |
 | `ai.briefing.subscribe` | C | – |  |  | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  |
 | `ai.proposal.read` | C | – |  |  | ● | ● | ● | ● | ● |  | ● | ● | ● |  | ● |  |
-| `ai.proposal.approve` | C,A | – |  |  | ● |  | ● | ● | ● |  |  |  |  |  |  |  |
+| `ai.proposal.approve` | C,S,A | – |  |  | ● |  | ● | ● | ● |  |  |  |  |  |  |  |
 | `ai.proposal.reject` | C | – |  |  | ● |  | ● | ● | ● |  |  |  |  |  |  |  |
 | `ai.settings.manage` | – | – |  | ● | ● |  |  |  |  |  |  |  |  |  |  |  |
 | `ai.autopilot_policy.approve` | S,A | – |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |
@@ -762,7 +762,7 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
     "ai.assistant.use": {"description": "Ask questions and request drafts/briefings; retrieval is limited to the caller's ACL inside SQL.", "conditions": ["classification", "room", "clean_team"], "ai": "none"},
     "ai.briefing.subscribe": {"description": "Schedule own briefings (Asia/Riyadh schedule).", "conditions": ["classification"], "ai": "none"},
     "ai.proposal.read": {"description": "View AI proposals, rationale, evidence snapshot and diff.", "conditions": ["classification"], "ai": "none"},
-    "ai.proposal.approve": {"description": "Approve an AI proposal. Approval binds payload hash, target version, approver and expiry; the approver must independently pass the underlying action's permission and conditions.", "conditions": ["classification", "authority"], "ai": "none"},
+    "ai.proposal.approve": {"description": "Approve an AI proposal. Approval binds payload hash, target version, approver and expiry; the approver must independently pass the underlying action's permission and conditions.", "conditions": ["classification", "not_self", "authority"], "ai": "none"},
     "ai.proposal.reject": {"description": "Reject an AI proposal.", "conditions": ["classification"], "ai": "none"},
     "ai.settings.manage": {"description": "Set a project's AI mode (off / advisory / assisted), budgets, schedules and room-indexing flags.", "conditions": [], "ai": "none"},
     "ai.autopilot_policy.approve": {"description": "Approve a policy-limited autopilot allowlist (actions, limits, scope, rate, expiry).", "conditions": ["not_self", "authority"], "ai": "none"},
