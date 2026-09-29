@@ -496,6 +496,8 @@ erDiagram
   task ||--o{ deliverable : "task_id"
   workstream ||--o{ deliverable : "workstream_id"
   app_user ||--o{ raci_assignment : "user_id"
+  change_request ||--o{ baseline_version : "change_request_id"
+  decision ||--o{ change_request : "decision_id"
   app_user ||--o{ risk : "owner_user_id"
   workstream ||--o{ risk : "workstream_id"
   app_user ||--o{ issue : "owner_user_id"
@@ -713,11 +715,15 @@ erDiagram
     text payload_hash
     timestamptz created_at
   }
+  document ||--o{ committee : "charter_document_id"
   program ||--o{ committee : "program_id"
   committee ||--o{ committee_membership : "committee_id"
+  committee_membership ||--o{ committee_membership : "delegate_of_membership_id"
   app_user ||--o{ committee_membership : "user_id"
   committee ||--o{ authority_matrix_version : "committee_id"
   committee ||--o{ meeting : "committee_id"
+  authority_matrix_version ||--o{ meeting : "authority_matrix_version_id"
+  report_snapshot ||--o{ meeting : "pack_snapshot_id"
   committee ||--o{ agenda_item : "committee_id"
   decision ||--o{ agenda_item : "decision_id"
   meeting ||--o{ agenda_item : "meeting_id"
@@ -729,10 +735,15 @@ erDiagram
   app_user ||--o{ decision : "requester_user_id"
   decision ||--o{ decision : "superseded_by_decision_id"
   decision ||--o{ vote : "decision_id"
+  authority_matrix_version ||--o{ vote : "authority_matrix_version_id"
+  meeting ||--o{ vote : "meeting_id"
   committee_membership ||--o{ vote : "membership_id"
   decision ||--o{ action_item : "decision_id"
+  issue ||--o{ action_item : "issue_id"
   meeting ||--o{ action_item : "meeting_id"
   app_user ||--o{ action_item : "owner_user_id"
+  committee ||--o{ escalation : "raised_to_committee_id"
+  decision ||--o{ escalation : "resolution_decision_id"
   approval_request ||--o{ approval_record : "approval_request_id"
 ```
 
@@ -836,9 +847,12 @@ erDiagram
     int4 version
   }
   gate_definition ||--o{ gate_criterion : "gate_id"
+  decision ||--o{ gate_assessment : "decision_id"
   gate_definition ||--o{ gate_assessment : "gate_id"
+  gate_assessment ||--o{ gate_assessment : "supersedes_assessment_id"
   gate_assessment ||--o{ criterion_assessment : "assessment_id"
   gate_criterion ||--o{ criterion_assessment : "criterion_id"
+  waiver ||--o{ criterion_assessment : "waiver_id"
 ```
 
 ## Carve-out, NewCo, readiness & TSA
@@ -994,6 +1008,7 @@ erDiagram
   legal_entity ||--o{ perimeter_item : "target_entity_id"
   workstream ||--o{ perimeter_item : "workstream_id"
   perimeter_item ||--o{ transfer_record : "perimeter_item_id"
+  document ||--o{ agreement : "executed_document_id"
   app_user ||--o{ agreement : "legal_reviewer_user_id"
   app_user ||--o{ agreement : "owner_user_id"
   agreement ||--o{ consent : "agreement_id"
@@ -1004,14 +1019,19 @@ erDiagram
   legal_entity ||--o{ regulatory_requirement : "legal_entity_id"
   app_user ||--o{ regulatory_requirement : "owner_user_id"
   agreement ||--o{ tsa_service : "agreement_id"
+  escalation ||--o{ tsa_service : "escalation_id"
+  decision ||--o{ tsa_service : "extension_decision_id"
   app_user ||--o{ tsa_service : "owner_user_id"
   legal_entity ||--o{ tsa_service : "provider_entity_id"
   legal_entity ||--o{ tsa_service : "recipient_entity_id"
   cutover_plan ||--o{ readiness_check : "cutover_plan_id"
   site ||--o{ readiness_check : "site_id"
+  waiver ||--o{ readiness_check : "waiver_id"
   workstream ||--o{ readiness_check : "workstream_id"
   readiness_check ||--o{ readiness_test_run : "readiness_check_id"
   app_user ||--o{ cutover_plan : "accountable_user_id"
+  decision ||--o{ cutover_plan : "go_decision_id"
+  document ||--o{ cutover_plan : "runbook_document_id"
   site ||--o{ cutover_plan : "site_id"
 ```
 
@@ -1118,8 +1138,10 @@ erDiagram
     timestamptz created_at
     varchar computed_by
   }
+  document ||--o{ financial_snapshot : "source_document_id"
   workstream ||--o{ financial_snapshot : "workstream_id"
   workstream ||--o{ budget_line : "workstream_id"
+  document ||--o{ financial_model_version : "source_document_id"
   app_user ||--o{ benefit : "owner_user_id"
   app_user ||--o{ kpi : "owner_user_id"
   kpi ||--o{ kpi_observation : "kpi_id"
@@ -1338,10 +1360,14 @@ erDiagram
   app_user ||--o{ diligence_request : "reviewer_user_id"
   partner_room ||--o{ diligence_request : "room_id"
   partner ||--o{ diligence_finding : "partner_id"
+  risk ||--o{ diligence_finding : "risk_id"
+  decision ||--o{ closing : "confirmation_decision_id"
   partner ||--o{ closing : "partner_id"
   closing ||--o{ closing_condition : "closing_id"
   app_user ||--o{ closing_condition : "owner_user_id"
+  waiver ||--o{ closing_condition : "waiver_id"
   closing ||--o{ closing_deliverable : "closing_id"
+  document ||--o{ closing_deliverable : "document_id"
   app_user ||--o{ closing_deliverable : "owner_user_id"
   closing ||--o{ funds_flow_item : "closing_id"
   closing ||--o{ post_close_obligation : "closing_id"
@@ -1455,11 +1481,15 @@ erDiagram
   }
   partner_room ||--o{ document : "room_id"
   document ||--o{ document_version : "document_id"
+  evidence_link ||--o{ evidence_link : "conflict_with_link_id"
   document ||--o{ evidence_link : "document_id"
   document_version ||--o{ evidence_link : "document_version_id"
   document_version ||--o{ source_record : "document_version_id"
+  source_record ||--o{ source_record : "supersedes_source_id"
+  source_claim ||--o{ source_claim : "conflict_with_claim_id"
   source_record ||--o{ source_claim : "source_id"
   document ||--o{ document_chunk : "document_id"
+  partner_room ||--o{ document_chunk : "room_id"
   document_version ||--o{ document_chunk : "document_version_id"
 ```
 
@@ -1529,7 +1559,11 @@ erDiagram
     jsonb before
     jsonb after
   }
+  baseline_version ||--o{ report_snapshot : "baseline_version_id"
+  report_snapshot ||--o{ report_snapshot : "previous_snapshot_id"
   report_snapshot ||--o{ report_export : "snapshot_id"
+  document_version ||--o{ import_batch : "document_version_id"
+  source_record ||--o{ import_batch : "source_id"
   import_batch ||--o{ import_row : "batch_id"
 ```
 
@@ -1754,6 +1788,14 @@ erDiagram
 
 ```mermaid
 erDiagram
+  audit_checkpoint {
+    uuid id
+    uuid org_id
+    int8 chain_pos
+    varchar hash
+    int8 row_count
+    timestamptz created_at
+  }
   conflict_declaration {
     uuid id
     uuid org_id
@@ -1804,4 +1846,5 @@ erDiagram
   committee ||--o{ conflict_declaration : "committee_id"
   decision ||--o{ conflict_declaration : "decision_id"
   meeting ||--o{ conflict_declaration : "meeting_id"
+  decision ||--o{ operating_model_definition : "decision_id"
 ```
