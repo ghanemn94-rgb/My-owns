@@ -44,10 +44,9 @@ export interface MatrixInForce {
 
 export const iso = (d: Date | null | undefined): string | null => (d ? d.toISOString() : null);
 
-/** Decision amount (the money columns come from a computed-key helper, so they are read through this accessor). */
+/** Decision amount as a money DTO (decimal string + currency + unit scale), or null when no amount applies. */
 export function amountOf(d: DecisionRow): { amount: string; currency: string; unitScale: number } | null {
-  const r = d as unknown as { amountAmount: string | null; amountCurrency: string | null; amountUnitScale: number | null };
-  return r.amountAmount && r.amountCurrency && r.amountUnitScale ? { amount: String(r.amountAmount), currency: r.amountCurrency, unitScale: Number(r.amountUnitScale) } : null;
+  return d.amountAmount && d.amountCurrency && d.amountUnitScale ? { amount: String(d.amountAmount), currency: d.amountCurrency, unitScale: Number(d.amountUnitScale) } : null;
 }
 
 /**

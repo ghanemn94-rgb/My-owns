@@ -1,0 +1,874 @@
+{
+  "hub": {
+    "title": "Committee Hub",
+    "subtitle": "Committees and boards, meetings, decision papers, votes, actions and escalations. Every command is checked, computed and recorded by the server.",
+    "tabs": {
+      "label": "Committee Hub sections",
+      "overview": "Overview",
+      "meetings": "Meetings",
+      "decisions": "Decisions",
+      "actions": "Actions",
+      "escalations": "Escalations"
+    },
+    "metrics": {
+      "title": "At a glance",
+      "underReview": "Decisions under review",
+      "recommended": "Recommended — pending external authority",
+      "implementationPending": "Approved — implementation pending",
+      "openActions": "Open actions",
+      "overdueActions": "Overdue actions",
+      "escalations": "Escalations awaiting a decision"
+    },
+    "internalApprovals": "Approvals recorded here are internal electronic approvals — not legally certified signatures."
+  },
+  "common": {
+    "all": "All",
+    "yes": "Yes",
+    "no": "No",
+    "tbc": "Role — To be confirmed",
+    "notTabled": "Not tabled",
+    "committee": "Committee",
+    "meeting": "Meeting",
+    "decision": "Decision",
+    "requester": "Requester",
+    "classification": "Classification",
+    "status": "Status",
+    "filters": "Filters",
+    "clearFilters": "Clear filters",
+    "mine": "Mine only",
+    "none": "None",
+    "select": "Select…",
+    "meetingNumber": "Meeting #{number}",
+    "circulationNumber": "Circulation #{number}",
+    "policyReason": "Reason given by the server",
+    "remove": "Remove",
+    "view": "View",
+    "reason": "Reason",
+    "loadingList": "Loading options…"
+  },
+  "history": {
+    "title": "Governance history"
+  },
+  "audit": {
+    "committee_create": "Created the committee",
+    "committee_update_charter": "Saved a new charter version",
+    "charter_approve": "Approved the charter",
+    "committee_activate": "Activated the committee",
+    "committee_add_membership": "Added a seat",
+    "committee_end_membership": "Ended a seat's term",
+    "authority_matrix_create": "Drafted an authority matrix version",
+    "authority_matrix_approve": "Approved an authority matrix version",
+    "meeting_create": "Scheduled the meeting",
+    "meeting_publish_agenda": "Published the agenda",
+    "meeting_start_session": "Opened the session",
+    "meeting_close_session": "Closed the session",
+    "meeting_cancel": "Cancelled the meeting",
+    "meeting_record_attendance": "Recorded attendance",
+    "conflict_declare": "Recorded a conflict declaration",
+    "meeting_quorum_check": "Checked quorum",
+    "minutes_draft": "Drafted minutes",
+    "minutes_approve": "Approved minutes",
+    "meeting_freeze_pack": "Froze the meeting pack",
+    "agenda_request_create": "Requested an agenda item",
+    "agenda_request_screen": "Screened an agenda request",
+    "decision_draft": "Drafted the decision paper",
+    "decision_update": "Edited the draft paper",
+    "decision_submit": "Submitted the paper",
+    "decision_start_review": "Accepted the paper for review",
+    "decision_return_to_draft": "Returned the paper to draft",
+    "decision_recusal": "Recorded a recusal",
+    "decision_vote": "Cast a vote",
+    "decision_table": "Tabled the decision at a meeting",
+    "circulation_initiate": "Started a resolution by circulation",
+    "circulation_close": "Closed the circulation",
+    "decision_record_outcome": "Recorded the outcome",
+    "decision_record_approval": "Recorded the external approval",
+    "decision_record_rejection": "Recorded the external rejection",
+    "decision_defer": "Deferred the decision",
+    "decision_resume": "Resumed the decision",
+    "decision_supersede": "Superseded the decision",
+    "decision_start_implementation": "Started implementation tracking",
+    "decision_verify_implementation": "Verified implementation",
+    "escalation_raise": "Raised an escalation",
+    "escalation_resolve": "Resolved an escalation",
+    "action_create": "Created an action",
+    "action_update": "Updated an action",
+    "action_start": "Started an action",
+    "action_report_done": "Reported an action done",
+    "action_verify_closure": "Verified an action's closure",
+    "action_reject_closure": "Returned an action",
+    "action_cancel": "Cancelled an action"
+  },
+  "committees": {
+    "title": "Committees and boards",
+    "distinct": "The program committee, the NewCo board and the JV board are separate bodies: a committee decision is never presented as a board resolution.",
+    "search": "Search committees",
+    "empty": "No committees yet.",
+    "emptySearch": "No committees match the filters.",
+    "filterKind": "Body type",
+    "columns": {
+      "name": "Name",
+      "kind": "Body type",
+      "status": "Status",
+      "seats": "Active seats",
+      "matrix": "Authority matrix",
+      "charter": "Charter"
+    },
+    "charterState": "v{version} · approved v{approved}",
+    "charterUnapproved": "v{version} · not approved",
+    "matrixNone": "None in force",
+    "matrixUsable": "In force (v{version})",
+    "matrixNotUsable": "Not usable (v{version})",
+    "create": {
+      "action": "New committee",
+      "title": "Create a committee or board",
+      "confirm": "Create",
+      "kind": "Body type",
+      "kindHint": "The body type cannot be changed later.",
+      "name": "Name",
+      "purpose": "Purpose",
+      "effect": "The committee is created as a draft. Its charter must be approved (by someone other than the drafter) and the committee activated before meetings can be scheduled.",
+      "done": "Committee created."
+    }
+  },
+  "committee": {
+    "back": "Back to the Committee Hub",
+    "charter": {
+      "title": "Charter",
+      "version": "Version {version}",
+      "approvedVersion": "Approved version: {version}",
+      "notApproved": "Not yet approved",
+      "amendmentPending": "Version {version} is awaiting approval.",
+      "cadenceProposal": "Proposal — not a confirmed schedule",
+      "empty": "No charter text yet.",
+      "fields": {
+        "purpose": "Purpose",
+        "scope": "Scope",
+        "delegatedAuthority": "Delegated authority",
+        "exclusions": "Exclusions",
+        "reservedMatters": "Matters reserved for higher authorities",
+        "cadence": "Cadence",
+        "classification": "Information classification",
+        "minutesRetention": "Minutes retention",
+        "escalation": "Escalation",
+        "conflictsOfInterest": "Conflicts of interest",
+        "circulation": "Resolutions by circulation"
+      },
+      "versions": "Charter versions",
+      "versionsEmpty": "No versions recorded.",
+      "columns": {
+        "version": "Version",
+        "changedAt": "Saved",
+        "reason": "Reason",
+        "approved": "Approved"
+      },
+      "update": {
+        "label": "Amend charter",
+        "title": "Save a new charter version",
+        "confirm": "Save version",
+        "cadenceIsProposal": "Cadence is a proposal (not a confirmed schedule)",
+        "effect": "A new charter version is saved and kept in the history; it needs approval by someone other than its drafter.",
+        "done": "Charter version saved."
+      },
+      "approve": {
+        "label": "Approve charter",
+        "title": "Approve charter version {version}",
+        "confirm": "Approve",
+        "reference": "Approval reference",
+        "effect": "Approves charter version {version}. You cannot approve a version you drafted.",
+        "done": "Charter approved."
+      },
+      "activate": {
+        "label": "Activate committee",
+        "title": "Activate the committee",
+        "confirm": "Activate",
+        "effect": "The committee can hold meetings and circulations once active.",
+        "done": "Committee activated."
+      }
+    },
+    "seats": {
+      "title": "Seats and members",
+      "empty": "No seats yet.",
+      "columns": {
+        "seat": "Seat",
+        "person": "Person",
+        "capacity": "Capacity",
+        "voting": "Voting",
+        "term": "Term",
+        "state": "State"
+      },
+      "active": "Active",
+      "ended": "Ended",
+      "notStarted": "Not started",
+      "termFrom": "from {from}",
+      "termRange": "{from} – {to}",
+      "add": {
+        "label": "Add seat",
+        "title": "Add a committee seat",
+        "confirm": "Add seat",
+        "person": "Person",
+        "personHint": "Leave empty for a seat whose holder is not yet confirmed; it is shown as \"Role — To be confirmed\".",
+        "roleLabel": "Seat label",
+        "capacity": "Capacity",
+        "voting": "Voting seat",
+        "votingHint": "Only the chair, the sponsor and voting members can vote.",
+        "validFrom": "Term starts",
+        "validTo": "Term ends",
+        "effect": "The seat is added to the committee from the start date.",
+        "done": "Seat added."
+      },
+      "end": {
+        "label": "End term",
+        "labelFor": "End the term of {seat}",
+        "title": "End a seat's term",
+        "confirm": "End term",
+        "validTo": "Last day of the term",
+        "effect": "The seat stays in the history. Attendance and votes already recorded are unchanged; the end date cannot precede them.",
+        "done": "Term ended."
+      }
+    },
+    "matrix": {
+      "title": "Delegated authority matrix",
+      "none": "No approved authority matrix is in force. Production approval authority is not active: votes and outcomes are refused until one is approved.",
+      "inForce": "Version {version} in force from {date}",
+      "notUsable": "Version {version} cannot be used: {reason}",
+      "demoPolicy": "Demo policy (synthetic values)",
+      "quorumRule": "Quorum: at least {min} eligible voting members present, and at least {percent}% of eligible voting members.",
+      "threshold": "Approval threshold: {value}",
+      "tieRule": "Tie rule: {value}",
+      "thresholds": {
+        "simple_majority": "Simple majority",
+        "two_thirds": "Two thirds"
+      },
+      "ties": {
+        "chair_casting_vote": "Chair's casting vote",
+        "escalate": "Escalate"
+      },
+      "types": {
+        "title": "Decision types",
+        "key": "Key",
+        "name": "Decision type",
+        "limit": "Limit",
+        "within": "Committee may approve",
+        "escalateTo": "Otherwise decided by",
+        "noLimit": "No monetary limit"
+      },
+      "versions": "Matrix versions",
+      "versionsEmpty": "No matrix versions yet.",
+      "columns": {
+        "version": "Version",
+        "status": "Status",
+        "demo": "Policy",
+        "effective": "Effective",
+        "approvedAt": "Approved",
+        "reference": "Reference"
+      },
+      "real": "Loaded policy",
+      "approve": {
+        "label": "Approve",
+        "labelFor": "Approve matrix version {version}",
+        "title": "Approve authority matrix version {version}",
+        "confirm": "Approve and activate",
+        "reference": "Approval reference (resolution / record number)",
+        "effectiveFrom": "Effective from",
+        "effect": "Activates this version and supersedes the version in force. A Demo policy can only be approved in a demo project, and you cannot approve a version you drafted.",
+        "done": "Authority matrix approved."
+      },
+      "draft": {
+        "label": "Draft new version",
+        "title": "Draft an authority matrix version",
+        "confirm": "Save draft",
+        "policy": "Policy (JSON)",
+        "policyHint": "Paste the machine-readable policy described in docs/governance/authority-matrix.md. The server validates it; self-approval prohibition and recusal exclusion are fixed platform rules.",
+        "invalidJson": "The policy is not valid JSON.",
+        "effectiveFrom": "Effective from",
+        "effectiveTo": "Effective to",
+        "effect": "The draft has no effect until someone other than you approves it.",
+        "done": "Matrix version drafted."
+      }
+    },
+    "meetings": {
+      "title": "Meetings and circulations",
+      "viewAll": "All meetings of this committee"
+    }
+  },
+  "meetings": {
+    "title": "Meetings",
+    "subtitle": "Numbered meetings and resolutions by circulation, with their agendas, attendance, packs and minutes.",
+    "search": "Search meetings",
+    "empty": "No meetings yet.",
+    "emptySearch": "No meetings match the filters.",
+    "filterType": "Type",
+    "typeMeeting": "Meetings",
+    "typeCirculation": "Circulations",
+    "columns": {
+      "number": "No.",
+      "title": "Title",
+      "committee": "Committee",
+      "scheduledAt": "Date",
+      "status": "Status",
+      "pack": "Pack"
+    },
+    "packFrozen": "Frozen",
+    "packNone": "Not frozen",
+    "circulation": "Circulation",
+    "create": {
+      "action": "Schedule meeting",
+      "title": "Schedule a meeting",
+      "confirm": "Schedule",
+      "committee": "Committee",
+      "committeeHint": "Only active committees can hold meetings.",
+      "titleField": "Title",
+      "scheduledAt": "Date and time (Asia/Riyadh)",
+      "location": "Location",
+      "effect": "The meeting receives the next number of the committee and starts as Planned.",
+      "done": "Meeting #{number} scheduled."
+    }
+  },
+  "agenda": {
+    "title": "Agenda requests",
+    "subtitle": "Requests are screened by the secretariat before they join a numbered agenda.",
+    "search": "Search requests",
+    "empty": "No agenda requests.",
+    "emptySearch": "No requests match the filters.",
+    "columns": {
+      "title": "Item",
+      "kind": "Kind",
+      "decision": "Decision",
+      "meeting": "Meeting",
+      "number": "Agenda no.",
+      "requestedAt": "Requested",
+      "status": "Screening"
+    },
+    "request": {
+      "action": "Request agenda item",
+      "title": "Request an agenda item",
+      "confirm": "Send request",
+      "committee": "Committee",
+      "itemTitle": "Item title",
+      "kind": "Kind",
+      "decision": "Decision paper",
+      "meeting": "Preferred meeting",
+      "effect": "The secretariat screens the request (accept, return or defer) before it is numbered on an agenda.",
+      "done": "Agenda request sent."
+    },
+    "screen": {
+      "action": "Screen",
+      "labelFor": "Screen request: {title}",
+      "title": "Screen an agenda request",
+      "confirm": "Record screening",
+      "outcome": "Outcome",
+      "accept": "Accept onto the agenda",
+      "return": "Return to the requester",
+      "defer": "Defer",
+      "meeting": "Meeting",
+      "effect": "Accepted items receive the next agenda number; a linked decision paper is tabled at that meeting. You cannot screen a request you made.",
+      "reasonRequired": "A reason is required to return or defer a request.",
+      "done": "Screening recorded."
+    },
+    "agendaTitle": "Numbered agenda",
+    "agendaEmpty": "No items accepted onto this agenda yet.",
+    "pending": "Requests for this meeting awaiting screening"
+  },
+  "meeting": {
+    "back": "Back to meetings",
+    "scheduledAt": "Date",
+    "location": "Location",
+    "responseDeadline": "Response deadline",
+    "committee": "Committee",
+    "cmd": {
+      "publish": {
+        "label": "Publish agenda",
+        "title": "Publish the agenda of meeting #{number}",
+        "effect": "Members see the numbered agenda. At least one accepted item is required.",
+        "done": "Agenda published."
+      },
+      "freeze": {
+        "label": "Freeze pack",
+        "title": "Freeze the meeting pack",
+        "effect": "The agenda, decision papers, open actions and quorum are frozen into an immutable, hashed snapshot. Later changes do not alter it; freezing again creates a new, linked version.",
+        "done": "Pack frozen."
+      },
+      "start": {
+        "label": "Open session",
+        "title": "Open the session of meeting #{number}",
+        "effect": "Attendance, conflict declarations and votes can be recorded while the session is open.",
+        "done": "Session opened."
+      },
+      "close": {
+        "label": "Close session",
+        "title": "Close the session",
+        "effect": "Voting in the meeting ends; outcomes can still be recorded from the votes cast.",
+        "done": "Session closed."
+      },
+      "cancel": {
+        "label": "Cancel meeting",
+        "title": "Cancel meeting #{number}",
+        "effect": "The meeting is cancelled. Decisions tabled at it must be tabled again.",
+        "done": "Meeting cancelled."
+      },
+      "quorum": {
+        "label": "Check quorum",
+        "title": "Check quorum",
+        "effect": "The server computes quorum from the recorded attendance and the approved authority matrix; the result is stored with the meeting.",
+        "done": "Quorum checked."
+      },
+      "draftMinutes": {
+        "label": "Draft minutes",
+        "correct": "Correct minutes",
+        "title": "Minutes of meeting #{number}",
+        "text": "Minutes",
+        "reason": "Reason for the correction",
+        "reasonHint": "Required when correcting approved minutes — the approved version stays in the history.",
+        "effect": "The minutes are saved as a draft version for approval by someone other than you.",
+        "done": "Minutes saved."
+      },
+      "approveMinutes": {
+        "label": "Approve minutes",
+        "title": "Approve the minutes of meeting #{number}",
+        "effect": "Approved minutes are immutable and attendance is frozen; corrections create a new version. You cannot approve minutes you drafted.",
+        "done": "Minutes approved."
+      }
+    },
+    "attendance": {
+      "title": "Attendance",
+      "empty": "No committee seats.",
+      "notRecorded": "Not recorded",
+      "record": "Record attendance",
+      "recordTitle": "Record attendance",
+      "confirm": "Save attendance",
+      "effect": "Attendance can be corrected until the session closes. Only seats active on the meeting date can attend.",
+      "done": "Attendance saved.",
+      "columns": {
+        "seat": "Seat",
+        "person": "Person",
+        "capacity": "Capacity",
+        "voting": "Voting",
+        "status": "Attendance"
+      }
+    },
+    "conflicts": {
+      "title": "Conflict declarations and recusals",
+      "empty": "No declarations recorded.",
+      "declare": "Declare",
+      "declareTitle": "Record a conflict declaration",
+      "confirm": "Record declaration",
+      "member": "Member",
+      "self": "Myself",
+      "declaration": "Declaration",
+      "decision": "Agenda item (decision)",
+      "decisionHint": "Required for a recusal.",
+      "description": "Details",
+      "effect": "Declarations are append-only. A recusal excludes the member from voting and from quorum on that decision.",
+      "done": "Declaration recorded.",
+      "types": {
+        "no_conflict": "No conflict",
+        "interest_declared": "Interest declared",
+        "recused": "Recused"
+      },
+      "columns": {
+        "member": "Member",
+        "declaration": "Declaration",
+        "decision": "Decision",
+        "details": "Details",
+        "at": "Recorded"
+      }
+    },
+    "quorum": {
+      "title": "Quorum",
+      "notChecked": "Not checked yet.",
+      "met": "Quorum met",
+      "notMet": "Quorum not met",
+      "detail": "{present} of {eligible} eligible voting members present (required: {required}) on {date}.",
+      "checkedAt": "Checked {at}"
+    },
+    "minutes": {
+      "title": "Minutes",
+      "empty": "No minutes drafted yet.",
+      "approvedAt": "Approved {at}"
+    },
+    "packs": {
+      "title": "Frozen meeting packs",
+      "empty": "No pack frozen yet.",
+      "columns": {
+        "title": "Pack",
+        "frozenAt": "Frozen",
+        "classification": "Classification",
+        "hash": "Content hash"
+      },
+      "current": "Current",
+      "view": "View",
+      "viewFor": "View pack {title}",
+      "agenda": "Agenda",
+      "papers": "Decision papers",
+      "openActions": "Open actions",
+      "quorum": "Quorum at freezing",
+      "noQuorum": "Not recorded at freezing",
+      "demoData": "Contains Demo data",
+      "previous": "Replaces an earlier version"
+    },
+    "decisions": {
+      "title": "Decisions tabled",
+      "empty": "No decisions tabled at this meeting."
+    }
+  },
+  "decisions": {
+    "title": "Decisions",
+    "subtitle": "Decision papers from draft to verified implementation. Outcomes are computed by the server from quorum, votes and the approved authority matrix.",
+    "search": "Search by code or title",
+    "empty": "No decisions yet.",
+    "emptySearch": "No decisions match the filters.",
+    "filterAuthority": "Authority",
+    "columns": {
+      "code": "Code",
+      "title": "Title",
+      "status": "Status",
+      "authority": "Authority",
+      "requester": "Requester",
+      "latestSafeDate": "Latest safe date",
+      "updatedAt": "Updated"
+    },
+    "create": {
+      "action": "New decision paper",
+      "title": "Draft a decision paper",
+      "confirm": "Create draft",
+      "effect": "The paper is saved as a draft with you as the requester. It can be submitted once every required field is complete.",
+      "done": "Draft {code} created."
+    }
+  },
+  "paper": {
+    "title": "Decision paper",
+    "titleField": "Title",
+    "decisionType": "Decision type",
+    "decisionTypeHint": "From the committee's authority matrix. A type that is not in the approved matrix is treated as outside the committee's authority.",
+    "issue": "Issue",
+    "whyNow": "Why a decision is needed now",
+    "alternatives": "Alternatives",
+    "alternativeTitle": "Alternative {n}",
+    "alternativeSummary": "Summary of alternative {n}",
+    "addAlternative": "Add alternative",
+    "removeAlternative": "Remove alternative {n}",
+    "recommendation": "Recommendation",
+    "impacts": "Impacts",
+    "impactsHint": "State each impact — write \"None identified\" rather than leaving one out.",
+    "impactFinancial": "Financial impact",
+    "impactOperational": "Operational impact",
+    "impactSchedule": "Schedule impact",
+    "amount": "Amount",
+    "amountValue": "Amount (decimal)",
+    "currency": "Currency",
+    "unitScale": "Unit",
+    "units": {
+      "1": "Units",
+      "1000": "Thousands",
+      "1000000": "Millions"
+    },
+    "amountInvalid": "Enter a positive decimal amount with at most 4 decimal places.",
+    "risks": "Risks",
+    "dependencies": "Dependencies",
+    "latestSafeDate": "Latest safe decision date",
+    "requiredAuthority": "Required approving authority",
+    "requester": "Requester",
+    "missingTitle": "The paper cannot be submitted yet",
+    "missingHint": "Complete these fields:",
+    "missing": {
+      "issue": "Issue",
+      "whyNow": "Why a decision is needed now",
+      "alternatives": "Alternatives",
+      "recommendation": "Recommendation",
+      "impacts_financial": "Financial impact",
+      "impacts_operational": "Operational impact",
+      "impacts_schedule": "Schedule impact",
+      "risks": "Risks",
+      "dependencies": "Dependencies",
+      "latestSafeDate": "Latest safe decision date",
+      "requiredAuthority": "Required approving authority",
+      "decisionTypeKey": "Decision type",
+      "requesterUserId": "Requester"
+    },
+    "complete": "The paper is complete and can be submitted.",
+    "edit": "Edit paper",
+    "editTitle": "Edit draft paper {code}",
+    "save": "Save paper",
+    "saved": "Paper saved.",
+    "notInMatrix": "{key} (not in the approved matrix)"
+  },
+  "decision": {
+    "back": "Back to decisions",
+    "tabledAt": "Tabled at",
+    "round": "Voting round {round}",
+    "recommended": {
+      "title": "Recommended — pending external authority",
+      "body": "The committee supports this decision, but it is outside the committee's delegated authority. This is not an approval: {body} must decide, and dependent gates stay blocked until that decision is recorded with its reference.",
+      "escalation": "Escalation {code}"
+    },
+    "facts": {
+      "escalatedTo": "Decided by",
+      "externalReference": "External authority reference",
+      "authorityReason": "Authority assessment",
+      "outcomeRecordedAt": "Outcome recorded",
+      "viaCirculation": "Decided by circulation",
+      "supersededBy": "Superseded by",
+      "implementationStartedAt": "Implementation tracking started",
+      "implementationVerifiedAt": "Implementation verified",
+      "implementationEvidence": "Implementation evidence"
+    },
+    "lifecycle": {
+      "title": "Lifecycle",
+      "approvalNotImplementation": "Approval is not implementation: an approved decision stays open until its implementation is verified with evidence."
+    },
+    "tally": {
+      "title": "Recorded outcome",
+      "counts": "{approve} approve · {reject} reject · {abstain} abstain",
+      "disregarded": "{count} vote(s) disregarded (recused members).",
+      "quorum": "Quorum"
+    },
+    "votes": {
+      "title": "Votes",
+      "empty": "No votes recorded.",
+      "immutable": "Votes are final and are kept unchanged even when a membership ends or the matrix changes.",
+      "columns": {
+        "member": "Member",
+        "capacity": "Capacity",
+        "choice": "Vote",
+        "round": "Round",
+        "via": "How",
+        "castAt": "Cast",
+        "comment": "Comment"
+      },
+      "viaCirculation": "Circulation",
+      "inMeeting": "Meeting"
+    },
+    "recusals": {
+      "title": "Recusals",
+      "empty": "No recusals recorded."
+    },
+    "actions": {
+      "title": "Implementation actions",
+      "empty": "No actions linked to this decision yet.",
+      "viewAll": "Open in the actions list"
+    },
+    "history": "Status history",
+    "cmd": {
+      "submit": {
+        "label": "Submit",
+        "title": "Submit {code} for review",
+        "effect": "The paper is sent to the secretariat. The server refuses an incomplete paper and lists the missing fields.",
+        "done": "Paper submitted."
+      },
+      "startReview": {
+        "label": "Start review",
+        "title": "Accept {code} for deliberation",
+        "meeting": "Table at meeting",
+        "meetingKeep": "Keep the current tabling",
+        "effect": "The decision is opened for deliberation and voting. You cannot review a paper you requested.",
+        "done": "Review started."
+      },
+      "return": {
+        "label": "Return to draft",
+        "title": "Return {code} to draft",
+        "effect": "The paper goes back to the requester with your reasons. Votes already cast no longer count (a new voting round opens).",
+        "done": "Paper returned to draft."
+      },
+      "vote": {
+        "label": "Vote",
+        "title": "Vote on {code}",
+        "choice": "Your vote",
+        "comment": "Comment",
+        "effect": "Votes are final. The server checks that you are an active voting member recorded present, that quorum is present, that you are not recused and that you did not request this decision.",
+        "requesterHint": "You requested this decision: the server refuses your vote (self-approval is prohibited).",
+        "recusedHint": "You are recused from this decision: the server refuses your vote.",
+        "alreadyVoted": "You already voted in this round ({choice}).",
+        "done": "Vote recorded."
+      },
+      "recordOutcome": {
+        "label": "Record outcome",
+        "title": "Record the outcome of {code}",
+        "effect1": "The server computes quorum, the tally and the authority check from the recorded attendance, the votes and the approved authority matrix.",
+        "effect2": "Within the committee's mandate a passing vote becomes Approved; outside it, the decision becomes Recommended — pending external authority, and an escalation is raised.",
+        "done": "Outcome recorded: {status}."
+      },
+      "external": {
+        "label": "Record external decision",
+        "title": "Record the external authority's decision on {code}",
+        "outcome": "Decision of the external authority",
+        "reference": "Reference (resolution / record number)",
+        "referenceHint": "Required. The person who recorded the recommendation cannot record the external decision.",
+        "effect": "Records the decision of {body} with its reference and closes the escalation.",
+        "done": "External decision recorded."
+      },
+      "defer": {
+        "label": "Defer",
+        "title": "Defer {code}",
+        "revisitDate": "Revisit date",
+        "effect": "Consideration is postponed; resuming it opens a new voting round.",
+        "done": "Decision deferred."
+      },
+      "resume": {
+        "label": "Resume",
+        "title": "Resume {code}",
+        "effect": "The decision returns to review in a new voting round; votes of earlier rounds stay in the history but no longer count.",
+        "done": "Decision resumed."
+      },
+      "circulate": {
+        "label": "Circulate",
+        "title": "Resolve {code} by circulation",
+        "deadline": "Response deadline",
+        "effect": "A frozen circulation packet is issued. Quorum is counted from the voting members who respond; the same thresholds apply.",
+        "done": "Circulation started."
+      },
+      "recuse": {
+        "label": "Declare recusal",
+        "title": "Declare that you are recused from {code}",
+        "effect": "You will not vote and will not count toward quorum for this decision. A recusal cannot be withdrawn.",
+        "done": "Recusal recorded."
+      },
+      "supersede": {
+        "label": "Supersede",
+        "title": "Supersede {code}",
+        "by": "Superseding decision",
+        "byHint": "Must be an approved decision of this project.",
+        "effect": "The decision becomes read-only and links to the decision that replaces it.",
+        "done": "Decision superseded."
+      },
+      "startImplementation": {
+        "label": "Start implementation",
+        "title": "Start implementation tracking of {code}",
+        "effect": "Implementation tracking starts. At least one action with an owner and a due date must be linked.",
+        "done": "Implementation tracking started."
+      },
+      "verifyImplementation": {
+        "label": "Verify implementation",
+        "title": "Verify the implementation of {code}",
+        "evidence": "Evidence of implementation",
+        "effect": "Marks the decision Implemented — verified. All linked actions must be verified closed; you cannot be the person who started tracking or an action owner.",
+        "done": "Implementation verified."
+      },
+      "addAction": "Add action"
+    }
+  },
+  "actions": {
+    "title": "Actions",
+    "subtitle": "Committee actions with one accountable owner and a due date. Closure needs evidence and a verifier who is not the owner.",
+    "search": "Search actions",
+    "empty": "No actions yet.",
+    "emptySearch": "No actions match the filters.",
+    "overdueOnly": "Overdue only",
+    "overdue": "Overdue",
+    "columns": {
+      "code": "Code",
+      "title": "Action",
+      "owner": "Owner",
+      "dueDate": "Due",
+      "status": "Status",
+      "linked": "Linked to",
+      "commands": "Commands"
+    },
+    "evidence": "Evidence",
+    "create": {
+      "action": "New action",
+      "title": "Create an action",
+      "confirm": "Create action",
+      "titleField": "Action",
+      "owner": "Owner",
+      "ownerHint": "One accountable owner, who must be an active member of the project.",
+      "dueDate": "Due date",
+      "decision": "Decision",
+      "meeting": "Meeting",
+      "effect": "The owner reports the action done with evidence; a different person verifies its closure.",
+      "done": "Action {code} created."
+    },
+    "cmd": {
+      "start": {
+        "label": "Start",
+        "title": "Start {code}",
+        "effect": "Marks the action in progress.",
+        "done": "Action started."
+      },
+      "reportDone": {
+        "label": "Report done",
+        "title": "Report {code} done",
+        "evidence": "Closure evidence",
+        "effect": "The action waits for verification by someone other than you.",
+        "done": "Reported done."
+      },
+      "verify": {
+        "label": "Verify closure",
+        "title": "Verify the closure of {code}",
+        "effect": "Closes the action as verified. The owner and the person who reported it done cannot verify it.",
+        "done": "Closure verified."
+      },
+      "reject": {
+        "label": "Return",
+        "title": "Return {code} to the owner",
+        "effect": "The closure evidence is not sufficient; the action goes back in progress.",
+        "done": "Action returned."
+      },
+      "cancel": {
+        "label": "Cancel",
+        "title": "Cancel {code}",
+        "effect": "A cancelled action never counts as complete.",
+        "done": "Action cancelled."
+      },
+      "edit": {
+        "label": "Re-date or reassign",
+        "title": "Re-date or reassign {code}",
+        "effect": "The change is versioned and recorded in the history.",
+        "done": "Action updated."
+      }
+    }
+  },
+  "escalations": {
+    "title": "Escalations",
+    "subtitle": "Each escalation states the requested action, the decision deadline and the options.",
+    "search": "Search escalations",
+    "empty": "No escalations.",
+    "emptySearch": "No escalations match the filters.",
+    "filterSource": "Source",
+    "system": "Raised by the system",
+    "columns": {
+      "code": "Code",
+      "title": "Escalation",
+      "requestedAction": "Requested action",
+      "deadline": "Decision deadline",
+      "options": "Options",
+      "target": "Escalated to",
+      "status": "Status",
+      "commands": "Commands"
+    },
+    "sources": {
+      "decision": "Decision",
+      "issue": "Issue",
+      "risk": "Risk",
+      "action_item": "Action",
+      "meeting": "Meeting",
+      "gate_definition": "Gate",
+      "other": "Other"
+    },
+    "raise": {
+      "action": "Raise escalation",
+      "title": "Raise an escalation",
+      "confirm": "Raise",
+      "titleField": "Title",
+      "sourceType": "About",
+      "decision": "Decision",
+      "requestedAction": "Requested action",
+      "deadline": "Decision deadline",
+      "options": "Options",
+      "optionTitle": "Option {n}",
+      "optionImpact": "Impact of option {n}",
+      "addOption": "Add option",
+      "removeOption": "Remove option {n}",
+      "target": "Escalated to",
+      "effect": "The escalation appears in the committee's list until it is resolved.",
+      "done": "Escalation {code} raised."
+    },
+    "resolve": {
+      "label": "Resolve",
+      "title": "Resolve {code}",
+      "decision": "Resolving decision",
+      "effect": "Closes the escalation. You cannot resolve an escalation you raised.",
+      "done": "Escalation resolved."
+    }
+  }
+}
