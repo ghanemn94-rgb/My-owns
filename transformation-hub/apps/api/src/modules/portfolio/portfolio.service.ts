@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, asc, count, desc, eq, ilike, inArray, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import { schema } from '@hub/db';
+import type { PgColumn } from 'drizzle-orm/pg-core';
 import {
   POLICY_MATRIX,
   ProjectTemplateDefinition,
@@ -71,6 +72,32 @@ const ACTIVITY_ENTITY_PERMISSION: Record<string, string> = {
   closing: 'jv.deal.read',
   closing_condition: 'jv.deal.read',
 };
+
+/**
+ * Entity tables whose rows carry their own classification and/or room (SEC-P1-03): an activity event about such a record is
+ * shown only when the caller can see the record itself (clearance + room grant), for auditors too.
+ */
+const CLASSIFIED_ENTITIES: { type: string; classification: boolean; room: boolean }[] = [
+  { type: 'agreement', classification: true, room: false },
+  { type: 'budget_line', classification: true, room: false },
+  { type: 'committee', classification: true, room: false },
+  { type: 'deal_scenario', classification: true, room: false },
+  { type: 'decision', classification: true, room: false },
+  { type: 'diligence_finding', classification: true, room: false },
+  { type: 'diligence_request', classification: true, room: true },
+  { type: 'document', classification: true, room: true },
+  { type: 'evidence_link', classification: false, room: true },
+  { type: 'financial_model_version', classification: true, room: false },
+  { type: 'financial_snapshot', classification: true, room: false },
+  { type: 'intercompany_reconciliation', classification: true, room: false },
+  { type: 'negotiation_issue', classification: true, room: false },
+  { type: 'partner', classification: true, room: false },
+  { type: 'partner_room', classification: true, room: false },
+  { type: 'perimeter_item', classification: true, room: false },
+  { type: 'report_snapshot', classification: true, room: false },
+  { type: 'room_grant', classification: false, room: true },
+  { type: 'source_record', classification: true, room: false },
+];
 
 @Injectable()
 export class PortfolioService {
@@ -555,6 +582,19 @@ export class PortfolioService {
     return { version: res[0].version };
   }
 
+  /** SEC-P1-03: events about classified / room-bound records are visible only when the record itself is visible. */
+  private activityVisibility(ctx: RequestContext, projectId: string): SQL {
+    const ae = schema.auditEvent;
+    const parts: SQL[] = CLASSIFIED_ENTITIES.map((t) => {
+      const vis = this.policy.visibilitySql(ctx, projectId, { classification: t.classification ? col('x.classification') : undefined, room: t.room ? col('x.room_id') : undefined });
+      return sql`(${ae.entityType} <> ${t.type} or exists (select 1 from ${sql.identifier(t.type)} x where x.id = ${ae.entityId} and ${vis}))`;
+    });
+    // document versions inherit the document's classification; their room is derived from it
+    const dv = this.policy.visibilitySql(ctx, projectId, { classification: col('d.classification'), room: col('x.room_id') });
+    parts.push(sql`(${ae.entityType} <> 'document_version' or exists (select 1 from document_version x join document d on d.id = x.document_id where x.id = ${ae.entityId} and ${dv}))`);
+    return sql.join(parts, sql` and `);
+  }
+
   async activity(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; entityType?: string; entityId?: string }) {
     const tx = this.db.tx();
     const canAudit = this.policy.canInProject(ctx, 'audit.event.read', projectId);
@@ -569,6 +609,7 @@ export class PortfolioService {
       if (visibleTypes.length === 0) return { items: [], page: q.page, pageSize: q.pageSize, total: 0 };
       conds.push(inArray(schema.auditEvent.entityType, visibleTypes));
     }
+    conds.push(this.activityVisibility(ctx, projectId));
     const where = and(...conds);
     const [{ total }] = (await tx.select({ total: count() }).from(schema.auditEvent).where(where)) as [{ total: number }];
     const rows = await tx
@@ -597,6 +638,10 @@ export class PortfolioService {
       total: Number(total),
     };
   }
+}
+
+function col(expr: string): PgColumn {
+  return sql.raw(expr) as unknown as PgColumn;
 }
 
 function pick(o: Record<string, unknown>, keys: string[]) {

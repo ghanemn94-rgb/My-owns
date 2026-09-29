@@ -10,6 +10,8 @@ import type { AddressInfo } from 'node:net';
 export interface FakeIdpUser {
   sub: string;
   email?: string;
+  /** Defaults to true when an email is present. */
+  emailVerified?: boolean;
 }
 
 export class FakeOidcIdp {
@@ -113,7 +115,7 @@ export class FakeOidcIdp {
       }
       this.codes.delete(form.get('code')!); // single use
       const now = Math.floor(Date.now() / 1000);
-      const claims: Record<string, unknown> = { iss: this.issuer, sub: entry.user.sub, aud: this.clientId, iat: now, exp: now + 300, nonce: entry.nonce, ...(entry.user.email ? { email: entry.user.email, email_verified: true } : {}) };
+      const claims: Record<string, unknown> = { iss: this.issuer, sub: entry.user.sub, aud: this.clientId, iat: now, exp: now + 300, nonce: entry.nonce, ...(entry.user.email ? { email: entry.user.email, email_verified: entry.user.emailVerified ?? true } : {}) };
       const t = this.tamperNextToken;
       this.tamperNextToken = null;
       if (t === 'nonce') claims.nonce = 'attacker-nonce';

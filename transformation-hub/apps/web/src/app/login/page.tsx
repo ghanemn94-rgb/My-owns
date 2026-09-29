@@ -18,12 +18,7 @@ import { useI18n } from '@/i18n/provider';
 import { LOCALE_COOKIE } from '@/i18n/config';
 import { api, readCookie } from '@/lib/api';
 import { qk } from '@/lib/queries';
-
-/** Only same-site relative paths are accepted as a post-login destination (no open redirect). */
-function safeNext(next: string | null): string {
-  if (!next || !next.startsWith('/') || next.startsWith('//') || next.startsWith('/\\') || next.startsWith('/login')) return '/';
-  return next;
-}
+import { safeNext } from '@/lib/safe-next';
 
 function LoginContent() {
   const { t, tStatus, formatList } = useI18n();
