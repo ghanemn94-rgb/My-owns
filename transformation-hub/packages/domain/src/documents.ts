@@ -249,6 +249,8 @@ export const EVIDENCE_TARGET_TYPES = [
   'financial_snapshot',
   'post_close_obligation',
   'closing_deliverable',
+  'cutover_plan',
+  'consent',
 ] as const;
 export type EvidenceTargetType = (typeof EVIDENCE_TARGET_TYPES)[number];
 
@@ -272,6 +274,8 @@ export const EVIDENCE_TARGET_PERMISSION: Record<EvidenceTargetType, string> = {
   financial_snapshot: 'finance.budget.manage',
   post_close_obligation: 'jv.closing_checklist.manage',
   closing_deliverable: 'jv.closing_checklist.manage',
+  cutover_plan: 'readiness.cutover.manage',
+  consent: 'carveout.consent.manage',
 };
 
 export type EvidenceLinkStatus = 'active' | 'superseded' | 'conflicting' | 'rejected';

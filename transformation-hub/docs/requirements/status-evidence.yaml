@@ -23,13 +23,13 @@ REQ-PHS-019: {status: Implemented, evidence: [docs/PRD.md, docs/requirements/, d
 REQ-PHS-020: {status: Implemented, evidence: [docs/governance/, docs/architecture/, docs/security/]}
 REQ-PHS-025: {status: Implemented, evidence: [docs/DELIVERY_STATUS.md]}
 REQ-ENT-001: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts "AT-02"]}
-REQ-ENT-003: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts (NewCo legal entity linked via project_entity)]}
+REQ-ENT-003: {status: Tested, evidence: ['P1 traceability-p1.spec.ts "one entity is linked to two projects without being duplicated"', 'P1 projects-templates-audit.spec.ts (NewCo legal entity linked via project_entity)']}
 REQ-ENT-005: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts "AT-02"]}
 REQ-ENT-006: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts "creates ... through the API"; "only authorized roles can create projects"]}
 REQ-ENT-008: {status: Implemented, evidence: [packages/db/src/templates-loader.ts (published versions immutable), project.template_version_id pin]}
 REQ-ENT-011: {status: Tested, evidence: [P1 isolation-and-auth.spec.ts, P1 architecture-hardening.spec.ts "ARCH-02"]}
 REQ-WS-001: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts (12 workstreams), validate-templates.mjs]}
-REQ-WS-002: {status: Tested, evidence: [validate-templates.mjs]}
+REQ-WS-002: {status: Implemented, evidence: ['packages/db/scripts/validate-templates.mjs (>=1 proposed activity per workstream; per-element minimum-scope coverage is NOT yet checked — QA-P1-10)']}
 REQ-WS-004: {status: Tested, evidence: [validate-templates.mjs (113 activities), P1 projects-templates-audit.spec.ts (>=80)]}
 REQ-WS-005: {status: Tested, evidence: [validate-templates.mjs (field set)]}
 REQ-WS-006: {status: Tested, evidence: [validate-templates.mjs (no dates/amounts), P1 projects-templates-audit.spec.ts (no planned dates)]}
@@ -47,8 +47,8 @@ REQ-DAT-003: {status: Tested, evidence: [D rules.test.ts "AT-29", numeric(20,4)+
 REQ-DAT-005: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts "AT-16"]}
 REQ-DAT-006: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts "Audit trail", P1 architecture-hardening.spec.ts]}
 REQ-DAT-008: {status: Tested, evidence: [ADR-0014, P1 architecture-hardening.spec.ts (TRUNCATE, checkpoints, actor binding)]}
-REQ-DAT-009: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts "AT-27 (DB level)"]}
-REQ-DAT-015: {status: Tested, evidence: [/api/v1 base path, P1 list tests (pagination)]}
+REQ-DAT-009: {status: Tested, evidence: ['P1 traceability-p1.spec.ts "a soft-deleted document disappears from the list, the total and the detail view"', 'documents at-27-legal-hold.spec.ts "it is soft, audited and invalidates the index"', 'AT variance: tasks are never deleted (cancelled status, kept visible); soft deletion applies to documents — recorded in the P1 gate report']}
+REQ-DAT-015: {status: Tested, evidence: ['P1 qa-p1-sec016-injection.spec.ts "REQ-DAT-015: pageSize > 100, page < 1 and non-numeric paging are rejected"', /api/v1 base path]}
 REQ-DAT-017: {status: Tested, evidence: [P1 isolation-and-auth.spec.ts "validation errors are 400"; errors.ts redacts SQL]}
 REQ-SEC-001: {status: Tested, evidence: [packages/domain/src/policy/policy-matrix.json, D policy.test.ts]}
 REQ-SEC-002: {status: Tested, evidence: [P1 isolation-and-auth.spec.ts "platform admin ... no project content", D policy.test.ts]}
@@ -67,4 +67,5 @@ REQ-PLT-004: {status: Implemented, evidence: [demo personas are role labels with
 REQ-PLT-006: {status: Implemented, evidence: [auth config returns honest OIDC status; docs/DELIVERY_STATUS.md vocabulary]}
 REQ-PLT-007: {status: Implemented, evidence: [no external channels implemented; DeliveryService ledger]}
 REQ-DEP-010: {status: Implemented, evidence: [apps/api/src/platform/config.ts production validation]}
-REQ-ARC-005: {status: Tested, evidence: [P1 oidc-sso.spec.ts (in-process test IdP: PKCE, state, nonce, signed ID token, no auto-provisioning, production config rejects demo login); Mobily IdP Not configured (Q-04)]}
+REQ-ARC-005: {status: Implemented, evidence: ['apps/api/src/modules/documents/storage/local-fs.storage.ts (local filesystem adapter behind storage.provider.ts, exercised by the documents tests)', 'S3-compatible adapter Not configured (s3-compatible.storage.ts refuses with storage.not_configured; P7)', 'shared adapter contract test not yet written (QA-P1-02)']}
+REQ-ARC-006: {status: Tested, evidence: ['P1 oidc-sso.spec.ts "OIDC SSO (Authorization Code + PKCE)" — in-process test IdP; PKCE, state, nonce, signed ID token, no auto-provisioning', 'P1 oidc-sso.spec.ts "demo (development) login and unsafe settings are rejected in production configuration"', 'Mobily IdP Not configured (Q-04); SAML via IdP gateway not implemented']}

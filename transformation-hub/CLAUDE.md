@@ -103,10 +103,14 @@ pnpm test                        # unit + integration tests (needs PostgreSQL; r
 #   TEST_DATABASE_URL=postgres://hub_app:hub_dev_only@127.0.0.1:5432/hub_test_<you> \
 #   TEST_DATABASE_MIGRATION_URL=postgres://hub_owner:hub_dev_only@127.0.0.1:5432/hub_test_<you> pnpm --filter @hub/api test
 #   (create it with: HUB_DATABASES=hub_test_<you> bash scripts/dev/pg-init-roles.sh)
-python3 scripts/requirements/render_traceability.py   # regenerate docs/requirements/requirements-traceability.md
+python3 scripts/requirements/apply_status.py --check  # validate status-evidence.yaml (cited tests/titles exist)
+python3 scripts/requirements/apply_status.py          # apply statuses to requirements.yaml + re-render the matrix
 pnpm test:e2e                    # Playwright E2E (needs running stack)
 pnpm typecheck && pnpm lint
 ```
+`test`, `test:*`, `typecheck`, `lint` and `db:*` build the workspace packages (`dist/` types) first, so they work on a
+fresh checkout. E2E needs the API started with `HUB_RATE_LIMIT_PUBLIC_PER_MINUTE=1000` and a production web build
+(`env -u NODE_ENV pnpm --filter @hub/web build`; `HUB_API_URL` is read at build time) — see e2e/playwright.config.ts.
 (Exact scripts are defined in `package.json`; if this list and `package.json` disagree, `package.json` wins and
 this file must be corrected.)
 

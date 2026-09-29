@@ -61,6 +61,8 @@ const ACTIVITY_ENTITY_PERMISSION: Record<string, string> = {
   criterion_assessment: 'gates.gate.read',
   waiver: 'gates.gate.read',
   perimeter_item: 'carveout.register.read',
+  perimeter_version: 'carveout.register.read',
+  perimeter_category_review: 'carveout.register.read',
   agreement: 'carveout.register.read',
   consent: 'carveout.register.read',
   legal_entity: 'newco.register.read',
@@ -82,6 +84,7 @@ const CLASSIFIED_ENTITIES: { type: string; classification: boolean; room: boolea
   { type: 'agreement', classification: true, room: false },
   { type: 'budget_line', classification: true, room: false },
   { type: 'committee', classification: true, room: false },
+  { type: 'consent', classification: true, room: false },
   { type: 'deal_scenario', classification: true, room: false },
   { type: 'decision', classification: true, room: false },
   { type: 'diligence_finding', classification: true, room: false },
@@ -95,9 +98,11 @@ const CLASSIFIED_ENTITIES: { type: string; classification: boolean; room: boolea
   { type: 'partner', classification: true, room: false },
   { type: 'partner_room', classification: true, room: false },
   { type: 'perimeter_item', classification: true, room: false },
+  { type: 'regulatory_requirement', classification: true, room: false },
   { type: 'report_snapshot', classification: true, room: false },
   { type: 'room_grant', classification: false, room: true },
   { type: 'source_record', classification: true, room: false },
+  { type: 'tsa_service', classification: true, room: false },
 ];
 
 @Injectable()
@@ -602,7 +607,7 @@ export class PortfolioService {
   /**
    * Setup gaps computed from CURRENT records (QA-P1-07), never a snapshot taken at creation:
    * committee (none active), authority_matrix (none approved and in date), baseline (none approved), owners (a workstream
-   * without an accountable lead), perimeter (carve-out templates only: no perimeter items recorded yet).
+   * without an accountable lead), perimeter (carve-out templates only: no APPROVED perimeter version yet).
    * Dates are compared with TODAY IN THE PROJECT TIMEZONE (never the database's UTC current_date).
    */
   private async setupGaps(projectId: string, templateKind: string, today: string): Promise<string[]> {
@@ -612,7 +617,7 @@ export class PortfolioService {
                        and (effective_from is null or effective_from <= ${today}::date) and (effective_to is null or effective_to >= ${today}::date)) as matrix,
              exists (select 1 from baseline_version where project_id = ${projectId} and status = 'approved') as baseline,
              not exists (select 1 from workstream where project_id = ${projectId} and lead_user_id is null) as owners,
-             exists (select 1 from perimeter_item where project_id = ${projectId}) as perimeter`);
+             exists (select 1 from perimeter_version where project_id = ${projectId} and status = 'approved') as perimeter`);
     const x = r.rows[0]!;
     const gaps: string[] = [];
     if (templateKind === 'dc_carveout' && !x.perimeter) gaps.push('perimeter');

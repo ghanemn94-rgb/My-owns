@@ -481,5 +481,6 @@ export const OUTBOX_EVENT_TYPES = [
   'report.generated',
   'baseline.approved',
   'change_request.decided',
+  'readiness.changed',
 ] as const;
 export type OutboxEventType = (typeof OUTBOX_EVENT_TYPES)[number];

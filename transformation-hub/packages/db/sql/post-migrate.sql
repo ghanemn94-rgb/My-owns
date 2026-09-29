@@ -163,6 +163,8 @@ BEGIN
     EXECUTE 'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO hub_app';
     -- Append-only tables: no UPDATE/DELETE for the runtime role
     EXECUTE 'REVOKE UPDATE, DELETE ON audit_event, vote, record_version, approval_record, transfer_record, readiness_test_run, report_snapshot FROM hub_app';
+    -- P3 history tables: decision records of cutover GO/NO-GO, agreement versions, perimeter impact assessments
+    EXECUTE 'REVOKE UPDATE, DELETE ON cutover_decision_record, agreement_version, perimeter_impact_assessment FROM hub_app';
     -- Documents are soft-deleted only; grant/membership history is revoked, never hard-deleted (ARCH-15c)
     EXECUTE 'REVOKE DELETE ON document, document_version, organization, project, org_role_assignment, project_membership, room_grant, recusal, conflict_declaration, attendance FROM hub_app';
     EXECUTE 'REVOKE UPDATE ON recusal, conflict_declaration FROM hub_app';
@@ -190,7 +192,7 @@ $$;
 DO $append$
 DECLARE t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['audit_event', 'vote', 'record_version', 'approval_record', 'transfer_record', 'readiness_test_run', 'report_snapshot', 'recusal', 'conflict_declaration', 'audit_checkpoint']
+  FOREACH t IN ARRAY ARRAY['audit_event', 'vote', 'record_version', 'approval_record', 'transfer_record', 'readiness_test_run', 'report_snapshot', 'recusal', 'conflict_declaration', 'audit_checkpoint', 'cutover_decision_record', 'agreement_version', 'perimeter_impact_assessment']
   LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS hub_append_only ON %I', t);
     EXECUTE format('CREATE TRIGGER hub_append_only BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION hub_reject_mutation()', t);
@@ -780,9 +782,9 @@ CREATE TRIGGER hub_same_project_source BEFORE INSERT OR UPDATE OF source_type, s
 -- update has been accepted (spec §9: history is preserved; changes go through a new baseline / status update).
 CREATE OR REPLACE FUNCTION hub_frozen_snapshot_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-  IF TG_TABLE_NAME = 'baseline_version' THEN
+  IF TG_TABLE_NAME IN ('baseline_version', 'perimeter_version') THEN
     IF NEW.snapshot IS DISTINCT FROM OLD.snapshot OR NEW.snapshot_hash IS DISTINCT FROM OLD.snapshot_hash THEN
-      RAISE EXCEPTION 'append_only_violation: a baseline snapshot is immutable — propose a new baseline' USING ERRCODE = 'P0001';
+      RAISE EXCEPTION 'append_only_violation: a % snapshot is immutable — propose a new version', TG_TABLE_NAME USING ERRCODE = 'P0001';
     END IF;
   ELSIF TG_TABLE_NAME = 'status_update' THEN
     IF OLD.status::text = 'accepted' AND NEW.frozen_snapshot IS DISTINCT FROM OLD.frozen_snapshot THEN
@@ -794,6 +796,8 @@ END
 $$;
 DROP TRIGGER IF EXISTS hub_frozen_snapshot_guard ON baseline_version;
 CREATE TRIGGER hub_frozen_snapshot_guard BEFORE UPDATE OF snapshot, snapshot_hash ON baseline_version FOR EACH ROW EXECUTE FUNCTION hub_frozen_snapshot_guard();
+DROP TRIGGER IF EXISTS hub_frozen_snapshot_guard ON perimeter_version;
+CREATE TRIGGER hub_frozen_snapshot_guard BEFORE UPDATE OF snapshot, snapshot_hash ON perimeter_version FOR EACH ROW EXECUTE FUNCTION hub_frozen_snapshot_guard();
 DROP TRIGGER IF EXISTS hub_frozen_snapshot_guard ON status_update;
 CREATE TRIGGER hub_frozen_snapshot_guard BEFORE UPDATE OF frozen_snapshot ON status_update FOR EACH ROW EXECUTE FUNCTION hub_frozen_snapshot_guard();
 

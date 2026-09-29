@@ -49,12 +49,14 @@ COPY e2e/package.json ./e2e/package.json
 COPY packages ./packages
 COPY apps/api ./apps/api
 COPY deploy/docker/api-entrypoint.cjs ./deploy/docker/api-entrypoint.cjs
+# `deploy --legacy` re-resolves the production tree and needs registry METADATA, which `pnpm fetch` does not cache, so it
+# runs --prefer-offline (package tarballs still come from the fetched store; only metadata goes to NPM_REGISTRY).
 RUN pnpm install --offline --frozen-lockfile --filter "@hub/api..." \
  && pnpm --filter @hub/domain run build \
  && pnpm --filter @hub/contracts run build \
  && pnpm --filter @hub/db run build \
  && pnpm --filter @hub/api run build \
- && pnpm --filter @hub/api deploy --prod --offline --legacy /out \
+ && pnpm --filter @hub/api deploy --prod --prefer-offline --legacy /out \
  && rm -rf /out/src /out/test /out/Dockerfile /out/tsconfig.json /out/tsconfig.build.json /out/vitest.config.mts \
  && cp deploy/docker/api-entrypoint.cjs /out/hub-entrypoint.cjs \
  && test -f /out/dist/main.js && test -f /out/dist/worker.js \

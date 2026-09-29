@@ -55,9 +55,12 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build:packages
+      # No separate build step: the documented commands must work on a fresh checkout (QA-P1-08) — they build the
+      # workspace packages (dist/ types) themselves.
       - run: pnpm typecheck
       - run: pnpm lint
+      - run: python3 -c "import yaml" 2>/dev/null || sudo apt-get install -y -qq python3-yaml
+      - run: python3 scripts/requirements/apply_status.py --check
 
   unit:
     name: Domain/contract unit tests + template validator
@@ -70,7 +73,6 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build:packages
       - run: pnpm test:unit
       - run: pnpm --filter @hub/db run validate:templates
 
@@ -165,12 +167,21 @@ jobs:
           node deploy/docker/api-entrypoint.cjs migrate
           node apps/api/dist/cli/seed-demo.js
       - name: Start API and worker
+        # Every browser shares the public-route rate-limit bucket behind the web tier's same-origin /api rewrite, and the
+        # suite signs in many times a minute (e2e/playwright.config.ts) — raise that limit for this dev/test stack only.
         run: |
           mkdir -p .dev
-          nohup node apps/api/dist/main.js > .dev/api.log 2>&1 &
+          HUB_RATE_LIMIT_PUBLIC_PER_MINUTE=1000 nohup node apps/api/dist/main.js > .dev/api.log 2>&1 &
           nohup node apps/api/dist/worker.js > .dev/worker.log 2>&1 &
           for _ in $(seq 1 60); do curl -sf http://127.0.0.1:4000/readyz && break; sleep 1; done
           curl -sf http://127.0.0.1:4000/readyz
+      - name: Build and start the web app (production build; next dev compiles each page on first hit)
+        # `next build` must not run with NODE_ENV=development (set for the API above); HUB_API_URL is read at build time.
+        run: |
+          env -u NODE_ENV HUB_API_URL=http://127.0.0.1:4000 pnpm --filter @hub/web run build
+          env -u NODE_ENV nohup pnpm --filter @hub/web run start > .dev/web.log 2>&1 &
+          for _ in $(seq 1 60); do curl -sf http://127.0.0.1:3000/login >/dev/null && break; sleep 1; done
+          curl -sf http://127.0.0.1:3000/login >/dev/null
       - run: pnpm --filter @hub/e2e exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4

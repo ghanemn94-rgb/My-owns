@@ -8,7 +8,7 @@ import { demoEmail } from '../../src/cli/seed-demo';
 import { FakeOidcIdp, type FakeIdpUser } from '../support/fake-oidc-idp';
 
 /**
- * REQ-ARC-005 / ADR-0005 — enterprise SSO via OIDC Authorization Code + PKCE against an in-process test IdP.
+ * REQ-ARC-006 / ADR-0005 — enterprise SSO via OIDC Authorization Code + PKCE against an in-process test IdP.
  * The API's real openid-client code path performs discovery, PKCE, state and nonce checks and ID-token validation.
  * Users are never auto-provisioned: the identity must map to an active, pre-provisioned, non-demo user.
  */
@@ -84,7 +84,7 @@ afterAll(async () => {
   await closePools();
 });
 
-describe('REQ-ARC-005 — OIDC SSO (Authorization Code + PKCE)', () => {
+describe('REQ-ARC-006 — OIDC SSO (Authorization Code + PKCE)', () => {
   it('reports an honest status: configured_unverified until discovery succeeds, then verified', async () => {
     const before = await request(strictApp.getHttpServer()).get('/api/v1/auth/config').expect(200);
     expect(before.body.oidc.status).toBe('configured_unverified');
@@ -229,7 +229,7 @@ describe('REQ-ARC-005 — OIDC SSO (Authorization Code + PKCE)', () => {
     expect(sessionCookieSet(cb)).toBe(false);
   });
 
-  it('REQ-ARC-005: demo (development) login and unsafe settings are rejected in production configuration', () => {
+  it('REQ-ARC-006: demo (development) login and unsafe settings are rejected in production configuration', () => {
     const prod = {
       NODE_ENV: 'production',
       HUB_MODE: 'standard',

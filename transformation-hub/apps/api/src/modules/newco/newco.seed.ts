@@ -8,7 +8,9 @@ const DEMO = 'Demo';
  * project creation ("incorporation in progress", proposed, unverified) — the seed never invents an incorporation or a
  * verification. Register entries are synthetic: an item referenced by the source summary stays
  * "Assessment pending — specialist"; only a fictional INTERNAL approval gets a (synthetic, labelled) applicability
- * assessment to show the flow. No approval is recorded as obtained.
+ * assessment to show the flow. No approval is recorded as obtained. Register entries are maintained by Legal only
+ * (REQ-AGR-004); the applicability assessment is recorded by a different verifier (the functional approver), never the
+ * registrant.
  */
 export const newcoSeed: ModuleSeed = {
   name: 'newco',
@@ -20,7 +22,7 @@ export const newcoSeed: ModuleSeed = {
       return;
     }
     const legal = await userId('legal');
-    await asUser('pm', (ctx) =>
+    await asUser('legal', (ctx) =>
       reg.create(ctx, pid, {
         category: 'regulatory',
         authority: 'CST',
@@ -32,7 +34,7 @@ export const newcoSeed: ModuleSeed = {
         gateKey: 'G2',
       }),
     );
-    await asUser('pm', (ctx) =>
+    await asUser('legal', (ctx) =>
       reg.create(ctx, pid, {
         category: 'external_party',
         authority: `${DEMO} landlord of Site A (fictional)`,
@@ -42,7 +44,7 @@ export const newcoSeed: ModuleSeed = {
         gateKey: 'G3',
       }),
     );
-    const internal = await asUser('pm', (ctx) =>
+    const internal = await asUser('legal', (ctx) =>
       reg.create(ctx, pid, {
         category: 'internal',
         authority: `${DEMO} internal approval body (fictional)`,
@@ -51,8 +53,8 @@ export const newcoSeed: ModuleSeed = {
         gateKey: 'G2',
       }),
     );
-    await asUser('legal', (ctx) => reg.assessApplicability(ctx, pid, internal.id, { expectedVersion: 1, applicability: 'applicable', basis: `${DEMO}: synthetic assessment for the demo sandbox — not a real determination` }));
-    await asUser('pm', (ctx) => reg.progress(ctx, pid, internal.id, { expectedVersion: 2, command: 'start_preparation', note: `${DEMO}: preparation started` }));
+    await asUser('approver', (ctx) => reg.assessApplicability(ctx, pid, internal.id, { expectedVersion: 1, applicability: 'applicable', basis: `${DEMO}: synthetic assessment for the demo sandbox — not a real determination` }));
+    await asUser('legal', (ctx) => reg.progress(ctx, pid, internal.id, { expectedVersion: 2, command: 'start_preparation', note: `${DEMO}: preparation started` }));
     log('newco: 3 demo register entries (source item pending specialist assessment; internal approval in preparation)');
   },
 };
