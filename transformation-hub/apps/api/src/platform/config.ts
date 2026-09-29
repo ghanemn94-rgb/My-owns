@@ -15,7 +15,8 @@ const Env = z.object({
   HUB_COOKIE_SECURE: z.enum(['true', 'false']).default('false'),
   HUB_SESSION_IDLE_MINUTES: z.coerce.number().int().min(5).max(24 * 60).default(60),
   HUB_SESSION_ABSOLUTE_HOURS: z.coerce.number().int().min(1).max(72).default(12),
-  HUB_TRUST_PROXY: z.enum(['true', 'false']).default('false'),
+  /** 'false' (default), 'true' (= 1 hop), a hop count, or a comma list of trusted proxy addresses/CIDRs (ADR-0017). */
+  HUB_TRUST_PROXY: z.string().regex(/^(true|false|\d{1,2}|[0-9a-fA-F.:/,\s]+)$/).default('false'),
   HUB_STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
   HUB_STORAGE_LOCAL_DIR: z.string().default('.data/objects'),
   HUB_MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(512).default(25),
@@ -46,6 +47,21 @@ const Env = z.object({
 
 export type AppConfig = ReturnType<typeof loadConfig>;
 
+/** Express 'trust proxy' value: false, a hop count, or a list of trusted proxy addresses (never `true` = trust everyone). */
+export function parseTrustProxy(v: string): false | number | string {
+  if (v === 'false') return false;
+  if (v === 'true') return 1;
+  if (/^\d{1,2}$/.test(v)) return Number(v) || false;
+  return v.split(',').map((x) => x.trim()).filter(Boolean).join(', ');
+}
+
+/** Rejects obviously weak secrets: too few distinct characters or a known placeholder. */
+export function weakSecret(s: string): boolean {
+  if (s.length < 32) return true;
+  if (new Set(s).size < 12) return true;
+  return /change[-_ ]?me|secret|password|example|placeholder/i.test(s);
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
   const parsed = Env.safeParse(env);
   if (!parsed.success) {
@@ -64,6 +80,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     if (!e.HUB_OIDC_ISSUER) problems.push('OIDC issuer must be configured in production (no password login exists)');
     if (e.HUB_OIDC_ISSUER && !e.HUB_COOKIE_SECRET) problems.push('HUB_COOKIE_SECRET (>= 32 chars) is required when OIDC is enabled');
     if (e.HUB_OIDC_ISSUER && !e.HUB_OIDC_ISSUER.startsWith('https://')) problems.push('OIDC issuer must use https in production');
+    if (e.HUB_OIDC_ISSUER && (!e.HUB_OIDC_CLIENT_ID || !e.HUB_OIDC_REDIRECT_URI)) problems.push('OIDC requires HUB_OIDC_CLIENT_ID and HUB_OIDC_REDIRECT_URI (otherwise nobody can sign in)');
+    if (e.HUB_OIDC_REDIRECT_URI && !e.HUB_OIDC_REDIRECT_URI.startsWith('https://')) problems.push('HUB_OIDC_REDIRECT_URI must use https in production');
+    if (e.HUB_COOKIE_SECRET && weakSecret(e.HUB_COOKIE_SECRET)) problems.push('HUB_COOKIE_SECRET is too weak (use >= 32 random characters, e.g. openssl rand -base64 48)');
   }
   if (problems.length) throw new Error(`Unsafe configuration rejected: ${problems.join('; ')}`);
   return {
@@ -77,7 +96,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     cookieSecure: e.HUB_COOKIE_SECURE === 'true',
     sessionIdleMinutes: e.HUB_SESSION_IDLE_MINUTES,
     sessionAbsoluteHours: e.HUB_SESSION_ABSOLUTE_HOURS,
-    trustProxy: e.HUB_TRUST_PROXY === 'true',
+    trustProxy: parseTrustProxy(e.HUB_TRUST_PROXY),
     storage: {
       driver: e.HUB_STORAGE_DRIVER,
       localDir: e.HUB_STORAGE_LOCAL_DIR,

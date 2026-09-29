@@ -103,6 +103,7 @@ CREATE TABLE "app_user" (
 	"clearance" "classification" DEFAULT 'internal' NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"is_service_account" boolean DEFAULT false NOT NULL,
+	"account_type" varchar(16) DEFAULT 'internal' NOT NULL,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"oidc_issuer" text,
 	"oidc_subject" text,
@@ -110,7 +111,8 @@ CREATE TABLE "app_user" (
 	"deactivated_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"version" integer DEFAULT 1 NOT NULL
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "app_user_account_type_ck" CHECK ("app_user"."account_type" in ('internal', 'external'))
 );
 --> statement-breakpoint
 CREATE TABLE "org_role_assignment" (

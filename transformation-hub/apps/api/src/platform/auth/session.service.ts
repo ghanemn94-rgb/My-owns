@@ -39,6 +39,8 @@ export class SessionService {
     if (!r) return null;
     const now = this.clock.now();
     if (r.revoked_at || !r.user_active) return null;
+    // Demo sessions / synthetic users are valid only while the deployment runs in demo mode (SEC-P1-02).
+    if (!this.config.demoMode && (r.auth_method === 'dev' || r.user_is_demo)) return null;
     if (new Date(r.idle_expires_at) <= now || new Date(r.absolute_expires_at) <= now) return null;
     return {
       sessionId: r.session_id,

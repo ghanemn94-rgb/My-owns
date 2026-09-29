@@ -15,3 +15,14 @@ With several API replicas the effective limit multiplies; production deployments
 ## Caveat (P0 architecture re-review)
 The public-route limiter keys on `req.ip`. Behind an ingress/reverse proxy, set `HUB_TRUST_PROXY=true` (and configure
 the proxy to overwrite `X-Forwarded-For`); otherwise all clients share the proxy's address and one 60/min bucket.
+
+## Amendment (P1 security review SEC-P1-04)
+- `HUB_TRUST_PROXY` accepts `false` (default), a hop count (`true` = 1) or a comma list of trusted proxy
+  addresses/CIDRs; it is never "trust everyone". Set it to exactly the ingress/route in front of the API.
+- **Supported production topology:** the ingress/route sends `/api` straight to the API service (Helm chart) and appends
+  the client address to `X-Forwarded-For`; the API trusts that one hop. The web tier's same-origin `/api` rewrite is for
+  development/evaluation; its proxy (`apps/web/src/proxy.ts`) strips client-supplied `X-Forwarded-For`, `X-Real-IP` and
+  `Forwarded`, so a browser cannot spoof its address through it. Residual (dev/eval only): behind the rewrite all clients
+  share the web server's public-route bucket.
+- An ingress-level limiter remains recommended in production (multi-replica API).
+

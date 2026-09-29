@@ -36,6 +36,7 @@ import { RecordVersionService, updateVersioned, loadInProject, nextCode, pageOf,
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { PlanningSupport, ProjectInfo } from './planning-support';
+import { likeContains } from '../../platform/helpers';
 
 type Task = typeof schema.task.$inferSelect;
 type Milestone = typeof schema.milestone.$inferSelect;
@@ -127,7 +128,7 @@ export class WbsService {
     if (q.status) conds.push(inArray(T.status, q.status));
     if (q.ownerUserId) conds.push(eq(T.accountableUserId, q.ownerUserId === 'me' ? (ctx.principal.userId ?? '00000000-0000-0000-0000-000000000000') : q.ownerUserId));
     if (q.gateKey) conds.push(eq(T.gateKey, q.gateKey));
-    if (q.q) conds.push(or(ilike(T.title, `%${q.q}%`), ilike(T.wbsCode, `%${q.q}%`))!);
+    if (q.q) conds.push(or(ilike(T.title, likeContains(q.q)), ilike(T.wbsCode, likeContains(q.q)))!);
     const overdueSql = sql`(${T.status} in ('not_started','in_progress','blocked') and coalesce(${T.plannedFinish}, ${T.forecastFinish}) < ${today})`;
     if (q.overdue === 'true') conds.push(overdueSql);
     if (q.overdue === 'false') conds.push(sql`not ${overdueSql}`);
@@ -557,7 +558,7 @@ export class WbsService {
     if (q.status) conds.push(inArray(M.status, q.status));
     if (q.gateKey) conds.push(eq(M.gateKey, q.gateKey));
     if (q.critical) conds.push(eq(M.isCritical, q.critical === 'true'));
-    if (q.q) conds.push(or(ilike(M.title, `%${q.q}%`), ilike(M.code, `%${q.q}%`))!);
+    if (q.q) conds.push(or(ilike(M.title, likeContains(q.q)), ilike(M.code, likeContains(q.q)))!);
     const od = sql`(${M.status} in ('planned','at_risk') and ${M.plannedDate} < ${today})`;
     if (q.overdue === 'true') conds.push(od);
     if (q.overdue === 'false') conds.push(sql`not coalesce(${od}, false)`);
@@ -715,7 +716,7 @@ export class WbsService {
     if (q.status) conds.push(inArray(D.status, q.status));
     if (q.gateKey) conds.push(eq(D.gateKey, q.gateKey));
     if (q.weightApproved) conds.push(eq(D.weightApproved, q.weightApproved === 'true'));
-    if (q.q) conds.push(or(ilike(D.title, `%${q.q}%`), ilike(D.code, `%${q.q}%`))!);
+    if (q.q) conds.push(or(ilike(D.title, likeContains(q.q)), ilike(D.code, likeContains(q.q)))!);
     const od = sql`(${D.status} in ('planned','in_progress','rejected') and ${D.dueDate} < ${today})`;
     if (q.overdue === 'true') conds.push(od);
     if (q.overdue === 'false') conds.push(sql`not coalesce(${od}, false)`);

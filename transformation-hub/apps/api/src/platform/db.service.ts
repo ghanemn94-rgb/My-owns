@@ -67,7 +67,8 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
   /** Raw SQL on the current transaction's connection when inside run(); otherwise on the pool (autocommit). */
   async query<R extends QueryResultRow = QueryResultRow>(text: string, params?: unknown[]): Promise<QueryResult<R>> {
     const s = this.als.getStore();
-    if (s && !s.closed) return s.client.query<R>(text, params);
+    if (s && s.closed) throw new Error('Transaction already finished — a continuation outlived its request (ARCH-07 / SEC-P1-09)');
+    if (s) return s.client.query<R>(text, params);
     return this.pool.query<R>(text, params);
   }
 
@@ -184,7 +185,7 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
               set_config('app.project_ids', $3, true), set_config('app.correlation_id', $4, true),
               set_config('app.full_project_ids', $5, true), set_config('app.room_ids', $6, true),
               set_config('statement_timeout', $7, true), set_config('lock_timeout', $8, true),
-              set_config('idle_in_transaction_session_timeout', $9, true)`,
+              set_config('idle_in_transaction_session_timeout', $9, true), set_config('app.room_only', $10, true)`,
       [
         ctx.principal.orgId,
         ctx.principal.userId ?? '',
@@ -195,7 +196,19 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
         String(this.timeouts.statementMs),
         String(this.timeouts.lockMs),
         String(this.timeouts.idleMs),
+        isRoomOnlyPrincipal(ctx) ? 'true' : 'false',
       ],
     );
   }
+}
+
+/**
+ * A room-only principal (clean team / external partner) holds only room grants: no organization role and no project or
+ * workstream role anywhere. The database then hides organization-level data from it (SEC-P1-12).
+ */
+export function isRoomOnlyPrincipal(ctx: RequestContext): boolean {
+  const p = ctx.principal;
+  if (p.kind !== 'user' || p.orgRoles.size > 0 || p.projects.size === 0) return false;
+  for (const s of p.projects.values()) if (s.roles.size > 0 || s.workstreamRoles.length > 0) return false;
+  return true;
 }

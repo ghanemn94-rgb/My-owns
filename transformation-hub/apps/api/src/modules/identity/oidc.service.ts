@@ -123,13 +123,11 @@ export class OidcService {
     type UserRow = { id: string; org_id: string; is_active: boolean; is_demo: boolean; locale: string };
     let user: UserRow | undefined = (await this.db.pool.query<UserRow>(`select * from hub_auth_user_by_subject($1, $2)`, [claims.iss, claims.sub])).rows[0];
     const email = typeof claims.email === 'string' ? claims.email.toLowerCase() : null;
-    if (!user && email && this.config.oidc.linkByEmail) {
+    // Link-by-email is a FIRST-login binding only (SEC-P1-01): the IdP must assert a verified email, and the pre-provisioned
+    // user must not be bound to any identity yet. An already-bound account is never reachable through another subject.
+    if (!user && email && this.config.oidc.linkByEmail && claims.email_verified === true) {
       const byEmail: UserRow | undefined = (await this.db.pool.query<UserRow>(`select * from hub_auth_user_by_email($1, $2)`, [orgId, email])).rows[0];
-      if (byEmail && !byEmail.is_demo) {
-        // First login: bind the IdP identity to the pre-provisioned user (audited below).
-        await this.linkSubject(byEmail.id, claims.iss, claims.sub);
-        user = byEmail;
-      }
+      if (byEmail && !byEmail.is_demo && (await this.linkSubject(byEmail.id, claims.iss, claims.sub))) user = byEmail;
     }
     if (!user || !user.is_active || user.is_demo) {
       this.log.warn(`OIDC login refused for subject at ${claims.iss} (not provisioned or inactive)`);
@@ -140,19 +138,30 @@ export class OidcService {
     return { ...s, userId: user.id, orgId: user.org_id, locale: user.locale };
   }
 
-  /** Binding uses the owner-free path: app_user is org-scoped; run inside an org context. */
-  private async linkSubject(userId: string, issuer: string, subject: string) {
+  /**
+   * Binds the IdP identity to a pre-provisioned user that has NO identity yet. Returns false (and changes nothing, audits
+   * nothing) when the user is already bound — the caller must then refuse the login.
+   */
+  private async linkSubject(userId: string, issuer: string, subject: string): Promise<boolean> {
     const client = await this.db.pool.connect();
     try {
       await client.query('begin');
       const org = await this.orgs.defaultOrgId();
       await client.query(`select set_config('app.org_id', $1, true), set_config('app.user_id', $2, true)`, [org, userId]);
-      await client.query(`update app_user set oidc_issuer = $2, oidc_subject = $3, updated_at = now() where id = $1 and oidc_subject is null`, [userId, issuer, subject]);
+      const r = await client.query(
+        `update app_user set oidc_issuer = $2, oidc_subject = $3, updated_at = now() where id = $1 and oidc_subject is null and oidc_issuer is null and is_active and not is_demo`,
+        [userId, issuer, subject],
+      );
+      if (r.rowCount !== 1) {
+        await client.query('rollback');
+        return false;
+      }
       await client.query(
         `insert into audit_event (org_id, actor_user_id, actor_kind, action, entity_type, entity_id, reason) values ($1, $2, 'user', 'identity.oidc.link_subject', 'app_user', $2, 'first OIDC login bound the IdP subject')`,
         [org, userId],
       );
       await client.query('commit');
+      return true;
     } catch (e) {
       await client.query('rollback').catch(() => undefined);
       throw e;

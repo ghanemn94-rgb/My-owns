@@ -33,6 +33,11 @@ CREATE OR REPLACE FUNCTION app_room_ids() RETURNS uuid[] LANGUAGE sql STABLE AS 
   SELECT coalesce(string_to_array(nullif(current_setting('app.room_ids', true), ''), ',')::uuid[], '{}'::uuid[])
 $$;
 
+-- Room-only principal (clean team / external partner with no project, workstream or org role): set by the API.
+CREATE OR REPLACE FUNCTION app_room_only() RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT coalesce(current_setting('app.room_only', true), '') = 'true'
+$$;
+
 -- 2. Row-level security -------------------------------------------------------------------------------------
 DO $rls$
 DECLARE
@@ -56,8 +61,9 @@ BEGIN
     EXECUTE format('DROP POLICY IF EXISTS hub_project_isolation ON %I', r.table_name);
     IF r.table_name = ANY (nullable_project) THEN
       -- Reads: full members only; writes (e.g. audit of a room-only user's actions): any in-scope project.
+      -- org-level rows (project_id NULL) are not readable by room-only principals (SEC-P1-12)
       EXECUTE format(
-        'CREATE POLICY hub_project_isolation ON %I USING (org_id = app_org_id() AND (project_id IS NULL OR project_id = ANY (app_full_project_ids()))) WITH CHECK (org_id = app_org_id() AND (project_id IS NULL OR project_id = ANY (app_project_ids())))',
+        'CREATE POLICY hub_project_isolation ON %I USING (org_id = app_org_id() AND ((project_id IS NULL AND NOT app_room_only()) OR project_id = ANY (app_full_project_ids()))) WITH CHECK (org_id = app_org_id() AND (project_id IS NULL OR project_id = ANY (app_project_ids())))',
         r.table_name);
     ELSIF EXISTS (SELECT 1 FROM information_schema.columns c3 WHERE c3.table_schema = 'public' AND c3.table_name = r.table_name AND c3.column_name = 'room_id') THEN
       -- Room-bearing tables: full members see the project's rows; room-only principals only rows of their rooms.
@@ -85,12 +91,19 @@ BEGIN
     CONTINUE WHEN r.table_name = ANY (exempt);
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', r.table_name);
     EXECUTE format('DROP POLICY IF EXISTS hub_org_isolation ON %I', r.table_name);
+    -- Room-only principals (clean team / partner) read no organization-level data (SEC-P1-12); app_user is re-scoped below.
     EXECUTE format(
-      'CREATE POLICY hub_org_isolation ON %I USING (org_id = app_org_id()) WITH CHECK (org_id = app_org_id())',
+      'CREATE POLICY hub_org_isolation ON %I USING (org_id = app_org_id() AND NOT app_room_only()) WITH CHECK (org_id = app_org_id() AND NOT app_room_only())',
       r.table_name);
   END LOOP;
 END
 $rls$;
+
+-- app_user: a room-only principal sees only its own account (not the organization's directory) — SEC-P1-12.
+DROP POLICY IF EXISTS hub_org_isolation ON app_user;
+CREATE POLICY hub_org_isolation ON app_user
+  USING (org_id = app_org_id() AND (NOT app_room_only() OR id = app_user_id()))
+  WITH CHECK (org_id = app_org_id() AND (NOT app_room_only() OR id = app_user_id()));
 
 -- organization: a session sees only its own organization
 ALTER TABLE organization ENABLE ROW LEVEL SECURITY;
@@ -371,13 +384,13 @@ RETURNS TABLE (kind text, project_id uuid, role text, workstream_id uuid, room_i
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
   -- project / workstream memberships
   SELECT 'membership', pm.project_id, pm.role::text, pm.workstream_id, NULL::uuid, false
-  FROM project_membership pm JOIN app_user u ON u.id = pm.user_id AND u.is_active
+  FROM project_membership pm JOIN app_user u ON u.id = pm.user_id AND u.is_active AND u.org_id = pm.org_id
   WHERE pm.user_id = p_user AND pm.revoked_at IS NULL AND pm.valid_from <= now()
     AND (pm.valid_to IS NULL OR pm.valid_to > now())
   UNION ALL
   -- organization-level roles (project_id NULL)
   SELECT 'org_role', NULL::uuid, ora.role::text, NULL::uuid, NULL::uuid, false
-  FROM org_role_assignment ora JOIN app_user u ON u.id = ora.user_id AND u.is_active
+  FROM org_role_assignment ora JOIN app_user u ON u.id = ora.user_id AND u.is_active AND u.org_id = ora.org_id
   WHERE ora.user_id = p_user AND ora.scope_type = 'organization' AND ora.revoked_at IS NULL
     AND ora.valid_from <= now() AND (ora.valid_to IS NULL OR ora.valid_to > now())
   UNION ALL
@@ -385,7 +398,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_te
   -- permission matrix limits them to read-only / portfolio functions). platform_admin is deliberately NOT expanded.
   SELECT 'org_expansion', p.id, ora.role::text, NULL::uuid, NULL::uuid, false
   FROM org_role_assignment ora
-  JOIN app_user u ON u.id = ora.user_id AND u.is_active
+  JOIN app_user u ON u.id = ora.user_id AND u.is_active AND u.org_id = ora.org_id
   JOIN project p ON p.org_id = ora.org_id
   WHERE ora.user_id = p_user AND ora.scope_type = 'organization' AND ora.role IN ('auditor', 'portfolio_admin')
     AND ora.revoked_at IS NULL AND ora.valid_from <= now() AND (ora.valid_to IS NULL OR ora.valid_to > now())
@@ -393,7 +406,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_te
   -- portfolio-scoped roles expand to the projects of that portfolio
   SELECT 'portfolio_role', p.id, ora.role::text, NULL::uuid, NULL::uuid, false
   FROM org_role_assignment ora
-  JOIN app_user u ON u.id = ora.user_id AND u.is_active
+  JOIN app_user u ON u.id = ora.user_id AND u.is_active AND u.org_id = ora.org_id
   JOIN program pr ON pr.portfolio_id = ora.scope_id AND pr.org_id = ora.org_id
   JOIN project p ON p.program_id = pr.id AND p.org_id = ora.org_id
   WHERE ora.user_id = p_user AND ora.scope_type = 'portfolio' AND ora.revoked_at IS NULL
@@ -402,7 +415,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_te
   -- partner / clean-team room grants
   SELECT 'room_grant', rg.project_id, rg.role::text, NULL::uuid, rg.room_id, r.is_clean_team
   FROM room_grant rg JOIN partner_room r ON r.id = rg.room_id
-  JOIN app_user u ON u.id = rg.user_id AND u.is_active
+  JOIN app_user u ON u.id = rg.user_id AND u.is_active AND u.org_id = rg.org_id
   WHERE rg.user_id = p_user AND rg.revoked_at IS NULL AND (rg.expires_at IS NULL OR rg.expires_at > now())
 $$;
 REVOKE ALL ON FUNCTION hub_auth_user_scope(uuid) FROM PUBLIC;
@@ -653,9 +666,12 @@ BEGIN
       AND (c.column_name LIKE '%user\_id' OR c.column_name LIKE '%\_by')
       AND c.table_name <> 'app_user'
       AND EXISTS (SELECT 1 FROM information_schema.columns o WHERE o.table_schema = 'public' AND o.table_name = c.table_name AND o.column_name = 'org_id')
-      -- skip columns that already carry a (single- or multi-column) FK
+      -- skip only columns that already carry a MULTI-column FK including org_id (a plain FK to app_user(id) does not
+      -- bind the organization — SEC-P1-06)
       AND NOT EXISTS (
-        SELECT 1 FROM pg_constraint k JOIN pg_attribute a ON a.attrelid = k.conrelid AND a.attnum = ANY (k.conkey)
+        SELECT 1 FROM pg_constraint k
+        JOIN pg_attribute a ON a.attrelid = k.conrelid AND a.attnum = ANY (k.conkey)
+        JOIN pg_attribute o ON o.attrelid = k.conrelid AND o.attnum = ANY (k.conkey) AND o.attname = 'org_id'
         WHERE k.contype = 'f' AND k.conrelid = format('public.%I', c.table_name)::regclass AND a.attname = c.column_name)
   LOOP
     cname := left('hub_ufk_' || r.table_name || '_' || r.column_name, 63);
@@ -780,3 +796,31 @@ DROP TRIGGER IF EXISTS hub_frozen_snapshot_guard ON baseline_version;
 CREATE TRIGGER hub_frozen_snapshot_guard BEFORE UPDATE OF snapshot, snapshot_hash ON baseline_version FOR EACH ROW EXECUTE FUNCTION hub_frozen_snapshot_guard();
 DROP TRIGGER IF EXISTS hub_frozen_snapshot_guard ON status_update;
 CREATE TRIGGER hub_frozen_snapshot_guard BEFORE UPDATE OF frozen_snapshot ON status_update FOR EACH ROW EXECUTE FUNCTION hub_frozen_snapshot_guard();
+
+-- 20. Account types (access-matrix §2.8, QA-P1-04) ---------------------------------------------------------------------
+-- External (partner) accounts never hold project, workstream, committee or organization roles; in rooms they may hold
+-- only `external_partner_limited`. Enforced here so no code path (or data fix) can mis-assign them.
+CREATE OR REPLACE FUNCTION hub_account_type_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+DECLARE acct text; uid uuid; role_text text;
+BEGIN
+  uid := nullif(to_jsonb(NEW) ->> 'user_id', '')::uuid;
+  IF uid IS NULL THEN RETURN NEW; END IF;
+  SELECT account_type INTO acct FROM app_user WHERE id = uid;
+  IF acct IS DISTINCT FROM 'external' THEN RETURN NEW; END IF;
+  role_text := to_jsonb(NEW) ->> 'role';
+  IF TG_TABLE_NAME = 'room_grant' AND role_text = 'external_partner_limited' THEN RETURN NEW; END IF;
+  RAISE EXCEPTION 'external_account_role: an external account cannot hold % on %', coalesce(role_text, 'a role'), TG_TABLE_NAME USING ERRCODE = 'P0001';
+END
+$$;
+REVOKE ALL ON FUNCTION hub_account_type_guard() FROM PUBLIC;
+DO $acct$
+DECLARE t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['project_membership', 'org_role_assignment', 'committee_membership', 'room_grant'] LOOP
+    IF to_regclass(t) IS NULL THEN CONTINUE; END IF;
+    EXECUTE format('DROP TRIGGER IF EXISTS hub_account_type_guard ON %I', t);
+    EXECUTE format('CREATE TRIGGER hub_account_type_guard BEFORE INSERT OR UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION hub_account_type_guard()', t);
+  END LOOP;
+END
+$acct$;
+
