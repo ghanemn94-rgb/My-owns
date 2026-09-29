@@ -168,7 +168,7 @@ export class TransfersService {
     const rec = await loadInProject(this.s.db, TR, p.id, transferId);
     const item = await this.perimeter.loadReadable(ctx, p, rec.perimeterItemId);
     // Separation of duties (not_self): the reviewer cannot be the reporter.
-    this.s.policy.assert(ctx, 'carveout.transfer.verify', { projectId: p.id, classification: item.classification as Classification, requesterUserId: rec.recordedBy });
+    this.s.policy.assert(ctx, 'carveout.transfer.verify', { projectId: p.id, classification: item.classification as Classification, workstreamId: item.workstreamId, requesterUserId: rec.recordedBy });
     if (rec.command !== 'report_transferred') throw ruleViolation('transfer.not_a_report', 'Only a reported transfer can be verified or have its evidence rejected');
     const [latest] = await this.tx
       .select({ id: TR.id })

@@ -852,15 +852,16 @@ export class PerimeterService {
     const R = schema.perimeterCategoryReview;
     const [existing] = await this.tx.select().from(R).where(and(eq(R.projectId, projectId), eq(R.category, category)));
     let version: number;
+    const reviewId = existing?.id ?? newId();
     if (existing) {
       if (body.expectedVersion === undefined) throw conflict('concurrency.version_required', 'This category was already reviewed — pass expectedVersion to update the review');
       const row = await updateVersioned(this.s.db, R, { id: existing.id, projectId, expectedVersion: body.expectedVersion }, { conclusion: body.conclusion, reviewedBy: ctx.principal.userId!, reviewedAt: new Date() });
       version = row['version'] as number;
     } else {
-      await this.tx.insert(R).values({ id: newId(), orgId: p.orgId, projectId, category, conclusion: body.conclusion, reviewedBy: ctx.principal.userId!, isDemo: p.isDemo });
+      await this.tx.insert(R).values({ id: reviewId, orgId: p.orgId, projectId, category, conclusion: body.conclusion, reviewedBy: ctx.principal.userId!, isDemo: p.isDemo });
       version = 1;
     }
-    await this.audit.record({ action: 'carveout.perimeter.category_review', entityType: 'project', entityId: projectId, projectId, before: existing ? { category, conclusion: existing.conclusion } : null, after: { category, conclusion: body.conclusion } });
+    await this.audit.record({ action: 'carveout.perimeter.category_review', entityType: 'perimeter_category_review', entityId: reviewId, projectId, before: existing ? { category, conclusion: existing.conclusion } : null, after: { category, conclusion: body.conclusion } });
     return { category, version };
   }
 
@@ -902,4 +903,3 @@ export function pick(o: Record<string, unknown>, keys: string[]) {
   return Object.fromEntries(keys.map((k) => [k, o[k]]));
 }
 
-void sql;

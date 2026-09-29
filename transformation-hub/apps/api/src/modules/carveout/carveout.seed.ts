@@ -4,6 +4,7 @@ import { Clock } from '../../platform/clock';
 import { PortfolioService } from '../portfolio/portfolio.service';
 import { ChangeControlService } from '../planning/change-control.service';
 import { LegalEntitiesService } from '../newco/legal-entities.service';
+import { StatusDimensionsService } from '../gates/status-dimensions.service';
 import { PerimeterService } from './perimeter.service';
 import { TransfersService } from './transfers.service';
 import { AgreementsService } from './agreements.service';
@@ -27,6 +28,7 @@ export const carveoutSeed: ModuleSeed = {
     const cc = app.get(ChangeControlService);
     const portfolio = app.get(PortfolioService);
     const clock = app.get(Clock);
+    const dims = app.get(StatusDimensionsService);
 
     const existing = await asUser('pm', (ctx) => perimeter.listItems(ctx, pid, { page: 1, pageSize: 5 }));
     if (existing.total > 0) {
@@ -122,5 +124,7 @@ export const carveoutSeed: ModuleSeed = {
     await asUser('pm', (ctx) => perimeter.reviewCategory(ctx, pid, 'financing', { conclusion: `${DEMO}: no financing arrangement identified in the synthetic scenario` }));
     await asUser('pm', (ctx) => perimeter.assessImpact(ctx, pid, ids['site']!, { narrative: { financial_statements: `${DEMO}: carve-out statements impact to be assessed by Finance (synthetic)` } }));
     log('carveout: category review and site impact assessment recorded');
+    // Status dimensions are owned by the gates module; refresh them now (the worker would do it from perimeter.changed).
+    await asUser('pm', (ctx) => dims.recompute(ctx, pid));
   },
 };

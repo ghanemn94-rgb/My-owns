@@ -89,31 +89,26 @@ export class PerimeterVersionsService {
     );
   }
 
-  private async dto(projectId: string, rows: VersionRow[]) {
+  private async dto(rows: VersionRow[]) {
     const names = await this.s.userNames(rows.flatMap((r) => [r.proposedBy, r.decidedBy]));
-    return Promise.all(
-      rows.map(async (r) => ({
-        id: r.id,
-        versionNo: r.versionNo,
-        status: r.status as 'proposed' | 'approved' | 'rejected' | 'superseded',
-        itemCount: r.itemCount,
-        snapshotHash: r.snapshotHash,
-        note: r.note,
-        proposedBy: r.proposedBy,
-        proposedByName: names.get(r.proposedBy) ?? null,
-        createdAt: r.createdAt.toISOString(),
-        decidedBy: r.decidedBy,
-        decidedByName: r.decidedBy ? (names.get(r.decidedBy) ?? null) : null,
-        decidedAt: iso(r.decidedAt),
-        decisionId: r.decisionId,
-        decisionNote: r.decisionNote,
-        warnings: ((r.snapshot as { warnings?: { code: string; issue: string }[] }).warnings ?? []).map((w) => ({ code: w.code, issue: w.issue })),
-        version: r.version,
-      })),
-    ).then((x) => {
-      void projectId;
-      return x;
-    });
+    return rows.map((r) => ({
+      id: r.id,
+      versionNo: r.versionNo,
+      status: r.status as 'proposed' | 'approved' | 'rejected' | 'superseded',
+      itemCount: r.itemCount,
+      snapshotHash: r.snapshotHash,
+      note: r.note,
+      proposedBy: r.proposedBy,
+      proposedByName: names.get(r.proposedBy) ?? null,
+      createdAt: r.createdAt.toISOString(),
+      decidedBy: r.decidedBy,
+      decidedByName: r.decidedBy ? (names.get(r.decidedBy) ?? null) : null,
+      decidedAt: iso(r.decidedAt),
+      decisionId: r.decisionId,
+      decisionNote: r.decisionNote,
+      warnings: ((r.snapshot as { warnings?: { code: string; issue: string }[] }).warnings ?? []).map((w) => ({ code: w.code, issue: w.issue })),
+      version: r.version,
+    }));
   }
 
   async list(ctx: RequestContext, projectId: string) {
@@ -121,7 +116,7 @@ export class PerimeterVersionsService {
     this.s.assertProjectWide(ctx, 'carveout.register.read', projectId);
     this.s.assertRead(ctx, 'carveout.register.read', { projectId, classification: p.classification });
     const rows = await this.tx.select().from(V).where(eq(V.projectId, projectId)).orderBy(desc(V.versionNo));
-    return { items: await this.dto(projectId, rows) };
+    return { items: await this.dto(rows) };
   }
 
   /** Setup wizard step 4: propose the current register as a perimeter version (blockers → 422). */
@@ -154,7 +149,7 @@ export class PerimeterVersionsService {
     await this.audit.record({ action: 'carveout.perimeter.propose_version', entityType: 'perimeter_version', entityId: id, projectId, after: { versionNo, snapshotHash, itemCount: snap.items.length, warnings: f.warnings.length }, reason: body.note ?? null });
     await this.outbox.emit({ type: 'approval.pending', projectId, aggregateType: 'perimeter_version', aggregateId: id, payload: { kind: 'perimeter_version_approval', versionNo } });
     const [row] = await this.tx.select().from(V).where(eq(V.id, id));
-    return (await this.dto(projectId, [row!]))[0]!;
+    return (await this.dto([row!]))[0]!;
   }
 
   private async lockVersion(p: CarveoutProject, versionId: string): Promise<VersionRow> {

@@ -78,13 +78,15 @@ export class CarveoutSupport {
     }
   }
 
-  /** Named owners / accountable users must be active members of the project (never outsiders or other orgs). */
+  /** Named owners / accountable users must be active, internal, full members of the project (never outsiders, partners or other orgs). */
   async assertMember(projectId: string, userId: string, field = 'user') {
     const r = await this.db.tx().execute<{ ok: boolean }>(sql`
       select exists (
         select 1 from project_membership m join app_user u on u.id = m.user_id
          where m.project_id = ${projectId} and m.user_id = ${userId} and m.revoked_at is null
            and (m.valid_to is null or m.valid_to > now()) and u.is_active
+           -- accountable people are internal full members, never room-only (clean team / external partner) accounts
+           and u.account_type = 'internal' and m.role not in ('clean_team', 'external_partner_limited')
       ) as ok`);
     if (!r.rows[0]?.ok) throw invalid('carveout.user_not_member', `The selected ${field} is not an active member of this project`);
   }
