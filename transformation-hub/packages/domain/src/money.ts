@@ -45,23 +45,29 @@ export interface AggregateResult {
   total: Money;
   count: number;
   conversions: ConversionBasis[];
+  /** Unit scales that were normalized (disclosed so reports can show the basis). */
+  normalizedUnitScales: number[];
 }
 
 /**
- * Sums amounts. Mixed currencies are rejected unless an explicit conversion basis is provided for each
- * foreign currency (AT-29). Mixed unit scales are normalized to base units (a pure scaling, not a conversion)
- * and the result is expressed in the target unit scale.
+ * Sums amounts (AT-29). Mixed currencies are rejected unless an explicit conversion basis is provided for each
+ * foreign currency. Mixed unit scales (units / thousands / millions) are rejected unless the caller explicitly opts in
+ * with `normalizeUnits: true`; when normalized, the scales involved are disclosed in `normalizedUnitScales`.
  */
 export function sumMoney(
   items: Money[],
-  opts: { targetCurrency?: string; targetUnitScale?: number; conversions?: ConversionBasis[] } = {},
+  opts: { targetCurrency?: string; targetUnitScale?: number; conversions?: ConversionBasis[]; normalizeUnits?: boolean } = {},
 ): AggregateResult {
   if (items.length === 0) {
     const currency = opts.targetCurrency ?? 'SAR';
-    return { total: { amount: '0.0000', currency, unitScale: opts.targetUnitScale ?? 1 }, count: 0, conversions: [] };
+    return { total: { amount: '0.0000', currency, unitScale: opts.targetUnitScale ?? 1 }, count: 0, conversions: [], normalizedUnitScales: [] };
   }
   const targetCurrency = opts.targetCurrency ?? items[0]!.currency;
   const targetUnitScale = opts.targetUnitScale ?? items[0]!.unitScale;
+  const scales = [...new Set([...items.map((i) => i.unitScale), targetUnitScale])];
+  if (scales.length > 1 && !opts.normalizeUnits) {
+    throw ruleViolation('money.mixed_unit_scale', `Cannot aggregate amounts expressed in different units (${scales.join(', ')}) without explicit normalization`, { scales });
+  }
   const used = new Map<string, ConversionBasis>();
   let total = new Decimal(0);
   for (const item of items) {
@@ -87,6 +93,7 @@ export function sumMoney(
     total: { amount: total.div(targetUnitScale).toFixed(4), currency: targetCurrency, unitScale: targetUnitScale },
     count: items.length,
     conversions: [...used.values()],
+    normalizedUnitScales: scales.length > 1 ? scales.sort((a, b) => a - b) : [],
   };
 }
 

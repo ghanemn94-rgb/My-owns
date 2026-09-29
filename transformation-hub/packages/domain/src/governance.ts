@@ -43,6 +43,8 @@ export interface QuorumInput {
   recusedUserIds: string[];
   onDate: string;
   policy: AuthorityPolicy;
+  /** The decision requester: excluded from quorum when self-approval is prohibited (A-19, P0 QA review QA-02). */
+  requesterUserId?: string | null;
 }
 
 export interface QuorumResult {
@@ -56,6 +58,9 @@ export interface QuorumResult {
 export function computeQuorum(input: QuorumInput): QuorumResult {
   const { policy } = input;
   const recused = new Set(input.recusedUserIds);
+  // Members barred from voting on this decision (recused, or the requester when self-approval is prohibited)
+  // cannot make up the quorum for it.
+  if (policy.selfApprovalProhibited && input.requesterUserId) recused.add(input.requesterUserId);
   const present = new Set(input.presentUserIds);
   const voting = input.members.filter((m) => m.voting && m.userId && isMemberActiveOn(m, input.onDate));
   const eligible = policy.recusedMembersExcludedFromQuorum ? voting.filter((m) => !recused.has(m.userId!)) : voting;

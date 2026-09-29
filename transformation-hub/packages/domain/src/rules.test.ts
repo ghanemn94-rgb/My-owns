@@ -136,11 +136,12 @@ describe('AT-29 — money aggregation', () => {
     expect(r.total.amount).toBe('47.5000');
     expect(r.conversions).toHaveLength(1);
   });
-  it('normalizes unit scales explicitly', () => {
-    const r = sumMoney([parseMoney({ amount: '1', currency: 'SAR', unitScale: 1_000_000 }), parseMoney({ amount: '500', currency: 'SAR', unitScale: 1000 })], {
-      targetUnitScale: 1000,
-    });
+  it('rejects mixed unit scales unless normalization is explicit, and discloses it (QA-03)', () => {
+    const items = [parseMoney({ amount: '1', currency: 'SAR', unitScale: 1_000_000 }), parseMoney({ amount: '500', currency: 'SAR', unitScale: 1000 })];
+    expect(() => sumMoney(items, { targetUnitScale: 1000 })).toThrow(/different units/);
+    const r = sumMoney(items, { targetUnitScale: 1000, normalizeUnits: true });
     expect(r.total).toEqual({ amount: '1500.0000', currency: 'SAR', unitScale: 1000 });
+    expect(r.normalizedUnitScales).toEqual([1000, 1000000]);
   });
   it('flags EV vs equity value confusion', () => {
     const w = detectValueBasisConfusion([

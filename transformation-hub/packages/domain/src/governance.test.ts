@@ -42,6 +42,15 @@ describe('quorum', () => {
   });
 });
 
+describe('QA-02 — the requester does not count toward quorum when self-approval is prohibited', () => {
+  it('excludes the requester from eligible and present voting members', () => {
+    const q = computeQuorum({ members, presentUserIds: ['chair', 'u1', 'u2'], recusedUserIds: [], requesterUserId: 'u2', onDate: '2026-09-29', policy });
+    expect(q.eligibleVoting).toBe(4);
+    expect(q.presentVoting).toBe(2);
+    expect(q.met).toBe(false);
+  });
+});
+
 describe('AT-05 — vote eligibility rules (server-side)', () => {
   const base = { members, recusedUserIds: ['u2'], requesterUserId: 'u3', onDate: '2026-09-29', policy };
   it('rejects a recused member', () => expect(() => assertMayVote({ ...base, voterUserId: 'u2' })).toThrow(/recused/));
