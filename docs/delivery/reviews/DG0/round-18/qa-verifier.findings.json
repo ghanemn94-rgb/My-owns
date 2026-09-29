@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG0-239",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-006",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "docs/delivery/agents.md (Process sandbox, D-030) still says 'the PID and IPC namespaces are private'. The code, the raw sandbox.json evidence and threat-model residual 8 all show the host PID namespace is shared. This is the same misstatement F-DG0-151 fixed in the agent_sandbox.py docstring, left in the agent-mechanism document",
+      "reproduction": "Candidate 21efe44b (450c756). `grep -n PID docs/delivery/agents.md` -> line 114: '- **Process:** only `CAP_SETFCAP` is kept, `no_new_privs` is set, and the PID and IPC namespaces are private.' Compare: (1) tools/agents/agent_sandbox.py bwrap_args passes `--unshare-ipc` and `--bind /proc /proc`; `grep -c unshare-pid tools/agents/agent_sandbox.py` = 0; the corrected module docstring (D-032) says it 'does NOT create a PID namespace'. (2) Raw evidence: sandbox.json of all three round-17 review runs (docs/delivery/runs/DG0/*R17*/sandbox.json) records `unshare: [\"ipc\"]`, `procfs: \"host-bind\"`. (3) docs/delivery/threat-model.md residual 8: 'The process sandbox shares the host PID namespace (D-030)'. The assignment asks QA to check that agents.md claims match the raw evidence (step 4). This sentence doesn't.",
+      "expected": "agents.md describes the process sandbox as the code and evidence do: host PID namespace shared (threat-model residual 8, with the reason: nested bwrap needs the host procfs), own IPC namespace (--unshare-ipc, D-031), host procfs bound read-write (residual 7). Suggested wording: '...`no_new_privs` is set, the IPC namespace is private, and the host PID namespace and procfs are shared (so a reviewer's nested bubblewrap works; threat-model residuals 7 and 8).'",
+      "actual": "A documentation-only overstatement of confinement in one summary sentence. The authoritative threat model and the code comment/docstring are correct, and the validator checks the real sandbox.json (`unshare` includes ipc, procfs host-bind), so no control or gate result depends on the wrong sentence. Low and non-mandatory. I'd accept it as an observation for DG0 if it's corrected in the next candidate (a one-line edit to a candidate file, owned by delivery-orchestrator).",
+      "evidence": [
+        "docs/delivery/agents.md#L114",
+        "tools/agents/agent_sandbox.py#bwrap_args",
+        "docs/delivery/threat-model.md#L61",
+        "docs/delivery/runs/DG0/DG0-T-DG0-REV-QA-R17-qa-verifier-20260929T111544Z-a1c9d0c1/sandbox.json",
+        "docs/delivery/test-evidence/DG0/qa/round-18/32-agents-md-vs-evidence.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-18/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-29T17:00:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-18 QA review of candidate 21efe44b (450c756). Low, documentation only; I'd accept it as an observation."
+        }
+      ]
+    }
+  ]
+}
