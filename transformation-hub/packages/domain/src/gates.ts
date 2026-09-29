@@ -1,5 +1,5 @@
 import { ruleViolation } from './errors';
-import type { CriterionStatus, GateAssessmentStatus } from './enums';
+import type { CriterionStatus, GateAssessmentStatus, DecisionStatus, DecisionAuthorityOutcome } from './enums';
 
 /**
  * Gate evaluation (spec §3). A gate is ready for decision only when every mandatory criterion is met with
@@ -30,7 +30,7 @@ export interface GateEvaluationInput {
 }
 
 export interface GateBlocker {
-  kind: 'criterion' | 'prerequisite' | 'evidence_conflict';
+  kind: 'criterion' | 'prerequisite' | 'evidence_conflict' | 'decision';
   ref: string;
   message: string;
 }
@@ -39,30 +39,39 @@ export interface GateEvaluation {
   ready: boolean;
   hasWaivers: boolean;
   blockers: GateBlocker[];
-  counts: { total: number; mandatory: number; met: number; waived: number; notApplicable: number; unmet: number };
+  /** `blockingUnmet` = blocking criteria not satisfied (forces the gate RAG to red — business-gates.md §2.1). */
+  counts: { total: number; mandatory: number; met: number; waived: number; notApplicable: number; unmet: number; blockingUnmet: number };
 }
 
 const APPROVED: (GateAssessmentStatus | 'none')[] = ['approved', 'approved_with_exceptions'];
 
 export function evaluateGate(input: GateEvaluationInput): GateEvaluation {
   const blockers: GateBlocker[] = [];
-  let met = 0, waived = 0, na = 0, unmet = 0;
+  let met = 0, waived = 0, na = 0, unmet = 0, blockingUnmet = 0;
   for (const c of input.criteria) {
-    if (c.conflictingEvidenceCount > 0 || c.status === 'conflicting') {
+    const conflicting = c.conflictingEvidenceCount > 0 || c.status === 'conflicting';
+    if (conflicting) {
       blockers.push({ kind: 'evidence_conflict', ref: c.key, message: `Criterion ${c.key} has conflicting evidence requiring reassessment` });
     }
+    let satisfied = false;
     switch (c.status) {
       case 'met':
         if (c.evidenceRequired && c.activeEvidenceCount === 0) {
           unmet++;
           if (c.mandatory || c.blocking) blockers.push({ kind: 'criterion', ref: c.key, message: `Criterion ${c.key} is marked met but has no active evidence` });
-        } else met++;
+        } else {
+          met++;
+          satisfied = true;
+        }
         break;
       case 'waived':
         if (!c.waivable || !c.approvedWaiverId) {
           unmet++;
           if (c.mandatory || c.blocking) blockers.push({ kind: 'criterion', ref: c.key, message: `Criterion ${c.key} waiver is not valid` });
-        } else waived++;
+        } else {
+          waived++;
+          satisfied = true;
+        }
         break;
       case 'not_applicable':
         if (!c.naDetermination?.approved || !c.naDetermination.basis.trim()) {
@@ -70,12 +79,16 @@ export function evaluateGate(input: GateEvaluationInput): GateEvaluation {
           if (c.mandatory || c.blocking) {
             blockers.push({ kind: 'criterion', ref: c.key, message: `Criterion ${c.key} is marked not applicable without an approved specialist determination` });
           }
-        } else na++;
+        } else {
+          na++;
+          satisfied = true;
+        }
         break;
       default:
         unmet++;
         if (c.mandatory || c.blocking) blockers.push({ kind: 'criterion', ref: c.key, message: `Mandatory criterion ${c.key} is not met` });
     }
+    if (c.blocking && (!satisfied || conflicting)) blockingUnmet++;
   }
   for (const p of input.prerequisites) {
     if (!APPROVED.includes(p.status)) {
@@ -93,8 +106,175 @@ export function evaluateGate(input: GateEvaluationInput): GateEvaluation {
       waived,
       notApplicable: na,
       unmet,
+      blockingUnmet,
     },
   };
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Assessment lifecycle guards used by the gates command service
+
+/** Assessments whose status and decision are final for their cycle (never modified afterwards — reopen creates a new cycle). */
+export const DECIDED_GATE_STATUSES: readonly GateAssessmentStatus[] = ['approved', 'approved_with_exceptions', 'rejected'];
+export const APPROVED_GATE_STATUSES: readonly GateAssessmentStatus[] = ['approved', 'approved_with_exceptions'];
+/**
+ * Criterion assessments may be changed only while the cycle is being assessed. From `ready_for_decision` the owner must
+ * first send the gate back to assessment (explicit command), so a decision is never taken on a moving target.
+ */
+export const CRITERION_EDITABLE_GATE_STATUSES: readonly GateAssessmentStatus[] = ['not_started', 'in_assessment', 'reopened'];
+
+export function assertCriterionEditable(gateKey: string, status: GateAssessmentStatus): void {
+  if (!CRITERION_EDITABLE_GATE_STATUSES.includes(status)) {
+    throw ruleViolation(
+      'gates.assessment.not_editable',
+      status === 'ready_for_decision'
+        ? `Gate ${gateKey} is ready for decision — send it back to assessment before changing criteria`
+        : `Gate ${gateKey} assessment is ${status}; criteria of a decided cycle are preserved (use the controlled reopen)`,
+      { status },
+    );
+  }
+}
+
+/**
+ * Decision states that are a final approval. Approval ≠ implementation (spec §4.2): the implementation-tracking states
+ * that follow `approved` are still approved decisions.
+ */
+export const FINAL_APPROVED_DECISION_STATUSES: readonly DecisionStatus[] = ['approved', 'implementation_pending', 'implemented_verified'];
+
+export interface GateDecisionBacking {
+  id: string;
+  status: DecisionStatus;
+  authorityOutcome: DecisionAuthorityOutcome;
+  /** Reference of the external authority's approval (recorded when a recommendation was approved by the authorized body). */
+  externalAuthorityReference?: string | null;
+  /** Gate the decision was raised for (decision.gate_key), when set. */
+  gateKey?: string | null;
+}
+
+/**
+ * AT-04: a gate approval must be backed by a FINAL governance decision. A decision that is only `recommended` (outside the
+ * committee's delegation, pending the external authority), still in review, deferred, rejected or superseded keeps the
+ * gate blocked. A decision is final when approved within the committee mandate, or when the authorized body approved a
+ * recommendation (status approved + external approval reference recorded — governance.assertApprovalAllowed).
+ * Returns null when the decision can back the approval, otherwise the blocker.
+ */
+export function gateDecisionIssue(d: GateDecisionBacking | null, gateKey: string): GateBlocker | null {
+  if (!d) return { kind: 'decision', ref: gateKey, message: `No approved governance decision is linked to gate ${gateKey}` };
+  if (d.gateKey && d.gateKey !== gateKey) {
+    return { kind: 'decision', ref: d.id, message: `The linked decision was raised for gate ${d.gateKey}, not ${gateKey}` };
+  }
+  if (!FINAL_APPROVED_DECISION_STATUSES.includes(d.status)) {
+    return {
+      kind: 'decision',
+      ref: d.id,
+      message:
+        d.status === 'recommended'
+          ? 'The linked decision is recommended — pending the external authority; it is not a final approval and the gate stays blocked'
+          : `The linked decision is ${d.status}; only an approved decision can back a gate approval`,
+    };
+  }
+  if (d.authorityOutcome === 'within_mandate') return null;
+  if (d.authorityOutcome === 'pending_external_authority' && d.externalAuthorityReference?.trim()) return null;
+  return {
+    kind: 'decision',
+    ref: d.id,
+    message:
+      d.authorityOutcome === 'pending_external_authority'
+        ? 'The linked decision is outside the committee delegation and no approval by the authorized body is recorded'
+        : 'The linked decision has no authority assessment (within mandate / external authority)',
+  };
+}
+
+export type GateDecisionOutcome = 'approve' | 'approve_with_exceptions' | 'reject';
+
+/**
+ * Guard for the gate decision command (server-side re-evaluation at decision time; spec §3 "Task completion reaching 100%
+ * does not unlock a gate. Validate evidence, approvals, and mandatory criteria on the server").
+ */
+export function assertGateDecisionAllowed(input: {
+  gateKey: string;
+  outcome: GateDecisionOutcome;
+  evaluation: GateEvaluation;
+  decision: GateDecisionBacking | null;
+  /** Decisions that already backed an earlier cycle of the same gate (a reopened gate needs a fresh decision). */
+  decisionIdsUsedByPriorCycles: string[];
+  note: string;
+}): void {
+  if (input.outcome === 'reject') {
+    if (!input.note.trim()) throw ruleViolation('gates.decide.missing_reason', 'A gate rejection requires a recorded reason');
+    return;
+  }
+  if (!input.evaluation.ready) {
+    throw ruleViolation('gates.decide.not_ready', `Gate ${input.gateKey} is not ready at decision time`, { blockers: input.evaluation.blockers });
+  }
+  const issue = gateDecisionIssue(input.decision, input.gateKey);
+  if (issue) {
+    throw ruleViolation('gates.decide.decision_not_final', issue.message, {
+      decisionId: input.decision?.id ?? null,
+      decisionStatus: input.decision?.status ?? null,
+      authorityOutcome: input.decision?.authorityOutcome ?? null,
+    });
+  }
+  if (input.decision && input.decisionIdsUsedByPriorCycles.includes(input.decision.id)) {
+    throw ruleViolation('gates.decide.decision_reused', 'This decision already backed an earlier cycle of the gate; a reopened gate needs a fresh decision');
+  }
+  if (input.outcome === 'approve_with_exceptions' && !input.evaluation.hasWaivers) {
+    throw ruleViolation('gates.decide.no_exceptions', 'Approve with exceptions requires at least one approved waiver');
+  }
+  if (input.outcome === 'approve' && input.evaluation.hasWaivers) {
+    throw ruleViolation('gates.decide.exceptions_present', 'Approved waivers exist — record the decision as approved with exceptions so the exceptions stay visible');
+  }
+}
+
+/**
+ * Gate RAG from criteria and blockers only (never from task progress or the workstream average — spec §9 rule 3).
+ */
+export function gateRag(status: GateAssessmentStatus, evaluation: GateEvaluation, needsReassessment: boolean): 'green' | 'amber' | 'red' {
+  if (needsReassessment) return 'red';
+  if (APPROVED_GATE_STATUSES.includes(status)) return 'green';
+  if (status === 'rejected') return 'red';
+  if (evaluation.blockers.some((b) => b.kind === 'evidence_conflict') || evaluation.counts.blockingUnmet > 0) return 'red';
+  if (evaluation.ready) return 'green';
+  return 'amber';
+}
+
+/** A waiver counts only when approved and not past its expiry (business date, inclusive). */
+export function waiverIsEffective(w: { status: string; expiresOn: string | null } | null | undefined, today: string): boolean {
+  return !!w && w.status === 'approved' && (!w.expiresOn || w.expiresOn >= today);
+}
+
+export interface PriorCriterionAssessment {
+  criterionId: string;
+  status: CriterionStatus;
+  waiverId: string | null;
+}
+
+/**
+ * Criterion states of a new (reopened) cycle. The prior cycle is never modified; the new cycle starts from its states
+ * except: criteria whose evidence is now conflicting → `conflicting`; criteria named by the reopener → `unmet` (re-review);
+ * a prior `conflicting` state that is no longer conflicting → `unmet` (must be re-assessed, never silently "met").
+ */
+export function carryForwardCriteria(
+  prior: PriorCriterionAssessment[],
+  opts: { conflictingCriterionIds: ReadonlySet<string>; resetCriterionIds: ReadonlySet<string> },
+): { criterionId: string; status: CriterionStatus; waiverId: string | null; carriedFrom: CriterionStatus }[] {
+  return prior.map((p) => {
+    let status: CriterionStatus = p.status;
+    if (opts.conflictingCriterionIds.has(p.criterionId)) status = 'conflicting';
+    else if (opts.resetCriterionIds.has(p.criterionId) || p.status === 'conflicting') status = 'unmet';
+    return { criterionId: p.criterionId, status, waiverId: status === 'waived' ? p.waiverId : null, carriedFrom: p.status };
+  });
+}
+
+/** Whether a role may approve waivers at all (waiver authority must be a role holding the approve permission). */
+export function assertWaivabilityDetermination(input: { waivable: boolean; waiverAuthorityRole: string | null; basis: string; authorityRoleCanApprove: boolean }): void {
+  if (!input.basis.trim()) throw ruleViolation('gates.waivability.missing_basis', 'A waivability determination requires a documented specialist basis');
+  if (input.waivable) {
+    if (!input.waiverAuthorityRole) throw ruleViolation('gates.waivability.missing_authority', 'A waivable criterion must name the waiver authority role');
+    if (!input.authorityRoleCanApprove) {
+      throw ruleViolation('gates.waivability.invalid_authority', `Role ${input.waiverAuthorityRole} cannot approve waivers under the policy matrix`);
+    }
+  }
 }
 
 /** AT-13: non-waivable conditions cannot be waived; waivers need an authorized approver distinct from requester. */

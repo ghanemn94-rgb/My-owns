@@ -1024,6 +1024,9 @@ CREATE TABLE "criterion_assessment" (
 	"na_proposed_by" uuid,
 	"na_determined_by" uuid,
 	"na_approved" boolean DEFAULT false NOT NULL,
+	"na_proposed_at" timestamp with time zone,
+	"na_determined_role" "role_key",
+	"na_determined_at" timestamp with time zone,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	CONSTRAINT "criterion_assessment_pid_uq" UNIQUE("project_id","id")
@@ -1041,6 +1044,8 @@ CREATE TABLE "gate_assessment" (
 	"decided_by" uuid,
 	"decided_at" timestamp with time zone,
 	"decision_id" uuid,
+	"submitted_by" uuid,
+	"submitted_at" timestamp with time zone,
 	"reopened_reason" text,
 	"supersedes_assessment_id" uuid,
 	"is_current" boolean DEFAULT true NOT NULL,
@@ -1120,6 +1125,10 @@ CREATE TABLE "waiver" (
 	"decided_at" timestamp with time zone,
 	"decision_note" text,
 	"authority_role" "role_key",
+	"conditions" text,
+	"expires_on" date,
+	"approval_request_id" uuid,
+	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	CONSTRAINT "waiver_pid_uq" UNIQUE("project_id","id")
@@ -2463,6 +2472,7 @@ ALTER TABLE "gate_criterion" ADD CONSTRAINT "gate_criterion_gate_fk" FOREIGN KEY
 ALTER TABLE "gate_definition" ADD CONSTRAINT "gate_definition_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "status_dimension" ADD CONSTRAINT "status_dimension_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "waiver" ADD CONSTRAINT "waiver_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "waiver" ADD CONSTRAINT "waiver_approval_request_fk" FOREIGN KEY ("project_id","approval_request_id") REFERENCES "public"."approval_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agreement" ADD CONSTRAINT "agreement_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agreement" ADD CONSTRAINT "agreement_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agreement" ADD CONSTRAINT "agreement_legal_reviewer_user_id_app_user_id_fk" FOREIGN KEY ("legal_reviewer_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

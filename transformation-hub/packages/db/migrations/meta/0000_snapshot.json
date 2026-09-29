@@ -1,5 +1,5 @@
 {
-  "id": "61a16cca-3fd3-4bd8-8128-5a383947c846",
+  "id": "45b6335d-9e54-4282-a726-20cdc03cbfd6",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -8152,6 +8152,25 @@
           "notNull": true,
           "default": false
         },
+        "na_proposed_at": {
+          "name": "na_proposed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "na_determined_role": {
+          "name": "na_determined_role",
+          "type": "role_key",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "na_determined_at": {
+          "name": "na_determined_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp with time zone",
@@ -8336,6 +8355,18 @@
         "decision_id": {
           "name": "decision_id",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "submitted_by": {
+          "name": "submitted_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -9030,6 +9061,31 @@
           "primaryKey": false,
           "notNull": false
         },
+        "conditions": {
+          "name": "conditions",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_on": {
+          "name": "expires_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_request_id": {
+          "name": "approval_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -9083,6 +9139,21 @@
             "project_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "waiver_approval_request_fk": {
+          "name": "waiver_approval_request_fk",
+          "tableFrom": "waiver",
+          "tableTo": "approval_request",
+          "columnsFrom": [
+            "project_id",
+            "approval_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",

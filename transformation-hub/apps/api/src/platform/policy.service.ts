@@ -15,6 +15,8 @@ export interface ResourceAttrs {
   withinAuthority?: boolean;
   /** Owner / assignee / creator ids of the resource (for `own_workstream`); for a CREATE, the actor is the creator. */
   ownerUserIds?: (string | null | undefined)[];
+  /** Role(s) that own the resource (e.g. a gate criterion's `owner_role`): holding one in the project counts as owning it. */
+  ownerRoles?: (RoleKey | null | undefined)[];
 }
 
 /**
@@ -206,7 +208,8 @@ export class PolicyService {
       ownWorkstreamSatisfied:
         scope.roles.has('project_manager') ||
         (!!res.workstreamId && !!wsGrants?.has(res.workstreamId)) ||
-        (!!p.userId && (res.ownerUserIds ?? []).includes(p.userId)),
+        (!!p.userId && (res.ownerUserIds ?? []).includes(p.userId)) ||
+        (res.ownerRoles ?? []).some((r) => !!r && (scope.roles.has(r) || scope.workstreamRoles.some((w) => w.role === r && (!res.workstreamId || w.workstreamId === res.workstreamId)))),
     };
     const r = evaluateConditions(conds, attrs);
     if (!r.allowed) {
