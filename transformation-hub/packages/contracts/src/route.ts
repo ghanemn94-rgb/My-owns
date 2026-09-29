@@ -82,7 +82,10 @@ export const ROUTES: Record<string, RouteDef> = {};
 
 export function registerRoutes<T extends Record<string, RouteDef>>(routes: T): T {
   for (const r of Object.values(routes)) {
-    if (ROUTES[r.id]) throw new Error(`Duplicate route id ${r.id}`);
+    const prev = ROUTES[r.id];
+    // Re-registering the SAME route (module re-evaluated by dev hot reload) is harmless; a different route with the
+    // same id is a programming error.
+    if (prev && (prev.method !== r.method || prev.path !== r.path)) throw new Error(`Duplicate route id ${r.id}`);
     ROUTES[r.id] = r;
   }
   return routes;

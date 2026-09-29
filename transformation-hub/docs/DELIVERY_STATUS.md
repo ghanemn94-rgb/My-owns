@@ -7,15 +7,15 @@ this environment) · **Simulated** (mock/demo stand-in, clearly labelled) · **N
 Engineering verification is distinct from Mobily production approval, which requires Mobily infrastructure, security
 and business owners (see `docs/assumptions-and-open-questions.md`).
 
-_Last updated: 2026-09-29 (P1 foundation checkpoint). This file is updated at every phase gate._
+_Last updated: 2026-09-29 (P1 foundation checkpoint). Per-requirement status (Planned / Implemented / Tested …) with evidence is in `docs/requirements/requirements-traceability.md`; statuses here are summaries of that matrix._
 
 | Area | Status | Evidence | Notes |
 |---|---|---|---|
 | Specification, requirements (394), PRD, backlog | Implemented | `docs/requirements/`, `docs/PRD.md` | P0 reviews in `docs/reviews/` |
 | Agent definitions (11) | Implemented | `.claude/agents/` | Executed as general-purpose subagents in the build session (ADR-0015) |
-| Domain rules (state machines, quorum/authority, gates, schedule/CPM, measurement, money, carve-out, AI authority, policy) | Tested | 91 unit tests (`packages/domain`) | |
-| Database schema, migrations, RLS, append-only audit + hash chain | Tested | integration tests `apps/api/test/p1` | 103 tables; 5 infrastructure tables exempt from RLS by design |
-| API platform (sessions, CSRF, scope, policy, audit, outbox, jobs, errors, contracts, OpenAPI) | Tested (core) | 25 integration tests | Worker job execution tested in later phases |
+| Domain rules (state machines, quorum/authority, gates, schedule/CPM, measurement, money, carve-out, AI authority, policy) | Tested | 92 unit tests (`packages/domain`) | |
+| Database schema, migrations, RLS, append-only audit + hash chain | Tested | integration tests `apps/api/test/p1` | 104 tables; 5 infrastructure tables exempt from RLS by design |
+| API platform (sessions, CSRF, scope, policy, audit, outbox, jobs, errors, contracts, OpenAPI) | Tested (core) | 41 integration tests (`apps/api/test/p1`) | Worker job execution tested in later phases |
 | Identity: demo login, logout, user admin | Tested | `isolation-and-auth.spec.ts` | Demo login exists only in `HUB_MODE=demo` |
 | Enterprise SSO (OIDC) | Not configured | — | Adapter planned P7; needs Mobily IdP (Q-04) |
 | Portfolio: projects from templates, members, workstreams, activity | Tested | `projects-templates-audit.spec.ts` | AT-02, AT-16 (project), AT-27 (DB trigger) |

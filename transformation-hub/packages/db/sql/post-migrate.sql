@@ -106,13 +106,14 @@ CREATE POLICY hub_project_self ON project
   USING (org_id = app_org_id() AND id = ANY (app_project_ids()))
   WITH CHECK (org_id = app_org_id() AND id = ANY (app_project_ids()));
 
--- project_membership: in-scope projects, plus the caller's own memberships (needed to compute scope).
+-- project_membership: full members see the project's team; everyone sees their own memberships (needed to compute
+-- scope). Room-only principals (clean team / external partner) do NOT see the internal team (ARCH-22).
 ALTER TABLE project_membership ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS hub_project_isolation ON project_membership;
 DROP POLICY IF EXISTS hub_membership_access ON project_membership;
 CREATE POLICY hub_membership_access ON project_membership
-  USING (org_id = app_org_id() AND (project_id = ANY (app_project_ids()) OR user_id = app_user_id()))
-  WITH CHECK (org_id = app_org_id() AND project_id = ANY (app_project_ids()));
+  USING (org_id = app_org_id() AND (project_id = ANY (app_full_project_ids()) OR user_id = app_user_id()))
+  WITH CHECK (org_id = app_org_id() AND project_id = ANY (app_full_project_ids()));
 
 -- notification: users read only their own; services may create for others inside the project scope.
 ALTER TABLE notification ENABLE ROW LEVEL SECURITY;
@@ -134,6 +135,12 @@ CREATE POLICY hub_project_isolation ON partner_room
   USING (project_id = ANY (app_full_project_ids()) OR (project_id = ANY (app_project_ids()) AND id = ANY (app_room_ids())))
   WITH CHECK (project_id = ANY (app_full_project_ids()));
 
+-- room_grant: room-only principals read only their OWN grants and can never write grants (ARCH-22).
+DROP POLICY IF EXISTS hub_project_isolation ON room_grant;
+CREATE POLICY hub_project_isolation ON room_grant
+  USING (project_id = ANY (app_full_project_ids()) OR (project_id = ANY (app_project_ids()) AND user_id = app_user_id()))
+  WITH CHECK (project_id = ANY (app_full_project_ids()));
+
 -- 3. Grants ------------------------------------------------------------------------------------------------
 DO $grants$
 BEGIN
@@ -146,6 +153,8 @@ BEGIN
     -- Documents are soft-deleted only; grant/membership history is revoked, never hard-deleted (ARCH-15c)
     EXECUTE 'REVOKE DELETE ON document, document_version, organization, project, org_role_assignment, project_membership, room_grant, recusal, conflict_declaration, attendance FROM hub_app';
     EXECUTE 'REVOKE UPDATE ON recusal, conflict_declaration FROM hub_app';
+    -- Audit checkpoints are written only by hub_audit_checkpoint() (no forged checkpoints, ARCH-05b)
+    EXECUTE 'REVOKE INSERT, UPDATE, DELETE ON audit_checkpoint FROM hub_app';
     -- No temporary objects for the runtime role (prevents pg_temp shadowing in SECURITY DEFINER functions, ARCH-03)
     EXECUTE format('REVOKE TEMPORARY ON DATABASE %I FROM PUBLIC', current_database());
     EXECUTE format('GRANT TEMPORARY ON DATABASE %I TO hub_owner', current_database());
@@ -219,6 +228,10 @@ BEGIN
   IF NEW.actor_kind = 'user' AND NEW.actor_user_id IS DISTINCT FROM app_user_id() THEN
     RAISE EXCEPTION 'audit_actor_mismatch: audit actor must be the session user' USING ERRCODE = 'P0001';
   END IF;
+  -- Service/system rows may not attribute the action to a human other than the session user (ARCH-05c).
+  IF NEW.actor_kind <> 'user' AND NEW.actor_user_id IS NOT NULL AND NEW.actor_user_id IS DISTINCT FROM app_user_id() THEN
+    RAISE EXCEPTION 'audit_actor_mismatch: a service/system audit row cannot name another user as actor' USING ERRCODE = 'P0001';
+  END IF;
   IF NEW.org_id IS DISTINCT FROM app_org_id() AND app_org_id() IS NOT NULL THEN
     RAISE EXCEPTION 'audit_org_mismatch: audit organization must be the session organization' USING ERRCODE = 'P0001';
   END IF;
@@ -250,7 +263,8 @@ DECLARE
   computed text;
   cp record;
 BEGIN
-  IF app_org_id() IS NOT NULL AND p_org IS DISTINCT FROM app_org_id() THEN
+  -- The runtime role may verify only its session organization; operators (owner role) may verify any org.
+  IF p_org IS DISTINCT FROM app_org_id() AND (app_org_id() IS NOT NULL OR session_user = 'hub_app') THEN
     RAISE EXCEPTION 'audit_verify_forbidden: can only verify the session organization' USING ERRCODE = 'P0001';
   END IF;
   FOR r IN SELECT * FROM audit_event WHERE org_id = p_org AND chain_pos IS NOT NULL ORDER BY chain_pos LOOP
@@ -277,11 +291,15 @@ BEGIN
 END
 $$;
 
--- Records the current chain head as a checkpoint (run periodically by the worker; export externally in production).
+-- Records the current chain head as a checkpoint. Scheduled by the worker (job `platform.audit.checkpoint`, every 15 min);
+-- in production also export checkpoints to external WORM storage/SIEM (ADR-0014).
 CREATE OR REPLACE FUNCTION hub_audit_checkpoint(p_org uuid) RETURNS bigint
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
 DECLARE head record; n bigint;
 BEGIN
+  IF p_org IS DISTINCT FROM app_org_id() AND (app_org_id() IS NOT NULL OR session_user = 'hub_app') THEN
+    RAISE EXCEPTION 'audit_checkpoint_forbidden: can only checkpoint the session organization' USING ERRCODE = 'P0001';
+  END IF;
   SELECT chain_pos, hash INTO head FROM audit_event WHERE org_id = p_org AND chain_pos IS NOT NULL ORDER BY chain_pos DESC LIMIT 1;
   IF head IS NULL THEN RETURN 0; END IF;
   SELECT count(*) INTO n FROM audit_event WHERE org_id = p_org;
@@ -524,10 +542,6 @@ BEGIN
   IF NEW.room_id IS DISTINCT FROM OLD.room_id OR NEW.classification IS DISTINCT FROM OLD.classification THEN
     UPDATE document_chunk SET room_id = NEW.room_id, classification = NEW.classification WHERE document_id = NEW.id;
   END IF;
-  IF NEW.current_version_id IS NOT NULL AND NEW.current_version_id IS DISTINCT FROM OLD.current_version_id
-     AND NOT EXISTS (SELECT 1 FROM document_version v WHERE v.id = NEW.current_version_id AND v.document_id = NEW.id) THEN
-    RAISE EXCEPTION 'cross_project_reference: current version must belong to the document' USING ERRCODE = 'P0001';
-  END IF;
   RETURN NEW;
 END
 $$;
@@ -549,3 +563,162 @@ BEGIN
   END IF;
 END
 $idgrant$;
+
+-- 13. Scope immutability (ARCH-23) ------------------------------------------------------------------------------
+-- project_id / org_id never change after insert. Moving a record between projects would silently turn existing
+-- references (evidence links, dependencies, polymorphic targets) into cross-project links; a move must be an
+-- explicit command that re-creates the record in the target project.
+CREATE OR REPLACE FUNCTION hub_scope_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF (to_jsonb(NEW) -> 'project_id') IS DISTINCT FROM (to_jsonb(OLD) -> 'project_id')
+     OR (to_jsonb(NEW) -> 'org_id') IS DISTINCT FROM (to_jsonb(OLD) -> 'org_id') THEN
+    RAISE EXCEPTION 'immutable_scope: project_id/org_id cannot change on %; re-create the record in the target project', TG_TABLE_NAME
+      USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+
+DO $scope$
+DECLARE r record; cols text;
+BEGIN
+  FOR r IN
+    SELECT t.table_name,
+           bool_or(c.column_name = 'project_id') AS has_project,
+           bool_or(c.column_name = 'org_id') AS has_org
+    FROM information_schema.tables t
+    JOIN information_schema.columns c ON c.table_schema = t.table_schema AND c.table_name = t.table_name
+    WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE' AND c.column_name IN ('project_id', 'org_id')
+    GROUP BY t.table_name
+  LOOP
+    cols := concat_ws(', ', CASE WHEN r.has_project THEN 'project_id' END, CASE WHEN r.has_org THEN 'org_id' END);
+    EXECUTE format('DROP TRIGGER IF EXISTS hub_scope_immutable ON %I', r.table_name);
+    EXECUTE format('CREATE TRIGGER hub_scope_immutable BEFORE UPDATE OF %s ON %I FOR EACH ROW EXECUTE FUNCTION hub_scope_immutable()', cols, r.table_name);
+  END LOOP;
+END
+$scope$;
+
+-- 14. Org-scoped user references and (org, project) binding (ARCH-21, ARCH-15b) ---------------------------------
+-- Convention (module guide): a uuid column named *_user_id or *_by is a USER reference. Every such column on a table
+-- with org_id gets a composite FK (org_id, col) → app_user(org_id, id), so a record can only name users of its own
+-- organization. Every table with org_id + project_id gets (org_id, project_id) → project(org_id, id).
+-- Generated here so columns added later by modules are covered automatically.
+CREATE UNIQUE INDEX IF NOT EXISTS app_user_org_id_uq ON app_user (org_id, id);
+CREATE UNIQUE INDEX IF NOT EXISTS project_org_id_uq ON project (org_id, id);
+
+DO $userfk$
+DECLARE r record; cname text;
+BEGIN
+  FOR r IN
+    SELECT c.table_name, c.column_name
+    FROM information_schema.columns c
+    JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name AND t.table_type = 'BASE TABLE'
+    WHERE c.table_schema = 'public' AND c.data_type = 'uuid'
+      AND (c.column_name LIKE '%user\_id' OR c.column_name LIKE '%\_by')
+      AND c.table_name <> 'app_user'
+      AND EXISTS (SELECT 1 FROM information_schema.columns o WHERE o.table_schema = 'public' AND o.table_name = c.table_name AND o.column_name = 'org_id')
+      -- skip columns that already carry a (single- or multi-column) FK
+      AND NOT EXISTS (
+        SELECT 1 FROM pg_constraint k JOIN pg_attribute a ON a.attrelid = k.conrelid AND a.attnum = ANY (k.conkey)
+        WHERE k.contype = 'f' AND k.conrelid = format('public.%I', c.table_name)::regclass AND a.attname = c.column_name)
+  LOOP
+    cname := left('hub_ufk_' || r.table_name || '_' || r.column_name, 63);
+    EXECUTE format('ALTER TABLE %I ADD CONSTRAINT %I FOREIGN KEY (org_id, %I) REFERENCES app_user (org_id, id)', r.table_name, cname, r.column_name);
+  END LOOP;
+
+  FOR r IN
+    SELECT c.table_name
+    FROM information_schema.columns c
+    JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name AND t.table_type = 'BASE TABLE'
+    WHERE c.table_schema = 'public' AND c.column_name = 'project_id'
+      AND EXISTS (SELECT 1 FROM information_schema.columns o WHERE o.table_schema = 'public' AND o.table_name = c.table_name AND o.column_name = 'org_id')
+  LOOP
+    cname := left('hub_opfk_' || r.table_name, 63);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = cname AND conrelid = format('public.%I', r.table_name)::regclass) THEN
+      EXECUTE format('ALTER TABLE %I ADD CONSTRAINT %I FOREIGN KEY (org_id, project_id) REFERENCES project (org_id, id)', r.table_name, cname);
+    END IF;
+  END LOOP;
+END
+$userfk$;
+
+-- 15. document.current_version_id must be a version of THIS document (ARCH-21) ------------------------------------
+-- Deferred constraint trigger: checked at COMMIT for INSERT and UPDATE, so a document and its first version can be
+-- written in either order inside one transaction. SECURITY DEFINER only to see the version row regardless of the
+-- caller's room scope; it compares ids and reveals nothing.
+CREATE OR REPLACE FUNCTION hub_document_current_version_check() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+BEGIN
+  IF NEW.current_version_id IS NOT NULL AND NOT EXISTS (
+       SELECT 1 FROM document_version v
+       WHERE v.id = NEW.current_version_id AND v.document_id = NEW.id AND v.project_id = NEW.project_id) THEN
+    RAISE EXCEPTION 'cross_project_reference: current version must be a version of this document' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NULL;
+END
+$$;
+REVOKE ALL ON FUNCTION hub_document_current_version_check() FROM PUBLIC;
+DROP TRIGGER IF EXISTS hub_document_current_version ON document;
+CREATE CONSTRAINT TRIGGER hub_document_current_version AFTER INSERT OR UPDATE OF current_version_id ON document
+  DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION hub_document_current_version_check();
+
+-- 16. Id-list references (ARCH-21) -----------------------------------------------------------------------------------
+-- Prefer child tables with composite FKs. Where a jsonb/uuid[] id list exists, every element must be a record of the
+-- same project that the caller can see (runs as invoker: RLS applies). Register new lists in the VALUES below.
+CREATE OR REPLACE FUNCTION hub_assert_same_project_ids() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  col text := TG_ARGV[0];
+  tbl text := TG_ARGV[1];
+  ids jsonb;
+  bad text;
+BEGIN
+  EXECUTE format('SELECT to_jsonb(($1).%I)', col) INTO ids USING NEW;
+  IF ids IS NULL OR jsonb_typeof(ids) = 'null' THEN RETURN NEW; END IF;
+  IF jsonb_typeof(ids) <> 'array' THEN
+    RAISE EXCEPTION 'invalid_reference_list: % must be an array of ids', col USING ERRCODE = 'P0001';
+  END IF;
+  EXECUTE format(
+    'SELECT e FROM jsonb_array_elements_text($1) e WHERE NOT EXISTS (SELECT 1 FROM %I t WHERE t.id = e::uuid AND t.project_id = $2) LIMIT 1', tbl)
+    INTO bad USING ids, NEW.project_id;
+  IF bad IS NOT NULL THEN
+    RAISE EXCEPTION 'cross_project_reference: % % is not a record of this project', tbl, bad USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+
+DO $idlists$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT * FROM (VALUES
+      ('diligence_request', 'evidence_document_ids', 'document')
+    ) AS v(tbl, col, target)
+  LOOP
+    IF to_regclass(r.tbl) IS NULL THEN CONTINUE; END IF;
+    EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I', 'hub_same_project_' || r.col, r.tbl);
+    EXECUTE format('CREATE TRIGGER %I BEFORE INSERT OR UPDATE OF %I ON %I FOR EACH ROW EXECUTE FUNCTION hub_assert_same_project_ids(%L, %L)',
+      'hub_same_project_' || r.col, r.col, r.tbl, r.col, r.target);
+  END LOOP;
+END
+$idlists$;
+
+-- 17. Votes are cast by the member of the deciding committee (ARCH-21, AT-05) ---------------------------------------
+-- vote.user_id must be the user of vote.membership_id, and that membership must belong to the decision's committee.
+CREATE OR REPLACE FUNCTION hub_vote_binding() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NOT EXISTS (
+       SELECT 1 FROM committee_membership cm
+       JOIN decision d ON d.id = NEW.decision_id AND d.project_id = NEW.project_id
+       WHERE cm.id = NEW.membership_id AND cm.project_id = NEW.project_id
+         AND cm.user_id = NEW.user_id AND cm.committee_id = d.committee_id) THEN
+    RAISE EXCEPTION 'vote_membership_mismatch: a vote must be cast by a member of the deciding committee' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_vote_binding ON vote;
+CREATE TRIGGER hub_vote_binding BEFORE INSERT ON vote FOR EACH ROW EXECUTE FUNCTION hub_vote_binding();
+
+-- 18. Notification sources belong to the notification's project (ARCH-21) --------------------------------------------
+DROP TRIGGER IF EXISTS hub_same_project_source ON notification;
+CREATE TRIGGER hub_same_project_source BEFORE INSERT OR UPDATE OF source_type, source_id ON notification
+  FOR EACH ROW EXECUTE FUNCTION hub_assert_same_project('source_type', 'source_id');

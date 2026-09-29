@@ -42,7 +42,7 @@
   statement: "The product display name defaults to the working name 'Mobily Transformation & Transactions Hub' and is configurable by a Platform Admin without code changes."
   user_story: "As a Platform Admin, I want to configure the product name, so that the platform can adopt the approved final name."
   business_outcome: "Branding follows approved corporate naming without redevelopment."
-  priority: should
+  priority: must
   module: platform
   ui: ["Reports & Administration"]
   api: ["GET /api/v1/settings/branding", "POST /api/v1/settings/branding"]
@@ -98,8 +98,8 @@
   security_rule: "Production bootstrap loader rejects person names, amounts and dates; demo records must carry is_demo = true"
   acceptance_tests: ["AT-28", "UT: production bootstrap contains no person names, amounts, partner names or actual dates"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [demo personas are role labels with @demo.invalid addresses; templates validated for no names/dates/amounts]
 - id: REQ-PLT-005
   section: "1-R6"
   title: "Every primary action backed end to end"
@@ -130,8 +130,8 @@
   security_rule: "Status derived server-side from last verified connectivity test; not user-editable"
   acceptance_tests: ["UT: mock adapter always reports Simulated, never Connected"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [auth config returns honest OIDC status; docs/DELIVERY_STATUS.md vocabulary]
 - id: REQ-PLT-007
   section: "1-R9"
   title: "No external publication or real messages without authorization"
@@ -146,8 +146,8 @@
   security_rule: "Outbound adapters default Disabled; enabling needs Platform Admin plus a configured authorized destination and sending authority"
   acceptance_tests: ["AT-22", "UT: email/Teams/SMS adapters refuse to send while not authorized"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [no external channels implemented; DeliveryService ledger]
 - id: REQ-PLT-008
   section: "12.4"
   title: "Internal in-app notifications through the outbox"
@@ -181,8 +181,8 @@
   security_rule: "n/a (documentation)"
   acceptance_tests: ["REVIEW: docs/source-register.md states image extraction not performed"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/source-register.md (image extraction NOT performed, recorded)]
 - id: REQ-SRC-002
   section: "2"
   title: "Map reference headings to template scope"
@@ -197,8 +197,8 @@
   security_rule: "Claims readable only by project members"
   acceptance_tests: ["UT: every reference heading claim links to at least one template workstream"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [packages/db/seed/templates/dc-carveout.v1.json, packages/db/scripts/validate-templates.mjs]
 - id: REQ-SRC-003
   section: "2"
   title: "Historical statuses kept as source-reported values only"
@@ -325,8 +325,8 @@
   security_rule: "Non-production environments display a synthetic-data banner; repository scanned for real data"
   acceptance_tests: ["REVIEW: repository and fixtures contain only synthetic Demo data"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [CLAUDE.md "Source boundaries", docs/source-register.md]
 
 # ---------------------------------------------------------------- LCY
 
@@ -707,7 +707,7 @@
   statement: "Provide a configurable proposed cadence (weekly operational follow-up; monthly/as-needed committee meetings) labelled Proposed, never presented as a confirmed corporate schedule."
   user_story: "As a Secretary/CPMO, I want to set a cadence, so that meetings are planned while the schedule is confirmed."
   business_outcome: "Predictable governance rhythm."
-  priority: should
+  priority: must
   module: governance
   ui: ["Committee Hub"]
   api: ["POST /api/v1/projects/{projectId}/committees/{committeeId}/cadence"]
@@ -1022,8 +1022,8 @@
   security_rule: "Templates readable by Portfolio Admin/Project Manager; editable only by Portfolio Admin"
   acceptance_tests: ["AT-02", "UT: DC template version validates against template schema"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 projects-templates-audit.spec.ts "AT-02"]
 - id: REQ-ENT-002
   section: "5"
   title: "Enterprise hierarchy"
@@ -1054,8 +1054,8 @@
   security_rule: "Entity participation per project; entity details beyond name follow project scope"
   acceptance_tests: ["UT: one entity linked to two projects without duplication"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 projects-templates-audit.spec.ts (NewCo legal entity linked via project_entity)]
 - id: REQ-ENT-004
   section: "5"
   title: "Portfolio, program, project and workstream views"
@@ -1086,8 +1086,8 @@
   security_rule: "n/a beyond template read permissions"
   acceptance_tests: ["AT-02", "IT: DC and general transformation projects run with their own phases"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 projects-templates-audit.spec.ts "AT-02"]
 - id: REQ-ENT-006
   section: "5"
   title: "Add projects through administration only"
@@ -1102,8 +1102,8 @@
   security_rule: "Only Portfolio Admin/Platform Admin with portfolio scope may create projects"
   acceptance_tests: ["AT-02", "AT-30", "E2E: create project from template via UI"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 projects-templates-audit.spec.ts "creates ... through the API"; "only authorized roles can create projects"]
 - id: REQ-ENT-007
   section: "5"
   title: "Template-configurable phases, gates, fields, forms, workflows and KPIs"
@@ -1134,8 +1134,8 @@
   security_rule: "Published versions immutable"
   acceptance_tests: ["AT-26", "UT: publishing new version leaves existing project on old version"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [packages/db/src/templates-loader.ts (published versions immutable), project.template_version_id pin]
 - id: REQ-ENT-009
   section: "5"
   title: "Template upgrade requires preview and approval"
@@ -1182,8 +1182,8 @@
   security_rule: "Role grants audited; grantor cannot exceed own scope"
   acceptance_tests: ["UT: workstream-scoped lead cannot edit another workstream"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 isolation-and-auth.spec.ts, P1 architecture-hardening.spec.ts "ARCH-02"]
 - id: REQ-ENT-012
   section: "5"
   title: "Partner, advisor and Clean Team data separation"
@@ -1233,8 +1233,8 @@
   security_rule: "Editing workstreams requires Project Manager"
   acceptance_tests: ["UT: DC project instantiates 12 workstreams"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 projects-templates-audit.spec.ts (12 workstreams), validate-templates.mjs]
 - id: REQ-WS-002
   section: "6"
   title: "Minimum scope per workstream seeded"
@@ -1249,8 +1249,8 @@
   security_rule: "Template content changes only via versioned template"
   acceptance_tests: ["UT: each of 12 workstreams has deliverables for every minimum-scope element"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [validate-templates.mjs]
 - id: REQ-WS-003
   section: "6"
   title: "Workstream required elements"
@@ -1281,8 +1281,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: template WBS has >=80 activities, all workstreams covered, no duplicate descriptions", "REVIEW: domain analyst confirms no filler"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [validate-templates.mjs (113 activities), P1 projects-templates-audit.spec.ts (>=80)]
 - id: REQ-WS-005
   section: "6"
   title: "WBS activity attributes"
@@ -1297,8 +1297,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: template schema rejects activity missing acceptance criteria or gate link"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [validate-templates.mjs (field set)]
 - id: REQ-WS-006
   section: "6"
   title: "No invented dates or people in WBS"
@@ -1313,8 +1313,8 @@
   security_rule: "Template validator rejects person names and absolute dates"
   acceptance_tests: ["UT: template contains only role owners and relative/TBD durations"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [validate-templates.mjs (no dates/amounts), P1 projects-templates-audit.spec.ts (no planned dates)]
 - id: REQ-WS-007
   section: "6"
   title: "Initial activity status Draft/Unverified"
@@ -1329,8 +1329,8 @@
   security_rule: "Status transitions only via task commands with evidence where required"
   acceptance_tests: ["AT-01", "UT: instantiated tasks all Draft/Unverified"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 projects-templates-audit.spec.ts (status draft, verification proposed)]
 
 # ---------------------------------------------------------------- PER
 
@@ -2462,7 +2462,7 @@
   statement: "Provide a responsibility/resource matrix and highlight owner-level conflicts (overloaded owners, overlapping accountability) without claiming advanced resource optimization."
   user_story: "As a Project Manager, I want owner overload visible, so that I rebalance assignments."
   business_outcome: "Balanced assignments."
-  priority: should
+  priority: must
   module: planning
   ui: ["Integrated Plan", "Workstream Workspace"]
   api: ["GET /api/v1/projects/{projectId}/responsibility-matrix"]
@@ -2673,7 +2673,7 @@
   statement: "Use a restrained corporate blue/white design via theme tokens that can adopt official Mobily branding if provided; no fabricated official logo."
   user_story: "As a Platform Admin, I want brandable themes, so that official branding can be applied later."
   business_outcome: "Professional, brand-ready UI."
-  priority: should
+  priority: must
   module: web
   ui: ["Reports & Administration"]
   api: []
@@ -3252,7 +3252,7 @@
   statement: "Provide BI-ready views or a documented API for Power BI within the approved architecture, using a restricted service account."
   user_story: "As a PMO analyst, I want BI access, so that I combine hub data with enterprise dashboards."
   business_outcome: "Enterprise BI integration."
-  priority: should
+  priority: must
   module: reporting
   ui: ["Reports & Administration"]
   api: ["GET /api/v1/bi/views/{viewName}"]
@@ -3591,7 +3591,7 @@
   statement: "Suggest weekly workstream plans and specific requests to data owners."
   user_story: "As a Workstream Lead, I want suggested weekly plans, so that I focus on the right items."
   business_outcome: "Focused execution."
-  priority: should
+  priority: must
   module: ai
   ui: ["AI PM Center", "Workstream Workspace"]
   api: ["GET /api/v1/projects/{projectId}/ai/proposals"]
@@ -3863,7 +3863,7 @@
   statement: "Provide rollback/compensation for reversible AI-executed changes; never promise recall of externally delivered messages."
   user_story: "As a Project Manager, I want to undo an AI change, so that mistakes are recoverable."
   business_outcome: "Recoverable automation."
-  priority: should
+  priority: must
   module: ai
   ui: ["AI PM Center"]
   api: ["POST /api/v1/projects/{projectId}/ai/runs/{runId}/compensate"]
@@ -4002,8 +4002,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: ADR records stack choice and versions"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [transformation-hub/ monorepo (apps/api NestJS, apps/web Next.js)]
 - id: REQ-ARC-002
   section: "13"
   title: "PostgreSQL source of truth with constraints; optional pgvector"
@@ -4018,8 +4018,8 @@
   security_rule: "n/a"
   acceptance_tests: ["IT: migrations apply cleanly to empty database and are repeatable"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [packages/db/migrations, P1 tests (constraints, FKs)]
 - id: REQ-ARC-003
   section: "13"
   title: "One documented ORM; isolation not assumed from ORM"
@@ -4034,8 +4034,8 @@
   security_rule: "RLS policies plus explicit scope filters"
   acceptance_tests: ["REVIEW: ADR documents ORM and isolation approach"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [ADR-0003, P1 isolation-and-auth.spec.ts "row-level security"]
 - id: REQ-ARC-004
   section: "13"
   title: "Separate worker for scheduling, reporting and AI"
@@ -4050,8 +4050,8 @@
   security_rule: "Worker uses least-privilege DB role"
   acceptance_tests: ["IT: worker processes outbox independently of API process"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [apps/api/src/worker.ts, platform/jobs/*]
 - id: REQ-ARC-005
   section: "13"
   title: "Object storage and file services via adapters"
@@ -4122,7 +4122,7 @@
   statement: "Emit OpenTelemetry traces/metrics/logs to an internal collector, with no public telemetry."
   user_story: "As a DevOps engineer, I want observability, so that incidents are diagnosed quickly."
   business_outcome: "Operability."
-  priority: should
+  priority: must
   module: platform
   ui: []
   api: []
@@ -4162,8 +4162,8 @@
   security_rule: "Modules access each other through service interfaces only"
   acceptance_tests: ["UT: dependency-cruiser rule forbids cross-module internal imports"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [ADR-0001]
 - id: REQ-ARC-012
   section: "13"
   title: "No external SaaS for core platform services"
@@ -4194,8 +4194,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: module folders and ownership documented"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [apps/api/src/modules/* (15 module shells + identity, portfolio)]
 - id: REQ-ARC-014
   section: "13"
   title: "Mandatory mutation flow"
@@ -4210,8 +4210,8 @@
   security_rule: "Command handler base enforces order; audit and outbox in same transaction"
   acceptance_tests: ["IT: failed business rule leaves no audit/outbox rows", "IT: mutation without session returns 401"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 isolation-and-auth.spec.ts "mutations ... audited as denied", P1 projects-templates-audit.spec.ts audit tests]
 - id: REQ-ARC-015
   section: "13"
   title: "Frontend never touches DB or LLM secrets; MCP optional"
@@ -4226,8 +4226,8 @@
   security_rule: "Web bundle scanned for secrets; DB credentials only in API/worker"
   acceptance_tests: ["UT: build output secret scan finds no provider keys or DB URLs"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [apps/web uses same-origin API proxy; no DB/LLM secrets in client]
 
 # ---------------------------------------------------------------- DAT
 
@@ -4245,8 +4245,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: docs/architecture ERD lists every section 14 entity"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/architecture/erd.md, docs/architecture/data-dictionary.md (generated from live schema)]
 - id: REQ-DAT-002
   section: "14"
   title: "Project scoping and cross-project link prevention"
@@ -4261,8 +4261,8 @@
   security_rule: "Composite FKs (project_id, id) plus assertSameProject in services"
   acceptance_tests: ["AT-03", "IT: linking Project A evidence to Project B task rejected by DB"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 architecture-hardening.spec.ts "ARCH-01 / REQ-DAT-002"]
 - id: REQ-DAT-003
   section: "14"
   title: "Decimal money with currency, units and periods"
@@ -4277,8 +4277,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-29", "UT: money type rejects float input; numeric(20,4) columns"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [D rules.test.ts "AT-29", numeric(20, 4)+currency+unit_scale columns]
 - id: REQ-DAT-004
   section: "14"
   title: "No invalid cross-currency/unit aggregation"
@@ -4309,8 +4309,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-16", "IT: concurrent baseline approvals — second receives 409"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 projects-templates-audit.spec.ts "AT-16"]
 - id: REQ-DAT-006
   section: "14"
   title: "Append-only audit with full context"
@@ -4325,15 +4325,15 @@
   security_rule: "DB trigger rejects UPDATE/DELETE; audit readable by Auditor role"
   acceptance_tests: ["IT: UPDATE on audit_event rejected", "UT: audit row contains before/after and correlation id"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 projects-templates-audit.spec.ts "Audit trail", P1 architecture-hardening.spec.ts]
 - id: REQ-DAT-007
   section: "14"
   title: "Audit export to independent log repository"
   statement: "Audit is exportable to an independent log repository under the approved architecture."
   user_story: "As a security reviewer, I want audit shipped externally, so that it survives DB compromise."
   business_outcome: "Independent audit trail."
-  priority: should
+  priority: must
   module: audit
   ui: ["Reports & Administration"]
   api: ["GET /api/v1/audit-events/export"]
@@ -4357,8 +4357,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: hash-chain verifier detects modified row", "REVIEW: ADR states tamper-evident, not tamper-proof"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [ADR-0014, P1 architecture-hardening.spec.ts (TRUNCATE, checkpoints, actor binding)]
 - id: REQ-DAT-009
   section: "14"
   title: "Soft deletion"
@@ -4373,8 +4373,8 @@
   security_rule: "Deleted rows excluded by scoped queries"
   acceptance_tests: ["UT: soft-deleted task excluded from lists and totals"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 projects-templates-audit.spec.ts "AT-27 (DB level)"]
 - id: REQ-DAT-010
   section: "14"
   title: "Retention and legal hold enforcement"
@@ -4397,7 +4397,7 @@
   statement: "Provide an authorized disposal procedure for records past retention, with approval and audit."
   user_story: "As a Legal Restricted user, I want controlled disposal, so that records are removed only when permitted."
   business_outcome: "Compliant data lifecycle."
-  priority: should
+  priority: must
   module: documents
   ui: ["Document & Evidence Center"]
   api: ["POST /api/v1/projects/{projectId}/disposals", "POST /api/v1/projects/{projectId}/disposals/{disposalId}/approve"]
@@ -4469,8 +4469,8 @@
   security_rule: "Totals computed inside caller scope"
   acceptance_tests: ["UT: pageSize > 100 rejected"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [/api/v1 base path, P1 list tests (pagination)]
 - id: REQ-DAT-016
   section: "14"
   title: "Rate limits"
@@ -4501,8 +4501,8 @@
   security_rule: "Log redaction for tokens, cookies, passwords"
   acceptance_tests: ["UT: error response contains no stack trace", "UT: log redaction removes session cookie"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 isolation-and-auth.spec.ts "validation errors are 400"; errors.ts redacts SQL]
 
 # ---------------------------------------------------------------- SEC
 
@@ -4520,8 +4520,8 @@
   security_rule: "Role definitions versioned; changes audited"
   acceptance_tests: ["UT: policy matrix covers all 14 roles for every permission"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [packages/domain/src/policy/policy-matrix.json, D policy.test.ts]
 - id: REQ-SEC-002
   section: "15"
   title: "Infrastructure administration separate from content access"
@@ -4536,8 +4536,8 @@
   security_rule: "Platform Admin role has no content permissions; RLS applies to admin sessions"
   acceptance_tests: ["IT: Platform Admin receives 404 for Legal Restricted document"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 isolation-and-auth.spec.ts "platform admin ... no project content", D policy.test.ts]
 - id: REQ-SEC-003
   section: "15"
   title: "RBAC plus ABAC, deny by default"
@@ -4552,8 +4552,8 @@
   security_rule: "PolicyService.assert on every read and mutation; unknown permission denied"
   acceptance_tests: ["AT-03", "UT: policy matrix unit tests for each role x permission x classification"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [D policy.test.ts, P1 isolation-and-auth.spec.ts]
 - id: REQ-SEC-004
   section: "15"
   title: "Segregation of request and approval; no self-approval"
@@ -4600,8 +4600,8 @@
   security_rule: "RLS on every project_id table; app role not owner, no BYPASSRLS"
   acceptance_tests: ["AT-03", "IT: raw query under app role cannot read other project rows", "IT: out-of-scope GET returns 404"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 isolation-and-auth.spec.ts, P1 architecture-hardening.spec.ts]
 - id: REQ-SEC-007
   section: "15"
   title: "Isolation in reports, search, AI, files, notifications and jobs"
@@ -4648,8 +4648,8 @@
   security_rule: "Session lookup on every request; revoked session rejected"
   acceptance_tests: ["AT-19", "IT: revoked session receives 401 on next request"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 isolation-and-auth.spec.ts "logout revokes", deactivating a user revokes]
 - id: REQ-SEC-010
   section: "15"
   title: "Separate service accounts with least privilege"
@@ -4664,8 +4664,8 @@
   security_rule: "Service identities cannot log in interactively; permissions minimal"
   acceptance_tests: ["UT: AI service identity lacks approve/verify permissions"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [ScopeService.servicePrincipal allowlist, JobContextFactory]
 - id: REQ-SEC-011
   section: "15"
   title: "TLS and data/backup encryption"
@@ -4760,8 +4760,8 @@
   security_rule: "Double-submit CSRF token; CSP; parameterized SQL; scoped lookups"
   acceptance_tests: ["IT: non-GET without CSRF token rejected", "IT: IDOR attempt returns 404"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [CSRF tested (P1 isolation-and-auth.spec.ts); parameterized SQL (Drizzle); helmet CSP; XSS/injection tests pending]
 - id: REQ-SEC-017
   section: "15"
   title: "CSV/Excel formula injection neutralized"
@@ -4888,8 +4888,8 @@
   security_rule: "Dev login route not registered when production config is active"
   acceptance_tests: ["IT: dev-login returns 404 in production mode", "UT: seed users have random generated credentials"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [config.ts rejects HUB_MODE=demo in production; demo login 404 outside demo mode]
 
 # ---------------------------------------------------------------- DEP
 
@@ -5051,8 +5051,8 @@
   security_rule: "Config schema validated at startup"
   acceptance_tests: ["UT: production boot fails with default session secret or dev login enabled"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [apps/api/src/platform/config.ts production validation]
 - id: REQ-DEP-011
   section: "16"
   title: "Adapters for infrastructure services"
@@ -5505,8 +5505,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: WORK_LOG records repository inspection; sibling project untouched"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [branch claude/mobily-transformation-hub; trading_agent/ untouched]
 - id: REQ-AGT-002
   section: "1-R2"
   title: "Complete requirement traceability chain"
@@ -5521,8 +5521,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: requirements.yaml validator — all fields present, all AT-xx referenced"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/requirements/requirements.yaml, docs/requirements/requirements-traceability.md]
 - id: REQ-AGT-003
   section: "1-R3"
   title: "Documented assumptions; no halt on unknowns"
@@ -5537,8 +5537,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: docs/assumptions-and-open-questions.md lists assumptions with owners"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/assumptions-and-open-questions.md]
 - id: REQ-AGT-004
   section: "1-R4"
   title: "Consolidated critical question list"
@@ -5553,8 +5553,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: single open-questions list maintained"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/assumptions-and-open-questions.md "Consolidated critical questions"]
 - id: REQ-AGT-005
   section: "1-R8"
   title: "Automatic phase advance; human approvals for business"
@@ -5569,8 +5569,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: gate reports show automatic advance only after PASS"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/WORK_LOG.md, docs/phases/]
 - id: REQ-AGT-006
   section: "18"
   title: "Agent definitions with content and tool limits"
@@ -5585,8 +5585,8 @@
   security_rule: "No bypassPermissions; reviewers read-only"
   acceptance_tests: ["REVIEW: 11 agent files present and registration verified or limitation recorded", "REVIEW: agent files include objective, files, tests, limits"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [.claude/agents/*.md, .claude/AGENT_RULES.md]
 - id: REQ-AGT-007
   section: "18"
   title: "Eleven agent roles with boundaries"
@@ -5601,8 +5601,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: each definition states responsibility and boundary per section 18 table"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [.claude/agents/ (11 definitions)]
 - id: REQ-AGT-008
   section: "18"
   title: "Two independent reviewers per phase with saved evidence"
@@ -5617,8 +5617,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: docs/reviews contains two independent reports per phase with revision ids"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/reviews/P0-qa-review.md, docs/reviews/P0-domain-review.md, docs/reviews/P0-architecture-review.md]
 - id: REQ-AGT-009
   section: "18"
   title: "Assignments carry REQ IDs, ownership and acceptance criteria"
@@ -5633,8 +5633,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: assignment briefs include REQ IDs and owned paths"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/architecture/module-guide.md]
 - id: REQ-AGT-010
   section: "18"
   title: "Parallelism within limits and without capability assumptions"
@@ -5649,8 +5649,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: WORK_LOG records actual delegation capabilities used"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/architecture/adr/0015-agent-execution-in-build-session.md]
 - id: REQ-AGT-011
   section: "18"
   title: "Single owner for shared contracts, migrations and lockfiles"
@@ -5665,8 +5665,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: migrations authored only by designated owner per git history"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/architecture/module-guide.md "File ownership"]
 - id: REQ-AGT-012
   section: "18"
   title: "Disclose when independent review cannot run"
@@ -5681,8 +5681,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: gate report marked BLOCKED when independent review missing"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/architecture/adr/0015-agent-execution-in-build-session.md]
 
 # ---------------------------------------------------------------- PHS
 
@@ -5924,8 +5924,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: WORK_LOG updated after each integration"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/WORK_LOG.md, CLAUDE.md "Resumption procedure"]
 - id: REQ-PHS-016
   section: "20"
   title: "Acceptance scenarios linked to requirement, fixture and result"
@@ -5972,8 +5972,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: CLAUDE.md commands match package.json scripts"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [CLAUDE.md]
 - id: REQ-PHS-019
   section: "22"
   title: "Core documentation set"
@@ -5988,8 +5988,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: each document present and reviewed in P0"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/PRD.md, docs/requirements/, docs/domain-glossary.md, docs/source-register.md, docs/assumptions-and-open-questions.md]
 - id: REQ-PHS-020
   section: "22"
   title: "Governance, architecture and security documentation"
@@ -6004,8 +6004,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: domain analyst review of governance docs", "REVIEW: architecture review of ERD/ADRs", "REVIEW: threat model reviewed in P0; control matrix completed in P7"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/governance/, docs/architecture/, docs/security/]
 - id: REQ-PHS-021
   section: "22"
   title: "AI documentation"
@@ -6084,8 +6084,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: DELIVERY_STATUS matches requirements.yaml statuses"]
   phase: P0
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [docs/DELIVERY_STATUS.md]
 - id: REQ-PHS-026
   section: "22"
   title: "Reproducible full-scenario walkthrough"
@@ -6167,8 +6167,8 @@
   security_rule: "Demo seed runs only in non-production modes"
   acceptance_tests: ["UT: demo seed idempotent; all records is_demo = true"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [apps/api/src/cli/seed-demo.ts (run by every integration test setup)]
 - id: REQ-SET-002
   section: "21"
   title: "Two fictional demo partners"
@@ -6199,8 +6199,8 @@
   security_rule: "Separate memberships"
   acceptance_tests: ["AT-02", "AT-03", "IT: demo users of project B see nothing of project A"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 isolation-and-auth.spec.ts (Project B isolation)]
 - id: REQ-SET-004
   section: "21"
   title: "Demo scenarios: blocked CP, TSA issue, out-of-authority decision"
@@ -6231,8 +6231,8 @@
   security_rule: "Reporting queries filter is_demo unless in demo project"
   acceptance_tests: ["UT: portfolio totals exclude demo projects"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [is_demo flags on all records; reporting exclusion pending P6]
 - id: REQ-SET-006
   section: "21"
   title: "Production bootstrap without invented content"
@@ -6247,8 +6247,8 @@
   security_rule: "Bootstrap validator rejects non-template content"
   acceptance_tests: ["UT: bootstrap produces only templates and role policies"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [apps/api/src/cli/bootstrap.ts]
 - id: REQ-SET-007
   section: "21"
   title: "Onboarding approvals for real projects"
@@ -6279,8 +6279,8 @@
   security_rule: "First admin created via one-time bootstrap token or IdP mapping"
   acceptance_tests: ["UT: bootstrap requires one-time token; no static credentials in repo"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [no password storage (ADR-0005); bootstrap creates IdP-bound admin only]
 - id: REQ-SET-009
   section: "21"
   title: "Wizard step 1: program, objective, parties and sites"

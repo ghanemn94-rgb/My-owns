@@ -357,3 +357,116 @@ Reasons:
 
 ## 9. Files changed by this review
 - `docs/reviews/P0-qa-review.md` (this file) is the only one. Throwaway scripts (`stats.py`, `scan.py`, `dd.py`, `probe.ts`) stayed in the reviewer's scratchpad and are not part of the repository.
+
+---
+
+# Re-review at 824bed9
+
+| Item | Value |
+|---|---|
+| Revision re-reviewed | **`824bed9`** ("Fix P0 architecture review findings"). Commits since `e2daae7`: `9901330`, `150910e`, `6fdb60f` (domain fixes), `b2ab1b9` (QA fixes), `824bed9` (architecture fixes) |
+| Report integrity | `git diff 824bed9 -- docs/reviews/P0-qa-review.md` is empty, so the committed copy of the original review above is unaltered |
+| Unchanged since `e2daae7` | `docs/requirements/**`, `docs/source-register.md`, `packages/db/seed/**`, `packages/db/scripts/**`, `docs/security/control-applicability-matrix.md`, `packages/domain/src/schedule.test.ts`, `packages/db/src/cli/**` (the dictionary generator) |
+| Independence | I did not read `P0-domain-review.md` or `P0-architecture-review.md`. |
+
+## R1. Commands run and real output
+
+```
+$ cd packages/domain && npx tsc -p tsconfig.build.json ; echo TSC_EXIT=$?
+TSC_EXIT=0
+$ npx vitest run --reporter=verbose ; echo VITEST_EXIT=$?
+VITEST_EXIT=0
+ Test Files  5 passed (5)
+      Tests  92 passed (92)
+   Duration  1.07s
+
+$ node packages/db/scripts/validate-templates.mjs ; echo EXIT=$?
+dc-carveout.v1.json: gates=8 workstreams=12 wbs=113 kpis=15 readinessAreas=14
+general-transformation.v1.json: gates=4 workstreams=4 wbs=17 kpis=5
+checks executed: 23735
+PASS — all checks passed
+EXIT=0
+
+# API integration tests against the reviewer's own DB (per coordinator instruction; guard allows only hub_test* on localhost)
+$ cd apps/api && TEST_DATABASE_URL=postgres://hub_app:…@127.0.0.1:5432/hub_test_qa \
+    TEST_DATABASE_MIGRATION_URL=postgres://hub_owner:…@127.0.0.1:5432/hub_test_qa pnpm test ; echo EXIT=$?
+EXIT=0
+> tsc -p tsconfig.build.json && vitest run
+ Test Files  3 passed (3)
+      Tests  41 passed (41)          # architecture-hardening 16, isolation-and-auth 16, projects-templates-audit 9
+   Duration  15.61s
+(PostgreSQL 16.13; the only warnings were Vite config-loader deprecation notices)
+```
+
+Behaviour probes of the fixed domain rules (`scratchpad/probe2.ts`, run with tsx; no repository file changed):
+```
+P1  requester u3 passed, flag=true : {"eligibleVoting":4,"presentVoting":2,"required":3,"met":false,…}      ← fixed
+P1c requester u3 passed, recusedMembersExcludedFromQuorum=false: {"eligibleVoting":5,"presentVoting":3,"required":3,"met":true,…}
+P1d requester omitted (optional param): {"eligibleVoting":5,"presentVoting":3,"required":3,"met":true,…}
+P2  no opts: rejected -> Cannot aggregate amounts expressed in different units (1000000, 1000) without explicit normalization  ← fixed
+P2b explicit: {"total":{"amount":"1.5000",…},"conversions":[],"normalizedUnitScales":[1000,1000000]}                           ← disclosed
+P4  extension approved + end date + continuity plan -> allowed | missing end date -> "An extension must state the new end date"
+P5  complete paper without evidence/attachments -> missing: []
+```
+
+Other checks:
+```
+data-dictionary cross-check: §14 coverage 64/64 'yes', all mapped tables exist; schema pgTable()=104, dictionary sections=103,
+  undocumented: ['audit_checkpoint'] (present in migration 0000 and in hub_test_qa: 104 base tables)
+requirements.yaml: 394 records, 16 fields each, status Planned ×394, evidence [] ×394 (file unchanged)
+hub_test_qa after demo seed: select count(*) from source_claim → 0 (none historical_unverified)
+git ls-files docs | WORK_LOG.md, DELIVERY_STATUS.md → present (34 and 33 lines)
+```
+
+## R2. Status of each finding
+
+| ID | Original | Status at 824bed9 | Evidence / residual |
+|---|---|---|---|
+| QA-01 | High | **Resolved** | `docs/WORK_LOG.md` records the phase, known failures and next action. `docs/DELIVERY_STATUS.md` uses the honest vocabulary and separates engineering verification from Mobily approval. CLAUDE.md's resumption step 1 now resolves. Content residuals are raised as R-02 (Low) and R-01 (Medium). |
+| QA-02 | Medium | **Partially resolved (residual Low)** | `computeQuorum` now excludes the requester when self-approval is prohibited, and the new test `QA-02 — the requester does not count…` covers it (probe P1: not met). Residuals: (a) with `recusedMembersExcludedFromQuorum=false`, recused members and the requester still count (P1c), although `docs/governance/authority-matrix.md:40` calls the flag "Always `true` (platform invariant, not configurable)"; (b) `requesterUserId` is optional, so a P2 caller that omits it silently gets the old behaviour (P1d). |
+| QA-03 | Medium | **Resolved** | Mixed unit scales are rejected unless `normalizeUnits: true` is passed, and the normalization is disclosed in `normalizedUnitScales`. There is a negative test (probes P2 and P2b). Note: consistency of periods is still not addressed in `Money`; this must be settled where FinancialSnapshot aggregation is built (P4). |
+| QA-04 | Medium | **Resolved** | `assertTsaExtensionAllowed` requires an approved decision, a new end date and a continuity plan, and the AT-10 test asserts the negative case (`rules.test.ts:236`). The comment at `:234` still precedes the unguarded transition assertion, but the guard is now tested next to it. A positive case and the missing-end-date or missing-plan cases are untested (probe P4 shows they work). |
+| QA-05 | Medium | **Largely resolved (residual Low)** | 12 of 13 elements are now validated, including all three impacts, dependencies, `requiredAuthority` and requester. Evidence and attachments are still not checked (P5 returns `[]`), and the test still uses `arrayContaining` rather than an exact list. |
+| QA-06 | Medium | **Open. Does not block P0** | `requirements.yaml` is unchanged. This is a priority mislabel; nothing is removed from scope, since every item stays in the register as Planned. **Fix before the P1 gate**, because REQ-PLT-001 and REQ-UX-003 are P1 requirements, and before each later owning phase. |
+| QA-07 | Medium | Open. Does not block P0 | Owned by P6 (AT-24). |
+| QA-08 | Medium | Open. Does not block P0 | REQ-SEC-016 is phase **P1**, so XSS and injection tests are required for the **P1** security/QA gate. |
+| QA-09 | Medium | **Open. Does not block P0** | `docs/source-register.md:37-38` still says CLM-009 "is represented in the demo sandbox". A freshly seeded `hub_test_qa` has 0 `source_claim` rows. This is a false present-tense statement about the implementation, not a fabricated Mobily fact, so the separation of source facts from design still holds. **Fix before the P1 gate**: the demo seed (REQ-SET-001) is a P1 deliverable, and AT-01's fixture depends on it. |
+| QA-10 | Low | Open | Register unchanged. |
+| QA-11 | Low | Open | `schedule.test.ts:90` unchanged. |
+| QA-12 | Low | Open | Register unchanged. |
+| QA-13 | Low | Open | Register unchanged. |
+| QA-14 | Low | (a) **Resolved**, (b) open | (a) The test was renamed ("the state machine only allows record_approval from under_review / recommended (guards are separate)"), and `assertApprovalAllowed` / `matrixUsable` were added with 5 tests covering the outside-mandate, missing-matrix, expired-matrix and demo-policy cases and the external reference plus different-recorder rule. (b) The JV-003 skipped-stage wording is unchanged. |
+| QA-15 | Low | Open | Control matrix unchanged. |
+| QA-16 | Low | Open | Validator unchanged. |
+| QA-17 | Low | Open | There is still no requirements validator script. |
+| QA-18 | Low | Open (and worsened, see R-03) | Dictionary still shows bare `numeric` (0 occurrences of `numeric(20`) and no CHECK or unique constraints. |
+| QA-19 | Low | Open | No committed OpenAPI document or data-flow document under docs/architecture. |
+
+## R3. New findings
+
+| ID | Severity | Location | Description | Requirement / AT | Recommendation |
+|---|---|---|---|---|---|
+| R-01 | Medium | `docs/DELIVERY_STATUS.md` vs `docs/requirements/requirements.yaml` | DELIVERY_STATUS marks domain rules, DB/RLS/audit, API platform, identity and portfolio as **Tested**, but all 394 register records remain `Planned` with `evidence: []`. REQ-PHS-025's own acceptance test ("DELIVERY_STATUS matches requirements.yaml statuses") therefore fails, and the §22 traceability columns Evidence and Status are not maintained. Does not block P0. | REQ-PHS-025, REQ-AGT-002; §22 | Before the P1 gate, set `status`/`evidence` in the register for the requirements actually verified by the 92 domain and 41 API tests, citing test files and this revision, and keep both files in sync. A scripted check (QA-17) would enforce this. |
+| R-02 | Low | `docs/WORK_LOG.md`, `docs/DELIVERY_STATUS.md` | Stale or missing content at `824bed9`: "91 unit tests", "25 integration tests", "103 tables" and "architecture (pending)" are now 92, 41, 104 and done. The latest commit hash is not recorded ("see git log"). REQ-AGT-001's "repository inspection; sibling project untouched" is not recorded, and REQ-AGT-010's delegation capabilities are recorded only indirectly (via ADR-0015). DELIVERY_STATUS uses "In progress", which is outside its own declared vocabulary. | REQ-PHS-015, REQ-PHS-025, REQ-AGT-001, REQ-AGT-010 | Refresh the counts and hash at each checkpoint. Add the two AGT items. Map "In progress" to Implemented or Planned (or declare it). |
+| R-03 | Low | `docs/architecture/data-dictionary.md:4` | The header says "Generated from the live PostgreSQL schema… Tables: 103", but the schema and migration define 104. `audit_checkpoint` (added for the audit hash-chain checkpoints) is undocumented. | REQ-DAT-001; §14 | Regenerate after every migration change, and add a CI check that the dictionary table count equals the `pgTable` count. |
+
+**Counts at 824bed9.**
+- **Open:** Critical 0 · High 0 · Medium 5 (QA-06, QA-07, QA-08, QA-09, R-01) · Low 14 (QA-02 residual, QA-05 residual, QA-10, QA-11, QA-12, QA-13, QA-14b, QA-15, QA-16, QA-17, QA-18, QA-19, R-02, R-03).
+- **Resolved:** QA-01, QA-03, QA-04, QA-14a.
+
+## R4. Verdict at 824bed9
+
+**PASS** (QA review of the P0 exit criteria).
+
+1. The single High finding (QA-01) is resolved, and no Critical or High findings remain open.
+2. All required verification was executed in this environment and is green: domain `tsc` exit 0 with 92/92 tests; template validator PASS (23,735 checks); API integration 41/41 against `hub_test_qa`.
+3. **Traceability** remains complete: 394 requirements with all 16 fields, AT-01..AT-30 all mapped, §14 coverage 64/64. **Separation of source facts from design** holds: templates are draft/proposed with no invented names, amounts, dates or percentages.
+4. **Conditions** (§19 step 7). The open Medium findings do not block P0, but must be recorded in `docs/phases/P0-gate-report.json` with owners, and fixed before these gates:
+   - **P1 gate:** QA-06 (P1 items), QA-08, QA-09 and R-01.
+   - **P6 gate:** QA-07.
+   - **P2 gate:** the QA-02 residual. P2 governance callers must pass `requesterUserId`, and the non-invariant flag must be removed or enforced.
+
+This verdict covers QA only. The P0 gate itself also depends on the domain and architecture reviewer verdicts, which I have not assessed.
+
+## R5. Files changed by this re-review
+- `docs/reviews/P0-qa-review.md` (this appended section) only. Probe scripts stayed in the reviewer's scratchpad.
