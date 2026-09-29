@@ -28,19 +28,12 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 | 15 | PASS | FAIL | PASS (Low: 236, 237) | 145 High (guard check-then-use: symlink swap between hook check and Write), 146 Low (sandbox stubs perturb working-tree candidate; fails closed) |
 
 - **Open blocker: F-DG0-145 (High, mandatory).**
-  - **The finding.** The file-tool write guard is a PreToolUse check, and Claude Code's Write tool runs unsandboxed. An agent's own sandboxed shell can swap a symlink between the check and the write. Code-security showed this live once in 11 attempts, and 236 of 600 times offline.
-  - **Planned fix: run the whole agent process inside an outer bubblewrap.** Its writable areas would be the role's scope, the run's private `TMPDIR` and the CLI's session store, so the kernel refuses forbidden writes whichever tool makes them.
-  - **Experiment 1.** The CLI and its Write tool work under such a sandbox with a read-only home. Bash needs the environment's process cgroup to be writable.
-  - **Experiment 2 (the follow-up) was refused by the session's auto-mode classifier**, as credential-related. It is not retried in any form.
-  - **Options for the user:**
-    1. Allow that experiment, so the outer-sandbox fix can be built and tested.
-    2. Choose a detection-based alternative: post-run integrity checks of protected paths, and re-scoping F-DG0-145's control in the threat model from "prevented" to "detected". The reviewers would then judge it against the revised model.
-    3. Another approach.
-- **Also pending:**
-  - F-DG0-146 (Low; fails closed).
-  - The QA round-15 result.
-  - An orchestrator-observed latent issue: a sandbox stub at `test-evidence/<stage>/audit` could block a reviewer's first `mkdir` in a new stage. Fix: the runner pre-creates the four evidence directories.
-- **Findings (round 15 imported):** 77 closed and verified. Open: F-DG0-145 (High), and the Low findings 146, 236 and 237. 146 and 236 are the same issue (sandbox stubs perturb the working-tree candidate; fails closed). 237 is a threat-model wording gap (new files outside the deny list, detected).
+  - **The finding.** The file-tool write guard is check-then-use. An agent's shell can swap a symlink between the hook's check and the unsandboxed Write.
+  - **The user chose option 1 (2026-09-29):** a kernel-enforced outer sandbox around the whole agent process.
+  - **Its required experiment is refused by the session's auto-mode safety classifier.** A chat approval does not lift that. It needs a permission rule in the user's Claude Code settings, and the orchestrator does not retry or work around the refusal.
+  - **Waiting for the user** either to add that rule or to choose option 2 (detection-based: post-run integrity checks, with the threat-model control re-scoped to "detected").
+- **Done meanwhile (D-029):** F-DG0-146, 236 and 237 were fixed at `fe722c8`, pending verification. Sandbox stubs no longer perturb the working-tree candidate. The runner pre-creates the evidence and gate directories. The threat-model wording is exact.
+- **Findings:** 77 closed and verified. F-DG0-145 (High) is open. F-DG0-146, 236 and 237 are fixed and pending verification.
 
 ## Done in P0 so far
 
