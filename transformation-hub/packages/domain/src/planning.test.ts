@@ -1,0 +1,111 @@
+import { describe, it, expect } from 'vitest';
+import {
+  RAID_MACHINE,
+  riskScore,
+  riskRating,
+  isBlockingIssue,
+  isOverdue,
+  lookAheadWindow,
+  inWindow,
+  deliverableProgressItem,
+  drivingNetwork,
+  latestDate,
+  updateFreshnessDate,
+  canonicalJson,
+} from './planning';
+import { transition } from './workflows';
+import { weightedProgress, calculateRag } from './measurement';
+
+describe('RAID lifecycle [REQ-PLN-012]', () => {
+  it('allows escalation, closure and reopen; rejects closing a cancelled item', () => {
+    expect(transition('raid', RAID_MACHINE, 'open', 'escalate')).toBe('escalated');
+    expect(transition('raid', RAID_MACHINE, 'escalated', 'close')).toBe('closed');
+    expect(transition('raid', RAID_MACHINE, 'closed', 'reopen')).toBe('open');
+    expect(() => transition('raid', RAID_MACHINE, 'cancelled', 'close')).toThrow(/Cannot close/);
+  });
+
+  it('scores exposure as probability × impact with bands', () => {
+    expect(riskScore(4, 5)).toBe(20);
+    expect(riskRating(20)).toBe('high');
+    expect(riskRating(9)).toBe('medium');
+    expect(riskRating(4)).toBe('low');
+    expect(() => riskScore(0, 3)).toThrow(RangeError);
+    expect(() => riskScore(3, 6)).toThrow(RangeError);
+  });
+
+  it('treats only open high/critical issues as blockers', () => {
+    expect(isBlockingIssue({ status: 'open', severity: 4 })).toBe(true);
+    expect(isBlockingIssue({ status: 'escalated', severity: 5 })).toBe(true);
+    expect(isBlockingIssue({ status: 'open', severity: 3 })).toBe(false);
+    expect(isBlockingIssue({ status: 'closed', severity: 5 })).toBe(false);
+  });
+
+  it('overdue needs a past due date and an open item', () => {
+    expect(isOverdue('2026-10-01', '2026-10-02', true)).toBe(true);
+    expect(isOverdue('2026-10-02', '2026-10-02', true)).toBe(false);
+    expect(isOverdue('2026-10-01', '2026-10-02', false)).toBe(false);
+    expect(isOverdue(null, '2026-10-02', true)).toBe(false);
+  });
+});
+
+describe('look-ahead window', () => {
+  it('covers exactly N weeks inclusive and rejects other sizes', () => {
+    const w = lookAheadWindow('2026-10-04', 2);
+    expect(w).toEqual({ from: '2026-10-04', to: '2026-10-17' });
+    expect(inWindow('2026-10-17', w)).toBe(true);
+    expect(inWindow('2026-10-18', w)).toBe(false);
+    expect(() => lookAheadWindow('2026-10-04', 3)).toThrow(RangeError);
+  });
+});
+
+describe('weighted progress from deliverables [REQ-PLN-016, REQ-PLN-017]', () => {
+  it('counts only accepted deliverables, excludes cancelled and unapproved weights with reasons', () => {
+    const items = [
+      deliverableProgressItem({ id: 'a', status: 'accepted', weight: 5, weightApproved: true }),
+      deliverableProgressItem({ id: 'b', status: 'submitted', weight: 3, weightApproved: true }),
+      deliverableProgressItem({ id: 'c', status: 'cancelled', weight: 10, weightApproved: true }),
+      deliverableProgressItem({ id: 'd', status: 'accepted', weight: 4, weightApproved: false }),
+    ];
+    const p = weightedProgress(items);
+    expect(p.denominatorWeight).toBe(8);
+    expect(p.numeratorWeight).toBe(5);
+    expect(p.percent).toBe(62.5);
+    expect(p.exclusions.map((e) => e.id).sort()).toEqual(['c', 'd']);
+    expect(p.exclusions.find((e) => e.id === 'd')!.reason).toMatch(/not approved/);
+  });
+});
+
+describe('driving network', () => {
+  it('returns the target and all transitive predecessors only', () => {
+    const edges = [
+      { predecessorId: 'A', successorId: 'B' },
+      { predecessorId: 'B', successorId: 'C' },
+      { predecessorId: 'X', successorId: 'C' },
+      { predecessorId: 'C', successorId: 'D' },
+    ];
+    expect([...drivingNetwork('C', edges)].sort()).toEqual(['A', 'B', 'C', 'X']);
+    expect([...drivingNetwork('A', edges)]).toEqual(['A']);
+  });
+});
+
+describe('RAG inputs [REQ-PLN-020]', () => {
+  it('latestDate requires all dates by default (missing → unknown)', () => {
+    expect(latestDate(['2026-10-01', '2026-11-01'])).toBe('2026-11-01');
+    expect(latestDate(['2026-10-01', null])).toBeNull();
+    expect(latestDate(['2026-10-01', null], false)).toBe('2026-10-01');
+    expect(latestDate([])).toBeNull();
+  });
+
+  it('freshness cannot be pre-dated into the future and stale is never green', () => {
+    expect(updateFreshnessDate('2026-12-01', '2026-10-05')).toBe('2026-10-05');
+    const r = calculateRag({ baselineFinish: '2026-11-01', forecastFinish: '2026-11-01', lastUpdatedOn: updateFreshnessDate('2026-09-01', '2026-09-02'), today: '2026-10-05', hasOpenBlocker: false });
+    expect(r.status).toBe('stale');
+  });
+});
+
+describe('canonical JSON', () => {
+  it('is key-order independent', () => {
+    expect(canonicalJson({ b: 1, a: [{ y: 2, x: null }] })).toBe(canonicalJson({ a: [{ x: null, y: 2 }], b: 1 }));
+    expect(canonicalJson({ a: undefined, b: 1 })).toBe('{"b":1}');
+  });
+});

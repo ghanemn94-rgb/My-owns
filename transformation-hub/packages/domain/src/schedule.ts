@@ -45,7 +45,8 @@ export type ScheduleIssueCode =
   | 'cycle'
   | 'unknown_node'
   | 'negative_duration'
-  | 'invalid_date';
+  | 'invalid_date'
+  | 'missing_project_start';
 
 export interface ScheduleIssue {
   code: ScheduleIssueCode;

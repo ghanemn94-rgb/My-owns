@@ -60,6 +60,10 @@ export const task = pgTable(
     requiresAcceptance: boolean('requires_acceptance').notNull().default(false),
     acceptedBy: uuid('accepted_by'),
     acceptedAt: ts('accepted_at'),
+    /** Who submitted for acceptance (separation of duties: the acceptor must be someone else). */
+    submittedBy: uuid('submitted_by'),
+    submittedAt: ts('submitted_at'),
+    blockedReason: text('blocked_reason'),
     gateKey: varchar('gate_key', { length: 16 }),
     isDeliverable: boolean('is_deliverable').notNull().default(false),
     weight: integer('weight').notNull().default(1),
@@ -102,6 +106,11 @@ export const milestone = pgTable(
     weight: integer('weight').notNull().default(3),
     ownerUserId: uuid('owner_user_id').references(() => appUser.id),
     verificationStatus: verificationStatus('verification_status').notNull().default('proposed'),
+    /** Reported achieved (claim) vs verified with evidence by someone else. */
+    reportedBy: uuid('reported_by'),
+    reportedAt: ts('reported_at'),
+    verifiedBy: uuid('verified_by'),
+    verifiedAt: ts('verified_at'),
     isDemo: isDemo(),
     createdAt: createdAt(),
     createdBy: createdBy(),
@@ -134,6 +143,12 @@ export const deliverable = pgTable(
     ownerUserId: uuid('owner_user_id').references(() => appUser.id),
     acceptedBy: uuid('accepted_by'),
     acceptedAt: ts('accepted_at'),
+    submittedBy: uuid('submitted_by'),
+    submittedAt: ts('submitted_at'),
+    /** Who last set the weight (weight approval requires a different person). */
+    weightSetBy: uuid('weight_set_by'),
+    weightApprovedBy: uuid('weight_approved_by'),
+    weightApprovedAt: ts('weight_approved_at'),
     gateKey: varchar('gate_key', { length: 16 }),
     isDemo: isDemo(),
     createdAt: createdAt(),
@@ -219,11 +234,21 @@ export const baselineVersion = pgTable(
     proposedBy: uuid('proposed_by'),
     approvedBy: uuid('approved_by'),
     approvedAt: ts('approved_at'),
+    rejectedBy: uuid('rejected_by'),
+    rejectedAt: ts('rejected_at'),
+    supersededAt: ts('superseded_at'),
     note: text('note'),
+    decisionNote: text('decision_note'),
     createdAt: createdAt(),
     version: versionCol(),
   },
-  (t) => [unique('baseline_pid_uq').on(t.projectId, t.id), uniqueIndex('baseline_version_uq').on(t.projectId, t.versionNo)],
+  (t) => [
+    unique('baseline_pid_uq').on(t.projectId, t.id),
+    uniqueIndex('baseline_version_uq').on(t.projectId, t.versionNo),
+    // At most one pending proposal and one approved (current) baseline per project — concurrent attempts → 409.
+    uniqueIndex('baseline_one_proposed_uq').on(t.projectId).where(sql`status = 'proposed'`),
+    uniqueIndex('baseline_one_approved_uq').on(t.projectId).where(sql`status = 'approved'`),
+  ],
 );
 
 export const changeRequest = pgTable(
@@ -377,20 +402,27 @@ export const statusUpdate = pgTable(
 );
 
 /** Manual RAG override: reason, expiry, reviewer; calculated value retained (measurement rule 6). */
-export const ragOverride = pgTable('rag_override', {
-  id: pk(),
-  orgId: orgIdCol(),
-  projectId: projectIdCol().references(() => project.id),
-  entityType: varchar('entity_type', { length: 32 }).notNull(),
-  entityId: uuid('entity_id').notNull(),
-  calculatedStatus: ragStatus('calculated_status').notNull(),
-  overrideStatus: ragStatus('override_status').notNull(),
-  reason: text('reason').notNull(),
-  expiresOn: date('expires_on', { mode: 'string' }).notNull(),
-  requestedBy: uuid('requested_by').notNull(),
-  reviewerUserId: uuid('reviewer_user_id'),
-  approved: boolean('approved').notNull().default(false),
-  reviewedAt: ts('reviewed_at'),
-  createdAt: createdAt(),
-  version: versionCol(),
-});
+export const ragOverride = pgTable(
+  'rag_override',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    entityType: varchar('entity_type', { length: 32 }).notNull(),
+    entityId: uuid('entity_id').notNull(),
+    calculatedStatus: ragStatus('calculated_status').notNull(),
+    overrideStatus: ragStatus('override_status').notNull(),
+    reason: text('reason').notNull(),
+    expiresOn: date('expires_on', { mode: 'string' }).notNull(),
+    requestedBy: uuid('requested_by').notNull(),
+    reviewerUserId: uuid('reviewer_user_id'),
+    approved: boolean('approved').notNull().default(false),
+    reviewedAt: ts('reviewed_at'),
+    reviewNote: text('review_note'),
+    isDemo: isDemo(),
+    createdAt: createdAt(),
+    version: versionCol(),
+  },
+  // One pending (unreviewed) override request per entity.
+  (t) => [uniqueIndex('rag_override_pending_uq').on(t.projectId, t.entityType, t.entityId).where(sql`reviewed_at is null`)],
+);
