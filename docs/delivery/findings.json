@@ -5037,14 +5037,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-15/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T23:45:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer in DG0 round 15 as a Low observation"
+        },
+        {
+          "at": "2026-09-29T06:12:43Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef"
         }
-      ]
+      ],
+      "fix_revision": "fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef",
+      "fix_summary": "D-029: manifestFromWorkingTree skips only untracked, zero-length, unwritable (0444) regular files, the exact shape of a concurrent bubblewrap mount stub, so candidate.mjs, --reconcile, --diff and the pre-freeze working-tree check no longer flip while agents run; frozen candidates come from committed content only. Test 'F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does' (fails on the previous code)."
     },
     {
       "id": "F-DG0-236",
@@ -5068,14 +5075,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-15/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T23:50:00Z",
           "status": "OPEN",
           "note": "Raised in the DG0 round-15 QA review of candidate b7f60ed3 (7fab49c). Low; I would accept it as an observation for DG0."
+        },
+        {
+          "at": "2026-09-29T06:12:43Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef"
         }
-      ]
+      ],
+      "fix_revision": "fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef",
+      "fix_summary": "D-029: same working-tree stub rule as F-DG0-146 (only untracked + zero-length + mode 0444 regular files are skipped; empty writable, non-empty read-only and tracked files still count). The runner also pre-creates docs/delivery/gates and docs/delivery/test-evidence/<stage>/{domain,code-security,qa,audit} before any agent starts, so no stub can occupy the auditor's gate directory or a reviewer's evidence directory. Tests: the validator test above and the runner test 'F-DG0-236: the runner pre-creates the stage's evidence directories and the gate-record directory'."
     },
     {
       "id": "F-DG0-237",
@@ -5097,14 +5111,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-15/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T23:50:00Z",
           "status": "OPEN",
           "note": "Raised in the DG0 round-15 QA review of candidate b7f60ed3 (7fab49c). Low; I would accept it as an observation."
+        },
+        {
+          "at": "2026-09-29T06:12:43Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef"
         }
-      ]
+      ],
+      "fix_revision": "fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef",
+      "fix_summary": "D-029: threat-model.md now states that a confined role's shell can create a new file or directory at any path that does not exist yet and is not on its deny list (repository root, new top-level directories such as src/ or docs/architecture/, new entries under docs/delivery/), that such files cannot change committed, protected or other agents' content, and that they are detected via meta.json outputs and git status (review auto-commits take only the run directory and tool-authored files)."
     }
   ]
 }
