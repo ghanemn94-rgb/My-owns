@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { crc32 } from 'node:zlib';
 import { getApp, demoUserId, owner } from '../helpers';
-import { registerDocumentsJobs } from '../../src/modules/documents/documents.jobs';
+import { registerJobHandlers } from '../../src/jobs';
 import { WorkerService } from '../../src/platform/jobs/worker.service';
 
 /** A logged-in persona that can also send raw (octet-stream) uploads with the CSRF header. */
@@ -61,10 +61,15 @@ export async function createWithVersion(c: DocClient, pid: string, meta: { title
   return { id: created.body.id as string, upload: up };
 }
 
-/** Drive the worker deterministically: dispatch outbox → run jobs, until nothing is left. */
+const registered = new WeakSet<object>();
+
+/** Drive the worker deterministically with the worker's real handler set: dispatch outbox → run jobs, until idle. */
 export async function drainWorker(): Promise<{ executed: number }> {
   const app = await getApp();
-  registerDocumentsJobs(app);
+  if (!registered.has(app)) {
+    registerJobHandlers(app);
+    registered.add(app);
+  }
   const worker = app.get(WorkerService);
   let executed = 0;
   for (let i = 0; i < 50; i++) {

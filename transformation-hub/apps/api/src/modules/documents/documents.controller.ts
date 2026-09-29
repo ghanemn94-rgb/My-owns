@@ -29,6 +29,11 @@ export class DocumentsController {
     return this.docs.search(ctx, i.params.projectId, i.query);
   }
 
+  @ApiRoute(R.uploadPolicy)
+  uploadPolicy() {
+    return this.docs.uploadPolicy();
+  }
+
   @ApiRoute(R.listDocuments)
   list(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.listDocuments>) {
     return this.docs.list(ctx, i.params.projectId, i.query);

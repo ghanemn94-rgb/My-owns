@@ -48,7 +48,7 @@ export const PROJECT_SECTIONS: readonly SectionDef[] = [
   { key: 'readiness', segment: 'readiness', permissions: ['readiness.register.read'], phase: 'P3', kinds: TRANSACTION_KINDS },
   { key: 'finance', segment: 'finance', permissions: ['finance.record.read'], phase: 'P4' },
   { key: 'jv', segment: 'jv', permissions: ['jv.deal.read', 'jv.partner.read', 'jv.room.read'], phase: 'P4', kinds: TRANSACTION_KINDS },
-  { key: 'documents', segment: 'documents', permissions: ['documents.document.read'], phase: 'P2/P3' },
+  { key: 'documents', segment: 'documents', permissions: ['documents.document.read'], phase: null },
   { key: 'ai', segment: 'ai', permissions: ['ai.proposal.read', 'ai.run.read', 'ai.assistant.use'], phase: 'P5' },
   { key: 'reports', segment: 'reports', permissions: ['reports.snapshot.read', 'reports.report.generate'], phase: 'P6' },
   { key: 'members', segment: 'members', permissions: ['admin.role_assignment.read'], phase: null },

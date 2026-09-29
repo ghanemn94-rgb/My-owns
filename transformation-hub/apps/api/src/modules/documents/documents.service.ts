@@ -17,6 +17,9 @@ import {
   assertDisposable,
   disposalAuthority,
   AllowedFileType,
+  ALLOWED_FILE_TYPES,
+  FILE_TYPE_INFO,
+  TEXT_EXTRACTABLE_TYPES,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
@@ -26,7 +29,7 @@ import { Clock } from '../../platform/clock';
 import { APP_CONFIG, AppConfig } from '../../platform/config';
 import type { RequestContext } from '../../platform/context';
 import { newId, payloadHash } from '../../platform/ids';
-import { assertVersion, loadInProject, pageOf, offsetOf, updateVersioned } from '../../platform/helpers';
+import { assertVersion, likeContains, loadInProject, pageOf, offsetOf, updateVersioned } from '../../platform/helpers';
 import { OBJECT_STORAGE, ObjectStorage, storageKey } from './storage/object-storage';
 import { MALWARE_SCANNER, MalwareScanner } from './files/scanner';
 import { listZipEntries } from './files/zip';
@@ -51,8 +54,6 @@ export function scanUsable(status: string, allowUnscanned: boolean): boolean {
 
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
 
-/** Escape LIKE wildcards so user text is matched literally (C-47). */
-export const likePattern = (q: string) => `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 
 @Injectable()
 export class DocumentsService {
@@ -171,13 +172,24 @@ export class DocumentsService {
   }
 
   // ---------------------------------------------------------------------------------------------------- reads
+  /** Limits and honest scanner/storage status for upload screens (no secrets, no paths). */
+  uploadPolicy() {
+    return {
+      maxUploadBytes: this.config.storage.maxUploadBytes,
+      acceptedTypes: ALLOWED_FILE_TYPES.map((type) => ({ type, mime: FILE_TYPE_INFO[type].mime, extensions: [...FILE_TYPE_INFO[type].extensions], textExtractable: TEXT_EXTRACTABLE_TYPES.includes(type) })),
+      scanner: { engine: this.scanner.engine, enterprise: this.scanner.enterprise },
+      allowUnscanned: this.config.storage.allowUnscanned,
+      storageStatus: this.storage.status,
+    };
+  }
+
   async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; sort?: string; kind?: string; classification?: string }) {
     const tx = this.db.tx();
     const d = schema.document;
     const conds: (SQL | undefined)[] = [this.visibleDocsWhere(ctx, projectId)];
     if (q.kind) conds.push(eq(d.kind, q.kind as DocRow['kind']));
     if (q.classification) conds.push(eq(d.classification, q.classification as Classification));
-    if (q.q) conds.push(sql`(to_tsvector('simple', ${d.title}) @@ websearch_to_tsquery('simple', ${q.q}) or ${d.title} ilike ${likePattern(q.q)})`);
+    if (q.q) conds.push(sql`(to_tsvector('simple', ${d.title}) @@ websearch_to_tsquery('simple', ${q.q}) or ${d.title} ilike ${likeContains(q.q)})`);
     const where = and(...conds);
     const [{ total }] = (await tx.select({ total: count() }).from(d).where(where)) as [{ total: number }];
     const order = q.sort === 'title' ? [asc(d.title)] : q.sort === 'createdAt' ? [asc(d.createdAt)] : [desc(d.updatedAt), asc(d.title)];
@@ -200,17 +212,21 @@ export class DocumentsService {
    * Search titles and indexed content of documents the caller may read. The ACL predicate is applied on the LIVE
    * document row inside the WHERE clause before ranking; only chunks of the current version are searched.
    */
-  async search(ctx: RequestContext, projectId: string, q: { q: string; page: number; pageSize: number }) {
+  async search(ctx: RequestContext, projectId: string, q: { q: string; page: number; pageSize: number; kind?: string; classification?: string }) {
     const tx = this.db.tx();
     const d = schema.document;
     const c = schema.documentChunk;
-    const vis = this.visibleDocsWhere(ctx, projectId);
+    const vis = and(
+      this.visibleDocsWhere(ctx, projectId),
+      q.kind ? eq(d.kind, q.kind as DocRow['kind']) : undefined,
+      q.classification ? eq(d.classification, q.classification as Classification) : undefined,
+    )!;
     const tsq = sql`websearch_to_tsquery('simple', ${q.q})`;
     const hits = sql`
       select ${d.id} as document_id, 'title'::text as matched_in, null::uuid as version_id, null::text as section, null::text as snippet,
-             (ts_rank(to_tsvector('simple', ${d.title}), ${tsq}) + case when ${d.title} ilike ${likePattern(q.q)} then 1 else 0 end)::float8 as rank
+             (ts_rank(to_tsvector('simple', ${d.title}), ${tsq}) + case when ${d.title} ilike ${likeContains(q.q)} then 1 else 0 end)::float8 as rank
         from ${d}
-       where ${vis} and (to_tsvector('simple', ${d.title}) @@ ${tsq} or ${d.title} ilike ${likePattern(q.q)})
+       where ${vis} and (to_tsvector('simple', ${d.title}) @@ ${tsq} or ${d.title} ilike ${likeContains(q.q)})
       union all
       select ${c.documentId}, 'content', ${c.documentVersionId}, ${c.section},
              ts_headline('simple', ${c.text}, ${tsq}, 'StartSel=«,StopSel=»,MaxFragments=1,MaxWords=25,MinWords=5'),

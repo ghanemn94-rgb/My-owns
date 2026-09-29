@@ -12,6 +12,11 @@ function toSchema(s: z.ZodTypeAny) {
 }
 
 const paths: Record<string, Record<string, unknown>> = {};
+/** Headers accompanying raw uploads (`upload: true` routes). */
+const UPLOAD_HEADERS = [
+  { name: 'x-filename', in: 'header', required: true, description: 'Original file name, percent-encoded UTF-8 (sanitised server-side; never used as a storage path)', schema: { type: 'string' } },
+  { name: 'x-file-type', in: 'header', required: false, description: 'Declared MIME type (untrusted; the server detects the type from the bytes)', schema: { type: 'string' } },
+];
 for (const r of Object.values(ROUTES)) {
   const p = r.path.replace(/:([A-Za-z0-9_]+)/g, '{$1}');
   const params = Object.keys((r.params as z.ZodObject<z.ZodRawShape>).shape ?? {}).map((name) => ({ name, in: 'path', required: true, schema: { type: 'string' } }));
@@ -23,8 +28,15 @@ for (const r of Object.values(ROUTES)) {
     summary: r.summary,
     description: `Access: ${access}.${r.command ? ' Domain command (explicit state change; audited).' : ''}`,
     tags: r.tags,
-    parameters: [...params, ...query],
-    ...(r.method !== 'GET' ? { requestBody: { required: true, content: { 'application/json': { schema: toSchema(r.body) } } } } : {}),
+    parameters: [...params, ...query, ...(r.upload ? UPLOAD_HEADERS : [])],
+    ...(r.method !== 'GET'
+      ? {
+          requestBody: r.upload
+            ? // Raw file bytes (bounded by HUB_MAX_UPLOAD_MB); the file name / declared type travel in headers.
+              { required: true, content: { 'application/octet-stream': { schema: { type: 'string', format: 'binary' } } } }
+            : { required: true, content: { 'application/json': { schema: toSchema(r.body) } } },
+        }
+      : {}),
     responses: {
       '200': { description: 'OK', content: r.binary ? { 'application/octet-stream': {} } : { 'application/json': { schema: toSchema(r.response) } } },
       default: { description: 'RFC 7807 problem', content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/Problem' } } } },

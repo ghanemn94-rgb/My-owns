@@ -21,8 +21,8 @@ import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import type { RequestContext } from '../../platform/context';
 import { newId, payloadHash } from '../../platform/ids';
-import { assertVersion, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
-import { DocumentsService, likePattern } from './documents.service';
+import { assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { DocumentsService } from './documents.service';
 
 type SourceRow = typeof schema.sourceRecord.$inferSelect;
 type ClaimRow = typeof schema.sourceClaim.$inferSelect;
@@ -156,7 +156,7 @@ export class SourcesService {
     const where = and(
       eq(s.projectId, projectId),
       this.policy.visibilitySql(ctx, projectId, { classification: s.classification }),
-      q.q ? or(ilike(s.code, likePattern(q.q)), ilike(s.filename, likePattern(q.q))) : undefined,
+      q.q ? or(ilike(s.code, likeContains(q.q)), ilike(s.filename, likeContains(q.q))) : undefined,
     );
     const tx = this.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(s).where(where)) as [{ total: number }];

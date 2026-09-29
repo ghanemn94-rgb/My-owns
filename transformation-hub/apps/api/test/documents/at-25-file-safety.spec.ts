@@ -217,5 +217,12 @@ describe('Object storage adapters (ADR-0010) [REQ-DAT-012]', () => {
     await expect(s3.exists(key)).rejects.toMatchObject({ code: 'storage.not_configured' });
     await expect(s3.get('../../etc/passwd')).rejects.toThrow(/Invalid storage key/);
   });
-});
 
+  it('the upload policy tells the UI the real limits and that no enterprise scanner is configured', async () => {
+    const r = await pm.get(`${docsPath(dcId)}/upload-policy`).expect(200);
+    expect(r.body).toMatchObject({ maxUploadBytes: 25 * 1024 * 1024, scanner: { engine: 'builtin-signature-check', enterprise: false }, allowUnscanned: true, storageStatus: 'configured' });
+    expect(r.body.acceptedTypes.map((x: { type: string }) => x.type)).toEqual(['pdf', 'docx', 'xlsx', 'pptx', 'png', 'jpeg', 'csv', 'txt', 'md']);
+    const pmB = await login('pm.b');
+    expect((await pmB.get(`${docsPath(dcId)}/upload-policy`)).status).toBe(404);
+  });
+});
