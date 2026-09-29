@@ -25,7 +25,7 @@ The paths protected from implementers are:
 - the delivery records: `docs/delivery/{reviews,gates,runs,candidates,test-evidence}/**`, `docs/delivery/stages.json` and `docs/delivery/findings.json`;
 - the gate CI workflow: `.github/workflows/delivery-gates.yml`.
 
-No role may write a `.git` path segment. The runner exports `MTH_GUARD_ROOT` (the main repository), and every hook runs that repository's guard. The guard protects the repository **and all of its git worktrees**, scoping each path from the deepest containing root, so neither a planted nested `.git` nor a worktree working directory can move the root (D-023). The guard fails closed if the roots can't be determined. Outside the repository only the run's own private temporary directory (`MTH_RUN_TMP`, created per run by the runner) is scratch. The shared `/tmp` and the home directory never are. The guard fails closed on paths it cannot resolve safely, including anything through `/proc`, `/sys` or `/dev` (D-028). The runner starts agents with `--setting-sources project` (D-025; user and local settings are not loaded) and detects changes to configuration outside the candidate, including removals (D-024, D-027). Shell commands run in the OS Bash sandbox generated per run (D-025). It checks the symlink-resolved real path as well as the lexical one, and deny rules match case-insensitively (D-020, F-DG0-111). The source of truth is `tools/agents/write-scopes.json`, and the tests are `tools/agents/tests/guard.test.mjs`.
+No role may write a `.git` path segment. The runner exports `MTH_GUARD_ROOT` (the main repository), and every hook runs that repository's guard. The guard protects the repository **and all of its git worktrees**, scoping each path from the deepest containing root, so neither a planted nested `.git` nor a worktree working directory can move the root (D-023). The guard fails closed if the roots can't be determined. Outside the repository only the run's own private temporary directory (`MTH_RUN_TMP`, created per run by the runner) is scratch. The shared `/tmp` and the home directory never are. The guard fails closed on paths it cannot resolve safely, including anything through `/proc`, `/sys` or `/dev` (D-028). The runner starts agents with `--setting-sources project` (D-025; user and local settings are not loaded) and detects changes to configuration outside the candidate, including removals (D-024, D-027). Shell commands run in the OS Bash sandbox generated per run (D-025), and the whole agent process runs in the process sandbox (D-030), so file-tool writes are confined by the kernel as well as by this guard. It checks the symlink-resolved real path as well as the lexical one, and deny rules match case-insensitively (D-020, F-DG0-111). The source of truth is `tools/agents/write-scopes.json`, and the tests are `tools/agents/tests/guard.test.mjs`.
 
 ## Invocation mechanism (decision D-003)
 
@@ -103,5 +103,15 @@ Every agent's shell runs in an OS sandbox (bubblewrap). The runner generates the
 - **Confined roles.** Reviewers and the analyst can additionally write only their own areas.
 - **Not loaded:** user and local settings. Agents start with `--setting-sources project`.
 - **Network:** sandboxed shells have none.
+
+## Process sandbox (D-030)
+
+The whole agent process, `claude` included, runs in a second bubblewrap sandbox built per run by `tools/agents/agent_sandbox.py`. The Bash sandbox above is nested inside it. It closes F-DG0-145: the guard checks a path and the CLI writes it later, so a symlink swapped in between could redirect a file-tool write.
+
+- **Read-only** everywhere except the role's own areas. `/tmp` and `/var/tmp` are private (the run's own `TMPDIR` is bound in). `HOME` is read-only except a private session directory at `~/.claude/projects`.
+- **Confined roles:** the repository's top level is a throwaway layer. Review records, the gate record and the analyst's register are written to a private staging copy. After the run the runner copies back only the role's own files and lists anything else in `runs/<DGx>/<run-id>/sandbox.json`. A review or analyst run with discarded writes exits 73 and is not auto-committed.
+- **Implementers:** the working tree is writable, and existing protected paths are read-only.
+- **Process:** only `CAP_SETFCAP` is kept, `no_new_privs` is set, and the PID and IPC namespaces are private. The network is shared, because the CLI needs the API.
+- **Evidence:** `sandbox.json` is hashed into `meta.process_sandbox_sha256`. The validator accepts a gate's review and audit records only from confined runs that discarded nothing.
 
 The scope of the controls is in `docs/delivery/threat-model.md`.

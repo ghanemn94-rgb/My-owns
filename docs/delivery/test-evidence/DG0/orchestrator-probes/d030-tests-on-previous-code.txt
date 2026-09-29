@@ -1,0 +1,25 @@
+# D-030 tests run against the previous code (orchestrator check, not an independent review)
+# 2026-09-29T08:11:52Z: a clone of 0afe6cd (before D-030) with only the new and adapted test files copied in:
+#   tools/gates/tests/validator.test.mjs, tools/agents/tests/{process-sandbox,runner}.test.mjs, tools/agents/tests/test_{agent_settings,run_meta}.py
+# Commands: node --test tools/gates/tests/validator.test.mjs; node --test tools/agents/tests/process-sandbox.test.mjs tools/agents/tests/runner.test.mjs;
+#           python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'
+# Expected: every new D-030/F-DG0-145 test fails; the adapted runner tests (1-6) still pass.
+not ok 44 - F-DG0-145/D-030: gate records must come from runs whose whole agent process was confined to the role's own areas
+# pass 46
+# fail 1
+not ok 1 - F-DG0-145: a confined reviewer's whole process writes only its own evidence and its own new review files
+not ok 2 - F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope
+not ok 3 - D-030: only CAP_SETFCAP remains, and neither the process nor a nested user namespace can unlock the read-only binds
+not ok 4 - D-030: implementers write product paths; existing protected paths stay read-only
+not ok 5 - D-030: the analyst's register is replaced atomically in staging and copied back, unless it changed concurrently
+not ok 6 - D-030: the auditor's gate record for its own stage is copied back; another stage's is not
+not ok 13 - F-DG0-145: the runner runs the whole agent inside the process sandbox and records it
+not ok 14 - D-030: a review run whose staging copy holds another role's file exits 73 and commits nothing
+# pass 6
+# fail 8
+ERROR: test_writable_areas_are_the_confined_scopes (test_agent_settings.AgentSettingsTest.test_writable_areas_are_the_confined_scopes)
+ERROR: test_extra_capabilities_are_not_a_process_sandbox (test_run_meta.ProcessSandboxTest.test_extra_capabilities_are_not_a_process_sandbox)
+ERROR: test_sandbox_record_is_hashed_and_summarised (test_run_meta.ProcessSandboxTest.test_sandbox_record_is_hashed_and_summarised)
+FAIL: test_confined_roles_omit_missing_paths_the_process_sandbox_makes_uncreatable (test_agent_settings.AgentSettingsTest.test_confined_roles_omit_missing_paths_the_process_sandbox_makes_uncreatable)
+Ran 22 tests in 0.204s
+FAILED (failures=1, errors=3)

@@ -13,6 +13,8 @@ export const STAGE_ORDER = ["DG0", "DG1", "DG2", "DG3", "DG4", "DG5", "DG6", "DG
 export const REQUIRED_REVIEWERS = ["domain-reviewer", "code-security-reviewer", "qa-verifier"];
 export const AUDITOR = "release-auditor";
 export const REVIEW_ROLES = [...REQUIRED_REVIEWERS, AUDITOR];
+// Each review role's own evidence directory key, as tools/agents/agent_settings.py defines it (F-DG0-144, D-030).
+const PROCESS_SANDBOX_EVIDENCE = { "domain-reviewer": "domain", "code-security-reviewer": "code-security", "qa-verifier": "qa", "release-auditor": "audit" };
 export const TRANSITIONS = {
   PLANNED: ["BUILDING", "BLOCKED"],
   BUILDING: ["REVIEWING", "BLOCKED"],
@@ -344,6 +346,31 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
       for (const p of [".git", ".claude", "tools/gates", "tools/agents", "docs/source", "docs/delivery/reviews", "docs/delivery/runs"]) {
         if (!cwdRoot || !deny.includes(`${cwdRoot}/${p}`)) bad(`its Bash sandbox does not deny writes to ${cwdRoot || "<unknown cwd>"}/${p}`);
       }
+    }
+    // ...and its whole agent process, file tools included, must have run in the process sandbox confined to the role's
+    // own areas, so no file-tool write can land outside them, whatever the write guard decided (D-030, F-DG0-145).
+    const pxRel = `docs/delivery/runs/${stageId}/${ref.run_id}/sandbox.json`;
+    if (!repoFile(repo, pxRel)) bad("has no sandbox.json (runs before D-030 cannot bind a gate record)");
+    else if (sha256File(join(repo, pxRel)) !== meta.process_sandbox_sha256) bad("sandbox.json does not match meta.process_sandbox_sha256");
+    else {
+      let px = {};
+      try {
+        px = JSON.parse(readFileSync(join(repo, pxRel), "utf8"));
+      } catch {
+        /* reported below */
+      }
+      const cwdRoot = String(meta.cwd || "").replace(/\/+$/, "");
+      const pyEscape = (x) => x.replace(/[^A-Za-z0-9_]/g, "\\$&"); // Python's re.escape, which wrote the pattern
+      const areas = [`docs/delivery/test-evidence/${stageId}/${PROCESS_SANDBOX_EVIDENCE[role]}`, ...(role === "qa-verifier" ? ["tests/qa", "e2e"] : [])];
+      const staged = [{ area: `docs/delivery/reviews/${stageId}`, accept: `round-[0-9]+/${pyEscape(role)}\\.[^/]+`, replace: false, copied: null },
+        ...(role === AUDITOR ? [{ area: "docs/delivery/gates", accept: `${stageId}\\.json`, replace: true, copied: null }] : [])];
+      const confined = px.schema === "mth-process-sandbox-v1" && px.role === role && px.confined === true && px.root === cwdRoot &&
+        px.read_only_root === true && px.private_sessions === true && px.no_new_privs === true &&
+        JSON.stringify(px.capabilities) === JSON.stringify(["CAP_SETFCAP"]);
+      if (!confined) bad("its agent process was not confined by the process sandbox (D-030)");
+      if (JSON.stringify(px.writable_areas) !== JSON.stringify(areas)) bad(`its process sandbox made ${JSON.stringify(px.writable_areas)} writable, not the role's ${JSON.stringify(areas)}`);
+      if (JSON.stringify(px.staged) !== JSON.stringify(staged)) bad("its process sandbox staged other directories or accepted other files than the role's own review and gate records");
+      if (!Array.isArray(px.discarded) || px.discarded.length) bad(`its process sandbox discarded out-of-scope writes: ${JSON.stringify(px.discarded)}`);
     }
   }
   if (binding) {

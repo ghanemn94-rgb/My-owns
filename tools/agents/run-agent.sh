@@ -7,6 +7,10 @@
 # - Gives each run a unique --session-id (its invocation reference).
 # - Applies the role write guard via --settings tools/agents/settings/<role>.settings.json. Frontmatter hooks
 #   don't run in --agent main-session mode; this was verified in P0 and is recorded in docs/delivery/agents.md.
+# - Runs the whole `claude` process inside a bubblewrap process sandbox (tools/agents/agent_sandbox.py, D-030): the
+#   repository is read-only except the role's own areas, /tmp and /var/tmp are private, HOME is read-only except a
+#   private per-run session directory, and only CAP_SETFCAP is kept. File-tool writes are therefore kernel-confined
+#   (F-DG0-145); the guard hook and the Claude Code Bash sandbox (D-025) stay as defence in depth.
 # - Passes the orchestrator's model explicitly, so `model: inherit` really means the orchestrator's model.
 # - Keeps permission mode `auto` (the same classifier-gated controls as the orchestrator session; not weakened).
 # - If the run stops only because the permission classifier returned no verdict repeatedly, it resumes the SAME
@@ -43,6 +47,8 @@ done
 [[ -f "$REPO_ROOT/.claude/agents/$ROLE.md" ]] || { echo "no agent definition for $ROLE" >&2; exit 65; }
 [[ -f "$REPO_ROOT/tools/agents/settings/$ROLE.settings.json" ]] || { echo "no guard settings for $ROLE" >&2; exit 65; }
 command -v bwrap >/dev/null || { echo "bubblewrap (bwrap) is required for the agent Bash sandbox (D-025)" >&2; exit 65; }
+command -v setpriv >/dev/null || { echo "setpriv (util-linux) is required for the agent process sandbox (D-030)" >&2; exit 65; }
+CLAUDE_BIN="$(readlink -f "$(command -v claude)")" && [[ -x "$CLAUDE_BIN" ]] || { echo "claude CLI not found" >&2; exit 65; }
 ASSIGNMENT_ABS="$(cd "$(dirname "$ASSIGNMENT")" && pwd)/$(basename "$ASSIGNMENT")"
 CWD="$(cd "$CWD" && pwd)"
 cd / # neutral working directory from here on (F-DG0-140)
@@ -56,10 +62,18 @@ OUT="$REPO_ROOT/docs/delivery/runs/$STAGE/$RUN_ID"
 mkdir -p "$REPO_ROOT/docs/delivery/runs/$STAGE"
 mkdir "$OUT" # fails if the directory exists: evidence is never overwritten
 HEAD_COMMIT="$(git -C "$CWD" rev-parse HEAD 2>/dev/null || echo unknown)"
+CWD_ROOT="$(git -C "$CWD" rev-parse --show-toplevel)"
 # Every reviewer's evidence directory for the stage, and the gate-record directory, exist before any agent starts, so a
 # concurrently running agent's sandbox never places a read-only mount stub where a reviewer or the auditor must create
-# them (F-DG0-236). Empty directories are not tracked by git and are not part of any candidate.
-mkdir -p "$REPO_ROOT/docs/delivery/gates" "$REPO_ROOT/docs/delivery/test-evidence/$STAGE"/{domain,code-security,qa,audit}
+# them (F-DG0-236). The process sandbox also binds the role's areas and the staged review directory, which must exist
+# (D-030). Empty directories are not tracked by git and are not part of any candidate.
+for R in "$REPO_ROOT" "$CWD_ROOT"; do
+  mkdir -p "$R/docs/delivery/gates" "$R/docs/delivery/reviews/$STAGE" "$R/docs/delivery/test-evidence/$STAGE"/{domain,code-security,qa,audit}
+done
+case "$ROLE" in
+  qa-verifier) mkdir -p "$CWD_ROOT/tests/qa" "$CWD_ROOT/e2e" ;;
+  transformation-analyst) mkdir -p "$CWD_ROOT/docs/analysis" "$CWD_ROOT/docs/delivery/handbacks" ;;
+esac
 # Per-run settings: the role's write-guard hook plus the OS Bash sandbox deny list (D-025), kept as run evidence.
 SETTINGS="$OUT/settings.json"
 python3 -I -B "$REPO_ROOT/tools/agents/agent_settings.py" "$ROLE" "$REPO_ROOT" "$CWD" "$STAGE" > "$SETTINGS"
@@ -68,8 +82,16 @@ python3 -I -B "$REPO_ROOT/tools/agents/agent_settings.py" "$ROLE" "$REPO_ROOT" "
 # running at the same time therefore cannot reach this run's disposable clones. It is removed when the run ends.
 RUN_TMP="$(mktemp -d "${MTH_RUN_TMP_PARENT:-/var/tmp}/mth-run.XXXXXX")"
 chmod 700 "$RUN_TMP"
-trap 'rm -rf "$RUN_TMP"' EXIT
+# The process sandbox's private state (D-030): the agent's own session directory (bound at ~/.claude/projects, so
+# --resume works and no other session's transcripts are reachable) and the staging copies of the review and gate
+# directories. Only the sandbox of this run ever binds it.
+STATE="$(mktemp -d "${MTH_RUN_TMP_PARENT:-/var/tmp}/mth-state.XXXXXX")"
+chmod 700 "$STATE"
+trap 'rm -rf "$RUN_TMP" "$STATE"' EXIT
 export MTH_RUN_TMP="$RUN_TMP" TMPDIR="$RUN_TMP"
+python3 -I -B "$REPO_ROOT/tools/agents/agent_sandbox.py" prepare "$ROLE" "$REPO_ROOT" "$CWD" "$STAGE" "$RUN_TMP" "$STATE" "$CLAUDE_BIN"
+mapfile -d '' SANDBOX < <(python3 -I -B "$REPO_ROOT/tools/agents/agent_sandbox.py" args "$STATE")
+[[ ${#SANDBOX[@]} -gt 10 && "${SANDBOX[-1]}" == "--" ]] || { echo "run-agent: could not build the process sandbox" >&2; exit 65; }
 ASSIGN_SHA="$(sha256sum "$ASSIGNMENT_ABS" | cut -d' ' -f1)"
 ASSIGN_REL="${ASSIGNMENT_ABS#"$REPO_ROOT"/}"
 
@@ -158,7 +180,7 @@ user_message() {
 
 ATTEMPTS=0
 set +e
-( cd "$CWD" && user_message "$PROMPT" | claude -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
+( cd "$CWD" && user_message "$PROMPT" | bwrap "${SANDBOX[@]}" "$CLAUDE_BIN" -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
     --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
     --input-format stream-json --replay-user-messages \
     --output-format stream-json --verbose ) > "$OUT/transcript.jsonl" 2> "$OUT/stderr.log"
@@ -167,7 +189,7 @@ while [[ $ATTEMPTS -lt $MAX_RESUMES ]] && classifier_outage "$OUT/transcript.jso
   ATTEMPTS=$((ATTEMPTS + 1))
   echo "classifier outage detected; resuming session $SESSION_ID (attempt $ATTEMPTS) after ${RESUME_PAUSE}s" >> "$OUT/stderr.log"
   sleep "$RESUME_PAUSE"
-  ( cd "$CWD" && user_message "$RESUME_PROMPT" | claude -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
+  ( cd "$CWD" && user_message "$RESUME_PROMPT" | bwrap "${SANDBOX[@]}" "$CLAUDE_BIN" -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
       --resume "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
       --input-format stream-json --replay-user-messages \
       --output-format stream-json --verbose ) >> "$OUT/transcript.jsonl" 2>> "$OUT/stderr.log"
@@ -175,6 +197,10 @@ while [[ $ATTEMPTS -lt $MAX_RESUMES ]] && classifier_outage "$OUT/transcript.jso
 done
 set -e
 FINISHED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+# Copy the role's own new review files (and the auditor's gate record) back from the staging copies; anything else the
+# process wrote there is discarded and listed in sandbox.json (D-030).
+SANDBOX_RC=0
+python3 -I -B "$REPO_ROOT/tools/agents/agent_sandbox.py" finish "$STATE" "$OUT" || SANDBOX_RC=$?
 snapshot > "$OUT/.post-snapshot.json"
 config_snapshot > "$OUT/.post-config.txt"
 # Every entry that was added, changed or removed (F-DG0-012): a configuration file that disappears, or is truncated to a
@@ -207,6 +233,14 @@ python3 -I -B "$REPO_ROOT/tools/agents/run_meta.py" "$OUT" "$RUN_ID" "$ROLE" "$S
 # Review roles: commit the run evidence and the reviewer-authored files immediately, so they are write-once in git
 # history from the moment the run ends (D-021). Implementer output is integrated by the orchestrator instead.
 CONFIG_CHANGED="$(python3 -I -B -c 'import json,sys; print("\n".join(json.load(open(sys.argv[1])).get("external_config_changed", [])))' "$OUT/meta.json")"
+if [[ $SANDBOX_RC -ne 0 ]]; then
+  case "$ROLE" in
+    domain-reviewer|code-security-reviewer|qa-verifier|release-auditor|transformation-analyst)
+      echo "run-agent: the process sandbox discarded out-of-scope writes during $RUN_ID (see sandbox.json); evidence NOT auto-committed" >&2
+      exit 73 ;;
+    *) echo "run-agent: WARNING the process sandbox discarded writes during $RUN_ID (see sandbox.json)" >&2 ;;
+  esac
+fi
 if [[ -n "$CONFIG_CHANGED" ]]; then
   case "$ROLE" in
     domain-reviewer|code-security-reviewer|qa-verifier|release-auditor|transformation-analyst)

@@ -110,5 +110,34 @@ class ExternalConfigTest(_RunMetaBase):
         self.assertEqual(meta["external_config_changed"], [])
 
 
+class ProcessSandboxTest(_RunMetaBase):
+    """D-030: the process sandbox record written by agent_sandbox.py is hashed and summarised in meta."""
+
+    def write_sandbox(self, **override):
+        px = {"schema": "mth-process-sandbox-v1", "read_only_root": True, "capabilities": ["CAP_SETFCAP"], "no_new_privs": True,
+              "discarded": []}
+        px.update(override)
+        data = json.dumps(px).encode()
+        with open(os.path.join(self.out, "sandbox.json"), "wb") as f:
+            f.write(data)
+        return hashlib.sha256(data).hexdigest()
+
+    def test_sandbox_record_is_hashed_and_summarised(self):
+        digest = self.write_sandbox(discarded=["docs/x: outside the role's scope (not copied)"])
+        meta = self.run_meta([{"type": "result", "session_id": "sid", "is_error": False}], {}, {})
+        self.assertEqual(meta["process_sandbox_sha256"], digest)
+        self.assertIs(meta["process_sandbox"], True)
+        self.assertEqual(meta["process_sandbox_discarded"], ["docs/x: outside the role's scope (not copied)"])
+
+    def test_extra_capabilities_are_not_a_process_sandbox(self):
+        self.write_sandbox(capabilities=["CAP_SETFCAP", "CAP_SYS_ADMIN"])
+        meta = self.run_meta([{"type": "result", "session_id": "sid", "is_error": False}], {}, {})
+        self.assertIs(meta["process_sandbox"], False)
+
+    def test_no_sandbox_record_means_no_claim(self):
+        meta = self.run_meta([{"type": "result", "session_id": "sid", "is_error": False}], {}, {})
+        self.assertNotIn("process_sandbox", meta)
+
+
 if __name__ == "__main__":
     unittest.main()

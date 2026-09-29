@@ -141,6 +141,16 @@ def build_meta(argv):
             sandbox = json.load(f).get("sandbox") or {}
         meta["bash_sandbox"] = bool(sandbox.get("enabled") and sandbox.get("failIfUnavailable")
                                     and sandbox.get("allowUnsandboxedCommands") is False)
+    process_sandbox = f"{out}/sandbox.json"
+    if os.path.exists(process_sandbox):
+        # The process sandbox that confined the whole agent (agent_sandbox.py, D-030).
+        with open(process_sandbox, "rb") as f:
+            meta["process_sandbox_sha256"] = hashlib.sha256(f.read()).hexdigest()
+        with open(process_sandbox, encoding="utf-8") as f:
+            px = json.load(f)
+        meta["process_sandbox"] = bool(px.get("schema") == "mth-process-sandbox-v1" and px.get("read_only_root") is True
+                                       and px.get("capabilities") == ["CAP_SETFCAP"] and px.get("no_new_privs") is True)
+        meta["process_sandbox_discarded"] = px.get("discarded", [])
     changed = f"{out}/.config-changed.txt"
     meta["external_config_changed"] = []
     if os.path.exists(changed):

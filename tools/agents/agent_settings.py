@@ -13,6 +13,11 @@ Sandbox facts verified in this environment (docs/delivery/decisions.md D-025, D-
   - denyWrite wins over allowWrite, and may name paths that do not exist yet.
   - enableWeakerNestedSandbox is required in this container (no unprivileged user namespaces).
   - Sandboxed commands have no network access here.
+  - A deny path that does not exist inside the CLI's writable areas (its working directory included) needs a mount
+    placeholder, which bubblewrap must create in the real directory. For confined roles the whole agent process runs
+    in a process sandbox whose repository is read-only outside the role's areas (agent_sandbox.py, D-030), so a
+    placeholder can only be created at the top level (a throwaway tmpfs there). Every other missing deny path has a
+    read-only parent and cannot be created anyway, so it is left out of the list.
 
 Usage: agent_settings.py ROLE REPO_ROOT CWD STAGE > settings.json
 """
@@ -47,6 +52,12 @@ CONFINED = {
 }
 IMPLEMENTERS = {"solution-architect", "frontend-ux-engineer", "backend-workflow-engineer", "kpi-benefits-engineer",
                 "devops-engineer"}
+
+
+def writable_areas(role, stage):
+    """The paths, relative to the working tree's root, that a confined role may write (read-write in both sandboxes)."""
+    own = f"docs/delivery/test-evidence/{stage}/{EVIDENCE_KEYS[role]}" if role in EVIDENCE_KEYS else None
+    return [own if k == "{evidence}" else k for k in CONFINED[role]]
 
 
 def worktree_roots(repo_root):
@@ -84,6 +95,16 @@ def deny_except(root, keep):
     return denies
 
 
+def creatable_in_process_sandbox(path, roots, cwd, areas):
+    """False for a missing path that a confined role's process sandbox already makes uncreatable (see the header)."""
+    if os.path.lexists(path):
+        return True
+    root = max((r for r in roots if cwd == r or cwd.startswith(r + os.sep)), key=len)
+    if os.path.dirname(path) == root:
+        return True  # top level: the process sandbox's tmpfs skeleton
+    return any(path.startswith(os.path.join(root, a) + os.sep) for a in areas)
+
+
 def build(role, repo_root, cwd, stage=None):
     if role not in CONFINED and role not in IMPLEMENTERS:
         raise SystemExit(f"agent_settings: unknown role {role}")
@@ -101,13 +122,15 @@ def build(role, repo_root, cwd, stage=None):
     for root in roots:
         deny += [os.path.join(root, p) for p in COMMON_DENY]
         if role in CONFINED:
-            deny += deny_except(root, [own if k == "{evidence}" else k for k in CONFINED[role]])
+            deny += deny_except(root, writable_areas(role, stage))
         # No role may write another reviewer's evidence, even where that directory does not exist yet (F-DG0-144);
         # roles without evidence of their own may write none.
         if own:
             deny += [os.path.join(root, evidence, k) for r, k in EVIDENCE_KEYS.items() if r != role]
         else:
             deny.append(os.path.join(root, "docs/delivery/test-evidence"))
+    if role in CONFINED:
+        deny = [p for p in deny if creatable_in_process_sandbox(p, roots, cwd_real, writable_areas(role, stage))]
     settings["sandbox"] = {
         "enabled": True,
         "failIfUnavailable": True,

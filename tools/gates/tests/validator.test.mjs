@@ -85,14 +85,32 @@ function makeRun(repo, role, { assignment, startedAt = T_RUN, task = "T-REV", st
   const settings = Buffer.from(JSON.stringify({ sandbox: { enabled: true, failIfUnavailable: true, allowUnsandboxedCommands: false,
     filesystem: { denyWrite: [".git", ".claude", "tools/gates", "tools/agents", "docs/source", "docs/delivery/reviews", "docs/delivery/runs"].map((x) => `${RUN_CWD}/${x}`) } } }));
   put(repo, `${base}/settings.json`, settings);
+  const processSandbox = Buffer.from(JSON.stringify(processSandboxFor(role, stage)));
+  put(repo, `${base}/sandbox.json`, processSandbox);
   const invocation_reference = { kind: "claude-code-cli-session", run_id, session_id };
   put(repo, `${base}/meta.json`, {
     run_id, role, stage, task, invocation_reference, model_requested: "claude-opus-5-5",
     assignment, assignment_sha256: sha(readFileSync(join(repo, assignment))),
     started_at: startedAt, exit_code: 0, is_error: false, result_session_id: session_id, head_commit_at_start: freezeCommit, cwd: RUN_CWD,
     result_sha256: sha(result), transcript_sha256: sha(transcript), settings_sha256: sha(settings),
+    process_sandbox_sha256: sha(processSandbox), process_sandbox: true, process_sandbox_discarded: [],
   });
   return invocation_reference;
+}
+
+/** What tools/agents/agent_sandbox.py records for a confined review run (D-030). */
+function processSandboxFor(role, stage) {
+  const key = { "domain-reviewer": "domain", "code-security-reviewer": "code-security", "qa-verifier": "qa", "release-auditor": "audit" }[role];
+  const esc = (x) => x.replace(/[^A-Za-z0-9_]/g, "\\$&");
+  return {
+    schema: "mth-process-sandbox-v1", role, root: RUN_CWD, confined: true, read_only_root: true, private_tmp: ["/tmp", "/var/tmp"],
+    run_tmp: "/var/tmp/mth-run.AbCdEf", writable_areas: [`docs/delivery/test-evidence/${stage}/${key}`, ...(role === "qa-verifier" ? ["tests/qa", "e2e"] : [])],
+    read_only_within_writable: [],
+    staged: [{ area: `docs/delivery/reviews/${stage}`, accept: `round-[0-9]+/${esc(role)}\\.[^/]+`, replace: false, copied: null },
+      ...(role === "release-auditor" ? [{ area: "docs/delivery/gates", accept: `${stage}\\.json`, replace: true, copied: null }] : [])],
+    private_sessions: true, cgroup_api: null, capabilities: ["CAP_SETFCAP"], no_new_privs: true, unshare: ["pid", "ipc"],
+    copied_back: [], discarded: [],
+  };
 }
 
 /** Records files as outputs written by a run's own file tools (what run-agent.sh derives from its snapshots). */
@@ -897,6 +915,34 @@ test("D-025: gate records must come from Bash-sandboxed runs", () => {
   const errs = validateGate(b.repo, "DG0");
   expectError(errs, /Bash sandbox was not enforced/);
   expectError(errs, /does not deny writes to .*\/tools\/gates/);
+});
+
+test("F-DG0-145/D-030: gate records must come from runs whose whole agent process was confined to the role's own areas", () => {
+  const missing = buildValidRepo();
+  const refM = get(missing.repo, missing.records["domain-reviewer"]).invocation_reference;
+  unlinkSync(join(missing.repo, `docs/delivery/runs/DG0/${refM.run_id}/sandbox.json`));
+  expectError(validateGate(missing.repo, "DG0"), /has no sandbox\.json/);
+  const tamper = (mutate, pattern) => {
+    const { repo, records } = buildValidRepo();
+    const ref = get(repo, records["qa-verifier"]).invocation_reference;
+    const px = processSandboxFor("qa-verifier", "DG0");
+    mutate(px);
+    const buf = Buffer.from(JSON.stringify(px));
+    put(repo, `docs/delivery/runs/DG0/${ref.run_id}/sandbox.json`, buf);
+    edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (m) => (m.process_sandbox_sha256 = sha(buf)));
+    expectError(validateGate(repo, "DG0"), pattern);
+  };
+  tamper((px) => (px.confined = false), /agent process was not confined by the process sandbox/);
+  tamper((px) => (px.capabilities = ["CAP_SETFCAP", "CAP_SYS_ADMIN"]), /agent process was not confined by the process sandbox/);
+  tamper((px) => (px.root = "/somewhere/else"), /agent process was not confined by the process sandbox/);
+  tamper((px) => px.writable_areas.push("docs/delivery/test-evidence/DG0/domain"), /process sandbox made .* writable, not the role's/);
+  tamper((px) => (px.staged[0].accept = "round-[0-9]+/[^/]+"), /staged other directories or accepted other files/);
+  tamper((px) => px.discarded.push("docs/delivery/reviews/DG0/round-1/domain-reviewer.json: outside the role's scope (not copied)"), /discarded out-of-scope writes/);
+  // The file must be the one the runner hashed into meta.
+  const { repo, records } = buildValidRepo();
+  const ref = get(repo, records["code-security-reviewer"]).invocation_reference;
+  put(repo, `docs/delivery/runs/DG0/${ref.run_id}/sandbox.json`, Buffer.from(JSON.stringify(processSandboxFor("code-security-reviewer", "DG0"), null, 1)));
+  expectError(validateGate(repo, "DG0"), /sandbox\.json does not match meta\.process_sandbox_sha256/);
 });
 
 test("F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory", () => {
