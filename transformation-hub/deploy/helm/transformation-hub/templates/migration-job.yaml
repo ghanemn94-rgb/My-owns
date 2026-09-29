@@ -1,0 +1,63 @@
+{{- if .Values.migrations.enabled }}
+# Forward-only schema migrations + idempotent post-migrate SQL (RLS, grants, triggers) with the OWNER role.
+# Runs before install/upgrade; if it fails, Helm stops and the running version keeps serving (docs/deployment/
+# upgrade-and-rollback.md). The owner Secret is mounted ONLY here and in the bootstrap Job.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "hub.fullname" . }}-migrate
+  labels:
+    {{- include "hub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.migrations.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migrations.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "hub.podLabels" (dict "ctx" . "component" "migrate") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      # Hooks run before the chart's ServiceAccount exists on first install: use the namespace default account
+      # without a token (the Job never calls the Kubernetes API).
+      serviceAccountName: default
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "hub.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ include "hub.apiImage" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["migrate"]
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.app.nodeEnv | quote }}
+            - name: HUB_DB_RUNTIME_ROLE
+              value: {{ .Values.database.runtimeRole | quote }}
+            - name: DATABASE_MIGRATION_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.migrationSecret.name }}
+                  key: {{ .Values.database.migrationSecret.key }}
+            {{- include "hub.caEnv" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.migrations.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- include "hub.caMount" . | nindent 12 }}
+      volumes:
+        - name: tmp
+          emptyDir: { sizeLimit: 64Mi }
+        {{- include "hub.caVolume" . | nindent 8 }}
+{{- end }}

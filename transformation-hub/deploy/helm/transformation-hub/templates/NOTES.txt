@@ -1,0 +1,26 @@
+Transformation Hub {{ .Chart.AppVersion }} — release {{ .Release.Name }} in namespace {{ .Release.Namespace }}.
+
+URL: {{ .Values.app.publicUrl }}   (mode: {{ .Values.app.mode }}, NODE_ENV: {{ .Values.app.nodeEnv }}, AI: {{ .Values.ai.mode }})
+
+Check:
+  kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+  kubectl -n {{ .Release.Namespace }} logs deploy/{{ include "hub.fullname" . }}-api | head
+{{- if .Values.networkPolicy.enabled }}
+
+Network policies are DEFAULT DENY. Dependencies without CIDRs/selectors in networkPolicy.egress.* are unreachable:
+{{- range $name := list "database" "objectStorage" "idp" "otelCollector" }}
+{{- if not (index $.Values.networkPolicy.egress $name).to }}
+  - {{ $name }}: no egress rule rendered (traffic blocked)
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if eq .Values.storage.driver "s3" }}
+
+NOTE: the S3-compatible storage adapter is "Not configured" at this application version — document uploads fail
+closed until it is implemented (docs/deployment/configuration.md).
+{{- end }}
+{{- if not .Values.bootstrap.enabled }}
+
+First installation: run the production bootstrap once (organization, templates, first administrator bound to an IdP
+identity; no passwords) — set bootstrap.enabled=true or follow docs/deployment/installation.md.
+{{- end }}

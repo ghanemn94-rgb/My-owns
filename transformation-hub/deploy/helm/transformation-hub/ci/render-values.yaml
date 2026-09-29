@@ -1,0 +1,20 @@
+# Values used ONLY to render/lint the chart in CI (not an installation profile). Documentation-range CIDRs (RFC 5737).
+networkPolicy:
+  egress:
+    database:
+      to: [{ ipBlock: { cidr: 192.0.2.0/28 } }]
+    objectStorage:
+      to: [{ ipBlock: { cidr: 192.0.2.16/28 } }]
+    idp:
+      to: [{ ipBlock: { cidr: 192.0.2.32/28 } }]
+    otelCollector:
+      to: [{ namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: observability } } }]
+otel:
+  enabled: true
+  endpoint: http://otel-collector.observability.svc:4318
+customCA:
+  enabled: true
+  configMapName: hub-ca-bundle
+proxy:
+  httpsProxy: http://proxy.example.internal:3128
+  httpProxy: http://proxy.example.internal:3128

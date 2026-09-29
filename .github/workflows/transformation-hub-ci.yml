@@ -1,0 +1,319 @@
+# =====================================================================================================================
+# Transformation Hub CI (the repository also contains an unrelated trading_agent/ — this workflow only runs for
+# transformation-hub/). Jobs: static checks, unit tests, template validator, integration tests (PostgreSQL 16 service),
+# OpenAPI, web build + private-mode egress check, Playwright smoke, backup/restore drill, deployment validation
+# (helm/kubeconform/compose/shellcheck), container images + image SBOM + vulnerability report, source SBOM
+# (syft / CycloneDX), pnpm audit (report only) and licence policy check.
+# Supply chain: pin every action to a full commit SHA when mirroring this workflow into Mobily's CI (tags are used here
+# because SHAs could not be verified in the build environment). Images are built but never pushed from this workflow.
+# The pipeline was NOT EXECUTED in the build environment (no GitHub runner); it was validated with actionlint.
+# =====================================================================================================================
+name: transformation-hub-ci
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths: ["transformation-hub/**", ".github/workflows/transformation-hub-ci.yml"]
+  pull_request:
+    paths: ["transformation-hub/**", ".github/workflows/transformation-hub-ci.yml"]
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Release mode: licence review items without a recorded approval fail the build"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hub-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: transformation-hub
+    shell: bash
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  PNPM_VERSION: 10.33.0
+  NODE_VERSION: "22"
+  # Throwaway credentials of the CI-only PostgreSQL service container (never used anywhere else).
+  PGADMIN_URL: postgres://postgres:ci_only_postgres@127.0.0.1:5432/postgres
+  HUB_DEV_DB_PASSWORD: hub_dev_only
+
+jobs:
+  static:
+    name: Install, build packages, typecheck, lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:packages
+      - run: pnpm typecheck
+      - run: pnpm lint
+
+  unit:
+    name: Domain/contract unit tests + template validator
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:packages
+      - run: pnpm test:unit
+      - run: pnpm --filter @hub/db run validate:templates
+
+  integration:
+    name: API integration tests (PostgreSQL 16)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: ci_only_postgres }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - name: Create roles hub_owner / hub_app (NOBYPASSRLS) and the test database
+        run: HUB_OWNER_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_APP_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_DATABASES=hub_test bash scripts/ops/db-init-roles.sh
+      - run: pnpm build:packages
+      - run: pnpm --filter @hub/api test
+
+  openapi:
+    name: OpenAPI generation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:packages && pnpm --filter @hub/api run build
+      - run: node apps/api/dist/cli/openapi.js openapi.json
+      - uses: actions/upload-artifact@v4
+        with: { name: openapi, path: transformation-hub/openapi.json }
+
+  web:
+    name: Web build + private-mode egress check (AT-22)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:packages && pnpm --filter @hub/api run build
+      - run: pnpm --filter @hub/web run build
+        env: { HUB_API_URL: "http://hub-api:4000" }
+      - name: Scan built assets for external URLs (fonts/CDNs/telemetry)
+        run: bash scripts/ops/egress-check.sh --require-web --allow hub-api | tee egress-report.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: egress-report, path: transformation-hub/egress-report.txt }
+
+  e2e:
+    name: Playwright smoke (demo stack)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: [static]
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: ci_only_postgres }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgres://hub_app:hub_dev_only@127.0.0.1:5432/hub_e2e
+      DATABASE_MIGRATION_URL: postgres://hub_owner:hub_dev_only@127.0.0.1:5432/hub_e2e
+      HUB_MODE: demo
+      NODE_ENV: development
+      HUB_STORAGE_LOCAL_DIR: /tmp/hub-e2e-objects
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - run: HUB_OWNER_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_APP_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_DATABASES=hub_e2e bash scripts/ops/db-init-roles.sh
+      - run: pnpm build:packages && pnpm --filter @hub/api run build
+      - name: Migrate (container entrypoint command) and load the Demo sandbox
+        run: |
+          node deploy/docker/api-entrypoint.cjs migrate
+          node apps/api/dist/cli/seed-demo.js
+      - name: Start API and worker
+        run: |
+          mkdir -p .dev
+          nohup node apps/api/dist/main.js > .dev/api.log 2>&1 &
+          nohup node apps/api/dist/worker.js > .dev/worker.log 2>&1 &
+          for _ in $(seq 1 60); do curl -sf http://127.0.0.1:4000/readyz && break; sleep 1; done
+          curl -sf http://127.0.0.1:4000/readyz
+      - run: pnpm --filter @hub/e2e exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-report
+          path: |
+            transformation-hub/e2e/playwright-report
+            transformation-hub/e2e/test-results
+            transformation-hub/.dev/*.log
+
+  restore-drill:
+    name: Backup/restore drill (AT-23)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: ci_only_postgres }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
+      - name: PostgreSQL 16 client tools (pg_dump must not be older than the server)
+        run: |
+          if ! pg_dump --version 2>/dev/null | grep -q ' 16\.'; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-16
+            echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+          fi
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:packages && pnpm --filter @hub/api run build
+      - run: HUB_DRILL_DIR="$PWD/.dev/drill" bash scripts/ops/restore-drill.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: restore-drill
+          path: |
+            transformation-hub/.dev/drill/*/drill.log
+            transformation-hub/.dev/drill/*/restore-report.txt
+            transformation-hub/.dev/drill/*/backup/manifest.json
+
+  deploy-validate:
+    name: Helm / kubeconform / compose / shellcheck
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with: { version: v3.19.0 }
+      - name: kubeconform
+        run: |
+          curl -fsSL -o /tmp/kubeconform.tgz https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz
+          tar -xzf /tmp/kubeconform.tgz -C /tmp kubeconform
+      - run: KUBECONFORM=/tmp/kubeconform bash scripts/ops/validate-deploy.sh
+
+  images:
+    name: Container images (build only) + image SBOM + vulnerability report
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build API image (target api)
+        # CI uses the public base image by TAG only; release builds in Mobily's pipeline pass the mirrored image digest.
+        run: >-
+          docker build -f apps/api/Dockerfile --target api
+          --build-arg NODE_BASE=node:22.22.2-bookworm-slim
+          --build-arg APP_VERSION=ci --build-arg GIT_COMMIT="${GITHUB_SHA}"
+          -t transformation-hub/api:ci --load .
+      - name: Build web image
+        run: >-
+          docker build -f apps/web/Dockerfile
+          --build-arg NODE_BASE=node:22.22.2-bookworm-slim --build-arg HUB_API_URL=http://hub-api:4000
+          --build-arg APP_VERSION=ci --build-arg GIT_COMMIT="${GITHUB_SHA}"
+          -t transformation-hub/web:ci --load .
+      - name: Image smoke checks (non-root user, entrypoint, no npm in runtime image)
+        run: |
+          test "$(docker inspect -f '{{.Config.User}}' transformation-hub/api:ci)" = "10001:0"
+          test "$(docker inspect -f '{{.Config.User}}' transformation-hub/web:ci)" = "10001:0"
+          docker run --rm --read-only transformation-hub/api:ci help
+          ! docker run --rm --entrypoint node transformation-hub/api:ci -e "require.resolve('/usr/local/lib/node_modules/npm')"
+      - uses: anchore/sbom-action@v0
+        with: { image: "transformation-hub/api:ci", format: cyclonedx-json, output-file: sbom-api-image.cdx.json, artifact-name: sbom-api-image.cdx.json }
+      - uses: anchore/sbom-action@v0
+        with: { image: "transformation-hub/web:ci", format: cyclonedx-json, output-file: sbom-web-image.cdx.json, artifact-name: sbom-web-image.cdx.json }
+      - name: Vulnerability report (grype) — report only; triage per docs/deployment/supply-chain.md
+        uses: anchore/scan-action@v6
+        id: scan
+        with: { image: "transformation-hub/api:ci", fail-build: false, severity-cutoff: critical, output-format: json }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: vulnerability-report-api, path: "${{ steps.scan.outputs.json }}" }
+
+  sbom:
+    name: Source SBOM (syft, CycloneDX)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anchore/sbom-action@v0
+        with:
+          path: transformation-hub
+          format: cyclonedx-json
+          output-file: transformation-hub-source.cdx.json
+          artifact-name: transformation-hub-source.cdx.json
+
+  audit:
+    name: pnpm audit --prod (report only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --prod --json > pnpm-audit.json || true
+      - run: pnpm audit --prod || true
+      - uses: actions/upload-artifact@v4
+        with: { name: pnpm-audit, path: transformation-hub/pnpm-audit.json }
+
+  licences:
+    name: Licence policy (shipped dependencies)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - name: Check licences against scripts/ops/licence-policy.json
+        env:
+          RELEASE_MODE: ${{ inputs.release && '--release' || '' }}
+        run: node scripts/ops/licence-check.mjs ${RELEASE_MODE:+"$RELEASE_MODE"} --report licence-report.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: licence-report, path: transformation-hub/licence-report.md }

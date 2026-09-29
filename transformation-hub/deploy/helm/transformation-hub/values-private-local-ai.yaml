@@ -1,0 +1,26 @@
+# Mode "Mobily Private — Local AI" (master prompt §16): same environment plus a LICENSED local/self-hosted model
+# endpoint speaking an OpenAI-compatible API (ADR-0009 adapter `openai_compatible`). Measure quality and resources
+# on Mobily's hardware; do not claim equivalence to Claude. Verify (DNS + IP) that the endpoint really is internal.
+# NOTE: the HUB_AI_* variables are PROPOSED names; the AI runtime reads them once implemented (P5).
+app:
+  privateMode: true
+  egressAllowlist:
+    - idp.example.internal          # REPLACE
+    - s3.example.internal           # REPLACE
+    - llm.example.internal          # REPLACE: local inference endpoint host
+ai:
+  mode: openai_compatible
+  allowMock: false
+  baseUrl: https://llm.example.internal/v1   # REPLACE
+  model: REPLACE_WITH_LICENSED_MODEL_ID
+  apiKeySecret:
+    name: ""                        # set to a Secret name if the endpoint requires a token
+    key: HUB_AI_API_KEY
+networkPolicy:
+  enabled: true
+  egress:
+    aiGateway:                      # worker → local inference endpoint only
+      enabled: true
+      ports: [{ port: 443, protocol: TCP }]
+      to:
+        - ipBlock: { cidr: 192.0.2.10/32 }    # REPLACE: documentation address (RFC 5737) — use the endpoint's IP/CIDR

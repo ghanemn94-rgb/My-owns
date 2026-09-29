@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hub.fullname" . }}-api
+  labels:
+    {{- include "hub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  type: {{ .Values.api.service.type }}
+  selector:
+    {{- include "hub.selector" (dict "ctx" . "component" "api") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.api.service.port }}
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hub.fullname" . }}-web
+  labels:
+    {{- include "hub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  type: {{ .Values.web.service.type }}
+  selector:
+    {{- include "hub.selector" (dict "ctx" . "component" "web") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.web.service.port }}
+      targetPort: http
+      protocol: TCP

@@ -1,0 +1,33 @@
+{{- if and .Values.openshift .Values.route.enabled }}
+{{- range $component := list "api" "web" }}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "hub.fullname" $ }}-{{ $component }}
+  labels:
+    {{- include "hub.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+  {{- with $.Values.route.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  host: {{ $.Values.route.host | quote }}
+  path: {{ if eq $component "api" }}/api{{ else }}/{{ end }}
+  to:
+    kind: Service
+    name: {{ include "hub.fullname" $ }}-{{ $component }}
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: {{ $.Values.route.tls.termination }}
+    insecureEdgeTerminationPolicy: {{ $.Values.route.tls.insecureEdgeTerminationPolicy }}
+    {{- with $.Values.route.tls.externalCertificateSecret }}
+    externalCertificate:
+      name: {{ . }}
+    {{- end }}
+  wildcardPolicy: None
+{{- end }}
+{{- end }}

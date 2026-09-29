@@ -1,0 +1,168 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $np := .Values.networkPolicy }}
+{{- $e := $np.egress }}
+{{- $ingressNs := ternary $np.ingressController.openshiftNamespaceSelector $np.ingressController.namespaceSelector .Values.openshift }}
+{{- $dnsNs := ternary $np.dns.openshiftNamespaceSelector $np.dns.namespaceSelector .Values.openshift }}
+{{- $dnsPorts := $np.dns.ports }}
+{{- if .Values.openshift }}
+{{- $dnsPorts = concat $dnsPorts (list (dict "port" 5353 "protocol" "UDP") (dict "port" 5353 "protocol" "TCP")) }}
+{{- end }}
+# (1) Default deny for every pod of this release — ingress AND egress (AT-22). Everything below is an explicit allow.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "hub.fullname" . }}-default-deny
+  labels:
+    {{- include "hub.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ include "hub.name" . }}
+  policyTypes: [Ingress, Egress]
+---
+# (2) DNS for every pod of this release.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "hub.fullname" . }}-dns
+  labels:
+    {{- include "hub.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ include "hub.name" . }}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            {{- toYaml $dnsNs | nindent 12 }}
+      ports:
+        {{- toYaml $dnsPorts | nindent 8 }}
+---
+# (3) web: from the ingress controller; to the API (rewrite fallback) and the OTEL collector only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "hub.fullname" . }}-web
+  labels:
+    {{- include "hub.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "hub.selector" (dict "ctx" . "component" "web") | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            {{- toYaml $ingressNs | nindent 12 }}
+      ports: [{ port: 3000, protocol: TCP }]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "hub.selector" (dict "ctx" . "component" "api") | nindent 14 }}
+      ports: [{ port: 4000, protocol: TCP }]
+    {{- if $e.otelCollector.to }}
+    - to: {{- toYaml $e.otelCollector.to | nindent 8 }}
+      ports: {{- toYaml $e.otelCollector.ports | nindent 8 }}
+    {{- end }}
+---
+# (4) api: from the ingress controller and the web pods; to PostgreSQL, object storage, IdP, OTEL, proxy.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "hub.fullname" . }}-api
+  labels:
+    {{- include "hub.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "hub.selector" (dict "ctx" . "component" "api") | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            {{- toYaml $ingressNs | nindent 12 }}
+        - podSelector:
+            matchLabels:
+              {{- include "hub.selector" (dict "ctx" . "component" "web") | nindent 14 }}
+      ports: [{ port: 4000, protocol: TCP }]
+  egress:
+    {{- range $name := list "database" "objectStorage" "idp" "otelCollector" "proxy" }}
+    {{- $d := index $e $name }}
+    {{- if $d.to }}
+    # {{ $name }}
+    - to: {{- toYaml $d.to | nindent 8 }}
+      ports: {{- toYaml $d.ports | nindent 8 }}
+    {{- end }}
+    {{- end }}
+    {{- range $x := $e.extra }}
+    {{- if eq $x.component "api" }}
+    - to: {{- toYaml $x.to | nindent 8 }}
+      ports: {{- toYaml $x.ports | nindent 8 }}
+    {{- end }}
+    {{- end }}
+---
+# (5) worker: no ingress; to PostgreSQL, object storage, OTEL, proxy and — only when approved — the AI endpoint.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "hub.fullname" . }}-worker
+  labels:
+    {{- include "hub.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "hub.selector" (dict "ctx" . "component" "worker") | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  egress:
+    {{- range $name := list "database" "objectStorage" "otelCollector" "proxy" }}
+    {{- $d := index $e $name }}
+    {{- if $d.to }}
+    # {{ $name }}
+    - to: {{- toYaml $d.to | nindent 8 }}
+      ports: {{- toYaml $d.ports | nindent 8 }}
+    {{- end }}
+    {{- end }}
+    {{- if and $e.aiGateway.enabled $e.aiGateway.to }}
+    # aiGateway (approved endpoint only)
+    - to: {{- toYaml $e.aiGateway.to | nindent 8 }}
+      ports: {{- toYaml $e.aiGateway.ports | nindent 8 }}
+    {{- end }}
+    {{- range $x := $e.extra }}
+    {{- if eq $x.component "worker" }}
+    - to: {{- toYaml $x.to | nindent 8 }}
+      ports: {{- toYaml $x.ports | nindent 8 }}
+    {{- end }}
+    {{- end }}
+---
+# (6) migration/bootstrap Jobs: PostgreSQL + DNS only. A hook, so it exists before the pre-install migration runs
+# in namespaces that already enforce a default deny.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "hub.fullname" . }}-migrate
+  labels:
+    {{- include "hub.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "hub.selector" (dict "ctx" . "component" "migrate") | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            {{- toYaml $dnsNs | nindent 12 }}
+      ports:
+        {{- toYaml $dnsPorts | nindent 8 }}
+    {{- if $e.database.to }}
+    - to: {{- toYaml $e.database.to | nindent 8 }}
+      ports: {{- toYaml $e.database.ports | nindent 8 }}
+    {{- end }}
+{{- end }}
