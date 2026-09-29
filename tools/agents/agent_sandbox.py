@@ -77,6 +77,20 @@ def sha256_of(path):
         return hashlib.sha256(f.read()).hexdigest() if stat.S_ISREG(os.fstat(f.fileno()).st_mode) else None
 
 
+def nested_in_process_sandbox():
+    """True only inside an agent's process sandbox: the runner marks it (MTH_PROCESS_SANDBOX=1) and its PID 1 is bwrap.
+
+    There, a fresh procfs cannot be mounted: the read-only covers bwrap puts over /proc/sys and similar paths are
+    locked in the agent's nested namespaces. That /proc already shows only that sandbox's processes, so a sandbox built
+    inside it (the tests and pre-freeze a reviewer runs) binds it instead, as the Claude Code Bash sandbox does. The
+    marker alone never changes anything: at the top level PID 1 is the host's init, and a private procfs is mounted."""
+    try:
+        with open("/proc/1/comm", encoding="utf-8") as f:
+            return os.environ.get("MTH_PROCESS_SANDBOX") == "1" and f.read().strip() == "bwrap"
+    except OSError:
+        return False
+
+
 def worktree_root(cwd, roots):
     cwd = os.path.realpath(cwd)
     inside = [r for r in roots if cwd == r or cwd.startswith(r + os.sep)]
@@ -121,12 +135,16 @@ def plan(role, repo_root, cwd, stage, run_tmp, state_dir, claude_bin, home=None)
             "staged": staged,
             "protected": protected, "run_tmp": os.path.realpath(run_tmp), "home": home,
             "sessions": os.path.join(state_dir, "projects"), "claude_bin": os.path.realpath(claude_bin),
+            "proc": "bound-nested" if nested_in_process_sandbox() else "private",
             "cgroup_api": CGROUP_API if os.path.isdir(CGROUP_API) else None}
 
 
 def bwrap_args(p):
-    a = ["--die-with-parent", "--new-session", "--unshare-pid", "--unshare-ipc",
-         "--ro-bind", "/", "/", "--dev", "/dev", "--proc", "/proc", "--tmpfs", "/tmp", "--tmpfs", "/var/tmp"]
+    # Nested (see nested_in_process_sandbox): bind the enclosing /proc, and create a user namespace, because the caller
+    # there holds no capability to create the other namespaces itself.
+    proc = ["--proc", "/proc"] if p["proc"] == "private" else ["--bind", "/proc", "/proc", "--unshare-user"]
+    a = ["--die-with-parent", "--new-session", "--unshare-pid", "--unshare-ipc", "--setenv", "MTH_PROCESS_SANDBOX", "1",
+         "--ro-bind", "/", "/", "--dev", "/dev", *proc, "--tmpfs", "/tmp", "--tmpfs", "/var/tmp"]
     # Repositories and a HOME under /tmp or /var/tmp (tests, the live probe) stay visible, read-only.
     for r in p["roots"] + ([p["home"]] if p["home"] != "/" else []):
         a += ["--ro-bind", r, r]
@@ -241,7 +259,7 @@ def finish(argv):
                     f.write(data)
                 accepted.append(path)
     summary = {"schema": p["schema"], "role": p["role"], "root": p["root"], "confined": p["confined"],
-               "read_only_root": True, "private_tmp": ["/tmp", "/var/tmp"], "run_tmp": p["run_tmp"],
+               "read_only_root": True, "private_tmp": ["/tmp", "/var/tmp"], "proc": p["proc"], "run_tmp": p["run_tmp"],
                "writable_areas": p["binds"] if p["confined"] else ["."],
                "read_only_within_writable": [os.path.relpath(x, p["root"]) for x in p["protected"]],
                "staged": [{"area": s["rel"], "accept": s["accept"], "replace": s["replace"], "copied": s["copied"]}

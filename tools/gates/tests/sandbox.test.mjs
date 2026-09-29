@@ -82,3 +82,22 @@ test("F-DG0-141: the clone, checkout and command run inside the sandbox, in a wo
   assert.equal(code, 0);
   rmSync(repo, { recursive: true, force: true });
 });
+
+test("D-030: sandbox-run works inside an agent's process sandbox (a reviewer running the pre-freeze)", () => {
+  assert.ok(hasBwrap, "bwrap is not installed");
+  // Build the process sandbox the runner gives an agent (tools/agents/agent_sandbox.py) around this fixture, then run
+  // sandbox-run.sh inside it. A fresh procfs cannot be mounted there, so sandbox-run binds the enclosing one.
+  const repo = fixture();
+  const py = join(here, "..", "..", "agents", "agent_sandbox.py");
+  const tmp = mkdtempSync(join(tmpdir(), "psb-"));
+  const runTmp = mkdtempSync(join(tmp, "mth-run.")), state = mkdtempSync(join(tmp, "mth-state."));
+  execFileSync("python3", ["-I", "-B", py, "prepare", "backend-workflow-engineer", repo, repo, "DG0", runTmp, state, "/bin/sh"], { cwd: "/" });
+  const args = execFileSync("python3", ["-I", "-B", py, "args", state], { cwd: "/" }).toString().split("\0").slice(0, -1);
+  const r = spawnSync("bwrap", [...args, join(repo, "tools/gates/sandbox-run.sh"), "HEAD", "--", "bash", "-c", "cat committed.txt; echo rc_net=$(python3 -c \"import socket; socket.create_connection(('1.1.1.1', 53), 2)\" 2>/dev/null; echo $?)"],
+    { encoding: "utf8", cwd: "/", timeout: 120000, env: { ...process.env, TMPDIR: runTmp } });
+  assert.equal(r.status, 0, `${r.stderr} ${r.error || ""}`);
+  assert.match(r.stdout, /committed/);
+  assert.doesNotMatch(r.stdout, /rc_net=0/);
+  rmSync(repo, { recursive: true, force: true });
+  rmSync(tmp, { recursive: true, force: true });
+});

@@ -26,10 +26,17 @@ cd /
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 COMMIT="$(git -C "$REPO_ROOT" rev-parse --verify --end-of-options "$REV^{commit}")"
 GIT_COMMON="$(git -C "$REPO_ROOT" rev-parse --path-format=absolute --git-common-dir)"
+# Inside an agent's process sandbox (a reviewer running the pre-freeze; D-030) a fresh procfs cannot be mounted, and
+# that sandbox's /proc shows only its own processes, so it is bound instead and the marker is passed on (see
+# nested_in_process_sandbox in tools/agents/agent_sandbox.py). At the top level a private procfs is always mounted.
+PROC=(--proc /proc) NESTED=()
+if [ "${MTH_PROCESS_SANDBOX:-}" = 1 ] && [ "$(cat /proc/1/comm 2>/dev/null)" = bwrap ]; then
+  PROC=(--bind /proc /proc --unshare-user) NESTED=(MTH_PROCESS_SANDBOX=1)
+fi
 exec env -i PATH="/usr/local/bin:/usr/bin:/bin" HOME=/tmp/home LANG=C.UTF-8 TMPDIR=/tmp \
   PYTHONDONTWRITEBYTECODE=1 PYTHONSAFEPATH=1 GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 \
-  MTH_COMMIT="$COMMIT" \
-  bwrap --ro-bind / / --dev /dev --proc /proc --tmpfs /tmp --ro-bind "$GIT_COMMON" /tmp/src.git \
+  MTH_COMMIT="$COMMIT" "${NESTED[@]}" \
+  bwrap --ro-bind / / --dev /dev "${PROC[@]}" --tmpfs /tmp --ro-bind "$GIT_COMMON" /tmp/src.git \
         --unshare-net --unshare-pid --die-with-parent --new-session --chdir /tmp -- \
   bash -c 'set -eu
     mkdir /tmp/home

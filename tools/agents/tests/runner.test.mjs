@@ -122,7 +122,8 @@ function runWith(repo, writes, extraEnv = {}) {
   chmodSync(join(bin, "claude"), 0o755);
   const res = spawnSync(join(repo, "tools", "agents", "run-agent.sh"),
     ["--role", "domain-reviewer", "--stage", "DG0", "--task", "T-STUB", "--assignment", join(repo, "docs/delivery/assignments/DG0/T.md")],
-    { cwd: repo, env: { ...process.env, MTH_RUN_TMP_PARENT: tmpdir(), PATH: `${bin}:${process.env.PATH}`, STUB_WRITE: JSON.stringify(writes), ...extraEnv }, encoding: "utf8" });
+    { cwd: repo, env: { ...process.env, MTH_RUN_TMP_PARENT: tmpdir(), PATH: `${bin}:${process.env.PATH}`, STUB_WRITE: JSON.stringify(writes), ...extraEnv }, encoding: "utf8",
+      timeout: 300000 });
   rmSync(bin, { recursive: true, force: true });
   return { res, ...runMeta(repo) };
 }
