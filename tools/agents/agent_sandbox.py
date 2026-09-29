@@ -21,8 +21,10 @@ Inside the sandbox:
         only the role's own files are copied back; everything else is discarded and reported.
       * Implementers: the working tree is read-write, with every existing protected path bound read-only on top.
   - The process keeps only CAP_SETFCAP, in the bounding set too. The Claude Code Bash sandbox needs it to map uid 0
-    into its own user namespace. no_new_privs is set, the PID and IPC namespaces are private, and the network is
-    shared, because the CLI must reach the API (agent shells have no network, D-025).
+    into its own user namespace. no_new_privs is set. The sandbox binds the host's real procfs (read-write) and does
+    NOT create a PID namespace -- sharing the host PID namespace is what lets a reviewer's own nested bwrap mount its
+    procfs (D-030; threat-model residual 8). It DOES create its own IPC namespace (--unshare-ipc, D-031, F-DG0-148).
+    The network is shared, because the CLI must reach the API (agent shells have no network via the Bash sandbox, D-025).
 
 Usage:
   agent_sandbox.py prepare ROLE REPO_ROOT CWD STAGE RUN_TMP STATE_DIR CLAUDE_BIN
@@ -264,7 +266,14 @@ def finish(argv):
                 dest = os.path.join(s["real"], rel)
                 os.makedirs(os.path.dirname(dest), exist_ok=True)
                 flags = os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | (os.O_TRUNC if rel in seed else os.O_EXCL)
-                fd = os.open(dest, flags, 0o644)
+                try:
+                    fd = os.open(dest, flags, 0o644)
+                except FileExistsError:
+                    # A new-in-staging file already exists in the real tree (another run of the same role committed it
+                    # after this run's prepare). Write-once: keep the real file, discard this copy. Never crash the loop
+                    # (F-DG0-150/238); the O_NOFOLLOW O_EXCL guarantees we never follow a symlink or clobber it.
+                    discarded.append(f"{path}: already present in the real tree; write-once (not copied)")
+                    continue
                 with os.fdopen(fd, "wb") as f:
                     f.write(data)
                 accepted.append(path)

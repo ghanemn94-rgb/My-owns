@@ -314,3 +314,23 @@ test("F-DG0-145 (round 16): a file another run commits to the real dir between p
   assert.equal(readFileSync(join(fx.repo, "docs/delivery/reviews/DG0/round-2/domain-reviewer.json"), "utf8"), '{"verdict":"PASS"}\n');
   rmSync(fx.base, { recursive: true, force: true });
 });
+
+test("F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash", () => {
+  requireTools();
+  const fx = fixture();
+  const sb = sandbox(fx, "code-security-reviewer");
+  const staging = sb.plan().staged.find((s) => s.rel === "docs/delivery/reviews/DG0").staging;
+  // This run writes its own new record into staging (not in the seed).
+  mkdirSync(join(staging, "round-2"), { recursive: true });
+  writeFileSync(join(staging, "round-2", "code-security-reviewer.json"), '{"verdict":"PASS"}\n');
+  // But another run of the same role committed the SAME path to the real tree after prepare, so the O_EXCL open would
+  // hit FileExistsError. finish() must report a write-once discard and keep going, never raise.
+  mkdirSync(join(fx.repo, "docs/delivery/reviews/DG0/round-2"), { recursive: true });
+  writeFileSync(join(fx.repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json"), '{"verdict":"EARLIER"}\n');
+  const { status, summary } = sb.finish();
+  assert.equal(status, 3); // discards → non-zero, fail-closed (run-agent turns this into exit 73, no auto-commit)
+  assert.deepEqual(summary.copied_back, []);
+  assert.match(summary.discarded.join("\n"), /round-2\/code-security-reviewer\.json: already present in the real tree; write-once/);
+  assert.equal(readFileSync(join(fx.repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json"), "utf8"), '{"verdict":"EARLIER"}\n'); // untouched
+  rmSync(fx.base, { recursive: true, force: true });
+});
