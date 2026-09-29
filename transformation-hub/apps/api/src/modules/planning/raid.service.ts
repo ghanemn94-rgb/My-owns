@@ -34,6 +34,7 @@ import { RecordVersionService, updateVersioned, loadInProject, nextCode, pageOf,
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { PlanningSupport, ProjectInfo } from './planning-support';
+import { likeContains } from '../../platform/helpers';
 
 export type RaidKindPath = 'risks' | 'issues' | 'assumptions' | 'dependencies';
 type RaidKind = 'risk' | 'issue' | 'assumption' | 'dependency';
@@ -121,7 +122,7 @@ export class RaidService {
     if (q.workstreamId) conds.push(eq(T.workstreamId, q.workstreamId));
     if (q.ownerUserId) conds.push(eq(T.ownerUserId, q.ownerUserId === 'me' ? (ctx.principal.userId ?? '00000000-0000-0000-0000-000000000000') : q.ownerUserId));
     if (q.gateKey) conds.push(eq(T.gateKey, q.gateKey));
-    if (q.q) conds.push(or(ilike(T.title, `%${q.q}%`), ilike(T.code, `%${q.q}%`))!);
+    if (q.q) conds.push(or(ilike(T.title, likeContains(q.q)), ilike(T.code, likeContains(q.q)))!);
     const dueCol = k.kind === 'dependency' ? sql`coalesce(${(schema.raidDependency as typeof schema.raidDependency).neededBy}, ${T.dueDate})` : sql`${T.dueDate}`;
     const od = sql`(${T.status} in ('open','monitoring','escalated') and ${dueCol} < ${today})`;
     if (q.overdue === 'true') conds.push(od);

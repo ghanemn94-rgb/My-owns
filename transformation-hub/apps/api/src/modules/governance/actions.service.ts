@@ -19,6 +19,7 @@ import { RecordVersionService, assertVersion, loadInProject, nextCode, offsetOf,
 import { newId } from '../../platform/ids';
 import type { RequestContext } from '../../platform/context';
 import { ActionRow, GovernanceSupport, iso } from './governance.support';
+import { likeContains } from '../../platform/helpers';
 
 type ActionStatus = (typeof ACTION_ITEM_STATUSES)[number];
 type EscalationStatus = (typeof ESCALATION_STATUSES)[number];
@@ -62,7 +63,7 @@ export class ActionsService {
       q.meetingId ? eq(a.meetingId, q.meetingId) : undefined,
       q.ownerUserId ? eq(a.ownerUserId, q.ownerUserId) : undefined,
       q.overdue === 'true' ? overdueSql : q.overdue === 'false' ? sql`not coalesce((${overdueSql}), false)` : undefined,
-      q.q ? or(ilike(a.title, `%${q.q}%`), ilike(a.code, `%${q.q}%`)) : undefined,
+      q.q ? or(ilike(a.title, likeContains(q.q)), ilike(a.code, likeContains(q.q))) : undefined,
     );
     const tx = this.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(a).leftJoin(d, eq(d.id, a.decisionId)).where(where)) as [{ total: number }];
@@ -199,7 +200,7 @@ export class ActionsService {
       q.status ? eq(e.status, q.status) : undefined,
       q.sourceType ? eq(e.sourceType, q.sourceType) : undefined,
       q.sourceId ? eq(e.sourceId, q.sourceId) : undefined,
-      q.q ? or(ilike(e.title, `%${q.q}%`), ilike(e.code, `%${q.q}%`)) : undefined,
+      q.q ? or(ilike(e.title, likeContains(q.q)), ilike(e.code, likeContains(q.q))) : undefined,
     );
     const join = and(eq(e.sourceType, 'decision'), eq(d.id, e.sourceId));
     const tx = this.db.tx();

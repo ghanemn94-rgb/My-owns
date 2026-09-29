@@ -118,3 +118,11 @@ export async function activeEvidenceCount(db: DbService, projectId: string, targ
       from evidence_link where project_id = ${projectId} and target_type = ${targetType} and target_id = ${targetId}`);
   return r.rows[0] ?? { active: 0, conflicting: 0 };
 }
+
+/**
+ * ILIKE "contains" pattern with the user's text matched LITERALLY: `%`, `_` and `\` are escaped (PostgreSQL's default LIKE
+ * escape character is backslash), so a search for "%" does not enumerate every row (QA-P1-06).
+ */
+export function likeContains(q: string): string {
+  return `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+}

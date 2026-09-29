@@ -57,7 +57,8 @@ function clearanceFor(u: DemoUser): Classification {
   // Demo project members are cleared to the demo projects' classification (confidential); higher clearances come
   // from role defaults. In production, clearance is granted explicitly (admin.clearance.grant).
   const isProjectMember = (u.dc?.length ?? 0) + (u.gen?.length ?? 0) + (u.dcWorkstream?.length ?? 0) > 0;
-  let best: Classification = isProjectMember ? 'confidential' : 'internal';
+  // The portfolio administrator creates and manages the (confidential) demo projects, so it is cleared to confidential.
+  let best: Classification = isProjectMember || (u.orgRoles ?? []).includes('portfolio_admin') ? 'confidential' : 'internal';
   for (const r of roles) {
     const c = POLICY_MATRIX.roles[r].defaultClearance;
     if (clearanceAllows(c, best)) best = c;
@@ -85,11 +86,11 @@ export async function seedDemo(opts: { ownerUrl: string; log?: (m: string) => vo
     await ensurePlatformSchedules(owner, orgId);
     for (const u of DEMO_USERS) {
       const r = await owner.query<{ id: string }>(
-        `insert into app_user (id, org_id, email, display_name, title, clearance, is_demo, locale)
-         values (gen_random_uuid(), $1, $2, $3, $4, $5, true, 'en')
-         on conflict (org_id, email) do update set display_name = excluded.display_name, title = excluded.title, clearance = excluded.clearance
+        `insert into app_user (id, org_id, email, display_name, title, clearance, is_demo, locale, account_type)
+         values (gen_random_uuid(), $1, $2, $3, $4, $5, true, 'en', $6)
+         on conflict (org_id, email) do update set display_name = excluded.display_name, title = excluded.title, clearance = excluded.clearance, account_type = excluded.account_type
          returning id`,
-        [orgId, demoEmail(u.key), u.displayName, u.title, clearanceFor(u)],
+        [orgId, demoEmail(u.key), u.displayName, u.title, clearanceFor(u), u.key.startsWith('partner.') ? 'external' : 'internal'],
       );
       const userId = r.rows[0]!.id;
       for (const role of u.orgRoles ?? []) {

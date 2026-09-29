@@ -5,7 +5,7 @@ import { createApp } from '../../src/bootstrap';
 import { loadConfig } from '../../src/platform/config';
 import { closePools, demoUserId, owner } from '../helpers';
 import { demoEmail } from '../../src/cli/seed-demo';
-import { FakeOidcIdp } from '../support/fake-oidc-idp';
+import { FakeOidcIdp, type FakeIdpUser } from '../support/fake-oidc-idp';
 
 /**
  * REQ-ARC-005 / ADR-0005 — enterprise SSO via OIDC Authorization Code + PKCE against an in-process test IdP.
@@ -43,7 +43,7 @@ async function provisionUser(email: string, opts: { subject?: string; active?: b
 }
 
 /** Runs the browser round trip: app login → IdP authorize (auto-consent) → app callback. */
-async function ssoLogin(app: INestApplication, user: { sub: string; email?: string }, tamper?: (callbackPath: string, agent: request.Agent) => Promise<request.Response>) {
+async function ssoLogin(app: INestApplication, user: FakeIdpUser, tamper?: (callbackPath: string, agent: request.Agent) => Promise<request.Response>) {
   const agent = request.agent(app.getHttpServer());
   const start = await agent.get('/api/v1/auth/oidc/login').expect(302);
   expect(start.headers.location).toMatch(new RegExp(`^${idp.issuer}/authorize\\?`));
@@ -135,6 +135,30 @@ describe('REQ-ARC-005 — OIDC SSO (Authorization Code + PKCE)', () => {
     expect(again.cb.headers.location).toBe('/');
   });
 
+  it('SEC-P1-01: an account already bound to a subject cannot be taken over by another subject with the same email', async () => {
+    const email = `sso.victim.${Date.now()}@example.invalid`;
+    const victimSub = `victim-${Date.now()}`;
+    const victimId = await provisionUser(email, { subject: victimSub });
+    for (const attempt of [email, email.toUpperCase()]) {
+      const att = await ssoLogin(linkApp, { sub: `attacker-${Math.random()}`, email: attempt });
+      expect(att.cb.headers.location).toBe('/login?sso_error=oidc.not_provisioned');
+      expect(sessionCookieSet(att.cb)).toBe(false);
+    }
+    const row = await owner().query(`select oidc_subject from app_user where id = $1`, [victimId]);
+    expect(row.rows[0].oidc_subject).toBe(victimSub);
+    const bogus = await owner().query(`select count(*)::int n from audit_event where action = 'identity.oidc.link_subject' and entity_id = $1`, [victimId]);
+    expect(bogus.rows[0].n).toBe(0); // nothing was linked, nothing is claimed
+  });
+
+  it('SEC-P1-01: an unverified email is never used to link an account', async () => {
+    const email = `sso.unverified.${Date.now()}@example.invalid`;
+    const userId = await provisionUser(email);
+    const r = await ssoLogin(linkApp, { sub: `unverified-${Date.now()}`, email, emailVerified: false });
+    expect(r.cb.headers.location).toBe('/login?sso_error=oidc.not_provisioned');
+    const row = await owner().query(`select oidc_subject from app_user where id = $1`, [userId]);
+    expect(row.rows[0].oidc_subject).toBeNull();
+  });
+
   it('demo users and deactivated users can never sign in through SSO', async () => {
     const demo = await ssoLogin(linkApp, { sub: `demo-${Date.now()}`, email: demoEmail('pm') });
     expect(demo.cb.headers.location).toBe('/login?sso_error=oidc.not_provisioned');
@@ -215,7 +239,7 @@ describe('REQ-ARC-005 — OIDC SSO (Authorization Code + PKCE)', () => {
       HUB_OIDC_ISSUER: 'https://idp.example.invalid',
       HUB_OIDC_CLIENT_ID: 'hub',
       HUB_OIDC_REDIRECT_URI: 'https://hub.example.invalid/api/v1/auth/oidc/callback',
-      HUB_COOKIE_SECRET: 'y'.repeat(48),
+      HUB_COOKIE_SECRET: 'q7Vd2LxP9rTb4NwZ8kHs3JmC6yFa1GeU5oRi0XpQ',
       HUB_AI_ALLOW_MOCK: 'false',
     };
     expect(() => loadConfig(prod)).not.toThrow();
@@ -224,6 +248,11 @@ describe('REQ-ARC-005 — OIDC SSO (Authorization Code + PKCE)', () => {
     expect(() => loadConfig({ ...prod, HUB_OIDC_ISSUER: 'http://idp.example.invalid' })).toThrow(/https in production/);
     expect(() => loadConfig({ ...prod, HUB_COOKIE_SECRET: undefined })).toThrow(/HUB_COOKIE_SECRET/);
     expect(() => loadConfig({ ...prod, DATABASE_URL: 'postgres://hub_owner:x@db:5432/hub' })).toThrow(/runtime role/);
+    // SEC-P1-10: incomplete OIDC, plain-http redirect and weak secrets are refused
+    expect(() => loadConfig({ ...prod, HUB_OIDC_CLIENT_ID: undefined })).toThrow(/HUB_OIDC_CLIENT_ID/);
+    expect(() => loadConfig({ ...prod, HUB_OIDC_REDIRECT_URI: 'http://hub.example.invalid/api/v1/auth/oidc/callback' })).toThrow(/REDIRECT_URI must use https/);
+    expect(() => loadConfig({ ...prod, HUB_COOKIE_SECRET: 'a'.repeat(40) })).toThrow(/too weak/);
+    expect(() => loadConfig({ ...prod, HUB_COOKIE_SECRET: 'change-me-change-me-change-me-12345678' })).toThrow(/too weak/);
   });
 
   it('SSO is 404 when OIDC is not configured', async () => {

@@ -41,6 +41,7 @@ export const UserDto = z.object({
   clearance: ClassificationSchema,
   isActive: z.boolean(),
   isDemo: z.boolean(),
+  accountType: z.enum(['internal', 'external']),
   lastLoginAt: z.string().nullable(),
 });
 
@@ -124,7 +125,14 @@ export const identityRoutes = registerRoutes({
     tags: ['admin'],
     access: { org: 'admin.users.manage' },
     command: true,
-    body: z.object({ email: z.string().email().max(254), displayName: Text(200).pipe(z.string().min(1)), title: Text(200).optional(), clearance: ClassificationSchema.default('internal') }),
+    body: z.object({
+      email: z.string().email().max(254),
+      displayName: Text(200).pipe(z.string().min(1)),
+      title: Text(200).optional(),
+      clearance: ClassificationSchema.default('internal'),
+      /** access-matrix §2.8: external (partner) accounts can only ever receive external_partner_limited room grants. */
+      accountType: z.enum(['internal', 'external']).default('internal'),
+    }),
     response: UserDto,
   }),
   deactivateUser: defineRoute({
