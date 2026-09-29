@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, integer, jsonb, varchar, boolean, unique, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, integer, jsonb, varchar, boolean, date, unique, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import {
   pk,
   orgIdCol,
@@ -14,6 +14,7 @@ import {
   criterionStatus,
   waiverStatus,
   statusDimensionKey,
+  isDemo,
 } from './_common';
 import { project } from './portfolio';
 
@@ -90,6 +91,9 @@ export const gateAssessment = pgTable(
     decidedBy: uuid('decided_by'),
     decidedAt: ts('decided_at'),
     decisionId: uuid('decision_id'), // committee decision backing the gate approval
+    /** Who submitted the cycle for decision (mark_ready) — the decider must be someone else (not_self). */
+    submittedBy: uuid('submitted_by'),
+    submittedAt: ts('submitted_at'),
     reopenedReason: text('reopened_reason'),
     supersedesAssessmentId: uuid('supersedes_assessment_id'),
     isCurrent: boolean('is_current').notNull().default(true),
@@ -123,6 +127,10 @@ export const criterionAssessment = pgTable(
     naProposedBy: uuid('na_proposed_by'),
     naDeterminedBy: uuid('na_determined_by'),
     naApproved: boolean('na_approved').notNull().default(false),
+    naProposedAt: ts('na_proposed_at'),
+    /** Role under which the determination was made (the criterion reviewer role) and when (P0 review D-01). */
+    naDeterminedRole: roleKey('na_determined_role'),
+    naDeterminedAt: ts('na_determined_at'),
     updatedAt: updatedAt(),
     version: versionCol(),
   },
@@ -153,6 +161,10 @@ export const waiver = pgTable(
     decidedAt: ts('decided_at'),
     decisionNote: text('decision_note'),
     authorityRole: roleKey('authority_role'),
+    /** Conditions attached to the waiver and its expiry (business date); an expired waiver no longer counts. */
+    conditions: text('conditions'),
+    expiresOn: date('expires_on', { mode: 'string' }),
+    isDemo: isDemo(),
     createdAt: createdAt(),
     version: versionCol(),
   },
