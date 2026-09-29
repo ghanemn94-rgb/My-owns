@@ -82,7 +82,7 @@ export class DocumentsService {
   }
 
   attrs(l: LoadedDoc) {
-    return { projectId: l.doc.projectId, classification: l.doc.classification as Classification, roomId: l.doc.roomId, roomIsCleanTeam: l.roomIsCleanTeam };
+    return { projectId: l.doc.projectId, classification: l.doc.classification as Classification, roomId: l.doc.roomId, roomIsCleanTeam: l.roomIsCleanTeam, ownerUserIds: [l.doc.ownerUserId, l.doc.createdBy] };
   }
 
   /** Visible = in scope, clearance ≥ classification, room granted — and not disposed. */

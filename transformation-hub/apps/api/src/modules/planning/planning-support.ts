@@ -21,6 +21,8 @@ export interface ProjectInfo {
 
 export interface ActAttrs {
   workstreamId?: string | null;
+  /** Owner / assignee / creator ids (access-matrix `own_workstream`); pass [actor] for a create. */
+  ownerUserIds?: (string | null | undefined)[];
   requesterUserId?: string | null;
   withinAuthority?: boolean;
 }
@@ -210,12 +212,19 @@ export class PlanningSupport {
    * workstream (planning.task.manage) may act for anyone; others must be the accountable owner or a Responsible assignee.
    */
   async assertOwnerOrAssigned(ctx: RequestContext, p: ProjectInfo, entity: { type: 'task' | 'milestone' | 'deliverable'; id: string; workstreamId: string | null; ownerUserId: string | null }) {
-    this.assert(ctx, 'planning.task.update_progress', p, { workstreamId: entity.workstreamId });
-    if (this.can(ctx, 'planning.task.manage', p, { workstreamId: entity.workstreamId })) return;
     const me = ctx.principal.userId;
+    const assigned = !!me && (await this.activeRaci(p.id, entity.type, entity.id, me, 'R'));
+    const attrs = { workstreamId: entity.workstreamId, ownerUserIds: [entity.ownerUserId, assigned ? me : null] };
+    const notAssigned = () => forbidden('planning.not_assigned', 'Only the accountable owner, a Responsible (R) assignee or the workstream/project manager can do this');
+    if (!this.can(ctx, 'planning.task.update_progress', p, attrs)) {
+      // RBAC and visibility hold, only ownership fails (access-matrix own_workstream) → the specific error.
+      if (this.can(ctx, 'planning.task.update_progress', p, { workstreamId: entity.workstreamId, ownerUserIds: [me] })) throw notAssigned();
+      this.assert(ctx, 'planning.task.update_progress', p, attrs); // throws the generic 404/403
+    }
+    if (this.can(ctx, 'planning.task.manage', p, { workstreamId: entity.workstreamId })) return;
     if (me && entity.ownerUserId === me) return;
-    if (me && (await this.activeRaci(p.id, entity.type, entity.id, me, 'R'))) return;
-    throw forbidden('planning.not_assigned', 'Only the accountable owner, a Responsible (R) assignee or the workstream/project manager can do this');
+    if (assigned) return;
+    throw notAssigned();
   }
 
   /** Current approved baseline row (or null). */

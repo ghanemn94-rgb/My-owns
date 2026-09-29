@@ -181,6 +181,18 @@ describe('ARCH-21 / ARCH-15b — references are constrained to the same organiza
   });
 });
 
+describe('Frozen planning snapshots are immutable', () => {
+  it('a baseline snapshot/hash can never be rewritten (even by the owner role)', async () => {
+    await ownerTx(async (c) => {
+      const b = await c.query(`insert into baseline_version (org_id, project_id, version_no, snapshot, snapshot_hash) values ($1,$2,9901,'{"a":1}'::jsonb,'h1') returning id`, [orgId, dcId]);
+      await c.query('savepoint s1');
+      await expect(c.query(`update baseline_version set snapshot = '{"a":2}'::jsonb where id = $1`, [b.rows[0].id])).rejects.toThrow(/append_only_violation/);
+      await c.query('rollback to savepoint s1');
+      await expect(c.query(`update baseline_version set snapshot_hash = 'h2' where id = $1`, [b.rows[0].id])).rejects.toThrow(/append_only_violation/);
+    });
+  });
+});
+
 describe('ARCH-22 — room-only principals at the database layer', () => {
   it('a partner sees only its own membership rows and cannot write room grants', async () => {
     const partner = await demoUserId('partner.alpha');
@@ -318,6 +330,17 @@ describe('ARCH-07 / ARCH-10 / ARCH-14 / ARCH-18 / ARCH-19 — platform patterns'
     expect(scanUsable('not_scanned', true)).toBe(true);
     for (const s of ['quarantined', 'rejected', 'pending']) expect(scanUsable(s, true)).toBe(false);
     expect(scanUsable('clean', false)).toBe(true);
+  });
+
+  it('access-matrix own_workstream: a project-wide contributor manages only RAID items it owns/created; the PM manages all', async () => {
+    const pm = await loginAs('pm');
+    const contributor = await loginAs('contributor');
+    const byPm = await pm.post(`/api/v1/projects/${dcId}/raid/risks`, { title: 'Owned by PM (test)', probability: 2, impact: 2, ownerUserId: pmId }).expect(201);
+    const denied = await contributor.patch(`/api/v1/projects/${dcId}/raid/risks/${byPm.body.id}`, { expectedVersion: byPm.body.version ?? 1, title: 'contributor edit' });
+    expect(denied.status).toBe(403);
+    const mine = await contributor.post(`/api/v1/projects/${dcId}/raid/risks`, { title: 'Raised by contributor (test)', probability: 1, impact: 1 }).expect(201);
+    await contributor.patch(`/api/v1/projects/${dcId}/raid/risks/${mine.body.id}`, { expectedVersion: mine.body.version ?? 1, title: 'own edit' }).expect(200);
+    await pm.patch(`/api/v1/projects/${dcId}/raid/risks/${mine.body.id}`, { expectedVersion: (mine.body.version ?? 1) + 1, title: 'PM edit' }).expect(200);
   });
 
   it('response contract: undeclared fields are detected (and stripped)', () => {

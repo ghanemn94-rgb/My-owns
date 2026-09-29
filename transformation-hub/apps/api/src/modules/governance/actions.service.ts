@@ -290,7 +290,7 @@ export class ActionsService {
       const [d] = await this.db.tx().select({ c: schema.decision.classification }).from(schema.decision).where(eq(schema.decision.id, a.decisionId));
       classification = d?.c ?? null;
     }
-    this.policy.assert(ctx, permission, { projectId, classification, ...extra(a) });
+    this.policy.assert(ctx, permission, { projectId, classification, ownerUserIds: [a.ownerUserId, a.createdBy], ...extra(a) });
     return a;
   }
 

@@ -155,7 +155,7 @@ export class RaidService {
   private async prepareCreate(ctx: RequestContext, projectId: string, body: { workstreamId?: string; ownerUserId?: string }) {
     const p = await this.s.project(ctx, projectId);
     if (body.workstreamId) await loadInProject(this.s.db, schema.workstream, projectId, body.workstreamId);
-    this.s.assert(ctx, 'planning.raid.manage', p, { workstreamId: body.workstreamId ?? null });
+    this.s.assert(ctx, 'planning.raid.manage', p, { workstreamId: body.workstreamId ?? null, ownerUserIds: [ctx.principal.userId] });
     if (body.ownerUserId) await this.s.assertMember(projectId, body.ownerUserId);
     return p;
   }
@@ -227,7 +227,7 @@ export class RaidService {
     const p = await this.s.project(ctx, projectId);
     const k = KINDS[kindPath];
     const r = (await loadInProject(this.s.db, k.table as typeof schema.risk, projectId, id)) as unknown as AnyRaidRow;
-    this.s.assert(ctx, 'planning.raid.manage', p, { workstreamId: r.workstreamId });
+    this.s.assert(ctx, 'planning.raid.manage', p, { workstreamId: r.workstreamId, ownerUserIds: [r.ownerUserId, r.createdBy] });
     this.s.assertVersion(r, expectedVersion, k.kind);
     if (['closed', 'cancelled'].includes(r.status)) throw ruleViolation('raid.not_editable', `A ${r.status} item cannot be edited — reopen it first`);
     return { p, k, r };
@@ -295,7 +295,7 @@ export class RaidService {
     const p = await this.s.project(ctx, projectId);
     const k = KINDS[kindPath];
     const r = (await this.s.lockInProject(k.table as typeof schema.risk, projectId, id)) as unknown as AnyRaidRow;
-    this.s.assert(ctx, 'planning.raid.manage', p, { workstreamId: r.workstreamId });
+    this.s.assert(ctx, 'planning.raid.manage', p, { workstreamId: r.workstreamId, ownerUserIds: [r.ownerUserId, r.createdBy] });
     this.s.assertVersion(r, body.expectedVersion, k.kind);
     if (command === 'mitigate' && k.kind !== 'risk') throw ruleViolation('raid.mitigate_risks_only', 'Only risks are mitigated — close issues, assumptions and dependencies instead');
     if (command === 'monitor' && k.kind === 'issue') throw ruleViolation('raid.monitor_not_for_issues', 'Issues are live problems — escalate, resolve or close them');
@@ -317,7 +317,7 @@ export class RaidService {
     const p = await this.s.project(ctx, projectId);
     const k = KINDS[kindPath];
     const r = (await this.s.lockInProject(k.table as typeof schema.risk, projectId, id)) as unknown as AnyRaidRow;
-    this.s.assert(ctx, r.ownerUserId ? 'planning.ownership.reassign' : 'planning.raid.manage', p, { workstreamId: r.workstreamId });
+    this.s.assert(ctx, r.ownerUserId ? 'planning.ownership.reassign' : 'planning.raid.manage', p, { workstreamId: r.workstreamId, ownerUserIds: [r.ownerUserId, r.createdBy] });
     this.s.assertVersion(r, body.expectedVersion, k.kind);
     if (r.ownerUserId === body.userId) throw ruleViolation('planning.owner_unchanged', 'This person is already the owner');
     await this.s.assertMember(projectId, body.userId);
@@ -330,7 +330,7 @@ export class RaidService {
   async raiseIssueFromRisk(ctx: RequestContext, projectId: string, riskId: string, body: z.infer<typeof RaiseIssueBody>) {
     const p = await this.s.project(ctx, projectId);
     const r = await this.s.lockInProject(schema.risk, projectId, riskId);
-    this.s.assert(ctx, 'planning.raid.manage', p, { workstreamId: r.workstreamId });
+    this.s.assert(ctx, 'planning.raid.manage', p, { workstreamId: r.workstreamId, ownerUserIds: [r.ownerUserId, r.createdBy] });
     this.s.assertVersion(r, body.expectedVersion, 'risk');
     if (!OPEN_RAID_STATUSES.includes(r.status as RaidStatus)) throw ruleViolation('raid.risk_not_open', 'Only an open risk can be raised as an issue');
     const code = await nextCode(this.s.db, schema.issue, projectId, 'ISS');

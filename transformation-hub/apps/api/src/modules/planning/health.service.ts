@@ -301,7 +301,7 @@ export class HealthService {
   async createStatusUpdate(ctx: RequestContext, projectId: string, body: z.infer<typeof CreateStatusUpdateBody>) {
     const p = await this.s.project(ctx, projectId);
     if (body.workstreamId) await loadInProject(this.s.db, schema.workstream, projectId, body.workstreamId);
-    this.s.assert(ctx, 'planning.status_update.submit', p, { workstreamId: body.workstreamId ?? null });
+    this.s.assert(ctx, 'planning.status_update.submit', p, { workstreamId: body.workstreamId ?? null, ownerUserIds: [ctx.principal.userId] });
     this.assertPeriodEnd(p, body.periodEnd);
     const id = newId();
     await this.tx.insert(schema.statusUpdate).values({
@@ -326,7 +326,7 @@ export class HealthService {
   async updateStatusUpdate(ctx: RequestContext, projectId: string, id: string, body: z.infer<typeof UpdateStatusUpdateBody>) {
     const p = await this.s.project(ctx, projectId);
     const u = await loadInProject(this.s.db, schema.statusUpdate, projectId, id);
-    this.s.assert(ctx, 'planning.status_update.submit', p, { workstreamId: u.workstreamId });
+    this.s.assert(ctx, 'planning.status_update.submit', p, { workstreamId: u.workstreamId, ownerUserIds: [u.createdBy, u.submittedBy] });
     this.s.assertVersion(u, body.expectedVersion, 'status update');
     if (!['draft', 'returned'].includes(u.status)) throw ruleViolation('status_update.frozen', 'Submitted or accepted updates cannot be edited');
     const c: Partial<typeof schema.statusUpdate.$inferInsert> = {};
@@ -354,7 +354,7 @@ export class HealthService {
   async statusUpdateCommand(ctx: RequestContext, projectId: string, id: string, command: 'submit' | 'return' | 'accept', body: { expectedVersion: number; note?: string; reason?: string }) {
     const p = await this.s.project(ctx, projectId);
     const u = await this.s.lockInProject(schema.statusUpdate, projectId, id);
-    if (command === 'submit') this.s.assert(ctx, 'planning.status_update.submit', p, { workstreamId: u.workstreamId });
+    if (command === 'submit') this.s.assert(ctx, 'planning.status_update.submit', p, { workstreamId: u.workstreamId, ownerUserIds: [u.createdBy, u.submittedBy] });
     // Review by someone other than the submitter (not_self).
     else this.s.assert(ctx, 'planning.status_update.review', p, { workstreamId: u.workstreamId, requesterUserId: u.submittedBy });
     this.s.assertVersion(u, body.expectedVersion, 'status update');

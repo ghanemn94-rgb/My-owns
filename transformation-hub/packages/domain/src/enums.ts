@@ -479,5 +479,7 @@ export const OUTBOX_EVENT_TYPES = [
   'permission.changed',
   'document.changed',
   'report.generated',
+  'baseline.approved',
+  'change_request.decided',
 ] as const;
 export type OutboxEventType = (typeof OUTBOX_EVENT_TYPES)[number];

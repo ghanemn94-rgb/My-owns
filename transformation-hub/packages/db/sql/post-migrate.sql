@@ -758,3 +758,25 @@ CREATE TRIGGER hub_vote_binding BEFORE INSERT ON vote FOR EACH ROW EXECUTE FUNCT
 DROP TRIGGER IF EXISTS hub_same_project_source ON notification;
 CREATE TRIGGER hub_same_project_source BEFORE INSERT OR UPDATE OF source_type, source_id ON notification
   FOR EACH ROW EXECUTE FUNCTION hub_assert_same_project('source_type', 'source_id');
+
+-- 19. Frozen snapshots (planning) ------------------------------------------------------------------------------------
+-- A baseline snapshot and its hash never change after insert; a status update's frozen snapshot never changes once the
+-- update has been accepted (spec §9: history is preserved; changes go through a new baseline / status update).
+CREATE OR REPLACE FUNCTION hub_frozen_snapshot_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_TABLE_NAME = 'baseline_version' THEN
+    IF NEW.snapshot IS DISTINCT FROM OLD.snapshot OR NEW.snapshot_hash IS DISTINCT FROM OLD.snapshot_hash THEN
+      RAISE EXCEPTION 'append_only_violation: a baseline snapshot is immutable — propose a new baseline' USING ERRCODE = 'P0001';
+    END IF;
+  ELSIF TG_TABLE_NAME = 'status_update' THEN
+    IF OLD.status::text = 'accepted' AND NEW.frozen_snapshot IS DISTINCT FROM OLD.frozen_snapshot THEN
+      RAISE EXCEPTION 'append_only_violation: the frozen snapshot of an accepted status update is immutable' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_frozen_snapshot_guard ON baseline_version;
+CREATE TRIGGER hub_frozen_snapshot_guard BEFORE UPDATE OF snapshot, snapshot_hash ON baseline_version FOR EACH ROW EXECUTE FUNCTION hub_frozen_snapshot_guard();
+DROP TRIGGER IF EXISTS hub_frozen_snapshot_guard ON status_update;
+CREATE TRIGGER hub_frozen_snapshot_guard BEFORE UPDATE OF frozen_snapshot ON status_update FOR EACH ROW EXECUTE FUNCTION hub_frozen_snapshot_guard();

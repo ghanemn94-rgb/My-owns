@@ -28,11 +28,19 @@ export const isDemo = () => boolean('is_demo').notNull().default(false);
 export const ts = (name: string) => timestamp(name, { withTimezone: true, mode: 'date' });
 
 /** Money = numeric(20,4) + ISO currency + unit scale. Never floats. */
-export const moneyCols = (prefix: string) => ({
-  [`${prefix}Amount`]: numeric(`${prefix}_amount`, { precision: 20, scale: 4 }),
-  [`${prefix}Currency`]: varchar(`${prefix}_currency`, { length: 3 }),
-  [`${prefix}UnitScale`]: integer(`${prefix}_unit_scale`),
-});
+const amountBuilder = (name: string) => numeric(name, { precision: 20, scale: 4 });
+const currencyBuilder = (name: string) => varchar(name, { length: 3 });
+const unitScaleBuilder = (name: string) => integer(name);
+/** Money column triple with typed keys: `<prefix>Amount`, `<prefix>Currency`, `<prefix>UnitScale`. */
+export type MoneyCols<P extends string> = { [K in `${P}Amount`]: ReturnType<typeof amountBuilder> } & {
+  [K in `${P}Currency`]: ReturnType<typeof currencyBuilder>;
+} & { [K in `${P}UnitScale`]: ReturnType<typeof unitScaleBuilder> };
+export const moneyCols = <P extends string>(prefix: P): MoneyCols<P> =>
+  ({
+    [`${prefix}Amount`]: amountBuilder(`${prefix}_amount`),
+    [`${prefix}Currency`]: currencyBuilder(`${prefix}_currency`),
+    [`${prefix}UnitScale`]: unitScaleBuilder(`${prefix}_unit_scale`),
+  }) as MoneyCols<P>;
 
 export type FkTarget = { projectId: AnyPgColumn; id: AnyPgColumn };
 

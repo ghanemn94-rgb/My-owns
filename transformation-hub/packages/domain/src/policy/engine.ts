@@ -38,6 +38,12 @@ export interface AbacAttributes {
   /** Workstream of the resource when permission is scoped to own workstream. */
   workstreamId?: string | null;
   userWorkstreamIds?: Set<string>;
+  /**
+   * `own_workstream` as defined in docs/security/access-matrix.md §2.4, computed by the caller: the actor owns/is assigned/
+   * created the resource, OR holds a workstream-scoped grant on its workstream, OR is the project manager. A project-scope
+   * grant of any other role does NOT satisfy it. When supplied it is authoritative.
+   */
+  ownWorkstreamSatisfied?: boolean;
   /** Result of an authority check computed by the caller (e.g. amount within delegation). */
   withinAuthority?: boolean;
 }
@@ -72,7 +78,11 @@ export function evaluateConditions(conditions: AbacCondition[], a: AbacAttribute
         if (a.withinAuthority === false) failed.push(c);
         break;
       case 'own_workstream':
-        if (a.userWorkstreamIds && a.workstreamId && !a.userWorkstreamIds.has(a.workstreamId)) failed.push(c);
+        if (a.ownWorkstreamSatisfied !== undefined) {
+          if (!a.ownWorkstreamSatisfied) failed.push(c);
+        } else if (!(a.userWorkstreamIds && a.workstreamId && a.userWorkstreamIds.has(a.workstreamId))) {
+          failed.push(c); // fail closed when the caller cannot establish ownership
+        }
         break;
     }
   }

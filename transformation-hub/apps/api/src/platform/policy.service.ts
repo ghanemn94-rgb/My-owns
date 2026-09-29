@@ -13,6 +13,8 @@ export interface ResourceAttrs {
   requesterUserId?: string | null; // for not_self (separation of duties)
   workstreamId?: string | null;
   withinAuthority?: boolean;
+  /** Owner / assignee / creator ids of the resource (for `own_workstream`); for a CREATE, the actor is the creator. */
+  ownerUserIds?: (string | null | undefined)[];
 }
 
 /**
@@ -200,6 +202,11 @@ export class PolicyService {
       workstreamId: res.workstreamId ?? null,
       userWorkstreamIds: viaWorkstream ? wsGrants : undefined,
       withinAuthority: res.withinAuthority,
+      // access-matrix §2.4: owner/assignee/creator, OR a workstream-scoped grant on the resource's workstream, OR PM.
+      ownWorkstreamSatisfied:
+        scope.roles.has('project_manager') ||
+        (!!res.workstreamId && !!wsGrants?.has(res.workstreamId)) ||
+        (!!p.userId && (res.ownerUserIds ?? []).includes(p.userId)),
     };
     const r = evaluateConditions(conds, attrs);
     if (!r.allowed) {

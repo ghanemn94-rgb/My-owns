@@ -105,21 +105,22 @@ describe('AT-04 — committee recommends a decision outside its delegation [REQ-
     expect((await decisionRow(reserved.id)).status).toBe('recommended');
   });
 
-  it('roles without the permission cannot record external approvals (chair → 403)', async () => {
-    const v = await decisionVersion(a.chair, pid, reserved.id);
-    const r = await a.chair.post(`${P(pid)}/decisions/${reserved.id}/record-external-approval`, { expectedVersion: v, externalReference: 'X' });
+  it('roles without the permission cannot record external approvals (sponsor → 403)', async () => {
+    const v = await decisionVersion(a.sponsor, pid, reserved.id);
+    const r = await a.sponsor.post(`${P(pid)}/decisions/${reserved.id}/record-external-approval`, { expectedVersion: v, externalReference: 'X' });
     expect(r.status).toBe(403);
+    expect((await decisionRow(reserved.id)).status).toBe('recommended');
   });
 
-  it('a different authorized person with a reference records the external approval → Approved; the escalation is resolved', async () => {
-    const v = await decisionVersion(secondSecretary, pid, reserved.id);
-    const r = await secondSecretary.post(`${P(pid)}/decisions/${reserved.id}/record-external-approval`, { expectedVersion: v, externalReference: 'DEMO-BOARD-RESOLUTION-001 (synthetic)', note: 'Synthetic external decision' });
+  it('decision-workflow row 9: the chair (not the secretary who recorded the recommendation) records the external approval → Approved; the escalation is resolved', async () => {
+    const v = await decisionVersion(a.chair, pid, reserved.id);
+    const r = await a.chair.post(`${P(pid)}/decisions/${reserved.id}/record-external-approval`, { expectedVersion: v, externalReference: 'DEMO-BOARD-RESOLUTION-001 (synthetic)', note: 'Synthetic external decision' });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
     expect(r.body.status).toBe('approved');
     const row = await decisionRow(reserved.id);
     expect(row).toMatchObject({ status: 'approved', external_authority_reference: 'DEMO-BOARD-RESOLUTION-001 (synthetic)', authority_outcome: 'pending_external_authority' });
     const esc = await owner().query(`select status, resolution_decision_id, resolved_by from escalation where source_id = $1`, [reserved.id]);
-    expect(esc.rows[0]).toMatchObject({ status: 'resolved', resolution_decision_id: reserved.id, resolved_by: secondSecretary.userId });
+    expect(esc.rows[0]).toMatchObject({ status: 'resolved', resolution_decision_id: reserved.id, resolved_by: a.chair.userId });
     // Approval is still not implementation.
     expect(row.status).not.toBe('implemented_verified');
   });

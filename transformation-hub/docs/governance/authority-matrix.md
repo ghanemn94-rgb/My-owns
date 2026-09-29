@@ -13,9 +13,12 @@
    lifecycle: `draft → approved → active → superseded | expired`. Only one version is `active` per committee at a time.
 2. Loading a matrix requires an approval record (evidence type `approved_document` or `board_resolution`) that
    references the approving authority; the loaded values must match the approved document (G0-C03).
-3. In a non-demo project without an `active` matrix, the server does not allow any decision to reach `approved`. The
-   committee may still deliberate and vote, but the outcome is recorded as **Recommended — pending authority
-   activation**, and dependent gates stay blocked.
+3. In a non-demo project without an `active` matrix, the server does not allow any decision to reach `approved`, and
+   dependent gates stay blocked. **As implemented (P2):** because quorum and voting thresholds come from the approved
+   matrix, recording votes, quorum checks and outcomes is refused with `422 governance.matrix.not_usable` until a
+   matrix is approved and in date; the committee can still meet, deliberate and minute its discussion. (An earlier
+   draft of this rule allowed votes to be recorded as "Recommended — pending authority activation"; it was replaced
+   because a quorum computed without approved rules would not be meaningful. Mobily may choose otherwise — Q-06.)
 4. The Demo policy is accepted only in projects flagged `is_demo = true`. Any attempt to attach it to a non-demo
    project is rejected and logged. Decisions made under the Demo policy carry a visible `Demo` badge and are excluded
    from actual reporting.

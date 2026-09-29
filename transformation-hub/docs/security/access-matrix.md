@@ -296,7 +296,7 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
 | `governance.decision.vote` | C,S | – |  |  | ● | ● |  |  |  |  | ● | ● | ● |  |  |  |
 | `governance.circulation.initiate` | C | – |  |  |  | ● | ● |  |  |  |  |  |  |  |  |  |
 | `governance.decision.record_outcome` | C,S,A | – |  |  |  | ● | ● |  |  |  |  |  |  |  |  |  |
-| `governance.decision.record_external_approval` | C,S | – |  |  |  |  | ● |  |  |  |  |  |  |  |  |  |
+| `governance.decision.record_external_approval` | C,S | – |  |  |  | ● | ● |  |  |  |  |  |  |  |  |  |
 | `governance.decision.verify_implementation` | C,S | – |  |  | ● |  | ● |  |  |  |  |  |  |  |  |  |
 | `governance.minutes.draft` | C | P |  |  |  |  | ● |  |  |  |  |  |  |  |  |  |
 | `governance.minutes.approve` | C,S | – |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
@@ -796,7 +796,7 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
     },
     "committee_chair": {
       "scopeTypes": ["portfolio", "project"],
-      "permissions": ["admin.directory.search", "portfolio.project.read", "portfolio.dashboard.read", "governance.committee.read", "governance.meeting.read", "governance.agenda_request.create", "governance.decision.read", "governance.conflict.declare", "governance.decision.vote", "governance.circulation.initiate", "governance.decision.record_outcome", "governance.minutes.approve", "governance.action.update", "governance.escalation.raise", "planning.plan.read", "planning.change_request.approve", "gates.gate.read", "gates.assessment.decide", "gates.assessment.reopen", "gates.waiver.approve", "carveout.register.read", "newco.register.read", "readiness.register.read", "readiness.go_no_go.decide", "finance.record.read", "jv.partner.read", "jv.deal.read", "documents.document.read", "documents.document.download", "reports.report.generate", "reports.snapshot.read", "reports.snapshot.export", "ai.assistant.use", "ai.briefing.subscribe", "ai.proposal.read", "notifications.inbox.read", "notifications.preferences.manage_own"],
+      "permissions": ["admin.directory.search", "portfolio.project.read", "portfolio.dashboard.read", "governance.committee.read", "governance.meeting.read", "governance.agenda_request.create", "governance.decision.read", "governance.conflict.declare", "governance.decision.vote", "governance.circulation.initiate", "governance.decision.record_outcome", "governance.decision.record_external_approval", "governance.minutes.approve", "governance.action.update", "governance.escalation.raise", "planning.plan.read", "planning.change_request.approve", "gates.gate.read", "gates.assessment.decide", "gates.assessment.reopen", "gates.waiver.approve", "carveout.register.read", "newco.register.read", "readiness.register.read", "readiness.go_no_go.decide", "finance.record.read", "jv.partner.read", "jv.deal.read", "documents.document.read", "documents.document.download", "reports.report.generate", "reports.snapshot.read", "reports.snapshot.export", "ai.assistant.use", "ai.briefing.subscribe", "ai.proposal.read", "notifications.inbox.read", "notifications.preferences.manage_own"],
       "defaultClearance": "restricted"
     },
     "secretary_cpmo": {
