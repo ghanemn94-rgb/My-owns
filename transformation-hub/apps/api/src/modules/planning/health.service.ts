@@ -192,9 +192,15 @@ export class HealthService {
     }
 
     // Project level: worst-of (effective) workstreams + critical milestones; red critical items listed explicitly.
-    const items: { id: string; status: RagStatus; critical?: boolean }[] = out.map((w) => ({ id: w.id, status: w.rag.effective, critical: w.openBlockers.length > 0 }));
+    // A manual override changes the displayed (effective) status, but an open blocker is never concealed from the
+    // aggregate (measurement rule 3): workstreams with open blockers always count — and are listed — as red critical.
+    const items: { id: string; status: RagStatus; critical?: boolean }[] = out.map((w) => ({ id: w.id, status: w.openBlockers.length > 0 ? 'red' : w.rag.effective, critical: w.openBlockers.length > 0 }));
     const redCritical: { id: string; type: 'workstream' | 'milestone'; label: string; reason: string }[] = [];
-    for (const w of out) if (w.rag.effective === 'red') redCritical.push({ id: w.id, type: 'workstream', label: `${w.code} ${w.name}`, reason: w.rag.calculated.explanation });
+    for (const w of out) {
+      if (w.rag.effective !== 'red' && w.openBlockers.length === 0) continue;
+      const overridden = w.rag.overridden && w.rag.effective !== 'red' ? ` (manual override to ${w.rag.effective} does not hide the blocker)` : '';
+      redCritical.push({ id: w.id, type: 'workstream', label: `${w.code} ${w.name}`, reason: `${w.rag.calculated.explanation}${overridden}` });
+    }
     for (const m of milestones.filter((x) => x.isCritical && x.status !== 'cancelled')) {
       const overdue = ['planned', 'at_risk'].includes(m.status) && !!m.plannedDate && m.plannedDate < today;
       if (m.status === 'missed' || overdue) {

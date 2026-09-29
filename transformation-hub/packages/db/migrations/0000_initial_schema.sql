@@ -394,7 +394,11 @@ CREATE TABLE "baseline_version" (
 	"proposed_by" uuid,
 	"approved_by" uuid,
 	"approved_at" timestamp with time zone,
+	"rejected_by" uuid,
+	"rejected_at" timestamp with time zone,
+	"superseded_at" timestamp with time zone,
 	"note" text,
+	"decision_note" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	CONSTRAINT "baseline_pid_uq" UNIQUE("project_id","id")
@@ -457,6 +461,11 @@ CREATE TABLE "deliverable" (
 	"owner_user_id" uuid,
 	"accepted_by" uuid,
 	"accepted_at" timestamp with time zone,
+	"submitted_by" uuid,
+	"submitted_at" timestamp with time zone,
+	"weight_set_by" uuid,
+	"weight_approved_by" uuid,
+	"weight_approved_at" timestamp with time zone,
 	"gate_key" varchar(16),
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -524,6 +533,10 @@ CREATE TABLE "milestone" (
 	"weight" integer DEFAULT 3 NOT NULL,
 	"owner_user_id" uuid,
 	"verification_status" "verification_status" DEFAULT 'proposed' NOT NULL,
+	"reported_by" uuid,
+	"reported_at" timestamp with time zone,
+	"verified_by" uuid,
+	"verified_at" timestamp with time zone,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
@@ -559,6 +572,8 @@ CREATE TABLE "rag_override" (
 	"reviewer_user_id" uuid,
 	"approved" boolean DEFAULT false NOT NULL,
 	"reviewed_at" timestamp with time zone,
+	"review_note" text,
+	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL
 );
@@ -674,6 +689,9 @@ CREATE TABLE "task" (
 	"requires_acceptance" boolean DEFAULT false NOT NULL,
 	"accepted_by" uuid,
 	"accepted_at" timestamp with time zone,
+	"submitted_by" uuid,
+	"submitted_at" timestamp with time zone,
+	"blocked_reason" text,
 	"gate_key" varchar(16),
 	"is_deliverable" boolean DEFAULT false NOT NULL,
 	"weight" integer DEFAULT 1 NOT NULL,
@@ -2577,12 +2595,15 @@ CREATE UNIQUE INDEX "site_code_uq" ON "site" USING btree ("project_id","code");-
 CREATE UNIQUE INDEX "workstream_code_uq" ON "workstream" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "assumption_code_uq" ON "assumption" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "baseline_version_uq" ON "baseline_version" USING btree ("project_id","version_no");--> statement-breakpoint
+CREATE UNIQUE INDEX "baseline_one_proposed_uq" ON "baseline_version" USING btree ("project_id") WHERE status = 'proposed';--> statement-breakpoint
+CREATE UNIQUE INDEX "baseline_one_approved_uq" ON "baseline_version" USING btree ("project_id") WHERE status = 'approved';--> statement-breakpoint
 CREATE UNIQUE INDEX "change_request_code_uq" ON "change_request" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "deliverable_code_uq" ON "deliverable" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "dependency_uq" ON "dependency" USING btree ("project_id","predecessor_id","successor_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "issue_code_uq" ON "issue" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "milestone_code_uq" ON "milestone" USING btree ("project_id","code");--> statement-breakpoint
 CREATE INDEX "raci_entity_idx" ON "raci_assignment" USING btree ("project_id","entity_type","entity_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "rag_override_pending_uq" ON "rag_override" USING btree ("project_id","entity_type","entity_id") WHERE reviewed_at is null;--> statement-breakpoint
 CREATE UNIQUE INDEX "raid_dependency_code_uq" ON "raid_dependency" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "risk_code_uq" ON "risk" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "task_wbs_uq" ON "task" USING btree ("project_id","wbs_code");--> statement-breakpoint

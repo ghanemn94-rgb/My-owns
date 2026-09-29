@@ -88,20 +88,16 @@ export class PlanningSupport {
    */
   readScope(ctx: RequestContext, p: ProjectInfo): Set<string> | null {
     if (!this.policy.canSee(ctx, { projectId: p.id, classification: p.classification })) throw notFound();
-    if (ctx.principal.kind === 'service') return null;
-    if (this.policy.projectPermissions(ctx.principal, p.id).has('planning.plan.read')) return null;
-    const ws = this.policy.workstreamPermissions(ctx.principal, p.id).get('planning.plan.read');
-    if (!ws || ws.size === 0) throw notFound();
-    return ws;
+    const reach = this.policy.permissionReach(ctx, 'planning.plan.read', p.id);
+    if (reach.all) return null;
+    if (reach.workstreamIds.length === 0) throw notFound();
+    return new Set(reach.workstreamIds);
   }
 
-  /** SQL filter for the read scope on a table's workstream column (visibility is applied inside the query). */
+  /** SQL filter for lists AND counts: visibility + workstream reach of planning.plan.read (ARCH-14). */
   scopeSql(ctx: RequestContext, p: ProjectInfo, wsCol: PgColumn): SQL {
-    const scope = this.readScope(ctx, p);
-    const vis = this.policy.visibilitySql(ctx, p.id, {});
-    if (!scope) return vis;
-    const ids = [...scope];
-    return and(vis, inArray(wsCol, ids))!;
+    this.readScope(ctx, p);
+    return and(this.policy.visibilitySql(ctx, p.id, {}), this.policy.reachSql(ctx, 'planning.plan.read', p.id, wsCol))!;
   }
 
   /** 404 unless a record of this workstream is readable by the caller. */

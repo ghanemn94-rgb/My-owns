@@ -12,7 +12,7 @@ import { createProject, dep, milestone, task, workstreams } from './fixtures';
 let admin: Client;
 let pm: Client;
 let pid: string;
-const ids: Record<string, string> = {};
+const ids = {} as Record<'A' | 'B' | 'C' | 'M', string>;
 
 function allKeys(v: unknown, out = new Set<string>()): Set<string> {
   if (Array.isArray(v)) v.forEach((x) => allKeys(x, out));

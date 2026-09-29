@@ -26,6 +26,13 @@ beforeAll(async () => {
   const ws = await workstreams(pm, pid);
   ws1 = ws.get('WS01')!.id;
   t1 = await task(pm, pid, ws1, 'AT-16 dated task', { durationDays: 5, plannedStart: '2026-10-04', plannedFinish: '2026-10-08' });
+  // Test-only: one restricted budget line (the finance module owns budget writes) so the baseline freezes budget too.
+  const org = await owner().query('select org_id from project where id = $1', [pid]);
+  await owner().query(
+    `insert into budget_line (org_id, project_id, code, name, category, approved_amount, currency, unit_scale, approval_state, classification, created_by)
+     values ($1, $2, 'BL-T1', 'Test separation budget (synthetic)', 'one_off_separation', 1000000, 'SAR', 1, 'approved', 'restricted', $3)`,
+    [org.rows[0].org_id, pid, pm.userId],
+  );
   await pm.post(`/api/v1/projects/${pid}/workstreams/${ws1}/tasks/activate`, { note: 'test' }).expect(201);
 });
 afterAll(async () => {
@@ -51,8 +58,13 @@ describe('AT-16 — concurrent baseline approvals and stale versions [REQ-PLN-00
     // Draft (unconfirmed) template activities are not part of the committed baseline.
     const drafts = await owner().query(`select id from task where project_id = $1 and status = 'draft'`, [pid]);
     expect(detail.snapshot.tasks.some((t: { id: string }) => drafts.rows.some((d) => d.id === t.id))).toBe(false);
-    // Budget stays restricted for a PM without finance read access.
-    expect(detail.snapshot.budget.restricted).toBe(true);
+    // Restricted budget figures are frozen but only shown to callers cleared for them (PM clearance: confidential).
+    expect(detail.snapshot.budget).toEqual({ restricted: true, lineCount: 1 });
+    const bySponsor = (await sponsor.get(`/api/v1/projects/${pid}/baselines/${b1.id}`).expect(200)).body;
+    expect(bySponsor.snapshot.budget.restricted).toBe(false);
+    expect(bySponsor.snapshot.budget.lines[0]).toMatchObject({ code: 'BL-T1', currency: 'SAR', unitScale: 1 });
+    expect(Number(bySponsor.snapshot.budget.lines[0].approvedAmount)).toBe(1000000);
+    expect(bySponsor.counts.budgetLines).toBe(1);
   });
 
   it('the proposer cannot approve their own baseline (not_self) and the attempt is audited as denied', async () => {
