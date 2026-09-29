@@ -189,6 +189,7 @@ export const CriterionCommandResult = z.object({
 });
 
 export const StatusDimensionDto = z.object({
+  id: Uuid,
   key: z.enum(STATUS_DIMENSION_KEYS),
   state: z.string(),
   explanation: z.string().nullable(),

@@ -886,7 +886,8 @@ export class GatesService implements OnModuleInit {
       prerequisites: b.prerequisites(g),
       decision: d && this.canSeeDecision(ctx, b.project.id, d) ? this.decisionDto(d, g.key) : null,
       blockers,
-      rag: gateRag(cur.status, evaluation, flags.needsReassessment),
+      // Ready on criteria but not backed by a final decision → not green (the gate is still blocked, AT-04).
+      rag: ((r) => (r === 'green' && blockers.some((b) => b.kind === 'decision') ? 'amber' : r))(gateRag(cur.status, evaluation, flags.needsReassessment)),
       history: b.cycles(g.id).filter((a) => !a.isCurrent).map((a) => this.assessmentDto(a)),
     };
   }

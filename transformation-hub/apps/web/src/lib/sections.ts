@@ -8,6 +8,7 @@ import type { TemplateKind } from '@hub/domain';
 export type SectionKey =
   | 'overview'
   | 'charter'
+  | 'gates'
   | 'committee'
   | 'plan'
   | 'workstreams'
@@ -37,6 +38,7 @@ const TRANSACTION_KINDS: readonly TemplateKind[] = ['dc_carveout', 'transaction_
 export const PROJECT_SECTIONS: readonly SectionDef[] = [
   { key: 'overview', segment: '', permissions: ['portfolio.project.read'], phase: null },
   { key: 'charter', segment: 'charter', permissions: ['portfolio.project.read'], phase: null },
+  { key: 'gates', segment: 'gates', permissions: ['gates.gate.read'], phase: null },
   { key: 'committee', segment: 'committee', permissions: ['governance.committee.read', 'governance.decision.read'], phase: 'P2' },
   { key: 'plan', segment: 'plan', permissions: ['planning.plan.read'], phase: 'P2' },
   { key: 'workstreams', segment: 'workstreams', permissions: ['planning.plan.read'], phase: null },

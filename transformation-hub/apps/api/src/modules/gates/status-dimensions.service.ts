@@ -64,6 +64,7 @@ export class StatusDimensionsService {
     const dims: DimensionState[] = rows.map((r) => ({ key: r.key, state: r.state, explanation: r.explanation ?? '' }));
     return {
       items: rows.map((r) => ({
+        id: r.id,
         key: r.key,
         state: r.state,
         explanation: r.explanation,

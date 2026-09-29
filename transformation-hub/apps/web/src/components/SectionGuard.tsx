@@ -17,7 +17,7 @@ export function SectionGuard({ section, children }: { section: SectionKey; child
 }
 
 /** Screen scheduled for a later phase: honest placeholder, no sample data. */
-export function PlaceholderSection({ section }: { section: Exclude<SectionKey, 'overview' | 'charter' | 'workstreams' | 'members'> }) {
+export function PlaceholderSection({ section }: { section: Exclude<SectionKey, 'overview' | 'charter' | 'workstreams' | 'members' | 'gates'> }) {
   const { t } = useI18n();
   const def = sectionByKey(section);
   const title = t(`project.screens.${section}.title`);

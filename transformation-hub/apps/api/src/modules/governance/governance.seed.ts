@@ -14,9 +14,10 @@ const DEMO_NOTE = 'DEMO — synthetic sandbox data (not a Mobily record)';
 /**
  * Demo sandbox scenario for governance (spec §21): an active steering committee with persona seats and a placeholder
  * seat, an approved DEMO authority matrix, draft NewCo / JV boards (kept distinct), meeting #1 held with attendance,
- * frozen pack and approved minutes, and four decisions — (a) approved within mandate → implementation pending with an
+ * frozen pack and approved minutes, and five decisions — (a) approved within mandate → implementation pending with an
  * action, (b) outside delegated authority → recommended / pending external authority with an escalation,
- * (c) submitted awaiting review, (d) draft. Everything goes through the services (policy, rules, audit, outbox);
+ * (c) submitted awaiting review, (d) draft, (e) gate G0 passage recommended to the delegating authority whose (synthetic)
+ * approval is then recorded — it backs the demo G0 gate decision in the gates seed. Everything goes through the services (policy, rules, audit, outbox);
  * every record is is_demo because the project is a demo project. Idempotent: skipped when the committee exists.
  */
 export const governanceSeed: ModuleSeed = {
@@ -149,6 +150,22 @@ export const governanceSeed: ModuleSeed = {
         }),
       }),
     );
+    // (e) Gate G0 passage: the committee cannot approve its own mandate, so it recommends to the delegating authority
+    //     (reserved matter in the DEMO matrix); the gates module links the final decision to the G0 gate decision.
+    const g0 = await asUser('pm', (ctx) =>
+      decisions.create(ctx, pid, {
+        committeeId: sc.id,
+        title: 'Demo — Recommend passage of gate G0 (Mandate & Governance) to the delegating authority',
+        gateKey: 'G0',
+        ...paper({
+          decisionTypeKey: 'charter_amendment',
+          issue: 'DEMO — The programme mandate, charters and delegation (G0 criteria) are evidenced; G0 passage is reserved to the delegating authority.',
+          recommendation: 'DEMO — Recommend that the delegating authority approves passage of G0.',
+          impacts: { financial: 'DEMO — None identified.', operational: 'DEMO — Enables gate G1 assessment to conclude.', schedule: 'DEMO — Keeps the synthetic G1 date.' },
+          requiredAuthority: 'Delegating authority — to be confirmed (reserved matter in the DEMO matrix)',
+        }),
+      }),
+    );
     await asUser('pm', (ctx) =>
       decisions.create(ctx, pid, {
         committeeId: sc.id,
@@ -160,18 +177,18 @@ export const governanceSeed: ModuleSeed = {
 
     // 5. Meeting #1: agenda requests screened onto the agenda, pack frozen, session, attendance, conflicts, quorum.
     const m = await asUser('secretary', (ctx) => meetings.create(ctx, pid, sc.id, { title: 'Demo — Steering Committee meeting #1', scheduledAt: new Date().toISOString(), location: 'DEMO — virtual meeting room' }));
-    for (const d of [a, b]) {
+    for (const d of [a, b, g0]) {
       const req = await asUser('pm', (ctx) => meetings.createAgendaRequest(ctx, pid, { committeeId: sc.id, title: `Decision ${d.code}`, kind: 'decision', decisionId: d.id, meetingId: m.id }));
       await asUser('secretary', (ctx) => meetings.screenAgendaRequest(ctx, pid, req.id, { expectedVersion: req.version, outcome: 'accept', meetingId: m.id, note: DEMO_NOTE }));
     }
     const version = async (id: string) => (await asUser('secretary', (ctx) => decisions.get(ctx, pid, id))).version;
-    for (const d of [a, b]) {
+    for (const d of [a, b, g0]) {
       const ev = await version(d.id);
       await asUser('pm', (ctx) => decisions.submit(ctx, pid, d.id, { expectedVersion: ev }));
     }
     const cv = await version(c.id);
     await asUser('finance', (ctx) => decisions.submit(ctx, pid, c.id, { expectedVersion: cv }));
-    for (const d of [a, b]) {
+    for (const d of [a, b, g0]) {
       const ev = await version(d.id);
       await asUser('secretary', (ctx) => decisions.startReview(ctx, pid, d.id, { expectedVersion: ev }));
     }
@@ -190,12 +207,15 @@ export const governanceSeed: ModuleSeed = {
     // 6. Votes and outcomes (recorded by the chair; the secretariat can later record the external decision on (b)).
     const av = await version(a.id);
     const bv = await version(b.id);
+    const gv = await version(g0.id);
     for (const k of ['chair', 'sponsor', 'finance', 'legal', 'approver']) {
       await asUser(k, (ctx) => decisions.castVote(ctx, pid, a.id, { expectedVersion: av, choice: 'approve' }));
       await asUser(k, (ctx) => decisions.castVote(ctx, pid, b.id, { expectedVersion: bv, choice: k === 'legal' ? 'abstain' : 'approve', comment: DEMO_NOTE }));
+      await asUser(k, (ctx) => decisions.castVote(ctx, pid, g0.id, { expectedVersion: gv, choice: 'approve', comment: DEMO_NOTE }));
     }
     await asUser('chair', (ctx) => decisions.recordOutcome(ctx, pid, a.id, { expectedVersion: av, note: DEMO_NOTE }));
     await asUser('chair', (ctx) => decisions.recordOutcome(ctx, pid, b.id, { expectedVersion: bv, note: DEMO_NOTE }));
+    await asUser('chair', (ctx) => decisions.recordOutcome(ctx, pid, g0.id, { expectedVersion: gv, note: DEMO_NOTE }));
 
     // 7. Close, minutes (secretary drafts, chair approves).
     mv = (await asUser('secretary', (ctx) => meetings.command(ctx, pid, m.id, 'close_session', { expectedVersion: mv }))).version;
@@ -203,18 +223,30 @@ export const governanceSeed: ModuleSeed = {
       await asUser('secretary', (ctx) =>
         meetings.draftMinutes(ctx, pid, m.id, {
           expectedVersion: mv,
-          text: `DEMO minutes (synthetic). Quorum met. ${a.code} approved within the DEMO mandate. ${b.code} recommended — pending external authority (reserved matter). No conflicts declared.`,
+          text: `DEMO minutes (synthetic). Quorum met. ${a.code} approved within the DEMO mandate. ${b.code} recommended — pending external authority (reserved matter). ${g0.code} (gate G0) recommended to the delegating authority. No conflicts declared.`,
         }),
       )
     ).version;
     await asUser('chair', (ctx) => meetings.approveMinutes(ctx, pid, m.id, { expectedVersion: mv }));
+
+    // 7b. The delegating authority's approval of the G0 recommendation is recorded by the secretariat (a different
+    //     person than the chair who recorded the recommendation) with a clearly synthetic reference.
+    const g0v = await version(g0.id);
+    await asUser('secretary', (ctx) =>
+      decisions.recordExternalApproval(ctx, pid, g0.id, {
+        expectedVersion: g0v,
+        outcome: 'approved',
+        externalReference: 'DEMO-DELEGATING-AUTHORITY-G0 (synthetic reference — not a real resolution)',
+        note: DEMO_NOTE,
+      }),
+    );
 
     // 8. Approval ≠ implementation: action with owner + due date, then implementation tracking starts.
     const pmId = await userId('pm');
     await asUser('secretary', (ctx) => actions.create(ctx, pid, { title: 'Demo — Book rehearsal environment and confirm vendor slots', decisionId: a.id, meetingId: m.id, ownerUserId: pmId, dueDate: in14 }));
     const av2 = await version(a.id);
     await asUser('secretary', (ctx) => decisions.startImplementation(ctx, pid, a.id, { expectedVersion: av2, note: DEMO_NOTE }));
-    log(`governance demo scenario: committee ${sc.id}, meeting #${m.number}, decisions ${a.code} (implementation pending), ${b.code} (recommended), ${c.code} (submitted), + 1 draft`);
+    log(`governance demo scenario: committee ${sc.id}, meeting #${m.number}, decisions ${a.code} (implementation pending), ${b.code} (recommended), ${c.code} (submitted), ${g0.code} (G0, approved by the delegating authority), + 1 draft`);
     void v;
   },
 };

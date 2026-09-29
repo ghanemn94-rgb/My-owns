@@ -368,7 +368,7 @@ describe('Visibility by classification, actions overdue flag and escalations [RE
 });
 
 describe('Demo seed — governance scenario (spec §21)', () => {
-  it('seeds the steering committee, distinct boards, an approved DEMO matrix, meeting #1 and the four decision states', async () => {
+  it('seeds the steering committee, distinct boards, an approved DEMO matrix, meeting #1 and the five decision states', async () => {
     const c = await owner().query(`select id, kind, status, is_demo from committee where project_id = $1 and name like '%(Demo)'`, [pid]);
     expect(c.rows.map((r) => [r.kind, r.status]).sort()).toEqual([
       ['jv_board', 'draft'],
@@ -384,12 +384,15 @@ describe('Demo seed — governance scenario (spec §21)', () => {
     const m = await owner().query(`select status, pack_snapshot_id, minutes_approved_by from meeting where committee_id = $1 and number = 1`, [sc]);
     expect(m.rows[0].status).toBe('minutes_approved');
     expect(m.rows[0].pack_snapshot_id).toBeTruthy();
-    const d = await owner().query(`select status, authority_outcome, is_demo from decision where committee_id = $1 order by code`, [sc]);
-    expect(d.rows.map((r) => r.status)).toEqual(['implementation_pending', 'recommended', 'submitted', 'draft']);
+    const d = await owner().query(`select status, authority_outcome, is_demo, gate_key, external_authority_reference from decision where committee_id = $1 order by code`, [sc]);
+    expect(d.rows.map((r) => r.status)).toEqual(['implementation_pending', 'recommended', 'submitted', 'approved', 'draft']);
     expect(d.rows[1].authority_outcome).toBe('pending_external_authority');
+    // (e) gate G0: recommended to the delegating authority, whose (synthetic) approval was then recorded
+    expect(d.rows[3]).toMatchObject({ gate_key: 'G0', authority_outcome: 'pending_external_authority' });
+    expect(d.rows[3].external_authority_reference).toMatch(/synthetic/);
     expect(d.rows.every((r) => r.is_demo)).toBe(true);
-    const esc = await owner().query(`select count(*)::int n from escalation e join decision d on d.id = e.source_id where d.committee_id = $1`, [sc]);
-    expect(esc.rows[0].n).toBe(1);
+    const esc = await owner().query(`select e.status from escalation e join decision d on d.id = e.source_id where d.committee_id = $1 order by d.code`, [sc]);
+    expect(esc.rows.map((r) => r.status)).toEqual(['decision_requested', 'resolved']);
     // Demo meeting totals visible through the API as well
     const list = (await a.chair.get(`${P(pid)}/meetings?committeeId=${sc}`).expect(200)).body;
     expect(list.items[0]).toMatchObject({ number: 1, status: 'minutes_approved', isDemo: true });
