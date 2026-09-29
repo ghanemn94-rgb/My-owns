@@ -1,5 +1,21 @@
 import { Module } from '@nestjs/common';
+import { PlanningSupport } from './planning-support';
+import { WbsService } from './wbs.service';
+import { ScheduleService } from './schedule.service';
+import { ChangeControlService } from './change-control.service';
+import { RaidService } from './raid.service';
+import { HealthService } from './health.service';
+import { MyWorkService } from './my-work.service';
+import { PlanningWbsController, PlanningScheduleController, PlanningChangeController, PlanningRaidController, PlanningHealthController } from './planning.controller';
 
-/** WBS/tasks, milestones, deliverables, dependencies, schedule, baselines, change requests, RAID, status updates, my work. Owner: see docs/architecture/module-guide.md (file ownership table). */
-@Module({ controllers: [], providers: [], exports: [] })
+/**
+ * WBS/tasks, milestones, deliverables, dependencies, schedule, baselines, change requests, RAID, status updates, my work.
+ * Exports ChangeControlService (currentBaseline / isInApprovedBaseline / createChangeRequestFor) for other modules, and
+ * ScheduleService / HealthService for reporting.
+ */
+@Module({
+  controllers: [PlanningWbsController, PlanningScheduleController, PlanningChangeController, PlanningRaidController, PlanningHealthController],
+  providers: [PlanningSupport, WbsService, ScheduleService, ChangeControlService, RaidService, HealthService, MyWorkService],
+  exports: [ChangeControlService, ScheduleService, HealthService, WbsService],
+})
 export class PlanningModule {}
