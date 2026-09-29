@@ -5224,14 +5224,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-16/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-29T10:40:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer in DG0 round 16; restates disclosed residual 8 with a concrete narrower mitigation (--unshare-ipc); accepted as an observation."
+        },
+        {
+          "at": "2026-09-29T11:09:11Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 98b87712ce8a52642015a37a41419432ea64f8b2"
         }
-      ]
+      ],
+      "fix_revision": "98b87712ce8a52642015a37a41419432ea64f8b2",
+      "fix_summary": "D-031: the process sandbox creates its own IPC namespace (--unshare-ipc), closing the SysV-IPC/POSIX-message-queue cross-run vector of residual 8 at no cost to nested bubblewrap (IPC has no bearing on procfs full-visibility). summary.unshare records [ipc]; the validator requires it. Verified by round-17 code-security."
     },
     {
       "id": "F-DG0-149",
