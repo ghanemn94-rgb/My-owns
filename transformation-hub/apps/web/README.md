@@ -22,7 +22,7 @@ pnpm --filter @hub/e2e test       # Playwright smoke (starts `dev` if nothing li
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `HUB_API_URL` | `http://127.0.0.1:4000` | API origin used by the `/api/*` rewrite (same-origin proxy, so session and CSRF cookies work). Read when the server starts. |
+| `HUB_API_URL` | `http://127.0.0.1:4000` | API origin used by the `/api/*` rewrite (same-origin proxy, so session and CSRF cookies work). Read at **build** time (compiled into the routes manifest); in production the ingress routes `/api` to the API directly. |
 | `HUB_APP_NAME` | "Transformation & Transactions Hub" | Text wordmark / product name. There is no logo; no official branding is fabricated. |
 | `NEXT_TELEMETRY_DISABLED` | set to `1` by every package script | **Private mode: Next.js telemetry must stay disabled.** Set it in any deployment environment too. |
 

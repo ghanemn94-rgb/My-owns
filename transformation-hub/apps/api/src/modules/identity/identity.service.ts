@@ -11,6 +11,7 @@ import { APP_CONFIG, AppConfig } from '../../platform/config';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { OutboxService } from '../../platform/outbox.service';
+import { likeContains } from '../../platform/helpers';
 
 @Injectable()
 export class IdentityService {
@@ -99,7 +100,7 @@ export class IdentityService {
   async listUsers(ctx: RequestContext, q: { page: number; pageSize: number; q?: string }) {
     this.policy.assertOrg(ctx, 'admin.users.read');
     const tx = this.db.tx();
-    const where = q.q ? or(ilike(schema.appUser.displayName, `%${q.q}%`), ilike(schema.appUser.email, `%${q.q}%`)) : undefined;
+    const where = q.q ? or(ilike(schema.appUser.displayName, likeContains(q.q)), ilike(schema.appUser.email, likeContains(q.q))) : undefined;
     const [{ total }] = (await tx.select({ total: count() }).from(schema.appUser).where(where)) as [{ total: number }];
     const rows = await tx
       .select()
@@ -117,6 +118,7 @@ export class IdentityService {
         clearance: u.clearance,
         isActive: u.isActive,
         isDemo: u.isDemo,
+        accountType: u.accountType as 'internal' | 'external',
         lastLoginAt: u.lastLoginAt?.toISOString() ?? null,
       })),
       page: q.page,
@@ -125,7 +127,7 @@ export class IdentityService {
     };
   }
 
-  async createUser(ctx: RequestContext, body: { email: string; displayName: string; title?: string; clearance: 'public' | 'internal' | 'confidential' | 'restricted' | 'strictly_confidential' }) {
+  async createUser(ctx: RequestContext, body: { email: string; displayName: string; title?: string; clearance: 'public' | 'internal' | 'confidential' | 'restricted' | 'strictly_confidential'; accountType: 'internal' | 'external' }) {
     this.policy.assertOrg(ctx, 'admin.users.manage');
     const email = body.email.trim().toLowerCase();
     // Clearance above "internal" must be granted through admin.clearance.grant (separate, audited, not_self).
@@ -138,9 +140,9 @@ export class IdentityService {
     const id = newId();
     const [u] = await tx
       .insert(schema.appUser)
-      .values({ id, orgId: ctx.principal.orgId, email, displayName: body.displayName, title: body.title ?? null, clearance: body.clearance, isDemo: false })
+      .values({ id, orgId: ctx.principal.orgId, email, displayName: body.displayName, title: body.title ?? null, clearance: body.clearance, isDemo: false, accountType: body.accountType })
       .returning();
-    await this.audit.record({ action: 'admin.users.create', entityType: 'app_user', entityId: id, after: { email, displayName: body.displayName, clearance: body.clearance } });
+    await this.audit.record({ action: 'admin.users.create', entityType: 'app_user', entityId: id, after: { email, displayName: body.displayName, clearance: body.clearance, accountType: body.accountType } });
     return {
       id: u!.id,
       email: u!.email,
@@ -149,6 +151,7 @@ export class IdentityService {
       clearance: u!.clearance,
       isActive: u!.isActive,
       isDemo: u!.isDemo,
+      accountType: u!.accountType as 'internal' | 'external',
       lastLoginAt: null,
     };
   }
