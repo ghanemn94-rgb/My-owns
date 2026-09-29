@@ -11,6 +11,7 @@ import {
   isDemo,
   ts,
   projectFk,
+  type FkTarget,
   taskStatus,
   milestoneStatus,
   deliverableStatus,
@@ -27,6 +28,7 @@ import {
 } from './_common';
 import { project, workstream } from './portfolio';
 import { appUser } from './identity';
+import { decision } from './governance';
 
 export const task = pgTable(
   'task',
@@ -75,7 +77,7 @@ export const task = pgTable(
   (t) => [
     unique('task_pid_uq').on(t.projectId, t.id),
     uniqueIndex('task_wbs_uq').on(t.projectId, t.wbsCode),
-    projectFk('task_ws_fk', t.projectId, t.workstreamId, workstream),
+    projectFk('task_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
     projectFk('task_parent_fk', t.projectId, t.parentId, { projectId: t.projectId, id: t.id }),
     index('task_ws_idx').on(t.workstreamId),
     check('task_progress_chk', sql`${t.reportedProgress} between 0 and 100`),
@@ -111,7 +113,7 @@ export const milestone = pgTable(
   (t) => [
     unique('milestone_pid_uq').on(t.projectId, t.id),
     uniqueIndex('milestone_code_uq').on(t.projectId, t.code),
-    projectFk('milestone_ws_fk', t.projectId, t.workstreamId, workstream),
+    projectFk('milestone_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
   ],
 );
 
@@ -144,8 +146,8 @@ export const deliverable = pgTable(
   (t) => [
     unique('deliverable_pid_uq').on(t.projectId, t.id),
     uniqueIndex('deliverable_code_uq').on(t.projectId, t.code),
-    projectFk('deliverable_ws_fk', t.projectId, t.workstreamId, workstream),
-    projectFk('deliverable_task_fk', t.projectId, t.taskId, task),
+    projectFk('deliverable_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
+    projectFk('deliverable_task_fk', t.projectId, t.taskId, (): FkTarget => task),
     check('deliverable_weight_chk', sql`${t.weight} > 0`),
   ],
 );
@@ -223,7 +225,8 @@ export const baselineVersion = pgTable(
     createdAt: createdAt(),
     version: versionCol(),
   },
-  (t) => [unique('baseline_pid_uq').on(t.projectId, t.id), uniqueIndex('baseline_version_uq').on(t.projectId, t.versionNo)],
+  (t) => [
+    projectFk('baseline_change_request_fk', t.projectId, t.changeRequestId, (): FkTarget => changeRequest),unique('baseline_pid_uq').on(t.projectId, t.id), uniqueIndex('baseline_version_uq').on(t.projectId, t.versionNo)],
 );
 
 export const changeRequest = pgTable(
@@ -256,7 +259,8 @@ export const changeRequest = pgTable(
     updatedAt: updatedAt(),
     version: versionCol(),
   },
-  (t) => [unique('change_request_pid_uq').on(t.projectId, t.id), uniqueIndex('change_request_code_uq').on(t.projectId, t.code)],
+  (t) => [
+    projectFk('change_request_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),unique('change_request_pid_uq').on(t.projectId, t.id), uniqueIndex('change_request_code_uq').on(t.projectId, t.code)],
 );
 
 const raidCommon = () => ({
@@ -293,7 +297,7 @@ export const risk = pgTable(
   (t) => [
     unique('risk_pid_uq').on(t.projectId, t.id),
     uniqueIndex('risk_code_uq').on(t.projectId, t.code),
-    projectFk('risk_ws_fk', t.projectId, t.workstreamId, workstream),
+    projectFk('risk_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
     check('risk_prob_chk', sql`${t.probability} between 1 and 5`),
     check('risk_impact_chk', sql`${t.impact} between 1 and 5`),
   ],
@@ -310,8 +314,8 @@ export const issue = pgTable(
   (t) => [
     unique('issue_pid_uq').on(t.projectId, t.id),
     uniqueIndex('issue_code_uq').on(t.projectId, t.code),
-    projectFk('issue_ws_fk', t.projectId, t.workstreamId, workstream),
-    projectFk('issue_risk_fk', t.projectId, t.raisedFromRiskId, risk),
+    projectFk('issue_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
+    projectFk('issue_risk_fk', t.projectId, t.raisedFromRiskId, (): FkTarget => risk),
   ],
 );
 
@@ -326,7 +330,7 @@ export const assumption = pgTable(
   (t) => [
     unique('assumption_pid_uq').on(t.projectId, t.id),
     uniqueIndex('assumption_code_uq').on(t.projectId, t.code),
-    projectFk('assumption_ws_fk', t.projectId, t.workstreamId, workstream),
+    projectFk('assumption_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
   ],
 );
 
@@ -341,7 +345,7 @@ export const raidDependency = pgTable(
   (t) => [
     unique('raid_dependency_pid_uq').on(t.projectId, t.id),
     uniqueIndex('raid_dependency_code_uq').on(t.projectId, t.code),
-    projectFk('raid_dependency_ws_fk', t.projectId, t.workstreamId, workstream),
+    projectFk('raid_dependency_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
   ],
 );
 
@@ -373,7 +377,7 @@ export const statusUpdate = pgTable(
     updatedAt: updatedAt(),
     version: versionCol(),
   },
-  (t) => [unique('status_update_pid_uq').on(t.projectId, t.id), projectFk('status_update_ws_fk', t.projectId, t.workstreamId, workstream)],
+  (t) => [unique('status_update_pid_uq').on(t.projectId, t.id), projectFk('status_update_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream)],
 );
 
 /** Manual RAG override: reason, expiry, reviewer; calculated value retained (measurement rule 6). */

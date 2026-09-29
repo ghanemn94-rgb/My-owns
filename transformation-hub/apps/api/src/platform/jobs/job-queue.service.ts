@@ -16,6 +16,8 @@ export interface EnqueueInput {
 
 export interface ClaimedJob {
   id: string;
+  /** Fencing: the worker that holds the lease (with `attempts` as the token). */
+  locked_by: string;
   kind: string;
   org_id: string;
   project_id: string | null;
@@ -63,41 +65,65 @@ export class JobQueue {
     return (r.rowCount ?? 0) > 0;
   }
 
-  /** Claim up to `limit` due jobs (including expired leases) with SKIP LOCKED. */
+  /**
+   * Claim up to `limit` due jobs (including expired leases) with SKIP LOCKED. Expired leases of jobs that already
+   * used all attempts are dead-lettered instead of re-run (poison jobs — ARCH-08). The returned `attempts` value is
+   * the fencing token: complete/fail/extend only succeed while the lease still belongs to this worker+attempt.
+   */
   async claim(workerId: string, limit: number, leaseMs: number): Promise<ClaimedJob[]> {
+    await this.db.pool.query(
+      `update job set status = 'dead', last_error = coalesce(last_error, '') || ' [lease expired after final attempt]',
+              locked_by = null, locked_until = null, finished_at = now(), updated_at = now()
+        where status = 'running' and locked_until < now() and attempts >= max_attempts`,
+    );
     const { rows } = await this.db.pool.query<ClaimedJob>(
       `update job set status = 'running', locked_by = $1, locked_until = now() + ($3::int * interval '1 millisecond'),
               attempts = attempts + 1, updated_at = now()
         where id in (
           select id from job
            where (status = 'queued' and run_at <= now())
-              or (status = 'running' and locked_until < now())
+              or (status = 'running' and locked_until < now() and attempts < max_attempts)
            order by run_at
            limit $2
            for update skip locked)
         returning id, kind, org_id, project_id, payload, attempts, max_attempts, idempotency_key, requested_by`,
       [workerId, limit, leaseMs],
     );
-    return rows;
+    return rows.map((r) => ({ ...r, locked_by: workerId }));
   }
 
-  async complete(id: string, result: Record<string, unknown>) {
-    await this.db.pool.query(
-      `update job set status = 'succeeded', result = $2, finished_at = now(), locked_by = null, locked_until = null, updated_at = now() where id = $1`,
-      [id, JSON.stringify(result)],
+  /** Heartbeat for long jobs (report rendering, AI runs): extends the lease only if still owned. */
+  async extendLease(job: ClaimedJob, leaseMs: number): Promise<boolean> {
+    const r = await this.db.pool.query(
+      `update job set locked_until = now() + ($4::int * interval '1 millisecond'), updated_at = now()
+        where id = $1 and locked_by = $2 and attempts = $3 and status = 'running'`,
+      [job.id, job.locked_by, job.attempts, leaseMs],
     );
+    return (r.rowCount ?? 0) > 0;
   }
 
-  /** Exponential backoff (2^attempts seconds, capped at 15 minutes); dead-letter after max attempts. */
-  async fail(job: ClaimedJob, error: string) {
-    const dead = job.attempts >= job.max_attempts;
-    const delayMs = Math.min(15 * 60_000, 2 ** job.attempts * 1000);
-    await this.db.pool.query(
-      `update job set status = $2, last_error = $3, run_at = now() + ($4::int * interval '1 millisecond'),
-              locked_by = null, locked_until = null, updated_at = now(), finished_at = case when $2 = 'dead' then now() else null end
-        where id = $1`,
-      [job.id, dead ? 'dead' : 'queued', error.slice(0, 2000), delayMs],
+  /** Fenced completion: a stale worker whose lease was taken over cannot overwrite the new owner's state. */
+  async complete(job: ClaimedJob, result: Record<string, unknown>): Promise<boolean> {
+    const r = await this.db.pool.query(
+      `update job set status = 'succeeded', result = $4, finished_at = now(), locked_by = null, locked_until = null, updated_at = now()
+        where id = $1 and locked_by = $2 and attempts = $3 and status = 'running'`,
+      [job.id, job.locked_by, job.attempts, JSON.stringify(result)],
     );
+    return (r.rowCount ?? 0) > 0;
+  }
+
+  /** Exponential backoff with jitter (capped at 15 minutes); dead-letter after max attempts. Fenced. */
+  async fail(job: ClaimedJob, error: string, opts: { permanent?: boolean } = {}): Promise<boolean> {
+    const dead = opts.permanent || job.attempts >= job.max_attempts;
+    const base = Math.min(15 * 60_000, 2 ** job.attempts * 1000);
+    const delayMs = Math.round(base * (0.75 + Math.random() * 0.5));
+    const r = await this.db.pool.query(
+      `update job set status = $4, last_error = $5, run_at = now() + ($6::int * interval '1 millisecond'),
+              locked_by = null, locked_until = null, updated_at = now(), finished_at = case when $4 = 'dead' then now() else null end
+        where id = $1 and locked_by = $2 and attempts = $3 and status = 'running'`,
+      [job.id, job.locked_by, job.attempts, dead ? 'dead' : 'queued', error.slice(0, 2000), delayMs],
+    );
+    return (r.rowCount ?? 0) > 0;
   }
 
   /** Emergency stop support: cancel queued jobs of a kind for a project. */

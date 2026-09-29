@@ -10,6 +10,7 @@ import {
   onOrNextWorkingDay,
   DEFAULT_CALENDAR,
   assertIsoDate,
+  endOfLocalDayUtc,
 } from './calendar';
 
 // 2026-10-01 is a Thursday; 2026-10-02 Friday; 2026-10-03 Saturday; 2026-10-04 Sunday.
@@ -46,6 +47,10 @@ describe('working calendar (Asia/Riyadh, proposed Sun–Thu week)', () => {
     // 22:30 UTC on 30 Sep = 01:30 on 1 Oct in Riyadh (UTC+3)
     expect(localDate(new Date('2026-09-30T22:30:00Z'), 'Asia/Riyadh')).toBe('2026-10-01');
     expect(localHour(new Date('2026-09-30T22:30:00Z'), 'Asia/Riyadh')).toBe(1);
+  });
+
+  it('computes end of local day in UTC', () => {
+    expect(endOfLocalDayUtc('2026-10-01', 'Asia/Riyadh').toISOString()).toBe('2026-10-01T20:59:59.000Z');
   });
 
   it('rejects invalid dates', () => {

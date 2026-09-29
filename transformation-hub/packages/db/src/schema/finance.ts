@@ -11,6 +11,7 @@ import {
   isDemo,
   ts,
   projectFk,
+  type FkTarget,
   moneyCols,
   financialKind,
   financialCategory,
@@ -25,6 +26,7 @@ import {
 } from './_common';
 import { project, workstream } from './portfolio';
 import { appUser } from './identity';
+import { document } from './documents';
 
 /** Baseline / forecast / actual financial figure with currency, unit, period, source and approval (spec §7.5). */
 export const financialSnapshot = pgTable(
@@ -55,9 +57,10 @@ export const financialSnapshot = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('financial_snapshot_doc_fk', t.projectId, t.sourceDocumentId, (): FkTarget => document),
     unique('financial_snapshot_pid_uq').on(t.projectId, t.id),
     uniqueIndex('financial_snapshot_line_uq').on(t.projectId, t.kind, t.lineRef, t.period),
-    projectFk('financial_snapshot_ws_fk', t.projectId, t.workstreamId, workstream),
+    projectFk('financial_snapshot_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
     check('financial_snapshot_scale_chk', sql`${t.unitScale} in (1, 1000, 1000000)`),
   ],
 );
@@ -92,7 +95,7 @@ export const budgetLine = pgTable(
   (t) => [
     unique('budget_line_pid_uq').on(t.projectId, t.id),
     uniqueIndex('budget_line_code_uq').on(t.projectId, t.code),
-    projectFk('budget_line_ws_fk', t.projectId, t.workstreamId, workstream),
+    projectFk('budget_line_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
     check('budget_line_scale_chk', sql`${t.unitScale} in (1, 1000, 1000000)`),
   ],
 );
@@ -129,7 +132,8 @@ export const financialModelVersion = pgTable(
     updatedAt: updatedAt(),
     version: versionCol(),
   },
-  (t) => [unique('financial_model_pid_uq').on(t.projectId, t.id), uniqueIndex('financial_model_uq').on(t.projectId, t.kind, t.versionLabel, t.modelCase)],
+  (t) => [
+    projectFk('financial_model_doc_fk', t.projectId, t.sourceDocumentId, (): FkTarget => document),unique('financial_model_pid_uq').on(t.projectId, t.id), uniqueIndex('financial_model_uq').on(t.projectId, t.kind, t.versionLabel, t.modelCase)],
 );
 
 export const benefit = pgTable(
@@ -207,7 +211,7 @@ export const kpiObservation = pgTable(
     computedAt: createdAt(),
     computedBy: varchar('computed_by', { length: 32 }).notNull().default('system'),
   },
-  (t) => [projectFk('kpi_observation_kpi_fk', t.projectId, t.kpiId, kpi), index('kpi_observation_idx').on(t.kpiId, t.period)],
+  (t) => [projectFk('kpi_observation_kpi_fk', t.projectId, t.kpiId, (): FkTarget => kpi), index('kpi_observation_idx').on(t.kpiId, t.period)],
 );
 
 /** Intercompany reconciliation between the parent and NewCo (spec §7.5; P0 review D-16). */

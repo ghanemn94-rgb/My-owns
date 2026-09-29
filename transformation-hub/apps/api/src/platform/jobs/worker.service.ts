@@ -15,6 +15,7 @@ export class WorkerService {
   private readonly log = new Logger('worker');
   private running = false;
   private timer: NodeJS.Timeout | null = null;
+  private inFlight: Promise<unknown> | null = null;
 
   constructor(
     private readonly db: DbService,
@@ -30,18 +31,23 @@ export class WorkerService {
     const loop = async () => {
       if (!this.running) return;
       try {
-        await this.tick();
+        this.inFlight = this.tick();
+        await this.inFlight;
       } catch (e) {
         this.log.error(`tick failed: ${(e as Error).message}`);
+      } finally {
+        this.inFlight = null;
       }
       if (this.running) this.timer = setTimeout(loop, this.config.worker.pollMs);
     };
     void loop();
   }
 
+  /** Stop polling and wait for the in-flight iteration to finish (graceful drain — ARCH-17). */
   async stop() {
     this.running = false;
     if (this.timer) clearTimeout(this.timer);
+    if (this.inFlight) await this.inFlight.catch(() => undefined);
   }
 
   /** One full iteration — exposed for tests (deterministic, no timers). */
@@ -120,12 +126,13 @@ export class WorkerService {
   private async execute(job: ClaimedJob) {
     const handler = this.registry.handler(job.kind);
     if (!handler) {
-      await this.queue.fail({ ...job, attempts: job.max_attempts }, `no handler registered for ${job.kind}`);
+      await this.queue.fail(job, `no handler registered for ${job.kind}`, { permanent: true });
       return;
     }
     try {
       const result = await handler(job);
-      await this.queue.complete(job.id, result ?? {});
+      const owned = await this.queue.complete(job, result ?? {});
+      if (!owned) this.log.warn(`job ${job.kind} ${job.id}: lease lost before completion; result discarded (fencing)`);
       if (job.payload['scheduledJobId']) {
         await this.db.pool.query(`update scheduled_job set last_status = 'succeeded', last_error = null where id = $1`, [job.payload['scheduledJobId']]);
       }

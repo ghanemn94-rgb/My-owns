@@ -68,7 +68,8 @@ describe('AT-03 — database row-level security as defense in depth [REQ-SEC-007
     try {
       await c.query('begin');
       const org = await owner().query('select org_id from project where id = $1', [genId]);
-      await c.query(`select set_config('app.org_id', $1, true), set_config('app.project_ids', $2, true)`, [org.rows[0].org_id, genId]);
+      // Full member of project B only (app.full_project_ids carries full-membership scope; see ADR-0003 room model).
+      await c.query(`select set_config('app.org_id', $1, true), set_config('app.project_ids', $2, true), set_config('app.full_project_ids', $2, true)`, [org.rows[0].org_id, genId]);
       const seen = await c.query('select distinct project_id from task');
       expect(seen.rows.map((r) => r.project_id)).toEqual([genId]);
       const leak = await c.query('select count(*)::int n from task where project_id = $1', [dcId]);

@@ -94,7 +94,10 @@ export class ProblemFilter implements ExceptionFilter {
       }
       if (pg) body = pg;
       else {
-        this.log.error(`unhandled error [${correlationId}]: ${(exception as Error)?.stack ?? String(exception)}`);
+        // Log the error class/message/stack but never SQL text or bound parameters (may contain data or secrets).
+        const err = exception as Error & { query?: string; params?: unknown };
+        const safeMessage = (err?.message ?? String(exception)).replace(/Failed query:[\s\S]*$/m, 'Failed query: [redacted]');
+        this.log.error(`unhandled error [${correlationId}] ${err?.name ?? 'Error'}: ${safeMessage}`);
         body = { type: 'about:blank', title: 'Internal error', status: 500, code: 'internal_error', detail: 'An unexpected error occurred.' };
       }
     }

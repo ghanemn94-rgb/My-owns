@@ -23,3 +23,18 @@ reconciliation rather than mass redelivery).
   a BullMQ adapter can replace the queue behind the `JobQueue` interface.
 - These infrastructure tables are exempt from RLS; payloads contain ids only and every job re-enters a project-scoped
   context (with fresh authorization of the human principal) before reading business data.
+
+## Amendments after the P0 architecture review
+- **Fencing (ARCH-08):** `complete`/`fail`/`extendLease` update only `WHERE id = ? AND locked_by = ? AND attempts = ?`; a
+  worker whose lease expired and was taken over cannot overwrite the new owner's state. Long jobs call `extendLease`
+  (heartbeat). Expired leases of jobs with no attempts left are dead-lettered instead of re-run; backoff has ±25% jitter.
+- **Authorization in jobs (ARCH-09):** `JobContextFactory.forUser(userId, projectId)` re-resolves the human principal at
+  execution time (null → skip the user-facing effect); `forService(...)` gives a service principal with an explicit
+  permission allowlist (deny by default).
+- **Deliveries (AT-20):** `DeliveryService` ledger (`sending` committed before the external call → `sent`/`failed`;
+  crash leaves `sending` → reconciled to `uncertain`, never blindly re-sent).
+- **Outbox events with no subscriber** are marked dispatched (not replayed for subscribers added later) — acceptable
+  because subscribers are code-defined; replay is an operator action (re-emit) if a new subscriber needs history.
+- **Missed schedule slots:** the next run is computed from "now" after an outage (no burst catch-up); the catch-up
+  decision is left to the job (e.g. the daily briefing covers the whole period since its last successful run).
+- **Shutdown:** the worker drains the in-flight iteration before closing.

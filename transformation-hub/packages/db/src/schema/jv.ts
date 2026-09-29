@@ -10,6 +10,7 @@ import {
   isDemo,
   ts,
   projectFk,
+  type FkTarget,
   classification,
   partnerStage,
   ndaStatus,
@@ -31,6 +32,10 @@ import {
 import { project, legalEntity } from './portfolio';
 import { appUser } from './identity';
 import { agreement } from './carveout';
+import { risk } from './planning';
+import { decision } from './governance';
+import { waiver } from './gates';
+import { document } from './documents';
 
 /** Partner (longlist/shortlist). No real default names: demo partners are fictional and flagged. */
 export const partner = pgTable(
@@ -79,7 +84,7 @@ export const partnerRoom = pgTable(
     createdBy: createdBy(),
     version: versionCol(),
   },
-  (t) => [unique('partner_room_pid_uq').on(t.projectId, t.id), projectFk('partner_room_partner_fk', t.projectId, t.partnerId, partner)],
+  (t) => [unique('partner_room_pid_uq').on(t.projectId, t.id), projectFk('partner_room_partner_fk', t.projectId, t.partnerId, (): FkTarget => partner)],
 );
 
 /** Explicit, revocable room access grant — the only way into a room (an NDA alone grants nothing). */
@@ -101,7 +106,7 @@ export const roomGrant = pgTable(
     revokedAt: ts('revoked_at'),
     revokedBy: uuid('revoked_by'),
   },
-  (t) => [projectFk('room_grant_room_fk', t.projectId, t.roomId, partnerRoom), index('room_grant_user_idx').on(t.userId)],
+  (t) => [projectFk('room_grant_room_fk', t.projectId, t.roomId, (): FkTarget => partnerRoom), index('room_grant_user_idx').on(t.userId)],
 );
 
 /** Ownership / contribution / governance scenario — versioned, never assumes control or percentages. */
@@ -127,7 +132,7 @@ export const dealScenario = pgTable(
     updatedAt: updatedAt(),
     version: versionCol(),
   },
-  (t) => [unique('deal_scenario_pid_uq').on(t.projectId, t.id), projectFk('deal_scenario_partner_fk', t.projectId, t.partnerId, partner)],
+  (t) => [unique('deal_scenario_pid_uq').on(t.projectId, t.id), projectFk('deal_scenario_partner_fk', t.projectId, t.partnerId, (): FkTarget => partner)],
 );
 
 export const negotiationIssue = pgTable(
@@ -155,8 +160,8 @@ export const negotiationIssue = pgTable(
   (t) => [
     unique('negotiation_issue_pid_uq').on(t.projectId, t.id),
     uniqueIndex('negotiation_issue_code_uq').on(t.projectId, t.code),
-    projectFk('negotiation_issue_partner_fk', t.projectId, t.partnerId, partner),
-    projectFk('negotiation_issue_agreement_fk', t.projectId, t.agreementId, agreement),
+    projectFk('negotiation_issue_partner_fk', t.projectId, t.partnerId, (): FkTarget => partner),
+    projectFk('negotiation_issue_agreement_fk', t.projectId, t.agreementId, (): FkTarget => agreement),
   ],
 );
 
@@ -192,8 +197,8 @@ export const diligenceRequest = pgTable(
   (t) => [
     unique('diligence_request_pid_uq').on(t.projectId, t.id),
     uniqueIndex('diligence_request_number_uq').on(t.projectId, t.partnerId, t.number),
-    projectFk('diligence_request_partner_fk', t.projectId, t.partnerId, partner),
-    projectFk('diligence_request_room_fk', t.projectId, t.roomId, partnerRoom),
+    projectFk('diligence_request_partner_fk', t.projectId, t.partnerId, (): FkTarget => partner),
+    projectFk('diligence_request_room_fk', t.projectId, t.roomId, (): FkTarget => partnerRoom),
   ],
 );
 
@@ -222,9 +227,10 @@ export const diligenceFinding = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('diligence_finding_risk_fk', t.projectId, t.riskId, (): FkTarget => risk),
     unique('diligence_finding_pid_uq').on(t.projectId, t.id),
     uniqueIndex('diligence_finding_code_uq').on(t.projectId, t.code),
-    projectFk('diligence_finding_partner_fk', t.projectId, t.partnerId, partner),
+    projectFk('diligence_finding_partner_fk', t.projectId, t.partnerId, (): FkTarget => partner),
   ],
 );
 
@@ -253,9 +259,10 @@ export const closing = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('closing_decision_fk', t.projectId, t.confirmationDecisionId, (): FkTarget => decision),
     unique('closing_pid_uq').on(t.projectId, t.id),
     uniqueIndex('closing_seq_uq').on(t.projectId, t.kind, t.sequence),
-    projectFk('closing_partner_fk', t.projectId, t.partnerId, partner),
+    projectFk('closing_partner_fk', t.projectId, t.partnerId, (): FkTarget => partner),
   ],
 );
 
@@ -291,9 +298,10 @@ export const closingCondition = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('closing_condition_waiver_fk', t.projectId, t.waiverId, (): FkTarget => waiver),
     unique('closing_condition_pid_uq').on(t.projectId, t.id),
     uniqueIndex('closing_condition_ref_uq').on(t.projectId, t.reference),
-    projectFk('closing_condition_closing_fk', t.projectId, t.closingId, closing),
+    projectFk('closing_condition_closing_fk', t.projectId, t.closingId, (): FkTarget => closing),
   ],
 );
 
@@ -317,7 +325,8 @@ export const closingDeliverable = pgTable(
     updatedAt: updatedAt(),
     version: versionCol(),
   },
-  (t) => [unique('closing_deliverable_pid_uq').on(t.projectId, t.id), projectFk('closing_deliverable_closing_fk', t.projectId, t.closingId, closing)],
+  (t) => [
+    projectFk('closing_deliverable_doc_fk', t.projectId, t.documentId, (): FkTarget => document),unique('closing_deliverable_pid_uq').on(t.projectId, t.id), projectFk('closing_deliverable_closing_fk', t.projectId, t.closingId, (): FkTarget => closing)],
 );
 
 /** Funds-flow tracking only — the platform never executes payments. */
@@ -341,7 +350,7 @@ export const fundsFlowItem = pgTable(
     createdBy: createdBy(),
     version: versionCol(),
   },
-  (t) => [projectFk('funds_flow_closing_fk', t.projectId, t.closingId, closing)],
+  (t) => [projectFk('funds_flow_closing_fk', t.projectId, t.closingId, (): FkTarget => closing)],
 );
 
 export const postCloseObligation = pgTable(
@@ -369,6 +378,6 @@ export const postCloseObligation = pgTable(
   (t) => [
     unique('post_close_obligation_pid_uq').on(t.projectId, t.id),
     uniqueIndex('post_close_obligation_code_uq').on(t.projectId, t.code),
-    projectFk('post_close_obligation_closing_fk', t.projectId, t.closingId, closing),
+    projectFk('post_close_obligation_closing_fk', t.projectId, t.closingId, (): FkTarget => closing),
   ],
 );
