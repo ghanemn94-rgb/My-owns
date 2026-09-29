@@ -5196,14 +5196,34 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-16/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "ACCEPTED_OBSERVATION",
       "history": [
         {
           "at": "2026-09-29T10:40:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer in DG0 round 16; reproduced in a fresh disposable clone under $TMPDIR (07-copyback-scope.log); fail-closed for gate integrity, accepted as an observation."
+        },
+        {
+          "at": "2026-09-29T11:25:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by code-security-reviewer round 17: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R17-code-security-reviewer-20260929T111538Z-5a9b1379",
+          "session_id": "5a9b1379-0508-4ad8-ae25-9abf8c860685"
+        },
+        "at": "2026-09-29T11:25:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-17/04-copyback-ipc-repro.log",
+          "tools/agents/agent_sandbox.py#L54-L67"
+        ],
+        "note": "Still reproduces with the round-17 code (case E: a new own-role file in round-1 is copied back, exit 0). I still judge it Low, non-mandatory and fail-closed for gate integrity: a record in an earlier round must reconstruct from that round's own run transcript, which a later run cannot satisfy. Accepted as an observation; pinning the accept pattern to the current round remains the recommended hardening."
+      }
     },
     {
       "id": "F-DG0-148",
@@ -5224,7 +5244,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-16/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-29T10:40:00Z",
@@ -5235,10 +5255,32 @@
           "at": "2026-09-29T11:09:11Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 98b87712ce8a52642015a37a41419432ea64f8b2"
+        },
+        {
+          "at": "2026-09-29T11:25:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 17: PASS"
         }
       ],
       "fix_revision": "98b87712ce8a52642015a37a41419432ea64f8b2",
-      "fix_summary": "D-031: the process sandbox creates its own IPC namespace (--unshare-ipc), closing the SysV-IPC/POSIX-message-queue cross-run vector of residual 8 at no cost to nested bubblewrap (IPC has no bearing on procfs full-visibility). summary.unshare records [ipc]; the validator requires it. Verified by round-17 code-security."
+      "fix_summary": "D-031: the process sandbox creates its own IPC namespace (--unshare-ipc), closing the SysV-IPC/POSIX-message-queue cross-run vector of residual 8 at no cost to nested bubblewrap (IPC has no bearing on procfs full-visibility). summary.unshare records [ipc]; the validator requires it. Verified by round-17 code-security.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R17-code-security-reviewer-20260929T111538Z-5a9b1379",
+          "session_id": "5a9b1379-0508-4ad8-ae25-9abf8c860685"
+        },
+        "at": "2026-09-29T11:25:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-17/04-copyback-ipc-repro.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-17/r17-copyback-ipc-repro.mjs",
+          "docs/delivery/test-evidence/DG0/code-security/round-17/03-prefreeze.log",
+          "tools/agents/agent_sandbox.py#L145"
+        ],
+        "note": "Fixed and verified. agent_sandbox.py:145 now passes --unshare-ipc. In a disposable fixture, the sandbox's /proc/self/ns/ipc (ipc:[4026532382]) differs from the host's (ipc:[4026532268]) with the round-17 code, and is identical with the round-16 code (4fd56d4). sandbox.json records unshare [\"ipc\"], and rules.mjs:368 requires it. The pre-freeze in a fresh clone, including the nested-bubblewrap sandbox tests, still passes, so the nested bwrap is unaffected. The D-031 copy-back concurrency fix also holds: a record another role commits to the real directory between prepare and finish gives exit 3 (false discard) with the round-16 code and exit 0 with no discard with the round-17 code, and scope enforcement (write-once, other roles, symlinks, top level) is unchanged. A new edge-case regression in the same change is raised separately as F-DG0-150 (Low)."
+      }
     },
     {
       "id": "F-DG0-149",
@@ -5264,6 +5306,81 @@
           "at": "2026-09-29T10:40:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer in DG0 round 16; confirms disclosed residual 7 is not larger than stated, with a narrower mitigation proposal; accepted as an observation."
+        },
+        {
+          "at": "2026-09-29T11:25:00Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 17: FAIL"
+        }
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R17-code-security-reviewer-20260929T111538Z-5a9b1379",
+          "session_id": "5a9b1379-0508-4ad8-ae25-9abf8c860685"
+        },
+        "at": "2026-09-29T11:25:00Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-16/04-sandbox-probe.log",
+          "docs/delivery/threat-model.md#disclosed-residuals"
+        ],
+        "note": "Not accepted as an observation in round 17. I could not complete the re-assessment of threat-model residual 7 (whether a file-tool write to a uid-0-writable /proc/sys entry stays within 'availability / host-tunable, not repository or gate integrity'): my analysis was stopped by the session's safety classifier, so I have no basis to confirm that the residual is no larger than stated. I am therefore not re-affirming my round-16 conclusion. The residual needs a fresh, human-supervised assessment. Separately, a read-only check this round shows /proc/sys/kernel/core_pattern on the host still reads 'test', the value the round-16 reproduction left behind, so the host tunable has not been restored and needs the user's attention."
+      }
+    },
+    {
+      "id": "F-DG0-150",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-031 copy-back regression: finish() raises an unhandled FileExistsError (exit 1, no sandbox.json, possible partial copy-back) when the same own-role path appears in the real directory during the run, where the round-16 code discarded it cleanly (fail-closed; observation)",
+      "reproduction": "tools/agents/agent_sandbox.py:259 tests `rel in seed` (the staging seed) instead of the live real directory, and line 266 then opens the destination with O_EXCL. If the real file was created after prepare (for example by a second concurrent run of the same role), the file is not in the seed, so the write-once discard branch is skipped and os.open raises FileExistsError. The loop is not wrapped, so the files sorted after it are not copied and sandbox.json is not written. Reproduced in a disposable fixture (docs/delivery/test-evidence/DG0/code-security/round-17/r17-copyback-ipc-repro.mjs, case D; log 04-copyback-ipc-repro.log): round-16 code: exit 3 with the entry discarded as 'existing file changed; review files are write-once'; round-17 code: exit 1 with a FileExistsError traceback and no sandbox.json. The real file is not overwritten.",
+      "expected": "A collision with an existing real file is reported as a discard (exit 3), sandbox.json is always written, and no partial copy-back occurs. For example, check os.path.lexists(dest) for the non-replace case, or catch FileExistsError and record a discard.",
+      "actual": "Unhandled exception. This fails closed: run-agent.sh:236-240 treats any non-zero finish status as exit 73 (not auto-committed) for confined roles, and the validator requires sandbox.json (rules.mjs:352-354), so gate integrity is not affected. But the runner's message wrongly says writes were 'discarded', evidence is missing, and earlier-sorted files may already have been copied back. It needs concurrent runs of the same role, which the protocol does not schedule. I would accept this as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-17/04-copyback-ipc-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-17/r17-copyback-ipc-repro.mjs",
+        "tools/agents/agent_sandbox.py#L249-L270",
+        "tools/agents/run-agent.sh#L236-L241"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-17/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-29T11:22:40Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 17; reproduced against both the round-16 and round-17 agent_sandbox.py in disposable fixtures."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-151",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "agent_sandbox.py module docstring misstates the confinement: it says 'the PID and IPC namespaces are private', but the PID namespace is shared with the host (threat-model residual 8)",
+      "reproduction": "tools/agents/agent_sandbox.py:23-25 (module docstring) states 'no_new_privs is set, the PID and IPC namespaces are private'. bwrap_args (line 145) passes only --unshare-ipc, with no --unshare-pid, and the code comment at lines 134-144, threat-model.md residual 8 and sandbox.json (unshare: [\"ipc\"]) all correctly say that the PID namespace is shared.",
+      "expected": "The docstring matches the implementation and the threat model: private IPC namespace; shared host PID namespace (disclosed residual 8).",
+      "actual": "The docstring overstates the isolation. This is documentation only: the machine-readable evidence (sandbox.json) and the threat model are correct. I would accept this as an observation.",
+      "evidence": [
+        "tools/agents/agent_sandbox.py#L23-L25",
+        "tools/agents/agent_sandbox.py#L145",
+        "docs/delivery/threat-model.md#disclosed-residuals"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-17/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-29T11:22:40Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 17 by source inspection."
         }
       ]
     }

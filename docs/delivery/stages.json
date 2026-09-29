@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -221,10 +221,9 @@
           "source_commit": "f84eed411dfb93fbe3a72d3475ee8ff7eae68f94",
           "records": {
             "domain-reviewer": "docs/delivery/reviews/DG0/round-17/domain-reviewer.json",
-            "code-security-reviewer": "docs/delivery/reviews/DG0/round-17/code-security-reviewer.json",
-            "qa-verifier": "docs/delivery/reviews/DG0/round-17/qa-verifier.json"
+            "code-security-reviewer": "docs/delivery/reviews/DG0/round-17/code-security-reviewer.json"
           },
-          "note": "Round 17: re-review after the round-16 repairs (D-031: copy-back bound to the staging seed; --unshare-ipc for F-DG0-148). code-security verifies F-DG0-148 and accepts F-DG0-147/149 as observations; qa verifies F-DG0-236/237."
+          "note": "Round 17: re-review after the round-16 repairs (D-031: copy-back bound to the staging seed; --unshare-ipc for F-DG0-148). code-security verifies F-DG0-148 and accepts F-DG0-147/149 as observations; qa verifies F-DG0-236/237. [qa-verifier hit the account session limit before writing its record; its unbindable sidecars removed; re-run in round 18. domain PASS; code-security BLOCKED (F-DG0-149 residual-7 re-assessment stopped by the safety classifier; new Low F-DG0-150/151).]"
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
@@ -403,6 +402,11 @@
           "state": "REVIEWING",
           "at": "2026-09-29T11:14:56Z",
           "note": "Round-16 findings repaired (D-031); sandboxed prefreeze PASS; candidate re-frozen for review round 17"
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-09-29T16:16:00Z",
+          "note": "Round 17: domain PASS; code-security BLOCKED (F-DG0-148 CLOSED_VERIFIED, F-DG0-147 accepted; F-DG0-149 classifier-blocked; new Low F-DG0-150 finish() O_EXCL crash, F-DG0-151 stale docstring); qa hit the session limit before its record. Repair D-032."
         }
       ]
     },
