@@ -1,0 +1,262 @@
+423 ['id', 'section', 'section_title', 'kind', 'text'] Counter({'REQUIREMENT': 367, 'CONTEXT': 49, 'NON-REQUIREMENT': 7})
+SAMPLE 76 ['M0003', 'M0002', 'M0006', 'M0007', 'M0011', 'M0009', 'M0021', 'M0014', 'M0032', 'M0031', 'M0041', 'M0053', 'M0034', 'M0063', 'M0058', 'M0072', 'M0071', 'M0080', 'M0079', 'M0086', 'M0082', 'M0098', 'M0110', 'M0099', 'M0091', 'M0117', 'M0124', 'M0147', 'M0146', 'M0126', 'M0140', 'M0154', 'M0155', 'M0161', 'M0158', 'M0169', 'M0170', 'M0179', 'M0181', 'M0211', 'M0188', 'M0197', 'M0201', 'M0217', 'M0218', 'M0240', 'M0225', 'M0238', 'M0247', 'M0252', 'M0258', 'M0274', 'M0261', 'M0256', 'M0279', 'M0296', 'M0304', 'M0309', 'M0314', 'M0315', 'M0319', 'M0336', 'M0333', 'M0340', 'M0345', 'M0350', 'M0364', 'M0398', 'M0367', 'M0397', 'M0374', 'M0396', 'M0419', 'M0402', 'M0415', 'M0420']
+== M0003 preamble REQUIREMENT :: 'Use this complete prompt with Business_Transformation_Playbook(2).docx in Claude Code. The Arabic edition is an equivalent translation, not an additional scope. Use one edition to execute; retain both as references if useful. This document specifies what Claude Code must build and verify; it does not assert that the platform or its reviews have already been executed.'
+   WHY: 
+   -> REQ-DLV-001 ENGINEERING Execute the English master prompt v2.0 against playbook v1.0 and record that the platform and delivery protocol are implementation additions, not play | cites
+== M0002 preamble NON-REQUIREMENT :: 'Version 2.0 · English edition · 28 September 2026'
+   WHY: Version and date stamp of the master prompt.
+== M0006 0 REQUIREMENT :: 'You are Claude Code acting as the delivery-orchestrator. Build the platform with actual specialized agent invocations, staged implementation, independent review and recorded quality gates. Use this protocol throughout execution; a role list or simulated conversation between personas does not satisfy it.'
+   WHY: 
+   -> REQ-DLV-006 ENGINEERING Delegate through real, separate agent invocations (ordinary subagents by default; Agent Teams optional); if real delegation is unavailable, mark indep | cites
+   -> REQ-DLV-010 ENGINEERING Run the three mandatory independent specialist reviews (domain, code-security, QA) and the release audit at every stage, against the same frozen candi | cites
+== M0007 0 REQUIREMENT :: 'There are two different gate systems. DG0–DG7 are software delivery gates for your engineering team. G1–G6 are business transformation approvals inside the product. Keep their records, authority and meanings separate. An engineering agent cannot grant a real business, Finance or IT production approval.'
+   WHY: 
+   -> REQ-DLV-002 ENGINEERING Keep engineering delivery gates DG0-DG7 separate from product business approvals G1-G6 in records, authority and meaning | cites
+== M0011 0.1 REQUIREMENT :: 'Use ordinary subagents as the default coordination mechanism. Agent Teams are optional when available and appropriately configured; the workflow must not depend on enabling that experimental feature. If concurrency is limited, invoke separate agents sequentially. If real delegation is unavailable, do useful preparation but mark independent review BLOCKED; do not present one agent’s role-playing as'
+   WHY: 
+   -> REQ-DLV-006 ENGINEERING Delegate through real, separate agent invocations (ordinary subagents by default; Agent Teams optional); if real delegation is unavailable, mark indep | cites
+== M0009 0.1 REQUIREMENT :: 'Inspect the repository, applicable instructions, installed Claude Code version, available agent tools, runtime, permissions and existing configuration. Preserve unrelated user work. Record your findings in docs/delivery/environment.md.'
+   WHY: 
+   -> REQ-DLV-003 ENGINEERING Record the verified build environment, capabilities and limitations before implementation | cites
+== M0021 0.2 REQUIREMENT :: '|kpi-benefits-engineer    |Implement KPI trajectories, safe formulas, attribution, allocations, calculation lineage and Finance validation    |Calculation specifications, fixtures and correct persisted results        |Does not independently validate its own financial logic                           |'
+   WHY: 
+   -> REQ-DLV-004 ENGINEERING Define the ten project agents in .claude/agents with supported frontmatter, role instructions, handback contracts and verified loading and execution | cites
+   -> REQ-DLV-005 ENGINEERING Apply each role's independence rule at every gate: no role reviews, certifies or approves its own work, and the orchestrator never records a review ve | cites
+== M0014 0.2 CONTEXT :: '0.2 Required agent roster'
+   WHY: Subsection heading §0.2; covered by REQ-DLV-004, -005, -009, -010.
+== M0032 0.3 REQUIREMENT :: 'Reviewers independently inspect the same frozen candidate before reading each other’s conclusions. Give them the requirements, code/artifacts, relevant history and acceptance criteria, not a leading instruction to approve. They must inspect implementation/evidence directly and exercise applicable workflows; an implementer’s summary is insufficient evidence. The code reviewer performs a direct diff'
+   WHY: 
+   -> REQ-DLV-010 ENGINEERING Run the three mandatory independent specialist reviews (domain, code-security, QA) and the release audit at every stage, against the same frozen candi | cites
+== M0031 0.3 REQUIREMENT :: 'Implementation handback includes changed files, behavior, tests actually run, results, known gaps and merge instructions. An unfinished agent task remains unfinished even if its final message sounds positive.'
+   WHY: 
+   -> REQ-DLV-012 ENGINEERING Require implementation handbacks listing changed files, behaviour, checks actually run with results, known gaps and merge instructions; unfinished tas | cites
+== M0041 0.4 REQUIREMENT :: '6. Repair: route each valid finding to an implementer. Keep the stage in FIXING.'
+   WHY: 
+   -> REQ-DLV-014 ENGINEERING Run the eight-step gate loop for every stage: plan, implement, integrate and freeze, review (rendered Arabic and English screens for visible changes), | cites
+== M0053 0.4 REQUIREMENT :: 'If reviewers disagree, reproduce the disputed behavior and obtain a targeted fresh independent review. A majority cannot overrule an unresolved demonstrated defect. After repeated unsuccessful repair cycles, perform root-cause analysis and revise the approach; after three unproductive cycles, record a blocker and a concrete recovery plan rather than looping indefinitely or lowering the gate. Conti'
+   WHY: 
+   -> REQ-DLV-018 ENGINEERING Resolve reviewer disagreement by reproduction and a targeted fresh review; after three unproductive repair cycles record a blocker and recovery plan i | cites
+== M0034 0.4 CONTEXT :: '0.4 Development gate loop'
+   WHY: Subsection heading §0.4; covered by REQ-DLV-014..018.
+== M0063 0.5 REQUIREMENT :: '• docs/delivery/gates/DGx.json: audited gate decision.'
+   WHY: 
+   -> REQ-DLV-021 ENGINEERING Record each gate's individual review records under reviews/DGx/round-N and the audited gate decision in gates/DGx.json | cites
+== M0058 0.5 REQUIREMENT :: '• docs/delivery/requirements.csv: source-to-feature-to-test coverage, stage ownership and status.'
+   WHY: 
+   -> REQ-DLV-020 ENGINEERING Maintain the requirement register (source heading/template, requirement ID, input fields, procedure, output, owner, permissions, automation, screen/AP | cites
+== M0072 0.6 REQUIREMENT :: 'At each gate send a short update: stage and candidate; capabilities demonstrated; reviewers and verdicts; findings fixed; remaining blockers; and next stage. Do not expose raw internal reasoning or inflate confidence. Report measurable evidence.'
+   WHY: 
+   -> REQ-DLV-028 ENGINEERING Send a short evidence-based update at each gate: stage and candidate, capabilities demonstrated, reviewers and verdicts, findings fixed, remaining blo | cites
+== M0071 0.6 REQUIREMENT :: 'Technical stage approvals are delegated to the review process above. Do not stop after every successful stage to ask the user “continue?” Continue automatically through DG0–DG7 within the existing authorization. Real company business approvals, production access, release authorization and irreversible actions follow the user’s/company’s actual authority; agent gate approval cannot grant them.'
+   WHY: 
+   -> REQ-DLV-027 ENGINEERING Continue automatically through DG0-DG7 without routine user confirmation, while real business approvals, production access, release authorization and  | cites
+== M0080 1 REQUIREMENT :: 'The application coordinates business change; it must not imply that a customer system, network upgrade, procurement transaction or other external operational change has happened merely because a task was marked complete. Capture verified evidence or receive a confirmed integration result.'
+   WHY: 
+   -> REQ-S01-005 ENGINEERING Never imply an external operational change happened because a task was marked complete; require verified evidence or a confirmed integration result | cites
+== M0079 1 REQUIREMENT :: 'Users must be able to perform the complete transformation management lifecycle inside the application. Reading the methodology, capturing data, conducting workshops, updating KPIs, managing initiatives, reviewing evidence, making decisions, obtaining approvals, generating reports and maintaining BAU performance must all have native application workflows. Exports and integrations are optional chann'
+   WHY: 
+   -> REQ-S01-004 USER Perform the complete transformation management lifecycle natively without depending on spreadsheets, slide decks or external approval emails | cites
+== M0086 2 REQUIREMENT :: '• User requirement — full in-platform operation, easy configuration, Mobily identity and transferable self-hosting.'
+   WHY: 
+   -> REQ-DLV-020 ENGINEERING Maintain the requirement register (source heading/template, requirement ID, input fields, procedure, output, owner, permissions, automation, screen/AP | cites
+== M0082 2 CONTEXT :: '2 Source fidelity and completion rules'
+   WHY: Section heading '2 Source fidelity and completion rules'; substance covered by REQ-S02-001 and REQ-S02-003..006 (former REQ-S02-002 consolidated into REQ-DLV-020, former REQ-S02-007 into REQ-S18-001) 
+== M0098 3 REQUIREMENT :: 'Support many-to-many relationships with explicit contribution and allocation rules. Every node is clickable, and each change can show downstream impact. Add a traceability view and an orphan report for missing links.'
+   WHY: 
+   -> REQ-PB-044 SOURCE Maintain the traceability chain from diagnosed issue to benefit with a view and orphan report | cites
+   -> REQ-S03-006 USER Support many-to-many traceability links with explicit contribution and allocation rules, clickable nodes and downstream impact | cites
+== M0110 3 REQUIREMENT :: '• Change and Adoption: stakeholders, interventions and adoption indicators.'
+   WHY: 
+   -> REQ-S03-007 USER Provide the fourteen primary navigation areas: My Work, Executive Overview, Transformations, Playbook and Procedures, Strategy and KPIs, Target Operat | cites
+== M0099 3 CONTEXT :: 'Primary navigation:'
+   WHY: Lead-in 'Primary navigation:'; the fourteen areas (M0100-M0113) are covered by REQ-S03-007 to REQ-S03-010.
+== M0091 3 CONTEXT :: '3 Business model and navigation'
+   WHY: Section heading '3 Business model and navigation'; covered by REQ-S03-001..REQ-S03-011.
+== M0117 4 CONTEXT :: '|Phase and gate                 |Inputs and native procedure                                                                                                                                                                                                                                                   |Required outputs and decision evidence                                                          '
+   WHY: Table header row (Phase and gate / Inputs and native procedure / Required outputs and decision evidence); data rows M0118-M0123 are covered by REQ-S04-003..008.
+== M0124 4 REQUIREMENT :: 'Gate submissions must show: criterion, required evidence, completeness, reviewer, finding, open condition, risk, decision and rationale. Support Draft, Submitted, Under Review, Changes Requested, Approved, Rejected and Deferred. Conditional approval is a configurable extension that records permitted scope, conditions, owners and deadlines; it cannot authorize unrestricted scaling.'
+   WHY: 
+   -> REQ-PB-015 SOURCE Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required | cites
+   -> REQ-S04-009 USER Show on every gate submission, per criterion: criterion, required evidence, completeness, reviewer, finding, open condition, risk, decision and ration | cites
+   -> REQ-S04-010 USER Support gate statuses Draft, Submitted, Under Review, Changes Requested, Approved, Rejected and Deferred with enforced transitions | cites
+   -> REQ-S04-011 USER Offer conditional approval as a configurable extension recording permitted scope, conditions, owners and deadlines, never authorizing unrestricted sca | cites
+== M0147 5 REQUIREMENT :: 'Target Operating Model Canvas. Preserve all ten dimensions: Customer and Value Proposition; Products and Services; Journeys and Processes; Organization; Governance and Decision Rights; People and Capabilities; Technology; Data and Analytics; Partners and Sourcing; Performance Management. Provide current/target design, linked gaps, owner, evidence, dependencies and decisions for each. Include a fac'
+   WHY: 
+   -> REQ-PB-024 SOURCE Provide an editable capability heatmap with build/buy/partner needs | cites
+   -> REQ-PB-025 SOURCE Provide journey and process maps capturing pain points, cycle time and failure demand | cites
+   -> REQ-PB-038 SOURCE Seed the 10 TOM dimensions with their design questions | cites
+   -> REQ-PB-040 SOURCE Keep the TOM distinct from the project portfolio | cites
+   -> REQ-PB-041 SOURCE Implement the Target Operating Model Canvas with the ten source boxes and prompts | cites
+   -> REQ-PB-042 SOURCE Support the TOM canvas workshop and convert unresolved items into design decisions with owners | cites
+   -> REQ-S05-003 USER Provide per TOM dimension the current/target design, linked gaps, owner, evidence, dependencies and decisions | cites
+== M0146 5 REQUIREMENT :: 'Transformation Charter. Transformation name, executive sponsor, transformation lead, case for change, North Star, scope in/out, baseline date, target horizon, top 3–5 outcomes, strategic guardrails, governance forum, decision rights and success definition. Include the transformation thesis: “If we change [capabilities/journeys/operating model], then [customer/operational outcomes] will improve, cr'
+   WHY: 
+   -> REQ-PB-029 SOURCE Implement the Transformation Charter as a first-class record with all 14 source fields | cites
+   -> REQ-PB-030 SOURCE Capture the transformation thesis in its four-part causal sentence | cites
+   -> REQ-PB-031 SOURCE Run the five scope sanity checks on the charter | cites
+== M0126 5 CONTEXT :: '5 Complete native forms and templates'
+   WHY: Section heading '5 Complete native forms and templates'; covered by REQ-S05-001..003, REQ-S05-005..006 (former REQ-S05-004 consolidated into REQ-PB-042) and the REQ-PB template rows.
+== M0140 5 REQUIREMENT :: '|T12|RACI                              |Deliverable, Sponsor, Transformation Lead, Business Owner, Workstream Lead, Finance, Tech/Data; assignments using R/A/C/I including allowed A/R combinations                                                                           |'
+   WHY: 
+   -> REQ-PB-067 SOURCE Implement Template 12 RACI with the six seeded deliverables and R/A/C/I values including A/R | cites
+== M0154 6 REQUIREMENT :: 'Provide an administrator Playbook Studio that can edit methodology text, phases, gates, mandatory artifacts, checklists, templates, fields, labels, help text, validation, formulas, routing, approvers, reminders, escalation rules, dashboards and reporting layouts through the UI. Include field types for text, rich text, number, currency, percentage, date, reference, attachment, lookup, choice and ca'
+   WHY: 
+   -> REQ-S06-004 USER Provide an administrator Playbook Studio to edit methodology text, phases, gates, mandatory artifacts, checklists, templates, fields, labels, help tex | cites
+   -> REQ-S06-005 USER Support Studio field types text, rich text, number, currency, percentage, date, reference, attachment, lookup, choice and calculated value | cites
+   -> REQ-S06-006 ENGINEERING Protect stable system identifiers and core data invariants from configuration changes | cites
+   -> REQ-PB-038 SOURCE Seed the 10 TOM dimensions with their design questions | cites
+   -> REQ-PB-093 SOURCE Let methodology administrators configure the default T06 weight set and scoring rubrics in Playbook Studio as versioned configuration | cites
+== M0155 6 REQUIREMENT :: 'Publishing a configuration follows Draft → Preview/Test → Review where configured → Publish. Show a side-by-side diff, affected records and compatibility checks. Keep published versions immutable. Existing transformations remain pinned to their methodology and form versions until a deliberate migration is approved. Migration must explain default mappings, new required fields, invalidated calculati'
+   WHY: 
+   -> REQ-S06-007 USER Publish configuration through Draft, Preview/Test, Review where configured and Publish, with side-by-side diff, affected records, compatibility checks | cites
+   -> REQ-S06-008 USER Pin existing transformations to their methodology and form versions until a deliberate, approved migration explains mappings, new required fields, inv | cites
+   -> REQ-S06-009 USER Roll back configuration by restoring a prior version through an audited change that does not erase later business transactions | cites
+   -> REQ-PB-093 SOURCE Let methodology administrators configure the default T06 weight set and scoring rubrics in Playbook Studio as versioned configuration | cites
+== M0161 7 REQUIREMENT :: 'Define aggregations explicitly: sum eligible flows, last value for stocks, weighted ratios where appropriate, or an approved custom formula. Do not average percentages or mix units by default. Preserve currency and period. Formula dependencies must reject circular references and invalid units.'
+   WHY: 
+   -> REQ-S07-010 ENGINEERING Define aggregations explicitly: sum eligible flows, last value for stocks, weighted ratios where appropriate or an approved custom formula; never aver | cites
+   -> REQ-S07-011 ENGINEERING Reject circular references and invalid units in formula dependencies | cites
+== M0158 7 REQUIREMENT :: 'Provide a KPI dictionary with name, description, business purpose, owner, steward, unit, frequency, polarity, numerator/denominator, calculation, baseline and baseline date, target and target date, phased trajectory, source, aggregation rule, data-quality rule, reporting period, approval policy and leading/lagging classification.'
+   WHY: 
+   -> REQ-S07-001 USER Provide a KPI dictionary with name, description, business purpose, owner, steward, unit, frequency, polarity, numerator/denominator, calculation, base | cites
+== M0169 8 REQUIREMENT :: 'Seed the two source examples as illustrative calculations:'
+   WHY: 
+   -> REQ-PB-057 SOURCE Seed the two source benefit formula examples | cites
+== M0170 8 REQUIREMENT :: '• Revenue uplift = change in attach rate × eligible customers × ARPU for the stated period. Store attach rate as a fraction; a rise from 10% to 12% is 0.02, or 2 percentage points. ARPU, customer population and ramp periods must align.'
+   WHY: 
+   -> REQ-PB-057 SOURCE Seed the two source benefit formula examples | cites
+   -> REQ-S08-007 ENGINEERING Validate the revenue uplift example: attach rate stored as a fraction (10% to 12% is 0.02, 2 percentage points) with aligned ARPU, customer population | cites
+== M0179 9 CONTEXT :: '|Wave           |Purpose                               |Typical horizon|Entry                  |Exit evidence                               |'
+   WHY: Table header row of the wave table (Wave / Purpose / Typical horizon / Entry / Exit evidence); data rows M0180-M0183 map to REQ-PB-050.
+== M0181 9 REQUIREMENT :: '|Wave 1 Prove   |Quick wins, pilots, de-risking        |1–3 months     |Prioritized initiatives|Measured pilot results                      |'
+   WHY: 
+   -> REQ-PB-050 SOURCE Implement Template 7 Wave Roadmap with the four seeded source waves | cites
+== M0211 10 REQUIREMENT :: 'Map roles to named people or governed groups. Require one accountable assignment per deliverable unless a documented governance rule permits otherwise. Finance validates benefits even where the Business Owner remains accountable. Support authorized delegation with effective dates, absence handling and preserved audit identity; delegation must not create approval loops.'
+   WHY: 
+   -> REQ-PB-013 SOURCE Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role | cites
+   -> REQ-S10-008 USER Map roles to named people or governed groups | cites
+   -> REQ-S10-009 USER Require one accountable assignment per deliverable unless a documented governance rule permits otherwise | cites
+   -> REQ-S10-010 USER Support authorized delegation with effective dates, absence handling and preserved audit identity, never creating approval loops | cites
+   -> REQ-PB-067 SOURCE Implement Template 12 RACI with the six seeded deliverables and R/A/C/I values including A/R | cites
+== M0188 10 REQUIREMENT :: 'Access is scoped by organization, business unit, transformation and sensitive record where needed. Job title alone must not grant access across all transformations. Technical administrators do not automatically become business approvers. Enforce permissions on the server for records, files, APIs, exports, search and AI retrieval.'
+   WHY: 
+   -> REQ-S10-002 USER Scope access by organization, business unit, transformation and sensitive record so that job title alone never grants access across all transformation | cites
+   -> REQ-S10-003 USER Never make technical administrators business approvers automatically | cites
+   -> REQ-S10-004 ENGINEERING Enforce permissions on the server for records, files, APIs, exports, search and AI retrieval | cites
+   -> REQ-PB-013 SOURCE Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role | cites
+== M0197 10 REQUIREMENT :: 'Seed T11 decision rights:'
+   WHY: 
+   -> REQ-PB-065 SOURCE Implement Template 11 Decision Rights Matrix with the four seeded source rows | cites
+== M0201 10 REQUIREMENT :: '|Target-state design  |Design Owner                   |Business Owner|Tech, Ops, CX and Finance  |Transformation Office|10 working days             |'
+   WHY: 
+   -> REQ-PB-065 SOURCE Implement Template 11 Decision Rights Matrix with the four seeded source rows | cites
+   -> REQ-PB-066 SOURCE Compute T11 SLAs by type: working days, next forum or release plan | cites
+== M0217 11 REQUIREMENT :: 'Support continuous performance management after project delivery and after transformation closure. BAU handover must include accepted business owner and KPI owner, operating procedures, controls, evidence, capability readiness, unresolved accepted risks, benefit monitoring cadence, data access and improvement backlog. Capture receiving-owner acceptance.'
+   WHY: 
+   -> REQ-PB-083 SOURCE Hand over to BAU with ownership transfer, controls and control cadence | cites
+   -> REQ-S11-004 USER Support continuous performance management after project delivery and after transformation closure | cites
+   -> REQ-S11-005 USER Require the BAU handover to include accepted business owner and KPI owner, operating procedures, controls, evidence, capability readiness, unresolved  | cites
+   -> REQ-PB-084 SOURCE Maintain a continuous-improvement backlog | cites
+== M0218 11 REQUIREMENT :: 'A transformation cannot be marked successful solely because initiatives are complete. Show delivery complete, value validation pending, and BAU accepted as separate states. For benefits with a longer realization period, allow a documented transition decision with residual benefit ownership and scheduled monitoring; do not label forecast future value as already sustained.'
+   WHY: 
+   -> REQ-PB-009 SOURCE Apply 'Benefits before closure': an initiative is complete only when value is realized and sustained, not when delivered | cites
+   -> REQ-S11-006 USER Show delivery complete, value validation pending and BAU accepted as separate states so success is never inferred from initiative completion | cites
+   -> REQ-S11-007 USER Allow a documented transition decision for long-realization benefits with residual benefit ownership and scheduled monitoring, never labelling forecas | cites
+== M0240 12 REQUIREMENT :: 'Use durable background jobs, idempotency keys, bounded retries with backoff, transaction-safe event/outbox handling and an operational failure queue. Prevent duplicate reminders, actions and approvals after retries or restarts. Store scheduled runs and execution outcomes in the database. Expose last success, next run, failures and repair actions to authorized administrators.'
+   WHY: 
+   -> REQ-S12-020 ENGINEERING Use durable background jobs, idempotency keys, bounded retries with backoff, transaction-safe event/outbox handling and an operational failure queue | cites
+   -> REQ-S12-021 ENGINEERING Prevent duplicate reminders, actions and approvals after retries or restarts | cites
+   -> REQ-S12-022 USER Store scheduled runs and execution outcomes in the database and expose last success, next run, failures and repair actions to authorized administrator | cites
+== M0225 12 REQUIREMENT :: '|Reporting period opens or update is due     |Create owner tasks and in-app reminders with direct links                                               |'
+   WHY: 
+   -> REQ-S12-005 USER Starter automation: when a reporting period opens or an update is due, create owner tasks and in-app reminders with direct links | cites
+== M0238 12 REQUIREMENT :: '|Methodology or formula revision is proposed |Show impact, run validation and route the change for the configured review                              |'
+   WHY: 
+   -> REQ-S12-018 USER Starter automation: when a methodology or formula revision is proposed, show impact, run validation and route the change for the configured review | cites
+== M0247 13 REQUIREMENT :: '|Outcomes           |Baseline, actual, target, trajectory and trend              |Expected outcome trajectory                     |'
+   WHY: 
+   -> REQ-PB-062 SOURCE Implement Template 10 Executive Transformation Dashboard with its six source areas | cites
+   -> REQ-PB-063 SOURCE Apply the area-specific T10 RAG logic | cites
+== M0252 13 REQUIREMENT :: '|People and adoption|Usage, behavior and capability indicators                   |Adoption trajectory                             |'
+   WHY: 
+   -> REQ-PB-062 SOURCE Implement Template 10 Executive Transformation Dashboard with its six source areas | cites
+   -> REQ-PB-063 SOURCE Apply the area-specific T10 RAG logic | cites
+== M0258 14 REQUIREMENT :: '• Days 0–30 Diagnose and align: confirm sponsor, baseline, stakeholder interviews, journeys/processes, value pools and initial governance. Outputs: charter v0.9, diagnostic, baseline, issue tree and governance.'
+   WHY: 
+   -> REQ-PB-086 SOURCE Seed the 90-day launch plan as scheduled tasks relative to a start date | cites
+== M0274 14 REQUIREMENT :: '12. Can every initiative be traced to an outcome?'
+   WHY: 
+   -> REQ-PB-091 SOURCE Implement the 25-question Transformation Health Check with score and top 3 actions | cites
+== M0261 14 REQUIREMENT :: 'Convert this into editable scheduled tasks with owners, dependencies and required outputs. Preserve the Day-90 leadership test: shared case/North Star; initiative-to-gap/outcome traceability; clear decision rights; Finance agreement on baseline/formulas; pilot evidence; and visible executive support needed this month.'
+   WHY: 
+   -> REQ-PB-086 SOURCE Seed the 90-day launch plan as scheduled tasks relative to a start date | cites
+   -> REQ-PB-087 SOURCE Run the Day-90 leadership test | cites
+   -> REQ-S14-004 USER Generate the 90-day launch plan as editable scheduled tasks with owners, dependencies and required outputs, and re-date unstarted tasks when the start | cites
+== M0256 14 CONTEXT :: '14 Launch plan and health check'
+   WHY: Section heading §14; covered by REQ-PB-086/087/091/092 and REQ-S14-001..004.
+== M0279 14 REQUIREMENT :: '17. Are overdue decisions visible?'
+   WHY: 
+   -> REQ-PB-091 SOURCE Implement the 25-question Transformation Health Check with score and top 3 actions | cites
+== M0296 15 REQUIREMENT :: '|surface.card  |#FFFFFF      |Content surfaces                              |'
+   WHY: 
+   -> REQ-S15-002 USER Seed the provisional design tokens brand.primary #0078FF, brand.deep #003B73, surface.page #F5F8FC, surface.card #FFFFFF, text.primary #142438, text.s | cites
+== M0304 15 REQUIREMENT :: 'Support keyboard navigation, visible focus, labeled controls, screen-reader names, adequate contrast and non-color status cues. Tables need sorting, filtering, pagination and column selection. Explain business calculations in plain language. Keep infrastructure and software implementation details in administrator screens and documentation.'
+   WHY: 
+   -> REQ-S15-012 USER Support keyboard navigation, visible focus, labelled controls, screen-reader names, adequate contrast and non-colour status cues | cites
+   -> REQ-S15-013 USER Give data tables sorting, filtering, pagination and column selection | cites
+   -> REQ-S15-014 USER Explain business calculations in plain language and keep infrastructure and implementation details in administrator screens and documentation | cites
+== M0309 16 REQUIREMENT :: '• PostgreSQL for relational records, configuration, reporting snapshots and durable workflow state.'
+   WHY: 
+   -> REQ-S16-004 ENGINEERING Use PostgreSQL for relational records, configuration, reporting snapshots and durable workflow state | cites
+== M0314 16 REQUIREMENT :: 'Verify current official documentation, support windows, licenses and security maintenance before selecting exact dependency versions. Pin compatible versions and lockfiles. Keep mandatory services runnable within company-controlled infrastructure. Third-party licenses remain applicable; include a license inventory and flag any procurement requirement.'
+   WHY: 
+   -> REQ-S16-009 ENGINEERING Verify official documentation, support windows, licences and security maintenance before selecting dependency versions; pin versions with lockfiles; k | cites
+   -> REQ-DLV-042 ENGINEERING Install dependencies only inside an OS sandbox: the orchestrator's install step runs under bubblewrap with network limited to the package registry, a  | cites
+== M0315 16 REQUIREMENT :: 'Use typed relational tables for core entities and validated metadata/JSON structures for extensible custom fields and versioned forms. Avoid a single unvalidated JSON blob as the entire database.'
+   WHY: 
+   -> REQ-S16-010 ENGINEERING Use typed relational tables for core entities and validated metadata/JSON structures for extensible custom fields and versioned forms, never one unval | cites
+== M0319 16 REQUIREMENT :: '• DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome and StrategicGuardrail.'
+   WHY: 
+   -> REQ-S16-013 ENGINEERING Implement the diagnosis and direction entity group: DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail | cites
+== M0336 17 REQUIREMENT :: 'An optional in-app assistant can explain the playbook, draft charters/decision briefs, summarize authorized records, identify missing evidence and suggest recovery actions. It must cite the source records and versions used, respect the same permissions, and distinguish suggestions from approved facts. It cannot silently submit approvals, certify benefits, invent evidence or change financial values'
+   WHY: 
+   -> REQ-S17-007 USER Offer an optional in-app assistant that explains the playbook, drafts charters and decision briefs, summarizes authorized records, identifies missing  | cites
+   -> REQ-S17-008 USER Prevent the assistant from submitting approvals, certifying benefits, inventing evidence or changing financial values, and distinguish its suggestions | cites
+== M0333 17 CONTEXT :: '17 Integrations and optional AI assistance'
+   WHY: Section heading §17; covered by REQ-S17-001..011.
+== M0340 18 CONTEXT :: 'Preserve the source example:'
+   WHY: Lead-in 'Preserve the source example:'; the example elements are covered by REQ-PB-088 and REQ-PB-090.
+== M0345 18 REQUIREMENT :: '• Initiatives: pass architecture redesign, digital activation, proactive travel triggers, partner-cost optimization, QoS monitoring, care simplification and analytics.'
+   WHY: 
+   -> REQ-PB-088 SOURCE Seed the International Roaming worked example as clearly synthetic demo data | cites
+== M0350 19 CONTEXT :: '19 IT handover and migration package'
+   WHY: Section heading §19; covered by REQ-S19-001..019.
+== M0364 19 REQUIREMENT :: 'Exportability includes all business records, relationships, audit history, approvals, evidence files, configuration, formulas and report snapshots. A source ZIP or CSV-only export is insufficient by itself. Use a versioned migration manifest that preserves IDs and attachment links. Export portable business users/role mappings without improperly transferring corporate passwords; rebind corporate id'
+   WHY: 
+   -> REQ-S19-016 USER Export all business records, relationships, audit history, approvals, evidence files, configuration, formulas and report snapshots through a versioned | cites
+== M0398 20 REQUIREMENT :: 'Use a documented realistic load dataset. As provisional test targets, exercise 50 transformations, 1,000 initiatives, 10,000 KPI-period actuals, 100,000 audit events and 100 concurrent signed-in users. Aim for p95 ordinary reads/updates within 2 seconds and key dashboards within 4 seconds on specified infrastructure; define the tested workload and report actual results. Long exports run asynchrono'
+   WHY: 
+   -> REQ-S20-029 ENGINEERING Exercise a documented realistic load dataset against provisional targets (50 transformations, 1,000 initiatives, 10,000 KPI-period actuals, 100,000 au | cites
+   -> REQ-S20-030 ENGINEERING Run long exports asynchronously with visible progress | cites
+== M0367 20 CONTEXT :: '20 Acceptance tests and measurable definition of done'
+   WHY: Section heading §20; covered by REQ-S20-001..031.
+== M0397 20 REQUIREMENT :: '|A28|Final package integrity       |After the DG7 candidate review, seal the handover with all eight gate records, agent definitions, requirement coverage and findings; verify package integrity and keep these records distinct from product gates G1–G6. This post-approval sealing check must pass before delivery is declared complete|'
+   WHY: 
+   -> REQ-DLV-041 ENGINEERING Seal the DG7 release after approval: approve the frozen payload whose hash excludes review and gate metadata, append the DG7 gate record to the eviden | cites
+   -> REQ-S20-028 ENGINEERING Deliver and pass the executable acceptance test A28 Final package integrity | cites
+== M0374 20 REQUIREMENT :: '|A05|Calculation correctness       |Automated tests cover higher/lower/band measures, stale/missing values, zero denominator, percentage points, periods and currency/decimal precision                                                                                                                                                    |'
+   WHY: 
+   -> REQ-S20-005 ENGINEERING Deliver and pass the executable acceptance test A05 Calculation correctness | cites
+== M0396 20 REQUIREMENT :: '|A27|Reliable resumption           |Resume from a checkpoint; reconstruct current stage/tasks/evidence, reject stale reviews and continue without inventing approvals or requiring routine user confirmation                                                                                                                               |'
+   WHY: 
+   -> REQ-S20-027 ENGINEERING Deliver and pass the executable acceptance test A27 Reliable resumption | cites
+== M0419 21 NON-REQUIREMENT :: '• Claude Code subagents — project definitions, supported configuration and actual delegation.'
+   WHY: Reference-list entry (Claude Code subagents documentation); not a requirement.
+== M0402 21 CONTEXT :: '|Stage and gate                               |Implementation owners                                                                         |Concrete outputs                                                                                                                                                                                 |Evidence required before approval                               '
+   WHY: Table header row of the stage table; rows covered by REQ-DLV-032..039.
+== M0415 21 REQUIREMENT :: 'Begin now with P0. Read the source, establish real agents, create the delivery records, run independent reviews, fix findings and achieve DG0 before continuing. Continue automatically stage by stage under section 0 until the complete deliverable is verified or a precise external blocker prevents progress.'
+   WHY: 
+   -> REQ-DLV-027 ENGINEERING Continue automatically through DG0-DG7 without routine user confirmation, while real business approvals, production access, release authorization and  | cites
+   -> REQ-DLV-032 ENGINEERING Deliver the P0 outputs and evidence: full source extraction, field/template inventory, glossary, requirement IDs, user journeys, stage plan, agent def | cites
+== M0420 21 NON-REQUIREMENT :: '• Claude Code Agent Teams — optional team mode and its current limitations.'
+   WHY: Reference-list entry (Claude Code Agent Teams documentation); not a requirement.

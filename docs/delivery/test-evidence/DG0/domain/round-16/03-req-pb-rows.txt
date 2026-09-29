@@ -1,0 +1,930 @@
+#### REQ-PB-001 SOURCE DG5 | Label the methodology provenance honestly as a practical synthesis inspired by PMI/Brightline/BRM and never claim official PMI status | src B0004;B0024;B0155;B0156;M0089 | tpl 
+  input_fields: Provenance statement (verbatim B0004);Source (PMI Organizational Transformation Series; Brightline Initiative / Transformation Compass; PMI Benefits Realization Management);Used for
+  procedure: System displays the verbatim provenance statement in the Playbook reader, About page and generated report footers; the source-foundations table (Source / Used for) is shown read-only in the Playbook reader
+  output: Provenance notice and source-foundations view
+  owner_roles: ADM;TO
+  permissions: edit-text:ADM(methodology admin, via versioned publish); view:all signed-in users
+  automation: none
+  acceptance: A01: provenance text on reader/About/report footer matches B0004 verbatim; an automated text scan of UI strings (en+ar) and report templates finds no claim of 'official PMI standard', 'PMI certified' or equivalent
+  increments: P1;P5
+  notes: Playbook (B0004, B0024, B0155, B0156): the provenance statement and the source-foundations table (Source / Used for). Master-prompt additions (§2): showing the statement in the reader, the About page and report footers, and the automated scan for claims of official PMI status or certification. Interpretations: none beyond where the statement is displayed. The Arabic rendering of the statement needs linguistic review.
+#### REQ-PB-002 SOURCE DG5 | Mark custom extensions of the playbook distinctly from PMI/Brightline-derived foundations | src B0154;B0157;B0158;B0159;B0160;B0161;B0162;M0089 | tpl 
+  input_fields: Custom extension items: 6-phase integrated methodology;10-dimension Target Operating Model;stage-gate structure and most practical templates;initiative scoring model;governance cadence;30-60-90 launch plan;health check;worked roaming example;traceability chain
+  procedure: Each seeded methodology element (phases, TOM dimensions, gates, templates, scoring model, cadence, launch plan, health check, roaming example, traceability chain) carries a provenance attribute 'custom extension (playbook v1.0)' shown as a badge in the Playbook reader and Studio
+  output: Provenance attribute on methodology elements
+  owner_roles: ADM;TO
+  permissions: edit:ADM(versioned publish only); view:all signed-in users
+  automation: none
+  acceptance: A01: every seeded element listed in B0158-B0162 returns provenance=custom-extension from the API and renders the badge in en and ar; no such element is labelled as a PMI standard
+  increments: P2;P5
+  notes: Playbook (B0154, B0157-B0162): the list of custom extensions. Master-prompt additions: none; §2 M0089 restates the practical-synthesis distinction, and the provenance badge is how the platform displays the source list. Interpretations: B0160 says 'most practical templates', so the platform tags all of T01-T16 as custom extensions unless an admin records otherwise.
+#### REQ-PB-003 SOURCE DG2 | Offer the two source usage modes End-to-End and Modular when creating or entering a transformation | src B0007;B0008;B0009;M0083;M0093;M0094;M0095;M0125 | tpl 
+  input_fields: Mode (choice: End-to-End | Modular);When to use;How;Entry phase (Modular only)
+  procedure: User creating a transformation selects a mode; the form shows the source 'When to use' and 'How' guidance for each mode; Modular requires an entry phase
+  output: Transformation record with mode and entry phase
+  owner_roles: TL;TO
+  permissions: create:TL,TO; edit-mode:TL,TO(before G1 approval; later via change request); view:scoped
+  automation: Transformation created -> instantiate phase checklist for the selected mode
+  acceptance: A01;A03: API accepts mode End-to-End or Modular only; Modular without entry phase is rejected with a validation error; guidance text shows 'Run Phases 1-6 sequentially...' and 'Enter at the relevant phase...' verbatim
+  increments: P1;P2
+  notes: Playbook (B0007-B0009): the two modes with their 'When to use' and 'How' text, preserved verbatim. Master-prompt additions (§3 M0095; §4 M0125): Modular enters an existing transformation at a selected phase, so a Modular transformation records its entry phase; a material change to an approved scope goes through an impact assessment and reapproval. Interpretations: a change of mode after G1 approval is treated as such a material change (the listed material changes do not name the mode), so it needs a change request. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.)
+#### REQ-PB-004 SOURCE DG3 | Enforce End-to-End sequencing: no initiative launch before North Star, outcomes and target state are clear | src B0009;M0094;M0125 | tpl 
+  input_fields: Mode;G2 Direction approval state;G3 Target State approval state;Initiative launch request
+  procedure: Drafting is allowed at any time; the initiative launch/execution transition is blocked in End-to-End mode until G2 (North Star, outcomes) and G3 (target state) are approved or an authorized waiver is recorded
+  output: Blocked/allowed launch transition with reason
+  owner_roles: TL;SP
+  permissions: launch-initiative:TL after G2+G3 approved; waiver:SP (recorded, never automatic); view:scoped
+  automation: Gate approved -> enable next phase actions
+  acceptance: A02;A08: in an End-to-End transformation with G3 not approved, POST launch returns 409 with reason 'North Star, outcomes and target state not yet approved'; after G2 and G3 approval the same call succeeds
+  increments: P2;P3
+  notes: Playbook (B0009): 'Do not launch initiatives before the North Star, outcomes and target state are clear.' Master-prompt additions (§3 M0094, §4 M0125): drafts are allowed at any time, and an authorized waiver can stand in for a gate. Interpretations: 'launch' is the transition that authorizes execution, and 'clear' means G2 and G3 are approved.
+#### REQ-PB-005 SOURCE DG4 | Support Modular entry at a chosen phase or as a standalone TOM, business case or benefits register and flag missing links to outcomes and benefits | src B0008;B0009;M0095 | tpl 
+  input_fields: Entry phase;Standalone deliverable type (Target Operating Model | initiative business case | benefits register);Inherited evidence;Minimum mandatory templates;Links to outcomes;Links to benefits
+  procedure: User enters at the relevant phase, completes the minimum mandatory templates, and reconnects to outcomes and benefits; the system lists missing upstream links and never marks earlier gates approved without recorded evidence
+  output: Modular transformation or standalone deliverable with missing-link report
+  owner_roles: TL;TO;BO
+  permissions: create:TL,TO; edit:TL,TO,BO(owned records); view:scoped
+  automation: Missing mandatory evidence -> display missing items and block gate submission
+  acceptance: A03: a transformation entering at Design with no baseline and no outcome links shows both as missing and G3 submission is rejected by the API until they are supplied or an authorized waiver exists
+  increments: P2;P3;P4
+  notes: Playbook (B0008, B0009): Modular entry at the relevant phase; the standalone deliverables (TOM, initiative business case, benefits register); completing the minimum mandatory templates and reconnecting to outcomes and benefits. Master-prompt additions (§3 M0095): the missing-link report, and earlier gates are never marked approved without recorded evidence. Interpretations: the minimum mandatory templates per phase are configurable, with defaults set in Playbook Studio.
+#### REQ-PB-006 SOURCE DG3 | Apply 'Outcome before activity': initiatives cannot be submitted for prioritization without a linked measurable outcome | src B0011 | tpl 
+  input_fields: Initiative;Linked outcome(s);Linked KPI(s)
+  procedure: When an initiative is submitted to the prioritization scorecard or to G4 evidence, the system checks for at least one linked outcome with a KPI
+  output: Validation result on initiative submission
+  owner_roles: WL;TL
+  permissions: submit:WL,TL; view:scoped
+  automation: none
+  acceptance: A01: submitting an initiative with no outcome/KPI link returns a validation error naming 'Outcome before activity'; the same initiative with a link is accepted
+  increments: P3
+  notes: Playbook (B0011): the principle 'Outcome before activity'. Master-prompt additions: none. Interpretations: enforcing it as a validation when an initiative is submitted to prioritization or to G4; the source states the principle, not the checkpoint. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.)
+#### REQ-PB-007 SOURCE DG3 | Apply 'Current state before solution': require a diagnostic covering economics, customer, operations, capability and technology before initiatives are prescribed | src B0012;M0094 | tpl 
+  input_fields: T01 diagnostic rows by dimension;Initiative
+  procedure: In End-to-End mode, initiatives created before the G1 diagnostic is approved stay in Draft; the diagnostic readiness shows which of the diagnosed areas are missing
+  output: Readiness indicator and draft-only initiative status
+  owner_roles: TL;TO
+  permissions: create-draft:WL,TL; promote:TL after G1; view:scoped
+  automation: none
+  acceptance: A01;A02: before G1 approval an initiative cannot leave Draft (API 409); readiness lists missing diagnostic dimensions
+  increments: P2;P3
+  notes: Playbook (B0012): the principle 'Current state before solution' and its five diagnosed areas. Master-prompt additions (§3 M0094): drafts may be prepared at any time, but required gate approvals are enforced before authorized execution. Interpretations: initiatives stay in Draft until G1 is approved, and the readiness indicator lists the diagnosed areas still missing. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.)
+#### REQ-PB-008 SOURCE DG4 | Apply 'Operating model before execution': decision rights, ownership and cross-functional ways of working are explicit before execution | src B0013 | tpl 
+  input_fields: Charter decision rights;T11 Decision Rights Matrix;T12 RACI;Owners
+  procedure: Execution-phase readiness (Transform) checks that the charter's decision rights are filled, T11 has at least the seeded decisions with an Approve role, and T12 has an accountable role per deliverable
+  output: Transform-phase readiness result
+  owner_roles: TL;TO
+  permissions: view:scoped; edit:TL,TO
+  automation: none
+  acceptance: A01: readiness for Transform shows 'not ready' when T11 or charter decision rights are empty and 'ready' once they are completed
+  increments: P2;P4
+  notes: Playbook (B0013): the principle 'Operating model before execution'. Master-prompt additions: none. Interpretations: the specific Transform readiness checks (charter decision rights filled, T11 seeded decisions with an Approve role, T12 one accountable role per deliverable); the source states the principle only. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.)
+#### REQ-PB-009 SOURCE DG4 | Apply 'Benefits before closure': an initiative is complete only when value is realized and sustained, not when delivered | src B0014;M0218;M0092 | tpl 
+  input_fields: Delivery status;Value realization status;Sustainment status
+  procedure: Initiatives carry separate delivery, value-realization and sustainment statuses; closure requires validated benefits and sustainment owner or a documented transition decision
+  output: Separate statuses; closure only when value conditions met
+  owner_roles: WL;BO;FIN
+  permissions: set-delivery:WL; validate-value:FIN; accept-sustain:BO; close:TL; view:scoped
+  automation: none
+  acceptance: A11: an initiative with delivery=Complete and no validated benefit cannot be closed (API 409); UI shows 'Delivered — value validation pending'
+  increments: P3;P4
+  notes: Playbook (B0014): the principle 'Benefits before closure'. Master-prompt additions (§3 M0092, §11 M0218): separate delivery, value-realization and sustainment statuses, and the documented transition decision. Interpretations: the closure rule (validated benefits plus a sustainment owner, or a transition decision), enforced as API 409.
+#### REQ-PB-010 SOURCE DG4 | Apply 'One source of truth': keep the charter, roadmap, initiative portfolio and benefits register linked as canonical records | src B0015;M0150 | tpl 
+  input_fields: Charter;Roadmap;Initiative portfolio;Benefits register
+  procedure: Charter, roadmap, portfolio and benefits register reference the same canonical records (no copies); editing an initiative updates its roadmap and benefits views
+  output: Linked canonical records
+  owner_roles: TO;TL
+  permissions: edit:record owners; view:scoped
+  automation: none
+  acceptance: A01: renaming an initiative changes it in roadmap, scorecard and benefits register views in one update; no duplicate initiative rows exist in the database
+  increments: P2;P3;P4
+  notes: Playbook (B0015): keep the charter, roadmap, initiative portfolio and benefits register linked. Master-prompt additions (§5 M0150): the records are canonical and referenced, not copied. Interpretations: none.
+#### REQ-PB-011 SOURCE DG5 | Show the four guiding questions and tag each deliverable with the question it answers | src B0016 | tpl 
+  input_fields: Question (Why change? | What must become different? | How will we execute? | How will we prove value?);Deliverable type
+  procedure: Each methodology template/deliverable carries one of the four questions, shown in form headers and the Playbook reader
+  output: Question tag on deliverable definitions
+  owner_roles: ADM;TO
+  permissions: edit:ADM(methodology admin); view:all signed-in users
+  automation: none
+  acceptance: A01: all four questions render verbatim (en) with ar translations; every seeded template has exactly one question tag
+  increments: P2;P5
+  notes: Playbook (B0016): the four guiding questions. Master-prompt additions: none. Interpretations: mapping each template to exactly one question; the source gives the rule, not the mapping, so the seeded mapping is an analyst default. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.)
+#### REQ-PB-012 SOURCE DG2 | Seed the six minimum governance roles with their source accountabilities and assign them per transformation | src B0017;B0018;M0187 | tpl 
+  input_fields: Role (Executive Sponsor | Transformation Lead | Business Owners | Workstream Leads | Finance / Value Office | Transformation Office);Accountability;Assigned person or governed group;Scope
+  procedure: Admin seeds roles; Transformation Lead/Office assign named people to roles per transformation; accountability text shown on the role assignment
+  output: Role catalogue and per-transformation role assignments
+  owner_roles: TO;TL;ADM
+  permissions: assign:TO,TL; manage-catalogue:ADM; view:scoped; note:ADM cannot grant business approvals
+  automation: Transformation created -> create role-assignment tasks
+  acceptance: A12: a user assigned Workstream Lead on transformation X cannot read transformation Y; role accountability text matches B0018
+  increments: P1;P2
+  notes: Playbook (B0017, B0018): the six minimum governance roles and their accountability text. Master-prompt additions (§10 M0187): the implementation roles KDS, TD, CM/SEC, AUD and ADM; per-transformation scoped assignment; ADM cannot grant business approvals. Interpretations: none.
+#### REQ-PB-013 SOURCE DG4 | Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role | src B0018;B0084;M0174;M0211;M0188;M0234;M0330 | tpl 
+  input_fields: Baseline validation status;Benefit logic validation status;Realized value validation status;Validator;Validation date
+  procedure: Only users holding FIN on the transformation can mark a baseline, benefit formula or realized value as validated; others can submit for validation
+  output: Validation decisions with validator identity
+  owner_roles: FIN;BO
+  permissions: submit:BO,WL,KDS; validate:FIN only; view:scoped
+  automation: Benefit evidence submitted -> route to Finance validation queue
+  acceptance: A10;A12: a Business Owner calling the validate endpoint receives 403; a Finance user succeeds and the audit event records validator identity
+  increments: P2;P3;P4
+  notes: Playbook (B0018, B0084): Finance / Value Office validates the baseline, benefit logic and value realization, early and not after delivery. Master-prompt additions (§8 M0174; §10 M0188, M0211; §12 M0234; §16 M0330): validation is exclusive to FIN and enforced on the server (403 for anyone else), routed through a validation queue, and audited with the validator's identity. Interpretations: none.
+#### REQ-PB-014 SOURCE DG4 | Model the six phases with name, purpose, key outputs and phase objective | src B0020;B0021;B0027;B0046;B0054;B0068;B0091;B0119;M0083;M0116 | tpl 
+  input_fields: Phase number;Phase name (DIAGNOSE | DEFINE | DESIGN | MOBILIZE | TRANSFORM | REALIZE);Purpose (Establish fact base | Set direction | Create target state | Build execution portfolio | Execute & govern | Prove & sustain value);Key outputs;Objective
+  procedure: Each transformation shows its current phase, the phase purpose, source objective text and key outputs with completion status
+  output: Phase workspace per transformation
+  owner_roles: TL;TO
+  permissions: advance-phase:via gate approval only; view:scoped
+  automation: Gate approved -> enable next phase and create its tasks
+  acceptance: A01;A02: API returns exactly six phases in order with names and purposes matching B0021; each phase page shows its objective text
+  increments: P1;P2;P3;P4
+  notes: Playbook (B0020, B0021, B0027, B0046, B0054, B0068, B0091, B0119): the six phases with name, purpose, key outputs and objective. Master-prompt additions (§4 M0116): a phase advances only through gate approval, and the next phase's tasks are created. Interpretations: none.
+#### REQ-PB-015 SOURCE DG4 | Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required | src B0022;B0023;B0160;M0083;M0116;M0124;M0213 | tpl 
+  input_fields: Gate (G1 - Case for Change | G2 - Direction | G3 - Target State | G4 - Mobilization | G5 - Scale | G6 - Sustain);Decision question;Evidence required;Submission;Approver;Decision;Rationale
+  procedure: Owner assembles evidence, submits the gate; approver records decision against the evidence snapshot; gates are never inferred from task completion
+  output: Gate approval record tied to evidence snapshot
+  owner_roles: TL;SP;TO
+  permissions: submit:TL; approve:SP (or configured approver); view:scoped; ADM cannot approve
+  automation: Valid gate submission -> route evidence snapshot to approvers
+  acceptance: A08: submission with missing mandatory evidence is rejected; approval by a non-approver returns 403; approval of a stale submission version is rejected
+  increments: P2;P3;P4
+  notes: Playbook (B0022, B0023, B0160): six gates with a decision question and the evidence required. The source names no gate approver. Master-prompt additions (§4 M0116, M0124; §10 M0213): explicit approval records tied to an evidence snapshot and never inferred from task completion; approval by a non-approver, or of a stale version, is rejected; ADM cannot approve. Interpretations: the default approver is the Executive Sponsor (B0018 'approves major trade-offs'), configurable per gate. Where T11 (B0099) names the decision a gate embodies, the gate can be configured to that approver: G3 per 'Target-state design' and G5 per 'Go-live / scale' (REQ-PB-018, REQ-PB-020). Gate workflow states and waivers are USER rows (REQ-S04-010, REQ-S04-013).
+#### REQ-PB-016 SOURCE DG2 | G1 Case for Change: require diagnostic, baseline, root causes and value pools as gate evidence | src B0023;M0118;M0125;M0228 | tpl 
+  input_fields: Diagnostic;Baseline;Root causes;Value pools
+  procedure: G1 checklist auto-links T01, baseline records and value pools; missing items block submission
+  output: G1 evidence checklist
+  owner_roles: TL;SP;FIN
+  permissions: submit:TL; approve:SP; view:scoped
+  automation: Mandatory gate evidence missing -> block submission
+  acceptance: A08: G1 submission without any value pool record returns a validation error listing 'Value pools'
+  increments: P2
+  notes: Playbook (B0023): the G1 evidence (diagnostic, baseline, root causes, value pools). Master-prompt additions (§4 M0125, §12 M0228): submission is blocked while mandatory evidence is missing. Interpretations: the checklist links T01, baseline records and value-pool records as the evidence items.
+#### REQ-PB-017 SOURCE DG2 | G2 Direction: require North Star, outcome tree, KPI definitions and guardrails as gate evidence | src B0023;M0119;M0125 | tpl 
+  input_fields: North Star;Outcome tree;KPI definitions;Guardrails
+  procedure: G2 checklist links North Star, T02 tree, KPI definitions and guardrails; missing items block submission
+  output: G2 evidence checklist
+  owner_roles: TL;SP
+  permissions: submit:TL; approve:SP; view:scoped
+  automation: Mandatory gate evidence missing -> block submission
+  acceptance: A08: G2 submission without guardrails is rejected listing 'Guardrails'
+  increments: P2
+  notes: Playbook (B0023): the G2 evidence (North Star, outcome tree, KPI definitions, guardrails). Master-prompt additions (§4 M0125): submission is blocked while mandatory evidence is missing. Interpretations: none.
+#### REQ-PB-018 SOURCE DG2 | G3 Target State: require Target Operating Model, capability gaps and future journeys as gate evidence | src B0023;M0120;M0125 | tpl 
+  input_fields: Target Operating Model;Capability gaps;Future journeys
+  procedure: G3 checklist links TOM canvas/T03, capability gaps and future journeys; missing items block submission
+  output: G3 evidence checklist
+  owner_roles: TL;BO;SP
+  permissions: submit:TL; approve:SP or BO per T11 'Target-state design'; view:scoped
+  automation: Mandatory gate evidence missing -> block submission
+  acceptance: A08: G3 submission with no future journey record is rejected listing 'Future journeys'
+  increments: P2
+  notes: Playbook (B0023): the G3 evidence (Target Operating Model, capability gaps, future journeys). Master-prompt additions (§4 M0125): submission is blocked while mandatory evidence is missing. Interpretations: the approver. B0023 names no gate approver; the default is SP, configurable to BO per T11 'Target-state design' (B0099).
+#### REQ-PB-019 SOURCE DG3 | G4 Mobilization: require initiative cards, business cases, roadmap, owners and capacity as gate evidence | src B0023;M0121;M0125 | tpl 
+  input_fields: Initiative cards;Business cases;Roadmap;Owners;Capacity
+  procedure: G4 checklist links T05 cards, business cases, T07 roadmap, owners and capacity records; missing items block submission
+  output: G4 evidence checklist
+  owner_roles: TL;SP;FIN
+  permissions: submit:TL; approve:SP; view:scoped
+  automation: Mandatory gate evidence missing -> block submission
+  acceptance: A08: G4 submission where an initiative has no owner is rejected listing 'Owners'
+  increments: P3
+  notes: Playbook (B0023): the G4 evidence (initiative cards, business cases, roadmap, owners, capacity). Master-prompt additions (§4 M0125): submission is blocked while mandatory evidence is missing. Interpretations: none.
+#### REQ-PB-020 SOURCE DG4 | G5 Scale: require performance evidence, adoption, risk closure and decision log as gate evidence | src B0023;M0122;M0125 | tpl 
+  input_fields: Performance evidence;Adoption;Risk closure;Decision log
+  procedure: G5 checklist links pilot/performance evidence, adoption indicators, closed or dispositioned risks and T16 entries
+  output: G5 evidence checklist
+  owner_roles: TL;SP;BO
+  permissions: submit:TL; approve:SP (default) or BO per T11 'Go-live / scale' (configurable per gate); view:scoped
+  automation: Mandatory gate evidence missing -> block submission
+  acceptance: A08;A11: G5 submission with an open High-impact risk and no disposition is rejected listing 'Risk closure'; with the G5 approver configured to BO per T11 'Go-live / scale', an SP approval returns 403 and a BO approval succeeds
+  increments: P4
+  notes: Playbook (B0023): the G5 evidence (performance evidence, adoption, risk closure, decision log). Master-prompt additions (§4 M0122, M0125): 'risk closure' is met by closed risks or approved dispositions, and submission is blocked while mandatory evidence is missing. Interpretations: (1) The approver. B0023 names no gate approver. The default is SP (B0018 'approves major trade-offs'); it can be configured to BO per T11 'Go-live / scale' (B0099), in the same way as G3 in REQ-PB-018 (AN-05, finding F-DG0-002). G5 is the transformation-level gate. T11 'Go-live / scale' decisions on individual initiatives are separate decision records (Recommend: initiative owner; Approve: BO; Consult: Risk/Tech/CX; Inform: SteerCo) that feed G5's decision-log evidence. (2) 'High-impact' as the materiality threshold in the acceptance.
+#### REQ-PB-021 SOURCE DG4 | G6 Sustain: require benefits evidence, ownership transfer, controls and continuous improvement backlog as gate evidence | src B0023;M0123;M0125;M0412 | tpl 
+  input_fields: Benefits evidence;Ownership transfer;Controls;Continuous improvement backlog
+  procedure: G6 checklist links validated benefit evidence, accepted BAU handover, controls and the CI backlog
+  output: G6 evidence checklist
+  owner_roles: TL;SP;BO;FIN
+  permissions: submit:TL; approve:SP; view:scoped
+  automation: Mandatory gate evidence missing -> block submission
+  acceptance: A08;A11: G6 submission without an accepted BAU handover is rejected listing 'Ownership transfer'
+  increments: P4
+  notes: Playbook (B0023): the G6 evidence (benefits evidence, ownership transfer, controls, continuous-improvement backlog). Master-prompt additions (§4 M0125, §21 M0412): submission is blocked while mandatory evidence is missing, and product G6 never implies engineering gate DG7. Interpretations: none.
+#### REQ-PB-022 SOURCE DG3 | Enforce the Gate 1 rule: no list of projects proceeds until leadership agrees on problem, baseline and material value pools | src B0032 | tpl 
+  input_fields: Leadership agreement on problem;Leadership agreement on baseline;Material value pools
+  procedure: G1 approval records explicit leadership agreement on problem, baseline and material value pools; before G1 approval (End-to-End) initiatives stay Draft and cannot enter the portfolio
+  output: G1 decision with agreement flags
+  owner_roles: SP;TL
+  permissions: approve:SP; view:scoped
+  automation: none
+  acceptance: A08;A02: G1 approval without the three agreement confirmations is rejected; pre-G1, adding an initiative to the portfolio returns 409
+  increments: P2;P3
+  notes: Playbook (B0032): do not proceed with a list of projects until the leadership team agrees on the problem, baseline and material value pools. Master-prompt additions: none. Interpretations: the agreement is recorded as three confirmations on the G1 decision, and before G1 (End-to-End) initiatives stay Draft and cannot enter the portfolio.
+#### REQ-PB-023 SOURCE DG2 | Organize the diagnostic into the six source workstreams with key questions and typical outputs | src B0029 | tpl 
+  input_fields: Workstream (Business & Financial | Customer | Process & Operations | Organization & Governance | Technology & Data | Capability);Key questions;Typical outputs
+  procedure: Diagnose workspace lists the six workstreams with their key questions; users attach outputs (e.g. Baseline P&L bridge, value pools, trend analysis; journey pain points; process map; RACI gaps; architecture pain points; capability heatmap) as linked records or evidence
+  output: Diagnostic workstream records with linked outputs
+  owner_roles: TL;WL;TO
+  permissions: edit:TL,WL(assigned),TO; view:scoped
+  automation: none
+  acceptance: A01: the six workstreams and their key questions are seeded verbatim; an output linked to a workstream is persisted and shown in the G1 pack
+  increments: P2
+  notes: Playbook (B0029): the six workstreams with their key questions and typical outputs, seeded verbatim. Master-prompt additions: none. Interpretations: outputs are attached as linked records or evidence and shown in the G1 pack.
+#### REQ-PB-024 SOURCE DG2 | Provide an editable capability heatmap with build/buy/partner needs | src B0029;B0021;M0147 | tpl 
+  input_fields: Capability;Current level;Target level;Gap;Build/buy/partner need;Owner
+  procedure: Users rate capabilities current vs target and record build/buy/partner need; gaps link to T03 and initiatives
+  output: Capability heatmap
+  owner_roles: BO;TL;WL
+  permissions: edit:BO,TL; view:scoped
+  automation: none
+  acceptance: A01: a capability with a gap can be linked to a TOM gap row; heatmap renders from persisted ratings in en and ar
+  increments: P2
+  notes: Playbook (B0029, B0021): the capability heatmap with build/buy/partner needs. Master-prompt additions (§5 M0147): an owner, and links from capability gaps to T03 and to initiatives. Interpretations: the current/target rating scale, which the source does not give.
+#### REQ-PB-025 SOURCE DG2 | Provide journey and process maps capturing pain points, cycle time and failure demand | src B0029;B0021;B0056;M0147 | tpl 
+  input_fields: Journey/process name;Steps;Actors;Handoffs;Systems;Controls;Pain points;Cycle time;Failure demand;Current or future state
+  procedure: Users build current and future journey/process maps; future journeys serve as G3 evidence
+  output: Journey/process maps
+  owner_roles: BO;WL;TL
+  permissions: edit:BO,WL,TL; view:scoped
+  automation: none
+  acceptance: A01: a future-state journey is linkable as G3 evidence; pain points link to T01 rows
+  increments: P2
+  notes: Playbook (B0029, B0021, B0056, B0023): journeys and processes with pain points, cycle time and failure demand; future journeys are G3 evidence. Master-prompt additions (§5 M0147): the steps, actors, handoffs, systems and controls fields. Interpretations: pain points link to T01 rows.
+#### REQ-PB-026 SOURCE DG2 | Implement Template 1 Current-State Diagnostic as a native register | src B0030;B0031;M0129;M0090 | tpl T01
+  input_fields: Dimension;Current state;Evidence / baseline;Root cause;Impact;Confidence
+  procedure: Register pre-seeded with dimensions Financial, Customer, Process, People / Org, Technology, Data; users fill each row; Confidence is H / M / L; Impact accepts SAR or KPI
+  output: T01 diagnostic register
+  owner_roles: TL;WL;FIN;TO
+  permissions: create/edit:TL,WL,TO; comment:FIN,BO; view:scoped
+  automation: none
+  acceptance: A01: T01 form persists all 6 source columns; the six dimensions are pre-seeded; Confidence outside H/M/L is rejected by the API
+  increments: P2
+  notes: Playbook (B0030, B0031): T01's six columns, the six seeded dimensions, Confidence H / M / L and Impact as SAR or KPI. Master-prompt additions (§2 M0090): server-side validation, which rejects Confidence values outside H/M/L. Interpretations: none.
+#### REQ-PB-027 SOURCE DG2 | Record measurable baselines with metric, source and baseline date | src B0023;B0031;B0035;B0042;B0085;M0149;M0159;M0174 | tpl 
+  input_fields: Baseline metric;Value;Unit;Source;Baseline date;Scope (Revenue | cost | customer | operational | capability);Validation status
+  procedure: Users record baselines referenced by T01, T02, T09, T14 and the business case; Finance validates; unvalidated baselines are labelled
+  output: Baseline records
+  owner_roles: TL;KDS;FIN
+  permissions: create/edit:TL,KDS; validate:FIN; view:scoped
+  automation: none
+  acceptance: A01;A05: a baseline without a value or source is flagged 'not measurable'; a missing baseline shows Unknown, never zero
+  increments: P2
+  notes: Playbook (B0023, B0031, B0035, B0042, B0085): measurable baselines with metric and source, and a baseline date. Master-prompt additions (§5 M0149, §7 M0159, §8 M0174): a separate baseline registry (extension), a Finance validation status, and Unknown (never zero) when a baseline is missing. Interpretations: none.
+#### REQ-PB-028 SOURCE DG2 | Record value pools quantified by driver with upside and downside | src B0021;B0023;B0029;B0032;B0085;M0118;M0149 | tpl 
+  input_fields: Value pool;Driver;Upside;Downside;Currency (SAR);Materiality;Evidence;Confidence
+  procedure: Users quantify value pools by driver; material pools are flagged for G1 agreement; unquantified pools are labelled explicitly
+  output: Value-pool register
+  owner_roles: TL;FIN;WL
+  permissions: create/edit:TL,WL; validate:FIN; view:scoped
+  automation: none
+  acceptance: A01: a value pool without quantification is shown as 'unquantified', not zero; material pools appear in the G1 pack
+  increments: P2
+  notes: Playbook (B0021, B0023, B0029, B0032, B0085): value pools quantified by driver with upside and downside; material pools are G1 evidence. Master-prompt additions (§5 M0149, §4 M0118): the value-pool register (extension), and 'unquantified' labelling instead of zero. Interpretations: none.
+#### REQ-PB-029 SOURCE DG2 | Implement the Transformation Charter as a first-class record with all 14 source fields | src B0034;B0035;M0146;M0127 | tpl CHARTER
+  input_fields: Transformation name;Executive sponsor;Transformation lead;Case for change;North Star;In scope;Out of scope;Baseline date;Target horizon;Top 3-5 outcomes;Strategic guardrails;Governance forum;Decision rights;Success definition
+  procedure: TL drafts the charter from the transformation workspace, links outcomes and guardrails, versions it, and submits it with G1/G2 evidence
+  output: Versioned transformation charter
+  owner_roles: TL;SP;BO;FIN
+  permissions: create/edit:TL; approve:SP (RACI A); consult:BO,FIN; view:scoped
+  automation: none
+  acceptance: A01: the charter form persists all 14 fields; Baseline date is a valid date; a saved change creates a new charter version with history retained
+  increments: P1;P2
+  notes: Playbook (B0034, B0035): the 14 charter fields. Master-prompt additions (§5 M0127): versioning with retained history. Interpretations: none. The transformation name is created in P1 and the full charter in P2.
+#### REQ-PB-030 SOURCE DG2 | Capture the transformation thesis in its four-part causal sentence | src B0036;B0037;M0146 | tpl CHARTER
+  input_fields: Capabilities / journeys / operating model changed;Customer/operational outcomes improved;Financial/strategic benefits created;Evidence / causal logic
+  procedure: Charter includes a structured thesis; the system renders 'If we change ..., then ... will improve, which will create ..., because ...'
+  output: Thesis statement on the charter
+  owner_roles: TL;SP
+  permissions: edit:TL; approve:SP (with charter); view:scoped
+  automation: none
+  acceptance: A01: thesis with any of the four parts empty is flagged incomplete; rendered sentence matches the source structure
+  increments: P2
+  notes: Playbook (B0036, B0037): the four-part thesis sentence. Master-prompt additions: none; §5 M0146 restates the thesis sentence. Interpretations: a thesis with any part empty is flagged incomplete.
+#### REQ-PB-031 SOURCE DG2 | Run the five scope sanity checks on the charter | src B0038;B0039;B0040;B0041;B0042;B0043;M0146 | tpl CHARTER
+  input_fields: Is scope tied to outcomes rather than departments?;Can each major scope item be traced to a diagnosed problem or opportunity?;Are explicit exclusions documented?;Is the baseline measurable?;Are executive decisions required to unblock the transformation visible?;Response;Evidence
+  procedure: Charter shows the five checks; system pre-evaluates checks it can (exclusions present, baseline measurable, scope items linked to T01) and users confirm the rest with evidence
+  output: Scope sanity check result on the charter
+  owner_roles: TL;SP
+  permissions: respond:TL; view:scoped
+  automation: none
+  acceptance: A01: all five questions render verbatim; an empty Out of scope field makes 'Are explicit exclusions documented?' fail
+  increments: P2
+  notes: Playbook (B0038-B0043): the five questions, verbatim. Master-prompt additions (§5 M0146): the five scope sanity checks are part of the native charter record. Interpretations: the response values (Yes/No/Partial), which neither source gives, and the system's pre-evaluation of the checks it can compute. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.)
+#### REQ-PB-032 SOURCE DG3 | Model the outcome hierarchy from North Star to strategic outcomes, KPIs, targets and initiative contribution | src B0047;B0048;M0130 | tpl T02
+  input_fields: Level (North Star | Strategic Outcomes | KPIs | Targets | Initiative Contribution);Definition;Example
+  procedure: Users build a linked tree; initiatives link to outcomes with a contribution statement
+  output: Outcome hierarchy tree
+  owner_roles: TL;BO;KDS
+  permissions: edit:TL,BO; view:scoped
+  automation: none
+  acceptance: A01: tree nodes for all five levels persist and link; an initiative contribution without an outcome link is rejected
+  increments: P2;P3
+  notes: Playbook (B0047, B0048): the five levels from North Star to initiative contribution. Master-prompt additions: none; §5 M0130 restates the hierarchy from North Star to initiative contributions. Interpretations: an initiative contribution without an outcome link is rejected.
+#### REQ-PB-033 SOURCE DG2 | Hold exactly one current North Star per transformation, stated as one concise sentence | src B0035;B0048 | tpl 
+  input_fields: North Star
+  procedure: The North Star is edited on the charter and shown at the top of the outcome tree and transformation header
+  output: North Star
+  owner_roles: TL;SP
+  permissions: edit:TL; approve:SP; view:scoped
+  automation: none
+  acceptance: A01: creating a second active North Star for the same transformation returns 409; the transformation header shows the North Star
+  increments: P2
+  notes: Playbook (B0035, B0048): the North Star is one concise sentence describing the future outcome. Master-prompt additions: none. Interpretations: exactly one current North Star per transformation, so a second active one is rejected (409).
+#### REQ-PB-034 SOURCE DG2 | Implement Template 2 Outcome & KPI Tree as a native register | src B0049;B0050;B0048;M0130 | tpl T02
+  input_fields: Outcome;KPI;Baseline;Target;Target date;Owner;Leading indicator
+  procedure: Users enter each outcome with its KPI, baseline, target, target date, owner and leading indicator; rows link into the outcome hierarchy
+  output: T02 outcome and KPI tree
+  owner_roles: TL;BO;KDS
+  permissions: create/edit:TL,BO,KDS; view:scoped
+  automation: none
+  acceptance: A01: T02 persists all 7 source columns; a row without Target date is rejected (targets are time-bound per B0048)
+  increments: P2
+  notes: Playbook (B0049, B0050, B0048): T02's seven columns; targets are time-bound. Master-prompt additions: none; §5 M0130 restates T02's columns. Interpretations: Target date is mandatory (from 'time-bound' in B0048).
+#### REQ-PB-035 SOURCE DG2 | Warn when the charter does not hold 3-5 top outcomes | src B0035 | tpl CHARTER
+  input_fields: Top 3-5 outcomes (Outcome + KPI + target)
+  procedure: Charter counts linked top outcomes and shows a warning below 3 or above 5; G2 readiness shows the count
+  output: Outcome count warning
+  owner_roles: TL
+  permissions: view:scoped
+  automation: none
+  acceptance: A01: a charter with 2 top outcomes shows the warning; with 4 it does not
+  increments: P2
+  notes: Playbook (B0035): 'Top 3-5 outcomes'. Master-prompt additions: none. Interpretations: '3-5' is read as guidance, so a count outside it warns rather than blocks. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.)
+#### REQ-PB-036 SOURCE DG2 | Apply the good outcome test to every outcome | src B0051 | tpl T02
+  input_fields: Specific;Measurable;Strategically relevant;Owned by a business leader;Achievable through a defined causal chain
+  procedure: Each outcome shows the five criteria; system checks measurable (KPI linked), owned (owner set) and flags statements that are only 'launch', 'implement' or 'deliver'
+  output: Outcome quality result
+  owner_roles: TL;BO
+  permissions: edit:TL,BO; view:scoped
+  automation: none
+  acceptance: A01: an outcome worded 'Launch new app' with no KPI fails the test with reasons; G2 readiness lists failing outcomes
+  increments: P2
+  notes: Playbook (B0051): the five criteria and the 'not just launch, implement or deliver' wording. Master-prompt additions: none. Interpretations: the automated checks (KPI linked, owner set) and the keyword flagging; neither source specifies how the test is evaluated. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.)
+#### REQ-PB-037 SOURCE DG2 | Record strategic guardrails as non-negotiables | src B0035;B0021;B0023;M0125 | tpl CHARTER
+  input_fields: Guardrail;Category (regulatory | CX | capex | risk | brand | other);Statement
+  procedure: Users list guardrails on the charter; guardrails are G2 evidence
+  output: Guardrail records
+  owner_roles: TL;SP
+  permissions: edit:TL; approve:SP; view:scoped
+  automation: none
+  acceptance: A01;A08: guardrails persist with category; G2 cannot be submitted with zero guardrails
+  increments: P2
+  notes: Playbook (B0035, B0021, B0023): guardrails are non-negotiables with the category examples, and are G2 evidence. Master-prompt additions (§4 M0125): G2 cannot be submitted with zero guardrails. Interpretations: the source's examples, plus 'other', form the category list.
+#### REQ-PB-038 SOURCE DG2 | Seed the 10 TOM dimensions with their design questions | src B0055;B0056;B0159;M0083;M0147;M0154 | tpl TOM-CANVAS
+  input_fields: Dimension (1. Customer & Value Proposition | 2. Products & Services | 3. Journeys & Processes | 4. Organization | 5. Governance & Decision Rights | 6. People & Capabilities | 7. Technology | 8. Data & Analytics | 9. Partners & Sourcing | 10. Performance Management);Design question
+  procedure: System seeds the ten dimensions as stable identifiers with labels and design questions; dimensions cannot be deleted
+  output: TOM dimension catalogue
+  owner_roles: ADM;TO
+  permissions: edit-labels:ADM; view:all signed-in users
+  automation: none
+  acceptance: A01: API returns exactly the ten dimensions with design questions matching B0056
+  increments: P2
+  notes: Playbook (B0055, B0056, B0159): the ten dimensions and their design questions. Master-prompt additions (§6 M0154): stable identifiers that cannot be deleted. Interpretations: none.
+#### REQ-PB-039 SOURCE DG2 | Implement Template 3 TOM Gap Matrix as a native register | src B0057;B0058;M0131;M0090 | tpl T03
+  input_fields: TOM dimension;Current state;Target state;Gap;Design decision;Owner
+  procedure: Users add gap rows per dimension, link design decisions (T04) and owners
+  output: T03 TOM gap matrix
+  owner_roles: BO;TL;WL
+  permissions: create/edit:TL,BO; view:scoped
+  automation: none
+  acceptance: A01: T03 form persists all 6 source columns; a TOM gap row without a dimension is rejected by the API
+  increments: P2
+  notes: Playbook (B0057, B0058): T03's six columns. Master-prompt additions (§2 M0090): server-side validation, which rejects a gap row without a dimension. Interpretations: none.
+#### REQ-PB-040 SOURCE DG3 | Keep the TOM distinct from the project portfolio | src B0059;M0147 | tpl 
+  input_fields: TOM gap;Initiative (vehicle);Link
+  procedure: TOM records describe the future operating state; initiatives are a separate entity linked as vehicles to TOM gaps; G3 evidence can't be satisfied by initiatives
+  output: Separate TOM and initiative entities with links
+  owner_roles: BO;TL
+  permissions: view:scoped(SP,TL,BO,WL,FIN,TO,KDS,TD,CM,SEC,AUD)
+  automation: none
+  acceptance: A01: attaching an initiative as G3 TOM evidence is rejected; an initiative links to one or more TOM gaps
+  increments: P2;P3
+  notes: Playbook (B0059): a project portfolio is not a TOM; initiatives are the vehicles. Master-prompt additions: none; §5 M0147 restates that a list of projects is not the target operating model. Interpretations: attaching an initiative as G3 TOM evidence is rejected, and initiatives link to TOM gaps.
+#### REQ-PB-041 SOURCE DG2 | Implement the Target Operating Model Canvas with the ten source boxes and prompts | src B0061;B0062;M0147 | tpl TOM-CANVAS
+  input_fields: CUSTOMER & VALUE (Segments / needs / promise / experience principles);PRODUCTS & SERVICES (Portfolio / bundles / pricing / service model);JOURNEYS & PROCESSES (Critical E2E journeys / automation / controls);ORGANIZATION (Structure / role clarity / accountability);GOVERNANCE (Decision rights / forums / escalation);PEOPLE & CAPABILITY (Skills / capacity / incentives / behaviors);TECHNOLOGY (Platforms / architecture / integration);DATA & ANALYTICS (Sources / ownership / insight / AI / measurement);PARTNERS & SOURCING (Partner model / vendors / build-buy-partner);PERFORMANCE (KPIs / benefits / management cadence / CI)
+  procedure: Users write target-state design per box (rich text) with the source prompts as help; each box maps to one of the ten TOM dimensions
+  output: Versioned TOM canvas
+  owner_roles: BO;TL
+  permissions: edit:BO,TL; approve:BO (per T11 Target-state design); view:scoped
+  automation: none
+  acceptance: A01: the canvas shows ten boxes with source prompts; content persists per box and maps to the matching dimension
+  increments: P2
+  notes: Playbook (B0061, B0062): the ten canvas boxes with their prompts; BO approves per T11 'Target-state design' (B0099). Master-prompt additions: none; §5 M0147 restates the ten dimensions. Interpretations: rich-text content per box, and each box mapped to one TOM dimension.
+#### REQ-PB-042 SOURCE DG2 | Support the TOM canvas workshop and convert unresolved items into design decisions with owners | src B0063;M0147 | tpl TOM-CANVAS
+  input_fields: Workshop date;Duration (90-120 minutes);Business owner participants;Agenda;Contributions;Unresolved items;Resulting design decision or action;Owner
+  procedure: Facilitator publishes an agenda and runs a workshop session with business owners, capturing contributions per dimension; each unresolved item is converted in one action into a T04 design decision with owner (source) or an owned action (extension)
+  output: Workshop record and generated design decisions
+  owner_roles: TL;BO
+  permissions: facilitate:TL; contribute:BO,WL; view:scoped
+  automation: Unresolved item converted -> create T04 decision with owner
+  acceptance: A01: converting an unresolved item creates a T04 row linked to the workshop with owner set; an item without an owner cannot be converted; converting an item to an action creates an owned action linked to the workshop; the workshop cannot be closed while unresolved items remain unconverted
+  increments: P2
+  notes: Source-grounded core (cited B blocks). AN-04 consolidation: absorbs former REQ-S05-004 (Run the facilitated 90-120-minute TOM workshop mode with agenda, captured contributions and conversion of unresolved items into decisions or actions); its anchors M0147 and acceptance are carried here. The agenda, per-dimension contribution capture, conversion into actions and the no-close-with-unconverted-items rule are master prompt §5 additions (M0147), not playbook content; the 90-120-minute workshop with business owners and conversion into design decisions with owners is source (B0063).
+#### REQ-PB-043 SOURCE DG2 | Implement Template 4 Design Decision Log as a native register | src B0064;B0065;M0132;M0150 | tpl T04
+  input_fields: ID;Decision required;Options;Recommendation;Decision owner;Due;Status
+  procedure: Users record design decisions with options (A / B / C), recommendation, owner and due date; Status defaults to Open
+  output: T04 design decision log
+  owner_roles: BO;TL;WL
+  permissions: create:TL,WL; decide:Decision owner; view:scoped
+  automation: none
+  acceptance: A01: T04 persists all 7 columns; IDs are generated as D-01, D-02...; a new decision has Status Open
+  increments: P2
+  notes: Playbook (B0064, B0065): T04's seven columns, IDs D-01, D-02…, Options A / B / C and Status Open. Master-prompt additions (§5 M0150): one decision model shared with T16. Interpretations: none.
+#### REQ-PB-044 SOURCE DG4 | Maintain the traceability chain from diagnosed issue to benefit with a view and orphan report | src B0069;B0070;B0162;M0097;M0098 | tpl 
+  input_fields: Diagnosed issue;Target-state gap;Initiative;Deliverable;Capability change;KPI movement;Benefit
+  procedure: Records link along the chain; a traceability view shows each path and an orphan report lists records missing an upstream or downstream link
+  output: Traceability view and orphan report
+  owner_roles: TO;TL
+  permissions: view:scoped(SP,TL,BO,WL,FIN,TO,KDS,TD,CM,SEC,AUD)
+  automation: none
+  acceptance: A01: an initiative without a TOM gap appears in the orphan report; clicking a node opens the linked record
+  increments: P2;P3;P4
+  notes: Playbook (B0069, B0070, B0162): the traceability chain. Master-prompt additions (§3 M0098): the orphan report and clickable nodes. Interpretations: none.
+#### REQ-PB-045 SOURCE DG3 | Implement Template 5 Initiative Card as a native record | src B0071;B0072;M0133 | tpl T05
+  input_fields: Initiative name;Executive owner;Workstream lead;Problem / gap addressed;Objective;Scope;Key deliverables;Outcome/KPI contribution;Financial benefit;Customer benefit;Dependencies;Risks;Milestones;Required decisions
+  procedure: WL drafts the card; Problem / gap addressed references diagnostic/TOM gaps; Dependencies, Risks and Required decisions reference canonical T08/T15/T16 records
+  output: T05 initiative card
+  owner_roles: WL;TL;BO
+  permissions: create/edit:WL,TL; approve:BO (RACI A for Initiative Delivery); view:scoped
+  automation: none
+  acceptance: A01: T05 persists all 14 source fields; Key deliverables outside 3-7 shows a warning
+  increments: P3
+  notes: Playbook (B0071, B0072): the 14 initiative-card fields; BO is accountable (A) for Initiative Delivery in T12 (B0101). Master-prompt additions: none; §5 M0133 restates the card fields. Interpretations: '3-7 deliverables' is a guidance range, so it warns rather than blocks.
+#### REQ-PB-046 SOURCE DG3 | Require every initiative to be traced to a target-state gap and an outcome | src B0072;B0070;M0125 | tpl T05
+  input_fields: Problem / gap addressed;Outcome/KPI contribution
+  procedure: Submission of an initiative for G4 requires at least one TOM/diagnostic gap link and one outcome/KPI link
+  output: Validated initiative links
+  owner_roles: WL;TL
+  permissions: submit:WL,TL; view:scoped
+  automation: none
+  acceptance: A01;A08: G4 submission containing an initiative with no gap link is rejected naming that initiative
+  increments: P3
+  notes: Playbook (B0072, B0070): every initiative references a diagnostic/TOM gap and an outcome/KPI contribution. Master-prompt additions (§4 M0125): the rule is enforced as mandatory G4 evidence. Interpretations: the check runs when G4 is submitted.
+#### REQ-PB-047 SOURCE DG3 | Implement Template 6 Prioritization Scorecard as a native register | src B0074;B0075;B0076;M0134 | tpl T06
+  input_fields: Initiative;Strategic fit (25%);Financial value (25%);Customer impact (20%);Feasibility (15%);Time-to-value (15%);Weighted score
+  procedure: Scorers enter 1-5 per criterion for each initiative; Weighted score is calculated; ranked table shown
+  output: T06 scorecard and ranking
+  owner_roles: TL;WL;FIN;TO
+  permissions: score:TL,TO,FIN(financial value); propose-rank:TL; view:scoped
+  automation: Score changed -> recalculate weighted score
+  acceptance: A01: T06 persists all criteria per initiative; Weighted score is read-only (calculated)
+  increments: P3
+  notes: Playbook (B0074-B0076): T06's criteria, weights and calculated weighted score. Master-prompt additions: none; §5 M0134 restates T06's criteria, weights and weighted result. Interpretations: which roles may score (for example, FIN scores financial value).
+#### REQ-PB-048 SOURCE DG3 | Apply T06 default weights 25/25/20/15/15 with a 1-5 scale and a calculated weighted score | src B0076;M0134;M0176 | tpl T06
+  input_fields: Strategic fit weight 25%;Financial value weight 25%;Customer impact weight 20%;Feasibility weight 15%;Time-to-value weight 15%;Score 1-5
+  procedure: Weighted score = sum(score x weight) on the 1-5 scale; scores outside 1-5 rejected; missing score marks the row incomplete
+  output: Weighted score per initiative
+  owner_roles: TL;TO
+  permissions: view:scoped
+  automation: Score changed -> recalculate
+  acceptance: A01;A05: scores 5,4,3,2,1 give 3.30 (decimal, exact); a score of 6 is rejected; a missing score shows 'incomplete', not a numeric total
+  increments: P3
+  notes: Playbook (B0076): the weights 25/25/20/15/15, the 1-5 scale and a calculated weighted score. Master-prompt additions (§9 M0176): weighted score = sum(score × weight), giving a 1-5 result, and a missing score means incomplete, not zero. Interpretations: none.
+#### REQ-PB-049 SOURCE DG3 | Adjust T06 weights per transformation, including risk/compliance replacing part of the weighting, with a 100% total check and versioned weight sets | src B0077;M0176 | tpl T06
+  input_fields: Transformation;Criterion;Weight;Risk/compliance criterion;Weight-set version;Effective from
+  procedure: Authorized users propose an adjusted weight set for a transformation, optionally with a risk/compliance criterion that replaces part of the weighting; the server rejects any set whose weights do not total 100%; an approved set becomes a new immutable version, earlier versions are kept, and every scoring and ranking records the weight-set version it used
+  output: Versioned per-transformation weight set
+  owner_roles: TL;SP
+  permissions: propose:TL; approve:SP; view:scoped
+  automation: Weight set approved -> rescore and record the version as the cause of rank changes
+  acceptance: A01;A05;A07: saving weights totalling 95% (or 105%) is rejected with a validation error; a risk/compliance criterion at 10% with strategic fit reduced to 15% is accepted as weight-set version 2 and rescoring uses it; scores computed under version 1 keep their version-1 reference; the REQ-S09-005 ranking history can name 'weight version 2' as the cause of a rank change
+  increments: P3
+  notes: Playbook (B0077): adjust weights to the transformation context; for regulated or safety-critical transformations, risk/compliance can replace part of the weighting. Master-prompt additions (§9 M0176): weights must total 100%, and approved weights are versioned. Interpretations: weight sets are per transformation and approved by SP. AN-05 split (finding F-DG0-001): this row keeps the per-transformation adjustment, the 100% check and weight-set versioning. The DG3 evidence 'invalid weights … handled' (M0406) and REQ-S09-005 (DG3) need these, so the row completes at DG3 (was P3;P5/DG5). Administrator-configured defaults and rubrics in Playbook Studio are now REQ-PB-093 (DG5). AN-04 consolidation: absorbs former REQ-S09-002 (Make scoring rubrics and approved weights configurable and versioned); its anchor M0176 is carried here, and its Studio part moved to REQ-PB-093.
+#### REQ-PB-050 SOURCE DG3 | Implement Template 7 Wave Roadmap with the four seeded source waves | src B0078;B0079;M0135;M0178;M0180;M0181;M0182;M0183 | tpl T07
+  input_fields: Wave;Purpose;Typical horizon;Entry criteria;Exit evidence
+  procedure: Seed Wave 0 — Mobilize (0-6 weeks), Wave 1 — Prove (1-3 months), Wave 2 — Scale (3-9 months), Wave 3 — Embed (6-18 months) with source purpose, entry criteria and exit evidence; initiatives are assigned to waves with dates
+  output: T07 wave roadmap and timeline
+  owner_roles: TL;WL;TO
+  permissions: edit:TL,TO; assign-initiative:TL; view:scoped
+  automation: none
+  acceptance: A01: four waves seeded with values verbatim (e.g. '0-6 weeks', 'Sponsor + charter'); overlapping horizons are accepted
+  increments: P3
+  notes: Playbook (B0078, B0079): the four waves with purpose, typical horizon, entry criteria and exit evidence, seeded verbatim. Master-prompt additions (§5 M0135; §9 M0178, M0180-M0183): T07 links initiatives, dates and milestones to each wave, and the four source waves (restated in M0180-M0183) are seeded as overlapping planning horizons, not rigid deadlines, which is why overlapping horizons are accepted. Interpretations: none.
+#### REQ-PB-051 SOURCE DG3 | Implement Template 8 Dependency Map as a native register | src B0080;B0081;M0136;M0184;M0232 | tpl T08
+  input_fields: Dependency;From;To;Type;Needed by;Owner;Status / mitigation
+  procedure: Users record dependencies between initiatives or from External; Needed by is a date; dependency is the same canonical record referenced by RAID Dependency entries
+  output: T08 dependency map
+  owner_roles: WL;TL;TO
+  permissions: create/edit:WL,TL,TO; view:scoped
+  automation: Critical dependency slips -> notify owners
+  acceptance: A01: T08 persists all 7 columns; From accepts an initiative or 'External'; a cycle A->B->A is reported
+  increments: P3
+  notes: Playbook (B0080, B0081): T08's seven columns, with From as an initiative or External. Master-prompt additions (§9 M0184, §12 M0232): cycle detection, and notifying owners when a critical dependency slips. Interpretations: the T08 record is the canonical record that RAID Dependency entries reference (see B0126, REQ-PB-078).
+#### REQ-PB-052 SOURCE DG3 | Support T08 dependency types Decision, Tech, Data and Vendor plus configurable types | src B0081;M0136 | tpl T08
+  input_fields: Type (Decision | Tech | Data | Vendor | configured)
+  procedure: Type is a choice seeded with Decision / Tech / Data / Vendor; admins may add types
+  output: Dependency type list
+  owner_roles: ADM;TO
+  permissions: configure:ADM; view:all
+  automation: none
+  acceptance: A01: the four source types are present and cannot be deleted; an unknown type value is rejected by the API
+  increments: P3
+  notes: Playbook (B0081): the types Decision / Tech / Data / Vendor. Master-prompt additions (§5 M0136): admins can add further (configurable) types. Interpretations: the four source types cannot be deleted.
+#### REQ-PB-053 SOURCE DG3 | Implement the Transformation Business Case with all ten source sections | src B0083;B0085;M0148;M0329 | tpl BIZCASE
+  input_fields: Strategic rationale;Baseline;Value pools;Interventions;Investment;Benefits;Timing;Risks & sensitivities;Ownership;Decision ask
+  procedure: TL drafts the case; Investment split into Capex, opex, internal FTE, vendor cost, opportunity cost; Benefits into revenue uplift, cost reduction, avoidance, working capital, strategic/non-financial; Timing records benefit ramp, one-off vs recurring and implementation horizon; Risks & sensitivities records key assumptions and downside/upside cases; Ownership names benefit owner, initiative owner and Finance validator; Decision ask names Funding / policy / resource / prioritization
+  output: Versioned business case
+  owner_roles: TL;FIN;SP;BO
+  permissions: create/edit:TL; co-author:FIN (R per RACI); approve:SP (A per RACI); view:scoped
+  automation: none
+  acceptance: A01: all ten sections persist; an investment line must carry one classification (Capex|opex|internal FTE|vendor cost|opportunity cost); SAR amounts stored as decimals
+  increments: P3
+  notes: Playbook (B0083, B0085): the ten sections and their content. Master-prompt additions (§5 M0148, §16 M0329): exactly one classification per investment line, and SAR amounts stored as decimals. Interpretations: none.
+#### REQ-PB-054 SOURCE DG3 | Support a transformation-level business case with lighter linked initiative cases | src B0084;M0148;M0173 | tpl BIZCASE
+  input_fields: Case level (Transformation | Initiative);Parent case
+  procedure: Initiative cases are lighter forms linked to the transformation case; roll-up references, not copies
+  output: Linked case hierarchy
+  owner_roles: TL;WL;FIN
+  permissions: create:TL(transformation),WL(initiative); view:scoped
+  automation: none
+  acceptance: A01;A10: an initiative case links to one transformation case; editing the initiative case changes the transformation roll-up without duplicating benefits
+  increments: P3
+  notes: Playbook (B0084): a transformation-level case, with lighter initiative cases underneath. Master-prompt additions (§8 M0173): the roll-up works by reference and never duplicates benefits. Interpretations: none.
+#### REQ-PB-055 SOURCE DG3 | Require Finance validation of baseline and benefit logic early, before G4, not after delivery | src B0084;B0139 | tpl BIZCASE
+  input_fields: Baseline validation;Benefit logic validation
+  procedure: A business case cannot be submitted as G4 evidence until Finance has validated its baseline and benefit formulas
+  output: Finance validation status on case
+  owner_roles: FIN;TL
+  permissions: validate:FIN; submit:TL; view:scoped
+  automation: Benefit evidence submitted -> Finance queue
+  acceptance: A08;A10: G4 submission with a business case whose benefit formula is unvalidated is rejected listing 'Finance validation'
+  increments: P3
+  notes: Playbook (B0084, B0139): Finance should validate the baseline and benefit logic 'early—not after delivery', and be aligned on baselines and benefit formulas by day 90. Master-prompt additions: none. Interpretations: 'early' becomes a hard rule: a business case cannot serve as G4 evidence until Finance has validated its baseline and benefit formulas (AN-05 relabelling, finding F-DG0-003).
+#### REQ-PB-056 SOURCE DG3 | Implement Template 9 Benefit Formula as a native register | src B0086;B0087;M0137;M0168 | tpl T09
+  input_fields: Benefit;Baseline driver;Change assumption;Formula;Ramp;Confidence
+  procedure: Users define each benefit's baseline driver, change assumption, formula, ramp (e.g. Q1-Q4) and Confidence H/M/L; formulas use a restricted expression language
+  output: T09 benefit formulas
+  owner_roles: WL;TL;FIN;KDS
+  permissions: create/edit:WL,TL; validate:FIN; view:scoped
+  automation: Formula changed -> recalc and impact preview
+  acceptance: A01: T09 persists all 6 columns; Confidence outside H/M/L is rejected; a formula referencing an undefined variable is rejected
+  increments: P3
+  notes: Playbook (B0086, B0087): T09's six columns, a ramp such as Q1-Q4, and Confidence H/M/L. Master-prompt additions (§8 M0168): a restricted expression language, which rejects undefined variables. Interpretations: none.
+#### REQ-PB-057 SOURCE DG3 | Seed the two source benefit formula examples | src B0087;M0169;M0170;M0171 | tpl T09
+  input_fields: Revenue uplift (Customers x attach rate x ARPU; Attach +X pp; Δ attach x customers x ARPU; Q1-Q4; M);Cost reduction (Volume x unit cost; Unit cost -X%; Volume x Δ unit cost; Q2-Q3; H)
+  procedure: Examples seeded as illustrative formulas; rates stored as fractions (percentage points distinct from percent)
+  output: Seeded formula examples
+  owner_roles: ADM;FIN
+  permissions: view:all; edit:ADM
+  automation: none
+  acceptance: A05: attach 0.10->0.12 with 100000 customers and ARPU 50 SAR yields 100000 SAR (decimal exact); cost example Volume x Δ unit cost computes exactly
+  increments: P3
+  notes: Playbook (B0087): the two example rows. Master-prompt additions (§8 M0169-M0171): rates are stored as fractions, and percentage points are distinct from percent. Interpretations: the numeric test values in the acceptance are fixtures, not Mobily data.
+#### REQ-PB-058 SOURCE DG4 | Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link | src B0088;M0173 | tpl T14
+  input_fields: Benefit ID;Owner;Baseline;Formula;Financial statement line or non-financial KPI;Parent benefit;Shared-benefit group;Contribution allocation
+  procedure: System rejects a benefit without a single owner, baseline, formula and a financial statement line or agreed non-financial KPI; initiatives link to canonical benefits via allocations, parent/child relationships and shared-benefit groups; portfolio totals sum canonical benefits, not links, so a shared benefit rolls up once
+  output: Validated, uniquely owned benefits
+  owner_roles: FIN;BO
+  permissions: create:BO,TL; validate:FIN; view:scoped
+  automation: none
+  acceptance: A10: a benefit with two owners is rejected; a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the portfolio total
+  increments: P3;P4
+  notes: Shared-benefit allocation rules detailed in master prompt §8. AN-04 consolidation: absorbs former REQ-S08-012 (Prevent double counting through a canonical benefit register, parent/child relationships, shared-benefit groups and contribution allocations so portfolio aggregation counts a shared benefit once); its anchors M0173 and acceptance are carried here. The canonical benefit register, parent/child relationships, shared-benefit groups and contribution allocations are the master prompt §8 mechanism (M0173); the unique owner, baseline, formula and statement/KPI link is source (B0088). Allocation limits: REQ-S08-013; overlap warnings: REQ-S08-014.
+#### REQ-PB-059 SOURCE DG3 | Record owners and capacity for mobilization | src B0021;B0023;B0079;M0149;M0177 | tpl 
+  input_fields: Initiative;Owner;Role;Capacity demand (FTE);Capacity available;Period
+  procedure: Users record owners and capacity per initiative/wave; capacity shortfalls are shown for G4 and Wave 2 entry
+  output: Resource/capacity plan
+  owner_roles: TL;WL;TO
+  permissions: edit:TL,WL; view:scoped
+  automation: none
+  acceptance: A01: a capacity demand exceeding availability shows a conflict indicator; G4 lists initiatives without owners
+  increments: P3
+  notes: Playbook (B0021, B0023, B0079): owners and capacity (Mobilize resourcing, G4 evidence, Wave 2 entry 'Evidence + capacity'). Master-prompt additions (§5 M0149, §9 M0177): the resource/capacity plan register (extension) and capacity-conflict indicators. Interpretations: none.
+#### REQ-PB-060 SOURCE DG4 | Seed the five transformation operating system layers with cadence, purpose, participants and outputs | src B0092;B0093;B0161;M0083;M0189;M0191;M0192;M0193;M0194;M0195;M0196;M0235 | tpl 
+  input_fields: Layer;Cadence;Purpose;Participants;Outputs
+  procedure: Seed Executive SteerCo (Monthly), Transformation Review (Bi-weekly), Workstream Review (Weekly), Rapid Response / Sprint (Daily / 2-3x week), Value Review (Monthly) as forums with recurrence and participants
+  output: Forum definitions and meeting series
+  owner_roles: TO;TL;SEC
+  permissions: configure:TO,ADM; attend:CM; record:SEC; view:scoped
+  automation: Meeting cut-off -> draft agenda
+  acceptance: A01: the five layers are seeded with cadence text verbatim; a forum meeting series generates meetings on the configured recurrence
+  increments: P4
+  notes: Playbook (B0092, B0093, B0161): the five layers with cadence, purpose, participants and outputs. Master-prompt additions (§10 M0196, §12 M0235): meetings generated on a configurable recurrence, and a draft agenda at the cut-off. Interpretations: none.
+#### REQ-PB-061 SOURCE DG4 | Produce each forum's source outputs as native meeting records | src B0093;M0191;M0192;M0193;M0194;M0195;M0212 | tpl 
+  input_fields: Forum;Meeting date;Decisions;Unblockers;Benefit view;Integrated status;Decision log;Milestones;Actions;RAID;Test;Evidence;Recommendation;Forecast;Corrective action
+  procedure: Meeting record captures the outputs defined for its layer (e.g. Value Review: benefit evidence, forecast, corrective action) linked to canonical records
+  output: Meeting records with linked outputs
+  owner_roles: SEC;CM;TL;FIN
+  permissions: record:SEC; approve-minutes:chair; view:scoped
+  automation: none
+  acceptance: A01: a Value Review meeting cannot be published without a benefit evidence or forecast entry; decisions recorded appear in T16
+  increments: P4
+  notes: Playbook (B0093): the outputs of each layer. Master-prompt additions (§10 M0212): outputs are native meeting records, and decisions recorded there flow into T16. Interpretations: publication is blocked until the layer's outputs are present, as a reading of the source 'Outputs' column. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.)
+#### REQ-PB-062 SOURCE DG4 | Implement Template 10 Executive Transformation Dashboard with its six source areas | src B0094;B0095;M0138;M0245;M0247;M0248;M0249;M0250;M0251;M0252;M0244 | tpl T10
+  input_fields: Area;What to show;RAG logic;Outcomes;Value;Portfolio;Dependencies;Decisions;People & adoption
+  procedure: Dashboard renders six areas from live canonical data with drill-down; each area shows what the source requires
+  output: T10 executive dashboard
+  owner_roles: SP;TL;TO
+  permissions: view:scoped(SP,TL,BO,WL,FIN,TO,AUD)
+  automation: Accepted KPI actual -> refresh dashboard
+  acceptance: A01;A04: all six areas render in en and ar from persisted data; each headline drills to contributing records
+  increments: P4
+  notes: Playbook (B0094, B0095): the six areas and what each one shows. Master-prompt additions (§13 M0244): the dashboard renders from live canonical data, with drill-down to contributing records. Interpretations: none.
+#### REQ-PB-063 SOURCE DG4 | Apply the area-specific T10 RAG logic | src B0095;M0138;M0160;M0245;M0247;M0248;M0249;M0250;M0251;M0252;M0159 | tpl T10
+  input_fields: Outcomes RAG (target trajectory, not activity completion);Value RAG (validated benefit gap);Portfolio RAG (milestone + outcome risk);Dependencies RAG (decision date / critical path);People & adoption RAG (vs adoption curve)
+  procedure: Each area computes status by its own rule; outcome RAG never uses task completion; missing data shows Unknown/Stale
+  output: Area RAG statuses with rule explanation
+  owner_roles: TL;KDS
+  permissions: override:authorized with reason (audited); view:scoped
+  automation: Accepted KPI actual -> recompute RAG
+  acceptance: A04;A05: an outcome whose tasks are 100% complete but KPI is below trajectory is Red/Amber, not Green; a KPI with no actual shows Unknown
+  increments: P4
+  notes: Playbook (B0095): the area-specific RAG logic, including 'not activity completion' for outcomes. Master-prompt additions (§7 M0159, M0160): Unknown/Stale for missing data, audited overrides with a reason, and RAG against the approved trajectory with configurable thresholds. Interpretations: the default threshold values, which neither source gives. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.) AN-04 resolution vs REQ-S07-007: 'never from task completion' governs KPI/outcome RAG; the Portfolio area's milestone component is source logic and is kept.
+#### REQ-PB-064 SOURCE DG4 | Show a Decisions area Red when an executive decision is overdue | src B0095;M0251;M0196;M0302 | tpl T10
+  input_fields: Decision needed;Owner;Due date;Impact of delay
+  procedure: Any open executive decision past its due date turns the Decisions area Red and lists the overdue item
+  output: Decisions area status
+  owner_roles: SP;TL
+  permissions: view:scoped
+  automation: Daily evaluation of decision due dates
+  acceptance: A09: with one open T16 decision due yesterday (Asia/Riyadh), Decisions area is Red and lists it; after the decision is recorded it no longer counts
+  increments: P4
+  notes: Playbook (B0095): 'Red if executive decision overdue'. Master-prompt additions (§10 M0196, §15 M0302): the rule is evaluated daily in the configured timezone (default Asia/Riyadh). Interpretations: none.
+#### REQ-PB-065 SOURCE DG4 | Implement Template 11 Decision Rights Matrix with the four seeded source rows | src B0098;B0099;M0139;M0197;M0199;M0200;M0201;M0202;M0231 | tpl T11
+  input_fields: Decision;Recommend;Approve;Consult;Inform;SLA
+  procedure: Seed Business scope change, Funding reallocation, Target-state design and Go-live / scale with source roles and SLAs (5 working days; Next SteerCo / urgent route; 10 working days; Per release plan); approvals route per the matrix
+  output: T11 decision rights matrix
+  owner_roles: TO;TL;SP
+  permissions: edit:TO,TL; approve-matrix:SP; view:scoped
+  automation: Decision SLA expires -> escalate
+  acceptance: A01: four rows seeded verbatim; a change request of type Business scope change routes approval to the Sponsor
+  increments: P4
+  notes: Playbook (B0098, B0099): the four decisions with Recommend / Approve / Consult / Inform and SLA, seeded verbatim. Master-prompt additions (§12 M0231): approvals are routed per the matrix, and an expired SLA escalates. Interpretations: none.
+#### REQ-PB-066 SOURCE DG4 | Compute T11 SLAs by type: working days, next forum or release plan | src B0099;M0196;M0199;M0200;M0201;M0202 | tpl T11
+  input_fields: SLA type (working days | Next SteerCo / urgent route | Per release plan);Working days
+  procedure: Working-day SLAs use the business calendar (Asia/Riyadh default); 'Next SteerCo / urgent route' resolves to the next scheduled SteerCo or an urgent route; 'Per release plan' uses the linked release date
+  output: Due date per decision
+  owner_roles: TO
+  permissions: configure-calendar:ADM; view:scoped
+  automation: Decision SLA expires -> escalate
+  acceptance: A09: a Business scope change raised Thursday gets a due date 5 working days later skipping the configured weekend days and holidays
+  increments: P4
+  notes: Playbook (B0099): the three SLA types (working days; Next SteerCo / urgent route; Per release plan). Master-prompt additions (§10 M0196): a configurable business calendar (default Asia/Riyadh) with workweek and holidays. Interpretations: how 'Next SteerCo / urgent route' and 'Per release plan' resolve to due dates.
+#### REQ-PB-067 SOURCE DG4 | Implement Template 12 RACI with the six seeded deliverables and R/A/C/I values including A/R | src B0100;B0101;M0140;M0203;M0205;M0206;M0207;M0208;M0209;M0210;M0211 | tpl T12
+  input_fields: Deliverable;Sponsor;Transformation Lead;Business Owner;Workstream Lead;Finance;Tech/Data
+  procedure: Seed Charter, Target Operating Model, Business Case, Initiative Delivery, Benefits Validation, BAU Handover with source letters; cells accept A, R, C, I or A/R; roles map to named people
+  output: T12 RACI
+  owner_roles: TO;TL
+  permissions: edit:TO,TL; approve:SP; view:scoped
+  automation: none
+  acceptance: A01: seeded RACI matches B0101 exactly; a cell value 'X' is rejected; 'A/R' is accepted
+  increments: P4
+  notes: Playbook (B0100, B0101): the six deliverables with their R/A/C/I values, including A/R. Master-prompt additions (§10 M0203, M0211): the source RACI is a configurable starting point, roles map to named people, and each deliverable has one accountable (REQ-S10-009). Interpretations: none.
+#### REQ-PB-068 SOURCE DG4 | Enforce the governance rule: escalate decisions, not status | src B0102;M0212 | tpl T16
+  input_fields: Decision required;Options;Recommendation;Impact of delay;Decision owner
+  procedure: An executive agenda item cannot be published unless it states all five elements
+  output: Validated executive agenda items
+  owner_roles: SEC;TL
+  permissions: create:TL,SEC; publish:chair; view:scoped
+  automation: none
+  acceptance: A09: publishing an agenda item missing 'Impact of delay' is rejected by the API
+  increments: P4
+  notes: Playbook (B0102): 'Escalate decisions, not status'; every executive agenda item 'should' state the five elements. Master-prompt additions (§10 M0212): executive asks require these elements, so an agenda item missing any of them is blocked from publication. Interpretations: none. (AN-08, finding F-DG0-006: the publication block was mislabelled as an interpretation.)
+#### REQ-PB-069 SOURCE DG4 | Manage adoption as an outcome with measurable leading indicators, separate from delivery | src B0105;M0216 | tpl 
+  input_fields: Adoption outcome;Adoption KPI;Adoption trajectory;Adoption actual;Intervention;Owner
+  procedure: Adoption has its own outcome, KPIs and status distinct from initiative delivery status; adoption KPIs use trajectories, and a gap beyond threshold creates one intervention with owner
+  output: Adoption outcomes and status
+  owner_roles: BO;TL
+  permissions: edit:BO,TL; view:scoped
+  automation: Adoption check fails -> create recovery action
+  acceptance: A11: an initiative with delivery Complete and adoption below trajectory shows adoption at risk and triggers an intervention; an adoption actual below trajectory creates exactly one intervention
+  increments: P4
+  notes: Source-grounded core (cited B blocks). AN-04 consolidation: absorbs former REQ-S11-003 (Track adoption actuals against adoption trajectories and create corrective interventions when gaps appear); its anchors M0216 and acceptance are carried here. Trajectory-based adoption tracking and the exactly-one-intervention rule are master prompt §11 additions (M0216); adoption as an outcome with leading indicators, separate from delivery, is source (B0105). Indicators: REQ-PB-071/072.
+#### REQ-PB-070 SOURCE DG4 | Implement Template 13 Stakeholder & Adoption Plan as a native register | src B0106;B0107;M0141;M0215 | tpl T13
+  input_fields: Stakeholder;Impact;Current stance;Required behavior;Intervention;Owner;Adoption KPI
+  procedure: Users record each stakeholder group; Impact H/M/L; Current stance Support / Neutral / Resist; Intervention Comms / training / involvement / incentive
+  output: T13 stakeholder and adoption plan
+  owner_roles: BO;WL;TL
+  permissions: create/edit:BO,WL,TL; view:scoped
+  automation: none
+  acceptance: A01: T13 persists all 7 columns; stance 'Hostile' is rejected; Intervention accepts the four source values
+  increments: P4
+  notes: Playbook (B0106, B0107): T13's seven columns and the value lists (H/M/L; Support / Neutral / Resist; Comms / training / involvement / incentive). Master-prompt additions: none in this row; §5 M0141 restates T13's columns, and the §11 M0215 additions (champions, communication/training actions, proficiency evidence, native feedback forms) are REQ-S11-001 and REQ-S11-002. Interpretations: the value lists are closed, so a stance of 'Hostile' is rejected.
+#### REQ-PB-071 SOURCE DG4 | Seed the seven leading adoption indicators | src B0108;B0109;B0110;B0111;B0112;B0113;B0114;B0115;M0216 | tpl 
+  input_fields: Usage / activation rate;Compliance with new process;Cycle-time shift;Training completion + observed proficiency;Decision turnaround time;Percentage of transactions handled through the new journey;Exception / workaround rate
+  procedure: Indicators are seeded as KPI templates attachable to adoption outcomes with actuals by period
+  output: Adoption indicator KPIs
+  owner_roles: BO;KDS
+  permissions: submit-actuals:KDS,BO; view:scoped
+  automation: Adoption check fails -> recovery action
+  acceptance: A11: all seven indicators are available by name; an actual below trajectory creates a corrective intervention
+  increments: P4
+  notes: Playbook (B0108-B0115): the seven leading adoption indicators. Master-prompt additions (§11 M0216): the indicators are KPI templates with actuals by period, and an actual below trajectory creates an intervention. Interpretations: none.
+#### REQ-PB-072 SOURCE DG4 | Track training completion and observed proficiency separately | src B0112;M0216;M0159 | tpl 
+  input_fields: Training completion;Observed proficiency;Assessor;Observation date
+  procedure: Proficiency is recorded by observation separately from completion; completion alone does not count as adoption
+  output: Separate training and proficiency measures
+  owner_roles: BO;WL
+  permissions: record:BO,WL; view:scoped
+  automation: none
+  acceptance: A11: 100% training completion with no proficiency observations shows proficiency Unknown, not adopted
+  increments: P4
+  notes: Playbook (B0112): 'Training completion + observed proficiency'. Master-prompt additions (§7 M0159; §11 M0216): missing proficiency observations show Unknown, and training attendance is distinguished from successful adoption, so completion alone never counts as adoption. Interpretations: completion and observed proficiency are recorded as two separate measures (the source joins them with '+').
+#### REQ-PB-073 SOURCE DG4 | Apply the people-centered principle: record impacted-team involvement in design and champion constraints | src B0116 | tpl 
+  input_fields: Impacted team;Involvement in design (workshop/decision);Champion;Constraint raised;Linked design decision
+  procedure: Design workshops and decisions record which impacted teams participated; champions can raise constraints that link to design decisions
+  output: Involvement records and champion constraints
+  owner_roles: BO;TL;WL
+  permissions: raise-constraint:champions(WL,BO); view:scoped
+  automation: none
+  acceptance: A01;A11: a champion's constraint links to a T04 decision and is visible on that decision
+  increments: P2;P4
+  notes: Playbook (B0116): involve impacted teams early in design; champions surface constraints and shape decisions. Master-prompt additions: none. Interpretations: participation is recorded on workshops and decisions, and champion constraints link to T04 design decisions, as a reading of 'surface constraints and shape decisions'. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.)
+#### REQ-PB-074 SOURCE DG4 | Implement the six-step benefits lifecycle Identify, Plan, Enable, Measure, Correct, Sustain | src B0120;B0121;M0083;M0166;M0234 | tpl 
+  input_fields: Step (Identify | Plan | Enable | Measure | Correct | Sustain);Question;Output (Benefit profile | Baseline, formula, target, owner | Benefit dependency chain | Evidence / actuals | Recovery plan | BAU owner + control cadence)
+  procedure: Each benefit progresses through the steps with the source output required per step
+  output: Benefit lifecycle state and outputs
+  owner_roles: BO;FIN;TL
+  permissions: advance:BO; validate:FIN; view:scoped
+  automation: Benefit evidence submitted -> Finance queue
+  acceptance: A04;A10;A11: a benefit cannot enter Measure without the Plan outputs; Sustain requires a BAU owner and control cadence
+  increments: P4
+  notes: Playbook (B0120, B0121): the six steps with their question and output. Master-prompt additions (§12 M0234): submitted benefit evidence is routed to the Finance queue. Interpretations: each step's outputs are preconditions (Measure needs the Plan outputs; Sustain needs a BAU owner and control cadence).
+#### REQ-PB-075 SOURCE DG4 | Implement Template 14 Benefits Register as a native register | src B0122;B0123;M0142;M0166;M0174 | tpl T14
+  input_fields: ID;Benefit;Type;Baseline;Target;Value (SAR);Realized;Owner;Evidence;Status
+  procedure: Users record benefits with Type (Revenue | Cost | CX | ...), Value (SAR) and Realized amounts, evidence source and Status R/A/G; IDs B01, B02...
+  output: T14 benefits register
+  owner_roles: BO;FIN;TL
+  permissions: create/edit:BO,TL; validate-realized:FIN; view:scoped
+  automation: Accepted KPI actual -> recompute realized (pending Finance)
+  acceptance: A10: T14 persists all 10 columns; realized value awaiting Finance validation is labelled pending and excluded from validated totals
+  increments: P4
+  notes: Playbook (B0122, B0123): T14's ten columns, IDs B01, B02… and Status R/A/G. Master-prompt additions (§8 M0166, M0174): realized value awaiting Finance validation is labelled pending and excluded from validated totals. Interpretations: none.
+#### REQ-PB-076 SOURCE DG4 | Allow non-financial benefits with Value (SAR) n/a and Realized expressed as KPI actual | src B0123;M0172;M0159 | tpl T14
+  input_fields: Type;Value (SAR) n/a;Realized [Actual]
+  procedure: For non-financial types (e.g. CX) Value (SAR) is n/a and Realized holds the KPI actual; no automatic monetization
+  output: Non-financial benefit rows
+  owner_roles: BO;FIN
+  permissions: edit:BO; view:scoped
+  automation: none
+  acceptance: A10: a CX benefit saved with Value n/a is excluded from SAR totals and not counted as zero
+  increments: P4
+  notes: Playbook (B0123): the CX row has Value (SAR) n/a and Realized [Actual]. Master-prompt additions (§8 M0172, §7 M0159): no automatic monetization, and exclusion from SAR totals rather than counting as zero. Interpretations: none.
+#### REQ-PB-077 SOURCE DG5 | Label the Realize phase as aligned with PMI BRM logic without claiming PMI standard status | src B0124;M0089 | tpl 
+  input_fields: Connection note (verbatim B0124)
+  procedure: The Realize phase guidance shows the note that it aligns with PMI Benefits Realization Management logic
+  output: Phase guidance label
+  owner_roles: ADM
+  permissions: edit:ADM; view:all
+  automation: none
+  acceptance: A01: Realize guidance shows 'aligns with PMI Benefits Realization Management logic' and no 'certified'/'official' wording
+  increments: P4;P5
+  notes: Playbook (B0124): the Realize phase aligns with PMI Benefits Realization Management logic. Master-prompt additions (§2 M0089): no 'certified' or 'official' wording. Interpretations: none. This is a labelling requirement.
+#### REQ-PB-078 SOURCE DG4 | Integrate RAID and decisions so dependencies and decisions are single canonical records | src B0126;M0150 | tpl 
+  input_fields: RAID entry;Dependency record;Decision record
+  procedure: RAID Dependency entries reference the canonical T08 dependency; design (T04) and executive (T16) decisions use one shared decision model with separate views
+  output: Integrated RAID and decision views
+  owner_roles: TO
+  permissions: view:scoped(SP,TL,BO,WL,FIN,TO,KDS,TD,CM,SEC,AUD)
+  automation: none
+  acceptance: A01: editing a dependency's owner in T08 changes the same RAID entry; there is no second copy
+  increments: P4
+  notes: Playbook (B0126): an integrated RAID and decision log. Master-prompt additions (§5 M0150): one decision model shared by T04 and T16, with separate views; the dependency map (T08) and RAID Dependency entries refer to the same canonical dependency record, so RAID references the T08 record rather than copying it. Interpretations: none.
+#### REQ-PB-079 SOURCE DG4 | Implement Template 15 RAID as a native register | src B0127;B0128;M0143;M0090 | tpl T15
+  input_fields: ID;Type;Description;Impact;Probability;Owner;Due;Mitigation / action;Status
+  procedure: Users log Risk, Assumption, Issue and Dependency entries (IDs R01, A01, I01, D01); Impact H/M/L; Status Open by default
+  output: T15 RAID log
+  owner_roles: WL;TL;TO
+  permissions: create/edit:WL,TL,TO; view:scoped
+  automation: none
+  acceptance: A01: T15 persists all 9 columns; Type outside Risk/Assumption/Issue/Dependency is rejected
+  increments: P4
+  notes: Playbook (B0127, B0128): T15's nine columns, ID prefixes R/A/I/D, Impact H/M/L and Status Open. Master-prompt additions (§2 M0090): server-side validation, which rejects an unknown Type. Interpretations: none.
+#### REQ-PB-080 SOURCE DG4 | Set T15 Probability to n/a for Assumption, Issue and Dependency entries | src B0128;M0143 | tpl T15
+  input_fields: Type;Probability
+  procedure: Probability is H/M/L for Risk and n/a otherwise
+  output: Probability validation
+  owner_roles: WL;TL
+  permissions: edit:WL,TL; view:scoped
+  automation: none
+  acceptance: A01: an Issue with Probability H is rejected; a Risk without Probability is rejected
+  increments: P4
+  notes: Playbook (B0128): Probability is H/M/L for Risk and n/a for Assumption, Issue and Dependency. Master-prompt additions: none; §5 M0143 restates 'probability where applicable'. Interpretations: a Risk must have a Probability, and non-Risk entries cannot have one.
+#### REQ-PB-081 SOURCE DG4 | Implement Template 16 Executive Decision Log as a native register | src B0129;B0130;M0144;M0212;M0231 | tpl T16
+  input_fields: ID;Decision;Why now;Options;Rec.;Owner;Decision date;Impact if delayed;Outcome
+  procedure: Executive asks are logged with IDs DEC-01...; Options A/B/C; Owner is an executive; Outcome recorded when decided
+  output: T16 executive decision log
+  owner_roles: SP;TL;SEC
+  permissions: create:TL,SEC; decide:Owner(executive); view:scoped
+  automation: Decision SLA expires -> escalate
+  acceptance: A09: T16 persists all 9 columns; a decision with Outcome recorded is closed and leaves the overdue list
+  increments: P4
+  notes: Playbook (B0129, B0130): T16's nine columns, IDs DEC-01…, Options A/B/C and an executive Owner. Master-prompt additions (§12 M0231): escalation when the decision SLA expires. Interpretations: recording the Outcome closes the decision and removes it from the overdue list.
+#### REQ-PB-082 SOURCE DG4 | Apply the escalation principle: a blocker red for multiple cycles requires a named decision, owner and deadline | src B0131;M0233 | tpl T16
+  input_fields: Blocker;RAG history by cycle;Named decision;Decision owner;Deadline
+  procedure: When a blocker stays Red across the configured number of cycles, the system requires/creates a T16 executive ask with decision, owner and deadline, without duplicating an existing open ask
+  output: Executive ask linked to blocker
+  owner_roles: TL;SP
+  permissions: view:scoped
+  automation: Blocker red across N cycles -> require executive ask
+  acceptance: A09;A13: a blocker Red in 2 consecutive cycles (N=2) produces exactly one open T16 ask; re-running the job creates no duplicate
+  increments: P4
+  notes: Playbook (B0131): a blocker should not stay red for multiple cycles without a named decision, decision owner and deadline; recurring issues become executive asks. Master-prompt additions (§12 M0233): the automation that requires or creates the T16 ask without duplicating an open one, and the number of cycles is configurable. Interpretations: none. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.) AN-04 consolidation: absorbs former REQ-S12-013 (Starter automation: when a blocker remains red across configured cycles, require a named executive decision, owner and deadline without duplicating an existing open ask); its anchors M0233 and acceptance are carried here.
+#### REQ-PB-083 SOURCE DG4 | Hand over to BAU with ownership transfer, controls and control cadence | src B0021;B0023;B0101;B0121;M0237;M0217 | tpl 
+  input_fields: BAU owner;KPI owner;Controls;Control cadence;Receiving-owner acceptance
+  procedure: Handover record is prepared and accepted by the receiving Business Owner; acceptance transfers routine ownership of KPIs, controls and benefits to the receiving owners and schedules recurring performance and control reviews
+  output: Accepted BAU handover
+  owner_roles: BO;WL;TL
+  permissions: prepare:WL; accept:BO (A/R per RACI); view:scoped
+  automation: BAU handover accepted -> recurring control reviews
+  acceptance: A11;A13: accepting a handover creates recurring BAU review tasks for the BAU owner exactly once
+  increments: P4
+  notes: Playbook (B0021, B0023, B0101, B0121): BAU handover with ownership transfer, controls and control cadence; BO is A/R for BAU Handover. Master-prompt additions (§11 M0217, §12 M0237): the KPI owner and receiving-owner acceptance fields (extension), and on acceptance the transfer of routine ownership and scheduling of recurring reviews. Interpretations: none. AN-04 consolidation: absorbs former REQ-S12-017 (Starter automation: when a BAU handover is accepted, transfer routine ownership and activate recurring performance and control reviews); its anchors M0237 and acceptance are carried here.
+#### REQ-PB-084 SOURCE DG4 | Maintain a continuous-improvement backlog | src B0021;B0023;M0219;M0217 | tpl 
+  input_fields: Improvement item;Owner;Source;Status
+  procedure: Users add improvement items per transformation/performance area; the backlog persists after closure
+  output: Continuous-improvement backlog
+  owner_roles: BO;TO
+  permissions: edit:BO,TO; view:scoped
+  automation: none
+  acceptance: A11: CI backlog items remain visible after transformation closure; G6 lists the backlog
+  increments: P4
+  notes: Playbook (B0021, B0023): a continuous-improvement backlog is a Realize output and G6 evidence. Master-prompt additions (§11 M0217, M0219): the backlog persists after transformation closure. Interpretations: none.
+#### REQ-PB-085 SOURCE DG4 | Create a recovery plan / corrective action when a benefit or KPI is off track | src B0121;B0093;M0227 | tpl 
+  input_fields: Off-track benefit or KPI;Recovery action;Owner;Due date
+  procedure: An off-track benefit (Correct step), a Value Review finding or a KPI deviating from trajectory under the configured severity and persistence rule creates a recovery plan / corrective-action case with owner and follow-up; an existing open case is updated rather than duplicated
+  output: Corrective action
+  owner_roles: BO;FIN;TL
+  permissions: create:BO,TL,FIN; view:scoped
+  automation: KPI deviates -> corrective action case
+  acceptance: A04;A11;A13: a benefit below plan creates one corrective action; repeated evaluation does not duplicate it; a KPI deviation persisting two cycles under a two-cycle rule creates one case and the third cycle updates it
+  increments: P4
+  notes: Playbook (B0121, B0093): the Correct step produces a recovery plan, and the Value Review produces corrective action. Master-prompt additions (§12 M0227): a KPI deviating from trajectory under the configured severity and persistence rule creates or updates one corrective-action case, and an open case is never duplicated. Interpretations: none. (AN-05 relabelling, finding F-DG0-003: the earlier 'no interpretation' label hid the §12 addition.) AN-04 consolidation: absorbs former REQ-S12-007 (Starter automation: when a KPI deviates from trajectory, create or update a corrective-action case using the configured severity and persistence rule); its anchors M0227 and acceptance are carried here.
+#### REQ-PB-086 SOURCE DG5 | Seed the 90-day launch plan as scheduled tasks relative to a start date | src B0133;B0134;B0161;M0083;M0224;M0257;M0258;M0259;M0260;M0261 | tpl LAUNCH90
+  input_fields: Window (Days 0-30 | Days 31-60 | Days 61-90);Primary objective;Actions;Outputs;Start date
+  procedure: On request, the system generates tasks for each window's actions and required outputs, dated from the chosen start date, with owners and links to the output records
+  output: 90-day launch task plan
+  owner_roles: TL;TO
+  permissions: generate/edit:TL,TO; view:scoped
+  automation: New transformation created -> optional 90-day plan
+  acceptance: A16: with start date 2026-10-01 the Days 31-60 tasks fall between 2026-11-01 and 2026-11-30; all actions of B0134 appear
+  increments: P5
+  notes: Playbook (B0133, B0134, B0161): the three windows with primary objective, actions and outputs. Master-prompt additions (§14 M0257, M0261; §12 M0224): tasks dated from a chosen start date, with owners and links to output records, and generation as an option when a transformation is created. Interpretations: none.
+#### REQ-PB-087 SOURCE DG5 | Run the Day-90 leadership test | src B0135;B0136;B0137;B0138;B0139;B0140;B0141;M0261 | tpl LAUNCH90
+  input_fields: Can leaders explain the same case for change and North Star?;Can every initiative be traced to a target-state gap and outcome?;Are executive decision rights clear?;Is Finance aligned on baselines and benefit formulas?;Are Wave 1 initiatives producing evidence rather than only plans?;Can the transformation team show what it needs from executives this month?;Response;Evidence
+  procedure: At day 90 the system schedules the test; it pre-fills evidence where available and leaders record responses
+  output: Day-90 test record
+  owner_roles: SP;TL
+  permissions: respond:SP,TL; view:scoped
+  automation: Day 90 reached -> create test task
+  acceptance: A16: all six questions render verbatim; unanswered questions mark the test incomplete
+  increments: P5
+  notes: Playbook (B0135-B0141): the six questions, verbatim. Master-prompt additions (§14 M0261): the Day-90 leadership test is preserved within the launch plan's editable scheduled tasks, so the test is scheduled at day 90 (task scheduling itself: REQ-PB-086, REQ-S14-004). Interpretations: evidence is pre-filled where available, and unanswered questions make the test incomplete.
+#### REQ-PB-088 SOURCE DG5 | Seed the International Roaming worked example as clearly synthetic demo data | src B0143;B0145;B0162;M0083;M0339;M0341;M0342;M0343;M0344;M0345;M0346;M0348 | tpl ROAMING-EX
+  input_fields: Case for change;North Star;Outcomes;TOM focus;Initiatives;Governance;Benefits
+  procedure: Demo environment seeds linked records carrying the seven elements verbatim
+  output: Roaming demo transformation
+  owner_roles: ADM
+  permissions: reset-demo:ADM; view:demo users
+  automation: none
+  acceptance: A01: the demo transformation's North Star equals 'Make international roaming effortless, trusted and economically accretive.'; the production initialization contains no demo records
+  increments: P5
+  notes: Playbook (B0143, B0145, B0162): the roaming example's seven elements. Master-prompt additions (§18 M0339, M0348): the example is seeded as synthetic demo data, and the production initialization contains no demo records. Interpretations: none. (AN-05 relabelling, finding F-DG0-003: the earlier 'no interpretation' label hid the §18 addition.) (AN-08, finding F-DG0-006: M0348 is now cited in source_ref; REQ-S18-003 carries the empty production initialization as its own requirement.)
+#### REQ-PB-089 SOURCE DG5 | Label every example record as illustrative and replaceable by validated data | src B0144;M0339;M0302 | tpl ROAMING-EX
+  input_fields: Illustrative flag
+  procedure: All demo records carry an 'Illustrative example — synthetic' badge on screen and in exports
+  output: Illustrative labelling
+  owner_roles: ADM
+  permissions: view:all
+  automation: none
+  acceptance: A01;A15: every demo record and exported demo report shows the illustrative label in en and ar
+  increments: P5
+  notes: Playbook (B0144): 'Illustrative example only. Replace assumptions with validated company data.' Master-prompt additions (§18 M0339, §15 M0302): the illustrative badge appears on screens and in exports, in en and ar. Interpretations: none.
+#### REQ-PB-090 SOURCE DG5 | Seed the three illustrative traceability chains of the roaming example | src B0146;B0147;M0347 | tpl ROAMING-EX
+  input_fields: Problem;TOM gap;Initiative;KPI;Benefit
+  procedure: Demo seeds Low activation, High complaints and Partner cost pressure chains as linked records visible in the traceability view
+  output: Linked demo chains
+  owner_roles: ADM
+  permissions: view:demo users
+  automation: none
+  acceptance: A01: the traceability view shows 'Low activation -> Proposition + journey -> Pass redesign + digital activation -> Attach rate / activation -> Revenue uplift'
+  increments: P5
+  notes: Playbook (B0146, B0147): the three illustrative chains. Master-prompt additions (§18 M0347): seeded as linked demo records and shown in the traceability view. Interpretations: none.
+#### REQ-PB-091 SOURCE DG5 | Implement the 25-question Transformation Health Check with score and top 3 actions | src B0149;B0150;B0161;M0083;M0262;M0263;M0264;M0265;M0266;M0267;M0268;M0269;M0270;M0271;M0272;M0273;M0274;M0275;M0276;M0277;M0278;M0279;M0280;M0281;M0282;M0283;M0284;M0285;M0286;M0287;M0288 | tpl HEALTH25
+  input_fields: Questions 1-25 (verbatim);Response;Evidence;Owner;Assessment date;Score (/ 25);Top 3 actions
+  procedure: Assessor answers all 25 questions; score out of 25 is calculated; three top actions are required; reassessments tracked
+  output: Health-check assessment
+  owner_roles: TL;TO;SP
+  permissions: assess:TL,TO; view:scoped
+  automation: none
+  acceptance: A16: all 25 questions render verbatim; an assessment with an unanswered question is labelled incomplete and shows no band; submission without three actions is rejected
+  increments: P5
+  notes: Playbook (B0149, B0150, B0161): the 25 questions (checkboxes), 'Score: __ / 25' and 'Top 3 actions'. Master-prompt additions (§14 M0262, M0288): Yes=1/No=0 scoring (REQ-S14-001) and incomplete-assessment handling (REQ-S14-002), both implementation assumption D-010 (M0262); the top three improvement actions are required and reassessments are tracked over time (M0288). Interpretations: the requirement for three actions is enforced by rejecting submission of an assessment with fewer than three.
+#### REQ-PB-092 SOURCE DG5 | Interpret the health-check score with the four source bands | src B0151;B0152;M0288 | tpl HEALTH25
+  input_fields: Score;Interpretation (21-25 | 16-20 | 10-15 | 0-9)
+  procedure: Completed assessments show the band text matching the score
+  output: Band interpretation
+  owner_roles: TL;TO
+  permissions: view:scoped
+  automation: none
+  acceptance: A16: scores 21, 16, 10 and 9 map to the four band texts verbatim
+  increments: P5
+  notes: Playbook (B0151, B0152): the four score bands and their text. Master-prompt additions: none; §14 M0288 restates the four bands (its top-three-actions and reassessment clause is covered by REQ-PB-091). Interpretations: none.
+#### REQ-PB-093 SOURCE DG5 | Let methodology administrators configure the default T06 weight set and scoring rubrics in Playbook Studio as versioned configuration | src B0077;M0176;M0154;M0155 | tpl T06
+  input_fields: Default criteria;Default weights;Optional default risk/compliance criterion;Scoring rubric per criterion (1-5 descriptors);Configuration version
+  procedure: A methodology admin edits the default weight set and the 1-5 rubric descriptors in a Studio draft; publishing applies the 100% rule and creates an immutable version, which becomes the starting weight set and rubric of transformations created afterwards; existing transformations keep their pinned weight set and rubric until a deliberate migration
+  output: Versioned default weight set and rubrics
+  owner_roles: ADM;TO
+  permissions: configure-default:ADM (methodology admin; draft and publish); review:TO; view:all signed-in users
+  automation: Methodology revision proposed -> impact and validation
+  acceptance: A06;A07: an admin changes the default Feasibility rubric text and the default weights to 30/20/20/15/15 in the UI and publishes without a code change; a transformation created afterwards starts with the new default; an existing transformation keeps its weight set and rubric version; publishing defaults that total 95% is rejected
+  increments: P5
+  notes: Playbook (B0077): weights are adjusted to the transformation context. Master-prompt additions (§9 M0176; §6 M0154, M0155): scoring rubrics and approved weights are configurable and versioned, administered in Playbook Studio with draft, publish and version pinning; the source weights 25/25/20/15/15 are seeded (M0176, REQ-PB-048). Interpretations: that seed is the initial Studio default for new transformations, and ADM configures defaults only, never approving a transformation's weights (permissions-matrix.md §5 rule 2). AN-05: split from REQ-PB-049 (finding F-DG0-001).
