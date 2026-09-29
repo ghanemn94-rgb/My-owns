@@ -1,0 +1,208 @@
+{
+ "schema_version": 1,
+ "stage_id": "DG0",
+ "round": 16,
+ "candidate_id": "sha256:3013023aa21da2f42b3bb279bd094fa0a1879a2bb1c65fd4b1e4e0c050d84db9",
+ "source_commit": "4fd56d4d701ffe02586edaf2c0cc3966e6ff68a0",
+ "reviewer_role": "code-security-reviewer",
+ "invocation_reference": {
+  "kind": "claude-code-cli-session",
+  "run_id": "DG0-T-DG0-REV-SEC-R16-code-security-reviewer-20260929T101948Z-8aad38c4",
+  "session_id": "8aad38c4-4930-41cd-b24c-1a0e84416b47"
+ },
+ "implementation_author": [
+  "transformation-analyst",
+  "delivery-orchestrator"
+ ],
+ "independence_declaration": {
+  "reviewer_authored_reviewed_scope": false,
+  "statement": "I (code-security-reviewer) authored none of the implementation in the reviewed scope (tools/gates, tools/agents, tools/source, .claude/agents, .github/workflows, and the analysis and delivery records). I formed this verdict before reading any other round-16 review record and read none; I saw only the file names in the round-16 directory. All code execution ran in disposable clones inside this run's private $TMPDIR. My reproductions targeted only directories I created for them; none touched another agent's files or scratch. One reproduction (residual 7) wrote /proc/sys/kernel/core_pattern, which reached the host tunable; the permission classifier then declined my attempt to restore it, so I left it for the user and disclose it in F-DG0-149 and the narrative."
+ },
+ "assignment": "docs/delivery/assignments/DG0/round-16/review-code-security-reviewer.md",
+ "requirements_checked": [
+  "REQ-DLV-004",
+  "REQ-DLV-006",
+  "REQ-DLV-007",
+  "REQ-DLV-013",
+  "REQ-DLV-016",
+  "REQ-DLV-022",
+  "REQ-DLV-023",
+  "REQ-DLV-026"
+ ],
+ "checks_run": [
+  {
+   "id": "chk-identity",
+   "procedure": "Confirm the frozen candidate: git rev-parse HEAD vs the recorded commit, and recompute the candidate ID at the source commit and working tree.",
+   "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG0; node tools/gates/candidate.mjs --stage DG0 --ref 4fd56d4d701ffe02586edaf2c0cc3966e6ff68a0",
+   "environment": "orchestrator shell, /home/user/My-owns",
+   "expected": "HEAD is a metadata-only commit after the freeze; working-tree and source-commit candidate IDs both equal sha256:3013023a...",
+   "actual": "HEAD=476595d (freeze round-16 candidate/assignments, metadata only per git log 4fd56d4..HEAD). candidate --stage DG0 (working-tree) and --ref 4fd56d4 both print sha256:3013023aa21da2f42b3bb279bd094fa0a1879a2bb1c65fd4b1e4e0c050d84db9, 90 files. Matches the assignment.",
+   "exit_status": 0,
+   "result": "PASS"
+  },
+  {
+   "id": "chk-node-tests",
+   "procedure": "Run the full gate + agent test suites in a fresh disposable clone at the candidate commit.",
+   "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+   "environment": "fresh clone $TMPDIR/dg0-sec @4fd56d4 (nested sandbox)",
+   "expected": "all tests pass, including the D-030/F-DG0-145 and D-029/F-DG0-146 regression tests",
+   "actual": "1..89, pass 89, fail 0. Includes 'F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope' and 'F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does'.",
+   "exit_status": 0,
+   "result": "PASS",
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-16/01-node-tests.log"]
+  },
+  {
+   "id": "chk-python-tests",
+   "procedure": "Run the Python runner/settings/meta tests in the disposable clone.",
+   "command": "python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'",
+   "environment": "fresh clone $TMPDIR/dg0-sec @4fd56d4",
+   "expected": "all pass",
+   "actual": "Ran 22 tests, OK.",
+   "exit_status": 0,
+   "result": "PASS",
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-16/02-python-tests.log"]
+  },
+  {
+   "id": "chk-prefreeze",
+   "procedure": "Run the pre-freeze gate in a fresh clone of the candidate commit (nested bubblewrap).",
+   "command": "bash tools/gates/prefreeze.sh DG0",
+   "environment": "fresh clone $TMPDIR/dg0-sec @4fd56d4 (nested sandbox)",
+   "expected": "all pre-freeze checks PASS; working-tree candidate equals HEAD",
+   "actual": "All rows PASS incl. source extraction reproducible (docx sha256 2584a35..., 165/423 blocks), validator+guard tests, runner tests, register rules, pipeline state, analysis checks, and 'working-tree candidate equals HEAD (sha256:3013023a...)'. exit 0.",
+   "exit_status": 0,
+   "result": "PASS",
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-16/03-prefreeze.log"]
+  },
+  {
+   "id": "chk-process-sandbox-confinement",
+   "procedure": "D-030: run a probe shell under the REAL bwrap args agent_sandbox.py emits for this role, and measure caps, no_new_privs, and read/write on protected paths and /proc/sys.",
+   "command": "python3 tools/agents/agent_sandbox.py prepare/args ...; bwrap \"${SB[@]}\" bash -c '<probe>'",
+   "environment": "fresh clone $TMPDIR/dg0-sec @4fd56d4",
+   "expected": "uid0 with CAP_SETFCAP only, NoNewPrivs=1; writes to tools/gates and / fail read-only; own evidence writable; /proc/sys behaviour matches disclosed residual 7",
+   "actual": "CapEff/Prm/Bnd/Amb=0000000080000000 (CAP_SETFCAP only), NoNewPrivs=1, uid=0. Write to tools/gates/HACK.txt and /HACK => 'Read-only file system'. Own evidence dir writable. /proc/sys/kernel/core_pattern writable and a test write succeeded (reached the HOST tunable) — exactly disclosed residual 7 (F-DG0-149); NO repository/gate path became writable.",
+   "exit_status": 0,
+   "result": "PASS",
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-16/04-sandbox-probe.log"]
+  },
+  {
+   "id": "chk-private-tmp",
+   "procedure": "Confirm /tmp and /var/tmp are private tmpfs inside the sandbox so another run's scratch is unreachable (closes the other-run-TMPDIR vector of F-DG0-145).",
+   "command": "bwrap \"${SB[@]}\" bash -c 'ls -a /var/tmp; ls /var/tmp/mth-run.OTHERVICTIM'",
+   "environment": "fresh clone $TMPDIR/dg0-sec @4fd56d4",
+   "expected": "only this run's own mth-run.* visible; a foreign mth-run.* is absent",
+   "actual": "Inside the sandbox /var/tmp shows only mth-run.IA7m2o (this run's parent, bind mount point); /tmp empty; the foreign mth-run.OTHERVICTIM is 'cannot access ... No such file or directory'. Private tmpfs confirmed.",
+   "exit_status": 0,
+   "result": "PASS",
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-16/06-private-tmp.log"]
+  },
+  {
+   "id": "chk-copyback-scope",
+   "procedure": "Test the process sandbox copy-back for cross-role, top-level, existing-file (write-once) and cross-round abuse.",
+   "command": "python3 tools/agents/agent_sandbox.py prepare/finish; inspect sandbox.json copied_back/discarded",
+   "environment": "fresh clone $TMPDIR/dg0-cb @4fd56d4",
+   "expected": "other-role, top-level and modified-existing writes discarded (exit 3, not committed); only own new files copied back",
+   "actual": "Cross-role (domain-reviewer.json), top-level and existing-file tamper are all discarded with exit 3 => run not committed (run-agent.sh exits 73). HOWEVER accept=round-[0-9]+/<role>.[^/]+ is not pinned to the run's round: a NEW own-role file in the PREVIOUS round-15 (code-security-reviewer.backdated.json) is copied_back with discarded=[] (exit 0), so a run could commit a stray own-role file into an already-committed round dir. Fail-closed for gate integrity (transcript-replay binding), raised Low as F-DG0-147.",
+   "exit_status": 0,
+   "result": "PASS",
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-16/07-copyback-scope.log"]
+  },
+  {
+   "id": "chk-validator-binding",
+   "procedure": "Read rules.mjs checkInvocation: gate records must have sandbox.json matching meta.process_sandbox_sha256, confined=true, read_only_root, CAP_SETFCAP, no_new_privs, writable_areas and staged equal to the role's own, and discarded empty; verification/record outputs bound to the run's own transcript via replayToolContent.",
+   "command": "sed -n '256,430p;445,640p' tools/gates/lib/rules.mjs",
+   "environment": "orchestrator shell",
+   "expected": "gate records only accepted from confined runs that discarded nothing; back-dated/foreign files cannot be honoured",
+   "actual": "checkInvocation (rules.mjs:347-372) rejects records without a matching sandbox.json or with confined!=true, wrong writable_areas/staged, or non-empty discarded. Verifications/records are bound to the round's OWN run: outputs=[recordPath,sidecar] with meta.outputs + tool_authored + replayToolContent (rules.mjs:406-424), so a file planted by a different run fails to reconstruct => error (fail-closed). Findings sidecars only add requirements and are superseded by later rounds.",
+   "exit_status": 0,
+   "result": "PASS"
+  },
+  {
+   "id": "chk-candidate-determinism",
+   "procedure": "D-029/REQ-DLV-022: verify sandbox stubs are skipped but real files still change the working-tree candidate, and the frozen ID uses committed content only.",
+   "command": "node tools/gates/candidate.mjs --stage DG0 [--ref HEAD] with stub and real untracked files added",
+   "environment": "fresh clone $TMPDIR/dg0-sec @4fd56d4",
+   "expected": "stub-shaped (untracked, 0-length, 0444) files leave the ID unchanged; a normal untracked file changes it",
+   "actual": "ref = sha256:3013023a...; after adding two stub files the working-tree ID stayed sha256:3013023a...; after adding a non-empty untracked file it became sha256:c18afd64... (differs). isSandboxStub is shape-based, covering the round-15 'docs/delivery/gates' file-name case.",
+   "exit_status": 0,
+   "result": "PASS",
+   "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-16/05-stub-determinism.log"]
+  },
+  {
+   "id": "chk-ci-workflow",
+   "procedure": "Review .github/workflows/delivery-gates.yml for least privilege, fetch-depth, pinned actions, secret exposure, and gate-failure propagation.",
+   "command": "cat -n .github/workflows/delivery-gates.yml",
+   "environment": "orchestrator shell",
+   "expected": "permissions contents:read; fetch-depth 0; SHA-pinned actions; no secrets; a failed gate fails the job",
+   "actual": "permissions: contents: read (least privilege). checkout@3d3c42e (v7.0.1) and setup-node@8207627 (v7.0.0) pinned by SHA. fetch-depth: 0 for historical recompute. Steps run node --test suites and validate.mjs --pipeline/--reconcile which exit non-zero on failure, so a failed gate fails the job. No secrets referenced. sysctl apparmor tweak is CI-runner-scoped and needed for bwrap.",
+   "exit_status": 0,
+   "result": "PASS"
+  },
+  {
+   "id": "chk-guard-defence-in-depth",
+   "procedure": "Confirm the write guard remains as defence in depth, covers all edit tools and is fail-closed.",
+   "command": "cat tools/agents/settings/code-security-reviewer.settings.json; grep -n catch/exit tools/agents/guard-write.mjs",
+   "environment": "orchestrator shell",
+   "expected": "PreToolUse matcher covers Write|Edit|NotebookEdit|MultiEdit; hook exits 2 when MTH_GUARD_ROOT unset or guard missing or rc!=0",
+   "actual": "matcher = 'Write|Edit|NotebookEdit|MultiEdit'; hook exits 2 on unset MTH_GUARD_ROOT, missing guard, or non-zero guard rc (fail-closed). With D-030 the kernel is the primary control, so residual guard tool-coverage gaps (from prior CLOSED findings) are now defence-in-depth only.",
+   "exit_status": 0,
+   "result": "PASS"
+  },
+  {
+   "id": "chk-agents-frontmatter",
+   "procedure": "REQ-DLV-004: validate frontmatter of the ten agent definitions.",
+   "command": "awk frontmatter extraction over .claude/agents/*.md",
+   "environment": "orchestrator shell",
+   "expected": "each has name, scoped tools, model: inherit; reviewers lack broad edit/write beyond need",
+   "actual": "All 10 present with name, tools and model: inherit. Reviewers (domain/code-security/release-auditor) = Read,Grep,Glob,Bash,Write; qa-verifier adds Edit; implementers add Edit. Consistent with write scopes.",
+   "exit_status": 0,
+   "result": "PASS"
+  },
+  {
+   "id": "chk-secrets",
+   "procedure": "Scan the reviewed scope for committed secrets or credentials.",
+   "command": "grep -rnE '(AKIA|BEGIN .*PRIVATE KEY|password|secret|token|api[_-]?key|ghp_|xox[baprs]-)' tools/ .github/ .claude/agents/",
+   "environment": "orchestrator shell",
+   "expected": "no real credentials; only test fixtures / doc references",
+   "actual": "Only test fixtures (validator.test.mjs 'secret.txt' fixture) and documentation strings (devops CA note, qa 'secrets removed' guidance). No credentials committed.",
+   "exit_status": 0,
+   "result": "PASS"
+  },
+  {
+   "id": "chk-residual-7-8",
+   "procedure": "Assess threat-model residuals 7 (rw host /proc, /proc/sys writable) and 8 (shared host PID/IPC ns) against the implementation.",
+   "command": "cat docs/delivery/threat-model.md (residuals); 04-sandbox-probe.log; agent_sandbox.py:127-145",
+   "environment": "orchestrator shell + fresh clone probe",
+   "expected": "each stays within the disclosed residual (availability/host-tunable, not repository/gate integrity) or is flagged as larger",
+   "actual": "Residual 7: confirmed exactly as stated — a file-tool-layer write to /proc/sys succeeds and reaches the host tunable, but every repo/gate path stayed read-only. Residual 8: host PIDs visible, shared IPC ns confirmed; cross-run FILE isolation intact. Neither is larger than disclosed. Narrower mitigations proposed: F-DG0-149 (non-root uid) and F-DG0-148 (--unshare-ipc). Note: my residual-7 probe mutated host core_pattern; classifier declined my restore, left for the user.",
+   "exit_status": 0,
+   "result": "PASS"
+  },
+  {
+   "id": "chk-verify-145-146",
+   "procedure": "Independently verify my FIXED_PENDING_VERIFICATION findings F-DG0-145 (High) and F-DG0-146 (Low).",
+   "command": "see verifications sidecar + 01/04/05/06 logs",
+   "environment": "fresh clone $TMPDIR @4fd56d4",
+   "expected": "both fixes complete and correct",
+   "actual": "F-DG0-145 CLOSED_VERIFIED: kernel read-only binds + private tmpfs + cap drop make the original targets (repo paths, other runs' scratch) unwritable regardless of the guard's decision; TOCTOU window irrelevant. F-DG0-146 CLOSED_VERIFIED: shape-based stub skip keeps the working-tree candidate deterministic while real files still register; frozen ID uses committed content.",
+   "exit_status": 0,
+   "result": "PASS"
+  }
+ ],
+ "findings": [
+  "F-DG0-147",
+  "F-DG0-148",
+  "F-DG0-149"
+ ],
+ "verdict": "PASS",
+ "evidence_paths": [
+  "docs/delivery/test-evidence/DG0/code-security/round-16/01-node-tests.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-16/02-python-tests.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-16/03-prefreeze.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-16/04-sandbox-probe.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-16/05-stub-determinism.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-16/06-private-tmp.log",
+  "docs/delivery/test-evidence/DG0/code-security/round-16/07-copyback-scope.log"
+ ],
+ "reviewed_at": "2026-09-29T10:45:00Z",
+ "summary": "DG0 delivery-control code is correct and secure for gate purposes. The D-030 process sandbox genuinely fixes the F-DG0-145 check-then-use race (kernel read-only binds + private tmpfs + CAP_SETFCAP-only + no_new_privs, verified live under the real bwrap args), and D-029 fixes the F-DG0-146 candidate perturbation (both CLOSED_VERIFIED). All 89 node + 22 python tests pass and prefreeze passes in a fresh clone. The copy-back scoping, validator run-binding, CI least-privilege, agent frontmatter and secret hygiene are sound. Three Low observations remain: copy-back accept not pinned to the current round (F-DG0-147, fail-closed), and confirmations of disclosed residuals 8 (F-DG0-148, propose --unshare-ipc) and 7 (F-DG0-149, propose non-root uid). None is Critical/High/Medium and all are acceptable as observations. Verdict PASS."
+}

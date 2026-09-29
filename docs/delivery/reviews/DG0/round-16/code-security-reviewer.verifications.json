@@ -1,0 +1,27 @@
+{
+ "verifications": [
+  {
+   "finding_id": "F-DG0-145",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "High/mandatory check-then-use race on the write guard, fixed by D-030 (process sandbox) at 5c003c0. I verified the fix independently in a fresh disposable clone by running a shell under the REAL bwrap args that agent_sandbox.py generates for code-security-reviewer (04-sandbox-probe.log): the process runs as uid 0 but with capabilities = CAP_SETFCAP only (CapEff 0000000080000000) and NoNewPrivs=1; writes to the two original attack targets FAIL kernel-side regardless of the guard's decision — protected repository paths ('tools/gates' -> 'Read-only file system') and the filesystem root ('/' -> 'Read-only file system'). The other original target, another run's private TMPDIR, is unreachable because /var/tmp and /tmp are private tmpfs; only this run's own mth-run.* is bound (06-private-tmp.log: a victim mth-run.* is invisible inside the sandbox). Because the read-only binds are kernel-enforced, a symlink swapped between the guard's check and the CLI's write can no longer make a forbidden path writable — the TOCTOU window is irrelevant. The regression test 'F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope' passes in tools/agents/tests/process-sandbox.test.mjs (part of the 89 passing node tests, 01-node-tests.log). The guard remains as defence in depth (matcher Write|Edit|NotebookEdit|MultiEdit, fail-closed on unset MTH_GUARD_ROOT or missing guard). The /proc/sys writability I observed is a SEPARATE, newly-disclosed residual (threat-model residual 7, tracked as F-DG0-149), not part of F-DG0-145's targets (repo paths / other runs' scratch), which are fully fixed.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-16/04-sandbox-probe.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-16/06-private-tmp.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-16/01-node-tests.log",
+    "tools/agents/agent_sandbox.py#L127-L177"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-146",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Low observation (concurrent sandbox mount stubs perturbed the working-tree candidate and --reconcile), fixed by D-029 at fe722c8. isSandboxStub() (tools/gates/lib/candidate.mjs:72-79) skips only untracked, zero-length, unwritable (mode & 0222 == 0) regular files in the WORKING-TREE manifest, and manifestFromWorkingTree calls it at :112. Frozen candidates come from manifestFromRef (committed content) so they are unaffected by design. I verified independently in a disposable clone (05-stub-determinism.log): with the ref candidate = sha256:3013023a..., adding two stub-shaped files (a 0444 CLAUDE.local.md and a 0444 'docs/delivery/gatesX_stub', both untracked and zero-length) left the working-tree candidate IDENTICAL to the ref (sha256:3013023a...), while a normal non-empty untracked file (docs/delivery/realfile.md) still CHANGED it (sha256:c18afd64...). This covers the original round-15 case of a file named exactly 'docs/delivery/gates' that the META_EXCLUDES glob missed, because the skip is now shape-based, not name-based. The runner also pre-creates docs/delivery/gates as a directory (D-029), removing the stub-as-file scenario. Regression test 'F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does' passes (test 89, 01-node-tests.log).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-16/05-stub-determinism.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-16/01-node-tests.log",
+    "tools/gates/lib/candidate.mjs#L72-L113"
+   ]
+  }
+ ]
+}

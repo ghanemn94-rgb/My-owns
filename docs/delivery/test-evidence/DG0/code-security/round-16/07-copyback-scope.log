@@ -1,0 +1,15 @@
+### F-DG0-147 copy-back round-scoping probe (FRESH disposable clone @4fd56d4)
+### accept = round-[0-9]+/<role>.[^/]+  (NOT pinned to the run's round)
+prepare: OK
+agent writes ONLY: legit round-16 files + a NEW own-role file in the PREVIOUS round-15:
+finish exit=0 (0 => nothing discarded => runner auto-commits)
+copied_back: [
+ "docs/delivery/reviews/DG0/round-15/code-security-reviewer.backdated.json",
+ "docs/delivery/reviews/DG0/round-16/code-security-reviewer.findings.json",
+ "docs/delivery/reviews/DG0/round-16/code-security-reviewer.json"
+]
+discarded: []
+--- back-dated file now committed-able in real tree round-15? ---
+-rw-r--r-- 1 root root 10 Sep 29 10:34 /var/tmp/mth-run.IA7m2o/claude-0/dg0-cb/docs/delivery/reviews/DG0/round-15/code-security-reviewer.backdated.json
+--- git would see it as new/untracked in the previously-committed round-15 dir ---
+?? docs/delivery/reviews/DG0/round-15/code-security-reviewer.backdated.json
