@@ -77,32 +77,6 @@ def sha256_of(path):
         return hashlib.sha256(f.read()).hexdigest() if stat.S_ISREG(os.fstat(f.fileno()).st_mode) else None
 
 
-def nested_in_process_sandbox():
-    """True only inside an agent's process sandbox: the runner marks it (MTH_PROCESS_SANDBOX=1) and its PID 1 is bwrap.
-
-    There, a fresh procfs cannot be mounted: the read-only covers bwrap puts over /proc/sys and similar paths are
-    locked in the agent's nested namespaces. That /proc already shows only that sandbox's processes, so a sandbox built
-    inside it (the tests and pre-freeze a reviewer runs) binds it instead, as the Claude Code Bash sandbox does. The
-    marker alone never changes anything: at the top level PID 1 is the host's init, and a private procfs is mounted."""
-    try:
-        with open("/proc/1/comm", encoding="utf-8") as f:
-            return os.environ.get("MTH_PROCESS_SANDBOX") == "1" and f.read().strip() == "bwrap"
-    except OSError:
-        return False
-
-
-def holds_cap_sys_admin():
-    """Whether this process may create namespaces itself (CAP_SYS_ADMIN in its own user namespace)."""
-    try:
-        with open("/proc/self/status", encoding="utf-8") as f:
-            for line in f:
-                if line.startswith("CapEff:"):
-                    return bool(int(line.split()[1], 16) >> 21 & 1)
-    except OSError:
-        pass
-    return False
-
-
 def worktree_root(cwd, roots):
     cwd = os.path.realpath(cwd)
     inside = [r for r in roots if cwd == r or cwd.startswith(r + os.sep)]
@@ -147,18 +121,24 @@ def plan(role, repo_root, cwd, stage, run_tmp, state_dir, claude_bin, home=None)
             "staged": staged,
             "protected": protected, "run_tmp": os.path.realpath(run_tmp), "home": home,
             "sessions": os.path.join(state_dir, "projects"), "claude_bin": os.path.realpath(claude_bin),
-            "proc": "bound-nested" if nested_in_process_sandbox() else "private",
             "cgroup_api": CGROUP_API if os.path.isdir(CGROUP_API) else None}
 
 
 def bwrap_args(p):
-    # Nested (see nested_in_process_sandbox): bind the enclosing /proc. A caller without CAP_SYS_ADMIN (directly inside
-    # the process sandbox) needs a user namespace of its own; a reviewer's shell already has one, with every capability
-    # in it, where the CLI's seccomp filter would stop a further one.
-    proc = ["--proc", "/proc"] if p["proc"] == "private" else \
-        ["--bind", "/proc", "/proc"] + ([] if holds_cap_sys_admin() else ["--unshare-user"])
-    a = ["--die-with-parent", "--new-session", "--unshare-pid", "--unshare-ipc", "--setenv", "MTH_PROCESS_SANDBOX", "1",
-         "--ro-bind", "/", "/", "--dev", "/dev", *proc, "--tmpfs", "/tmp", "--tmpfs", "/var/tmp"]
+    # A fresh procfs for the current (host) PID namespace, with /proc/sys read-only so a confined process cannot change
+    # kernel tunables (F-DG0-147). run-agent invokes bwrap with the host's full privileges, so mounting the procfs and
+    # binding /proc/sys read-only both happen before the capability drop below.
+    #
+    # The sandbox deliberately does NOT create a PID or IPC namespace. The Claude Code Bash sandbox nested inside it
+    # creates its own PID namespace, and a reviewer's own bwrap (the pre-freeze, the sandbox tests) nests inside THAT.
+    # A private procfs two PID namespaces up cannot serve that innermost bwrap: it can neither mount a fresh procfs
+    # (denied) nor read its children's namespace files (they carry the inner namespace's PID numbering, absent from the
+    # outer procfs). Keeping this sandbox transparent to the PID namespace reproduces the round-15 topology, in which a
+    # reviewer's bwrap works. It does not weaken write confinement (the read-only binds and the capability drop do
+    # that, F-DG0-145); it only means the agent shares the host PID/IPC namespaces, disclosed in the threat model.
+    a = ["--die-with-parent", "--new-session", "--setenv", "MTH_PROCESS_SANDBOX", "1",
+         "--ro-bind", "/", "/", "--dev", "/dev", "--proc", "/proc", "--ro-bind", "/proc/sys", "/proc/sys",
+         "--tmpfs", "/tmp", "--tmpfs", "/var/tmp"]
     # Repositories and a HOME under /tmp or /var/tmp (tests, the live probe) stay visible, read-only.
     for r in p["roots"] + ([p["home"]] if p["home"] != "/" else []):
         a += ["--ro-bind", r, r]
@@ -273,13 +253,14 @@ def finish(argv):
                     f.write(data)
                 accepted.append(path)
     summary = {"schema": p["schema"], "role": p["role"], "root": p["root"], "confined": p["confined"],
-               "read_only_root": True, "private_tmp": ["/tmp", "/var/tmp"], "proc": p["proc"], "run_tmp": p["run_tmp"],
+               "read_only_root": True, "private_tmp": ["/tmp", "/var/tmp"], "procfs": "fresh", "procsys_readonly": True,
+               "run_tmp": p["run_tmp"],
                "writable_areas": p["binds"] if p["confined"] else ["."],
                "read_only_within_writable": [os.path.relpath(x, p["root"]) for x in p["protected"]],
                "staged": [{"area": s["rel"], "accept": s["accept"], "replace": s["replace"], "copied": s["copied"]}
                           for s in p["staged"]],
                "private_sessions": True, "cgroup_api": p["cgroup_api"],
-               "capabilities": ["CAP_SETFCAP"], "no_new_privs": True, "unshare": ["pid", "ipc"],
+               "capabilities": ["CAP_SETFCAP"], "no_new_privs": True, "unshare": [],
                "copied_back": accepted, "discarded": discarded}
     with open(os.path.join(out_dir, "sandbox.json"), "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=1)

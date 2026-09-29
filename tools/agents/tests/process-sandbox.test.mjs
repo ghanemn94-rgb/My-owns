@@ -73,8 +73,6 @@ function sandbox(fx, role, { stage = "DG0" } = {}) {
   return { run, finish, runTmp, state, plan: () => JSON.parse(readFileSync(join(state, "plan.json"), "utf8")) };
 }
 
-/** Whether this test process itself runs inside an agent's process sandbox (a reviewer running the suite). */
-const nestedHere = () => process.env.MTH_PROCESS_SANDBOX === "1" && readFileSync("/proc/1/comm", "utf8").trim() === "bwrap";
 
 /** Each probe prints "<label> WROTE" or "<label> refused"; returns {label: bool}. Only the listed directories are created. */
 function probe(sb, targets, mkdirs = []) {
@@ -277,25 +275,22 @@ test("D-030: the auditor's gate record for its own stage is copied back; another
   rmSync(fx.base, { recursive: true, force: true });
 });
 
-test("D-030: a sandbox built inside an agent's process sandbox binds its /proc and works; the marker alone changes nothing", () => {
+// Note: whether a reviewer can run its own nested bwrap (the pre-freeze, the sandbox tests) inside the full stack
+// (process sandbox -> Claude Code Bash sandbox -> its bwrap) is verified by the real-agent probe under
+// docs/delivery/test-evidence/DG0/orchestrator-probes, not here: a unit test cannot reproduce the CLI's Bash sandbox,
+// which supplies the privileged user namespace that the innermost bwrap needs.
+test("F-DG0-147: /proc/sys is read-only inside the process sandbox (kernel tunables cannot be changed)", () => {
   requireTools();
   const fx = fixture();
-  // The marker alone never weakens the top-level sandbox: a private procfs unless PID 1 is also the sandbox's bwrap.
-  const marked = sandbox(fx, "code-security-reviewer");
-  assert.equal(marked.plan().proc, nestedHere() ? "bound-nested" : "private");
-  // Inside a process sandbox (what a reviewer's test run or pre-freeze sees), a fresh procfs cannot be mounted, so the
-  // nested sandbox binds the enclosing one, which shows only that sandbox's processes. It must build and run.
-  const py = join(fx.repo, "tools/agents/agent_sandbox.py");
-  const r = marked.run(`set -e
-    rt=$(mktemp -d "$MTH_RUN_TMP/mth-run.XXXXXX"); st=$(mktemp -d "$MTH_RUN_TMP/mth-state.XXXXXX")
-    python3 -I -B '${py}' prepare code-security-reviewer '${fx.repo}' '${fx.repo}' DG0 "$rt" "$st" /bin/sh
-    python3 -I -B -c 'import json,sys; print("proc=" + json.load(open(sys.argv[1]))["proc"])' "$st/plan.json"
-    python3 -I -B '${py}' args "$st" | xargs -0 sh -c 'exec timeout 120 bwrap "$@" /bin/sh -c "echo NESTED_OK; grep -E ^CapEff: /proc/self/status; echo x > ${fx.repo}/tools/gates/p 2>/dev/null && echo NESTED_WROTE_PROTECTED || true"' sh`);
+  const sb = sandbox(fx, "domain-reviewer");
+  // Read-only check only (test -w), and a same-name self-write attempt whose failure is what we assert.
+  const r = sb.run(`for f in /proc/sys/kernel/domainname /proc/sys/vm/drop_caches; do test -w "$f" && echo "WRITABLE $f" || echo "RO $f"; done`);
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /proc=bound-nested/);
-  assert.match(r.stdout, /NESTED_OK/);
-  assert.doesNotMatch(r.stdout, /NESTED_WROTE_PROTECTED/);
-  assert.equal(existsSync(join(fx.repo, "tools/gates/p")), false);
-  // Without the marker the nested plan would mount a fresh procfs; the runner always sets it inside its sandbox.
+  assert.doesNotMatch(r.stdout, /WRITABLE/);
+  assert.match(r.stdout, /RO \/proc\/sys\/kernel\/domainname/);
+  const { summary } = sb.finish();
+  assert.equal(summary.procsys_readonly, true);
+  assert.equal(summary.procfs, "fresh");
+  assert.deepEqual(summary.unshare, []);
   rmSync(fx.base, { recursive: true, force: true });
 });

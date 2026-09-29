@@ -103,12 +103,12 @@ function processSandboxFor(role, stage) {
   const key = { "domain-reviewer": "domain", "code-security-reviewer": "code-security", "qa-verifier": "qa", "release-auditor": "audit" }[role];
   const esc = (x) => x.replace(/[^A-Za-z0-9_]/g, "\\$&");
   return {
-    schema: "mth-process-sandbox-v1", role, root: RUN_CWD, confined: true, read_only_root: true, private_tmp: ["/tmp", "/var/tmp"], proc: "private",
+    schema: "mth-process-sandbox-v1", role, root: RUN_CWD, confined: true, read_only_root: true, private_tmp: ["/tmp", "/var/tmp"], procfs: "fresh", procsys_readonly: true,
     run_tmp: "/var/tmp/mth-run.AbCdEf", writable_areas: [`docs/delivery/test-evidence/${stage}/${key}`, ...(role === "qa-verifier" ? ["tests/qa", "e2e"] : [])],
     read_only_within_writable: [],
     staged: [{ area: `docs/delivery/reviews/${stage}`, accept: `round-[0-9]+/${esc(role)}\\.[^/]+`, replace: false, copied: null },
       ...(role === "release-auditor" ? [{ area: "docs/delivery/gates", accept: `${stage}\\.json`, replace: true, copied: null }] : [])],
-    private_sessions: true, cgroup_api: null, capabilities: ["CAP_SETFCAP"], no_new_privs: true, unshare: ["pid", "ipc"],
+    private_sessions: true, cgroup_api: null, capabilities: ["CAP_SETFCAP"], no_new_privs: true, unshare: [],
     copied_back: [], discarded: [],
   };
 }
@@ -935,7 +935,8 @@ test("F-DG0-145/D-030: gate records must come from runs whose whole agent proces
   tamper((px) => (px.confined = false), /agent process was not confined by the process sandbox/);
   tamper((px) => (px.capabilities = ["CAP_SETFCAP", "CAP_SYS_ADMIN"]), /agent process was not confined by the process sandbox/);
   tamper((px) => (px.root = "/somewhere/else"), /agent process was not confined by the process sandbox/);
-  tamper((px) => (px.proc = "bound-nested"), /agent process was not confined by the process sandbox/);
+  tamper((px) => (px.procfs = "bound"), /agent process was not confined by the process sandbox/);
+  tamper((px) => (px.procsys_readonly = false), /agent process was not confined by the process sandbox/);
   tamper((px) => px.writable_areas.push("docs/delivery/test-evidence/DG0/domain"), /process sandbox made .* writable, not the role's/);
   tamper((px) => (px.staged[0].accept = "round-[0-9]+/[^/]+"), /staged other directories or accepted other files/);
   tamper((px) => px.discarded.push("docs/delivery/reviews/DG0/round-1/domain-reviewer.json: outside the role's scope (not copied)"), /discarded out-of-scope writes/);
