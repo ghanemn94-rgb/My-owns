@@ -29,7 +29,7 @@ import { Clock } from '../../platform/clock';
 import { APP_CONFIG, AppConfig } from '../../platform/config';
 import type { RequestContext } from '../../platform/context';
 import { newId, payloadHash } from '../../platform/ids';
-import { assertVersion, loadInProject, pageOf, offsetOf, updateVersioned } from '../../platform/helpers';
+import { assertVersion, likeContains, loadInProject, pageOf, offsetOf, updateVersioned } from '../../platform/helpers';
 import { OBJECT_STORAGE, ObjectStorage, storageKey } from './storage/object-storage';
 import { MALWARE_SCANNER, MalwareScanner } from './files/scanner';
 import { listZipEntries } from './files/zip';
@@ -54,8 +54,6 @@ export function scanUsable(status: string, allowUnscanned: boolean): boolean {
 
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
 
-/** Escape LIKE wildcards so user text is matched literally (C-47). */
-export const likePattern = (q: string) => `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 
 @Injectable()
 export class DocumentsService {
@@ -191,7 +189,7 @@ export class DocumentsService {
     const conds: (SQL | undefined)[] = [this.visibleDocsWhere(ctx, projectId)];
     if (q.kind) conds.push(eq(d.kind, q.kind as DocRow['kind']));
     if (q.classification) conds.push(eq(d.classification, q.classification as Classification));
-    if (q.q) conds.push(sql`(to_tsvector('simple', ${d.title}) @@ websearch_to_tsquery('simple', ${q.q}) or ${d.title} ilike ${likePattern(q.q)})`);
+    if (q.q) conds.push(sql`(to_tsvector('simple', ${d.title}) @@ websearch_to_tsquery('simple', ${q.q}) or ${d.title} ilike ${likeContains(q.q)})`);
     const where = and(...conds);
     const [{ total }] = (await tx.select({ total: count() }).from(d).where(where)) as [{ total: number }];
     const order = q.sort === 'title' ? [asc(d.title)] : q.sort === 'createdAt' ? [asc(d.createdAt)] : [desc(d.updatedAt), asc(d.title)];
@@ -226,9 +224,9 @@ export class DocumentsService {
     const tsq = sql`websearch_to_tsquery('simple', ${q.q})`;
     const hits = sql`
       select ${d.id} as document_id, 'title'::text as matched_in, null::uuid as version_id, null::text as section, null::text as snippet,
-             (ts_rank(to_tsvector('simple', ${d.title}), ${tsq}) + case when ${d.title} ilike ${likePattern(q.q)} then 1 else 0 end)::float8 as rank
+             (ts_rank(to_tsvector('simple', ${d.title}), ${tsq}) + case when ${d.title} ilike ${likeContains(q.q)} then 1 else 0 end)::float8 as rank
         from ${d}
-       where ${vis} and (to_tsvector('simple', ${d.title}) @@ ${tsq} or ${d.title} ilike ${likePattern(q.q)})
+       where ${vis} and (to_tsvector('simple', ${d.title}) @@ ${tsq} or ${d.title} ilike ${likeContains(q.q)})
       union all
       select ${c.documentId}, 'content', ${c.documentVersionId}, ${c.section},
              ts_headline('simple', ${c.text}, ${tsq}, 'StartSel=«,StopSel=»,MaxFragments=1,MaxWords=25,MinWords=5'),

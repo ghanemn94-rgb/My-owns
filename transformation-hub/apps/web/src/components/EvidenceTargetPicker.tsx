@@ -28,12 +28,21 @@ const TYPE_PERMISSION: Record<PickableTargetType, string> = {
  * lists come from the owning modules' APIs (scoped server-side). Other record types embed <EvidencePanel> on
  * their own screens.
  */
-export function EvidenceTargetPicker({ value, onChange }: { value: PickedTarget | null; onChange: (t: PickedTarget | null) => void }) {
+export function EvidenceTargetPicker({
+  value,
+  onChange,
+  only,
+}: {
+  value: PickedTarget | null;
+  onChange: (t: PickedTarget | null) => void;
+  /** Restrict the offered record types (e.g. source claims cannot target gate criteria). */
+  only?: readonly PickableTargetType[];
+}) {
   const { t, locale } = useI18n();
   const { projectId, can } = useProjectContext();
   const typeId = useId();
   const gateId = useId();
-  const types = PICKABLE_TARGET_TYPES.filter((ty) => can(TYPE_PERMISSION[ty]));
+  const types = PICKABLE_TARGET_TYPES.filter((ty) => can(TYPE_PERMISSION[ty]) && (!only || only.includes(ty)));
   const [type, setType] = useState<PickableTargetType | ''>(value?.type ?? types[0] ?? '');
   const [q, setQ] = useState('');
   const [gate, setGate] = useState('');
