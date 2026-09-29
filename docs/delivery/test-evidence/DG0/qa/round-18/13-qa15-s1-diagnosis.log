@@ -1,0 +1,20 @@
+# QA15-S1 diagnosis [2026-09-29T16:44:36Z]
+QA15-S1 (round 15, D-028 assumption: the Bash deny list names every other reviewer's evidence dir) fails against the clone: 'domain-reviewer shell must not write audit evidence'.
+Cause: in a fresh clone docs/delivery/test-evidence/DG0/audit does not exist (empty dirs are untracked): agent-load agent-smoke code-security domain orchestrator-probes qa round-12-orphaned round-5-orphaned 
+Since D-030 agent_settings.py build() drops, for confined roles, missing deny paths whose parent is read-only in the process sandbox (creatable_in_process_sandbox). Protection for those moves to the process sandbox; the runner (run-agent.sh L66-72) pre-creates all four evidence dirs (F-DG0-236), so in real runs they exist and ARE Bash-denied.
+Real run settings.json (this run) denyWrite coverage:
+  domain denied
+  code-security denied
+  audit denied
+  qa NOT denied (own area)
+Live shell writes into other reviewers' evidence dirs:
+  domain: Read-only file system
+  code-security: Read-only file system
+  audit: Read-only file system
+Conclusion: QA15-S1's expectation is superseded by D-030 (two-layer confinement); not a product regression. The QA15-S1 test should be updated when promoted to tests/qa/dg0 (assert via the process-sandbox plan, or create the evidence dirs in the fixture first, as the runner does).
+
+# Confirmation: QA15-S1 against $TMPDIR/pf (fresh clone at 450c756) after 'mkdir -p docs/delivery/test-evidence/DG0/{domain,code-security,qa,audit} docs/delivery/gates' (what run-agent.sh does):
+ok 1 - QA15-S1 D-028 sandbox: every tracked candidate file is shell-denied for each reviewer, and evidence areas are per-reviewer
+# pass 1
+# fail 0
+candidate id of $TMPDIR/pf after mkdir: {"stage":"DG0","source":"working-tree","candidate_id":"sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5","files":90}

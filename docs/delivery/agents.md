@@ -111,7 +111,7 @@ The whole agent process, `claude` included, runs in a second bubblewrap sandbox 
 - **Read-only** everywhere except the role's own areas. `/tmp` and `/var/tmp` are private (the run's own `TMPDIR` is bound in). `HOME` is read-only except a private session directory at `~/.claude/projects`.
 - **Confined roles:** the repository's top level is a throwaway layer. Review records, the gate record and the analyst's register are written to a private staging copy. After the run the runner copies back only the role's own files and lists anything else in `runs/<DGx>/<run-id>/sandbox.json`. A review or analyst run with discarded writes exits 73 and is not auto-committed.
 - **Implementers:** the working tree is writable, and existing protected paths are read-only.
-- **Process:** only `CAP_SETFCAP` is kept, `no_new_privs` is set, and the PID and IPC namespaces are private. The network is shared, because the CLI needs the API.
+- **Process:** only `CAP_SETFCAP` is kept and `no_new_privs` is set. The IPC namespace is private (`--unshare-ipc`), but the PID namespace is shared with the host and the host procfs is bound read-write, so a reviewer's own nested bubblewrap can mount a fresh procfs (D-030). To keep that sharing from becoming a cross-run path, each run also enters its own scope-only Landlock domain (D-033, F-DG0-152). The network is shared, because the CLI needs the API.
 - **Evidence:** `sandbox.json` is hashed into `meta.process_sandbox_sha256`. The validator accepts a gate's review and audit records only from confined runs that discarded nothing.
 
 The scope of the controls is in `docs/delivery/threat-model.md`.

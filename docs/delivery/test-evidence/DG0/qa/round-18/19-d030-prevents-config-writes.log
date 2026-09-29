@@ -1,0 +1,14 @@
+# Manual reproduction of QA11-R2/R3 under D-030 [run at 16:58Z; logged 2026-09-29T16:58:51Z]
+Setup: fresh clone of $TMPDIR/rv at 450c756, stub 'claude' on PATH, HOME=fixture home, MTH_RUN_TMP_PARENT=$TMPDIR/rtp2, run-agent.sh --role qa-verifier --stage DG0 --task T-QA11.
+Stub claude (in the runner's process sandbox) tries: append to $HOME/.gitconfig, and write $REPO/.git/hooks/pre-commit.
+run-agent.sh rc=0; run stderr.log:
+  /var/tmp/mth-run.sbowHu/claude-0/r2man/bin/claude: line 4: /var/tmp/mth-run.sbowHu/claude-0/r2man/home/.gitconfig: Read-only file system
+  cat: /tmp/err: No such file or directory
+  STUB: gitconfig edit REFUSED: 
+  STUB: .git/hooks write REFUSED: /var/tmp/mth-run.sbowHu/claude-0/r2man/bin/claude: line 5: /var/tmp/mth-run.sbowHu/claude-0/r2man/clone/.git/hooks/pre-commit: Read-only file system
+fixture HOME/.gitconfig afterwards:
+  [user]
+  	name = qa11
+.git/hooks/pre-commit exists: no
+meta.external_config_changed: [] meta.process_sandbox: True
+Conclusion: the legacy QA11-R2..R6 / QA13-R* / QA14-R* expected DETECTION (exit 71) of an agent-shell config write. Since D-030 the write is PREVENTED (read-only HOME and .git inside the process sandbox), so nothing changes and exit 0 is correct. Stronger control; not a regression. Detection of changes made outside the sandbox (config_snapshot, D-024) is still covered by the candidate's runner tests (01-step1-required-commands.log).

@@ -1,0 +1,35 @@
+# Runner end-to-end legacy cases re-run with MTH_RUN_TMP_PARENT=$TMPDIR/rtp MTH_RUN_TMP=$TMPDIR (the product runner tests do the same; /var/tmp is read-only in a reviewer sandbox) + hermetic git  [2026-09-29T16:57:31Z]
+=== dg0-gate-negative-r11.test.mjs
+ok 1 - QA11-G4 F-DG0-136: path normalisation and sibling prefixes: '..' out of the temp dir, '/tmpX' and a HOME sibling are classified correctly
+not ok 2 - QA11-R6 D-024: a shell-written .claude/settings.local.json in the agent's worktree working directory must leave a trace in the run evidence
+ok 3 - QA11-R1 runner control: a run that changes no external configuration exits 0, records external_config_changed [] and auto-commits
+not ok 4 - QA11-R2 D-024: a run whose shell edits ~/.gitconfig exits 71, is recorded in meta and is NOT auto-committed
+not ok 5 - QA11-R3 D-024: a planted .git/hooks/pre-commit is detected before the auto-commit, so the hook never executes
+not ok 6 - QA11-R4 control: a shell-written .claude/settings.local.json (loaded under --setting-sources project,local) shows in meta.outputs and git status
+not ok 7 - QA11-R5 D-024: hiding a shell-written .claude/settings.local.json with .git/info/exclude must still leave a trace in the run evidence
+# tests 7 # pass 2 # fail 5 EXIT=1
+=== dg0-gate-negative-r12.test.mjs
+not ok 1 - QA12-REG A23/A24/A25 regression: the 94-case round-9 suite passes against the candidate once fixture runs carry a sandboxed settings.json
+ok 2 - QA12-R7 D-024/D-025: a reviewer run that plants a nested CLAUDE.md inside its own evidence area is refused (exit 71, not committed)
+ok 3 - QA12-R8 D-024/D-025: a reviewer run that plants a nested .claude/settings.json in its evidence area is refused (exit 71)
+ok 4 - QA12-R9 D-024/D-025: a reviewer run that plants a .gitignore (hiding its own files from the snapshots) is refused (exit 71)
+ok 5 - QA12-R10 F-DG0-138: git hooks that already exist before the run never execute during the evidence auto-commit, which contains only the run directory
+ok 6 - QA12-R11 D-025: without bubblewrap on PATH the runner refuses to start (exit 65) and creates no run directory
+ok 7 - QA12-R12 D-025: each run keeps its generated settings.json; meta.settings_sha256 matches and meta.bash_sandbox is true; protected paths are denied
+not ok 8 - QA12-P1 D-024/D-025: an analyst run that plants a gitignored docs/analysis/tools/csv.pyc must leave a trace in the run evidence
+# tests 8 # pass 6 # fail 2 EXIT=1
+=== dg0-gate-negative-r13.test.mjs
+not ok 1 - QA13-REG A24/A25 regression: the 94-case round-9 suite (every assignment negative) passes against the candidate with D-026-shaped run evidence
+not ok 2 - QA13-R1 probe D-026 stub rule: a pre-existing untracked, non-empty CLAUDE.local.md truncated to zero during a run
+not ok 3 - QA13-R1b probe D-026 stub rule: a pre-existing ignored, non-empty .claude/settings.local.json truncated to zero during a run (reported before D-026)
+not ok 4 - QA13-R2 probe D-024: a pre-existing ignored, non-empty .claude/settings.local.json deleted during a run
+not ok 5 - QA13-R3 D-026 by design: zero-length untracked .gitattributes and nested .claude files are ignored; the same files with content are reported
+# tests 5 # pass 0 # fail 5 EXIT=1
+=== dg0-gate-negative-r14.test.mjs
+not ok 1 - QA14-REG A24/A25 regression: the round-9 suite (every assignment negative) with D-027-shaped run evidence: 91 pass, and the 3 one-field cwd controls fail only on cwd binding
+ok 2 - QA14-R0 runner control: no configuration change -> exit 0 and nothing reported (and meta.cwd equals the stub's init cwd)
+not ok 3 - QA14-R4 runner F-DG0-234: a .git/hooks file deleted during a run is reported as removed
+not ok 4 - QA14-R5 runner F-DG0-234: a nested .gitignore in a second worktree deleted during a run is reported as removed
+not ok 5 - QA14-R6 runner: an ignored .claude/settings.local.json symlink retargeted to identical content is reported
+not ok 6 - QA14-R7 runner F-DG0-012 fail-closed: if the before-snapshot cannot be read the comparison fails and the run is flagged
+# tests 6 # pass 1 # fail 5 EXIT=1

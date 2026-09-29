@@ -1,0 +1,16 @@
+# Live guard probe, qa-verifier run 21af56d2, 2026-09-29T16:41:21Z
+## 1) Write tool -> docs/source/QA-PROBE.txt
+Result (verbatim tool error): PreToolUse:Write hook error: [...guard-write.mjs qa-verifier...]: BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+## 2) shell -> same path and other protected/foreign paths
+create docs/source/QA-PROBE.txt -> rc=1 Read-only file system
+create tools/gates/QA-PROBE.txt -> rc=1 Read-only file system
+create .claude/agents/QA-PROBE.md -> rc=1 Read-only file system
+append-noop to existing docs/delivery/requirements.csv -> rc=1 Read-only file system
+create docs/delivery/test-evidence/DG0/code-security/QA-PROBE.txt -> rc=1 Read-only file system
+create docs/delivery/test-evidence/DG0/domain/QA-PROBE.txt -> rc=1 Read-only file system
+create docs/delivery/gates/QA-PROBE.json -> rc=1 Read-only file system
+append-noop to existing docs/delivery/findings.json -> rc=1 Read-only file system
+create .git/QA-PROBE -> rc=1 Read-only file system
+## 3) state after
+ls: cannot access 'docs/source/QA-PROBE.txt': No such file or directory
+(no output above = no protected path modified)

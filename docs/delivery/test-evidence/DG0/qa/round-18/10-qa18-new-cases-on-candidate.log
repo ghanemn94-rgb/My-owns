@@ -1,0 +1,28 @@
+# First run (before correcting QA18-S5) failed only on QA18-S5: my test wrongly expected round-18/qa-verifier.json.bak to be out of scope; the accept regex round-[0-9]+/<role>\.[^/]+ admits it by design (D-021 '<role>.*'). Test corrected; not a product finding.
+# $ QA_REPO_ROOT=$TMPDIR/rv (450c756, candidate 21efe44b) node --test dg0-gate-negative-r18.test.mjs   [2026-09-29T16:29:59Z, node v22.22.2, python Python 3.11.15]
+TAP version 13
+#   QA18-S4 status=1 sandbox.json=MISSING stderr-tail="FileExistsError: [Errno 17] File exists: '/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-wm48Qq/repo/docs/delivery/reviews/DG0/round-18'"
+# Subtest: QA18-C1 stub rule boundaries: no-write-bit empty untracked files are skipped, any write bit or a symlink counts
+ok 1 - QA18-C1 stub rule boundaries: no-write-bit empty untracked files are skipped, any write bit or a symlink counts
+# Subtest: QA18-C2 a skipped stub stays detectable by git status, never enters the committed candidate, and counts once tracked
+ok 2 - QA18-C2 a skipped stub stays detectable by git status, never enters the committed candidate, and counts once tracked
+# Subtest: QA18-S1 finish(): a dangling symlink planted at the own-role destination is a discard; never followed, never clobbered
+ok 3 - QA18-S1 finish(): a dangling symlink planted at the own-role destination is a discard; never followed, never clobbered
+# Subtest: QA18-S2 finish(): a collision on one own-role file does not stop the loop; the other file is copied back; non-zero
+ok 4 - QA18-S2 finish(): a collision on one own-role file does not stop the loop; the other file is copied back; non-zero
+# Subtest: QA18-S3 finish(): a directory already at the own-role destination is a discard, not a crash
+ok 5 - QA18-S3 finish(): a directory already at the own-role destination is a discard, not a crash
+# Subtest: QA18-S4 finish(): the round directory is a regular file in the real tree: fail-closed and the real file is untouched
+ok 6 - QA18-S4 finish(): the round directory is a regular file in the real tree: fail-closed and the real file is untouched
+# Subtest: QA18-S5 finish(): an out-of-scope staging file is discarded and an unchanged seed file is not re-copied
+ok 7 - QA18-S5 finish(): an out-of-scope staging file is discarded and an unchanged seed file is not re-copied
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1050.555696
+EXIT=0

@@ -1,0 +1,25 @@
+# agents.md claims vs raw evidence, candidate 450c756 [2026-09-29T16:47:05Z]
+## (a) load-check claims (agents.md L68-90) vs T-DG0-LOAD raw evidence: see 30-agent-load-evidence.log -> 10 runs, 10 distinct sessions, init model claude-opus-5-5, >=1 guard-blocked write each, overall PASS. MATCH.
+## (b) process-sandbox claims (agents.md, 'Process sandbox (D-030)')
+$ grep -n 'PID\|IPC\|CAP_SETFCAP' docs/delivery/agents.md
+114:- **Process:** only `CAP_SETFCAP` is kept, `no_new_privs` is set, and the PID and IPC namespaces are private. The network is shared, because the CLI needs the API.
+$ grep -n -- '--unshare\|--bind", "/proc\|--proc' tools/agents/agent_sandbox.py
+26:    procfs (D-030; threat-model residual 8). It DOES create its own IPC namespace (--unshare-ipc, D-031, F-DG0-148).
+131:    # fresh --proc mount and it carries no read-only submount over /proc/sys, because either would make the procfs
+139:    # PID namespace. It DOES create its own IPC namespace (--unshare-ipc, F-DG0-148): the IPC namespace has no bearing
+147:    a = ["--die-with-parent", "--new-session", "--unshare-ipc", "--setenv", "MTH_PROCESS_SANDBOX", "1",
+148:         "--ro-bind", "/", "/", "--dev", "/dev", "--bind", "/proc", "/proc",
+unshare-pid occurrences: 0
+$ sed -n 24,28p tools/agents/agent_sandbox.py  (docstring after D-032)
+    into its own user namespace. no_new_privs is set. The sandbox binds the host's real procfs (read-write) and does
+    NOT create a PID namespace -- sharing the host PID namespace is what lets a reviewer's own nested bwrap mount its
+    procfs (D-030; threat-model residual 8). It DOES create its own IPC namespace (--unshare-ipc, D-031, F-DG0-148).
+    The network is shared, because the CLI must reach the API (agent shells have no network via the Bash sandbox, D-025).
+
+$ threat-model.md residual 8:
+8. **The process sandbox shares the host PID namespace** (D-030), so an agent can see host processes in `/proc` and, running as the same uid, could signal them. This is a deliberate trade: a private PID namespace broke the reviewers' own nested bubblewrap (the
+## raw sandbox.json (round-17 review runs):
+docs/delivery/runs/DG0/DG0-T-DG0-REV-DOM-R17-domain-reviewer-20260929T111532Z-43296721/sandbox.json: {'procfs': 'host-bind', 'unshare': ['ipc'], 'capabilities': ['CAP_SETFCAP'], 'no_new_privs': True}
+docs/delivery/runs/DG0/DG0-T-DG0-REV-QA-R17-qa-verifier-20260929T111544Z-a1c9d0c1/sandbox.json: {'procfs': 'host-bind', 'unshare': ['ipc'], 'capabilities': ['CAP_SETFCAP'], 'no_new_privs': True}
+docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R17-code-security-reviewer-20260929T111538Z-5a9b1379/sandbox.json: {'procfs': 'host-bind', 'unshare': ['ipc'], 'capabilities': ['CAP_SETFCAP'], 'no_new_privs': True}
+## RESULT: agents.md L114 says PID namespace private; code/evidence/threat model say host PID namespace shared -> MISMATCH (F-DG0-239, Low). All other checked claims (CAP_SETFCAP only, no_new_privs, IPC private, read-only root, staged copy-back, exit 73, sandbox.json hashed into meta) match code and evidence.

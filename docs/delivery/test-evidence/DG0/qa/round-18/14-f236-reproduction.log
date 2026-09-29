@@ -1,0 +1,18 @@
+# F-DG0-236: 13 empty untracked 0444 stub files (the round-15 list) added to a fixture repo; working-tree candidate before/after  [2026-09-29T16:46:08Z]
+## round-15 code 7fab49c:
+/var/tmp/mth-run.sbowHu/claude-0/r15: before=9b87177af27ae1cc after=14fbfd389399656e files=0 -> CHANGED (bug reproduced)
+## candidate 450c756:
+/var/tmp/mth-run.sbowHu/claude-0/rv: before=9b87177af27ae1cc after=9b87177af27ae1cc files=0 -> STABLE (fixed)
+## runner pre-creates gates + evidence dirs (run-agent.sh):
+# Every reviewer's evidence directory for the stage, and the gate-record directory, exist before any agent starts, so a
+# concurrently running agent's sandbox never places a read-only mount stub where a reviewer or the auditor must create
+# them (F-DG0-236). The process sandbox also binds the role's areas and the staged review directory, which must exist
+# (D-030). Empty directories are not tracked by git and are not part of any candidate.
+for R in "$REPO_ROOT" "$CWD_ROOT"; do
+  mkdir -p "$R/docs/delivery/gates" "$R/docs/delivery/reviews/$STAGE" "$R/docs/delivery/test-evidence/$STAGE"/{domain,code-security,qa,audit}
+done
+## product tests covering it (passed in 01-step1-required-commands.log):
+# Subtest: F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does
+ok 53 - F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does
+## live: shared tree has stub paths present (git status '??'), working-tree candidate = frozen 21efe44b, 90 files (02-head-clone-and-shared-tree.log)
+## note: 'files=0' above is a display bug in my script (the manifest object is not read through .entries); the before/after candidate IDs are the result.

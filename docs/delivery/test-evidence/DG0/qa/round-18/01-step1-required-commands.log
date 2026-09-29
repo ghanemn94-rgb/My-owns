@@ -1,0 +1,139 @@
+# Round-18 QA step 1 — run in disposable clone $TMPDIR/rv at 450c756 (2026-09-29T16:24:49Z)
+# env: node v22.22.2, python Python 3.11.15, Linux 6.18.44-fc-v49
+
+=================== $ tools/source/check_extraction.sh
+PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)
+EXIT=0
+
+=================== $ node --test tools/gates/tests/*.test.mjs
+TAP version 13
+# Subtest: sandbox-run: requires bubblewrap (a missing sandbox is a failure, not a pass)
+ok 1 - sandbox-run: requires bubblewrap (a missing sandbox is a failure, not a pass)
+  ---
+  duration_ms: 0.945526
+... (328 lines; tail follows)
+  ---
+  duration_ms: 169.521496
+  type: 'test'
+  ...
+# Subtest: F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the replayed prompt)
+ok 52 - F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the replayed prompt)
+  ---
+  duration_ms: 508.150621
+  type: 'test'
+  ...
+# Subtest: F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does
+ok 53 - F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does
+  ---
+  duration_ms: 133.431757
+  type: 'test'
+  ...
+1..53
+# tests 53
+# suites 0
+# pass 53
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 18028.245986
+EXIT=0
+
+=================== $ node --test tools/agents/tests/*.test.mjs
+TAP version 13
+# Subtest: reviewers may write only review records and evidence
+ok 1 - reviewers may write only review records and evidence
+  ---
+  duration_ms: 44.947189
+... (244 lines; tail follows)
+  ---
+  duration_ms: 622.148009
+  type: 'test'
+  ...
+# Subtest: F-DG0-145: the runner runs the whole agent inside the process sandbox and records it
+ok 37 - F-DG0-145: the runner runs the whole agent inside the process sandbox and records it
+  ---
+  duration_ms: 666.877825
+  type: 'test'
+  ...
+# Subtest: D-030: a review run whose staging copy holds another role's file exits 73 and commits nothing
+ok 38 - D-030: a review run whose staging copy holds another role's file exits 73 and commits nothing
+  ---
+  duration_ms: 585.904656
+  type: 'test'
+  ...
+1..38
+# tests 38
+# suites 0
+# pass 38
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 56172.974771
+EXIT=0
+
+=================== $ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+EXIT=0
+
+=================== $ node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG0 FIXING)
+EXIT=0
+
+=================== $ node tools/gates/validate.mjs --reconcile
+active stage: DG0 (FIXING)
+frozen candidate: sha256:34b06b8a8245250ff15d4dc1ad6453a59de4d07950d6d24668b30233b1af314e
+working tree:     sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5 (differs: 3 changed, 0 added, 0 removed)
+round 1 domain-reviewer: FAIL (STALE for current content)
+round 1 code-security-reviewer: BLOCKED (STALE for current content)
+round 1 qa-verifier: FAIL (STALE for current content)
+round 2 domain-reviewer: PASS (STALE for current content)
+round 2 code-security-reviewer: FAIL (STALE for current content)
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: PASS (STALE for current content)
+round 3 code-security-reviewer: FAIL (STALE for current content)
+round 3 qa-verifier: PASS (STALE for current content)
+round 4 domain-reviewer: PASS (STALE for current content)
+round 4 code-security-reviewer: FAIL (STALE for current content)
+round 4 qa-verifier: PASS (STALE for current content)
+round 5 domain-reviewer: FAIL (STALE for current content)
+round 6 domain-reviewer: FAIL (STALE for current content)
+round 6 code-security-reviewer: FAIL (STALE for current content)
+round 6 qa-verifier: FAIL (STALE for current content)
+round 7 domain-reviewer: PASS (STALE for current content)
+round 7 code-security-reviewer: FAIL (STALE for current content)
+round 7 qa-verifier: PASS (STALE for current content)
+round 8 domain-reviewer: PASS (STALE for current content)
+round 8 code-security-reviewer: PASS (STALE for current content)
+round 8 qa-verifier: PASS (STALE for current content)
+round 9 domain-reviewer: PASS (STALE for current content)
+round 9 code-security-reviewer: FAIL (STALE for current content)
+round 9 qa-verifier: PASS (STALE for current content)
+round 10 domain-reviewer: PASS (STALE for current content)
+round 10 code-security-reviewer: FAIL (STALE for current content)
+round 10 qa-verifier: PASS (STALE for current content)
+round 11 domain-reviewer: PASS (STALE for current content)
+round 11 code-security-reviewer: FAIL (STALE for current content)
+round 11 qa-verifier: FAIL (STALE for current content)
+round 12 code-security-reviewer: FAIL (STALE for current content)
+round 12 qa-verifier: FAIL (STALE for current content)
+round 13 domain-reviewer: PASS (STALE for current content)
+round 13 code-security-reviewer: FAIL (STALE for current content)
+round 13 qa-verifier: FAIL (STALE for current content)
+round 14 domain-reviewer: PASS (STALE for current content)
+round 14 code-security-reviewer: FAIL (STALE for current content)
+round 14 qa-verifier: PASS (STALE for current content)
+round 15 domain-reviewer: PASS (STALE for current content)
+round 15 code-security-reviewer: FAIL (STALE for current content)
+round 15 qa-verifier: PASS (STALE for current content)
+round 16 domain-reviewer: PASS (STALE for current content)
+round 16 code-security-reviewer: PASS (STALE for current content)
+round 17 domain-reviewer: PASS (STALE for current content)
+round 17 code-security-reviewer: BLOCKED (STALE for current content)
+PASS reconcile (structure)
+EXIT=0
+
+=================== $ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5","files":90}
+EXIT=0

@@ -1,0 +1,37 @@
+# Clone at HEAD 9bed6d156f7701b73897ce5267c129ae5f3ba96b (freeze metadata commit), 2026-09-29T16:26:17Z
+
+=== $ node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+EXIT=0
+
+=== $ node tools/gates/validate.mjs --reconcile
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5
+working tree:     sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5 (matches)
+PASS reconcile (structure)
+EXIT=0
+
+=== $ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+EXIT=0
+
+=== $ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5","files":90}
+EXIT=0
+
+=== $ node tools/gates/candidate.mjs --stage DG0 --ref HEAD
+{"stage":"DG0","source":"HEAD","candidate_id":"sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5","files":90}
+EXIT=0
+
+=== $ node tools/gates/validate.mjs --historical --stage DG0; echo '(no prior approved gate expected)'
+FAIL gate DG0 (historical) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+(no prior approved gate expected)
+EXIT=0
+
+=== shared tree /home/user/My-owns (read-only)
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5","files":90}
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5
+working tree:     sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5 (matches)
+PASS reconcile (structure)

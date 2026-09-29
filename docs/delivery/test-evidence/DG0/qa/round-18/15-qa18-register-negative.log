@@ -1,0 +1,39 @@
+# $ QA_REPO_ROOT=$TMPDIR/rv (450c756, candidate 21efe44b) node --test dg0-register-negative-r18.test.mjs  [2026-09-29T16:48:30Z, node v22.22.2]
+TAP version 13
+#   R1 B0999: exit=1 :: FAIL register rules at DG0 (1 problem) |   - requirements.csv REQ-PB-001: cites unknown playbook block B0999
+#   R1 M0999: exit=1 :: FAIL register rules at DG0 (1 problem) |   - requirements.csv REQ-PB-001: cites unknown master-prompt block M0999
+#   R2: exit=1 :: FAIL register rules at DG0 (5 problems) |   - requirements.csv REQ-PB-001: SOURCE requirement cites no playbook block |   - docs/analysis/source-coverage.csv: B0004 maps to REQ-PB-001, but REQ-PB-001 does not cite B0004 in source_ref
+#   R3: exit=1 :: FAIL register rules at DG0 (1 problem) |   - docs/analysis/source-coverage.csv: block B0100 has no disposition
+#   R4: exit=1 :: FAIL register rules at DG0 (1 problem) |   - docs/analysis/source-coverage.csv: B0004 maps to REQ-DLV-001, but REQ-DLV-001 does not cite B0004 in source_ref
+#   R5a SPECIFIED: exit=1 :: FAIL register rules at DG0 (1 problem) |   - requirements.csv REQ-DLV-022: final gate DG0 requires IMPLEMENTED at DG0 (is SPECIFIED)
+#   R5b empty evidence: exit=1 :: FAIL register rules at DG0 (1 problem) |   - requirements.csv REQ-DLV-022: IMPLEMENTED for DG0 without evidence
+#   R5c missing evidence file: exit=1 :: FAIL register rules at DG0 (1 problem) |   - requirements.csv REQ-DLV-022: evidence is not an existing repository file: tools/gates/does-not-exist.mjs
+#   R6: exit=1 :: FAIL register rules at DG0 (2 problems) |   - requirements.csv REQ-DLV-022: invalid status 'VERIFIED' |   - requirements.csv REQ-DLV-022: final gate DG0 requires IMPLEMENTED at DG0 (is VERIFIED)
+#   R7a duplicate: exit=1 :: FAIL register rules at DG0 (1 problem) |   - requirements.csv REQ-PB-001: duplicate req_id
+#   R7b ragged row: exit=1 :: FAIL register rules at DG0 (1 problem) |   - docs/delivery/requirements.csv: CSV: record 410 has 18 fields, header has 19
+# Subtest: QA18-R0 control: the unmutated clone passes --register DG0
+ok 1 - QA18-R0 control: the unmutated clone passes --register DG0
+# Subtest: QA18-R1 a row citing a non-existent block anchor is rejected (B0999, M0999)
+ok 2 - QA18-R1 a row citing a non-existent block anchor is rejected (B0999, M0999)
+# Subtest: QA18-R2 a SOURCE row that cites no playbook block is rejected
+ok 3 - QA18-R2 a SOURCE row that cites no playbook block is rejected
+# Subtest: QA18-R3 source-coverage.csv missing a playbook block is rejected
+ok 4 - QA18-R3 source-coverage.csv missing a playbook block is rejected
+# Subtest: QA18-R4 a coverage row mapping a block to a requirement that does not cite it is rejected
+ok 5 - QA18-R4 a coverage row mapping a block to a requirement that does not cite it is rejected
+# Subtest: QA18-R5 an incomplete DG0 requirement is rejected (SPECIFIED at its final gate; IMPLEMENTED without evidence)
+ok 6 - QA18-R5 an incomplete DG0 requirement is rejected (SPECIFIED at its final gate; IMPLEMENTED without evidence)
+# Subtest: QA18-R6 a row declaring VERIFIED is rejected
+ok 7 - QA18-R6 a row declaring VERIFIED is rejected
+# Subtest: QA18-R7 a duplicated req_id and a row with a missing column are rejected
+ok 8 - QA18-R7 a duplicated req_id and a row with a missing column are rejected
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15033.789948
+EXIT=0

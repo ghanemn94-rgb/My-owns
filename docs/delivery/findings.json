@@ -5207,22 +5207,27 @@
           "at": "2026-09-29T11:25:00Z",
           "status": "ACCEPTED_OBSERVATION",
           "note": "verified by code-security-reviewer round 17: PASS"
+        },
+        {
+          "at": "2026-09-29T16:36:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by code-security-reviewer round 18: PASS"
         }
       ],
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R17-code-security-reviewer-20260929T111538Z-5a9b1379",
-          "session_id": "5a9b1379-0508-4ad8-ae25-9abf8c860685"
+          "run_id": "DG0-T-DG0-REV-SEC-R18-code-security-reviewer-20260929T162345Z-2b492b0f",
+          "session_id": "2b492b0f-6e27-4726-8623-9ceef8f0057e"
         },
-        "at": "2026-09-29T11:25:00Z",
+        "at": "2026-09-29T16:36:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-17/04-copyback-ipc-repro.log",
-          "tools/agents/agent_sandbox.py#L54-L67"
+          "docs/delivery/test-evidence/DG0/code-security/round-18/05-r17-repro-old-vs-new.log",
+          "tools/agents/agent_sandbox.py#L56-L69"
         ],
-        "note": "Still reproduces with the round-17 code (case E: a new own-role file in round-1 is copied back, exit 0). I still judge it Low, non-mandatory and fail-closed for gate integrity: a record in an earlier round must reconstruct from that round's own run transcript, which a later run cannot satisfy. Accepted as an observation; pinning the accept pattern to the current round remains the recommended hardening."
+        "note": "Still reproduces unchanged (case E: a new own-role file in an earlier round is copied back, exit 0). I still judge it Low, non-mandatory and fail-closed for gate integrity, because a record in an earlier round must reconstruct from that round's own run transcript. Re-accepted as an observation; pinning the accept pattern to the current round remains the recommended hardening."
       }
     },
     {
@@ -5311,22 +5316,28 @@
           "at": "2026-09-29T11:25:00Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 17: FAIL"
+        },
+        {
+          "at": "2026-09-29T16:36:00Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 18: FAIL"
         }
       ],
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R17-code-security-reviewer-20260929T111538Z-5a9b1379",
-          "session_id": "5a9b1379-0508-4ad8-ae25-9abf8c860685"
+          "run_id": "DG0-T-DG0-REV-SEC-R18-code-security-reviewer-20260929T162345Z-2b492b0f",
+          "session_id": "2b492b0f-6e27-4726-8623-9ceef8f0057e"
         },
-        "at": "2026-09-29T11:25:00Z",
+        "at": "2026-09-29T16:36:00Z",
         "result": "FAIL",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-16/04-sandbox-probe.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-18/03-proc-peer-root-repro.log",
+          "tools/agents/agent_sandbox.py#L147-L149",
           "docs/delivery/threat-model.md#disclosed-residuals"
         ],
-        "note": "Not accepted as an observation in round 17. I could not complete the re-assessment of threat-model residual 7 (whether a file-tool write to a uid-0-writable /proc/sys entry stays within 'availability / host-tunable, not repository or gate integrity'): my analysis was stopped by the session's safety classifier, so I have no basis to confirm that the residual is no larger than stated. I am therefore not re-affirming my round-16 conclusion. The residual needs a fresh, human-supervised assessment. Separately, a read-only check this round shows /proc/sys/kernel/core_pattern on the host still reads 'test', the value the round-16 reproduction left behind, so the host tunable has not been restored and needs the user's attention."
+        "note": "Assessed without writing any /proc/sys entry. The residual as scoped (a uid-0 file-tool write to a /proc/sys tunable) is confirmed as described: host /proc is bound read-write with no /proc/sys submount (agent_sandbox.py:148); the CLI runs as uid 0 with CapEff = CAP_SETFCAP only and NoNewPrivs 1 (Read of /proc/self/status); `test -w /proc/sys/kernel/core_pattern` reports writable at the process-sandbox layer (mode-bit read only, 03-proc-peer-root-repro.log); and the guard fails closed on paths that resolve through /proc, /sys or /dev. However, I cannot confirm that the residual is no larger than disclosed. The same read-write host procfs plus the shared PID namespace exposes /proc/<peer-pid>/root and /cwd, through which another concurrent run's evidence, private TMPDIR, staged review record and session directory become writable (F-DG0-152, reproduced in a disposable fixture). That contradicts the residual's statement that no reviewer artefact or another run's scratch becomes writable. It stays OPEN until F-DG0-152 is fixed, or the residual is re-scoped and re-assessed."
       }
     },
     {
@@ -5348,7 +5359,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-17/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-29T11:22:40Z",
@@ -5359,10 +5370,32 @@
           "at": "2026-09-29T16:21:00Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at cb76260164f108eb36037704ac639790d27c23a4"
+        },
+        {
+          "at": "2026-09-29T16:36:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 18: PASS"
         }
       ],
       "fix_revision": "cb76260164f108eb36037704ac639790d27c23a4",
-      "fix_summary": "D-032: finish() catches FileExistsError on the O_EXCL copy-back and records a write-once discard (keeps the real file, continues the loop) instead of an unhandled crash; O_NOFOLLOW+O_EXCL still never follow/clobber a symlink. Test 'F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash'."
+      "fix_summary": "D-032: finish() catches FileExistsError on the O_EXCL copy-back and records a write-once discard (keeps the real file, continues the loop) instead of an unhandled crash; O_NOFOLLOW+O_EXCL still never follow/clobber a symlink. Test 'F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash'.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R18-code-security-reviewer-20260929T162345Z-2b492b0f",
+          "session_id": "2b492b0f-6e27-4726-8623-9ceef8f0057e"
+        },
+        "at": "2026-09-29T16:36:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-18/05-r17-repro-old-vs-new.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-18/06-finish-edge.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-18/r18-finish-edge.py",
+          "tools/agents/agent_sandbox.py#L266-L279"
+        ],
+        "note": "Reproduced the original failure against the round-17 code (f84eed4): the same-path collision makes finish() exit 1 with FileExistsError and write no sandbox.json, and later-sorted files are not processed. The fixed code (450c756, agent_sandbox.py:269-276) exits 3 with a write-once discard, writes sandbox.json, leaves the real file untouched, and still copies back a later-sorted own-role file. A planted dangling symlink at the destination is not followed: O_NOFOLLOW|O_EXCL gives EEXIST, which is discarded. The D-031 concurrent-commit case (another role's record committed mid-run: exit 0, no false discard) still holds, and so does --unshare-ipc (private ipc namespace, F-DG0-148)."
+      }
     },
     {
       "id": "F-DG0-151",
@@ -5382,7 +5415,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-17/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-29T11:22:40Z",
@@ -5393,10 +5426,116 @@
           "at": "2026-09-29T16:21:00Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at cb76260164f108eb36037704ac639790d27c23a4"
+        },
+        {
+          "at": "2026-09-29T16:36:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 18: PASS"
         }
       ],
       "fix_revision": "cb76260164f108eb36037704ac639790d27c23a4",
-      "fix_summary": "D-032: the agent_sandbox.py module docstring now matches the code and threat model (shared host PID namespace, unshared IPC namespace, host-bind procfs), instead of claiming 'the PID and IPC namespaces are private'."
+      "fix_summary": "D-032: the agent_sandbox.py module docstring now matches the code and threat model (shared host PID namespace, unshared IPC namespace, host-bind procfs), instead of claiming 'the PID and IPC namespaces are private'.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R18-code-security-reviewer-20260929T162345Z-2b492b0f",
+          "session_id": "2b492b0f-6e27-4726-8623-9ceef8f0057e"
+        },
+        "at": "2026-09-29T16:36:00Z",
+        "result": "PASS",
+        "evidence": [
+          "tools/agents/agent_sandbox.py#L23-L27",
+          "tools/agents/agent_sandbox.py#L147-L149"
+        ],
+        "note": "The module docstring (agent_sandbox.py:23-27) now states a host-bind read-write procfs, NO PID namespace (residual 8), and its own IPC namespace (--unshare-ipc). This matches bwrap_args (line 147-148: --unshare-ipc, --bind /proc /proc, no --unshare-pid) and sandbox.json (procfs: host-bind, unshare: [ipc]). Separately, threat-model.md:27 still has the old wording; that is recorded as new finding F-DG0-153."
+      }
+    },
+    {
+      "id": "F-DG0-152",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The process sandbox does not isolate concurrent runs from each other: through the shared host PID namespace and the read-write host procfs, a process at the sandbox layer can write into another run's mount namespace (/proc/<peer-pid>/root, /proc/<peer-pid>/cwd), reaching the peer's evidence, private TMPDIR, staged review record and CLI session directory. A record written this way is copied back as the peer's own.",
+      "reproduction": "tools/agents/agent_sandbox.py:147-149 binds the host procfs read-write (`--bind /proc /proc`) and creates no PID or user namespace. Every run gets identical credentials: uid 0, CapEff/CapPrm/CapBnd = CAP_SETFCAP only, no_new_privs (lines 178-180). For this run's own CLI process these were confirmed by a Read of /proc/self/status: host PID namespace, pid 2552, CapEff 0000000080000000, NoNewPrivs 1, Seccomp 0. The kernel's PTRACE_MODE_READ check for /proc/<pid>/root and /proc/<pid>/cwd therefore passes between two runs (same uid, same user namespace, equal capability sets), and no Yama/LSM is active here. Each peer's rw binds are live in its own mount namespace: evidence dir, staging copy of reviews/<stage>, run_tmp, and sessions at ~/.claude/projects (lines 164-175). Reproduction in a disposable fixture under $TMPDIR, using the REAL agent_sandbox.py prepare/args/finish (docs/delivery/test-evidence/DG0/code-security/round-18/r18-proc-peer-root-repro.mjs, log 03-proc-peer-root-repro.log). The victim is a qa-verifier sandbox (sleeping); the attacker is a sibling code-security-reviewer sandbox with the same credentials. (A) A direct write to test-evidence/DG0/qa is refused ('Read-only file system'). Writes via /proc/<victim>/root succeed into: (B) the victim's evidence, (C, via /proc/<victim>/cwd) the same, (D) the victim's private TMPDIR, i.e. its disposable clones, (E) the victim's staged review record round-2/qa-verifier.json, (F) the victim's CLI session (transcript) directory, and (G) the same target through a symlink in the attacker's own evidence dir, which models the file-tool symlink race. The victim's own `finish` then exits 0 with copied_back=[round-2/qa-verifier.json] and discarded=[], so the forged record lands in the real tree as the victim's, and the runner would auto-commit it. In the live topology the agent's SHELL is in its own PID and user namespace and cannot see peers (checked). The reachable layer is the CLI's file tools. The write guard blocks paths that resolve through /proc (guard-write.mjs:108-175) but is check-then-use; the threat model itself (residual 7) acknowledges racing a symlink past the guard, the same class as F-DG0-145. I deliberately did NOT probe the live concurrent peer runs, so this is not demonstrated end-to-end against a live run.",
+      "expected": "threat-model.md 'Mechanically prevented' row 2 says another reviewer's records and evidence, and another run's disposable clones, are read-only to an agent 'in the kernel'. Residual 7 states that no reviewer artefact or another run's scratch becomes writable, and residual 8 states that the shared PID namespace does not let an agent write any protected file.",
+      "actual": "Within the process-sandbox layer the kernel does not prevent cross-run writes: another run's evidence, disposable clones, staged review record and session transcripts are writable through /proc/<peer-pid>/root. Residuals 7 and 8 are therefore larger than disclosed, and a control listed as mechanically prevented (cross-run falsification, review-record integrity) is not. Gate-integrity impact: an agent can plant files in a concurrently running reviewer's evidence or clones (silently changing what that reviewer tests), and can place a record into that reviewer's staging that is copied back as the reviewer's own. Whether the validator's transcript-replay binding (D-021) catches a forged record depends on whether the peer's transcript, which lives in the same writable session directory, can also be altered consistently. I did not attempt that. Proposed narrower mitigation, spiked in the same fixture (r18-landlock-spike.mjs, log 04-landlock-spike.log): put each run's sandboxed process in its own Landlock domain with a scope-only ruleset (handled_access_fs=0, scoped=SIGNAL|ABSTRACT_UNIX_SOCKET; ABI 7 is available on this kernel). With that, B/C/D are refused ('Permission denied'), a cross-run signal is refused (this also narrows residual 8), own areas stay writable, and a nested bwrap with a fresh --proc (what the pre-freeze needs) still works. Alternatives: a distinct uid per run, or serialising reviewer runs. The fix needs a test that two concurrently prepared sandboxes cannot write each other's areas via /proc/<pid>/root or /cwd.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-18/03-proc-peer-root-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-18/r18-proc-peer-root-repro.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-18/04-landlock-spike.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-18/r18-landlock-spike.mjs",
+        "tools/agents/agent_sandbox.py#L147-L180",
+        "tools/agents/guard-write.mjs#L108-L175",
+        "docs/delivery/threat-model.md#disclosed-residuals"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-29T16:35:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 18; reproduced with the real agent_sandbox.py args in a disposable fixture under $TMPDIR; live peer runs deliberately not probed."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-153",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "threat-model.md 'Mechanically prevented' row 1 still says the process sandbox 'creates no PID/IPC namespace of its own', contradicting --unshare-ipc (D-031) and residual 8",
+      "reproduction": "docs/delivery/threat-model.md:27 says 'The sandbox binds the host's real procfs (read-write) and creates no PID/IPC namespace of its own'. agent_sandbox.py:147 passes --unshare-ipc, sandbox.json records unshare: [\"ipc\"], and threat-model.md:61 (residual 8) correctly says the IPC namespace IS unshared.",
+      "expected": "The threat model states consistently that the PID namespace is shared and the IPC namespace is private.",
+      "actual": "Documentation inconsistency only; the code and the machine-readable evidence are correct. I would accept this as an observation.",
+      "evidence": [
+        "docs/delivery/threat-model.md#L27",
+        "tools/agents/agent_sandbox.py#L147"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-29T16:35:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 18 by source inspection."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-239",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-006",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "docs/delivery/agents.md (Process sandbox, D-030) still says 'the PID and IPC namespaces are private'. The code, the raw sandbox.json evidence and threat-model residual 8 all show the host PID namespace is shared. This is the same misstatement F-DG0-151 fixed in the agent_sandbox.py docstring, left in the agent-mechanism document",
+      "reproduction": "Candidate 21efe44b (450c756). `grep -n PID docs/delivery/agents.md` -> line 114: '- **Process:** only `CAP_SETFCAP` is kept, `no_new_privs` is set, and the PID and IPC namespaces are private.' Compare: (1) tools/agents/agent_sandbox.py bwrap_args passes `--unshare-ipc` and `--bind /proc /proc`; `grep -c unshare-pid tools/agents/agent_sandbox.py` = 0; the corrected module docstring (D-032) says it 'does NOT create a PID namespace'. (2) Raw evidence: sandbox.json of all three round-17 review runs (docs/delivery/runs/DG0/*R17*/sandbox.json) records `unshare: [\"ipc\"]`, `procfs: \"host-bind\"`. (3) docs/delivery/threat-model.md residual 8: 'The process sandbox shares the host PID namespace (D-030)'. The assignment asks QA to check that agents.md claims match the raw evidence (step 4). This sentence doesn't.",
+      "expected": "agents.md describes the process sandbox as the code and evidence do: host PID namespace shared (threat-model residual 8, with the reason: nested bwrap needs the host procfs), own IPC namespace (--unshare-ipc, D-031), host procfs bound read-write (residual 7). Suggested wording: '...`no_new_privs` is set, the IPC namespace is private, and the host PID namespace and procfs are shared (so a reviewer's nested bubblewrap works; threat-model residuals 7 and 8).'",
+      "actual": "A documentation-only overstatement of confinement in one summary sentence. The authoritative threat model and the code comment/docstring are correct, and the validator checks the real sandbox.json (`unshare` includes ipc, procfs host-bind), so no control or gate result depends on the wrong sentence. Low and non-mandatory. I'd accept it as an observation for DG0 if it's corrected in the next candidate (a one-line edit to a candidate file, owned by delivery-orchestrator).",
+      "evidence": [
+        "docs/delivery/agents.md#L114",
+        "tools/agents/agent_sandbox.py#bwrap_args",
+        "docs/delivery/threat-model.md#L61",
+        "docs/delivery/runs/DG0/DG0-T-DG0-REV-QA-R17-qa-verifier-20260929T111544Z-a1c9d0c1/sandbox.json",
+        "docs/delivery/test-evidence/DG0/qa/round-18/32-agents-md-vs-evidence.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-18/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-29T17:00:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-18 QA review of candidate 21efe44b (450c756). Low, documentation only; I'd accept it as an observation."
+        }
+      ]
     }
   ]
 }

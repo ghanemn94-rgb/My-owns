@@ -54,17 +54,26 @@ if (opt("--fix")) {
     }
     const vPath = join(dir, `${role}.verifications.json`);
     if (existsSync(vPath)) {
-      if (!rec) throw new Error(`${vPath}: verifications need the reviewer's record ${recPath} for provenance`);
-      for (const v of JSON.parse(readFileSync(vPath, "utf8")).verifications) {
-        const f = byId.get(v.finding_id);
-        if (!f) throw new Error(`${vPath}: unknown finding ${v.finding_id}`);
-        f.verification = {
-          by_role: role, invocation_reference: rec.invocation_reference, at: rec.reviewed_at,
-          result: v.result, evidence: v.evidence || [], note: v.note || "",
-        };
-        f.status = v.status_after;
-        f.history.push({ at: rec.reviewed_at, status: f.status, note: `verified by ${role} round ${round}: ${v.result}` });
-        log.push(`~ ${f.id} -> ${f.status} (${role})`);
+      if (!rec) {
+        // An interrupted run (e.g. the CLI hits the account session limit before writing its verdict) can leave a
+        // verifications sidecar with no review record. Its verifications cannot be attributed without the record's
+        // provenance (invocation_reference, reviewed_at), so they are NOT imported: the findings they targeted stay
+        // pending and are re-verified in a later round. The sidecar is left in place as honest evidence of the
+        // interrupted run and never deleted -- deleting committed review evidence violates the write-once invariant
+        // (tools/gates/lib/rules.mjs checkWriteOnce), which is what forced the round-17 mishap that this guard prevents.
+        log.push(`skip ${role} verifications: no review record ${role}.json (interrupted run); its findings stay pending`);
+      } else {
+        for (const v of JSON.parse(readFileSync(vPath, "utf8")).verifications) {
+          const f = byId.get(v.finding_id);
+          if (!f) throw new Error(`${vPath}: unknown finding ${v.finding_id}`);
+          f.verification = {
+            by_role: role, invocation_reference: rec.invocation_reference, at: rec.reviewed_at,
+            result: v.result, evidence: v.evidence || [], note: v.note || "",
+          };
+          f.status = v.status_after;
+          f.history.push({ at: rec.reviewed_at, status: f.status, note: `verified by ${role} round ${round}: ${v.result}` });
+          log.push(`~ ${f.id} -> ${f.status} (${role})`);
+        }
       }
     }
   }

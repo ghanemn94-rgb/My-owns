@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -239,7 +239,14 @@
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
-      "blockers": [],
+      "blockers": [
+        {
+          "id": "BLK-DG0-writeonce",
+          "severity": "gate-blocking",
+          "opened_at": "2026-09-29T16:45:00Z",
+          "summary": "Write-once history poisoning: commit 0947a8b (round-17 outcome, ancestor of HEAD) deleted the round-17 qa-verifier sidecars committed by e9a00fd. checkWriteOnce (tools/gates/lib/rules.mjs:678, gate path) fails with 6 errors (D and removal events under reviews/DG0/**), so DG0 cannot pass its gate. The correct fix is a git history rewrite over 0947a8b^..HEAD that un-deletes the two files (restores evidence, loses nothing) plus a force-push; the auto-mode safety classifier denies it as Git Destructive. Awaiting a user permission rule or a decision on how to proceed. import-findings.mjs has been hardened to skip an interrupted run's record-less verifications so this class of mistake cannot recur."
+        }
+      ],
       "history": [
         {
           "state": "PLANNED",
@@ -424,6 +431,11 @@
           "state": "REVIEWING",
           "at": "2026-09-29T16:23:25Z",
           "note": "Round-17 findings repaired (D-032); sandboxed prefreeze PASS; candidate re-frozen for review round 18"
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-09-29T16:40:00Z",
+          "note": "Round 18: domain PASS; code-security FAIL (F-DG0-152 High mandatory: cross-run isolation break via /proc/<peer-pid>/root|cwd through the shared host PID namespace + rw host procfs; F-DG0-153 Low doc; F-DG0-150/151 CLOSED_VERIFIED; F-DG0-147 re-accepted; F-DG0-149 re-assessed read-only, stays OPEN as a residual-7 observation); qa hit the account session limit (resets 21:10 UTC) after writing its sidecars (236/237 PASS, new F-DG0-239 Low doc) but before its verdict record, so its verifications are unbindable and 236/237 are re-verified in round 19. Repair D-033 (per-run Landlock domain, committed pre-rewrite as 5647a29). BLOCKED on a pre-existing write-once history poisoning discovered here: commit 0947a8b (round-17 outcome) deleted the round-17 qa-verifier sidecars its own auto-commit had committed, which checkWriteOnce (gate path) forbids; the fix (git history rewrite to un-delete them) is denied by the auto-mode classifier as Git Destructive and awaits a user permission rule or decision. import-findings.mjs hardened to skip an interrupted run's record-less verifications instead of forcing a deletion."
         }
       ]
     },

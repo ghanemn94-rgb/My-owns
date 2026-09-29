@@ -1,0 +1,596 @@
+# Regression: all qa-verifier test files (rounds 1-18) against $TMPDIR/rv (450c756), QA_REPO_ROOT set  [2026-09-29T16:30:13Z]
+=== dg0-gate-negative-r10.test.mjs
+not ok 1 - QA10-1 F-DG0-134 root cause: a worktree's tampered guard copy cannot weaken the hook when MTH_GUARD_ROOT names the repository
+not ok 2 - QA10-2 fail closed: MTH_GUARD_ROOT unset, empty, nonexistent or without a guard blocks every role's writes
+not ok 3 - QA10-3 runner started from a linked worktree: MTH_GUARD_ROOT = worktree still guards the main repository and sibling worktrees
+not ok 4 - QA10-4 portability x worktrees: a worktree under a path with spaces and Arabic characters is guarded; in-scope writes still pass
+not ok 5 - QA10-5 worktree bypass attempts: symlink from scratch into a worktree, case variants, and the worktree's .git file are blocked
+not ok 6 - QA10-6 deepest root wins: a worktree nested inside the repository is scoped from its own root
+ok 7 - QA10-7 F-DG0-224 end to end: the candidate ID is independent of checkout location, and review metadata leaves it unchanged there
+ok 8 - QA10-8 F-DG0-224 negative path: under a space/Arabic path every validator mode runs and fails closed with diagnostics, not a crash
+# tests 8 # pass 2 # fail 6 EXIT=1
+=== dg0-gate-negative-r11.test.mjs
+not ok 1 - QA11-G1 F-DG0-136: a symlink inside the temp directory that points into HOME cannot be used to write HOME configuration
+not ok 2 - QA11-G2 F-DG0-136: TMPDIR pointing at HOME does not make HOME scratch (home rule wins over the temp rule)
+not ok 3 - QA11-G3 F-DG0-136: when the guarded repository lies inside HOME, in-repo scopes still apply (the home rule does not over-block) and HOME files stay blocked
+not ok 4 - QA11-G4 F-DG0-136: path normalisation and sibling prefixes: '..' out of the temp dir, '/tmpX' and a HOME sibling are classified correctly
+not ok 5 - QA11-G5 F-DG0-135: the hook fails closed for a non-existent MTH_GUARD_ROOT and for a repository whose git metadata is corrupt, even for temp scratch
+not ok 6 - QA11-R6 D-024: a shell-written .claude/settings.local.json in the agent's worktree working directory must leave a trace in the run evidence
+not ok 7 - QA11-R1 runner control: a run that changes no external configuration exits 0, records external_config_changed [] and auto-commits
+not ok 8 - QA11-R2 D-024: a run whose shell edits ~/.gitconfig exits 71, is recorded in meta and is NOT auto-committed
+not ok 9 - QA11-R3 D-024: a planted .git/hooks/pre-commit is detected before the auto-commit, so the hook never executes
+not ok 10 - QA11-R4 control: a shell-written .claude/settings.local.json (loaded under --setting-sources project,local) shows in meta.outputs and git status
+not ok 11 - QA11-R5 D-024: hiding a shell-written .claude/settings.local.json with .git/info/exclude must still leave a trace in the run evidence
+# tests 11 # pass 0 # fail 11 EXIT=1
+=== dg0-gate-negative-r12.test.mjs
+not ok 1 - QA12-REG A23/A24/A25 regression: the 94-case round-9 suite passes against the candidate once fixture runs carry a sandboxed settings.json
+not ok 2 - QA12-V1 control: the D-025-adapted independent fixture validates cleanly
+ok 3 - QA12-V2 D-025: a sandbox deny list rooted in a different directory than the run's repository must not bind a gate record
+ok 4 - QA12-V3 D-025: settings.json present but meta.settings_sha256 missing is rejected
+ok 5 - QA12-V4 D-025: sandbox.enabled given as the string "true" (not boolean) is rejected
+ok 6 - QA12-V5 D-025: unparsable settings.json with a matching hash is rejected, not crashed on
+not ok 7 - QA12-V6 D-025: a deny list missing only tools/agents is rejected and names the gap
+ok 8 - QA12-V7 metadata invariance: adding run directories with settings.json, a new review round and sidecars leaves the candidate unchanged
+not ok 9 - QA12-A1 agent_settings: a sibling-prefix cwd (<repo>-evil) is refused
+ok 10 - QA12-A2 agent_settings: a cwd that is a symlink inside the repository pointing outside it is refused
+not ok 11 - QA12-A3 agent_settings: qa-verifier is confined to test-evidence, tests/qa and e2e; everything else that exists is denied
+not ok 12 - QA12-R7 D-024/D-025: a reviewer run that plants a nested CLAUDE.md inside its own evidence area is refused (exit 71, not committed)
+not ok 13 - QA12-R8 D-024/D-025: a reviewer run that plants a nested .claude/settings.json in its evidence area is refused (exit 71)
+not ok 14 - QA12-R9 D-024/D-025: a reviewer run that plants a .gitignore (hiding its own files from the snapshots) is refused (exit 71)
+not ok 15 - QA12-R10 F-DG0-138: git hooks that already exist before the run never execute during the evidence auto-commit, which contains only the run directory
+ok 16 - QA12-R11 D-025: without bubblewrap on PATH the runner refuses to start (exit 65) and creates no run directory
+not ok 17 - QA12-R12 D-025: each run keeps its generated settings.json; meta.settings_sha256 matches and meta.bash_sandbox is true; protected paths are denied
+not ok 18 - QA12-P1 D-024/D-025: an analyst run that plants a gitignored docs/analysis/tools/csv.pyc must leave a trace in the run evidence
+ok 19 - QA12-P2 prefreeze.sh must not execute gitignored bytecode planted next to an analysis check (it runs outside any sandbox)
+# tests 19 # pass 8 # fail 11 EXIT=1
+=== dg0-gate-negative-r13.test.mjs
+not ok 1 - QA13-REG A24/A25 regression: the 94-case round-9 suite (every assignment negative) passes against the candidate with D-026-shaped run evidence
+not ok 2 - QA13-V1 control: the D-026-adapted fixture validates cleanly
+ok 3 - QA13-V2 F-DG0-230/D-026: a deny list without docs/source (the round-12 runner shape) is rejected
+ok 4 - QA13-V3 F-DG0-230: a run whose meta has no cwd cannot bind a record (the deny list cannot be anchored)
+ok 5 - QA13-V4 F-DG0-230: non-normalised deny entries (<cwd>/./x) are rejected; the check fails closed
+ok 6 - QA13-V5 F-DG0-230 residual: a run whose meta.cwd is forged to the foreign root its deny list protects (transcript init/prompt say /work/repo) should not bind
+ok 7 - QA13-S1 sandbox-run: an uncommitted edit of a tracked file never reaches the command (it checks the committed revision)
+ok 8 - QA13-S2 sandbox-run: BASH_ENV, NODE_OPTIONS, PYTHONPATH and PYTHONSTARTUP from the caller do not reach the sandboxed command
+ok 9 - QA13-S3 sandbox-run: a hook planted in the source repository's .git/hooks never runs during clone/checkout
+ok 10 - QA13-S4 sandbox-run: an unknown revision fails before the command runs
+ok 11 - QA13-S5 sandbox-run: the command can write neither the source repository's .git nor the caller's HOME
+ok 12 - QA13-S6 F-DG0-229 regression: prefreeze never imports gitignored bytecode planted next to an analysis check
+ok 13 - QA13-S7 prefreeze: an uncommitted edit of a tracked candidate file fails (the sandboxed checks see HEAD only; the final check catches the drift)
+not ok 14 - QA13-R1 probe D-026 stub rule: a pre-existing untracked, non-empty CLAUDE.local.md truncated to zero during a run
+not ok 15 - QA13-R1b probe D-026 stub rule: a pre-existing ignored, non-empty .claude/settings.local.json truncated to zero during a run (reported before D-026)
+not ok 16 - QA13-R2 probe D-024: a pre-existing ignored, non-empty .claude/settings.local.json deleted during a run
+not ok 17 - QA13-R3 D-026 by design: zero-length untracked .gitattributes and nested .claude files are ignored; the same files with content are reported
+ok 18 - QA13-C1 A25: review metadata leaves the candidate unchanged; a new tests/qa file (or a mode change) changes it
+# tests 18 # pass 12 # fail 6 EXIT=1
+=== dg0-gate-negative-r14.test.mjs
+not ok 1 - QA14-REG A24/A25 regression: the round-9 suite (every assignment negative) with D-027-shaped run evidence: 91 pass, and the 3 one-field cwd controls fail only on cwd binding
+not ok 2 - QA14-V9 positive (consistent QA9-C01): a path with spaces, parentheses and Arabic characters binds when all agree
+not ok 3 - QA14-V10 positive (consistent QA7-N77): Write tool paths that are absolute under a consistent meta.cwd bind
+ok 4 - QA14-V11 negative: absolute Write paths under /fake/cwd while meta/init/prompt say /work/repo do not count as authored
+not ok 5 - QA14-V1 control: init.cwd = meta.cwd = prompt cwd = deny-list root validates cleanly
+ok 6 - QA14-V2 F-DG0-233: an init line without a cwd field cannot bind
+ok 7 - QA14-V3 F-DG0-233: meta.cwd and init.cwd forged consistently to the deny-list root, prompt still /work/repo -> rejected
+ok 8 - QA14-V12 F-DG0-233 original repro (QA13-V5) on the init-cwd fixture: meta.cwd + deny list forged, init and prompt say /work/repo -> rejected by both checks
+ok 9 - QA14-V4 F-DG0-233: a replayed prompt with no working-directory sentence cannot bind
+ok 10 - QA14-V5 F-DG0-233: meta.cwd '/work/repo/' (trailing slash) does not equal the transcript's /work/repo (strict, fails closed)
+ok 11 - QA14-V6 limit probe (disclosed residual 1): meta, init, prompt and deny list all consistently name a foreign root
+ok 12 - QA14-V7 limit probe: a resume init line (same session) naming a different cwd
+not ok 13 - QA14-V8 positive: a working directory with spaces binds when meta, init, prompt and deny list agree
+not ok 14 - QA14-R0 runner control: no configuration change -> exit 0 and nothing reported (and meta.cwd equals the stub's init cwd)
+not ok 15 - QA14-R4 runner F-DG0-234: a .git/hooks file deleted during a run is reported as removed
+not ok 16 - QA14-R5 runner F-DG0-234: a nested .gitignore in a second worktree deleted during a run is reported as removed
+not ok 17 - QA14-R6 runner: an ignored .claude/settings.local.json symlink retargeted to identical content is reported
+not ok 18 - QA14-R7 runner F-DG0-012 fail-closed: if the before-snapshot cannot be read the comparison fails and the run is flagged
+# tests 18 # pass 8 # fail 10 EXIT=1
+=== dg0-gate-negative-r15.test.mjs
+ok 1 - QA15-G1 guard: qa-verifier may not write look-alike evidence keys or record names that merely start with its role
+ok 2 - QA15-G2 guard: '..' through a reviewer's own area into another reviewer's record or evidence is blocked
+ok 3 - QA15-G3 guard positive control: own record, sidecars and evidence at any stage and round are writable
+ok 4 - QA15-C1 candidate: metadata exclusion is exact, look-alike paths are part of the candidate
+ok 5 - QA15-C2 candidate: a zero-length untracked file (sandbox stub shape) changes the working-tree id, not the committed id
+ok 6 - QA15-A1 F-DG0-235: independent mutations of the acceptance map are each rejected by check_acceptance_map.py
+not ok 7 - QA15-S1 D-028 sandbox: every tracked candidate file is shell-denied for each reviewer, and evidence areas are per-reviewer
+ok 8 - QA15-S2 agent_settings.py refuses a stage outside DG0-DG7
+# tests 8 # pass 7 # fail 1 EXIT=1
+=== dg0-gate-negative-r18.test.mjs
+ok 1 - QA18-C1 stub rule boundaries: no-write-bit empty untracked files are skipped, any write bit or a symlink counts
+ok 2 - QA18-C2 a skipped stub stays detectable by git status, never enters the committed candidate, and counts once tracked
+ok 3 - QA18-S1 finish(): a dangling symlink planted at the own-role destination is a discard; never followed, never clobbered
+ok 4 - QA18-S2 finish(): a collision on one own-role file does not stop the loop; the other file is copied back; non-zero
+ok 5 - QA18-S3 finish(): a directory already at the own-role destination is a discard, not a crash
+ok 6 - QA18-S4 finish(): the round directory is a regular file in the real tree: fail-closed and the real file is untouched
+ok 7 - QA18-S5 finish(): an out-of-scope staging file is discarded and an unchanged seed file is not re-copied
+# tests 7 # pass 7 # fail 0 EXIT=0
+=== dg0-gate-negative-r2.test.mjs
+not ok 1 - control: the independent round-2 fixture is accepted (API and CLI exit 0)
+not ok 2 - QA2-R201 (F-DG0-201): the QA review citing its own pre-freeze LOAD run of the same role is rejected
+not ok 3 - QA2-R201b (F-DG0-201): the right assignment but a run started before the freeze is rejected
+not ok 4 - QA2-R202 (F-DG0-202): a bare non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+not ok 5 - QA2-N01 provenance: a run recorded under another stage cannot back a DG0 review
+not ok 6 - QA2-N02 provenance: transcript model differs from the orchestrator's requested model
+not ok 7 - QA2-N03 provenance: transcript whose final result is an error, even though meta claims success
+not ok 8 - QA2-N04 provenance: a transcript from a different role's prompt cannot back the auditor
+not ok 9 - QA2-N05 provenance: result_session_id drift (the CLI resumed a different session) is rejected
+not ok 10 - QA2-N06 provenance: result.json swapped after the run no longer matches meta.result_sha256
+not ok 11 - QA2-N07 findings: a review record may not list a finding that no reviewer sidecar raised (orchestrator-invented)
+not ok 12 - QA2-N08 findings: a sidecar may not raise a finding in another reviewer's name
+not ok 13 - QA2-N09 findings: reviewer-set mandatory_violation cannot be flipped off in findings.json
+not ok 14 - QA2-N10 findings: verification cited from a run of a different role than by_role is rejected
+not ok 15 - QA2-N11 findings: a CLOSED_VERIFIED finding verified by a pre-freeze LOAD run of the reporter is rejected
+not ok 16 - QA2-N12 register: evidence that is a symlink pointing outside the repository is rejected
+not ok 17 - QA2-N13 register: an evidence entry padded with whitespace or duplicated ';' still must resolve
+not ok 18 - QA2-N14 candidate: a committed post-freeze change to a tracked file's mode (exec bit) — reported, not asserted
+not ok 19 - QA2-N15 metadata: a new review round, verifications sidecar and run dirs leave the candidate and gate unchanged
+not ok 20 - QA2-N16 candidate: deleting a review-round findings sidecar that raised a finding is caught (dropped finding source)
+# tests 20 # pass 0 # fail 20 EXIT=1
+=== dg0-gate-negative-r3.test.mjs
+not ok 1 - control: the independent round-3 fixture is accepted (API and CLI exit 0)
+not ok 2 - QA3-R204 (F-DG0-204): findings.json citing a pre-freeze LOAD run as the verification is rejected
+not ok 3 - QA3-R204b (F-DG0-204): moving the sidecar to a round-1 record that cites a LOAD run is rejected (assignment + freeze binding)
+not ok 4 - QA3-N17 findings: a later-round PASS overrides an earlier FAIL (positive), but a same-round FAIL by another reviewer wins
+not ok 5 - QA3-N18 findings: a verifications sidecar with no review record of that role in its round is rejected
+not ok 6 - QA3-N19 findings: the owner cannot close its own finding through a sidecar in its name (non-review role)
+not ok 7 - QA3-N20 findings: rewriting an older round's frozen_at to legitimise a LOAD-run verification — probe # TODO F-DG0-208
+not ok 8 - QA3-R205 (F-DG0-205): a symlinked directory pointing outside the repo cannot supply evidence; in-repo symlink still accepted
+not ok 9 - QA3-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+not ok 10 - QA3-N21 candidate: a manifest whose entry mode was flipped (id unchanged) is rejected as tampered
+not ok 11 - QA3-N22 candidate: a manifest entry without a mode (pre-round-3 format) is rejected, not silently hashed
+not ok 12 - QA3-N23 metadata: a round-3 verifications sidecar + run dir + assignments leave the candidate unchanged
+not ok 13 - QA3-N24 history: after approval, editing an earlier round's findings sidecar is detected in historical mode
+ok 14 - QA3-N25 guard: a qa-verifier write into a '.git' segment inside its evidence scope is blocked
+not ok 15 - QA3-A24 rejects: missing reviewer
+not ok 16 - QA3-A24 rejects: reviewer who authored the scope
+not ok 17 - QA3-A24 rejects: reviewer listed as implementation author
+not ok 18 - QA3-A24 rejects: shared invocation
+not ok 19 - QA3-A24 rejects: failed check
+not ok 20 - QA3-A24 rejects: blocked check
+not ok 21 - QA3-A24 rejects: unresolved High finding
+not ok 22 - QA3-A24 rejects: incomplete requirement
+not ok 23 - QA3-A24 rejects: register row with a non-existent block anchor
+not ok 24 - QA3-A24 rejects: SOURCE row without a playbook block
+not ok 25 - QA3-A24 rejects: coverage matrix missing a block
+not ok 26 - QA3-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+not ok 27 - QA3-A24 rejects: candidate change after freeze
+not ok 28 - QA3-A24 rejects: tampered manifest
+# tests 28 # pass 1 # fail 26 EXIT=1
+=== dg0-gate-negative-r4.test.mjs
+not ok 1 - control: the independent round-4 fixture is accepted (API and CLI exit 0)
+not ok 2 - QA4-R208a (F-DG0-208): the QA3-N20 attack (rewrite round-1 frozen_at + record to cite a LOAD run), committed, is rejected
+not ok 3 - QA4-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+not ok 4 - QA4-N30 (F-DG0-208 variant): a new round with a fabricated early manifest and a new record citing the LOAD run is rejected (no write-once edit needed)
+not ok 5 - QA4-N30b probe: a fresh round backed by a fabricated, backdated manifest legitimises a genuine pre-freeze run's closure # TODO F-DG0-212
+not ok 6 - QA4-N31 (F-DG0-208 variant): a LOAD run that did write a record cannot close a finding after the fact (assignment + freeze binding)
+not ok 7 - QA4-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+not ok 8 - QA4-R201b (F-DG0-201): a review record that names no assignment cannot be bound to any run
+not ok 9 - QA4-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+not ok 10 - QA4-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+not ok 11 - QA4-R205 (F-DG0-205): register evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+not ok 12 - QA4-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+not ok 13 - QA4-N32 write-once: a committed round assignment edited later is rejected (history M and assignment sha mismatch)
+not ok 14 - QA4-N33 write-once: a committed record replaced by a symlink to identical bytes is rejected (type change T)
+not ok 15 - QA4-N34 binding: a record written by another reviewer's run (not this run's file tools) is rejected
+not ok 16 - QA4-N35 binding: a record whose meta.outputs hash is for different bytes (record written, then altered before commit) is rejected
+not ok 17 - QA4-N36 write-once: deleting a committed frozen manifest in the working tree is rejected
+not ok 18 - QA4-N37 rounds: a gate candidate manifest in the retired single-file location or with hash v1 is rejected
+not ok 19 - QA4-N38 acceptance: positive control, then a specialist's later-round FAIL/OPEN withdraws the observation acceptance
+not ok 20 - QA4-N38b acceptance: a Low observation still marked accepted in findings.json/gate after the auditor withdrew it is rejected
+not ok 21 - QA4-N41 findings: in the same round a PASS by the reporter and a FAIL by another bound reviewer -> FAIL wins
+not ok 22 - QA4-N42 findings: a verifications sidecar for a role not listed in its round is rejected
+not ok 23 - QA4-N39 probe: a gate record edited after the auditor's run (tests list trimmed, decided_at changed) is rejected # TODO F-DG0-211
+not ok 24 - QA4-N40 probe: a gate record never written by the auditor run (absent from its outputs) is rejected # TODO F-DG0-211
+not ok 25 - QA4-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+not ok 26 - QA4-A24 rejects: missing reviewer
+not ok 27 - QA4-A24 rejects: reviewer who authored the scope
+not ok 28 - QA4-A24 rejects: reviewer listed as implementation author
+not ok 29 - QA4-A24 rejects: shared invocation
+not ok 30 - QA4-A24 rejects: failed check
+not ok 31 - QA4-A24 rejects: blocked check
+not ok 32 - QA4-A24 rejects: failed gate test
+not ok 33 - QA4-A24 rejects: unresolved High finding
+not ok 34 - QA4-A24 rejects: High finding closed without any verification sidecar
+not ok 35 - QA4-A24 rejects: incomplete requirement
+not ok 36 - QA4-A24 rejects: register row with a non-existent block anchor
+not ok 37 - QA4-A24 rejects: SOURCE row without a playbook block
+not ok 38 - QA4-A24 rejects: coverage matrix missing a block
+not ok 39 - QA4-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+not ok 40 - QA4-A24 rejects: candidate change after freeze
+not ok 41 - QA4-A24 rejects: tampered manifest
+# tests 41 # pass 0 # fail 38 EXIT=1
+=== dg0-gate-negative-r5.test.mjs
+not ok 1 - control: the independent round-5 fixture is accepted (API and CLI exit 0)
+not ok 2 - control: a genuine later-round closure (post-manifest run) is accepted
+not ok 3 - QA5-R211a (F-DG0-211 = QA4-N39): a gate record edited and committed after the auditor's run is rejected
+not ok 4 - QA5-R211b (F-DG0-211 = QA4-N40): a gate record the auditor run never wrote (absent from its outputs) is rejected
+not ok 5 - QA5-R211c (F-DG0-211 variant): a gate record present in the auditor run's window but not tool-authored (shell/other writer) is rejected
+not ok 6 - QA5-R212a (F-DG0-212 = QA4-N30b): a round backed by a fabricated, backdated manifest is rejected
+not ok 7 - QA5-R212b (F-DG0-212 variant, new): an honest-content but backdated manifest (narrowed spec, so a new id/path) cannot legitimise a run that started before it was committed
+not ok 8 - QA5-P01 probe (informational): a later round whose manifest uses a narrower spec than the stage candidate_spec
+not ok 9 - QA5-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+not ok 10 - QA5-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+not ok 11 - QA5-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+not ok 12 - QA5-R205 (F-DG0-205): evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+not ok 13 - QA5-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+not ok 14 - QA5-R208a (F-DG0-208 = QA3-N20): rewrite round-1 frozen_at + record to cite a LOAD run, committed, is rejected
+not ok 15 - QA5-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+not ok 16 - QA5-N50 binding: a run whose meta has written_by_tools but no tool_authored (round-4 runner shape) cannot bind a record
+not ok 17 - QA5-N51 binding: a closing sidecar that the run touched with file tools but whose final bytes are not the replay (e.g. shell edit after Write) cannot close a finding
+not ok 18 - QA5-N52 binding: head_commit_at_start that is not a commit in this repository is rejected
+not ok 19 - QA5-N53 binding: a run with no head_commit_at_start at all is rejected
+not ok 20 - QA5-N54 write-once: delete a committed record, then re-add it with different bytes in a later commit, is rejected
+not ok 21 - QA5-N55 write-once: re-adding the identical bytes after a delete is accepted (content, not history shape, is what matters)
+not ok 22 - QA5-N56 write-once: an edited round assignment committed on a side branch and merged is rejected (history + sha binding)
+not ok 23 - QA5-N57 manifests: a round whose manifest names a source_commit that does not exist is rejected
+not ok 24 - QA5-N58 manifests: a committed frozen manifest edited in the working tree (hidden with assume-unchanged) is rejected
+not ok 25 - QA5-N59 gate: the gate record authored by a domain-reviewer run (not the auditor) is rejected even if the auditor's outputs list is edited in history to match
+not ok 26 - QA5-RP1 runner replay: Write then Edit (chained) is tool_authored; outputs record the change
+not ok 27 - QA5-RP2 runner replay: Write followed by a shell rewrite (final bytes differ) is NOT tool_authored
+not ok 28 - QA5-RP3 runner replay: a failed (guard-denied) Write whose content appears via the shell is NOT tool_authored
+not ok 29 - QA5-RP4 runner replay: an Edit on a pre-existing file (not written by this run) is NOT tool_authored
+not ok 30 - QA5-RP5 runner replay: an Edit whose old_string does not occur poisons the replay; writes outside the repo are ignored
+not ok 31 - QA5-RP6 runner replay: a later successful Write supersedes an earlier failed one and binds the final bytes
+not ok 32 - QA5-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+not ok 33 - QA5-A24 rejects: missing reviewer
+not ok 34 - QA5-A24 rejects: reviewer who authored the scope
+not ok 35 - QA5-A24 rejects: reviewer listed as implementation author
+not ok 36 - QA5-A24 rejects: shared invocation
+not ok 37 - QA5-A24 rejects: failed check
+not ok 38 - QA5-A24 rejects: blocked check
+not ok 39 - QA5-A24 rejects: failed gate test
+not ok 40 - QA5-A24 rejects: unresolved High finding
+not ok 41 - QA5-A24 rejects: incomplete requirement
+not ok 42 - QA5-A24 rejects: register row with a non-existent block anchor
+not ok 43 - QA5-A24 rejects: SOURCE row without a playbook block
+not ok 44 - QA5-A24 rejects: coverage matrix missing a block
+not ok 45 - QA5-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+not ok 46 - QA5-A24 rejects: candidate change after freeze
+not ok 47 - QA5-A24 rejects: tampered manifest
+# tests 47 # pass 0 # fail 47 EXIT=1
+=== dg0-gate-negative-r6.test.mjs
+not ok 1 - control: the independent round-5 fixture is accepted (API and CLI exit 0)
+not ok 2 - control: a genuine later-round closure (post-manifest run) is accepted
+not ok 3 - QA5-R211a (F-DG0-211 = QA4-N39): a gate record edited and committed after the auditor's run is rejected
+not ok 4 - QA5-R211b (F-DG0-211 = QA4-N40): a gate record the auditor run never wrote (absent from its outputs) is rejected
+not ok 5 - QA5-R211c (F-DG0-211 variant): a gate record present in the auditor run's window but not tool-authored (shell/other writer) is rejected
+not ok 6 - QA5-R212a (F-DG0-212 = QA4-N30b): a round backed by a fabricated, backdated manifest is rejected
+not ok 7 - QA5-R212b (F-DG0-212 variant, new): an honest-content but backdated manifest (narrowed spec, so a new id/path) cannot legitimise a run that started before it was committed
+not ok 8 - QA5-P01 probe (informational): a later round whose manifest uses a narrower spec than the stage candidate_spec
+not ok 9 - QA5-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+not ok 10 - QA5-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+not ok 11 - QA5-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+not ok 12 - QA5-R205 (F-DG0-205): evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+not ok 13 - QA5-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+not ok 14 - QA5-R208a (F-DG0-208 = QA3-N20): rewrite round-1 frozen_at + record to cite a LOAD run, committed, is rejected
+not ok 15 - QA5-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+not ok 16 - QA5-N50 binding: a run whose meta has written_by_tools but no tool_authored (round-4 runner shape) cannot bind a record
+not ok 17 - QA5-N51 binding: a closing sidecar that the run touched with file tools but whose final bytes are not the replay (e.g. shell edit after Write) cannot close a finding
+not ok 18 - QA5-N52 binding: head_commit_at_start that is not a commit in this repository is rejected
+not ok 19 - QA5-N53 binding: a run with no head_commit_at_start at all is rejected
+not ok 20 - QA5-N54 write-once: delete a committed record, then re-add it with different bytes in a later commit, is rejected
+not ok 21 - QA5-N55 write-once: re-adding the identical bytes after a delete is accepted (content, not history shape, is what matters)
+not ok 22 - QA5-N56 write-once: an edited round assignment committed on a side branch and merged is rejected (history + sha binding)
+not ok 23 - QA5-N57 manifests: a round whose manifest names a source_commit that does not exist is rejected
+not ok 24 - QA5-N58 manifests: a committed frozen manifest edited in the working tree (hidden with assume-unchanged) is rejected
+not ok 25 - QA5-N59 gate: the gate record authored by a domain-reviewer run (not the auditor) is rejected even if the auditor's outputs list is edited in history to match
+ok 26 - QA5-RP1 runner replay: Write then Edit (chained) is tool_authored; outputs record the change
+ok 27 - QA5-RP2 runner replay: Write followed by a shell rewrite (final bytes differ) is NOT tool_authored
+ok 28 - QA5-RP3 runner replay: a failed (guard-denied) Write whose content appears via the shell is NOT tool_authored
+ok 29 - QA5-RP4 runner replay: an Edit on a pre-existing file (not written by this run) is NOT tool_authored
+ok 30 - QA5-RP5 runner replay: an Edit whose old_string does not occur poisons the replay; writes outside the repo are ignored
+ok 31 - QA5-RP6 runner replay: a later successful Write supersedes an earlier failed one and binds the final bytes
+not ok 32 - QA5-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+not ok 33 - QA5-A24 rejects: missing reviewer
+not ok 34 - QA5-A24 rejects: reviewer who authored the scope
+not ok 35 - QA5-A24 rejects: reviewer listed as implementation author
+not ok 36 - QA5-A24 rejects: shared invocation
+not ok 37 - QA5-A24 rejects: failed check
+not ok 38 - QA5-A24 rejects: blocked check
+not ok 39 - QA5-A24 rejects: failed gate test
+not ok 40 - QA5-A24 rejects: unresolved High finding
+not ok 41 - QA5-A24 rejects: incomplete requirement
+not ok 42 - QA5-A24 rejects: register row with a non-existent block anchor
+not ok 43 - QA5-A24 rejects: SOURCE row without a playbook block
+not ok 44 - QA5-A24 rejects: coverage matrix missing a block
+not ok 45 - QA5-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+not ok 46 - QA5-A24 rejects: candidate change after freeze
+not ok 47 - QA5-A24 rejects: tampered manifest
+ok 48 - QA6-N60 A25: on a fresh clone, running the shipped runner-metadata unit tests (CI + prefreeze step) leaves the candidate ID and the tree unchanged
+not ok 49 - QA6-N61 binding: a review whose run directory has a transcript and result but no meta.json (the orphaned round-5 shape) is rejected
+not ok 50 - QA6-N62 binding: a run whose meta records no result line (is_error, subtype no-result-line) cannot bind a PASS review
+not ok 51 - QA6-N63 binding: a run whose meta.json hashes do not match its committed transcript (transcript replaced after the run) is rejected
+ok 52 - QA6-RP7 run_meta: a session resumed after a classifier outage (two transcript segments, two result lines) binds a Write from segment 1 edited in segment 2, and meta reflects the last result
+ok 53 - QA6-RP8 run_meta: MultiEdit is replayed (all edits apply -> bound); one missing old_string poisons the file
+ok 54 - QA6-RP9 run_meta: bilingual content (Arabic RTL text, emoji, CRLF) is bound byte-exactly as UTF-8
+ok 55 - QA6-RP10 run_meta: a sibling path that merely shares the repo-root prefix (<repo>-evil/...) is not mapped into the repository
+ok 56 - QA6-RP11 run_meta: an unrelated failed tool_result does not unbind a successful Write; a failed Edit after a Write leaves the Write's bytes bound
+ok 57 - QA6-RP12 run_meta: a transcript with no result line yields is_error/no-result-line, and a corrupt snapshot fails loudly without meta.json while keeping the snapshots
+# tests 57 # pass 13 # fail 44 EXIT=1
+=== dg0-gate-negative-r7.test.mjs
+not ok 1 - control: the independent round-5 fixture is accepted (API and CLI exit 0)
+not ok 2 - control: a genuine later-round closure (post-manifest run) is accepted
+not ok 3 - QA5-R211a (F-DG0-211 = QA4-N39): a gate record edited and committed after the auditor's run is rejected
+not ok 4 - QA5-R211b (F-DG0-211 = QA4-N40): a gate record the auditor run never wrote (absent from its outputs) is rejected
+not ok 5 - QA5-R211c (F-DG0-211 variant): a gate record present in the auditor run's window but not tool-authored (shell/other writer) is rejected
+not ok 6 - QA5-R212a (F-DG0-212 = QA4-N30b): a round backed by a fabricated, backdated manifest is rejected
+not ok 7 - QA5-R212b (F-DG0-212 variant, new): an honest-content but backdated manifest (narrowed spec, so a new id/path) cannot legitimise a run that started before it was committed
+not ok 8 - QA5-P01 probe (informational): a later round whose manifest uses a narrower spec than the stage candidate_spec
+not ok 9 - QA5-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+not ok 10 - QA5-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+not ok 11 - QA5-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+not ok 12 - QA5-R205 (F-DG0-205): evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+not ok 13 - QA5-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+not ok 14 - QA5-R208a (F-DG0-208 = QA3-N20): rewrite round-1 frozen_at + record to cite a LOAD run, committed, is rejected
+not ok 15 - QA5-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+not ok 16 - QA5-N50 binding: a run whose meta has written_by_tools but no tool_authored (round-4 runner shape) cannot bind a record
+not ok 17 - QA5-N51 binding: a closing sidecar that the run touched with file tools but whose final bytes are not the replay (e.g. shell edit after Write) cannot close a finding
+not ok 18 - QA5-N52 binding: head_commit_at_start that is not a commit in this repository is rejected
+not ok 19 - QA5-N53 binding: a run with no head_commit_at_start at all is rejected
+not ok 20 - QA5-N54 write-once: delete a committed record, then re-add it with different bytes in a later commit, is rejected
+not ok 21 - QA5-N55/QA7 write-once: deleting a committed record and re-adding the identical bytes is rejected (no D events allowed, D-021 rev.)
+not ok 22 - QA5-N56 write-once: an edited round assignment committed on a side branch and merged is rejected (history + sha binding)
+not ok 23 - QA5-N57 manifests: a round whose manifest names a source_commit that does not exist is rejected
+not ok 24 - QA5-N58 manifests: a committed frozen manifest edited in the working tree (hidden with assume-unchanged) is rejected
+not ok 25 - QA5-N59 gate: the gate record authored by a domain-reviewer run (not the auditor) is rejected even if the auditor's outputs list is edited in history to match
+ok 26 - QA5-RP1 runner replay: Write then Edit (chained) is tool_authored; outputs record the change
+ok 27 - QA5-RP2 runner replay: Write followed by a shell rewrite (final bytes differ) is NOT tool_authored
+ok 28 - QA5-RP3 runner replay: a failed (guard-denied) Write whose content appears via the shell is NOT tool_authored
+ok 29 - QA5-RP4 runner replay: an Edit on a pre-existing file (not written by this run) is NOT tool_authored
+ok 30 - QA5-RP5 runner replay: an Edit whose old_string does not occur poisons the replay; writes outside the repo are ignored
+ok 31 - QA5-RP6 runner replay: a later successful Write supersedes an earlier failed one and binds the final bytes
+not ok 32 - QA5-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+not ok 33 - QA5-A24 rejects: missing reviewer
+not ok 34 - QA5-A24 rejects: reviewer who authored the scope
+not ok 35 - QA5-A24 rejects: reviewer listed as implementation author
+not ok 36 - QA5-A24 rejects: shared invocation
+not ok 37 - QA5-A24 rejects: failed check
+not ok 38 - QA5-A24 rejects: blocked check
+not ok 39 - QA5-A24 rejects: failed gate test
+not ok 40 - QA5-A24 rejects: unresolved High finding
+not ok 41 - QA5-A24 rejects: incomplete requirement
+not ok 42 - QA5-A24 rejects: register row with a non-existent block anchor
+not ok 43 - QA5-A24 rejects: SOURCE row without a playbook block
+not ok 44 - QA5-A24 rejects: coverage matrix missing a block
+not ok 45 - QA5-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+not ok 46 - QA5-A24 rejects: candidate change after freeze
+not ok 47 - QA5-A24 rejects: tampered manifest
+ok 48 - QA6-N60 A25: on a fresh clone, running the shipped runner-metadata unit tests (CI + prefreeze step) leaves the candidate ID and the tree unchanged
+not ok 49 - QA6-N61 binding: a review whose run directory has a transcript and result but no meta.json (the orphaned round-5 shape) is rejected
+not ok 50 - QA6-N62 binding: a run whose meta records no result line (is_error, subtype no-result-line) cannot bind a PASS review
+not ok 51 - QA6-N63 binding: a run whose meta.json hashes do not match its committed transcript (transcript replaced after the run) is rejected
+ok 52 - QA6-RP7 run_meta: a session resumed after a classifier outage (two transcript segments, two result lines) binds a Write from segment 1 edited in segment 2, and meta reflects the last result
+ok 53 - QA6-RP8 run_meta: MultiEdit is replayed (all edits apply -> bound); one missing old_string poisons the file
+ok 54 - QA6-RP9 run_meta: bilingual content (Arabic RTL text, emoji, CRLF) is bound byte-exactly as UTF-8
+ok 55 - QA6-RP10 run_meta: a sibling path that merely shares the repo-root prefix (<repo>-evil/...) is not mapped into the repository
+ok 56 - QA6-RP11 run_meta: an unrelated failed tool_result does not unbind a successful Write; a failed Edit after a Write leaves the Write's bytes bound
+ok 57 - QA6-RP12 run_meta: a transcript with no result line yields is_error/no-result-line, and a corrupt snapshot fails loudly without meta.json while keeping the snapshots
+not ok 58 - QA7-N70 D-022: a transcript carrying the runner prompt only as a plain (non-replayed) user message, i.e. the pre-D-022 shape, cannot close a finding
+not ok 59 - QA7-N71 D-022: the prompt text inside a tool_result of a replayed user event (e.g. the agent reading run-agent.sh output) does not count
+not ok 60 - QA7-N72 D-022: a replayed prompt copied from another role's run (right run_id text, wrong role) is rejected
+not ok 61 - QA7-N73 D-022: a replayed prompt whose session_id differs from the run's session is rejected
+not ok 62 - QA7-N74 D-022: a replayed prompt for another stage (DG1) is rejected; the same prompt as an array of text blocks is accepted (control)
+not ok 63 - QA7-N75 replay: meta.tool_authored/outputs are hash-consistent with the file, but the transcript's own Write produced different bytes (forged meta) -> rejected
+not ok 64 - QA7-N76 replay: the only Write of the sidecar failed (tool_result is_error, e.g. guard-denied) although meta claims it tool-authored -> rejected
+not ok 65 - QA7-N77 replay (control): Write of a draft, then a successful Edit producing the final bytes, plus an unrelated failed Edit, binds; an absolute path under meta.cwd binds too
+not ok 66 - QA7-N78 history: a commit back-dated before its parent (GIT_COMMITTER_DATE) anywhere in history is rejected
+not ok 67 - QA7-N79 write-once: the same review path added on two branches with different bytes, merged keeping ours, is rejected (two blobs)
+not ok 68 - QA7-N80 write-once: a committed review record turned into a symlink to an identical copy (type change) is rejected
+not ok 69 - QA7-N81 write-once: modify a record on a side branch then revert it there (HEAD bytes unchanged) and merge -> the M events are still rejected
+ok 70 - QA7-N82 A25 prefreeze: on a fresh clone an ignored __pycache__ file does not fail prefreeze, but an untracked non-ignored candidate file does
+not ok 71 - QA7-N83 runner: both the first run and every resume pipe a stream-json user message with --input-format stream-json --replay-user-messages, and the prompt prefix equals what the validator requires
+ok 72 - QA7-P02 probe (informational): replay of a Write that has no tool_result line
+# tests 72 # pass 15 # fail 57 EXIT=1
+=== dg0-gate-negative-r8.test.mjs
+not ok 1 - control: the independent round-5 fixture is accepted (API and CLI exit 0)
+not ok 2 - control: a genuine later-round closure (post-manifest run) is accepted
+not ok 3 - QA5-R211a (F-DG0-211 = QA4-N39): a gate record edited and committed after the auditor's run is rejected
+not ok 4 - QA5-R211b (F-DG0-211 = QA4-N40): a gate record the auditor run never wrote (absent from its outputs) is rejected
+not ok 5 - QA5-R211c (F-DG0-211 variant): a gate record present in the auditor run's window but not tool-authored (shell/other writer) is rejected
+not ok 6 - QA5-R212a (F-DG0-212 = QA4-N30b): a round backed by a fabricated, backdated manifest is rejected
+not ok 7 - QA5-R212b (F-DG0-212 variant, new): an honest-content but backdated manifest (narrowed spec, so a new id/path) cannot legitimise a run that started before it was committed
+not ok 8 - QA5-P01 probe (informational): a later round whose manifest uses a narrower spec than the stage candidate_spec
+not ok 9 - QA5-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+not ok 10 - QA5-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+not ok 11 - QA5-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+not ok 12 - QA5-R205 (F-DG0-205): evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+not ok 13 - QA5-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+not ok 14 - QA5-R208a (F-DG0-208 = QA3-N20): rewrite round-1 frozen_at + record to cite a LOAD run, committed, is rejected
+not ok 15 - QA5-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+not ok 16 - QA5-N50 binding: a run whose meta has written_by_tools but no tool_authored (round-4 runner shape) cannot bind a record
+not ok 17 - QA5-N51 binding: a closing sidecar that the run touched with file tools but whose final bytes are not the replay (e.g. shell edit after Write) cannot close a finding
+not ok 18 - QA5-N52 binding: head_commit_at_start that is not a commit in this repository is rejected
+not ok 19 - QA5-N53 binding: a run with no head_commit_at_start at all is rejected
+not ok 20 - QA5-N54 write-once: delete a committed record, then re-add it with different bytes in a later commit, is rejected
+not ok 21 - QA5-N55/QA7 write-once: deleting a committed record and re-adding the identical bytes is rejected (no D events allowed, D-021 rev.)
+not ok 22 - QA5-N56 write-once: an edited round assignment committed on a side branch and merged is rejected (history + sha binding)
+not ok 23 - QA5-N57 manifests: a round whose manifest names a source_commit that does not exist is rejected
+not ok 24 - QA5-N58 manifests: a committed frozen manifest edited in the working tree (hidden with assume-unchanged) is rejected
+not ok 25 - QA5-N59 gate: the gate record authored by a domain-reviewer run (not the auditor) is rejected even if the auditor's outputs list is edited in history to match
+ok 26 - QA5-RP1 runner replay: Write then Edit (chained) is tool_authored; outputs record the change
+ok 27 - QA5-RP2 runner replay: Write followed by a shell rewrite (final bytes differ) is NOT tool_authored
+ok 28 - QA5-RP3 runner replay: a failed (guard-denied) Write whose content appears via the shell is NOT tool_authored
+ok 29 - QA5-RP4 runner replay: an Edit on a pre-existing file (not written by this run) is NOT tool_authored
+ok 30 - QA5-RP5 runner replay: an Edit whose old_string does not occur poisons the replay; writes outside the repo are ignored
+ok 31 - QA5-RP6 runner replay: a later successful Write supersedes an earlier failed one and binds the final bytes
+not ok 32 - QA5-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+not ok 33 - QA5-A24 rejects: missing reviewer
+not ok 34 - QA5-A24 rejects: reviewer who authored the scope
+not ok 35 - QA5-A24 rejects: reviewer listed as implementation author
+not ok 36 - QA5-A24 rejects: shared invocation
+not ok 37 - QA5-A24 rejects: failed check
+not ok 38 - QA5-A24 rejects: blocked check
+not ok 39 - QA5-A24 rejects: failed gate test
+not ok 40 - QA5-A24 rejects: unresolved High finding
+not ok 41 - QA5-A24 rejects: incomplete requirement
+not ok 42 - QA5-A24 rejects: register row with a non-existent block anchor
+not ok 43 - QA5-A24 rejects: SOURCE row without a playbook block
+not ok 44 - QA5-A24 rejects: coverage matrix missing a block
+not ok 45 - QA5-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+not ok 46 - QA5-A24 rejects: candidate change after freeze
+not ok 47 - QA5-A24 rejects: tampered manifest
+ok 48 - QA6-N60 A25: on a fresh clone, running the shipped runner-metadata unit tests (CI + prefreeze step) leaves the candidate ID and the tree unchanged
+not ok 49 - QA6-N61 binding: a review whose run directory has a transcript and result but no meta.json (the orphaned round-5 shape) is rejected
+not ok 50 - QA6-N62 binding: a run whose meta records no result line (is_error, subtype no-result-line) cannot bind a PASS review
+not ok 51 - QA6-N63 binding: a run whose meta.json hashes do not match its committed transcript (transcript replaced after the run) is rejected
+ok 52 - QA6-RP7 run_meta: a session resumed after a classifier outage (two transcript segments, two result lines) binds a Write from segment 1 edited in segment 2, and meta reflects the last result
+ok 53 - QA6-RP8 run_meta: MultiEdit is replayed (all edits apply -> bound); one missing old_string poisons the file
+ok 54 - QA6-RP9 run_meta: bilingual content (Arabic RTL text, emoji, CRLF) is bound byte-exactly as UTF-8
+ok 55 - QA6-RP10 run_meta: a sibling path that merely shares the repo-root prefix (<repo>-evil/...) is not mapped into the repository
+ok 56 - QA6-RP11 run_meta: an unrelated failed tool_result does not unbind a successful Write; a failed Edit after a Write leaves the Write's bytes bound
+ok 57 - QA6-RP12 run_meta: a transcript with no result line yields is_error/no-result-line, and a corrupt snapshot fails loudly without meta.json while keeping the snapshots
+not ok 58 - QA7-N70 D-022: a transcript carrying the runner prompt only as a plain (non-replayed) user message, i.e. the pre-D-022 shape, cannot close a finding
+not ok 59 - QA7-N71 D-022: the prompt text inside a tool_result of a replayed user event (e.g. the agent reading run-agent.sh output) does not count
+not ok 60 - QA7-N72 D-022: a replayed prompt copied from another role's run (right run_id text, wrong role) is rejected
+not ok 61 - QA7-N73 D-022: a replayed prompt whose session_id differs from the run's session is rejected
+not ok 62 - QA7-N74 D-022: a replayed prompt for another stage (DG1) is rejected; the same prompt as an array of text blocks is accepted (control)
+not ok 63 - QA7-N75 replay: meta.tool_authored/outputs are hash-consistent with the file, but the transcript's own Write produced different bytes (forged meta) -> rejected
+not ok 64 - QA7-N76 replay: the only Write of the sidecar failed (tool_result is_error, e.g. guard-denied) although meta claims it tool-authored -> rejected
+not ok 65 - QA7-N77 replay (control): Write of a draft, then a successful Edit producing the final bytes, plus an unrelated failed Edit, binds; an absolute path under meta.cwd binds too
+not ok 66 - QA7-N78 history: a commit back-dated before its parent (GIT_COMMITTER_DATE) anywhere in history is rejected
+not ok 67 - QA7-N79 write-once: the same review path added on two branches with different bytes, merged keeping ours, is rejected (two blobs)
+not ok 68 - QA7-N80 write-once: a committed review record turned into a symlink to an identical copy (type change) is rejected
+not ok 69 - QA7-N81 write-once: modify a record on a side branch then revert it there (HEAD bytes unchanged) and merge -> the M events are still rejected
+ok 70 - QA7-N82 A25 prefreeze: on a fresh clone an ignored __pycache__ file does not fail prefreeze, but an untracked non-ignored candidate file does
+not ok 71 - QA7-N83 runner: both the first run and every resume pipe a stream-json user message with --input-format stream-json --replay-user-messages, and the prompt prefix equals what the validator requires
+ok 72 - QA7-P02 probe (informational): replay of a Write that has no tool_result line
+not ok 73 - QA8-C00 control: the round-8 fixture (runner-shaped prompt with assignment + sha256) closes the finding cleanly
+not ok 74 - QA8-N84 F-DG0-132: a 0-byte transcript that is not even gzip fails the gzip check AND every transcript check
+not ok 75 - QA8-N85 F-DG0-132: a gzip transcript of non-JSON garbage lines (non-empty, all unparsable) fails every transcript check
+not ok 76 - QA8-N86 F-DG0-132: a missing transcript file (meta hash removed as well) fails every transcript check
+not ok 77 - QA8-N87 F-DG0-133: the right assignment path but the sha256 of other content (e.g. a pre-edit version) is rejected
+not ok 78 - QA8-N88 F-DG0-133: another real assignment of the same role with ITS correct sha256 (round-2) is rejected
+not ok 79 - QA8-N89 F-DG0-133: a suffix-sibling path (/work/repo/xdocs/...) whose tail equals meta.assignment minus its first char is rejected
+not ok 80 - QA8-N90 F-DG0-133: a replayed prompt with no 'assignment ... (sha256 ...)' clause at all is rejected
+not ok 81 - QA8-N91 F-DG0-133: an upper-case hex sha256 in the prompt (not what the runner emits) is rejected, never silently accepted
+not ok 82 - QA8-N92 transcript: an init line whose model differs from meta.model_requested is rejected
+not ok 83 - QA8-P03 probe (informational): the prompt names the right relative assignment under a different absolute root
+ok 84 - QA8-S01 F-DG0-011 static: all ten agent definitions state the no-real-approval rule and that G6 never implies DG7
+ok 85 - QA8-S02 F-DG0-222 static: agents.md documents the runner's actual stream-json/replay invocation and the D-022/F-DG0-132/133 binding conditions
+not ok 86 - QA8-F223 portability: a genuine runner-shaped prompt from a checkout whose absolute path contains a space binds
+# tests 86 # pass 17 # fail 69 EXIT=1
+=== dg0-gate-negative-r9.test.mjs
+not ok 1 - control: the independent round-5 fixture is accepted (API and CLI exit 0)
+not ok 2 - control: a genuine later-round closure (post-manifest run) is accepted
+not ok 3 - QA5-R211a (F-DG0-211 = QA4-N39): a gate record edited and committed after the auditor's run is rejected
+not ok 4 - QA5-R211b (F-DG0-211 = QA4-N40): a gate record the auditor run never wrote (absent from its outputs) is rejected
+not ok 5 - QA5-R211c (F-DG0-211 variant): a gate record present in the auditor run's window but not tool-authored (shell/other writer) is rejected
+not ok 6 - QA5-R212a (F-DG0-212 = QA4-N30b): a round backed by a fabricated, backdated manifest is rejected
+not ok 7 - QA5-R212b (F-DG0-212 variant, new): an honest-content but backdated manifest (narrowed spec, so a new id/path) cannot legitimise a run that started before it was committed
+not ok 8 - QA5-P01 probe (informational): a later round whose manifest uses a narrower spec than the stage candidate_spec
+not ok 9 - QA5-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+not ok 10 - QA5-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+not ok 11 - QA5-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+not ok 12 - QA5-R205 (F-DG0-205): evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+not ok 13 - QA5-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+not ok 14 - QA5-R208a (F-DG0-208 = QA3-N20): rewrite round-1 frozen_at + record to cite a LOAD run, committed, is rejected
+not ok 15 - QA5-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+not ok 16 - QA5-N50 binding: a run whose meta has written_by_tools but no tool_authored (round-4 runner shape) cannot bind a record
+not ok 17 - QA5-N51 binding: a closing sidecar that the run touched with file tools but whose final bytes are not the replay (e.g. shell edit after Write) cannot close a finding
+not ok 18 - QA5-N52 binding: head_commit_at_start that is not a commit in this repository is rejected
+not ok 19 - QA5-N53 binding: a run with no head_commit_at_start at all is rejected
+not ok 20 - QA5-N54 write-once: delete a committed record, then re-add it with different bytes in a later commit, is rejected
+not ok 21 - QA5-N55/QA7 write-once: deleting a committed record and re-adding the identical bytes is rejected (no D events allowed, D-021 rev.)
+not ok 22 - QA5-N56 write-once: an edited round assignment committed on a side branch and merged is rejected (history + sha binding)
+not ok 23 - QA5-N57 manifests: a round whose manifest names a source_commit that does not exist is rejected
+not ok 24 - QA5-N58 manifests: a committed frozen manifest edited in the working tree (hidden with assume-unchanged) is rejected
+not ok 25 - QA5-N59 gate: the gate record authored by a domain-reviewer run (not the auditor) is rejected even if the auditor's outputs list is edited in history to match
+ok 26 - QA5-RP1 runner replay: Write then Edit (chained) is tool_authored; outputs record the change
+ok 27 - QA5-RP2 runner replay: Write followed by a shell rewrite (final bytes differ) is NOT tool_authored
+ok 28 - QA5-RP3 runner replay: a failed (guard-denied) Write whose content appears via the shell is NOT tool_authored
+ok 29 - QA5-RP4 runner replay: an Edit on a pre-existing file (not written by this run) is NOT tool_authored
+ok 30 - QA5-RP5 runner replay: an Edit whose old_string does not occur poisons the replay; writes outside the repo are ignored
+ok 31 - QA5-RP6 runner replay: a later successful Write supersedes an earlier failed one and binds the final bytes
+not ok 32 - QA5-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+not ok 33 - QA5-A24 rejects: missing reviewer
+not ok 34 - QA5-A24 rejects: reviewer who authored the scope
+not ok 35 - QA5-A24 rejects: reviewer listed as implementation author
+not ok 36 - QA5-A24 rejects: shared invocation
+not ok 37 - QA5-A24 rejects: failed check
+not ok 38 - QA5-A24 rejects: blocked check
+not ok 39 - QA5-A24 rejects: failed gate test
+not ok 40 - QA5-A24 rejects: unresolved High finding
+not ok 41 - QA5-A24 rejects: incomplete requirement
+not ok 42 - QA5-A24 rejects: register row with a non-existent block anchor
+not ok 43 - QA5-A24 rejects: SOURCE row without a playbook block
+not ok 44 - QA5-A24 rejects: coverage matrix missing a block
+not ok 45 - QA5-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+not ok 46 - QA5-A24 rejects: candidate change after freeze
+not ok 47 - QA5-A24 rejects: tampered manifest
+ok 48 - QA6-N60 A25: on a fresh clone, running the shipped runner-metadata unit tests (CI + prefreeze step) leaves the candidate ID and the tree unchanged
+not ok 49 - QA6-N61 binding: a review whose run directory has a transcript and result but no meta.json (the orphaned round-5 shape) is rejected
+not ok 50 - QA6-N62 binding: a run whose meta records no result line (is_error, subtype no-result-line) cannot bind a PASS review
+not ok 51 - QA6-N63 binding: a run whose meta.json hashes do not match its committed transcript (transcript replaced after the run) is rejected
+ok 52 - QA6-RP7 run_meta: a session resumed after a classifier outage (two transcript segments, two result lines) binds a Write from segment 1 edited in segment 2, and meta reflects the last result
+ok 53 - QA6-RP8 run_meta: MultiEdit is replayed (all edits apply -> bound); one missing old_string poisons the file
+ok 54 - QA6-RP9 run_meta: bilingual content (Arabic RTL text, emoji, CRLF) is bound byte-exactly as UTF-8
+ok 55 - QA6-RP10 run_meta: a sibling path that merely shares the repo-root prefix (<repo>-evil/...) is not mapped into the repository
+ok 56 - QA6-RP11 run_meta: an unrelated failed tool_result does not unbind a successful Write; a failed Edit after a Write leaves the Write's bytes bound
+ok 57 - QA6-RP12 run_meta: a transcript with no result line yields is_error/no-result-line, and a corrupt snapshot fails loudly without meta.json while keeping the snapshots
+not ok 58 - QA7-N70 D-022: a transcript carrying the runner prompt only as a plain (non-replayed) user message, i.e. the pre-D-022 shape, cannot close a finding
+not ok 59 - QA7-N71 D-022: the prompt text inside a tool_result of a replayed user event (e.g. the agent reading run-agent.sh output) does not count
+not ok 60 - QA7-N72 D-022: a replayed prompt copied from another role's run (right run_id text, wrong role) is rejected
+not ok 61 - QA7-N73 D-022: a replayed prompt whose session_id differs from the run's session is rejected
+not ok 62 - QA7-N74 D-022: a replayed prompt for another stage (DG1) is rejected; the same prompt as an array of text blocks is accepted (control)
+not ok 63 - QA7-N75 replay: meta.tool_authored/outputs are hash-consistent with the file, but the transcript's own Write produced different bytes (forged meta) -> rejected
+not ok 64 - QA7-N76 replay: the only Write of the sidecar failed (tool_result is_error, e.g. guard-denied) although meta claims it tool-authored -> rejected
+not ok 65 - QA7-N77 replay (control): Write of a draft, then a successful Edit producing the final bytes, plus an unrelated failed Edit, binds; an absolute path under meta.cwd binds too
+not ok 66 - QA7-N78 history: a commit back-dated before its parent (GIT_COMMITTER_DATE) anywhere in history is rejected
+not ok 67 - QA7-N79 write-once: the same review path added on two branches with different bytes, merged keeping ours, is rejected (two blobs)
+not ok 68 - QA7-N80 write-once: a committed review record turned into a symlink to an identical copy (type change) is rejected
+not ok 69 - QA7-N81 write-once: modify a record on a side branch then revert it there (HEAD bytes unchanged) and merge -> the M events are still rejected
+ok 70 - QA7-N82 A25 prefreeze: on a fresh clone an ignored __pycache__ file does not fail prefreeze, but an untracked non-ignored candidate file does
+not ok 71 - QA7-N83 runner: both the first run and every resume pipe a stream-json user message with --input-format stream-json --replay-user-messages, and the prompt prefix equals what the validator requires
+ok 72 - QA7-P02 probe (informational): replay of a Write that has no tool_result line
+not ok 73 - QA8-C00 control: the round-8 fixture (runner-shaped prompt with assignment + sha256) closes the finding cleanly
+not ok 74 - QA8-N84 F-DG0-132: a 0-byte transcript that is not even gzip fails the gzip check AND every transcript check
+not ok 75 - QA8-N85 F-DG0-132: a gzip transcript of non-JSON garbage lines (non-empty, all unparsable) fails every transcript check
+not ok 76 - QA8-N86 F-DG0-132: a missing transcript file (meta hash removed as well) fails every transcript check
+not ok 77 - QA8-N87 F-DG0-133: the right assignment path but the sha256 of other content (e.g. a pre-edit version) is rejected
+not ok 78 - QA8-N88 F-DG0-133: another real assignment of the same role with ITS correct sha256 (round-2) is rejected
+not ok 79 - QA8-N89 F-DG0-133: a suffix-sibling path (/work/repo/xdocs/...) whose tail equals meta.assignment minus its first char is rejected
+not ok 80 - QA8-N90 F-DG0-133: a replayed prompt with no 'assignment ... (sha256 ...)' clause at all is rejected
+not ok 81 - QA8-N91 F-DG0-133: an upper-case hex sha256 in the prompt (not what the runner emits) is rejected, never silently accepted
+not ok 82 - QA8-N92 transcript: an init line whose model differs from meta.model_requested is rejected
+not ok 83 - QA8-P03 probe (informational): the prompt names the right relative assignment under a different absolute root
+ok 84 - QA8-S01 F-DG0-011 static: all ten agent definitions state the no-real-approval rule and that G6 never implies DG7
+ok 85 - QA8-S02 F-DG0-222 static: agents.md documents the runner's actual stream-json/replay invocation and the D-022/F-DG0-132/133 binding conditions
+not ok 86 - QA8-F223 portability: a genuine runner-shaped prompt from a checkout whose absolute path contains a space binds
+not ok 87 - QA9-C01 control (F-DG0-223): a path with spaces, parentheses and Arabic characters binds
+not ok 88 - QA9-N93 F-DG0-223: the widened regex keeps the sha binding (spaced path with another content's sha256 is rejected)
+not ok 89 - QA9-N94 F-DG0-223: a spaced path naming another real assignment of the role, with its correct sha256, is rejected
+not ok 90 - QA9-N95 F-DG0-223: a space before the relative path ("…/repo/ docs/…") is not a path boundary and is rejected
+not ok 91 - QA9-N96 F-DG0-223: a spaced path with a trailing suffix ("….md.bak") is rejected
+not ok 92 - QA9-N97 F-DG0-223: a second, appended assignment clause cannot override the first (first clause names another assignment)
+not ok 93 - QA9-N98 F-DG0-223: a newline inside the path (the lazy capture must not span lines) is rejected
+not ok 94 - QA9-F224 portability: the gate tooling itself, installed under a path with a space, validates a valid fixture
+# tests 94 # pass 17 # fail 77 EXIT=1
+=== dg0-gate-negative.test.mjs
+not ok 1 - control: the independent fixture is accepted (current mode and CLI exit 0)
+not ok 2 - QA-N01 missing reviewer: gate points at a review file that does not exist; CLI exits non-zero
+not ok 3 - QA-N02 missing reviewer: qa-verifier slot filled with the domain-reviewer's record (role substitution)
+not ok 4 - QA-N03 missing reviewer: the release audit is absent
+not ok 5 - QA-N04 authorship: the release-auditor listed as an implementation author is rejected
+not ok 6 - QA-N05 shared invocation: a reviewer and the auditor cite the same session
+not ok 7 - QA-N06 shared invocation: two run records with different run_ids but one session_id
+not ok 8 - QA-N07 invocation: a run that exited with an error cannot back a review
+not ok 9 - QA-N08 failed check: a FAIL check result and a BLOCKED verdict each fail the gate
+not ok 10 - QA-N09 gate test evidence missing or BLOCKED fails the gate
+not ok 11 - QA-N10 unresolved High finding (OPEN, not referenced by any review) still blocks the gate
+not ok 12 - QA-N11 a High finding cannot be parked as ACCEPTED_OBSERVATION
+not ok 13 - QA-N12 a High finding CLOSED_VERIFIED without verification, and one referenced by a review but missing from findings.json
+not ok 14 - QA-N13 incomplete requirement: a DG0 row that is BLOCKED (with notes) fails
+not ok 15 - QA-N14 incomplete requirement: DG0 row IMPLEMENTED with no evidence, or a non-existent evidence path
+not ok 16 - QA-N15 incomplete requirement: a DG0 row missing from the gate's final_gate_ids, and one unchecked by domain/security
+not ok 17 - QA-N16 incomplete requirement: a later-gate row still PLANNED fails at DG0 (must be SPECIFIED)
+not ok 18 - QA-N17 register rows citing non-existent or malformed anchors are rejected
+not ok 19 - QA-N18 a SOURCE row citing only master-prompt blocks, and a REQ-PB id on a USER row, are rejected
+not ok 20 - QA-N19 coverage: master-prompt matrix missing a block; mapping to a requirement that does not cite the block
+not ok 21 - QA-N20 coverage: unknown requirement, unknown block, duplicate row, CONTEXT without rationale, bad disposition
+not ok 22 - QA-N21 change after freeze: an added untracked file and a deleted file are both detected
+not ok 23 - QA-N22 change after freeze: a candidate edited and committed after freeze fails --stage; CLI exits 1
+not ok 24 - QA-N23 tampered manifest that is internally consistent (entries, id, gate, stages, reviews all rewritten) is still caught by recompute
+not ok 25 - QA-N24 tampered manifest: a manifest whose stage_id or source_commit disagree with the gate is rejected
+not ok 26 - QA-N25 metadata writes in every excluded area leave the candidate ID unchanged (and the gate valid)
+not ok 27 - QA-N26 a stage spec cannot re-include delivery metadata into the candidate
+not ok 28 - QA-N27 provenance: a review citing a different task's run (e.g. the load check) is rejected
+not ok 29 - QA-N28 incomplete requirement: a DG0 row whose evidence is a bare, non-existent file name is rejected
+# tests 29 # pass 0 # fail 29 EXIT=1

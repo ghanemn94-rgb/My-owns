@@ -1,0 +1,109 @@
+# Reproduction against the ROUND-17 candidate f84eed4 (before D-032): QA_REPO_ROOT=$TMPDIR/old node --test dg0-gate-negative-r18.test.mjs  [2026-09-29T16:30:00Z]
+# Expected: QA18-S1/S2/S3 FAIL there (unhandled FileExistsError, no sandbox.json) = the F-DG0-150/238 bug; C1/C2 pass (D-029 predates round 17)
+TAP version 13
+#   QA18-S4 status=1 sandbox.json=MISSING stderr-tail="FileExistsError: [Errno 17] File exists: '/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-NVeJkq/repo/docs/delivery/reviews/DG0/round-18'"
+# Subtest: QA18-C1 stub rule boundaries: no-write-bit empty untracked files are skipped, any write bit or a symlink counts
+ok 1 - QA18-C1 stub rule boundaries: no-write-bit empty untracked files are skipped, any write bit or a symlink counts
+# Subtest: QA18-C2 a skipped stub stays detectable by git status, never enters the committed candidate, and counts once tracked
+ok 2 - QA18-C2 a skipped stub stays detectable by git status, never enters the committed candidate, and counts once tracked
+# Subtest: QA18-S1 finish(): a dangling symlink planted at the own-role destination is a discard; never followed, never clobbered
+not ok 3 - QA18-S1 finish(): a dangling symlink planted at the own-role destination is a discard; never followed, never clobbered
+  location: '/var/tmp/mth-run.sbowHu/claude-0/r18.test.mjs:131:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    sandbox.json must be written (stderr: Traceback (most recent call last):
+      File "/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-RhkdQv/repo/tools/agents/agent_sandbox.py", line 302, in <module>
+        main()
+      File "/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-RhkdQv/repo/tools/agents/agent_sandbox.py", line 296, in main
+        sys.exit(finish(argv))
+                 ^^^^^^^^^^^^
+      File "/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-RhkdQv/repo/tools/agents/agent_sandbox.py", line 267, in finish
+        fd = os.open(dest, flags, 0o644)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    FileExistsError: [Errno 17] File exists: '/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-RhkdQv/repo/docs/delivery/reviews/DG0/round-18/qa-verifier.json'
+    )
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///var/tmp/mth-run.sbowHu/claude-0/r18.test.mjs:138:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# Subtest: QA18-S2 finish(): a collision on one own-role file does not stop the loop; the other file is copied back; non-zero
+not ok 4 - QA18-S2 finish(): a collision on one own-role file does not stop the loop; the other file is copied back; non-zero
+  location: '/var/tmp/mth-run.sbowHu/claude-0/r18.test.mjs:148:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    sandbox.json must be written (stderr: Traceback (most recent call last):
+      File "/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-sWEK37/repo/tools/agents/agent_sandbox.py", line 302, in <module>
+        main()
+      File "/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-sWEK37/repo/tools/agents/agent_sandbox.py", line 296, in main
+        sys.exit(finish(argv))
+                 ^^^^^^^^^^^^
+      File "/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-sWEK37/repo/tools/agents/agent_sandbox.py", line 267, in finish
+        fd = os.open(dest, flags, 0o644)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    FileExistsError: [Errno 17] File exists: '/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-sWEK37/repo/docs/delivery/reviews/DG0/round-18/qa-verifier.json'
+    )
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///var/tmp/mth-run.sbowHu/claude-0/r18.test.mjs:154:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# Subtest: QA18-S3 finish(): a directory already at the own-role destination is a discard, not a crash
+not ok 5 - QA18-S3 finish(): a directory already at the own-role destination is a discard, not a crash
+  location: '/var/tmp/mth-run.sbowHu/claude-0/r18.test.mjs:163:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    sandbox.json must be written (stderr: Traceback (most recent call last):
+      File "/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-P3Boo2/repo/tools/agents/agent_sandbox.py", line 302, in <module>
+        main()
+      File "/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-P3Boo2/repo/tools/agents/agent_sandbox.py", line 296, in main
+        sys.exit(finish(argv))
+                 ^^^^^^^^^^^^
+      File "/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-P3Boo2/repo/tools/agents/agent_sandbox.py", line 267, in finish
+        fd = os.open(dest, flags, 0o644)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    FileExistsError: [Errno 17] File exists: '/var/tmp/mth-run.sbowHu/claude-0/qa18-sbx-P3Boo2/repo/docs/delivery/reviews/DG0/round-18/qa-verifier.md'
+    )
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///var/tmp/mth-run.sbowHu/claude-0/r18.test.mjs:168:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# Subtest: QA18-S4 finish(): the round directory is a regular file in the real tree: fail-closed and the real file is untouched
+ok 6 - QA18-S4 finish(): the round directory is a regular file in the real tree: fail-closed and the real file is untouched
+# Subtest: QA18-S5 finish(): an out-of-scope staging file is discarded and an unchanged seed file is not re-copied
+ok 7 - QA18-S5 finish(): an out-of-scope staging file is discarded and an unchanged seed file is not re-copied
+1..7
+# tests 7
+# suites 0
+# pass 4
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1018.12589
+EXIT=1
