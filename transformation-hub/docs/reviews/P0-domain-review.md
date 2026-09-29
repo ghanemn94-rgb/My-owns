@@ -172,3 +172,154 @@ Re-review conditions:
 
 - `docs/reviews/P0-domain-review.md` (this file). No other repository file was modified.
 - The reproduction script is in the reviewer scratchpad only and is not committed.
+
+---
+
+## Re-review at 824bed9
+
+| Item | Value |
+|---|---|
+| Reviewer | carveout-domain-analyst (REVIEW mode, separate context; did not author any fix) |
+| Revision | `824bed9` (HEAD of `claude/mobily-transformation-hub`). The domain fixes are in `6fdb60f`; `b2ab1b9` and `824bed9` add QA and architecture fixes. |
+| Working tree | `packages/domain`, `packages/db` and `docs/requirements` had no uncommitted changes. Unrelated untracked or modified `apps/web` and `e2e` files belong to other contexts. |
+| Scope | Findings D-01 to D-27. Diffs `e2daae7..824bed9` of `packages/domain/src/{gates,governance,carveout,measurement,workflows}.ts`, `packages/db/src/schema/{gates,carveout,governance,finance,jv,planning}.ts`, `packages/db/migrations/0000_initial_schema.sql` and `packages/db/sql/post-migrate.sql` |
+| API wiring | `apps/api/src/modules/{governance,gates,readiness,carveout,jv}` now exist, but they contain only `*.module.ts`, `*.jobs.ts` and `*.seed.ts`. No command calls the new guards yet. The guards remain the future enforcement point, as they were at P0. |
+| **Verdict** | **PASS**: no open Critical or High findings. The residual Medium and Low items are listed below, each with a phase and owner. |
+
+### R.1 Commands and real output
+
+```
+$ git -C /home/user/My-owns log --oneline -4
+824bed9 Fix P0 architecture review findings (2 High, 11 Medium, 7 Low)
+b2ab1b9 Fix P0 QA findings: work log, delivery status, quorum, unit scales
+6fdb60f Fix P0 domain review findings (3 High, 11 Medium)
+150910e Platform: raw upload routes (application/octet-stream) with size limit
+
+$ cd transformation-hub/packages/domain && npx tsc -p tsconfig.build.json; echo "tsc exit=$?"
+tsc exit=0
+$ npx vitest run
+ Test Files  5 passed (5)
+      Tests  92 passed (92)
+   Duration  1.42s
+```
+
+The verbose run lists new tests covering D-01, D-02, D-03 (5 tests), D-04, D-05, D-07, D-08, D-09, D-10, D-14, D-15 and D-17. D-06 is covered inside the AT-10 test (`rules.test.ts:236`).
+
+**Original reproduction script, unchanged** (`tsx <scratchpad>/repro.ts`, same inputs as in §1):
+
+```
+R1 N/A on non-waivable mandatory criterion -> ready = false
+R2 blocking non-mandatory met w/o evidence -> ready = false
+R3 waived blocker -> goDecisionBlockers = [{"id":"r1","title":"Connectivity test","status":"waived","blocker":true}]
+R3 assertGoAllowed threw A GO decision is blocked by open readiness blockers or missing cutover prerequisites
+R4 stale + open blocker -> status = red | aggregate redCritical = ["x"]
+R5 recommended --record_approval--> approved
+R6 missing fields = ["impacts.operational","impacts.schedule","dependencies","requiredAuthority","requesterUserId"]
+R7 closingBlockers (verified CP, validity lapsed) = []
+R8 TSA expired_unresolved --record_extension--> extended
+R9 commands from approved = [] | any command -> superseded: false
+R10 ops dimension = {"key":"operational_readiness","state":"in_progress","explanation":"1 of 2 mandatory/blocking checks cleared."}
+R11 day1 position transferable (unassessed) = {"ok":false,"missing":["specialistClassification","interimArrangement","serviceAccountableOwner","billingAccountableOwner","slaAccountableOwner","remediationPlan"]}
+R12 weightedProgress (no approval flag in input) = 100
+```
+
+Three of these lines still look unchanged, for different reasons:
+
+- **R5 and R8 are expected.** The state machines stay deliberately unguarded. The guards are the separate functions `assertApprovalAllowed` and `assertTsaExtensionAllowed`, exercised below.
+- **R7 comes from the old input.** It omits the new optional `validTo`/`evidenceCount` fields. With them, the lapse is detected (D07a), but omission is permissive (see N-01).
+- **R12 is not fixed** (D-18).
+
+**New reproduction script** (`tsx <scratchpad>/repro2.ts`, not committed). It exercises the new guards and what happens when inputs are omitted:
+
+```
+D01a N/A approved determination -> ready = true
+D01b N/A by proposer -> REJECTED: The proposer cannot approve their own not-applicable determination
+D03a under_review, pending_external_authority -> REJECTED: The decision is outside the committee delegated authority — record it as a recommendation pending the authorized body
+D03b under_review, within mandate, no matrix -> REJECTED: No authority matrix exists for this committee — production approval authority is not active
+D03c under_review, within mandate, demo matrix on real project -> REJECTED: A demo policy cannot authorize decisions on a non-demo project — production approval authority is not active
+D03d under_review, within mandate, expired matrix -> REJECTED: Authority matrix (delegation) has expired — production approval authority is not active
+D03e recommended, no external reference -> REJECTED: Approval of a recommendation requires the external authority approval reference
+D03f recommended, ext ref, recommendationRecordedBy omitted, same person -> OK
+D03g under_review, within mandate, usable matrix -> OK
+D06 extension without approved decision -> REJECTED: A TSA extension requires an approved decision; it is never automatic
+D07a lapsed validity -> [{"ref":"CP-1","message":"Validity of CP-1 lapsed on 2026-09-01"}]
+D07b verified, evidenceCount 0 -> [{"ref":"CP-1","message":"Blocking condition CP-1 is verified without active evidence"}]
+D07c verified, evidenceCount OMITTED -> []
+D14a GO, window/impact/owner/testing = false -> REJECTED: A GO decision is blocked by open readiness blockers or missing cutover prerequisites
+D14b GO, window/impact/owner/testing OMITTED -> OK
+D02 readiness waiver, approver lacks waiver authority role, no impact -> OK
+D05 economic status OMITTED -> perimeter = transferred_verified
+D05 economic in_progress -> perimeter = in_progress
+D15 TSA breached -> ops = blocked
+D09 planReopen(approved) -> OK {"cycle":2,"supersedesAssessmentId":"a1","status":"reopened","reason":"Evidence found defective"}
+D25 end passed, replacement accepted, exit not accepted -> {"kind":"ok"}
+```
+
+**Schema and migration check.** `migrations/0000_initial_schema.sql` contains every new column: `economic_transfer_status`, `na_basis`/`na_approved`, `extension_decision_id`, `continuity_plan`, `vote.round`, `decision.vote_round`, `effective_from`, `recommendation_recorded_by`, readiness `waivable`/`waiver_authority_role`, and `go_decision_id`. It also contains `CREATE UNIQUE INDEX "vote_uq" ON "vote" ("decision_id","user_id","round")`. `post-migrate.sql:147-148,171` makes `conflict_declaration` append-only.
+
+### R.2 Per-finding status
+
+| ID | Sev (P0) | Status at 824bed9 | Evidence | Residual |
+|---|---|---|---|---|
+| D-01 | High | **Fixed** | `gates.ts:67-74`: N/A counts only with an approved determination and a basis. `assertNotApplicableAllowed` requires the reviewer role, a basis and a determiner other than the proposer. The schema adds `na_basis`, `na_proposed_by`, `na_determined_by` and `na_approved`. Checked by R1 and D01a/b. | None |
+| D-02 | High | **Fixed** (the High is closed) | `goDecisionBlockers` and the dimension clear a waived check only when `waivable === true` and an approved waiver exists; omitted inputs fail closed. `readiness_check` gains `waivable`, `waiver_authority_role` and `waiver_id` (FK to `waiver`), and `waiver.target_type` now covers `readiness_check`. Checked by R3. | N-02 (Medium): `assertReadinessWaiverAllowed` ignores the authority role and the impact |
+| D-03 | High | **Fixed** | `governance.ts` adds `matrixUsable` (approved status, effective window, demo only on demo projects) and `assertApprovalAllowed` (approval from `under_review` needs `within_mandate` and a usable matrix; approval from `recommended` needs an external reference recorded by a different person). The schema adds `decision.recommendation_recorded_by`. Checked by D03a-e and D03g, with 5 new tests. The misleading test was renamed. | N-01 (Medium): when `recommendationRecordedBy` is omitted, the same-person check is skipped (D03f) |
+| D-04 | Medium | **Fixed** | `gates.ts:58,64` now use `mandatory \|\| blocking`. Checked by R2. | None |
+| D-05 | Medium | **Partially fixed**, deferred to **P3** (owner: carve-out module implementer, via delivery-orchestrator) | `perimeter_item.economic_transfer_status` was added. `combinedTransferStatus` takes the less advanced of legal and economic. Checked by D05. | `transfer_record` still logs a single `from_status`/`to_status`, with no legal/economic aspect and no separate economic effective date. When `economicTransferStatus` is omitted, the dimension falls back to the legal status (N-01). |
+| D-06 | Medium | **Fixed** | `assertTsaExtensionAllowed` requires an approved decision, a new end date and a continuity plan. `tsa_service` adds `extension_decision_id` (FK to `decision`) and `continuity_plan`, and `escalation_id` now has an FK. Checked by D06. | The trigger that detects a replacement-service failure (escalation plus decision request, REQ-TSA-004) is worker behaviour, deferred to **P3** (readiness/TSA module) |
+| D-07 | Medium | **Fixed** when inputs are supplied | `closingBlockers` blocks a lapsed `validTo` and `verified` with `evidenceCount 0`. Checked by D07a/b. | N-01: an omitted `evidenceCount` is permissive (D07c) |
+| D-08 | Medium | **Fixed** | Completeness now checks all three impacts, dependencies, requiredAuthority and requester. Checked by R6. | Evidence and attachments are to be checked by the P2 submit command (**P2**, governance) |
+| D-09 | Medium | **Fixed** | `reopen` was removed from the machine. `planReopen` creates cycle+1 with status `reopened`, and the prior row is never modified. `gate_assessment.supersedes_assessment_id` now has an FK. Checked by R9 and D09. | N-03 (Low): no helper resolves the current gate status |
+| D-10 | Medium | **Fixed** | `measurement.ts:89`: a blocker is evaluated before staleness. Checked by R4. | None |
+| D-11 | Medium | **Partially fixed**; residual Low deferred to **P2** (governance) | `vote.round` and `decision.vote_round` were added, and `vote_uq` is now `(decision_id, user_id, round)`. The vote's matrix version now has an FK. | `vote.authority_matrix_version_id` is still nullable |
+| D-12 | Medium | **Fixed** | `authority_matrix_version.effective_from/effective_to` were added and are used by `matrixUsable`. Checked by D03d. | None |
+| D-13 | Medium | **Partially fixed**; guard deferred to **P2** (governance vote command) | `conflict_declaration` table added; it is append-only (`post-migrate.sql:147-148,171`). | There is no domain guard requiring a declaration from every present voting member before a vote. `declaration` is a free `varchar` with no CHECK (N-04). |
+| D-14 | Medium | **Fixed** when inputs are supplied | `CutoverPrerequisites` adds window, service impact, accountable owner and testing. Checked by D14a. The schema adds `cutover_plan.go_decision_id`. | N-01: omitted fields are permissive (D14b) |
+| D-15 | Medium | **Fixed** | Blocker-only checks now count. Breached or expired TSAs block the dimension. Transitional and enduring arrangements are reported. `operating_model_definition` was added (versioned, approval and decision FK). Checked by R10 and D15. | An unapproved definition only adds a note and does not block. This is acceptable under §3 but should be confirmed with the owner in **P3**. |
+| D-16 | Medium | **Fixed** (model) | `intercompany_reconciliation` table: both balances, currency, unit scale with a CHECK, status, reviewer and source. | No rule yet flags unreconciled differences; deferred to **P4** (finance). `status` has no CHECK (N-04). |
+| D-17 | Medium | **Fixed** | `assertDay1ContractPosition` treats an unassessed class as not accepted, and an omitted `classAssessedBy` fails closed. Checked by R11. | None |
+| D-18 | Low | **Not fixed**; deferred to **P2** (planning, measurement) | `weightedProgress` unchanged. Checked by R12. | Add `weightApproved` |
+| D-19 | Low | **Not fixed**; deferred to **P2** (governance) | Enum and REQ-GOV-012 unchanged | Align |
+| D-20 | Low | **Not fixed**; deferred to **P3** (status dimensions) | `status_dimension.state` is still a free `varchar(48)` with no owner | Constrain and add owner |
+| D-21 | Low | **Fixed** | Project-scoped FKs added for `agreement.executed_document_id`, `closing_deliverable.document_id`, `committee.charter_document_id`, `meeting.pack_snapshot_id` (to `report_snapshot`), `financial_snapshot.source_document_id`, `financial_model_version.source_document_id` and `cutover_plan.runbook_document_id` | None |
+| D-22 | Low | **Not fixed**; deferred to **P4** (finance) | `financial_snapshot_line_uq` unchanged | Version forecasts, or document reliance on `record_version` |
+| D-23 | Low | **Not fixed**; deferred to **P4** (JV/DD) | `diligence_request` release fields unchanged | Add `release_approved_at` and disclosure versions |
+| D-24 | Low | **Not fixed**; deferred to **P4** (JV) | `closing_condition.closing_id` still nullable (`jv.ts:276`) | Require it, and choose one home for conditions subsequent |
+| D-25 | Low | **Not fixed**; deferred to **P3** (TSA) | `assessTsaExpiry` unchanged. Checked by D25. | Return `exit_acceptance_pending` |
+| D-26 | Low | **Not fixed**; deferred to the **P2** register update (owner: delivery-orchestrator) | `requirements.yaml` unchanged | Wording |
+| D-27 | Low | **Not fixed**; deferred to **P2** (governance) | `assertMayVote` unchanged | Make it a policy parameter |
+
+No written disposition of the Low items (D-18 to D-27) was found in the repository. The phase and owner assignments
+above are this reviewer's recommendation, and the lead should record them in the backlog or requirement register.
+
+### R.3 New findings at 824bed9
+
+| ID | Sev | Location | Description (reproduction) | Spec / AT | Recommendation, phase and owner |
+|---|---|---|---|---|---|
+| N-01 | Medium | `carveout.ts` `ClosingReadinessInput.conditions[].evidenceCount`/`validTo`, `CutoverPrerequisites.hasWindow`/`hasServiceImpact`/`hasAccountableOwner`/`testingDone`, `DimensionInput.perimeter[].economicTransferStatus`; `governance.ts` `assertApprovalAllowed.recommendationRecordedBy` | Several new guard inputs are **optional and fail open when omitted**. A verified CP with `evidenceCount` omitted clears closing (D07c). GO is allowed with the four new cutover fields omitted (D14b). Approval of a recommendation by the same person passes when `recommendationRecordedBy` is omitted (D03f). A perimeter item is `transferred_verified` when the economic status is omitted. The same release closes the equivalent D-02 and D-17 inputs (fails closed), so the approach is inconsistent. A service that forgets a field would silently weaken AT-04, AT-09 and AT-12. | §§3, 4.2, 7.4, 8; AT-04, AT-09, AT-12 | Make these fields required in the TypeScript signatures, or treat `undefined` as failing, with a negative test for each. Close this before, or together with, the first consuming command: **P2** (governance: `recommendationRecordedBy`), **P3** (readiness and carve-out: cutover fields, `economicTransferStatus`), **P4** (JV: `evidenceCount`, `validTo`). Owner: domain-rule author, via delivery-orchestrator. |
+| N-02 | Medium | `carveout.ts` `assertReadinessWaiverAllowed` | The guard checks waivability, self-approval and basis. It ignores the specialist-set `readiness_check.waiver_authority_role`, and it does not require an impact even though its message says "basis and impact". **Repro D02:** an approver without the authority role and with no impact passes. The gate equivalent, `assertWaiverAllowed`, checks both. | §3 ("waiver authority… basis, approval, and impact"); AT-13 | Add `waiverAuthorityRole`, `approverRoles` and `impact` to the input, as `assertWaiverAllowed` has them, plus a test. **P3** (readiness module); may be fixed now. Owner: domain-rule author. |
+| N-03 | Low | `gates.ts` `planReopen`; `enums.ts` `superseded` | After a reopen, the prior assessment keeps `approved` (by design) and `superseded` is no longer reachable. No domain helper resolves a gate's current status from `is_current` or the latest cycle. A consumer that builds `evaluateGate().prerequisites` from "any approved assessment" would treat a reopened gate as still approved. | §3; AT-14 | Add `currentAssessmentStatus()` with a test, and use it for prerequisites. **P2** (gates). |
+| N-04 | Low | `conflict_declaration.declaration`, `intercompany_reconciliation.status`, `operating_model_definition.status` | These are free `varchar` columns with no CHECK constraint or pgEnum, unlike the rest of the model. | §14 integrity | Add CHECK constraints or enums. Owner: lead (migrations); **P2**/**P4**. |
+
+### R.4 Verdict at 824bed9
+
+**PASS.** All three P0 Highs are fixed and verified by reproduction and unit tests:
+
+- **D-01:** a not-applicable criterion now needs an approved specialist determination.
+- **D-02:** a waived readiness blocker now needs waivability and an approved waiver.
+- **D-03:** approval is now bound to the mandate, a usable (approved, effective, non-demo) authority matrix, and an external-authority reference.
+
+There are no Critical or High findings from this re-review. The domain package builds (`tsc exit=0`) and its 92 unit tests pass.
+
+Open items that do not block this P0 gate:
+
+- **Medium, open, fix before or with the consuming command:**
+  - N-01, fail-open optional guard inputs (P2/P3/P4)
+  - N-02, readiness waiver authority and impact (P3)
+- **Medium, partially fixed and deferred:**
+  - D-05 residual: transfer-record aspect (P3)
+  - D-13 residual: conflict-declaration pre-vote guard (P2)
+- **Low:** D-11 residual, D-18 to D-20, D-22 to D-27, N-03 and N-04, each with the phase shown above.
+
+Every AT-04, AT-09, AT-12 and AT-13 scenario still has to be proven end to end through API integration tests when
+the P2 to P4 commands are wired. This PASS covers the domain rules and data model only.

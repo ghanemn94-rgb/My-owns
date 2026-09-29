@@ -232,3 +232,158 @@ No ADR contradicts the spec's explicit prohibitions: no external SaaS is imposed
 1. ARCH-01: composite FKs for all concrete intra-project references, a same-project trigger or helper for polymorphic targets, a constraint on the `document_chunk` ACL columns, and an integration test for REQ-DAT-002 showing the DB rejects the probe-8 insert.
 2. ARCH-02: fix `canSee` and add a SQL visibility predicate for room-only principals; add room-aware RLS or a documented, tested equivalent; add clean-team and external-partner isolation tests.
 3. Medium findings: fix them, or accept each in an ADR with an owner and a target phase before P2 modules copy these patterns. ARCH-03, ARCH-07, ARCH-08 and ARCH-10a should be fixed, not only accepted.
+
+---
+
+# Re-review at 824bed9
+
+| Item | Value |
+|---|---|
+| Reviewer | `solution-architect`, REVIEW mode, the same independent reviewer as above. The reviewer did not author the fixes. |
+| Revision | **`824bed9`** "Fix P0 architecture review findings" on `claude/mobily-transformation-hub`. `git log --oneline -6` shows `824bed9`, `b2ab1b9`, `6fdb60f`, `150910e`, `9901330`, `e2daae7`. The working tree has no differences from `824bed9` under `packages/`, `apps/api/`, `docs/`. Only uncommitted `apps/web` and `e2e` files from other agents are present. |
+| Database | Probes ran on **`hub_test_arch`**, a dedicated database migrated and seeded by the test run below (as the coordinator directed). `hub_dev` was not modified and still has the e2daae7 schema. Every write probe ran in `BEGIN … ROLLBACK` or behind a savepoint, and a follow-up query confirmed nothing persisted. |
+| Scope | `post-migrate.sql`, `packages/db/src/schema/*`, `apps/api/src/platform/*`, `apps/api/src/modules/portfolio/*`, ADR-0003/0004/0014/0016/0017, module guide, the new test `apps/api/test/p1/architecture-hardening.spec.ts` |
+| **Verdict** | **PASS**: 0 Critical and 0 High open. Three Medium findings remain open (ARCH-05 residual, ARCH-21, ARCH-23) and must be fixed before the modules that depend on them ship (see "Conditions"). |
+
+## R1. Commands and real output
+
+**R1. Integration tests**
+```
+$ cd transformation-hub/apps/api && TEST_DATABASE_URL=postgres://hub_app:…@127.0.0.1:5432/hub_test_arch \
+    TEST_DATABASE_MIGRATION_URL=postgres://hub_owner:…@127.0.0.1:5432/hub_test_arch pnpm test
+> tsc -p tsconfig.build.json && vitest run
+ Test Files  3 passed (3)
+      Tests  41 passed (41)
+   Duration  12.17s
+```
+
+**R2. Probe 7: composite-FK coverage** (hub_test_arch)
+```
+FK between project tables lacking project_id: 0
+composite (project_id, x) FKs: 111      (hub_dev / e2daae7 schema: 73)
+e.g. vote (project_id, meeting_id) → meeting; vote (project_id, authority_matrix_version_id) → authority_matrix_version;
+     gate_assessment (project_id, decision_id) → decision; closing_condition (project_id, waiver_id) → waiver;
+     change_request (project_id, decision_id) → decision; document_chunk (project_id, room_id) → partner_room
+-- project-table *_id columns with neither an FK nor a hub_same_project_* trigger (remaining):
+agenda_item.presenter_user_id, ai_action_approval.approver_user_id, approval_record.approver_user_id, attendance.user_id,
+audit_event.{actor_user_id, entity_id}, conflict_declaration.user_id, diligence_request.evidence_document_ids (jsonb),
+document.current_version_id, document.owner_user_id, intercompany_reconciliation.reviewer_user_id,
+notification.{ai_proposal_id, source_id, user_id}, rag_override.reviewer_user_id, record_version.entity_id, recusal.user_id,
+source_claim.reviewer_user_id, vote.user_id  (+ infra: delivery_record, outbox_event, scheduled_job)
+```
+
+**R3. Probe 8: cross-project references** (hub_app, both projects in full scope, rolled back)
+```
+P8a INSERT evidence_link (project B → task of A)
+    ERROR:  cross_project_reference: task 01a0ece1-0e8e-… is not a record of this project        ← FIXED
+P8b INSERT evidence_link (project A → leaf task of A)  → INSERT 0 1 (valid)
+    UPDATE task SET project_id = B, workstream_id = NULL WHERE id = <leaf>  → UPDATE 1
+     probe          | link_in_a | task_now_in_b | cross_project_dependencies
+     P8b after move | t         | t             | 3                                               ← NEW (ARCH-23)
+P8c INSERT document (project B, current_version_id = <version of a Project-A document>)
+     doc_in_b t | current_version_id 469385bc-…   (accepted)                                       ← ARCH-21
+P8d INSERT diligence_request (project B, evidence_document_ids = [<Project-A document>])
+     P8d accepted | ["d0740e99-…"]                                                                  ← ARCH-21
+(after rollback) diligence_request rows: 0
+```
+
+**R4. Probe 9: pg_temp shadowing**
+```
+hub_app TEMP=false CREATE on public=false
+all 9 SECURITY DEFINER functions: search_path=pg_catalog, public, pg_temp
+hub_app> CREATE TEMP TABLE organization …  → ERROR: permission denied to create temporary tables in database "hub_test_arch"
+hub_owner (has TEMP)> CREATE TEMP TABLE organization; INSERT fake 'mobily'; select hub_auth_org_by_slug('mobily')
+    → 26cb7923-953c-4905-aa6e-48f91d24d4c1   (real org; the shadow is ignored)                      ← FIXED
+```
+
+**R5. Probe 10: TRUNCATE, tail truncation, audit trusted fields**
+```
+head 47 | last_checkpoint 44 | checkpoints 1        (the only checkpoint was written by the test suite)
+hub_app on audit_checkpoint: DELETE,INSERT,SELECT,UPDATE
+owner> TRUNCATE audit_event → ERROR: append_only_violation: TRUNCATE on audit_event is not permitted     ← FIXED
+owner> DISABLE TRIGGER hub_append_only; DELETE rows chain_pos > last checkpoint (3 rows);
+       hub_audit_verify → broken_rows 0      (tail after the last checkpoint is undetectable — see ARCH-05 residual)
+hub_app> INSERT audit_checkpoint (chain_pos 1, hash 'fff…') → hub_audit_verify → 1 broken row (false alarm possible)
+hub_app (user = pm)> INSERT audit_event actor_kind 'user', actor = sponsor → ERROR: audit_actor_mismatch   ← FIXED
+hub_app (user = pm)> INSERT audit_event actor_kind 'service', actor = sponsor, created_at '2020-01-01'
+       → accepted | actor_is_other_user t | created_at_stamped t       (created_at fixed; 'service' kind bypasses actor binding)
+```
+
+**R6. Probe 12: room-only principal, PM revoke, service allowlist** (compiled 824bed9 `policy.service.js`)
+```
+guard canInProject(documents.document.read) = true
+canSee(non-room internal document)       = false        ← FIXED (was true)
+canSee(in-room internal document)        = true
+DB scope: project_ids=["p1"] full_project_ids=[] room_ids=["room-1"]
+PM grant/revoke sponsor (withinAuthority=false) = false  ← FIXED (revoke now passes withinAuthority; API test → 403)
+service principal allowed planning.plan.read = true | documents.document.read = false   (allowlist)
+```
+RLS as the real partner (`partner.alpha`, room "Demo room Alpha (test)", rolled back):
+```
+tasks 0 | workstreams 0 | docs_visible 1 | docs_outside_room 0 | project_audit 0 | memberships_visible 16 | projects_visible 1 | room_grants_visible 1
+INSERT room_grant (own room, self) → "room grant insert accepted by RLS"                       ← ARCH-22 (Low)
+```
+
+**R7. Response-contract check ignores extra fields**
+```
+updateProject response schema accepts extra field: true | interceptor returns original body with extra field:
+{"version":2,"leaked_internal_column":"secret"}
+```
+
+## R2. Per-finding status
+
+| ID | Orig. | Status at 824bed9 | Evidence | Residual (severity) |
+|---|---|---|---|---|
+| ARCH-01 | High | **Partially fixed**. The High is closed. | 111 composite FKs (was 73); 0 project-to-project FKs without `project_id`. `hub_assert_same_project` trigger on all 12 polymorphic columns (`post-migrate.sql:483-495`). `document_chunk` ACL derived by trigger. `loadInProject` is mandated in the module guide. REQ-DAT-002 test passes and probe P8a is rejected. | P8c/P8d (`documents.ts:42`, `jv.ts:183`), notification refs and user refs without FKs → **ARCH-21 (Medium)**. Re-homing → **ARCH-23 (Medium)**. |
+| ARCH-02 | High | **Fixed** | `app.full_project_ids` / `app.room_ids` and room-aware policies (`post-migrate.sql:~55-70`, `partner_room` policy). `canSee` room-only rule plus `visibilitySql`. Probe R6 and test "RLS: no plan/governance rows…". The API partner test gets 0 projects and 403/404 on lists. | `project_membership` still visible to room-only principals (16 rows). RLS allows a room-only principal to insert `room_grant` for its own room. `diligence_finding` has no `room_id`, so clean-team `jv.finding.manage` cannot work under RLS → **ARCH-22 (Low)** |
+| ARCH-03 | Medium | **Fixed** | `search_path = pg_catalog, public, pg_temp` on all SECURITY DEFINER functions; TEMP revoked (`post-migrate.sql:150`); probe R4 (both layers). | none |
+| ARCH-04 | Medium | **Fixed** (docs). Runtime self-check not added. | ADR-0003 lists all 9 SECURITY DEFINER functions, the room model, and a "Limits" section (caller-settable GUC, FK checks, owner bypass). | No startup assertion that the runtime role is not owner/BYPASSRLS; API and worker share `hub_app` (Low, carried to ARCH-15) |
+| ARCH-05 | Medium | **Partially fixed** | `created_at` stamped and user-actor bound (`post-migrate.sql:219`). Statement-level TRUNCATE guard on 10 tables. Checkpoint table and `hub_audit_verify` checkpoint comparison. Probes R5 and test "checkpoints make tail truncation detectable". | **Medium**: (a) nothing schedules `hub_audit_checkpoint`; there is no worker job (grep of `apps/api/src` finds no caller), yet ADR-0014:15 says "records the chain head periodically (worker job)". In a deployment every row after the last manual checkpoint can be deleted undetected (probe: 3 rows deleted, verify = 0). (b) `hub_app` can INSERT forged checkpoints (false tamper alarms) and call `hub_audit_checkpoint` for any org. (c) `actor_kind='service'` rows may name any human as actor. |
+| ARCH-06 | Medium | **Fixed** | `recusal` and `conflict_declaration` append-only; attendance frozen after `minutes_approved` (enum value exists); `document_version` identity immutable; DELETE revoked. Test "recusals are append-only and document versions keep their storage identity". | none |
+| ARCH-07 | Medium | **Partially fixed** | Nested `run` with a different scope throws (test). `closed` flag. Per-transaction `statement_timeout` 30 s, `lock_timeout` 10 s, `idle_in_transaction_session_timeout` 60 s. Nested pool use in `createProject` removed. | Low: the `closed` check lives only in `db.tx()` (`db.service.ts:49`). Services capture `const tx = this.db.tx()` (14× in `portfolio.service.ts`), so a continuation holding `tx` still runs on a released client. No Pool `connectionTimeoutMillis`. `release()` without an error after a failed ROLLBACK. `identity.service.ts:66` still uses `db.pool` inside a request. |
+| ARCH-08 | Medium | **Fixed** | Fenced `complete`/`fail`/`extendLease` (`locked_by` + `attempts`). Poison jobs dead-lettered in `claim`. ±25% jitter. Test "a worker that lost its lease cannot complete the job; poison jobs are dead-lettered". | Heartbeat is opt-in per handler (documented in ADR-0004 and the module guide); lease stays 120 s. |
+| ARCH-09 | Medium | **Partially fixed**. Acceptable for P1: no real handlers exist yet. | `JobContextFactory.forUser/forService`; service permission allowlist (probe R6); `DeliveryService` ledger plus AT-20 test. | Low: the worker does not enforce a job context; handlers opt in. `reconcileStale` is never scheduled. Module guide §2 line 66 still tells authors to use `scopes.servicePrincipal(orgId, projectId, 'svc-<module>')` without permissions, which is now deny-all and contradicts the "Mandatory patterns" section. AT-23 restore reconciliation is still ADR text only. |
+| ARCH-10 | Medium | **Partially fixed** | (a) revoke authority fixed (API test → 403). (b) `listMembers`, `listWorkstreams`, `listPrograms` and `listTemplates` now assert in the service. | Low: `identity.service.ts` is unchanged. There are no service-level asserts in `createUser`/`deactivateUser`/`listUsers`; the guard's org permission still applies. Session create/revoke runs outside the request transaction. `deactivateUser` emits no `permission.changed` and takes no `expectedVersion`. |
+| ARCH-11 | Medium | **Fixed** | Cause-chain unwrap and SQL/params redaction (`errors.ts`). The duplicate-code API test returns 409 through `DrizzleQueryError` → 23505. | none |
+| ARCH-12 | Medium | **Fixed** | Allowlist `ACTIVITY_ENTITY_PERMISSION`; reasons hidden from non-auditors; unknown type → 404 (test). | The visibility check is RBAC-only per entity type, not per-row classification (folded into ARCH-14). |
+| ARCH-13 | Medium | **Fixed** | `touch(...).catch(log)`; `unhandledRejection` handlers in `main.ts` and `worker.ts`. | none |
+| ARCH-14 | Low | **Not fixed** | `summarize` / `getProject` / `listWorkstreams` counts still gated by `canInProject` (`portfolio.service.ts:126, 201-206, 494-496`); `visibilitySql` is unused. | Low: workstream-scoped users still get project-wide counts. |
+| ARCH-15 | Low | **Partially fixed** | (a) notification UPDATE restricted to own rows. (c) DELETE revoked on org, project, role, membership and grant tables (probe R5 grants). | Low: (b) no `(org_id, project_id)` binding FK (0 found). (d) the anonymous public context still carries `app.org_id`. |
+| ARCH-16 | Low | **Partially fixed** | Org checks in `hub_auth_user_scope`; `hub_audit_verify` is limited to the session org when a context is set (`post-migrate.sql:253`). | Low: `hub_audit_checkpoint` has no org check (`:281,342`). Verify works for any org when called with no context. |
+| ARCH-17 | Low | **Fixed / Accepted-with-rationale** | Worker drains in-flight work on stop. ADR-0004 amendments document the no-subscriber and missed-slot policies. | none |
+| ARCH-18 | Low | **Partially fixed** | `ResponseContractInterceptor` validates responses in dev/test. | Low: `safeParse(body)` on non-strict schemas accepts **extra** fields and returns the original body (probe R7), so over-exposure is not detected; nothing is validated or stripped in production; `cli/openapi.ts` unchanged (`io:'input'` for responses, untyped params). |
+| ARCH-19 | Low | **Partially fixed** | Explicit field mapping; `validTo` uses project-timezone end of day; existing NewCo entity validated. | Low: a workstream lead still need not be a project member (`portfolio.service.ts:518`). |
+| ARCH-20 | Low | **Fixed / Accepted-with-rationale** | ADR-0016 (observability, implementation P7) and ADR-0017 (rate limiting, implemented and tested). | Denied **read** attempts are still not audited; ADR-0016 defers this to P7 (accepted). Note: the public-route limiter keys on `req.ip`. Behind an ingress with `HUB_TRUST_PROXY=false`, all clients share one bucket (60/min). |
+
+## R3. New findings
+
+| ID | Sev | Location (824bed9) | Description | Spec / ADR | Recommendation |
+|---|---|---|---|---|---|
+| ARCH-21 | Medium | `packages/db/src/schema/jv.ts:183` (`diligence_request.evidence_document_ids` jsonb); `documents.ts:42` + `post-migrate.sql:535` (`document.current_version_id`, checked only by an **AFTER UPDATE** trigger); `notification.ai_proposal_id/source_id`; user references with no FK (`vote.user_id`, `recusal.user_id`, `attendance.user_id`, `approval_record.approver_user_id`, …) | Some intra-project references are still unconstrained. Probes P8c and P8d: the database accepts a Project-B document whose `current_version_id` is a Project-A version (INSERT path), and a Project-B DD request listing a Project-A document as evidence. `vote.user_id` is not tied to the committee membership's user (AT-05 integrity). | §14; REQ-DAT-002; ADR-0003 ("every concrete intra-project reference") | Replace the jsonb list with a child table that has a composite FK, or add a trigger checking every array element. Run the `current_version_id` check on INSERT as well, or add a composite FK `(project_id, current_version_id)` (DEFERRABLE). Add org-scoped user FKs, and a composite `(project_id, membership_id, user_id)` for votes and recusals. **Fix before the documents and JV modules write these columns.** |
+| ARCH-23 | Medium | all project-scoped tables (no immutability guard on `project_id`); probe P8b | **`project_id` is mutable.** The same-project trigger validates the referencing row only. Moving a referenced record (a task with no FK children) to another project is accepted, and existing polymorphic references and dependencies silently become cross-project links (P8b: the evidence link in A now targets a task in B; 3 dependencies crossed projects). This needs a principal with both projects in full scope and a code path that writes `project_id`. No current API does this. | §14 cross-project linking; REQ-DAT-002 | Add a generic `BEFORE UPDATE OF project_id` trigger raising `project_id is immutable` on every project-scoped table (generated in `post-migrate.sql` like the RLS loop). Moving a record between projects should be an explicit command that re-creates it. |
+| ARCH-22 | Low | `post-migrate.sql:112-114` (`hub_membership_access`), `:65` (room-bearing WITH CHECK); `schema/jv.ts` `diligence_finding` | Room-model residuals at the DB layer. Room-only principals can read all project memberships (names and roles of the internal team). RLS lets them insert `room_grant` rows for their own room (app-level checks still apply). `diligence_finding` has no `room_id`, so the clean-team role's `jv.finding.manage` cannot be exercised under RLS. | §15; ADR-0003 room model | Restrict `hub_membership_access` to `app_full_project_ids()` plus the caller's own rows. For `room_grant` writes, require full membership. Add `room_id` to clean-team-produced tables when P4 is designed. |
+
+## R4. ADR re-check
+
+- **ADR-0003:** now honest and complete about bypasses and limits, and documents the room model. Minor gap: the `project_membership` exception to "every other project table requires full membership" is not stated (ARCH-22).
+- **ADR-0004:** the amendments describe what is implemented (fencing, poison jobs, jitter, `JobContextFactory`, `DeliveryService`, drain). Two statements remain aspirational: "every job re-enters a project-scoped context with fresh authorization" is opt-in, and "restore marks in-flight jobs for reconciliation" is not implemented. They should be labelled "pattern" and "not implemented" respectively.
+- **ADR-0014:** created_at and actor binding, the TRUNCATE guard and checkpoints are accurately described, **except** "periodically (worker job)", which is not implemented (ARCH-05 residual). The first Decision bullet still says the trigger holds "unless the trigger is dropped". The Limits bullet now correctly adds DISABLE TRIGGER.
+- **ADR-0016:** a design ADR, honestly marked "implementation P7". No external SaaS.
+- **ADR-0017:** implemented and tested (per-session and per-IP windows). The multi-replica caveat is stated. Add the `HUB_TRUST_PROXY` caveat above.
+- No ADR contradicts the spec's prohibitions (no external SaaS, no "tamper-proof" claim, no claim that the ORM enforces isolation).
+
+## R5. Not executed
+
+- `packages/domain` and `packages/contracts` unit tests (`pnpm test:unit`): **NOT EXECUTED**. Only the API suite was requested. The commit message claims 92 domain tests; this reviewer did not verify that.
+- Real worker crash, restart and lease-expiry runs: **NOT EXECUTED**. Fencing and poison handling are evidenced by the passing integration test and code reading.
+- `hub_dev` was not re-migrated (instructed not to modify it). All 824bed9 DB evidence is from `hub_test_arch`.
+
+## R6. Verdict and conditions
+
+**PASS**: no Critical or High finding is open at `824bed9`. ARCH-01 and ARCH-02 are closed at High severity. The DB rejects the original probe-8 link. Room-only principals see only their rooms in both RLS and `PolicyService`. The 41 API integration tests pass on a dedicated database.
+
+Conditions carried forward. These are tracked items; if any is still open when the named module ships, the review becomes FAIL.
+1. **ARCH-21 (Medium):** constrain `diligence_request.evidence_document_ids` and `document.current_version_id` on INSERT before the documents and JV modules write them.
+2. **ARCH-23 (Medium):** make `project_id` immutable on project-scoped tables before P2 modules add update commands.
+3. **ARCH-05 residual (Medium):** schedule `hub_audit_checkpoint` (and `DeliveryService.reconcileStale`) as real worker jobs, or correct ADR-0014. Revoke direct INSERT on `audit_checkpoint` from `hub_app`. Bind `actor_user_id` for `actor_kind='service'` too.
+4. Low residuals (ARCH-07, -09, -10, -14, -15, -16, -18, -19, -22): fix before P2 modules copy the patterns. The module-guide contradiction on `servicePrincipal` (ARCH-09) should be corrected now, because implementation agents are reading it.

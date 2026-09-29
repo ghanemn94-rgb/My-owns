@@ -10,6 +10,7 @@ import { SessionService } from '../../platform/auth/session.service';
 import { APP_CONFIG, AppConfig } from '../../platform/config';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
+import { OutboxService } from '../../platform/outbox.service';
 
 @Injectable()
 export class IdentityService {
@@ -18,6 +19,7 @@ export class IdentityService {
     private readonly policy: PolicyService,
     private readonly audit: AuditService,
     private readonly sessions: SessionService,
+    private readonly outbox: OutboxService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -63,7 +65,7 @@ export class IdentityService {
       .from(schema.appUser)
       .where(and(eq(schema.appUser.isDemo, true), eq(schema.appUser.isActive, true), eq(schema.appUser.isServiceAccount, false)))
       .orderBy(asc(schema.appUser.displayName));
-    const roleRows = await this.db.pool.query<{ user_id: string; roles: string }>(
+    const roleRows = await this.db.query<{ user_id: string; roles: string }>(
       `select uid as user_id, string_agg(distinct s.role, ', ') as roles
          from unnest($1::uuid[]) as uid cross join lateral hub_auth_user_scope(uid) s
         where s.role is not null group by uid`,
@@ -95,6 +97,7 @@ export class IdentityService {
   // Account administration (no transaction content)
 
   async listUsers(ctx: RequestContext, q: { page: number; pageSize: number; q?: string }) {
+    this.policy.assertOrg(ctx, 'admin.users.read');
     const tx = this.db.tx();
     const where = q.q ? or(ilike(schema.appUser.displayName, `%${q.q}%`), ilike(schema.appUser.email, `%${q.q}%`)) : undefined;
     const [{ total }] = (await tx.select({ total: count() }).from(schema.appUser).where(where)) as [{ total: number }];
@@ -123,6 +126,7 @@ export class IdentityService {
   }
 
   async createUser(ctx: RequestContext, body: { email: string; displayName: string; title?: string; clearance: 'public' | 'internal' | 'confidential' | 'restricted' | 'strictly_confidential' }) {
+    this.policy.assertOrg(ctx, 'admin.users.manage');
     const email = body.email.trim().toLowerCase();
     // Clearance above "internal" must be granted through admin.clearance.grant (separate, audited, not_self).
     if (!['public', 'internal'].includes(body.clearance)) {
@@ -150,12 +154,17 @@ export class IdentityService {
   }
 
   async deactivateUser(ctx: RequestContext, userId: string, reason: string) {
+    this.policy.assertOrg(ctx, 'admin.users.manage');
     if (userId === ctx.principal.userId) throw ruleViolation('identity.self_deactivation', 'You cannot deactivate your own account');
     const tx = this.db.tx();
     const [u] = await tx.select().from(schema.appUser).where(eq(schema.appUser.id, userId));
     if (!u) throw notFound();
+    // Idempotent: deactivating an inactive account changes nothing (no expectedVersion needed for a one-way switch).
+    if (!u.isActive) return;
     await tx.update(schema.appUser).set({ isActive: false, deactivatedAt: new Date(), updatedAt: new Date(), version: sql`${schema.appUser.version} + 1` }).where(eq(schema.appUser.id, userId));
+    // Same transaction: sessions revoked, audit row and permission.changed event commit (or roll back) together.
     await this.sessions.revokeAllForUser(userId, `deactivated: ${reason}`);
-    await this.audit.record({ action: 'admin.users.deactivate', entityType: 'app_user', entityId: userId, reason });
+    await this.audit.record({ action: 'admin.users.deactivate', entityType: 'app_user', entityId: userId, reason, before: { isActive: true }, after: { isActive: false } });
+    await this.outbox.emit({ type: 'permission.changed', projectId: null, aggregateType: 'app_user', aggregateId: userId, payload: { userId, change: 'deactivated' } });
   }
 }

@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { WorkerService } from './platform/jobs/worker.service';
 import { registerJobHandlers } from './jobs';
+import { ensureDefaultOrgSchedules } from './platform/jobs/platform.jobs';
 
 process.on('unhandledRejection', (reason) => {
   Logger.error(`unhandledRejection: ${reason instanceof Error ? reason.message : String(reason)}`, 'process');
@@ -13,6 +14,7 @@ process.on('unhandledRejection', (reason) => {
 async function main() {
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error', 'warn', 'log'] });
   registerJobHandlers(app);
+  await ensureDefaultOrgSchedules(app);
   const worker = app.get(WorkerService);
   worker.start();
   const stop = async () => {

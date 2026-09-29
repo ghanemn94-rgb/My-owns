@@ -11,3 +11,7 @@ IP for public routes (`HUB_RATE_LIMIT_PUBLIC_PER_MINUTE`, default 60). Exceeding
 ## Consequences
 With several API replicas the effective limit multiplies; production deployments should add an ingress/gateway limiter
 (documented in the deployment guide). Values are proposals to be tuned from load tests (P7).
+
+## Caveat (P0 architecture re-review)
+The public-route limiter keys on `req.ip`. Behind an ingress/reverse proxy, set `HUB_TRUST_PROXY=true` (and configure
+the proxy to overwrite `X-Forwarded-For`); otherwise all clients share the proxy's address and one 60/min bucket.
