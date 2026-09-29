@@ -21,7 +21,7 @@ export class ReadinessSummaryService {
 
   async get(ctx: RequestContext, projectId: string) {
     const p = await this.s.project(projectId);
-    this.s.policy.assert(ctx, 'readiness.register.read', { projectId });
+    this.s.assertListable(ctx, projectId);
     const tx = this.s.db.tx();
     const c = schema.readinessCheck;
     const byStatus = await tx.select({ status: c.status, n: count() }).from(c).where(this.checks.scopeSql(ctx, projectId)).groupBy(c.status);

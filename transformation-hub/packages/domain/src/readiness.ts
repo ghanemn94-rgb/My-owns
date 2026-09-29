@@ -191,13 +191,13 @@ export function assertCutoverSubmittable(p: CutoverPlanFacts): void {
 }
 
 /**
- * Which readiness checks gate a cutover plan's GO: a check bound to a plan gates only that plan; an unbound site check
- * gates the plans of its site and project-wide plans; an unbound project check gates every plan of the project.
+ * Which readiness checks gate a cutover plan's GO: a check bound to a plan gates only that plan; a project-wide (Day-1)
+ * plan (no site) is gated by every unbound check of the project; a site plan is gated by the unbound checks of its site.
  */
 export function readinessCheckAppliesToPlan(check: { cutoverPlanId: string | null; siteId: string | null }, plan: { id: string; siteId: string | null }): boolean {
   if (check.cutoverPlanId) return check.cutoverPlanId === plan.id;
-  if (check.siteId) return plan.siteId === null || plan.siteId === check.siteId;
-  return true;
+  if (plan.siteId === null) return true;
+  return check.siteId === plan.siteId;
 }
 
 export interface GoEvaluation {

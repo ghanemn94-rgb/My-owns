@@ -194,13 +194,17 @@ describe('Cutover and go/no-go (REQ-RDY-003/004/005, AT-09)', () => {
     expect(transition('cutover', CUTOVER_MACHINE, 'executed', 'accept')).toBe('accepted');
     expect(transition('cutover', CUTOVER_MACHINE, 'no_go', 'return_to_planning')).toBe('planning');
   });
-  it('check applicability: bound checks gate their plan only; site checks gate their site and project-wide plans', () => {
+  it('check applicability: bound checks gate their plan only; the Day-1 plan takes every unbound check; a site plan its site', () => {
     const plan = { id: 'p1', siteId: 's1' };
+    const day1 = { id: 'p0', siteId: null };
     expect(readinessCheckAppliesToPlan({ cutoverPlanId: 'p1', siteId: null }, plan)).toBe(true);
     expect(readinessCheckAppliesToPlan({ cutoverPlanId: 'p2', siteId: 's1' }, plan)).toBe(false);
+    expect(readinessCheckAppliesToPlan({ cutoverPlanId: null, siteId: 's1' }, plan)).toBe(true);
     expect(readinessCheckAppliesToPlan({ cutoverPlanId: null, siteId: 's2' }, plan)).toBe(false);
-    expect(readinessCheckAppliesToPlan({ cutoverPlanId: null, siteId: 's2' }, { id: 'p3', siteId: null })).toBe(true);
-    expect(readinessCheckAppliesToPlan({ cutoverPlanId: null, siteId: null }, plan)).toBe(true);
+    expect(readinessCheckAppliesToPlan({ cutoverPlanId: null, siteId: null }, plan)).toBe(false);
+    expect(readinessCheckAppliesToPlan({ cutoverPlanId: null, siteId: 's2' }, day1)).toBe(true);
+    expect(readinessCheckAppliesToPlan({ cutoverPlanId: null, siteId: null }, day1)).toBe(true);
+    expect(readinessCheckAppliesToPlan({ cutoverPlanId: 'p1', siteId: null }, day1)).toBe(false);
   });
   it('REQ-RDY-005: acceptance without evidence is rejected; only the accountable owner, never the executor', () => {
     const a = { acceptorUserId: 'owner', accountableUserId: 'owner', executedBy: 'ops', activeEvidenceCount: 1, conflictingEvidenceCount: 0, note: 'Accepted (synthetic)' };

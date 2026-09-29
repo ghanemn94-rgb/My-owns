@@ -77,7 +77,7 @@ export class CutoverService {
 
   async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; status?: CutoverStatus; siteId?: string }) {
     await this.s.project(projectId);
-    this.s.policy.assert(ctx, 'readiness.register.read', { projectId });
+    this.s.assertListable(ctx, projectId);
     const c = schema.cutoverPlan;
     const where = and(
       this.scopeSql(ctx, projectId),

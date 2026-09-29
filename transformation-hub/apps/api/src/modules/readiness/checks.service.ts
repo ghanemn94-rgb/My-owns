@@ -95,7 +95,7 @@ export class ReadinessChecksService implements OnModuleInit {
 
   async list(ctx: RequestContext, projectId: string, q: CheckListQuery) {
     await this.s.project(projectId);
-    this.s.policy.assert(ctx, 'readiness.register.read', { projectId });
+    this.s.assertListable(ctx, projectId);
     const c = schema.readinessCheck;
     const where = and(
       this.scopeSql(ctx, projectId),
@@ -278,11 +278,18 @@ export class ReadinessChecksService implements OnModuleInit {
     const c = schema.readinessCheck;
     for (const area of areas) {
       for (const d of area.defaultChecks) {
+        // The project factory creates the project-level defaults with code `<area>-<key>` (no template_key): recognise both.
+        const factoryCode = `${area.key}-${d.key}`.slice(0, 32);
         const [found] = await this.s.db
           .tx()
           .select({ id: c.id })
           .from(c)
-          .where(and(eq(c.projectId, projectId), eq(c.templateKey, d.key), body.siteId ? eq(c.siteId, body.siteId) : isNull(c.siteId)));
+          .where(
+            and(
+              eq(c.projectId, projectId),
+              body.siteId ? and(eq(c.siteId, body.siteId), eq(c.templateKey, d.key)) : and(isNull(c.siteId), or(eq(c.templateKey, d.key), and(isNull(c.templateKey), eq(c.code, factoryCode)))),
+            ),
+          );
         if (found) {
           existing++;
           continue;
@@ -498,7 +505,7 @@ export class ReadinessChecksService implements OnModuleInit {
 
   async listWaivers(ctx: RequestContext, projectId: string, status?: string) {
     const p = await this.s.project(projectId);
-    this.s.policy.assert(ctx, 'readiness.register.read', { projectId });
+    this.s.assertListable(ctx, projectId);
     const rows = await this.waivers.list(projectId, 'readiness_check', status);
     const visible = rows.length
       ? await this.s.db

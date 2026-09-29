@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { invalid, linkedDecisionIssue, notFound, Classification, LinkedDecision, RoleKey } from '@hub/domain';
+import { forbidden, invalid, linkedDecisionIssue, notFound, Classification, LinkedDecision, RoleKey } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
@@ -44,6 +44,16 @@ export class ReadinessSupport {
 
   today(p: ProjectRow): string {
     return this.clock.today(p.timezone);
+  }
+
+  /**
+   * Access to a LIST / summary (rows are then filtered by visibility + workstream reach in SQL): out of scope or room-only
+   * → 404; no grant of the permission anywhere in the project (project, workstream) → 403. A workstream-only principal
+   * passes and sees only its workstreams' rows.
+   */
+  assertListable(ctx: RequestContext, projectId: string, permission = 'readiness.register.read') {
+    if (!this.policy.inScope(ctx, projectId) || this.policy.isRoomOnly(ctx.principal, projectId)) throw notFound();
+    if (!this.policy.canInProject(ctx, permission, projectId)) throw forbidden('policy.forbidden', `Missing permission ${permission}`);
   }
 
   /** The actor's roles in the project: project-wide roles, plus workstream roles for `workstreamId` (when given). */

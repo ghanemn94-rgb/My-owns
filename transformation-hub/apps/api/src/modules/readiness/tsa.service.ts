@@ -155,7 +155,7 @@ export class TsaService {
 
   async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; status?: TsaStatus; workstreamId?: string; enduring?: 'true' | 'false' }) {
     const p = await this.s.project(projectId);
-    this.s.policy.assert(ctx, 'readiness.register.read', { projectId });
+    this.s.assertListable(ctx, projectId);
     const t = schema.tsaService;
     const where = and(
       this.scopeSql(ctx, projectId),
@@ -454,7 +454,9 @@ export class TsaService {
     assertTsaExitAcceptable({ replacementAccepted: t.replacementAccepted, acceptanceEvidenceCount: ev.active });
     if (t.exitApprovalRequestId) {
       const prev = await loadInProject(this.s.db, schema.approvalRequest, projectId, t.exitApprovalRequestId);
-      if (prev.status === 'pending') throw conflict('tsa.exit.already_requested', 'An exit approval request is already pending');
+      if (prev.status === 'pending' && prev.subjectVersion === t.version) throw conflict('tsa.exit.already_requested', 'An exit approval request is already pending');
+      // A pending request bound to an older version of the TSA is stale: it is invalidated and replaced.
+      if (prev.status === 'pending') await this.invalidatePendingExit(t, 'superseded by a fresh request after the TSA changed');
     }
     const reqId = newId();
     const nextVersion = t.version + 1;
@@ -493,6 +495,8 @@ export class TsaService {
   /** approveTSAExit (REQ-TSA-006, AT-10): replacement accepted with evidence; independent approver; binding checked. */
   async approveExit(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note?: string }) {
     const t = await loadInProject(this.s.db, schema.tsaService, projectId, id);
+    // RBAC first (a caller without the permission learns nothing about the request), then not_self against the requester.
+    this.s.policy.assert(ctx, 'readiness.tsa.approve_exit', { projectId, workstreamId: t.workstreamId, classification: t.classification });
     const req = await this.pendingExitRequest(t);
     this.s.policy.assert(ctx, 'readiness.tsa.approve_exit', { projectId, workstreamId: t.workstreamId, classification: t.classification, requesterUserId: req.requestedBy });
     assertTsaExitApprovalSeparation({ approverUserId: ctx.principal.userId!, requesterUserId: req.requestedBy, ownerUserId: t.ownerUserId, replacementAcceptedBy: t.replacementAcceptedBy });
@@ -511,6 +515,8 @@ export class TsaService {
 
   async rejectExit(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note: string }) {
     const t = await loadInProject(this.s.db, schema.tsaService, projectId, id);
+    // RBAC first (a caller without the permission learns nothing about the request), then not_self against the requester.
+    this.s.policy.assert(ctx, 'readiness.tsa.approve_exit', { projectId, workstreamId: t.workstreamId, classification: t.classification });
     const req = await this.pendingExitRequest(t);
     this.s.policy.assert(ctx, 'readiness.tsa.approve_exit', { projectId, workstreamId: t.workstreamId, classification: t.classification, requesterUserId: req.requestedBy });
     assertVersion(t, body.expectedVersion, 'TSA service');
