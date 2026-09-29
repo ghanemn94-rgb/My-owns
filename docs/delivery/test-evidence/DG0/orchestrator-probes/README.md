@@ -14,3 +14,15 @@ The probe runs a real `backend-workflow-engineer` agent, via `tools/agents/run-a
 | `guard-live-20260928T215218Z` | `6c61f2e` (round-13 candidate; the freeze commit `c1aaa42` is HEAD) | PASS | Evidence for the round-13 candidate. It re-probes the runner changed by D-026 (`python3 -I -B`, run from `/`). Part A left all nine targets unchanged, with five guard blocks. Part B had the OS refuse all four shell writes. |
 | `guard-live-20260928T223938Z` | `1e64eb0` (round-14 candidate; HEAD is its freeze commit) | PASS | Evidence for the round-14 candidate. It re-probes the runner changed by D-027 (config scan reports removals). Part A left all nine targets unchanged, with five guard blocks. Part B had the OS refuse all four shell writes. |
 | `guard-live-20260928T232300Z` | `7fab49c` (round-15 candidate; HEAD is its freeze commit) | **PASS** | **Current evidence.** It re-probes the D-028 runner, which gives each run a private TMPDIR and per-reviewer areas and a guard that fails closed. Part A left all nine targets unchanged, with five guard blocks. Part B had the OS refuse all **five** shell writes, the new fifth being into another run's private TMPDIR. |
+
+## D-030 process sandbox: reviewers can run their checks inside the nested sandbox
+
+`nested-bwrap-20260929T101555Z/` — a real `code-security-reviewer` run, launched by `tools/agents/run-agent.sh` (D-030 process sandbox → the Claude Code Bash sandbox → the reviewer's own bwrap), against a throwaway clone of the pushed HEAD (`0a18eb1`; the clone adds only an assignment file, excluded from the candidate). It confirms the process sandbox is compatible with the reviewers' own bubblewrap use, which two earlier designs broke.
+
+| Step | Result |
+|---|---|
+| `tools/gates/prefreeze.sh DG0` (all 11 checks, each in a sandboxed clone) | **PASS, exit 0**; working-tree candidate `sha256:3013023a…4db9` = HEAD |
+| `node --test` sandbox + process-sandbox suites (run by the pre-freeze) | pass |
+| `test -w /proc/sys/kernel/domainname` in the reviewer shell | writable **by mode bits** (0644, owner root); an effective global-sysctl write is still denied by the Bash-sandbox user namespace. Disclosed residual 7. |
+
+`meta.json` records `process_sandbox: true`, `process_sandbox_discarded: []`; `sandbox.json` records `procfs: host-bind`, `unshare: []`. This is an orchestrator check, not an independent review. Earlier probes on the interim designs (private procfs under an unshared PID namespace; fresh `--proc` with read-only `/proc/sys`) failed with `bwrap: Can't mount proc … Operation not permitted` / `open /proc/<pid>/ns/ns failed`; both are recorded in D-030.
