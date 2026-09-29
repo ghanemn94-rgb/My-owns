@@ -58,7 +58,7 @@ export function statusAfterTestRun(current: ReadinessStatus, result: 'passed' | 
 }
 
 /** Who may act as "the specialist role assigned to the check" (REQ-RDY-001). */
-function assertAssignedSpecialist(what: string, checkCode: string, signoffRole: RoleKey | null, actorRoles: readonly string[]) {
+export function assertAssignedSpecialist(what: string, checkCode: string, signoffRole: RoleKey | null, actorRoles: readonly string[]) {
   if (!signoffRole) {
     throw ruleViolation('readiness.signoff.no_role', `Readiness check ${checkCode} has no assigned specialist sign-off role; ${what} is not possible until one is assigned`);
   }
