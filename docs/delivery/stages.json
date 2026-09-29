@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -210,10 +210,9 @@
           "source_commit": "4fd56d4d701ffe02586edaf2c0cc3966e6ff68a0",
           "records": {
             "domain-reviewer": "docs/delivery/reviews/DG0/round-16/domain-reviewer.json",
-            "code-security-reviewer": "docs/delivery/reviews/DG0/round-16/code-security-reviewer.json",
-            "qa-verifier": "docs/delivery/reviews/DG0/round-16/qa-verifier.json"
+            "code-security-reviewer": "docs/delivery/reviews/DG0/round-16/code-security-reviewer.json"
           },
-          "note": "Round 16: full re-review after the round-15 repairs (D-029; D-030: whole agent process in a kernel-enforced process sandbox, the user-chosen repair of F-DG0-145)"
+          "note": "Round 16: full re-review after the round-15 repairs (D-029; D-030: whole agent process in a kernel-enforced process sandbox, the user-chosen repair of F-DG0-145) [qa-verifier run timed out (exit 124) before finish; orphaned, re-run in round 17]"
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
@@ -382,6 +381,11 @@
           "state": "REVIEWING",
           "at": "2026-09-29T10:18:37Z",
           "note": "Round-15 findings repaired (D-029, D-030); sandboxed prefreeze PASS; candidate re-frozen for review round 16"
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-09-29T11:00:00Z",
+          "note": "Round 16: domain PASS; code-security PASS (F-DG0-145 High and F-DG0-146 verified CLOSED; new Low F-DG0-147/148/149); qa-verifier timed out. Repair: finish() concurrency false-positive + --unshare-ipc (F-DG0-148)."
         }
       ]
     },

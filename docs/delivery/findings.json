@@ -5009,7 +5009,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-15/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T23:45:00Z",
@@ -5020,10 +5020,32 @@
           "at": "2026-09-29T08:14:29Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 5c003c03a164f045d4325e69b12211f56e73bdfd"
+        },
+        {
+          "at": "2026-09-29T10:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 16: PASS"
         }
       ],
       "fix_revision": "5c003c03a164f045d4325e69b12211f56e73bdfd",
-      "fix_summary": "D-030 (user-chosen option 1): run-agent.sh runs the whole claude process inside a bubblewrap process sandbox (tools/agents/agent_sandbox.py) with a read-only root, private /tmp and /var/tmp (only the run's own TMPDIR bound), HOME read-only except a private per-run ~/.claude/projects, and only CAP_SETFCAP (bounding set included) with no_new_privs. Confined roles see a throwaway tmpfs top level and can write only their own directories; review records, the gate record and the analyst's register go through a private staging copy from which only the role's own files are copied back (discards listed in sandbox.json, exit 73). Implementers write the working tree with existing protected paths read-only. File-tool writes are therefore kernel-confined whatever the guard decided; the guard stays as defence in depth. The validator requires gate records from confined runs that discarded nothing. Tests: tools/agents/tests/process-sandbox.test.mjs (incl. 'F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope': without the sandbox 64/69 hook-allowed writes escaped, inside it 0 of 336 redirected writes landed), the runner test 'F-DG0-145: the runner runs the whole agent inside the process sandbox and records it' and the validator test 'F-DG0-145/D-030: gate records must come from runs whose whole agent process was confined to the role's own areas'; all fail on the previous code."
+      "fix_summary": "D-030 (user-chosen option 1): run-agent.sh runs the whole claude process inside a bubblewrap process sandbox (tools/agents/agent_sandbox.py) with a read-only root, private /tmp and /var/tmp (only the run's own TMPDIR bound), HOME read-only except a private per-run ~/.claude/projects, and only CAP_SETFCAP (bounding set included) with no_new_privs. Confined roles see a throwaway tmpfs top level and can write only their own directories; review records, the gate record and the analyst's register go through a private staging copy from which only the role's own files are copied back (discards listed in sandbox.json, exit 73). Implementers write the working tree with existing protected paths read-only. File-tool writes are therefore kernel-confined whatever the guard decided; the guard stays as defence in depth. The validator requires gate records from confined runs that discarded nothing. Tests: tools/agents/tests/process-sandbox.test.mjs (incl. 'F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope': without the sandbox 64/69 hook-allowed writes escaped, inside it 0 of 336 redirected writes landed), the runner test 'F-DG0-145: the runner runs the whole agent inside the process sandbox and records it' and the validator test 'F-DG0-145/D-030: gate records must come from runs whose whole agent process was confined to the role's own areas'; all fail on the previous code.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R16-code-security-reviewer-20260929T101948Z-8aad38c4",
+          "session_id": "8aad38c4-4930-41cd-b24c-1a0e84416b47"
+        },
+        "at": "2026-09-29T10:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-16/04-sandbox-probe.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-16/06-private-tmp.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-16/01-node-tests.log",
+          "tools/agents/agent_sandbox.py#L127-L177"
+        ],
+        "note": "High/mandatory check-then-use race on the write guard, fixed by D-030 (process sandbox) at 5c003c0. I verified the fix independently in a fresh disposable clone by running a shell under the REAL bwrap args that agent_sandbox.py generates for code-security-reviewer (04-sandbox-probe.log): the process runs as uid 0 but with capabilities = CAP_SETFCAP only (CapEff 0000000080000000) and NoNewPrivs=1; writes to the two original attack targets FAIL kernel-side regardless of the guard's decision — protected repository paths ('tools/gates' -> 'Read-only file system') and the filesystem root ('/' -> 'Read-only file system'). The other original target, another run's private TMPDIR, is unreachable because /var/tmp and /tmp are private tmpfs; only this run's own mth-run.* is bound (06-private-tmp.log: a victim mth-run.* is invisible inside the sandbox). Because the read-only binds are kernel-enforced, a symlink swapped between the guard's check and the CLI's write can no longer make a forbidden path writable — the TOCTOU window is irrelevant. The regression test 'F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope' passes in tools/agents/tests/process-sandbox.test.mjs (part of the 89 passing node tests, 01-node-tests.log). The guard remains as defence in depth (matcher Write|Edit|NotebookEdit|MultiEdit, fail-closed on unset MTH_GUARD_ROOT or missing guard). The /proc/sys writability I observed is a SEPARATE, newly-disclosed residual (threat-model residual 7, tracked as F-DG0-149), not part of F-DG0-145's targets (repo paths / other runs' scratch), which are fully fixed."
+      }
     },
     {
       "id": "F-DG0-146",
@@ -5044,7 +5066,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-15/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T23:45:00Z",
@@ -5055,10 +5077,31 @@
           "at": "2026-09-29T06:12:43Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef"
+        },
+        {
+          "at": "2026-09-29T10:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 16: PASS"
         }
       ],
       "fix_revision": "fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef",
-      "fix_summary": "D-029: manifestFromWorkingTree skips only untracked, zero-length, unwritable (0444) regular files, the exact shape of a concurrent bubblewrap mount stub, so candidate.mjs, --reconcile, --diff and the pre-freeze working-tree check no longer flip while agents run; frozen candidates come from committed content only. Test 'F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does' (fails on the previous code)."
+      "fix_summary": "D-029: manifestFromWorkingTree skips only untracked, zero-length, unwritable (0444) regular files, the exact shape of a concurrent bubblewrap mount stub, so candidate.mjs, --reconcile, --diff and the pre-freeze working-tree check no longer flip while agents run; frozen candidates come from committed content only. Test 'F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does' (fails on the previous code).",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R16-code-security-reviewer-20260929T101948Z-8aad38c4",
+          "session_id": "8aad38c4-4930-41cd-b24c-1a0e84416b47"
+        },
+        "at": "2026-09-29T10:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-16/05-stub-determinism.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-16/01-node-tests.log",
+          "tools/gates/lib/candidate.mjs#L72-L113"
+        ],
+        "note": "Low observation (concurrent sandbox mount stubs perturbed the working-tree candidate and --reconcile), fixed by D-029 at fe722c8. isSandboxStub() (tools/gates/lib/candidate.mjs:72-79) skips only untracked, zero-length, unwritable (mode & 0222 == 0) regular files in the WORKING-TREE manifest, and manifestFromWorkingTree calls it at :112. Frozen candidates come from manifestFromRef (committed content) so they are unaffected by design. I verified independently in a disposable clone (05-stub-determinism.log): with the ref candidate = sha256:3013023a..., adding two stub-shaped files (a 0444 CLAUDE.local.md and a 0444 'docs/delivery/gatesX_stub', both untracked and zero-length) left the working-tree candidate IDENTICAL to the ref (sha256:3013023a...), while a normal non-empty untracked file (docs/delivery/realfile.md) still CHANGED it (sha256:c18afd64...). This covers the original round-15 case of a file named exactly 'docs/delivery/gates' that the META_EXCLUDES glob missed, because the skip is now shape-based, not name-based. The runner also pre-creates docs/delivery/gates as a directory (D-029), removing the stub-as-file scenario. Regression test 'F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does' passes (test 89, 01-node-tests.log)."
+      }
     },
     {
       "id": "F-DG0-236",
@@ -5133,6 +5176,89 @@
       ],
       "fix_revision": "fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef",
       "fix_summary": "D-029: threat-model.md now states that a confined role's shell can create a new file or directory at any path that does not exist yet and is not on its deny list (repository root, new top-level directories such as src/ or docs/architecture/, new entries under docs/delivery/), that such files cannot change committed, protected or other agents' content, and that they are detected via meta.json outputs and git status (review auto-commits take only the run directory and tool-authored files)."
+    },
+    {
+      "id": "F-DG0-147",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-013",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The process sandbox's copy-back accept pattern is not pinned to the run's current round, so an own-role run can create and auto-commit a new <role>.* file into an earlier, already-committed review round directory (fail-closed for gate integrity; observation)",
+      "reproduction": "tools/agents/agent_sandbox.py:62 staged_areas() accepts `round-[0-9]+/<role>\\.[^/]+` for ANY round, not the run's assigned round; the same pattern is mirrored in tools/gates/lib/rules.mjs:365. finish() (agent_sandbox.py:235-258) copies back every staged file matching accept that is new (rel not in before), and run-agent.sh:255-288 auto-commits meta.tool_authored paths. Reproduced in a fresh disposable clone under $TMPDIR (docs/delivery/test-evidence/DG0/code-security/round-16/07-copyback-scope.log): prepared a code-security-reviewer plan for DG0, wrote into the staging copy ONLY round-16/code-security-reviewer.json + .findings.json (legit) plus round-15/code-security-reviewer.backdated.json (own role, PREVIOUS round, new file), then ran `agent_sandbox.py finish`. Result: finish exit=0, discarded=[], copied_back includes docs/delivery/reviews/DG0/round-15/code-security-reviewer.backdated.json, and the file lands untracked in the already-committed round-15 dir. Because discarded is empty the runner would auto-commit it (run-agent.sh does not exit 73). A separate variant showed cross-role/top-level/existing-file writes are correctly discarded (exit 3).",
+      "expected": "The copy-back should accept only files under the run's assigned round (e.g. round-16), matching review-common.md round-16 (\"copies back only your own new round-16/<your-role>.* files\") and the write-once-per-round intent. A run should not be able to add files to a previous, already-committed round directory.",
+      "actual": "A stray own-role file can be committed into an earlier round directory. It is fail-closed for gate integrity: to be honoured as a verification or review record such a file must reconstruct from that round's OWN run transcript (checkInvocation outputs binding + replayToolContent, rules.mjs:406-424), which a later run's transcript cannot satisfy, so the validator errors (BLOCKED) rather than accepting it; a stray findings sidecar in an old round only ADDS requirements and is superseded by later rounds (rules.mjs:452-462). No other role's files, no other reviewer's evidence and no other run's scratch are reachable (kernel read-only binds + private tmpfs, verified). I would accept this as an observation. Recommended fix: pass the run's round to staged_areas()/finish() and to the validator's expected `staged` pattern, and pin accept to `round-<current>/<role>\\.[^/]+`.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-16/07-copyback-scope.log",
+        "tools/agents/agent_sandbox.py#L54-L67",
+        "tools/agents/agent_sandbox.py#L235-L258",
+        "tools/gates/lib/rules.mjs#L363-L372"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-16/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-29T10:40:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 16; reproduced in a fresh disposable clone under $TMPDIR (07-copyback-scope.log); fail-closed for gate integrity, accepted as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-148",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Threat-model residual 8 (shared host PID+IPC namespaces): the IPC-namespace half is a cross-run availability vector that could be closed with --unshare-ipc at no cost to the nested-bubblewrap procfs requirement (disclosed residual; narrower mitigation proposed)",
+      "reproduction": "tools/agents/agent_sandbox.py:143-145,174 builds bwrap args with no --unshare-pid and no --unshare-ipc; the comment (127-142) and threat-model.md residual 8 justify sharing the PID namespace because a private PID namespace broke the reviewers' own nested bubblewrap (fresh --proc). I verified in a disposable clone (docs/delivery/test-evidence/DG0/code-security/round-16/04-sandbox-probe.log) that host PIDs are visible inside the sandbox (running as uid 0), confirming the shared PID+IPC namespaces exactly as disclosed. The IPC namespace, unlike the PID namespace, has no bearing on procfs 'full visibility' or on a nested fresh --proc mount.",
+      "expected": "Residual 8 is a disclosed residual (availability / cross-run signalling, not repository or gate integrity), so this is not larger than stated. Cross-run FILE isolation is intact (private /var/tmp tmpfs, verified in 06-private-tmp.log). A narrower mitigation is available for the SysV-IPC half of the residual.",
+      "actual": "The sandbox shares the host IPC namespace unnecessarily. Adding `--unshare-ipc` to bwrap_args would remove the SysV IPC / POSIX message-queue cross-run vector without affecting the PID/procfs constraint that forced the shared PID namespace (my probe's fresh-procfs nested bwrap in sandbox-run.sh works with --unshare-pid regardless of IPC). Availability-only, no integrity impact; I would accept the current state as an observation and propose --unshare-ipc as a cheap hardening.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-16/04-sandbox-probe.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-16/06-private-tmp.log",
+        "tools/agents/agent_sandbox.py#L127-L145",
+        "docs/delivery/threat-model.md#disclosed-residuals"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-16/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-29T10:40:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 16; restates disclosed residual 8 with a concrete narrower mitigation (--unshare-ipc); accepted as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-149",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Threat-model residual 7 (read-write host /proc, uid-0-writable /proc/sys) confirmed exactly as disclosed: a file-tool-layer write to /proc/sys succeeds and reaches the host, but no repository or gate path becomes writable (disclosed residual; narrower mitigation proposed)",
+      "reproduction": "tools/agents/agent_sandbox.py:144 binds the host procfs read-write (`--bind /proc /proc`) with no read-only /proc/sys submount and no PID/user namespace, as documented (127-142) and in threat-model.md residual 7. In a disposable clone, running a shell under the REAL generated bwrap args (docs/delivery/test-evidence/DG0/code-security/round-16/04-sandbox-probe.log) the process ran as uid 0 with caps = CAP_SETFCAP only (CapEff 0000000080000000) and NoNewPrivs=1; writes to protected repo paths (tools/gates, /) failed 'Read-only file system', but `/proc/sys/kernel/core_pattern` was writable and a test write succeeded. Because /proc is a host bind with no PID/user-ns isolation, that write reached the HOST tunable (an unintended side effect of the reproduction; the classifier subsequently declined my attempt to restore it, so it was left for the user).",
+      "expected": "Residual 7 states this is an availability / host-tunable risk, not repository or gate integrity, and that /proc/sys is read-only for the agent's SHELL and inside the reviewers' own fresh-procfs sandboxes. My probe confirms it is NOT larger than stated: every protected repository path, review artefact and other run's scratch stayed read-only/unreachable; only host kernel tunables (root-owned, uid-0-writable without CAP_SYS_ADMIN) were affected.",
+      "actual": "The residual holds exactly as disclosed. Narrower mitigation to consider (spike, not a blocker): run the CLI process at a non-zero uid inside the process sandbox (e.g. a user-namespace uid map where the outer process is not uid 0), so root-owned /proc/sys entries are not writable, provided the nested Claude Code Bash sandbox can still obtain its required uid-0 mapping in a further nested user namespace. I would accept the current state as an observation. Note for reproducers: do NOT write /proc/sys during repro; a read-only probe (test -w) is sufficient and avoids mutating the host.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-16/04-sandbox-probe.log",
+        "tools/agents/agent_sandbox.py#L127-L145",
+        "docs/delivery/threat-model.md#disclosed-residuals"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-16/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-29T10:40:00Z",
+          "status": "OPEN",
+          "note": "raised by code-security-reviewer in DG0 round 16; confirms disclosed residual 7 is not larger than stated, with a narrower mitigation proposal; accepted as an observation."
+        }
+      ]
     }
   ]
 }
