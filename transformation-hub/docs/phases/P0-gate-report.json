@@ -1,0 +1,53 @@
+{
+  "phase": "P0",
+  "title": "Discovery & Blueprint",
+  "revision": "824bed9 (reviewed); conditions addressed in 734d091, dc9e612, f1b3aa1 (pending reviewer verification at the P1 gate)",
+  "requirements": ["REQ-PHS-*", "REQ-AGT-*", "REQ-DAT-001", "REQ-DAT-002", "REQ-SRC-*", "REQ-GOV-* (rules)", "REQ-CO-* (rules)"],
+  "implemented": [
+    "docs/MASTER_PROMPT.md (verbatim specification)",
+    ".claude/agents/*.md (11 agents) + .claude/AGENT_RULES.md",
+    "docs/requirements/requirements.yaml (394 requirements, AT-01..AT-30 traced), PRD, backlog, traceability matrix renderer",
+    "docs/architecture/adr/0001-0017, ERD and data dictionary generated from the live schema (104 tables)",
+    "docs/governance/*, docs/security/*, domain glossary, source register (image/Excel NOT available; extraction NOT performed), assumptions & open questions",
+    "packages/domain rules (state machines, governance quorum/authority, gates, schedule/CPM, money, carve-out, measurement, AI authority, policy matrix)",
+    "packages/db schema + single pre-release migration + post-migrate RLS/audit/integrity SQL; DC and general templates"
+  ],
+  "tests_executed": [
+    {"command": "cd packages/domain && npx vitest run", "result": "92 passed (92)", "revision": "f1b3aa1", "environment": "build container"},
+    {"command": "cd apps/api && TEST_DATABASE_URL=.../hub_test_lead pnpm test", "result": "4 files, 57 passed (57)", "revision": "f1b3aa1", "environment": "build container, PostgreSQL 16 local cluster"},
+    {"command": "pnpm --filter @hub/db validate:templates", "result": "PASS (reported by QA reviewer at 824bed9: 23,735 checks)", "revision": "824bed9"}
+  ],
+  "reviewers": [
+    {"agent": "qa-test-engineer", "verdict": "PASS", "evidence": ["docs/reviews/P0-qa-review.md §R4 (re-review at 824bed9): QA-01 High resolved; tsc exit 0, 92/92 domain, 41/41 API on hub_test_qa"]},
+    {"agent": "carveout-domain-analyst", "verdict": "PASS", "evidence": ["docs/reviews/P0-domain-review.md §R.4 (re-review at 824bed9): D-01, D-02, D-03 High fixed and reproduced"]},
+    {"agent": "solution-architect", "verdict": "PASS", "evidence": ["docs/reviews/P0-architecture-review.md 'Re-review at 824bed9' §R6: ARCH-01/02 High closed; conditional on ARCH-05 residual, ARCH-21, ARCH-23 before dependent modules ship"]}
+  ],
+  "open_findings": [
+    {"id": "ARCH-05 residual / ARCH-21 / ARCH-23 / ARCH-22 / ARCH-07,09,10,14,16,18,19", "severity": "Medium/Low", "status": "Fixed in f1b3aa1 (16 new integration tests) — to be verified by the P1 security review", "owner": "lead (platform)", "gate": "P1"},
+    {"id": "ARCH-22 (diligence_finding has no room_id)", "severity": "Low", "status": "Open", "owner": "JV module implementer", "gate": "P4"},
+    {"id": "ARCH-15d (anonymous context carries app.org_id)", "severity": "Low", "status": "Open (accepted: org-level public data only)", "owner": "lead", "gate": "P7"},
+    {"id": "ADR-0004 AT-23 restore reconciliation of in-flight jobs", "severity": "Low", "status": "Not implemented (ADR says so)", "owner": "devops-platform-engineer", "gate": "P7"},
+    {"id": "QA-06", "severity": "Medium", "status": "Fixed in 734d091 (10 items reclassified) — verify at P1 QA review", "owner": "lead", "gate": "P1"},
+    {"id": "QA-08 (XSS/injection tests, REQ-SEC-016)", "severity": "Medium", "status": "Open", "owner": "qa-test-engineer + security-privacy-reviewer", "gate": "P1"},
+    {"id": "QA-09", "severity": "Medium", "status": "Fixed in 734d091 (source register wording) — AT-01 fixture seeding planned with the documents module", "owner": "documents module", "gate": "P1/P2"},
+    {"id": "R-01", "severity": "Medium", "status": "Fixed in dc9e612 (status-evidence overlay; Tested requires evidence)", "owner": "lead", "gate": "P1"},
+    {"id": "QA-07 (AT-24)", "severity": "Medium", "status": "Open", "owner": "integration-reporting-engineer", "gate": "P6"},
+    {"id": "QA-02 residual (requesterUserId from P2 callers)", "severity": "Low", "status": "Open", "owner": "governance module", "gate": "P2"},
+    {"id": "QA-05 residual (decision paper evidence/attachments)", "severity": "Low", "status": "Open", "owner": "governance + documents modules", "gate": "P2"},
+    {"id": "QA-10..QA-19, R-02, R-03", "severity": "Low", "status": "Open (R-03 fixed by regenerated dictionary in dc9e612)", "owner": "lead / qa-test-engineer", "gate": "P1-P8 as listed in the review"},
+    {"id": "N-01 fail-open optional guard inputs", "severity": "Medium", "status": "Open", "owner": "module implementers consuming each guard", "gate": "P2/P3/P4"},
+    {"id": "N-02 readiness waiver authority role and impact", "severity": "Medium", "status": "Open", "owner": "readiness module", "gate": "P3"},
+    {"id": "D-05 residual (transfer_record legal/economic aspect)", "severity": "Medium", "status": "Open", "owner": "carve-out module", "gate": "P3"},
+    {"id": "D-13 residual (conflict declaration before vote)", "severity": "Medium", "status": "Open", "owner": "governance module", "gate": "P2"},
+    {"id": "N-03 current gate status helper", "severity": "Low", "status": "Open", "owner": "gates module", "gate": "P2"},
+    {"id": "N-04 free varchar status columns", "severity": "Low", "status": "Open", "owner": "lead (migrations)", "gate": "P2/P4"}
+  ],
+  "assumptions": ["docs/assumptions-and-open-questions.md A-01..A-23"],
+  "external_dependencies": [
+    "Reference image and Excel workbook not provided — image extraction NOT performed",
+    "Mobily IdP, SMTP/Teams, SIEM, approved model endpoint, infrastructure: Not configured (Q-01..Q-22)",
+    "Docker daemon unavailable in the build environment"
+  ],
+  "gate": "PASS",
+  "next_action": "P1 gate: run the independent P1 security review (verify f1b3aa1 fixes, XSS/injection tests per QA-08) and P1 QA review of 873960d (API + web + e2e); in parallel merge wave-1 module branches (governance, planning, documents, gates) for P2."
+}
