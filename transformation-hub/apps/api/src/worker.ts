@@ -5,6 +5,10 @@ import { AppModule } from './app.module';
 import { WorkerService } from './platform/jobs/worker.service';
 import { registerJobHandlers } from './jobs';
 
+process.on('unhandledRejection', (reason) => {
+  Logger.error(`unhandledRejection: ${reason instanceof Error ? reason.message : String(reason)}`, 'process');
+});
+
 /** Worker process: outbox dispatch, schedules, durable jobs (runs independently of any browser session). */
 async function main() {
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error', 'warn', 'log'] });

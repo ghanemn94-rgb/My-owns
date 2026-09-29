@@ -126,11 +126,11 @@ export async function seedDemo(opts: { ownerUrl: string; log?: (m: string) => vo
     const existing = await ownerPool.query<{ id: string; code: string }>(`select id, code from project where org_id = $1`, [orgId]);
     await ownerPool.end();
     const byCode = new Map(existing.rows.map((p) => [p.code, p.id]));
-    const templates = await asUser(app, admin, async () => portfolio.listTemplates());
+    const templates = await asUser(app, admin, async (ctx) => portfolio.listTemplates(ctx));
     const dcTpl = templates.items.find((t) => t.templateKey === 'dc-carveout');
     const genTpl = templates.items.find((t) => t.templateKey === 'general-transformation');
     if (!dcTpl || !genTpl) throw new Error('templates not loaded');
-    const programs = await asUser(app, admin, async () => portfolio.listPrograms());
+    const programs = await asUser(app, admin, async (ctx) => portfolio.listPrograms(ctx));
     const programId = programs.items.find((p) => p.code === 'DEMO-N4')?.id;
     const userId = async (key: string) => (await asUser(app, admin, async (ctx) => portfolio.directory(ctx, demoEmail(key)))).items[0]!.id;
 

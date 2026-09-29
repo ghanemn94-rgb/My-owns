@@ -10,6 +10,7 @@ import {
   isDemo,
   ts,
   projectFk,
+  type FkTarget,
   moneyCols,
   classification,
   committeeKind,
@@ -29,6 +30,9 @@ import {
 } from './_common';
 import { project, program } from './portfolio';
 import { appUser } from './identity';
+import { issue } from './planning';
+import { reportSnapshot } from './reporting';
+import { document } from './documents';
 
 /** Program committee (distinct from NewCo board / JV board via `kind`). Anchored to a project for isolation. */
 export const committee = pgTable(
@@ -68,7 +72,8 @@ export const committee = pgTable(
     updatedAt: updatedAt(),
     version: versionCol(),
   },
-  (t) => [unique('committee_pid_uq').on(t.projectId, t.id)],
+  (t) => [
+    projectFk('committee_charter_doc_fk', t.projectId, t.charterDocumentId, (): FkTarget => document),unique('committee_pid_uq').on(t.projectId, t.id)],
 );
 
 export const committeeMembership = pgTable(
@@ -90,8 +95,9 @@ export const committeeMembership = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('committee_membership_delegate_fk', t.projectId, t.delegateOfMembershipId, { projectId: t.projectId, id: t.id }),
     unique('committee_membership_pid_uq').on(t.projectId, t.id),
-    projectFk('committee_membership_committee_fk', t.projectId, t.committeeId, committee),
+    projectFk('committee_membership_committee_fk', t.projectId, t.committeeId, (): FkTarget => committee),
     index('committee_membership_committee_idx').on(t.committeeId),
   ],
 );
@@ -120,7 +126,7 @@ export const authorityMatrixVersion = pgTable(
   },
   (t) => [
     unique('authority_matrix_pid_uq').on(t.projectId, t.id),
-    projectFk('authority_matrix_committee_fk', t.projectId, t.committeeId, committee),
+    projectFk('authority_matrix_committee_fk', t.projectId, t.committeeId, (): FkTarget => committee),
     uniqueIndex('authority_matrix_version_uq').on(t.committeeId, t.versionNo),
   ],
 );
@@ -151,8 +157,10 @@ export const meeting = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('meeting_matrix_fk', t.projectId, t.authorityMatrixVersionId, (): FkTarget => authorityMatrixVersion),
+    projectFk('meeting_pack_fk', t.projectId, t.packSnapshotId, (): FkTarget => reportSnapshot),
     unique('meeting_pid_uq').on(t.projectId, t.id),
-    projectFk('meeting_committee_fk', t.projectId, t.committeeId, committee),
+    projectFk('meeting_committee_fk', t.projectId, t.committeeId, (): FkTarget => committee),
     uniqueIndex('meeting_number_uq').on(t.committeeId, t.number),
   ],
 );
@@ -206,8 +214,8 @@ export const decision = pgTable(
   (t) => [
     unique('decision_pid_uq').on(t.projectId, t.id),
     uniqueIndex('decision_code_uq').on(t.projectId, t.code),
-    projectFk('decision_committee_fk', t.projectId, t.committeeId, committee),
-    projectFk('decision_meeting_fk', t.projectId, t.meetingId, meeting),
+    projectFk('decision_committee_fk', t.projectId, t.committeeId, (): FkTarget => committee),
+    projectFk('decision_meeting_fk', t.projectId, t.meetingId, (): FkTarget => meeting),
     projectFk('decision_superseded_fk', t.projectId, t.supersededByDecisionId, { projectId: t.projectId, id: t.id }),
     index('decision_status_idx').on(t.projectId, t.status),
   ],
@@ -239,9 +247,9 @@ export const agendaItem = pgTable(
   },
   (t) => [
     unique('agenda_item_pid_uq').on(t.projectId, t.id),
-    projectFk('agenda_item_committee_fk', t.projectId, t.committeeId, committee),
-    projectFk('agenda_item_meeting_fk', t.projectId, t.meetingId, meeting),
-    projectFk('agenda_item_decision_fk', t.projectId, t.decisionId, decision),
+    projectFk('agenda_item_committee_fk', t.projectId, t.committeeId, (): FkTarget => committee),
+    projectFk('agenda_item_meeting_fk', t.projectId, t.meetingId, (): FkTarget => meeting),
+    projectFk('agenda_item_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
   ],
 );
 
@@ -259,8 +267,8 @@ export const attendance = pgTable(
     recordedAt: createdAt(),
   },
   (t) => [
-    projectFk('attendance_meeting_fk', t.projectId, t.meetingId, meeting),
-    projectFk('attendance_membership_fk', t.projectId, t.membershipId, committeeMembership),
+    projectFk('attendance_meeting_fk', t.projectId, t.meetingId, (): FkTarget => meeting),
+    projectFk('attendance_membership_fk', t.projectId, t.membershipId, (): FkTarget => committeeMembership),
     uniqueIndex('attendance_uq').on(t.meetingId, t.membershipId),
   ],
 );
@@ -277,7 +285,7 @@ export const recusal = pgTable(
     declaredAt: createdAt(),
     recordedBy: uuid('recorded_by'),
   },
-  (t) => [projectFk('recusal_decision_fk', t.projectId, t.decisionId, decision), uniqueIndex('recusal_uq').on(t.decisionId, t.userId)],
+  (t) => [projectFk('recusal_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision), uniqueIndex('recusal_uq').on(t.decisionId, t.userId)],
 );
 
 /** Votes are immutable (UPDATE/DELETE blocked by trigger) and keep the authority matrix version in force. */
@@ -300,8 +308,10 @@ export const vote = pgTable(
     castAt: createdAt(),
   },
   (t) => [
-    projectFk('vote_decision_fk', t.projectId, t.decisionId, decision),
-    projectFk('vote_membership_fk', t.projectId, t.membershipId, committeeMembership),
+    projectFk('vote_meeting_fk', t.projectId, t.meetingId, (): FkTarget => meeting),
+    projectFk('vote_matrix_fk', t.projectId, t.authorityMatrixVersionId, (): FkTarget => authorityMatrixVersion),
+    projectFk('vote_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
+    projectFk('vote_membership_fk', t.projectId, t.membershipId, (): FkTarget => committeeMembership),
     uniqueIndex('vote_uq').on(t.decisionId, t.userId, t.round),
   ],
 );
@@ -332,10 +342,11 @@ export const actionItem = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('action_item_issue_fk', t.projectId, t.issueId, (): FkTarget => issue),
     unique('action_item_pid_uq').on(t.projectId, t.id),
     uniqueIndex('action_item_code_uq').on(t.projectId, t.code),
-    projectFk('action_item_decision_fk', t.projectId, t.decisionId, decision),
-    projectFk('action_item_meeting_fk', t.projectId, t.meetingId, meeting),
+    projectFk('action_item_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
+    projectFk('action_item_meeting_fk', t.projectId, t.meetingId, (): FkTarget => meeting),
   ],
 );
 
@@ -362,7 +373,9 @@ export const escalation = pgTable(
     updatedAt: updatedAt(),
     version: versionCol(),
   },
-  (t) => [unique('escalation_pid_uq').on(t.projectId, t.id), uniqueIndex('escalation_code_uq').on(t.projectId, t.code)],
+  (t) => [
+    projectFk('escalation_committee_fk', t.projectId, t.raisedToCommitteeId, (): FkTarget => committee),
+    projectFk('escalation_resolution_fk', t.projectId, t.resolutionDecisionId, (): FkTarget => decision),unique('escalation_pid_uq').on(t.projectId, t.id), uniqueIndex('escalation_code_uq').on(t.projectId, t.code)],
 );
 
 /**
@@ -407,7 +420,7 @@ export const approvalRecord = pgTable(
     payloadHash: text('payload_hash').notNull(),
     recordedAt: createdAt(),
   },
-  (t) => [projectFk('approval_record_request_fk', t.projectId, t.approvalRequestId, approvalRequest)],
+  (t) => [projectFk('approval_record_request_fk', t.projectId, t.approvalRequestId, (): FkTarget => approvalRequest)],
 );
 
 /**
@@ -430,8 +443,8 @@ export const conflictDeclaration = pgTable(
     recordedBy: uuid('recorded_by'),
   },
   (t) => [
-    projectFk('conflict_declaration_committee_fk', t.projectId, t.committeeId, committee),
-    projectFk('conflict_declaration_meeting_fk', t.projectId, t.meetingId, meeting),
-    projectFk('conflict_declaration_decision_fk', t.projectId, t.decisionId, decision),
+    projectFk('conflict_declaration_committee_fk', t.projectId, t.committeeId, (): FkTarget => committee),
+    projectFk('conflict_declaration_meeting_fk', t.projectId, t.meetingId, (): FkTarget => meeting),
+    projectFk('conflict_declaration_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
   ],
 );

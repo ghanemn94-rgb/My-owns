@@ -10,7 +10,9 @@ import { ScopeService } from './auth/scope.service';
 import { PolicyService } from './policy.service';
 import { OrgService } from './org.service';
 import { APP_CONFIG, AppConfig } from './config';
-import { projectIdsOf, RequestContext } from './context';
+import { RequestContext, withDbScope } from './context';
+import { RateLimiter } from './rate-limiter';
+import { Logger } from '@nestjs/common';
 import type { Classification } from '@hub/domain';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -29,8 +31,11 @@ export class HubGuard implements CanActivate {
     private readonly scopes: ScopeService,
     private readonly policy: PolicyService,
     private readonly orgs: OrgService,
+    private readonly limiter: RateLimiter,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
+
+  private readonly log = new Logger('guard');
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<HubRequest>();
@@ -48,6 +53,7 @@ export class HubGuard implements CanActivate {
     const locale: 'en' | 'ar' = req.cookies?.hub_locale === 'ar' ? 'ar' : 'en';
 
     if (route.access === 'public') {
+      if (!this.limiter.hit(ip ?? 'unknown', 'public')) throw new HttpException({ message: 'Too many requests', code: 'rate_limited' }, 429);
       const orgId = await this.orgs.defaultOrgId();
       req.hubCtx = {
         principal: {
@@ -66,6 +72,8 @@ export class HubGuard implements CanActivate {
         ip,
         authMethod: null,
         projectIds: [],
+        fullProjectIds: [],
+        roomIds: [],
         locale,
       };
       this.validate(route, req);
@@ -77,7 +85,10 @@ export class HubGuard implements CanActivate {
     if (!SAFE_METHODS.has(req.method) && !this.sessions.verifyCsrf(session, req.headers[SessionService.CSRF_HEADER] as string | undefined)) {
       throw new HttpException({ message: 'CSRF token missing or invalid', code: 'auth.csrf' }, 403);
     }
-    void this.sessions.touch(session.sessionId);
+    if (!this.limiter.hit(session.sessionId, SAFE_METHODS.has(req.method) ? 'read' : 'mutation')) {
+      throw new HttpException({ message: 'Too many requests', code: 'rate_limited' }, 429);
+    }
+    this.sessions.touch(session.sessionId).catch((e: unknown) => this.log.warn(`session touch failed: ${(e as Error).message}`));
 
     const principal = await this.scopes.resolveUser({
       userId: session.userId,
@@ -87,15 +98,15 @@ export class HubGuard implements CanActivate {
       clearance: session.clearance as Classification,
       isDemo: session.isDemo,
     });
-    const ctx: RequestContext = {
+    const ctx: RequestContext = withDbScope({
       principal,
       correlationId,
       sessionId: session.sessionId,
       ip,
       authMethod: session.authMethod,
-      projectIds: projectIdsOf(principal),
+      projectIds: [],
       locale: session.locale === 'ar' ? 'ar' : locale,
-    };
+    });
     req.hubCtx = ctx;
 
     const projectId = (req.params as Record<string, string>)?.projectId;

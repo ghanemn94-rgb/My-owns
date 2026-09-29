@@ -134,3 +134,20 @@ export function localHour(instant: Date, timezone: string): number {
   const h = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', hour12: false }).format(instant);
   return Number(h) % 24;
 }
+
+/** UTC offset (minutes) of a timezone on a given local date (e.g. Asia/Riyadh → 180). */
+export function tzOffsetMinutes(date: string, timezone: string): number {
+  const probe = new Date(`${date}T12:00:00Z`);
+  const name = new Intl.DateTimeFormat('en-US', { timeZone: timezone, timeZoneName: 'longOffset' }).formatToParts(probe).find((p) => p.type === 'timeZoneName')?.value ?? 'GMT';
+  const m = /GMT([+-])(\d{2}):?(\d{2})?/.exec(name);
+  if (!m) return 0;
+  const sign = m[1] === '-' ? -1 : 1;
+  return sign * (Number(m[2]) * 60 + Number(m[3] ?? 0));
+}
+
+/** The UTC instant of 23:59:59 local time on `date` in `timezone` (for "valid until" business dates). */
+export function endOfLocalDayUtc(date: string, timezone: string): Date {
+  assertIsoDate(date);
+  const [y, mo, d] = date.split('-').map(Number) as [number, number, number];
+  return new Date(Date.UTC(y, mo - 1, d, 23, 59, 59) - tzOffsetMinutes(date, timezone) * 60_000);
+}

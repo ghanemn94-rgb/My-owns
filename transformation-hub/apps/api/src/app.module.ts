@@ -4,6 +4,7 @@ import { PlatformModule } from './platform/platform.module';
 import { HealthController } from './platform/health.controller';
 import { HubGuard } from './platform/hub.guard';
 import { TxInterceptor } from './platform/tx.interceptor';
+import { ResponseContractInterceptor } from './platform/response.interceptor';
 import { ProblemFilter } from './platform/errors';
 import { IdentityModule } from './modules/identity/identity.module';
 import { PortfolioModule } from './modules/portfolio/portfolio.module';
@@ -50,6 +51,7 @@ export const DOMAIN_MODULES = [
   providers: [
     { provide: APP_GUARD, useClass: HubGuard },
     { provide: APP_INTERCEPTOR, useClass: TxInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: ResponseContractInterceptor },
     { provide: APP_FILTER, useClass: ProblemFilter },
   ],
 })
