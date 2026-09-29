@@ -15,6 +15,7 @@ import {
   assertWaivabilityDetermination,
   gateDecisionIssue,
   gateRag,
+  forbidden,
   notFound,
   ruleViolation,
   CriterionStatus,
@@ -367,15 +368,15 @@ export class GatesService implements OnModuleInit {
   }
 
   /**
-   * Reviewer accepts (met) or returns (unmet) a criterion. `met` requires active evidence (when evidence is required), no
-   * conflicting evidence, and a reviewer who is not an owner of that evidence (policy not_self).
+   * The criterion's designated reviewer accepts (met) or returns (unmet) it. `met` requires active evidence (when
+   * evidence is required), no conflicting evidence, and a reviewer who is not an owner of that evidence (policy not_self).
    */
   async reviewCriterion(ctx: RequestContext, projectId: string, gateId: string, criterionId: string, body: { expectedVersion: number; outcome: 'met' | 'unmet'; note?: string }) {
     const { b, gate, crit, cur } = await this.loadCriterion(projectId, gateId, criterionId);
     const ev = b.evidenceOf(crit.id);
     const actor = ctx.principal.userId;
     const evidenceOwner = body.outcome === 'met' ? (actor && ev.submitters.includes(actor) ? actor : (ev.submitters[0] ?? null)) : null;
-    this.commandAssert(ctx, 'gates.assessment.review', { projectId, classification: b.project.classification, requesterUserId: evidenceOwner });
+    this.assertDesignatedReviewer(ctx, projectId, b.project.classification, crit, evidenceOwner);
     assertCriterionEditable(gate.key, cur.status);
     const ca = await this.ensureCa(ctx, b, cur, crit);
     if (body.outcome === 'met') {
@@ -423,14 +424,14 @@ export class GatesService implements OnModuleInit {
   async determineNotApplicable(ctx: RequestContext, projectId: string, gateId: string, criterionId: string, body: { expectedVersion: number; approve: boolean; note?: string }) {
     const { b, gate, crit, cur } = await this.loadCriterion(projectId, gateId, criterionId);
     const ca0 = b.ca(cur.id, crit.id);
-    this.commandAssert(ctx, 'gates.assessment.review', { projectId, classification: b.project.classification, requesterUserId: ca0?.naProposedBy ?? null });
+    this.assertDesignatedReviewer(ctx, projectId, b.project.classification, crit, ca0?.naProposedBy ?? null);
     assertCriterionEditable(gate.key, cur.status);
     if (!ca0 || ca0.status !== 'not_applicable' || ca0.naApproved) throw ruleViolation('gates.na.no_proposal', `Criterion ${crit.key} has no pending not-applicable proposal`);
     if (body.approve) {
       assertNotApplicableAllowed({
         criterionKey: crit.key,
         reviewerRole: crit.reviewerRole,
-        determinerRoles: this.rolesOf(ctx, projectId),
+        determinerRoles: this.reviewerRolesOf(ctx, projectId),
         determinerUserId: ctx.principal.userId ?? '',
         proposerUserId: ca0.naProposedBy ?? '',
         basis: ca0.naBasis ?? '',
@@ -680,6 +681,39 @@ export class GatesService implements OnModuleInit {
   private rolesOf(ctx: RequestContext, projectId: string): RoleKey[] {
     const s = ctx.principal.projects.get(projectId);
     return s ? [...s.roles] : [];
+  }
+
+  /**
+   * Roles that can stand as a criterion's designated reviewer: the project-wide roles, plus `workstream_lead` when the
+   * actor leads any workstream of the project (criteria carry no workstream, so any workstream lead role qualifies).
+   */
+  private reviewerRolesOf(ctx: RequestContext, projectId: string): RoleKey[] {
+    const s = ctx.principal.projects.get(projectId);
+    if (!s) return [];
+    const roles = new Set<RoleKey>(s.roles);
+    if (s.workstreamRoles.some((w) => w.role === 'workstream_lead')) roles.add('workstream_lead');
+    return [...roles];
+  }
+
+  /**
+   * Criterion review and N/A determination belong to the criterion's DESIGNATED reviewer role, not to anyone holding
+   * `gates.assessment.review`. The check order is: human actor; then 403 `gates.not_designated_reviewer` for a caller
+   * who can see the project and holds the permission but not the designated role; then RBAC + ABAC (404 visibility,
+   * 403 missing permission, 403 not_self: the evidence submitter / N/A proposer never reviews their own submission).
+   * A workstream lead's grant is workstream-scoped, so the policy check runs against the workstream they lead.
+   */
+  private assertDesignatedReviewer(ctx: RequestContext, projectId: string, classification: Parameters<PolicyService['assert']>[2]['classification'], crit: CriterionRow, requesterUserId: string | null) {
+    const permission = 'gates.assessment.review';
+    assertHumanActor(ctx, permission);
+    const scope = ctx.principal.projects.get(projectId);
+    const role = crit.reviewerRole as RoleKey;
+    const designated = this.reviewerRolesOf(ctx, projectId).includes(role);
+    const viaWorkstream = designated && !scope?.roles.has(role) ? scope?.workstreamRoles.find((w) => w.role === role) : undefined;
+    const refuse = () =>
+      forbidden('gates.not_designated_reviewer', `Criterion ${crit.key} can only be reviewed by its designated reviewer role (${crit.reviewerRole})`);
+    if (!designated && this.policy.canSee(ctx, { projectId, classification }) && this.policy.canInProject(ctx, permission, projectId)) throw refuse();
+    this.policy.assert(ctx, permission, { projectId, classification, requesterUserId, workstreamId: viaWorkstream?.workstreamId ?? null });
+    if (!designated) throw refuse();
   }
 
   private clearNa() {

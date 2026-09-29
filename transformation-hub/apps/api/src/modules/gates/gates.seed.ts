@@ -9,6 +9,18 @@ import { EvidenceService } from '../documents/evidence.service';
 
 const DEMO_EVIDENCE = (key: string) => `DEMO — synthetic note evidence for ${key} (no real document; illustrates the evidence → review flow)`;
 
+/** Demo persona holding each designated reviewer role in the DC demo project (see DEMO_USERS in cli/seed-demo). */
+const DEMO_REVIEWER: Record<string, string> = {
+  sponsor: 'sponsor',
+  committee_chair: 'chair',
+  secretary_cpmo: 'secretary',
+  project_manager: 'pm',
+  workstream_lead: 'tech.lead',
+  functional_approver: 'approver',
+  finance_restricted: 'finance',
+  legal_restricted: 'legal',
+};
+
 /**
  * Demo sandbox scenario for gates (idempotent; everything goes through the gates services so policy, audit and outbox
  * apply). Tolerant of absent governance/documents seeds:
@@ -46,15 +58,21 @@ export const gatesSeed: ModuleSeed = {
         await asUser('pm', (ctx) => gates.startAssessment(ctx, pid, g.id, { expectedVersion: g.assessment.version, note: 'Demo sandbox scenario' }));
       }
     };
-    /** Evidence added by the PM (evidence owner), accepted by a different reviewer (Legal) — separation of duties. */
+    /**
+     * Evidence added by the PM (the contributor for PM-designated criteria), accepted by the persona holding the
+     * criterion's DESIGNATED reviewer role — never by the evidence submitter (separation of duties).
+     */
     const meet = async (gateKey: string, critKey: string) => {
       let { g, c } = await criterion(gateKey, critKey);
       if (c.assessment.status === 'met') return;
+      const reviewer = DEMO_REVIEWER[c.reviewerRole];
+      if (!reviewer) throw new Error(`no demo persona holds reviewer role ${c.reviewerRole} (${critKey})`);
       if (c.evidence.active === 0) {
-        await asUser('pm', (ctx) => evidence.link(ctx, pid, { targetType: 'gate_criterion', targetId: c.id, note: DEMO_EVIDENCE(critKey), purpose: 'Demo sandbox — synthetic note evidence (no real document)' }));
+        const adder = c.reviewerRole === 'project_manager' ? 'contributor' : 'pm';
+        await asUser(adder, (ctx) => evidence.link(ctx, pid, { targetType: 'gate_criterion', targetId: c.id, note: DEMO_EVIDENCE(critKey), purpose: 'Demo sandbox — synthetic note evidence (no real document)' }));
         ({ g, c } = await criterion(gateKey, critKey));
       }
-      await asUser('legal', (ctx) => gates.reviewCriterion(ctx, pid, g.id, c.id, { expectedVersion: c.assessment.version, outcome: 'met', note: 'Demo review of synthetic evidence' }));
+      await asUser(reviewer, (ctx) => gates.reviewCriterion(ctx, pid, g.id, c.id, { expectedVersion: c.assessment.version, outcome: 'met', note: 'Demo review of synthetic evidence' }));
     };
 
     // G0 — Mandate & Governance: all mandatory criteria met with (demo) evidence.

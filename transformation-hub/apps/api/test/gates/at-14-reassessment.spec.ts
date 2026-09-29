@@ -139,13 +139,13 @@ describe('AT-14 — conflicting evidence triggers a controlled reassessment [REQ
     let g0 = await gateByKey(p.pm, projectId, 'G0');
     const c = crit(g0, 'G0-C01');
     const url = `/api/v1/projects/${projectId}/gates/${g0.id}/criteria/${c.id}/review`;
-    const blocked = await p.legal.post(url, { expectedVersion: c.assessment.version, outcome: 'met' });
+    const blocked = await p.secretary.post(url, { expectedVersion: c.assessment.version, outcome: 'met' });
     expect(blocked.status).toBe(422);
     expect(blocked.body.code).toBe('gates.criterion.evidence_conflict');
     // Documents resolves the conflict: both links superseded (kept for history), corrected evidence linked.
     await supersedeAll(p.pm, projectId, c.id);
     await addEvidence(p.pm, projectId, c.id, 'Corrected charter evidence (synthetic)');
-    await p.legal.post(url, { expectedVersion: c.assessment.version, outcome: 'met', note: 'Re-reviewed against the corrected charter' }).expect(201);
+    await p.secretary.post(url, { expectedVersion: c.assessment.version, outcome: 'met', note: 'Re-reviewed against the corrected charter' }).expect(201);
     g0 = await gateByKey(p.pm, projectId, 'G0');
     await p.pm.post(`/api/v1/projects/${projectId}/gates/${g0.id}/assessment/mark-ready`, { expectedVersion: g0.assessment.version }).expect(201);
     g0 = await gateByKey(p.pm, projectId, 'G0');

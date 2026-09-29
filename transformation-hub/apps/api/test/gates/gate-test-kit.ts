@@ -23,6 +23,8 @@ export interface Personas {
   finance: Client;
   approver: Client;
   contributor: Client;
+  /** Holds `workstream_lead` on the project's first workstream only (a workstream-scoped grant). */
+  techLead: Client;
 }
 
 export interface GateView {
@@ -86,6 +88,11 @@ export async function setupProject(code: string, extraGrants: [string, string][]
   const org = await owner().query<{ org_id: string }>('select org_id from project where id = $1', [projectId]);
   const p = {} as Personas;
   for (const k of ['pm', 'sponsor', 'chair', 'secretary', 'legal', 'finance', 'approver', 'contributor'] as const) p[k] = await loginAs(k);
+  // Workstream-designated criteria (e.g. G5-C07, G6-C03) are reviewed by a workstream lead: grant tech.lead that role on
+  // the first template workstream only, so the workstream-scoped path of the designated-reviewer rule is exercised.
+  const ws = (await p.pm.get(`/api/v1/projects/${projectId}/workstreams`).expect(200)).body.items as { id: string }[];
+  await admin.post(`/api/v1/projects/${projectId}/members`, { userId: await demoUserId('tech.lead'), role: 'workstream_lead', workstreamId: ws[0]!.id, reason: 'gates test (workstream lead)' }).expect(201);
+  p.techLead = await loginAs('tech.lead');
   return { projectId, orgId: org.rows[0]!.org_id, p };
 }
 
@@ -222,12 +229,36 @@ export async function startGate(p: Personas, projectId: string, key: string) {
   }
 }
 
-/** PM links evidence; Legal (a different person) reviews it as met. */
+/** The persona holding each designated reviewer role in the test project (see ROLE_GRANTS). */
+const REVIEWER_PERSONA: Record<string, keyof Personas> = {
+  sponsor: 'sponsor',
+  committee_chair: 'chair',
+  secretary_cpmo: 'secretary',
+  project_manager: 'pm',
+  workstream_lead: 'techLead',
+  functional_approver: 'approver',
+  finance_restricted: 'finance',
+  legal_restricted: 'legal',
+};
+
+/** The criterion's designated reviewer (only that role may accept, return or determine N/A). */
+export function reviewerFor(p: Personas, reviewerRole: string): Client {
+  const k = REVIEWER_PERSONA[reviewerRole];
+  if (!k) throw new Error(`no test persona holds reviewer role ${reviewerRole}`);
+  return p[k];
+}
+
+/** Someone other than the reviewer links the evidence (not_self): the PM, or the contributor when the PM reviews. */
+export function evidenceAdderFor(p: Personas, reviewerRole: string): Client {
+  return reviewerRole === 'project_manager' ? p.contributor : p.pm;
+}
+
+/** A different person links evidence; the criterion's designated reviewer accepts it as met. */
 export async function meetCriterion(p: Personas, projectId: string, gateKey: string, critKey: string) {
   const g = await gateByKey(p.pm, projectId, gateKey);
   const c = crit(g, critKey);
-  if (c.evidence.active === 0) await addEvidence(p.pm, projectId, c.id);
-  const res = await p.legal.post(`/api/v1/projects/${projectId}/gates/${g.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'met', note: 'test review' });
+  if (c.evidence.active === 0) await addEvidence(evidenceAdderFor(p, c.reviewerRole), projectId, c.id);
+  const res = await reviewerFor(p, c.reviewerRole).post(`/api/v1/projects/${projectId}/gates/${g.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'met', note: 'test review' });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
 }
 

@@ -121,9 +121,11 @@ export class MyWorkService {
       select d.id, d.project_id, d.code, d.title, d.status, d.latest_safe_date::text as latest_safe_date, d.classification, d.requester_user_id, d.is_demo
         from decision d
         join committee_membership cm on cm.committee_id = d.committee_id and cm.project_id = d.project_id and cm.user_id = ${me} and cm.voting
+        join project p on p.id = d.project_id
        where d.project_id in (${sql.join(pids.map((x) => sql`${x}::uuid`), sql`, `)})
          and d.status = 'under_review'
-         and cm.valid_from <= current_date and (cm.valid_to is null or cm.valid_to >= current_date)
+         -- seat validity in the PROJECT's timezone (not the database's UTC date)
+         and cm.valid_from <= (now() at time zone p.timezone)::date and (cm.valid_to is null or cm.valid_to >= (now() at time zone p.timezone)::date)
          and not exists (select 1 from recusal r where r.decision_id = d.id and r.user_id = ${me})
          and not exists (select 1 from vote v where v.decision_id = d.id and v.user_id = ${me} and v.round = d.vote_round)`);
     const seen = new Set<string>();

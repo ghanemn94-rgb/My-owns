@@ -258,7 +258,7 @@ export class PortfolioService {
       workingDays: r.p.workingDays,
       plannedStart: r.p.plannedStart,
       version: r.p.version,
-      setupState: { ...(r.p.setupState as Record<string, unknown>), gaps: await this.setupGaps(projectId, r.tplKind), gapsComputedAt: this.clock.now().toISOString() },
+      setupState: { ...(r.p.setupState as Record<string, unknown>), gaps: await this.setupGaps(projectId, r.tplKind, this.clock.today(r.p.timezone)), gapsComputedAt: this.clock.now().toISOString() },
       phases: (def.phases ?? []).map((ph) => ({ key: ph.key, name: ctx.locale === 'ar' ? ph.name.ar : ph.name.en, gateKeys: ph.gateKeys })),
       entities: entities.map((e) => ({ id: e.id, name: e.name, role: e.role, incorporationStatus: e.inc, verification: e.ver, isDemo: e.isDemo })),
       counts,
@@ -603,12 +603,13 @@ export class PortfolioService {
    * Setup gaps computed from CURRENT records (QA-P1-07), never a snapshot taken at creation:
    * committee (none active), authority_matrix (none approved and in date), baseline (none approved), owners (a workstream
    * without an accountable lead), perimeter (carve-out templates only: no perimeter items recorded yet).
+   * Dates are compared with TODAY IN THE PROJECT TIMEZONE (never the database's UTC current_date).
    */
-  private async setupGaps(projectId: string, templateKind: string): Promise<string[]> {
+  private async setupGaps(projectId: string, templateKind: string, today: string): Promise<string[]> {
     const r = await this.db.tx().execute<{ committee: boolean; matrix: boolean; baseline: boolean; owners: boolean; perimeter: boolean }>(sql`
       select exists (select 1 from committee where project_id = ${projectId} and status = 'active') as committee,
              exists (select 1 from authority_matrix_version where project_id = ${projectId} and status = 'approved'
-                       and (effective_from is null or effective_from <= current_date) and (effective_to is null or effective_to >= current_date)) as matrix,
+                       and (effective_from is null or effective_from <= ${today}::date) and (effective_to is null or effective_to >= ${today}::date)) as matrix,
              exists (select 1 from baseline_version where project_id = ${projectId} and status = 'approved') as baseline,
              not exists (select 1 from workstream where project_id = ${projectId} and lead_user_id is null) as owners,
              exists (select 1 from perimeter_item where project_id = ${projectId}) as perimeter`);

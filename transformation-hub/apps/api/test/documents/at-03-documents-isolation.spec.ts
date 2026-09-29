@@ -110,9 +110,11 @@ describe('AT-03 — classification and room ACL inside SQL: lists, counts, searc
     const sec = await secretary.get(`${docsPath(dcId)}?pageSize=100`).expect(200);
     const secTitles = sec.body.items.map((d: { title: string }) => d.title);
     expect(secTitles).toEqual(expect.arrayContaining([RESTRICTED_TITLE, ROOM_TITLE]));
+    // Every room the secretary holds an active grant for (other specs may grant further rooms — the API must count them).
     const secExpected = await owner().query(
-      `select count(*)::int n from document where project_id = $1 and deleted_at is null and (room_id is null or room_id = $2) and classification <> 'strictly_confidential'`,
-      [dcId, roomId],
+      `select count(*)::int n from document where project_id = $1 and deleted_at is null and classification <> 'strictly_confidential'
+          and (room_id is null or room_id in (select room_id from room_grant where user_id = $2 and project_id = $1 and revoked_at is null and (expires_at is null or expires_at > now())))`,
+      [dcId, secretary.userId],
     );
     expect(sec.body.total).toBe(secExpected.rows[0].n);
     // A filter on the hidden classification returns nothing (not a smaller "restricted" count).
