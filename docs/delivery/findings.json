@@ -5009,14 +5009,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-15/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-28T23:45:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer in DG0 round 15; reproduced offline (236/600) and live with the real Write tool (1/11) against candidate 7fab49c"
+        },
+        {
+          "at": "2026-09-29T08:14:29Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 5c003c03a164f045d4325e69b12211f56e73bdfd"
         }
-      ]
+      ],
+      "fix_revision": "5c003c03a164f045d4325e69b12211f56e73bdfd",
+      "fix_summary": "D-030 (user-chosen option 1): run-agent.sh runs the whole claude process inside a bubblewrap process sandbox (tools/agents/agent_sandbox.py) with a read-only root, private /tmp and /var/tmp (only the run's own TMPDIR bound), HOME read-only except a private per-run ~/.claude/projects, and only CAP_SETFCAP (bounding set included) with no_new_privs. Confined roles see a throwaway tmpfs top level and can write only their own directories; review records, the gate record and the analyst's register go through a private staging copy from which only the role's own files are copied back (discards listed in sandbox.json, exit 73). Implementers write the working tree with existing protected paths read-only. File-tool writes are therefore kernel-confined whatever the guard decided; the guard stays as defence in depth. The validator requires gate records from confined runs that discarded nothing. Tests: tools/agents/tests/process-sandbox.test.mjs (incl. 'F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope': without the sandbox 64/69 hook-allowed writes escaped, inside it 0 of 336 redirected writes landed), the runner test 'F-DG0-145: the runner runs the whole agent inside the process sandbox and records it' and the validator test 'F-DG0-145/D-030: gate records must come from runs whose whole agent process was confined to the role's own areas'; all fail on the previous code."
     },
     {
       "id": "F-DG0-146",
