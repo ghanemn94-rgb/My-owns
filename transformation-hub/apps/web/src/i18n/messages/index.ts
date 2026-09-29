@@ -12,6 +12,7 @@ import enMembers from './en/members.json';
 import enStates from './en/states.json';
 import enStatuses from './en/statuses.json';
 import enAdmin from './en/admin.json';
+import enPlanning from './en/planning.json';
 import arCommon from './ar/common.json';
 import arNav from './ar/nav.json';
 import arAuth from './ar/auth.json';
@@ -21,6 +22,7 @@ import arMembers from './ar/members.json';
 import arStates from './ar/states.json';
 import arStatuses from './ar/statuses.json';
 import arAdmin from './ar/admin.json';
+import arPlanning from './ar/planning.json';
 
 const en = {
   common: enCommon,
@@ -32,6 +34,7 @@ const en = {
   states: enStates,
   statuses: enStatuses,
   admin: enAdmin,
+  planning: enPlanning,
 };
 
 export type Messages = typeof en;
@@ -47,6 +50,7 @@ const ar = {
   states: arStates,
   statuses: arStatuses,
   admin: arAdmin,
+  planning: arPlanning,
 } satisfies DeepShape<Messages>;
 
 type DeepShape<T> = { [K in keyof T]: T[K] extends string ? string : DeepShape<T[K]> };

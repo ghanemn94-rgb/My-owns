@@ -22,7 +22,6 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { useProjectContext } from '@/lib/project-context';
 import { qk, useWorkstreams } from '@/lib/queries';
-import { sectionHref } from '@/lib/sections';
 import { workstreamName, type Workstream } from '@/lib/workstreams';
 import { Tabs, useTabParam } from '@/components/planning/Tabs';
 import { WorkstreamProgress, WorkstreamTasks } from '@/components/planning/workstream';
