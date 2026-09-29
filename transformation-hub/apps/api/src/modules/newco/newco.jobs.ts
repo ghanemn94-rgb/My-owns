@@ -1,6 +1,10 @@
 import type { INestApplicationContext } from '@nestjs/common';
 
-/** Register this module's job handlers and outbox subscriptions (called by src/jobs.ts in the worker). */
+/**
+ * The NewCo module registers no job handlers: incorporation commands recompute the status dimensions synchronously through
+ * the gates module's StatusDimensionsService, and approval validity is evaluated on read (`validityState`). A scheduled
+ * "approval expiring" notification is not implemented (see the module report).
+ */
 export function registerNewcoJobs(_app: INestApplicationContext): void {
-  // e.g. app.get(JobRegistry).register('newco.something', handler); registry.subscribe('evidence.changed', 'newco.something');
+  // intentionally empty
 }

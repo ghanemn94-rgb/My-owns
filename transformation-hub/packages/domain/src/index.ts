@@ -10,6 +10,8 @@ export * from './measurement';
 export * from './canonical';
 export * from './planning';
 export * from './carveout';
+export * from './perimeter';
+export * from './newco';
 export * from './ai';
 export * from './templates';
 export * from './policy';

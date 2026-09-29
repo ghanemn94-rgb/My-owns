@@ -1,6 +1,10 @@
 import type { INestApplicationContext } from '@nestjs/common';
 
-/** Register this module's job handlers and outbox subscriptions (called by src/jobs.ts in the worker). */
+/**
+ * The carve-out module registers no job handlers: its commands emit `perimeter.changed` and the gates module's worker job
+ * (`gates.recompute_dimensions`) recomputes the status dimensions. Change requests are decided in planning; the approved
+ * change is applied by an explicit carve-out command (apply-change), never automatically.
+ */
 export function registerCarveoutJobs(_app: INestApplicationContext): void {
-  // e.g. app.get(JobRegistry).register('carveout.something', handler); registry.subscribe('evidence.changed', 'carveout.something');
+  // intentionally empty
 }
