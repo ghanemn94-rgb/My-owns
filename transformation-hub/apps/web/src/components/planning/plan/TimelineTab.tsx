@@ -43,9 +43,11 @@ export function ScheduleStatus({ s }: { s: Schedule }) {
               return (
                 <li key={k}>
                   {n ? (
-                    <Link href={nodeHref(projectId, n.type, n.id)} className={cx('me-1 font-medium text-primary hover:underline')} dir="ltr">
-                      {n.code}
-                    </Link>
+                    <>
+                      <Link href={nodeHref(projectId, n.type, n.id)} className="font-medium text-primary hover:underline" dir="ltr">
+                        {n.code}
+                      </Link>{' '}
+                    </>
                   ) : null}
                   {(ISSUES as readonly string[]).includes(i.code) ? t(`planning.schedule.issue_${i.code as IssueCode}`) : <span dir="ltr">{i.message}</span>}
                 </li>

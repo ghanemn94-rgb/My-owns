@@ -116,7 +116,7 @@ export function Gantt({ rows, today, caption, testId }: { rows: GanttRow[]; toda
               <g key={i}>
                 <line x1={mx(tk.x)} x2={mx(tk.x)} y1={tk.major ? 0 : HEAD - 10} y2={H} stroke="var(--hub-border)" strokeWidth={tk.major ? 1 : 0.5} />
                 {tk.label ? (
-                  <text x={mx(tk.x) + (rtl ? -3 : 3)} y={tk.major && effectiveZoom === 'week' ? 14 : HEAD - 14} fontSize="10" fill="var(--hub-text-muted)" textAnchor={rtl ? 'end' : 'start'}>
+                  <text x={mx(tk.x) + (rtl ? -3 : 3)} y={tk.major && effectiveZoom === 'week' ? 14 : HEAD - 14} fontSize="10" fill="var(--hub-text-muted)" textAnchor="start">
                     {tk.label}
                   </text>
                 ) : null}
@@ -158,7 +158,7 @@ export function Gantt({ rows, today, caption, testId }: { rows: GanttRow[]; toda
                 );
               } else {
                 shape = (
-                  <text x={rtl ? W - 6 : 6} y={mid + 4} fontSize="11" fill="var(--hub-text-muted)" textAnchor={rtl ? 'end' : 'start'}>
+                  <text x={rtl ? W - 6 : 6} y={mid + 4} fontSize="11" fill="var(--hub-text-muted)" textAnchor="start">
                     {t('planning.gantt.noDates')}
                   </text>
                 );
@@ -177,7 +177,7 @@ export function Gantt({ rows, today, caption, testId }: { rows: GanttRow[]; toda
               );
             })}
             <line x1={mx(x(today))} x2={mx(x(today))} y1={HEAD - 6} y2={H} stroke="var(--hub-warning)" strokeWidth={1.5} strokeDasharray="4 3" />
-            <text x={mx(x(today)) + (rtl ? -3 : 3)} y={HEAD - 2} fontSize="10" fontWeight="600" fill="var(--hub-warning)" textAnchor={rtl ? 'end' : 'start'}>
+            <text x={mx(x(today)) + (rtl ? -3 : 3)} y={HEAD - 2} fontSize="10" fontWeight="600" fill="var(--hub-warning)" textAnchor="start">
               {t('planning.gantt.today')}
             </text>
           </svg>

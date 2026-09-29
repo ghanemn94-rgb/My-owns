@@ -65,7 +65,8 @@ export default function InboxPage() {
             </span>
           ) : null}
           <span className="text-ink group-hover:text-primary" dir="auto">
-            {i.title}
+            {/* The server titles baselines generically in English; show the translated wording instead. */}
+            {i.type === 'baseline_approval' ? t('planning.inbox.baselineTitle') : i.title}
           </span>
         </Link>
       ),
