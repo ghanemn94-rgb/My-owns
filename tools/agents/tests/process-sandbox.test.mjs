@@ -279,7 +279,7 @@ test("D-030: the auditor's gate record for its own stage is copied back; another
 // (process sandbox -> Claude Code Bash sandbox -> its bwrap) is verified by the real-agent probe under
 // docs/delivery/test-evidence/DG0/orchestrator-probes, not here: a unit test cannot reproduce the CLI's Bash sandbox,
 // which supplies the privileged user namespace that the innermost bwrap needs.
-test("D-030: the process sandbox binds the host procfs and creates no PID/IPC namespace (so nested bwrap works)", () => {
+test("D-030: the process sandbox binds the host procfs and creates no PID namespace (so nested bwrap works)", () => {
   requireTools();
   const fx = fixture();
   const sb = sandbox(fx, "domain-reviewer");
@@ -289,8 +289,28 @@ test("D-030: the process sandbox binds the host procfs and creates no PID/IPC na
   assert.match(r.stdout, /PROC_OK/);
   const { summary } = sb.finish();
   assert.equal(summary.procfs, "host-bind"); // bound host procfs, not a fresh --proc mount (nested bwrap needs it)
-  assert.deepEqual(summary.unshare, []); // no PID/IPC namespace of the sandbox's own
+  assert.deepEqual(summary.unshare, ["ipc"]); // own IPC namespace (F-DG0-148); no PID namespace of its own
   // /proc/sys read-only where candidate code runs is verified by the sandbox-run suite's fresh-procfs check and, for
   // the full reviewer stack, by the real-agent probe under docs/delivery/test-evidence/DG0/orchestrator-probes.
+  rmSync(fx.base, { recursive: true, force: true });
+});
+
+test("F-DG0-145 (round 16): a file another run commits to the real dir between prepare and finish is not a false discard", () => {
+  requireTools();
+  const fx = fixture();
+  const sb = sandbox(fx, "code-security-reviewer");
+  const staging = sb.plan().staged.find((s) => s.rel === "docs/delivery/reviews/DG0").staging;
+  // The reviewer writes its own new record into its staging copy.
+  mkdirSync(join(staging, "round-2"), { recursive: true });
+  writeFileSync(join(staging, "round-2", "code-security-reviewer.json"), '{"verdict":"PASS"}\n');
+  // Meanwhile a concurrently running review commits ITS record to the real reviews dir, AFTER this run's prepare.
+  mkdirSync(join(fx.repo, "docs/delivery/reviews/DG0/round-2"), { recursive: true });
+  writeFileSync(join(fx.repo, "docs/delivery/reviews/DG0/round-2/domain-reviewer.json"), '{"verdict":"PASS"}\n');
+  const { status, summary } = sb.finish();
+  // finish() compares against the staging seed, so the concurrently-committed file is neither seen nor mis-flagged.
+  assert.deepEqual(summary.discarded, [], summary.discarded.join("; "));
+  assert.equal(status, 0);
+  assert.deepEqual(summary.copied_back, ["docs/delivery/reviews/DG0/round-2/code-security-reviewer.json"]);
+  assert.equal(readFileSync(join(fx.repo, "docs/delivery/reviews/DG0/round-2/domain-reviewer.json"), "utf8"), '{"verdict":"PASS"}\n');
   rmSync(fx.base, { recursive: true, force: true });
 });

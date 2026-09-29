@@ -131,16 +131,18 @@ def bwrap_args(p):
     # bwrap (the pre-freeze via tools/gates/sandbox-run.sh, the sandbox tests) nests inside the Claude Code Bash
     # sandbox and must be able to mount its own fresh procfs; verified inside a real reviewer's shell (D-030).
     #
-    # The sandbox deliberately creates NO PID or IPC namespace (transparent to them), so that innermost bwrap sees the
-    # same PID numbering in /proc as it operates on. This reproduces the round-15 topology in which a reviewer's bwrap
-    # works. It does not weaken write confinement -- the read-only binds and the capability drop do that (F-DG0-145),
-    # independent of the PID namespace. The trade-offs are disclosed in the threat model: the agent shares the host
-    # PID/IPC namespaces and sees a read-write host /proc. /proc/sys kernel tunables are read-only for the agent's
-    # SHELL (the Claude Code Bash sandbox's user namespace, as in round 15) and inside the reviewer's own fresh-procfs
-    # sandboxes (userns default), where candidate code runs; a file-tool write to a uid-0-writable /proc/sys entry is a
-    # disclosed residual (an availability / host-tunable risk, not repository or gate integrity), which round-16
-    # code-security assesses (option A, chosen by the user 2026-09-29).
-    a = ["--die-with-parent", "--new-session", "--setenv", "MTH_PROCESS_SANDBOX", "1",
+    # The sandbox creates NO PID namespace (transparent to it), so that innermost bwrap sees the same PID numbering in
+    # /proc as it operates on. This reproduces the round-15 topology in which a reviewer's bwrap works. It does not
+    # weaken write confinement -- the read-only binds and the capability drop do that (F-DG0-145), independent of the
+    # PID namespace. It DOES create its own IPC namespace (--unshare-ipc, F-DG0-148): the IPC namespace has no bearing
+    # on procfs "full visibility", so unsharing it closes the SysV-IPC / POSIX-message-queue cross-run vector of
+    # threat-model residual 8 at no cost to the nested bwrap. Still disclosed: the agent shares the host PID namespace
+    # and sees a read-write host /proc. /proc/sys kernel tunables are read-only for the agent's SHELL (the Claude Code
+    # Bash sandbox's user namespace, as in round 15) and inside the reviewer's own fresh-procfs sandboxes (userns
+    # default), where candidate code runs; a file-tool write to a uid-0-writable /proc/sys entry is a disclosed residual
+    # (residual 7; an availability / host-tunable risk, not repository or gate integrity), which code-security assesses
+    # (option A, chosen by the user 2026-09-29).
+    a = ["--die-with-parent", "--new-session", "--unshare-ipc", "--setenv", "MTH_PROCESS_SANDBOX", "1",
          "--ro-bind", "/", "/", "--dev", "/dev", "--bind", "/proc", "/proc",
          "--tmpfs", "/tmp", "--tmpfs", "/var/tmp"]
     # Repositories and a HOME under /tmp or /var/tmp (tests, the live probe) stay visible, read-only.
@@ -192,10 +194,21 @@ def prepare(argv):
                 src = os.path.join(s["real"], name)
                 if os.path.lexists(src):
                     shutil.copy2(src, os.path.join(s["staging"], name), follow_symlinks=False)
-        # The files that may be replaced are compared with the real tree before being copied back (concurrent change).
+        # The staging SEED: a signature of every file present right after seeding. finish() compares the staging copy
+        # against this seed, NOT against the live real directory, so a file another concurrently running review commits
+        # to the real tree between this run's prepare and finish is never mis-read as "removed" (F-DG0-145 round 16:
+        # the copy-back exit-73 false positive). The files that may be replaced also keep a baseline for detecting a
+        # concurrent change to the real file.
+        seed = {}
         for rel, (kind, data) in regular_files(s["staging"]).items():
-            if kind == "file" and s["replace"] and re.fullmatch(s["accept"], rel):
-                s["baseline"][rel] = hashlib.sha256(data).hexdigest()
+            if kind == "file":
+                digest = hashlib.sha256(data).hexdigest()
+                seed[rel] = ["file", digest]
+                if s["replace"] and re.fullmatch(s["accept"], rel):
+                    s["baseline"][rel] = digest
+            else:
+                seed[rel] = [kind, None]
+        s["seed"] = seed
     with open(os.path.join(state_dir, "plan.json"), "w", encoding="utf-8") as f:
         json.dump(p, f, indent=1)
 
@@ -229,29 +242,28 @@ def finish(argv):
     accepted, discarded = [], []
     for s in p["staged"]:
         skip = set(s["bound"])
-        before, after = regular_files(s["real"], skip), regular_files(s["staging"], skip)
-        if s["copied"] is not None:
-            before = {k: v for k, v in before.items() if k in s["copied"]}  # only copies were staged
-        for rel in sorted(set(before) | set(after)):
-            path = f"{s['rel']}/{rel}"
-            if rel not in after:
-                discarded.append(f"{path}: removed in the sandbox (kept)")
-                continue
-            if after[rel] == before.get(rel):
-                continue
+        seed = {rel: tuple(v) for rel, v in s["seed"].items()}  # rel -> ("file", sha) | (kind, None), from prepare
+        after = regular_files(s["staging"], skip)
+        # Only files present in the staging copy at finish are considered. A file in the seed but not in `after` was
+        # removed from the throwaway staging copy; the real file is never touched, so it is ignored (not a discard).
+        for rel in sorted(after):
             kind, data = after[rel]
+            sig = ("file", hashlib.sha256(data).hexdigest()) if kind == "file" else (kind, None)
+            if seed.get(rel) == sig:
+                continue  # unchanged since the staging seed
+            path = f"{s['rel']}/{rel}"
             if kind != "file":
                 discarded.append(f"{path}: {kind} (not copied)")
             elif not re.fullmatch(s["accept"], rel):
                 discarded.append(f"{path}: outside the role's scope (not copied)")
-            elif rel in before and not s["replace"]:
+            elif rel in seed and not s["replace"]:
                 discarded.append(f"{path}: existing file changed; review files are write-once (not copied)")
             elif s["replace"] and sha256_of(os.path.join(s["real"], rel)) != s["baseline"].get(rel):
                 discarded.append(f"{path}: changed outside the sandbox during the run (not copied)")
             else:
                 dest = os.path.join(s["real"], rel)
                 os.makedirs(os.path.dirname(dest), exist_ok=True)
-                flags = os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | (os.O_TRUNC if rel in before else os.O_EXCL)
+                flags = os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | (os.O_TRUNC if rel in seed else os.O_EXCL)
                 fd = os.open(dest, flags, 0o644)
                 with os.fdopen(fd, "wb") as f:
                     f.write(data)
@@ -263,7 +275,7 @@ def finish(argv):
                "staged": [{"area": s["rel"], "accept": s["accept"], "replace": s["replace"], "copied": s["copied"]}
                           for s in p["staged"]],
                "private_sessions": True, "cgroup_api": p["cgroup_api"],
-               "capabilities": ["CAP_SETFCAP"], "no_new_privs": True, "unshare": [],
+               "capabilities": ["CAP_SETFCAP"], "no_new_privs": True, "unshare": ["ipc"],
                "copied_back": accepted, "discarded": discarded}
     with open(os.path.join(out_dir, "sandbox.json"), "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=1)

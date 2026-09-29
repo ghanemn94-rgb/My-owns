@@ -108,7 +108,7 @@ function processSandboxFor(role, stage) {
     read_only_within_writable: [],
     staged: [{ area: `docs/delivery/reviews/${stage}`, accept: `round-[0-9]+/${esc(role)}\\.[^/]+`, replace: false, copied: null },
       ...(role === "release-auditor" ? [{ area: "docs/delivery/gates", accept: `${stage}\\.json`, replace: true, copied: null }] : [])],
-    private_sessions: true, cgroup_api: null, capabilities: ["CAP_SETFCAP"], no_new_privs: true, unshare: [],
+    private_sessions: true, cgroup_api: null, capabilities: ["CAP_SETFCAP"], no_new_privs: true, unshare: ["ipc"],
     copied_back: [], discarded: [],
   };
 }
