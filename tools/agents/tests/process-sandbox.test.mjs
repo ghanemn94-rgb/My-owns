@@ -290,7 +290,7 @@ test("D-030: the process sandbox binds the host procfs and creates no PID/IPC na
   const { summary } = sb.finish();
   assert.equal(summary.procfs, "host-bind"); // bound host procfs, not a fresh --proc mount (nested bwrap needs it)
   assert.deepEqual(summary.unshare, []); // no PID/IPC namespace of the sandbox's own
-  // /proc/sys read-only where candidate code runs is verified by the sandbox-run test (fresh procfs) and, for the
-  // full reviewer stack, by the real-agent probe under docs/delivery/test-evidence/DG0/orchestrator-probes.
+  // /proc/sys read-only where candidate code runs is verified by the sandbox-run suite's fresh-procfs check and, for
+  // the full reviewer stack, by the real-agent probe under docs/delivery/test-evidence/DG0/orchestrator-probes.
   rmSync(fx.base, { recursive: true, force: true });
 });
