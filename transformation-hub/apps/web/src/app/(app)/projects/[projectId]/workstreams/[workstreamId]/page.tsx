@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, UserPlus } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { portfolioRoutes } from '@hub/contracts';
 import { ActivityHistory } from '@/components/ActivityHistory';
 import { ConfirmCommandDialog } from '@/components/ConfirmCommandDialog';
@@ -12,7 +12,6 @@ import { DataTable } from '@/components/DataTable';
 import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
 import { MetricCard } from '@/components/MetricCard';
-import { NotImplementedYet } from '@/components/NotImplementedYet';
 import { PageHeader } from '@/components/PageHeader';
 import { RestrictedState } from '@/components/RestrictedState';
 import { SectionGuard } from '@/components/SectionGuard';
@@ -25,6 +24,14 @@ import { useProjectContext } from '@/lib/project-context';
 import { qk, useWorkstreams } from '@/lib/queries';
 import { sectionHref } from '@/lib/sections';
 import { workstreamName, type Workstream } from '@/lib/workstreams';
+import { Tabs, useTabParam } from '@/components/planning/Tabs';
+import { WorkstreamProgress, WorkstreamTasks } from '@/components/planning/workstream';
+import { DeliverablesTab, MilestonesTab } from '@/components/planning/plan/RegisterTabs';
+import { StatusUpdatesPanel } from '@/components/planning/updates';
+import { RaidRegister } from '@/components/planning/raid';
+
+const WS_TABS = ['overview', 'tasks', 'deliverables', 'milestones', 'updates', 'risks', 'issues', 'progress'] as const;
+type WsTab = (typeof WS_TABS)[number];
 
 function AssignLeadDialog({ open, onClose, workstream }: { open: boolean; onClose: () => void; workstream: Workstream }) {
   const { t, locale } = useI18n();
@@ -69,12 +76,22 @@ function AssignLeadDialog({ open, onClose, workstream }: { open: boolean; onClos
   );
 }
 
+/** Screen 6 — Workstream Workspace: overview, tasks, deliverables, milestones, periodic updates, risks, issues, progress. */
 export default function WorkstreamDetailPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <WorkstreamScreen />
+    </Suspense>
+  );
+}
+
+function WorkstreamScreen() {
   const { t, locale, tStatus } = useI18n();
   const { workstreamId } = useParams<{ workstreamId: string }>();
   const { projectId, can } = useProjectContext();
   const ws = useWorkstreams(projectId);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [tab, setTab] = useTabParam<WsTab>(WS_TABS, 'overview');
 
   if (ws.isLoading) return <LoadingState />;
   if (ws.error) return <ErrorState error={ws.error} onRetry={() => ws.refetch()} />;
@@ -82,8 +99,7 @@ export default function WorkstreamDetailPage() {
   if (!w) return <RestrictedState />;
 
   const canAssign = can('planning.ownership.reassign');
-  const planHref = sectionHref(projectId, 'plan');
-  const raidHref = sectionHref(projectId, 'raid');
+  const base = `/projects/${projectId}/workstreams/${w.id}`;
 
   return (
     <SectionGuard section="workstreams">
@@ -116,6 +132,8 @@ export default function WorkstreamDetailPage() {
         }
       />
 
+      <Tabs label={t('planning.ws.workspace')} value={tab} onChange={setTab} tabs={WS_TABS.map((k) => ({ key: k, label: t(`planning.ws.tab_${k}`) }))} testId="ws-tabs">
+      {tab === 'overview' ? (
       <div className="space-y-6">
         <section aria-labelledby="ws-details" className={cx(card, 'p-4')}>
           <h2 id="ws-details" className="mb-3 text-lg font-semibold">
@@ -161,9 +179,9 @@ export default function WorkstreamDetailPage() {
             {t('project.metrics.title')}
           </h2>
           <div className="grid gap-3 sm:grid-cols-3">
-            <MetricCard label={t('project.metrics.tasks')} value={w.counts.tasks} href={planHref} />
-            <MetricCard label={t('project.metrics.deliverables')} value={w.counts.deliverables} href={planHref} />
-            <MetricCard label={t('portfolio.openRisks')} value={w.counts.openRisks} href={raidHref} />
+            <MetricCard label={t('project.metrics.tasks')} value={w.counts.tasks} href={`${base}?tab=tasks`} />
+            <MetricCard label={t('project.metrics.deliverables')} value={w.counts.deliverables} href={`${base}?tab=deliverables`} />
+            <MetricCard label={t('portfolio.openRisks')} value={w.counts.openRisks} href={`${base}?tab=risks`} />
           </div>
         </section>
 
@@ -196,10 +214,17 @@ export default function WorkstreamDetailPage() {
           />
         </section>
 
-        <NotImplementedYet phase="P2" feature={t('project.workstreams.tasksTitle')} description={t('project.workstreams.tasksLater')} />
-
         <ActivityHistory projectId={projectId} entityType="workstream" entityId={w.id} />
       </div>
+      ) : null}
+      {tab === 'tasks' ? <WorkstreamTasks ws={w} /> : null}
+      {tab === 'deliverables' ? <DeliverablesTab workstreamId={w.id} /> : null}
+      {tab === 'milestones' ? <MilestonesTab workstreamId={w.id} /> : null}
+      {tab === 'updates' ? <StatusUpdatesPanel workstreamId={w.id} /> : null}
+      {tab === 'risks' ? <RaidRegister kind="risks" workstreamId={w.id} /> : null}
+      {tab === 'issues' ? <RaidRegister kind="issues" workstreamId={w.id} /> : null}
+      {tab === 'progress' ? <WorkstreamProgress ws={w} /> : null}
+      </Tabs>
 
       {canAssign ? <AssignLeadDialog open={assignOpen} onClose={() => setAssignOpen(false)} workstream={w} /> : null}
     </SectionGuard>
