@@ -23,6 +23,7 @@ import { Clock } from '../../platform/clock';
 import type { RequestContext, ProjectScope } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { ProjectFactory } from './project-factory.service';
+import { likeContains } from '../../platform/helpers';
 
 /** Roles a project manager may grant (higher-authority roles need portfolio/platform administration). */
 const PM_GRANTABLE: RoleKey[] = ['workstream_lead', 'contributor', 'functional_approver', 'finance_restricted', 'legal_restricted', 'clean_team', 'external_partner_limited', 'secretary_cpmo'];
@@ -116,7 +117,7 @@ export class PortfolioService {
     const ids = ctx.projectIds;
     if (ids.length === 0) return { items: [], page: q.page, pageSize: q.pageSize, total: 0 };
     const conds = [inArray(schema.project.id, ids)];
-    if (q.q) conds.push(or(ilike(schema.project.name, `%${q.q}%`), ilike(schema.project.code, `%${q.q}%`))!);
+    if (q.q) conds.push(or(ilike(schema.project.name, likeContains(q.q)), ilike(schema.project.code, likeContains(q.q)))!);
     if (q.includeDemo === 'false') conds.push(eq(schema.project.isDemo, false));
     const rows = await tx
       .select({
@@ -257,7 +258,7 @@ export class PortfolioService {
       workingDays: r.p.workingDays,
       plannedStart: r.p.plannedStart,
       version: r.p.version,
-      setupState: r.p.setupState,
+      setupState: { ...(r.p.setupState as Record<string, unknown>), gaps: await this.setupGaps(projectId, r.tplKind), gapsComputedAt: this.clock.now().toISOString() },
       phases: (def.phases ?? []).map((ph) => ({ key: ph.key, name: ctx.locale === 'ar' ? ph.name.ar : ph.name.en, gateKeys: ph.gateKeys })),
       entities: entities.map((e) => ({ id: e.id, name: e.name, role: e.role, incorporationStatus: e.inc, verification: e.ver, isDemo: e.isDemo })),
       counts,
@@ -276,6 +277,13 @@ export class PortfolioService {
     if (body.description !== undefined) changes.description = body.description;
     if (body.objective !== undefined) changes.objective = body.objective;
     if (body.plannedStart !== undefined) changes.plannedStart = body.plannedStart;
+    // A request that changes nothing is not a write: no version bump, no audit row (QA-P1-12).
+    const current = p as unknown as Record<string, unknown>;
+    const effective = Object.fromEntries(Object.entries(changes).filter(([k, v]) => current[k] !== v));
+    if (Object.keys(effective).length === 0) {
+      if (p.version !== expectedVersion) throw conflict('concurrency.version_mismatch', 'The project was changed by someone else — reload and review', { expectedVersion, currentVersion: p.version });
+      return { version: p.version };
+    }
     const res = await tx
       .update(schema.project)
       .set({ ...changes, updatedAt: new Date(), version: sql`${schema.project.version} + 1` })
@@ -350,8 +358,17 @@ export class PortfolioService {
     const tx = this.db.tx();
     const [tv] = await tx.select().from(schema.projectTemplateVersion).where(eq(schema.projectTemplateVersion.id, body.templateVersionId));
     if (!tv || tv.status !== 'published') throw invalid('portfolio.template_not_published', 'Template version is not published');
+    // access-matrix §2.4: nobody creates content above their own clearance (QA-P1-05).
+    if (!clearanceAllows(ctx.principal.clearance, body.classification)) {
+      throw forbidden('policy.classification_exceeds_clearance', 'You cannot create a project classified above your own clearance');
+    }
     const [pm] = await tx.select().from(schema.appUser).where(and(eq(schema.appUser.id, body.projectManagerUserId), eq(schema.appUser.isActive, true)));
     if (!pm) throw invalid('portfolio.pm_not_found', 'Project manager user not found or inactive');
+    // access-matrix §2.8: external (partner) accounts never hold internal roles (QA-P1-04); the DB enforces it too.
+    if (pm.accountType !== 'internal') throw ruleViolation('identity.external_account_role', 'An external account cannot be the project manager');
+    if (!clearanceAllows(pm.clearance as Classification, body.classification)) {
+      throw ruleViolation('portfolio.pm_clearance_too_low', "The project manager's clearance is below the project classification");
+    }
     if (body.programId) {
       const [prog] = await tx.select({ id: schema.program.id }).from(schema.program).where(eq(schema.program.id, body.programId));
       if (!prog) throw invalid('portfolio.program_not_found', 'Program not found');
@@ -432,7 +449,7 @@ export class PortfolioService {
     const where = and(
       eq(schema.appUser.isActive, true),
       eq(schema.appUser.isServiceAccount, false),
-      q ? or(ilike(schema.appUser.displayName, `%${q}%`), ilike(schema.appUser.email, `%${q}%`)) : undefined,
+      q ? or(ilike(schema.appUser.displayName, likeContains(q)), ilike(schema.appUser.email, likeContains(q))) : undefined,
     );
     const rows = await tx
       .select({ id: schema.appUser.id, displayName: schema.appUser.displayName, email: schema.appUser.email, title: schema.appUser.title, isDemo: schema.appUser.isDemo })
@@ -580,6 +597,29 @@ export class PortfolioService {
     if (!res[0]) throw conflict('concurrency.version_mismatch', 'The workstream was changed by someone else — reload and review');
     await this.audit.record({ action: 'planning.workstream.assign_lead', entityType: 'workstream', entityId: workstreamId, projectId, before: { leadUserId: w.leadUserId }, after: { leadUserId: userId } });
     return { version: res[0].version };
+  }
+
+  /**
+   * Setup gaps computed from CURRENT records (QA-P1-07), never a snapshot taken at creation:
+   * committee (none active), authority_matrix (none approved and in date), baseline (none approved), owners (a workstream
+   * without an accountable lead), perimeter (carve-out templates only: no perimeter items recorded yet).
+   */
+  private async setupGaps(projectId: string, templateKind: string): Promise<string[]> {
+    const r = await this.db.tx().execute<{ committee: boolean; matrix: boolean; baseline: boolean; owners: boolean; perimeter: boolean }>(sql`
+      select exists (select 1 from committee where project_id = ${projectId} and status = 'active') as committee,
+             exists (select 1 from authority_matrix_version where project_id = ${projectId} and status = 'approved'
+                       and (effective_from is null or effective_from <= current_date) and (effective_to is null or effective_to >= current_date)) as matrix,
+             exists (select 1 from baseline_version where project_id = ${projectId} and status = 'approved') as baseline,
+             not exists (select 1 from workstream where project_id = ${projectId} and lead_user_id is null) as owners,
+             exists (select 1 from perimeter_item where project_id = ${projectId}) as perimeter`);
+    const x = r.rows[0]!;
+    const gaps: string[] = [];
+    if (templateKind === 'dc_carveout' && !x.perimeter) gaps.push('perimeter');
+    if (!x.committee) gaps.push('committee');
+    if (!x.matrix) gaps.push('authority_matrix');
+    if (!x.baseline) gaps.push('baseline');
+    if (!x.owners) gaps.push('owners');
+    return gaps;
   }
 
   /** SEC-P1-03: events about classified / room-bound records are visible only when the record itself is visible. */

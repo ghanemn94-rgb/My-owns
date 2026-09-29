@@ -796,3 +796,31 @@ DROP TRIGGER IF EXISTS hub_frozen_snapshot_guard ON baseline_version;
 CREATE TRIGGER hub_frozen_snapshot_guard BEFORE UPDATE OF snapshot, snapshot_hash ON baseline_version FOR EACH ROW EXECUTE FUNCTION hub_frozen_snapshot_guard();
 DROP TRIGGER IF EXISTS hub_frozen_snapshot_guard ON status_update;
 CREATE TRIGGER hub_frozen_snapshot_guard BEFORE UPDATE OF frozen_snapshot ON status_update FOR EACH ROW EXECUTE FUNCTION hub_frozen_snapshot_guard();
+
+-- 20. Account types (access-matrix §2.8, QA-P1-04) ---------------------------------------------------------------------
+-- External (partner) accounts never hold project, workstream, committee or organization roles; in rooms they may hold
+-- only `external_partner_limited`. Enforced here so no code path (or data fix) can mis-assign them.
+CREATE OR REPLACE FUNCTION hub_account_type_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+DECLARE acct text; uid uuid; role_text text;
+BEGIN
+  uid := nullif(to_jsonb(NEW) ->> 'user_id', '')::uuid;
+  IF uid IS NULL THEN RETURN NEW; END IF;
+  SELECT account_type INTO acct FROM app_user WHERE id = uid;
+  IF acct IS DISTINCT FROM 'external' THEN RETURN NEW; END IF;
+  role_text := to_jsonb(NEW) ->> 'role';
+  IF TG_TABLE_NAME = 'room_grant' AND role_text = 'external_partner_limited' THEN RETURN NEW; END IF;
+  RAISE EXCEPTION 'external_account_role: an external account cannot hold % on %', coalesce(role_text, 'a role'), TG_TABLE_NAME USING ERRCODE = 'P0001';
+END
+$$;
+REVOKE ALL ON FUNCTION hub_account_type_guard() FROM PUBLIC;
+DO $acct$
+DECLARE t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['project_membership', 'org_role_assignment', 'committee_membership', 'room_grant'] LOOP
+    IF to_regclass(t) IS NULL THEN CONTINUE; END IF;
+    EXECUTE format('DROP TRIGGER IF EXISTS hub_account_type_guard ON %I', t);
+    EXECUTE format('CREATE TRIGGER hub_account_type_guard BEFORE INSERT OR UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION hub_account_type_guard()', t);
+  END LOOP;
+END
+$acct$;
+

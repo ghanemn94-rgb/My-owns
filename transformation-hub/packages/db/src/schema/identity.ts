@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, boolean, jsonb, varchar, index, uniqueIndex, integer } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, boolean, jsonb, varchar, index, uniqueIndex, integer, check } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { pk, orgIdCol, createdAt, updatedAt, ts, isDemo, classification, roleKey, scopeType, versionCol } from './_common';
 
@@ -26,6 +26,8 @@ export const appUser = pgTable(
     clearance: classification('clearance').notNull().default('internal'),
     isActive: boolean('is_active').notNull().default(true),
     isServiceAccount: boolean('is_service_account').notNull().default(false),
+    /** access-matrix §2.8: `external` (partner/counterparty) accounts hold only `external_partner_limited` room grants. */
+    accountType: varchar('account_type', { length: 16 }).notNull().default('internal'),
     isDemo: isDemo(),
     oidcIssuer: text('oidc_issuer'),
     oidcSubject: text('oidc_subject'),
@@ -37,6 +39,7 @@ export const appUser = pgTable(
   },
   (t) => [
     uniqueIndex('app_user_org_email_uq').on(t.orgId, t.email),
+    check('app_user_account_type_ck', sql`${t.accountType} in ('internal', 'external')`),
     uniqueIndex('app_user_oidc_uq').on(t.oidcIssuer, t.oidcSubject).where(sql`${t.oidcSubject} is not null`),
   ],
 );

@@ -27,6 +27,7 @@ import { RecordVersionService, assertVersion, loadInProject, offsetOf, pageOf, u
 import { newId, payloadHash } from '../../platform/ids';
 import type { RequestContext } from '../../platform/context';
 import { CommitteeRow, GovernanceSupport, MeetingRow, ProjectInfo, amountOf, iso } from './governance.support';
+import { likeContains } from '../../platform/helpers';
 
 type MeetingStatus = (typeof MEETING_STATUSES)[number];
 type AgendaKind = (typeof AGENDA_ITEM_KINDS)[number];
@@ -63,7 +64,7 @@ export class MeetingsService {
       q.committeeId ? eq(m.committeeId, q.committeeId) : undefined,
       q.status ? eq(m.status, q.status) : undefined,
       q.isCirculation ? eq(m.isCirculation, q.isCirculation === 'true') : undefined,
-      q.q ? ilike(m.title, `%${q.q}%`) : undefined,
+      q.q ? ilike(m.title, likeContains(q.q)) : undefined,
     );
     const [{ total }] = (await tx.select({ total: count() }).from(m).innerJoin(c, eq(c.id, m.committeeId)).where(where)) as [{ total: number }];
     const rows = await tx
@@ -132,7 +133,7 @@ export class MeetingsService {
       q.committeeId ? eq(a.committeeId, q.committeeId) : undefined,
       q.meetingId ? eq(a.meetingId, q.meetingId) : undefined,
       q.screeningStatus ? eq(a.screeningStatus, q.screeningStatus) : undefined,
-      q.q ? ilike(a.title, `%${q.q}%`) : undefined,
+      q.q ? ilike(a.title, likeContains(q.q)) : undefined,
     );
     const tx = this.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(a).innerJoin(c, eq(c.id, a.committeeId)).where(where)) as [{ total: number }];
