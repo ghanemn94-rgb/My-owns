@@ -158,8 +158,8 @@ describe('AT-06 — independent status dimensions', () => {
     const dims = computeStatusDimensions({
       newcoIncorporation: { status: 'incorporated', evidenceVerified: true },
       perimeter: [
-        { disposition: 'included', transferStatus: 'in_progress' },
-        { disposition: 'included', transferStatus: 'not_started' },
+        { disposition: 'included', transferStatus: 'in_progress', economicTransferStatus: 'in_progress' },
+        { disposition: 'included', transferStatus: 'not_started', economicTransferStatus: 'not_started' },
       ],
       readiness: [{ mandatory: true, blocker: true, status: 'in_progress' }],
       standaloneAccepted: false,
@@ -178,14 +178,14 @@ describe('AT-06 — independent status dimensions', () => {
 
 describe('AT-07 / AT-08 / AT-09 / AT-10 — carve-out rules', () => {
   it('AT-07: adding/changing perimeter after baseline approval requires a change request', () => {
-    expect(perimeterChangeRequiresChangeRequest({ baselineApproved: true, itemInBaseline: false, isNewItem: true })).toBe(true);
-    expect(perimeterChangeRequiresChangeRequest({ baselineApproved: false, itemInBaseline: false, isNewItem: true })).toBe(false);
+    expect(perimeterChangeRequiresChangeRequest({ baselineApproved: true, itemInBaseline: false, isNewItem: true, fromDisposition: null, toDisposition: 'shared' })).toBe(true);
+    expect(perimeterChangeRequiresChangeRequest({ baselineApproved: false, itemInBaseline: false, isNewItem: true, fromDisposition: null, toDisposition: 'shared' })).toBe(false);
   });
   it('reconciliation flags items without a transfer plan / evidence / consent', () => {
     const f = reconcilePerimeter([
-      { id: '1', code: 'P1', disposition: 'included', transferStatus: 'not_started', transferMechanism: null, plannedEffectiveDate: null, consentRequired: true, consentGranted: false, evidenceCount: 0, hasInterimArrangement: false },
-      { id: '2', code: 'P2', disposition: 'included', transferStatus: 'transferred_verified', transferMechanism: 'ATA', plannedEffectiveDate: '2026-12-01', consentRequired: false, consentGranted: false, evidenceCount: 0, hasInterimArrangement: false },
-      { id: '3', code: 'P3', disposition: 'excluded', transferStatus: 'not_applicable', transferMechanism: null, plannedEffectiveDate: null, consentRequired: false, consentGranted: false, evidenceCount: 0, hasInterimArrangement: false },
+      { id: '1', code: 'P1', disposition: 'included', transferStatus: 'not_started', economicTransferStatus: 'not_started', transferMechanism: null, plannedEffectiveDate: null, consentRequired: true, consentGranted: false, evidenceCount: 0, hasInterimArrangement: false },
+      { id: '2', code: 'P2', disposition: 'included', transferStatus: 'transferred_verified', economicTransferStatus: 'transferred_verified', transferMechanism: 'ATA', plannedEffectiveDate: '2026-12-01', consentRequired: false, consentGranted: false, evidenceCount: 0, hasInterimArrangement: false },
+      { id: '3', code: 'P3', disposition: 'excluded', transferStatus: 'not_applicable', economicTransferStatus: 'not_applicable', transferMechanism: null, plannedEffectiveDate: null, consentRequired: false, consentGranted: false, evidenceCount: 0, hasInterimArrangement: false },
     ]);
     expect(f.map((x) => `${x.code}:${x.issue}`).sort()).toEqual(['P1:consent_outstanding', 'P1:no_transfer_plan', 'P2:no_evidence']);
   });

@@ -17,8 +17,11 @@ import type {
 
 export interface DimensionInput {
   newcoIncorporation: { status: IncorporationStatus; evidenceVerified: boolean } | null;
-  /** Legal transfer status + economic transfer status (spec §3 "legal/economic transfer", P0 review D-05). */
-  perimeter: { disposition: PerimeterDisposition; transferStatus: TransferStatus; economicTransferStatus?: TransferStatus }[];
+  /**
+   * Legal transfer status + economic transfer status (spec §3 "legal/economic transfer", P0 review D-05). Both are
+   * REQUIRED (N-01): a missing economic status fails closed (treated as not started), never as the legal status.
+   */
+  perimeter: { disposition: PerimeterDisposition; transferStatus: TransferStatus; economicTransferStatus: TransferStatus }[];
   /** `waivedValid` = waivable check with an approved waiver (a bare "waived" status does not count — D-02). */
   readiness: { mandatory: boolean; blocker: boolean; status: ReadinessStatus; waivedValid?: boolean }[];
   standaloneAccepted: boolean; // G4 approved
@@ -64,7 +67,7 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
 
   const inScope = input.perimeter
     .filter((p) => p.disposition === 'included' || p.disposition === 'shared')
-    .map((p) => ({ ...p, transferStatus: combinedTransferStatus(p.transferStatus, p.economicTransferStatus ?? p.transferStatus) }));
+    .map((p) => ({ ...p, transferStatus: combinedTransferStatus(p.transferStatus ?? 'not_started', p.economicTransferStatus ?? 'not_started') }));
   const counts: Record<string, number> = {};
   for (const p of inScope) counts[p.transferStatus] = (counts[p.transferStatus] ?? 0) + 1;
   const pending = input.perimeter.filter((p) => p.disposition === 'pending').length;
@@ -132,7 +135,10 @@ export interface PerimeterReconItem {
   id: string;
   code: string;
   disposition: PerimeterDisposition;
+  /** Legal transfer status. */
   transferStatus: TransferStatus;
+  /** Economic transfer status (D-05) — reconciliation uses the combined (least advanced) status. */
+  economicTransferStatus: TransferStatus;
   transferMechanism: string | null;
   plannedEffectiveDate: string | null;
   consentRequired: boolean;
@@ -156,10 +162,14 @@ export function reconcilePerimeter(items: PerimeterReconItem[]): ReconFinding[] 
       continue;
     }
     if (it.disposition === 'excluded') continue;
-    if (it.transferStatus !== 'not_applicable' && (!it.transferMechanism || !it.plannedEffectiveDate)) {
+    const legal = it.transferStatus ?? 'not_started';
+    const economic = it.economicTransferStatus ?? 'not_started'; // N-01: omitted → fails closed
+    const combined = combinedTransferStatus(legal, economic);
+    if (combined !== 'not_applicable' && (!it.transferMechanism || !it.plannedEffectiveDate)) {
       out.push({ itemId: it.id, code: it.code, issue: 'no_transfer_plan', message: 'No transfer mechanism and/or planned effective date' });
     }
-    if ((it.transferStatus === 'transferred_pending_evidence' || it.transferStatus === 'transferred_verified') && it.evidenceCount === 0) {
+    const reported = (s: TransferStatus) => s === 'transferred_pending_evidence' || s === 'transferred_verified';
+    if ((reported(legal) || reported(economic)) && it.evidenceCount === 0) {
       out.push({ itemId: it.id, code: it.code, issue: 'no_evidence', message: 'Reported transferred without acceptance evidence' });
     }
     if (it.consentRequired && !it.consentGranted && !it.hasInterimArrangement) {
@@ -169,9 +179,25 @@ export function reconcilePerimeter(items: PerimeterReconItem[]): ReconFinding[] 
   return out;
 }
 
-/** AT-07: changes to an item that belongs to an approved baseline perimeter require a change request. */
-export function perimeterChangeRequiresChangeRequest(opts: { baselineApproved: boolean; itemInBaseline: boolean; isNewItem: boolean }): boolean {
-  return opts.baselineApproved && (opts.itemInBaseline || opts.isNewItem);
+/**
+ * AT-07 / REQ-PER-002/005: once a baseline (planning baseline or approved perimeter version) is approved, a change
+ * request is required to ADD any item, to change the scope of an item that is in the approved baseline, or to move an
+ * item into or out of the transferring scope (included/shared). All inputs are required (N-01); a missing flag fails
+ * closed (treated as "baseline approved" / "new" / "in baseline").
+ */
+export function perimeterChangeRequiresChangeRequest(opts: {
+  baselineApproved: boolean;
+  itemInBaseline: boolean;
+  isNewItem: boolean;
+  /** Disposition before the change (null for a new item). */
+  fromDisposition: PerimeterDisposition | null;
+  /** Disposition after the change. */
+  toDisposition: PerimeterDisposition;
+}): boolean {
+  if (opts.baselineApproved === false) return false;
+  if (opts.isNewItem !== false || opts.itemInBaseline !== false) return true;
+  const inScope = (d: PerimeterDisposition | null | undefined) => d === 'included' || d === 'shared' || d === undefined;
+  return inScope(opts.fromDisposition) || inScope(opts.toDisposition);
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -179,8 +205,8 @@ export function perimeterChangeRequiresChangeRequest(opts: { baselineApproved: b
 
 export function assertDay1ContractPosition(c: {
   transferClass: ContractTransferClass;
-  /** Specialist who assessed the class; unassessed classes are not accepted (P0 review D-17). */
-  classAssessedBy?: string | null;
+  /** Specialist who assessed the class; unassessed classes are not accepted (P0 review D-17). Required (N-01). */
+  classAssessedBy: string | null;
   consentGranted: boolean;
   interimArrangement: string | null;
   serviceAccountableOwner: string | null;

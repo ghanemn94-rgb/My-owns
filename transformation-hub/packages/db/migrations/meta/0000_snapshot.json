@@ -1,5 +1,5 @@
 {
-  "id": "45b6335d-9e54-4282-a726-20cdc03cbfd6",
+  "id": "27eccf9f-34ef-4add-9393-c95533509b05",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -790,6 +790,36 @@
         },
         "incorporation_evidence_note": {
           "name": "incorporation_evidence_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "incorporation_recorded_by": {
+          "name": "incorporation_recorded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "incorporation_recorded_at": {
+          "name": "incorporation_recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "incorporation_verified_by": {
+          "name": "incorporation_verified_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "incorporation_verified_at": {
+          "name": "incorporation_verified_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "incorporation_verification_note": {
+          "name": "incorporation_verification_note",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -9223,6 +9253,24 @@
           "notNull": true,
           "default": false
         },
+        "kind_expansion_confirmed_by": {
+          "name": "kind_expansion_confirmed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind_expansion_confirmed_at": {
+          "name": "kind_expansion_confirmed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind_expansion_basis": {
+          "name": "kind_expansion_basis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "title": {
           "name": "title",
           "type": "text",
@@ -9447,6 +9495,162 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.agreement_version": {
+      "name": "agreement_version",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "agreement_id": {
+          "name": "agreement_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_label": {
+          "name": "version_label",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "document_version_id": {
+          "name": "document_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recorded_by": {
+          "name": "recorded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "agreement_version_uq": {
+          "name": "agreement_version_uq",
+          "columns": [
+            {
+              "expression": "agreement_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version_label",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "agreement_version_project_id_project_id_fk": {
+          "name": "agreement_version_project_id_project_id_fk",
+          "tableFrom": "agreement_version",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "agreement_version_agreement_fk": {
+          "name": "agreement_version_agreement_fk",
+          "tableFrom": "agreement_version",
+          "tableTo": "agreement",
+          "columnsFrom": [
+            "project_id",
+            "agreement_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "agreement_version_document_fk": {
+          "name": "agreement_version_document_fk",
+          "tableFrom": "agreement_version",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "agreement_version_docver_fk": {
+          "name": "agreement_version_docver_fk",
+          "tableFrom": "agreement_version",
+          "tableTo": "document_version",
+          "columnsFrom": [
+            "project_id",
+            "document_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.consent": {
       "name": "consent",
       "schema": "",
@@ -9488,6 +9692,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "kind": {
+          "name": "kind",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'consent'"
+        },
         "counterparty": {
           "name": "counterparty",
           "type": "text",
@@ -9500,17 +9711,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "transfer_class": {
-          "name": "transfer_class",
-          "type": "contract_transfer_class",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'unknown'"
-        },
-        "class_assessed_by": {
-          "name": "class_assessed_by",
-          "type": "text",
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -9528,8 +9731,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "granted_on": {
-          "name": "granted_on",
+        "responded_on": {
+          "name": "responded_on",
           "type": "date",
           "primaryKey": false,
           "notNull": false
@@ -9546,35 +9749,43 @@
           "primaryKey": false,
           "notNull": false
         },
-        "interim_arrangement": {
-          "name": "interim_arrangement",
+        "valid_to": {
+          "name": "valid_to",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "response_evidence_note": {
+          "name": "response_evidence_note",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "service_accountable_user_id": {
-          "name": "service_accountable_user_id",
+        "response_document_id": {
+          "name": "response_document_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "billing_accountable_user_id": {
-          "name": "billing_accountable_user_id",
+        "response_recorded_by": {
+          "name": "response_recorded_by",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "sla_accountable_user_id": {
-          "name": "sla_accountable_user_id",
-          "type": "uuid",
+        "response_recorded_at": {
+          "name": "response_recorded_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "remediation_plan": {
-          "name": "remediation_plan",
-          "type": "text",
+        "classification": {
+          "name": "classification",
+          "type": "classification",
+          "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "'confidential'"
         },
         "is_demo": {
           "name": "is_demo",
@@ -9648,38 +9859,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "consent_service_accountable_user_id_app_user_id_fk": {
-          "name": "consent_service_accountable_user_id_app_user_id_fk",
+        "consent_owner_user_id_app_user_id_fk": {
+          "name": "consent_owner_user_id_app_user_id_fk",
           "tableFrom": "consent",
           "tableTo": "app_user",
           "columnsFrom": [
-            "service_accountable_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "consent_billing_accountable_user_id_app_user_id_fk": {
-          "name": "consent_billing_accountable_user_id_app_user_id_fk",
-          "tableFrom": "consent",
-          "tableTo": "app_user",
-          "columnsFrom": [
-            "billing_accountable_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "consent_sla_accountable_user_id_app_user_id_fk": {
-          "name": "consent_sla_accountable_user_id_app_user_id_fk",
-          "tableFrom": "consent",
-          "tableTo": "app_user",
-          "columnsFrom": [
-            "sla_accountable_user_id"
+            "owner_user_id"
           ],
           "columnsTo": [
             "id"
@@ -9716,6 +9901,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "consent_response_doc_fk": {
+          "name": "consent_response_doc_fk",
+          "tableFrom": "consent",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "response_document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -9730,7 +9930,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "consent_kind_ck": {
+          "name": "consent_kind_ck",
+          "value": "\"consent\".\"kind\" in ('consent', 'novation', 'assignment', 'notification', 'other')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.cutover_plan": {
@@ -10214,7 +10419,293 @@
         }
       },
       "policies": {},
+      "checkConstraints": {
+        "operating_model_definition_status_ck": {
+          "name": "operating_model_definition_status_ck",
+          "value": "\"operating_model_definition\".\"status\" in ('proposed', 'approved', 'superseded')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.perimeter_category_review": {
+      "name": "perimeter_category_review",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "perimeter_item_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "conclusion": {
+          "name": "conclusion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reviewed_by": {
+          "name": "reviewed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "perimeter_category_review_uq": {
+          "name": "perimeter_category_review_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "category",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "perimeter_category_review_project_id_project_id_fk": {
+          "name": "perimeter_category_review_project_id_project_id_fk",
+          "tableFrom": "perimeter_category_review",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "perimeter_category_review_pid_uq": {
+          "name": "perimeter_category_review_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.perimeter_impact_assessment": {
+      "name": "perimeter_impact_assessment",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "perimeter_item_id": {
+          "name": "perimeter_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "change_request_id": {
+          "name": "change_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "trigger": {
+          "name": "trigger",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entries": {
+          "name": "entries",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "narrative": {
+          "name": "narrative",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "assessed_by": {
+          "name": "assessed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "perimeter_impact_item_idx": {
+          "name": "perimeter_impact_item_idx",
+          "columns": [
+            {
+              "expression": "perimeter_item_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "perimeter_impact_assessment_project_id_project_id_fk": {
+          "name": "perimeter_impact_assessment_project_id_project_id_fk",
+          "tableFrom": "perimeter_impact_assessment",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "perimeter_impact_item_fk": {
+          "name": "perimeter_impact_item_fk",
+          "tableFrom": "perimeter_impact_assessment",
+          "tableTo": "perimeter_item",
+          "columnsFrom": [
+            "project_id",
+            "perimeter_item_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "perimeter_impact_cr_fk": {
+          "name": "perimeter_impact_cr_fk",
+          "tableFrom": "perimeter_impact_assessment",
+          "tableTo": "change_request",
+          "columnsFrom": [
+            "project_id",
+            "change_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "perimeter_impact_pid_uq": {
+          "name": "perimeter_impact_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "perimeter_impact_trigger_ck": {
+          "name": "perimeter_impact_trigger_ck",
+          "value": "\"perimeter_impact_assessment\".\"trigger\" in ('manual', 'change_request')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.perimeter_item": {
@@ -10277,6 +10768,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "current_entity_id": {
           "name": "current_entity_id",
           "type": "uuid",
@@ -10296,6 +10793,18 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'pending'"
+        },
+        "resolution_path": {
+          "name": "resolution_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_gate_key": {
+          "name": "target_gate_key",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": false
         },
         "legal_owner": {
           "name": "legal_owner",
@@ -10323,6 +10832,18 @@
         },
         "actual_effective_date": {
           "name": "actual_effective_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "economic_planned_effective_date": {
+          "name": "economic_planned_effective_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "economic_actual_effective_date": {
+          "name": "economic_actual_effective_date",
           "type": "date",
           "primaryKey": false,
           "notNull": false
@@ -10404,12 +10925,67 @@
           "primaryKey": false,
           "notNull": false
         },
-        "in_approved_baseline": {
-          "name": "in_approved_baseline",
-          "type": "boolean",
+        "transfer_class": {
+          "name": "transfer_class",
+          "type": "contract_transfer_class",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": false
+          "default": "'unknown'"
+        },
+        "transfer_class_assessed_by": {
+          "name": "transfer_class_assessed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "transfer_class_assessed_at": {
+          "name": "transfer_class_assessed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "transfer_class_basis": {
+          "name": "transfer_class_basis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interim_arrangement": {
+          "name": "interim_arrangement",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "service_accountable_user_id": {
+          "name": "service_accountable_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "billing_accountable_user_id": {
+          "name": "billing_accountable_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sla_accountable_user_id": {
+          "name": "sla_accountable_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "remediation_plan": {
+          "name": "remediation_plan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pending_change_request_id": {
+          "name": "pending_change_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "verification_status": {
           "name": "verification_status",
@@ -10520,6 +11096,19 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "perimeter_item_owner_user_id_app_user_id_fk": {
+          "name": "perimeter_item_owner_user_id_app_user_id_fk",
+          "tableFrom": "perimeter_item",
+          "tableTo": "app_user",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "perimeter_item_current_entity_id_legal_entity_id_fk": {
           "name": "perimeter_item_current_entity_id_legal_entity_id_fk",
           "tableFrom": "perimeter_item",
@@ -10539,6 +11128,45 @@
           "tableTo": "legal_entity",
           "columnsFrom": [
             "target_entity_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "perimeter_item_service_accountable_user_id_app_user_id_fk": {
+          "name": "perimeter_item_service_accountable_user_id_app_user_id_fk",
+          "tableFrom": "perimeter_item",
+          "tableTo": "app_user",
+          "columnsFrom": [
+            "service_accountable_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "perimeter_item_billing_accountable_user_id_app_user_id_fk": {
+          "name": "perimeter_item_billing_accountable_user_id_app_user_id_fk",
+          "tableFrom": "perimeter_item",
+          "tableTo": "app_user",
+          "columnsFrom": [
+            "billing_accountable_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "perimeter_item_sla_accountable_user_id_app_user_id_fk": {
+          "name": "perimeter_item_sla_accountable_user_id_app_user_id_fk",
+          "tableFrom": "perimeter_item",
+          "tableTo": "app_user",
+          "columnsFrom": [
+            "sla_accountable_user_id"
           ],
           "columnsTo": [
             "id"
@@ -10590,6 +11218,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "perimeter_item_pending_cr_fk": {
+          "name": "perimeter_item_pending_cr_fk",
+          "tableFrom": "perimeter_item",
+          "tableTo": "change_request",
+          "columnsFrom": [
+            "project_id",
+            "pending_change_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -10605,6 +11248,229 @@
       },
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.perimeter_version": {
+      "name": "perimeter_version",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_no": {
+          "name": "version_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'proposed'"
+        },
+        "snapshot": {
+          "name": "snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot_hash": {
+          "name": "snapshot_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_count": {
+          "name": "item_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "proposed_by": {
+          "name": "proposed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "decided_by": {
+          "name": "decided_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decision_id": {
+          "name": "decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decision_note": {
+          "name": "decision_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "superseded_at": {
+          "name": "superseded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "perimeter_version_no_uq": {
+          "name": "perimeter_version_no_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version_no",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "perimeter_version_one_proposed_uq": {
+          "name": "perimeter_version_one_proposed_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "status = 'proposed'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "perimeter_version_one_approved_uq": {
+          "name": "perimeter_version_one_approved_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "status = 'approved'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "perimeter_version_project_id_project_id_fk": {
+          "name": "perimeter_version_project_id_project_id_fk",
+          "tableFrom": "perimeter_version",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "perimeter_version_decision_fk": {
+          "name": "perimeter_version_decision_fk",
+          "tableFrom": "perimeter_version",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "perimeter_version_pid_uq": {
+          "name": "perimeter_version_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "perimeter_version_status_ck": {
+          "name": "perimeter_version_status_ck",
+          "value": "\"perimeter_version\".\"status\" in ('proposed', 'approved', 'rejected', 'superseded')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.readiness_check": {
@@ -11054,6 +11920,19 @@
           "primaryKey": false,
           "notNull": false
         },
+        "origin": {
+          "name": "origin",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manual'"
+        },
+        "source_reference": {
+          "name": "source_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "applicability": {
           "name": "applicability",
           "type": "applicability_status",
@@ -11064,7 +11943,13 @@
         },
         "applicability_assessed_by": {
           "name": "applicability_assessed_by",
-          "type": "text",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "applicability_assessed_at": {
+          "name": "applicability_assessed_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -11118,6 +12003,36 @@
           "primaryKey": false,
           "notNull": false
         },
+        "outcome_recorded_by": {
+          "name": "outcome_recorded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "outcome_recorded_at": {
+          "name": "outcome_recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "conditions_satisfied_by": {
+          "name": "conditions_satisfied_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "conditions_satisfied_at": {
+          "name": "conditions_satisfied_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "conditions_satisfaction_note": {
+          "name": "conditions_satisfaction_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "legal_entity_id": {
           "name": "legal_entity_id",
           "type": "uuid",
@@ -11137,6 +12052,14 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'proposed'"
+        },
+        "classification": {
+          "name": "classification",
+          "type": "classification",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'confidential'"
         },
         "is_demo": {
           "name": "is_demo",
@@ -11249,7 +12172,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "regulatory_requirement_origin_ck": {
+          "name": "regulatory_requirement_origin_ck",
+          "value": "\"regulatory_requirement\".\"origin\" in ('manual', 'source_extraction', 'import')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.transfer_record": {
@@ -11278,6 +12206,18 @@
         "perimeter_item_id": {
           "name": "perimeter_item_id",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "aspect": {
+          "name": "aspect",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "command": {
+          "name": "command",
+          "type": "varchar(32)",
           "primaryKey": false,
           "notNull": true
         },
@@ -11310,6 +12250,19 @@
         "note": {
           "name": "note",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evidence_count": {
+          "name": "evidence_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "reviews_record_id": {
+          "name": "reviews_record_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -11372,12 +12325,45 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "transfer_record_reviews_fk": {
+          "name": "transfer_record_reviews_fk",
+          "tableFrom": "transfer_record",
+          "tableTo": "transfer_record",
+          "columnsFrom": [
+            "project_id",
+            "reviews_record_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "transfer_record_pid_uq": {
+          "name": "transfer_record_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "transfer_record_aspect_ck": {
+          "name": "transfer_record_aspect_ck",
+          "value": "\"transfer_record\".\"aspect\" in ('legal', 'economic')"
+        },
+        "transfer_record_command_ck": {
+          "name": "transfer_record_command_ck",
+          "value": "\"transfer_record\".\"command\" in ('plan', 'start', 'report_transferred', 'verify', 'reject_evidence', 'block', 'unblock', 'mark_not_applicable')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.tsa_service": {

@@ -139,6 +139,13 @@ export const legalEntity = pgTable('legal_entity', {
   incorporationStatus: incorporationStatus('incorporation_status').notNull().default('unconfirmed'),
   incorporationVerification: verificationStatus('incorporation_verification').notNull().default('unknown'),
   incorporationEvidenceNote: text('incorporation_evidence_note'),
+  /** Who recorded the current incorporation status and when (newco module; the verifier must be someone else). */
+  incorporationRecordedBy: uuid('incorporation_recorded_by'),
+  incorporationRecordedAt: ts('incorporation_recorded_at'),
+  /** Legal verification of the status against evidence (newco.incorporation.verify, not_self). */
+  incorporationVerifiedBy: uuid('incorporation_verified_by'),
+  incorporationVerifiedAt: ts('incorporation_verified_at'),
+  incorporationVerificationNote: text('incorporation_verification_note'),
   jurisdiction: text('jurisdiction'),
   isDemo: isDemo(),
   createdAt: createdAt(),
