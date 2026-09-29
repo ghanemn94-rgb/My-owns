@@ -64,6 +64,17 @@ test("sandbox-run: the command's exit status is returned", () => {
   rmSync(repo, { recursive: true, force: true });
 });
 
+test("D-030: candidate code runs with /proc/sys read-only (kernel tunables cannot be changed)", () => {
+  assert.ok(hasBwrap, "bwrap is not installed");
+  const repo = fixture();
+  // sandbox-run mounts a fresh procfs with /proc/sys read-only; a test -w read check only, no write attempted.
+  const r = run(repo, `for f in /proc/sys/kernel/domainname /proc/sys/vm/drop_caches; do test -w "$f" && echo "WRITABLE $f" || echo "RO $f"; done`);
+  assert.equal(r.status, 0, r.stderr);
+  assert.doesNotMatch(r.stdout, /WRITABLE/);
+  assert.match(r.stdout, /RO \/proc\/sys\/kernel\/domainname/);
+  rmSync(repo, { recursive: true, force: true });
+});
+
 test("F-DG0-141: the clone, checkout and command run inside the sandbox, in a work area no other process can see", async () => {
   // A concurrently running agent can write $TMPDIR and /tmp (shell sandbox and file tools). If the work clone lived
   // there, it could plant a git filter or hook before the checkout, or change files while they are checked.

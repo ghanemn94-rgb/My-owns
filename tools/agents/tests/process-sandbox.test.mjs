@@ -279,18 +279,18 @@ test("D-030: the auditor's gate record for its own stage is copied back; another
 // (process sandbox -> Claude Code Bash sandbox -> its bwrap) is verified by the real-agent probe under
 // docs/delivery/test-evidence/DG0/orchestrator-probes, not here: a unit test cannot reproduce the CLI's Bash sandbox,
 // which supplies the privileged user namespace that the innermost bwrap needs.
-test("D-030: /proc/sys is read-only inside the process sandbox (kernel tunables cannot be changed)", () => {
+test("D-030: the process sandbox binds the host procfs and creates no PID/IPC namespace (so nested bwrap works)", () => {
   requireTools();
   const fx = fixture();
   const sb = sandbox(fx, "domain-reviewer");
-  // Read-only check only (test -w), and a same-name self-write attempt whose failure is what we assert.
-  const r = sb.run(`for f in /proc/sys/kernel/domainname /proc/sys/vm/drop_caches; do test -w "$f" && echo "WRITABLE $f" || echo "RO $f"; done`);
+  // /proc shows the host PID namespace (PID 1 is not this sandbox's own init), confirming it is transparent to it.
+  const r = sb.run(`readlink /proc/self/exe >/dev/null && echo PROC_OK; head -c 0 /proc/1/cmdline >/dev/null 2>&1 && echo PROC1_VISIBLE`);
   assert.equal(r.status, 0, r.stderr);
-  assert.doesNotMatch(r.stdout, /WRITABLE/);
-  assert.match(r.stdout, /RO \/proc\/sys\/kernel\/domainname/);
+  assert.match(r.stdout, /PROC_OK/);
   const { summary } = sb.finish();
-  assert.equal(summary.procsys_readonly, true);
-  assert.equal(summary.procfs, "fresh");
-  assert.deepEqual(summary.unshare, []);
+  assert.equal(summary.procfs, "host-bind"); // bound host procfs, not a fresh --proc mount (nested bwrap needs it)
+  assert.deepEqual(summary.unshare, []); // no PID/IPC namespace of the sandbox's own
+  // /proc/sys read-only where candidate code runs is verified by the sandbox-run test (fresh procfs) and, for the
+  // full reviewer stack, by the real-agent probe under docs/delivery/test-evidence/DG0/orchestrator-probes.
   rmSync(fx.base, { recursive: true, force: true });
 });

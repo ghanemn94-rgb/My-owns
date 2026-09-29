@@ -125,19 +125,23 @@ def plan(role, repo_root, cwd, stage, run_tmp, state_dir, claude_bin, home=None)
 
 
 def bwrap_args(p):
-    # A fresh procfs for the current (host) PID namespace, with /proc/sys read-only so a confined process cannot change
-    # kernel tunables (D-030 hardening; round-16 code-security verifies it). run-agent invokes bwrap with the host's full privileges, so mounting the procfs and
-    # binding /proc/sys read-only both happen before the capability drop below.
+    # The host's real procfs is bound in (read-write; the CLI needs a working /proc, e.g. /proc/self). It is NOT a
+    # fresh --proc mount and it carries no read-only submount over /proc/sys, because either would make the procfs
+    # "not fully visible" to the kernel, which then forbids a fresh procfs mount deeper in the stack. A reviewer's own
+    # bwrap (the pre-freeze via tools/gates/sandbox-run.sh, the sandbox tests) nests inside the Claude Code Bash
+    # sandbox and must be able to mount its own fresh procfs; verified inside a real reviewer's shell (D-030).
     #
-    # The sandbox deliberately does NOT create a PID or IPC namespace. The Claude Code Bash sandbox nested inside it
-    # creates its own PID namespace, and a reviewer's own bwrap (the pre-freeze, the sandbox tests) nests inside THAT.
-    # A private procfs two PID namespaces up cannot serve that innermost bwrap: it can neither mount a fresh procfs
-    # (denied) nor read its children's namespace files (they carry the inner namespace's PID numbering, absent from the
-    # outer procfs). Keeping this sandbox transparent to the PID namespace reproduces the round-15 topology, in which a
-    # reviewer's bwrap works. It does not weaken write confinement (the read-only binds and the capability drop do
-    # that, F-DG0-145); it only means the agent shares the host PID/IPC namespaces, disclosed in the threat model.
+    # The sandbox deliberately creates NO PID or IPC namespace (transparent to them), so that innermost bwrap sees the
+    # same PID numbering in /proc as it operates on. This reproduces the round-15 topology in which a reviewer's bwrap
+    # works. It does not weaken write confinement -- the read-only binds and the capability drop do that (F-DG0-145),
+    # independent of the PID namespace. The trade-offs are disclosed in the threat model: the agent shares the host
+    # PID/IPC namespaces and sees a read-write host /proc. /proc/sys kernel tunables are read-only for the agent's
+    # SHELL (the Claude Code Bash sandbox's user namespace, as in round 15) and inside the reviewer's own fresh-procfs
+    # sandboxes (userns default), where candidate code runs; a file-tool write to a uid-0-writable /proc/sys entry is a
+    # disclosed residual (an availability / host-tunable risk, not repository or gate integrity), which round-16
+    # code-security assesses (option A, chosen by the user 2026-09-29).
     a = ["--die-with-parent", "--new-session", "--setenv", "MTH_PROCESS_SANDBOX", "1",
-         "--ro-bind", "/", "/", "--dev", "/dev", "--proc", "/proc", "--ro-bind", "/proc/sys", "/proc/sys",
+         "--ro-bind", "/", "/", "--dev", "/dev", "--bind", "/proc", "/proc",
          "--tmpfs", "/tmp", "--tmpfs", "/var/tmp"]
     # Repositories and a HOME under /tmp or /var/tmp (tests, the live probe) stay visible, read-only.
     for r in p["roots"] + ([p["home"]] if p["home"] != "/" else []):
@@ -253,8 +257,7 @@ def finish(argv):
                     f.write(data)
                 accepted.append(path)
     summary = {"schema": p["schema"], "role": p["role"], "root": p["root"], "confined": p["confined"],
-               "read_only_root": True, "private_tmp": ["/tmp", "/var/tmp"], "procfs": "fresh", "procsys_readonly": True,
-               "run_tmp": p["run_tmp"],
+               "read_only_root": True, "private_tmp": ["/tmp", "/var/tmp"], "procfs": "host-bind", "run_tmp": p["run_tmp"],
                "writable_areas": p["binds"] if p["confined"] else ["."],
                "read_only_within_writable": [os.path.relpath(x, p["root"]) for x in p["protected"]],
                "staged": [{"area": s["rel"], "accept": s["accept"], "replace": s["replace"], "copied": s["copied"]}

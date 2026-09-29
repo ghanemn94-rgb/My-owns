@@ -365,7 +365,7 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
       const staged = [{ area: `docs/delivery/reviews/${stageId}`, accept: `round-[0-9]+/${pyEscape(role)}\\.[^/]+`, replace: false, copied: null },
         ...(role === AUDITOR ? [{ area: "docs/delivery/gates", accept: `${stageId}\\.json`, replace: true, copied: null }] : [])];
       const confined = px.schema === "mth-process-sandbox-v1" && px.role === role && px.confined === true && px.root === cwdRoot &&
-        px.read_only_root === true && px.procfs === "fresh" && px.procsys_readonly === true && px.private_sessions === true && px.no_new_privs === true &&
+        px.read_only_root === true && px.procfs === "host-bind" && px.private_sessions === true && px.no_new_privs === true &&
         JSON.stringify(px.capabilities) === JSON.stringify(["CAP_SETFCAP"]);
       if (!confined) bad("its agent process was not confined by the process sandbox (D-030)");
       if (JSON.stringify(px.writable_areas) !== JSON.stringify(areas)) bad(`its process sandbox made ${JSON.stringify(px.writable_areas)} writable, not the role's ${JSON.stringify(areas)}`);
