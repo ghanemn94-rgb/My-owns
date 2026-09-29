@@ -54,6 +54,7 @@ export function DocumentsTab() {
       key: 'title',
       header: t('documents.list.columns.title'),
       isRowHeader: true,
+      className: 'min-w-48',
       cell: (d) => (
         <span className="flex flex-wrap items-center gap-1.5">
           <Link href={href(d.id)} className={btn.link} dir="auto" data-testid="document-link">
@@ -70,6 +71,7 @@ export function DocumentsTab() {
     {
       key: 'version',
       header: t('documents.list.columns.version'),
+      className: 'min-w-40',
       cell: (d) =>
         d.currentVersion ? (
           <span className="flex flex-col">
@@ -92,6 +94,7 @@ export function DocumentsTab() {
       key: 'title',
       header: t('documents.list.columns.title'),
       isRowHeader: true,
+      className: 'min-w-64',
       cell: (h) => (
         <span className="flex flex-col gap-1">
           <Link href={href(h.documentId)} className={btn.link} dir="auto" data-testid="search-hit">

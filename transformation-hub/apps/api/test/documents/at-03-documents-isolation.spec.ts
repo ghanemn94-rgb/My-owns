@@ -130,6 +130,12 @@ describe('AT-03 — classification and room ACL inside SQL: lists, counts, searc
     expect(secHit.body.items.map((h: { documentId: string; matchedIn: string }) => [h.documentId, h.matchedIn])).toContainEqual([roomDocId, 'content']);
     const secTitle = await secretary.get(`${docsPath(dcId)}/search?q=${encodeURIComponent('finance note')}`).expect(200);
     expect(secTitle.body.items.map((h: { documentId: string }) => h.documentId)).toContain(restrictedId);
+    // Filters narrow the visible set only (same predicate as the list); totals follow the filter.
+    const filtered = await secretary.get(`${docsPath(dcId)}/search?q=${encodeURIComponent('finance note')}&classification=confidential`).expect(200);
+    expect(filtered.body.items.map((h: { documentId: string }) => h.documentId)).not.toContain(restrictedId);
+    expect(filtered.body.total).toBe(filtered.body.items.length);
+    const byKind = await secretary.get(`${docsPath(dcId)}/search?q=${encodeURIComponent('finance note')}&kind=financial_model&classification=restricted`).expect(200);
+    expect(byKind.body.items.map((h: { documentId: string }) => h.documentId)).toEqual([restrictedId]);
   });
 
   it('direct reads and downloads of hidden documents are 404 (existence not revealed)', async () => {

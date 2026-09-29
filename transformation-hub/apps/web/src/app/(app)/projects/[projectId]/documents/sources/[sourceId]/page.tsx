@@ -157,6 +157,7 @@ function SourceView({ source }: { source: SourceDetail }) {
       key: 'subject',
       header: t('documents.claims.columns.subject'),
       isRowHeader: true,
+      className: 'min-w-48',
       cell: (c) => (
         <span className="flex flex-col gap-0.5">
           <span dir="auto">{c.subject}</span>
@@ -169,6 +170,7 @@ function SourceView({ source }: { source: SourceDetail }) {
     {
       key: 'values',
       header: t('documents.claims.columns.values'),
+      className: 'min-w-56',
       cell: (c) => (
         <dl className="space-y-0.5 text-xs">
           <div>
@@ -196,6 +198,7 @@ function SourceView({ source }: { source: SourceDetail }) {
     {
       key: 'verification',
       header: t('documents.claims.columns.verification'),
+      className: 'min-w-44',
       cell: (c) => (
         <span className="flex flex-col gap-1" data-testid="claim-verification" data-claim-subject={c.subject}>
           <VerificationBadge value={c.verificationStatus} />
@@ -237,15 +240,16 @@ function SourceView({ source }: { source: SourceDetail }) {
   ];
 
   const compareColumns: Column<CompareRow>[] = [
-    { key: 'subject', header: t('documents.claims.columns.subject'), isRowHeader: true, cell: (r) => <span dir="auto">{r.subject}</span> },
+    { key: 'subject', header: t('documents.claims.columns.subject'), isRowHeader: true, className: 'min-w-44', cell: (r) => <span dir="auto">{r.subject}</span> },
     { key: 'target', header: t('documents.claims.columns.target'), cell: (r) => <span className="text-xs">{targetLabel(r.targetType, r.field)}</span> },
     { key: 'current', header: t('documents.compare.current'), cell: (r) => <span dir="auto">{r.currentValue ?? EM_DASH}</span> },
     { key: 'claim', header: t('documents.compare.claim'), cell: (r) => <span dir="auto">{r.claimValue}</span> },
     { key: 'previous', header: t('documents.compare.previous'), cell: (r) => <span dir="auto">{r.previousSourceValue ?? EM_DASH}</span> },
-    { key: 'verification', header: t('documents.claims.columns.verification'), cell: (r) => <VerificationBadge value={r.verificationStatus} /> },
+    { key: 'verification', header: t('documents.claims.columns.verification'), className: 'min-w-44', cell: (r) => <VerificationBadge value={r.verificationStatus} /> },
     {
       key: 'outcome',
       header: t('documents.compare.outcome'),
+      className: 'min-w-64',
       cell: (r) => (
         <span className="flex flex-col gap-0.5 text-xs" data-applicable={String(r.applicable)}>
           <span className={cx('font-semibold', r.applicable ? 'text-success' : 'text-muted')}>{r.applicable ? t('documents.compare.canPropose') : t('documents.compare.notApplied')}</span>

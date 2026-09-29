@@ -114,9 +114,10 @@ function DocumentDetailView({ doc }: { doc: DocumentDetail }) {
     {
       key: 'file',
       header: t('documents.versions.columns.file'),
+      className: 'min-w-44',
       cell: (v) => (
         <span className="flex flex-col">
-          <span dir="auto" className="break-all">
+          <span dir="auto" className="wrap-anywhere">
             {v.filename}
           </span>
           {v.note ? (

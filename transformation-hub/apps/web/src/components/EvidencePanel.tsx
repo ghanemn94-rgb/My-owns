@@ -344,10 +344,13 @@ export function EvidencePanel({
                 <div className="mt-2 flex flex-wrap gap-2">
                   {canVerify && !mine ? (
                     <>
-                      <button type="button" className={btn.secondary} onClick={() => setPending({ kind: 'accept', link: l })} data-testid="evidence-verify">
-                        <CheckCheck aria-hidden="true" className="size-4" />
-                        {t('documents.evidence.verify')}
-                      </button>
+                      {/* Already-verified active links need no second acceptance; conflicting ones are re-verified after resolution. */}
+                      {!l.reviewedAt || l.status === 'conflicting' ? (
+                        <button type="button" className={btn.secondary} onClick={() => setPending({ kind: 'accept', link: l })} data-testid="evidence-verify">
+                          <CheckCheck aria-hidden="true" className="size-4" />
+                          {t('documents.evidence.verify')}
+                        </button>
+                      ) : null}
                       <button type="button" className={btn.secondary} onClick={() => setPending({ kind: 'reject', link: l })}>
                         <Ban aria-hidden="true" className="size-4" />
                         {t('documents.evidence.reject')}
