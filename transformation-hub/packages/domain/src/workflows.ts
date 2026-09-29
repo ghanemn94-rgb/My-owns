@@ -200,14 +200,16 @@ export const TSA_MACHINE: Machine<TsaStatus, TsaCommand> = {
     description: 'Exit accepted — replacement service accepted with evidence',
   },
   record_extension: {
-    from: ['active', 'exit_in_progress', 'expired_unresolved', 'breached'],
+    // `extended` included: a further extension needs its own approved decision (the guard runs on every extension).
+    from: ['active', 'extended', 'exit_in_progress', 'expired_unresolved', 'breached'],
     to: 'extended',
     description: 'Extension recorded ONLY with an approved decision (guard: assertTsaExtensionAllowed); never automatic',
   },
   record_breach: { from: ['active', 'extended', 'exit_in_progress'], to: 'breached', description: 'SLA/contract breach recorded' },
   remedy_breach: { from: ['breached'], to: 'active', description: 'Breach remedied' },
   mark_expired_unresolved: {
-    from: ['active', 'extended', 'exit_in_progress', 'breached'],
+    // `approved` included (P0 review D-25): an approved TSA whose end date passes without an exit is not "ok".
+    from: ['approved', 'active', 'extended', 'exit_in_progress', 'breached'],
     to: 'expired_unresolved',
     description: 'End date passed without accepted exit — escalation required',
   },

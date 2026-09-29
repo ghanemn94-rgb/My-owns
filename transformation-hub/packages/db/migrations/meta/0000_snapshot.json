@@ -1,5 +1,5 @@
 {
-  "id": "e9c12543-275f-4461-8b81-646ff0646a36",
+  "id": "d2b86b33-ac29-4323-8efc-911e6c6844f6",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -9950,6 +9950,168 @@
       },
       "isRLSEnabled": false
     },
+    "public.cutover_decision_record": {
+      "name": "cutover_decision_record",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cutover_plan_id": {
+          "name": "cutover_plan_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from_status": {
+          "name": "from_status",
+          "type": "cutover_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "to_status": {
+          "name": "to_status",
+          "type": "cutover_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rationale": {
+          "name": "rationale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "go_decision_id": {
+          "name": "go_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evaluation": {
+          "name": "evaluation",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "cutover_decision_record_plan_idx": {
+          "name": "cutover_decision_record_plan_idx",
+          "columns": [
+            {
+              "expression": "cutover_plan_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "cutover_decision_record_project_id_project_id_fk": {
+          "name": "cutover_decision_record_project_id_project_id_fk",
+          "tableFrom": "cutover_decision_record",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "cutover_decision_record_plan_fk": {
+          "name": "cutover_decision_record_plan_fk",
+          "tableFrom": "cutover_decision_record",
+          "tableTo": "cutover_plan",
+          "columnsFrom": [
+            "project_id",
+            "cutover_plan_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "cutover_decision_record_decision_fk": {
+          "name": "cutover_decision_record_decision_fk",
+          "tableFrom": "cutover_decision_record",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "go_decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.cutover_plan": {
       "name": "cutover_plan",
       "schema": "",
@@ -9987,6 +10149,12 @@
         },
         "site_id": {
           "name": "site_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workstream_id": {
+          "name": "workstream_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -10033,6 +10201,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "communications_approval_ref": {
+          "name": "communications_approval_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "testing_summary": {
           "name": "testing_summary",
@@ -10099,6 +10273,36 @@
           "notNull": true,
           "default": "'planning'"
         },
+        "submitted_for_decision_by": {
+          "name": "submitted_for_decision_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "submitted_for_decision_at": {
+          "name": "submitted_for_decision_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "executed_by": {
+          "name": "executed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "executed_at": {
+          "name": "executed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "execution_note": {
+          "name": "execution_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "post_transition_accepted": {
           "name": "post_transition_accepted",
           "type": "boolean",
@@ -10109,6 +10313,18 @@
         "post_transition_accepted_by": {
           "name": "post_transition_accepted_by",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_transition_accepted_at": {
+          "name": "post_transition_accepted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_transition_acceptance_note": {
+          "name": "post_transition_acceptance_note",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -10234,6 +10450,21 @@
           "columnsFrom": [
             "project_id",
             "site_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "cutover_plan_ws_fk": {
+          "name": "cutover_plan_ws_fk",
+          "tableFrom": "cutover_plan",
+          "tableTo": "workstream",
+          "columnsFrom": [
+            "project_id",
+            "workstream_id"
           ],
           "columnsTo": [
             "project_id",
@@ -11551,6 +11782,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "template_key": {
+          "name": "template_key",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "mandatory": {
           "name": "mandatory",
           "type": "boolean",
@@ -11576,6 +11819,24 @@
           "name": "waiver_authority_role",
           "type": "role_key",
           "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "waivability_basis": {
+          "name": "waivability_basis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "waivability_determined_by": {
+          "name": "waivability_determined_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "waivability_determined_at": {
+          "name": "waivability_determined_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -11609,6 +11870,12 @@
         "signed_off_at": {
           "name": "signed_off_at",
           "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "signoff_note": {
+          "name": "signoff_note",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -11686,6 +11953,27 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "readiness_check_status_idx": {
+          "name": "readiness_check_status_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -11695,6 +11983,19 @@
           "tableTo": "project",
           "columnsFrom": [
             "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "readiness_check_owner_user_id_app_user_id_fk": {
+          "name": "readiness_check_owner_user_id_app_user_id_fk",
+          "tableFrom": "readiness_check",
+          "tableTo": "app_user",
+          "columnsFrom": [
+            "owner_user_id"
           ],
           "columnsTo": [
             "id"
@@ -11841,7 +12142,29 @@
           "default": 1
         }
       },
-      "indexes": {},
+      "indexes": {
+        "readiness_test_run_seq_uq": {
+          "name": "readiness_test_run_seq_uq",
+          "columns": [
+            {
+              "expression": "readiness_check_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "seq",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "readiness_test_run_project_id_project_id_fk": {
           "name": "readiness_test_run_project_id_project_id_fk",
@@ -12509,9 +12832,35 @@
           "primaryKey": false,
           "notNull": false
         },
+        "workstream_id": {
+          "name": "workstream_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "classification": {
+          "name": "classification",
+          "type": "classification",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'confidential'"
+        },
         "replacement_service": {
           "name": "replacement_service",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replacement_plan": {
+          "name": "replacement_plan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replacement_due_date": {
+          "name": "replacement_due_date",
+          "type": "date",
           "primaryKey": false,
           "notNull": false
         },
@@ -12531,6 +12880,18 @@
         "replacement_accepted_at": {
           "name": "replacement_accepted_at",
           "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replacement_failed_at": {
+          "name": "replacement_failed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replacement_failure_note": {
+          "name": "replacement_failure_note",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -12574,15 +12935,57 @@
           "primaryKey": false,
           "notNull": false
         },
+        "approval_decision_id": {
+          "name": "approval_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "extension_decision_id": {
           "name": "extension_decision_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
+        "proposed_end_date": {
+          "name": "proposed_end_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "extension_requested_by": {
+          "name": "extension_requested_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "extension_requested_at": {
+          "name": "extension_requested_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "continuity_plan": {
           "name": "continuity_plan",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exit_approval_request_id": {
+          "name": "exit_approval_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exit_approved_by": {
+          "name": "exit_approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exit_approved_at": {
+          "name": "exit_approved_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -12639,6 +13042,27 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "tsa_service_status_idx": {
+          "name": "tsa_service_status_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -12719,6 +13143,51 @@
           "columnsFrom": [
             "project_id",
             "extension_decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tsa_service_approval_decision_fk": {
+          "name": "tsa_service_approval_decision_fk",
+          "tableFrom": "tsa_service",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "approval_decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tsa_service_exit_approval_fk": {
+          "name": "tsa_service_exit_approval_fk",
+          "tableFrom": "tsa_service",
+          "tableTo": "approval_request",
+          "columnsFrom": [
+            "project_id",
+            "exit_approval_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tsa_service_ws_fk": {
+          "name": "tsa_service_ws_fk",
+          "tableFrom": "tsa_service",
+          "tableTo": "workstream",
+          "columnsFrom": [
+            "project_id",
+            "workstream_id"
           ],
           "columnsTo": [
             "project_id",

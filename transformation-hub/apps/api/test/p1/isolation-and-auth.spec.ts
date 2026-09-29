@@ -20,11 +20,16 @@ afterAll(async () => {
 describe('AT-03 — cross-project isolation (API layer) [REQ-SEC-007, REQ-ENT]', () => {
   it('lists only authorized projects', async () => {
     // (Other test files may add projects for the PM; assert inclusion/exclusion rather than exact lists.)
-    const a = await pm.get('/api/v1/projects').expect(200);
+    // Search by code so the assertion does not depend on how many projects other specs created for the PM.
+    const own = await pm.get(`/api/v1/projects?q=${DC}&pageSize=100`).expect(200);
+    expect(own.body.items.map((p: { code: string }) => p.code)).toContain(DC);
+    const other = await pm.get(`/api/v1/projects?q=${GEN}&pageSize=100`).expect(200);
+    expect(other.body).toMatchObject({ total: 0, items: [] }); // not listed and not counted
+    const a = await pm.get('/api/v1/projects?pageSize=100').expect(200);
     const aCodes = a.body.items.map((p: { code: string }) => p.code);
-    expect(aCodes).toContain(DC);
     expect(aCodes).not.toContain(GEN);
-    expect(a.body.total).toBe(aCodes.length);
+    // the total counts exactly the rows the PM may see (a full page when there are more than 100)
+    expect(aCodes.length).toBe(Math.min(a.body.total, 100));
     const b = await pmB.get('/api/v1/projects').expect(200);
     expect(b.body.items.map((p: { code: string }) => p.code)).toEqual([GEN]);
   });

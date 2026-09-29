@@ -34,7 +34,7 @@ import {
 import { project, site, workstream, legalEntity } from './portfolio';
 import { appUser } from './identity';
 import { document, documentVersion } from './documents';
-import { decision, escalation } from './governance';
+import { decision, escalation, approvalRequest } from './governance';
 import { waiver } from './gates';
 import { changeRequest } from './planning';
 
@@ -434,19 +434,39 @@ export const tsaService = pgTable(
     extensionTerms: text('extension_terms'),
     terminationTerms: text('termination_terms'),
     ownerUserId: uuid('owner_user_id').references(() => appUser.id),
+    /** Workstream accountable for the service (own_workstream / workstream reach of readiness.tsa.manage). */
+    workstreamId: uuid('workstream_id'),
+    /** TSA records carry commercial terms (charge basis): confidential by default (access-matrix §2.3). */
+    classification: classification('classification').notNull().default('confidential'),
     replacementService: text('replacement_service'),
+    /** How and by when the replacement is delivered (the replacement plan). */
+    replacementPlan: text('replacement_plan'),
+    replacementDueDate: date('replacement_due_date', { mode: 'string' }),
     replacementAccepted: boolean('replacement_accepted').notNull().default(false),
     replacementAcceptedBy: uuid('replacement_accepted_by'),
     replacementAcceptedAt: ts('replacement_accepted_at'),
+    /** Last reported replacement-service failure (REQ-TSA-004); history in record_version + audit. */
+    replacementFailedAt: ts('replacement_failed_at'),
+    replacementFailureNote: text('replacement_failure_note'),
     exitMilestones: jsonb('exit_milestones').$type<{ title: string; dueDate?: string; done?: boolean }[]>().notNull().default([]),
     acceptanceEvidenceNote: text('acceptance_evidence_note'),
     residualRisks: text('residual_risks'),
     isEnduringArrangement: boolean('is_enduring_arrangement').notNull().default(false),
     status: tsaStatus('status').notNull().default('proposed'),
     escalationId: uuid('escalation_id'),
+    /** Governance decision that approved the TSA terms (type tsa_approval_or_extension). */
+    approvalDecisionId: uuid('approval_decision_id'),
     /** Approved decision authorizing an extension (never automatic — P0 review D-06). */
     extensionDecisionId: uuid('extension_decision_id'),
+    /** Requested new end date awaiting the extension decision (applied only by record-extension). */
+    proposedEndDate: date('proposed_end_date', { mode: 'string' }),
+    extensionRequestedBy: uuid('extension_requested_by'),
+    extensionRequestedAt: ts('extension_requested_at'),
     continuityPlan: text('continuity_plan'),
+    /** approveTSAExit: approval request bound to the TSA version + payload hash (REQ-TSA-006). */
+    exitApprovalRequestId: uuid('exit_approval_request_id'),
+    exitApprovedBy: uuid('exit_approved_by'),
+    exitApprovedAt: ts('exit_approved_at'),
     isDemo: isDemo(),
     createdAt: createdAt(),
     createdBy: createdBy(),
@@ -456,9 +476,13 @@ export const tsaService = pgTable(
   (t) => [
     projectFk('tsa_service_escalation_fk', t.projectId, t.escalationId, (): FkTarget => escalation),
     projectFk('tsa_service_extension_decision_fk', t.projectId, t.extensionDecisionId, (): FkTarget => decision),
+    projectFk('tsa_service_approval_decision_fk', t.projectId, t.approvalDecisionId, (): FkTarget => decision),
+    projectFk('tsa_service_exit_approval_fk', t.projectId, t.exitApprovalRequestId, (): FkTarget => approvalRequest),
+    projectFk('tsa_service_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
     unique('tsa_service_pid_uq').on(t.projectId, t.id),
     uniqueIndex('tsa_service_code_uq').on(t.projectId, t.code),
     projectFk('tsa_service_agreement_fk', t.projectId, t.agreementId, (): FkTarget => agreement),
+    index('tsa_service_status_idx').on(t.projectId, t.status),
   ],
 );
 
@@ -471,6 +495,8 @@ export const cutoverPlan = pgTable(
     code: varchar('code', { length: 32 }).notNull(),
     title: text('title').notNull(),
     siteId: uuid('site_id'),
+    /** Workstream accountable for the transition (own_workstream / workstream reach of readiness.cutover.manage). */
+    workstreamId: uuid('workstream_id'),
     runbookDocumentId: uuid('runbook_document_id'),
     runbookSummary: text('runbook_summary'),
     windowStart: ts('window_start'),
@@ -478,6 +504,8 @@ export const cutoverPlan = pgTable(
     serviceImpact: text('service_impact'),
     accountableUserId: uuid('accountable_user_id').references(() => appUser.id),
     communicationsApproved: boolean('communications_approved').notNull().default(false),
+    /** Reference of the communications approval (who/what approved them outside the platform). */
+    communicationsApprovalRef: text('communications_approval_ref'),
     testingSummary: text('testing_summary'),
     rehearsalDone: boolean('rehearsal_done').notNull().default(false),
     contingencyPlan: text('contingency_plan'),
@@ -488,8 +516,17 @@ export const cutoverPlan = pgTable(
     goNoGoRationale: text('go_no_go_rationale'),
     goDecisionId: uuid('go_decision_id'),
     status: cutoverStatus('status').notNull().default('planning'),
+    /** Requester of the go/no-go (the decider must be another person — access-matrix §2.4). */
+    submittedForDecisionBy: uuid('submitted_for_decision_by'),
+    submittedForDecisionAt: ts('submitted_for_decision_at'),
+    /** Execution recorded here; the change itself happens in the approved operational systems (REQ-RDY-006). */
+    executedBy: uuid('executed_by'),
+    executedAt: ts('executed_at'),
+    executionNote: text('execution_note'),
     postTransitionAccepted: boolean('post_transition_accepted').notNull().default(false),
     postTransitionAcceptedBy: uuid('post_transition_accepted_by'),
+    postTransitionAcceptedAt: ts('post_transition_accepted_at'),
+    postTransitionAcceptanceNote: text('post_transition_acceptance_note'),
     isDemo: isDemo(),
     createdAt: createdAt(),
     createdBy: createdBy(),
@@ -502,6 +539,38 @@ export const cutoverPlan = pgTable(
     unique('cutover_plan_pid_uq').on(t.projectId, t.id),
     uniqueIndex('cutover_plan_code_uq').on(t.projectId, t.code),
     projectFk('cutover_plan_site_fk', t.projectId, t.siteId, (): FkTarget => site),
+    projectFk('cutover_plan_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
+  ],
+);
+
+/**
+ * Go/no-go decision history of a cutover plan (AT-09 "decision history"): submissions, GO / NO-GO decisions, GO attempts
+ * refused by the server (with the blockers at that moment), execution, rollback and acceptance. Append-only by design —
+ * the service never updates or deletes rows (lead request: add to the post-migrate append-only list).
+ */
+export const cutoverDecisionRecord = pgTable(
+  'cutover_decision_record',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    cutoverPlanId: uuid('cutover_plan_id').notNull(),
+    /** submitted | returned_to_planning | rehearsal | go | no_go | go_blocked | executed | rolled_back | accepted */
+    kind: varchar('kind', { length: 32 }).notNull(),
+    fromStatus: cutoverStatus('from_status'),
+    toStatus: cutoverStatus('to_status'),
+    actorUserId: uuid('actor_user_id').notNull(),
+    rationale: text('rationale'),
+    goDecisionId: uuid('go_decision_id'),
+    /** Server evaluation at that moment: open blockers and missing prerequisites. */
+    evaluation: jsonb('evaluation').$type<{ blockers: { id: string; title: string; status: string; blocker: boolean }[]; missing: string[] }>(),
+    isDemo: isDemo(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    projectFk('cutover_decision_record_plan_fk', t.projectId, t.cutoverPlanId, (): FkTarget => cutoverPlan),
+    projectFk('cutover_decision_record_decision_fk', t.projectId, t.goDecisionId, (): FkTarget => decision),
+    index('cutover_decision_record_plan_idx').on(t.cutoverPlanId, t.createdAt),
   ],
 );
 
@@ -519,17 +588,26 @@ export const readinessCheck = pgTable(
     siteId: uuid('site_id'),
     workstreamId: uuid('workstream_id'),
     cutoverPlanId: uuid('cutover_plan_id'),
+    /** Accountable owner of the check (own_workstream; excluded from signing it off — access-matrix §2.4). */
+    ownerUserId: uuid('owner_user_id').references(() => appUser.id),
+    /** Key of the template default check it was instantiated from (DC template readinessAreas), if any. */
+    templateKey: varchar('template_key', { length: 64 }),
     mandatory: boolean('mandatory').notNull().default(true),
     blocker: boolean('blocker').notNull().default(false),
     /** Waivability set by a specialist; a waiver needs an approved `waiver` row (P0 review D-02). */
     waivable: boolean('waivable').notNull().default(false),
     waiverAuthorityRole: roleKey('waiver_authority_role'),
+    waivabilityBasis: text('waivability_basis'),
+    waivabilityDeterminedBy: uuid('waivability_determined_by'),
+    waivabilityDeterminedAt: ts('waivability_determined_at'),
     waiverId: uuid('waiver_id'),
     status: readinessStatus('status').notNull().default('not_started'),
     signoffRole: roleKey('signoff_role'),
     signedOffBy: uuid('signed_off_by'),
     signedOffAt: ts('signed_off_at'),
+    signoffNote: text('signoff_note'),
     testResult: text('test_result'),
+    /** Contingency runbook applied when the check fails (AT-09 shows it next to the blocker). */
     failureContingency: text('failure_contingency'),
     dueDate: date('due_date', { mode: 'string' }),
     isDemo: isDemo(),
@@ -545,6 +623,7 @@ export const readinessCheck = pgTable(
     projectFk('readiness_check_site_fk', t.projectId, t.siteId, (): FkTarget => site),
     projectFk('readiness_check_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
     projectFk('readiness_check_cutover_fk', t.projectId, t.cutoverPlanId, (): FkTarget => cutoverPlan),
+    index('readiness_check_status_idx').on(t.projectId, t.status),
   ],
 );
 
@@ -562,7 +641,11 @@ export const readinessTestRun = pgTable(
     recordedAt: createdAt(),
     seq: integer('seq').notNull().default(1),
   },
-  (t) => [projectFk('readiness_test_run_check_fk', t.projectId, t.readinessCheckId, (): FkTarget => readinessCheck)],
+  (t) => [
+    projectFk('readiness_test_run_check_fk', t.projectId, t.readinessCheckId, (): FkTarget => readinessCheck),
+    // One run per sequence number (the check's version lock serializes writers).
+    uniqueIndex('readiness_test_run_seq_uq').on(t.readinessCheckId, t.seq),
+  ],
 );
 
 /**

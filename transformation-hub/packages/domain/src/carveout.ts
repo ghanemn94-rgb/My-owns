@@ -240,27 +240,42 @@ export function goDecisionBlockers(
     .map((c) => ({ id: c.id, title: c.title, status: c.status, blocker: c.blocker }));
 }
 
+/**
+ * The §7.4 transition elements a GO needs. Every field is REQUIRED (domain review N-01: an omitted input must never
+ * weaken the guard), and a GO additionally needs the approved governance go/no-go decision (REQ-RDY-004).
+ */
 export interface CutoverPrerequisites {
   hasRunbook: boolean;
+  /** Contingency AND rollback plan documented (§7.4 "contingency/rollback"; AT-09 shows the contingency runbook). */
   hasRollbackPlan: boolean;
   communicationsApproved: boolean;
   /** §7.4: window, service-impact assessment, accountable owner and testing are also mandatory (D-14). */
-  hasWindow?: boolean;
-  hasServiceImpact?: boolean;
-  hasAccountableOwner?: boolean;
-  testingDone?: boolean;
+  hasWindow: boolean;
+  hasServiceImpact: boolean;
+  hasAccountableOwner: boolean;
+  testingDone: boolean;
+  /** A FINAL approved governance decision authorizing the go-live is linked (the platform records authority; AT-04). */
+  hasApprovedGoDecision: boolean;
+}
+
+/** Missing §7.4 prerequisites (labels) — `includeDecision` = false when checking a plan before it goes to decision. */
+export function missingCutoverPrerequisites(cutover: CutoverPrerequisites, opts: { includeDecision: boolean } = { includeDecision: true }): string[] {
+  const missing: string[] = [];
+  // `!== true` so that a value that is not an explicit `true` (e.g. undefined from an untyped caller) fails closed.
+  if (cutover.hasRunbook !== true) missing.push('runbook');
+  if (cutover.hasRollbackPlan !== true) missing.push('contingency/rollback plan');
+  if (cutover.communicationsApproved !== true) missing.push('approved communications');
+  if (cutover.hasWindow !== true) missing.push('transition window');
+  if (cutover.hasServiceImpact !== true) missing.push('service-impact assessment');
+  if (cutover.hasAccountableOwner !== true) missing.push('accountable owner');
+  if (cutover.testingDone !== true) missing.push('testing / rehearsal');
+  if (opts.includeDecision && cutover.hasApprovedGoDecision !== true) missing.push('approved go/no-go decision');
+  return missing;
 }
 
 export function assertGoAllowed(checks: Parameters<typeof goDecisionBlockers>[0], cutover: CutoverPrerequisites) {
   const blockers = goDecisionBlockers(checks);
-  const missing: string[] = [];
-  if (!cutover.hasRunbook) missing.push('runbook');
-  if (!cutover.hasRollbackPlan) missing.push('contingency/rollback plan');
-  if (!cutover.communicationsApproved) missing.push('approved communications');
-  if (cutover.hasWindow === false) missing.push('transition window');
-  if (cutover.hasServiceImpact === false) missing.push('service-impact assessment');
-  if (cutover.hasAccountableOwner === false) missing.push('accountable owner');
-  if (cutover.testingDone === false) missing.push('testing / rehearsal');
+  const missing = missingCutoverPrerequisites(cutover);
   if (blockers.length > 0 || missing.length > 0) {
     throw ruleViolation('readiness.go_blocked', 'A GO decision is blocked by open readiness blockers or missing cutover prerequisites', {
       blockers,
@@ -269,11 +284,29 @@ export function assertGoAllowed(checks: Parameters<typeof goDecisionBlockers>[0]
   }
 }
 
-/** Readiness checks may be waived only if flagged waivable (by a specialist) and approved by a different person. */
-export function assertReadinessWaiverAllowed(c: { waivable: boolean; blocker: boolean; approverUserId: string; requesterUserId: string; basis: string }) {
-  if (!c.waivable) throw ruleViolation('readiness.waiver.non_waivable', 'This readiness check is not waivable');
+/**
+ * Readiness checks may be waived only if a specialist flagged them waivable, the approver holds the specialist-set
+ * waiver authority role, the approver is not the requester, and the basis AND impact are documented (spec §3 "record
+ * every waiver's basis, approval, and impact"; AT-13; domain review N-02 — mirrors the gate `assertWaiverAllowed`).
+ */
+export function assertReadinessWaiverAllowed(c: {
+  checkCode?: string;
+  waivable: boolean;
+  blocker: boolean;
+  waiverAuthorityRole: string | null;
+  approverRoles: string[];
+  approverUserId: string;
+  requesterUserId: string;
+  basis: string;
+  impact: string;
+}) {
+  const label = c.checkCode ? `Readiness check ${c.checkCode}` : 'This readiness check';
+  if (!c.waivable) throw ruleViolation('readiness.waiver.non_waivable', `${label} is not waivable`);
+  if (!c.waiverAuthorityRole || !c.approverRoles.includes(c.waiverAuthorityRole)) {
+    throw ruleViolation('readiness.waiver.unauthorized', `A waiver of ${label.toLowerCase()} requires the ${c.waiverAuthorityRole ?? 'designated (not yet determined)'} waiver authority`);
+  }
   if (c.approverUserId === c.requesterUserId) throw ruleViolation('readiness.waiver.self_approval', 'A waiver cannot be approved by its requester');
-  if (!c.basis.trim()) throw ruleViolation('readiness.waiver.missing_basis', 'A waiver requires a documented basis and impact');
+  if (!c.basis.trim() || !c.impact.trim()) throw ruleViolation('readiness.waiver.missing_basis', 'A waiver requires a documented basis and impact');
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -290,13 +323,16 @@ export interface TsaExpiryInput {
 export type TsaExpiryAssessment =
   | { kind: 'ok' }
   | { kind: 'expiring'; daysLeft: number }
-  | { kind: 'expired_unresolved'; daysOverdue: number };
+  | { kind: 'expired_unresolved'; daysOverdue: number }
+  /** End date passed, replacement accepted, but the exit itself is not yet approved (P0 review D-25). Not an exit. */
+  | { kind: 'exit_acceptance_pending'; daysOverdue: number };
 
 export function assessTsaExpiry(i: TsaExpiryInput): TsaExpiryAssessment {
   if (!i.endDate || ['exit_accepted', 'proposed', 'negotiating'].includes(i.status)) return { kind: 'ok' };
   const days = Math.round((Date.parse(i.endDate) - Date.parse(i.today)) / 86_400_000);
   if (days < 0 && !i.replacementAccepted) return { kind: 'expired_unresolved', daysOverdue: -days };
-  if (days >= 0 && days <= i.warnDays) return { kind: 'expiring', daysLeft: days };
+  if (days < 0) return { kind: 'exit_acceptance_pending', daysOverdue: -days };
+  if (days <= i.warnDays) return { kind: 'expiring', daysLeft: days };
   return { kind: 'ok' };
 }
 

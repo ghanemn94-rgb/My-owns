@@ -199,13 +199,17 @@ describe('AT-07 / AT-08 / AT-09 / AT-10 — carve-out rules', () => {
     expect(assertDay1ContractPosition({ transferClass: 'transferable', classAssessedBy: 'Legal (demo)', consentGranted: false, interimArrangement: null, serviceAccountableOwner: null, billingAccountableOwner: null, slaAccountableOwner: null, remediationPlan: null }).ok).toBe(true);
   });
   it('D-02: a waived blocker clears GO only when waivable with an approved waiver', () => {
-    const cut = { hasRunbook: true, hasRollbackPlan: true, communicationsApproved: true, hasWindow: true, hasServiceImpact: true, hasAccountableOwner: true, testingDone: true };
+    const cut = { hasRunbook: true, hasRollbackPlan: true, communicationsApproved: true, hasWindow: true, hasServiceImpact: true, hasAccountableOwner: true, testingDone: true, hasApprovedGoDecision: true };
     expect(() => assertGoAllowed([{ id: 'c', title: 'NOC handover', mandatory: true, blocker: true, status: 'waived' }], cut)).toThrow(/GO decision is blocked/);
     expect(() => assertGoAllowed([{ id: 'c', title: 'NOC handover', mandatory: true, blocker: true, status: 'waived', waivable: true, hasApprovedWaiver: true }], cut)).not.toThrow();
-    expect(() => assertReadinessWaiverAllowed({ waivable: false, blocker: true, approverUserId: 'a', requesterUserId: 'b', basis: 'x' })).toThrow(/not waivable/);
+    expect(() =>
+      assertReadinessWaiverAllowed({ waivable: false, blocker: true, waiverAuthorityRole: 'sponsor', approverRoles: ['sponsor'], approverUserId: 'a', requesterUserId: 'b', basis: 'x', impact: 'y' }),
+    ).toThrow(/not waivable/);
   });
   it('D-14: GO also requires window, service impact, accountable owner and testing', () => {
-    expect(() => assertGoAllowed([], { hasRunbook: true, hasRollbackPlan: true, communicationsApproved: true, hasWindow: false, hasServiceImpact: true, hasAccountableOwner: true, testingDone: false })).toThrow(/GO decision is blocked/);
+    expect(() =>
+      assertGoAllowed([], { hasRunbook: true, hasRollbackPlan: true, communicationsApproved: true, hasWindow: false, hasServiceImpact: true, hasAccountableOwner: true, testingDone: false, hasApprovedGoDecision: true }),
+    ).toThrow(/GO decision is blocked/);
   });
   it('D-05: legal and economic transfer combine to the least advanced', () => {
     expect(combinedTransferStatus('transferred_verified', 'in_progress')).toBe('in_progress');
@@ -225,6 +229,11 @@ describe('AT-07 / AT-08 / AT-09 / AT-10 — carve-out rules', () => {
         hasRunbook: true,
         hasRollbackPlan: true,
         communicationsApproved: true,
+        hasWindow: true,
+        hasServiceImpact: true,
+        hasAccountableOwner: true,
+        testingDone: true,
+        hasApprovedGoDecision: true,
       }),
     ).toThrow(/GO decision is blocked/);
   });

@@ -1219,6 +1219,22 @@ CREATE TABLE "consent" (
 	CONSTRAINT "consent_kind_ck" CHECK ("consent"."kind" in ('consent', 'novation', 'assignment', 'notification', 'other'))
 );
 --> statement-breakpoint
+CREATE TABLE "cutover_decision_record" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"cutover_plan_id" uuid NOT NULL,
+	"kind" varchar(32) NOT NULL,
+	"from_status" "cutover_status",
+	"to_status" "cutover_status",
+	"actor_user_id" uuid NOT NULL,
+	"rationale" text,
+	"go_decision_id" uuid,
+	"evaluation" jsonb,
+	"is_demo" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "cutover_plan" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"org_id" uuid NOT NULL,
@@ -1226,6 +1242,7 @@ CREATE TABLE "cutover_plan" (
 	"code" varchar(32) NOT NULL,
 	"title" text NOT NULL,
 	"site_id" uuid,
+	"workstream_id" uuid,
 	"runbook_document_id" uuid,
 	"runbook_summary" text,
 	"window_start" timestamp with time zone,
@@ -1233,6 +1250,7 @@ CREATE TABLE "cutover_plan" (
 	"service_impact" text,
 	"accountable_user_id" uuid,
 	"communications_approved" boolean DEFAULT false NOT NULL,
+	"communications_approval_ref" text,
 	"testing_summary" text,
 	"rehearsal_done" boolean DEFAULT false NOT NULL,
 	"contingency_plan" text,
@@ -1243,8 +1261,15 @@ CREATE TABLE "cutover_plan" (
 	"go_no_go_rationale" text,
 	"go_decision_id" uuid,
 	"status" "cutover_status" DEFAULT 'planning' NOT NULL,
+	"submitted_for_decision_by" uuid,
+	"submitted_for_decision_at" timestamp with time zone,
+	"executed_by" uuid,
+	"executed_at" timestamp with time zone,
+	"execution_note" text,
 	"post_transition_accepted" boolean DEFAULT false NOT NULL,
 	"post_transition_accepted_by" uuid,
+	"post_transition_accepted_at" timestamp with time zone,
+	"post_transition_acceptance_note" text,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
@@ -1393,15 +1418,21 @@ CREATE TABLE "readiness_check" (
 	"site_id" uuid,
 	"workstream_id" uuid,
 	"cutover_plan_id" uuid,
+	"owner_user_id" uuid,
+	"template_key" varchar(64),
 	"mandatory" boolean DEFAULT true NOT NULL,
 	"blocker" boolean DEFAULT false NOT NULL,
 	"waivable" boolean DEFAULT false NOT NULL,
 	"waiver_authority_role" "role_key",
+	"waivability_basis" text,
+	"waivability_determined_by" uuid,
+	"waivability_determined_at" timestamp with time zone,
 	"waiver_id" uuid,
 	"status" "readiness_status" DEFAULT 'not_started' NOT NULL,
 	"signoff_role" "role_key",
 	"signed_off_by" uuid,
 	"signed_off_at" timestamp with time zone,
+	"signoff_note" text,
 	"test_result" text,
 	"failure_contingency" text,
 	"due_date" date,
@@ -1508,18 +1539,31 @@ CREATE TABLE "tsa_service" (
 	"extension_terms" text,
 	"termination_terms" text,
 	"owner_user_id" uuid,
+	"workstream_id" uuid,
+	"classification" "classification" DEFAULT 'confidential' NOT NULL,
 	"replacement_service" text,
+	"replacement_plan" text,
+	"replacement_due_date" date,
 	"replacement_accepted" boolean DEFAULT false NOT NULL,
 	"replacement_accepted_by" uuid,
 	"replacement_accepted_at" timestamp with time zone,
+	"replacement_failed_at" timestamp with time zone,
+	"replacement_failure_note" text,
 	"exit_milestones" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"acceptance_evidence_note" text,
 	"residual_risks" text,
 	"is_enduring_arrangement" boolean DEFAULT false NOT NULL,
 	"status" "tsa_status" DEFAULT 'proposed' NOT NULL,
 	"escalation_id" uuid,
+	"approval_decision_id" uuid,
 	"extension_decision_id" uuid,
+	"proposed_end_date" date,
+	"extension_requested_by" uuid,
+	"extension_requested_at" timestamp with time zone,
 	"continuity_plan" text,
+	"exit_approval_request_id" uuid,
+	"exit_approved_by" uuid,
+	"exit_approved_at" timestamp with time zone,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
@@ -2596,11 +2640,15 @@ ALTER TABLE "consent" ADD CONSTRAINT "consent_owner_user_id_app_user_id_fk" FORE
 ALTER TABLE "consent" ADD CONSTRAINT "consent_item_fk" FOREIGN KEY ("project_id","perimeter_item_id") REFERENCES "public"."perimeter_item"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "consent" ADD CONSTRAINT "consent_agreement_fk" FOREIGN KEY ("project_id","agreement_id") REFERENCES "public"."agreement"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "consent" ADD CONSTRAINT "consent_response_doc_fk" FOREIGN KEY ("project_id","response_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cutover_decision_record" ADD CONSTRAINT "cutover_decision_record_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cutover_decision_record" ADD CONSTRAINT "cutover_decision_record_plan_fk" FOREIGN KEY ("project_id","cutover_plan_id") REFERENCES "public"."cutover_plan"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cutover_decision_record" ADD CONSTRAINT "cutover_decision_record_decision_fk" FOREIGN KEY ("project_id","go_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_accountable_user_id_app_user_id_fk" FOREIGN KEY ("accountable_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_runbook_fk" FOREIGN KEY ("project_id","runbook_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_go_decision_fk" FOREIGN KEY ("project_id","go_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_site_fk" FOREIGN KEY ("project_id","site_id") REFERENCES "public"."site"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "operating_model_definition" ADD CONSTRAINT "operating_model_definition_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "operating_model_definition" ADD CONSTRAINT "operating_model_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "perimeter_category_review" ADD CONSTRAINT "perimeter_category_review_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2621,6 +2669,7 @@ ALTER TABLE "perimeter_item" ADD CONSTRAINT "perimeter_item_pending_cr_fk" FOREI
 ALTER TABLE "perimeter_version" ADD CONSTRAINT "perimeter_version_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "perimeter_version" ADD CONSTRAINT "perimeter_version_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "readiness_check" ADD CONSTRAINT "readiness_check_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "readiness_check" ADD CONSTRAINT "readiness_check_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "readiness_check" ADD CONSTRAINT "readiness_check_waiver_fk" FOREIGN KEY ("project_id","waiver_id") REFERENCES "public"."waiver"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "readiness_check" ADD CONSTRAINT "readiness_check_site_fk" FOREIGN KEY ("project_id","site_id") REFERENCES "public"."site"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "readiness_check" ADD CONSTRAINT "readiness_check_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2639,6 +2688,9 @@ ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_recipient_entity_id_legal_
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_escalation_fk" FOREIGN KEY ("project_id","escalation_id") REFERENCES "public"."escalation"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_extension_decision_fk" FOREIGN KEY ("project_id","extension_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_approval_decision_fk" FOREIGN KEY ("project_id","approval_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_exit_approval_fk" FOREIGN KEY ("project_id","exit_approval_request_id") REFERENCES "public"."approval_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_agreement_fk" FOREIGN KEY ("project_id","agreement_id") REFERENCES "public"."agreement"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "benefit" ADD CONSTRAINT "benefit_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "benefit" ADD CONSTRAINT "benefit_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2777,6 +2829,7 @@ CREATE INDEX "waiver_target_idx" ON "waiver" USING btree ("project_id","target_t
 CREATE UNIQUE INDEX "agreement_code_uq" ON "agreement" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "agreement_version_uq" ON "agreement_version" USING btree ("agreement_id","version_label");--> statement-breakpoint
 CREATE UNIQUE INDEX "consent_code_uq" ON "consent" USING btree ("project_id","code");--> statement-breakpoint
+CREATE INDEX "cutover_decision_record_plan_idx" ON "cutover_decision_record" USING btree ("cutover_plan_id","created_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "cutover_plan_code_uq" ON "cutover_plan" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "operating_model_definition_uq" ON "operating_model_definition" USING btree ("project_id","version_label");--> statement-breakpoint
 CREATE UNIQUE INDEX "perimeter_category_review_uq" ON "perimeter_category_review" USING btree ("project_id","category");--> statement-breakpoint
@@ -2787,9 +2840,12 @@ CREATE UNIQUE INDEX "perimeter_version_no_uq" ON "perimeter_version" USING btree
 CREATE UNIQUE INDEX "perimeter_version_one_proposed_uq" ON "perimeter_version" USING btree ("project_id") WHERE status = 'proposed';--> statement-breakpoint
 CREATE UNIQUE INDEX "perimeter_version_one_approved_uq" ON "perimeter_version" USING btree ("project_id") WHERE status = 'approved';--> statement-breakpoint
 CREATE UNIQUE INDEX "readiness_check_code_uq" ON "readiness_check" USING btree ("project_id","code");--> statement-breakpoint
+CREATE INDEX "readiness_check_status_idx" ON "readiness_check" USING btree ("project_id","status");--> statement-breakpoint
+CREATE UNIQUE INDEX "readiness_test_run_seq_uq" ON "readiness_test_run" USING btree ("readiness_check_id","seq");--> statement-breakpoint
 CREATE UNIQUE INDEX "regulatory_requirement_code_uq" ON "regulatory_requirement" USING btree ("project_id","code");--> statement-breakpoint
 CREATE INDEX "transfer_record_item_idx" ON "transfer_record" USING btree ("perimeter_item_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "tsa_service_code_uq" ON "tsa_service" USING btree ("project_id","code");--> statement-breakpoint
+CREATE INDEX "tsa_service_status_idx" ON "tsa_service" USING btree ("project_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "benefit_code_uq" ON "benefit" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "budget_line_code_uq" ON "budget_line" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "financial_model_uq" ON "financial_model_version" USING btree ("project_id","kind","version_label","model_case");--> statement-breakpoint
