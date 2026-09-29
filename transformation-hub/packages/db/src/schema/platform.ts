@@ -224,3 +224,20 @@ export const recordVersion = pgTable(
   },
   (t) => [uniqueIndex('record_version_uq').on(t.entityType, t.entityId, t.versionNo)],
 );
+
+/**
+ * Periodic checkpoints of the audit chain head. Exported to an external log store in production so that truncation of
+ * the chain tail becomes detectable (ADR-0014 limits). Append-only.
+ */
+export const auditCheckpoint = pgTable(
+  'audit_checkpoint',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    chainPos: bigint('chain_pos', { mode: 'number' }).notNull(),
+    hash: varchar('hash', { length: 64 }).notNull(),
+    rowCount: bigint('row_count', { mode: 'number' }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('audit_checkpoint_org_idx').on(t.orgId, t.chainPos)],
+);

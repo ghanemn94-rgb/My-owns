@@ -9,6 +9,7 @@ import {
   versionCol,
   ts,
   projectFk,
+  type FkTarget,
   aiMode,
   aiProvider,
   aiRunStatus,
@@ -110,7 +111,7 @@ export const aiProposal = pgTable(
   (t) => [
     unique('ai_proposal_pid_uq').on(t.projectId, t.id),
     uniqueIndex('ai_proposal_idem_uq').on(t.idempotencyKey),
-    projectFk('ai_proposal_run_fk', t.projectId, t.runId, aiRun),
+    projectFk('ai_proposal_run_fk', t.projectId, t.runId, (): FkTarget => aiRun),
   ],
 );
 
@@ -129,7 +130,7 @@ export const aiActionApproval = pgTable(
     invalidatedReason: text('invalidated_reason'),
     createdAt: createdAt(),
   },
-  (t) => [projectFk('ai_action_approval_proposal_fk', t.projectId, t.proposalId, aiProposal)],
+  (t) => [projectFk('ai_action_approval_proposal_fk', t.projectId, t.proposalId, (): FkTarget => aiProposal)],
 );
 
 /**

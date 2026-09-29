@@ -82,8 +82,11 @@ export class ScopeService {
     };
   }
 
-  /** Service principal for worker jobs: scoped to exactly one project, no human roles. */
-  servicePrincipal(orgId: string, projectId: string | null, serviceIdentity: string): Principal {
+  /**
+   * Service principal for worker jobs: scoped to exactly one project, no human roles, and an explicit permission
+   * allowlist (deny by default — ARCH-09). User-facing output must instead use JobContextFactory.forUser().
+   */
+  servicePrincipal(orgId: string, projectId: string | null, serviceIdentity: string, permissions: string[] = []): Principal {
     const projects = new Map<string, ProjectScope>();
     if (projectId) projects.set(projectId, { projectId, roles: new Set(), workstreamRoles: [], roomIds: new Set(), cleanTeamRoomIds: new Set(), roomRoles: [] });
     return {
@@ -97,6 +100,7 @@ export class ScopeService {
       orgRoles: new Set(),
       projects,
       serviceIdentity,
+      servicePermissions: new Set(permissions),
     };
   }
 }

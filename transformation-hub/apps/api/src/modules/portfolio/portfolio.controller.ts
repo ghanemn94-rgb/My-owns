@@ -29,13 +29,13 @@ export class PortfolioController {
   }
 
   @ApiRoute(R.listTemplates)
-  listTemplates() {
-    return this.svc.listTemplates();
+  listTemplates(@Ctx() ctx: RequestContext) {
+    return this.svc.listTemplates(ctx);
   }
 
   @ApiRoute(R.listPrograms)
-  listPrograms() {
-    return this.svc.listPrograms();
+  listPrograms(@Ctx() ctx: RequestContext) {
+    return this.svc.listPrograms(ctx);
   }
 
   @ApiRoute(R.directory)

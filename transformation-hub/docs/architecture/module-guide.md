@@ -78,6 +78,19 @@ principal at execution time (AT-19).
 - Approvals: use the `approval_request` / `approval_record` tables for approvals that are not committee votes (gate decision
   support, waivers, baselines, TSA exit, closing confirmation). Bind to `subjectVersion` + `payloadHash`.
 
+### Mandatory patterns added after the P0 architecture review (read carefully)
+- **Every submitted id** (path, body, query) is loaded with `loadInProject(db, table, projectId, id)` before use — the DB
+  also enforces composite FKs and the polymorphic same-project trigger (allowed polymorphic target types are listed in
+  `hub_target_table()` in `packages/db/sql/post-migrate.sql`; ask the lead to add a type).
+- **Lists and counts** must use `policy.visibilitySql(ctx, projectId, { classification: table.classification, room: table.roomId })`
+  in the WHERE clause (room-only principals — clean team / external partner — see only their rooms).
+- **Responses must match the route's `response` schema exactly** — in test mode a mismatch fails with
+  `500 contract.response_mismatch` (ResponseContractInterceptor). Return plain JSON (ISO strings for dates).
+- **Jobs:** use `JobContextFactory` — `forService(job, 'svc-<module>', [permissions...])` for maintenance (explicit
+  permission allowlist), `forUser(userId, projectId)` for anything user-facing (returns null if access was revoked → skip
+  and record). Long jobs call `queue.extendLease(job, ms)`. External deliveries go through `DeliveryService`.
+- Denied/rejected mutations are audited automatically by the problem filter; do not swallow domain errors.
+
 ## 3. Database changes
 Edit only your schema file. For local testing run, in your worktree:
 `pnpm --filter @hub/db build && (cd packages/db && rm -rf migrations/* && npx drizzle-kit generate --name initial_schema)`

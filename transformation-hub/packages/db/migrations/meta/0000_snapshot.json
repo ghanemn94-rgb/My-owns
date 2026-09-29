@@ -1,5 +1,5 @@
 {
-  "id": "5c215923-71e3-4ec8-a6cc-8526e9e180bc",
+  "id": "aa116430-5f2f-4148-89bc-a5aa82779ddc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2617,6 +2617,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "baseline_change_request_fk": {
+          "name": "baseline_change_request_fk",
+          "tableFrom": "baseline_version",
+          "tableTo": "change_request",
+          "columnsFrom": [
+            "project_id",
+            "change_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2819,6 +2834,21 @@
             "project_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "change_request_decision_fk": {
+          "name": "change_request_decision_fk",
+          "tableFrom": "change_request",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -5264,6 +5294,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "action_item_issue_fk": {
+          "name": "action_item_issue_fk",
+          "tableFrom": "action_item",
+          "tableTo": "issue",
+          "columnsFrom": [
+            "project_id",
+            "issue_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "action_item_decision_fk": {
           "name": "action_item_decision_fk",
           "tableFrom": "action_item",
@@ -6251,6 +6296,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "committee_charter_doc_fk": {
+          "name": "committee_charter_doc_fk",
+          "tableFrom": "committee",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "charter_document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -6401,6 +6461,21 @@
             "user_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "committee_membership_delegate_fk": {
+          "name": "committee_membership_delegate_fk",
+          "tableFrom": "committee_membership",
+          "tableTo": "committee_membership",
+          "columnsFrom": [
+            "project_id",
+            "delegate_of_membership_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -7151,6 +7226,36 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "escalation_committee_fk": {
+          "name": "escalation_committee_fk",
+          "tableFrom": "escalation",
+          "tableTo": "committee",
+          "columnsFrom": [
+            "project_id",
+            "raised_to_committee_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "escalation_resolution_fk": {
+          "name": "escalation_resolution_fk",
+          "tableFrom": "escalation",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "resolution_decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -7339,6 +7444,36 @@
             "project_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "meeting_matrix_fk": {
+          "name": "meeting_matrix_fk",
+          "tableFrom": "meeting",
+          "tableTo": "authority_matrix_version",
+          "columnsFrom": [
+            "project_id",
+            "authority_matrix_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "meeting_pack_fk": {
+          "name": "meeting_pack_fk",
+          "tableFrom": "meeting",
+          "tableTo": "report_snapshot",
+          "columnsFrom": [
+            "project_id",
+            "pack_snapshot_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -7627,6 +7762,36 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "vote_meeting_fk": {
+          "name": "vote_meeting_fk",
+          "tableFrom": "vote",
+          "tableTo": "meeting",
+          "columnsFrom": [
+            "project_id",
+            "meeting_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "vote_matrix_fk": {
+          "name": "vote_matrix_fk",
+          "tableFrom": "vote",
+          "tableTo": "authority_matrix_version",
+          "columnsFrom": [
+            "project_id",
+            "authority_matrix_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "vote_decision_fk": {
           "name": "vote_decision_fk",
           "tableFrom": "vote",
@@ -7803,6 +7968,21 @@
             "project_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "criterion_assessment_waiver_fk": {
+          "name": "criterion_assessment_waiver_fk",
+          "tableFrom": "criterion_assessment",
+          "tableTo": "waiver",
+          "columnsFrom": [
+            "project_id",
+            "waiver_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -8001,6 +8181,36 @@
             "project_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "gate_assessment_decision_fk": {
+          "name": "gate_assessment_decision_fk",
+          "tableFrom": "gate_assessment",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "gate_assessment_supersedes_fk": {
+          "name": "gate_assessment_supersedes_fk",
+          "tableFrom": "gate_assessment",
+          "tableTo": "gate_assessment",
+          "columnsFrom": [
+            "project_id",
+            "supersedes_assessment_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -8903,6 +9113,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "agreement_executed_doc_fk": {
+          "name": "agreement_executed_doc_fk",
+          "tableFrom": "agreement",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "executed_document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -9341,6 +9566,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "go_decision_id": {
+          "name": "go_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "status": {
           "name": "status",
           "type": "cutover_status",
@@ -9442,6 +9673,36 @@
             "accountable_user_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "cutover_plan_runbook_fk": {
+          "name": "cutover_plan_runbook_fk",
+          "tableFrom": "cutover_plan",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "runbook_document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "cutover_plan_go_decision_fk": {
+          "name": "cutover_plan_go_decision_fk",
+          "tableFrom": "cutover_plan",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "go_decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -9618,6 +9879,21 @@
             "project_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "operating_model_decision_fk": {
+          "name": "operating_model_decision_fk",
+          "tableFrom": "operating_model_definition",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -10241,6 +10517,21 @@
             "project_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "readiness_check_waiver_fk": {
+          "name": "readiness_check_waiver_fk",
+          "tableFrom": "readiness_check",
+          "tableTo": "waiver",
+          "columnsFrom": [
+            "project_id",
+            "waiver_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -11106,6 +11397,36 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "tsa_service_escalation_fk": {
+          "name": "tsa_service_escalation_fk",
+          "tableFrom": "tsa_service",
+          "tableTo": "escalation",
+          "columnsFrom": [
+            "project_id",
+            "escalation_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tsa_service_extension_decision_fk": {
+          "name": "tsa_service_extension_decision_fk",
+          "tableFrom": "tsa_service",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "extension_decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "tsa_service_agreement_fk": {
           "name": "tsa_service_agreement_fk",
           "tableFrom": "tsa_service",
@@ -11775,6 +12096,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "financial_model_doc_fk": {
+          "name": "financial_model_doc_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "source_document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -11991,6 +12327,21 @@
             "project_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_snapshot_doc_fk": {
+          "name": "financial_snapshot_doc_fk",
+          "tableFrom": "financial_snapshot",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "source_document_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -12758,6 +13109,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "closing_decision_fk": {
+          "name": "closing_decision_fk",
+          "tableFrom": "closing",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "confirmation_decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "closing_partner_fk": {
           "name": "closing_partner_fk",
           "tableFrom": "closing",
@@ -13012,6 +13378,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "closing_condition_waiver_fk": {
+          "name": "closing_condition_waiver_fk",
+          "tableFrom": "closing_condition",
+          "tableTo": "waiver",
+          "columnsFrom": [
+            "project_id",
+            "waiver_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "closing_condition_closing_fk": {
           "name": "closing_condition_closing_fk",
           "tableFrom": "closing_condition",
@@ -13174,6 +13555,21 @@
             "owner_user_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "closing_deliverable_doc_fk": {
+          "name": "closing_deliverable_doc_fk",
+          "tableFrom": "closing_deliverable",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "document_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -13547,6 +13943,21 @@
             "project_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "diligence_finding_risk_fk": {
+          "name": "diligence_finding_risk_fk",
+          "tableFrom": "diligence_finding",
+          "tableTo": "risk",
+          "columnsFrom": [
+            "project_id",
+            "risk_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -15258,6 +15669,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "document_chunk_room_fk": {
+          "name": "document_chunk_room_fk",
+          "tableFrom": "document_chunk",
+          "tableTo": "partner_room",
+          "columnsFrom": [
+            "project_id",
+            "room_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "document_chunk_document_fk": {
           "name": "document_chunk_document_fk",
           "tableFrom": "document_chunk",
@@ -15637,6 +16063,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "evidence_link_conflict_fk": {
+          "name": "evidence_link_conflict_fk",
+          "tableFrom": "evidence_link",
+          "tableTo": "evidence_link",
+          "columnsFrom": [
+            "project_id",
+            "conflict_with_link_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "evidence_link_document_fk": {
           "name": "evidence_link_document_fk",
           "tableFrom": "evidence_link",
@@ -15882,6 +16323,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "source_claim_conflict_fk": {
+          "name": "source_claim_conflict_fk",
+          "tableFrom": "source_claim",
+          "tableTo": "source_claim",
+          "columnsFrom": [
+            "project_id",
+            "conflict_with_claim_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "source_claim_source_fk": {
           "name": "source_claim_source_fk",
           "tableFrom": "source_claim",
@@ -16096,6 +16552,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "source_record_supersedes_fk": {
+          "name": "source_record_supersedes_fk",
+          "tableFrom": "source_record",
+          "tableTo": "source_record",
+          "columnsFrom": [
+            "project_id",
+            "supersedes_source_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "source_record_docver_fk": {
           "name": "source_record_docver_fk",
           "tableFrom": "source_record",
@@ -16275,6 +16746,36 @@
             "project_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "import_batch_source_fk": {
+          "name": "import_batch_source_fk",
+          "tableFrom": "import_batch",
+          "tableTo": "source_record",
+          "columnsFrom": [
+            "project_id",
+            "source_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "import_batch_docver_fk": {
+          "name": "import_batch_docver_fk",
+          "tableFrom": "import_batch",
+          "tableTo": "document_version",
+          "columnsFrom": [
+            "project_id",
+            "document_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -16720,6 +17221,36 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "report_snapshot_baseline_fk": {
+          "name": "report_snapshot_baseline_fk",
+          "tableFrom": "report_snapshot",
+          "tableTo": "baseline_version",
+          "columnsFrom": [
+            "project_id",
+            "baseline_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "report_snapshot_previous_fk": {
+          "name": "report_snapshot_previous_fk",
+          "tableFrom": "report_snapshot",
+          "tableTo": "report_snapshot",
+          "columnsFrom": [
+            "project_id",
+            "previous_snapshot_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -16733,6 +17264,79 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.audit_checkpoint": {
+      "name": "audit_checkpoint",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chain_pos": {
+          "name": "chain_pos",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash": {
+          "name": "hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "row_count": {
+          "name": "row_count",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "audit_checkpoint_org_idx": {
+          "name": "audit_checkpoint_org_idx",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "chain_pos",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

@@ -11,6 +11,7 @@ import {
   isDemo,
   ts,
   projectFk,
+  type FkTarget,
   classification,
   documentKind,
   scanStatus,
@@ -53,7 +54,7 @@ export const document = pgTable(
   },
   (t) => [
     unique('document_pid_uq').on(t.projectId, t.id),
-    projectFk('document_room_fk', t.projectId, t.roomId, partnerRoom),
+    projectFk('document_room_fk', t.projectId, t.roomId, (): FkTarget => partnerRoom),
     index('document_project_idx').on(t.projectId, t.kind),
   ],
 );
@@ -82,7 +83,7 @@ export const documentVersion = pgTable(
   },
   (t) => [
     unique('document_version_pid_uq').on(t.projectId, t.id),
-    projectFk('document_version_document_fk', t.projectId, t.documentId, document),
+    projectFk('document_version_document_fk', t.projectId, t.documentId, (): FkTarget => document),
     uniqueIndex('document_version_uq').on(t.documentId, t.versionNo),
   ],
 );
@@ -110,9 +111,10 @@ export const evidenceLink = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('evidence_link_conflict_fk', t.projectId, t.conflictWithLinkId, { projectId: t.projectId, id: t.id }),
     unique('evidence_link_pid_uq').on(t.projectId, t.id),
-    projectFk('evidence_link_document_fk', t.projectId, t.documentId, document),
-    projectFk('evidence_link_version_fk', t.projectId, t.documentVersionId, documentVersion),
+    projectFk('evidence_link_document_fk', t.projectId, t.documentId, (): FkTarget => document),
+    projectFk('evidence_link_version_fk', t.projectId, t.documentVersionId, (): FkTarget => documentVersion),
     index('evidence_link_target_idx').on(t.projectId, t.targetType, t.targetId),
   ],
 );
@@ -145,9 +147,10 @@ export const sourceRecord = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('source_record_supersedes_fk', t.projectId, t.supersedesSourceId, { projectId: t.projectId, id: t.id }),
     unique('source_record_pid_uq').on(t.projectId, t.id),
     uniqueIndex('source_record_code_uq').on(t.projectId, t.code),
-    projectFk('source_record_docver_fk', t.projectId, t.documentVersionId, documentVersion),
+    projectFk('source_record_docver_fk', t.projectId, t.documentVersionId, (): FkTarget => documentVersion),
   ],
 );
 
@@ -184,8 +187,9 @@ export const sourceClaim = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('source_claim_conflict_fk', t.projectId, t.conflictWithClaimId, { projectId: t.projectId, id: t.id }),
     unique('source_claim_pid_uq').on(t.projectId, t.id),
-    projectFk('source_claim_source_fk', t.projectId, t.sourceId, sourceRecord),
+    projectFk('source_claim_source_fk', t.projectId, t.sourceId, (): FkTarget => sourceRecord),
     index('source_claim_target_idx').on(t.projectId, t.targetType, t.targetId),
   ],
 );
@@ -213,8 +217,9 @@ export const documentChunk = pgTable(
     indexedAt: createdAt(),
   },
   (t) => [
-    projectFk('document_chunk_document_fk', t.projectId, t.documentId, document),
-    projectFk('document_chunk_version_fk', t.projectId, t.documentVersionId, documentVersion),
+    projectFk('document_chunk_room_fk', t.projectId, t.roomId, (): FkTarget => partnerRoom),
+    projectFk('document_chunk_document_fk', t.projectId, t.documentId, (): FkTarget => document),
+    projectFk('document_chunk_version_fk', t.projectId, t.documentVersionId, (): FkTarget => documentVersion),
     index('document_chunk_tsv_idx').using('gin', t.tsv),
     index('document_chunk_doc_idx').on(t.documentId),
   ],

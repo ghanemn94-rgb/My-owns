@@ -12,6 +12,9 @@ import { JobQueue } from './jobs/job-queue.service';
 import { JobRegistry } from './jobs/job-registry';
 import { WorkerService } from './jobs/worker.service';
 import { RecordVersionService } from './helpers';
+import { JobContextFactory } from './jobs/job-context';
+import { DeliveryService } from './delivery.service';
+import { RateLimiter } from './rate-limiter';
 
 const providers = [
   { provide: APP_CONFIG, useFactory: () => loadConfig() },
@@ -27,6 +30,9 @@ const providers = [
   JobRegistry,
   WorkerService,
   RecordVersionService,
+  JobContextFactory,
+  DeliveryService,
+  RateLimiter,
 ];
 
 /** Cross-cutting platform services shared by all modules. */
