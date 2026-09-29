@@ -1,0 +1,20 @@
+===== node round-17/r17-copyback-ipc-repro.mjs <tools/agents @ f84eed411dfb93fbe3a72d3475ee8ff7eae68f94>  (2026-09-29T16:29:43Z)
+A ipc: bwrap has --unshare-ipc=true host=ipc:[4026532265] sandbox=ipc:[4026532326] private=true
+A finish: exit=0 copied_back=[] discarded=[] unshare=["ipc"]
+B concurrent commit by another role: exit=0 copied_back=["docs/delivery/reviews/DG0/round-2/code-security-reviewer.json"] discarded=[] unshare=["ipc"]
+C scope: exit=3 copied_back=[] discarded=["docs/delivery/reviews/DG0/round-1/code-security-reviewer.json: existing file changed; review files are write-once (not copied)","docs/delivery/reviews/DG0/round-2/code-security-reviewer.link: symlink (not copied)","docs/delivery/reviews/DG0/round-2/domain-reviewer.json: outside the role's scope (not copied)","docs/delivery/reviews/DG0/top.json: outside the role's scope (not copied)"] unshare=["ipc"]
+C real round-1/code-security-reviewer.json unchanged=true real domain-reviewer kept=true forged absent=true
+D same-path collision: exit=1 copied_back=undefined discarded=undefined unshare=undefined stderr=         ^^^^^^^^^^^^^^^^^^^^^^^^^^^ | FileExistsError: [Errno 17] File exists: '/var/tmp/mth-run.AF7uOx/claude-0/r17-81YVd8/repo/docs/delivery/reviews/DG0/round-2/code-security-reviewer.json'
+D real file content={"theirs":1}
+E backdated own-role file (F-DG0-147): exit=0 copied_back=["docs/delivery/reviews/DG0/round-1/code-security-reviewer.backdated.json"] discarded=[] unshare=["ipc"]
+exit=0
+===== node round-17/r17-copyback-ipc-repro.mjs <tools/agents @ 450c756f679a911b4c736e856fc9dd5e9b2c89a8>  (2026-09-29T16:29:44Z)
+A ipc: bwrap has --unshare-ipc=true host=ipc:[4026532265] sandbox=ipc:[4026532326] private=true
+A finish: exit=0 copied_back=[] discarded=[] unshare=["ipc"]
+B concurrent commit by another role: exit=0 copied_back=["docs/delivery/reviews/DG0/round-2/code-security-reviewer.json"] discarded=[] unshare=["ipc"]
+C scope: exit=3 copied_back=[] discarded=["docs/delivery/reviews/DG0/round-1/code-security-reviewer.json: existing file changed; review files are write-once (not copied)","docs/delivery/reviews/DG0/round-2/code-security-reviewer.link: symlink (not copied)","docs/delivery/reviews/DG0/round-2/domain-reviewer.json: outside the role's scope (not copied)","docs/delivery/reviews/DG0/top.json: outside the role's scope (not copied)"] unshare=["ipc"]
+C real round-1/code-security-reviewer.json unchanged=true real domain-reviewer kept=true forged absent=true
+D same-path collision: exit=3 copied_back=[] discarded=["docs/delivery/reviews/DG0/round-2/code-security-reviewer.json: already present in the real tree; write-once (not copied)"] unshare=["ipc"]
+D real file content={"theirs":1}
+E backdated own-role file (F-DG0-147): exit=0 copied_back=["docs/delivery/reviews/DG0/round-1/code-security-reviewer.backdated.json"] discarded=[] unshare=["ipc"]
+exit=0

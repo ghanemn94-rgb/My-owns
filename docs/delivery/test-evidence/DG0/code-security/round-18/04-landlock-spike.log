@@ -1,0 +1,19 @@
+# node r18-landlock-spike.mjs $TMPDIR/dg0-sec  (candidate 450c756, 2026-09-29T16:29:26Z; kernel 6.18.44-fc-v49, Landlock ABI 7)
+--- attacker WITHOUT landlock (current D-030 design) (victim is landlocked in its own domain) ---
+B via /proc/<peer>/root: other reviewer evidence: WROTE
+C via /proc/<peer>/cwd: other reviewer evidence: WROTE
+D via /proc/<peer>/root: other run private TMPDIR: WROTE
+own evidence (must stay writable): WROTE
+own TMPDIR (must stay writable): WROTE
+cross-run signal (kill -0 peer): allowed
+nested bwrap with fresh --proc: works
+--- attacker WITH scope-only landlock domain per run (victim is landlocked in its own domain) ---
+B via /proc/<peer>/root: other reviewer evidence: refused (y/test-evidence/DG0/qa/via-proc-root.txt: Permission denied)
+C via /proc/<peer>/cwd: other reviewer evidence: refused (ry/test-evidence/DG0/qa/via-proc-cwd.txt: Permission denied)
+D via /proc/<peer>/root: other run private TMPDIR: refused (zOYIa/var-tmp/mth-run.IdfwVM/planted.txt: Permission denied)
+own evidence (must stay writable): WROTE
+own TMPDIR (must stay writable): WROTE
+cross-run signal (kill -0 peer): refused (n/sh: 6: kill: Operation not permitted)
+nested bwrap with fresh --proc: works
+fixture removed
+exit=0
