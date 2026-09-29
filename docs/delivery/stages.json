@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -20,10 +20,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:b7f60ed34dd77f93ca454edb545da1cee8e9cd7cdb649b5ad3895c454abddb5e",
-        "source_commit": "7fab49c5c6764721bbe2982aa621a34ea31cfdea",
-        "frozen_at": "2026-09-28T23:22:48Z",
-        "manifest_path": "docs/delivery/candidates/DG0/b7f60ed34dd77f93.manifest.json"
+        "candidate_id": "sha256:3013023aa21da2f42b3bb279bd094fa0a1879a2bb1c65fd4b1e4e0c050d84db9",
+        "source_commit": "4fd56d4d701ffe02586edaf2c0cc3966e6ff68a0",
+        "frozen_at": "2026-09-29T10:18:37Z",
+        "manifest_path": "docs/delivery/candidates/DG0/3013023aa21da2f4.manifest.json"
       },
       "review_rounds": [
         {
@@ -202,6 +202,18 @@
             "qa-verifier": "docs/delivery/reviews/DG0/round-15/qa-verifier.json"
           },
           "note": "Round 15: full re-review after the round-14 repairs (D-028: concurrent agents isolated) and T-DG0-AN-14; round-14 closures by domain and QA re-verified because of the round-14 incident"
+        },
+        {
+          "round": 16,
+          "candidate_id": "sha256:3013023aa21da2f42b3bb279bd094fa0a1879a2bb1c65fd4b1e4e0c050d84db9",
+          "frozen_at": "2026-09-29T10:18:37Z",
+          "source_commit": "4fd56d4d701ffe02586edaf2c0cc3966e6ff68a0",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG0/round-16/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG0/round-16/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG0/round-16/qa-verifier.json"
+          },
+          "note": "Round 16: full re-review after the round-15 repairs (D-029; D-030: whole agent process in a kernel-enforced process sandbox, the user-chosen repair of F-DG0-145)"
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
@@ -365,6 +377,11 @@
           "state": "FIXING",
           "at": "2026-09-28T23:51:29Z",
           "note": "Round 15: domain PASS; QA PASS (F-DG0-236/237 Low observations); code-security FAIL (F-DG0-145 High mandatory: write guard is check-then-use; F-DG0-146 Low). F-DG0-145 fix awaits a user decision: the outer-sandbox experiment was refused by the session's safety classifier. [at source: finished_at of the last round-15 reviewer run]"
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-09-29T10:18:37Z",
+          "note": "Round-15 findings repaired (D-029, D-030); sandboxed prefreeze PASS; candidate re-frozen for review round 16"
         }
       ]
     },
