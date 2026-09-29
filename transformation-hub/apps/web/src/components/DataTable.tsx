@@ -99,7 +99,7 @@ export function DataTable<T>({
   return (
     <div className={cx(card, 'overflow-hidden', className)} data-testid={testId}>
       {body ?? (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <caption className="sr-only">{caption}</caption>
             <thead className="bg-surface-muted">

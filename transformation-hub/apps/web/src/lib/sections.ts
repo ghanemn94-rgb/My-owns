@@ -39,7 +39,7 @@ export const PROJECT_SECTIONS: readonly SectionDef[] = [
   { key: 'overview', segment: '', permissions: ['portfolio.project.read'], phase: null },
   { key: 'charter', segment: 'charter', permissions: ['portfolio.project.read'], phase: null },
   { key: 'gates', segment: 'gates', permissions: ['gates.gate.read'], phase: null },
-  { key: 'committee', segment: 'committee', permissions: ['governance.committee.read', 'governance.decision.read'], phase: 'P2' },
+  { key: 'committee', segment: 'committee', permissions: ['governance.committee.read', 'governance.decision.read'], phase: null },
   { key: 'plan', segment: 'plan', permissions: ['planning.plan.read'], phase: null },
   { key: 'workstreams', segment: 'workstreams', permissions: ['planning.plan.read'], phase: null },
   { key: 'raid', segment: 'raid', permissions: ['planning.plan.read'], phase: null },

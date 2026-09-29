@@ -15,6 +15,7 @@ import enAdmin from './en/admin.json';
 import enGates from './en/gates.json';
 import enDocuments from './en/documents.json';
 import enPlanning from './en/planning.json';
+import enGovernance from './en/governance.json';
 import arCommon from './ar/common.json';
 import arNav from './ar/nav.json';
 import arAuth from './ar/auth.json';
@@ -27,6 +28,7 @@ import arAdmin from './ar/admin.json';
 import arGates from './ar/gates.json';
 import arDocuments from './ar/documents.json';
 import arPlanning from './ar/planning.json';
+import arGovernance from './ar/governance.json';
 
 const en = {
   common: enCommon,
@@ -41,6 +43,7 @@ const en = {
   gates: enGates,
   documents: enDocuments,
   planning: enPlanning,
+  governance: enGovernance,
 };
 
 export type Messages = typeof en;
@@ -59,6 +62,7 @@ const ar = {
   gates: arGates,
   documents: arDocuments,
   planning: arPlanning,
+  governance: arGovernance,
 } satisfies DeepShape<Messages>;
 
 type DeepShape<T> = { [K in keyof T]: T[K] extends string ? string : DeepShape<T[K]> };

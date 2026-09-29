@@ -19,13 +19,15 @@ export function errorHeadlineKey(error: unknown): MessageKey {
 /**
  * Inline error for forms and command dialogs:
  * 409 → "changed by someone else — reload and review" (+ reload action), 422/400 → the server's detail,
- * 403/404 → the neutral restricted message (existence is never revealed).
+ * 403 → the server's reason (separation of duties / authority on a visible record); 404 → the neutral restricted message
+ * (existence is never revealed).
  */
 export function ApiErrorNotice({ error, onReload, className }: { error: unknown; onReload?: () => void; className?: string }) {
   const t = useT();
   if (!error) return null;
   const e = isApiError(error) ? error : null;
-  const showDetail = e && (e.status === 422 || e.status === 400) && e.detail;
+  // 403 is only returned for VISIBLE resources (separation of duties, authority); its reason is safe to show. 404 never is.
+  const showDetail = e && (e.status === 422 || e.status === 400 || e.status === 403) && e.detail;
   return (
     <div role="alert" className={cx('rounded-md border border-danger/40 bg-danger-soft p-3 text-sm text-danger', className)}>
       <div className="flex items-start gap-2">
