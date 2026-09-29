@@ -241,6 +241,7 @@ export class ScheduleService {
     const sc = this.scope(g, body.targetNodeId);
     if (!sc.nodes.some((n) => n.id === body.nodeId)) throw ruleViolation('schedule.node_outside_scope', 'The delayed activity does not drive the selected target');
     if (node.status === 'cancelled') throw ruleViolation('schedule.node_cancelled', 'A cancelled activity cannot be delayed');
+    if (node.actualFinish) throw ruleViolation('schedule.node_finished', 'This activity already finished — delay a successor instead');
     const cal = await this.s.calendar(p);
     const byId = new Map(g.nodes.map((n) => [n.id, n]));
     const base = {

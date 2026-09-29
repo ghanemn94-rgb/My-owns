@@ -3,6 +3,7 @@ import {
   DEFAULT_CALENDAR,
   onOrNextWorkingDay,
   addCalendarDays,
+  addWorkingDays,
   isWorkingDay,
   assertIsoDate,
 } from './calendar';
@@ -433,8 +434,16 @@ export function delayImpact(
       assumptions: before.assumptions,
     };
   }
+  // The delay applies on top of the activity's CURRENT finish: its duration and, when the owner recorded a forecast
+  // finish (not yet finished), that forecast too — otherwise an existing forecast slip would absorb the what-if delay.
   const delayed = nodes.map((n) =>
-    n.id === delayedNodeId && n.durationDays !== null ? { ...n, durationDays: n.durationDays + delayWorkingDays } : n,
+    n.id === delayedNodeId && n.durationDays !== null
+      ? {
+          ...n,
+          durationDays: n.durationDays + delayWorkingDays,
+          forecastFinish: n.forecastFinish && !n.actualFinish ? addWorkingDays(n.forecastFinish, delayWorkingDays, cal) : n.forecastFinish,
+        }
+      : n,
   );
   const after = computeSchedule(delayed, edges, projectStart, cal);
   const affected: DelayImpact['affected'] = [];
@@ -465,7 +474,7 @@ export function delayImpact(
     issues: [],
     assumptions: [
       ...after.assumptions,
-      `Delay applied as +${delayWorkingDays} working day(s) to the duration of ${label.get(delayedNodeId) ?? delayedNodeId}.`,
+      `Delay applied as +${delayWorkingDays} working day(s) to the duration (and any owner forecast finish) of ${label.get(delayedNodeId) ?? delayedNodeId}.`,
     ],
   };
 }

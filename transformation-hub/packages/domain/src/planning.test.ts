@@ -15,6 +15,7 @@ import {
 } from './planning';
 import { transition } from './workflows';
 import { weightedProgress, calculateRag } from './measurement';
+import { delayImpact } from './schedule';
 
 describe('RAID lifecycle [REQ-PLN-012]', () => {
   it('allows escalation, closure and reopen; rejects closing a cancelled item', () => {
@@ -107,5 +108,30 @@ describe('canonical JSON', () => {
   it('is key-order independent', () => {
     expect(canonicalJson({ b: 1, a: [{ y: 2, x: null }] })).toBe(canonicalJson({ a: [{ x: null, y: 2 }], b: 1 }));
     expect(canonicalJson({ a: undefined, b: 1 })).toBe('{"b":1}');
+  });
+});
+
+describe('delay impact on top of an existing forecast slip [REQ-PLN-024]', () => {
+  it('applies the what-if delay to the current forecast finish, not only to the duration', () => {
+    const fs = (p: string, s: string) => ({ predecessorId: p, successorId: s, type: 'FS' as const, lagDays: 0 });
+    // A: 5 days from Sun 2026-10-04 (planned finish Thu 10-08) but forecast Thu 10-15 (+5 working days).
+    const nodes = [
+      { id: 'A', durationDays: 5, forecastFinish: '2026-10-15' },
+      { id: 'M', durationDays: 0 },
+    ];
+    const r = delayImpact(nodes, [fs('A', 'M')], '2026-10-04', 'A', 3);
+    expect(r.status).toBe('computed');
+    expect(r.baselineFinish).toBe('2026-10-15');
+    expect(r.forecastFinish).toBe('2026-10-20');
+    expect(r.projectSlipWorkingDays).toBe(3);
+  });
+
+  it('does not move an activity that already finished', () => {
+    const nodes = [
+      { id: 'A', durationDays: 5, actualStart: '2026-10-04', actualFinish: '2026-10-08' },
+      { id: 'M', durationDays: 0 },
+    ];
+    const r = delayImpact(nodes, [{ predecessorId: 'A', successorId: 'M', type: 'FS' as const, lagDays: 0 }], '2026-10-04', 'A', 3);
+    expect(r.projectSlipWorkingDays).toBe(0);
   });
 });
