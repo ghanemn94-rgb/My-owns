@@ -35,6 +35,8 @@ function Panel({ title, id, children, className }: { title: string; id: string; 
 function DecisionPanel({ gate }: { gate: GateDetail }) {
   const { t, tStatus } = useI18n();
   const d = gate.decision;
+  // Only decisions actually raised for this gate (a linked decision without a gate key is shown above, not here).
+  const raised = gate.decisions.filter((x) => x.gateKey === gate.key);
   return (
     <Panel title={t('gates.decision.title')} id="decision-title">
       {gate.assessment.decisionId && !d ? (
@@ -53,17 +55,21 @@ function DecisionPanel({ gate }: { gate: GateDetail }) {
       ) : (
         <p className="text-sm text-muted">{t('gates.decision.none')}</p>
       )}
-      {gate.decisions.length > 0 ? (
+      {raised.length > 0 ? (
         <div className="mt-3">
           <h3 className="mb-1 text-xs font-semibold tracking-wide text-muted uppercase">{t('gates.decision.raisedForGate')}</h3>
-          <ul className="space-y-1 text-sm">
-            {gate.decisions.map((x) => (
-              <li key={x.id} className="flex flex-wrap items-center gap-2">
-                <span dir="ltr">{x.code}</span>
-                <span className="min-w-0 flex-1" dir="auto">
+          <ul className="space-y-2 text-sm" data-testid="gate-decisions">
+            {raised.map((x) => (
+              <li key={x.id}>
+                <span className="flex flex-wrap items-center gap-2">
+                  <span dir="ltr" className="font-medium">
+                    {x.code}
+                  </span>
+                  <StatusBadge enumName="decisionStatuses" value={x.status} />
+                </span>
+                <span className="block text-muted" dir="auto">
                   {x.title}
                 </span>
-                <StatusBadge enumName="decisionStatuses" value={x.status} />
               </li>
             ))}
           </ul>
