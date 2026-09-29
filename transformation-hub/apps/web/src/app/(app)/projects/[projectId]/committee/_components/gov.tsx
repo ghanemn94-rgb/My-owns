@@ -419,13 +419,22 @@ export function UText({ value, multiline = false }: { value: string | null | und
   );
 }
 
+/** Groups a numeric(20,4) decimal string for display ("250000.0000" → "250,000") without going through a float. */
+export function groupDecimal(amount: string): string {
+  const m = /^(-?)(\d+)(?:\.(\d+))?$/.exec(amount.trim());
+  if (!m) return amount;
+  const fraction = (m[3] ?? '').replace(/0+$/, '');
+  const whole = (m[2] ?? '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return `${m[1] ?? ''}${whole}${fraction ? `.${fraction}` : ''}`;
+}
+
 export function Money({ value }: { value: { amount: string; currency: string; unitScale: number } | null | undefined }) {
   const { t } = useI18n();
   if (!value) return <span className="text-muted">{EM_DASH}</span>;
   const unit = value.unitScale === 1 ? '' : ` × ${t(`governance.paper.units.${value.unitScale as 1000 | 1000000}`)}`;
   return (
     <span dir="ltr" className="tabular">
-      {value.amount} {value.currency}
+      {groupDecimal(value.amount)} {value.currency}
       {unit}
     </span>
   );

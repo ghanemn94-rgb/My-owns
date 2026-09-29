@@ -239,6 +239,7 @@ export default function ActionsPage() {
         </label>
       </FilterBar>
       <DataTable
+        className="relative"
         caption={t('governance.actions.title')}
         columns={columns}
         rows={list.data?.items}

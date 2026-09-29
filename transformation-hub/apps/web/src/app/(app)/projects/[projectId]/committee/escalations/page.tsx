@@ -176,6 +176,7 @@ export default function EscalationsPage() {
         />
       </FilterBar>
       <DataTable
+        className="relative"
         caption={t('governance.escalations.title')}
         columns={columns}
         rows={list.data?.items}

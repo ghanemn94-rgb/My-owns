@@ -234,6 +234,7 @@ export default function CommitteeHubPage() {
         </FilterBar>
         {can('governance.committee.read') ? (
         <DataTable
+          className="relative"
           caption={t('governance.committees.title')}
           columns={columns}
           rows={list.data?.items}

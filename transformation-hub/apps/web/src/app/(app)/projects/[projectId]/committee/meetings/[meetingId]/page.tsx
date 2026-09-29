@@ -387,6 +387,7 @@ export default function MeetingDetailPage() {
 
         <Section id="tabled" title={t('governance.meeting.decisions.title')}>
           <DataTable
+            className="relative"
             caption={t('governance.meeting.decisions.title')}
             rows={decisions.data?.items}
             rowKey={(d) => d.id}
@@ -432,6 +433,7 @@ export default function MeetingDetailPage() {
             }
           >
             <DataTable
+              className="relative"
               caption={t('governance.meeting.attendance.title')}
               rows={m.attendance}
               rowKey={(a) => a.membershipId}
@@ -490,6 +492,7 @@ export default function MeetingDetailPage() {
             }
           >
             <DataTable
+              className="relative"
               caption={t('governance.meeting.conflicts.title')}
               rows={m.conflicts}
               rowKey={(c) => c.id}
@@ -541,6 +544,7 @@ export default function MeetingDetailPage() {
 
         <Section id="packs" title={t('governance.meeting.packs.title')}>
           <DataTable
+            className="relative"
             caption={t('governance.meeting.packs.title')}
             rows={packs.data?.items}
             rowKey={(p) => p.id}

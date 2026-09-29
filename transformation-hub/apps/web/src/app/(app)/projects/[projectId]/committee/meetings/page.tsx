@@ -171,6 +171,7 @@ export default function MeetingsPage() {
         />
       </FilterBar>
       <DataTable
+        className="relative"
         caption={t('governance.meetings.title')}
         columns={columns}
         rows={meetings.data?.items}
@@ -194,6 +195,7 @@ export default function MeetingsPage() {
           />
         </div>
         <DataTable
+          className="relative"
           caption={t('governance.agenda.title')}
           columns={agendaColumns}
           rows={agenda.data?.items}

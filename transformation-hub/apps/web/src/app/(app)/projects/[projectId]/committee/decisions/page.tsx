@@ -119,6 +119,7 @@ export default function DecisionsPage() {
         ) : null}
       </FilterBar>
       <DataTable
+        className="relative"
         caption={t('governance.decisions.title')}
         columns={columns}
         rows={list.data?.items}

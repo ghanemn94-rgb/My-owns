@@ -326,7 +326,7 @@ export default function CommitteeDetailPage() {
           <details className={cx(card, 'p-4')}>
             <summary className="cursor-pointer font-semibold text-ink">{t('governance.committee.charter.versions')}</summary>
             <DataTable
-              className="mt-3"
+              className="relative mt-3"
               caption={t('governance.committee.charter.versions')}
               rows={versions.data?.items}
               rowKey={(v) => String(v.versionNo)}
@@ -356,6 +356,7 @@ export default function CommitteeDetailPage() {
           }
         >
           <DataTable
+            className="relative"
             caption={t('governance.committee.seats.title')}
             rows={d.memberships}
             rowKey={(s) => s.id}
@@ -444,6 +445,7 @@ export default function CommitteeDetailPage() {
           </div>
           {policy ? (
             <DataTable
+              className="relative"
               caption={t('governance.committee.matrix.types.title')}
               rows={policy.decisionTypes}
               rowKey={(x) => x.key}
@@ -473,6 +475,7 @@ export default function CommitteeDetailPage() {
             />
           ) : null}
           <DataTable
+            className="relative"
             caption={t('governance.committee.matrix.versions')}
             rows={matrices.data?.items}
             rowKey={(m) => m.id}
@@ -536,6 +539,7 @@ export default function CommitteeDetailPage() {
           }
         >
           <DataTable
+            className="relative"
             caption={t('governance.committee.meetings.title')}
             rows={meetings.data?.items}
             rowKey={(m) => m.id}

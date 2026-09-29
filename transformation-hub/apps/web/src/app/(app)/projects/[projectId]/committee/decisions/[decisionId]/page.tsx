@@ -529,8 +529,42 @@ export default function DecisionDetailPage() {
               {num(tally?.disregardedVotes) > 0 ? <p className="text-sm text-muted">{t('governance.decision.tally.disregarded', { count: num(tally?.disregardedVotes) })}</p> : null}
               <Facts
                 items={[
-                  ...(tallyQuorum ? [{ label: t('governance.decision.tally.quorum'), value: <span dir="ltr">{String(tallyQuorum.explanation ?? EM_DASH)}</span>, wide: true }] : []),
-                  ...(tallyAuthority || d.authorityReason ? [{ label: t('governance.decision.facts.authorityReason'), value: <span dir="ltr">{d.authorityReason ?? String(tallyAuthority?.reason ?? '')}</span>, wide: true }] : []),
+                  ...(tallyQuorum
+                    ? [
+                        {
+                          label: t('governance.decision.tally.quorum'),
+                          value:
+                            typeof tallyQuorum.presentVoting === 'number' && typeof tallyQuorum.eligibleVoting === 'number' && typeof tallyQuorum.required === 'number' ? (
+                              t('governance.decision.tally.quorumDetail', {
+                                status: tallyQuorum.met ? t('governance.meeting.quorum.met') : t('governance.meeting.quorum.notMet'),
+                                present: tallyQuorum.presentVoting,
+                                eligible: tallyQuorum.eligibleVoting,
+                                required: tallyQuorum.required,
+                              })
+                            ) : (
+                              // Older snapshots without structured counts: the server's (English) explanation.
+                              <span dir="ltr" lang="en">
+                                {String(tallyQuorum.explanation ?? EM_DASH)}
+                              </span>
+                            ),
+                          wide: true,
+                        },
+                      ]
+                    : []),
+                  ...(tallyAuthority || d.authorityReason
+                    ? [
+                        {
+                          label: t('governance.decision.facts.authorityReason'),
+                          // Server-generated rule explanation (English); the translated outcome is the badge in the header.
+                          value: (
+                            <span dir="ltr" lang="en">
+                              {d.authorityReason ?? String(tallyAuthority?.reason ?? '')}
+                            </span>
+                          ),
+                          wide: true,
+                        },
+                      ]
+                    : []),
                   ...(d.escalatedTo ? [{ label: t('governance.decision.facts.escalatedTo'), value: <UText value={d.escalatedTo} /> }] : []),
                   ...(d.outcomeRecordedAt ? [{ label: t('governance.decision.facts.outcomeRecordedAt'), value: formatDateTime(d.outcomeRecordedAt) }] : []),
                   ...(d.decidedViaCirculation ? [{ label: t('governance.decision.facts.viaCirculation'), value: t('governance.common.yes') }] : []),
@@ -558,6 +592,7 @@ export default function DecisionDetailPage() {
 
         <Section id="votes" title={t('governance.decision.votes.title')} description={t('governance.decision.votes.immutable')}>
           <DataTable<Vote>
+            className="relative"
             caption={t('governance.decision.votes.title')}
             rows={votes.data?.items}
             rowKey={(v) => v.id}
@@ -617,6 +652,7 @@ export default function DecisionDetailPage() {
           }
         >
           <DataTable
+            className="relative"
             caption={t('governance.decision.actions.title')}
             rows={actions.data?.items}
             rowKey={(a) => a.id}
@@ -688,12 +724,14 @@ function Hint({ tone, children }: { tone: 'warning' | 'info'; children: ReactNod
 }
 
 function CommitteeLink({ committeeId }: { committeeId: string }) {
+  const { t } = useI18n();
   const { projectId, can } = useProjectContext();
   const c = useQuery({
     queryKey: gk.committee(projectId, committeeId),
     queryFn: ({ signal }) => api(governanceRoutes.getCommittee, { params: { projectId, committeeId }, signal }),
     enabled: can('governance.committee.read'),
   });
+  if (c.isLoading) return <span className="text-muted">{t('states.loading')}</span>;
   if (!c.data) return <span className="text-muted">{EM_DASH}</span>;
   return (
     <Link href={`${hubHref(projectId)}/committees/${committeeId}`} className={btn.link} dir="auto">
