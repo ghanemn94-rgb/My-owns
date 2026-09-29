@@ -53,7 +53,10 @@ export const DEMO_GEN_CODE = 'DEMO-TRANSFORM';
 
 function clearanceFor(u: DemoUser): Classification {
   const roles = [...(u.orgRoles ?? []), ...(u.dc ?? []), ...(u.gen ?? []), ...(u.dcWorkstream ?? []).map((w) => w.role)];
-  let best: Classification = 'internal';
+  // Demo project members are cleared to the demo projects' classification (confidential); higher clearances come
+  // from role defaults. In production, clearance is granted explicitly (admin.clearance.grant).
+  const isProjectMember = (u.dc?.length ?? 0) + (u.gen?.length ?? 0) + (u.dcWorkstream?.length ?? 0) > 0;
+  let best: Classification = isProjectMember ? 'confidential' : 'internal';
   for (const r of roles) {
     const c = POLICY_MATRIX.roles[r].defaultClearance;
     if (clearanceAllows(c, best)) best = c;
@@ -118,8 +121,11 @@ export async function seedDemo(opts: { ownerUrl: string; log?: (m: string) => vo
   try {
     const portfolio = app.get(PortfolioService);
     const admin = demoEmail('portfolio.admin');
-    const existing = await asUser(app, admin, async (ctx) => portfolio.listProjects(ctx, { page: 1, pageSize: 100, includeDemo: 'true' }));
-    const byCode = new Map(existing.items.map((p) => [p.code, p.id]));
+    // Existence check with the owner role: the portfolio admin may lack clearance to *see* confidential projects.
+    const ownerPool = new Pool({ connectionString: opts.ownerUrl, max: 1 });
+    const existing = await ownerPool.query<{ id: string; code: string }>(`select id, code from project where org_id = $1`, [orgId]);
+    await ownerPool.end();
+    const byCode = new Map(existing.rows.map((p) => [p.code, p.id]));
     const templates = await asUser(app, admin, async () => portfolio.listTemplates());
     const dcTpl = templates.items.find((t) => t.templateKey === 'dc-carveout');
     const genTpl = templates.items.find((t) => t.templateKey === 'general-transformation');

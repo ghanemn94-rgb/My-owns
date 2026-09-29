@@ -21,3 +21,37 @@ export interface ModuleSeed {
  * validation, authorization, audit and outbox apply). Modules append here as they are implemented.
  */
 export const DEMO_MODULE_SEEDS: ModuleSeed[] = [];
+
+// Order matters: documents → governance → planning → gates → carve-out … (later seeds may reference earlier data).
+import { documentsSeed } from '../modules/documents/documents.seed';
+import { governanceSeed } from '../modules/governance/governance.seed';
+import { planningSeed } from '../modules/planning/planning.seed';
+import { gatesSeed } from '../modules/gates/gates.seed';
+import { carveoutSeed } from '../modules/carveout/carveout.seed';
+import { newcoSeed } from '../modules/newco/newco.seed';
+import { readinessSeed } from '../modules/readiness/readiness.seed';
+import { financeSeed } from '../modules/finance/finance.seed';
+import { jvSeed } from '../modules/jv/jv.seed';
+import { aiSeed } from '../modules/ai/ai.seed';
+import { reportingSeed } from '../modules/reporting/reporting.seed';
+import { importsSeed } from '../modules/imports/imports.seed';
+import { integrationsSeed } from '../modules/integrations/integrations.seed';
+import { notificationsSeed } from '../modules/notifications/notifications.seed';
+import { configSeed } from '../modules/config/config.seed';
+DEMO_MODULE_SEEDS.push(
+  documentsSeed,
+  governanceSeed,
+  planningSeed,
+  gatesSeed,
+  carveoutSeed,
+  newcoSeed,
+  readinessSeed,
+  financeSeed,
+  jvSeed,
+  aiSeed,
+  reportingSeed,
+  importsSeed,
+  integrationsSeed,
+  notificationsSeed,
+  configSeed,
+);

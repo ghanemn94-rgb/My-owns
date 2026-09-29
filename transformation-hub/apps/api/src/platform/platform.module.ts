@@ -11,6 +11,7 @@ import { OrgService } from './org.service';
 import { JobQueue } from './jobs/job-queue.service';
 import { JobRegistry } from './jobs/job-registry';
 import { WorkerService } from './jobs/worker.service';
+import { RecordVersionService } from './helpers';
 
 const providers = [
   { provide: APP_CONFIG, useFactory: () => loadConfig() },
@@ -25,6 +26,7 @@ const providers = [
   JobQueue,
   JobRegistry,
   WorkerService,
+  RecordVersionService,
 ];
 
 /** Cross-cutting platform services shared by all modules. */

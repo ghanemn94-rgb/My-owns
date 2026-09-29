@@ -85,7 +85,13 @@ export class ProblemFilter implements ExceptionFilter {
       const detail = typeof r === 'string' ? r : ((r as { message?: string | string[] }).message?.toString() ?? exception.message);
       body = { type: 'about:blank', title: HttpStatus[status] ?? 'Error', status, code: (r as { code?: string }).code ?? `http.${status}`, detail };
     } else {
-      const pg = fromPg(exception as { code?: string; message?: string });
+      // Drizzle wraps driver errors (DrizzleQueryError.cause) — walk the cause chain to find the PostgreSQL error.
+      let e: unknown = exception;
+      let pg: ProblemBody | null = null;
+      for (let i = 0; i < 4 && e && !pg; i++) {
+        pg = fromPg(e as { code?: string; message?: string });
+        e = (e as { cause?: unknown }).cause;
+      }
       if (pg) body = pg;
       else {
         this.log.error(`unhandled error [${correlationId}]: ${(exception as Error)?.stack ?? String(exception)}`);

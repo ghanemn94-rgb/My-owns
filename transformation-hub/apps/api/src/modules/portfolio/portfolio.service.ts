@@ -256,8 +256,7 @@ export class PortfolioService {
       const [prog] = await tx.select({ id: schema.program.id }).from(schema.program).where(eq(schema.program.id, body.programId));
       if (!prog) throw invalid('portfolio.program_not_found', 'Program not found');
     }
-    const dup = await this.db.pool.query(`select 1 from project where org_id = $1 and code = $2`, [ctx.principal.orgId, body.code]);
-    if (dup.rowCount) throw conflict('portfolio.code_exists', `Project code ${body.code} already exists`);
+    // Code uniqueness is enforced by the (org_id, code) unique index → 409 (no details about the other project).
 
     const projectId = newId();
     // Extend the transaction's RLS scope to the new project (creator's authority comes from portfolio.project.create).
