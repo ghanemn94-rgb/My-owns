@@ -214,11 +214,15 @@ export class DocumentsService {
    * Search titles and indexed content of documents the caller may read. The ACL predicate is applied on the LIVE
    * document row inside the WHERE clause before ranking; only chunks of the current version are searched.
    */
-  async search(ctx: RequestContext, projectId: string, q: { q: string; page: number; pageSize: number }) {
+  async search(ctx: RequestContext, projectId: string, q: { q: string; page: number; pageSize: number; kind?: string; classification?: string }) {
     const tx = this.db.tx();
     const d = schema.document;
     const c = schema.documentChunk;
-    const vis = this.visibleDocsWhere(ctx, projectId);
+    const vis = and(
+      this.visibleDocsWhere(ctx, projectId),
+      q.kind ? eq(d.kind, q.kind as DocRow['kind']) : undefined,
+      q.classification ? eq(d.classification, q.classification as Classification) : undefined,
+    )!;
     const tsq = sql`websearch_to_tsquery('simple', ${q.q})`;
     const hits = sql`
       select ${d.id} as document_id, 'title'::text as matched_in, null::uuid as version_id, null::text as section, null::text as snippet,

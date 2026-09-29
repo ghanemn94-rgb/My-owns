@@ -248,7 +248,7 @@ export const documentsRoutes = registerRoutes({
     tags: T,
     access: 'documents.document.read',
     params: ProjectParams,
-    query: z.object({ q: RequiredText(200), page: PageQuery.shape.page, pageSize: PageQuery.shape.pageSize }),
+    query: z.object({ q: RequiredText(200), page: PageQuery.shape.page, pageSize: PageQuery.shape.pageSize, kind: DocumentKindSchema.optional(), classification: ClassificationSchema.optional() }),
     response: paged(SearchHitDto),
   }),
   uploadPolicy: defineRoute({
