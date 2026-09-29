@@ -21,7 +21,7 @@ import { CreateDocumentDialog } from './CreateDocumentDialog';
 const PAGE_SIZE = 25;
 
 export function DocumentsTab() {
-  const { t, tStatus, formatDateTime, locale } = useI18n();
+  const { t, tStatus, formatDateTime, formatNumber, locale } = useI18n();
   const { projectId, can } = useProjectContext();
   const [q, setQ] = useState('');
   const [kind, setKind] = useState('');
@@ -178,7 +178,7 @@ export function DocumentsTab() {
       )}
       {active.data ? (
         <p className="text-xs text-muted" data-testid="documents-total">
-          {t('documents.list.total', { count: active.data.total })}
+          {t('documents.list.total', { count: formatNumber(active.data.total) })}
         </p>
       ) : null}
       {can('documents.document.upload') ? <CreateDocumentDialog open={createOpen} onClose={() => setCreateOpen(false)} /> : null}
