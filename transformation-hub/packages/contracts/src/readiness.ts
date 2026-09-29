@@ -345,13 +345,15 @@ export const CreateReadinessCheckBody = z.object({
   blocker: z.boolean().default(false),
   /** Specialist role that signs the check off (REQ-RDY-001). */
   signoffRole: Role.nullable().optional(),
-});
+}).strict(); // unknown fields (e.g. status, waivable) are a 400 (QA-P1-12)
 
-export const UpdateReadinessCheckBody = z.object({
-  expectedVersion: ExpectedVersion,
-  ...checkDescriptive,
-  title: RequiredText(300).optional(),
-});
+export const UpdateReadinessCheckBody = z
+  .object({
+    expectedVersion: ExpectedVersion,
+    ...checkDescriptive,
+    title: RequiredText(300).optional(),
+  })
+  .strict();
 
 const planDescriptive = {
   title: RequiredText(300),
@@ -368,8 +370,8 @@ const planDescriptive = {
   rollbackPlan: Text(8000).nullable().optional(),
 };
 
-export const CreateCutoverPlanBody = z.object(planDescriptive);
-export const UpdateCutoverPlanBody = z.object({ expectedVersion: ExpectedVersion, ...planDescriptive, title: RequiredText(300).optional() });
+export const CreateCutoverPlanBody = z.object(planDescriptive).strict();
+export const UpdateCutoverPlanBody = z.object({ expectedVersion: ExpectedVersion, ...planDescriptive, title: RequiredText(300).optional() }).strict();
 
 const tsaDescriptive = {
   name: RequiredText(300),
@@ -397,8 +399,8 @@ const tsaDescriptive = {
   classification: ClassificationSchema.optional(),
 };
 
-export const CreateTsaServiceBody = z.object(tsaDescriptive);
-export const UpdateTsaServiceBody = z.object({ expectedVersion: ExpectedVersion, ...tsaDescriptive, name: RequiredText(300).optional() });
+export const CreateTsaServiceBody = z.object(tsaDescriptive).strict();
+export const UpdateTsaServiceBody = z.object({ expectedVersion: ExpectedVersion, ...tsaDescriptive, name: RequiredText(300).optional() }).strict();
 
 // ---------------------------------------------------------------------------------------------------------------
 // Routes
