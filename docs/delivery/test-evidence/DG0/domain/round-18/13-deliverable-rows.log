@@ -1,0 +1,65 @@
+## REQ-PB-029 [SOURCE DG2] B0034;B0035;M0146;M0127 | Implement the Transformation Charter as a first-class record with all 14 source fields
+ IN: Transformation name;Executive sponsor;Transformation lead;Case for change;North Star;In scope;Out of scope;Baseline date;Target horizon;Top 3-5 outcomes;Strategic guardrails;Governance forum;Decision rights;Success definition
+ ACC: A01: the charter form persists all 14 fields; Baseline date is a valid date; a saved change creates a new charter version with history retained
+ NOTES: Playbook (B0034, B0035): the 14 charter fields. Master-prompt additions (§5 M0127): versioning with retained history. Interpretations: none. The transformation name is created in P1 and the full charter in P2.
+
+## REQ-PB-031 [SOURCE DG2] B0038;B0039;B0040;B0041;B0042;B0043;M0146 | Run the five scope sanity checks on the charter
+ IN: Is scope tied to outcomes rather than departments?;Can each major scope item be traced to a diagnosed problem or opportunity?;Are explicit exclusions documented?;Is the baseline measurable?;Are executive decisions required to unblock the transformation visible?;Response;Evidence
+ ACC: A01: all five questions render verbatim; an empty Out of scope field makes 'Are explicit exclusions documented?' fail
+ NOTES: Playbook (B0038-B0043): the five questions, verbatim. Master-prompt additions (§5 M0146): the five scope sanity checks are part of the native charter record. Interpretations: the response values (Yes/No/Partial), which neither source gives, and the system's pre-evaluation of the checks it can compute. (AN-08, finding F-DG0-006: provenance labels re-checked against source_ref.)
+
+## REQ-PB-041 [SOURCE DG2] B0061;B0062;M0147 | Implement the Target Operating Model Canvas with the ten source boxes and prompts
+ IN: CUSTOMER & VALUE (Segments / needs / promise / experience principles);PRODUCTS & SERVICES (Portfolio / bundles / pricing / service model);JOURNEYS & PROCESSES (Critical E2E journeys / automation / controls);ORGANIZATION (Structure / role clarity / accountability);GOVERNANCE (Decision rights / forums / escalation);PEOPLE & CAPABILITY (Skills / capacity / incentives / behaviors);TECHNOLOGY (Platforms / architecture / integration);DATA & ANALYTICS (Sources / ownership / insight / AI / measurement);
+ ACC: A01: the canvas shows ten boxes with source prompts; content persists per box and maps to the matching dimension
+ NOTES: Playbook (B0061, B0062): the ten canvas boxes with their prompts; BO approves per T11 'Target-state design' (B0099). Master-prompt additions: none; §5 M0147 restates the ten dimensions. Interpretations: rich-text content per box, and each box mapped to one TOM dimension.
+
+## REQ-PB-042 [SOURCE DG2] B0063;M0147 | Support the TOM canvas workshop and convert unresolved items into design decisions with owners
+ IN: Workshop date;Duration (90-120 minutes);Business owner participants;Agenda;Contributions;Unresolved items;Resulting design decision or action;Owner
+ ACC: A01: converting an unresolved item creates a T04 row linked to the workshop with owner set; an item without an owner cannot be converted; converting an item to an action creates an owned action linked to the workshop; the workshop cannot be closed while unresolved items remain unconverted
+ NOTES: Source-grounded core (cited B blocks). AN-04 consolidation: absorbs former REQ-S05-004 (Run the facilitated 90-120-minute TOM workshop mode with agenda, captured contributions and conversion of unresolved items into decisions or actions); its anchors M0147 and acceptance are carried here. The agenda, per-dimension contribution capture, conversion into actions and the no-close-with-unconverted-items rule are master prompt §5 additions (M0147), not
+
+## REQ-PB-053 [SOURCE DG3] B0083;B0085;M0148;M0329 | Implement the Transformation Business Case with all ten source sections
+ IN: Strategic rationale;Baseline;Value pools;Interventions;Investment;Benefits;Timing;Risks & sensitivities;Ownership;Decision ask
+ ACC: A01: all ten sections persist; an investment line must carry one classification (Capex|opex|internal FTE|vendor cost|opportunity cost); SAR amounts stored as decimals
+ NOTES: Playbook (B0083, B0085): the ten sections and their content. Master-prompt additions (§5 M0148, §16 M0329): exactly one classification per investment line, and SAR amounts stored as decimals. Interpretations: none.
+
+## REQ-PB-060 [SOURCE DG4] B0092;B0093;B0161;M0083;M0189;M0191;M0192;M0193;M0194;M0195;M0196;M0235 | Seed the five transformation operating system layers with cadence, purpose, participants and outputs
+ IN: Layer;Cadence;Purpose;Participants;Outputs
+ ACC: A01: the five layers are seeded with cadence text verbatim; a forum meeting series generates meetings on the configured recurrence
+ NOTES: Playbook (B0092, B0093, B0161): the five layers with cadence, purpose, participants and outputs. Master-prompt additions (§10 M0196, §12 M0235): meetings generated on a configurable recurrence, and a draft agenda at the cut-off. Interpretations: none.
+
+## REQ-PB-071 [SOURCE DG4] B0108;B0109;B0110;B0111;B0112;B0113;B0114;B0115;M0216 | Seed the seven leading adoption indicators
+ IN: Usage / activation rate;Compliance with new process;Cycle-time shift;Training completion + observed proficiency;Decision turnaround time;Percentage of transactions handled through the new journey;Exception / workaround rate
+ ACC: A11: all seven indicators are available by name; an actual below trajectory creates a corrective intervention
+ NOTES: Playbook (B0108-B0115): the seven leading adoption indicators. Master-prompt additions (§11 M0216): the indicators are KPI templates with actuals by period, and an actual below trajectory creates an intervention. Interpretations: none.
+
+## REQ-PB-086 [SOURCE DG5] B0133;B0134;B0161;M0083;M0224;M0257;M0258;M0259;M0260;M0261 | Seed the 90-day launch plan as scheduled tasks relative to a start date
+ IN: Window (Days 0-30 | Days 31-60 | Days 61-90);Primary objective;Actions;Outputs;Start date
+ ACC: A16: with start date 2026-10-01 the Days 31-60 tasks fall between 2026-11-01 and 2026-11-30; all actions of B0134 appear
+ NOTES: Playbook (B0133, B0134, B0161): the three windows with primary objective, actions and outputs. Master-prompt additions (§14 M0257, M0261; §12 M0224): tasks dated from a chosen start date, with owners and links to output records, and generation as an option when a transformation is created. Interpretations: none.
+
+## REQ-PB-087 [SOURCE DG5] B0135;B0136;B0137;B0138;B0139;B0140;B0141;M0261 | Run the Day-90 leadership test
+ IN: Can leaders explain the same case for change and North Star?;Can every initiative be traced to a target-state gap and outcome?;Are executive decision rights clear?;Is Finance aligned on baselines and benefit formulas?;Are Wave 1 initiatives producing evidence rather than only plans?;Can the transformation team show what it needs from executives this month?;Response;Evidence
+ ACC: A16: all six questions render verbatim; unanswered questions mark the test incomplete
+ NOTES: Playbook (B0135-B0141): the six questions, verbatim. Master-prompt additions (§14 M0261): the Day-90 leadership test is preserved within the launch plan's editable scheduled tasks, so the test is scheduled at day 90 (task scheduling itself: REQ-PB-086, REQ-S14-004). Interpretations: evidence is pre-filled where available, and unanswered questions make the test incomplete.
+
+## REQ-PB-090 [SOURCE DG5] B0146;B0147;M0347 | Seed the three illustrative traceability chains of the roaming example
+ IN: Problem;TOM gap;Initiative;KPI;Benefit
+ ACC: A01: the traceability view shows 'Low activation -> Proposition + journey -> Pass redesign + digital activation -> Attach rate / activation -> Revenue uplift'
+ NOTES: Playbook (B0146, B0147): the three illustrative chains. Master-prompt additions (§18 M0347): seeded as linked demo records and shown in the traceability view. Interpretations: none.
+
+## REQ-PB-092 [SOURCE DG5] B0151;B0152;M0288 | Interpret the health-check score with the four source bands
+ IN: Score;Interpretation (21-25 | 16-20 | 10-15 | 0-9)
+ ACC: A16: scores 21, 16, 10 and 9 map to the four band texts verbatim
+ NOTES: Playbook (B0151, B0152): the four score bands and their text. Master-prompt additions: none; §14 M0288 restates the four bands (its top-three-actions and reassessment clause is covered by REQ-PB-091). Interpretations: none.
+
+## REQ-PB-048 [SOURCE DG3] B0076;M0134;M0176 | Apply T06 default weights 25/25/20/15/15 with a 1-5 scale and a calculated weighted score
+ IN: Strategic fit weight 25%;Financial value weight 25%;Customer impact weight 20%;Feasibility weight 15%;Time-to-value weight 15%;Score 1-5
+ ACC: A01;A05: scores 5,4,3,2,1 give 3.30 (decimal, exact); a score of 6 is rejected; a missing score shows 'incomplete', not a numeric total
+ NOTES: Playbook (B0076): the weights 25/25/20/15/15, the 1-5 scale and a calculated weighted score. Master-prompt additions (§9 M0176): weighted score = sum(score × weight), giving a 1-5 result, and a missing score means incomplete, not zero. Interpretations: none.
+
+## REQ-PB-012 [SOURCE DG2] B0017;B0018;M0187 | Seed the six minimum governance roles with their source accountabilities and assign them per transformation
+ IN: Role (Executive Sponsor | Transformation Lead | Business Owners | Workstream Leads | Finance / Value Office | Transformation Office);Accountability;Assigned person or governed group;Scope
+ ACC: A12: a user assigned Workstream Lead on transformation X cannot read transformation Y; role accountability text matches B0018
+ NOTES: Playbook (B0017, B0018): the six minimum governance roles and their accountability text. Master-prompt additions (§10 M0187): the implementation roles KDS, TD, CM/SEC, AUD and ADM; per-transformation scoped assignment; ADM cannot grant business approvals. Interpretations: none.
+

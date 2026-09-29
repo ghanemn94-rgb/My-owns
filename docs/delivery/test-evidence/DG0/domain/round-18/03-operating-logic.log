@@ -1,0 +1,50 @@
+== RAG from trajectory not task completion: 2 rows -> ['REQ-PB-063', 'REQ-S07-007']
+    REQ-PB-063 ... 0252;M0159 Template 10 — RAG logic T10 Outcomes RAG (target trajectory, not activity completion);Value RAG (validated benefit gap);Portfolio RAG (milestone
+    REQ-S07-007 ... REQ-S07-007 USER Compute RAG from the approved expected trajectory with configurable thresholds and never from project task completion M0160 §7 KPI engine and change propagation  Approved trajec
+== separate delivery/adoption/value/closure statuses: 1 rows -> ['REQ-S03-003']
+    REQ-S03-003 ... REQ-S03-003 USER Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses M0092 §3 Business model and navigat
+== forecast never validated: 2 rows -> ['REQ-S08-001', 'REQ-S20-010']
+    REQ-S08-001 ...  and Finance > Benefit; /api/v1/benefits/{id}/values A10: a forecast amount never appears in the validated total; a rejected measurement is retained and shown as reje
+    REQ-S20-010 ...  shared benefit rolls up once; 110% allocation is rejected; unvalidated or forecast value cannot appear as validated actual P3;P4 DG4 SPECIFIED  
+== Finance validates, BO accountable: 0 rows -> []
+== shared benefit counted once; allocation<=100%, unallocated shown: 1 rows -> ['REQ-S08-013']
+    REQ-S08-013 ... REQ-S08-013 USER Reject allocations over 100% and show any share below 100% as unallocated M0173 §8 Benefits and financial validation  Allocation % per contributor The server sums allocations per benefit; above 100% is rejected; below 100% shows the remaining share as unallocated Allocation validation FIN;BO allocate:BO,TL none Benefits a
+== no double counting: 2 rows -> ['REQ-PB-058', 'REQ-DLV-036']
+    REQ-PB-058 ... REQ-PB-058 SOURCE Prevent double counting: each benefit has a unique owner, baseline, formula and 
+    REQ-DLV-036 ... e KPI-to-benefit-to-dashboard scenario, Finance validation, double-counting prevention, recurrence and escalation, adoption/BAU acce
+== gates explicit approvals tied to evidence snapshot: 3 rows -> ['REQ-PB-015', 'REQ-S04-002', 'REQ-S12-009']
+    REQ-PB-015 ... ce, submits the gate; approver records decision against the evidence snapshot; gates are never inferred from task completion Gate approva
+    REQ-S04-002 ... es explicit approval records tied to a versioned, immutable evidence snapshot, never inferred from task completion M0116 §4 Phase workflo
+== DG0-DG7 separate from G1-G6: 4 rows -> ['REQ-PB-021', 'REQ-DLV-002', 'REQ-S04-008', 'REQ-S21-001']
+    REQ-PB-021 ... is blocked while mandatory evidence is missing, and product G6 never implies engineering gate DG7. Interpretations: none.
+    REQ-DLV-002 ... tage_id DG0-DG7; CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval
+== Finance validates / BO accountable (targeted search)
+   REQ-S08-003 Record for each benefit a unique ID, type, accountable business owner, Finance validator where applicable, baseline/counterfactual, formula, driver units, target, timing, one-off/recurring classification, currency, measurement source, evidence, confidence, assumptions, contribution links and financial-statement mapping or agreed non-financial KPI
+== shared benefit counted once
+   REQ-PB-058 Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link
+   REQ-S05-005 Classify business-case investment (capex, opex, internal FTE, vendor cost, opportunity cost) and benefits (revenue, cost reduction, cost avoidance, working capital, strategic/non-financial) so no item is treated twice
+   REQ-S20-010 Deliver and pass the executable acceptance test A10 Benefit integrity
+
+## REQ-S03-003 USER M0092 DG4 | Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses 
+ PROC: Each status has its own state machine and owner; none is derived from another; views show all four side by side 
+ ACC: A11: setting delivery to Complete leaves adoption, validated value and closure unchanged; the API rejects a closure request while validated value is pending unless a transition decision exists
+
+## REQ-PB-013 SOURCE B0018;B0084;M0174;M0211;M0188;M0234;M0330 DG4 | Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role 
+ PROC: Only users holding FIN on the transformation can mark a baseline, benefit formula or realized value as validated; others can submit for validation 
+ ACC: A10;A12: a Business Owner calling the validate endpoint receives 403; a Finance user succeeds and the audit event records validator identity
+
+## REQ-PB-058 SOURCE B0088;M0173 DG4 | Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link 
+ PROC: System rejects a benefit without a single owner, baseline, formula and a financial statement line or agreed non-financial KPI; initiatives link to canonical benefits via allocations, parent/child relationships and shared-benefit groups; portfolio totals sum canonical benefits, not links, so a shared benefit rolls up once 
+ ACC: A10: a benefit with two owners is rejected; a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the portfolio total
+
+## REQ-S08-013 USER M0173 DG4 | Reject allocations over 100% and show any share below 100% as unallocated 
+ PROC: The server sums allocations per benefit; above 100% is rejected; below 100% shows the remaining share as unallocated 
+ ACC: A10: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated
+
+## REQ-S07-007 USER M0160 DG4 | Compute RAG from the approved expected trajectory with configurable thresholds and never from project task completion 
+ PROC: RAG = evaluation of actual versus expected-to-date by polarity using configured thresholds; task completion is not an input 
+ ACC: A04;A05: with all tasks complete and actual below the red threshold the KPI is Red; changing the threshold version recomputes RAG
+
+## REQ-PB-063 SOURCE B0095;M0138;M0160;M0245;M0247;M0248;M0249;M0250;M0251;M0252;M0159 DG4 | Apply the area-specific T10 RAG logic 
+ PROC: Each area computes status by its own rule; outcome RAG never uses task completion; missing data shows Unknown/Stale 
+ ACC: A04;A05: an outcome whose tasks are 100% complete but KPI is below trajectory is Red/Amber, not Green; a KPI with no actual shows Unknown
