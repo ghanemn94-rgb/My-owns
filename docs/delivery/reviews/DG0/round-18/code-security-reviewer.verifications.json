@@ -1,0 +1,47 @@
+{
+ "verifications": [
+  {
+   "finding_id": "F-DG0-150",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Reproduced the original failure against the round-17 code (f84eed4): the same-path collision makes finish() exit 1 with FileExistsError and write no sandbox.json, and later-sorted files are not processed. The fixed code (450c756, agent_sandbox.py:269-276) exits 3 with a write-once discard, writes sandbox.json, leaves the real file untouched, and still copies back a later-sorted own-role file. A planted dangling symlink at the destination is not followed: O_NOFOLLOW|O_EXCL gives EEXIST, which is discarded. The D-031 concurrent-commit case (another role's record committed mid-run: exit 0, no false discard) still holds, and so does --unshare-ipc (private ipc namespace, F-DG0-148).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-18/05-r17-repro-old-vs-new.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-18/06-finish-edge.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-18/r18-finish-edge.py",
+    "tools/agents/agent_sandbox.py#L266-L279"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-151",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "The module docstring (agent_sandbox.py:23-27) now states a host-bind read-write procfs, NO PID namespace (residual 8), and its own IPC namespace (--unshare-ipc). This matches bwrap_args (line 147-148: --unshare-ipc, --bind /proc /proc, no --unshare-pid) and sandbox.json (procfs: host-bind, unshare: [ipc]). Separately, threat-model.md:27 still has the old wording; that is recorded as new finding F-DG0-153.",
+   "evidence": [
+    "tools/agents/agent_sandbox.py#L23-L27",
+    "tools/agents/agent_sandbox.py#L147-L149"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-147",
+   "result": "PASS",
+   "status_after": "ACCEPTED_OBSERVATION",
+   "note": "Still reproduces unchanged (case E: a new own-role file in an earlier round is copied back, exit 0). I still judge it Low, non-mandatory and fail-closed for gate integrity, because a record in an earlier round must reconstruct from that round's own run transcript. Re-accepted as an observation; pinning the accept pattern to the current round remains the recommended hardening.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-18/05-r17-repro-old-vs-new.log",
+    "tools/agents/agent_sandbox.py#L56-L69"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-149",
+   "result": "FAIL",
+   "status_after": "OPEN",
+   "note": "Assessed without writing any /proc/sys entry. The residual as scoped (a uid-0 file-tool write to a /proc/sys tunable) is confirmed as described: host /proc is bound read-write with no /proc/sys submount (agent_sandbox.py:148); the CLI runs as uid 0 with CapEff = CAP_SETFCAP only and NoNewPrivs 1 (Read of /proc/self/status); `test -w /proc/sys/kernel/core_pattern` reports writable at the process-sandbox layer (mode-bit read only, 03-proc-peer-root-repro.log); and the guard fails closed on paths that resolve through /proc, /sys or /dev. However, I cannot confirm that the residual is no larger than disclosed. The same read-write host procfs plus the shared PID namespace exposes /proc/<peer-pid>/root and /cwd, through which another concurrent run's evidence, private TMPDIR, staged review record and session directory become writable (F-DG0-152, reproduced in a disposable fixture). That contradicts the residual's statement that no reviewer artefact or another run's scratch becomes writable. It stays OPEN until F-DG0-152 is fixed, or the residual is re-scoped and re-assessed.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-18/03-proc-peer-root-repro.log",
+    "tools/agents/agent_sandbox.py#L147-L149",
+    "docs/delivery/threat-model.md#disclosed-residuals"
+   ]
+  }
+ ]
+}

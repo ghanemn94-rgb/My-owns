@@ -1,0 +1,61 @@
+{
+ "findings": [
+  {
+   "id": "F-DG0-152",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-007",
+   "severity": "High",
+   "mandatory_violation": true,
+   "title": "The process sandbox does not isolate concurrent runs from each other: through the shared host PID namespace and the read-write host procfs, a process at the sandbox layer can write into another run's mount namespace (/proc/<peer-pid>/root, /proc/<peer-pid>/cwd), reaching the peer's evidence, private TMPDIR, staged review record and CLI session directory. A record written this way is copied back as the peer's own.",
+   "reproduction": "tools/agents/agent_sandbox.py:147-149 binds the host procfs read-write (`--bind /proc /proc`) and creates no PID or user namespace. Every run gets identical credentials: uid 0, CapEff/CapPrm/CapBnd = CAP_SETFCAP only, no_new_privs (lines 178-180). For this run's own CLI process these were confirmed by a Read of /proc/self/status: host PID namespace, pid 2552, CapEff 0000000080000000, NoNewPrivs 1, Seccomp 0. The kernel's PTRACE_MODE_READ check for /proc/<pid>/root and /proc/<pid>/cwd therefore passes between two runs (same uid, same user namespace, equal capability sets), and no Yama/LSM is active here. Each peer's rw binds are live in its own mount namespace: evidence dir, staging copy of reviews/<stage>, run_tmp, and sessions at ~/.claude/projects (lines 164-175). Reproduction in a disposable fixture under $TMPDIR, using the REAL agent_sandbox.py prepare/args/finish (docs/delivery/test-evidence/DG0/code-security/round-18/r18-proc-peer-root-repro.mjs, log 03-proc-peer-root-repro.log). The victim is a qa-verifier sandbox (sleeping); the attacker is a sibling code-security-reviewer sandbox with the same credentials. (A) A direct write to test-evidence/DG0/qa is refused ('Read-only file system'). Writes via /proc/<victim>/root succeed into: (B) the victim's evidence, (C, via /proc/<victim>/cwd) the same, (D) the victim's private TMPDIR, i.e. its disposable clones, (E) the victim's staged review record round-2/qa-verifier.json, (F) the victim's CLI session (transcript) directory, and (G) the same target through a symlink in the attacker's own evidence dir, which models the file-tool symlink race. The victim's own `finish` then exits 0 with copied_back=[round-2/qa-verifier.json] and discarded=[], so the forged record lands in the real tree as the victim's, and the runner would auto-commit it. In the live topology the agent's SHELL is in its own PID and user namespace and cannot see peers (checked). The reachable layer is the CLI's file tools. The write guard blocks paths that resolve through /proc (guard-write.mjs:108-175) but is check-then-use; the threat model itself (residual 7) acknowledges racing a symlink past the guard, the same class as F-DG0-145. I deliberately did NOT probe the live concurrent peer runs, so this is not demonstrated end-to-end against a live run.",
+   "expected": "threat-model.md 'Mechanically prevented' row 2 says another reviewer's records and evidence, and another run's disposable clones, are read-only to an agent 'in the kernel'. Residual 7 states that no reviewer artefact or another run's scratch becomes writable, and residual 8 states that the shared PID namespace does not let an agent write any protected file.",
+   "actual": "Within the process-sandbox layer the kernel does not prevent cross-run writes: another run's evidence, disposable clones, staged review record and session transcripts are writable through /proc/<peer-pid>/root. Residuals 7 and 8 are therefore larger than disclosed, and a control listed as mechanically prevented (cross-run falsification, review-record integrity) is not. Gate-integrity impact: an agent can plant files in a concurrently running reviewer's evidence or clones (silently changing what that reviewer tests), and can place a record into that reviewer's staging that is copied back as the reviewer's own. Whether the validator's transcript-replay binding (D-021) catches a forged record depends on whether the peer's transcript, which lives in the same writable session directory, can also be altered consistently. I did not attempt that. Proposed narrower mitigation, spiked in the same fixture (r18-landlock-spike.mjs, log 04-landlock-spike.log): put each run's sandboxed process in its own Landlock domain with a scope-only ruleset (handled_access_fs=0, scoped=SIGNAL|ABSTRACT_UNIX_SOCKET; ABI 7 is available on this kernel). With that, B/C/D are refused ('Permission denied'), a cross-run signal is refused (this also narrows residual 8), own areas stay writable, and a nested bwrap with a fresh --proc (what the pre-freeze needs) still works. Alternatives: a distinct uid per run, or serialising reviewer runs. The fix needs a test that two concurrently prepared sandboxes cannot write each other's areas via /proc/<pid>/root or /cwd.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-18/03-proc-peer-root-repro.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-18/r18-proc-peer-root-repro.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-18/04-landlock-spike.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-18/r18-landlock-spike.mjs",
+    "tools/agents/agent_sandbox.py#L147-L180",
+    "tools/agents/guard-write.mjs#L108-L175",
+    "docs/delivery/threat-model.md#disclosed-residuals"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-29T16:35:00Z",
+     "status": "OPEN",
+     "note": "raised by code-security-reviewer in DG0 round 18; reproduced with the real agent_sandbox.py args in a disposable fixture under $TMPDIR; live peer runs deliberately not probed."
+    }
+   ]
+  },
+  {
+   "id": "F-DG0-153",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-007",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "threat-model.md 'Mechanically prevented' row 1 still says the process sandbox 'creates no PID/IPC namespace of its own', contradicting --unshare-ipc (D-031) and residual 8",
+   "reproduction": "docs/delivery/threat-model.md:27 says 'The sandbox binds the host's real procfs (read-write) and creates no PID/IPC namespace of its own'. agent_sandbox.py:147 passes --unshare-ipc, sandbox.json records unshare: [\"ipc\"], and threat-model.md:61 (residual 8) correctly says the IPC namespace IS unshared.",
+   "expected": "The threat model states consistently that the PID namespace is shared and the IPC namespace is private.",
+   "actual": "Documentation inconsistency only; the code and the machine-readable evidence are correct. I would accept this as an observation.",
+   "evidence": [
+    "docs/delivery/threat-model.md#L27",
+    "tools/agents/agent_sandbox.py#L147"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-29T16:35:00Z",
+     "status": "OPEN",
+     "note": "raised by code-security-reviewer in DG0 round 18 by source inspection."
+    }
+   ]
+  }
+ ]
+}
