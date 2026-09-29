@@ -10,6 +10,7 @@ import {
   isDemo,
   ts,
   projectFk,
+  type FkTarget,
   classification,
   templateKind,
   templateVersionStatus,
@@ -225,7 +226,7 @@ export const projectMembership = pgTable(
   },
   (t) => [
     unique('project_membership_pid_uq').on(t.projectId, t.id),
-    projectFk('project_membership_ws_fk', t.projectId, t.workstreamId, workstream),
+    projectFk('project_membership_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
     index('project_membership_user_idx').on(t.userId),
   ],
 );

@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { POLICY_MATRIX, permissionsOf, evaluateConditions, isKnownPermission, forbidden, notFound, AbacAttributes, Classification, RoleKey } from '@hub/domain';
-import type { Principal, RequestContext } from './context';
+import { POLICY_MATRIX, permissionsOf, evaluateConditions, isKnownPermission, forbidden, notFound, clearanceAllows, AbacAttributes, Classification, RoleKey } from '@hub/domain';
+import { sql, SQL } from 'drizzle-orm';
+import type { PgColumn } from 'drizzle-orm/pg-core';
+import { CLASSIFICATIONS } from '@hub/domain';
+import { isFullScope, Principal, RequestContext } from './context';
 
 export interface ResourceAttrs {
   projectId: string;
@@ -68,9 +71,15 @@ export class PolicyService {
     return ctx.principal.projects.has(projectId);
   }
 
+  /** True when the principal only holds room-scoped roles in this project (clean team / external partner). */
+  isRoomOnly(p: Principal, projectId: string): boolean {
+    const s = p.projects.get(projectId);
+    return !!s && p.kind !== 'service' && !isFullScope(s);
+  }
+
   /** RBAC-only check: does the principal hold `permission` anywhere in the project? */
   canInProject(ctx: RequestContext, permission: string, projectId: string): boolean {
-    if (ctx.principal.kind === 'service') return ctx.principal.projects.has(projectId);
+    if (ctx.principal.kind === 'service') return ctx.principal.projects.has(projectId) && (ctx.principal.servicePermissions?.has(permission) ?? false);
     return (
       this.projectPermissions(ctx.principal, projectId).has(permission) ||
       this.workstreamPermissions(ctx.principal, projectId).has(permission) ||
@@ -100,11 +109,19 @@ export class PolicyService {
     return this.check(ctx, permission, res).allowed;
   }
 
-  /** Visibility-only check used to filter lists (classification/room/clean team). */
+  /**
+   * Visibility-only check used to filter lists (classification/room/clean team). Room-only principals see ONLY
+   * resources inside their rooms (ARCH-02); resources without a room are invisible to them.
+   */
   canSee(ctx: RequestContext, res: Omit<ResourceAttrs, 'requesterUserId' | 'withinAuthority'>): boolean {
     const p = ctx.principal;
     const scope = p.projects.get(res.projectId);
     if (!scope) return false;
+    if (p.kind === 'service') return true;
+    if (!isFullScope(scope)) {
+      const rooms = new Set([...scope.roomIds, ...scope.roomRoles.map((r) => r.roomId)]);
+      if (!res.roomId || !rooms.has(res.roomId)) return false;
+    }
     const r = evaluateConditions(['classification', 'room', 'clean_team'], {
       clearance: p.clearance,
       classification: res.classification ?? null,
@@ -129,7 +146,12 @@ export class PolicyService {
     // Visibility first → 404
     if (p.kind !== 'service' && !this.canSee(ctx, res)) return { allowed: false, hide: true, reason: 'not visible' };
 
-    if (p.kind === 'service') return { allowed: true, hide: false, reason: '' };
+    // Service principals: explicit permission allowlist only (deny by default — ARCH-09).
+    if (p.kind === 'service') {
+      return p.servicePermissions?.has(permission)
+        ? { allowed: true, hide: false, reason: '' }
+        : { allowed: false, hide: false, reason: `Service identity ${p.serviceIdentity} is not allowed ${permission}` };
+    }
 
     const projectWide = this.projectPermissions(p, res.projectId).has(permission);
     const wsGrants = this.workstreamPermissions(p, res.projectId).get(permission);
@@ -172,6 +194,34 @@ export class PolicyService {
       return { allowed: false, hide: false, reason };
     }
     return { allowed: true, hide: false, reason: '' };
+  }
+
+  /**
+   * SQL visibility predicate for lists and counts (ARCH-02/ARCH-14): classification ≤ clearance, room grants, and
+   * room-only restriction — applied INSIDE the query so totals never include invisible rows.
+   * Pass the table's columns; omit `room` for tables without a room column.
+   */
+  visibilitySql(ctx: RequestContext, projectId: string, cols: { classification?: PgColumn; room?: PgColumn }): SQL {
+    const p = ctx.principal;
+    const scope = p.projects.get(projectId);
+    if (!scope) return sql`false`;
+    if (p.kind === 'service') return sql`true`;
+    const parts: SQL[] = [];
+    if (cols.classification) {
+      const allowed = CLASSIFICATIONS.filter((c) => clearanceAllows(p.clearance, c));
+      parts.push(sql`${cols.classification} in (${sql.join(allowed.map((c) => sql`${c}`), sql`, `)})`);
+    }
+    const rooms = [...new Set([...scope.roomIds, ...scope.roomRoles.map((r) => r.roomId)])];
+    const cleanTeamRooms = [...scope.cleanTeamRoomIds];
+    if (cols.room) {
+      const roomList = rooms.length ? sql`${cols.room} in (${sql.join(rooms.map((r) => sql`${r}::uuid`), sql`, `)})` : sql`false`;
+      if (!isFullScope(scope)) parts.push(roomList);
+      else parts.push(sql`(${cols.room} is null or ${roomList})`);
+      void cleanTeamRooms; // clean-team rooms are a subset of granted rooms; grants are the gate.
+    } else if (!isFullScope(scope)) {
+      parts.push(sql`false`);
+    }
+    return parts.length ? sql.join(parts, sql` and `) : sql`true`;
   }
 
   static roleSummary(roles: Iterable<RoleKey>): string {

@@ -1179,6 +1179,7 @@ CREATE TABLE "cutover_plan" (
 	"go_no_go_decided_by" uuid,
 	"go_no_go_decided_at" timestamp with time zone,
 	"go_no_go_rationale" text,
+	"go_decision_id" uuid,
 	"status" "cutover_status" DEFAULT 'planning' NOT NULL,
 	"post_transition_accepted" boolean DEFAULT false NOT NULL,
 	"post_transition_accepted_by" uuid,
@@ -2042,6 +2043,15 @@ CREATE TABLE "report_snapshot" (
 	CONSTRAINT "report_snapshot_pid_uq" UNIQUE("project_id","id")
 );
 --> statement-breakpoint
+CREATE TABLE "audit_checkpoint" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"chain_pos" bigint NOT NULL,
+	"hash" varchar(64) NOT NULL,
+	"row_count" bigint NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "audit_event" (
 	"seq" bigserial PRIMARY KEY NOT NULL,
 	"id" uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -2331,7 +2341,9 @@ ALTER TABLE "assumption" ADD CONSTRAINT "assumption_project_id_project_id_fk" FO
 ALTER TABLE "assumption" ADD CONSTRAINT "assumption_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "assumption" ADD CONSTRAINT "assumption_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "baseline_version" ADD CONSTRAINT "baseline_version_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "baseline_version" ADD CONSTRAINT "baseline_change_request_fk" FOREIGN KEY ("project_id","change_request_id") REFERENCES "public"."change_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "change_request" ADD CONSTRAINT "change_request_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "change_request" ADD CONSTRAINT "change_request_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cross_project_dependency" ADD CONSTRAINT "cross_project_dependency_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cross_project_dependency" ADD CONSTRAINT "cross_project_dependency_other_project_id_project_id_fk" FOREIGN KEY ("other_project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "deliverable" ADD CONSTRAINT "deliverable_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2363,6 +2375,7 @@ ALTER TABLE "task" ADD CONSTRAINT "task_ws_fk" FOREIGN KEY ("project_id","workst
 ALTER TABLE "task" ADD CONSTRAINT "task_parent_fk" FOREIGN KEY ("project_id","parent_id") REFERENCES "public"."task"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "action_item" ADD CONSTRAINT "action_item_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "action_item" ADD CONSTRAINT "action_item_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "action_item" ADD CONSTRAINT "action_item_issue_fk" FOREIGN KEY ("project_id","issue_id") REFERENCES "public"."issue"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "action_item" ADD CONSTRAINT "action_item_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "action_item" ADD CONSTRAINT "action_item_meeting_fk" FOREIGN KEY ("project_id","meeting_id") REFERENCES "public"."meeting"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agenda_item" ADD CONSTRAINT "agenda_item_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2379,8 +2392,10 @@ ALTER TABLE "authority_matrix_version" ADD CONSTRAINT "authority_matrix_version_
 ALTER TABLE "authority_matrix_version" ADD CONSTRAINT "authority_matrix_committee_fk" FOREIGN KEY ("project_id","committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee" ADD CONSTRAINT "committee_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee" ADD CONSTRAINT "committee_program_id_program_id_fk" FOREIGN KEY ("program_id") REFERENCES "public"."program"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "committee" ADD CONSTRAINT "committee_charter_doc_fk" FOREIGN KEY ("project_id","charter_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee_membership" ADD CONSTRAINT "committee_membership_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee_membership" ADD CONSTRAINT "committee_membership_user_id_app_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "committee_membership" ADD CONSTRAINT "committee_membership_delegate_fk" FOREIGN KEY ("project_id","delegate_of_membership_id") REFERENCES "public"."committee_membership"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee_membership" ADD CONSTRAINT "committee_membership_committee_fk" FOREIGN KEY ("project_id","committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "conflict_declaration" ADD CONSTRAINT "conflict_declaration_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "conflict_declaration" ADD CONSTRAINT "conflict_declaration_committee_fk" FOREIGN KEY ("project_id","committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2392,17 +2407,26 @@ ALTER TABLE "decision" ADD CONSTRAINT "decision_committee_fk" FOREIGN KEY ("proj
 ALTER TABLE "decision" ADD CONSTRAINT "decision_meeting_fk" FOREIGN KEY ("project_id","meeting_id") REFERENCES "public"."meeting"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "decision" ADD CONSTRAINT "decision_superseded_fk" FOREIGN KEY ("project_id","superseded_by_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "escalation" ADD CONSTRAINT "escalation_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "escalation" ADD CONSTRAINT "escalation_committee_fk" FOREIGN KEY ("project_id","raised_to_committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "escalation" ADD CONSTRAINT "escalation_resolution_fk" FOREIGN KEY ("project_id","resolution_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "meeting" ADD CONSTRAINT "meeting_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "meeting" ADD CONSTRAINT "meeting_matrix_fk" FOREIGN KEY ("project_id","authority_matrix_version_id") REFERENCES "public"."authority_matrix_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "meeting" ADD CONSTRAINT "meeting_pack_fk" FOREIGN KEY ("project_id","pack_snapshot_id") REFERENCES "public"."report_snapshot"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "meeting" ADD CONSTRAINT "meeting_committee_fk" FOREIGN KEY ("project_id","committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "recusal" ADD CONSTRAINT "recusal_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "recusal" ADD CONSTRAINT "recusal_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "vote" ADD CONSTRAINT "vote_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "vote" ADD CONSTRAINT "vote_meeting_fk" FOREIGN KEY ("project_id","meeting_id") REFERENCES "public"."meeting"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "vote" ADD CONSTRAINT "vote_matrix_fk" FOREIGN KEY ("project_id","authority_matrix_version_id") REFERENCES "public"."authority_matrix_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "vote" ADD CONSTRAINT "vote_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "vote" ADD CONSTRAINT "vote_membership_fk" FOREIGN KEY ("project_id","membership_id") REFERENCES "public"."committee_membership"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "criterion_assessment" ADD CONSTRAINT "criterion_assessment_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "criterion_assessment" ADD CONSTRAINT "criterion_assessment_waiver_fk" FOREIGN KEY ("project_id","waiver_id") REFERENCES "public"."waiver"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "criterion_assessment" ADD CONSTRAINT "criterion_assessment_assessment_fk" FOREIGN KEY ("project_id","assessment_id") REFERENCES "public"."gate_assessment"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "criterion_assessment" ADD CONSTRAINT "criterion_assessment_criterion_fk" FOREIGN KEY ("project_id","criterion_id") REFERENCES "public"."gate_criterion"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "gate_assessment" ADD CONSTRAINT "gate_assessment_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "gate_assessment" ADD CONSTRAINT "gate_assessment_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "gate_assessment" ADD CONSTRAINT "gate_assessment_supersedes_fk" FOREIGN KEY ("project_id","supersedes_assessment_id") REFERENCES "public"."gate_assessment"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "gate_assessment" ADD CONSTRAINT "gate_assessment_gate_fk" FOREIGN KEY ("project_id","gate_id") REFERENCES "public"."gate_definition"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "gate_criterion" ADD CONSTRAINT "gate_criterion_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "gate_criterion" ADD CONSTRAINT "gate_criterion_gate_fk" FOREIGN KEY ("project_id","gate_id") REFERENCES "public"."gate_definition"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2412,6 +2436,7 @@ ALTER TABLE "waiver" ADD CONSTRAINT "waiver_project_id_project_id_fk" FOREIGN KE
 ALTER TABLE "agreement" ADD CONSTRAINT "agreement_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agreement" ADD CONSTRAINT "agreement_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agreement" ADD CONSTRAINT "agreement_legal_reviewer_user_id_app_user_id_fk" FOREIGN KEY ("legal_reviewer_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "agreement" ADD CONSTRAINT "agreement_executed_doc_fk" FOREIGN KEY ("project_id","executed_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "consent" ADD CONSTRAINT "consent_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "consent" ADD CONSTRAINT "consent_service_accountable_user_id_app_user_id_fk" FOREIGN KEY ("service_accountable_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "consent" ADD CONSTRAINT "consent_billing_accountable_user_id_app_user_id_fk" FOREIGN KEY ("billing_accountable_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2420,8 +2445,11 @@ ALTER TABLE "consent" ADD CONSTRAINT "consent_item_fk" FOREIGN KEY ("project_id"
 ALTER TABLE "consent" ADD CONSTRAINT "consent_agreement_fk" FOREIGN KEY ("project_id","agreement_id") REFERENCES "public"."agreement"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_accountable_user_id_app_user_id_fk" FOREIGN KEY ("accountable_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_runbook_fk" FOREIGN KEY ("project_id","runbook_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_go_decision_fk" FOREIGN KEY ("project_id","go_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cutover_plan" ADD CONSTRAINT "cutover_plan_site_fk" FOREIGN KEY ("project_id","site_id") REFERENCES "public"."site"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "operating_model_definition" ADD CONSTRAINT "operating_model_definition_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "operating_model_definition" ADD CONSTRAINT "operating_model_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "perimeter_item" ADD CONSTRAINT "perimeter_item_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "perimeter_item" ADD CONSTRAINT "perimeter_item_current_entity_id_legal_entity_id_fk" FOREIGN KEY ("current_entity_id") REFERENCES "public"."legal_entity"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "perimeter_item" ADD CONSTRAINT "perimeter_item_target_entity_id_legal_entity_id_fk" FOREIGN KEY ("target_entity_id") REFERENCES "public"."legal_entity"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2429,6 +2457,7 @@ ALTER TABLE "perimeter_item" ADD CONSTRAINT "perimeter_item_site_fk" FOREIGN KEY
 ALTER TABLE "perimeter_item" ADD CONSTRAINT "perimeter_item_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "perimeter_item" ADD CONSTRAINT "perimeter_item_agreement_fk" FOREIGN KEY ("project_id","agreement_id") REFERENCES "public"."agreement"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "readiness_check" ADD CONSTRAINT "readiness_check_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "readiness_check" ADD CONSTRAINT "readiness_check_waiver_fk" FOREIGN KEY ("project_id","waiver_id") REFERENCES "public"."waiver"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "readiness_check" ADD CONSTRAINT "readiness_check_site_fk" FOREIGN KEY ("project_id","site_id") REFERENCES "public"."site"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "readiness_check" ADD CONSTRAINT "readiness_check_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "readiness_check" ADD CONSTRAINT "readiness_check_cutover_fk" FOREIGN KEY ("project_id","cutover_plan_id") REFERENCES "public"."cutover_plan"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2443,13 +2472,17 @@ ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_project_id_project_id_fk" 
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_provider_entity_id_legal_entity_id_fk" FOREIGN KEY ("provider_entity_id") REFERENCES "public"."legal_entity"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_recipient_entity_id_legal_entity_id_fk" FOREIGN KEY ("recipient_entity_id") REFERENCES "public"."legal_entity"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_escalation_fk" FOREIGN KEY ("project_id","escalation_id") REFERENCES "public"."escalation"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_extension_decision_fk" FOREIGN KEY ("project_id","extension_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_agreement_fk" FOREIGN KEY ("project_id","agreement_id") REFERENCES "public"."agreement"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "benefit" ADD CONSTRAINT "benefit_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "benefit" ADD CONSTRAINT "benefit_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "budget_line" ADD CONSTRAINT "budget_line_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "budget_line" ADD CONSTRAINT "budget_line_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "financial_model_version" ADD CONSTRAINT "financial_model_version_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_model_version" ADD CONSTRAINT "financial_model_doc_fk" FOREIGN KEY ("project_id","source_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_doc_fk" FOREIGN KEY ("project_id","source_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "intercompany_reconciliation" ADD CONSTRAINT "intercompany_reconciliation_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "kpi" ADD CONSTRAINT "kpi_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2457,16 +2490,20 @@ ALTER TABLE "kpi" ADD CONSTRAINT "kpi_owner_user_id_app_user_id_fk" FOREIGN KEY 
 ALTER TABLE "kpi_observation" ADD CONSTRAINT "kpi_observation_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "kpi_observation" ADD CONSTRAINT "kpi_observation_kpi_fk" FOREIGN KEY ("project_id","kpi_id") REFERENCES "public"."kpi"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing" ADD CONSTRAINT "closing_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "closing" ADD CONSTRAINT "closing_decision_fk" FOREIGN KEY ("project_id","confirmation_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing" ADD CONSTRAINT "closing_partner_fk" FOREIGN KEY ("project_id","partner_id") REFERENCES "public"."partner"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_waiver_fk" FOREIGN KEY ("project_id","waiver_id") REFERENCES "public"."waiver"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_closing_fk" FOREIGN KEY ("project_id","closing_id") REFERENCES "public"."closing"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_deliverable" ADD CONSTRAINT "closing_deliverable_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_deliverable" ADD CONSTRAINT "closing_deliverable_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "closing_deliverable" ADD CONSTRAINT "closing_deliverable_doc_fk" FOREIGN KEY ("project_id","document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_deliverable" ADD CONSTRAINT "closing_deliverable_closing_fk" FOREIGN KEY ("project_id","closing_id") REFERENCES "public"."closing"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "deal_scenario" ADD CONSTRAINT "deal_scenario_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "deal_scenario" ADD CONSTRAINT "deal_scenario_partner_fk" FOREIGN KEY ("project_id","partner_id") REFERENCES "public"."partner"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "diligence_finding" ADD CONSTRAINT "diligence_finding_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "diligence_finding" ADD CONSTRAINT "diligence_finding_risk_fk" FOREIGN KEY ("project_id","risk_id") REFERENCES "public"."risk"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "diligence_finding" ADD CONSTRAINT "diligence_finding_partner_fk" FOREIGN KEY ("project_id","partner_id") REFERENCES "public"."partner"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "diligence_request" ADD CONSTRAINT "diligence_request_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "diligence_request" ADD CONSTRAINT "diligence_request_assignee_user_id_app_user_id_fk" FOREIGN KEY ("assignee_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2491,23 +2528,31 @@ ALTER TABLE "room_grant" ADD CONSTRAINT "room_grant_room_fk" FOREIGN KEY ("proje
 ALTER TABLE "document" ADD CONSTRAINT "document_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document" ADD CONSTRAINT "document_room_fk" FOREIGN KEY ("project_id","room_id") REFERENCES "public"."partner_room"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_chunk" ADD CONSTRAINT "document_chunk_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "document_chunk" ADD CONSTRAINT "document_chunk_room_fk" FOREIGN KEY ("project_id","room_id") REFERENCES "public"."partner_room"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_chunk" ADD CONSTRAINT "document_chunk_document_fk" FOREIGN KEY ("project_id","document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_chunk" ADD CONSTRAINT "document_chunk_version_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_version" ADD CONSTRAINT "document_version_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_version" ADD CONSTRAINT "document_version_document_fk" FOREIGN KEY ("project_id","document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "evidence_link" ADD CONSTRAINT "evidence_link_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "evidence_link" ADD CONSTRAINT "evidence_link_conflict_fk" FOREIGN KEY ("project_id","conflict_with_link_id") REFERENCES "public"."evidence_link"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "evidence_link" ADD CONSTRAINT "evidence_link_document_fk" FOREIGN KEY ("project_id","document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "evidence_link" ADD CONSTRAINT "evidence_link_version_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_claim" ADD CONSTRAINT "source_claim_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "source_claim" ADD CONSTRAINT "source_claim_conflict_fk" FOREIGN KEY ("project_id","conflict_with_claim_id") REFERENCES "public"."source_claim"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_claim" ADD CONSTRAINT "source_claim_source_fk" FOREIGN KEY ("project_id","source_id") REFERENCES "public"."source_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_record" ADD CONSTRAINT "source_record_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "source_record" ADD CONSTRAINT "source_record_supersedes_fk" FOREIGN KEY ("project_id","supersedes_source_id") REFERENCES "public"."source_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_record" ADD CONSTRAINT "source_record_docver_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "import_batch" ADD CONSTRAINT "import_batch_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "import_batch" ADD CONSTRAINT "import_batch_source_fk" FOREIGN KEY ("project_id","source_id") REFERENCES "public"."source_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "import_batch" ADD CONSTRAINT "import_batch_docver_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "import_row" ADD CONSTRAINT "import_row_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "import_row" ADD CONSTRAINT "import_row_batch_fk" FOREIGN KEY ("project_id","batch_id") REFERENCES "public"."import_batch"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "report_export" ADD CONSTRAINT "report_export_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "report_export" ADD CONSTRAINT "report_export_snapshot_fk" FOREIGN KEY ("project_id","snapshot_id") REFERENCES "public"."report_snapshot"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "report_snapshot" ADD CONSTRAINT "report_snapshot_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "report_snapshot" ADD CONSTRAINT "report_snapshot_baseline_fk" FOREIGN KEY ("project_id","baseline_version_id") REFERENCES "public"."baseline_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "report_snapshot" ADD CONSTRAINT "report_snapshot_previous_fk" FOREIGN KEY ("project_id","previous_snapshot_id") REFERENCES "public"."report_snapshot"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "integration_connection" ADD CONSTRAINT "integration_connection_org_id_organization_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organization"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ai_action_approval" ADD CONSTRAINT "ai_action_approval_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ai_action_approval" ADD CONSTRAINT "ai_action_approval_proposal_fk" FOREIGN KEY ("project_id","proposal_id") REFERENCES "public"."ai_proposal"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2592,6 +2637,7 @@ CREATE INDEX "source_claim_target_idx" ON "source_claim" USING btree ("project_i
 CREATE UNIQUE INDEX "source_record_code_uq" ON "source_record" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "import_row_uq" ON "import_row" USING btree ("batch_id","row_no");--> statement-breakpoint
 CREATE INDEX "report_snapshot_kind_idx" ON "report_snapshot" USING btree ("project_id","kind");--> statement-breakpoint
+CREATE INDEX "audit_checkpoint_org_idx" ON "audit_checkpoint" USING btree ("org_id","chain_pos");--> statement-breakpoint
 CREATE UNIQUE INDEX "audit_event_id_uq" ON "audit_event" USING btree ("id");--> statement-breakpoint
 CREATE INDEX "audit_event_project_idx" ON "audit_event" USING btree ("project_id","created_at");--> statement-breakpoint
 CREATE INDEX "audit_event_entity_idx" ON "audit_event" USING btree ("entity_type","entity_id");--> statement-breakpoint

@@ -7,9 +7,10 @@ import {
   boolean,
   numeric,
   varchar,
-  foreignKey,
   customType,
+  ForeignKeyBuilder,
   type AnyPgColumn,
+  type PgColumn,
 } from 'drizzle-orm/pg-core';
 import * as E from '@hub/domain';
 
@@ -33,14 +34,18 @@ export const moneyCols = (prefix: string) => ({
   [`${prefix}UnitScale`]: integer(`${prefix}_unit_scale`),
 });
 
-/** Composite FK (project_id, <col>) → target(project_id, id): prevents cross-project linking (spec §14). */
-export function projectFk(
-  name: string,
-  projectIdColumn: AnyPgColumn,
-  column: AnyPgColumn,
-  target: { projectId: AnyPgColumn; id: AnyPgColumn },
-) {
-  return foreignKey({ name, columns: [projectIdColumn, column], foreignColumns: [target.projectId, target.id] });
+export type FkTarget = { projectId: AnyPgColumn; id: AnyPgColumn };
+
+/**
+ * Composite FK (project_id, <col>) → target(project_id, id): prevents cross-project linking (spec §14).
+ * The target may be a thunk so that mutually referencing tables (e.g. meeting ↔ decision) type-check; the FK is
+ * resolved lazily when drizzle builds the table config.
+ */
+export function projectFk(name: string, projectIdColumn: AnyPgColumn, column: AnyPgColumn, target: FkTarget | (() => FkTarget)): ForeignKeyBuilder {
+  return new ForeignKeyBuilder(() => {
+    const t = typeof target === 'function' ? target() : target;
+    return { name, columns: [projectIdColumn as PgColumn, column as PgColumn], foreignColumns: [t.projectId as PgColumn, t.id as PgColumn] };
+  });
 }
 
 export const tsvector = customType<{ data: string }>({

@@ -30,6 +30,12 @@ const Env = z.object({
   HUB_WORKER_POLL_MS: z.coerce.number().int().min(100).default(1000),
   HUB_LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   HUB_CHROMIUM_PATH: z.string().optional(),
+  HUB_DB_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(1000).default(30000),
+  HUB_DB_LOCK_TIMEOUT_MS: z.coerce.number().int().min(100).default(10000),
+  HUB_DB_IDLE_TX_TIMEOUT_MS: z.coerce.number().int().min(1000).default(60000),
+  HUB_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(10).default(600),
+  HUB_RATE_LIMIT_MUTATIONS_PER_MINUTE: z.coerce.number().int().min(5).default(120),
+  HUB_RATE_LIMIT_PUBLIC_PER_MINUTE: z.coerce.number().int().min(5).default(60),
 });
 
 export type AppConfig = ReturnType<typeof loadConfig>;
@@ -77,6 +83,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     worker: { id: e.HUB_WORKER_ID, pollMs: e.HUB_WORKER_POLL_MS },
     logLevel: e.HUB_LOG_LEVEL,
     chromiumPath: e.HUB_CHROMIUM_PATH ?? null,
+    dbTimeouts: { statementMs: e.HUB_DB_STATEMENT_TIMEOUT_MS, lockMs: e.HUB_DB_LOCK_TIMEOUT_MS, idleMs: e.HUB_DB_IDLE_TX_TIMEOUT_MS },
+    rateLimits: { perMinute: e.HUB_RATE_LIMIT_PER_MINUTE, mutationsPerMinute: e.HUB_RATE_LIMIT_MUTATIONS_PER_MINUTE, publicPerMinute: e.HUB_RATE_LIMIT_PUBLIC_PER_MINUTE },
   };
 }
 

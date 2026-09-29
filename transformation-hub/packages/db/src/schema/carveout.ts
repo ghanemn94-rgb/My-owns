@@ -10,6 +10,7 @@ import {
   isDemo,
   ts,
   projectFk,
+  type FkTarget,
   moneyCols,
   classification,
   perimeterItemType,
@@ -31,6 +32,9 @@ import {
 } from './_common';
 import { project, site, workstream, legalEntity } from './portfolio';
 import { appUser } from './identity';
+import { document } from './documents';
+import { decision, escalation } from './governance';
+import { waiver } from './gates';
 
 export const agreement = pgTable(
   'agreement',
@@ -64,7 +68,8 @@ export const agreement = pgTable(
     updatedAt: updatedAt(),
     version: versionCol(),
   },
-  (t) => [unique('agreement_pid_uq').on(t.projectId, t.id), uniqueIndex('agreement_code_uq').on(t.projectId, t.code)],
+  (t) => [
+    projectFk('agreement_executed_doc_fk', t.projectId, t.executedDocumentId, (): FkTarget => document),unique('agreement_pid_uq').on(t.projectId, t.id), uniqueIndex('agreement_code_uq').on(t.projectId, t.code)],
 );
 
 /** Transaction perimeter register (spec §7.1). */
@@ -112,9 +117,9 @@ export const perimeterItem = pgTable(
   (t) => [
     unique('perimeter_item_pid_uq').on(t.projectId, t.id),
     uniqueIndex('perimeter_item_code_uq').on(t.projectId, t.code),
-    projectFk('perimeter_item_site_fk', t.projectId, t.siteId, site),
-    projectFk('perimeter_item_ws_fk', t.projectId, t.workstreamId, workstream),
-    projectFk('perimeter_item_agreement_fk', t.projectId, t.agreementId, agreement),
+    projectFk('perimeter_item_site_fk', t.projectId, t.siteId, (): FkTarget => site),
+    projectFk('perimeter_item_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
+    projectFk('perimeter_item_agreement_fk', t.projectId, t.agreementId, (): FkTarget => agreement),
     index('perimeter_item_status_idx').on(t.projectId, t.transferStatus),
   ],
 );
@@ -134,7 +139,7 @@ export const transferRecord = pgTable(
     recordedBy: uuid('recorded_by').notNull(),
     recordedAt: createdAt(),
   },
-  (t) => [projectFk('transfer_record_item_fk', t.projectId, t.perimeterItemId, perimeterItem), index('transfer_record_item_idx').on(t.perimeterItemId)],
+  (t) => [projectFk('transfer_record_item_fk', t.projectId, t.perimeterItemId, (): FkTarget => perimeterItem), index('transfer_record_item_idx').on(t.perimeterItemId)],
 );
 
 /** Contract consent / novation position — also covers the Day-1 fallback for non-transferable contracts (AT-08). */
@@ -170,8 +175,8 @@ export const consent = pgTable(
   (t) => [
     unique('consent_pid_uq').on(t.projectId, t.id),
     uniqueIndex('consent_code_uq').on(t.projectId, t.code),
-    projectFk('consent_item_fk', t.projectId, t.perimeterItemId, perimeterItem),
-    projectFk('consent_agreement_fk', t.projectId, t.agreementId, agreement),
+    projectFk('consent_item_fk', t.projectId, t.perimeterItemId, (): FkTarget => perimeterItem),
+    projectFk('consent_agreement_fk', t.projectId, t.agreementId, (): FkTarget => agreement),
   ],
 );
 
@@ -251,9 +256,11 @@ export const tsaService = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('tsa_service_escalation_fk', t.projectId, t.escalationId, (): FkTarget => escalation),
+    projectFk('tsa_service_extension_decision_fk', t.projectId, t.extensionDecisionId, (): FkTarget => decision),
     unique('tsa_service_pid_uq').on(t.projectId, t.id),
     uniqueIndex('tsa_service_code_uq').on(t.projectId, t.code),
-    projectFk('tsa_service_agreement_fk', t.projectId, t.agreementId, agreement),
+    projectFk('tsa_service_agreement_fk', t.projectId, t.agreementId, (): FkTarget => agreement),
   ],
 );
 
@@ -281,6 +288,7 @@ export const cutoverPlan = pgTable(
     goNoGoDecidedBy: uuid('go_no_go_decided_by'),
     goNoGoDecidedAt: ts('go_no_go_decided_at'),
     goNoGoRationale: text('go_no_go_rationale'),
+    goDecisionId: uuid('go_decision_id'),
     status: cutoverStatus('status').notNull().default('planning'),
     postTransitionAccepted: boolean('post_transition_accepted').notNull().default(false),
     postTransitionAcceptedBy: uuid('post_transition_accepted_by'),
@@ -291,9 +299,11 @@ export const cutoverPlan = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('cutover_plan_runbook_fk', t.projectId, t.runbookDocumentId, (): FkTarget => document),
+    projectFk('cutover_plan_go_decision_fk', t.projectId, t.goDecisionId, (): FkTarget => decision),
     unique('cutover_plan_pid_uq').on(t.projectId, t.id),
     uniqueIndex('cutover_plan_code_uq').on(t.projectId, t.code),
-    projectFk('cutover_plan_site_fk', t.projectId, t.siteId, site),
+    projectFk('cutover_plan_site_fk', t.projectId, t.siteId, (): FkTarget => site),
   ],
 );
 
@@ -331,11 +341,12 @@ export const readinessCheck = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('readiness_check_waiver_fk', t.projectId, t.waiverId, (): FkTarget => waiver),
     unique('readiness_check_pid_uq').on(t.projectId, t.id),
     uniqueIndex('readiness_check_code_uq').on(t.projectId, t.code),
-    projectFk('readiness_check_site_fk', t.projectId, t.siteId, site),
-    projectFk('readiness_check_ws_fk', t.projectId, t.workstreamId, workstream),
-    projectFk('readiness_check_cutover_fk', t.projectId, t.cutoverPlanId, cutoverPlan),
+    projectFk('readiness_check_site_fk', t.projectId, t.siteId, (): FkTarget => site),
+    projectFk('readiness_check_ws_fk', t.projectId, t.workstreamId, (): FkTarget => workstream),
+    projectFk('readiness_check_cutover_fk', t.projectId, t.cutoverPlanId, (): FkTarget => cutoverPlan),
   ],
 );
 
@@ -353,7 +364,7 @@ export const readinessTestRun = pgTable(
     recordedAt: createdAt(),
     seq: integer('seq').notNull().default(1),
   },
-  (t) => [projectFk('readiness_test_run_check_fk', t.projectId, t.readinessCheckId, readinessCheck)],
+  (t) => [projectFk('readiness_test_run_check_fk', t.projectId, t.readinessCheckId, (): FkTarget => readinessCheck)],
 );
 
 /**
@@ -380,5 +391,6 @@ export const operatingModelDefinition = pgTable(
     updatedAt: updatedAt(),
     version: versionCol(),
   },
-  (t) => [unique('operating_model_definition_pid_uq').on(t.projectId, t.id), uniqueIndex('operating_model_definition_uq').on(t.projectId, t.versionLabel)],
+  (t) => [
+    projectFk('operating_model_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),unique('operating_model_definition_pid_uq').on(t.projectId, t.id), uniqueIndex('operating_model_definition_uq').on(t.projectId, t.versionLabel)],
 );

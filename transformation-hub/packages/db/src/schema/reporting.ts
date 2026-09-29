@@ -9,6 +9,7 @@ import {
   versionCol,
   ts,
   projectFk,
+  type FkTarget,
   classification,
   reportKind,
   exportFormat,
@@ -16,6 +17,8 @@ import {
   importRowAction,
 } from './_common';
 import { project } from './portfolio';
+import { baselineVersion } from './planning';
+import { sourceRecord, documentVersion } from './documents';
 
 /**
  * Report snapshot — immutable in content (trigger blocks UPDATE of payload columns and DELETE). Figures never
@@ -45,7 +48,9 @@ export const reportSnapshot = pgTable(
     generatedBy: uuid('generated_by'),
     generatedAt: createdAt(),
   },
-  (t) => [unique('report_snapshot_pid_uq').on(t.projectId, t.id), index('report_snapshot_kind_idx').on(t.projectId, t.kind)],
+  (t) => [
+    projectFk('report_snapshot_baseline_fk', t.projectId, t.baselineVersionId, (): FkTarget => baselineVersion),
+    projectFk('report_snapshot_previous_fk', t.projectId, t.previousSnapshotId, { projectId: t.projectId, id: t.id }),unique('report_snapshot_pid_uq').on(t.projectId, t.id), index('report_snapshot_kind_idx').on(t.projectId, t.kind)],
 );
 
 export const reportExport = pgTable(
@@ -63,7 +68,7 @@ export const reportExport = pgTable(
     createdBy: createdBy(),
     createdAt: createdAt(),
   },
-  (t) => [projectFk('report_export_snapshot_fk', t.projectId, t.snapshotId, reportSnapshot)],
+  (t) => [projectFk('report_export_snapshot_fk', t.projectId, t.snapshotId, (): FkTarget => reportSnapshot)],
 );
 
 export const importBatch = pgTable(
@@ -91,7 +96,9 @@ export const importBatch = pgTable(
     updatedAt: updatedAt(),
     version: versionCol(),
   },
-  (t) => [unique('import_batch_pid_uq').on(t.projectId, t.id)],
+  (t) => [
+    projectFk('import_batch_source_fk', t.projectId, t.sourceId, (): FkTarget => sourceRecord),
+    projectFk('import_batch_docver_fk', t.projectId, t.documentVersionId, (): FkTarget => documentVersion),unique('import_batch_pid_uq').on(t.projectId, t.id)],
 );
 
 export const importRow = pgTable(
@@ -111,5 +118,5 @@ export const importRow = pgTable(
     before: jsonb('before').$type<Record<string, unknown>>(),
     after: jsonb('after').$type<Record<string, unknown>>(),
   },
-  (t) => [projectFk('import_row_batch_fk', t.projectId, t.batchId, importBatch), uniqueIndex('import_row_uq').on(t.batchId, t.rowNo)],
+  (t) => [projectFk('import_row_batch_fk', t.projectId, t.batchId, (): FkTarget => importBatch), uniqueIndex('import_row_uq').on(t.batchId, t.rowNo)],
 );

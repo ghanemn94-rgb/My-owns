@@ -23,6 +23,16 @@ CREATE OR REPLACE FUNCTION app_project_ids() RETURNS uuid[] LANGUAGE sql STABLE 
   SELECT coalesce(string_to_array(nullif(current_setting('app.project_ids', true), ''), ',')::uuid[], '{}'::uuid[])
 $$;
 
+-- Projects where the principal is a full member (not merely room-scoped, e.g. clean team / external partner).
+CREATE OR REPLACE FUNCTION app_full_project_ids() RETURNS uuid[] LANGUAGE sql STABLE AS $$
+  SELECT coalesce(string_to_array(nullif(current_setting('app.full_project_ids', true), ''), ',')::uuid[], '{}'::uuid[])
+$$;
+
+-- Partner / clean-team rooms with an active grant for the principal.
+CREATE OR REPLACE FUNCTION app_room_ids() RETURNS uuid[] LANGUAGE sql STABLE AS $$
+  SELECT coalesce(string_to_array(nullif(current_setting('app.room_ids', true), ''), ',')::uuid[], '{}'::uuid[])
+$$;
+
 -- 2. Row-level security -------------------------------------------------------------------------------------
 DO $rls$
 DECLARE
@@ -45,12 +55,19 @@ BEGIN
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', r.table_name);
     EXECUTE format('DROP POLICY IF EXISTS hub_project_isolation ON %I', r.table_name);
     IF r.table_name = ANY (nullable_project) THEN
+      -- Reads: full members only; writes (e.g. audit of a room-only user's actions): any in-scope project.
       EXECUTE format(
-        'CREATE POLICY hub_project_isolation ON %I USING (org_id = app_org_id() AND (project_id IS NULL OR project_id = ANY (app_project_ids()))) WITH CHECK (org_id = app_org_id() AND (project_id IS NULL OR project_id = ANY (app_project_ids())))',
+        'CREATE POLICY hub_project_isolation ON %I USING (org_id = app_org_id() AND (project_id IS NULL OR project_id = ANY (app_full_project_ids()))) WITH CHECK (org_id = app_org_id() AND (project_id IS NULL OR project_id = ANY (app_project_ids())))',
+        r.table_name);
+    ELSIF EXISTS (SELECT 1 FROM information_schema.columns c3 WHERE c3.table_schema = 'public' AND c3.table_name = r.table_name AND c3.column_name = 'room_id') THEN
+      -- Room-bearing tables: full members see the project's rows; room-only principals only rows of their rooms.
+      EXECUTE format(
+        'CREATE POLICY hub_project_isolation ON %I USING (project_id = ANY (app_full_project_ids()) OR (project_id = ANY (app_project_ids()) AND room_id = ANY (app_room_ids()))) WITH CHECK (project_id = ANY (app_full_project_ids()) OR (project_id = ANY (app_project_ids()) AND room_id = ANY (app_room_ids())))',
         r.table_name);
     ELSE
+      -- Everything else: full members only (room-only principals see nothing).
       EXECUTE format(
-        'CREATE POLICY hub_project_isolation ON %I USING (project_id = ANY (app_project_ids())) WITH CHECK (project_id = ANY (app_project_ids()))',
+        'CREATE POLICY hub_project_isolation ON %I USING (project_id = ANY (app_full_project_ids())) WITH CHECK (project_id = ANY (app_full_project_ids()))',
         r.table_name);
     END IF;
   END LOOP;
@@ -108,8 +125,14 @@ CREATE POLICY hub_notification_read ON notification FOR SELECT
 CREATE POLICY hub_notification_write ON notification FOR INSERT
   WITH CHECK (org_id = app_org_id() AND (project_id IS NULL OR project_id = ANY (app_project_ids())));
 CREATE POLICY hub_notification_update ON notification FOR UPDATE
-  USING (org_id = app_org_id() AND (user_id = app_user_id() OR project_id = ANY (app_project_ids())))
-  WITH CHECK (org_id = app_org_id() AND (project_id IS NULL OR project_id = ANY (app_project_ids())));
+  USING (org_id = app_org_id() AND user_id = app_user_id())
+  WITH CHECK (org_id = app_org_id() AND user_id = app_user_id());
+
+-- partner_room: room-only principals may read the rooms they are granted (id, not room_id).
+DROP POLICY IF EXISTS hub_project_isolation ON partner_room;
+CREATE POLICY hub_project_isolation ON partner_room
+  USING (project_id = ANY (app_full_project_ids()) OR (project_id = ANY (app_project_ids()) AND id = ANY (app_room_ids())))
+  WITH CHECK (project_id = ANY (app_full_project_ids()));
 
 -- 3. Grants ------------------------------------------------------------------------------------------------
 DO $grants$
@@ -120,8 +143,12 @@ BEGIN
     EXECUTE 'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO hub_app';
     -- Append-only tables: no UPDATE/DELETE for the runtime role
     EXECUTE 'REVOKE UPDATE, DELETE ON audit_event, vote, record_version, approval_record, transfer_record, readiness_test_run, report_snapshot FROM hub_app';
-    -- Documents are soft-deleted only
-    EXECUTE 'REVOKE DELETE ON document, document_version FROM hub_app';
+    -- Documents are soft-deleted only; grant/membership history is revoked, never hard-deleted (ARCH-15c)
+    EXECUTE 'REVOKE DELETE ON document, document_version, organization, project, org_role_assignment, project_membership, room_grant, recusal, conflict_declaration, attendance FROM hub_app';
+    EXECUTE 'REVOKE UPDATE ON recusal, conflict_declaration FROM hub_app';
+    -- No temporary objects for the runtime role (prevents pg_temp shadowing in SECURITY DEFINER functions, ARCH-03)
+    EXECUTE format('REVOKE TEMPORARY ON DATABASE %I FROM PUBLIC', current_database());
+    EXECUTE format('GRANT TEMPORARY ON DATABASE %I TO hub_owner', current_database());
     -- Migration bookkeeping is owner-only
     IF to_regclass('drizzle.__drizzle_migrations') IS NOT NULL THEN
       EXECUTE 'REVOKE ALL ON ALL TABLES IN SCHEMA drizzle FROM hub_app';
@@ -141,21 +168,60 @@ $$;
 DO $append$
 DECLARE t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['audit_event', 'vote', 'record_version', 'approval_record', 'transfer_record', 'readiness_test_run', 'report_snapshot']
+  FOREACH t IN ARRAY ARRAY['audit_event', 'vote', 'record_version', 'approval_record', 'transfer_record', 'readiness_test_run', 'report_snapshot', 'recusal', 'conflict_declaration', 'audit_checkpoint']
   LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS hub_append_only ON %I', t);
     EXECUTE format('CREATE TRIGGER hub_append_only BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION hub_reject_mutation()', t);
+    -- Row triggers do not fire on TRUNCATE (ARCH-05): add a statement-level guard.
+    EXECUTE format('DROP TRIGGER IF EXISTS hub_no_truncate ON %I', t);
+    EXECUTE format('CREATE TRIGGER hub_no_truncate BEFORE TRUNCATE ON %I FOR EACH STATEMENT EXECUTE FUNCTION hub_reject_mutation()', t);
   END LOOP;
 END
 $append$;
 
+-- attendance: never deleted; frozen once the meeting's minutes are approved (ARCH-06).
+CREATE OR REPLACE FUNCTION hub_attendance_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN RAISE EXCEPTION 'append_only_violation: attendance rows are never deleted' USING ERRCODE = 'P0001'; END IF;
+  IF EXISTS (SELECT 1 FROM meeting m WHERE m.id = OLD.meeting_id AND m.status = 'minutes_approved') THEN
+    RAISE EXCEPTION 'append_only_violation: attendance is frozen after minutes approval' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_attendance_guard ON attendance;
+CREATE TRIGGER hub_attendance_guard BEFORE UPDATE OR DELETE ON attendance FOR EACH ROW EXECUTE FUNCTION hub_attendance_guard();
+
+-- document_version: storage identity is immutable; only scan/extraction metadata may change (ARCH-06).
+CREATE OR REPLACE FUNCTION hub_document_version_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN RAISE EXCEPTION 'retention_violation: document versions are never deleted' USING ERRCODE = 'P0001'; END IF;
+  IF (NEW.document_id, NEW.version_no, NEW.storage_key, NEW.filename, NEW.size_bytes, NEW.sha256, NEW.uploaded_by, NEW.created_at, NEW.project_id)
+     IS DISTINCT FROM (OLD.document_id, OLD.version_no, OLD.storage_key, OLD.filename, OLD.size_bytes, OLD.sha256, OLD.uploaded_by, OLD.created_at, OLD.project_id) THEN
+    RAISE EXCEPTION 'append_only_violation: document version identity (storage key, hash, size, filename) is immutable' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_document_version_guard ON document_version;
+CREATE TRIGGER hub_document_version_guard BEFORE UPDATE OR DELETE ON document_version FOR EACH ROW EXECUTE FUNCTION hub_document_version_guard();
+
+
 -- 5. Audit hash chain (tamper-EVIDENT) ---------------------------------------------------------------------
 -- Serialized per organization with a transaction-scoped advisory lock; chain_pos gives the verification order.
-CREATE OR REPLACE FUNCTION hub_audit_chain() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+CREATE OR REPLACE FUNCTION hub_audit_chain() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
 DECLARE
   prev_hash text;
   prev_pos bigint;
 BEGIN
+  -- Trusted fields are set/validated here, not taken from the caller (ARCH-05).
+  NEW.created_at := now();
+  IF NEW.actor_kind = 'user' AND NEW.actor_user_id IS DISTINCT FROM app_user_id() THEN
+    RAISE EXCEPTION 'audit_actor_mismatch: audit actor must be the session user' USING ERRCODE = 'P0001';
+  END IF;
+  IF NEW.org_id IS DISTINCT FROM app_org_id() AND app_org_id() IS NOT NULL THEN
+    RAISE EXCEPTION 'audit_org_mismatch: audit organization must be the session organization' USING ERRCODE = 'P0001';
+  END IF;
   PERFORM pg_advisory_xact_lock(hashtextextended('hub_audit:' || NEW.org_id::text, 0));
   SELECT a.hash, a.chain_pos INTO prev_hash, prev_pos
     FROM audit_event a WHERE a.org_id = NEW.org_id AND a.chain_pos IS NOT NULL
@@ -174,14 +240,19 @@ $$;
 DROP TRIGGER IF EXISTS hub_audit_chain ON audit_event;
 CREATE TRIGGER hub_audit_chain BEFORE INSERT ON audit_event FOR EACH ROW EXECUTE FUNCTION hub_audit_chain();
 
--- Verification helper: returns the first broken link (NULL chain_pos when intact).
+-- Verification helper: returns the first broken link, or a checkpoint mismatch (tail truncation) — own org only.
+DROP FUNCTION IF EXISTS hub_audit_verify(uuid);
 CREATE OR REPLACE FUNCTION hub_audit_verify(p_org uuid)
-RETURNS TABLE (broken_at bigint, expected text, actual text) LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+RETURNS TABLE (broken_at bigint, expected text, actual text) LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
 DECLARE
   r record;
   expected_prev text := repeat('0', 64);
   computed text;
+  cp record;
 BEGIN
+  IF app_org_id() IS NOT NULL AND p_org IS DISTINCT FROM app_org_id() THEN
+    RAISE EXCEPTION 'audit_verify_forbidden: can only verify the session organization' USING ERRCODE = 'P0001';
+  END IF;
   FOR r IN SELECT * FROM audit_event WHERE org_id = p_org AND chain_pos IS NOT NULL ORDER BY chain_pos LOOP
     computed := encode(digest(concat_ws('|',
       r.prev_hash, r.chain_pos::text, r.id::text, r.org_id::text, coalesce(r.project_id::text, ''),
@@ -195,7 +266,27 @@ BEGIN
     END IF;
     expected_prev := r.hash;
   END LOOP;
+  -- Every checkpoint must still match the chain (detects deletion/rewrite of rows up to the last checkpoint).
+  FOR cp IN SELECT * FROM audit_checkpoint WHERE org_id = p_org ORDER BY chain_pos LOOP
+    IF NOT EXISTS (SELECT 1 FROM audit_event a WHERE a.org_id = p_org AND a.chain_pos = cp.chain_pos AND a.hash = cp.hash) THEN
+      broken_at := cp.chain_pos; expected := cp.hash; actual := 'missing or altered (checkpoint mismatch)';
+      RETURN NEXT; RETURN;
+    END IF;
+  END LOOP;
   RETURN;
+END
+$$;
+
+-- Records the current chain head as a checkpoint (run periodically by the worker; export externally in production).
+CREATE OR REPLACE FUNCTION hub_audit_checkpoint(p_org uuid) RETURNS bigint
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+DECLARE head record; n bigint;
+BEGIN
+  SELECT chain_pos, hash INTO head FROM audit_event WHERE org_id = p_org AND chain_pos IS NOT NULL ORDER BY chain_pos DESC LIMIT 1;
+  IF head IS NULL THEN RETURN 0; END IF;
+  SELECT count(*) INTO n FROM audit_event WHERE org_id = p_org;
+  INSERT INTO audit_checkpoint (id, org_id, chain_pos, hash, row_count) VALUES (gen_random_uuid(), p_org, head.chain_pos, head.hash, n);
+  RETURN head.chain_pos;
 END
 $$;
 
@@ -221,7 +312,7 @@ CREATE TRIGGER hub_document_guard BEFORE UPDATE OR DELETE ON document FOR EACH R
 
 -- 7. Narrow SECURITY DEFINER auth lookups --------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION hub_auth_org_by_slug(p_slug text) RETURNS uuid
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
   SELECT id FROM organization WHERE slug = p_slug
 $$;
 
@@ -231,7 +322,7 @@ RETURNS TABLE (
   idle_expires_at timestamptz, absolute_expires_at timestamptz, revoked_at timestamptz,
   user_active boolean, user_clearance text, user_locale text, user_display_name text, user_email text,
   user_is_demo boolean
-) LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+) LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
   SELECT s.id, s.user_id, s.org_id, s.csrf_hash, s.auth_method, s.idle_expires_at, s.absolute_expires_at,
          s.revoked_at, u.is_active, u.clearance::text, u.locale, u.display_name, u.email, u.is_demo
   FROM session s JOIN app_user u ON u.id = s.user_id
@@ -241,12 +332,14 @@ $$;
 REVOKE ALL ON FUNCTION hub_auth_org_by_slug(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION hub_auth_session(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION hub_audit_verify(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION hub_audit_checkpoint(uuid) FROM PUBLIC;
 DO $fgrants$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
     EXECUTE 'GRANT EXECUTE ON FUNCTION hub_auth_org_by_slug(text) TO hub_app';
     EXECUTE 'GRANT EXECUTE ON FUNCTION hub_auth_session(text) TO hub_app';
     EXECUTE 'GRANT EXECUTE ON FUNCTION hub_audit_verify(uuid) TO hub_app';
+    EXECUTE 'GRANT EXECUTE ON FUNCTION hub_audit_checkpoint(uuid) TO hub_app';
   END IF;
 END
 $fgrants$;
@@ -257,7 +350,7 @@ $fgrants$;
 DROP FUNCTION IF EXISTS hub_auth_user_scope(uuid);
 CREATE OR REPLACE FUNCTION hub_auth_user_scope(p_user uuid)
 RETURNS TABLE (kind text, project_id uuid, role text, workstream_id uuid, room_id uuid, is_clean_team boolean)
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
   -- project / workstream memberships
   SELECT 'membership', pm.project_id, pm.role::text, pm.workstream_id, NULL::uuid, false
   FROM project_membership pm JOIN app_user u ON u.id = pm.user_id AND u.is_active
@@ -283,8 +376,8 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT 'portfolio_role', p.id, ora.role::text, NULL::uuid, NULL::uuid, false
   FROM org_role_assignment ora
   JOIN app_user u ON u.id = ora.user_id AND u.is_active
-  JOIN program pr ON pr.portfolio_id = ora.scope_id
-  JOIN project p ON p.program_id = pr.id
+  JOIN program pr ON pr.portfolio_id = ora.scope_id AND pr.org_id = ora.org_id
+  JOIN project p ON p.program_id = pr.id AND p.org_id = ora.org_id
   WHERE ora.user_id = p_user AND ora.scope_type = 'portfolio' AND ora.revoked_at IS NULL
     AND ora.valid_from <= now() AND (ora.valid_to IS NULL OR ora.valid_to > now())
   UNION ALL
@@ -306,13 +399,13 @@ $sgrant$;
 -- 9. Identity lookups before an org/user context exists (login mapping; seed/bootstrap) -------------------------
 CREATE OR REPLACE FUNCTION hub_auth_user_by_email(p_org uuid, p_email text)
 RETURNS TABLE (id uuid, org_id uuid, display_name text, email text, clearance text, is_active boolean, is_demo boolean, is_service_account boolean, locale text)
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
   SELECT u.id, u.org_id, u.display_name, u.email, u.clearance::text, u.is_active, u.is_demo, u.is_service_account, u.locale
   FROM app_user u WHERE u.org_id = p_org AND lower(u.email) = lower(p_email)
 $$;
 CREATE OR REPLACE FUNCTION hub_auth_user_by_subject(p_issuer text, p_subject text)
 RETURNS TABLE (id uuid, org_id uuid, display_name text, email text, clearance text, is_active boolean, is_demo boolean, is_service_account boolean, locale text)
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
   SELECT u.id, u.org_id, u.display_name, u.email, u.clearance::text, u.is_active, u.is_demo, u.is_service_account, u.locale
   FROM app_user u WHERE u.oidc_issuer = p_issuer AND u.oidc_subject = p_subject
 $$;
@@ -326,3 +419,133 @@ BEGIN
   END IF;
 END
 $ugrant$;
+
+
+-- 10. Same-project guard for polymorphic references (ARCH-01) ---------------------------------------------------
+-- Allowlisted target types → tables. Runs as the invoker (RLS applies): a target outside the caller's scope is
+-- indistinguishable from a missing one and is rejected.
+CREATE OR REPLACE FUNCTION hub_target_table(p_type text) RETURNS text LANGUAGE sql IMMUTABLE AS $$
+  SELECT CASE p_type
+    WHEN 'project' THEN 'project' WHEN 'workstream' THEN 'workstream' WHEN 'task' THEN 'task' WHEN 'milestone' THEN 'milestone'
+    WHEN 'deliverable' THEN 'deliverable' WHEN 'risk' THEN 'risk' WHEN 'issue' THEN 'issue' WHEN 'assumption' THEN 'assumption'
+    WHEN 'raid_dependency' THEN 'raid_dependency' WHEN 'change_request' THEN 'change_request' WHEN 'baseline_version' THEN 'baseline_version'
+    WHEN 'status_update' THEN 'status_update' WHEN 'committee' THEN 'committee' WHEN 'meeting' THEN 'meeting' WHEN 'decision' THEN 'decision'
+    WHEN 'action_item' THEN 'action_item' WHEN 'escalation' THEN 'escalation' WHEN 'gate_definition' THEN 'gate_definition'
+    WHEN 'gate_criterion' THEN 'gate_criterion' WHEN 'gate_assessment' THEN 'gate_assessment' WHEN 'perimeter_item' THEN 'perimeter_item'
+    WHEN 'transfer' THEN 'perimeter_item' WHEN 'agreement' THEN 'agreement' WHEN 'consent' THEN 'consent'
+    WHEN 'regulatory_requirement' THEN 'regulatory_requirement' WHEN 'tsa_service' THEN 'tsa_service' WHEN 'readiness_check' THEN 'readiness_check'
+    WHEN 'cutover_plan' THEN 'cutover_plan' WHEN 'financial_snapshot' THEN 'financial_snapshot' WHEN 'budget_line' THEN 'budget_line'
+    WHEN 'financial_model_version' THEN 'financial_model_version' WHEN 'benefit' THEN 'benefit' WHEN 'kpi' THEN 'kpi'
+    WHEN 'intercompany_reconciliation' THEN 'intercompany_reconciliation' WHEN 'partner' THEN 'partner' WHEN 'deal_scenario' THEN 'deal_scenario'
+    WHEN 'negotiation_issue' THEN 'negotiation_issue' WHEN 'diligence_request' THEN 'diligence_request' WHEN 'diligence_finding' THEN 'diligence_finding'
+    WHEN 'closing' THEN 'closing' WHEN 'closing_condition' THEN 'closing_condition' WHEN 'closing_deliverable' THEN 'closing_deliverable'
+    WHEN 'post_close_obligation' THEN 'post_close_obligation' WHEN 'document' THEN 'document' WHEN 'site' THEN 'site'
+    WHEN 'operating_model_definition' THEN 'operating_model_definition' WHEN 'ai_proposal' THEN 'ai_proposal'
+    ELSE NULL END
+$$;
+
+CREATE OR REPLACE FUNCTION hub_assert_same_project() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  type_col text := TG_ARGV[0];
+  id_col text := TG_ARGV[1];
+  t_type text;
+  t_id uuid;
+  tbl text;
+  found boolean;
+BEGIN
+  EXECUTE format('SELECT ($1).%I::text, ($1).%I::uuid', type_col, id_col) INTO t_type, t_id USING NEW;
+  IF t_id IS NULL THEN RETURN NEW; END IF;
+  IF t_type = 'legal_entity' THEN
+    SELECT EXISTS (SELECT 1 FROM project_entity pe WHERE pe.legal_entity_id = t_id AND pe.project_id = NEW.project_id) INTO found;
+  ELSIF t_type = 'request' THEN
+    RETURN NEW; -- synthetic audit-style target (no row)
+  ELSE
+    tbl := hub_target_table(t_type);
+    IF tbl IS NULL THEN
+      RAISE EXCEPTION 'invalid_target_type: unsupported target type %', t_type USING ERRCODE = 'P0001';
+    END IF;
+    IF tbl = 'project' THEN
+      found := (t_id = NEW.project_id);
+    ELSE
+      EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I WHERE id = $1 AND project_id = $2)', tbl) INTO found USING t_id, NEW.project_id;
+    END IF;
+  END IF;
+  IF NOT found THEN
+    RAISE EXCEPTION 'cross_project_reference: % % is not a record of this project', t_type, t_id USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+
+DO $poly$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT * FROM (VALUES
+      ('evidence_link', 'target_type', 'target_id', 'target'),
+      ('waiver', 'target_type', 'target_id', 'target'),
+      ('approval_request', 'subject_type', 'subject_id', 'subject'),
+      ('raci_assignment', 'entity_type', 'entity_id', 'entity'),
+      ('rag_override', 'entity_type', 'entity_id', 'entity'),
+      ('change_request', 'subject_type', 'subject_id', 'subject'),
+      ('source_claim', 'target_type', 'target_id', 'target'),
+      ('escalation', 'source_type', 'source_id', 'source'),
+      ('import_row', 'target_type', 'target_id', 'target'),
+      ('ai_proposal', 'target_type', 'target_id', 'target'),
+      ('dependency', 'predecessor_type', 'predecessor_id', 'predecessor'),
+      ('dependency', 'successor_type', 'successor_id', 'successor')
+    ) AS v(tbl, type_col, id_col, suffix)
+  LOOP
+    IF to_regclass(r.tbl) IS NULL THEN CONTINUE; END IF;
+    EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I', 'hub_same_project_' || r.suffix, r.tbl);
+    EXECUTE format('CREATE TRIGGER %I BEFORE INSERT OR UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION hub_assert_same_project(%L, %L)',
+      'hub_same_project_' || r.suffix, r.tbl, r.type_col, r.id_col);
+  END LOOP;
+END
+$poly$;
+
+-- 11. document_chunk ACL attributes are DERIVED from the parent document (ARCH-01 / ADR-0008) ----------------------
+CREATE OR REPLACE FUNCTION hub_chunk_acl_sync() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE d record;
+BEGIN
+  SELECT room_id, classification, project_id INTO d FROM document WHERE id = NEW.document_id;
+  IF d IS NULL OR d.project_id IS DISTINCT FROM NEW.project_id THEN
+    RAISE EXCEPTION 'cross_project_reference: chunk document not in project' USING ERRCODE = 'P0001';
+  END IF;
+  NEW.room_id := d.room_id;
+  NEW.classification := d.classification;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_chunk_acl_sync ON document_chunk;
+CREATE TRIGGER hub_chunk_acl_sync BEFORE INSERT OR UPDATE ON document_chunk FOR EACH ROW EXECUTE FUNCTION hub_chunk_acl_sync();
+
+CREATE OR REPLACE FUNCTION hub_document_acl_cascade() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.room_id IS DISTINCT FROM OLD.room_id OR NEW.classification IS DISTINCT FROM OLD.classification THEN
+    UPDATE document_chunk SET room_id = NEW.room_id, classification = NEW.classification WHERE document_id = NEW.id;
+  END IF;
+  IF NEW.current_version_id IS NOT NULL AND NEW.current_version_id IS DISTINCT FROM OLD.current_version_id
+     AND NOT EXISTS (SELECT 1 FROM document_version v WHERE v.id = NEW.current_version_id AND v.document_id = NEW.id) THEN
+    RAISE EXCEPTION 'cross_project_reference: current version must belong to the document' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_document_acl_cascade ON document;
+CREATE TRIGGER hub_document_acl_cascade AFTER UPDATE ON document FOR EACH ROW EXECUTE FUNCTION hub_document_acl_cascade();
+
+-- 12. Identity lookup by id for worker re-authorization (AT-19) -----------------------------------------------------
+CREATE OR REPLACE FUNCTION hub_auth_user_by_id(p_user uuid)
+RETURNS TABLE (id uuid, org_id uuid, display_name text, email text, clearance text, is_active boolean, is_demo boolean, is_service_account boolean, locale text)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+  SELECT u.id, u.org_id, u.display_name, u.email, u.clearance::text, u.is_active, u.is_demo, u.is_service_account, u.locale
+  FROM app_user u WHERE u.id = p_user
+$$;
+REVOKE ALL ON FUNCTION hub_auth_user_by_id(uuid) FROM PUBLIC;
+DO $idgrant$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
+    EXECUTE 'GRANT EXECUTE ON FUNCTION hub_auth_user_by_id(uuid) TO hub_app';
+  END IF;
+END
+$idgrant$;

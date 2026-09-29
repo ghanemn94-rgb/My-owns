@@ -9,6 +9,7 @@ import {
   versionCol,
   ts,
   projectFk,
+  type FkTarget,
   roleKey,
   gateAssessmentStatus,
   criterionStatus,
@@ -16,6 +17,7 @@ import {
   statusDimensionKey,
 } from './_common';
 import { project } from './portfolio';
+import { decision } from './governance';
 
 /** Business gate (G0–G7 for the DC template) instantiated per project from its template version. */
 export const gateDefinition = pgTable(
@@ -67,7 +69,7 @@ export const gateCriterion = pgTable(
   },
   (t) => [
     unique('gate_criterion_pid_uq').on(t.projectId, t.id),
-    projectFk('gate_criterion_gate_fk', t.projectId, t.gateId, gateDefinition),
+    projectFk('gate_criterion_gate_fk', t.projectId, t.gateId, (): FkTarget => gateDefinition),
     uniqueIndex('gate_criterion_key_uq').on(t.projectId, t.key),
   ],
 );
@@ -99,8 +101,10 @@ export const gateAssessment = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('gate_assessment_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
+    projectFk('gate_assessment_supersedes_fk', t.projectId, t.supersedesAssessmentId, { projectId: t.projectId, id: t.id }),
     unique('gate_assessment_pid_uq').on(t.projectId, t.id),
-    projectFk('gate_assessment_gate_fk', t.projectId, t.gateId, gateDefinition),
+    projectFk('gate_assessment_gate_fk', t.projectId, t.gateId, (): FkTarget => gateDefinition),
     index('gate_assessment_gate_idx').on(t.gateId),
   ],
 );
@@ -127,9 +131,10 @@ export const criterionAssessment = pgTable(
     version: versionCol(),
   },
   (t) => [
+    projectFk('criterion_assessment_waiver_fk', t.projectId, t.waiverId, (): FkTarget => waiver),
     unique('criterion_assessment_pid_uq').on(t.projectId, t.id),
-    projectFk('criterion_assessment_assessment_fk', t.projectId, t.assessmentId, gateAssessment),
-    projectFk('criterion_assessment_criterion_fk', t.projectId, t.criterionId, gateCriterion),
+    projectFk('criterion_assessment_assessment_fk', t.projectId, t.assessmentId, (): FkTarget => gateAssessment),
+    projectFk('criterion_assessment_criterion_fk', t.projectId, t.criterionId, (): FkTarget => gateCriterion),
     uniqueIndex('criterion_assessment_uq').on(t.assessmentId, t.criterionId),
   ],
 );

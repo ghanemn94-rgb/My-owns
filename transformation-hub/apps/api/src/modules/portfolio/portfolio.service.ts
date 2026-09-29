@@ -12,6 +12,7 @@ import {
   invalid,
   clearanceAllows,
   Classification,
+  endOfLocalDayUtc,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
@@ -24,8 +25,52 @@ import { ProjectFactory } from './project-factory.service';
 
 /** Roles a project manager may grant (higher-authority roles need portfolio/platform administration). */
 const PM_GRANTABLE: RoleKey[] = ['workstream_lead', 'contributor', 'functional_approver', 'finance_restricted', 'legal_restricted', 'clean_team', 'external_partner_limited', 'secretary_cpmo'];
-/** Entity types whose activity entries are hidden from the project-wide feed unless the caller can read audit. */
-const SENSITIVE_ENTITY_TYPES = new Set(['document', 'document_version', 'partner', 'partner_room', 'room_grant', 'diligence_request', 'diligence_finding', 'deal_scenario', 'financial_model_version', 'negotiation_issue']);
+/**
+ * Activity feed ALLOWLIST (ARCH-12): entity type → permission required to see its history. Unknown or unlisted
+ * types are hidden (deny by default); document/partner-room level history is only visible through audit.event.read.
+ */
+const ACTIVITY_ENTITY_PERMISSION: Record<string, string> = {
+  project: 'portfolio.project.read',
+  workstream: 'planning.plan.read',
+  project_membership: 'admin.role_assignment.read',
+  task: 'planning.plan.read',
+  milestone: 'planning.plan.read',
+  deliverable: 'planning.plan.read',
+  dependency: 'planning.plan.read',
+  baseline_version: 'planning.plan.read',
+  change_request: 'planning.plan.read',
+  risk: 'planning.plan.read',
+  issue: 'planning.plan.read',
+  assumption: 'planning.plan.read',
+  raid_dependency: 'planning.plan.read',
+  status_update: 'planning.plan.read',
+  rag_override: 'planning.plan.read',
+  committee: 'governance.committee.read',
+  committee_membership: 'governance.committee.read',
+  authority_matrix_version: 'governance.committee.read',
+  meeting: 'governance.meeting.read',
+  agenda_item: 'governance.meeting.read',
+  decision: 'governance.decision.read',
+  action_item: 'governance.decision.read',
+  escalation: 'governance.decision.read',
+  gate_definition: 'gates.gate.read',
+  gate_criterion: 'gates.gate.read',
+  gate_assessment: 'gates.gate.read',
+  criterion_assessment: 'gates.gate.read',
+  waiver: 'gates.gate.read',
+  perimeter_item: 'carveout.register.read',
+  agreement: 'carveout.register.read',
+  consent: 'carveout.register.read',
+  legal_entity: 'newco.register.read',
+  regulatory_requirement: 'newco.register.read',
+  readiness_check: 'readiness.register.read',
+  cutover_plan: 'readiness.register.read',
+  tsa_service: 'readiness.register.read',
+  budget_line: 'finance.record.read',
+  benefit: 'finance.record.read',
+  closing: 'jv.deal.read',
+  closing_condition: 'jv.deal.read',
+};
 
 @Injectable()
 export class PortfolioService {
@@ -181,7 +226,13 @@ export class PortfolioService {
     const [p] = await tx.select().from(schema.project).where(eq(schema.project.id, projectId));
     if (!p) throw notFound();
     this.policy.assert(ctx, 'portfolio.project.update', { projectId, classification: p.classification });
-    const { expectedVersion, ...changes } = body;
+    const { expectedVersion } = body;
+    // Explicit field mapping — never spread request bodies into updates (ARCH-19); status is not updatable here.
+    const changes: Partial<typeof schema.project.$inferInsert> = {};
+    if (body.name !== undefined) changes.name = body.name;
+    if (body.description !== undefined) changes.description = body.description;
+    if (body.objective !== undefined) changes.objective = body.objective;
+    if (body.plannedStart !== undefined) changes.plannedStart = body.plannedStart;
     const res = await tx
       .update(schema.project)
       .set({ ...changes, updatedAt: new Date(), version: sql`${schema.project.version} + 1` })
@@ -193,7 +244,12 @@ export class PortfolioService {
   }
 
   // ---------------------------------------------------------------------------------------------------------
-  async listTemplates() {
+  async listTemplates(ctx: RequestContext) {
+    const allowed =
+      this.policy.canOrg(ctx, 'config.template.read') ||
+      this.policy.canOrg(ctx, 'portfolio.project.create') ||
+      [...ctx.principal.projects.keys()].some((pid) => this.policy.canInProject(ctx, 'config.template.read', pid));
+    if (!allowed) throw forbidden('policy.forbidden', 'Missing permission config.template.read');
     const tx = this.db.tx();
     const rows = await tx
       .select({ v: schema.projectTemplateVersion, t: schema.projectTemplate })
@@ -219,7 +275,8 @@ export class PortfolioService {
     };
   }
 
-  async listPrograms() {
+  async listPrograms(ctx: RequestContext) {
+    this.policy.assertOrg(ctx, 'portfolio.portfolio.read');
     const tx = this.db.tx();
     const rows = await tx
       .select({ id: schema.program.id, code: schema.program.code, name: schema.program.name, portfolioName: schema.portfolio.name, isDemo: schema.program.isDemo })
@@ -296,6 +353,11 @@ export class PortfolioService {
 
     if (body.newco.mode !== 'none') {
       let entityId = body.newco.legalEntityId ?? null;
+      if (body.newco.mode === 'existing') {
+        if (!entityId) throw invalid('portfolio.newco_entity_required', 'Select the existing NewCo legal entity');
+        const [le] = await tx.select({ id: schema.legalEntity.id, kind: schema.legalEntity.kind }).from(schema.legalEntity).where(eq(schema.legalEntity.id, entityId));
+        if (!le || le.kind !== 'newco') throw invalid('portfolio.newco_entity_invalid', 'Legal entity not found or not a NewCo');
+      }
       if (body.newco.mode === 'new') {
         if (!body.newco.name) throw invalid('portfolio.newco_name_required', 'NewCo name is required');
         entityId = newId();
@@ -339,6 +401,7 @@ export class PortfolioService {
   }
 
   async listMembers(ctx: RequestContext, projectId: string) {
+    this.policy.assert(ctx, 'admin.role_assignment.read', { projectId });
     const tx = this.db.tx();
     const rows = await tx
       .select({ m: schema.projectMembership, u: schema.appUser, wsCode: schema.workstream.code })
@@ -369,10 +432,12 @@ export class PortfolioService {
     if (!roleDef.scopeTypes.includes(scopeType)) {
       throw ruleViolation('membership.scope_not_allowed', `Role ${body.role} cannot be granted at ${scopeType} scope (allowed: ${roleDef.scopeTypes.join(', ')})`);
     }
-    const actorScope = ctx.principal.projects.get(projectId);
-    const actorIsPmOnly = !!actorScope && actorScope.roles.has('project_manager') && !actorScope.roles.has('portfolio_admin') && !ctx.principal.orgRoles.has('portfolio_admin') && !ctx.principal.orgRoles.has('platform_admin');
-    const withinAuthority = !actorIsPmOnly || PM_GRANTABLE.includes(body.role);
+    const withinAuthority = this.withinGrantAuthority(ctx, projectId, body.role);
     this.policy.assert(ctx, 'admin.role_assignment.manage', { projectId, requesterUserId: body.userId, withinAuthority });
+    if (body.workstreamId) {
+      const [ws] = await tx.select({ id: schema.workstream.id }).from(schema.workstream).where(and(eq(schema.workstream.id, body.workstreamId), eq(schema.workstream.projectId, projectId)));
+      if (!ws) throw notFound();
+    }
     const [u] = await tx.select().from(schema.appUser).where(and(eq(schema.appUser.id, body.userId), eq(schema.appUser.isActive, true)));
     if (!u) throw invalid('membership.user_not_found', 'User not found or inactive');
     const id = newId();
@@ -385,7 +450,7 @@ export class PortfolioService {
       workstreamId: body.workstreamId ?? null,
       grantedBy: ctx.principal.userId,
       reason: body.reason,
-      validTo: body.validTo ? new Date(`${body.validTo}T23:59:59Z`) : null,
+      validTo: body.validTo ? endOfLocalDayUtc(body.validTo, await this.projectTimezone(projectId)) : null,
     });
     await this.audit.record({ action: 'admin.role_assignment.grant', entityType: 'project_membership', entityId: id, projectId, after: { userId: body.userId, role: body.role, workstreamId: body.workstreamId ?? null }, reason: body.reason });
     await this.outbox.emit({ type: 'permission.changed', projectId, aggregateType: 'app_user', aggregateId: body.userId, payload: { change: 'grant', role: body.role } });
@@ -396,13 +461,27 @@ export class PortfolioService {
     const tx = this.db.tx();
     const [m] = await tx.select().from(schema.projectMembership).where(and(eq(schema.projectMembership.id, membershipId), eq(schema.projectMembership.projectId, projectId)));
     if (!m || m.revokedAt) throw notFound();
-    this.policy.assert(ctx, 'admin.role_assignment.manage', { projectId, requesterUserId: m.userId });
+    // A project manager may only revoke roles it could grant (ARCH-10a) — e.g. not a sponsor or committee chair.
+    this.policy.assert(ctx, 'admin.role_assignment.manage', { projectId, requesterUserId: m.userId, withinAuthority: this.withinGrantAuthority(ctx, projectId, m.role) });
     await tx.update(schema.projectMembership).set({ revokedAt: new Date(), revokedBy: ctx.principal.userId }).where(eq(schema.projectMembership.id, membershipId));
     await this.audit.record({ action: 'admin.role_assignment.revoke', entityType: 'project_membership', entityId: membershipId, projectId, before: { userId: m.userId, role: m.role }, reason });
     await this.outbox.emit({ type: 'permission.changed', projectId, aggregateType: 'app_user', aggregateId: m.userId, payload: { change: 'revoke', role: m.role } });
   }
 
+  private async projectTimezone(projectId: string): Promise<string> {
+    const [p] = await this.db.tx().select({ tz: schema.project.timezone }).from(schema.project).where(eq(schema.project.id, projectId));
+    return p?.tz ?? 'Asia/Riyadh';
+  }
+
+  private withinGrantAuthority(ctx: RequestContext, projectId: string, role: RoleKey): boolean {
+    const actorScope = ctx.principal.projects.get(projectId);
+    const isAdmin = ctx.principal.orgRoles.has('portfolio_admin') || ctx.principal.orgRoles.has('platform_admin') || !!actorScope?.roles.has('portfolio_admin');
+    if (isAdmin) return true;
+    return PM_GRANTABLE.includes(role);
+  }
+
   async listWorkstreams(ctx: RequestContext, projectId: string) {
+    this.policy.assert(ctx, 'planning.plan.read', { projectId });
     const tx = this.db.tx();
     const rows = await tx
       .select({ w: schema.workstream, leadName: schema.appUser.displayName })
@@ -460,8 +539,12 @@ export class PortfolioService {
     if (q.entityType) conds.push(eq(schema.auditEvent.entityType, q.entityType));
     if (q.entityId) conds.push(eq(schema.auditEvent.entityId, q.entityId));
     if (!canAudit) {
-      if (q.entityType && SENSITIVE_ENTITY_TYPES.has(q.entityType)) throw notFound();
-      conds.push(sql`coalesce(${schema.auditEvent.entityType}, '') not in (${sql.join([...SENSITIVE_ENTITY_TYPES].map((s) => sql`${s}`), sql`, `)})`);
+      const visibleTypes = Object.entries(ACTIVITY_ENTITY_PERMISSION)
+        .filter(([, perm]) => this.policy.canInProject(ctx, perm, projectId))
+        .map(([t]) => t);
+      if (q.entityType && !visibleTypes.includes(q.entityType)) throw notFound();
+      if (visibleTypes.length === 0) return { items: [], page: q.page, pageSize: q.pageSize, total: 0 };
+      conds.push(inArray(schema.auditEvent.entityType, visibleTypes));
     }
     const where = and(...conds);
     const [{ total }] = (await tx.select({ total: count() }).from(schema.auditEvent).where(where)) as [{ total: number }];
@@ -483,7 +566,8 @@ export class PortfolioService {
         entityType: e.entityType,
         entityId: e.entityId,
         outcome: e.outcome,
-        reason: e.reason,
+        // Free-text reasons may carry sensitive detail: only auditors see them in the feed.
+        reason: canAudit ? e.reason : null,
       })),
       page: q.page,
       pageSize: q.pageSize,
