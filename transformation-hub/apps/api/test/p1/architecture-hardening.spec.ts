@@ -40,17 +40,17 @@ describe('ARCH-01 / REQ-DAT-002 — cross-project links are rejected by the data
   it('rejects a Project-B evidence link that targets a Project-A task (reviewer probe 8)', async () => {
     const taskA = (await owner().query('select id from task where project_id = $1 limit 1', [dcId])).rows[0].id;
     await expect(
-      owner().query(`insert into evidence_link (org_id, project_id, target_type, target_id, note, added_by) values ($1, $2, 'task', $3, 'probe', gen_random_uuid())`, [orgId, genId, taskA]),
+      owner().query(`insert into evidence_link (org_id, project_id, target_type, target_id, note, added_by) values ($1, $2, 'task', $3, 'probe', (select id from app_user where org_id = $1 limit 1))`, [orgId, genId, taskA]),
     ).rejects.toThrow(/cross_project_reference/);
     // the same link inside Project A is accepted
-    const ok = await owner().query(`insert into evidence_link (org_id, project_id, target_type, target_id, note, added_by) values ($1, $2, 'task', $3, 'ok', gen_random_uuid()) returning id`, [orgId, dcId, taskA]);
+    const ok = await owner().query(`insert into evidence_link (org_id, project_id, target_type, target_id, note, added_by) values ($1, $2, 'task', $3, 'ok', (select id from app_user where org_id = $1 limit 1)) returning id`, [orgId, dcId, taskA]);
     expect(ok.rows[0].id).toBeTruthy();
   });
 
   it('rejects unsupported polymorphic target types and cross-project schedule dependencies', async () => {
     const taskA = (await owner().query('select id from task where project_id = $1 limit 1', [dcId])).rows[0].id;
     const taskB = (await owner().query('select id from task where project_id = $1 limit 1', [genId])).rows[0].id;
-    await expect(owner().query(`insert into evidence_link (org_id, project_id, target_type, target_id, added_by) values ($1, $2, 'banana', $3, gen_random_uuid())`, [orgId, dcId, taskA])).rejects.toThrow(/invalid_target_type/);
+    await expect(owner().query(`insert into evidence_link (org_id, project_id, target_type, target_id, added_by) values ($1, $2, 'banana', $3, (select id from app_user where org_id = $1 limit 1))`, [orgId, dcId, taskA])).rejects.toThrow(/invalid_target_type/);
     await expect(
       owner().query(`insert into dependency (org_id, project_id, predecessor_type, predecessor_id, successor_type, successor_id) values ($1, $2, 'task', $3, 'task', $4)`, [orgId, dcId, taskA, taskB]),
     ).rejects.toThrow(/cross_project_reference/);
@@ -59,7 +59,7 @@ describe('ARCH-01 / REQ-DAT-002 — cross-project links are rejected by the data
   it('document_chunk ACL attributes are derived from the document, not the caller', async () => {
     const doc = await owner().query(`insert into document (org_id, project_id, title, kind, classification) values ($1, $2, 'ACL probe', 'evidence', 'restricted') returning id`, [orgId, dcId]);
     const ver = await owner().query(
-      `insert into document_version (org_id, project_id, document_id, version_no, storage_key, filename, mime_type, size_bytes, sha256, uploaded_by) values ($1,$2,$3,1,'k','f.txt','text/plain',1,repeat('a',64),gen_random_uuid()) returning id`,
+      `insert into document_version (org_id, project_id, document_id, version_no, storage_key, filename, mime_type, size_bytes, sha256, uploaded_by) values ($1,$2,$3,1,'k','f.txt','text/plain',1,repeat('a',64),(select id from app_user where org_id = $1 limit 1)) returning id`,
       [orgId, dcId, doc.rows[0].id],
     );
     const ch = await owner().query(
@@ -147,7 +147,7 @@ describe('ARCH-03 / ARCH-05 / ARCH-06 — database hardening', () => {
   it('recusals are append-only and document versions keep their storage identity', async () => {
     const d = await owner().query(`insert into document (org_id, project_id, title, kind) values ($1,$2,'immutable probe','evidence') returning id`, [orgId, dcId]);
     const v = await owner().query(
-      `insert into document_version (org_id, project_id, document_id, version_no, storage_key, filename, mime_type, size_bytes, sha256, uploaded_by) values ($1,$2,$3,1,'k1','f.txt','text/plain',1,repeat('b',64),gen_random_uuid()) returning id`,
+      `insert into document_version (org_id, project_id, document_id, version_no, storage_key, filename, mime_type, size_bytes, sha256, uploaded_by) values ($1,$2,$3,1,'k1','f.txt','text/plain',1,repeat('b',64),(select id from app_user where org_id = $1 limit 1)) returning id`,
       [orgId, dcId, d.rows[0].id],
     );
     await expect(owner().query(`update document_version set storage_key = 'swapped' where id = $1`, [v.rows[0].id])).rejects.toThrow(/append_only_violation/);

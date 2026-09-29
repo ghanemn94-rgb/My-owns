@@ -11,12 +11,12 @@
 ## Done
 - P0: specification copy, 11 agent definitions, 15 ADRs, requirements register (394 REQs, AT-01..AT-30 traced), PRD,
   backlog, governance docs, glossary, security design docs, templates (DC 113 activities / general 17), source register,
-  assumptions & open questions, ERD + data dictionary generated from the live schema (103 tables).
+  assumptions & open questions, ERD + data dictionary generated from the live schema (104 tables).
 - P0 reviews: domain (FAIL → 3 High + 11 Medium fixed in `6fdb60f`), QA (FAIL on missing WORK_LOG/DELIVERY_STATUS → fixed
   here; QA-02 quorum/requester and QA-03 unit scales fixed), architecture (pending).
 - P1: NestJS platform (RLS context per transaction, sessions + CSRF, fresh scope, RBAC+ABAC, audit + hash chain, outbox,
   Postgres job queue/worker, problem+json, contract check, OpenAPI), identity & portfolio modules, demo seed through real
-  services, 25 API integration tests + 91 domain unit tests passing.
+  services, 41 API integration tests + 92 domain unit tests passing (see docs/requirements/requirements-traceability.md for per-requirement status).
 
 ## In progress (parallel agents)
 - Web foundation (ux-frontend-engineer) — Next.js shell, bilingual RTL/LTR, login, portfolio home, creation wizard.

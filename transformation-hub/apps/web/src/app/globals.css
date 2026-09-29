@@ -1,0 +1,108 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens — restrained corporate blue/white. Official branding can replace these variables without
+ * touching components. All text/background pairs below meet WCAG AA (≥ 4.5:1) for normal text.
+ */
+:root {
+  --hub-bg: #f5f7fa;
+  --hub-surface: #ffffff;
+  --hub-surface-muted: #f0f3f7;
+  --hub-border: #d3dae4;
+  --hub-border-strong: #9aa7b8;
+  --hub-text: #111827;
+  --hub-text-muted: #4a5565;
+  --hub-primary: #0b4f8a;
+  --hub-primary-hover: #083c69;
+  --hub-primary-soft: #e6effa;
+  --hub-primary-contrast: #ffffff;
+  --hub-focus: #1b66c9;
+  --hub-success: #13643f;
+  --hub-success-soft: #e5f4ec;
+  --hub-warning: #7f4a00;
+  --hub-warning-soft: #fff2d9;
+  --hub-danger: #a61b12;
+  --hub-danger-soft: #fdeceb;
+  --hub-info: #0b4f8a;
+  --hub-info-soft: #e6effa;
+  --hub-neutral: #374151;
+  --hub-neutral-soft: #eef1f5;
+  --hub-demo: #6b3f00;
+  --hub-demo-soft: #fff0cc;
+  --hub-demo-border: #d9a441;
+  --hub-font-latin: 'IBM Plex Sans', 'IBM Plex Sans Arabic', system-ui, 'Segoe UI', Arial, sans-serif;
+  --hub-font-arabic: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, 'Segoe UI', Tahoma, sans-serif;
+}
+
+@theme inline {
+  --color-bg: var(--hub-bg);
+  --color-surface: var(--hub-surface);
+  --color-surface-muted: var(--hub-surface-muted);
+  --color-line: var(--hub-border);
+  --color-line-strong: var(--hub-border-strong);
+  --color-ink: var(--hub-text);
+  --color-muted: var(--hub-text-muted);
+  --color-primary: var(--hub-primary);
+  --color-primary-hover: var(--hub-primary-hover);
+  --color-primary-soft: var(--hub-primary-soft);
+  --color-primary-contrast: var(--hub-primary-contrast);
+  --color-focus: var(--hub-focus);
+  --color-success: var(--hub-success);
+  --color-success-soft: var(--hub-success-soft);
+  --color-warning: var(--hub-warning);
+  --color-warning-soft: var(--hub-warning-soft);
+  --color-danger: var(--hub-danger);
+  --color-danger-soft: var(--hub-danger-soft);
+  --color-info: var(--hub-info);
+  --color-info-soft: var(--hub-info-soft);
+  --color-neutral: var(--hub-neutral);
+  --color-neutral-soft: var(--hub-neutral-soft);
+  --color-demo: var(--hub-demo);
+  --color-demo-soft: var(--hub-demo-soft);
+  --color-demo-line: var(--hub-demo-border);
+  --font-sans: var(--hub-font-latin);
+}
+
+html {
+  background: var(--hub-bg);
+  color: var(--hub-text);
+  font-family: var(--hub-font-latin);
+  -webkit-text-size-adjust: 100%;
+}
+
+html[lang='ar'] {
+  font-family: var(--hub-font-arabic);
+}
+
+body {
+  min-height: 100vh;
+  background: var(--hub-bg);
+  color: var(--hub-text);
+  line-height: 1.5;
+}
+
+/* Visible focus for keyboard users on every interactive element. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--hub-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+dialog::backdrop {
+  background: rgb(17 24 39 / 0.45);
+}
+
+/* Tabular figures keep columns of numbers aligned in both directions. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

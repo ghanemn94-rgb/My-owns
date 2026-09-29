@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { Pool } from 'pg';
 import { POLICY_MATRIX, clearanceAllows, RoleKey, Classification } from '@hub/domain';
 import { loadTemplates } from '@hub/db';
+import { ensurePlatformSchedules } from '../platform/jobs/platform.jobs';
 import { AppModule } from '../app.module';
 import { loadConfig } from '../platform/config';
 import { PortfolioService } from '../modules/portfolio/portfolio.service';
@@ -81,6 +82,7 @@ export async function seedDemo(opts: { ownerUrl: string; log?: (m: string) => vo
     );
     orgId = org.rows[0]!.id;
     await loadTemplates(owner, orgId, undefined, log);
+    await ensurePlatformSchedules(owner, orgId);
     for (const u of DEMO_USERS) {
       const r = await owner.query<{ id: string }>(
         `insert into app_user (id, org_id, email, display_name, title, clearance, is_demo, locale)

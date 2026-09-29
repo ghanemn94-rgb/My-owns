@@ -1,0 +1,69 @@
+# Status + evidence overlay applied onto requirements.yaml by scripts/requirements/apply_status.py.
+# Rules: "Tested" requires an executed automated test cited below; "Implemented" = code/docs exist, no dedicated test yet.
+# Test files: D = packages/domain/src/*.test.ts, P1 = apps/api/test/p1/*.spec.ts
+REQ-SRC-001: {status: Implemented, evidence: [docs/source-register.md (image extraction NOT performed, recorded)]}
+REQ-SRC-002: {status: Implemented, evidence: [packages/db/seed/templates/dc-carveout.v1.json, packages/db/scripts/validate-templates.mjs]}
+REQ-SRC-010: {status: Implemented, evidence: [CLAUDE.md "Source boundaries", docs/source-register.md]}
+REQ-DAT-001: {status: Implemented, evidence: [docs/architecture/erd.md, docs/architecture/data-dictionary.md (generated from live schema)]}
+REQ-AGT-001: {status: Implemented, evidence: [branch claude/mobily-transformation-hub; trading_agent/ untouched]}
+REQ-AGT-002: {status: Implemented, evidence: [docs/requirements/requirements.yaml, docs/requirements/requirements-traceability.md]}
+REQ-AGT-003: {status: Implemented, evidence: [docs/assumptions-and-open-questions.md]}
+REQ-AGT-004: {status: Implemented, evidence: [docs/assumptions-and-open-questions.md "Consolidated critical questions"]}
+REQ-AGT-005: {status: Implemented, evidence: [docs/WORK_LOG.md, docs/phases/]}
+REQ-AGT-006: {status: Implemented, evidence: [.claude/agents/*.md, .claude/AGENT_RULES.md]}
+REQ-AGT-007: {status: Implemented, evidence: [.claude/agents/ (11 definitions)]}
+REQ-AGT-008: {status: Implemented, evidence: [docs/reviews/P0-qa-review.md, docs/reviews/P0-domain-review.md, docs/reviews/P0-architecture-review.md]}
+REQ-AGT-009: {status: Implemented, evidence: [docs/architecture/module-guide.md]}
+REQ-AGT-010: {status: Implemented, evidence: [docs/architecture/adr/0015-agent-execution-in-build-session.md]}
+REQ-AGT-011: {status: Implemented, evidence: [docs/architecture/module-guide.md "File ownership"]}
+REQ-AGT-012: {status: Implemented, evidence: [docs/architecture/adr/0015-agent-execution-in-build-session.md]}
+REQ-PHS-015: {status: Implemented, evidence: [docs/WORK_LOG.md, CLAUDE.md "Resumption procedure"]}
+REQ-PHS-018: {status: Implemented, evidence: [CLAUDE.md]}
+REQ-PHS-019: {status: Implemented, evidence: [docs/PRD.md, docs/requirements/, docs/domain-glossary.md, docs/source-register.md, docs/assumptions-and-open-questions.md]}
+REQ-PHS-020: {status: Implemented, evidence: [docs/governance/, docs/architecture/, docs/security/]}
+REQ-PHS-025: {status: Implemented, evidence: [docs/DELIVERY_STATUS.md]}
+REQ-ENT-001: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts "AT-02"]}
+REQ-ENT-003: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts (NewCo legal entity linked via project_entity)]}
+REQ-ENT-005: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts "AT-02"]}
+REQ-ENT-006: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts "creates ... through the API"; "only authorized roles can create projects"]}
+REQ-ENT-008: {status: Implemented, evidence: [packages/db/src/templates-loader.ts (published versions immutable), project.template_version_id pin]}
+REQ-ENT-011: {status: Tested, evidence: [P1 isolation-and-auth.spec.ts, P1 architecture-hardening.spec.ts "ARCH-02"]}
+REQ-WS-001: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts (12 workstreams), validate-templates.mjs]}
+REQ-WS-002: {status: Tested, evidence: [validate-templates.mjs]}
+REQ-WS-004: {status: Tested, evidence: [validate-templates.mjs (113 activities), P1 projects-templates-audit.spec.ts (>=80)]}
+REQ-WS-005: {status: Tested, evidence: [validate-templates.mjs (field set)]}
+REQ-WS-006: {status: Tested, evidence: [validate-templates.mjs (no dates/amounts), P1 projects-templates-audit.spec.ts (no planned dates)]}
+REQ-WS-007: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts (status draft, verification proposed)]}
+REQ-ARC-001: {status: Implemented, evidence: [transformation-hub/ monorepo (apps/api NestJS, apps/web Next.js)]}
+REQ-ARC-002: {status: Tested, evidence: [packages/db/migrations, P1 tests (constraints, FKs)]}
+REQ-ARC-003: {status: Tested, evidence: [ADR-0003, P1 isolation-and-auth.spec.ts "row-level security"]}
+REQ-ARC-004: {status: Implemented, evidence: [apps/api/src/worker.ts, platform/jobs/*]}
+REQ-ARC-011: {status: Implemented, evidence: [ADR-0001]}
+REQ-ARC-013: {status: Implemented, evidence: [apps/api/src/modules/* (15 module shells + identity, portfolio)]}
+REQ-ARC-014: {status: Tested, evidence: [P1 isolation-and-auth.spec.ts "mutations ... audited as denied", P1 projects-templates-audit.spec.ts audit tests]}
+REQ-ARC-015: {status: Implemented, evidence: [apps/web uses same-origin API proxy; no DB/LLM secrets in client]}
+REQ-DAT-002: {status: Tested, evidence: [P1 architecture-hardening.spec.ts "ARCH-01 / REQ-DAT-002"]}
+REQ-DAT-003: {status: Tested, evidence: [D rules.test.ts "AT-29", numeric(20,4)+currency+unit_scale columns]}
+REQ-DAT-005: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts "AT-16"]}
+REQ-DAT-006: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts "Audit trail", P1 architecture-hardening.spec.ts]}
+REQ-DAT-008: {status: Tested, evidence: [ADR-0014, P1 architecture-hardening.spec.ts (TRUNCATE, checkpoints, actor binding)]}
+REQ-DAT-009: {status: Tested, evidence: [P1 projects-templates-audit.spec.ts "AT-27 (DB level)"]}
+REQ-DAT-015: {status: Tested, evidence: [/api/v1 base path, P1 list tests (pagination)]}
+REQ-DAT-017: {status: Tested, evidence: [P1 isolation-and-auth.spec.ts "validation errors are 400"; errors.ts redacts SQL]}
+REQ-SEC-001: {status: Tested, evidence: [packages/domain/src/policy/policy-matrix.json, D policy.test.ts]}
+REQ-SEC-002: {status: Tested, evidence: [P1 isolation-and-auth.spec.ts "platform admin ... no project content", D policy.test.ts]}
+REQ-SEC-003: {status: Tested, evidence: [D policy.test.ts, P1 isolation-and-auth.spec.ts]}
+REQ-SEC-006: {status: Tested, evidence: [P1 isolation-and-auth.spec.ts, P1 architecture-hardening.spec.ts]}
+REQ-SEC-009: {status: Tested, evidence: [P1 isolation-and-auth.spec.ts "logout revokes", "deactivating a user revokes"]}
+REQ-SEC-010: {status: Implemented, evidence: [ScopeService.servicePrincipal allowlist, JobContextFactory]}
+REQ-SEC-016: {status: Implemented, evidence: [CSRF tested (P1 isolation-and-auth.spec.ts); parameterized SQL (Drizzle); helmet CSP; XSS/injection tests pending]}
+REQ-SEC-024: {status: Implemented, evidence: [config.ts rejects HUB_MODE=demo in production; demo login 404 outside demo mode]}
+REQ-SET-001: {status: Tested, evidence: [apps/api/src/cli/seed-demo.ts (run by every integration test setup)]}
+REQ-SET-003: {status: Tested, evidence: [P1 isolation-and-auth.spec.ts (Project B isolation)]}
+REQ-SET-005: {status: Implemented, evidence: [is_demo flags on all records; reporting exclusion pending P6]}
+REQ-SET-006: {status: Implemented, evidence: [apps/api/src/cli/bootstrap.ts]}
+REQ-SET-008: {status: Implemented, evidence: [no password storage (ADR-0005); bootstrap creates IdP-bound admin only]}
+REQ-PLT-004: {status: Implemented, evidence: [demo personas are role labels with @demo.invalid addresses; templates validated for no names/dates/amounts]}
+REQ-PLT-006: {status: Implemented, evidence: [auth config returns honest OIDC status; docs/DELIVERY_STATUS.md vocabulary]}
+REQ-PLT-007: {status: Implemented, evidence: [no external channels implemented; DeliveryService ledger]}
+REQ-DEP-010: {status: Implemented, evidence: [apps/api/src/platform/config.ts production validation]}
