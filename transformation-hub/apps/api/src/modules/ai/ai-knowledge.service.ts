@@ -92,7 +92,7 @@ export class AiKnowledgeService {
     }>(sql`
       select document_chunk.id, document_chunk.document_id, document_chunk.document_version_id, document_version.version_no,
              document_chunk.page, document_chunk.section, document_chunk.text, document_chunk.classification, document_chunk.room_id,
-             document_chunk.suspicious_instructions, document.title, document.kind, document.is_demo, document_version.uploaded_at,
+             document_chunk.suspicious_instructions, document.title, document.kind, document.is_demo, document_version.created_at as uploaded_at,
              ts_rank(document_chunk.tsv, hub_q.query) as rank
         from document_chunk
         join document on document.id = document_chunk.document_id and document.project_id = document_chunk.project_id

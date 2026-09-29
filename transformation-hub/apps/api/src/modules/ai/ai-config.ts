@@ -63,7 +63,7 @@ export class AiConfig {
   readonly staleSourceDays = 90;
   readonly bottleneckDays = 10;
   readonly approvalBottleneckDays = 5;
-  readonly maxModelToolCalls = 8;
+  readonly maxModelToolCalls = 12;
   readonly maxContextItems = 40;
   readonly maxOutputTokens = 2000;
 }

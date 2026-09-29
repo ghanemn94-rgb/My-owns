@@ -375,16 +375,21 @@ export function sanitizeAiText(text: string): { text: string; removed: string[] 
     removed.push('markdown_image');
     return '';
   });
+  // HTML first (including unterminated tags), so a URL inside an attribute cannot hide the tag from the next steps.
+  t = t.replace(/<\/?[a-z][^>]*(?:>|$)/gi, () => {
+    removed.push('html_tag');
+    return '';
+  });
   t = t.replace(/\[([^\]]*)\]\((?:[a-z][a-z0-9+.-]*:)?\/\/[^)]*\)/gi, (_m, label: string) => {
     removed.push('external_link');
     return label;
   });
-  t = t.replace(/\b(?:https?|ftp|data|javascript):[^\s)]*/gi, () => {
+  t = t.replace(/\b(?:https?|ftp|data|javascript):[^\s)"'<>]*/gi, () => {
     removed.push('external_url');
     return '[link removed]';
   });
-  t = t.replace(/<\/?[a-z][^>]*>/gi, () => {
-    removed.push('html_tag');
+  t = t.replace(/[<>]/g, () => {
+    removed.push('angle_bracket');
     return '';
   });
   t = t.replace(/[​-‏‪-‮⁦-⁩﻿]/g, () => {

