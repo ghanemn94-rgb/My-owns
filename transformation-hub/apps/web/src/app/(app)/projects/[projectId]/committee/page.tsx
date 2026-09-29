@@ -26,20 +26,22 @@ const FILTERS = ['q', 'kind', 'status'] as const;
 type CommitteeKind = (typeof COMMITTEE_KINDS)[number];
 type CommitteeStatus = (typeof COMMITTEE_STATUSES)[number];
 
-/** Count of a filtered list (null = the caller may not read it → "—"). */
-function useCount<R extends typeof governanceRoutes.listDecisions | typeof governanceRoutes.listActions | typeof governanceRoutes.listEscalations>(
-  route: R,
-  query: RouteQuery<R>,
-  permission: string,
-) {
+/** Count of a filtered list (null = the caller may not read it → "—"; undefined = still loading). */
+function useCount(list: 'decisions' | 'actions' | 'escalations', filter: Record<string, string>) {
   const { projectId, can } = useProjectContext();
-  const allowed = can(permission);
+  const allowed = can('governance.decision.read');
   const q = useQuery({
-    queryKey: [...gk.root(projectId), 'count', route.id, query],
-    queryFn: ({ signal }) => api(route, { params: { projectId }, query: { ...query, page: 1, pageSize: 1 } as RouteQuery<R>, signal }),
+    queryKey: [...gk.root(projectId), 'count', list, filter],
+    queryFn: async ({ signal }) => {
+      const query = { ...filter, page: 1, pageSize: 1 };
+      const params = { projectId };
+      if (list === 'decisions') return (await api(governanceRoutes.listDecisions, { params, query: query as RouteQuery<typeof governanceRoutes.listDecisions>, signal })).total;
+      if (list === 'actions') return (await api(governanceRoutes.listActions, { params, query: query as RouteQuery<typeof governanceRoutes.listActions>, signal })).total;
+      return (await api(governanceRoutes.listEscalations, { params, query: query as RouteQuery<typeof governanceRoutes.listEscalations>, signal })).total;
+    },
     enabled: allowed,
   });
-  return allowed ? (q.data?.total ?? undefined) : null;
+  return allowed ? q.data : null;
 }
 
 function CreateCommitteeDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -116,13 +118,13 @@ export default function CommitteeHubPage() {
     placeholderData: (prev) => prev,
   });
 
-  const underReview = useCount(governanceRoutes.listDecisions, { status: 'under_review' }, 'governance.decision.read');
-  const recommended = useCount(governanceRoutes.listDecisions, { status: 'recommended' }, 'governance.decision.read');
-  const implPending = useCount(governanceRoutes.listDecisions, { status: 'implementation_pending' }, 'governance.decision.read');
-  const openActions = useCount(governanceRoutes.listActions, { status: 'open' }, 'governance.decision.read');
-  const overdue = useCount(governanceRoutes.listActions, { overdue: 'true' }, 'governance.decision.read');
-  const escOpen = useCount(governanceRoutes.listEscalations, { status: 'open' }, 'governance.decision.read');
-  const escRequested = useCount(governanceRoutes.listEscalations, { status: 'decision_requested' }, 'governance.decision.read');
+  const underReview = useCount('decisions', { status: 'under_review' });
+  const recommended = useCount('decisions', { status: 'recommended' });
+  const implPending = useCount('decisions', { status: 'implementation_pending' });
+  const openActions = useCount('actions', { status: 'open' });
+  const overdue = useCount('actions', { overdue: 'true' });
+  const escOpen = useCount('escalations', { status: 'open' });
+  const escRequested = useCount('escalations', { status: 'decision_requested' });
   const escalations = escOpen === null || escRequested === null ? null : escOpen === undefined || escRequested === undefined ? undefined : escOpen + escRequested;
 
   const columns: Column<Committee>[] = [

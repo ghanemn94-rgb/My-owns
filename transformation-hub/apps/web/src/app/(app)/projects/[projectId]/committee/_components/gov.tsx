@@ -139,6 +139,12 @@ export function useMeetingList(query: RouteQuery<typeof governanceRoutes.listMee
   });
 }
 
+/** i18n key of an escalation source type ('other' is stored as `unspecified`: an `other` key marks plural groups). */
+export function sourceKey(type: string): MessageKey {
+  const known = ['decision', 'issue', 'risk', 'action_item', 'meeting', 'gate_definition'];
+  return `governance.escalations.sources.${known.includes(type) ? type : 'unspecified'}` as MessageKey;
+}
+
 export function typeName(types: PolicyDecisionType[], key: string | null | undefined, locale: 'en' | 'ar'): string {
   if (!key) return EM_DASH;
   const t = types.find((x) => x.key === key);

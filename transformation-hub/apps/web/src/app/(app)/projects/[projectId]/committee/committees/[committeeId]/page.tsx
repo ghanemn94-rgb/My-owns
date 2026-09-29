@@ -50,7 +50,6 @@ export default function CommitteeDetailPage() {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [charter, setCharter] = useState<Record<CharterKey, string>>(() => Object.fromEntries(CHARTER_KEYS.map((k) => [k, ''])) as Record<CharterKey, string>);
   const [cadenceIsProposal, setCadenceIsProposal] = useState(true);
-  const [reason, setReason] = useState('');
   const [reference, setReference] = useState('');
   const [seatUser, setSeatUser] = useState<PickedUser | null>(null);
   const [seatLabel, setSeatLabel] = useState('');
@@ -73,7 +72,6 @@ export default function CommitteeDetailPage() {
   const todayStr = today();
 
   const open = (k: Cmd) => {
-    setReason('');
     setReference('');
     setDateA(k === 'addSeat' ? todayStr : '');
     setDateB('');

@@ -13,7 +13,7 @@ import { btn, cx, hint } from '@/components/ui';
 import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { useProjectContext } from '@/lib/project-context';
-import { GovCommandDialog, useCommitteeList, useDecisionList, useDecisionTypes, useGovRefresh, useMeetingList, type DecisionDetail } from './gov';
+import { GovCommandDialog, sourceKey, useCommitteeList, useDecisionList, useDecisionTypes, useGovRefresh, useMeetingList, type DecisionDetail } from './gov';
 
 type Classification = (typeof CLASSIFICATIONS)[number];
 type AgendaKind = (typeof AGENDA_ITEM_KINDS)[number];
@@ -548,7 +548,7 @@ export function RaiseEscalationDialog({ open, onClose, decisionId }: { open: boo
           <SelectField label={t('governance.escalations.raise.sourceType')} required value={sourceType} onChange={(e) => setSourceType(e.target.value as (typeof SOURCE_TYPES)[number])}>
             {SOURCE_TYPES.map((s) => (
               <option key={s} value={s}>
-                {t(`governance.escalations.sources.${s}`)}
+                {t(sourceKey(s))}
               </option>
             ))}
           </SelectField>
