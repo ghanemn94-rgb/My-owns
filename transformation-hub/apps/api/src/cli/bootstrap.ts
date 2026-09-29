@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { Pool } from 'pg';
 import { loadTemplates, runMigrations } from '@hub/db';
+import { ensurePlatformSchedules } from '../platform/jobs/platform.jobs';
 
 /**
  * PRODUCTION BOOTSTRAP (spec §21 "Production bootstrap"): no invented people, partners, values or accomplishments; no
@@ -39,6 +40,7 @@ export async function bootstrap(env = process.env, log: (m: string) => void = co
 
     const t = await loadTemplates(pool, orgId, undefined, log);
     log(`templates: ${t.map((x) => `${x.key}@v${x.version}:${x.action}`).join(', ')}`);
+    log(`platform maintenance schedules created: ${await ensurePlatformSchedules(pool, orgId)}`);
 
     const email = env.HUB_BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
     if (email) {

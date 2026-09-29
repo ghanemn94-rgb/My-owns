@@ -87,6 +87,24 @@ export class PolicyService {
     );
   }
 
+  /**
+   * Where a permission applies inside a project (ARCH-14): everywhere (project-wide role or service allowlist), or only
+   * in the workstreams of workstream-scoped roles. Room grants never extend to workstream-structured data.
+   */
+  permissionReach(ctx: RequestContext, permission: string, projectId: string): { all: true } | { all: false; workstreamIds: string[] } {
+    if (ctx.principal.kind === 'service') return this.canInProject(ctx, permission, projectId) ? { all: true } : { all: false, workstreamIds: [] };
+    if (this.projectPermissions(ctx.principal, projectId).has(permission)) return { all: true };
+    return { all: false, workstreamIds: [...(this.workstreamPermissions(ctx.principal, projectId).get(permission) ?? [])] };
+  }
+
+  /** SQL predicate restricting a workstream column to the permission's reach (use in lists AND counts). */
+  reachSql(ctx: RequestContext, permission: string, projectId: string, workstreamCol: PgColumn | SQL): SQL {
+    const r = this.permissionReach(ctx, permission, projectId);
+    if (r.all) return sql`true`;
+    if (!r.workstreamIds.length) return sql`false`;
+    return sql`${workstreamCol} in (${sql.join(r.workstreamIds.map((w) => sql`${w}::uuid`), sql`, `)})`;
+  }
+
   canOrg(ctx: RequestContext, permission: string): boolean {
     return this.orgPermissions(ctx.principal).has(permission);
   }

@@ -135,7 +135,7 @@ export class OidcService {
       throw forbidden('oidc.not_provisioned', 'Your account is not provisioned in this application — contact the administrator');
     }
     const s = await this.sessions.create({ userId: user.id, orgId: user.org_id, authMethod: 'oidc', ip: meta.ip, userAgent: meta.userAgent });
-    await this.db.pool.query(`update app_user set last_login_at = now() where id = $1`, [user.id]).catch(() => undefined);
+    await this.db.query(`update app_user set last_login_at = now() where id = $1`, [user.id]);
     return { ...s, userId: user.id, orgId: user.org_id, locale: user.locale };
   }
 

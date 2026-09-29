@@ -8,6 +8,7 @@ import { SessionService } from '../../platform/auth/session.service';
 import { APP_CONFIG, AppConfig } from '../../platform/config';
 import { OidcService } from './oidc.service';
 import { AuditService } from '../../platform/audit.service';
+import { DbService } from '../../platform/db.service';
 
 @Controller()
 export class IdentityController {
@@ -16,6 +17,7 @@ export class IdentityController {
     private readonly sessions: SessionService,
     private readonly oidc: OidcService,
     private readonly audit: AuditService,
+    private readonly db: DbService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -73,7 +75,10 @@ export class IdentityController {
       this.setCookies(res, s.token, s.csrf);
       res.cookie('hub_locale', s.locale, { sameSite: 'lax', secure: this.config.cookieSecure, path: '/' });
       await this.audit.recordDetached({ ...ctx, principal: { ...ctx.principal, userId: s.userId, orgId: s.orgId } }, { action: 'identity.login', entityType: 'app_user', entityId: s.userId, reason: 'OIDC login' });
-      res.redirect(302, '/');
+      // The session row is written in the request transaction: redirect only after it has committed, so the browser's
+      // next request can already see it.
+      if (this.db.inTx()) this.db.afterCommit(() => void res.redirect(302, '/'));
+      else res.redirect(302, '/');
     } catch (e) {
       res.clearCookie(OidcService.STATE_COOKIE, { path: '/api/v1/auth/oidc' });
       const code = (e as { code?: string }).code ?? 'oidc.failed';

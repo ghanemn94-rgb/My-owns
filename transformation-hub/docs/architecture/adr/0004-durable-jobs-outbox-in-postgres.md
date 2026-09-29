@@ -15,14 +15,15 @@ Use PostgreSQL tables instead of Redis/BullMQ:
 
 ## Rationale
 One fewer stateful component to host, secure, back up and restore inside Mobily; enqueue is atomic with the business
-change; backup/restore of one database restores queue state consistently (AT-23: restore marks in-flight jobs for
-reconciliation rather than mass redelivery).
+change; backup/restore of one database restores queue state consistently (AT-23: marking in-flight jobs for
+reconciliation after a restore is **not implemented yet** — planned with the P7 restore drill).
 
 ## Consequences
 - Throughput ceiling far above expected load (committee/program management: tens–hundreds of users). If needed later,
   a BullMQ adapter can replace the queue behind the `JobQueue` interface.
-- These infrastructure tables are exempt from RLS; payloads contain ids only and every job re-enters a project-scoped
-  context (with fresh authorization of the human principal) before reading business data.
+- These infrastructure tables are exempt from RLS; payloads contain ids only. **Pattern (enforced by review, not by the
+  worker):** every handler re-enters a context through `JobContextFactory` — `forService` (explicit permission allowlist)
+  or `forUser` (fresh authorization of the human principal) — before reading business data.
 
 ## Amendments after the P0 architecture review
 - **Fencing (ARCH-08):** `complete`/`fail`/`extendLease` update only `WHERE id = ? AND locked_by = ? AND attempts = ?`; a
@@ -38,3 +39,8 @@ reconciliation rather than mass redelivery).
 - **Missed schedule slots:** the next run is computed from "now" after an outage (no burst catch-up); the catch-up
   decision is left to the job (e.g. the daily briefing covers the whole period since its last successful run).
 - **Shutdown:** the worker drains the in-flight iteration before closing.
+
+## Amendments after the P0 architecture RE-review
+- Platform maintenance schedules exist and run: `platform.audit.checkpoint` (every 15 min) and
+  `platform.delivery.reconcile` (every 10 min, `DeliveryService.reconcileStale`), created idempotently per organization
+  by the worker at start-up, the production bootstrap and the demo seed (`apps/api/src/platform/jobs/platform.jobs.ts`).
