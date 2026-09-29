@@ -84,6 +84,13 @@ export class ProblemFilter implements ExceptionFilter {
       const r = exception.getResponse();
       const detail = typeof r === 'string' ? r : ((r as { message?: string | string[] }).message?.toString() ?? exception.message);
       body = { type: 'about:blank', title: HttpStatus[status] ?? 'Error', status, code: (r as { code?: string }).code ?? `http.${status}`, detail };
+    } else if (isBodyParserError(exception)) {
+      // body-parser errors (entity.too.large, entity.parse.failed, …) carry a 4xx status; never report them as 500.
+      const status = (exception as { status: number }).status;
+      body =
+        status === 413
+          ? { type: 'about:blank', title: 'Payload Too Large', status, code: 'request.too_large', detail: 'The request body exceeds the configured size limit.' }
+          : { type: 'about:blank', title: HttpStatus[status] ?? 'Bad Request', status, code: 'request.body_invalid', detail: 'The request body could not be read.' };
     } else {
       // Drizzle wraps driver errors (DrizzleQueryError.cause) — walk the cause chain to find the PostgreSQL error.
       let e: unknown = exception;
@@ -118,4 +125,9 @@ export class ProblemFilter implements ExceptionFilter {
 
     res.status(body.status).type('application/problem+json').send(JSON.stringify(body));
   }
+}
+
+function isBodyParserError(e: unknown): boolean {
+  const x = e as { type?: unknown; status?: unknown } | null;
+  return !!x && typeof x.type === 'string' && x.type.startsWith('entity.') && typeof x.status === 'number' && x.status >= 400 && x.status < 500;
 }
