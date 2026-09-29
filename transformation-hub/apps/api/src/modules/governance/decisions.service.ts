@@ -275,6 +275,10 @@ export class DecisionsService {
     const recused = await this.sup.recusedUserIds(d.id);
     const voter = ctx.principal.userId!;
     const member = assertMayVote({ voterUserId: voter, members, recusedUserIds: recused, requesterUserId: d.requesterUserId, onDate, policy: mx.policy });
+    // The vote must reference the voter's own seat on the decision's committee (also enforced by a DB trigger).
+    if (member.userId !== voter || !members.some((x) => x.membershipId === member.membershipId)) {
+      throw ruleViolation('governance.vote.membership_mismatch', "The vote must be cast on the voter's own seat of the decision's committee");
+    }
     if (!m.isCirculation) {
       const present = presentUserIds(await this.sup.attendance(m.id));
       if (!present.includes(voter)) throw ruleViolation('governance.vote.not_present', 'Only members recorded present (in person or remote) may vote in a meeting');
