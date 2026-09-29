@@ -143,7 +143,7 @@ export const portfolioRoutes = registerRoutes({
       description: Text(4000).optional(),
       objective: Text(4000).optional(),
       plannedStart: IsoDate.nullable().optional(),
-    }),
+    }).strict(), // unknown fields (e.g. status) are a 400, never silently ignored (QA-P1-12)
     response: z.object({ version: z.number().int() }),
   }),
   listTemplates: defineRoute({

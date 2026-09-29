@@ -24,6 +24,7 @@ import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { PlanningSupport, ProjectInfo } from './planning-support';
 import { ScheduleService } from './schedule.service';
+import { likeContains } from '../../platform/helpers';
 
 type Impacts = z.infer<typeof ImpactsSchema>;
 type Baseline = typeof schema.baselineVersion.$inferSelect;
@@ -368,7 +369,7 @@ export class ChangeControlService {
     if (q.status) conds.push(inArray(C.status, q.status));
     if (q.subjectType) conds.push(eq(C.subjectType, q.subjectType));
     if (q.subjectId) conds.push(eq(C.subjectId, q.subjectId));
-    if (q.q) conds.push(or(ilike(C.title, `%${q.q}%`), ilike(C.code, `%${q.q}%`))!);
+    if (q.q) conds.push(or(ilike(C.title, likeContains(q.q)), ilike(C.code, likeContains(q.q)))!);
     const where = and(...conds);
     const [{ n }] = (await this.tx.select({ n: count() }).from(C).where(where)) as [{ n: number }];
     const rows = await this.tx.select().from(C).where(where).orderBy(desc(C.createdAt)).limit(q.pageSize).offset(offsetOf(q));

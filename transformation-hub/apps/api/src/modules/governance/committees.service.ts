@@ -21,6 +21,7 @@ import { RecordVersionService, assertVersion, loadInProject, offsetOf, pageOf, u
 import { newId, payloadHash } from '../../platform/ids';
 import type { RequestContext } from '../../platform/context';
 import { CommitteeRow, GovernanceSupport, MatrixRow, MembershipRow, ProjectInfo, iso } from './governance.support';
+import { likeContains } from '../../platform/helpers';
 
 type CommitteeKind = (typeof COMMITTEE_KINDS)[number];
 type CommitteeStatus = (typeof COMMITTEE_STATUSES)[number];
@@ -50,7 +51,7 @@ export class CommitteesService {
       this.policy.visibilitySql(ctx, projectId, { classification: t.classification }),
       q.kind ? eq(t.kind, q.kind) : undefined,
       q.status ? eq(t.status, q.status) : undefined,
-      q.q ? ilike(t.name, `%${q.q}%`) : undefined,
+      q.q ? ilike(t.name, likeContains(q.q)) : undefined,
     );
     const [{ total }] = (await tx.select({ total: count() }).from(t).where(where)) as [{ total: number }];
     const rows = await tx.select().from(t).where(where).orderBy(asc(t.kind), asc(t.createdAt)).limit(q.pageSize).offset(offsetOf(q));
