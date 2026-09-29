@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -20,10 +20,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:3013023aa21da2f42b3bb279bd094fa0a1879a2bb1c65fd4b1e4e0c050d84db9",
-        "source_commit": "4fd56d4d701ffe02586edaf2c0cc3966e6ff68a0",
-        "frozen_at": "2026-09-29T10:18:37Z",
-        "manifest_path": "docs/delivery/candidates/DG0/3013023aa21da2f4.manifest.json"
+        "candidate_id": "sha256:34b06b8a8245250ff15d4dc1ad6453a59de4d07950d6d24668b30233b1af314e",
+        "source_commit": "f84eed411dfb93fbe3a72d3475ee8ff7eae68f94",
+        "frozen_at": "2026-09-29T11:14:56Z",
+        "manifest_path": "docs/delivery/candidates/DG0/34b06b8a8245250f.manifest.json"
       },
       "review_rounds": [
         {
@@ -213,6 +213,18 @@
             "code-security-reviewer": "docs/delivery/reviews/DG0/round-16/code-security-reviewer.json"
           },
           "note": "Round 16: full re-review after the round-15 repairs (D-029; D-030: whole agent process in a kernel-enforced process sandbox, the user-chosen repair of F-DG0-145) [qa-verifier run timed out (exit 124) before finish; orphaned, re-run in round 17]"
+        },
+        {
+          "round": 17,
+          "candidate_id": "sha256:34b06b8a8245250ff15d4dc1ad6453a59de4d07950d6d24668b30233b1af314e",
+          "frozen_at": "2026-09-29T11:14:56Z",
+          "source_commit": "f84eed411dfb93fbe3a72d3475ee8ff7eae68f94",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG0/round-17/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG0/round-17/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG0/round-17/qa-verifier.json"
+          },
+          "note": "Round 17: re-review after the round-16 repairs (D-031: copy-back bound to the staging seed; --unshare-ipc for F-DG0-148). code-security verifies F-DG0-148 and accepts F-DG0-147/149 as observations; qa verifies F-DG0-236/237."
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
@@ -386,6 +398,11 @@
           "state": "FIXING",
           "at": "2026-09-29T11:00:00Z",
           "note": "Round 16: domain PASS; code-security PASS (F-DG0-145 High and F-DG0-146 verified CLOSED; new Low F-DG0-147/148/149); qa-verifier timed out. Repair: finish() concurrency false-positive + --unshare-ipc (F-DG0-148)."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-09-29T11:14:56Z",
+          "note": "Round-16 findings repaired (D-031); sandboxed prefreeze PASS; candidate re-frozen for review round 17"
         }
       ]
     },
