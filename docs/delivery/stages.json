@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -20,10 +20,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:34b06b8a8245250ff15d4dc1ad6453a59de4d07950d6d24668b30233b1af314e",
-        "source_commit": "f84eed411dfb93fbe3a72d3475ee8ff7eae68f94",
-        "frozen_at": "2026-09-29T11:14:56Z",
-        "manifest_path": "docs/delivery/candidates/DG0/34b06b8a8245250f.manifest.json"
+        "candidate_id": "sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5",
+        "source_commit": "450c756f679a911b4c736e856fc9dd5e9b2c89a8",
+        "frozen_at": "2026-09-29T16:23:25Z",
+        "manifest_path": "docs/delivery/candidates/DG0/21efe44b6a4613a0.manifest.json"
       },
       "review_rounds": [
         {
@@ -224,6 +224,18 @@
             "code-security-reviewer": "docs/delivery/reviews/DG0/round-17/code-security-reviewer.json"
           },
           "note": "Round 17: re-review after the round-16 repairs (D-031: copy-back bound to the staging seed; --unshare-ipc for F-DG0-148). code-security verifies F-DG0-148 and accepts F-DG0-147/149 as observations; qa verifies F-DG0-236/237. [qa-verifier hit the account session limit before writing its record; its unbindable sidecars removed; re-run in round 18. domain PASS; code-security BLOCKED (F-DG0-149 residual-7 re-assessment stopped by the safety classifier; new Low F-DG0-150/151).]"
+        },
+        {
+          "round": 18,
+          "candidate_id": "sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5",
+          "frozen_at": "2026-09-29T16:23:25Z",
+          "source_commit": "450c756f679a911b4c736e856fc9dd5e9b2c89a8",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG0/round-18/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG0/round-18/qa-verifier.json"
+          },
+          "note": "Round 18: re-review after D-032 (finish() write-once-collision fix, F-DG0-150/238; docstring, F-DG0-151). code-security verifies F-DG0-150/151, re-accepts F-DG0-147, assesses F-DG0-149 read-only; qa verifies F-DG0-236/237."
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
@@ -407,6 +419,11 @@
           "state": "FIXING",
           "at": "2026-09-29T16:16:00Z",
           "note": "Round 17: domain PASS; code-security BLOCKED (F-DG0-148 CLOSED_VERIFIED, F-DG0-147 accepted; F-DG0-149 classifier-blocked; new Low F-DG0-150 finish() O_EXCL crash, F-DG0-151 stale docstring); qa hit the session limit before its record. Repair D-032."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-09-29T16:23:25Z",
+          "note": "Round-17 findings repaired (D-032); sandboxed prefreeze PASS; candidate re-frozen for review round 18"
         }
       ]
     },
