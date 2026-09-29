@@ -426,7 +426,7 @@ export class AiSettingsService {
         ),
       );
     const nextRunAt = b.enabled ? new Date(nextCronRun(b.cron, b.timezone, this.clock.now())) : null;
-    let row: typeof schema.scheduledJob.$inferSelect;
+    let row: typeof schema.scheduledJob.$inferSelect | undefined;
     if (existing[0]) {
       [row] = await tx
         .update(schema.scheduledJob)

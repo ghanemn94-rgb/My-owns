@@ -130,6 +130,8 @@ export class AiKnowledgeService {
     if (!this.can(ctx, 'planning.plan.read', projectId)) return null;
     const tx = this.db.tx();
     const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const reachT = this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.task.workstreamId);
+    const reachM = this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.milestone.workstreamId);
     const due = sql<string>`coalesce(${schema.task.forecastFinish}, ${schema.task.plannedFinish})`;
     const tasks = await tx
       .select({
@@ -148,7 +150,7 @@ export class AiKnowledgeService {
         verificationStatus: schema.task.verificationStatus,
       })
       .from(schema.task)
-      .where(and(eq(schema.task.projectId, projectId), vis, inArray(schema.task.status, ['not_started', 'in_progress', 'blocked', 'submitted_for_acceptance']), lt(due, today)))
+      .where(and(eq(schema.task.projectId, projectId), vis, reachT, inArray(schema.task.status, ['not_started', 'in_progress', 'blocked', 'submitted_for_acceptance']), lt(due, today)))
       .orderBy(asc(due))
       .limit(50);
     const mdue = sql<string>`coalesce(${schema.milestone.forecastDate}, ${schema.milestone.plannedDate})`;
@@ -168,13 +170,13 @@ export class AiKnowledgeService {
         verificationStatus: schema.milestone.verificationStatus,
       })
       .from(schema.milestone)
-      .where(and(eq(schema.milestone.projectId, projectId), vis, inArray(schema.milestone.status, ['planned', 'at_risk']), lt(mdue, today)))
+      .where(and(eq(schema.milestone.projectId, projectId), vis, reachM, inArray(schema.milestone.status, ['planned', 'at_risk']), lt(mdue, today)))
       .orderBy(asc(mdue))
       .limit(50);
     const pendingEvidence = await tx
       .select({ id: schema.milestone.id, code: schema.milestone.code, title: schema.milestone.title, gateKey: schema.milestone.gateKey, version: schema.milestone.version, ownerUserId: schema.milestone.ownerUserId, updatedAt: schema.milestone.updatedAt })
       .from(schema.milestone)
-      .where(and(eq(schema.milestone.projectId, projectId), vis, eq(schema.milestone.status, 'achieved_pending_evidence')))
+      .where(and(eq(schema.milestone.projectId, projectId), vis, reachM, eq(schema.milestone.status, 'achieved_pending_evidence')))
       .limit(50);
     return { tasks, milestones, pendingEvidence };
   }
@@ -183,7 +185,9 @@ export class AiKnowledgeService {
     if (!this.can(ctx, 'planning.plan.read', projectId)) return null;
     const tx = this.db.tx();
     const vis = this.policy.visibilitySql(ctx, projectId, {});
-    const where = and(eq(schema.task.projectId, projectId), vis, isNull(schema.task.accountableUserId), inArray(schema.task.status, ['draft', 'not_started', 'in_progress', 'blocked']));
+    const reachT = this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.task.workstreamId);
+    const reachM = this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.milestone.workstreamId);
+    const where = and(eq(schema.task.projectId, projectId), vis, reachT, isNull(schema.task.accountableUserId), inArray(schema.task.status, ['draft', 'not_started', 'in_progress', 'blocked']));
     const [{ n }] = (await tx.select({ n: sql<number>`count(*)::int` }).from(schema.task).where(where)) as [{ n: number }];
     const tasks = await tx
       .select({ id: schema.task.id, code: schema.task.wbsCode, title: schema.task.title, status: schema.task.status, gateKey: schema.task.gateKey, version: schema.task.version, updatedAt: schema.task.updatedAt })
@@ -194,7 +198,7 @@ export class AiKnowledgeService {
     const milestones = await tx
       .select({ id: schema.milestone.id, code: schema.milestone.code, title: schema.milestone.title, status: schema.milestone.status, gateKey: schema.milestone.gateKey, version: schema.milestone.version, updatedAt: schema.milestone.updatedAt })
       .from(schema.milestone)
-      .where(and(eq(schema.milestone.projectId, projectId), vis, isNull(schema.milestone.ownerUserId), inArray(schema.milestone.status, ['planned', 'at_risk'])))
+      .where(and(eq(schema.milestone.projectId, projectId), vis, reachM, isNull(schema.milestone.ownerUserId), inArray(schema.milestone.status, ['planned', 'at_risk'])))
       .limit(20);
     return { taskTotal: n, tasks, milestones };
   }
@@ -203,13 +207,14 @@ export class AiKnowledgeService {
     if (!this.can(ctx, 'planning.plan.read', projectId)) return null;
     const cutoff = addCalendarDays(today, -this.cfg.staleUpdateDays);
     const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const reach = this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.workstream.id);
     const r = await this.db.tx().execute<{ id: string; code: string; name: string; version: number; last_period: string | null; updated_at: Date }>(sql`
       select workstream.id, workstream.code, workstream.name, workstream.version, workstream.updated_at,
              (select max(status_update.period_end) from status_update
                where status_update.project_id = workstream.project_id and status_update.workstream_id = workstream.id
                  and status_update.status in ('submitted', 'accepted'))::text as last_period
         from workstream
-       where workstream.project_id = ${projectId} and ${vis}
+       where workstream.project_id = ${projectId} and ${vis} and ${reach}
        order by workstream.sort_order`);
     return r.rows.filter((w) => !w.last_period || w.last_period < cutoff).map((w) => ({ ...w, cutoff }));
   }
@@ -333,7 +338,7 @@ export class AiKnowledgeService {
       .tx()
       .select({ id: schema.readinessCheck.id, code: schema.readinessCheck.code, title: schema.readinessCheck.title, area: schema.readinessCheck.area, status: schema.readinessCheck.status, blocker: schema.readinessCheck.blocker, dueDate: schema.readinessCheck.dueDate, version: schema.readinessCheck.version, updatedAt: schema.readinessCheck.updatedAt, isDemo: schema.readinessCheck.isDemo })
       .from(schema.readinessCheck)
-      .where(and(eq(schema.readinessCheck.projectId, projectId), vis, sql`(${schema.readinessCheck.blocker} or ${schema.readinessCheck.mandatory})`, inArray(schema.readinessCheck.status, ['not_started', 'in_progress', 'failed'])))
+      .where(and(eq(schema.readinessCheck.projectId, projectId), vis, this.policy.reachSql(ctx, 'readiness.register.read', projectId, schema.readinessCheck.workstreamId), sql`(${schema.readinessCheck.blocker} or ${schema.readinessCheck.mandatory})`, inArray(schema.readinessCheck.status, ['not_started', 'in_progress', 'failed'])))
       .orderBy(desc(schema.readinessCheck.blocker), asc(schema.readinessCheck.code))
       .limit(30);
   }
@@ -421,11 +426,11 @@ export class AiKnowledgeService {
    * Delay impact of one task/milestone via the deterministic CPM engine (AT-15). The model never computes schedule
    * numbers. Returns null without planning.plan.read; `unknown_node` when the node is not a visible record.
    */
-  async delayImpactFor(ctx: RequestContext, projectId: string, nodeId: string, delayWorkingDays: number): Promise<DelayImpact | null> {
+  async delayImpactFor(ctx: RequestContext, projectId: string, nodeId: string, delayWorkingDays: number, fallbackStart: string): Promise<DelayImpact | null> {
     if (!this.can(ctx, 'planning.plan.read', projectId)) return null;
     const { nodes, edges, start, cal } = await this.scheduleModel(ctx, projectId);
     if (!nodes.some((n) => n.id === nodeId)) return null;
-    return delayImpact(nodes, edges, start, nodeId, delayWorkingDays, cal);
+    return delayImpact(nodes, edges, start ?? fallbackStart, nodeId, delayWorkingDays, cal);
   }
 
   async scheduleModel(ctx: RequestContext, projectId: string) {
@@ -434,11 +439,11 @@ export class AiKnowledgeService {
     const tasks = await tx
       .select({ id: schema.task.id, title: schema.task.title, code: schema.task.wbsCode, durationDays: schema.task.durationDays, plannedStart: schema.task.plannedStart, actualStart: schema.task.actualStart, actualFinish: schema.task.actualFinish, forecastFinish: schema.task.forecastFinish, status: schema.task.status })
       .from(schema.task)
-      .where(and(eq(schema.task.projectId, projectId), vis));
+      .where(and(eq(schema.task.projectId, projectId), vis, this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.task.workstreamId)));
     const milestones = await tx
       .select({ id: schema.milestone.id, title: schema.milestone.title, code: schema.milestone.code, actualDate: schema.milestone.actualDate, status: schema.milestone.status })
       .from(schema.milestone)
-      .where(and(eq(schema.milestone.projectId, projectId), vis));
+      .where(and(eq(schema.milestone.projectId, projectId), vis, this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.milestone.workstreamId)));
     const deps = await tx
       .select({ predecessorId: schema.dependency.predecessorId, successorId: schema.dependency.successorId, type: schema.dependency.type, lagDays: schema.dependency.lagDays })
       .from(schema.dependency)
@@ -447,7 +452,10 @@ export class AiKnowledgeService {
       ...tasks.map((t) => ({ id: t.id, label: `${t.code} ${t.title}`, durationDays: t.durationDays, earliestStart: t.plannedStart, actualStart: t.actualStart, actualFinish: t.actualFinish, forecastFinish: t.forecastFinish, cancelled: t.status === 'cancelled' })),
       ...milestones.map((m) => ({ id: m.id, label: `${m.code} ${m.title}`, durationDays: 0, actualFinish: m.actualDate, cancelled: m.status === 'cancelled' })),
     ];
-    const edges: ScheduleEdge[] = deps.map((d) => ({ predecessorId: d.predecessorId, successorId: d.successorId, type: d.type, lagDays: d.lagDays }));
+    const known = new Set(nodes.map((n) => n.id));
+    const edges: ScheduleEdge[] = deps
+      .filter((d) => known.has(d.predecessorId) && known.has(d.successorId))
+      .map((d) => ({ predecessorId: d.predecessorId, successorId: d.successorId, type: d.type, lagDays: d.lagDays }));
     const p = await this.project(projectId);
     const cal = await this.calendar(projectId);
     return { nodes, edges, start: p?.plannedStart ?? null, cal, tasks };
@@ -501,7 +509,8 @@ export class AiKnowledgeService {
         case 'workstream': {
           if (!this.can(ctx, 'planning.plan.read', projectId)) break;
           const t = type === 'task' ? schema.task : type === 'milestone' ? schema.milestone : schema.workstream;
-          add(type, await tx.select({ id: t.id }).from(t).where(and(eq(t.projectId, projectId), inArray(t.id, ids), projectVis)));
+          const wsCol = type === 'task' ? schema.task.workstreamId : type === 'milestone' ? schema.milestone.workstreamId : schema.workstream.id;
+          add(type, await tx.select({ id: t.id }).from(t).where(and(eq(t.projectId, projectId), inArray(t.id, ids), projectVis, this.policy.reachSql(ctx, 'planning.plan.read', projectId, wsCol))));
           break;
         }
         case 'decision':
@@ -527,7 +536,8 @@ export class AiKnowledgeService {
         case 'readiness_check': {
           if (!this.can(ctx, 'readiness.register.read', projectId)) break;
           const t = type === 'tsa_service' ? schema.tsaService : schema.readinessCheck;
-          add(type, await tx.select({ id: t.id }).from(t).where(and(eq(t.projectId, projectId), inArray(t.id, ids), projectVis)));
+          const reach = type === 'readiness_check' ? this.policy.reachSql(ctx, 'readiness.register.read', projectId, schema.readinessCheck.workstreamId) : sql`true`;
+          add(type, await tx.select({ id: t.id }).from(t).where(and(eq(t.projectId, projectId), inArray(t.id, ids), projectVis, reach)));
           break;
         }
         case 'status_dimension':
@@ -563,28 +573,13 @@ export class AiKnowledgeService {
     return out;
   }
 
-  /** Current version of a proposal target (for approval binding); null when missing/invisible. */
+  /** Current version of a proposal target (for approval binding); null = no target, 'missing' = not in this project. */
   async targetVersion(projectId: string, targetType: string | null, targetId: string | null): Promise<number | null | 'missing'> {
     if (!targetType || !targetId) return null;
-    const tables: Record<string, { id: typeof schema.task.id; projectId: typeof schema.task.projectId; version: typeof schema.task.version }> = {
-      task: schema.task,
-      milestone: schema.milestone,
-      decision: schema.decision,
-      action_item: schema.actionItem,
-      closing_condition: schema.closingCondition,
-      readiness_check: schema.readinessCheck,
-      tsa_service: schema.tsaService,
-      gate_definition: schema.gateDefinition,
-      workstream: schema.workstream,
-    } as never;
-    const t = tables[targetType];
-    if (!t) return 'missing';
-    const [row] = await this.db
-      .tx()
-      .select({ v: t.version })
-      .from(t as never)
-      .where(and(eq(t.projectId, projectId), eq(t.id, targetId)));
-    return row ? row.v : 'missing';
+    if (!(PROPOSAL_TARGET_TYPES as readonly string[]).includes(targetType) || !/^[0-9a-f-]{36}$/i.test(targetId)) return 'missing';
+    // Table name comes from the fixed allowlist above (never from input); ids are bound parameters.
+    const r = await this.db.query<{ v: number }>(`select version as v from ${targetType} where project_id = $1 and id = $2`, [projectId, targetId]);
+    return r.rows[0] ? r.rows[0].v : 'missing';
   }
 }
 

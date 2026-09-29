@@ -20,6 +20,7 @@ import {
   redactSensitive,
   sanitizeAiText,
   toolAllowedInMode,
+  ungroundedNumbers,
   validateAutopilotPolicy,
   validateClaims,
   type AiCitationRef,
@@ -137,6 +138,12 @@ describe('REQ-AI-004 / REQ-AI-006 — output validation, sanitising and DLP', ()
     const r = redactSensitive('mail advisor@external.example iban SA0380000000608010167519 id 1012345678 phone +966501234567');
     expect(r.text).not.toMatch(/advisor@|SA038|1012345678|501234567/);
     expect(r.redactions).toBe(4);
+  });
+  it('numbers in a claim must appear in a cited source (AIT-32)', () => {
+    expect(ungroundedNumbers('Total separation cost is 123,456,789 SAR', ['Line A 1,000 SAR'])).toEqual(['123456789']);
+    expect(ungroundedNumbers('CP-07 is due 2026-10-05', ['CP-07 long stop 2026-10-05'])).toEqual([]);
+    expect(ungroundedNumbers('المبلغ ١٢٣٤ ريال', ['amount 1234'])).toEqual([]);
+    expect(ungroundedNumbers('3 criteria', ['none'])).toEqual([]);
   });
   it('destination allowlist is exact-host (or explicit .suffix)', () => {
     expect(hostAllowed('https://llm.internal.example/v1', ['llm.internal.example'])).toBe(true);

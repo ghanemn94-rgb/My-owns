@@ -452,6 +452,22 @@ export function extractSearchTerms(q: string, max = 12): string[] {
   return out;
 }
 
+/**
+ * Numeric grounding (AIT-32, §12.1 "deterministic engines compute numbers"): every multi-digit number in a claim must
+ * appear in one of the cited sources. Returns the numbers that do not (claim must be dropped). Arabic-Indic digits and
+ * thousands separators are normalised first.
+ */
+export function ungroundedNumbers(claim: string, sources: string[]): string[] {
+  const norm = (s: string) =>
+    String(s ?? '')
+      .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+      .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+      .replace(/(\d)[,٬](?=\d{3}\b)/g, '$1');
+  const nums = norm(claim).match(/\d+(?:\.\d+)?/g) ?? [];
+  const src = norm(sources.join(' \n '));
+  return [...new Set(nums.filter((n) => n.replace('.', '').length >= 2 && !src.includes(n)))];
+}
+
 /** Stable JSON (sorted keys) — the canonical form hashed for approval binding (C-21). */
 export function canonicalJson(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value ?? null);
