@@ -50,8 +50,9 @@ export class OidcService {
       this.config.oidc.clientId!,
       this.config.oidc.clientSecret ?? undefined,
       undefined,
-      // Allow plain-HTTP issuers only outside production (test IdP).
-      this.config.nodeEnv === 'production' ? undefined : { execute: [lib.allowInsecureRequests] },
+      // Always verify ID-token signatures against the IdP's JWKS (defence in depth beyond TLS — OIDC Core §3.1.3.7
+      // would allow skipping it for tokens from the token endpoint). Plain-HTTP issuers only outside production (test IdP).
+      { execute: this.config.nodeEnv === 'production' ? [lib.enableNonRepudiationChecks] : [lib.enableNonRepudiationChecks, lib.allowInsecureRequests] },
     );
     try {
       const cfg = await this.configPromise;
