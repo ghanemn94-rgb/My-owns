@@ -8,11 +8,11 @@ import { setupProject, gateByKey, crit, startGate, meetCriterion, meetAllMandato
  * a cycle that is ready for decision are frozen; the gates API is project-isolated.
  */
 let projectId: string;
-let orgId: string;
+
 let p: Personas;
 
 beforeAll(async () => {
-  ({ projectId, orgId, p } = await setupProject('GT-RULES'));
+  ({ projectId, p } = await setupProject('GT-RULES'));
 });
 afterAll(async () => {
   await closeApp();
@@ -51,7 +51,7 @@ describe('Criterion review — evidence and separation of duties [REQ-LCY-010]',
   it('the evidence owner cannot accept their own evidence (403); the PM cannot review at all (403)', async () => {
     const g0 = await gateByKey(p.pm, projectId, 'G0');
     const c = crit(g0, 'G0-C04');
-    await addEvidence(orgId, projectId, c.id, p.legal.userId);
+    await addEvidence(p.legal, projectId, c.id);
     const self = await p.legal.post(`/api/v1/projects/${projectId}/gates/${g0.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'met' });
     expect(self.status).toBe(403);
     expect((await p.pm.post(`/api/v1/projects/${projectId}/gates/${g0.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'met' })).status).toBe(403);
@@ -68,11 +68,11 @@ describe('Criterion review — evidence and separation of duties [REQ-LCY-010]',
 
 describe('Not applicable requires an approved specialist determination [REQ-LCY-005, P0 review D-01]', () => {
   it('a proposed N/A blocks the gate until the criterion reviewer role (not the proposer) approves it', async () => {
-    await meetAllMandatory(p, orgId, projectId, 'G0', ['G0-C02', 'G0-C06']);
+    await meetAllMandatory(p, projectId, 'G0', ['G0-C02', 'G0-C06']);
     let g0 = await gateByKey(p.pm, projectId, 'G0');
     const c2 = crit(g0, 'G0-C02'); // reviewer role: legal_restricted
     await p.pm.post(`/api/v1/projects/${projectId}/gates/${g0.id}/criteria/${c2.id}/propose-not-applicable`, { expectedVersion: c2.assessment.version, basis: 'Committee charter covered by group charter (synthetic basis)' }).expect(201);
-    await meetCriterion(p, orgId, projectId, 'G0', 'G0-C06');
+    await meetCriterion(p, projectId, 'G0', 'G0-C06');
     g0 = await gateByKey(p.pm, projectId, 'G0');
     expect(crit(g0, 'G0-C02').assessment.status).toBe('not_applicable');
     expect(g0.evaluation.ready).toBe(false);
@@ -114,7 +114,7 @@ describe('Not applicable requires an approved specialist determination [REQ-LCY-
 describe('Prerequisite gates and frozen cycles [REQ-LCY-010]', () => {
   it('G1 with every mandatory criterion met is still blocked while G0 is not approved', async () => {
     await startGate(p, projectId, 'G1');
-    await meetAllMandatory(p, orgId, projectId, 'G1');
+    await meetAllMandatory(p, projectId, 'G1');
     const g1 = await gateByKey(p.pm, projectId, 'G1');
     expect(g1.evaluation.counts.unmet).toBe(0);
     expect(g1.evaluation.ready).toBe(false);

@@ -15,7 +15,6 @@ import {
   assertWaivabilityDetermination,
   gateDecisionIssue,
   gateRag,
-  forbidden,
   notFound,
   ruleViolation,
   CriterionStatus,
@@ -650,36 +649,6 @@ export class GatesService implements OnModuleInit {
       }
     }
     return { b, evaluations };
-  }
-
-  /** Demo seed only: note-only evidence (the documents module owns evidence links; used when its API is absent). */
-  async seedDemoNoteEvidence(ctx: RequestContext, projectId: string, criterionId: string, note: string): Promise<string> {
-    const b = await this.loader.bundle(projectId);
-    if (!b.project.isDemo) throw forbidden('gates.demo_only', 'Demo note evidence can only be added to demo projects');
-    this.commandAssert(ctx, 'gates.evidence.attach', { projectId, classification: b.project.classification });
-    const crit = b.criteria.find((c) => c.id === criterionId);
-    if (!crit) throw notFound();
-    const existing = await this.db
-      .tx()
-      .select({ id: schema.evidenceLink.id })
-      .from(schema.evidenceLink)
-      .where(and(eq(schema.evidenceLink.projectId, projectId), eq(schema.evidenceLink.targetType, 'gate_criterion'), eq(schema.evidenceLink.targetId, criterionId), eq(schema.evidenceLink.note, note)));
-    if (existing[0]) return existing[0].id;
-    const id = newId();
-    await this.db.tx().insert(schema.evidenceLink).values({
-      id,
-      orgId: ctx.principal.orgId,
-      projectId,
-      targetType: 'gate_criterion',
-      targetId: criterionId,
-      note,
-      purpose: 'Demo sandbox — synthetic note evidence (no real document)',
-      status: 'active',
-      addedBy: ctx.principal.userId!,
-    });
-    await this.audit.record({ action: 'gates.evidence.attach_demo_note', entityType: 'evidence_link', entityId: id, projectId, after: { targetType: 'gate_criterion', criterionKey: crit.key, note } });
-    await this.outbox.emit({ type: 'evidence.changed', projectId, aggregateType: 'evidence_link', aggregateId: id, payload: { targetType: 'gate_criterion', targetId: criterionId, status: 'active' } });
-    return id;
   }
 
   // ---------------------------------------------------------------------------------------------------------

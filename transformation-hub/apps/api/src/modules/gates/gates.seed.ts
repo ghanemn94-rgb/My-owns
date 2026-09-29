@@ -5,13 +5,15 @@ import type { ModuleSeed } from '../../cli/seed-modules';
 import { DbService } from '../../platform/db.service';
 import { GatesService } from './gates.service';
 import { StatusDimensionsService } from './status-dimensions.service';
+import { EvidenceService } from '../documents/evidence.service';
 
 const DEMO_EVIDENCE = (key: string) => `DEMO — synthetic note evidence for ${key} (no real document; illustrates the evidence → review flow)`;
 
 /**
  * Demo sandbox scenario for gates (idempotent; everything goes through the gates services so policy, audit and outbox
  * apply). Tolerant of absent governance/documents seeds:
- *  - evidence is linked as clearly-labelled demo NOTE evidence when no documents exist;
+ *  - evidence is linked through the documents module (note evidence, clearly labelled demo) where a criterion has none —
+ *    the documents seed already links the demo charter excerpt to the first criterion (G0-C01);
  *  - G0 is approved ONLY if an approved demo governance decision raised for G0 exists — otherwise it is left
  *    ready_for_decision (a gate approval without a final decision is refused by the server, AT-04).
  * Scenario: G0 approved (or ready), G1 in assessment with some criteria met, G2 in assessment, G5 in assessment in
@@ -23,6 +25,7 @@ export const gatesSeed: ModuleSeed = {
     const gates = app.get(GatesService);
     const dims = app.get(StatusDimensionsService);
     const db = app.get(DbService);
+    const evidence = app.get(EvidenceService);
 
     const list = await asUser('pm', (ctx) => gates.listGates(ctx, pid));
     const gateId = (key: string) => {
@@ -48,7 +51,7 @@ export const gatesSeed: ModuleSeed = {
       let { g, c } = await criterion(gateKey, critKey);
       if (c.assessment.status === 'met') return;
       if (c.evidence.active === 0) {
-        await asUser('pm', (ctx) => gates.seedDemoNoteEvidence(ctx, pid, c.id, DEMO_EVIDENCE(critKey)));
+        await asUser('pm', (ctx) => evidence.link(ctx, pid, { targetType: 'gate_criterion', targetId: c.id, note: DEMO_EVIDENCE(critKey), purpose: 'Demo sandbox — synthetic note evidence (no real document)' }));
         ({ g, c } = await criterion(gateKey, critKey));
       }
       await asUser('legal', (ctx) => gates.reviewCriterion(ctx, pid, g.id, c.id, { expectedVersion: c.assessment.version, outcome: 'met', note: 'Demo review of synthetic evidence' }));
