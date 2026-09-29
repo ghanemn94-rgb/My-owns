@@ -1,0 +1,46 @@
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { POLICY_MATRIX, permissionsOf, evaluateConditions, clearanceAllows } from './index';
+import { ROLE_KEYS } from '../enums';
+
+describe('policy matrix', () => {
+  it('matches the JSON block in docs/security/access-matrix.md (no drift)', () => {
+    const doc = readFileSync(join(__dirname, '../../../../docs/security/access-matrix.md'), 'utf8');
+    const blocks = [...doc.matchAll(/```json\n([\s\S]*?)\n```/g)].map((m) => JSON.parse(m[1]!));
+    const fromDoc = blocks.find((b) => b.permissions && b.roles);
+    expect(fromDoc).toEqual(POLICY_MATRIX);
+  });
+
+  it('defines every role and only known permissions', () => {
+    expect(Object.keys(POLICY_MATRIX.roles).sort()).toEqual([...ROLE_KEYS].sort());
+    for (const r of Object.values(POLICY_MATRIX.roles)) for (const p of r.permissions) expect(POLICY_MATRIX.permissions[p]).toBeDefined();
+  });
+
+  it('platform_admin has no transaction-content permissions (spec §15)', () => {
+    const perms = [...permissionsOf(POLICY_MATRIX, ['platform_admin'])];
+    const content = perms.filter((p) => /^(documents|governance|jv|finance|carveout|newco|gates|planning|readiness)\./.test(p));
+    expect(content).toEqual([]);
+  });
+
+  it('auditor is read-only', () => {
+    const perms = [...permissionsOf(POLICY_MATRIX, ['auditor'])];
+    const writes = perms.filter((p) => !/\.(read|read_external|view|export|verify|download)$|\.event\.|chain\.verify|bi_view|dashboard\.read|plan\.read|inbox\.read|preferences\.manage_own|disclosure_log\.read|operations\.read|run\.read|register\.read|gate\.read|deal\.read|record\.read|snapshot\.read|proposal\.read/.test(p));
+    expect(writes).toEqual([]);
+  });
+
+  it('external partner cannot read internal registers', () => {
+    const perms = permissionsOf(POLICY_MATRIX, ['external_partner_limited']);
+    for (const p of ['planning.plan.read', 'governance.decision.read', 'finance.record.read', 'documents.document.read']) expect(perms.has(p)).toBe(false);
+  });
+
+  it('ABAC: classification, rooms, clean team, not_self, own_workstream fail closed', () => {
+    expect(clearanceAllows('confidential', 'restricted')).toBe(false);
+    expect(evaluateConditions(['classification'], { clearance: 'internal', classification: 'confidential' }).allowed).toBe(false);
+    expect(evaluateConditions(['room'], { clearance: 'restricted', roomId: 'r1', userRoomIds: new Set() }).allowed).toBe(false);
+    expect(evaluateConditions(['room'], { clearance: 'restricted', roomId: 'r1', userRoomIds: new Set(['r1']) }).allowed).toBe(true);
+    expect(evaluateConditions(['clean_team'], { clearance: 'restricted', roomId: 'r1', roomIsCleanTeam: true, userCleanTeamRoomIds: new Set() }).allowed).toBe(false);
+    expect(evaluateConditions(['not_self'], { clearance: 'internal', actorUserId: 'u', subjectRequesterId: 'u' }).allowed).toBe(false);
+    expect(evaluateConditions(['own_workstream'], { clearance: 'internal', workstreamId: 'w2', userWorkstreamIds: new Set(['w1']) }).allowed).toBe(false);
+  });
+});

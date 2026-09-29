@@ -59,6 +59,7 @@ export type IncorporationStatus = (typeof INCORPORATION_STATUSES)[number];
 // ---------------------------------------------------------------------------------------------------------
 // Planning
 export const TASK_STATUSES = [
+  'draft', // template-generated / proposed, not yet confirmed by the PM (spec §6 "Initial status is Draft/Unverified")
   'not_started',
   'in_progress',
   'blocked',

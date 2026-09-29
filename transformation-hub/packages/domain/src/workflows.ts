@@ -97,8 +97,9 @@ export const DECISION_MACHINE: Machine<DecisionStatus, DecisionCommand> = {
   },
 };
 
-export type TaskCommand = 'start' | 'block' | 'unblock' | 'submit_for_acceptance' | 'accept' | 'reject_acceptance' | 'complete' | 'cancel' | 'reopen';
+export type TaskCommand = 'activate' | 'start' | 'block' | 'unblock' | 'submit_for_acceptance' | 'accept' | 'reject_acceptance' | 'complete' | 'cancel' | 'reopen';
 export const TASK_MACHINE: Machine<TaskStatus, TaskCommand> = {
+  activate: { from: ['draft'], to: 'not_started', description: 'Proposed activity confirmed into the plan' },
   start: { from: ['not_started'], to: 'in_progress', description: 'Work started' },
   block: { from: ['not_started', 'in_progress'], to: 'blocked', description: 'Blocked' },
   unblock: { from: ['blocked'], to: 'in_progress', description: 'Unblocked' },
@@ -106,7 +107,7 @@ export const TASK_MACHINE: Machine<TaskStatus, TaskCommand> = {
   accept: { from: ['submitted_for_acceptance'], to: 'accepted', description: 'Accepted by approver with evidence' },
   reject_acceptance: { from: ['submitted_for_acceptance'], to: 'in_progress', description: 'Returned by approver' },
   complete: { from: ['in_progress'], to: 'done', description: 'Completed (only for tasks that do not require acceptance)' },
-  cancel: { from: ['not_started', 'in_progress', 'blocked'], to: 'cancelled', description: 'Cancelled (excluded from progress, not counted complete)' },
+  cancel: { from: ['draft', 'not_started', 'in_progress', 'blocked'], to: 'cancelled', description: 'Cancelled (excluded from progress, not counted complete)' },
   reopen: { from: ['done', 'accepted', 'cancelled'], to: 'in_progress', description: 'Reopened' },
 };
 

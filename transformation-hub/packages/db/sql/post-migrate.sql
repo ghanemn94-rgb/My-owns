@@ -250,3 +250,79 @@ BEGIN
   END IF;
 END
 $fgrants$;
+
+-- 8. Principal scope resolution (SECURITY DEFINER, read-only) --------------------------------------------------
+-- Returns the caller's effective grants so the API can compute app.project_ids. Computed fresh on every request
+-- and every job execution (no caching) so revocations take effect immediately (AT-19).
+DROP FUNCTION IF EXISTS hub_auth_user_scope(uuid);
+CREATE OR REPLACE FUNCTION hub_auth_user_scope(p_user uuid)
+RETURNS TABLE (kind text, project_id uuid, role text, workstream_id uuid, room_id uuid, is_clean_team boolean)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  -- project / workstream memberships
+  SELECT 'membership', pm.project_id, pm.role::text, pm.workstream_id, NULL::uuid, false
+  FROM project_membership pm JOIN app_user u ON u.id = pm.user_id AND u.is_active
+  WHERE pm.user_id = p_user AND pm.revoked_at IS NULL AND pm.valid_from <= now()
+    AND (pm.valid_to IS NULL OR pm.valid_to > now())
+  UNION ALL
+  -- organization-level roles (project_id NULL)
+  SELECT 'org_role', NULL::uuid, ora.role::text, NULL::uuid, NULL::uuid, false
+  FROM org_role_assignment ora JOIN app_user u ON u.id = ora.user_id AND u.is_active
+  WHERE ora.user_id = p_user AND ora.scope_type = 'organization' AND ora.revoked_at IS NULL
+    AND ora.valid_from <= now() AND (ora.valid_to IS NULL OR ora.valid_to > now())
+  UNION ALL
+  -- organization-wide auditor / portfolio_admin expand to every project of the organization (read scope; the
+  -- permission matrix limits them to read-only / portfolio functions). platform_admin is deliberately NOT expanded.
+  SELECT 'org_expansion', p.id, ora.role::text, NULL::uuid, NULL::uuid, false
+  FROM org_role_assignment ora
+  JOIN app_user u ON u.id = ora.user_id AND u.is_active
+  JOIN project p ON p.org_id = ora.org_id
+  WHERE ora.user_id = p_user AND ora.scope_type = 'organization' AND ora.role IN ('auditor', 'portfolio_admin')
+    AND ora.revoked_at IS NULL AND ora.valid_from <= now() AND (ora.valid_to IS NULL OR ora.valid_to > now())
+  UNION ALL
+  -- portfolio-scoped roles expand to the projects of that portfolio
+  SELECT 'portfolio_role', p.id, ora.role::text, NULL::uuid, NULL::uuid, false
+  FROM org_role_assignment ora
+  JOIN app_user u ON u.id = ora.user_id AND u.is_active
+  JOIN program pr ON pr.portfolio_id = ora.scope_id
+  JOIN project p ON p.program_id = pr.id
+  WHERE ora.user_id = p_user AND ora.scope_type = 'portfolio' AND ora.revoked_at IS NULL
+    AND ora.valid_from <= now() AND (ora.valid_to IS NULL OR ora.valid_to > now())
+  UNION ALL
+  -- partner / clean-team room grants
+  SELECT 'room_grant', rg.project_id, rg.role::text, NULL::uuid, rg.room_id, r.is_clean_team
+  FROM room_grant rg JOIN partner_room r ON r.id = rg.room_id
+  JOIN app_user u ON u.id = rg.user_id AND u.is_active
+  WHERE rg.user_id = p_user AND rg.revoked_at IS NULL AND (rg.expires_at IS NULL OR rg.expires_at > now())
+$$;
+REVOKE ALL ON FUNCTION hub_auth_user_scope(uuid) FROM PUBLIC;
+DO $sgrant$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
+    EXECUTE 'GRANT EXECUTE ON FUNCTION hub_auth_user_scope(uuid) TO hub_app';
+  END IF;
+END
+$sgrant$;
+
+-- 9. Identity lookups before an org/user context exists (login mapping; seed/bootstrap) -------------------------
+CREATE OR REPLACE FUNCTION hub_auth_user_by_email(p_org uuid, p_email text)
+RETURNS TABLE (id uuid, org_id uuid, display_name text, email text, clearance text, is_active boolean, is_demo boolean, is_service_account boolean, locale text)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT u.id, u.org_id, u.display_name, u.email, u.clearance::text, u.is_active, u.is_demo, u.is_service_account, u.locale
+  FROM app_user u WHERE u.org_id = p_org AND lower(u.email) = lower(p_email)
+$$;
+CREATE OR REPLACE FUNCTION hub_auth_user_by_subject(p_issuer text, p_subject text)
+RETURNS TABLE (id uuid, org_id uuid, display_name text, email text, clearance text, is_active boolean, is_demo boolean, is_service_account boolean, locale text)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT u.id, u.org_id, u.display_name, u.email, u.clearance::text, u.is_active, u.is_demo, u.is_service_account, u.locale
+  FROM app_user u WHERE u.oidc_issuer = p_issuer AND u.oidc_subject = p_subject
+$$;
+REVOKE ALL ON FUNCTION hub_auth_user_by_email(uuid, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION hub_auth_user_by_subject(text, text) FROM PUBLIC;
+DO $ugrant$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
+    EXECUTE 'GRANT EXECUTE ON FUNCTION hub_auth_user_by_email(uuid, text) TO hub_app';
+    EXECUTE 'GRANT EXECUTE ON FUNCTION hub_auth_user_by_subject(text, text) TO hub_app';
+  END IF;
+END
+$ugrant$;

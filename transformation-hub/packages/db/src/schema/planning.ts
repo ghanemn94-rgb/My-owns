@@ -40,7 +40,7 @@ export const task = pgTable(
     title: text('title').notNull(),
     titleAr: text('title_ar'),
     description: text('description'),
-    status: taskStatus('status').notNull().default('not_started'),
+    status: taskStatus('status').notNull().default('draft'),
     accountableUserId: uuid('accountable_user_id').references(() => appUser.id),
     proposedOwnerFunction: text('proposed_owner_function'),
     output: text('output'),

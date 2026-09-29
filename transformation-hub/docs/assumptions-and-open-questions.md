@@ -41,3 +41,30 @@ rules 3–4).
 | A-12 | PostgreSQL full-text search (`simple` config) is adequate for bilingual retrieval at pilot scale; embeddings optional | AI | Add pgvector adapter |
 | A-13 | NestJS 11.2 (CJS) + TypeScript 5.9 rather than NestJS 12 (ESM-only) / TS 7 | Architecture | Planned upgrade (ADR-0002) |
 | A-14 | Demo monetary values use a fictional unit label "DEMO-SAR" in narrative and currency code SAR in data, always with the Demo flag | Demo sandbox | Excluded from real reporting by `is_demo` |
+
+## Additional assumptions from P0 domain design (carveout-domain-analyst)
+
+| ID | Assumption | Where it applies |
+|---|---|---|
+| A-15 | G0 (mandate & governance) is approved by the Sponsor, not the committee (a committee cannot approve its own mandate) | Gates template |
+| A-16 | Gate prerequisites: G2 requires G1; G5 requires only G1 (JV preparation runs in parallel with separation, spec §3); G6 requires G5; G7 requires G4 and G6. Whether closing needs separation completed is expressed as deal-specific CPs, not a fixed gate link | Gates template |
+| A-17 | "Blocking" criteria are always mandatory; unmet non-mandatory criteria are observations | Gate evaluation |
+| A-18 | Only two criteria are proposed as waivable (G3-C08 cutover rehearsal, G5-C01 partner comparative assessment), pending specialist confirmation; all others default non-waivable | Gates template |
+| A-19 | Requester/owner of an item may not vote on it and does not count toward its quorum; the same person may not both record and confirm an external decision; an action owner may not verify their own action | Governance |
+| A-20 | A non-demo project with no approved authority matrix cannot progress a decision beyond "Recommended — pending external authority" | Governance |
+| A-21 | Proposed abbreviation expansions (to be confirmed): ATA = Asset Transfer Agreement; MSA = Master Services Agreement; CST = Communications, Space and Technology Commission; DCCo = Data Center Company | Glossary / labels (Q-08) |
+| A-22 | WBS durations are "assumed" where given; regulator/counterparty-dependent activities are TBD (so the real schedule is "Incomplete" until owners supply durations) | Template WBS |
+| A-23 | Secretary and CPMO are treated as one role (`secretary_cpmo`) until the charter separates them | Roles |
+
+## Additional open questions from the requirements analysis (delivery-orchestrator draft)
+
+| ID | Question | Current handling |
+|---|---|---|
+| Q-15 | Could any G5/G6 decision fall within the committee's delegated authority, or are they always reserved? | Demo policy reserves JV signing/closing to a higher authority |
+| Q-16 | Tie, alternate and proxy rules; quorum/threshold for resolutions by circulation | Demo policy: ties escalate; circulation uses the same quorum/threshold |
+| Q-17 | Does the opening balance sheet also require a NewCo board resolution? | Modelled as evidence type `board_resolution` where applicable |
+| Q-18 | Data room: minimal internal VDR (implemented) or integration with an approved external VDR? | Internal access-controlled partner rooms implemented; VDR adapter documented |
+| Q-19 | Who approves deliverable weights, and what applies before approval? | Weights default 1–5 (proposed) and are flagged unapproved until approved |
+| Q-20 | Multiple closings: tranches or per-entity? | Model supports ordered sequences of signing/closing events |
+| Q-21 | Which "low-impact" actions may be allowlisted for AI autopilot? | Autopilot-eligible list limited to internal notifications, update requests, status drafts, risk flags; requires approved policy |
+| Q-22 | Performance / availability / RPO / RTO targets | PRD proposals (e.g. RPO ≤ 1 h, RTO ≤ 8 h) pending Mobily infrastructure approval |

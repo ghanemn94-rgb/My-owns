@@ -1,5 +1,5 @@
 {
-  "id": "49cf0470-0af3-4e3a-a796-9959d5ed3012",
+  "id": "70e63faf-7045-4469-a0d1-9cec854f9666",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -4762,7 +4762,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'not_started'"
+          "default": "'draft'"
         },
         "accountable_user_id": {
           "name": "accountable_user_id",
@@ -14200,6 +14200,13 @@
           "notNull": true,
           "default": "'read'"
         },
+        "role": {
+          "name": "role",
+          "type": "role_key",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
         "reason": {
           "name": "reason",
           "type": "text",
@@ -19148,6 +19155,7 @@
       "name": "task_status",
       "schema": "public",
       "values": [
+        "draft",
         "not_started",
         "in_progress",
         "blocked",

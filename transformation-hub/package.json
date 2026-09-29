@@ -2,13 +2,13 @@
   "name": "transformation-hub",
   "private": true,
   "version": "0.1.0",
-  "description": "Mobily Transformation & Transactions Hub (working name) — program, project and committee management platform",
+  "description": "Mobily Transformation & Transactions Hub (working name) \u2014 program, project and committee management platform",
   "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=22.12 <23"
   },
   "scripts": {
-    "build": "pnpm -r --filter ./packages/** run build && pnpm --filter @hub/api run build && pnpm --filter @hub/web run build",
+    "build": "pnpm build:packages && pnpm --filter @hub/api run build && pnpm --filter @hub/web run build",
     "typecheck": "pnpm -r run typecheck",
     "lint": "pnpm -r run lint",
     "test": "pnpm test:unit && pnpm test:integration",
@@ -19,17 +19,23 @@
     "db:stop": "bash scripts/dev/pg-stop.sh",
     "db:migrate": "pnpm --filter @hub/db run migrate",
     "db:generate": "pnpm --filter @hub/db run generate",
-    "db:seed:demo": "pnpm --filter @hub/db run seed:demo",
-    "db:bootstrap": "pnpm --filter @hub/db run bootstrap",
-    "db:reset:dev": "pnpm --filter @hub/db run reset:dev",
+    "db:seed:demo": "pnpm --filter @hub/api run seed:demo",
+    "db:bootstrap": "pnpm --filter @hub/api run bootstrap",
+    "db:reset:dev": "bash scripts/dev/db-reset.sh hub_dev && bash scripts/dev/db-reset.sh hub_test",
     "dev": "bash scripts/dev/dev.sh",
-    "openapi": "pnpm --filter @hub/api run openapi"
+    "openapi": "pnpm --filter @hub/api run openapi",
+    "build:packages": "pnpm --filter @hub/domain run build && pnpm --filter @hub/contracts run build && pnpm --filter @hub/db run build"
   },
   "devDependencies": {
     "typescript": "5.9.3",
     "@types/node": "22.20.4"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@swc/core", "esbuild", "unrs-resolver", "sharp"]
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "esbuild",
+      "unrs-resolver",
+      "sharp"
+    ]
   }
 }

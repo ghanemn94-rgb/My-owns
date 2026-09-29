@@ -82,7 +82,7 @@ CREATE TYPE "public"."schedule_node_type" AS ENUM('task', 'milestone');--> state
 CREATE TYPE "public"."scope_type" AS ENUM('organization', 'portfolio', 'project', 'workstream', 'partner_room');--> statement-breakpoint
 CREATE TYPE "public"."source_type" AS ENUM('image', 'excel', 'csv', 'minutes', 'pdf', 'docx', 'manual_entry', 'system');--> statement-breakpoint
 CREATE TYPE "public"."status_dimension_key" AS ENUM('incorporation', 'perimeter_transfer', 'operational_readiness', 'jv_transaction');--> statement-breakpoint
-CREATE TYPE "public"."task_status" AS ENUM('not_started', 'in_progress', 'blocked', 'submitted_for_acceptance', 'accepted', 'done', 'cancelled');--> statement-breakpoint
+CREATE TYPE "public"."task_status" AS ENUM('draft', 'not_started', 'in_progress', 'blocked', 'submitted_for_acceptance', 'accepted', 'done', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."template_kind" AS ENUM('dc_carveout', 'general_transformation', 'strategy', 'technology', 'transaction_other');--> statement-breakpoint
 CREATE TYPE "public"."template_migration_status" AS ENUM('proposed', 'approved', 'applied', 'rejected');--> statement-breakpoint
 CREATE TYPE "public"."template_version_status" AS ENUM('draft', 'published', 'retired');--> statement-breakpoint
@@ -654,7 +654,7 @@ CREATE TABLE "task" (
 	"title" text NOT NULL,
 	"title_ar" text,
 	"description" text,
-	"status" "task_status" DEFAULT 'not_started' NOT NULL,
+	"status" "task_status" DEFAULT 'draft' NOT NULL,
 	"accountable_user_id" uuid,
 	"proposed_owner_function" text,
 	"output" text,
@@ -1741,6 +1741,7 @@ CREATE TABLE "room_grant" (
 	"room_id" uuid NOT NULL,
 	"user_id" uuid NOT NULL,
 	"access_level" varchar(16) DEFAULT 'read' NOT NULL,
+	"role" "role_key",
 	"reason" text NOT NULL,
 	"granted_by" uuid NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,

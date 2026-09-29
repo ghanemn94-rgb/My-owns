@@ -92,6 +92,8 @@ export const roomGrant = pgTable(
     roomId: uuid('room_id').notNull(),
     userId: uuid('user_id').notNull().references(() => appUser.id),
     accessLevel: varchar('access_level', { length: 16 }).notNull().default('read'), // read | contribute | manage
+    /** Room-scoped role (clean_team / external_partner_limited). Null = access under the user's project roles. */
+    role: roleKey('role'),
     reason: text('reason').notNull(),
     grantedBy: uuid('granted_by').notNull(),
     grantedAt: createdAt(),
