@@ -9,7 +9,7 @@ import { OutboxService } from '../../platform/outbox.service';
 import { Clock } from '../../platform/clock';
 import type { RequestContext } from '../../platform/context';
 import { loadInProject, updateVersioned } from '../../platform/helpers';
-import { newId } from '../../platform/ids';
+import { newId, payloadHash } from '../../platform/ids';
 
 export type WaiverRecord = typeof schema.waiver.$inferSelect;
 
@@ -26,8 +26,15 @@ export interface WaiverTargetInfo {
   requestPermission: string;
   /** Permission needed to approve/reject a waiver on this target type (conditions: not_self + authority). */
   approvePermission: string;
+  /** Version of the target record; the approval request is bound to it (a later change invalidates the approval). */
+  version: number;
   /** Throws a rule violation when the target's current state cannot take a waiver (e.g. already met). */
   assertRequestable?: () => void;
+}
+
+/** Payload an approver approves — hashed and bound to the approval request (module guide: approvals). */
+function waiverPayload(w: Pick<WaiverRecord, 'id' | 'targetType' | 'targetId' | 'basis' | 'impact' | 'conditions' | 'expiresOn'>, authorityRole: string | null) {
+  return { waiverId: w.id, targetType: w.targetType, targetId: w.targetId, basis: w.basis, impact: w.impact, conditions: w.conditions, expiresOn: w.expiresOn, authorityRole };
 }
 
 /**
@@ -120,11 +127,32 @@ export class WaiverService {
     if (open.some((w) => w.status === 'requested' || waiverIsEffective(w, today))) {
       throw conflict('gates.waiver.already_open', `${info.label} already has an open or effective waiver`);
     }
+    const waiverId = newId();
+    const approvalRequestId = newId();
+    const payload = waiverPayload(
+      { id: waiverId, targetType, targetId, basis: input.basis, impact: input.impact, conditions: input.conditions ?? null, expiresOn: input.expiresOn ?? null },
+      info.waiverAuthorityRole,
+    );
+    await this.db.tx().insert(schema.approvalRequest).values({
+      id: approvalRequestId,
+      orgId: ctx.principal.orgId,
+      projectId,
+      subjectType: targetType,
+      subjectId: targetId,
+      subjectVersion: info.version,
+      action: 'waiver.approve',
+      payload,
+      payloadHash: payloadHash(payload),
+      requiredPermission: info.approvePermission,
+      requestedBy: ctx.principal.userId!,
+      status: 'pending',
+      note: `Waiver of ${info.label}`,
+    });
     const [row] = await this.db
       .tx()
       .insert(schema.waiver)
       .values({
-        id: newId(),
+        id: waiverId,
         orgId: ctx.principal.orgId,
         projectId,
         targetType,
@@ -136,6 +164,7 @@ export class WaiverService {
         status: 'requested',
         requestedBy: ctx.principal.userId!,
         authorityRole: info.waiverAuthorityRole,
+        approvalRequestId,
         isDemo: project.isDemo,
       })
       .returning();
@@ -146,7 +175,13 @@ export class WaiverService {
       projectId,
       after: { targetType, targetId, target: info.label, basis: input.basis, impact: input.impact, conditions: input.conditions ?? null, expiresOn: input.expiresOn ?? null, authorityRole: info.waiverAuthorityRole },
     });
-    await this.outbox.emit({ type: 'approval.pending', projectId, aggregateType: 'waiver', aggregateId: row!.id, payload: { targetType, targetId, authorityRole: info.waiverAuthorityRole } });
+    await this.outbox.emit({
+      type: 'approval.pending',
+      projectId,
+      aggregateType: 'approval_request',
+      aggregateId: approvalRequestId,
+      payload: { waiverId, targetType, targetId, authorityRole: info.waiverAuthorityRole, requiredPermission: info.approvePermission },
+    });
     return row!;
   }
 
@@ -190,6 +225,7 @@ export class WaiverService {
     });
     const today = this.clock.today(project.timezone);
     if (w.expiresOn && w.expiresOn < today) throw ruleViolation('gates.waiver.expired', 'The waiver request has expired');
+    const hash = await this.assertApprovalBinding(w, info);
     const updated = (await updateVersioned(this.db, schema.waiver, { id: w.id, projectId, expectedVersion: body.expectedVersion }, {
       status: 'approved',
       decidedBy: ctx.principal.userId,
@@ -197,6 +233,7 @@ export class WaiverService {
       decisionNote: body.note ?? null,
       authorityRole: info.waiverAuthorityRole,
     })) as WaiverRecord;
+    await this.recordApproval(ctx, projectId, w, 'approve', hash, body.note ?? null, info.waiverAuthorityRole);
     await resolver.onApproved?.(ctx, projectId, updated);
     await this.audit.record({
       action: 'gates.waiver.approve',
@@ -220,15 +257,52 @@ export class WaiverService {
     const withinAuthority = !!info.waiverAuthorityRole && roles.includes(info.waiverAuthorityRole);
     this.policy.assert(ctx, info.approvePermission, { projectId, classification: info.classification ?? project.classification, requesterUserId: w.requestedBy, withinAuthority });
     if (w.status !== 'requested') throw ruleViolation('gates.waiver.invalid_state', `The waiver is ${w.status}; only requested waivers can be decided`);
+    const req = w.approvalRequestId ? await loadInProject(this.db, schema.approvalRequest, projectId, w.approvalRequestId) : null;
     const updated = (await updateVersioned(this.db, schema.waiver, { id: w.id, projectId, expectedVersion: body.expectedVersion }, {
       status: 'rejected',
       decidedBy: ctx.principal.userId,
       decidedAt: new Date(),
       decisionNote: body.note,
     })) as WaiverRecord;
+    if (req) await this.recordApproval(ctx, projectId, w, 'reject', req.payloadHash, body.note, info.waiverAuthorityRole);
     await resolver.onRejected?.(ctx, projectId, updated);
     await this.audit.record({ action: 'gates.waiver.reject', entityType: 'waiver', entityId: w.id, projectId, before: { status: w.status }, after: { status: 'rejected', target: info.label }, reason: body.note });
     return updated;
+  }
+
+  /**
+   * The approval is bound to the request's payload hash and the target version: if the waiver content or the target's
+   * waivability determination changed since the request, the approval is refused and a fresh request is required.
+   */
+  private async assertApprovalBinding(w: WaiverRecord, info: WaiverTargetInfo): Promise<string> {
+    if (!w.approvalRequestId) throw ruleViolation('gates.waiver.no_approval_request', 'The waiver has no approval request');
+    const req = await loadInProject(this.db, schema.approvalRequest, w.projectId, w.approvalRequestId);
+    const hash = payloadHash(waiverPayload(w, info.waiverAuthorityRole));
+    if (req.status !== 'pending') throw ruleViolation('gates.waiver.approval_not_pending', `The approval request is ${req.status}`);
+    if (req.subjectType !== w.targetType || req.subjectId !== w.targetId || req.payloadHash !== hash || req.subjectVersion !== info.version) {
+      throw conflict('gates.waiver.approval_stale', `${info.label} or the waiver changed since the request (waivability/authority or content) — a fresh waiver request is required`, {
+        requestedVersion: req.subjectVersion,
+        currentVersion: info.version,
+      });
+    }
+    return hash;
+  }
+
+  private async recordApproval(ctx: RequestContext, projectId: string, w: WaiverRecord, decision: 'approve' | 'reject', hash: string, comment: string | null, authorityRole: string | null) {
+    if (!w.approvalRequestId) return;
+    const req = await loadInProject(this.db, schema.approvalRequest, projectId, w.approvalRequestId);
+    await this.db.tx().insert(schema.approvalRecord).values({
+      id: newId(),
+      orgId: ctx.principal.orgId,
+      projectId,
+      approvalRequestId: req.id,
+      approverUserId: ctx.principal.userId!,
+      decision,
+      comment,
+      authorityBasis: authorityRole ? `Holder of the waiver authority role ${authorityRole}` : null,
+      payloadHash: hash,
+    });
+    await updateVersioned(this.db, schema.approvalRequest, { id: req.id, projectId, expectedVersion: req.version }, { status: decision === 'approve' ? 'approved' : 'rejected' });
   }
 
   /** For other modules: is `waiverId` an approved, unexpired waiver of exactly this target? */

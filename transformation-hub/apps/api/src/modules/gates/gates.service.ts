@@ -86,6 +86,7 @@ export class GatesService implements OnModuleInit {
         const ca = b.ca(cur.id, crit.id);
         return {
           label: crit.key,
+          version: crit.version,
           waivable: crit.waivable,
           waiverAuthorityRole: crit.waiverAuthorityRole,
           classification: b.project.classification,

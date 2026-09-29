@@ -125,6 +125,32 @@ describe('AT-13 — non-waivable conditions and unauthorized waivers [REQ-LCY-01
     expect(g3.evaluation.counts.waived).toBe(1);
     const audit = await owner().query(`select after from audit_event where project_id = $1 and action = 'gates.waiver.approve' and entity_id = $2`, [projectId, waiverId]);
     expect(audit.rows[0].after).toMatchObject({ basis: expect.any(String), impact: expect.any(String), authorityRole: 'committee_chair' });
+    // the approval is recorded against the generic approval request, bound to the payload hash and criterion version
+    const req = await owner().query(
+      `select ar.status, ar.subject_type, ar.subject_version, ar.payload_hash, ar.required_permission, rec.decision, rec.approver_user_id, rec.payload_hash as record_hash
+         from waiver w join approval_request ar on ar.id = w.approval_request_id join approval_record rec on rec.approval_request_id = ar.id where w.id = $1`,
+      [waiverId],
+    );
+    expect(req.rows).toHaveLength(1);
+    expect(req.rows[0]).toMatchObject({ status: 'approved', subject_type: 'gate_criterion', required_permission: 'gates.waiver.approve', decision: 'approve', approver_user_id: p.chair.userId });
+    expect(req.rows[0].record_hash).toBe(req.rows[0].payload_hash);
+  });
+
+  it('a waivability/authority change after the request invalidates the pending approval (409 — fresh request required)', async () => {
+    let g7 = await gateByKey(p.finance, projectId, 'G7');
+    let c = crit(g7, 'G7-C02');
+    const setUrl = `/api/v1/projects/${projectId}/gates/${g7.id}/criteria/${c.id}/waivability`;
+    await p.finance.post(setUrl, { expectedVersion: c.version, waivable: true, waiverAuthorityRole: 'committee_chair', waivabilityBasis: 'Ops specialist (synthetic)' }).expect(201);
+    const req = await p.pm.post(`/api/v1/projects/${projectId}/gates/${g7.id}/criteria/${c.id}/waivers`, { basis: 'b', impact: 'i' });
+    expect(req.status).toBe(201);
+    g7 = await gateByKey(p.finance, projectId, 'G7');
+    c = crit(g7, 'G7-C02');
+    await p.finance.post(setUrl, { expectedVersion: c.version, waivable: true, waiverAuthorityRole: 'sponsor', waivabilityBasis: 'Authority re-assigned (synthetic)' }).expect(201);
+    const stale = await p.sponsor.post(`/api/v1/projects/${projectId}/gate-waivers/${req.body.id}/approve`, { expectedVersion: req.body.version });
+    expect(stale.status).toBe(409);
+    expect(stale.body.code).toBe('gates.waiver.approval_stale');
+    expect((await p.chair.post(`/api/v1/projects/${projectId}/gate-waivers/${req.body.id}/approve`, { expectedVersion: req.body.version })).status).toBe(403);
+    expect(crit(await gateByKey(p.pm, projectId, 'G7'), 'G7-C02').assessment.status).toBe('unmet');
   });
 
   it('a rejected waiver is recorded with its reason', async () => {

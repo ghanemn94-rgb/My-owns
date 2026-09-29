@@ -18,7 +18,7 @@ import {
   isDemo,
 } from './_common';
 import { project } from './portfolio';
-import { decision } from './governance';
+import { decision, approvalRequest } from './governance';
 
 /** Business gate (G0–G7 for the DC template) instantiated per project from its template version. */
 export const gateDefinition = pgTable(
@@ -169,11 +169,15 @@ export const waiver = pgTable(
     /** Conditions attached to the waiver and its expiry (business date); an expired waiver no longer counts. */
     conditions: text('conditions'),
     expiresOn: date('expires_on', { mode: 'string' }),
+    /** Generic approval request binding the waiver payload + target version (module guide: approvals). */
+    approvalRequestId: uuid('approval_request_id'),
     isDemo: isDemo(),
     createdAt: createdAt(),
     version: versionCol(),
   },
-  (t) => [unique('waiver_pid_uq').on(t.projectId, t.id), index('waiver_target_idx').on(t.projectId, t.targetType, t.targetId)],
+  (t) => [
+    projectFk('waiver_approval_request_fk', t.projectId, t.approvalRequestId, (): FkTarget => approvalRequest),
+    unique('waiver_pid_uq').on(t.projectId, t.id), index('waiver_target_idx').on(t.projectId, t.targetType, t.targetId)],
 );
 
 /** Latest computed state of each independent status dimension, with history via record_version. */
