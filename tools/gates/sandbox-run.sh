@@ -29,7 +29,7 @@ GIT_COMMON="$(git -C "$REPO_ROOT" rev-parse --path-format=absolute --git-common-
 # A reviewer runs this inside its agent process sandbox (D-030), which is transparent to the PID namespace, and the
 # Claude Code Bash sandbox nested inside that; this bwrap then creates its own PID namespace with --unshare-pid and
 # mounts a fresh procfs, exactly as it does at the orchestrator's top level. /proc/sys is read-only so the sandboxed
-# command cannot change kernel tunables (F-DG0-147).
+# command cannot change kernel tunables (D-030 hardening; round-16 code-security verifies it).
 exec env -i PATH="/usr/local/bin:/usr/bin:/bin" HOME=/tmp/home LANG=C.UTF-8 TMPDIR=/tmp \
   PYTHONDONTWRITEBYTECODE=1 PYTHONSAFEPATH=1 GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 \
   MTH_COMMIT="$COMMIT" \

@@ -279,7 +279,7 @@ test("D-030: the auditor's gate record for its own stage is copied back; another
 // (process sandbox -> Claude Code Bash sandbox -> its bwrap) is verified by the real-agent probe under
 // docs/delivery/test-evidence/DG0/orchestrator-probes, not here: a unit test cannot reproduce the CLI's Bash sandbox,
 // which supplies the privileged user namespace that the innermost bwrap needs.
-test("F-DG0-147: /proc/sys is read-only inside the process sandbox (kernel tunables cannot be changed)", () => {
+test("D-030: /proc/sys is read-only inside the process sandbox (kernel tunables cannot be changed)", () => {
   requireTools();
   const fx = fixture();
   const sb = sandbox(fx, "domain-reviewer");

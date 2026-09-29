@@ -126,7 +126,7 @@ def plan(role, repo_root, cwd, stage, run_tmp, state_dir, claude_bin, home=None)
 
 def bwrap_args(p):
     # A fresh procfs for the current (host) PID namespace, with /proc/sys read-only so a confined process cannot change
-    # kernel tunables (F-DG0-147). run-agent invokes bwrap with the host's full privileges, so mounting the procfs and
+    # kernel tunables (D-030 hardening; round-16 code-security verifies it). run-agent invokes bwrap with the host's full privileges, so mounting the procfs and
     # binding /proc/sys read-only both happen before the capability drop below.
     #
     # The sandbox deliberately does NOT create a PID or IPC namespace. The Claude Code Bash sandbox nested inside it
