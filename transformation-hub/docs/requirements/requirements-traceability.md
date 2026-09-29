@@ -8,7 +8,7 @@
 | Phase | Planned | Implemented | Tested | Simulated | Not configured | Blocked | Deferred | Total |
 |---|---|---|---|---|---|---|---|---|
 | P0 | 2 | 19 | 0 | 0 | 0 | 0 | 0 | 21 |
-| P1 | 35 | 18 | 29 | 0 | 0 | 0 | 0 | 82 |
+| P1 | 34 | 18 | 30 | 0 | 0 | 0 | 0 | 82 |
 | P2 | 85 | 0 | 0 | 0 | 0 | 0 | 0 | 85 |
 | P3 | 37 | 0 | 0 | 0 | 0 | 0 | 0 | 37 |
 | P4 | 39 | 0 | 0 | 0 | 0 | 0 | 0 | 39 |
@@ -304,7 +304,7 @@
 | REQ-ARC-002 | PostgreSQL source of truth with constraints; optional pgvector | Data integrity. | platform |  |  | n/a | IT: migrations apply cleanly to empty database and are repeatable | P1 | packages/db/migrations; P1 tests (constraints; FKs) | Tested |
 | REQ-ARC-003 | One documented ORM; isolation not assumed from ORM | Robust isolation. | platform |  |  | RLS policies plus explicit scope filters | REVIEW: ADR documents ORM and isolation approach | P1 | ADR-0003; P1 isolation-and-auth.spec.ts "row-level security" | Tested |
 | REQ-ARC-004 | Separate worker for scheduling, reporting and AI | Responsive, resilient platform. | platform |  | Job; OutboxEvent | Worker uses least-privilege DB role | IT: worker processes outbox independently of API process | P1 | apps/api/src/worker.ts; platform/jobs/* | Implemented |
-| REQ-ARC-005 | Object storage and file services via adapters | Deployment flexibility. | platform | Document & Evidence Center | Document; DocumentVersion | Objects private; access via short-lived signed URLs after authorization | UT: local filesystem and S3 adapters pass the same contract tests | P1 |  | Planned |
+| REQ-ARC-005 | Object storage and file services via adapters | Deployment flexibility. | platform | Document & Evidence Center | Document; DocumentVersion | Objects private; access via short-lived signed URLs after authorization | UT: local filesystem and S3 adapters pass the same contract tests | P1 | {'P1 oidc-sso.spec.ts (in-process test IdP': 'PKCE'}; state; nonce; signed ID token; no auto-provisioning; production config rejects demo login); Mobily IdP Not configured (Q-04) | Tested |
 | REQ-ARC-006 | OIDC/SAML identity with isolated dev identities | Enterprise identity integration. | identity | Reports & Administration; GET /api/v1/auth/oidc/login; GET /api/v1/auth/oidc/callback | User; Session | Dev identity provider disabled in production config | IT: OIDC login against test IdP; dev login rejected when NODE_ENV=production | P7 |  | Planned |
 | REQ-ARC-007 | OpenAPI, schemas and safe generated client | Reliable integrations. | platform | GET /api/v1/openapi.json |  | OpenAPI published without secrets; auth required outside dev | UT: OpenAPI generated from contracts matches registered routes | P1 |  | Planned |
 | REQ-ARC-008 | Unit, integration, E2E and accessibility testing | Quality assurance. | process |  |  | n/a | REVIEW: CI runs unit, integration, E2E and axe checks | P1 |  | Planned |
