@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -20,10 +20,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:f0f3a93a1fcf33e58b1d553e39205cc8bc1764407189b69904d2d58e976f351a",
-        "source_commit": "6db3b8388699b767032b4f92547ceb79edf74519",
-        "frozen_at": "2026-09-30T13:21:05Z",
-        "manifest_path": "docs/delivery/candidates/DG0/f0f3a93a1fcf33e5.manifest.json"
+        "candidate_id": "sha256:b77a1c6303fe7be11fbdc858c2810329e947871d788d29b8f000cbd6dbfdcbab",
+        "source_commit": "2386a0fbd0795f3f09ec2802112e84fae2d616f9",
+        "frozen_at": "2026-09-30T13:46:09Z",
+        "manifest_path": "docs/delivery/candidates/DG0/b77a1c6303fe7be1.manifest.json"
       },
       "review_rounds": [
         {
@@ -307,6 +307,18 @@
             "qa-verifier": "docs/delivery/reviews/DG0/round-24/qa-verifier.json"
           },
           "note": "Round 24: re-review after the D-040 run-head binding. Gate round: domain+code-security together check all 19 DG0-final requirements; reviewers verify F-DG0-014/166/167/249; auditor concurs on F-DG0-147/149."
+        },
+        {
+          "round": 25,
+          "candidate_id": "sha256:b77a1c6303fe7be11fbdc858c2810329e947871d788d29b8f000cbd6dbfdcbab",
+          "frozen_at": "2026-09-30T13:46:09Z",
+          "source_commit": "2386a0fbd0795f3f09ec2802112e84fae2d616f9",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG0/round-25/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG0/round-25/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG0/round-25/qa-verifier.json"
+          },
+          "note": "Round 25: re-review after the D-041 three-anchor closure repair. Gate round: domain+code-security together check all 19 DG0-final requirements; reviewers verify F-DG0-168; auditor concurs on F-DG0-147/149."
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
@@ -560,6 +572,11 @@
           "state": "FIXING",
           "at": "2026-09-30T14:05:00Z",
           "note": "Round 24: domain PASS (0 findings), qa PASS (0 findings), code-security PASS (1 Low: F-DG0-168). Verified CLOSED_VERIFIED: F-DG0-014/166/167/249. F-DG0-168: D-040 replaced the frozen-round-candidate closure anchor instead of adding to it, so a candidate-scope fix committed after the freeze but before the verifier ran could close in a genuine round. Repair (D-041): checkClosure now requires the fix to be an ancestor of all three anchors (frozen round source_commit when present, verifying run head, gate candidate), every one enforced. Gate suite 62 pass."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-09-30T14:15:00Z",
+          "note": "Round-24 findings repaired (D-041): checkClosure now requires a CLOSED_VERIFIED fix to be an ancestor of all three anchors -- the frozen round source_commit (when present), the verifying run head, and the gate candidate -- restoring the frozen-round anchor D-040 had replaced (F-DG0-168). Comments corrected to the three-anchor model. Real-repo dry-run: 0 in every history bucket, no anchor failure. Prefreeze all PASS; candidate re-frozen for review round 25."
         }
       ]
     },
