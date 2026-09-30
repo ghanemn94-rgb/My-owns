@@ -1,0 +1,21 @@
+# determinism: QA suites 3 consecutive times, each on a fresh disposable cluster (2026-09-30T23:49:50Z)
+$ run 1: tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa
+ Test Files  3 passed (3)
+      Tests  24 passed (24)
+exit 0
+$ run 2: tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa
+ Test Files  3 passed (3)
+      Tests  24 passed (24)
+exit 0
+$ run 3: tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa
+ Test Files  3 passed (3)
+      Tests  24 passed (24)
+exit 0
+
+$ env -u TEST_DATABASE_ADMIN_URL npx vitest run --project integration tests/qa   (no database: must be BLOCKED, not pass)
+Error: BLOCKED: no database. The integration project needs TEST_DATABASE_ADMIN_URL (superuser URL of a disposable PostgreSQL 16+ cluster, e.g. postgresql://postgres@127.0.0.1:5432/postgres).
+exit 1
+
+$ PGBIN=/nonexistent tests/qa/support/with-pg.sh true   (no PostgreSQL binaries: must be BLOCKED)
+BLOCKED: PostgreSQL server binaries not found (set PGBIN)
+exit 3

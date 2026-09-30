@@ -1,0 +1,49 @@
+# mutation (negative-control) checks in a disposable clone of 4e5e72a; product files mutated ONLY in the clone (2026-09-30T23:48:39Z)
+=== M1-read-not-denied: apps/api/src/modules/access/policy.ts
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+   × A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 0: reads exactly its scope 37ms
+   × A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 1: reads exactly its scope 19ms
+   × A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 2: reads exactly its scope 12ms
+   × A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 0: PATCH and archive outside the scope are 404 and change nothing 16ms
+   × A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 1: PATCH and archive outside the scope are 404 and change nothing 9ms
+   × A12 cross-scope write is denied and writes nothing; in-scope write succeeds > probe 2: PATCH and archive outside the scope are 404 and change nothing 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| tests/qa/integration/a12-cross-scope.test.ts > A12 cross-scope read is denied (404, existence not disclosed); in-scope read succeeds > probe 0: reads exactly its scope
+RESULT M1-read-not-denied: suite FAILED under mutation (exit 1) -> mutation killed
+=== M2-ledger-ignored: apps/worker/src/handlers.ts
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+   × A13 transformation.created handler: processed twice = one ledger effect > first run is 'done', the duplicate is 'duplicate'; one ledger row and one audit event 26ms
+   × A13 transformation.created handler: processed twice = one ledger effect > concurrent deliveries of the same message produce exactly one effect 29ms
+   × A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate' 2584ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 transformation.created handler: processed twice = one ledger effect > first run is 'done', the duplicate is 'duplicate'; one ledger row and one audit event
+ FAIL  |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 transformation.created handler: processed twice = one ledger effect > concurrent deliveries of the same message produce exactly one effect
+ FAIL  |integration| tests/qa/integration/a13-job-idempotency.test.ts > A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'
+      Tests  3 failed | 2 passed (5)
+RESULT M2-ledger-ignored: suite FAILED under mutation (exit 1) -> mutation killed
+=== M3-stale-accepted: apps/api/src/modules/transformations/routes.ts
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+   × A14 transformation PATCH > fresh If-Match succeeds and bumps version; stale If-Match is 409 with currentVersion; missing is 428 52ms
+   × A14 transformation PATCH > two writers racing on the same version: exactly one 200, the rest 409, version bumped once 47ms
+   × A14 transformation archive > stale If-Match is 409, missing is 428, fresh archives and bumps version 35ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation PATCH > fresh If-Match succeeds and bumps version; stale If-Match is 409 with currentVersion; missing is 428
+ FAIL  |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation PATCH > two writers racing on the same version: exactly one 200, the rest 409, version bumped once
+ FAIL  |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation archive > stale If-Match is 409, missing is 428, fresh archives and bumps version
+      Tests  3 failed | 2 passed (5)
+RESULT M3-stale-accepted: suite FAILED under mutation (exit 1) -> mutation killed
+=== M4-missing-ifmatch-accepted: apps/api/src/modules/platform/http.ts
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+   × A14 transformation PATCH > fresh If-Match succeeds and bumps version; stale If-Match is 409 with currentVersion; missing is 428 62ms
+   × A14 transformation archive > stale If-Match is 409, missing is 428, fresh archives and bumps version 35ms
+   × A14 own preferences (PUT /me/preferences) > missing If-Match is 428, stale is 409 with currentVersion, fresh succeeds 20ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation PATCH > fresh If-Match succeeds and bumps version; stale If-Match is 409 with currentVersion; missing is 428
+ FAIL  |integration| tests/qa/integration/a14-concurrency.test.ts > A14 transformation archive > stale If-Match is 409, missing is 428, fresh archives and bumps version
+ FAIL  |integration| tests/qa/integration/a14-concurrency.test.ts > A14 own preferences (PUT /me/preferences) > missing If-Match is 428, stale is 409 with currentVersion, fresh succeeds
+      Tests  3 failed | 2 passed (5)
+RESULT M4-missing-ifmatch-accepted: suite FAILED under mutation (exit 1) -> mutation killed
+=== unmutated control
+control exit 0
+ Test Files  3 passed (3)
+      Tests  24 passed (24)

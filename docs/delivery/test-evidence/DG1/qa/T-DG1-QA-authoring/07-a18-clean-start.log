@@ -1,0 +1,75 @@
+
+==> [   0.0 s] environment
+  date (UTC): 2026-09-30T23:49:11Z; node v22.22.2; pnpm 10.33.0; postgres (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+
+==> [   0.3 s] 1. fresh checkout of HEAD
+  PASS checked-out commit: 4e5e72a2f0b4cec7207cd95e081ee3b1434c26d8
+  PASS working tree clean: 
+  PASS no build output or node_modules in the fresh checkout
+
+==> [   2.1 s] 2. dependencies
+  NOT RUN: pnpm install (forbidden by the DG1 QA assignment). Copying the candidate's installed node_modules,
+  which were installed from the same committed pnpm-lock.yaml.
+
+==> [   4.3 s] 3. build (documented: pnpm -r build)
+apps/worker build: Done
+apps/api build: Done
+  PASS build outputs present
+
+==> [  18.0 s] 4. fresh PostgreSQL, roles and empty database (docs/operations: mth_owner owns, mth_app runtime)
+
+==> [  18.7 s] 5. migrate the fresh database (documented: mth-db status / migrate)
+  | pending  0001_identity_access.sql
+  | pending  0002_transformation.sql
+  | pending  0003_audit_event.sql
+  | pending  0004_outbox_jobs.sql
+  | pending  0005_seed_roles_permissions.sql
+  | pending  0006_pgboss_schema_v25.sql
+  | mth-db status: 6 pending
+  | mth-db migrate: applying 0001_identity_access.sql
+  | mth-db migrate: applying 0002_transformation.sql
+  | mth-db migrate: applying 0003_audit_event.sql
+  | mth-db migrate: applying 0004_outbox_jobs.sql
+  | mth-db migrate: applying 0005_seed_roles_permissions.sql
+  | mth-db migrate: applying 0006_pgboss_schema_v25.sql
+  | mth-db migrate: applied 6 migration(s)
+  | mth-db migrate: database is up to date
+  | applied  0001_identity_access.sql
+  | applied  0002_transformation.sql
+  | applied  0003_audit_event.sql
+  | applied  0004_outbox_jobs.sql
+  | applied  0005_seed_roles_permissions.sql
+  | applied  0006_pgboss_schema_v25.sql
+  | mth-db status: up to date (6 applied)
+  PASS status on the empty database (3 = pending): 3
+  PASS migrate exit: 0
+  PASS second migrate exit (no-op): 0
+  PASS status after migrate (0 = up to date): 0
+  PASS applied migrations recorded = migration files: 6
+
+==> [  19.6 s] 6. start api + worker in PRODUCTION configuration (AUTH_MODE=oidc; IdP not reachable offline)
+
+==> [  20.2 s] 7. health and readiness
+  PASS GET /healthz status: 200
+  body: {"status":"ok"}
+  PASS healthz body: ok
+  PASS GET /readyz status: 200
+  body: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+  PASS readyz body: ready/ok/ok
+  PASS GET / serves the SPA: 200
+  PASS SPA index has lang="ar" dir="rtl"
+  PASS dev login absent in production (404): 404
+  PASS GET /api/v1/me without a session: 401
+  PASS worker running (pid alive after 2 s)
+
+==> [  22.3 s] 8. restart: the API comes back ready against the same database
+  PASS GET /readyz after restart: 200
+
+==> [  22.9 s] 9. negative: an UNMIGRATED database is live but not ready
+  PASS GET /healthz (liveness) on an unmigrated database: 200
+  PASS GET /readyz on an unmigrated database: 503
+  body: {"status":"not_ready","checks":{"database":"ok","migrations":"pending"}}
+
+==> [  23.5 s] done
+A18 CLEAN START: PASS (commit 4e5e72a2f0b4cec7207cd95e081ee3b1434c26d8; install step: NOT RUN, candidate node_modules reused; total 23.5 s)
+a18 exit 0
