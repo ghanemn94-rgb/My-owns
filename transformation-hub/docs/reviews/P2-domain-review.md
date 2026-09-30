@@ -825,6 +825,14 @@ $ pnpm --filter @hub/e2e exec playwright test   (API :4716 with HUB_RATE_LIMIT_P
   a11y 114 scans PASS (0 serious/critical); the one failure is p3-carveout (a) AT-07, the known F-13 regression at HEAD
   (`change_control.amount_unquantified`, no costImpact field in the UI — unrelated); (b)–(d) skipped after it.
 $ playwright test tests/p3-carveout.spec.ts --grep "\((b|c|d)\)"   →  3 passed
+
+After merging claude/mobily-transformation-hub c2fa6dd (P4 web UIs, P1 gate close-out; no schema change, only the generated
+requirement matrix conflicted — re-rendered with apply_status.py):
+$ pnpm lint                                        → passed (i18n 18 namespaces, 5537 keys, 611 enum values, 78 server codes)
+$ domain / contracts tests                         → 357 / 100 passed
+$ pnpm --filter @hub/api test                      → Test Files 79 passed (79), Tests 703 passed (703)
+$ playwright (fresh migrate + seed, production build): p2-gates 5 passed; p3-readiness 2 passed; p3-carveout (a) AT-07
+  failed (the known F-13 issue), (b)–(d) 3 passed in a separate run; a11y --grep "gate|inbox|my-work|keyboard" 14 passed
 ```
 
 Not executed: Docker / compose, Helm. The data dictionary and ERD (`docs/architecture/data-dictionary.md`, generated from the
