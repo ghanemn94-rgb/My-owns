@@ -35,6 +35,8 @@ src/app/layout.tsx                 root layout: reads `hub_locale` cookie → <h
 src/app/login/                     demo personas (DEMO mode only) + honest SSO status
 src/app/(app)/                     authenticated shell (AppShell): portfolio, wizard, inbox, admin
 src/app/(app)/projects/[projectId] project workspace: overview/cockpit, charter, workstreams, members, phase placeholders
+src/app/(app)/partner-access/      counterparty (external partner) view: only its granted rooms' released items and DD Q&A
+                                   (partner-access API projection; external accounts cannot open the project workspace)
 src/components/                    shared UI (DataTable, StatusBadge, Dialog, ConfirmCommandDialog, states, …)
 src/lib/api.ts                     typed client from @hub/contracts route definitions (CSRF header, RFC 7807 → ApiError)
 src/lib/queries.ts                 query keys, useMe/useProject/…, permission hints (the API stays the authority)
@@ -60,7 +62,9 @@ src/i18n/messages/{en,ar}/*.json   UI text; `statuses.json` translates every enu
   is a follow-up.
 - Server strings follow the bilingual pattern of `docs/architecture/module-guide.md` §2 (QA-P1-14): template-seeded
   names/titles come as `<field>` + `<field>Ar` and are picked by locale (`src/lib/i18n-data.ts`); status-dimension
-  explanations and gate blockers come as message codes translated from `gates.messages.*`. Still English only (no
-  codes yet): RAG / measurement explanations and data-quality notes on the plan Health tab, schedule issues and
-  assumptions, governance quorum / tally explanations, and template RACI function labels. Data entered in English
+  explanations, gate blockers and JV signing / closing blockers come as message codes translated from
+  `gates.messages.*`. Still English only (no codes yet): RAG / measurement explanations and data-quality notes on the
+  plan Health tab, schedule issues and assumptions, governance quorum / tally explanations, template RACI function
+  labels, the `detail` of refused commands (JV refusals also carry the blockers, which are shown translated) and the
+  audit action codes of the activity history. Data entered in English
   only (or edited after instantiation without an Arabic text) is shown as entered — nothing is machine-translated.

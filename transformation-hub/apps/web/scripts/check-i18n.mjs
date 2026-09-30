@@ -5,7 +5,8 @@
  *  2. no message is empty;
  *  3. {placeholders} are identical between languages;
  *  4. statuses.<enumName> covers every value of every enum exported by packages/domain/src/enums.ts;
- *  5. every server message code the domain emits (status dimensions, gate blockers — QA-P1-14) has a translation
+ *     (plus the JV vocabularies declared in packages/domain/src/jv.ts — room types, access levels, disclosure statuses, …);
+ *  5. every server message code the domain emits (status dimensions, gate blockers, JV signing/closing blockers — QA-P1-14) has a translation
  *     `gates.messages.<code>` in en and ar with the same placeholders as the domain's English template, and no stale code
  *     is left in the catalogue.
  */
@@ -53,10 +54,18 @@ for (const ns of namespaces.filter((n) => arNamespaces.includes(n))) {
 }
 
 const camel = (c) => c.toLowerCase().replace(/_([a-z0-9])/g, (_, ch) => ch.toUpperCase());
+// JV vocabularies live next to their rules (packages/domain/src/jv.ts) rather than in enums.ts; the screens show them too.
+const jv = require('@hub/domain/dist/jv.js');
+const JV_VOCABULARIES = ['ROOM_TYPES', 'ROOM_ACCESS_LEVELS', 'DISCLOSURE_STATUSES', 'ROOM_ACCESS_EVENT_KINDS', 'ASSESSMENT_BASES', 'DD_REQUEST_ORIGINS', 'DD_DOMAINS', 'DD_EXTERNAL_STATUSES', 'PARTNER_CONFLICT_STATUSES', 'PROGRAM_CLOSURE_STATUSES'];
+const vocabularies = { ...enums };
+for (const name of JV_VOCABULARIES) {
+  if (!Array.isArray(jv[name])) errors.push(`@hub/domain jv.${name} is not an exported vocabulary`);
+  else vocabularies[name] = jv[name];
+}
 let enumValues = 0;
 for (const locale of ['en', 'ar']) {
   const statuses = load(locale, 'statuses');
-  for (const [name, values] of Object.entries(enums)) {
+  for (const [name, values] of Object.entries(vocabularies)) {
     if (!Array.isArray(values)) continue;
     const group = statuses[camel(name)];
     if (!group) {
@@ -70,10 +79,11 @@ for (const locale of ['en', 'ar']) {
   }
 }
 
-// 5. Server message codes (packages/domain: DIMENSION_MESSAGES_EN, GATE_MESSAGES_EN) ↔ gates.messages.*
+// 5. Server message codes (packages/domain: DIMENSION_MESSAGES_EN, GATE_MESSAGES_EN, JV_MESSAGES_EN) ↔ gates.messages.*
 const { DIMENSION_MESSAGES_EN } = require('@hub/domain/dist/carveout.js');
 const { GATE_MESSAGES_EN } = require('@hub/domain/dist/gates.js');
-const serverCodes = { ...DIMENSION_MESSAGES_EN, ...GATE_MESSAGES_EN };
+const { JV_MESSAGES_EN } = jv;
+const serverCodes = { ...DIMENSION_MESSAGES_EN, ...GATE_MESSAGES_EN, ...JV_MESSAGES_EN };
 for (const locale of ['en', 'ar']) {
   const catalogue = flatten(load(locale, 'gates').messages ?? {});
   for (const [code, template] of Object.entries(serverCodes)) {
