@@ -173,10 +173,17 @@ export default function DecisionDetailPage() {
   const me_ = me.user.id;
   const isRequester = d.requesterUserId === me_;
   const recused = d.recusals.some((r) => r.userId === me_);
-  const seatHolders = new Map((committee.data?.memberships ?? []).filter((s) => s.userId).map((s) => [s.userId!, s.displayName ?? s.roleLabel]));
+  const seats = committee.data?.memberships ?? [];
+  const seatHolders = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.displayName ?? s.roleLabel]));
   const recusedIds = new Set(d.recusals.map((r) => r.userId));
-  const onBehalfCandidates = [...seatHolders.entries()].filter(([uid]) => uid !== me_ && !recusedIds.has(uid));
-  const recorderName = (uid: string | null) => (uid === null ? null : uid === me_ ? t('governance.decision.recusals.recordedByYou') : (seatHolders.get(uid) ?? t('governance.decision.recusals.recordedByOther')));
+  // Members who hold a seat today and are not recused yet (the API re-checks the seat and the current round's votes).
+  const onBehalfCandidates = [...new Map(seats.filter((s) => s.userId && s.activeToday && s.userId !== me_ && !recusedIds.has(s.userId)).map((s) => [s.userId!, s.displayName ?? s.roleLabel])).entries()];
+  const recorderName = (uid: string | null) =>
+    uid === null
+      ? null
+      : uid === me_
+        ? t('governance.decision.recusals.recordedByYou')
+        : (seatHolders.get(uid) ?? (committee.data ? t('governance.decision.recusals.recordedByOther') : t('governance.decision.recusals.recordedByUnknown')));
   const myVote = votes.data?.items.find((v) => v.userId === me_ && v.round === d.voteRound);
   const base = hubHref(projectId);
 
