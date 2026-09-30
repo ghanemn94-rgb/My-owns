@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 27,
+  "candidate_id": "sha256:9420948b55a5131e5c0e61385071b6615b1d001bac9f7023c2e512e1e5ac8128",
+  "source_commit": "49b5ad790443409ec2248097727cd61fd34f42f4",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {"kind": "claude-code-cli-session", "run_id": "DG0-T-DG0-REV-DOM-R27-domain-reviewer-20260930T142642Z-5ecc9160", "session_id": "5ecc9160-2f62-4dbc-81f3-4f9ef8ea5919"},
+  "implementation_author": ["transformation-analyst", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (domain-reviewer, session 5ecc9160) authored none of the reviewed implementation (analysis, register, sources tooling, gate tooling, decisions). I formed this verdict from my own checks on the frozen candidate before reading any other round-27 review record (I read none)."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-27/review-domain-reviewer.md",
+  "requirements_checked": ["REQ-PB-001", "REQ-PB-002", "REQ-PB-003", "REQ-PB-004", "REQ-PB-005", "REQ-PB-006", "REQ-PB-007", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010", "REQ-PB-011", "REQ-PB-012", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-019", "REQ-PB-020", "REQ-PB-021", "REQ-PB-022", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025", "REQ-PB-026", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029", "REQ-PB-030", "REQ-PB-031", "REQ-PB-032", "REQ-PB-033", "REQ-PB-034", "REQ-PB-035", "REQ-PB-036", "REQ-PB-037", "REQ-PB-038", "REQ-PB-039", "REQ-PB-040", "REQ-PB-041", "REQ-PB-042", "REQ-PB-043", "REQ-PB-044", "REQ-PB-045", "REQ-PB-046", "REQ-PB-047", "REQ-PB-048", "REQ-PB-049", "REQ-PB-050", "REQ-PB-051", "REQ-PB-052", "REQ-PB-053", "REQ-PB-054", "REQ-PB-055", "REQ-PB-056", "REQ-PB-057", "REQ-PB-058", "REQ-PB-059", "REQ-PB-060", "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068", "REQ-PB-069", "REQ-PB-070", "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-077", "REQ-PB-078", "REQ-PB-079", "REQ-PB-080", "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090", "REQ-PB-091", "REQ-PB-092", "REQ-PB-093", "REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-020", "REQ-DLV-032"],
+  "checks_run": [
+    {
+      "id": "C01-candidate-identity",
+      "procedure": "Confirm the frozen candidate: HEAD vs commit, recomputed candidate ID, complete clone, only metadata commits after the freeze; in a --no-local clone checked out at 49b5ad7 recompute the ID and confirm the round-26->27 candidate diff touches no executable line of rules.mjs",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG0; git diff --name-only 49b5ad7..HEAD (filtered for non-excluded paths); git clone --no-local . $TMPDIR/review-dom27 && git checkout 49b5ad7 && node tools/gates/candidate.mjs --stage DG0; git diff -U0 7edacdc..49b5ad7 -- tools/gates/lib/rules.mjs | non-comment +/- lines",
+      "environment": "Linux sandbox, node, git; main repo (HEAD a4c6f82) and disposable --no-local clone under $TMPDIR",
+      "expected": "candidate ID sha256:9420948b...8128 in both; not shallow; post-freeze commits only touch D-005-excluded metadata; zero non-comment changed lines in rules.mjs",
+      "actual": "HEAD a4c6f82 (metadata-only freeze commit: assignments, candidate manifest, stages.json); candidate ID matches in main repo and in clone at 49b5ad7; is-shallow=false; 0 non-comment changed lines in rules.mjs; decisions.md gains only the D-043 row",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-27/01-scope.log"]
+    },
+    {
+      "id": "C02-extraction-fidelity",
+      "procedure": "Independent extraction: strip XML from word/document.xml (w:t text per w:p, including all table cells), normalise whitespace and search each paragraph in playbook.md; inspect every non-literal hit; also run the shipped reproducibility check",
+      "command": "python3 (zipfile + regex over word/document.xml vs docs/source/playbook.md); sha256sum docx; bash tools/source/check_extraction.sh",
+      "environment": "disposable clone at 49b5ad7, python3",
+      "expected": "every non-empty docx paragraph/cell present in playbook.md; docx SHA-256 2584a352...548ad2; extraction reproducible",
+      "actual": "1001 non-empty paragraphs/cells (49 tables); 986 literal matches; the 15 others are w:br-split cells present with <br> in playbook.md (cover stats line 14, TOM canvas lines 295-300, health-check score cell line 721, footer line 2) - 0 dropped; docx hash matches; check_extraction.sh PASS (165 playbook blocks, 423 master-prompt blocks)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-27/02-extraction.log"]
+    },
+    {
+      "id": "C03-source-coverage",
+      "procedure": "Every block B0001-B0165 has exactly one disposition; each req_id exists and back-cites the block; every REQUIREMENT block is cited; SOURCE rows cite a B block; register/coverage reproduce from parts via merge_register.py; spot-read substance of blocks whose text is paraphrased (B0014, B0016, B0029, B0059, B0063, B0084, B0131)",
+      "command": "python3 over docs/analysis/source-coverage.csv and docs/delivery/requirements.csv; python3 tools/source/merge_register.py && git status --short docs/",
+      "environment": "disposable clone at 49b5ad7, python3",
+      "expected": "165 rows in order, 0 mapping problems, 0 uncited REQUIREMENT blocks, 0 SOURCE rows without B citation, merge reproduces byte-identically",
+      "actual": "165/165 (129 REQUIREMENT, 29 CONTEXT, 7 NON-REQUIREMENT); 0 mapping problems; 0 uncited; 93 REQ-PB all SOURCE/SPECIFIED with acceptance+final_gate; merge output identical (clean git status); paraphrased blocks implemented in substance (e.g. REQ-PB-023 seeds the six B0029 workstreams verbatim; REQ-PB-009 closure needs validated benefits; REQ-PB-082 red-for-N-cycles T16 ask)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-27/03-source-coverage.out", "docs/delivery/test-evidence/DG0/domain/round-27/02b-register-merge.out"]
+    },
+    {
+      "id": "C04-templates",
+      "procedure": "Parse each 'Template N' table in playbook.md; check every column header (or field label for vertical T05) verbatim in the field-inventory Tnn section and in the register rows whose template_id is Tnn; check every non-placeholder example cell (value lists, weights, waves, T10 RAG, T11 SLAs, T12 RACI) verbatim in field-inventory",
+      "command": "python3 (playbook.md template tables vs docs/analysis/field-inventory.md and requirements.csv)",
+      "environment": "disposable clone at 49b5ad7, python3",
+      "expected": "0 missing columns for T01-T16; all value lists present",
+      "actual": "T01-T16: 0 missing columns in inventory and register; 218 non-placeholder cells, 193 verbatim, remaining 25 are equivalent (1-5 rendered 1–5; sample IDs D-03/B03/DEC-01/DEC-02/'Initiative E' covered by ID patterns and From/To reference fields). H/M/L, Support/Neutral/Resist, Decision/Tech/Data/Vendor, Risk/Assumption/Issue/Dependency, A/R, 25/25/20/15/15, wave horizons/entry/exit, T11 SLAs and T10 per-area RAG all present",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-27/04-template-columns-values.out"]
+    },
+    {
+      "id": "C05-first-class-deliverables",
+      "procedure": "Check every source table cell and anchored paragraph against the analysis corpus (field-inventory, register, spec, journeys, glossary, permissions, acceptance map, parts); then targeted checks: charter 14 fields, thesis, 5 scope checks, TOM 10 dims + canvas prompts, 90-120 min workshop, business case, OS layers, benefits lifecycle, 7 adoption indicators, 90-day plan, Day-90 test, 25 questions + bands, roaming example, modes, 6 phases + G1-G6, minimum governance roles",
+      "command": "python3 (normalised substring search of 743 source units; per-deliverable phrase lists)",
+      "environment": "disposable clone at 49b5ad7, python3",
+      "expected": "every deliverable fully specified; non-verbatim units are headings, prose rendered in substance, or reference-list entries",
+      "actual": "All 25 health-check questions, the /25 score + Top 3 actions, all ten canvas prompts, the traceability chain, G1-G6 questions/evidence, charter fields, B0048 North Star present verbatim; the 112 non-verbatim units are section headings, cover/reference-list entries (B0163-B0165 NON-REQUIREMENT/CONTEXT) or principles implemented in substance by the mapped REQ-PB rows (checked by reading them)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-27/05-deliverables-substance.out"]
+    },
+    {
+      "id": "C06-no-invented-source-and-provenance",
+      "procedure": "SOURCE rows must cite B blocks, non-SOURCE rows M blocks; REQ-PB notes separate playbook substance / master-prompt additions / interpretations; scan analysis, register, decisions, CLAUDE.md, agents for official-PMI/certified/official-Mobily claims and unqualified #0078FF",
+      "command": "python3 register scan; grep -rniE 'official PMI|PMI[- ]certified|certified product|PMI standard|official Mobily|Mobily brand' (negations filtered); grep 0078FF",
+      "environment": "disposable clone at 49b5ad7",
+      "expected": "0 SOURCE rows without B; 0 affirmative overclaims; #0078FF only provisional/non-action",
+      "actual": "0 SOURCE rows without B; 0 USER/ENGINEERING rows without M; 90/93 notes carry explicit Interpretation labels and the other 3 (042/058/069) name their master-prompt additions; only affirmative-looking hits are the 'inspired by' synthesis statements and REQ-PB-002; #0078FF appears only in REQ-S15-003 ('not used for action buttons')",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-PB-002", "REQ-DLV-001"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-27/03-source-coverage.out"]
+    },
+    {
+      "id": "C07-operating-logic",
+      "procedure": "Read the register rows that carry each rule: RAG from trajectory (REQ-PB-063), delivery/value/closure separation (REQ-PB-009), forecast never validated (REQ-S08-001, REQ-PB-075 pending excluded), Finance validation (REQ-PB-013/055/075), unique owner + shared benefit once (REQ-PB-058, REQ-S08-003), allocation <=100% with unallocated shown (REQ-S08-013), gates as evidence-tied approvals (REQ-PB-015..021), DG vs G separation (REQ-DLV-002), technical admins not approvers (permissions-matrix s5)",
+      "command": "python3 regex scan of requirements.csv + reading rows; grep permissions-matrix.md",
+      "environment": "disposable clone at 49b5ad7",
+      "expected": "each rule specified with a testable acceptance",
+      "actual": "All present with testable acceptance (e.g. PB-063: 100% tasks but below trajectory is not Green, no actual -> Unknown; PB-058: 10M SAR shared benefit counted once; S08-013: >100% rejected, <100% unallocated; PB-015: ADM cannot approve, stale version rejected; G6 never implies DG7 in REQ-DLV-002/CLAUDE.md)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-002"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-27/07-operating-logic.out"]
+    },
+    {
+      "id": "C08-master-prompt-sample",
+      "procedure": "Coverage has exactly M0001-M0423; deterministic sample every 7th block (61 blocks, M0001..M0421, spanning preamble and s0-s21 including table rows of s0.2, s5, s9, s10, s12, s13, s15, s20, s21); check disposition, req existence and back-citation, class",
+      "command": "python3 over docs/analysis/master-prompt-coverage.csv, master-prompt.blocks.json, requirements.csv",
+      "environment": "disposable clone at 49b5ad7",
+      "expected": "sensible dispositions, 0 dangling/uncited mappings",
+      "actual": "423 rows (367 REQUIREMENT, 49 CONTEXT, 7 NON-REQUIREMENT); sample of 61 listed in evidence; 0 problems; CONTEXT only on headings/table headers, NON-REQUIREMENT only on title and reference-list entries",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-27/08-master-prompt-sample.out"]
+    },
+    {
+      "id": "C09-staging",
+      "procedure": "final_gate is DG0-DG7 and equals the last increment for every row; template/gate rows follow s21 (T01-T04 DG2, T05-T09 DG3, T10-T16 DG4, 90-day/Day-90/health check DG5, G1-G3 DG2, G4 DG3, G5-G6 DG4); inspect deviations; read the four assigned REQ-DLV rows",
+      "command": "python3 over requirements.csv; grep docs/analysis/stage-plan.md; sed s21 rows M0403-M0412",
+      "environment": "disposable clone at 49b5ad7",
+      "expected": "0 inconsistencies; deviations justified",
+      "actual": "0 increment/final_gate inconsistencies across 412 rows; only deviations REQ-PB-032 (P2;P3, DG3: initiative-contribution level needs P3 initiatives) and REQ-PB-093 (Studio weights, P5) - both justified and listed in stage-plan.md; REQ-DLV-001/002/020/032 acceptance concrete and testable",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": ["docs/analysis/stage-plan.md", "docs/delivery/requirements.csv"]
+    },
+    {
+      "id": "C10-glossary-journeys-permissions",
+      "procedure": "Sample Arabic glossary terms; list journey headings; check T11 rows (approver + SLA) in permissions-matrix/field-inventory; check SoD rules",
+      "command": "grep/awk on glossary.md, user-journeys.md; python3 T11 row check against permissions-matrix.md + field-inventory.md",
+      "environment": "disposable clone at 49b5ad7",
+      "expected": "sensible MSA terms flagged for linguistic review; journeys for all phases/gates, modular entry, KPI update, Finance validation, committee, BAU handover, admin publishing; T11 approvers/SLAs respected; tech admins not approvers",
+      "actual": "Terms sensible (e.g. ميثاق التحوّل, نموذج التشغيل المستهدف; rejected-term table explains 'Business Owner' choice) and marked proposed pending Mobily review; J2.1-J2.6 cover all phases/G1-G6, J3-J8 cover the rest; all 4 T11 approvers and SLAs found; s5 rules: requester != approver, ADM not approver, automation never approves",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/analysis/user-journeys.md", "docs/analysis/permissions-matrix.md", "docs/analysis/glossary.md"]
+    },
+    {
+      "id": "C11-d043-comment-and-d039-accuracy",
+      "procedure": "Verify F-DG0-170 context within domain scope: commitPresent() comment states no closure policy; checkClosure comment matches code (anchor 1 unconditional); no other rules.mjs comment describes the closure model; D-043/D-039 text makes no business/provenance claim and the D-039 gc statement holds (exactly one absent round source_commit, also absent in the main repo); D-043's '57' suite count checked against a run",
+      "command": "grep -n -iE 'anchor|closure|tolera' tools/gates/lib/rules.mjs; sed checkClosure; for each candidate manifest source_commit: git cat-file -e (in --no-local clone and main repo); sandbox-run.sh HEAD -- node --test per gate test file",
+      "environment": "fresh --no-local clone at 49b5ad7 ($TMPDIR/pf27)",
+      "expected": "comment single-source and consistent; only round-18 orphan absent; no misstated business claim",
+      "actual": "commitPresent() comment: 'only answers presence -- it states no policy'; checkClosure comment lists 3 anchors, anchor 1 NOT conditional, matching the code (absent round source_commit -> error F-DG0-169); isShallow comment's generic 'commit-absence tolerances' wording describes clone-depth effects, not the closure model (no inconsistency material to the domain scope); 26 present + 1 absent (450c756f, round 18) in clone and main repo; validator.test 57/57 (D-043's '57'), sandbox.test 6/6, agents 39/39; D-043/D-039 contain no business, operating-logic or provenance claim",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-27/10-d043-comment-and-d039.log"]
+    },
+    {
+      "id": "C12-prefreeze",
+      "procedure": "Run the shipped pre-freeze in a fresh --no-local clone at the candidate commit",
+      "command": "git clone --no-local /home/user/My-owns $TMPDIR/pf27 && git checkout 49b5ad7 && bash tools/gates/prefreeze.sh DG0",
+      "environment": "fresh --no-local clone, nested bwrap sandbox via sandbox-run.sh",
+      "expected": "exit 0, every check PASS, working-tree candidate equals HEAD",
+      "actual": "exit 0; 11/11 PASS (extraction, gate+guard tests, runner tests, register rules, register==merge, pipeline, acceptance map, counts, PB provenance 0 problems, test refs 0 problems, candidate sha256:9420948b...8128)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-27/13-prefreeze.log"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/domain/round-27/01-scope.log",
+    "docs/delivery/test-evidence/DG0/domain/round-27/02-extraction.log",
+    "docs/delivery/test-evidence/DG0/domain/round-27/02b-register-merge.out",
+    "docs/delivery/test-evidence/DG0/domain/round-27/03-source-coverage.out",
+    "docs/delivery/test-evidence/DG0/domain/round-27/04-template-columns-values.out",
+    "docs/delivery/test-evidence/DG0/domain/round-27/05-deliverables-substance.out",
+    "docs/delivery/test-evidence/DG0/domain/round-27/07-operating-logic.out",
+    "docs/delivery/test-evidence/DG0/domain/round-27/08-master-prompt-sample.out",
+    "docs/delivery/test-evidence/DG0/domain/round-27/10-d043-comment-and-d039.log",
+    "docs/delivery/test-evidence/DG0/domain/round-27/13-prefreeze.log"
+  ],
+  "reviewed_at": "2026-09-30T14:40:00Z",
+  "summary": "PASS, no findings. The P0 specification stays faithful to playbook v1.0 and the master prompt: extraction complete, 165/165 blocks dispositioned, T01-T16 verbatim, deliverables and operating-logic rules specified with testable acceptance, no invented source requirements, provenance honest. The D-043 change is comment-only and consistent with the code. No domain findings of mine are open."
+}
