@@ -1,0 +1,58 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-166",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "checkClosure still skips the 'fix is in the verified round candidate' check when the verifying round's source_commit is absent, a predicate that forged round metadata alone can satisfy. A PRESENT fix committed after the verifier's run started (so absent from both the round candidate and the run's head) still closes the finding",
+      "reproduction": "tools/gates/lib/rules.mjs:733 runs `if (commitPresent(repo, round.source_commit) && !isAncestor(fix, round.source_commit))`. round.source_commit is orchestrator metadata that checkReviewRounds (:752) only requires to equal the round manifest's source_commit, and findManifest (:895-913) tolerates a manifest whose source_commit does not exist. SEC23-7 in docs/delivery/test-evidence/DG0/code-security/round-23/sec23-repro.tests.mjs.txt (run by run-sec23-repro.sh on a --no-local clone of 6438e20; log sec23-repro.log) sets up round 2 to verify F-DG0-101 (High, mandatory) and round 3 as the gate round on a new candidate. The fix commit is a content change committed AFTER round 2's runs started, so it is not an ancestor of the round-2 verifier's head_commit_at_start (fix-in-verifier-head=false). Control, round 2 genuine (source_commit present): 1 error, 'fix … is not in the verified round-2 candidate'. Forged, round 2's committed manifest and stages entry name source_commit 'deadbeef'x5, entries self-consistent: 0 errors. D-039 closed the ABSENT-fix variant (SEC23-2/3: all-zero and typo'd fixes are rejected), and the fix must still be an ancestor of the gate candidate (SEC23-4). What remains is only the round-level binding: the reviewer's PASS is recorded as verifying a fix its run could not have seen. Real-repo census (tolerance-census.log): the only absent round is 18, and no CLOSED_VERIFIED closure is verified in round 18. So the skipped branch has no legitimate use today and is reachable only through forged round metadata. Exploitation still needs a genuine reviewer PASS verification in the forged round, so the effect is a mis-attributed fix_revision, not an unfixed finding in the gate candidate.",
+      "expected": "A CLOSED_VERIFIED closure must be tied to content the verifying run could actually see, whatever the round metadata says. Two options: (a) additionally require isAncestor(fix_revision, meta.head_commit_at_start) of the verifying run (always present and 40-hex after D-039, and a descendant of the round's source_commit in every legitimate case); or (b) reject a CLOSED_VERIFIED closure verified in a round whose source_commit is absent (no current closure depends on one). Optionally also require head_commit_at_start to be reachable from HEAD (isAncestor(head, HEAD)), not merely present in the object store, so an unreachable local object cannot change a verdict between clone modes (fail-closed in CI today). Add a fixture test like SEC23-7.",
+      "actual": "With a forged absent round source_commit, a present fix that is in the gate candidate but not in the verified round's candidate, nor in the verifier's run head, passes validateGate with 0 errors. The same fixture with a genuine round reports the error.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-23/sec23-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/run-sec23-repro.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/sec23-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/tolerance-census.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-23/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T13:06:40Z",
+          "status": "OPEN",
+          "note": "Raised in round 23 (code-security-reviewer)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-167",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Stale comment: rules.mjs:597-601 (commitPresent) still says checkClosure and checkInvocation tolerate a commit's genuine absence (D-037). D-039 removed those tolerances",
+      "reproduction": "sed -n 597,601p tools/gates/lib/rules.mjs (captured in docs/delivery/test-evidence/DG0/code-security/round-23/candidate-and-scope.log) reads: 'Provenance checks that need such a commit tolerate its genuine absence (D-035 for findManifest; D-037 for checkClosure and checkInvocation)'. After D-039, checkClosure (:730-731) and checkInvocation (:395-398) reject an absent fix_revision and an absent head_commit_at_start outright. SEC23-2/3/5 confirm this.",
+      "expected": "The helper's comment states the current rule: the only absence tolerance is findManifest's (D-035). checkClosure's round-ancestry check is skipped only when a round's source_commit is absent (see F-DG0-166).",
+      "actual": "The comment describes the withdrawn D-037/D-038 tolerances. It misleads a later maintainer or auditor about which absence escapes exist. No behavioural impact.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-23/candidate-and-scope.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/sec23-repro.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-23/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T13:06:40Z",
+          "status": "OPEN",
+          "note": "Raised in round 23 (code-security-reviewer)."
+        }
+      ]
+    }
+  ]
+}

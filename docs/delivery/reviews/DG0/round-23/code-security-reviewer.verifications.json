@@ -1,0 +1,31 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-164",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified against the round-23 candidate e6df2e1e… (source 6438e20). Fix 7180d97 is an ancestor of 6438e20. The D-038 'round absent' tolerance is removed from both sites. checkClosure (rules.mjs:730-737) requires a 40-hex, present fix_revision that is an ancestor of the gate candidate, and of the round candidate when that resolves. checkInvocation (:394-405) requires a 40-hex, present head_commit_at_start that contains the manifest. roundSourceCommit is gone from every binding. My round-22 bypass was reproduced on the same fixture design against 6438e20 (SEC23, --no-local clone). The forged superseded round (manifest and stages entry naming 'deadbeef'x5) still passes structurally with a real fix (SEC23-1, 0 errors: findManifest D-035). An all-zero fix is now rejected (SEC23-2: 'fix 0000000000 is not a commit present in this repository'), and so is a typo'd fix (SEC23-3). A present off-branch fix is still caught against the gate (SEC23-4). In the forged round, the verifier head values unknown/HEAD/missing/null/zeros/absent-40hex/UPPERHEX/short are all rejected (SEC23-5). Unit tests 'D-039 / F-DG0-164/246' and 'D-039 / F-DG0-164' pass (node-tests.log, 101/101). Tolerance census: the only surviving absence sites are findManifest's (:906-912), which still requires the entries to hash to candidate_id at :890-894 before tolerating, and the round-ancestry skip at :733 (raised separately as F-DG0-166, Low; it cannot admit an absent fix). No new gap on the complete history: the real-repo dry-run on a --no-local clone reports 0 fix-ancestry, 0 head, 0 record-less and 0 dropped errors. All 104 closures verify under the strict rule. The object-store-membership part of the original finding is moot now that 450c756/cb76260 are pruned (orphan-and-shallow.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-23/sec23-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/run-sec23-repro.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/sec23-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/node-tests.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/real-repo-dryrun.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/tolerance-census.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/orphan-and-shallow.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-165",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified against the round-23 candidate (source 6438e20). Fix 7180d97 is an ancestor. collectRaisedFindings (rules.mjs:494-502) keeps the FIRST raising sidecar's version, processing rounds in ascending numeric order and files sorted within a round. Any later sidecar whose IMMUTABLE_FINDING_FIELDS differ is an error, and findings.json is compared with the first version (:544-546). SEC23-6(a): a round-2 sidecar re-raising F-DG0-101 as Low/non-mandatory, with findings.json edited to match, is rejected (severity and mandatory_violation drift errors, plus findings.json vs reviewer errors). SEC23-6(b): an attacker-ADDED earlier-round sidecar (a new file, so write-once has no objection) that pre-empts a finding with a Low classification is also caught, because the genuine later sidecar then drifts (severity/mandatory_violation/reported_by errors). SEC23-6(c): an identical re-listing in a later round gives 0 errors, so legitimate re-listing is unaffected. Unit test 'D-039 / F-DG0-165' passes. The real-repo dry-run shows no drift errors in the committed history.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-23/sec23-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/sec23-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/node-tests.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-23/real-repo-dryrun.log"
+      ]
+    }
+  ]
+}
