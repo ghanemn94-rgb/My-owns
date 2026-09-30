@@ -921,3 +921,78 @@ BEGIN
   END IF;
 END
 $legrant$;
+
+-- 22. Finance (REQ-FIN-001..010, AT-29) -----------------------------------------------------------------------------------
+-- (a) A business plan / valuation version is frozen at insert: its assumptions, outputs and source never change (a change
+--     is a NEW version, so prior assumptions are preserved — REQ-FIN-005). Approved values, once recorded from a final
+--     governance decision, never change either (REQ-FIN-006). Versions are never deleted.
+CREATE OR REPLACE FUNCTION hub_finance_model_version_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    RAISE EXCEPTION 'append_only_violation: financial model versions are never deleted' USING ERRCODE = 'P0001';
+  END IF;
+  IF (NEW.model_id, NEW.kind, NEW.version_no, NEW.version_label, NEW.model_case, NEW.based_on_version_id, NEW.assumptions, NEW.outputs,
+      NEW.headline_basis, NEW.source_type, NEW.source_document_id, NEW.source_document_version_id, NEW.source_ref, NEW.import_batch_id,
+      NEW.prepared_by, NEW.created_by, NEW.created_at)
+     IS DISTINCT FROM (OLD.model_id, OLD.kind, OLD.version_no, OLD.version_label, OLD.model_case, OLD.based_on_version_id, OLD.assumptions, OLD.outputs,
+      OLD.headline_basis, OLD.source_type, OLD.source_document_id, OLD.source_document_version_id, OLD.source_ref, OLD.import_batch_id,
+      OLD.prepared_by, OLD.created_by, OLD.created_at) THEN
+    RAISE EXCEPTION 'append_only_violation: a financial model version is frozen — create a new version' USING ERRCODE = 'P0001';
+  END IF;
+  IF OLD.approved_values IS NOT NULL AND NEW.approved_values IS DISTINCT FROM OLD.approved_values THEN
+    RAISE EXCEPTION 'append_only_violation: approved values are immutable once recorded' USING ERRCODE = 'P0001';
+  END IF;
+  IF OLD.superseded_by_id IS NOT NULL AND NEW.superseded_by_id IS DISTINCT FROM OLD.superseded_by_id THEN
+    RAISE EXCEPTION 'append_only_violation: the successor of a model version cannot change' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_finance_model_version_guard ON financial_model_version;
+CREATE TRIGGER hub_finance_model_version_guard BEFORE UPDATE OR DELETE ON financial_model_version FOR EACH ROW EXECUTE FUNCTION hub_finance_model_version_guard();
+
+-- (b) An APPROVED figure is immutable while approved: its content changes only after an explicit reopen (state → proposed,
+--     recorded in audit + record_version). Approved budget amounts change only with a new approval decision.
+CREATE OR REPLACE FUNCTION hub_finance_approved_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_TABLE_NAME = 'financial_snapshot' THEN
+    IF OLD.approval_state = 'approved' AND NEW.approval_state = 'approved'
+       AND (NEW.kind, NEW.category, NEW.line_ref, NEW.label, NEW.period, NEW.amount, NEW.currency, NEW.unit_scale, NEW.tsa_service_id,
+            NEW.source_ref, NEW.source_document_id, NEW.source_document_version_id, NEW.source_sheet, NEW.source_cell,
+            NEW.validated_by, NEW.validated_hash, NEW.approved_by, NEW.approved_at, NEW.approval_decision_id)
+           IS DISTINCT FROM (OLD.kind, OLD.category, OLD.line_ref, OLD.label, OLD.period, OLD.amount, OLD.currency, OLD.unit_scale, OLD.tsa_service_id,
+            OLD.source_ref, OLD.source_document_id, OLD.source_document_version_id, OLD.source_sheet, OLD.source_cell,
+            OLD.validated_by, OLD.validated_hash, OLD.approved_by, OLD.approved_at, OLD.approval_decision_id) THEN
+      RAISE EXCEPTION 'append_only_violation: an approved financial figure is immutable — reopen it first' USING ERRCODE = 'P0001';
+    END IF;
+  ELSIF TG_TABLE_NAME = 'budget_line' THEN
+    IF OLD.approved_amount IS NOT NULL AND NEW.approved_amount IS DISTINCT FROM OLD.approved_amount
+       AND NEW.approval_decision_id IS NOT DISTINCT FROM OLD.approval_decision_id THEN
+      RAISE EXCEPTION 'append_only_violation: an approved budget changes only with a new approval decision' USING ERRCODE = 'P0001';
+    END IF;
+    IF OLD.approved_amount IS NOT NULL AND (NEW.currency, NEW.unit_scale) IS DISTINCT FROM (OLD.currency, OLD.unit_scale) THEN
+      RAISE EXCEPTION 'append_only_violation: the currency / unit of an approved budget line cannot change' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_finance_approved_guard ON financial_snapshot;
+CREATE TRIGGER hub_finance_approved_guard BEFORE UPDATE ON financial_snapshot FOR EACH ROW EXECUTE FUNCTION hub_finance_approved_guard();
+DROP TRIGGER IF EXISTS hub_finance_approved_guard ON budget_line;
+CREATE TRIGGER hub_finance_approved_guard BEFORE UPDATE ON budget_line FOR EACH ROW EXECUTE FUNCTION hub_finance_approved_guard();
+
+-- (c) KPI observations are append-only (a correction is a new observation); finance registers are never hard-deleted.
+DROP TRIGGER IF EXISTS hub_append_only ON kpi_observation;
+CREATE TRIGGER hub_append_only BEFORE UPDATE OR DELETE ON kpi_observation FOR EACH ROW EXECUTE FUNCTION hub_reject_mutation();
+DROP TRIGGER IF EXISTS hub_no_truncate ON kpi_observation;
+CREATE TRIGGER hub_no_truncate BEFORE TRUNCATE ON kpi_observation FOR EACH STATEMENT EXECUTE FUNCTION hub_reject_mutation();
+DO $finance_grants$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
+    EXECUTE 'REVOKE UPDATE, DELETE ON kpi_observation FROM hub_app';
+    EXECUTE 'REVOKE DELETE ON financial_snapshot, budget_line, financial_model, financial_model_version, intercompany_reconciliation, benefit, kpi FROM hub_app';
+  END IF;
+END
+$finance_grants$;
+
