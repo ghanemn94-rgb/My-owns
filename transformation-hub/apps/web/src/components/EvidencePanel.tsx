@@ -48,13 +48,15 @@ function DocumentVersionPicker({
   return (
     <div className="space-y-2" data-testid="evidence-document-picker">
       <SearchInput label={t('documents.evidence.searchDocuments')} value={q} onChange={setQ} />
-      <ul className="max-h-48 overflow-y-auto rounded-md border border-line" role="listbox" aria-label={t('documents.evidence.document')}>
+      {/* A list of toggle buttons (aria-pressed), not a listbox: a listbox option may not contain a button. */}
+      <ul className="max-h-48 overflow-y-auto rounded-md border border-line" aria-label={t('documents.evidence.document')}>
         {docs.isLoading ? <li className="px-3 py-2 text-sm text-muted">{t('states.loading')}</li> : null}
         {(docs.data?.items ?? []).length === 0 && !docs.isLoading ? <li className="px-3 py-2 text-sm text-muted">{t('documents.list.emptySearch')}</li> : null}
         {(docs.data?.items ?? []).map((d) => (
-          <li key={d.id} role="option" aria-selected={value?.documentId === d.id}>
+          <li key={d.id}>
             <button
               type="button"
+              aria-pressed={value?.documentId === d.id}
               className={cx('flex w-full items-center gap-2 px-3 py-2 text-start text-sm hover:bg-surface-muted', value?.documentId === d.id && 'bg-primary-soft font-semibold text-primary')}
               onClick={() => onChange({ documentId: d.id, versionId: d.currentVersion?.id ?? null, title: d.title })}
             >

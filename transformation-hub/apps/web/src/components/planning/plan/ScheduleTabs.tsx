@@ -35,6 +35,7 @@ import { useToast } from '../../Toast';
 import { btn, card, cx } from '../../ui';
 import { CodeLink, DateText, FilterSelect, ForecastLabel, Section } from '../bits';
 import { FormDialog } from '../dialogs';
+import { ScrollRegion } from '../../ScrollRegion';
 
 function nodeLabel(n: Pick<ScheduleNode, 'code' | 'title'>) {
   return `${n.code} — ${n.title}`;
@@ -447,7 +448,7 @@ export function WhatIfTab({ initialNodeId }: { initialNodeId?: string }) {
             </p>
           ) : null}
           {d.affected.length ? (
-            <div className="overflow-x-auto">
+            <ScrollRegion label={t('planning.whatIf.affected')} className="overflow-x-auto">
               <table className="w-full text-sm">
                 <caption className="sr-only">{t('planning.whatIf.affected')}</caption>
                 <thead className="bg-surface-muted">
@@ -477,7 +478,7 @@ export function WhatIfTab({ initialNodeId }: { initialNodeId?: string }) {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollRegion>
           ) : null}
           <details>
             <summary className="cursor-pointer text-sm text-primary">{t('planning.schedule.assumptions', { count: d.assumptions.length })}</summary>

@@ -73,7 +73,7 @@ export default function InboxPage() {
     },
     { key: 'status', header: t('planning.common.status'), cell: (i) => <StatusBadge enumName={STATUS_ENUM[i.type]} value={i.status} /> },
     { key: 'due', header: t('planning.common.due'), sortValue: (i) => i.dueDate ?? '9999', cell: (i) => <DateText value={i.dueDate} overdue={i.overdue} /> },
-    { key: 'demo', header: '', cell: (i) => (i.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (i) => (i.isDemo ? <DemoBadge /> : null) },
   ];
 
   return (

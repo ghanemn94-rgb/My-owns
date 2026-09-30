@@ -23,6 +23,7 @@ import { DemoBadge } from '../../DemoBadge';
 import { VerificationBadge } from '../../VerificationBadge';
 import { DateText, FilterSelect, FilterToggle } from '../bits';
 import { TaskFormDialog } from '../dialogs';
+import { ScrollRegion } from '../../ScrollRegion';
 
 function ActivateAllDialog({ open, onClose, ws, drafts }: { open: boolean; onClose: () => void; ws: Ws; drafts: number }) {
   const { t, locale } = useI18n();
@@ -131,7 +132,7 @@ export function WbsTab() {
           <EmptyState title={q || status || workstreamId || overdue || mine ? t('planning.wbs.emptyFiltered') : t('planning.wbs.empty')} />
         </div>
       ) : (
-        <div className={cx(card, 'overflow-x-auto')}>
+        <ScrollRegion label={t('planning.wbs.title')} className={cx(card, 'overflow-x-auto')}>
           <table className="w-full border-collapse text-sm" data-testid="wbs-table">
             <caption className="sr-only">{t('planning.wbs.title')}</caption>
             <thead className="bg-surface-muted">
@@ -204,7 +205,7 @@ export function WbsTab() {
             })}
           </table>
           <p className="border-t border-line px-3 py-2 text-xs text-muted">{t('planning.wbs.progressLegend')}</p>
-        </div>
+        </ScrollRegion>
       )}
       {tasks.data ? <p className="text-xs text-muted">{t('planning.wbs.total', { count: tasks.data.total })}</p> : null}
       <TaskFormDialog open={createOpen} onClose={() => setCreateOpen(false)} defaultWorkstreamId={workstreamId || undefined} />

@@ -55,9 +55,12 @@ export function RiskHeatMap({ workstreamId }: { workstreamId?: string }) {
                 const n = grid.get(`${p}-${i}`) ?? 0;
                 return (
                   <td key={i} className="p-0.5">
-                    <span className={cx('flex size-8 items-center justify-center rounded font-semibold', cls(p, i), n === 0 && 'opacity-50')} aria-label={t('planning.raid.heatCell', { p, i, count: n })}>
+                    {/* aria-label is not allowed on a generic <span>: the visible count is hidden from assistive technology
+                        and the full cell description is given as screen-reader text instead. */}
+                    <span className={cx('flex size-8 items-center justify-center rounded font-semibold', cls(p, i), n === 0 && 'opacity-50')} aria-hidden="true">
                       {n ? formatNumber(n) : ''}
                     </span>
+                    <span className="sr-only">{t('planning.raid.heatCell', { p, i, count: n })}</span>
                   </td>
                 );
               })}
@@ -118,7 +121,7 @@ export function RaidRegister({ kind, workstreamId: fixedWs }: { kind: RaidKindPa
     { key: 'ws', header: t('planning.common.workstream'), cell: (r) => <span dir="ltr">{r.workstreamCode ?? '—'}</span> },
     { key: 'owner', header: t('planning.common.owner'), cell: (r) => (r.ownerName ? <span dir="auto">{r.ownerName}</span> : <span className="text-muted">{t('planning.common.unassigned')}</span>) },
     { key: 'due', header: k === 'dependency' ? t('planning.raid.neededBy') : t('planning.common.due'), cell: (r) => <DateText value={k === 'dependency' ? (r.neededBy ?? r.dueDate) : r.dueDate} overdue={r.overdue} /> },
-    { key: 'demo', header: '', cell: (r) => (r.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (r) => (r.isDemo ? <DemoBadge /> : null) },
   ];
 
   return (
@@ -327,7 +330,7 @@ export function ChangeRequestsPanel() {
     { key: 'subject', header: t('planning.cr.subject'), cell: (c) => (c.subjectType ? <span dir="ltr" className="text-xs">{c.subjectType}</span> : '—') },
     { key: 'by', header: t('planning.cr.requestedBy'), cell: (c) => <span dir="auto">{c.requestedByName ?? '—'}</span> },
     { key: 'created', header: t('planning.baseline.createdAt'), cell: (c) => formatDateTime(c.createdAt) },
-    { key: 'demo', header: '', cell: (c) => (c.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (c) => (c.isDemo ? <DemoBadge /> : null) },
   ];
   return (
     <div className="space-y-3" data-testid="cr-panel">

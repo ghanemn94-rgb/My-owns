@@ -12,6 +12,7 @@ import { ErrorState } from '@/components/ErrorState';
 import { TextAreaField } from '@/components/Field';
 import { LoadingState } from '@/components/LoadingState';
 import { PageHeader } from '@/components/PageHeader';
+import { ScrollRegion } from '@/components/ScrollRegion';
 import { SectionGuard } from '@/components/SectionGuard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useToast } from '@/components/Toast';
@@ -154,9 +155,9 @@ export default function ChangeRequestPage() {
             </Fact>
             {c.proposedChange ? (
               <Fact label={t('planning.cr.proposedChange')} wide>
-                <pre className="max-h-48 overflow-auto rounded bg-surface-muted p-2 text-xs" dir="ltr">
+                <ScrollRegion as="pre" label={t('planning.cr.proposedChange')} className="max-h-48 overflow-auto rounded bg-surface-muted p-2 text-xs" dir="ltr">
                   {JSON.stringify(c.proposedChange, null, 2)}
-                </pre>
+                </ScrollRegion>
               </Fact>
             ) : null}
           </dl>

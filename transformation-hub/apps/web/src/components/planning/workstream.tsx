@@ -51,7 +51,7 @@ export function WorkstreamTasks({ ws }: { ws: Workstream }) {
     { key: 'owner', header: t('planning.common.accountable'), cell: (x) => (x.accountableName ? <span dir="auto">{x.accountableName}</span> : <span className="text-muted">{t('planning.common.unassigned')}</span>) },
     { key: 'finish', header: t('planning.task.plannedFinish'), cell: (x) => <DateText value={x.plannedFinish} overdue={x.overdue} /> },
     { key: 'progress', header: t('planning.task.progressShort'), cell: (x) => <span className="tabular whitespace-nowrap">{formatNumber(x.reportedProgress)}% <span className="text-xs text-muted">/ {formatNumber(x.verifiedProgress)}%</span></span> },
-    { key: 'demo', header: '', cell: (x) => (x.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (x) => (x.isDemo ? <DemoBadge /> : null) },
   ];
   return (
     <div className="space-y-3" data-testid="ws-tasks">

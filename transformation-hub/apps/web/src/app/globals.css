@@ -3,13 +3,16 @@
 /*
  * Design tokens — restrained corporate blue/white. Official branding can replace these variables without
  * touching components. All text/background pairs below meet WCAG AA (≥ 4.5:1) for normal text.
+ * --hub-border-strong outlines form controls and secondary buttons: it keeps ≥ 3:1 against every surface token
+ * (bg, surface, surface-muted, primary-soft) for WCAG 1.4.11 non-text contrast; --hub-focus keeps ≥ 3:1 too.
+ * --hub-border is only a decorative divider/card edge (not used to identify a control).
  */
 :root {
   --hub-bg: #f5f7fa;
   --hub-surface: #ffffff;
   --hub-surface-muted: #f0f3f7;
   --hub-border: #d3dae4;
-  --hub-border-strong: #9aa7b8;
+  --hub-border-strong: #7a8799;
   --hub-text: #111827;
   --hub-text-muted: #4a5565;
   --hub-primary: #0b4f8a;
@@ -86,6 +89,11 @@ body {
   outline: 3px solid var(--hub-focus);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* Scrollable regions (components/ScrollRegion) often sit inside cards with overflow hidden: draw the ring inside. */
+[data-scroll-region]:focus-visible {
+  outline-offset: -3px;
 }
 
 dialog::backdrop {

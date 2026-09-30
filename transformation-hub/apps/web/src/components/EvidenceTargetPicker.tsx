@@ -126,15 +126,17 @@ export function EvidenceTargetPicker({
       ) : (
         <SearchInput label={t('documents.picker.search')} value={q} onChange={setQ} />
       )}
-      <ul className="max-h-56 overflow-y-auto rounded-md border border-line" role="listbox" aria-label={t('documents.picker.results')}>
+      {/* A list of toggle buttons (aria-pressed), not a listbox: a listbox option may not contain a button. */}
+      <ul className="max-h-56 overflow-y-auto rounded-md border border-line" aria-label={t('documents.picker.results')}>
         {loading ? <li className="px-3 py-2 text-sm text-muted">{t('states.loading')}</li> : null}
         {!loading && options.length === 0 ? <li className="px-3 py-2 text-sm text-muted">{t('documents.picker.none')}</li> : null}
         {options.map((o) => {
           const selected = value?.id === o.id;
           return (
-            <li key={o.id} role="option" aria-selected={selected}>
+            <li key={o.id}>
               <button
                 type="button"
+                aria-pressed={selected}
                 className={cx('flex w-full items-start gap-2 px-3 py-2 text-start text-sm hover:bg-surface-muted', selected && 'bg-primary-soft font-semibold text-primary')}
                 onClick={() => onChange({ type: type as PickableTargetType, id: o.id, label: `${o.code} — ${o.title}` })}
                 data-testid="evidence-target-option"

@@ -118,7 +118,8 @@ export default function AdminPage() {
             role="tab"
             id={`tab-${x.key}`}
             aria-selected={tab === x.key}
-            aria-controls={`panel-${x.key}`}
+            // Only the selected tab's panel is rendered; an IDREF to a missing element is invalid.
+            aria-controls={tab === x.key ? `panel-${x.key}` : undefined}
             tabIndex={tab === x.key ? 0 : -1}
             onClick={() => setTab(x.key)}
             onKeyDown={(e) => {

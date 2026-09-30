@@ -1,13 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type APIRequestContext, type Browser, type BrowserContext, type Page } from '@playwright/test';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PERSONAS, apiSessionAs, loginAs } from './helpers';
 
 /**
  * REQ-ARC-008 — automated accessibility checks (axe-core via @axe-core/playwright) on every delivered screen, in
  * English (LTR) and Arabic (RTL), plus a 390 px mobile pass, a few open-widget states (dialog, combobox) and keyboard
- * operability checks (skip link, tabs, dialog focus/Escape, visible focus).
+ * operability checks (skip link, visible focus, tabs, dialog focus/Escape, scrollable Gantt, evidence pickers).
  *
  * Gate: a scan FAILS on any violation of impact `serious` or `critical` from the WCAG 2.0/2.1 A and AA rule sets
  * (tags wcag2a, wcag2aa, wcag21a, wcag21aa). `best-practice` rules are run in the same pass and reported (advisory),
@@ -15,8 +15,8 @@ import { PERSONAS, apiSessionAs, loginAs } from './helpers';
  * No rule is disabled: EXCLUDED_RULES below is the only place an exclusion may be added, each with a written reason
  * that is repeated in docs/test-evidence/a11y-report.md.
  *
- * Automated checks find only a subset of WCAG failures (roughly a third to a half); passing them is NOT a claim of
- * WCAG 2.1 AA conformance. Manual review with assistive technology is still required.
+ * Automated checks find only a subset of WCAG failures; passing them is NOT a claim of WCAG 2.1 AA conformance.
+ * Manual review with assistive technology is still required.
  *
  * Deterministic: read-only (no command is submitted; the locale is switched with the `hub_locale` cookie, not by
  * saving a persona preference), fixture ids are looked up by their seeded codes, and every scan waits for the page's
@@ -145,6 +145,20 @@ const SCREENS: readonly Screen[] = [
   // Documents & Evidence Center.
   { id: 'documents', persona: 'pm', path: (i) => `/projects/${i.dc}/documents`, ready: visible('[data-testid="documents-table"]') },
   { id: 'documents-evidence', persona: 'pm', path: (i) => `/projects/${i.dc}/documents?tab=evidence` },
+  {
+    // Evidence panel of a record + the "link evidence" dialog with its document picker (nothing is submitted).
+    id: 'evidence-link-dialog-open',
+    persona: 'pm',
+    path: (i) => `/projects/${i.dc}/documents?tab=evidence`,
+    ready: visible('[data-testid="evidence-target-option"]'),
+    prepare: async (page) => {
+      await page.getByTestId('evidence-target-option').first().click();
+      await expect(page.getByTestId('evidence-panel')).toBeVisible();
+      await page.getByTestId('evidence-add').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+      await expect(page.getByTestId('evidence-document-picker').locator('button[aria-pressed]').first()).toBeVisible();
+    },
+  },
   { id: 'documents-sources', persona: 'pm', path: (i) => `/projects/${i.dc}/documents?tab=sources` },
   { id: 'document-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/documents/${i.document}`, ready: visible('[data-testid="versions-table"]') },
   { id: 'source-detail-claims', persona: 'pm', path: (i) => `/projects/${i.dc}/documents/sources/${i.source}` },
@@ -180,15 +194,34 @@ interface ScanRecord {
   screen: string;
   locale: Locale;
   url: string;
+  axe: string;
   findings: Finding[];
-  incomplete: number;
+  /** axe "incomplete" results: rules that could not decide automatically and need a manual check (rule → nodes). */
+  incomplete: Record<string, number>;
 }
-const records: ScanRecord[] = [];
-let axeVersion = 'unknown';
 const expectedScans = SCREENS.length * LOCALES.length;
 const REPO = join(__dirname, '..', '..');
 const REPORT = join(REPO, 'docs', 'test-evidence', 'a11y-report.md');
+// Inside Playwright's outputDir, which it empties at the start of every run. One file per scan: Playwright starts a
+// fresh worker (fresh module state) after every failed test, so results cannot be collected in memory.
 const OUT = join(__dirname, '..', 'test-results', 'a11y');
+const SCANS = join(OUT, 'scans');
+const scanOrder = (r: ScanRecord) => LOCALES.indexOf(r.locale) * 1000 + SCREENS.findIndex((s) => s.id === r.screen);
+
+function saveRecord(r: ScanRecord, full: unknown) {
+  mkdirSync(SCANS, { recursive: true });
+  writeFileSync(join(SCANS, `${r.locale}--${r.screen}.json`), JSON.stringify(r, null, 2));
+  // Full axe output next to the summary (also attached to the test) so CI artifacts keep it with any reporter.
+  mkdirSync(join(OUT, 'axe'), { recursive: true });
+  writeFileSync(join(OUT, 'axe', `${r.locale}--${r.screen}.json`), JSON.stringify(full, null, 2));
+}
+function loadRecords(): ScanRecord[] {
+  if (!existsSync(SCANS)) return [];
+  return readdirSync(SCANS)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => JSON.parse(readFileSync(join(SCANS, f), 'utf8')) as ScanRecord)
+    .sort((a, b) => scanOrder(a) - scanOrder(b));
+}
 
 let ids: Ids;
 const sessions: Partial<Record<PersonaKey, Awaited<ReturnType<BrowserContext['storageState']>>>> = {};
@@ -243,14 +276,31 @@ async function openContext(browser: Browser, baseURL: string, persona: PersonaKe
   return ctx;
 }
 
-/** Generic readiness: right direction, a single visible <h1>, no loading indicator, network quiet. */
+/**
+ * Wait until the rendered page stops changing: no loading indicator and the same DOM size over two consecutive
+ * samples 400 ms apart. (`networkidle` is not usable: Next.js keeps prefetching linked routes in the viewport.)
+ */
+async function waitForStableDom(page: Page) {
+  await expect(page.getByTestId('loading-state')).toHaveCount(0);
+  const sample = () => page.evaluate(() => `${document.body.innerHTML.length}:${document.querySelectorAll('[data-testid="loading-state"]').length}`);
+  await expect
+    .poll(
+      async () => {
+        const a = await sample();
+        await page.waitForTimeout(400);
+        return a === (await sample()) && a.endsWith(':0');
+      },
+      { timeout: 20_000, intervals: [0] },
+    )
+    .toBe(true);
+}
+
+/** Generic readiness: right language and direction, a visible <h1>, then a settled DOM. */
 async function settle(page: Page, locale: Locale) {
   await expect(page.locator('html')).toHaveAttribute('lang', locale);
   await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
   await expect(page.locator('h1').first()).toBeVisible();
-  await expect(page.getByTestId('loading-state')).toHaveCount(0);
-  await page.waitForLoadState('networkidle');
-  await expect(page.getByTestId('loading-state')).toHaveCount(0);
+  await waitForStableDom(page);
 }
 
 function summarise(results: Awaited<ReturnType<AxeBuilder['analyze']>>): Finding[] {
@@ -285,10 +335,12 @@ test.describe('REQ-ARC-008 accessibility (axe-core, WCAG 2.1 A/AA)', () => {
   });
 
   test.afterAll(() => {
+    // Runs when each worker ends (Playwright replaces the worker after a failure); the last one sees every scan file.
+    const records = loadRecords();
     mkdirSync(OUT, { recursive: true });
     writeFileSync(join(OUT, 'axe-summary.json'), JSON.stringify({ excludedRules: EXCLUDED_RULES, records }, null, 2));
     // The Markdown summary is only rewritten after a complete run (a filtered run would under-report).
-    if (records.length === expectedScans) writeReport();
+    if (records.length === expectedScans) writeReport(records);
   });
 
   for (const locale of LOCALES) {
@@ -302,14 +354,13 @@ test.describe('REQ-ARC-008 accessibility (axe-core, WCAG 2.1 A/AA)', () => {
           if (screen.ready) await screen.ready(page);
           if (screen.prepare) {
             await screen.prepare(page);
-            await page.waitForLoadState('networkidle');
-            await expect(page.getByTestId('loading-state')).toHaveCount(0);
+            await waitForStableDom(page);
           }
           const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS, 'best-practice']).analyze();
-          axeVersion = results.testEngine.version;
           await testInfo.attach(`axe-${locale}-${screen.id}.json`, { body: JSON.stringify(results, null, 2), contentType: 'application/json' });
           const findings = summarise(results);
-          records.push({ screen: screen.id, locale, url: new URL(page.url()).pathname + new URL(page.url()).search, findings, incomplete: results.incomplete.length });
+          const url = new URL(page.url());
+          saveRecord({ screen: screen.id, locale, url: url.pathname + url.search, axe: results.testEngine.version, findings, incomplete: Object.fromEntries(results.incomplete.map((r) => [r.id, r.nodes.length])) }, results);
           const gating = findings.filter((f) => f.gating);
           expect(
             gating,
@@ -411,6 +462,52 @@ test.describe('REQ-ARC-008 keyboard operability', () => {
         await ctx.close();
       }
     });
+
+    test(`[${locale}] scrollable Gantt and evidence pickers work with the keyboard`, async ({ browser, baseURL }) => {
+      const ctx = await openContext(browser, baseURL!, 'pm', locale);
+      try {
+        const page = await ctx.newPage();
+
+        // 1. The overflowing Gantt chart is a named, focusable group that the arrow keys scroll (in reading direction).
+        await page.goto(`/projects/${ids.dc}/plan?tab=timeline`);
+        await settle(page, locale);
+        const scroller = page.getByTestId('gantt-scroll');
+        await expect(scroller).toHaveAttribute('tabindex', '0');
+        await expect(scroller).toHaveAttribute('role', 'group');
+        await expect(scroller).toHaveAttribute('aria-label', /\S/);
+        await scroller.evaluate((el) => el.scrollTo({ left: 0 }));
+        await scroller.focus();
+        expect((await focusIndicator(page)).visible, 'Gantt scroll area shows a focus indicator').toBe(true);
+        for (let i = 0; i < 5; i++) await page.keyboard.press(locale === 'ar' ? 'ArrowLeft' : 'ArrowRight');
+        await expect.poll(() => scroller.evaluate((el) => Math.abs(el.scrollLeft)), { message: 'arrow keys scroll the chart' }).toBeGreaterThan(0);
+
+        // 2. Evidence target picker: toggle buttons (aria-pressed), chosen with Enter.
+        await page.goto(`/projects/${ids.dc}/documents?tab=evidence`);
+        await settle(page, locale);
+        const option = page.getByTestId('evidence-target-option').first();
+        await expect(option).toHaveAttribute('aria-pressed', 'false');
+        await option.focus();
+        expect((await focusIndicator(page)).visible, 'picker option shows a focus indicator').toBe(true);
+        await page.keyboard.press('Enter');
+        await expect(page.getByTestId('evidence-target-label')).toBeVisible();
+
+        // 3. "Link evidence" dialog from the keyboard: document picker chosen with Space; Escape closes and returns focus.
+        const add = page.getByTestId('evidence-add');
+        await add.focus();
+        await page.keyboard.press('Enter');
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeVisible();
+        const doc = dialog.getByTestId('evidence-document-picker').locator('button[aria-pressed]').first();
+        await doc.focus();
+        await page.keyboard.press(' ');
+        await expect(doc).toHaveAttribute('aria-pressed', 'true');
+        await page.keyboard.press('Escape');
+        await expect(dialog).toBeHidden();
+        await expect(add).toBeFocused();
+      } finally {
+        await ctx.close();
+      }
+    });
   }
 });
 
@@ -420,7 +517,8 @@ test.describe('REQ-ARC-008 keyboard operability', () => {
 const START = '<!-- a11y:auto:start -->';
 const END = '<!-- a11y:auto:end -->';
 
-function writeReport() {
+function writeReport(records: ScanRecord[]) {
+  const axeVersion = [...new Set(records.map((r) => r.axe))].join(', ');
   const all = records.flatMap((r) => r.findings.map((f) => ({ ...f, screen: r.screen, locale: r.locale })));
   const byRule = new Map<string, { impact: string; kind: string; nodes: number; scans: Set<string>; example: string; help: string }>();
   for (const f of all) {
@@ -438,7 +536,18 @@ function writeReport() {
   lines.push(`- Scans: **${records.length}** (${SCREENS.length} screen states × ${LOCALES.length} locales: en/LTR, ar/RTL)`);
   lines.push(`- Gating result (serious/critical WCAG violations): **${gating.length === 0 ? 'PASS — 0' : `FAIL — ${gating.length}`}**`);
   lines.push(`- Excluded rules: ${EXCLUDED_RULES.length === 0 ? 'none' : EXCLUDED_RULES.map((r) => `\`${r.id}\` (${r.reason})`).join('; ')}`);
-  lines.push(`- Scans with axe "incomplete" (needs manual review) items: ${records.filter((r) => r.incomplete > 0).length}`);
+  const incomplete = new Map<string, { nodes: number; scans: number }>();
+  for (const r of records) {
+    for (const [rule, n] of Object.entries(r.incomplete)) {
+      const k = incomplete.get(rule) ?? { nodes: 0, scans: 0 };
+      incomplete.set(rule, { nodes: k.nodes + n, scans: k.scans + 1 });
+    }
+  }
+  lines.push(
+    `- axe "incomplete" (could not be decided automatically — manual review): ${
+      incomplete.size === 0 ? 'none' : [...incomplete.entries()].sort().map(([rule, k]) => `\`${rule}\` ${k.nodes} nodes in ${k.scans} scans`).join('; ')
+    }`,
+  );
   lines.push('');
   lines.push('| Rule | Impact | Kind | Nodes | Scans | Example selector (screen) |');
   lines.push('|---|---|---|---|---|---|');

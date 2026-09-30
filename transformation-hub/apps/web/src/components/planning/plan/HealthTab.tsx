@@ -162,7 +162,7 @@ function OverridesSection({ progress }: { progress: Progress }) {
     { key: 'expires', header: t('planning.override.expires'), cell: (o) => <DateText value={o.expiresOn} /> },
     { key: 'by', header: t('planning.override.requestedBy'), cell: (o) => <span dir="auto">{o.requestedByName ?? '—'}</span> },
     { key: 'reviewed', header: t('planning.override.reviewedBy'), cell: (o) => (o.reviewerName ? <span dir="auto">{o.reviewerName} · {formatDateTime(o.reviewedAt)}</span> : '—') },
-    { key: 'demo', header: '', cell: (o) => (o.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (o) => (o.isDemo ? <DemoBadge /> : null) },
     {
       key: 'actions',
       header: t('planning.common.actions'),
