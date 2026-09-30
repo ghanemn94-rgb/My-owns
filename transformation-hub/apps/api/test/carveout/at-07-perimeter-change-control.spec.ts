@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, owner } from '../helpers';
-import { Personas, approveBaseline, approveChangeRequest, auditRows, base, carveoutProject, createItem, item, ok, workstreamId } from './carveout-kit';
+import { Personas, approveBaseline, approveChangeRequest, auditRows, base, carveoutProject, createItem, grantWorkstreamLead, item, ok, workstreamId } from './carveout-kit';
 
 /**
  * AT-07: adding a site / shared asset after baseline approval creates a change request with financial / TSA /
@@ -154,5 +154,33 @@ describe('AT-07 — perimeter change after baseline approval [AT-07, REQ-PER-002
     // Legal (no finance.record.read) sees the budget references withheld, never the codes.
     const legalView = (await p.legal.get(`${base(pid)}/perimeter-items/${baselineItemId}/impact-assessments`).expect(200)).body.items;
     expect(legalView.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('AT-07 — a workstream-only lead raises the change for its own workstream (planning workstream reach)', () => {
+  it('raises, reads and applies a change request about its workstream; other workstreams stay 404/403', async () => {
+    const techLead = await grantWorkstreamLead(pid, 'tech.lead', 'WS06');
+    const ws06 = await workstreamId(p.pm, pid, 'WS06');
+    // The HTTP "current baseline" stays a project-wide view.
+    expect((await techLead.get(`${base(pid)}/baselines/current`)).status).toBe(403);
+    // Post-baseline addition in its own workstream: the change request is raised under its own (workstream) authority.
+    const own = await createItem(techLead, pid, { type: 'data', name: 'WS06 data set found after baseline (synthetic)', disposition: 'included', workstreamId: ws06, justification: 'Data set discovered in the inventory (test)' });
+    expect(own.applied).toBe(false);
+    expect(own.changeRequest).toMatchObject({ status: 'submitted', rebaseline: true });
+    const cr = (await techLead.get(`${base(pid)}/change-requests/${own.changeRequest!.id}`).expect(200)).body;
+    expect(cr).toMatchObject({ subjectType: 'perimeter_item', subjectId: own.id, requestedBy: techLead.userId });
+    // Another workstream: no addition (403) and no view of its change requests (404, existence not revealed).
+    expect((await techLead.post(`${base(pid)}/perimeter-items`, { type: 'data', name: 'WS05 data (test)', workstreamId: ws05, justification: 'x' })).status).toBe(403);
+    const other = (await p.pm.get(`${base(pid)}/change-requests?subjectType=perimeter_item`).expect(200)).body.items.find((c: { subjectId: string }) => c.subjectId !== own.id);
+    expect(other).toBeTruthy();
+    expect((await techLead.get(`${base(pid)}/change-requests/${other.id}`)).status).toBe(404);
+    expect((await techLead.get(`${base(pid)}/change-requests`)).status).toBe(403); // the register itself is project-wide
+    // Approval stays with the project authority (not the workstream lead).
+    const cur = (await techLead.get(`${base(pid)}/change-requests/${own.changeRequest!.id}`).expect(200)).body;
+    expect((await techLead.post(`${base(pid)}/change-requests/${cur.id}/approve`, { expectedVersion: cur.version })).status).toBe(403);
+    await approveChangeRequest(p, pid, own.changeRequest!.id);
+    const it0 = await item(techLead, pid, own.id);
+    const applied = await ok<{ outcome: string; disposition: string }>(techLead.post(`${base(pid)}/perimeter-items/${own.id}/apply-change`, { expectedVersion: it0.version, changeRequestId: own.changeRequest!.id }));
+    expect(applied).toMatchObject({ outcome: 'applied', disposition: 'included' });
   });
 });

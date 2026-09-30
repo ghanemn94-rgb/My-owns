@@ -142,7 +142,18 @@ export default function ChangeRequestPage() {
                 EM_DASH
               )}
             </Fact>
-            <Fact label={t('planning.cr.subject')}>{c.subjectType ? <span dir="ltr">{c.subjectType}</span> : EM_DASH}</Fact>
+            <Fact label={t('planning.cr.subject')}>
+              {c.subjectType === 'perimeter_item' && c.subjectId ? (
+                // Perimeter changes (AT-07): the decided outcome is applied from the item page.
+                <Link className={btn.link} href={`/projects/${projectId}/perimeter/items/${c.subjectId}`} data-testid="cr-subject-link" dir="ltr">
+                  {c.subjectType}
+                </Link>
+              ) : c.subjectType ? (
+                <span dir="ltr">{c.subjectType}</span>
+              ) : (
+                EM_DASH
+              )}
+            </Fact>
             <Fact label={t('planning.cr.linkedBaseline')}>
               {c.linkedBaselineId ? (
                 <Link className={btn.link} href={baselineHref(projectId, c.linkedBaselineId)}>

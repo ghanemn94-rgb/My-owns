@@ -16,6 +16,8 @@ import enGates from './en/gates.json';
 import enDocuments from './en/documents.json';
 import enPlanning from './en/planning.json';
 import enGovernance from './en/governance.json';
+import enCarveout from './en/carveout.json';
+import enNewco from './en/newco.json';
 import enReadiness from './en/readiness.json';
 import arCommon from './ar/common.json';
 import arNav from './ar/nav.json';
@@ -30,6 +32,8 @@ import arGates from './ar/gates.json';
 import arDocuments from './ar/documents.json';
 import arPlanning from './ar/planning.json';
 import arGovernance from './ar/governance.json';
+import arCarveout from './ar/carveout.json';
+import arNewco from './ar/newco.json';
 import arReadiness from './ar/readiness.json';
 
 const en = {
@@ -46,6 +50,8 @@ const en = {
   documents: enDocuments,
   planning: enPlanning,
   governance: enGovernance,
+  carveout: enCarveout,
+  newco: enNewco,
   readiness: enReadiness,
 };
 
@@ -66,6 +72,8 @@ const ar = {
   documents: arDocuments,
   planning: arPlanning,
   governance: arGovernance,
+  carveout: arCarveout,
+  newco: arNewco,
   readiness: arReadiness,
 } satisfies DeepShape<Messages>;
 
