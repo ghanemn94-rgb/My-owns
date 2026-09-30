@@ -1,0 +1,76 @@
+# =====================================================================================================================
+# Secret-scan configuration (gitleaks >= 8.25, MIT licence) for the Transformation Hub — REQ-SEC-012, REQ-ARC-015,
+# REQ-SET-008. Used by scripts/ops/secret-scan.sh and the CI job `secret-scan` over:
+#   (a) the git history of the checked-out revision and its working tree,
+#   (b) the built web client bundle (apps/web/.next/static),
+#   (c) test reports and logs produced in CI (Playwright report, e2e/compose/restore-drill logs, docs/test-evidence).
+#
+# Rules = gitleaks' default rule set + one project rule for passwords embedded in connection URLs (the application's
+# main secret type is a PostgreSQL URL, which the default rules do not detect).
+#
+# ALLOW-LIST POLICY: entries below are ONLY for known synthetic development/test values. Each entry matches the exact
+# value (and, where the value is a one-off, the exact file) and says why it is not a secret. Anything else fails the
+# scan. Inline `gitleaks:allow` comments are NOT honoured (the script passes --ignore-gitleaks-allow), so every
+# exception is reviewed here. Adding an entry needs a security reviewer's approval in the pull request; never add a
+# value that is, or ever was, used outside a local/CI throwaway database or test.
+# This file itself is skipped by gitleaks' default path allow-list (`gitleaks\.toml`).
+# =====================================================================================================================
+title = "transformation-hub secret scan"
+minVersion = "v8.25.0"
+
+[extend]
+useDefault = true
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Project rule: password inside a URL (postgres://user:PASSWORD@host, amqp://, redis://, mongodb://, http(s)://u:p@).
+# Placeholders such as ${VAR}, $VAR, *** (redacted) are excluded by gitleaks' default global allow-list; one-character
+# values (`x`) and `…` are below the 3-character minimum.
+[[rules]]
+id = "hub-url-embedded-password"
+description = "Password embedded in a connection/service URL (e.g. postgres://user:password@host)"
+regex = '''(?i)\b(?:postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|rediss?|amqps?|ldaps?|smtps?|ftps?|https?)://[^\s:/?#@'"`<>\\]{1,64}:([^\s/?#@'"`<>\\]{3,256})@[^\s/?#@'"`<>\\]+'''
+secretGroup = 1
+keywords = ["://"]
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Allow-list: synthetic development / CI values only.
+
+[[allowlists]]
+description = "Local development and CI-only database passwords. `hub_dev_only` is the documented password of the local dev cluster and the CI service containers (scripts/dev/pg-init-roles.sh, scripts/ops/db-init-roles.sh); production configuration refuses it (apps/api/src/platform/config.ts: 'DATABASE_URL uses the development password'; api-entrypoint.cjs refuses it for migrate). `ci_only_postgres` is the superuser password of the throwaway PostgreSQL service container in .github/workflows/transformation-hub-ci.yml. Neither value exists outside local/CI throwaway databases."
+regexes = [
+  '''^hub_dev_only$''',
+  '''^hub%5Fdev%5Fonly$''',
+  '''^ci_only_postgres$''',
+]
+
+[[allowlists]]
+description = "AWS documentation example key pair (public, non-functional values published in the AWS SDK/SigV4 documentation). Used by apps/api/test/documents/storage-contract.spec.ts to check the SigV4 signer against independently generated vectors and to authenticate against the in-process fake S3 server."
+regexes = [
+  '''^AKIAIOSFODNN7EXAMPLE$''',
+  '''^wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY$''',
+]
+
+[[allowlists]]
+description = "Synthetic production-shaped configuration in the config-validation test (apps/api/test/p1/oidc-sso.spec.ts): a made-up HUB_COOKIE_SECRET that passes the strength check and a made-up database password, passed only to loadConfig() in memory. Never used by a running system."
+condition = "AND"
+paths = ['''(?:^|/)apps/api/test/p1/oidc-sso\.spec\.ts$''']
+regexes = [
+  '''^q7Vd2LxP9rTb4NwZ8kHs3JmC6yFa1GeU5oRi0XpQ$''',
+  '''^strong-secret$''',
+]
+
+[[allowlists]]
+description = "Synthetic production-shaped HUB_COOKIE_SECRET in the S3 configuration test (apps/api/test/documents/storage-contract.spec.ts), passed only to loadConfig() in memory. Never used by a running system."
+condition = "AND"
+paths = ['''(?:^|/)apps/api/test/documents/storage-contract\.spec\.ts$''']
+regexes = [
+  '''^Zq8#pL2!vN5@rT9\$wX3%yB6\^cF1&hJ4\*$''',
+]
+
+[[allowlists]]
+description = "Documentation example in a code comment of the container entrypoint (`postgres://user:secret@host/db → postgres://user:***@host/db`, describing the log redaction)."
+condition = "AND"
+paths = ['''(?:^|/)deploy/docker/api-entrypoint\.cjs$''']
+regexes = [
+  '''^secret$''',
+]

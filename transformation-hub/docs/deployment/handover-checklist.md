@@ -33,7 +33,8 @@ map to the threat model's open questions (MQ-xx).
 | API image (api, worker, migrate, bootstrap) | `apps/api/Dockerfile`, `deploy/docker/api-entrypoint.cjs` | Build steps exercised without Docker; the runtime layout booted locally. **Image build NOT EXECUTED** |
 | Web image | `apps/web/Dockerfile` | Build steps exercised without Docker; the standalone server booted. **Image build NOT EXECUTED** |
 | Helm chart + 3 mode overlays | `deploy/helm/transformation-hub` | `helm lint` + `template` + kubeconform + security invariants: **PASS**. **Install NOT EXECUTED** |
-| Compose (dev/eval) | `deploy/compose` | `docker compose config` **PASS**. **`up` NOT EXECUTED** |
+| Compose (dev/eval; not HA) | `deploy/compose`, `scripts/ops/compose-env-init.sh`, `scripts/ops/compose-smoke.sh` | `docker compose config` **PASS**. The documented `up --build --wait` → Demo seed → smoke → `down -v` sequence runs in the CI job `compose`. **Not executed in the build environment** (no Docker daemon) |
+| Secret scan | `scripts/ops/secret-scan.sh`, `scripts/ops/gitleaks.toml` | **Executed** locally (history, tree, web bundle, Playwright report/traces/logs: 0 findings; planted values detected). CI job `secret-scan` |
 | Backup/restore + drill | `scripts/ops/backup.sh`, `restore.sh`, `restore-drill.sh` | **Executed**, PASS ([results](restore-drill-results.md)) |
 | Egress check | `scripts/ops/egress-check.sh` | **Executed** (API dist: 0 findings; web build: 0 FAIL / 26 WARN; positive control: 4 FAIL detected) |
 | Licence check, SBOM | `scripts/ops/licence-check.mjs`; syft in CI | **Executed** locally (0 FAIL / 2 WARN; CycloneDX SBOM with 539 components) |

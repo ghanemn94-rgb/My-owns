@@ -1,19 +1,25 @@
 # =====================================================================================================================
 # Transformation Hub — Docker Compose for DEVELOPMENT / EVALUATION ONLY.
 #
-#   NOT FOR PRODUCTION. Single host, no high availability, no backups, local passwords in deploy/compose/.env,
-#   local-filesystem object storage. Production uses the Helm chart (deploy/helm/transformation-hub) with secret
-#   references, S3-compatible storage, OIDC and Mobily-managed PostgreSQL (docs/deployment/installation.md).
+#   NOT FOR PRODUCTION. Single host, NO HIGH AVAILABILITY (one container per service, no failover, no replicas), no
+#   backups, local passwords in deploy/compose/.env, local-filesystem object storage. Production uses the Helm chart
+#   (deploy/helm/transformation-hub) with S3-compatible storage, OIDC, Mobily-managed PostgreSQL and credentials held in
+#   Kubernetes Secrets (docs/deployment/installation.md).
 #
-#   cp deploy/compose/.env.example deploy/compose/.env        # then replace every CHANGE_ME value
-#   docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env up -d --build
+# Documented commands (run from transformation-hub/; docs/deployment/installation.md §7 — CI job `compose` runs them):
+#   bash scripts/ops/compose-env-init.sh    # = cp deploy/compose/.env.example deploy/compose/.env + replace every CHANGE_ME
+#   docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env up --build --wait --wait-timeout 300
 #   docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env --profile demo run --rm seed-demo
-#   open http://127.0.0.1:3000                                   # Demo sandbox (HUB_MODE=demo)
+#   open http://127.0.0.1:3000/login                          # Demo sandbox (HUB_MODE=demo): pick a Demo persona
+#   bash scripts/ops/compose-smoke.sh                         # optional: the smoke checks CI runs
+#   docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env down -v   # stop; DELETES all data
 #   Optional MinIO (S3-compatible) for evaluating the S3 adapter/backup tooling:  --profile s3
 #
+# `up --wait` returns when db, api, worker and web report healthy and migrate has exited 0 (health checks below).
 # Networks: `backend` is internal (no route outside the host bridge): db, migrations, worker and MinIO have NO
 # outbound internet access. `edge` carries the published ports (web, api) bound to 127.0.0.1 only.
-# NOT EXECUTED in the build environment (no Docker daemon); validated with `docker compose config`.
+# Only the base images (node, postgres) and npm packages (image build) are pulled; the running stack calls no
+# external service.
 # =====================================================================================================================
 name: transformation-hub-dev
 
@@ -63,16 +69,19 @@ services:
       - ./initdb/10-hub-roles.sh:/docker-entrypoint-initdb.d/10-hub-roles.sh:ro
       - ../../scripts/ops/db-init-roles.sh:/hub-ops/db-init-roles.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ${HUB_DB_NAME:-hub}"]
+      # TCP, not the socket: during first-time init the image runs a socket-only temporary server (and the role script),
+      # so a socket probe would report ready before PostgreSQL accepts the network connections the other services use.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U postgres -d ${HUB_DB_NAME:-hub}"]
       interval: 5s
       timeout: 5s
       retries: 30
+      start_period: 60s
+      start_interval: 2s
     networks: [backend]
     restart: unless-stopped
 
   migrate:
-    image: ${HUB_API_IMAGE:-transformation-hub/api:dev}
-    build: *api-build
+    image: ${HUB_API_IMAGE:-transformation-hub/api:dev}   # built once by the api service; migrate/worker/seed-demo reuse it
     command: ["migrate"]
     environment:
       DATABASE_MIGRATION_URL: postgres://hub_owner:${HUB_OWNER_DB_PASSWORD:?set HUB_OWNER_DB_PASSWORD in .env}@db:5432/${HUB_DB_NAME:-hub}
@@ -106,6 +115,14 @@ services:
     environment: *app-env
     volumes: ["objects:/data/objects"]
     ports: ["127.0.0.1:${HUB_API_PORT:-4000}:4000"]
+    healthcheck:
+      # Readiness: /readyz answers 200 only when the API can query PostgreSQL.
+      test: ["CMD", "node", "-e", "require('node:http').get({host:'127.0.0.1',port:4000,path:'/readyz',agent:false,timeout:4000},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+      start_interval: 2s
     depends_on:
       migrate: { condition: service_completed_successfully }
     networks: [backend, edge]
@@ -115,13 +132,18 @@ services:
   worker:
     image: ${HUB_API_IMAGE:-transformation-hub/api:dev}
     command: ["worker"]
-    environment: *app-env
+    environment:
+      <<: *app-env
+      # Written after every successful loop iteration; `healthcheck worker` fails when it is older than 2 minutes.
+      HUB_WORKER_HEARTBEAT_FILE: /tmp/hub-worker.heartbeat
     volumes: ["objects:/data/objects"]
     healthcheck:
       test: ["CMD", "node", "/app/hub-entrypoint.cjs", "healthcheck", "worker"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 60s
+      start_interval: 2s
     depends_on:
       migrate: { condition: service_completed_successfully }
     networks: [backend]
@@ -142,6 +164,13 @@ services:
       HOSTNAME: 0.0.0.0
       PORT: "3000"
     ports: ["127.0.0.1:${HUB_WEB_PORT:-3000}:3000"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('node:http').get({host:'127.0.0.1',port:3000,path:'/login',agent:false,timeout:4000},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+      start_interval: 2s
     depends_on:
       api: { condition: service_healthy }
     networks: [edge]
