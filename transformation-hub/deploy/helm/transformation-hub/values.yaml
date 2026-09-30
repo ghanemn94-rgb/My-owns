@@ -73,12 +73,12 @@ database:
 
 # --- Object storage ---------------------------------------------------------------------------------------------------
 storage:
-  driver: s3                                    # production: s3 (the S3 adapter is "Not configured" at this commit)
-  s3:                                           # PROPOSED variable names (HUB_S3_*) for the S3-compatible adapter
+  driver: s3                                    # production: s3 (S3 REST + SigV4, path-style; contract-tested, not yet connected to Mobily storage)
+  s3:                                           # HUB_S3_* (apps/api/src/platform/config.ts); the endpoint host must be on egress.allowlist
     endpoint: https://s3.example.internal       # REPLACE
     bucket: hub-objects                         # REPLACE
     region: us-east-1                           # placeholder required by most S3 SDKs; set per provider
-    forcePathStyle: true
+    forcePathStyle: true                        # the adapter always uses path-style URLs (MinIO / Ceph RGW / on-prem S3)
     credentialsSecret:
       name: hub-object-storage
       accessKeyIdKey: HUB_S3_ACCESS_KEY_ID
