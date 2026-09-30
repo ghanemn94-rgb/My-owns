@@ -526,7 +526,13 @@ BEGIN
       ('import_row', 'target_type', 'target_id', 'target'),
       ('ai_proposal', 'target_type', 'target_id', 'target'),
       ('dependency', 'predecessor_type', 'predecessor_id', 'predecessor'),
-      ('dependency', 'successor_type', 'successor_id', 'successor')
+      ('dependency', 'successor_type', 'successor_id', 'successor'),
+      -- DOM-P2-18: the successor task / milestone of a non-schedule prerequisite (the predecessor is validated by the
+      -- service, its types are not all in hub_target_table).
+      ('record_dependency', 'successor_type', 'successor_id', 'successor'),
+      -- DOM-P2-17: the dependent item of a cross-project dependency is a record of the OWNING project; the other end
+      -- is in another project by design (other_project_id, bound to the organization below).
+      ('cross_project_dependency', 'local_item_type', 'local_item_id', 'local_item')
     ) AS v(tbl, type_col, id_col, suffix)
   LOOP
     IF to_regclass(r.tbl) IS NULL THEN CONTINUE; END IF;
@@ -719,6 +725,19 @@ BEGIN
   END LOOP;
 END
 $hierfk$;
+
+-- Cross-project dependencies (DOM-P2-17): the other end must be a project of the SAME organization. A plain FK to
+-- project(id) does not bind the organization (and FK checks bypass RLS).
+DO $xpfk$
+BEGIN
+  IF to_regclass('public.cross_project_dependency') IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'hub_xpfk_cross_project_dependency_other'
+                     AND conrelid = 'public.cross_project_dependency'::regclass) THEN
+    ALTER TABLE cross_project_dependency ADD CONSTRAINT hub_xpfk_cross_project_dependency_other
+      FOREIGN KEY (org_id, other_project_id) REFERENCES project (org_id, id);
+  END IF;
+END
+$xpfk$;
 
 -- 15. document.current_version_id must be a version of THIS document (ARCH-21) ------------------------------------
 -- Deferred constraint trigger: checked at COMMIT for INSERT and UPDATE, so a document and its first version can be

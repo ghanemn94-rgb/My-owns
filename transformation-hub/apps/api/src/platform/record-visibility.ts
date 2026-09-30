@@ -135,6 +135,16 @@ const RULES: Record<string, Rule> = {
       where ${raw(x)}.id = ${id} and ${e.vis({ room: `${x}.room_id` })}
         and (${raw(x)}.document_id is null or ${e.vis({ classification: `${x}d.classification`, room: `${x}d.room_id` })})
         and ${e.target(`${x}.target_type`, `${x}.target_id`, depth + 1)})`,
+  // a non-schedule prerequisite (DOM-P2-18): visible when its successor task / milestone (workstream reach) AND its
+  // predecessor are — a decision / agreement by classification, an approval request / evidence link by their own rules
+  // (both polymorphic, so they are resolved directly rather than through `target`); a gate definition has no record rule
+  record_dependency: (x, id, e, depth) => {
+    const pred = (t: string) => RULES[t]!(`${x}q`, raw(`${x}.predecessor_id`), e, depth + 1);
+    return sql`exists (select 1 from record_dependency ${raw(x)} where ${raw(x)}.id = ${id}
+      and ${e.target(`${x}.successor_type::text`, `${x}.successor_id`, depth + 1)}
+      and (case ${raw(x)}.predecessor_type when 'decision' then ${pred('decision')} when 'agreement' then ${pred('agreement')}
+        when 'approval_request' then ${pred('approval_request')} when 'evidence_link' then ${pred('evidence_link')} else true end))`;
+  },
   // polymorphic records: visible when their target is
   ai_proposal: viaTarget('ai_proposal', 'target_type', 'target_id'),
   approval_request: viaTarget('approval_request', 'subject_type', 'subject_id'),

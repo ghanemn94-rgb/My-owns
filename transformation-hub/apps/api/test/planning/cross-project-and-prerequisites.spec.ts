@@ -132,3 +132,60 @@ describe('DOM-P2-18 — tasks wait for decisions, gates, agreements, approvals a
     expect(audit.rows[0].n).toBeGreaterThanOrEqual(4);
   });
 });
+
+describe('DOM-P2-17/18 — database guards and history [REQ-ENT-010, REQ-PLN-006]', () => {
+  it('DB: a prerequisite successor and a local item are records of the owning project; the other project is of the same organization', async () => {
+    const c = await owner().connect();
+    try {
+      await c.query('begin');
+      const orgId = (await c.query<{ org_id: string }>('select org_id from project where id = $1', [A])).rows[0]!.org_id;
+      const tv = (await c.query<{ template_version_id: string }>('select template_version_id from project where id = $1', [A])).rows[0]!.template_version_id;
+      const refused = async (q: string, params: unknown[], match: RegExp | { code: string }) => {
+        await c.query('savepoint probe');
+        const r = c.query(q, params);
+        if (match instanceof RegExp) await expect(r).rejects.toThrow(match);
+        else await expect(r).rejects.toMatchObject(match);
+        await c.query('rollback to savepoint probe');
+      };
+      // record_dependency: the successor milestone belongs to B, the row to A → same-project trigger.
+      await refused(
+        `insert into record_dependency (id, org_id, project_id, successor_type, successor_id, predecessor_type, predecessor_id) values (gen_random_uuid(), $1, $2, 'milestone', $3, 'decision', gen_random_uuid())`,
+        [orgId, A, msB],
+        /cross_project_reference/,
+      );
+      // cross_project_dependency: the LOCAL item must be of the owning project.
+      await refused(
+        `insert into cross_project_dependency (id, org_id, project_id, other_project_id, local_item_type, local_item_id, other_item_type, other_item_id, description) values (gen_random_uuid(), $1, $2, $3, 'milestone', $4, 'milestone', $4, 'probe (test)')`,
+        [orgId, A, B, msB],
+        /cross_project_reference/,
+      );
+      // The other project must be of the same organization (composite FK) — a project of another organization is refused.
+      const org2 = (await c.query<{ id: string }>(`insert into organization (id, name, slug) values (gen_random_uuid(), 'XP foreign org (test)', 'xp-foreign-' || substr(md5(random()::text), 1, 8)) returning id`)).rows[0]!.id;
+      const pf2 = (await c.query<{ id: string }>(`insert into portfolio (org_id, name) values ($1, 'XP foreign portfolio (test)') returning id`, [org2])).rows[0]!.id;
+      const pg2 = (await c.query<{ id: string }>(`insert into program (org_id, portfolio_id, code, name) values ($1, $2, 'XP-FOREIGN', 'XP foreign program (test)') returning id`, [org2, pf2])).rows[0]!.id;
+      const p2 = (await c.query<{ id: string }>(`insert into project (id, org_id, program_id, template_version_id, code, name) values (gen_random_uuid(), $1, $2, $3, 'XP-FOREIGN', 'XP foreign project (test)') returning id`, [org2, pg2, tv])).rows[0]!.id;
+      await refused(
+        `insert into cross_project_dependency (id, org_id, project_id, other_project_id, other_item_type, other_item_id, description) values (gen_random_uuid(), $1, $2, $3, 'milestone', gen_random_uuid(), 'probe (test)')`,
+        [orgId, A, p2],
+        { code: '23503' },
+      );
+      // Positive control: the same row pointing at B (same organization) is accepted.
+      await c.query(
+        `insert into cross_project_dependency (id, org_id, project_id, other_project_id, other_item_type, other_item_id, description) values (gen_random_uuid(), $1, $2, $3, 'milestone', $4, 'control (test)')`,
+        [orgId, A, B, msB],
+      );
+    } finally {
+      await c.query('rollback');
+      c.release();
+    }
+  });
+
+  it('history: prerequisites appear in the activity feed of plan readers; cross-project dependencies only to audit readers', async () => {
+    const feed = (await pm.get(`/api/v1/projects/${A}/activity?entityType=record_dependency&pageSize=100`).expect(200)).body;
+    expect(feed.items.some((i: { action: string }) => i.action.startsWith('planning.prerequisite.'))).toBe(true);
+    // Minimum disclosure: the single-project feed cannot check the other end, so it never lists these (404 for the type).
+    expect((await pm.get(`/api/v1/projects/${A}/activity?entityType=cross_project_dependency`)).status).toBe(404);
+    const all = (await pm.get(`/api/v1/projects/${A}/activity?pageSize=100`).expect(200)).body.items as { entityType: string }[];
+    expect(all.some((i) => i.entityType === 'cross_project_dependency')).toBe(false);
+  });
+});

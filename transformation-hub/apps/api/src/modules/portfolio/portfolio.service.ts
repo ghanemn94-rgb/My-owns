@@ -42,6 +42,9 @@ const ACTIVITY_ENTITY_PERMISSION: Record<string, string> = {
   milestone: 'planning.plan.read',
   deliverable: 'planning.plan.read',
   dependency: 'planning.plan.read',
+  record_dependency: 'planning.plan.read',
+  // cross_project_dependency is deliberately NOT listed: it is visible only to users who can read both projects
+  // (DOM-P2-17, minimum disclosure), which the single-project feed cannot express; its history is audit.event.read only.
   baseline_version: 'planning.plan.read',
   change_request: 'planning.plan.read',
   risk: 'planning.plan.read',

@@ -19,7 +19,6 @@ import {
   decidedCriterionReassessment,
   evidenceRejectedSinceAcceptance,
   gateApprovalDecisionIssue,
-  gateAuthorityOf,
   gateDecisionTypeIssue,
   gateRag,
   forbidden,
@@ -56,6 +55,7 @@ import {
   WaiverRow,
 } from './gates.evaluation';
 import { WaiverService, WaiverRecord, assertHumanActor } from './waiver.service';
+import { gateDecisionAuthorities } from './gate-authority';
 
 type DecisionRow = typeof schema.decision.$inferSelect;
 
@@ -1043,35 +1043,9 @@ export class GatesService implements OnModuleInit {
     return { id: d.id, status: d.status, authorityOutcome: d.authorityOutcome, externalAuthorityReference: d.externalAuthorityReference, gateKey: d.gateKey, decisionTypeKey: d.decisionTypeKey };
   }
 
-  /**
-   * DOM-P2-01: the approved authority matrix of each decision's DECIDING committee — the version recorded with the committee
-   * outcome (tally snapshot), or, before an outcome, the committee's latest approved version — and the decision's type in
-   * it. A committee without an approved matrix yields `matrixVersionId: null` (the decision cannot back a gate).
-   */
-  private async authoritiesFor(projectId: string, decisions: DecisionRow[]): Promise<Map<string, GateDecisionAuthority>> {
-    const out = new Map<string, GateDecisionAuthority>();
-    if (!decisions.length) return out;
-    const recorded = (d: DecisionRow) => {
-      const id = (d.tallySnapshot as { matrixVersionId?: unknown } | null)?.matrixVersionId;
-      return typeof id === 'string' ? id : null;
-    };
-    const ids = [...new Set(decisions.map(recorded).filter((x): x is string => !!x))];
-    const committees = [...new Set(decisions.map((d) => d.committeeId))];
-    const M = schema.authorityMatrixVersion;
-    const rows = await this.db
-      .tx()
-      .select({ id: M.id, committeeId: M.committeeId, status: M.status, versionNo: M.versionNo, policy: M.policy })
-      .from(M)
-      .where(and(eq(M.projectId, projectId), or(...(ids.length ? [inArray(M.id, ids)] : []), and(inArray(M.committeeId, committees), eq(M.status, 'approved')))));
-    for (const d of decisions) {
-      const rid = recorded(d);
-      // The outcome's matrix (approved at the time; possibly superseded since) — never a draft, never another committee's.
-      const m = rid
-        ? rows.find((r) => r.id === rid && r.committeeId === d.committeeId && r.status !== 'draft')
-        : rows.filter((r) => r.committeeId === d.committeeId && r.status === 'approved').sort((a, b) => b.versionNo - a.versionNo)[0];
-      out.set(d.id, gateAuthorityOf(m ? { id: m.id, policy: m.policy as { decisionTypes?: { key: string; gateKeys?: string[]; withinCommitteeAuthority: boolean }[] } } : null, d.decisionTypeKey));
-    }
-    return out;
+  /** DOM-P2-01: the deciding committee's approved matrix and the decision's type in it (see gate-authority.ts). */
+  private authoritiesFor(projectId: string, decisions: DecisionRow[]): Promise<Map<string, GateDecisionAuthority>> {
+    return gateDecisionAuthorities(this.db, projectId, decisions);
   }
 
   /** Decisions linked to cycles or raised for the given gates (all rows; visibility is applied when rendering). */

@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools } from '../helpers';
-import { gateDecision, setupGovernance } from '../gates/gate-test-kit';
+import { gateDecision, insertDecisionRow, setupGovernance } from '../gates/gate-test-kit';
 import { Personas, approveChangeRequest, base, carveoutProject, createItem, item, newcoId, ok, workstreamId } from './carveout-kit';
 
 /**
@@ -17,11 +17,12 @@ afterAll(async () => {
 
 describe('Perimeter version — setup wizard step 4 [REQ-SET-012]', () => {
   let pv: string;
+  let orgId: string;
   let q: Personas;
   let gov: Awaited<ReturnType<typeof setupGovernance>>;
   let excludedId: string;
   it('pending dispositions or in-scope items without workstream/owner block the proposal', async () => {
-    ({ projectId: pv, p: q } = await carveoutProject('CO-SETUP'));
+    ({ projectId: pv, orgId, p: q } = await carveoutProject('CO-SETUP'));
     pvRef.id = pv;
     pvRef.p = q;
     const ws = await workstreamId(q.pm, pv, 'WS05');
@@ -45,6 +46,10 @@ describe('Perimeter version — setup wizard step 4 [REQ-SET-012]', () => {
     const notFinal = await gateDecision(pv, q, gov, 'G1', { vote: false });
     expect((await q.pm.post(`${base(pv)}/perimeter/versions/${v.id}/approve`, { expectedVersion: 1, decisionId: notFinal.id })).status).toBe(403);
     expect((await q.sponsor.post(`${base(pv)}/perimeter/versions/${v.id}/approve`, { expectedVersion: 1, decisionId: notFinal.id })).status).toBe(403); // outside authority until final
+    // DOM-P2-01: the perimeter approval follows the G1 gate-approval rule — a final decision raised for no gate (or of a
+    // type the committee's matrix does not assign to G1) backs nothing.
+    const noGate = await insertDecisionRow(orgId, pv, { code: 'DEC-PV-NOGATE', status: 'approved', authorityOutcome: 'within_mandate' });
+    expect((await q.sponsor.post(`${base(pv)}/perimeter/versions/${v.id}/approve`, { expectedVersion: 1, decisionId: noGate })).status).toBe(403);
     const d = await gateDecision(pv, q, gov, 'G1');
     expect(d.status).toBe('approved');
     const a = await ok<{ status: string }>(q.sponsor.post(`${base(pv)}/perimeter/versions/${v.id}/approve`, { expectedVersion: 1, decisionId: d.id, note: 'Approved (test)' }));

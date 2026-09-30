@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { Classification, DecisionAuthorityOutcome, DecisionStatus, PerimeterDisposition, PerimeterItemType, conflict, gateDecisionIssue, notFound, perimeterVersionFindings, reconcilePerimeterRegister, ruleViolation } from '@hub/domain';
+import { Classification, DecisionAuthorityOutcome, DecisionStatus, PerimeterDisposition, PerimeterItemType, conflict, gateApprovalDecisionIssue, notFound, perimeterVersionFindings, reconcilePerimeterRegister, ruleViolation } from '@hub/domain';
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { RecordVersionService, assertVersion, loadInProject, updateVersioned } from '../../platform/helpers';
 import type { RequestContext } from '../../platform/context';
 import { newId, payloadHash } from '../../platform/ids';
 import { CarveoutProject, CarveoutSupport, iso } from './carveout.support';
+import { gateDecisionAuthorities } from '../gates/gate-authority';
 
 const V = schema.perimeterVersion;
 type VersionRow = typeof schema.perimeterVersion.$inferSelect;
@@ -165,7 +166,14 @@ export class PerimeterVersionsService {
     const v = await this.lockVersion(p, versionId);
     const d = await loadInProject(this.s.db, schema.decision, projectId, body.decisionId);
     if (!this.s.policy.canSee(ctx, { projectId, classification: d.classification as Classification })) throw notFound();
-    const issue = gateDecisionIssue({ id: d.id, status: d.status as DecisionStatus, authorityOutcome: d.authorityOutcome as DecisionAuthorityOutcome, externalAuthorityReference: d.externalAuthorityReference, gateKey: d.gateKey }, PERIMETER_GATE);
+    // DOM-P2-01: the same rule as a G1 gate approval — raised for G1, final, of a type the deciding committee's approved
+    // matrix assigns to G1, decided by the body holding that authority (a decision raised for no gate backs nothing).
+    const authority = (await gateDecisionAuthorities(this.s.db, projectId, [d])).get(d.id) ?? null;
+    const issue = gateApprovalDecisionIssue(
+      { id: d.id, status: d.status as DecisionStatus, authorityOutcome: d.authorityOutcome as DecisionAuthorityOutcome, externalAuthorityReference: d.externalAuthorityReference, gateKey: d.gateKey, decisionTypeKey: d.decisionTypeKey },
+      PERIMETER_GATE,
+      authority,
+    );
     // `authority`: the approver acts within delegated authority only with a FINAL decision of the authorized body.
     this.s.policy.assert(ctx, 'carveout.perimeter.approve', { projectId, classification: p.classification, requesterUserId: v.proposedBy, withinAuthority: issue === null });
     assertVersion(v, body.expectedVersion, 'perimeter version');
