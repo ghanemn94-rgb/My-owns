@@ -603,8 +603,8 @@
   security_rule: "Creating committees requires Portfolio Admin or Secretary/CPMO"
   acceptance_tests: ["UT: two committees with distinct authority levels"]
   phase: P2
-  status: Implemented
-  evidence: ['several committees per project with their own authority-matrix versions (committee kinds program_steering, newco_board, jv_board): governance governance-integrity.spec.ts "committee kinds are distinct (program committee ≠ NewCo/JV boards) and filterable; kind cannot be changed"', 'reserved matters escalate to the body named in the matrix: governance at-04-decision-outside-delegation.spec.ts "a passing vote on a reserved decision type is recorded as Recommended — pending external authority, with an escalation (never Approved)"', 'gap: no test of the AT (two committees with distinct approved authority levels)']
+  status: Tested
+  evidence: ['governance p2r-residuals-governance.spec.ts "both committees have their own APPROVED matrix version, with different limits for change_request_budget"; "the same decision type and amount (500,000 DEMO-SAR) is Approved within the mandate of one committee and only Recommended (escalated) by the other" (two committees of one project, each outcome computed under its own approved matrix version — tally snapshot)', D governance.p2r.test.ts "the same decision type and amount is within the mandate of one committee and escalated by the other", 'several committees per project (committee kinds program_steering, newco_board, jv_board): governance governance-integrity.spec.ts "committee kinds are distinct (program committee ≠ NewCo/JV boards) and filterable; kind cannot be changed"']
 - id: REQ-GOV-003
   section: "4"
   title: "Program committee distinct from NewCo and JV boards"
@@ -700,7 +700,7 @@
   acceptance_tests: ["UT: minutes inherit charter classification and retention"]
   phase: P2
   status: Implemented
-  evidence: ['charter fields classification, minutesRetention and escalation (committees.service.ts); meetings, minutes and packs inherit the committee classification in SQL visibility; approved minutes change only through a new version', 'gap: minutes retention is a charter text field and is not enforced on committee records; no test of the AT (minutes inherit charter classification and retention)']
+  evidence: ['governance p2r-residuals-governance.spec.ts "a reader without that clearance (PM: confidential) gets 404 for the meeting, its minutes and its packs"; "lists and counts exclude them for that reader: meetings, agenda requests and the activity of the minutes"; "a cleared reader sees the meeting, its approved minutes (labelled) and its pack, classified like the committee" (minutes and packs inherit the committee / charter classification)', 'charter fields classification, minutesRetention and escalation (committees.service.ts); approved minutes change only through a new version', 'gap: minutes retention is a charter text field and is not enforced on committee records — re-phased to P7 with REQ-DAT-011 (records retention)']
 - id: REQ-GOV-009
   section: "4.1"
   title: "Configurable proposed meeting cadence"
@@ -715,8 +715,8 @@
   security_rule: "Only Secretary/CPMO may change cadence"
   acceptance_tests: ["UT: generated meeting series labelled Proposed"]
   phase: P2
-  status: Implemented
-  evidence: ['the cadence is a charter field flagged as a proposal (cadenceIsProposal defaults to true; only the secretariat edits the charter): governance governance-integrity.spec.ts "charter versions: amendments after approval need re-approval by someone other than the drafter"', 'gap: no meeting series is generated from the cadence, so the AT (generated meeting series labelled Proposed) is not exercised']
+  status: Tested
+  evidence: ['governance p2r-residuals-governance.spec.ts "creates Proposed meetings on the dates the cadence determines from the first meeting (nothing else invented)"; "is idempotent: the same request creates nothing new; a longer series only adds the missing dates"; "a proposed meeting is never published or opened, and takes no agenda item until the secretariat confirms it"; "a declined (cancelled) proposal is not re-created by a later run"; "only the secretariat generates; a charter without a cadence rule cannot be used"', 'D governance.p2r.test.ts "weekly and every-two-weeks keep the first meeting local time; dates only from the cadence"; "monthly keeps the day of the month across the year end; a start after the 28th is refused"; "a proposed meeting is never published or opened: only confirm_schedule (→ planned) or cancel apply"', e2e p2r-governance-my-work.spec.ts "the secretariat proposes a meeting series from the charter cadence in the Committee Hub; the meetings are Proposed", 'the charter cadence stays a proposal (cadenceIsProposal); its rule (cadenceRule) is part of the charter, so a change needs re-approval: governance governance-integrity.spec.ts "charter versions: amendments after approval need re-approval by someone other than the drafter"']
 - id: REQ-GOV-010
   section: "4.1"
   title: "No production approval authority before delegation approved"
@@ -764,7 +764,7 @@
   acceptance_tests: ["UT: screened-out request records reason and requester notified"]
   phase: P2
   status: Implemented
-  evidence: [governance decision-lifecycle.spec.ts "1. agenda request for a draft decision paper → secretariat screening onto a numbered agenda" (only the secretariat screens; return needs a reason), 'D governance.p2.test.ts "accepts, returns or defers requested items; a returned item stays returned"', 'gap: screening outcomes are accept / return / defer only (no merge, no reject); the requester is not notified (no outbox event on screening; notifications re-phased to P6 with REQ-PLT-008)']
+  evidence: ['governance p2r-residuals-governance.spec.ts "reject: a reason is required (400); with it the request is screened out, the reason recorded, the requester event emitted"; "merge: into another live request of the same meeting only, with a reason; the merged request gets no agenda number"; "a request for a decision paper merges only into a request for the same paper; the requester cannot screen (403)"', 'D governance.p2r.test.ts "every (screening status, outcome) pair: legal ones apply, the others are refused (agenda_request.invalid_transition)"; "refuses itself, another committee, no / another meeting, a closed target and a different decision paper"', governance decision-lifecycle.spec.ts "1. agenda request for a draft decision paper → secretariat screening onto a numbered agenda" (only the secretariat screens; return needs a reason), 'e2e p2r-governance-my-work.spec.ts "an agenda request is offered in the secretariat My Work (en + ar), not to the requester; screened out with a reason from its link"', 'gap: the requester is not yet NOTIFIED — every screening emits the outbox event agenda_request.screened (ids and outcome, tested above); its delivery as a notification is P6 with REQ-PLT-008']
 - id: REQ-GOV-013
   section: "4.2"
   title: "Numbered agendas linked to issues and decisions"
@@ -875,8 +875,8 @@
   security_rule: "No generic PATCH may change decision status; invalid transitions return 409"
   acceptance_tests: ["UT: decision state machine rejects every illegal transition"]
   phase: P2
-  status: Implemented
-  evidence: ['DECISION_MACHINE (packages/domain/src/workflows.ts); status changes only through commands: governance decision-lifecycle.spec.ts "2. an incomplete paper cannot be submitted (422 lists missing fields); stale edits are rejected (AT-16 → 409)" (a PATCH with status leaves the status unchanged)', D governance.test.ts "the state machine only allows record_approval from under_review / recommended (guards are separate)"; "approved decisions do not become implemented automatically", governance governance-integrity.spec.ts "votes from a previous round do not count after resume; supersede requires an approved successor", 'gap: no test walks every illegal transition of the machine (AT); illegal transitions return 422 decision.invalid_transition, the register says 409']
+  status: Tested
+  evidence: ['D governance.p2r.test.ts "allows exactly the legal transitions and refuses every illegal one with 422 decision.invalid_transition" (every (state, command) pair of DECISION_MACHINE against an independently written table: 20 legal, 90 refused); "the table covers every decision state and every command of the machine (a new state or command must be added here)"; "allowedCommands lists exactly the legal commands per state; superseded and implemented-verified are terminal"', 'governance p2r-residuals-governance.spec.ts "defer / resume / start-review of a draft paper: 422 with the machine code; the paper is unchanged" (a stale version is 409)', 'status changes only through commands: governance dat-013-no-status-patch.spec.ts "a real draft decision paper: a PATCH with a status is refused as a whole (400) — neither the status nor the other fields change"', 'AT variance (recorded for the P2 gate report): the register says an invalid transition returns 409; the platform answers 422 decision.invalid_transition for every illegal state transition and 409 only for a version conflict (optimistic concurrency)']
 - id: REQ-GOV-020
   section: "4.2"
   title: "Approval separate from execution"
@@ -1003,8 +1003,8 @@
   security_rule: "n/a (labelling); approval records carry method=internal"
   acceptance_tests: ["UT: approval record and exports labelled 'Internal electronic approval'"]
   phase: P2
-  status: Implemented
-  evidence: [meeting packs carry the label Internal electronic approvals — not legally certified signatures (meetings.service.ts); charter approval contract summary and the web text governance.internalApprovals say the same, 'gap: no test asserts the label on approval records; exports are P6']
+  status: Tested
+  evidence: ['governance p2r-residuals-governance.spec.ts "decision approval: the decision detail carries the label once an outcome is recorded (never on a draft paper)"; "external authority decision: the recording response and the decision carry the label"; "authority-matrix approval: the approve response and the approved version carry the label; a draft version does not"; "charter approval: the approve response and the committee carry the label; an unapproved charter does not"; "a cleared reader sees the meeting, its approved minutes (labelled) and its pack, classified like the committee" (minutes approval and frozen meeting pack)', D governance.p2r.test.ts "the label says internal electronic approval and not a legally certified signature", 'approval_record.method (default internal_electronic, check constraint approval_record_method_ck refuses any other method) — packages/db/src/schema/governance.ts', 'AT scope: exports do not exist before P6 (reporting); the export label is covered with the P6 exports']
 
 # ---------------------------------------------------------------- ENT
 
@@ -1265,8 +1265,8 @@
   security_rule: "Workstream Lead edits own workstream only"
   acceptance_tests: ["UT: workstream without accountable owner flagged in data quality"]
   phase: P2
-  status: Implemented
-  evidence: ['workstream health lists data-quality issues (no accountable workstream lead, stale / not-updated reporting) in apps/api/src/modules/planning/health.service.ts; project setup gaps list owners: planning measurement.spec.ts "an open blocker makes the workstream red and the project red despite a green workstream" (dataQualityIssues)', 'gap: no test asserts the no-accountable-lead flag (AT); the other required elements (objective, RACI, deliverables, milestones, budget, risks, dependencies, acceptance evidence, linked gates) are not checked per workstream; per-element minimum-scope coverage (REQ-WS-002, QA-P1-10) is still open']
+  status: Tested
+  evidence: [planning p2r-residuals-planning.spec.ts "every workstream created without a lead carries the no-accountable-lead flag (plan.dq.no_lead) in its data-quality list"; "assigning the accountable lead clears the flag for that workstream only", workstream health (apps/api/src/modules/planning/health.service.ts) lists the data-quality issues; shown in the Health tab and the workstream workspace, 'scope note: the statement''s other required elements (objective, RACI, deliverables, milestones, budget, risks, dependencies, acceptance evidence, linked gates) are per-element checks with REQ-WS-002 (P6, configuration)']
 - id: REQ-WS-004
   section: "6"
   title: "Proposed WBS of at least 80 useful activities"
@@ -2921,8 +2921,8 @@
   security_rule: "Items across projects filtered by membership"
   acceptance_tests: ["AT-30", "E2E: assigned approval appears in inbox"]
   phase: P2
-  status: Implemented
-  evidence: ['My Work / Inbox (apps/web/src/app/(app)/inbox): an assigned approval appears in the approver inbox: e2e p2-planning.spec.ts "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'API item types with the command checks: planning approver-role-and-my-work.spec.ts "unverified evidence is offered to a verifier, never to the person who linked it; it leaves My Work once verified"; gates p2-gate-authority-reassessment.spec.ts "a gate ready for decision is offered to its approver role, not to the submitter or another approver role" (DOM-P2-09 fixed)', 'gap: agenda screening, external-authority recording and claim reviews are not My Work item types (DOM-P2-09 residual); no comments; notifications re-phased to P6 with REQ-PLT-008; AT-30 with REQ-PLT-003 (P8)']
+  status: Tested
+  evidence: ['planning p2r-residuals-planning.spec.ts "a request awaiting screening is offered to the secretariat, not to the requester or roles without the screening permission"; "the secretariat''s own request is never offered to them — the screening command would refuse it (403)"; "no one is offered the recording while no verified evidence exists (the command would refuse: evidence required)"; "with verified evidence it is offered to the chair, never to the recorder of the recommendation (who would be refused)"; "an unreviewed claim is offered to verifiers other than its author; the author (who would be refused) is not offered it"; "a claim flagged conflicting is offered again for review (to a verifier the command accepts)"', 'e2e p2r-governance-my-work.spec.ts "an agenda request is offered in the secretariat My Work (en + ar), not to the requester; screened out with a reason from its link"', 'an assigned approval appears in the approver inbox: e2e p2-planning.spec.ts "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves"', 'API item types with the command checks: planning approver-role-and-my-work.spec.ts "unverified evidence is offered to a verifier, never to the person who linked it; it leaves My Work once verified"; gates p2-gate-authority-reassessment.spec.ts "a gate ready for decision is offered to its approver role, not to the submitter or another approver role"', 'scope note: comments and notifications in My Work are P6 with REQ-PLT-008; AT-30 (a full day of work) with REQ-PLT-003 (P8)']
 - id: REQ-UX-019
   section: "10"
   title: "Screen 16a: Administration (templates, users, permissions, identity)"
@@ -4437,8 +4437,8 @@
   security_rule: "Contract schemas for update endpoints exclude status fields"
   acceptance_tests: ["UT: PATCH containing status field rejected on every resource"]
   phase: P2
-  status: Implemented
-  evidence: ['status changes only through commands: governance decision-lifecycle.spec.ts "2. an incomplete paper cannot be submitted (422 lists missing fields); stale edits are rejected (AT-16 → 409)" (status in a PATCH is stripped); P1 qa-p1-sec016-injection.spec.ts "a PATCH cannot change the project status column"; carveout at-07-perimeter-change-control.spec.ts "a generic PATCH cannot change disposition or transfer status (strict body → 400)"; finance finance-registers.spec.ts "no PATCH of the approved amount or state; the database refuses an approved amount on an unapproved line"', C carveout.test.ts "every route declares a permission key and status changes are commands" (carve-out and NewCo routes only), 'gap: no registry-wide test that no PATCH contract of any module accepts a status field (AT: every resource); some PATCH routes strip a status field (200) instead of rejecting it']
+  status: Tested
+  evidence: ['C patch-status.test.ts "no PATCH / PUT body declares a status-like field"; "every PATCH / PUT body refuses a status field (strict schema: unrecognized key), never strips it"; "the registry has the generic update routes of every module (sanity: the check below is not vacuous)"', 'governance dat-013-no-status-patch.spec.ts "every PATCH / PUT route of the registry answers 400 validation_failed naming the status field (never 200)"; "a real draft decision paper: a PATCH with a status is refused as a whole (400) — neither the status nor the other fields change"; "an assumption''s verification status changes only through its command (reason required), not through the PATCH"', P1 qa-p1-sec016-injection.spec.ts "a PATCH cannot change the project status column"; carveout at-07-perimeter-change-control.spec.ts "a generic PATCH cannot change disposition or transfer status (strict body → 400)", 'the PATCH / PUT bodies that stripped unknown fields (governance decision and action, documents source and claim, gate criterion note, JV partner / negotiation issue / room / finding / condition / criteria, AI settings) are strict; the assumption verification status moved from its PATCH to the command planning.setAssumptionVerification']
 - id: REQ-DAT-014
   section: "14"
   title: "Reassessment and cache invalidation on change"

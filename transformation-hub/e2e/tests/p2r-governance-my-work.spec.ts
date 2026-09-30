@@ -132,12 +132,12 @@ test.describe('P2 residuals — My Work agenda screening and proposed meeting se
       await expect(dialog).toBeHidden();
       await expect(sec.page.getByText('3 meeting(s) proposed; 0 date(s) already had a meeting.')).toBeVisible();
 
-      const table = sec.page.locator('#committee-meetings');
-      await expect(table.getByRole('row').filter({ hasText: `E2E weekly follow-up ${RUN}` })).toHaveCount(3);
-      for (const r of await table.getByRole('row').filter({ hasText: `E2E weekly follow-up ${RUN}` }).all()) await expect(r).toContainText('Proposed');
+      const rows = sec.page.getByRole('table', { name: 'Meetings and circulations' }).getByRole('row').filter({ hasText: `E2E weekly follow-up ${RUN}` });
+      await expect(rows).toHaveCount(3);
+      for (const r of await rows.all()) await expect(r).toContainText('Proposed');
 
       // A proposed meeting shows the proposal note and only the confirm / cancel commands.
-      await table.getByRole('row').filter({ hasText: `E2E weekly follow-up ${RUN}` }).first().getByRole('link').first().click();
+      await rows.first().getByRole('link').first().click();
       await expect(sec.page.getByTestId('meeting-proposed-note')).toBeVisible();
       await expect(sec.page.getByTestId('meeting-status')).toContainText('Proposed');
       await expect(sec.page.locator('[data-command="confirm"]')).toBeVisible();
