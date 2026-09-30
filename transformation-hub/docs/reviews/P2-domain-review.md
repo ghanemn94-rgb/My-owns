@@ -466,7 +466,8 @@ this section: **DOM-P2-02, -03, -06, -12, -13, -20** only. DOM-P2-01, -04, -05, 
 fixed by a separate implementation branch; DOM-P2-08, -11, -14, -17 and -18 are not addressed here.
 Branch `worktree-agent-a479a6526cb335355` (from `claude/mobily-transformation-hub` @ `4f05318` + the review branch @
 `640dc99`, merged with `claude/mobily-transformation-hub` @ `7751b98` — the P1 security fixes, whose policy conditions
-now fail closed, I-R3). Commits: `d1e362b` (WIP), `c625c27` (merge of `7751b98`, migration regenerated), `9d4bb32` (WIP), `8f0142a`, and the commit that adds this section.
+now fail closed, I-R3). Commits: `d1e362b` (WIP), `c625c27` (merge of `7751b98`, migration regenerated), `9d4bb32` (WIP), `8f0142a`, `9505c89`
+(fixes + this section), `eba2572` (merge of `411ee52`), and the commit that records the post-merge results below.
 
 The probes of these findings keep their assertions and were renamed from `DEFECT DOM-P2-nn …` to `DOM-P2-nn …`
 (`apps/api/test/reviews/p2-domain.spec.ts`: DOM-P2-02 (domain), DOM-P2-02 (API), DOM-P2-03a, DOM-P2-03b, DOM-P2-06).
@@ -489,6 +490,18 @@ $ pnpm lint                                              # exit 0 (packages, api
 $ python3 scripts/requirements/apply_status.py --check   # status-evidence.yaml OK (102 entries)
 ```
 Count check: 527 tests at `7751b98` (P1 security fixes) + 12 review probes + 18 new API tests = 557.
+
+Re-verified after merging `claude/mobily-transformation-hub` @ `411ee52` (P4 finance / JV) in `eba2572` (migration
+regenerated; the finance test kit now records external approvals with verified evidence, DOM-P2-12):
+
+```
+$ pnpm --filter @hub/api test          → Test Files 1 failed | 73 passed (74), Tests 7 failed | 653 passed (660), 433.84s
+                                          (the same 7 probes of the other branch; nothing else fails)
+$ (cd packages/domain && npx vitest run)    → Test Files 17 passed (17), Tests 329 passed (329)
+$ (cd packages/contracts && npx vitest run) → Test Files 2 passed (2),   Tests 98 passed (98)
+$ pnpm lint                                  # exit 0
+$ python3 scripts/requirements/apply_status.py --check   # OK (102 entries)
+```
 
 ### DOM-P2-02 (High) — Fixed (documented rule implemented; confirmation pending)
 - `tallyVotes` (`packages/domain/src/governance.ts`) implements `authority-matrix.md` §3 steps 5–6 as written: eligible
