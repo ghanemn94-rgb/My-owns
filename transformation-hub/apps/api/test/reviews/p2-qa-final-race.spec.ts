@@ -265,9 +265,9 @@ describe('QA-P2-01 re-check — a G1 decision relied upon by a perimeter version
 
 describe('QA-P2F-02 — a request that waits longer than the lock timeout gets a retryable problem, never 500 [REQ-DAT-017, AT-16]', () => {
   // QA-P2F-02 (docs/reviews/P2-qa-final-review.md, Low): PostgreSQL 55P03 lock_not_available (lock_timeout, 10 s by default)
-  // and 57014 query_canceled (statement_timeout) are not mapped by platform/errors.ts `fromPg`, so the client gets
-  // 500 internal_error. Recorded with `it.fails` until fixed; then drop `.fails`.
-  it.fails('an approval blocked for longer than lock_timeout is answered 409/503 with a problem code, and nothing is applied', async () => {
+  // and 57014 query_canceled (statement_timeout) were not mapped by platform/errors.ts `fromPg`, so the client got
+  // 500 internal_error. Fixed: 55P03 → 409 db.lock_timeout, 57014 → 503 db.statement_timeout (assertion unchanged).
+  it('QA-P2F-02 (fixed, regression): an approval blocked for longer than lock_timeout is answered 409/503 with a problem code, and nothing is applied', async () => {
     const x = await crConfirmed('QA lock timeout', '0.0000');
     const v = await crVersion(x);
     const locker = await owner().connect();

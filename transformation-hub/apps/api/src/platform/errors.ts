@@ -46,6 +46,12 @@ function fromPg(e: { code?: string; message?: string; constraint?: string }): Pr
     case '40001':
     case '40P01':
       return { type: 'about:blank', title: 'Conflict', status: 409, code: 'db.serialization_failure', detail: 'Concurrent update — reload and retry.' };
+    case '55P03':
+      // lock_not_available: waited longer than lock_timeout for a row another request holds (QA-P2F-02). Nothing applied.
+      return { type: 'about:blank', title: 'Conflict', status: 409, code: 'db.lock_timeout', detail: 'The record is being changed by another request — retry.' };
+    case '57014':
+      // query_canceled: statement_timeout reached (QA-P2F-02). The transaction is rolled back; the request can be retried.
+      return { type: 'about:blank', title: 'Service unavailable', status: 503, code: 'db.statement_timeout', detail: 'The request took too long and was cancelled — retry.' };
     default:
       return null;
   }

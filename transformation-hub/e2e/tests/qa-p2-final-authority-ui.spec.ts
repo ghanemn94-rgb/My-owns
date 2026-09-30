@@ -439,8 +439,9 @@ test.describe('QA P2 final — "block decisions outside authority" in the UI wit
   });
   // QA-P2F-03 (docs/reviews/P2-qa-final-review.md, Low): the audit action of DOM-P2R-01 `governance.decision.close_voting`
   // has no `governance.audit.decision_close_voting` label in en or ar, so the governance history shows the raw code
-  // (gov.tsx GovHistory falls back to <code>). Recorded with `test.fail` until the label exists; then make it a plain test.
-  test.fail('QA-P2F-03: the history entry of the chair closing the vote is a translated label, not a raw audit code (en and ar)', async ({ page, baseURL }) => {
+  // (gov.tsx GovHistory falls back to <code>). Fixed: the label exists in en and ar, and the i18n check (check-i18n.mjs §8)
+  // now requires a history label for every literal governance / finance audit action.
+  test('QA-P2F-03 (fixed, regression): the history entry of the chair closing the vote is a translated label, not a raw audit code (en and ar)', async ({ page, baseURL }) => {
     expect(shared.decisionUrl, 'the journey test ran first').not.toBe('');
     await loginAs(page, P.chair);
     for (const lang of ['en', 'ar'] as const) {

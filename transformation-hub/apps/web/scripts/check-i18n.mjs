@@ -16,7 +16,10 @@
  *  6. every AI refusal code raised in apps/api/src/modules/ai has `ai.errors.<code>` in en and ar, and every AI detection
  *     code / proposable action has its label;
  *  7. every refusal code the gates module raises (apps/api/src/modules/gates, packages/domain/src/gates.ts) has a
- *     translated explanation in apps/web/src/lib/refusals.ts (QA-P2-04), whose keys are typed and checked by 1–3.
+ *     translated explanation in apps/web/src/lib/refusals.ts (QA-P2-04), whose keys are typed and checked by 1–3;
+ *  8. every audit action written with a literal `action: '<module>.…'` in the governance and finance modules has its
+ *     history label `<module>.audit.<action with dots as underscores>` in en and ar (QA-P2F-03: the decision history
+ *     showed the raw code `governance.decision.close_voting`).
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -163,10 +166,31 @@ const refusalCodes = new Set([...refusalsSrc.matchAll(/^\s*'([a-z_.]+)':/gm)].ma
 if (gateCodes.size < 30) errors.push(`only ${gateCodes.size} gate refusal codes found — scan broken?`);
 for (const code of gateCodes) if (!refusalCodes.has(code)) errors.push(`gate refusal code ${code} has no translated explanation in src/lib/refusals.ts`);
 
+// 8. History labels of audit actions (QA-P2F-03). The history screens translate `<module>.audit.<action>`; a missing label
+//    shows the raw code in both languages. Only literal actions can be scanned (template literals are listed by hand).
+let auditActionCount = 0;
+for (const mod of ['governance', 'finance']) {
+  const dir = join(here, '..', '..', 'api', 'src', 'modules', mod);
+  const actions = new Set();
+  for (const f of readdirSync(dir, { recursive: true }).filter((x) => String(x).endsWith('.ts'))) {
+    const src = readFileSync(join(dir, String(f)), 'utf8');
+    for (const m of src.matchAll(new RegExp(`\\baction:\\s*'(${mod}\\.[a-z_.]+)'`, 'g'))) actions.add(m[1]);
+  }
+  if (actions.size < 10) errors.push(`only ${actions.size} ${mod} audit actions found — scan broken?`);
+  auditActionCount += actions.size;
+  for (const locale of ['en', 'ar']) {
+    const labels = load(locale, mod).audit ?? {};
+    for (const a of actions) {
+      const key = a.slice(mod.length + 1).replace(/\./g, '_');
+      if (!labels[key]) errors.push(`${locale} ${mod}.audit.${key} missing (history label of the audit action ${a})`);
+    }
+  }
+}
+
 if (errors.length) {
   console.error(`i18n check FAILED (${errors.length} problems):\n  ${errors.join('\n  ')}`);
   process.exit(1);
 }
 console.log(
-  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV, finance, planning, governance), ${aiCodes.size} AI refusal codes, ${gateCodes.size} gate refusal codes.`,
+  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV, finance, planning, governance), ${aiCodes.size} AI refusal codes, ${gateCodes.size} gate refusal codes, ${auditActionCount} governance / finance history labels.`,
 );

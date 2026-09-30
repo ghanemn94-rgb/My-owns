@@ -41,15 +41,31 @@ const PUBLISHED = {
   portfolio: ['portfolio.service'], // demo seeds create projects through the portfolio service
 };
 
-function* files(dir) {
+const PLATFORM = join(ROOT, '..', 'platform');
+const SOURCE = /\.(?:[cm]?[jt]sx?)$/;
+
+function* files(dir, pattern = /\.ts$/) {
   for (const f of readdirSync(dir)) {
     const p = join(dir, f);
-    if (statSync(p).isDirectory()) yield* files(p);
-    else if (f.endsWith('.ts')) yield p;
+    if (statSync(p).isDirectory()) yield* files(p, pattern);
+    else if (pattern.test(f)) yield p;
   }
 }
 
 const errors = [];
+// QA-P2-05 residual: a module holds TypeScript only — a .js / .mjs / .cjs / .jsx / .tsx file would escape the scan below.
+for (const file of files(ROOT, SOURCE)) {
+  if (!file.endsWith('.ts')) errors.push(`${relative(join(ROOT, '..', '..'), file)} is not a .ts file; module sources must be TypeScript so the boundary check can read them`);
+}
+// QA-P2-05 residual: the platform layer never depends on a domain module, so it cannot re-export a module's internals to
+// other modules ("laundering" through src/platform).
+for (const file of files(PLATFORM, SOURCE)) {
+  const src = readFileSync(file, 'utf8');
+  for (const m of src.matchAll(/(?:from|import|require)\s*\(?\s*(['"`])(\.[^'"`]+)\1/g)) {
+    const target = relative(ROOT, join(dirname(file), m[2])).split(sep);
+    if (target[0] !== '..') errors.push(`${relative(join(ROOT, '..', '..'), file)} imports modules/${target.join('/')}: the platform layer must not depend on a domain module`);
+  }
+}
 const edges = new Map(); // module → Set(module)
 let imports = 0;
 for (const file of files(ROOT)) {

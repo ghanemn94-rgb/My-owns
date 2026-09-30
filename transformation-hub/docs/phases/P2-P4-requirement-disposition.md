@@ -285,6 +285,8 @@ are checked by `apply_status.py --check`.
 
 ## 4. Gaps: every `must` that is Planned, Deferred or Implemented without a test of its AT (by recommended owner)
 
+> Superseded for P2 by "Update at the P2 gate" at the end of this document (current owners and targets). Kept as written.
+
 - **ux-frontend-engineer (blocking, F-13):** the `costImpact` money field on the change-request assess / edit dialogs (P2 web
   follow-up in progress), then re-run `e2e/tests/p3-carveout.spec.ts`; until then no perimeter change after baseline can be
   approved from the UI (UX-010, UX-015, PLN-013, AT-07).
@@ -417,3 +419,44 @@ are checked by `apply_status.py --check`.
   - JV & Diligence: `e2e/tests/p4-jv.spec.ts`.
   REQ-UX-013 / REQ-UX-014 still need their status-evidence entries; they will be added at the P4 disposition update.
 
+
+### Update at the P2 gate (lead, 2026-09-30) — the P2 `must` requirements still Implemented
+
+State of the register: 85 P2 musts — 60 Tested, 23 Implemented, 2 Deferred (REQ-PLT-008 and REQ-PLN-019 to P6, owners in
+§4). Since §4 was written, REQ-GOV-013, GOV-014, GOV-015, UX-005, UX-013, UX-014 and LCY-010 became Tested, and F-01, F-02
+(partly), F-03, F-04, F-05 and F-13 were fixed. The P2 QA final re-review (`docs/reviews/P2-qa-final-review.md`, condition
+C1) asked for a phase, an owner and a reason for every P2 must still Implemented. All 23 are below (21 in the table, plus
+REQ-ENT-010 and REQ-PHS-004 after it). None of them is a
+Critical or High finding; each has working behaviour whose acceptance test is missing or partial.
+
+"P2 residuals" = the follow-up assignment run in parallel with the P3/P4 reviews; it must finish before the P3 gate. An item
+not closed by then is re-dispositioned in the P3 gate report.
+
+| Requirement | Missing for Tested | Owner | Target |
+|---|---|---|---|
+| REQ-GOV-002 | Test of the AT: two committees with distinct APPROVED authority levels deciding differently | backend-data-engineer (governance) | P2 residuals |
+| REQ-GOV-019 | Test walking every illegal transition of `DECISION_MACHINE`; the register's 409 vs the implemented 422 `decision.invalid_transition` (F-10) is an AT variance: the platform answers 422 for every illegal state transition and 409 only for version conflicts | backend-data-engineer (governance) | P2 residuals (variance recorded in the P2 gate report) |
+| REQ-GOV-027 | Test that approval records carry the "Internal electronic approval — not a legally certified signature" label; exports are P6 | backend-data-engineer (governance) | P2 residuals (exports: P6) |
+| REQ-GOV-008 | Minutes retention is a charter text field, not enforced; test that minutes and packs inherit the charter classification | backend-data-engineer (governance) | classification test: P2 residuals; retention enforcement: P7 with REQ-DAT-011 (records retention) |
+| REQ-GOV-009 | No meeting series is generated from the cadence (AT: generated series labelled Proposed) | backend-data-engineer (governance) + ux-frontend-engineer | P2 residuals |
+| REQ-GOV-012 | Screening outcomes merge and reject; notification of the requester | backend-data-engineer (governance) | outcomes: P2 residuals; notification: P6 with REQ-PLT-008 |
+| REQ-DAT-013 | Registry-wide test that no PATCH body accepts a status field, with one behaviour (400) (F-11) | solution-architect / backend-data-engineer | P2 residuals |
+| REQ-WS-003 | Test of the "no accountable workstream lead" data-quality flag; per-element checks with REQ-WS-002 | backend-data-engineer (planning) | flag test: P2 residuals; per-element checks: P6 (configuration) |
+| REQ-SET-013 | Setup-wizard step 5 (committee, delegation, quorum) — today done in the Committee Hub, listed as setup gaps | backend-data-engineer + ux-frontend-engineer | P2 residuals |
+| REQ-SET-014 | Setup-wizard step 6 (draft baseline, gates) — today done in the Integrated Plan and gates screen | backend-data-engineer + ux-frontend-engineer | P2 residuals |
+| REQ-PLN-002 | Kanban view over the same task data (F-06) | ux-frontend-engineer | P2 residuals |
+| REQ-UX-006 | Program Overview shows the committee charter version and the approved baseline (F-07) | ux-frontend-engineer | P2 residuals |
+| REQ-UX-008 | E2E: critical path and baseline variance on the Gantt | ux-frontend-engineer / qa-test-engineer | P2 residuals |
+| REQ-UX-009 | E2E: a lead submits an update from the workstream workspace | ux-frontend-engineer / qa-test-engineer | P2 residuals |
+| REQ-UX-015 | E2E: raise a change request from a risk | ux-frontend-engineer / qa-test-engineer | P2 residuals |
+| REQ-UX-018 | My Work item types for agenda screening, external-authority recording and claim reviews (DOM-P2-09 residual) | backend-data-engineer (planning My Work) + ux-frontend-engineer | P2 residuals |
+| REQ-UX-022 | E2E: loading, empty, error and restricted states on each P2 screen | ux-frontend-engineer / qa-test-engineer | P2 residuals |
+| REQ-UX-023 | E2E: an edit shows in the record history with actor and reason | ux-frontend-engineer / qa-test-engineer | P2 residuals |
+| REQ-UX-024 | KPI tile drill-down to a filtered list matching the count (the contributors API is also missing) | ux-frontend-engineer + backend-data-engineer | P2 residuals |
+| REQ-UX-007 | AT-04 in the UI: a reserved decision shown as "Recommended — pending external authority" with its escalation, driven from the Committee Hub (today only the metric) | ux-frontend-engineer / qa-test-engineer | P2 residuals |
+| REQ-PLN-023 | Unit test that the AI response schema rejects a delay probability | ai-runtime-engineer | P5 review cycle |
+
+Also carried: REQ-ENT-010 (Implemented; F-08 variance — a reader of one end sees nothing instead of a redacted remote item,
+awaiting the governance owner); REQ-PHS-004 is closed by the P2 gate report itself (the decision journey passes: request →
+authorized approval → action → verified closure, `governance decision-lifecycle.spec.ts` and the QA final e2e
+`qa-p2-final-authority-ui.spec.ts`).

@@ -421,3 +421,18 @@ in English and Arabic.
   checks (accessible name, focus, Escape).
 - **Gate decisions in the UI on a final decision (approve)** beyond what the existing e2e specs cover: the gate part of the
   criterion was re-verified through the API (QA-P2-03, O-1, perimeter + gate) only.
+
+---
+
+## Fix status (lead, after this review)
+
+The reviewer's text above is unchanged.
+
+| Finding / condition | Status | Evidence |
+|---|---|---|
+| QA-P2F-02 (Low) | **Fixed.** `platform/errors.ts` maps PostgreSQL 55P03 `lock_not_available` to 409 `db.lock_timeout` and 57014 `query_canceled` (statement timeout) to 503 `db.statement_timeout`; both are retryable and nothing is applied. | The probe is now a plain test "QA-P2F-02 (fixed, regression): …" with its assertion unchanged, and passes. The 57014 branch has no executed test of its own; it is a direct mapping. |
+| QA-P2F-03 (Low) | **Fixed.** The label `governance.audit.decision_close_voting` was added in en and ar. The i18n check (`apps/web/scripts/check-i18n.mjs` §8) now requires a history label for every literal governance and finance audit action (52 today). Negative check: removing the label fails the check with both locales named. | The e2e `test.fail` is now a plain test "QA-P2F-03 (fixed, regression): …". |
+| QA-P2-05 residual (Low) | **Fixed.** The module boundary checker refuses a non-TypeScript source file inside a module, and any import of a module from `src/platform/`, so a module's internals can no longer be re-exported through the platform layer. | Probes on scratch files: a `.js` file in `modules/gates` and a platform re-export of `gates/gates.jobs` fail the check (exit 1, both named); the tree passes. |
+| C1 | **Addressed.** All 23 P2 musts still Implemented have what is missing, an owner and a target. | `docs/phases/P2-P4-requirement-disposition.md`, "Update at the P2 gate". |
+| C2 | **In the P3/P4 reviews.** The independent re-check of the adapted probes (SEC-P2-02; the domain re-review and final-review probes) is part of the P3/P4 security review and the P3 domain review. | Review briefs ("P2 closure re-check"). |
+| C4 | **Met.** `DELIVERY_STATUS.md`, the `WORK_LOG.md` checkpoint, REQ-PHS-004 / REQ-UX-007 evidence and the disposition are refreshed. | This commit. |
