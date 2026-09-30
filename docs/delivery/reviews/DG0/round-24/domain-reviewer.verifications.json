@@ -1,0 +1,17 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-014",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "I reproduced the original condition first. At the round-23 baseline 6438e20, rules.mjs lines 596-601 say that checkClosure and checkInvocation tolerate an absent commit (D-037). Then I showed it fixed. At the fix commit 81f036d and at the candidate 6db3b83, the commitPresent() header comment says the validator runs on a complete clone and that findManifest's content-preserving tolerance (D-035) is the ONLY absence tolerance. It says checkClosure and checkInvocation are strict (D-039/D-040) and that the fix must be an ancestor of the verifying run's head and of the gate candidate. That matches the code. checkInvocation rejects a non-hex or absent head_commit_at_start. checkClosure rejects a malformed or absent fix_revision, a fix outside the verifying run's head, and a fix outside the gate source_commit. The findManifest comment (corrected again in 6db3b83) also matches the code. The only D-037 mentions left in rules.mjs are about unrelated behaviours (the annotated-tag gate commit and the listed-round checks). One small wording point, which is not a new finding: the header's last sentence, 'checkClosure skips the round-side check only via the run's real head', would read better as 'performs the round-side check only against the run's real head'. The behaviour is correct either way. The fix_revision 81f036d is an ancestor of the candidate 6db3b83 and of my run's head 79fb0f8. The D-040 unit tests pass, and so does the full gate suite (62/62). In the real-repo dry run (a --no-local clone), 0 closures fail the run-head ancestry check.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/19-commitPresent-comment-verify.log",
+        "docs/delivery/test-evidence/DG0/domain/round-24/18-d040-tests.log",
+        "docs/delivery/test-evidence/DG0/domain/round-24/18b-gate-suite.log",
+        "docs/delivery/test-evidence/DG0/domain/round-24/15-real-repo-dry-run.log",
+        "tools/gates/lib/rules.mjs"
+      ]
+    }
+  ]
+}

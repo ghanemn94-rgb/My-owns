@@ -1,0 +1,309 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 24,
+  "candidate_id": "sha256:f0f3a93a1fcf33e58b1d553e39205cc8bc1764407189b69904d2d58e976f351a",
+  "source_commit": "6db3b8388699b767032b4f92547ceb79edf74519",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-DOM-R24-domain-reviewer-20260930T132351Z-561163f2",
+    "session_id": "561163f2-3ee4-4ab9-bea1-f33e77ffd9df"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am domain-reviewer, and I authored nothing in the reviewed scope: sources, analysis, register, agent definitions, gate or agent tooling, or delivery docs. My only writes are this round-24 record, its verifications sidecar and narrative, and my own evidence under docs/delivery/test-evidence/DG0/domain/round-24/. I formed this verdict without reading any other round-24 review record, and none existed in my view. The only earlier review material I read was my own round-23 domain record, findings, verifications and scripts, which I reused and re-ran."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-24/review-domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-003", "REQ-PB-004", "REQ-PB-005", "REQ-PB-006", "REQ-PB-007", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010",
+    "REQ-PB-011", "REQ-PB-012", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-019", "REQ-PB-020",
+    "REQ-PB-021", "REQ-PB-022", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025", "REQ-PB-026", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029", "REQ-PB-030",
+    "REQ-PB-031", "REQ-PB-032", "REQ-PB-033", "REQ-PB-034", "REQ-PB-035", "REQ-PB-036", "REQ-PB-037", "REQ-PB-038", "REQ-PB-039", "REQ-PB-040",
+    "REQ-PB-041", "REQ-PB-042", "REQ-PB-043", "REQ-PB-044", "REQ-PB-045", "REQ-PB-046", "REQ-PB-047", "REQ-PB-048", "REQ-PB-049", "REQ-PB-050",
+    "REQ-PB-051", "REQ-PB-052", "REQ-PB-053", "REQ-PB-054", "REQ-PB-055", "REQ-PB-056", "REQ-PB-057", "REQ-PB-058", "REQ-PB-059", "REQ-PB-060",
+    "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068", "REQ-PB-069", "REQ-PB-070",
+    "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-077", "REQ-PB-078", "REQ-PB-079", "REQ-PB-080",
+    "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090",
+    "REQ-PB-091", "REQ-PB-092", "REQ-PB-093",
+    "REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-020", "REQ-DLV-032"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM24-00-candidate",
+      "procedure": "Confirm the frozen candidate. In the main repository, record HEAD, confirm the clone isn't shallow and recompute the candidate ID. Then make a fresh `git clone --no-local`, check out 6db3b83 there, and recompute the ID again.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG0; git clone -q --no-local . $TMPDIR/review-dom24 && git checkout 6db3b83 && node tools/gates/candidate.mjs --stage DG0",
+      "environment": "Main repository (HEAD 79fb0f8, the metadata-only freeze commit) and a fresh --no-local clone at 6db3b83 in $TMPDIR; node v22.22.2",
+      "expected": "Both print sha256:f0f3a93a…351a; shallow=false",
+      "actual": "Main HEAD is 79fb0f8 ('freeze round-24 candidate'), shallow=false, and the candidate is sha256:f0f3a93a1fcf33e58b1d553e39205cc8bc1764407189b69904d2d58e976f351a (91 files). The clone HEAD is 6db3b83, shallow=false, with the same ID. The 6db3b83..79fb0f8 diff touches only assignments, the manifest and stages.json.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/01-scope-and-rerun.log",
+        "docs/delivery/candidates/DG0/f0f3a93a1fcf33e5.manifest.json"
+      ]
+    },
+    {
+      "id": "DOM24-01-scope-diff",
+      "procedure": "List the candidate-scope changes since the round-23 candidate. Exclude the D-005 metadata paths.",
+      "command": "git diff --stat 6438e20 6db3b83 -- . ':!docs/delivery/reviews' ':!docs/delivery/test-evidence' ':!docs/delivery/runs' ':!docs/delivery/candidates' ':!docs/delivery/assignments' ':!docs/delivery/handbacks' ':!docs/delivery/findings.json' ':!docs/delivery/progress.md' ':!docs/delivery/stages.json' ':!docs/delivery/gates'",
+      "environment": "--no-local clone in $TMPDIR",
+      "expected": "Only tools/gates/lib/rules.mjs, tools/gates/tests/validator.test.mjs and docs/delivery/decisions.md changed. There are no changes to sources, analysis, the register or agent definitions.",
+      "actual": "Exactly those 3 files changed (38 insertions, 29 deletions). decisions.md gets +1 line, the D-040 row. D-039 and every other row are unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/01-scope-and-rerun.log"
+      ]
+    },
+    {
+      "id": "DOM24-02-extraction-fidelity",
+      "procedure": "Check extraction fidelity by two independent methods. (a) Re-run my paragraph, table-cell and ordered-token comparison of the docx XML (document.xml and footer1.xml) against playbook.md. (b) Strip the XML tags from word/document.xml with unzip and sed, then compare the word-token multiset with playbook.md.",
+      "command": "cd $TMPDIR/review-dom24 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-extraction.py; unzip -p docs/source/Business_Transformation_Playbook.docx word/document.xml | sed -e 's/<w:tab\\/>/ /g' -e 's/<w:br\\/>/ /g' -e 's/<\\/w:p>/\\n/g' -e 's/<[^>]*>//g' | python3 (Counter comparison)",
+      "environment": "--no-local clone at 6db3b83; python3; docx sha256 2584a352…548ad2",
+      "expected": "No docx paragraph, cell or token is missing from playbook.md",
+      "actual": "(a) paragraphs 1002 missing 0; table cells 885 missing 0; docx tokens not matched in order 0. The output is byte-identical to round 23. (b) There are 3586 docx word tokens and 0 are under-represented in playbook.md. The docx sha256 is 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/r24-extraction.out",
+        "docs/delivery/test-evidence/DG0/domain/round-24/02-extraction-tagstrip.log"
+      ]
+    },
+    {
+      "id": "DOM24-03-extraction-reproducible",
+      "procedure": "Run the shipped extraction check (sandboxed, via prefreeze).",
+      "command": "cd $TMPDIR/review-dom24 && bash tools/gates/prefreeze.sh DG0  (first line: tools/source/check_extraction.sh)",
+      "environment": "--no-local clone at 79fb0f8 (candidate-identical to 6db3b83); prefreeze sandbox",
+      "expected": "PASS, with docx sha256 2584a352…, 165 playbook blocks and 423 master-prompt blocks",
+      "actual": "PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/13-prefreeze.log"
+      ]
+    },
+    {
+      "id": "DOM24-04-coverage",
+      "procedure": "Check source coverage. Every block B0001–B0165 must have exactly one disposition row, and every REQUIREMENT row must map to existing requirements. List the REQ-PB classes and statuses, and check that every SOURCE row cites a B block.",
+      "command": "cd $TMPDIR/review-dom24 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-coverage.py",
+      "environment": "--no-local clone at 6db3b83; python3",
+      "expected": "165 rows in block order, no structural problems, 93 REQ-PB rows all SOURCE/SPECIFIED, and no SOURCE row without a B reference",
+      "actual": "Blocks 165, coverage rows 165, ids identical. Dispositions: REQUIREMENT 129, CONTEXT 29, NON-REQUIREMENT 7. Problems []. REQ-PB: 93 rows, all SOURCE and SPECIFIED. SOURCE rows without a B ref: []. The output is byte-identical to round 23, whose substance review I carried forward, and the source, analysis and register are unchanged since then.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/r24-coverage.out"
+      ]
+    },
+    {
+      "id": "DOM24-05-template-columns",
+      "procedure": "Check that the T01–T16 columns appear verbatim in the field inventory and in the register's input_fields.",
+      "command": "cd $TMPDIR/review-dom24 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-template-columns.py",
+      "environment": "--no-local clone at 6db3b83; python3",
+      "expected": "Every template column is present verbatim. The only permitted exception is the header labels 'Field'/'Fill-in' of vertical form templates, which are inventoried by their row labels.",
+      "actual": "Every T01–T16 column is present in both places. The only 'missing' items are the T05 vertical-form header labels 'Field' and 'Fill-in' (all 14 row labels are present). This is the same expected result as in earlier rounds. The script exits 1 by design because it flags that exception. The output is byte-identical to round 23.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/r24-template-columns.out"
+      ]
+    },
+    {
+      "id": "DOM24-06-template-values",
+      "procedure": "Check that the template value lists and example cells (H/M/L, Support/Neutral/Resist, Decision/Tech/Data/Vendor, Risk/Assumption/Issue/Dependency, A/R, the 25/25/20/15/15 weights, wave horizons and entry/exit, T11 SLAs, T10 RAG per area) are preserved.",
+      "command": "cd $TMPDIR/review-dom24 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-template-values.py",
+      "environment": "--no-local clone at 6db3b83; python3",
+      "expected": "All value cells are present. The only permitted absences are illustrative example-row identifiers.",
+      "actual": "182 cells checked. 6 are absent and all are example-row IDs (D-03, Initiative B/D/E, B03, DEC-02), not value lists or rules. The output is byte-identical to round 23.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/r24-template-values.out"
+      ]
+    },
+    {
+      "id": "DOM24-07-first-class-deliverables",
+      "procedure": "Check that the first-class deliverables are fully specified: the 14 charter fields, the thesis, the 5 scope checks, the outcome hierarchy, the 10 TOM dimensions and canvas, the 90–120 min workshop, the 10 business-case sections, the OS layers, the benefits lifecycle, the 7 adoption indicators, the 90-day plan, the Day-90 test, the 25 questions and 4 bands, the roaming example, the modes, the phases and G1–G6, and the minimum roles.",
+      "command": "cd $TMPDIR/review-dom24 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-deliverables.py",
+      "environment": "--no-local clone at 6db3b83; python3",
+      "expected": "Every item is present verbatim or as a checked paraphrase",
+      "actual": "The output is byte-identical to round 23. Its only non-verbatim items are the TOM canvas cell layouts, the thesis sentence template and the North Star quotation. My round-23 paraphrase grep (07b) confirmed each of them in the register and field inventory. The analysis and register files are unchanged since then (DOM24-01).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/r24-deliverables.out",
+        "docs/delivery/test-evidence/DG0/domain/round-23/07b-deliverables-paraphrase-grep.log"
+      ]
+    },
+    {
+      "id": "DOM24-08-provenance-no-invented",
+      "procedure": "Check that SOURCE rows are grounded in B blocks, that master-prompt additions are labelled, and that the provenance and branding statements (inspired-by, not official PMI; #0078FF provisional) are in place.",
+      "command": "cd $TMPDIR/review-dom24 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-provenance-logic.py; grep -n '0078FF\\|official PMI\\|inspired by\\|G6 never implies' CLAUDE.md docs/delivery/agent-protocol.md; grep -n 'official PMI' docs/analysis/*.md docs/delivery/requirements.csv",
+      "environment": "--no-local clone at 6db3b83; python3",
+      "expected": "No invented SOURCE requirement. Every 'official PMI' mention is a negation. #0078FF is described as provisional.",
+      "actual": "93 SOURCE rows. The 3 label-pattern hits (REQ-PB-042/058/069) use equivalent wording that separates source from master-prompt additions, as reviewed in earlier rounds. Every 'official PMI' mention (README, field-inventory, glossary, permissions-matrix, REQ-PB-001) is a negation. CLAUDE.md and agent-protocol.md mark #0078FF as provisional. The output is byte-identical to round 23.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-DLV-032"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/r24-provenance-logic.out",
+        "docs/delivery/test-evidence/DG0/domain/round-24/16-d040-doc-and-provenance.log"
+      ]
+    },
+    {
+      "id": "DOM24-09-operating-logic",
+      "procedure": "Check the operating-logic semantics in the register: RAG comes from the trajectory, not task completion; delivery, adoption, validated value and closure are separate; forecast is never validated value; Finance validates; no double counting (allocation ≤100%, unallocated shown); gates are evidence-tied; DG and G stay separate.",
+      "command": "cd $TMPDIR/review-dom24 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-provenance-logic.py",
+      "environment": "--no-local clone at 6db3b83; python3",
+      "expected": "Each rule is specified by a register row with testable acceptance",
+      "actual": "Each rule is present: REQ-PB-063 and REQ-S07-007 (RAG from the trajectory; all tasks complete below threshold means Red), REQ-S03-003 (separate statuses), the benefit, Finance-validation, allocation and gate rows, and REQ-DLV-002. The output is byte-identical to round 23, and the register is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/r24-provenance-logic.out"
+      ]
+    },
+    {
+      "id": "DOM24-10-master-prompt-sample",
+      "procedure": "Sample 92 M blocks (at least 60 required) across the preamble and §0–§21, including table rows. Confirm each disposition and mapping. The sample list is printed in the output.",
+      "command": "cd $TMPDIR/review-dom24 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-master-prompt-sample.py",
+      "environment": "--no-local clone at 6db3b83; python3",
+      "expected": "423 blocks with 423 coverage rows, no structural problems, and every sampled disposition sensible",
+      "actual": "423/423 blocks, ids identical, structural problems 0, 128 table-like blocks, SAMPLE 92 (list in the output). The output is byte-identical to my round-23 sample, whose dispositions I reviewed. The master-prompt coverage is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/r24-master-prompt-sample.out"
+      ]
+    },
+    {
+      "id": "DOM24-11-staging",
+      "procedure": "Check that final_gate and increments follow §21 (M0403–M0410) and that the acceptance conditions are concrete.",
+      "command": "cd $TMPDIR/review-dom24 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-staging.py",
+      "environment": "--no-local clone at 6db3b83; python3",
+      "expected": "Stages are consistent with §21",
+      "actual": "Consistent. The output is byte-identical to round 23.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/r24-staging.out"
+      ]
+    },
+    {
+      "id": "DOM24-12-glossary-journeys-permissions",
+      "procedure": "Re-inspect the glossary Arabic terms, the journey headings (every phase and gate, modular entry, KPI update, Finance validation, committee, BAU handover, admin publishing) and the permissions matrix (technical admins are not business approvers).",
+      "command": "sed -n '28,66p;160,191p' docs/analysis/glossary.md; grep -n '^#' docs/analysis/user-journeys.md; sed -n 151,193p docs/analysis/user-journeys.md; sed -n 123,153p docs/analysis/permissions-matrix.md",
+      "environment": "--no-local clone at 6db3b83",
+      "expected": "Same content as the reviewed round-23 state, and sensible",
+      "actual": "Sensible, and the files are unchanged since round 23 (DOM24-01). My round-24 log differs from the round-23 log only because the round-23 log was truncated when it was captured. The underlying files are unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/12-glossary-journeys-permissions.log"
+      ]
+    },
+    {
+      "id": "DOM24-13-dlv-rows",
+      "procedure": "Check the assigned DLV rows 001, 002, 020 and 032: class, final gate, acceptance, and that every evidence file exists. Check D-001 and D-002, and the G6/DG7 separation statements.",
+      "command": "python3 (inline) read requirements.csv rows and os.path.isfile each evidence entry; grep D-001/D-002 decisions.md; grep 'G6 never implies' CLAUDE.md",
+      "environment": "--no-local clone at 6db3b83; python3",
+      "expected": "All four are ENGINEERING with final gate DG0 and IMPLEMENTED, and every evidence file exists",
+      "actual": "All four are ENGINEERING with final gate DG0 and IMPLEMENTED, and every evidence file exists. D-001 (docx SHA-256) and D-002 (English edition) are present. CLAUDE.md line 13 says G6 never implies DG7, and agent-protocol.md §Two gate systems says the same.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/13b-dlv-rows.log"
+      ]
+    },
+    {
+      "id": "DOM24-14-prefreeze",
+      "procedure": "Run the orchestrator pre-freeze in a fresh --no-local clone",
+      "command": "cd $TMPDIR/review-dom24 && git checkout 79fb0f8 && bash tools/gates/prefreeze.sh DG0",
+      "environment": "--no-local clone; node v22.22.2; python3; nested sandbox",
+      "expected": "All lines PASS, exit 0",
+      "actual": "Exit 0. All 11 lines PASS: extraction, validator and guard tests, runner tests, the register rules at DG0, register equals merge, pipeline, acceptance map, counts, PB provenance (93 rows, 0 problems), test refs, and working tree equals HEAD (sha256:f0f3a93a…).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/13-prefreeze.log"
+      ]
+    },
+    {
+      "id": "DOM24-15-d040-tests-and-dry-run",
+      "procedure": "Run the D-040 unit tests and the full gate suite. Then do a real-repo dry run: in a --no-local clone, draft a schema-valid APPROVED gate on the frozen candidate, run validateGate (current mode) and classify every error. The dry run specifically counts 'fix not in the verifying run's starting history' (the D-040 check).",
+      "command": "node --test --test-name-pattern='D-040|F-DG0-110 / F-DG0-204' tools/gates/tests/validator.test.mjs; node --test tools/gates/tests/*.test.mjs; node docs/delivery/test-evidence/DG0/domain/round-24/r24-dry-run.mjs /home/user/My-owns",
+      "environment": "--no-local clone at 6db3b83 (tests); a fresh --no-local clone at 79fb0f8 created and removed by the script (dry run); node v22.22.2",
+      "expected": "The two named tests and 62/62 pass. The dry run shows 0 run-head ancestry errors and 0 gate-ancestry errors, and every remaining error is round-24-pending.",
+      "actual": "The named tests pass 2/2 and the suite passes 62/62. Dry run: 57 errors. 8 are unfinished-round errors (round-24 records not written yet). The D-040 run-head ancestry class, the gate-ancestry class, the pruned classes and the dropped class all have 0 errors, and no finding's fix_revision is absent (114 of 116 have one). The other 49 are expected until the gate round completes: F-DG0-014/166/167/249 are pending verification, F-DG0-147/149 are awaiting the auditor's acceptance, the round-24 reviewers' requirements_checked are absent, and the draft gate's placeholder final_gate_ids differ from the register.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/18-d040-tests.log",
+        "docs/delivery/test-evidence/DG0/domain/round-24/18b-gate-suite.log",
+        "docs/delivery/test-evidence/DG0/domain/round-24/15-real-repo-dry-run.log",
+        "docs/delivery/test-evidence/DG0/domain/round-24/r24-dry-run.mjs"
+      ]
+    },
+    {
+      "id": "DOM24-16-d040-doc-claims",
+      "procedure": "Confirm that the D-040 decisions.md row (and the unchanged D-039 row) makes no misstated business, operating-logic or source-provenance claim, and that its technical claims match the code",
+      "command": "git diff 6438e20 6db3b83 -- docs/delivery/decisions.md tools/gates/lib/rules.mjs; grep '^| D-040' docs/delivery/decisions.md | grep -oiE 'Finance|benefit|RAG|adoption|G[1-6]\\b|PMI|Mobily|playbook|business approval|validated value'",
+      "environment": "--no-local clone at 6db3b83",
+      "expected": "The row is delivery-tooling only and its claims match the code",
+      "actual": "D-040 contains no business, operating-logic or provenance vocabulary (grep exit 1, no hits). Its claims match rules.mjs: checkClosure binds the fix to the verifying run's head_commit_at_start and to the gate source_commit, the round.source_commit ancestry check is removed, and the header comment is corrected. The 'gate suite 62 pass' claim reproduced. D-039 is unchanged since round 23, where I verified it.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/16-d040-doc-and-provenance.log",
+        "docs/delivery/decisions.md#D-040"
+      ]
+    },
+    {
+      "id": "DOM24-17-own-finding-F-DG0-014",
+      "procedure": "Reproduce F-DG0-014 at the round-23 baseline, then show it fixed at the fix commit and at the candidate. Check the fix_revision ancestry.",
+      "command": "git show 6438e20:tools/gates/lib/rules.mjs | sed -n 596,601p; git show 81f036d:tools/gates/lib/rules.mjs | grep -A7 '^// Whether a commit object'; git show 6db3b83:... ; git merge-base --is-ancestor 81f036d 6db3b83; git merge-base --is-ancestor 81f036d 79fb0f8",
+      "environment": "--no-local clone",
+      "expected": "The stale D-037 tolerance wording is present at 6438e20 and gone at 81f036d/6db3b83. The fix is an ancestor of the candidate and of my run head.",
+      "actual": "Reproduced at 6438e20. At 81f036d and 6db3b83 the header states the strict complete-history model, with findManifest's content-preserving D-035 tolerance as the only exception, and that matches the code. Both ancestry checks exit 0. There is a minor wording nit in the last sentence ('skips … only via'), and the behaviour is correct. Status: CLOSED_VERIFIED in the verifications sidecar.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-24/19-commitPresent-comment-verify.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/domain/round-24/01-scope-and-rerun.log",
+    "docs/delivery/test-evidence/DG0/domain/round-24/02-extraction-tagstrip.log",
+    "docs/delivery/test-evidence/DG0/domain/round-24/r24-extraction.out",
+    "docs/delivery/test-evidence/DG0/domain/round-24/r24-coverage.out",
+    "docs/delivery/test-evidence/DG0/domain/round-24/r24-template-columns.out",
+    "docs/delivery/test-evidence/DG0/domain/round-24/r24-template-values.out",
+    "docs/delivery/test-evidence/DG0/domain/round-24/r24-deliverables.out",
+    "docs/delivery/test-evidence/DG0/domain/round-24/r24-provenance-logic.out",
+    "docs/delivery/test-evidence/DG0/domain/round-24/r24-master-prompt-sample.out",
+    "docs/delivery/test-evidence/DG0/domain/round-24/r24-staging.out",
+    "docs/delivery/test-evidence/DG0/domain/round-24/12-glossary-journeys-permissions.log",
+    "docs/delivery/test-evidence/DG0/domain/round-24/13-prefreeze.log",
+    "docs/delivery/test-evidence/DG0/domain/round-24/13b-dlv-rows.log",
+    "docs/delivery/test-evidence/DG0/domain/round-24/15-real-repo-dry-run.log",
+    "docs/delivery/test-evidence/DG0/domain/round-24/r24-dry-run.mjs",
+    "docs/delivery/test-evidence/DG0/domain/round-24/16-d040-doc-and-provenance.log",
+    "docs/delivery/test-evidence/DG0/domain/round-24/18-d040-tests.log",
+    "docs/delivery/test-evidence/DG0/domain/round-24/18b-gate-suite.log",
+    "docs/delivery/test-evidence/DG0/domain/round-24/19-commitPresent-comment-verify.log"
+  ],
+  "reviewed_at": "2026-09-30T13:35:00Z"
+}
