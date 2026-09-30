@@ -620,6 +620,8 @@ export class AiRuntimeService {
       finishedAt: iso(r.finishedAt),
       createdAt: r.createdAt.toISOString(),
       output: (r.output as AiRunOutput | null) ?? null,
+      // Tool NAMES from the evidence snapshot (never the snapshot items: they may reference records the reader can no longer see).
+      toolsUsed: Array.isArray(r.evidenceSnapshot?.['tools']) ? (r.evidenceSnapshot['tools'] as unknown[]).filter((x): x is string => typeof x === 'string') : [],
     };
   }
 }

@@ -92,7 +92,11 @@ export const AiRunSummaryDto = z.object({
   finishedAt: z.string().nullable(),
   createdAt: z.string(),
 });
-export const AiRunDto = AiRunSummaryDto.extend({ output: AiRunOutputDto.nullable() });
+export const AiRunDto = AiRunSummaryDto.extend({
+  output: AiRunOutputDto.nullable(),
+  /** Names of the typed read tools the runtime invoked for this run (from its evidence snapshot; names only). */
+  toolsUsed: z.array(z.string()),
+});
 export type AiRun = z.infer<typeof AiRunDto>;
 
 export const AutopilotPolicyDto = z.object({
@@ -251,6 +255,11 @@ export const AiStatusDto = z.object({
   }),
   manualFallback: z.string(),
   deterministicFeatures: z.array(z.string()),
+  /**
+   * Deployment status of every provider type (not only the one this project uses), so the UI can state honestly that a
+   * real model endpoint is "Not configured" instead of assuming it. Statuses only — never a URL, host or secret.
+   */
+  endpoints: z.array(z.object({ provider: z.enum(AI_PROVIDERS), status: z.enum(AI_PROVIDER_STATUSES), simulated: z.boolean() })),
 });
 
 export const AiCostsDto = z.object({

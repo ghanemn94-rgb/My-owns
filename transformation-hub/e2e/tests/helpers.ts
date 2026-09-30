@@ -7,6 +7,10 @@ export const PERSONAS = {
   contributor: 'Demo Contributor',
   partnerAlpha: 'Demo Partner Alpha User',
   finance: 'Demo Finance Member',
+  sponsor: 'Demo Sponsor',
+  secretary: 'Demo Secretary / CPMO',
+  cleanTeam: 'Demo Clean Team Member',
+  contributorB: 'Demo Contributor — Project B',
 } as const;
 
 /** Sign in through the real login page by clicking the persona's button. */

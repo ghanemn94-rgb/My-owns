@@ -24,7 +24,7 @@ import { PERSONAS, apiSessionAs, loginAs } from './helpers';
  */
 
 type Locale = 'en' | 'ar';
-type PersonaKey = 'pm' | 'portfolioAdmin' | 'partnerAlpha' | 'finance' | 'contributor';
+type PersonaKey = 'pm' | 'portfolioAdmin' | 'partnerAlpha' | 'finance' | 'contributor' | 'sponsor' | 'cleanTeam';
 const LOCALES: readonly Locale[] = ['en', 'ar'];
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] as const;
 const FAILING_IMPACTS = new Set(['serious', 'critical']);
@@ -62,6 +62,8 @@ interface Ids {
   financeModel: string;
   benefit: string;
   kpi: string;
+  aiProposal: string;
+  aiRun: string;
 }
 
 interface Screen {
@@ -277,6 +279,29 @@ const SCREENS: readonly Screen[] = [
   { id: 'finance-benefit-detail', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/benefits/${i.benefit}`, ready: visible('[data-testid="benefit-detail"]') },
   { id: 'finance-kpi-detail', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/kpis/${i.kpi}`, ready: visible('[data-testid="kpi-detail"]') },
   { id: 'finance-restricted', persona: 'contributor', path: (i) => `/projects/${i.dc}/finance`, ready: visible('[data-testid="restricted-state"]') },
+  // AI PM Center (screen 14): every tab, the proposal and run details, an open command dialog, 390 px and the restricted
+  // state for a user without AI permissions. Read-only: nothing is asked, approved or activated.
+  { id: 'ai-overview', persona: 'pm', path: (i) => `/projects/${i.dc}/ai`, ready: visible('[data-testid="ai-status"]') },
+  { id: 'ai-overview-390', persona: 'pm', path: (i) => `/projects/${i.dc}/ai`, ready: visible('[data-testid="ai-status"]'), viewport: MOBILE },
+  { id: 'ai-ask', persona: 'pm', path: (i) => `/projects/${i.dc}/ai/ask`, ready: visible('[data-testid="ask-form-panel"]') },
+  { id: 'ai-proposals', persona: 'pm', path: (i) => `/projects/${i.dc}/ai/proposals`, ready: visible('[data-testid="proposals-table"] table') },
+  { id: 'ai-proposal-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/ai/proposals/${i.aiProposal}`, ready: visible('[data-testid="proposal-binding"]') },
+  { id: 'ai-runs', persona: 'pm', path: (i) => `/projects/${i.dc}/ai/runs`, ready: visible('[data-testid="runs-table"] table') },
+  { id: 'ai-run-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/ai/runs/${i.aiRun}`, ready: visible('[data-testid="run-output"]') },
+  { id: 'ai-briefings-detections', persona: 'pm', path: (i) => `/projects/${i.dc}/ai/briefings`, ready: visible('[data-testid="detections-table"] table') },
+  { id: 'ai-settings', persona: 'sponsor', path: (i) => `/projects/${i.dc}/ai/settings`, ready: visible('[data-testid="settings-form"]') },
+  {
+    // The emergency-stop confirmation (reason field, consequences); nothing is submitted.
+    id: 'ai-kill-switch-dialog-open',
+    persona: 'sponsor',
+    path: (i) => `/projects/${i.dc}/ai/settings`,
+    ready: visible('[data-testid="kill-switch-activate"]'),
+    prepare: async (page) => {
+      await page.getByTestId('kill-switch-activate').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+    },
+  },
+  { id: 'ai-restricted', persona: 'cleanTeam', path: (i) => `/projects/${i.dc}/ai`, ready: visible('[data-testid="restricted-state"]') },
   // Administration.
   { id: 'admin', persona: 'portfolioAdmin', path: () => '/admin' },
   // An open modal dialog (native <dialog>): the RAID "new risk" form.
@@ -389,6 +414,9 @@ async function lookupIds(baseURL: string): Promise<Ids> {
       financeModel: await findId(fin, `${p}/financial-models?pageSize=100`, 'code', 'FM-001'),
       benefit: await findId(api, `${p}/benefits?pageSize=100`, 'code', 'BEN-001'),
       kpi: await findId(api, `${p}/kpis?pageSize=100`, 'key', 'action_closure_time'),
+      // The seeded AI proposal (DEMO-DC) and the PM's seeded briefing run (runs are per user).
+      aiProposal: String((await listItems(api, `${p}/ai/proposals?pageSize=100&sort=createdAt`))[0]!.id),
+      aiRun: await findId(api, `${p}/ai/runs?pageSize=100&sort=createdAt`, 'kind', 'briefing'),
     };
   } finally {
     await api.dispose();
@@ -456,7 +484,7 @@ function summarise(results: Awaited<ReturnType<AxeBuilder['analyze']>>): Finding
 test.describe('REQ-ARC-008 accessibility (axe-core, WCAG 2.1 A/AA)', () => {
   test.beforeAll(async ({ browser, baseURL }) => {
     ids = await lookupIds(baseURL!);
-    for (const persona of ['pm', 'portfolioAdmin', 'partnerAlpha', 'finance', 'contributor'] as const) {
+    for (const persona of ['pm', 'portfolioAdmin', 'partnerAlpha', 'finance', 'contributor', 'sponsor', 'cleanTeam'] as const) {
       const ctx = await browser.newContext();
       const page = await ctx.newPage();
       await loginAs(page, PERSONAS[persona]);

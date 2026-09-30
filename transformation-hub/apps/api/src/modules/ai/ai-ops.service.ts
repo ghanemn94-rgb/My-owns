@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import type { AiRunOutput, RouteInput, aiRoutes } from '@hub/contracts';
-import { AI_ACTION_PERMISSION, AI_AUTOPILOT_ELIGIBLE, AI_MODES, AI_PROHIBITED_ACTIONS, AI_TOOLS, aiFlagOf, circuitIsOpen, notFound, POLICY_VERSION, toolAllowedInMode, type AiProposableAction } from '@hub/domain';
+import { AI_ACTION_PERMISSION, AI_AUTOPILOT_ELIGIBLE, AI_MODES, AI_PROHIBITED_ACTIONS, AI_PROVIDERS, AI_TOOLS, aiFlagOf, circuitIsOpen, notFound, POLICY_VERSION, toolAllowedInMode, type AiProposableAction } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import { Clock } from '../../platform/clock';
@@ -43,8 +43,9 @@ export class AiOpsService {
     const rows = await this.db.tx().select().from(schema.aiRun).where(where).orderBy(...orderBySort(q.sort, { createdAt: schema.aiRun.createdAt, kind: schema.aiRun.kind, status: schema.aiRun.status }, schema.aiRun.id, [desc(schema.aiRun.createdAt), desc(schema.aiRun.id)])).limit(q.pageSize).offset((q.page - 1) * q.pageSize);
     return {
       items: rows.map((r) => {
-        const { output: _o, ...summary } = this.runtime.toDto(r);
+        const { output: _o, toolsUsed: _t, ...summary } = this.runtime.toDto(r);
         void _o;
+        void _t;
         return summary;
       }),
       page: q.page,
@@ -100,6 +101,12 @@ export class AiOpsService {
       budget: { month, tokensUsed: usage.tokens, monthlyTokenBudget: s.monthlyTokenBudget, costUsed: usage.cost, monthlyCostBudget: s.monthlyCostBudget, currency: s.costCurrency, exhausted },
       manualFallback: ctx.locale === 'ar' ? MANUAL_FALLBACK.ar : MANUAL_FALLBACK.en,
       deterministicFeatures: ['detections (rules only)', 'schedule / critical path (CPM engine)', 'gate evaluation', 'status dimensions', 'money aggregation', 'committee workflows', 'reports'],
+      // Every provider type's deployment status (statuses only — no URL, host or secret), so a real endpoint that is not set
+      // up reads "not_configured" rather than being assumed. The project's own provider is checked with its model.
+      endpoints: AI_PROVIDERS.filter((p) => p !== 'off').map((p) => {
+        const pr = this.providers.get(p);
+        return { provider: p, status: pr.status(p === s.provider ? s.model : null), simulated: pr.simulated };
+      }),
     };
   }
 
