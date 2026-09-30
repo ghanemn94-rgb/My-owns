@@ -653,7 +653,25 @@ $ HUB_WEB_URL=… npx playwright test qa-p2-arabic-rtl p2-web-followups qa-p2-ga
                                     the gate journey now logs "translated explanation shown: true" for both refusals
 ```
 Before the final build, only the Arabic wording of the effort estimate changed. The 260-test run used the build before
-that change. The full Playwright suite was not run. The data dictionary and ERD were not regenerated: regenerating them
+that change.
+
+After merging `claude/mobily-transformation-hub` at `8f8d72b` (P4 domain fixes; the migration regenerated: the
+integration branch's migration plus the three task columns), on the merged tree with a freshly migrated and seeded
+`hub_e2e_qa24`:
+
+```
+$ pnpm test:unit                  → domain 20 files / 414 tests passed; contracts 2 files / 100 tests passed
+$ pnpm lint                       → exit 0 (i18n: 150 server message codes, 50 gate refusal codes)
+$ … pnpm --filter @hub/api test   → Test Files 93 passed (93), Tests 809 passed | 4 expected fail (813), 1328 s
+$ HUB_WEB_URL=… npx playwright test qa-p2-arabic-rtl qa-p1r-arabic-rtl p2-planning p2-gates p2-governance p2-cockpit
+  a11y p2-web-followups qa-p2-gate-review-journey qa-p2-exit-journey
+                                  → 271 passed, 1 failed (28.5m): p2-web-followups (b) hit the 240 s test timeout
+                                    waiting for the redirect after a demo login, while the API suite ran on the same
+                                    machine (load average ≈ 10 on 4 cores); rerun alone: p2-web-followups 4 passed (1.4m)
+                                    qa-p2-arabic-rtl 6, qa-p1r-arabic-rtl 3, p2-planning 3, p2-gates 5, p2-governance 1,
+                                    p2-cockpit 4, a11y 244, qa-p2-gate-review-journey 1, qa-p2-exit-journey 1 — all passed
+```
+The full Playwright suite was not run. The data dictionary and ERD were not regenerated: regenerating them
 also picks up earlier, unregenerated schema changes (for example `decision_use`), which is left to integration. The API,
 worker and web server were stopped by PID after checking their command lines; the tracked screenshots and
 `docs/test-evidence` rewritten by the runs were restored with `git checkout`.
