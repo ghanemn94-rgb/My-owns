@@ -22,14 +22,14 @@
   - Backends and web screens merged.
   - Domain review FAIL (`docs/reviews/P4-domain-review.md`). All its High findings are fixed: part 1 (DOM-P4-02/03/04/05/09 and Lows) and part 2 (DOM-P4-01/06/07/08 on the decision-use registry). The lowered requirements are Tested again with regression evidence.
   - Security and QA reviews not run.
-- **P5:** AI backend and AI PM web screens merged (mock provider labelled Simulated); reviews not run. To check in the P5 review: `ai-proposals.service.ts` `approve()` may audit and invalidate before a throw that rolls them back.
+- **P5:** AI backend and AI PM web screens merged (mock provider labelled Simulated); reviews not run. Fixed before the review: `ai-proposals.service.ts` `approve()` wrote the invalidation (payload / target version changed) and its audit row and then threw 409, so the rollback discarded them; they are now written in an autonomous transaction (`invalidateDetached`), with tests in `at-18-ai-approval-binding.spec.ts` that fail without the fix.
 - **P6–P8:** not started.
 
 ### Verified
 
 - **Gates deadlock fixed:** a gate command and the worker's evaluation refresh could lock the same `gate_assessment` rows in opposite orders ("deadlock detected" → 409, seen once in the full Playwright run). Every gate writer now takes the per-project advisory lock `hub_gates:<projectId>` first (module guide, "One writer of a project's gate state at a time"). Regression `apps/api/test/gates/gate-lock-order.spec.ts` reproduces the 409 without the lock and passes with it.
 - **API integration suite:** 100 files, 847 passed + 2 expected fail (DOM-P2F-02/04 probes) at `b41fe6e`. Domain 424/424, contracts 100/100, `pnpm typecheck` clean.
-- **CI:** run 34 fully green at `4fadf91`. Run 38 at `40fac20` was red (shellcheck and an RTL-detector false positive), fixed in `a58218b`.
+- **CI:** run 48 at `5bf274b`: every job green except one API test — the P2 QA race probe was written before the DOM-P2F-08 fix (a G1 paper must name the perimeter version) and met it at the merge; the fixture now raises the paper for the version, and the second concurrent G1 decide is asserted as 422 `gate_assessment.invalid_transition` (the gate lock makes it behave as a sequential second attempt). Playwright passed in run 48. Earlier: run 34 fully green at `4fadf91`. Run 38 at `40fac20` was red (shellcheck and an RTL-detector false positive), fixed in `a58218b`.
 - **Lint:** root `pnpm lint` passes. Secret scan: tree and history pass.
 
 ## Done in this session (highlights)
@@ -76,6 +76,10 @@
   - PLN-002.
   The domain re-review will say which of them block the P2 gate.
 - **Low findings carried** in `docs/phases/P1-gate-report.json`: QA-P1-09, QA-P1R-04/05, SEC-P1S-05/06/08.
+- **Build-machine capacity:** 4 cores and 15 GB shared by the lead and every agent. On 2026-09-30 the session process was
+  restarted after memory ran out, with five agents running full API suites and two e2e stacks at once. Keep at most three
+  agents with test runs in parallel; an agent starts a full suite or a Playwright run only with at least 4 GB free, never
+  both at once, and stops its e2e stack by PID when done.
 - **Environment limits:**
   - The reference image and Excel workbook are not available (image extraction NOT performed).
   - There is no Docker daemon here: images, Compose and Helm are validated only in CI, and Helm install is NOT EXECUTED.
