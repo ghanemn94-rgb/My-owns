@@ -1,4 +1,5 @@
 import { sql, type SQL } from 'drizzle-orm';
+import { financeDomainClearance } from '@hub/domain';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import type { PolicyService } from './policy.service';
 import type { RequestContext } from './context';
@@ -27,7 +28,9 @@ export interface RecordVisibilityOptions {
   readPermission?: (type: string) => string | undefined;
 }
 
-type Vis = (cols: { classification?: string; room?: string }) => SQL;
+/** A security domain whose roles may carry a higher clearance for that domain's records (access-matrix §2.3). */
+type Domain = 'finance';
+type Vis = (cols: { classification?: string; room?: string }, domain?: Domain) => SQL;
 interface Env {
   vis: Vis;
   reach: (permission: string, workstreamExpr: string) => SQL;
@@ -40,11 +43,15 @@ type Rule = (x: string, id: SQL, e: Env, depth: number) => SQL;
 const raw = (s: string) => sql.raw(s);
 const TRUE = sql`true`;
 
-/** A record with its own classification / room columns and optionally a workstream (reach of `ws` permission). */
-function own(table: string, o: { c?: boolean; r?: boolean; ws?: string; wsCol?: string }): Rule {
+/**
+ * A record with its own classification / room columns and optionally a workstream (reach of `ws` permission). `wsCol: null`
+ * = a table without a workstream: only a project-wide grant of `ws` reaches it. `domain`: the classification is compared
+ * with the domain clearance (e.g. finance: max(user clearance, domainClearance.finance of the project roles)).
+ */
+function own(table: string, o: { c?: boolean; r?: boolean; ws?: string; wsCol?: string | null; domain?: Domain }): Rule {
   return (x, id, e) => {
-    const vis = o.c || o.r ? e.vis({ classification: o.c ? `${x}.classification` : undefined, room: o.r ? `${x}.room_id` : undefined }) : TRUE;
-    const reach = o.ws ? e.reach(o.ws, `${x}.${o.wsCol ?? 'workstream_id'}`) : TRUE;
+    const vis = o.c || o.r ? e.vis({ classification: o.c ? `${x}.classification` : undefined, room: o.r ? `${x}.room_id` : undefined }, o.domain) : TRUE;
+    const reach = o.ws ? e.reach(o.ws, o.wsCol === null ? 'null::uuid' : `${x}.${o.wsCol ?? 'workstream_id'}`) : TRUE;
     return sql`exists (select 1 from ${sql.identifier(table)} ${raw(x)} where ${raw(x)}.id = ${id} and ${vis} and ${reach})`;
   };
 }
@@ -70,12 +77,20 @@ function viaTarget(table: string, typeCol: string, idCol: string): Rule {
 const PLAN = 'planning.plan.read';
 const CARVEOUT = 'carveout.register.read';
 const READINESS = 'readiness.register.read';
+const FIN = 'finance.record.read';
 
 /** Every entity type that carries a record-level visibility rule (activity feed types and evidence target types). */
 const RULES: Record<string, Rule> = {
   // own classification / room
   agreement: own('agreement', { c: true }),
-  budget_line: own('budget_line', { c: true }),
+  // finance records: finance-domain clearance and the reach of finance.record.read, exactly like FinanceSupport.visibleSql
+  budget_line: own('budget_line', { c: true, ws: FIN, domain: 'finance' }),
+  financial_snapshot: own('financial_snapshot', { c: true, ws: FIN, domain: 'finance' }),
+  financial_model: own('financial_model', { c: true, ws: FIN, wsCol: null, domain: 'finance' }),
+  financial_model_version: own('financial_model_version', { c: true, ws: FIN, wsCol: null, domain: 'finance' }),
+  intercompany_reconciliation: own('intercompany_reconciliation', { c: true, ws: FIN, wsCol: null, domain: 'finance' }),
+  benefit: own('benefit', { c: true, ws: FIN, domain: 'finance' }),
+  kpi: own('kpi', { c: true, ws: FIN, wsCol: null, domain: 'finance' }),
   committee: own('committee', { c: true }),
   consent: own('consent', { c: true }),
   deal_scenario: own('deal_scenario', { c: true }),
@@ -83,9 +98,6 @@ const RULES: Record<string, Rule> = {
   diligence_finding: own('diligence_finding', { c: true, r: true }), // room derived from its DD request (ARCH-22)
   diligence_request: own('diligence_request', { c: true, r: true }),
   document: own('document', { c: true, r: true }),
-  financial_model_version: own('financial_model_version', { c: true }),
-  financial_snapshot: own('financial_snapshot', { c: true }),
-  intercompany_reconciliation: own('intercompany_reconciliation', { c: true }),
   negotiation_issue: own('negotiation_issue', { c: true }),
   partner: own('partner', { c: true }),
   partner_room: own('partner_room', { c: true }),
@@ -172,14 +184,23 @@ export class RecordVisibility {
 
   private env(): Env {
     return {
-      vis: (cols) =>
-        this.policy.visibilitySql(this.ctx, this.projectId, {
+      vis: (cols, domain) =>
+        this.policy.visibilitySql(domain ? this.domainCtx(domain) : this.ctx, this.projectId, {
           classification: cols.classification ? (raw(cols.classification) as unknown as PgColumn) : undefined,
           room: cols.room ? (raw(cols.room) as unknown as PgColumn) : undefined,
         }),
       reach: (permission, wsExpr) => (this.opts.reach ? this.policy.reachSql(this.ctx, permission, this.projectId, raw(wsExpr)) : TRUE),
       target: (typeExpr, idExpr, depth) => this.targetSql(raw(typeExpr), raw(idExpr), depth),
     };
+  }
+
+  /** The caller with the clearance of a security domain (finance: FinanceSupport.fx — project-wide roles only). */
+  private domainCtx(domain: Domain): RequestContext {
+    const p = this.ctx.principal;
+    const scope = p.kind === 'service' ? undefined : p.projects.get(this.projectId);
+    if (!scope || domain !== 'finance') return this.ctx;
+    const clearance = financeDomainClearance(p.clearance, scope.roles);
+    return clearance === p.clearance ? this.ctx : { ...this.ctx, principal: { ...p, clearance } };
   }
 
   /** The record `type`/`id` is visible (TRUE for a type without a record-level rule). */
@@ -224,4 +245,4 @@ export class RecordVisibility {
 }
 
 /** Polymorphic target types that have no record-level rule (visibility = type-level read permission only). */
-const UNRULED_TARGET_TYPES = ['gate_criterion', 'closing_condition', 'legal_entity', 'benefit', 'post_close_obligation', 'closing_deliverable', 'project', 'gate_assessment', 'document_chunk', 'baseline_version', 'change_request', 'perimeter_version'];
+const UNRULED_TARGET_TYPES = ['gate_criterion', 'closing_condition', 'legal_entity', 'post_close_obligation', 'closing_deliverable', 'project', 'gate_assessment', 'document_chunk', 'baseline_version', 'change_request', 'perimeter_version'];

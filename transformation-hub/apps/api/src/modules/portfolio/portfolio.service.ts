@@ -78,6 +78,11 @@ const ACTIVITY_ENTITY_PERMISSION: Record<string, string> = {
   tsa_service: 'readiness.register.read',
   budget_line: 'finance.record.read',
   benefit: 'finance.record.read',
+  financial_snapshot: 'finance.record.read',
+  financial_model: 'finance.record.read',
+  financial_model_version: 'finance.record.read',
+  intercompany_reconciliation: 'finance.record.read',
+  kpi: 'finance.record.read',
   closing: 'jv.deal.read',
   closing_condition: 'jv.deal.read',
 };

@@ -138,6 +138,24 @@ describe('Finance isolation — other projects, clearance, workstream reach, for
     expect((await p.sponsor.get(`${P(projectId)}/financial-models`).expect(200)).body.total).toBe(1);
   });
 
+  it('evidence and history of finance records follow the finance-domain clearance and reach, like the finance lists', async () => {
+    const ev = (target: string, id: string) => `${P(projectId)}/evidence?targetType=${target}&targetId=${id}`;
+    const hist = (type: string, id: string) => `${P(projectId)}/activity?entityType=${type}&entityId=${id}`;
+    // finance_restricted (general clearance below the figure, finance-domain clearance strictly_confidential): readable.
+    expect((await p.finance.get(ev('financial_snapshot', restrictedSnap))).status).toBe(200);
+    expect((await p.finance.get(hist('financial_snapshot', restrictedSnap)).expect(200)).body.total).toBeGreaterThan(0);
+    expect((await p.finance.get(hist('financial_model', valuationModel)).expect(200)).body.total).toBeGreaterThan(0);
+    // The PM (confidential, no finance-domain clearance): the same records are invisible — 404 / nothing in the history.
+    expect((await p.pm.get(ev('financial_snapshot', restrictedSnap))).status).toBe(404);
+    expect((await p.pm.get(hist('financial_snapshot', restrictedSnap)).expect(200)).body.total).toBe(0);
+    expect((await p.pm.get(hist('financial_model', valuationModel)).expect(200)).body.total).toBe(0);
+    expect((await p.pm.get(hist('financial_snapshot', confidentialSnap)).expect(200)).body.total).toBeGreaterThan(0);
+    // A workstream-only finance reader: a budget line of another workstream / of the whole programme is not in its history.
+    const lead = await loginAs('tech.lead');
+    expect((await lead.get(hist('budget_line', lineWs07)).expect(200)).body.total).toBeGreaterThan(0);
+    expect((await lead.get(hist('budget_line', lineProject)).expect(200)).body.total).toBe(0);
+  });
+
   it('a workstream-only reader sees and counts only its workstream (reach in SQL); records without a workstream are 404', async () => {
     const lead = await loginAs('tech.lead');
     const lines = (await lead.get(`${P(projectId)}/budget-lines?pageSize=100`).expect(200)).body;
