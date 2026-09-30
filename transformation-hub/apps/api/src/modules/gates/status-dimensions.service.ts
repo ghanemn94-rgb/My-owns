@@ -161,7 +161,10 @@ export class StatusDimensionsService {
         changed.push(d.key);
         continue;
       }
-      const same = prev.state === d.state && (prev.explanation ?? '') === d.explanation && JSON.stringify(prev.counts ?? null) === JSON.stringify(counts);
+      // Key-order-insensitive: jsonb returns object keys in its own order, so a plain JSON.stringify comparison reported a
+      // change (new version, history row and audit event) on every recompute of an unchanged dimension (REQ-SET-001).
+      const canon = (c: Record<string, number> | null | undefined) => (c ? JSON.stringify(Object.keys(c).sort().map((k) => [k, c[k]])) : 'null');
+      const same = prev.state === d.state && (prev.explanation ?? null) === (d.explanation ?? null) && canon(prev.counts) === canon(counts);
       if (same) {
         await tx.update(schema.statusDimension).set({ computedAt: now }).where(eq(schema.statusDimension.id, prev.id));
         continue;
