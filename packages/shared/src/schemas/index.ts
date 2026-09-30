@@ -5,3 +5,4 @@ export * from "./access.ts";
 export * from "./transformation.ts";
 export * from "./audit.ts";
 export * from "./problem.ts";
+export * from "./events.ts";

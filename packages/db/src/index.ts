@@ -1,14 +1,45 @@
-// @mth/db skeleton (T-DG1-ARCH-01). backend-workflow-engineer adds: the Kysely `Database` interface for the
-// P1 tables (docs/architecture/data-dictionary.md), the pool factory and the migration runner (ADR-0003).
-
-/** Migration bookkeeping table (forward-only, checksum-locked). */
-export const MIGRATION_TABLE = "schema_migration";
-
-/** Migration file naming: NNNN_snake_case_description.sql, applied in lexical order, never edited once merged. */
-export const MIGRATION_FILE_PATTERN = /^(\d{4})_[a-z0-9_]+\.sql$/;
-
-/** PostgreSQL roles the migrations grant to (created by deployment, not by migrations; ADR-0003/ADR-0004). */
-export const DB_ROLES = {
-  owner: "mth_owner",
-  app: "mth_app",
-} as const;
+// @mth/db public surface (ADR-0002, ADR-0003): Kysely schema types, pool/transaction helpers, the migration
+// runner, the single audit insert path, bootstrap and the dev-only synthetic seed.
+export { DB_ROLES, DEV_ISSUER, MIGRATION_FILE_PATTERN, MIGRATION_TABLE } from "./constants.ts";
+export * from "./schema.ts";
+export {
+  connectionWithSessionOptions,
+  createDb,
+  createPool,
+  withTransaction,
+  type Db,
+  type DbOrTx,
+  type PoolOptions,
+  type Tx,
+} from "./pool.ts";
+export {
+  compareStatus,
+  defaultMigrationsDir,
+  listMigrationFiles,
+  migrate,
+  MigrationError,
+  migrationStatus,
+  sha256Hex,
+  type AppliedMigration,
+  type MigrationFile,
+  type MigrationStatus,
+} from "./migrate.ts";
+export {
+  diffFields,
+  insertAuditEvent,
+  type ActorType,
+  type AuditActor,
+  type AuditEventInput,
+  type AuditSource,
+  type FieldChanges,
+} from "./audit.ts";
+export {
+  bootstrap,
+  BOOTSTRAP_ADMIN_ROLES,
+  BootstrapError,
+  validateBootstrapInput,
+  type BootstrapInput,
+  type BootstrapResult,
+} from "./bootstrap.ts";
+export { assertDevSeedAllowed, DevSeedRefused, devSeedFile, seedDev } from "./dev-seed.ts";
+export { sql, type Expression, type SqlBool } from "kysely";

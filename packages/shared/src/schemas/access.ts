@@ -1,5 +1,18 @@
 import { z } from "zod";
-import { locale, name, permissionCode, reason, roleCode, scopeRef, timestamp, timeZone, userStatus, uuid, version } from "./common.ts";
+import {
+  locale,
+  name,
+  permissionCode,
+  uniqueArray,
+  reason,
+  roleCode,
+  scopeRef,
+  timestamp,
+  timeZone,
+  userStatus,
+  uuid,
+  version,
+} from "./common.ts";
 import { organization } from "./organization.ts";
 
 export const userIdentity = z.strictObject({
@@ -29,7 +42,12 @@ export const userCreate = z.strictObject({
   identity: z.strictObject({ issuer: z.string().max(512), subject: z.string().min(1).max(255) }).optional(),
 });
 export const userUpdate = z
-  .strictObject({ displayName: name, email: z.email().max(320).nullable(), preferredLocale: locale, status: userStatus })
+  .strictObject({
+    displayName: name,
+    email: z.email().max(320).nullable(),
+    preferredLocale: locale,
+    status: userStatus,
+  })
   .partial()
   .refine((o) => Object.keys(o).length > 0, "validation.empty_update");
 export const preferencesUpdate = z
@@ -44,7 +62,7 @@ export const role = z.strictObject({
   nameAr: name,
   kind: z.enum(["source", "implementation", "technical_admin"]),
   inheritsDownward: z.boolean(),
-  permissions: z.array(permissionCode),
+  permissions: uniqueArray(permissionCode),
 });
 export const permissionEntry = z.strictObject({
   code: permissionCode,
@@ -76,7 +94,8 @@ export const roleAssignmentCreate = z
     effectiveTo: timestamp.optional(),
     reason,
   })
-  .refine((a) => !a.effectiveFrom || !a.effectiveTo || a.effectiveFrom < a.effectiveTo, {
+  // Compare instants, not strings: "2026-01-01T10:00:00+03:00" is BEFORE "2026-01-01T08:00:00Z".
+  .refine((a) => !a.effectiveFrom || !a.effectiveTo || Date.parse(a.effectiveFrom) < Date.parse(a.effectiveTo), {
     message: "validation.effective_range",
     path: ["effectiveTo"],
   });
@@ -92,7 +111,7 @@ export const me = z.strictObject({
   organization,
   assignments: z.array(roleAssignment),
   effectivePermissions: z.array(
-    z.strictObject({ scope: scopeRef, inheritsDownward: z.boolean(), permissions: z.array(permissionCode) }),
+    z.strictObject({ scope: scopeRef, inheritsDownward: z.boolean(), permissions: uniqueArray(permissionCode) }),
   ),
 });
 

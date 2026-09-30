@@ -40,3 +40,6 @@ export type EnvVarName = keyof typeof ENV_VARS;
 /** Allowed AUTH_MODE values; `dev` must be rejected at startup when NODE_ENV=production (ADR-0005). */
 export const AUTH_MODES = ["oidc", "dev"] as const;
 export type AuthMode = (typeof AUTH_MODES)[number];
+
+// Validated loader over the catalogue above (T-DG1-BE).
+export { ConfigError, loadConfig, secretVariableNames, LOG_LEVELS, NODE_ENVS, type AppConfig, type Service } from "./load.ts";

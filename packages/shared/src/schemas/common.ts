@@ -60,3 +60,8 @@ export const ifMatch = z
   .regex(/^"[1-9][0-9]{0,9}"$/, "validation.if_match")
   .transform((v) => Number(v.slice(1, -1)));
 export const etagFor = (v: number): string => `"${v}"`;
+
+/** Array with JSON Schema `uniqueItems: true` semantics (primitives). */
+export function uniqueArray<T extends z.ZodType>(item: T) {
+  return z.array(item).refine((xs) => new Set(xs).size === xs.length, "validation.unique_items");
+}

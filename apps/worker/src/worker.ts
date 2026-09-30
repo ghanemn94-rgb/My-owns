@@ -1,0 +1,80 @@
+// Worker runtime (ADR-0008): the outbox relay loop, the pg-boss handlers and the maintenance schedule.
+// A handler that throws is retried by pg-boss per the queue policy and lands in `ops.failed` when retries run out.
+import type { Db } from "@mth/db";
+import type PgBoss from "pg-boss";
+import { handleTransformationCreated, purgeExpired } from "./handlers.ts";
+import { ensureQueues, OUTBOX_RELAY, QUEUES, schedulePurge, type QueuePolicyOverrides } from "./queues.ts";
+import { relayOnce } from "./relay.ts";
+
+export interface WorkerLogger {
+  info(obj: object, msg: string): void;
+  error(obj: object, msg: string): void;
+}
+
+export interface WorkerOptions {
+  readonly db: Db;
+  readonly boss: PgBoss;
+  readonly timeZone: string;
+  readonly log?: WorkerLogger;
+  readonly pollIntervalMs?: number;
+  readonly jobPollingIntervalSeconds?: number;
+  readonly queuePolicy?: QueuePolicyOverrides;
+}
+
+export interface RunningWorker {
+  stop(): Promise<void>;
+}
+
+const consoleLogger: WorkerLogger = {
+  info: (obj, msg) => console.log(JSON.stringify({ level: "info", msg, ...obj })),
+  error: (obj, msg) => console.error(JSON.stringify({ level: "error", msg, ...obj })),
+};
+
+export async function startWorker(options: WorkerOptions): Promise<RunningWorker> {
+  const { db, boss } = options;
+  const log = options.log ?? consoleLogger;
+  const pollingIntervalSeconds = options.jobPollingIntervalSeconds ?? 2;
+
+  await ensureQueues(boss, options.queuePolicy);
+  await schedulePurge(boss, options.timeZone);
+
+  await boss.work(QUEUES.transformationCreated, { batchSize: 1, pollingIntervalSeconds }, async ([job]) => {
+    const outcome = await handleTransformationCreated(db, job!.data, job!.id);
+    log.info({ queue: QUEUES.transformationCreated, jobId: job!.id, outcome }, "job handled");
+    return { outcome };
+  });
+  await boss.work(QUEUES.purge, { batchSize: 1, pollingIntervalSeconds }, async ([job]) => {
+    const result = await purgeExpired(db);
+    log.info({ queue: QUEUES.purge, jobId: job!.id, ...result }, "expired rows purged");
+    return result;
+  });
+
+  let stopped = false;
+  let running: Promise<void> = Promise.resolve();
+  const interval = options.pollIntervalMs ?? OUTBOX_RELAY.pollIntervalMs;
+  const tick = async () => {
+    try {
+      const r = await relayOnce(db, boss);
+      if (r.published > 0 || r.failed > 0) log.info({ ...r }, "outbox relay");
+    } catch (err) {
+      log.error({ err: err instanceof Error ? err.message : String(err) }, "outbox relay failed");
+    }
+  };
+  const loop = async () => {
+    while (!stopped) {
+      running = tick();
+      await running;
+      await new Promise((r) => setTimeout(r, interval));
+    }
+  };
+  void loop();
+
+  return {
+    async stop() {
+      stopped = true;
+      await running;
+      await boss.offWork(QUEUES.transformationCreated);
+      await boss.offWork(QUEUES.purge);
+    },
+  };
+}
