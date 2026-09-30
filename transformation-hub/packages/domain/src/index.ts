@@ -6,6 +6,7 @@ export * from './calendar';
 export * from './schedule';
 export * from './workflows';
 export * from './governance';
+export * from './decision-reliance';
 export * from './gates';
 export * from './measurement';
 export * from './canonical';

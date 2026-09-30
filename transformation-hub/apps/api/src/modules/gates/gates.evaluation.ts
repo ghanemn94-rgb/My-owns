@@ -40,12 +40,25 @@ export interface EvidenceCounts {
   linkVersions: { id: string; status: string; version: number }[];
 }
 
-/** Stored reassessment flags on a decided cycle's `evaluation` JSON (AT-14, DOM-P2-05). */
+/**
+ * DOM-P2R-04: the governance decision the approval relied on lost the evidence of its external approval (the evidence link
+ * was rejected as defective, superseded or marked conflicting).
+ */
+export interface DecisionEvidenceFlag {
+  decisionId: string;
+  code: string;
+  evidenceLinkId: string;
+  reason: ReassessmentReason;
+}
+
+/** Stored reassessment flags on a decided cycle's `evaluation` JSON (AT-14, DOM-P2-05, DOM-P2R-04). */
 export interface ReassessmentFlags {
   needsReassessment: boolean;
   requestedAt: string | null;
   /** `reason`: conflicting evidence, evidence rejected as defective, or superseded evidence relied upon at the decision. */
   criteria: { criterionId: string; key: string; evidenceLinkIds: string[]; reason: ReassessmentReason }[];
+  /** The backing decision's external-approval evidence changed (DOM-P2R-04); null when not. */
+  decisionEvidence: DecisionEvidenceFlag | null;
   escalationId: string | null;
   upstreamGateKeys: string[];
 }
@@ -193,6 +206,7 @@ export function reassessmentOf(a: AssessmentRow): ReassessmentFlags {
     requestedAt: r?.reassessment?.requestedAt ?? null,
     // Flags written before DOM-P2-05 carry no reason: they were all raised for conflicting evidence.
     criteria: (r?.reassessment?.criteria ?? []).map((c) => ({ criterionId: c.criterionId, key: c.key, evidenceLinkIds: c.evidenceLinkIds ?? [], reason: c.reason ?? 'evidence_conflict' })),
+    decisionEvidence: r?.reassessment?.decisionEvidence ?? null,
     escalationId: r?.reassessment?.escalationId ?? null,
     upstreamGateKeys: r?.reassessment?.upstreamGateKeys ?? [],
   };

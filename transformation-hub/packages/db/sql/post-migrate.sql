@@ -192,7 +192,7 @@ $$;
 DO $append$
 DECLARE t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['audit_event', 'vote', 'record_version', 'approval_record', 'transfer_record', 'readiness_test_run', 'report_snapshot', 'recusal', 'conflict_declaration', 'audit_checkpoint', 'cutover_decision_record', 'agreement_version', 'perimeter_impact_assessment']
+  FOREACH t IN ARRAY ARRAY['audit_event', 'vote', 'record_version', 'approval_record', 'transfer_record', 'readiness_test_run', 'report_snapshot', 'recusal', 'conflict_declaration', 'audit_checkpoint', 'cutover_decision_record', 'agreement_version', 'perimeter_impact_assessment', 'decision_use']
   LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS hub_append_only ON %I', t);
     EXECUTE format('CREATE TRIGGER hub_append_only BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION hub_reject_mutation()', t);
@@ -475,6 +475,7 @@ CREATE OR REPLACE FUNCTION hub_target_table(p_type text) RETURNS text LANGUAGE s
     WHEN 'closing' THEN 'closing' WHEN 'closing_condition' THEN 'closing_condition' WHEN 'closing_deliverable' THEN 'closing_deliverable'
     WHEN 'post_close_obligation' THEN 'post_close_obligation' WHEN 'document' THEN 'document' WHEN 'site' THEN 'site'
     WHEN 'operating_model_definition' THEN 'operating_model_definition' WHEN 'ai_proposal' THEN 'ai_proposal'
+    WHEN 'perimeter_version' THEN 'perimeter_version'
     ELSE NULL END
 $$;
 
@@ -521,6 +522,11 @@ BEGIN
       ('raci_assignment', 'entity_type', 'entity_id', 'entity'),
       ('rag_override', 'entity_type', 'entity_id', 'entity'),
       ('change_request', 'subject_type', 'subject_id', 'subject'),
+      -- DOM-P2R-03: the record a decision authorizes (change request / baseline version / perimeter version) is a record
+      -- of the decision's own project.
+      ('decision', 'subject_type', 'subject_id', 'subject'),
+      -- Decision-use registry (DOM-P2R-05, QA-P2-01): the record a decision was relied upon for is a record of its project.
+      ('decision_use', 'subject_type', 'subject_id', 'subject'),
       ('source_claim', 'target_type', 'target_id', 'target'),
       ('escalation', 'source_type', 'source_id', 'source'),
       ('import_row', 'target_type', 'target_id', 'target'),

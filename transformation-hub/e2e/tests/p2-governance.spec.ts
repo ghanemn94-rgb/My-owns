@@ -17,6 +17,7 @@ const P = {
   sponsor: 'Demo Sponsor',
   finance: 'Demo Finance Member',
   legal: 'Demo Legal Member',
+  approver: 'Demo Functional Approver',
 } as const;
 const STEERING = 'DC Carve-out & JV Steering Committee (Demo)';
 
@@ -105,6 +106,8 @@ test.describe('P2 governance — Committee Hub (REQ-GOV-012..020, AT-05 in the U
       await form.getByLabel(/^Dependencies/).fill('None identified');
       await form.getByLabel(/^Latest safe decision date/).fill('2026-12-15');
       await form.getByLabel(/^Required approving authority/).fill('Steering committee (DEMO matrix)');
+      // DOM-P2-14: supporting evidence on the paper — or "none" with a reason.
+      await form.getByLabel(/^No supporting evidence or attachment — reason/).fill('Synthetic E2E paper: no supporting documents exist');
       await form.getByTestId('paper-save').click();
       await pm.page.waitForURL(/\/committee\/decisions\/[0-9a-f-]{36}$/);
       const decisionUrl = new URL(pm.page.url()).pathname;
@@ -136,7 +139,7 @@ test.describe('P2 governance — Committee Hub (REQ-GOV-012..020, AT-05 in the U
       await expect(sec.page.getByTestId('meeting-status')).toContainText('In session');
       await sec.page.getByTestId('record-attendance').click();
       const att = sec.page.getByRole('dialog');
-      for (const who of [P.chair, P.sponsor, P.finance, P.legal, P.secretary, 'Demo Functional Approver']) {
+      for (const who of [P.chair, P.sponsor, P.finance, P.legal, P.secretary, P.approver]) {
         await att.locator(`select[data-person="${who}"]`).selectOption('present');
       }
       await confirmDialog(sec.page, 'Save attendance');
@@ -171,12 +174,15 @@ test.describe('P2 governance — Committee Hub (REQ-GOV-012..020, AT-05 in the U
         await legal.close();
       }
 
-      // --- Eligible members vote.
-      for (const persona of [P.chair, P.sponsor, P.finance]) {
+      // --- Every present eligible member votes (DOM-P2R-01), each first declaring "no conflict" for the item (REQ-GOV-015).
+      for (const persona of [P.chair, P.sponsor, P.finance, P.approver]) {
         const voter = await asPersona(browser, persona);
         try {
           await voter.page.goto(decisionUrl);
-          await runCommand(voter.page, 'vote', 'Vote');
+          await runCommand(voter.page, 'vote', 'Vote', async (d) => {
+            await expect(d.getByRole('button', { name: 'Vote', exact: true })).toBeDisabled();
+            await d.getByTestId('vote-conflict').getByRole('radio', { name: 'I have no conflict of interest with this item' }).check();
+          });
           await expect(voter.page.getByTestId('votes-table')).toContainText(persona);
           expect(voter.problems(), voter.problems().join('\n')).toEqual([]);
         } finally {
@@ -186,10 +192,10 @@ test.describe('P2 governance — Committee Hub (REQ-GOV-012..020, AT-05 in the U
 
       // --- The server computes quorum, tally and authority: Approved within the DEMO mandate.
       await sec.page.reload();
-      await expect(sec.page.getByTestId('votes-table').getByRole('row')).toHaveCount(4);
+      await expect(sec.page.getByTestId('votes-table').getByRole('row')).toHaveCount(5);
       await runCommand(sec.page, 'recordOutcome', 'Record outcome');
       await expect(sec.page.getByTestId('decision-status')).toContainText('Approved');
-      await expect(sec.page.getByTestId('decision-outcome')).toContainText('3 approve · 0 reject · 0 abstain');
+      await expect(sec.page.getByTestId('decision-outcome')).toContainText('4 approve · 0 reject · 0 abstain');
       await expect(sec.page.getByTestId('decision-outcome')).toContainText('Quorum met:');
       await expect(sec.page.getByTestId('decision-lifecycle')).toContainText('Implementation pending');
       await expect(sec.page.getByText('Approval is not implementation', { exact: false })).toBeVisible();
@@ -213,9 +219,9 @@ test.describe('P2 governance — Committee Hub (REQ-GOV-012..020, AT-05 in the U
         await expect(ar.page.locator('html')).toHaveAttribute('dir', 'rtl');
         await expect(ar.page.getByTestId('committee-tabs').getByRole('link', { name: 'القرارات' })).toBeVisible();
         await expect(ar.page.getByTestId('decision-status')).toContainText('معتمد');
-        await expect(ar.page.getByTestId('decision-outcome')).toContainText('3 موافقة · 0 رفض · 0 امتناع');
+        await expect(ar.page.getByTestId('decision-outcome')).toContainText('4 موافقة · 0 رفض · 0 امتناع');
         await expect(ar.page.getByTestId('decision-outcome')).toContainText('النصاب مكتمل:');
-        await expect(ar.page.getByTestId('votes-table').getByRole('row')).toHaveCount(4);
+        await expect(ar.page.getByTestId('votes-table').getByRole('row')).toHaveCount(5);
         await expect(ar.page.getByTestId('gov-history').locator('li[data-action]').first()).toBeVisible();
         await expect(ar.page.getByRole('link', { name: STEERING })).toBeVisible();
         await ar.page.screenshot({ path: join(SHOTS, 'governance-ar.png'), fullPage: true });

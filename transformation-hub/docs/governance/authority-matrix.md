@@ -94,6 +94,26 @@ For every approval command the server evaluates, in one transaction, and logs th
    vote are not counted; a round without any approve or reject vote (abstentions only) records no outcome. This is the
    current written rule of this build and awaits confirmation by Mobily's governance owner (A-40 / Q-40, with the
    alternative).
+   *Closing the vote (P2 re-review DOM-P2R-01) — PROPOSED default of this build, pending the governance owner's
+   confirmation (Q-40); not a Mobily policy:* an outcome is recorded only when the vote is complete —
+   (a) every eligible member expected to vote has voted (approve, reject or abstain): in a meeting, the appointed voting
+   members recorded present, minus members recused from the item and the requester; for a resolution by circulation,
+   every appointed eligible voting member (the circulation is sent to all of them); or
+   (b) the committee's **chair** (the chair seat holder on the meeting date) closed voting on the round with a reason
+   (`POST …/decisions/:id/close-voting`, audited `governance.decision.close_voting`); no further vote is accepted in that
+   round (`422 governance.vote.voting_closed`); or
+   (c) for a circulation only, its response deadline has passed.
+   Otherwise `422 governance.outcome.votes_outstanding` (in a meeting, a quorum missing from the attendance is reported
+   first, `governance.outcome.no_quorum`, since no vote could be cast). Members who had not voted when the vote closed are listed in the
+   tally snapshot (`voting.notVoted`) and are **not counted** — abstention handling is unchanged. A new round (resume,
+   return to draft) reopens voting. The alternative reading (non-voters present count as not approving, A-40) remains open
+   for the governance owner.
+   *Declarations before voting (REQ-GOV-015, F-01):* a member votes on an item only after recording, **in their own name**,
+   a conflict-of-interest declaration for that item — "no conflict" (given with the vote, `conflictDeclaration:
+   "no_conflict"`, or earlier in the meeting's conflict register) or a declared interest (the chair may then rule a
+   recusal). A member with a conflict records a recusal instead of voting. A declaration recorded by someone else on the
+   member's behalf does not satisfy the rule (`422 governance.vote.declaration_required`). Whether an interest declared
+   without a chair's ruling may vote is for the governance owner to confirm (Q-40).
 6. **Tie** (approve votes equal non-approve votes): `chair_casting_vote` → the chair's casting vote decides (only if
    the chair is eligible for the item); `escalate` → the item is recorded as tied and escalated; no approval.
    *Clarified (DOM-P2-13):* the chair has no second vote — the casting vote is exercised through the chair's own vote in
@@ -122,6 +142,29 @@ For every approval command the server evaluates, in one transaction, and logs th
     recorded external approval. Linking a decision that fails (a) or (c) to a gate cycle is refused
     (`gates.decision.not_for_gate`); deciding on one is refused (`gates.decide.decision_not_for_gate` /
     `gates.decide.decision_not_final`). A committee without an approved matrix cannot back any gate.
+12. **Relying on a decision (P2 re-review DOM-P2R-04).** Every time a decision is relied upon — gate approval, change-request
+    or baseline approval, prerequisite satisfaction, perimeter-version approval — an approval recorded from the external
+    authority counts only while its evidence link (DOM-P2-12) is still **active and verified**. A rejected (found
+    defective), superseded or conflicting link stops the decision from backing any new approval
+    (`change_control.decision_evidence_invalid`, `gates.decide.decision_evidence_invalid`, gate blocker
+    `gate.blocker.decision_external_evidence_invalid`, prerequisite unsatisfied). A gate already approved on that decision is
+    flagged for controlled reassessment (`reassessment.decisionEvidence`, escalation, notifications, `gate.blocked`,
+    downstream gates flagged, status dimensions recomputed) — the recorded decision and the approved cycle are never
+    modified.
+13. **One decision, one record (DOM-P2R-03, DOM-P2R-05, QA-P2-01).** A decision paper names the record it authorizes
+    (`subjectType` + `subjectId`: `change_request`, `baseline_version` or `perimeter_version`), chosen when the paper is
+    drafted and fixed from its first submission (`governance.decision.subject_locked`). A change-request or baseline
+    approval rests only on a decision raised for that record (`change_control.decision_no_subject` /
+    `…decision_other_subject`); a perimeter-version approval rests on a G1 decision that backed no other version
+    (`perimeter.version.decision_already_used`) and, when the decision names a subject, on one raised for that version.
+    Every use is recorded in the **decision-use registry** (`decision_use`: decision, kind of use, record — unique per
+    decision and kind; kinds `change_request`, `baseline_version`, `perimeter_version`, `gate_cycle`), checked under a row
+    lock on the decision (`…decision_already_used`, 422) with the registry's unique index — and the partial unique indexes
+    on `decision_id` — as the backstop (409). Gate decisions are bound by the gate key (rule 11) and cannot back a later
+    cycle of the same gate, whether the earlier cycle was approved or rejected (`gates.decide.decision_reused`; the
+    rejected-cycle case is a proposed rule, pending the governance owner — QA observation O-1). The mechanism is generic
+    (docs/architecture/module-guide.md, "Relying on a governance decision") for later consumers (JV closings, valuations,
+    budget lines).
 
 ### 3.1 Individual approvals under delegated authority — baselines and change requests (P2 fix DOM-P2-03)
 
@@ -137,17 +180,26 @@ the basis in the audit event (`after.authority`):
    `change_request_budget` with its structured budget impact `costImpact` (decimal + currency + unit scale; `0` = none).
    A change request whose `impacts.cost` states a cost in text only has an **unquantified** amount and is never assumed
    to be within a limit (`422 change_control.amount_unquantified`) — the assessor records `costImpact` first.
+   *Who quantifies (P2 re-review DOM-P2R-02) — conservative option, PROPOSED pending the governance owner (Q-43):* the
+   requester may state a `costImpact`, but a requester-stated amount can only make an approval FAIL (above a limit, not
+   covered by a decision); it makes an approval PASS only once an assessor who is **not the requester** has recorded or
+   confirmed it through the impact assessment (`costImpactRecordedBy` ≠ requester; otherwise
+   `422 change_control.amount_unconfirmed`). The requester re-recording the amount does not confirm it. A change with no
+   monetary impact stated at all (no amount, no cost text) is unaffected. Baseline amounts are the approved budget lines
+   frozen in the snapshot (finance-approved) and count as confirmed.
 3. **Within authority** (same rule as §3 step 3: type within the committee's delegation, same currency, amount ≤
    `maxAmount`, decimal arithmetic) → the approver may approve (`basis: delegated_authority`).
 4. **Outside authority** → refused with `422 change_control.outside_delegated_authority` and the body to escalate to. The
    change is routed to the committee through the existing decision flow: a decision paper of the matching type with the
    amount; a passing vote above the limit becomes `recommended` and is escalated; the authorized body's decision is
    recorded with verified evidence (transition 9). The approval then names that decision (`decisionId`): it must be
-   final (approved within the mandate, or approved by the external authority and recorded), of the matching type, carry an
-   amount in the same currency that covers the change, belong to the project, and back one approval only
-   (`change_control.decision_not_final`, `…decision_type_mismatch`, `…decision_amount_missing`, `…decision_amount_currency`,
-   `…decision_amount_insufficient`, `…decision_already_used`; 404 for a decision of another project). The change request /
-   baseline stores `decisionId` (`basis: governance_decision`).
+   final (approved within the mandate, or approved by the external authority and recorded, with that approval's evidence
+   still active and verified — §3 rule 12), of the matching type, **raised for this change request / baseline version**
+   (§3 rule 13), carry an amount in the same currency that covers the change, belong to the project, and back one approval
+   only — checked in this order: `change_control.decision_not_final`, `…decision_evidence_invalid`,
+   `…decision_type_mismatch`, `…decision_already_used` (422, or 409 when a concurrent approval won), `…decision_no_subject`,
+   `…decision_other_subject`, `…amount_unquantified`, `…decision_amount_missing`, `…decision_amount_currency`,
+   `…decision_amount_insufficient`, `…amount_unconfirmed`; 404 for a decision of another project). The change request / baseline stores `decisionId` (`basis: governance_decision`).
 5. **Order of checks**: role (403/404) → state and `expectedVersion` (422/409) → separation of duties (the requester or
    proposer is refused whatever the amount, 403) → delegated authority (422) → the policy check with the evaluated
    `withinAuthority` (never assumed, I-R3). Refusals are audited (`outcome = rejected`).

@@ -73,7 +73,7 @@ describe('QA-P2 adversarial — gate review under concurrency and stale state (G
   // QA-P2-03 (docs/reviews/P2-qa-review.md): the endorsement is checked at submission only. Evidence of a criterion can still
   // change while the cycle is ready for decision (the documents module does not look at the gate state) and `decide` does not
   // re-check the review basis, so the approver decides on a state the gate reviewer never reviewed.
-  it.fails('after submission, a change to a criterion’s evidence is not decided on without a fresh review (evidence refused or decision refused)', async () => {
+  it('after submission, a change to a criterion’s evidence is not decided on without a fresh review (evidence refused or decision refused)', async () => {
     let g0 = await gateByKey(p.pm, projectId, 'G0');
     await review(p.pm, g0.id, g0.assessment.version, 'endorse', 'Re-endorsed after the verification (synthetic)').expect(201);
     g0 = await gateByKey(p.pm, projectId, 'G0');
@@ -111,7 +111,7 @@ describe('QA-P2 adversarial — votes and re-used decisions under concurrency [R
   // unique constraint (change-control.service.ts evaluateAuthority), so approvals of different change requests running at
   // the same time can all rely on the same committee decision. (Also reproduced without the lock below: 4 simultaneous
   // approvals → 2 approved on one decision in 2 of 4 runs.)
-  it.fails('two change requests above the delegated limit approved at the same time on ONE final decision: at most one is approved', async () => {
+  it('two change requests above the delegated limit approved at the same time on ONE final decision: at most one is approved', async () => {
     // The authorized body's decision: 1,500,000 SAR (above the DEMO committee limit) → recommendation → external approval.
     const d = await tabledDecision(projectId, A(), p.pm, gov.committeeId, gov.meetingId, { title: uniq('QA reuse race decision'), decisionTypeKey: 'change_request_budget', amount: { amount: '1500000.0000', currency: 'SAR', unitScale: 1 } });
     const v = await decisionVersion(p.chair, projectId, d.id);
@@ -254,7 +254,7 @@ describe('QA-P2 adversarial — separation of duties on external authority decis
 describe('QA-P2 adversarial — agenda numbering under concurrency [REQ-GOV-013]', () => {
   // F-03 (docs/phases/P2-P4-requirement-disposition.md §5, still open): the agenda number is max(number) + 1 without a lock or
   // a unique index per meeting.
-  it.fails('three agenda requests accepted onto the same meeting at the same instant get distinct numbers', async () => {
+  it('three agenda requests accepted onto the same meeting at the same instant get distinct numbers', async () => {
     const m = await p.secretary.post(`${P(projectId)}/committees/${gov.committeeId}/meetings`, { title: uniq('QA numbering probe meeting'), scheduledAt: new Date().toISOString() });
     expect(m.status, JSON.stringify(m.body)).toBe(201);
     const reqs = [];

@@ -11,6 +11,7 @@ let admin: Client;
 let pm: Client;
 let sponsor: Client;
 let chair: Client;
+let legal: Client;
 let pid: string;
 let ws1: string;
 let t1: string;
@@ -27,7 +28,7 @@ beforeAll(async () => {
   // DOM-P2-03: baseline and change-request approvals act on the project's approved authority matrix (non-demo project):
   // committee + non-demo matrix approved with its approval document and verified by a second person (DOM-P2-12).
   const secretary = await loginAs('secretary');
-  const legal = await loginAs('legal');
+  legal = await loginAs('legal');
   await grant(admin, pid, secretary, 'secretary_cpmo');
   await grant(admin, pid, legal, 'legal_restricted');
   await approvedNonDemoMatrix(pid, { secretary, sponsor, legal });
@@ -126,8 +127,9 @@ describe('AT-16 — concurrent baseline approvals and stale versions [REQ-PLN-00
     const early = await sponsor.post(`/api/v1/projects/${pid}/change-requests/${cr.body.id}/approve`, { expectedVersion: 3 });
     expect(early.status).toBe(422);
     expect(early.body.code).toBe('change_request.impacts_missing');
-    // The budget impact is quantified (DOM-P2-03: "0" = none) so the delegated limit can be checked at approval.
-    await pm
+    // The budget impact is quantified (DOM-P2-03: "0" = none) so the delegated limit can be checked at approval — by an
+    // assessor other than the requester (DOM-P2R-02: a requester-stated amount alone never decides the approval path).
+    await legal
       .post(`/api/v1/projects/${pid}/change-requests/${cr.body.id}/assess`, { expectedVersion: 3, impacts: { time: '+5 working days on WS01 (test)', cost: 'None (test)' }, costImpact: { amount: '0.0000', currency: 'SAR', unitScale: 1 } })
       .expect(201);
     // The PM (who holds the sponsor role in this project) cannot approve their own request.

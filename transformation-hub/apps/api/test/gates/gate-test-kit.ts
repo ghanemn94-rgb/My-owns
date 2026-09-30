@@ -182,10 +182,17 @@ export interface Gov {
   secretary2: Client;
 }
 
-/** Real governance set-up through the governance API: active committee, approved DEMO matrix, open meeting with quorum. */
-export async function setupGovernance(projectId: string, p: Personas): Promise<Gov> {
+/**
+ * Real governance set-up through the governance API: active committee, approved DEMO matrix, open meeting with quorum.
+ * Present by default: chair, sponsor, secretary, finance and legal — the four voting members who vote in the kits (the
+ * approver seat holder is not recorded present), so a round in which those four voted is complete (DOM-P2R-01: every
+ * present eligible member voted) and quorum holds (4 of 5 appointed voting members; DEMO minimum 3).
+ * `allVotingMembersPresent`: the approver is present too (every voting member present).
+ */
+export async function setupGovernance(projectId: string, p: Personas, opts: { allVotingMembersPresent?: boolean } = {}): Promise<Gov> {
   const tc = await setupCommittee(projectId, p as unknown as Actors);
-  const meetingId = (await openMeeting(projectId, p as unknown as Actors, tc, ['chair', 'sponsor', 'secretary', 'finance', 'legal', 'approver'])).id;
+  const present = ['chair', 'sponsor', 'secretary', 'finance', 'legal', ...(opts.allVotingMembersPresent ? ['approver'] : [])];
+  const meetingId = (await openMeeting(projectId, p as unknown as Actors, tc, present)).id;
   const admin = await loginAs('portfolio.admin');
   const opsLead = await loginAs('ops.lead');
   await admin.post(`/api/v1/projects/${projectId}/members`, { userId: opsLead.userId, role: 'secretary_cpmo', reason: 'gates test: second secretariat member' }).expect(201);
@@ -224,6 +231,7 @@ export async function gateDecision(
     const r = await vote(projectId, p[k], d.id, 'approve', v);
     expect(r.status, JSON.stringify(r.body)).toBe(201);
   }
+  await completeVoting(projectId, p, d.id, 'approve');
   const out = await p.secretary.post(`/api/v1/projects/${projectId}/decisions/${d.id}/record-outcome`, { expectedVersion: v });
   expect(out.status, JSON.stringify(out.body)).toBe(201);
   let status = out.body.status as string;
@@ -242,6 +250,20 @@ export async function gateDecision(
     status = ext.body.status;
   }
   return { id: d.id, code: d.code, status };
+}
+
+/**
+ * DOM-P2R-01: every eligible member expected to vote in the current round and not voted yet casts `choice` (declaring "no
+ * conflict"), so the outcome can be recorded without the chair closing the vote. Uses the server's voting state.
+ */
+export async function completeVoting(projectId: string, p: Personas, decisionId: string, choice: 'approve' | 'reject' | 'abstain') {
+  const d = (await p.chair.get(`/api/v1/projects/${projectId}/decisions/${decisionId}`).expect(200)).body as { version: number; voting: { outstandingUserIds: string[] } | null };
+  for (const uid of d.voting?.outstandingUserIds ?? []) {
+    const who = (['chair', 'sponsor', 'finance', 'legal', 'approver'] as const).find((k) => p[k].userId === uid);
+    if (!who) throw new Error(`no test persona for outstanding voter ${uid}`);
+    const r = await vote(projectId, p[who], decisionId, choice, d.version);
+    expect(r.status, JSON.stringify(r.body)).toBe(201);
+  }
 }
 
 /**

@@ -1,4 +1,5 @@
-import { pgTable, uuid, text, integer, jsonb, varchar, date, boolean, index, unique, uniqueIndex } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { pgTable, uuid, text, integer, jsonb, varchar, date, boolean, check, index, unique, uniqueIndex } from 'drizzle-orm/pg-core';
 import {
   pk,
   orgIdCol,
@@ -231,6 +232,22 @@ export const decision = pgTable(
     implementationVerifiedAt: ts('implementation_verified_at'),
     classification: classification('classification').notNull().default('confidential'),
     gateKey: varchar('gate_key', { length: 16 }),
+    /**
+     * The record this decision authorizes (DOM-P2R-03): `change_request` | `baseline_version` | `perimeter_version` + id,
+     * set when the paper is drafted and fixed from its first submission. An approval of a change request / baseline /
+     * perimeter version may rest only on a decision raised for that record. Same-project checked by trigger (post-migrate).
+     */
+    subjectType: varchar('subject_type', { length: 32 }),
+    subjectId: uuid('subject_id'),
+    /** First submission of the paper (the subject can no longer change from then on). */
+    firstSubmittedAt: ts('first_submitted_at'),
+    /** DOM-P2-14: the paper explicitly states that no supporting evidence / attachment exists, with the reason. */
+    evidenceNoneReason: text('evidence_none_reason'),
+    /** DOM-P2R-01: the chair closed voting for this round (the outcome may then be recorded with members not voted). */
+    votingClosedRound: integer('voting_closed_round'),
+    votingClosedBy: uuid('voting_closed_by'),
+    votingClosedAt: ts('voting_closed_at'),
+    votingCloseReason: text('voting_close_reason'),
     isDemo: isDemo(),
     createdAt: createdAt(),
     createdBy: createdBy(),
@@ -239,6 +256,8 @@ export const decision = pgTable(
   },
   (t) => [
     unique('decision_pid_uq').on(t.projectId, t.id),
+    check('decision_subject_ck', sql`(${t.subjectType} is null) = (${t.subjectId} is null) and (${t.subjectType} is null or ${t.subjectType} in ('change_request', 'baseline_version', 'perimeter_version'))`),
+    index('decision_subject_idx').on(t.projectId, t.subjectType, t.subjectId),
     uniqueIndex('decision_code_uq').on(t.projectId, t.code),
     projectFk('decision_committee_fk', t.projectId, t.committeeId, (): FkTarget => committee),
     projectFk('decision_meeting_fk', t.projectId, t.meetingId, (): FkTarget => meeting),
@@ -274,6 +293,8 @@ export const agendaItem = pgTable(
   },
   (t) => [
     unique('agenda_item_pid_uq').on(t.projectId, t.id),
+    // F-03 (REQ-GOV-013): accepted items of a meeting carry distinct numbers (screening also locks the meeting row).
+    uniqueIndex('agenda_item_number_uq').on(t.meetingId, t.number).where(sql`screening_status = 'accepted' and number is not null`),
     projectFk('agenda_item_committee_fk', t.projectId, t.committeeId, (): FkTarget => committee),
     projectFk('agenda_item_meeting_fk', t.projectId, t.meetingId, (): FkTarget => meeting),
     projectFk('agenda_item_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
@@ -313,6 +334,34 @@ export const recusal = pgTable(
     recordedBy: uuid('recorded_by'),
   },
   (t) => [projectFk('recusal_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision), uniqueIndex('recusal_uq').on(t.decisionId, t.userId)],
+);
+
+/**
+ * Decision-use registry (DOM-P2R-05, QA-P2-01, O-1; generic — docs/architecture/module-guide.md "Relying on a governance
+ * decision"): one row per record a committee decision was relied upon to decide — a change-request approval, a baseline
+ * approval, a perimeter-version approval, a gate cycle decision… (`use_kind`, see `DECISION_USE_KINDS` in @hub/domain).
+ * Unique per (decision, kind): one decision backs ONE record of each kind. Written in the approval's own transaction, after
+ * `SELECT … FOR UPDATE` on the decision row; append-only (a use stays recorded even when the record is later superseded).
+ * The record (`subject_type` / `subject_id`) is a record of the same project (polymorphic same-project trigger).
+ */
+export const decisionUse = pgTable(
+  'decision_use',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    decisionId: uuid('decision_id').notNull(),
+    useKind: varchar('use_kind', { length: 48 }).notNull(),
+    subjectType: varchar('subject_type', { length: 32 }).notNull(),
+    subjectId: uuid('subject_id').notNull(),
+    usedAt: ts('used_at').notNull().defaultNow(),
+    usedBy: uuid('used_by'),
+  },
+  (t) => [
+    projectFk('decision_use_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
+    uniqueIndex('decision_use_kind_uq').on(t.decisionId, t.useKind),
+    index('decision_use_subject_idx').on(t.projectId, t.subjectType, t.subjectId),
+  ],
 );
 
 /** Votes are immutable (UPDATE/DELETE blocked by trigger) and keep the authority matrix version in force. */

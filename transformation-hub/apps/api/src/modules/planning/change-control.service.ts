@@ -19,6 +19,7 @@ import {
   ApprovalAmount,
   CHANGE_CONTROL_DECISION_TYPES,
   DelegatedApprovalResult,
+  DecisionUseRecord,
   GoverningMatrix,
   LinkedDecisionSnapshot,
   baselineBudgetAmount,
@@ -37,6 +38,7 @@ import { PlanningSupport, ProjectInfo } from './planning-support';
 import { ScheduleService } from './schedule.service';
 import { DEMO_AUTHORITY_POLICY } from '../governance/demo-policy';
 import { amountOf } from '../governance/governance.support';
+import { isUniqueViolation, lockDecisionForReliance, registerDecisionUse } from '../governance/decision-reliance';
 import { likeContains } from '../../platform/helpers';
 
 type Impacts = z.infer<typeof ImpactsSchema>;
@@ -350,7 +352,8 @@ export class ChangeControlService {
     this.s.assertVersion(b, body.expectedVersion, 'baseline');
     const to = transition('baseline', BASELINE_MACHINE, b.status as BaselineStatus, 'approve');
     const frozen = b.snapshot as unknown as BaselineSnapshot;
-    const auth = await this.evaluateAuthority(ctx, p, CHANGE_CONTROL_DECISION_TYPES.baseline, baselineBudgetAmount(frozen.budgetLines ?? []), body.decisionId, { kind: 'baseline', selfId: b.id });
+    // The frozen budget lines are the finance-approved amounts (not a requester's statement): confirmed (DOM-P2R-02).
+    const auth = await this.evaluateAuthority(ctx, p, CHANGE_CONTROL_DECISION_TYPES.baseline, baselineBudgetAmount(frozen.budgetLines ?? []), body.decisionId, { kind: 'baseline', selfId: b.id }, true);
     this.assertDelegatedApproval(ctx, 'planning.baseline.approve', p, b.proposedBy, auth);
     const previous = await this.s.currentBaselineRow(projectId);
     if (previous) {
@@ -358,11 +361,13 @@ export class ChangeControlService {
       await updateVersioned(this.s.db, schema.baselineVersion, { id: previous.id, projectId, expectedVersion: previous.version }, { status: 'superseded', supersededAt: new Date() });
       await this.audit.record({ action: 'planning.baseline.supersede', entityType: 'baseline_version', entityId: previous.id, projectId, before: { status: 'approved' }, after: { status: 'superseded', supersededBy: baselineId } });
     }
-    const row = await updateVersioned(
-      this.s.db,
-      schema.baselineVersion,
-      { id: baselineId, projectId, expectedVersion: body.expectedVersion },
-      { status: to, approvedBy: ctx.principal.userId, approvedAt: new Date(), decisionNote: body.note ?? null, decisionId: auth.decisionId },
+    const row = await this.guardDecisionReuse(ctx, projectId, auth, { kind: 'baseline_version', subjectId: baselineId }, () =>
+      updateVersioned(
+        this.s.db,
+        schema.baselineVersion,
+        { id: baselineId, projectId, expectedVersion: body.expectedVersion },
+        { status: to, approvedBy: ctx.principal.userId, approvedAt: new Date(), decisionNote: body.note ?? null, decisionId: auth.decisionId },
+      ),
     );
     // The approver approved the frozen weights too: mark them approved where unchanged since the snapshot and not set by the approver.
     const snap = b.snapshot as unknown as BaselineSnapshot;
@@ -433,6 +438,8 @@ export class ChangeControlService {
       alternatives: c.alternatives ?? [],
       impacts: (c.impacts ?? {}) as Impacts,
       costImpact: costImpactOf(c),
+      costImpactRecordedBy: c.costImpactRecordedBy,
+      costImpactConfirmed: costImpactConfirmed(c),
       status: c.status as ChangeRequestStatus,
       subjectType: c.subjectType,
       subjectId: c.subjectId,
@@ -508,6 +515,8 @@ export class ChangeControlService {
       alternatives: body.alternatives ?? [],
       impacts,
       ...costImpactValues(body.costImpact ?? null),
+      // DOM-P2R-02: stated by the requester (decides authority only once an assessor other than the requester confirms it).
+      costImpactRecordedBy: body.costImpact ? ctx.principal.userId : null,
       status: 'draft',
       subjectType: body.subjectType ?? null,
       subjectId: body.subjectId ?? null,
@@ -577,7 +586,7 @@ export class ChangeControlService {
     if (body.rationale !== undefined) u.rationale = body.rationale;
     if (body.alternatives !== undefined) u.alternatives = body.alternatives;
     if (body.impacts !== undefined) u.impacts = pickImpacts(body.impacts);
-    if (body.costImpact !== undefined) Object.assign(u, costImpactValues(body.costImpact));
+    if (body.costImpact !== undefined) Object.assign(u, costImpactValues(body.costImpact), { costImpactRecordedBy: body.costImpact ? ctx.principal.userId : null });
     if (body.proposedChange !== undefined) u.proposedChange = body.proposedChange;
     if (body.rebaseline !== undefined) u.rebaseline = body.rebaseline;
     if (Object.keys(u).length === 0) throw invalid('planning.no_changes', 'No changes supplied');
@@ -645,7 +654,7 @@ export class ChangeControlService {
       if (!Object.values(impacts).some((v) => typeof v === 'string' && v.trim().length > 0) && !costImpactOf(c)) {
         throw ruleViolation('change_request.impacts_missing', 'Record the impact assessment (time, cost, scope, readiness, transaction…) before approval');
       }
-      auth = await this.evaluateAuthority(ctx, p, CHANGE_CONTROL_DECISION_TYPES.changeRequest, crAmount(c), body.decisionId, { kind: 'change_request', selfId: c.id });
+      auth = await this.evaluateAuthority(ctx, p, CHANGE_CONTROL_DECISION_TYPES.changeRequest, crAmount(c), body.decisionId, { kind: 'change_request', selfId: c.id }, costImpactConfirmed(c));
       this.assertDelegatedApproval(ctx, 'planning.change_request.approve', p, c.requestedBy, auth);
       extra.decisionId = auth.decisionId ?? c.decisionId;
     }
@@ -656,14 +665,14 @@ export class ChangeControlService {
         .where(and(eq(schema.baselineVersion.projectId, projectId), eq(schema.baselineVersion.changeRequestId, c.id), inArray(schema.baselineVersion.status, ['approved', 'superseded'])));
       if (!bl) throw ruleViolation('change_request.rebaseline_missing', 'This change requires a re-baseline: propose and approve the new baseline (linked to this request) first');
     }
-    const row = await updateVersioned(this.s.db, schema.changeRequest, { id, projectId, expectedVersion: body.expectedVersion }, { ...extra, status: to });
+    const row = await this.guardDecisionReuse(ctx, projectId, auth, { kind: 'change_request', subjectId: id }, () => updateVersioned(this.s.db, schema.changeRequest, { id, projectId, expectedVersion: body.expectedVersion }, { ...extra, status: to }));
     await this.audit.record({
       action: `planning.change_request.${command}`,
       entityType: 'change_request',
       entityId: id,
       projectId,
       before: { status: c.status },
-      after: { status: to, ...(auth ? { costImpact: costImpactOf(c), authority: authorityAudit(auth) } : {}) },
+      after: { status: to, ...(auth ? { costImpact: costImpactOf(c), costImpactRecordedBy: c.costImpactRecordedBy, costImpactConfirmed: costImpactConfirmed(c), authority: authorityAudit(auth) } : {}) },
       reason: body.reason ?? body.note ?? null,
     });
     if (command === 'submit') await this.outbox.emit({ type: 'approval.pending', projectId, aggregateType: 'change_request', aggregateId: id, payload: { kind: 'change_request_review' } });
@@ -692,7 +701,8 @@ export class ChangeControlService {
     if (c.status !== 'under_review') throw ruleViolation('change_request.not_under_review', 'Impacts are assessed while the request is under review');
     const merged = { ...((c.impacts ?? {}) as Impacts), ...pickImpacts(body.impacts) };
     // The budget impact as money (DOM-P2-03): compared with the delegated limit at approval.
-    const cost = body.costImpact !== undefined ? costImpactValues(body.costImpact) : {};
+    // DOM-P2R-02: the assessor records (or confirms by re-recording) the amount; it decides authority when not the requester.
+    const cost = body.costImpact !== undefined ? { ...costImpactValues(body.costImpact), costImpactRecordedBy: body.costImpact ? ctx.principal.userId : null } : {};
     const row = await updateVersioned(this.s.db, schema.changeRequest, { id, projectId, expectedVersion: body.expectedVersion }, { impacts: merged, ...cost, reviewedBy: ctx.principal.userId });
     await this.audit.record({
       action: 'planning.change_request.assess',
@@ -734,7 +744,11 @@ export class ChangeControlService {
     return { matrix: null, reason };
   }
 
-  /** Loads the governing matrix and the offered decision (same project, visible, not used by another approval) and evaluates. */
+  /**
+   * Loads the governing matrix and the offered decision (same project, visible, not used by another approval) and evaluates.
+   * QA-P2-01: the decision row is locked (`FOR UPDATE`) before the single-use check, so concurrent approvals relying on the
+   * same decision serialize; the partial unique indexes on `decision_id` are the backstop (409).
+   */
   private async evaluateAuthority(
     ctx: RequestContext,
     p: ProjectInfo,
@@ -742,25 +756,18 @@ export class ChangeControlService {
     amount: ApprovalAmount,
     decisionId: string | undefined,
     subject: { kind: 'baseline' | 'change_request'; selfId: string },
+    amountConfirmed: boolean,
   ): Promise<DelegatedApprovalResult> {
     let decision: LinkedDecisionSnapshot | null = null;
+    let decisionUses: DecisionUseRecord[] = [];
     if (decisionId) {
-      const d = await loadInProject(this.s.db, schema.decision, p.id, decisionId);
-      if (!this.s.policy.canSee(ctx, { projectId: p.id, classification: d.classification as Classification })) throw notFound();
-      // One decision backs one approval (a baseline version, or a change request).
-      const used =
-        subject.kind === 'baseline'
-          ? await this.tx
-              .select({ id: schema.baselineVersion.id })
-              .from(schema.baselineVersion)
-              .where(and(eq(schema.baselineVersion.projectId, p.id), eq(schema.baselineVersion.decisionId, d.id), inArray(schema.baselineVersion.status, ['approved', 'superseded'])))
-              .limit(1)
-          : await this.tx
-              .select({ id: schema.changeRequest.id })
-              .from(schema.changeRequest)
-              .where(and(eq(schema.changeRequest.projectId, p.id), eq(schema.changeRequest.decisionId, d.id), inArray(schema.changeRequest.status, ['approved', 'implemented'])))
-              .limit(1);
-      if (used[0] && used[0].id !== subject.selfId) throw ruleViolation('change_control.decision_already_used', `Decision ${d.code} already backs another approval`);
+      const found = await loadInProject(this.s.db, schema.decision, p.id, decisionId);
+      if (!this.s.policy.canSee(ctx, { projectId: p.id, classification: found.classification as Classification })) throw notFound();
+      // Generic reliance facility: lock the decision row, re-read it with its current evidence and its registered uses
+      // (one decision backs one baseline version / one change request — checked in evaluateDelegatedApproval).
+      const locked = await lockDecisionForReliance(this.s.db, p.id, decisionId);
+      const d = locked.row;
+      decisionUses = locked.uses;
       decision = {
         id: d.id,
         code: d.code,
@@ -769,10 +776,53 @@ export class ChangeControlService {
         decisionTypeKey: d.decisionTypeKey,
         amount: amountOf(d),
         externalAuthorityReference: d.externalAuthorityReference,
+        subjectType: d.subjectType,
+        subjectId: d.subjectId,
+        // DOM-P2R-04: the evidence of the external approval as it is NOW.
+        externalEvidence: locked.externalEvidence,
       };
     }
     const g = decision ? { matrix: null, reason: '' } : await this.governingMatrix(p);
-    return evaluateDelegatedApproval({ decisionTypeKey, matrix: g.matrix, matrixUnusableReason: g.reason, amount, decision });
+    return evaluateDelegatedApproval({
+      decisionTypeKey,
+      matrix: g.matrix,
+      matrixUnusableReason: g.reason,
+      amount,
+      amountConfirmed,
+      subject: { type: subject.kind === 'baseline' ? 'baseline_version' : 'change_request', id: subject.selfId },
+      decision,
+      decisionUses,
+    });
+  }
+
+  /**
+   * Writes the approval and — when a governance decision backs it — registers the decision's use (`decision_use`, kind
+   * `change_request` / `baseline_version`). A unique violation of the registry or of the per-table "one decision backs one
+   * approval" indexes (a concurrent approval won the race despite the lock) is answered 409 `change_control.decision_already_used`.
+   */
+  private async guardDecisionReuse<T>(ctx: RequestContext, projectId: string, auth: DelegatedApprovalResult | null, use: { kind: 'change_request' | 'baseline_version'; subjectId: string }, write: () => Promise<T>): Promise<T> {
+    try {
+      const out = await write();
+      if (auth?.basis === 'governance_decision' && auth.decisionId) {
+        const [d] = await this.tx.select({ code: schema.decision.code }).from(schema.decision).where(and(eq(schema.decision.id, auth.decisionId), eq(schema.decision.projectId, projectId)));
+        await registerDecisionUse(this.s.db, {
+          orgId: ctx.principal.orgId,
+          projectId,
+          decisionId: auth.decisionId,
+          decisionCode: d?.code ?? auth.decisionId,
+          kind: use.kind,
+          subjectId: use.subjectId,
+          usedBy: ctx.principal.userId,
+          codePrefix: 'change_control',
+        });
+      }
+      return out;
+    } catch (e) {
+      if (isUniqueViolation(e, ['change_request_decision_uq', 'baseline_version_decision_uq'])) {
+        throw conflict('change_control.decision_already_used', 'The decision already backs another approval (concurrent approval) — one decision backs one approval');
+      }
+      throw e;
+    }
   }
 
   /**
@@ -800,6 +850,14 @@ function costImpactOf(c: ChangeRequest): { amount: string; currency: string; uni
   return c.costImpactAmount !== null && c.costImpactCurrency && c.costImpactUnitScale
     ? { amount: String(c.costImpactAmount), currency: c.costImpactCurrency, unitScale: Number(c.costImpactUnitScale) as 1 | 1000 | 1000000 }
     : null;
+}
+
+/**
+ * DOM-P2R-02 (conservative option, pending the governance owner — Q-43): the cost impact decides delegated authority only
+ * when recorded or confirmed by an assessor who is not the requester. An unknown requester or recorder fails closed.
+ */
+function costImpactConfirmed(c: ChangeRequest): boolean {
+  return !!c.costImpactRecordedBy && !!c.requestedBy && c.costImpactRecordedBy !== c.requestedBy;
 }
 
 function costImpactValues(m: { amount: string; currency: string; unitScale: number } | null) {

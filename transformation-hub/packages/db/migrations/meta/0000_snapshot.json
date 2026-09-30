@@ -1,5 +1,5 @@
 {
-  "id": "7a218147-004a-4c14-8625-7ed992df08cc",
+  "id": "eba64604-223c-447c-a090-93918751dc4d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2725,6 +2725,22 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "baseline_version_decision_uq": {
+          "name": "baseline_version_decision_uq",
+          "columns": [
+            {
+              "expression": "decision_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "decision_id is not null and status in ('approved', 'superseded')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -2868,6 +2884,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "cost_impact_recorded_by": {
+          "name": "cost_impact_recorded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "subject_type": {
           "name": "subject_type",
           "type": "varchar(32)",
@@ -2976,6 +2998,22 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "change_request_decision_uq": {
+          "name": "change_request_decision_uq",
+          "columns": [
+            {
+              "expression": "decision_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "decision_id is not null and status in ('approved', 'implemented')",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -6007,7 +6045,30 @@
           "default": 1
         }
       },
-      "indexes": {},
+      "indexes": {
+        "agenda_item_number_uq": {
+          "name": "agenda_item_number_uq",
+          "columns": [
+            {
+              "expression": "meeting_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "screening_status = 'accepted' and number is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "agenda_item_project_id_project_id_fk": {
           "name": "agenda_item_project_id_project_id_fk",
@@ -7505,6 +7566,54 @@
           "primaryKey": false,
           "notNull": false
         },
+        "subject_type": {
+          "name": "subject_type",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subject_id": {
+          "name": "subject_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "first_submitted_at": {
+          "name": "first_submitted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evidence_none_reason": {
+          "name": "evidence_none_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "voting_closed_round": {
+          "name": "voting_closed_round",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "voting_closed_by": {
+          "name": "voting_closed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "voting_closed_at": {
+          "name": "voting_closed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "voting_close_reason": {
+          "name": "voting_close_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "is_demo": {
           "name": "is_demo",
           "type": "boolean",
@@ -7541,6 +7650,33 @@
         }
       },
       "indexes": {
+        "decision_subject_idx": {
+          "name": "decision_subject_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "subject_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "subject_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "decision_code_uq": {
           "name": "decision_code_uq",
           "columns": [
@@ -7683,6 +7819,158 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {
+        "decision_subject_ck": {
+          "name": "decision_subject_ck",
+          "value": "(\"decision\".\"subject_type\" is null) = (\"decision\".\"subject_id\" is null) and (\"decision\".\"subject_type\" is null or \"decision\".\"subject_type\" in ('change_request', 'baseline_version', 'perimeter_version'))"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.decision_use": {
+      "name": "decision_use",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "decision_id": {
+          "name": "decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "use_kind": {
+          "name": "use_kind",
+          "type": "varchar(48)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_type": {
+          "name": "subject_type",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_id": {
+          "name": "subject_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "used_at": {
+          "name": "used_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "used_by": {
+          "name": "used_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "decision_use_kind_uq": {
+          "name": "decision_use_kind_uq",
+          "columns": [
+            {
+              "expression": "decision_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "use_kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "decision_use_subject_idx": {
+          "name": "decision_use_subject_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "subject_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "subject_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "decision_use_project_id_project_id_fk": {
+          "name": "decision_use_project_id_project_id_fk",
+          "tableFrom": "decision_use",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "decision_use_decision_fk": {
+          "name": "decision_use_decision_fk",
+          "tableFrom": "decision_use",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -12107,6 +12395,22 @@
           ],
           "isUnique": true,
           "where": "status = 'approved'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "perimeter_version_decision_uq": {
+          "name": "perimeter_version_decision_uq",
+          "columns": [
+            {
+              "expression": "decision_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "decision_id is not null and status in ('approved', 'superseded')",
           "concurrently": false,
           "method": "btree",
           "with": {}

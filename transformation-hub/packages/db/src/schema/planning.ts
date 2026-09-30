@@ -304,6 +304,8 @@ export const baselineVersion = pgTable(
     // At most one pending proposal and one approved (current) baseline per project — concurrent attempts → 409.
     uniqueIndex('baseline_one_proposed_uq').on(t.projectId).where(sql`status = 'proposed'`),
     uniqueIndex('baseline_one_approved_uq').on(t.projectId).where(sql`status = 'approved'`),
+    // QA-P2-01 / DOM-P2R-03 backstop: one governance decision backs one baseline approval.
+    uniqueIndex('baseline_version_decision_uq').on(t.decisionId).where(sql`decision_id is not null and status in ('approved', 'superseded')`),
   ],
 );
 
@@ -330,6 +332,11 @@ export const changeRequest = pgTable(
     costImpactAmount: numeric('cost_impact_amount', { precision: 20, scale: 4 }),
     costImpactCurrency: varchar('cost_impact_currency', { length: 3 }),
     costImpactUnitScale: integer('cost_impact_unit_scale'),
+    /**
+     * Who last recorded the cost impact (DOM-P2R-02): the requester when stated at creation / draft edit, the assessor when
+     * recorded through the impact assessment. It decides authority only when recorded by someone other than the requester.
+     */
+    costImpactRecordedBy: uuid('cost_impact_recorded_by'),
     subjectType: varchar('subject_type', { length: 32 }),
     subjectId: uuid('subject_id'),
     proposedChange: jsonb('proposed_change').$type<Record<string, unknown>>(),
@@ -349,6 +356,9 @@ export const changeRequest = pgTable(
     projectFk('change_request_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
     unique('change_request_pid_uq').on(t.projectId, t.id),
     uniqueIndex('change_request_code_uq').on(t.projectId, t.code),
+    // QA-P2-01 / DOM-P2R-03 backstop: one governance decision backs one change-request approval (the service also locks the
+    // decision row; a concurrent second approval gets 409 change_control.decision_already_used).
+    uniqueIndex('change_request_decision_uq').on(t.decisionId).where(sql`decision_id is not null and status in ('approved', 'implemented')`),
     // Money triple is all-or-nothing, with an allowed unit scale (1 / 1000 / 1000000).
     check(
       'change_request_cost_impact_ck',

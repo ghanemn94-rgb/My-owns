@@ -28,8 +28,8 @@ flowchart LR
 | 2. Secretariat screening | `secretary_cpmo` | Accept, return with reasons, or merge | Returned items go back to Draft with the reasons kept |
 | 3. Decision paper | Requester | Required paper fields (§2) | Cannot be submitted incomplete **[server]** |
 | 4. Agenda and meeting pack | `secretary_cpmo` | Numbered agenda; pack frozen as a snapshot | Changes after freeze create a new pack version **[server]** |
-| 5. Quorum and conflict checks | Chair, with `secretary_cpmo` | Attendance, declared conflicts, recusals per item | Quorum computed per item after recusals **[server]**; recusals before the member votes; attendance frozen while an item has votes and no outcome **[server]** |
-| 6. Discussion and vote, or circulation | Voting members | Votes (approve / reject / abstain) against the frozen paper version | Recused, self-interested and non-voting users cannot vote **[server]** |
+| 5. Quorum and conflict checks | Chair, with `secretary_cpmo` | Attendance, declared conflicts, recusals per item | Quorum computed per item after recusals **[server]**; recusals before the member votes; attendance frozen while an item has votes and no outcome **[server]**; each voting member's own declaration for the item ("no conflict" or an interest; a conflict → recusal) before the vote **[server]** (REQ-GOV-015) |
+| 6. Discussion and vote, or circulation | Voting members | Votes (approve / reject / abstain) against the frozen paper version | Recused, self-interested and non-voting users cannot vote **[server]**; the outcome is recorded when every eligible member expected to vote has voted, or the chair closed voting with a reason (proposed, Q-40) **[server]** |
 | 7. Minutes approval | Committee (next meeting or circulation) | Numbered minutes, versioned; approval record | Approved minutes are immutable; corrections are new versions |
 | 8. Actions | `secretary_cpmo` | Action number, owner (one accountable), due date, linked decision | Action owner must be an active project member |
 | 9. Implementation tracking | Action owners | Progress, evidence | Approval does not imply implementation |
@@ -40,6 +40,21 @@ flowchart LR
 Required before submission: issue; why a decision is needed now; alternatives; recommendation; financial, operational
 and schedule impacts (money with currency and unit); risks; dependencies; latest safe decision date; requester;
 decision type (from the authority matrix) and required approving authorities; evidence; attachments; classification.
+
+**As implemented (P2 re-review):**
+- *Evidence and attachments (DOM-P2-14, REQ-GOV-014):* at least one active evidence link or attachment on the paper
+  (documents module, target = the decision), **or** an explicit "no supporting evidence or attachment — reason" entry
+  (`evidenceNoneReason`). Otherwise submission is refused (`governance.decision.incomplete_paper`, missing
+  `supportingEvidence`) **[server]**.
+- *Subject (DOM-P2R-03):* a paper that asks for the approval of a specific record names it — a change request, a
+  baseline version or a perimeter version (`subjectType` + `subjectId`), chosen while drafting from records of the project
+  that await approval. The subject is fixed from the first submission, even if the paper is returned to draft
+  (`governance.decision.subject_locked`). Only a decision raised for a record can back that record's approval
+  (`authority-matrix.md` §3 rules 12–13) **[server]**.
+- *Reliance on a decision:* every approval that rests on a decision re-checks it at that moment — final, external-approval
+  evidence still active and verified, raised for the record — and records the use in the decision-use registry: one
+  decision backs one record of each kind (change request, baseline version, perimeter version, gate cycle)
+  (`docs/architecture/module-guide.md` "Relying on a governance decision") **[server]**.
 
 ## 3. Decision states (حالات القرار)
 
@@ -119,6 +134,16 @@ Additional invariants **[server]**:
   requester, or (in a meeting) a member no longer recorded present, the outcome is refused
   (`governance.outcome.vote_integrity`) instead of dropping the vote; attendance is frozen while an item has votes and no
   outcome (`governance.attendance.frozen_voting_open`, DOM-P2-20).
+- **Closing the vote (DOM-P2R-01) — PROPOSED default of this build, pending the governance owner's confirmation (Q-40);
+  not a Mobily policy.** The outcome of transitions 4–6 is recorded only when the vote is complete: every eligible member
+  expected to vote has voted (meeting: the eligible members recorded present; circulation: every eligible appointed
+  voting member), or the committee's chair closed voting on the round with a reason (`POST …/close-voting`, chair seat
+  holder on the meeting date only, audited), or — circulation only — the response deadline has passed. Otherwise
+  `governance.outcome.votes_outstanding`. After the chair closes the round no further vote is accepted; members who had not
+  voted are listed in the tally snapshot and not counted (abstention handling unchanged). A new round reopens voting.
+- **Conflict declarations (REQ-GOV-015).** Before voting on an item, the member records their own declaration for it: "no
+  conflict" (with the vote or in the meeting's conflict register) or a declared interest; a member with a conflict records
+  a recusal instead of voting. On-behalf declarations do not satisfy the rule (`governance.vote.declaration_required`).
 - **Self-approval (S).** A requester/owner cannot vote on or approve their own item; the same user cannot record and
   confirm an external decision; an action owner cannot verify their own action (AT-05).
 - **Authority (A).** Evaluated against the matrix version active at vote time (`authority-matrix.md` §3). An outside-authority
@@ -143,7 +168,9 @@ evidence (transition 11). Reports show approved-but-not-implemented decisions se
 
 1. Allowed only for items designated by the chair and not listed as reserved matters (proposed).
 2. The circulation packet is a frozen paper version with a response deadline.
-3. Quorum is computed on eligible responses received by the deadline; recusal and self-approval rules apply.
+3. Quorum is computed on eligible responses received by the deadline; recusal and self-approval rules apply. The outcome is
+   recorded once every eligible appointed voting member has responded, the deadline has passed, or the chair closed voting
+   with a reason (DOM-P2R-01, proposed — Q-40).
 4. A member's request to discuss in a meeting lapses the circulation (proposed); the item returns to `under_review`
    for the next meeting.
 5. Outcomes follow the same transitions (4–6) and are tabled for noting in the next minutes.

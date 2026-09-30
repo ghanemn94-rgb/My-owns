@@ -220,7 +220,12 @@ export default function GateDetailPage() {
                   <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-danger" />
                   <div>
                     <p className="font-semibold">{t('gates.reassessment.title')}</p>
-                    <p>{t('gates.reassessment.body', { criteria: formatList(flags.criteria.map((c) => c.key)) || EM_DASH })}</p>
+                    {flags.criteria.length > 0 || !flags.decisionEvidence ? <p>{t('gates.reassessment.body', { criteria: formatList(flags.criteria.map((c) => c.key)) || EM_DASH })}</p> : null}
+                    {flags.decisionEvidence ? (
+                      <p data-testid="reassessment-decision-evidence" data-reason={flags.decisionEvidence.reason}>
+                        {t(`gates.reassessment.decisionEvidence.${flags.decisionEvidence.reason}`, { decision: flags.decisionEvidence.code })}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               ) : null}

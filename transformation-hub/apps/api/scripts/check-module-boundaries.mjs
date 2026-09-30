@@ -29,6 +29,9 @@ const PUBLISHED = {
   governance: [
     'demo-policy', // the DEMO authority policy for demo projects without an approved matrix
     'governance.support', // money amount parsing shared with change control
+    // Relying on a governance decision (DOM-P2R-03/-04/-05, QA-P2-01): row lock, current external-approval evidence and
+    // the decision-use registry, used by every module whose records a committee decision backs (module-guide.md).
+    'decision-reliance',
   ],
   newco: ['legal-entities.service'], // the carve-out demo seed links the demo legal entity
   planning: [

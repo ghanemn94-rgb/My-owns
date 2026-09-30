@@ -1,5 +1,6 @@
 import Decimal from 'decimal.js';
-import { ruleViolation } from './errors';
+import { forbidden, ruleViolation } from './errors';
+import { decisionRelianceIssue, type DecisionSubject, type DecisionUseRecord, type ExternalEvidenceState } from './decision-reliance';
 import type { ActionItemStatus, AGENDA_SCREENING_STATUSES, ATTENDANCE_STATUSES, CommitteeMemberRole, MeetingStatus, VoteChoice } from './enums';
 import type { Machine } from './workflows';
 
@@ -343,6 +344,11 @@ export interface LinkedDecisionSnapshot {
   decisionTypeKey: string | null;
   amount: { amount: string; currency: string; unitScale: number } | null;
   externalAuthorityReference: string | null;
+  /** The record the decision authorizes (DOM-P2R-03); null = raised for no specific record. */
+  subjectType: string | null;
+  subjectId: string | null;
+  /** The evidence link of the external approval as it is now (DOM-P2R-04); null when none is recorded. */
+  externalEvidence: ExternalEvidenceState | null;
 }
 
 export interface DelegatedApprovalInput {
@@ -352,8 +358,21 @@ export interface DelegatedApprovalInput {
   /** Why no matrix is usable (shown in the refusal). */
   matrixUnusableReason?: string;
   amount: ApprovalAmount;
+  /**
+   * DOM-P2R-02: the structured amount was recorded or confirmed by an assessor who is NOT the requester (a baseline's
+   * frozen, approved budget lines are always confirmed). A requester-stated amount may refuse an approval (above a limit)
+   * but never make it pass.
+   */
+  amountConfirmed: boolean;
+  /** The record being approved (DOM-P2R-03): a linked decision must have been raised for exactly this record. */
+  subject: DecisionSubject;
   /** A governance decision offered as the basis of the approval (already loaded inside the project). */
   decision: LinkedDecisionSnapshot | null;
+  /**
+   * Registered uses of that decision (`decision_use` rows, read under the decision row lock — DOM-P2R-05, QA-P2-01). One
+   * decision backs one record of each kind. Omitted = none registered.
+   */
+  decisionUses?: readonly DecisionUseRecord[];
 }
 
 export interface DelegatedApprovalResult {
@@ -377,13 +396,17 @@ const moneyGte = (a: { amount: string; unitScale: number }, b: { amount: string;
 /**
  * Evaluates whether an individual approval of a baseline or change request is within delegated authority (DOM-P2-03).
  *
- * 1. With a linked governance decision: the decision must be FINAL (approved within the committee mandate, or approved by
- *    the external authority and recorded), of the matching decision type, and — when the change has a monetary impact —
- *    carry an amount in the same currency that covers it. It is then the basis of the approval (the out-of-authority
- *    route: the committee decides or recommends, the authorized body approves).
+ * 1. With a linked governance decision, in this order: the decision must be FINAL (approved within the committee mandate,
+ *    or approved by the external authority and recorded) and — for an external approval — its evidence must STILL be an
+ *    active, verified evidence link (DOM-P2R-04); of the matching decision type; raised for THIS record (its subject —
+ *    DOM-P2R-03); and — when the change has a monetary impact — carry an amount in the same currency that covers it. It is
+ *    then the basis of the approval (the out-of-authority route: the committee decides or recommends, the authorized body
+ *    approves).
  * 2. Without a decision: an approved, in-force authority matrix is required (outside the demo sandbox); the decision type
  *    must be within the committee's delegation and the monetary impact within `maxAmount` (same currency; decimal
  *    arithmetic). An unquantified monetary impact is never assumed to be within a limit.
+ * 3. Last (DOM-P2R-02): an approval that would pass on a structured amount stated by the requester alone is refused until
+ *    an assessor other than the requester records or confirms it (`change_control.amount_unconfirmed`).
  * The caller passes `withinAuthority` explicitly to the policy check and refuses (422, audited) with `code` otherwise.
  */
 export function evaluateDelegatedApproval(input: DelegatedApprovalInput): DelegatedApprovalResult {
@@ -401,17 +424,28 @@ export function evaluateDelegatedApproval(input: DelegatedApprovalInput): Delega
     escalateTo,
     decisionId,
   });
+  const unconfirmed = (decisionId: string | null): DelegatedApprovalResult | null =>
+    input.amount.kind === 'amount' && !input.amountConfirmed
+      ? refuse(
+          'change_control.amount_unconfirmed',
+          'The cost impact that decides this approval was stated by the requester only — an assessor other than the requester must record or confirm it through the impact assessment before approval',
+          null,
+          decisionId,
+        )
+      : null;
   const d = input.decision;
   if (d) {
-    if (!(FINAL_APPROVED_DECISION_STATES as readonly string[]).includes(d.status)) {
-      return refuse('change_control.decision_not_final', `Decision ${d.code} is ${d.status}: only a final approval (within the committee mandate, or recorded from the external authority) can back this approval`, null, d.id);
-    }
-    if (d.authorityOutcome === 'pending_external_authority' && !d.externalAuthorityReference) {
-      return refuse('change_control.decision_not_final', `Decision ${d.code} is a recommendation without a recorded external approval`, null, d.id);
-    }
-    if (d.decisionTypeKey !== input.decisionTypeKey) {
-      return refuse('change_control.decision_type_mismatch', `Decision ${d.code} is of type "${d.decisionTypeKey ?? 'none'}"; this approval needs a decision of type "${input.decisionTypeKey}"`, null, d.id);
-    }
+    // The generic reliance check (decision-reliance.ts): final → external evidence still standing → type → raised for this
+    // record → not used for another record of the same kind.
+    const reliance = decisionRelianceIssue({
+      decision: d,
+      use: { kind: input.subject.type, subjectType: input.subject.type, subjectId: input.subject.id },
+      uses: input.decisionUses ?? [],
+      subjectRule: 'required',
+      decisionTypeKeys: [input.decisionTypeKey],
+      codePrefix: 'change_control',
+    });
+    if (reliance) return refuse(reliance.code, reliance.reason, null, d.id);
     if (input.amount.kind === 'unquantified') {
       return refuse('change_control.amount_unquantified', `${input.amount.reason} — record the monetary impact as an amount with currency and unit (0 when none) before approval`, null, d.id);
     }
@@ -425,7 +459,7 @@ export function evaluateDelegatedApproval(input: DelegatedApprovalInput): Delega
         return refuse('change_control.decision_amount_insufficient', `Decision ${d.code} covers ${d.amount.amount} ${d.amount.currency} (unit ${d.amount.unitScale}); the change is ${m.amount} ${m.currency} (unit ${m.unitScale})`, null, d.id);
       }
     }
-    return { ...base, withinAuthority: true, basis: 'governance_decision', code: null, reason: `Backed by the final governance decision ${d.code}.`, escalateTo: null, decisionId: d.id };
+    return unconfirmed(d.id) ?? { ...base, withinAuthority: true, basis: 'governance_decision', code: null, reason: `Backed by the final governance decision ${d.code}.`, escalateTo: null, decisionId: d.id };
   }
   if (!input.matrix) {
     return refuse(
@@ -452,15 +486,17 @@ export function evaluateDelegatedApproval(input: DelegatedApprovalInput): Delega
       a.escalateTo,
     );
   }
-  return {
-    ...base,
-    withinAuthority: true,
-    basis: 'delegated_authority',
-    code: null,
-    reason: `${a.reason} (${input.matrix.source === 'demo_sandbox_policy' ? 'DEMO sandbox policy — synthetic, not a real delegation' : 'approved authority matrix in force'}).`,
-    escalateTo: null,
-    decisionId: null,
-  };
+  return (
+    unconfirmed(null) ?? {
+      ...base,
+      withinAuthority: true,
+      basis: 'delegated_authority',
+      code: null,
+      reason: `${a.reason} (${input.matrix.source === 'demo_sandbox_policy' ? 'DEMO sandbox policy — synthetic, not a real delegation' : 'approved authority matrix in force'}).`,
+      escalateTo: null,
+      decisionId: null,
+    }
+  );
 }
 
 /**
@@ -521,20 +557,27 @@ export function assertExternalApprovalEvidence(input: {
 /**
  * Decision paper completeness (spec §4.2) before submission. Returns missing field names. Impacts must state the
  * financial, operational AND schedule impact (use "None identified" explicitly rather than leaving one out).
+ * DOM-P2-14 (REQ-GOV-014, decision-workflow.md §2 "evidence; attachments"): the paper carries at least one active evidence
+ * link or attachment (documents module, target = the decision), or an explicit "none — reason" entry
+ * (`evidenceNoneReason`); otherwise `supportingEvidence` is missing.
  */
-export function missingDecisionPaperFields(paper: {
-  issue?: string | null;
-  whyNow?: string | null;
-  alternatives?: unknown[] | null;
-  recommendation?: string | null;
-  impacts?: Record<string, unknown> | null;
-  risks?: string | null;
-  dependencies?: string | null;
-  latestSafeDate?: string | null;
-  requiredAuthority?: string | null;
-  decisionTypeKey?: string | null;
-  requesterUserId?: string | null;
-}): string[] {
+export function missingDecisionPaperFields(
+  paper: {
+    issue?: string | null;
+    whyNow?: string | null;
+    alternatives?: unknown[] | null;
+    recommendation?: string | null;
+    impacts?: Record<string, unknown> | null;
+    risks?: string | null;
+    dependencies?: string | null;
+    latestSafeDate?: string | null;
+    requiredAuthority?: string | null;
+    decisionTypeKey?: string | null;
+    requesterUserId?: string | null;
+    evidenceNoneReason?: string | null;
+  },
+  supporting: { activeEvidenceLinks: number },
+): string[] {
   const missing: string[] = [];
   const txt = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
   if (!txt(paper.issue)) missing.push('issue');
@@ -548,7 +591,90 @@ export function missingDecisionPaperFields(paper: {
   if (!txt(paper.requiredAuthority)) missing.push('requiredAuthority');
   if (!paper.decisionTypeKey) missing.push('decisionTypeKey');
   if (!paper.requesterUserId) missing.push('requesterUserId');
+  if (supporting.activeEvidenceLinks <= 0 && !txt(paper.evidenceNoneReason)) missing.push('supportingEvidence');
   return missing;
+}
+
+// =============================================================================================================
+// Voting closure (DOM-P2R-01) and conflict-of-interest declarations before voting (REQ-GOV-015, F-01)
+// PROPOSED default of this build, pending the governance owner's confirmation (Q-40): documented in
+// docs/governance/authority-matrix.md §3 step 5 and decision-workflow.md §5.
+// =============================================================================================================
+
+/**
+ * Members who still have a vote to cast in the round: the eligible voting members expected to vote — for a meeting, the
+ * appointed voting members recorded present; for a circulation, every appointed voting member (the circulation is sent to
+ * all of them) — minus members recused from the item and the requester (self-approval prohibited), minus those who voted.
+ */
+export function outstandingVoters(input: {
+  members: MemberSnapshot[];
+  onDate: string;
+  /** Meeting: user ids recorded present. Circulation: omit (every appointed voting member is expected to respond). */
+  presentUserIds: string[] | null;
+  recusedUserIds: string[];
+  requesterUserId: string | null;
+  selfApprovalProhibited: boolean;
+  votedUserIds: string[];
+}): string[] {
+  const excluded = new Set(input.recusedUserIds);
+  if (input.selfApprovalProhibited && input.requesterUserId) excluded.add(input.requesterUserId);
+  const present = input.presentUserIds ? new Set(input.presentUserIds) : null;
+  const voted = new Set(input.votedUserIds);
+  const expected = input.members.filter((m) => m.voting && m.userId && isMemberActiveOn(m, input.onDate) && !excluded.has(m.userId) && (!present || present.has(m.userId)));
+  return [...new Set(expected.map((m) => m.userId!).filter((u) => !voted.has(u)))];
+}
+
+/**
+ * DOM-P2R-01: an outcome is recorded only when the vote is complete — every eligible member expected to vote has voted
+ * (approve, reject or abstain), or the chair closed voting for the round with a reason (a circulation also completes when
+ * its response deadline has passed). Members who did not vote when voting closed are listed in the tally snapshot and are
+ * not counted (abstention handling unchanged: authority-matrix.md §3 step 5).
+ */
+export function assertVotingComplete(input: { outstanding: string[]; closedByChair: boolean; circulationDeadlinePassed?: boolean; round: number }): void {
+  if (input.outstanding.length === 0 || input.closedByChair || input.circulationDeadlinePassed) return;
+  throw ruleViolation(
+    'governance.outcome.votes_outstanding',
+    `${input.outstanding.length} eligible member(s) have not voted in round ${input.round} — wait for their votes, or the chair closes voting with a reason before the outcome is recorded`,
+    { round: input.round, outstanding: input.outstanding.length },
+  );
+}
+
+/**
+ * DOM-P2R-01: the chair of the decision's committee (the chair seat holder on the meeting date) closes voting for the
+ * current round with a reason. Role (the command's permission) → state → the actor is the chair → reason.
+ */
+export function assertVotingClosable(input: { status: string; actorUserId: string | null; chairUserId: string | null; closedRound: number | null; round: number; reason: string | null | undefined; tabled: boolean }): void {
+  if (input.status !== 'under_review') throw ruleViolation('governance.voting.not_open', `Voting can be closed only while the decision is under review (current: ${input.status})`);
+  if (!input.tabled) throw ruleViolation('governance.vote.not_tabled', 'The decision is not tabled at a meeting or circulated');
+  if (input.closedRound === input.round) throw ruleViolation('governance.voting.already_closed', `Voting on round ${input.round} is already closed`, { round: input.round });
+  if (!input.chairUserId) throw forbidden('governance.voting.no_chair', 'The committee has no chair appointed on the meeting date, so nobody can close voting');
+  if (!input.actorUserId || input.actorUserId !== input.chairUserId) throw forbidden('governance.voting.not_chair', "Only the committee's chair closes voting");
+  if (!input.reason?.trim()) throw ruleViolation('governance.voting.reason_required', 'Closing voting requires a reason (recorded in the audit trail and the tally snapshot)');
+}
+
+/** No vote is accepted in a round whose voting the chair closed. */
+export function assertVotingOpen(input: { closedRound: number | null; round: number }): void {
+  if (input.closedRound === input.round) {
+    throw ruleViolation('governance.vote.voting_closed', `The chair closed voting on round ${input.round}; no further votes are accepted in this round`, { round: input.round });
+  }
+}
+
+/** Declarations that allow a member to vote on an item: no conflict, or an interest declared (the chair may rule a recusal). */
+export const VOTING_DECLARATIONS: readonly string[] = ['no_conflict', 'interest_declared'];
+
+/**
+ * REQ-GOV-015 (committee-charter-draft.md §14): before voting on an item, the member has declared — in their OWN name — either
+ * "no conflict" or an interest in the item. A conflict leads to recusal (recused members cannot vote). A declaration
+ * recorded by someone else on the member's behalf does not count here.
+ */
+export function assertConflictDeclared(input: { voterUserId: string; declarations: { userId: string; recordedBy: string | null; declaration: string }[] }): void {
+  const own = input.declarations.filter((x) => x.userId === input.voterUserId && x.recordedBy === input.voterUserId && VOTING_DECLARATIONS.includes(x.declaration));
+  if (own.length === 0) {
+    throw ruleViolation(
+      'governance.vote.declaration_required',
+      'Declare your conflict of interest for this item before voting: "no conflict", or declare the conflict and recuse yourself',
+    );
+  }
 }
 
 export interface MatrixState {

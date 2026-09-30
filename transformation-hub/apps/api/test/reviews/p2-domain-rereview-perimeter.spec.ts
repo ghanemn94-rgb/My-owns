@@ -14,7 +14,7 @@ afterAll(async () => {
 });
 
 describe('P2 domain re-review — perimeter version approval backed by a G1 decision [docs/reviews/P2-domain-rereview.md]', () => {
-  it('DEFECT DOM-P2R-05: the G1 decision that approved perimeter version 1 cannot also approve a later, different version 2', async () => {
+  it('DOM-P2R-05 (fixed, regression): the G1 decision that approved perimeter version 1 cannot also approve a later, different version 2', async () => {
     const { projectId: pv, p: q } = (await carveoutProject('DRR-PV')) as { projectId: string; p: Personas };
     const ws = await workstreamId(q.pm, pv, 'WS05');
     await createItem(q.pm, pv, { type: 'site', name: 'Re-review site (synthetic)', disposition: 'included', workstreamId: ws, ownerUserId: q.pm.userId });

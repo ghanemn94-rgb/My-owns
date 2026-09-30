@@ -58,18 +58,35 @@ describe('P2 domain re-review — probes [docs/reviews/P2-domain-rereview.md]', 
   });
 
   // -------------------------------------------------------------------------------------------------------------
-  it('OBSERVATION DOM-P2R-01: with five eligible members present, the outcome can be recorded after ONE approve vote — approved 1 to 0', async () => {
+  // Was "OBSERVATION DOM-P2R-01" (pinned the gap: approved 1 to 0 at once). The fix (proposed default, pending the
+  // governance owner, Q-40) requires every present eligible member's vote, or the chair's closing of the vote with a reason.
+  it('DOM-P2R-01 (fixed, regression): with the eligible members present, ONE approve vote does not let the outcome be recorded; only the chair closes voting (with a reason), non-voters are recorded', async () => {
     const x = await tabledDecision(pR, A(), a.pm, gov.committeeId, gov.meetingId); // change_request_budget, 100,000 (within the DEMO limit)
     const v = await decisionVersion(a.chair, pR, x.id);
     expect((await vote(pR, a.chair, x.id, 'approve', v)).status).toBe(201);
-    // Nobody else has voted yet; the secretariat records the outcome at once.
-    const out = await a.secretary.post(`${P(pR)}/decisions/${x.id}/record-outcome`, { expectedVersion: v });
+    // Nobody else has voted yet; the secretariat tries to record the outcome at once.
+    const early = await a.secretary.post(`${P(pR)}/decisions/${x.id}/record-outcome`, { expectedVersion: v });
+    expect(early.status, JSON.stringify(early.body)).toBe(422);
+    expect(early.body.code).toBe('governance.outcome.votes_outstanding');
+    expect(early.body.details).toMatchObject({ round: 1, outstanding: 3 });
+    expect((await decisionRow(x.id))['status']).toBe('under_review');
+    // Only the committee's chair closes voting.
+    const bySecretary = await a.secretary.post(`${P(pR)}/decisions/${x.id}/close-voting`, { expectedVersion: v, reason: 'Closing the vote (probe)' });
+    expect(bySecretary.status, JSON.stringify(bySecretary.body)).toBe(403);
+    expect(bySecretary.body.code).toBe('governance.voting.not_chair');
+    const closed = await a.chair.post(`${P(pR)}/decisions/${x.id}/close-voting`, { expectedVersion: v, reason: 'Members left before voting (synthetic)' });
+    expect(closed.status, JSON.stringify(closed.body)).toBe(201);
+    expect(closed.body).toMatchObject({ round: 1, notVoted: 3 });
+    // No vote is accepted in the closed round.
+    const late = await vote(pR, a.sponsor, x.id, 'approve');
+    expect(late.status, JSON.stringify(late.body)).toBe(422);
+    expect(late.body.code).toBe('governance.vote.voting_closed');
+    const out = await a.secretary.post(`${P(pR)}/decisions/${x.id}/record-outcome`, { expectedVersion: closed.body.version });
     expect(out.status, JSON.stringify(out.body)).toBe(201);
-    // Current behaviour (authority-matrix.md §3 step 5 as clarified by the fix: present members who do not vote are not
-    // counted; no rule closes the vote or requires the present eligible members to have voted). See finding DOM-P2R-01.
-    expect(out.body.status).toBe('approved');
     expect(out.body.explanation).toMatch(/1 approve, 0 reject, 0 abstain of 1 eligible votes/);
-    expect((await decisionRow(x.id))['status']).toBe('approved');
+    const snap = (await decisionRow(x.id))['tally_snapshot'] as { voting: { complete: string; notVoted: string[]; closeReason: string } };
+    expect(snap.voting).toMatchObject({ complete: 'closed_by_chair', closeReason: 'Members left before voting (synthetic)' });
+    expect(snap.voting.notVoted).toHaveLength(3);
   });
 
   // -------------------------------------------------------------------------------------------------------------
@@ -81,7 +98,10 @@ describe('P2 domain re-review — probes [docs/reviews/P2-domain-rereview.md]', 
     expect((await owner().query(`select status from change_request where id = $1`, [id])).rows[0].status).toBe('under_review');
   });
 
-  it('OBSERVATION DOM-P2R-02: the requester alone records the structured cost impact (0) that decides authority, against a stated 1,500,000 — approved', async () => {
+  // Was "OBSERVATION DOM-P2R-02" (pinned the gap: approved on the requester's own 0). The fix (conservative option, pending
+  // the governance owner, Q-43): the amount decides authority only when recorded or confirmed by an assessor who is not the
+  // requester; a requester-stated figure can refuse an approval but never make it pass.
+  it('DOM-P2R-02 (fixed, regression): the requester alone records the structured cost impact (0) against a stated 1,500,000 — refused until an assessor other than the requester records the amount', async () => {
     // The PM raises the change, states a cost of 1,500,000 DEMO-SAR in the impact text and records the structured cost
     // impact as 0 on the same request; the PM also starts the review. Nobody but the requester quantified the amount.
     const id = await newCr({
@@ -89,16 +109,21 @@ describe('P2 domain re-review — probes [docs/reviews/P2-domain-rereview.md]', 
       costImpact: { amount: '0.0000', currency: 'SAR', unitScale: 1 },
     });
     const cr = (await a.pm.get(`${P(pR)}/change-requests/${id}`).expect(200)).body;
-    expect(cr.costImpact).toMatchObject({ amount: '0.0000' });
+    expect(cr).toMatchObject({ costImpact: { amount: '0.0000' }, costImpactConfirmed: false, costImpactRecordedBy: a.pm.userId });
     const r = await approveCr(id);
-    // Current behaviour: the structured amount wins over the text, whoever recorded it; the sponsor approves within the
-    // delegation. Only the approver's reading of the text stands between the two figures. See finding DOM-P2R-02 (Low).
-    expect(r.status, JSON.stringify(r.body)).toBe(201);
-    const audit = (await owner().query(`select after from audit_event where entity_id = $1 and action = 'planning.change_request.approve' order by seq desc limit 1`, [id])).rows[0];
-    expect(audit.after).toMatchObject({ costImpact: { amount: '0.0000' }, authority: { basis: 'delegated_authority' } });
+    expect(r.status, JSON.stringify(r.body)).toBe(422);
+    expect(r.body.code).toBe('change_control.amount_unconfirmed');
+    expect((await owner().query(`select status from change_request where id = $1`, [id])).rows[0].status).toBe('under_review');
+    // Finance (an assessor who is not the requester) records the amount stated in the text: now it decides — and it is above
+    // the delegated limit, so the sponsor alone cannot approve.
+    const as = await a.finance.post(`${P(pR)}/change-requests/${id}/assess`, { expectedVersion: cr.version, impacts: {}, costImpact: { amount: '1500000.0000', currency: 'SAR', unitScale: 1 }, note: 'Assessed from the stated cost (synthetic)' });
+    expect(as.status, JSON.stringify(as.body)).toBe(201);
+    const again = await a.sponsor.post(`${P(pR)}/change-requests/${id}/approve`, { expectedVersion: as.body.version, note: 'Re-review probe (synthetic)' });
+    expect(again.status, JSON.stringify(again.body)).toBe(422);
+    expect(again.body.code).toBe('change_control.outside_delegated_authority');
   });
 
-  it('DEFECT DOM-P2R-03: a committee decision that authorized change request X cannot approve a different change request Y', async () => {
+  it('DOM-P2R-03 (fixed, regression): a committee decision that authorized change request X cannot approve a different change request Y', async () => {
     const crX = await newCr({ title: uniq('Change X (synthetic)'), costImpact: { amount: '1500000.0000', currency: 'SAR', unitScale: 1 } });
     const crY = await newCr({ title: uniq('Change Y (synthetic)'), costImpact: { amount: '1200000.0000', currency: 'SAR', unitScale: 1 } });
     // The committee paper is about change X (1,500,000): recommended above the limit, then approved by the external body.
@@ -123,7 +148,7 @@ describe('P2 domain re-review — probes [docs/reviews/P2-domain-rereview.md]', 
     expect(r.status, `change Y approved on the decision about change X: ${JSON.stringify(r.body)}`).toBe(422);
   });
 
-  it('DEFECT DOM-P2R-04b: an external approval whose evidence was since rejected as defective no longer backs a change-request approval', async () => {
+  it('DOM-P2R-04b (fixed, regression): an external approval whose evidence was since rejected as defective no longer backs a change-request approval', async () => {
     const cr = await newCr({ title: uniq('Change Z (synthetic)'), costImpact: { amount: '1500000.0000', currency: 'SAR', unitScale: 1 } });
     const d = await tabledDecision(pR, A(), a.pm, gov.committeeId, gov.meetingId, {
       title: uniq('Authorize change Z (synthetic)'),
@@ -156,8 +181,9 @@ describe('P2 domain re-review — probes [docs/reviews/P2-domain-rereview.md]', 
     const r = await a.secretary.post(`${P(pR)}/meetings/${gov.meetingId}/attendance`, { entries: [{ membershipId: seat, status: 'absent' }] });
     expect(r.status, JSON.stringify(r.body)).toBe(422);
     expect(r.body.code).toBe('governance.attendance.frozen_voting_open');
-    // Close the round so later probes can use the meeting.
-    for (const k of ['sponsor', 'finance'] as const) expect((await vote(pR, a[k], x.id, 'approve', v)).status).toBe(201);
+    // Close the round so later probes can use the meeting. (Setup change for DOM-P2R-01: the outcome needs every present
+    // eligible member's vote — Legal is present in the gate kit's meeting and votes too; the assertions are unchanged.)
+    for (const k of ['sponsor', 'finance', 'legal'] as const) expect((await vote(pR, a[k], x.id, 'approve', v)).status).toBe(201);
     expect((await a.secretary.post(`${P(pR)}/decisions/${x.id}/record-outcome`, { expectedVersion: v })).status).toBe(201);
   });
 
@@ -217,7 +243,7 @@ describe('P2 domain re-review — probes [docs/reviews/P2-domain-rereview.md]', 
   });
 
   // -------------------------------------------------------------------------------------------------------------
-  it('DEFECT DOM-P2R-04a: the external approval evidence behind an APPROVED gate is later rejected as defective — the gate must be flagged for controlled reassessment', async () => {
+  it('DOM-P2R-04a (fixed, regression): the external approval evidence behind an APPROVED gate is later rejected as defective — the gate must be flagged for controlled reassessment', async () => {
     const g0 = await gateByKey(a.pm, pR, 'G0');
     expect(g0.assessment.status).toBe('approved');
     const d = await decisionRow(g0.assessment.decisionId!);

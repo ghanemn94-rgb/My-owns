@@ -427,6 +427,7 @@ CREATE TABLE "change_request" (
 	"cost_impact_amount" numeric(20, 4),
 	"cost_impact_currency" varchar(3),
 	"cost_impact_unit_scale" integer,
+	"cost_impact_recorded_by" uuid,
 	"subject_type" varchar(32),
 	"subject_id" uuid,
 	"proposed_change" jsonb,
@@ -965,12 +966,33 @@ CREATE TABLE "decision" (
 	"implementation_verified_at" timestamp with time zone,
 	"classification" "classification" DEFAULT 'confidential' NOT NULL,
 	"gate_key" varchar(16),
+	"subject_type" varchar(32),
+	"subject_id" uuid,
+	"first_submitted_at" timestamp with time zone,
+	"evidence_none_reason" text,
+	"voting_closed_round" integer,
+	"voting_closed_by" uuid,
+	"voting_closed_at" timestamp with time zone,
+	"voting_close_reason" text,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
-	CONSTRAINT "decision_pid_uq" UNIQUE("project_id","id")
+	CONSTRAINT "decision_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "decision_subject_ck" CHECK (("decision"."subject_type" is null) = ("decision"."subject_id" is null) and ("decision"."subject_type" is null or "decision"."subject_type" in ('change_request', 'baseline_version', 'perimeter_version')))
+);
+--> statement-breakpoint
+CREATE TABLE "decision_use" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"decision_id" uuid NOT NULL,
+	"use_kind" varchar(48) NOT NULL,
+	"subject_type" varchar(32) NOT NULL,
+	"subject_id" uuid NOT NULL,
+	"used_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"used_by" uuid
 );
 --> statement-breakpoint
 CREATE TABLE "escalation" (
@@ -2989,6 +3011,8 @@ ALTER TABLE "decision" ADD CONSTRAINT "decision_committee_fk" FOREIGN KEY ("proj
 ALTER TABLE "decision" ADD CONSTRAINT "decision_meeting_fk" FOREIGN KEY ("project_id","meeting_id") REFERENCES "public"."meeting"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "decision" ADD CONSTRAINT "decision_superseded_fk" FOREIGN KEY ("project_id","superseded_by_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "decision" ADD CONSTRAINT "decision_external_evidence_fk" FOREIGN KEY ("project_id","external_evidence_link_id") REFERENCES "public"."evidence_link"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "decision_use" ADD CONSTRAINT "decision_use_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "decision_use" ADD CONSTRAINT "decision_use_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "escalation" ADD CONSTRAINT "escalation_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "escalation" ADD CONSTRAINT "escalation_committee_fk" FOREIGN KEY ("project_id","raised_to_committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "escalation" ADD CONSTRAINT "escalation_resolution_fk" FOREIGN KEY ("project_id","resolution_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -3250,7 +3274,9 @@ CREATE UNIQUE INDEX "assumption_code_uq" ON "assumption" USING btree ("project_i
 CREATE UNIQUE INDEX "baseline_version_uq" ON "baseline_version" USING btree ("project_id","version_no");--> statement-breakpoint
 CREATE UNIQUE INDEX "baseline_one_proposed_uq" ON "baseline_version" USING btree ("project_id") WHERE status = 'proposed';--> statement-breakpoint
 CREATE UNIQUE INDEX "baseline_one_approved_uq" ON "baseline_version" USING btree ("project_id") WHERE status = 'approved';--> statement-breakpoint
+CREATE UNIQUE INDEX "baseline_version_decision_uq" ON "baseline_version" USING btree ("decision_id") WHERE decision_id is not null and status in ('approved', 'superseded');--> statement-breakpoint
 CREATE UNIQUE INDEX "change_request_code_uq" ON "change_request" USING btree ("project_id","code");--> statement-breakpoint
+CREATE UNIQUE INDEX "change_request_decision_uq" ON "change_request" USING btree ("decision_id") WHERE decision_id is not null and status in ('approved', 'implemented');--> statement-breakpoint
 CREATE INDEX "cross_project_dependency_other_idx" ON "cross_project_dependency" USING btree ("other_project_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "deliverable_code_uq" ON "deliverable" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "dependency_uq" ON "dependency" USING btree ("project_id","predecessor_id","successor_id");--> statement-breakpoint
@@ -3265,12 +3291,16 @@ CREATE UNIQUE INDEX "risk_code_uq" ON "risk" USING btree ("project_id","code");-
 CREATE UNIQUE INDEX "task_wbs_uq" ON "task" USING btree ("project_id","wbs_code");--> statement-breakpoint
 CREATE INDEX "task_ws_idx" ON "task" USING btree ("workstream_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "action_item_code_uq" ON "action_item" USING btree ("project_id","code");--> statement-breakpoint
+CREATE UNIQUE INDEX "agenda_item_number_uq" ON "agenda_item" USING btree ("meeting_id","number") WHERE screening_status = 'accepted' and number is not null;--> statement-breakpoint
 CREATE INDEX "approval_request_subject_idx" ON "approval_request" USING btree ("project_id","subject_type","subject_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "attendance_uq" ON "attendance" USING btree ("meeting_id","membership_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "authority_matrix_version_uq" ON "authority_matrix_version" USING btree ("committee_id","version_no");--> statement-breakpoint
 CREATE INDEX "committee_membership_committee_idx" ON "committee_membership" USING btree ("committee_id");--> statement-breakpoint
+CREATE INDEX "decision_subject_idx" ON "decision" USING btree ("project_id","subject_type","subject_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "decision_code_uq" ON "decision" USING btree ("project_id","code");--> statement-breakpoint
 CREATE INDEX "decision_status_idx" ON "decision" USING btree ("project_id","status");--> statement-breakpoint
+CREATE UNIQUE INDEX "decision_use_kind_uq" ON "decision_use" USING btree ("decision_id","use_kind");--> statement-breakpoint
+CREATE INDEX "decision_use_subject_idx" ON "decision_use" USING btree ("project_id","subject_type","subject_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "escalation_code_uq" ON "escalation" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "meeting_number_uq" ON "meeting" USING btree ("committee_id","number");--> statement-breakpoint
 CREATE UNIQUE INDEX "recusal_uq" ON "recusal" USING btree ("decision_id","user_id");--> statement-breakpoint
@@ -3294,6 +3324,7 @@ CREATE INDEX "perimeter_item_status_idx" ON "perimeter_item" USING btree ("proje
 CREATE UNIQUE INDEX "perimeter_version_no_uq" ON "perimeter_version" USING btree ("project_id","version_no");--> statement-breakpoint
 CREATE UNIQUE INDEX "perimeter_version_one_proposed_uq" ON "perimeter_version" USING btree ("project_id") WHERE status = 'proposed';--> statement-breakpoint
 CREATE UNIQUE INDEX "perimeter_version_one_approved_uq" ON "perimeter_version" USING btree ("project_id") WHERE status = 'approved';--> statement-breakpoint
+CREATE UNIQUE INDEX "perimeter_version_decision_uq" ON "perimeter_version" USING btree ("decision_id") WHERE decision_id is not null and status in ('approved', 'superseded');--> statement-breakpoint
 CREATE UNIQUE INDEX "readiness_check_code_uq" ON "readiness_check" USING btree ("project_id","code");--> statement-breakpoint
 CREATE INDEX "readiness_check_status_idx" ON "readiness_check" USING btree ("project_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "readiness_test_run_seq_uq" ON "readiness_test_run" USING btree ("readiness_check_id","seq");--> statement-breakpoint

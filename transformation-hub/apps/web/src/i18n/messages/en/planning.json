@@ -268,6 +268,7 @@
     "frozenTasks": "Frozen task dates",
     "noTasks": "No confirmed tasks in this baseline.",
     "selfNotice": "You proposed this baseline, so someone else must approve or reject it.",
+    "raisePaper": "Raise decision paper for this baseline",
     "back": "Baselines",
     "approveAmount": "The amount compared with the delegated limit is the total of the approved budget lines frozen in the snapshot."
   },
@@ -488,12 +489,15 @@
     "assessHint": "Describe each impact in plain language; leave a field empty when it does not apply.",
     "assessed": "Impact assessment recorded.",
     "selfNotice": "You requested this change, so someone else must approve or reject it.",
+    "raisePaper": "Raise decision paper for this change",
     "back": "Change requests",
     "costImpact": "Cost impact (money)",
     "costImpactHint": "Record the budget impact as an amount with currency and unit; enter 0 when the change has no cost impact. Approval compares it with the delegated limit.",
     "costTextOnly": "A cost impact is described in text but has no amount: approval will be refused until you record it as money (0 when none).",
     "costNotQuantified": "Described in text only — not quantified",
     "costNotRecorded": "Not recorded",
+    "costUnconfirmed": "Stated by the requester — an assessor other than the requester must record or confirm it before it can decide an approval.",
+    "costConfirmed": "Recorded by an assessor other than the requester.",
     "costNotQuantifiedShort": "Not quantified",
     "costBeforeApproval": "Before approval, the assessor records the budget effect as an amount with currency and unit (0 when none) in the change request's impact assessment; a cost stated in text only is refused."
   },
@@ -666,7 +670,13 @@
       "prerequisite_duplicate": "This prerequisite already exists.",
       "xproj_same_project": "Both ends are in this project: use an ordinary dependency instead.",
       "xproj_already_closed": "This cross-project dependency is already closed.",
-      "xproj_local_item_incomplete": "Select both the type and the item of this project, or neither."
+      "xproj_local_item_incomplete": "Select both the type and the item of this project, or neither.",
+      "change_control_decision_no_subject": "The selected decision was not raised for a specific record. Only a decision raised for this change request or baseline version can back its approval: raise a decision paper for it.",
+      "change_control_decision_other_subject": "The selected decision authorizes another record. Only a decision raised for this change request or baseline version can back its approval.",
+      "change_control_decision_evidence_invalid": "The evidence of the external authority's approval recorded on the selected decision is no longer active and verified (for example it was rejected as defective). The decision no longer backs approvals until the external approval is evidenced again.",
+      "change_control_amount_unconfirmed": "The cost impact was stated by the requester only. An assessor other than the requester must record or confirm it in the impact assessment before it can decide this approval.",
+      "prerequisite_reason_required": "Give a reason to remove the prerequisite.",
+      "prerequisite_removal_by_blocked_party": "This prerequisite still blocks a task or milestone you are accountable for: someone else must remove it (separation of duties)."
     }
   },
   "money": {
@@ -690,6 +700,7 @@
     "noAccess": "You cannot read committee decisions, so you cannot select one. The approval can only rest on your delegated authority; outside it the server refuses it.",
     "label": "Backing governance decision",
     "hint": "Optional within your delegated authority. Needed outside it, or when no approved authority matrix is in force: select the final committee decision of type \"{type}\" that covers the amount.",
+    "subjectHint": "Only decisions raised for this record are offered (the paper names the change request or baseline version it authorizes); a decision whose external approval evidence was rejected no longer counts.",
     "loading": "Loading decisions…",
     "none": "None — approve within my delegated authority",
     "empty": "No final decision of type \"{type}\" exists yet. A recommendation counts only once the external authority's decision is recorded with verified evidence.",
@@ -781,6 +792,7 @@
     "removeTitle": "Remove prerequisite",
     "removeLabel": "Remove prerequisite {label}",
     "removeEffect": "{code} no longer waits for this {type}: {label}.",
+    "removeRule": "A reason is required. While the prerequisite still blocks, the person accountable for the task or milestone cannot remove it — someone else must (separation of duties).",
     "removed": "Prerequisite removed.",
     "notYetFinal": "not final yet",
     "evidenceVerified": "verified",

@@ -623,8 +623,30 @@
       "latestSafeDate": "Latest safe decision date",
       "requiredAuthority": "Required approving authority",
       "decisionTypeKey": "Decision type",
-      "requesterUserId": "Requester"
+      "requesterUserId": "Requester",
+      "supportingEvidence": "Supporting evidence or attachment — or \"none\" with a reason"
     },
+    "subject": {
+      "legend": "Record this paper authorizes",
+      "hint": "Choose the change request, baseline version or perimeter version the committee is asked to authorize. Only a decision raised for that record can back its approval. It cannot be changed once the paper is submitted.",
+      "locked": "The record was fixed when the paper was submitted and can no longer change. Raise a new paper for another record.",
+      "type": "Record type",
+      "none": "None (not the approval of a specific record)",
+      "record": "Record",
+      "restricted": "You cannot read this register",
+      "versionLabel": "Version {version}",
+      "types": {
+        "change_request": "Change request",
+        "baseline_version": "Baseline version",
+        "perimeter_version": "Perimeter version"
+      },
+      "fact": "Authorizes",
+      "factNone": "No specific record"
+    },
+    "evidenceNoneReason": "No supporting evidence or attachment — reason",
+    "evidenceNoneReasonHint": "Link supporting evidence or attachments in the paper's evidence panel after saving. If none exists, state why here — one or the other is required to submit the paper.",
+    "supportingEvidence": "Supporting evidence",
+    "supportingEvidenceCount": "Evidence links and attachments on the paper: {count}",
     "complete": "The paper is complete and can be submitted.",
     "edit": "Edit paper",
     "editTitle": "Edit draft paper {code}",
@@ -636,6 +658,13 @@
     "back": "Back to decisions",
     "tabledAt": "Tabled at",
     "round": "Voting round {round}",
+    "votingState": {
+      "title": "Voting — round {round}",
+      "outstanding": "Eligible members who have not voted yet ({count}):",
+      "allVoted": "Every eligible member expected to vote has voted: the outcome can be recorded.",
+      "closed": "The chair closed voting on {at}.",
+      "rule": "Proposed rule, pending the governance owner's confirmation: the outcome is recorded when every present eligible member has voted (for a circulation: every eligible member, or the deadline has passed), or when the chair closes voting with a reason; members who did not vote are listed and not counted."
+    },
     "recommended": {
       "title": "Recommended — pending external authority",
       "body": "The committee supports this decision, but it is outside the committee's delegated authority. This is not an approval: {body} must decide, and dependent gates stay blocked until that decision is recorded with its reference.",
@@ -729,7 +758,15 @@
         "recusedHint": "You are recused from this decision: the server refuses your vote.",
         "alreadyVoted": "You already voted in this round ({choice}).",
         "done": "Vote recorded.",
-        "conflictFirst": "If you have a conflict of interest, declare your recusal before voting: once you have voted in this round, a recusal is refused until the round is restarted."
+        "conflictFirst": "If you have a conflict of interest, declare your recusal before voting: once you have voted in this round, a recusal is refused until the round is restarted.",
+        "conflictLegend": "Conflict of interest for this item (required before voting)",
+        "noConflict": "I have no conflict of interest with this item",
+        "hasConflict": "I have a conflict of interest — record my recusal instead of voting",
+        "declared": "Your conflict-of-interest declaration for this item is recorded.",
+        "recuseReason": "Reason for the recusal (your conflict)",
+        "recuseConfirm": "Record my recusal",
+        "recusedDone": "Recusal recorded; you do not vote on this item.",
+        "votingClosed": "The chair closed voting on this round: no further votes are accepted."
       },
       "recordOutcome": {
         "label": "Record outcome",
@@ -737,7 +774,17 @@
         "effect1": "The server computes quorum, the tally and the authority check from the recorded attendance, the votes and the approved authority matrix.",
         "effect2": "Within the committee's mandate a passing vote becomes Approved; outside it, the decision becomes Recommended — pending external authority, and an escalation is raised.",
         "done": "Outcome recorded: {status}.",
-        "integrity": "Refused if the round contains votes of recused members, of the requester or of members no longer recorded present: defer and resume the decision to open a new round."
+        "integrity": "Refused if the round contains votes of recused members, of the requester or of members no longer recorded present: defer and resume the decision to open a new round.",
+        "complete": "The outcome can be recorded only when every eligible member expected to vote has voted, or the chair has closed voting.",
+        "outstanding": "Not yet: {count} eligible member(s) have not voted. Wait for their votes, or the chair closes voting with a reason."
+      },
+      "closeVoting": {
+        "label": "Close voting",
+        "title": "Close voting on {code}",
+        "effect1": "Closes the current voting round: no further votes are accepted. Only the committee's chair can do this, with a reason.",
+        "effect2": "Members who have not voted are listed in the tally snapshot and are not counted (proposed rule, pending the governance owner's confirmation).",
+        "outstanding": "Members who have not voted yet: {count}",
+        "done": "Voting closed."
       },
       "external": {
         "label": "Record external decision",
@@ -963,7 +1010,20 @@
       "attendance_frozen_voting_open": "Attendance is frozen while voting is open on {decisions}. Record the outcome first, or defer the decision and resume it to open a new voting round, then correct attendance.",
       "attendance_frozen_voting_open_noList": "Attendance is frozen while voting is open on a decision tabled at this meeting. Record the outcome first, or defer the decision and resume it to open a new voting round, then correct attendance.",
       "outcome_vote_integrity": "The outcome cannot be recorded: round {round} contains votes cast by members who are recused, requested the decision or are no longer recorded present (votes concerned: {count}). Cast votes are never discarded — defer the decision and resume it to open a new voting round.",
-      "outcome_vote_integrity_noCounts": "The outcome cannot be recorded: the current round contains votes cast by members who are recused, requested the decision or are no longer recorded present. Cast votes are never discarded — defer the decision and resume it to open a new voting round."
+      "outcome_vote_integrity_noCounts": "The outcome cannot be recorded: the current round contains votes cast by members who are recused, requested the decision or are no longer recorded present. Cast votes are never discarded — defer the decision and resume it to open a new voting round.",
+      "outcome_votes_outstanding": "The outcome cannot be recorded yet: {count} eligible member(s) have not voted in round {round}. Wait for their votes, or the chair closes voting with a reason.",
+      "outcome_votes_outstanding_noCounts": "The outcome cannot be recorded yet: eligible members have not voted. Wait for their votes, or the chair closes voting with a reason.",
+      "voting_not_chair": "Only the committee's chair can close voting.",
+      "voting_no_chair": "The committee has no chair appointed on the meeting date, so voting cannot be closed.",
+      "voting_already_closed": "Voting on this round is already closed.",
+      "voting_not_open": "Voting can be closed only while the decision is under review.",
+      "voting_reason_required": "Give a reason for closing the vote.",
+      "vote_voting_closed": "The chair closed voting on this round: no further votes are accepted.",
+      "vote_declaration_required": "Declare your conflict of interest for this item before voting: \"no conflict\", or record your recusal.",
+      "decision_subject_locked": "The record this paper authorizes was fixed when the paper was submitted. Raise a new paper for another record.",
+      "decision_subject_not_open": "A paper can be raised only for a record awaiting approval (a change request not yet decided, or a proposed baseline or perimeter version).",
+      "decision_subject_incomplete": "Select both the record type and the record, or neither.",
+      "decision_incomplete_paper": "The paper is incomplete. Complete the fields listed on the paper (including supporting evidence, or \"none\" with a reason) and submit again."
     }
   },
   "external": {

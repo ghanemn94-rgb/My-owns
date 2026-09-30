@@ -14,22 +14,28 @@ import { btn } from '../ui';
 import { MoneyText } from './money';
 
 export type ApprovalDecisionType = 'baseline_approval' | 'change_request_budget';
+/** The record being approved: a decision backs it only when raised for it (DOM-P2R-03). */
+export interface ApprovalSubject {
+  subjectType: 'change_request' | 'baseline_version';
+  subjectId: string;
+}
 
 const FINAL: readonly string[] = FINAL_APPROVED_DECISION_STATES;
 
 /**
  * Optional `decisionId` of a baseline / change-request approval (DOM-P2-03): outside the approver's delegated authority —
  * or when no approved matrix is in force — the approval must rest on a FINAL committee decision of the matching type that
- * covers the amount (approved within the committee mandate, or approved by the external authority and recorded). Only
- * such decisions are offered; the server re-checks finality, type, amount, currency, project and single use.
+ * covers the amount (approved within the committee mandate, or approved by the external authority and recorded) and that
+ * was raised for THIS record (DOM-P2R-03). Only such decisions are offered; the server re-checks finality, the evidence of an
+ * external approval, type, subject, amount, currency, project and single use.
  */
-export function ApprovalDecisionPicker({ decisionTypeKey, value, onChange }: { decisionTypeKey: ApprovalDecisionType; value: string; onChange: (id: string) => void }) {
+export function ApprovalDecisionPicker({ decisionTypeKey, subject, value, onChange }: { decisionTypeKey: ApprovalDecisionType; subject: ApprovalSubject; value: string; onChange: (id: string) => void }) {
   const { t, tStatus } = useI18n();
   const { projectId, can } = useProjectContext();
   const readable = can('governance.decision.read');
   const list = useQuery({
-    queryKey: ['gov', projectId, 'decisions', { approvalPicker: decisionTypeKey }],
-    queryFn: ({ signal }) => api(governanceRoutes.listDecisions, { params: { projectId }, query: { page: 1, pageSize: 100 }, signal }),
+    queryKey: ['gov', projectId, 'decisions', { approvalPicker: decisionTypeKey, ...subject }],
+    queryFn: ({ signal }) => api(governanceRoutes.listDecisions, { params: { projectId }, query: { page: 1, pageSize: 100, subjectType: subject.subjectType, subjectId: subject.subjectId, decisionTypeKey }, signal }),
     enabled: readable,
   });
   const selected = useQuery({
@@ -56,7 +62,7 @@ export function ApprovalDecisionPicker({ decisionTypeKey, value, onChange }: { d
         label={t('planning.approvalDecision.label')}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        hint={t('planning.approvalDecision.hint', { type: typeLabel })}
+        hint={`${t('planning.approvalDecision.hint', { type: typeLabel })} ${t('planning.approvalDecision.subjectHint')}`}
         data-testid="approval-decision-select"
       >
         <option value="">{list.isLoading ? t('planning.approvalDecision.loading') : t('planning.approvalDecision.none')}</option>

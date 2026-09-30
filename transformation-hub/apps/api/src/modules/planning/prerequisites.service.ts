@@ -3,9 +3,11 @@ import { and, asc, eq, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
   EVIDENCE_TARGET_READ_PERMISSION,
+  ExternalEvidenceState,
   PrerequisiteState,
   PrerequisiteType,
   ScheduleNodeType,
+  assertPrerequisiteRemovable,
   assertPrerequisitesSatisfied,
   conflict,
   notFound,
@@ -44,10 +46,10 @@ export class PrerequisiteService {
   private async successor(projectId: string, type: ScheduleNodeType, id: string) {
     if (type === 'task') {
       const t = await loadInProject(this.s.db, schema.task, projectId, id);
-      return { type, id, code: t.wbsCode, title: t.title, workstreamId: t.workstreamId };
+      return { type, id, code: t.wbsCode, title: t.title, workstreamId: t.workstreamId, accountableUserId: t.accountableUserId };
     }
     const m = await loadInProject(this.s.db, schema.milestone, projectId, id);
-    return { type, id, code: m.code, title: m.title, workstreamId: m.workstreamId };
+    return { type, id, code: m.code, title: m.title, workstreamId: m.workstreamId, accountableUserId: m.ownerUserId };
   }
 
   /** Record visibility of a prerequisite record for the caller (decision / agreement classification, gate read, …). */
@@ -66,7 +68,16 @@ export class PrerequisiteService {
     switch (type) {
       case 'decision': {
         const d = await loadInProject(this.s.db, schema.decision, projectId, id);
-        return { state: { type, status: d.status, authorityOutcome: d.authorityOutcome, externalAuthorityReference: d.externalAuthorityReference }, label: `${d.code} ${d.title}` };
+        // DOM-P2R-04: an external approval satisfies the prerequisite only while its evidence is active and verified.
+        let externalEvidence: ExternalEvidenceState | null = null;
+        if (d.externalEvidenceLinkId) {
+          const [l] = await this.tx
+            .select({ status: schema.evidenceLink.status, reviewedBy: schema.evidenceLink.reviewedBy })
+            .from(schema.evidenceLink)
+            .where(and(eq(schema.evidenceLink.id, d.externalEvidenceLinkId), eq(schema.evidenceLink.projectId, projectId)));
+          externalEvidence = { linkId: d.externalEvidenceLinkId, status: l?.status ?? null, verified: !!l?.reviewedBy };
+        }
+        return { state: { type, status: d.status, authorityOutcome: d.authorityOutcome, externalAuthorityReference: d.externalAuthorityReference, externalEvidence }, label: `${d.code} ${d.title}` };
       }
       case 'gate': {
         const g = await loadInProject(this.s.db, schema.gateDefinition, projectId, id);
@@ -110,13 +121,28 @@ export class PrerequisiteService {
     return { id };
   }
 
+  /**
+   * DOM-P2R-07: role (dependency management on the successor's workstream) → the prerequisite's state → separation of
+   * duties: a reason is required, and while the prerequisite still blocks the task / milestone it may not be removed by the
+   * person accountable for it (the person it blocks). Audited with the reason and whether it was still blocking.
+   */
   async remove(ctx: RequestContext, projectId: string, prerequisiteId: string, reason?: string) {
     const p = await this.s.project(ctx, projectId);
     const r = await loadInProject(this.s.db, schema.recordDependency, projectId, prerequisiteId);
     const succ = await this.successor(projectId, r.successorType as ScheduleNodeType, r.successorId);
     this.s.assert(ctx, 'planning.dependency.manage', p, { workstreamId: succ.workstreamId });
+    const pre = await this.state(projectId, r.predecessorType as PrerequisiteType, r.predecessorId);
+    const satisfied = prerequisiteSatisfied(pre.state);
+    assertPrerequisiteRemovable({ satisfied, reason, actorUserId: ctx.principal.userId, blockedUserIds: [succ.accountableUserId] });
     await this.tx.delete(schema.recordDependency).where(and(eq(schema.recordDependency.id, r.id), eq(schema.recordDependency.projectId, projectId)));
-    await this.audit.record({ action: 'planning.prerequisite.remove', entityType: 'record_dependency', entityId: r.id, projectId, before: { successorId: r.successorId, predecessorType: r.predecessorType, predecessorId: r.predecessorId }, reason: reason ?? null });
+    await this.audit.record({
+      action: 'planning.prerequisite.remove',
+      entityType: 'record_dependency',
+      entityId: r.id,
+      projectId,
+      before: { successorId: r.successorId, predecessorType: r.predecessorType, predecessorId: r.predecessorId, satisfied, accountableUserId: succ.accountableUserId },
+      reason: reason!.trim(),
+    });
     return { ok: true as const };
   }
 

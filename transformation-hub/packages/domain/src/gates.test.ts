@@ -85,7 +85,10 @@ describe('AT-04 — gate approval needs a final governance decision [REQ-LCY-010
   });
   it('an approved decision outside mandate needs the recorded approval of the authorized body', () => {
     expect(gateDecisionIssue({ ...base, authorityOutcome: 'pending_external_authority' }, 'G1')).not.toBeNull();
-    expect(gateDecisionIssue({ ...base, authorityOutcome: 'pending_external_authority', externalAuthorityReference: 'Board resolution (demo ref)' }, 'G1')).toBeNull();
+    // DOM-P2R-04: the recorded external approval counts only with its evidence still active and verified.
+    const verified = { linkId: 'l1', status: 'active', verified: true };
+    expect(gateDecisionIssue({ ...base, authorityOutcome: 'pending_external_authority', externalAuthorityReference: 'Board resolution (demo ref)', externalEvidence: verified }, 'G1')).toBeNull();
+    expect(gateDecisionIssue({ ...base, authorityOutcome: 'pending_external_authority', externalAuthorityReference: 'Board resolution (demo ref)' }, 'G1')?.messageI18n[0]?.code).toBe('gate.blocker.decision_external_evidence_missing');
     expect(gateDecisionIssue({ ...base, authorityOutcome: 'not_assessed' }, 'G1')).not.toBeNull();
   });
   it('a decision raised for another gate cannot back this gate', () => {
@@ -151,7 +154,9 @@ describe('DOM-P2-01 — the decision backing a gate: gate key, decision type ass
     const d = { ...approved, gateKey: 'G0', decisionTypeKey: 'gate_decision_mandate' };
     expect(code(gateApprovalDecisionIssue(d, 'G0', mandate))).toBe('gate.blocker.decision_body_not_authorized');
     expect(code(gateApprovalDecisionIssue({ ...d, status: 'recommended', authorityOutcome: 'pending_external_authority' }, 'G0', mandate))).toBe('gate.blocker.decision_recommended');
-    expect(gateApprovalDecisionIssue({ ...d, authorityOutcome: 'pending_external_authority', externalAuthorityReference: 'DEMO-REF (synthetic)' }, 'G0', mandate)).toBeNull();
+    expect(
+      gateApprovalDecisionIssue({ ...d, authorityOutcome: 'pending_external_authority', externalAuthorityReference: 'DEMO-REF (synthetic)', externalEvidence: { linkId: 'l1', status: 'active', verified: true } }, 'G0', mandate),
+    ).toBeNull();
   });
   it('finality is reported before the type (a pending decision of the right type shows its real blocker); another gate is refused first', () => {
     expect(code(gateApprovalDecisionIssue({ ...approved, status: 'under_review', gateKey: 'G1', decisionTypeKey: 'gate_decision_operational' }, 'G1', op))).toBe('gate.blocker.decision_not_approved');

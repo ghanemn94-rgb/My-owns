@@ -1,7 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { Classification, DecisionAuthorityOutcome, DecisionStatus, PerimeterDisposition, PerimeterItemType, conflict, gateApprovalDecisionIssue, notFound, perimeterVersionFindings, reconcilePerimeterRegister, ruleViolation } from '@hub/domain';
+import {
+  Classification,
+  DecisionAuthorityOutcome,
+  DecisionStatus,
+  PerimeterDisposition,
+  PerimeterItemType,
+  assertDecisionReliance,
+  conflict,
+  gateApprovalDecisionIssue,
+  notFound,
+  perimeterVersionFindings,
+  reconcilePerimeterRegister,
+  ruleViolation,
+} from '@hub/domain';
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { RecordVersionService, assertVersion, loadInProject, updateVersioned } from '../../platform/helpers';
@@ -9,6 +22,7 @@ import type { RequestContext } from '../../platform/context';
 import { newId, payloadHash } from '../../platform/ids';
 import { CarveoutProject, CarveoutSupport, iso } from './carveout.support';
 import { gateDecisionAuthorities } from '../gates/gate-authority';
+import { isUniqueViolation, lockDecisionForReliance, registerDecisionUse } from '../governance/decision-reliance';
 
 const V = schema.perimeterVersion;
 type VersionRow = typeof schema.perimeterVersion.$inferSelect;
@@ -160,17 +174,35 @@ export class PerimeterVersionsService {
     return loadInProject(this.s.db, V, p.id, versionId);
   }
 
-  /** Approval per authority matrix: sponsor, not the proposer, backed by a final governance decision. */
+  /**
+   * Approval per authority matrix: sponsor, not the proposer, backed by a final governance decision.
+   * DOM-P2R-05: one decision backs ONE perimeter version (a decision that approved version 1 never approves version 2): the
+   * decision row is locked and its earlier use refused (422 `perimeter.version.decision_already_used`), a partial unique
+   * index is the backstop (409); a decision raised for a specific record must have been raised for THIS version
+   * (DOM-P2R-03). DOM-P2R-04: an external approval counts only while its evidence is active and verified.
+   */
   async approve(ctx: RequestContext, projectId: string, versionId: string, body: { expectedVersion: number; decisionId: string; note?: string }) {
     const p = await this.s.project(ctx, projectId);
     const v = await this.lockVersion(p, versionId);
-    const d = await loadInProject(this.s.db, schema.decision, projectId, body.decisionId);
-    if (!this.s.policy.canSee(ctx, { projectId, classification: d.classification as Classification })) throw notFound();
+    const found = await loadInProject(this.s.db, schema.decision, projectId, body.decisionId);
+    if (!this.s.policy.canSee(ctx, { projectId, classification: found.classification as Classification })) throw notFound();
+    // Generic reliance facility: the decision row is locked and re-read with its current evidence and registered uses.
+    const locked = await lockDecisionForReliance(this.s.db, projectId, body.decisionId);
+    const d = locked.row;
+    const externalEvidence = locked.externalEvidence;
     // DOM-P2-01: the same rule as a G1 gate approval — raised for G1, final, of a type the deciding committee's approved
     // matrix assigns to G1, decided by the body holding that authority (a decision raised for no gate backs nothing).
     const authority = (await gateDecisionAuthorities(this.s.db, projectId, [d])).get(d.id) ?? null;
     const issue = gateApprovalDecisionIssue(
-      { id: d.id, status: d.status as DecisionStatus, authorityOutcome: d.authorityOutcome as DecisionAuthorityOutcome, externalAuthorityReference: d.externalAuthorityReference, gateKey: d.gateKey, decisionTypeKey: d.decisionTypeKey },
+      {
+        id: d.id,
+        status: d.status as DecisionStatus,
+        authorityOutcome: d.authorityOutcome as DecisionAuthorityOutcome,
+        externalAuthorityReference: d.externalAuthorityReference,
+        gateKey: d.gateKey,
+        decisionTypeKey: d.decisionTypeKey,
+        externalEvidence,
+      },
       PERIMETER_GATE,
       authority,
     );
@@ -178,6 +210,15 @@ export class PerimeterVersionsService {
     this.s.policy.assert(ctx, 'carveout.perimeter.approve', { projectId, classification: p.classification, requesterUserId: v.proposedBy, withinAuthority: issue === null });
     assertVersion(v, body.expectedVersion, 'perimeter version');
     if (v.status !== 'proposed') throw ruleViolation('perimeter.version.not_proposed', `The version is ${v.status}`);
+    // DOM-P2R-03: a decision raised for a specific record backs only that record (G1 papers raised for no record are bound
+    // by gate key above). DOM-P2R-05: one decision backs one perimeter version (registered uses, read under the lock).
+    assertDecisionReliance({
+      decision: locked.decision,
+      use: { kind: 'perimeter_version', subjectType: 'perimeter_version', subjectId: v.id },
+      uses: locked.uses,
+      subjectRule: 'if_set',
+      codePrefix: 'perimeter.version',
+    });
     // The register must still be what was proposed (a later change requires a new proposal).
     const current = payloadHash(await this.snapshot(projectId));
     if (current !== v.snapshotHash) throw conflict('perimeter.version.stale', 'The perimeter changed since this version was proposed — reject it and propose again');
@@ -186,7 +227,23 @@ export class PerimeterVersionsService {
       await updateVersioned(this.s.db, V, { id: prev.id, projectId, expectedVersion: prev.version }, { status: 'superseded', supersededAt: new Date() });
       await this.audit.record({ action: 'carveout.perimeter.supersede_version', entityType: 'perimeter_version', entityId: prev.id, projectId, before: { status: 'approved' }, after: { status: 'superseded', supersededBy: v.id } });
     }
-    const row = await updateVersioned(this.s.db, V, { id: v.id, projectId, expectedVersion: body.expectedVersion }, { status: 'approved', decidedBy: ctx.principal.userId, decidedAt: new Date(), decisionId: d.id, decisionNote: body.note ?? null });
+    let row: Record<string, unknown>;
+    try {
+      row = await updateVersioned(this.s.db, V, { id: v.id, projectId, expectedVersion: body.expectedVersion }, { status: 'approved', decidedBy: ctx.principal.userId, decidedAt: new Date(), decisionId: d.id, decisionNote: body.note ?? null });
+      await registerDecisionUse(this.s.db, {
+        orgId: ctx.principal.orgId,
+        projectId,
+        decisionId: d.id,
+        decisionCode: d.code,
+        kind: 'perimeter_version',
+        subjectId: v.id,
+        usedBy: ctx.principal.userId,
+        codePrefix: 'perimeter.version',
+      });
+    } catch (e) {
+      if (isUniqueViolation(e, ['perimeter_version_decision_uq'])) throw conflict('perimeter.version.decision_already_used', `Decision ${d.code} already backs another perimeter version (concurrent approval)`);
+      throw e;
+    }
     await this.versions.snapshot({ projectId, entityType: 'perimeter_version', entityId: v.id, versionNo: row['version'] as number, snapshot: { status: 'approved', snapshotHash: v.snapshotHash, decisionId: d.id, approvedBy: ctx.principal.userId }, reason: 'approved' });
     await this.audit.record({ action: 'carveout.perimeter.approve_version', entityType: 'perimeter_version', entityId: v.id, projectId, before: { status: v.status }, after: { status: 'approved', versionNo: v.versionNo, snapshotHash: v.snapshotHash, decisionId: d.id, decisionCode: d.code, supersedes: prev?.id ?? null }, reason: body.note ?? null });
     await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'perimeter_version', aggregateId: v.id, payload: { change: 'version_approved', versionNo: v.versionNo }, dedupeKey: `perimeter-version-approved:${v.id}` });

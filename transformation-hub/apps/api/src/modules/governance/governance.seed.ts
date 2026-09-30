@@ -111,6 +111,8 @@ export const governanceSeed: ModuleSeed = {
       risks: 'DEMO — synthetic risk: vendor availability.',
       dependencies: 'DEMO — Day-1 readiness workstream (WS07).',
       latestSafeDate: in30,
+      // DOM-P2-14: supporting evidence or an explicit "none — reason".
+      evidenceNoneReason: 'DEMO — synthetic paper: no supporting documents exist in the sandbox',
       ...over,
     });
     const a = await asUser('pm', (ctx) =>
@@ -210,10 +212,12 @@ export const governanceSeed: ModuleSeed = {
     const av = await version(a.id);
     const bv = await version(b.id);
     const gv = await version(g0.id);
+    // REQ-GOV-015: each member declares "no conflict" for the item when casting the vote; every present voting member votes
+    // (DOM-P2R-01), so the outcomes can be recorded without closing the vote.
     for (const k of ['chair', 'sponsor', 'finance', 'legal', 'approver']) {
-      await asUser(k, (ctx) => decisions.castVote(ctx, pid, a.id, { expectedVersion: av, choice: 'approve' }));
-      await asUser(k, (ctx) => decisions.castVote(ctx, pid, b.id, { expectedVersion: bv, choice: k === 'legal' ? 'abstain' : 'approve', comment: DEMO_NOTE }));
-      await asUser(k, (ctx) => decisions.castVote(ctx, pid, g0.id, { expectedVersion: gv, choice: 'approve', comment: DEMO_NOTE }));
+      await asUser(k, (ctx) => decisions.castVote(ctx, pid, a.id, { expectedVersion: av, choice: 'approve', conflictDeclaration: 'no_conflict' }));
+      await asUser(k, (ctx) => decisions.castVote(ctx, pid, b.id, { expectedVersion: bv, choice: k === 'legal' ? 'abstain' : 'approve', comment: DEMO_NOTE, conflictDeclaration: 'no_conflict' }));
+      await asUser(k, (ctx) => decisions.castVote(ctx, pid, g0.id, { expectedVersion: gv, choice: 'approve', comment: DEMO_NOTE, conflictDeclaration: 'no_conflict' }));
     }
     await asUser('chair', (ctx) => decisions.recordOutcome(ctx, pid, a.id, { expectedVersion: av, note: DEMO_NOTE }));
     await asUser('chair', (ctx) => decisions.recordOutcome(ctx, pid, b.id, { expectedVersion: bv, note: DEMO_NOTE }));

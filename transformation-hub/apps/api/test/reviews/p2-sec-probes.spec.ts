@@ -127,7 +127,8 @@ describe('SEC-P2-02 — decision separation of duties: the paper editor / submit
     expect(own.status, JSON.stringify(own.body)).toBe(201);
     const rev = await p.secretary.post(`${G(projectId)}/decisions/${d.id}/start-review`, { expectedVersion: own.body.version, meetingId: gov.meetingId });
     expect(rev.status, JSON.stringify(rev.body)).toBe(201);
-    const v = await p.finance.post(`${G(projectId)}/decisions/${d.id}/votes`, { expectedVersion: rev.body.version, choice: 'approve' });
+    // (Setup change for REQ-GOV-015: the member declares "no conflict" for the item with the vote; assertion unchanged.)
+    const v = await p.finance.post(`${G(projectId)}/decisions/${d.id}/votes`, { expectedVersion: rev.body.version, choice: 'approve', conflictDeclaration: 'no_conflict' });
     expect(v.status, JSON.stringify(v.body)).toBe(201);
   });
 });

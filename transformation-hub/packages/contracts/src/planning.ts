@@ -609,6 +609,13 @@ export const ChangeRequestDto = z.object({
   impacts: ImpactsSchema,
   /** Budget impact as money (decimal + currency + unit): compared with the `change_request_budget` delegated limit. */
   costImpact: MoneySchema.nullable(),
+  /** Who last recorded the cost impact (DOM-P2R-02). */
+  costImpactRecordedBy: Uuid.nullable(),
+  /**
+   * The cost impact was recorded or confirmed by an assessor other than the requester (impact assessment): only then can it
+   * make an approval pass the delegated limit (DOM-P2R-02). A requester-stated figure can still make it fail.
+   */
+  costImpactConfirmed: z.boolean(),
   status: z.enum(CHANGE_REQUEST_STATUSES),
   subjectType: z.string().nullable(),
   subjectId: Uuid.nullable(),
@@ -1125,7 +1132,7 @@ export const planningRoutes = registerRoutes({
     response: z.object({ items: z.array(PrerequisiteDto) }),
   }),
   createPrerequisite: defineRoute({ id: 'planning.createPrerequisite', method: 'POST', path: p('/prerequisites'), summary: 'Make a task / milestone wait for a decision, gate, agreement, approval or verified evidence', tags: T, access: 'planning.dependency.manage', params: ProjectParams, body: CreatePrerequisiteBody, response: Created }),
-  removePrerequisite: defineRoute({ id: 'planning.removePrerequisite', method: 'POST', path: p('/prerequisites/:prerequisiteId/remove'), summary: 'Remove a prerequisite', tags: T, access: 'planning.dependency.manage', command: true, params: idP('prerequisiteId'), body: z.object({ reason: Text(1000).optional() }), response: Ok }),
+  removePrerequisite: defineRoute({ id: 'planning.removePrerequisite', method: 'POST', path: p('/prerequisites/:prerequisiteId/remove'), summary: 'Remove a prerequisite (reason required; while it still blocks, not by the person accountable for the task / milestone it blocks — DOM-P2R-07)', tags: T, access: 'planning.dependency.manage', command: true, params: idP('prerequisiteId'), body: z.object({ reason: RequiredText(1000) }), response: Ok }),
   getSchedule: defineRoute({ id: 'planning.getSchedule', method: 'GET', path: p('/schedule'), summary: 'Schedule-based forecast: critical path and float (FS only; incomplete when data is missing)', tags: T, access: 'planning.plan.read', params: ProjectParams, query: ScheduleQuery, response: ScheduleDto }),
   delayImpact: defineRoute({ id: 'planning.delayImpact', method: 'POST', path: p('/schedule/delay-impact'), summary: 'What-if: calendar-based impact of delaying one activity (AT-15; no probabilities)', tags: T, access: 'planning.plan.read', params: ProjectParams, body: DelayImpactBody, response: DelayImpactDto }),
   listHolidays: defineRoute({ id: 'planning.listHolidays', method: 'GET', path: p('/calendar/holidays'), summary: 'Project calendar holidays', tags: T, access: 'planning.plan.read', params: ProjectParams, response: z.object({ timezone: z.string(), workingDays: z.array(z.number().int()), items: z.array(HolidayDto) }) }),

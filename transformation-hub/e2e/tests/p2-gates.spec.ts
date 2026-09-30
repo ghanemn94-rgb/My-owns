@@ -228,6 +228,8 @@ test.describe('P2 business gates', () => {
       dependencies: 'None identified',
       latestSafeDate: new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10),
       requiredAuthority: 'Steering committee (DEMO matrix, synthetic)',
+      // DOM-P2-14: no supporting documents, with the reason.
+      evidenceNoneReason: 'E2E synthetic paper: the G1 evidence is on the gate criteria',
     });
     const submitted = await post(pm, `/api/v1/projects/${pid}/decisions/${draft.id}/submit`, { expectedVersion: draft.version });
     await post(await as(P.secretary), `/api/v1/projects/${pid}/decisions/${draft.id}/start-review`, { expectedVersion: submitted.version });

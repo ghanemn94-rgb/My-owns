@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   ApprovalAmount,
   AuthorityPolicy,
+  DelegatedApprovalInput,
   GoverningMatrix,
   LinkedDecisionSnapshot,
   MemberSnapshot,
@@ -119,34 +120,39 @@ describe('DOM-P2-20 — attendance is frozen while voting is open', () => {
   });
 });
 
+/** The record under approval in these cases (DOM-P2R-03) and a confirmed amount (DOM-P2R-02) unless a case says otherwise. */
+const CR1 = { type: 'change_request' as const, id: 'cr1' };
+const evalApproval = (i: Omit<DelegatedApprovalInput, 'subject' | 'amountConfirmed'> & Partial<Pick<DelegatedApprovalInput, 'subject' | 'amountConfirmed'>>) =>
+  evaluateDelegatedApproval({ subject: CR1, amountConfirmed: true, ...i });
+
 describe('DOM-P2-03 — delegated authority for baseline and change-request approvals', () => {
   const demo: GoverningMatrix = { policy, source: 'demo_sandbox_policy', matrixVersionId: null, committeeId: null };
   const real: GoverningMatrix = { policy: { ...policy, isDemoPolicy: false }, source: 'approved_matrix', matrixVersionId: 'mx1', committeeId: 'c1' };
   const sar = (amount: string) => ({ kind: 'amount' as const, money: { amount, currency: 'SAR', unitScale: 1 } });
 
   it('no approved matrix (outside the demo sandbox) → refused', () => {
-    const r = evaluateDelegatedApproval({ decisionTypeKey: 'baseline_approval', matrix: null, matrixUnusableReason: 'No authority matrix exists', amount: { kind: 'none' }, decision: null });
+    const r = evalApproval({ decisionTypeKey: 'baseline_approval', matrix: null, matrixUnusableReason: 'No authority matrix exists', amount: { kind: 'none' }, decision: null });
     expect(r).toMatchObject({ withinAuthority: false, code: 'change_control.no_usable_matrix' });
   });
   it('within the matrix: decision type within the committee delegation and the amount within the limit', () => {
-    expect(evaluateDelegatedApproval({ decisionTypeKey: 'baseline_approval', matrix: real, amount: { kind: 'none' }, decision: null })).toMatchObject({ withinAuthority: true, basis: 'delegated_authority', matrixSource: 'approved_matrix', matrixVersionId: 'mx1' });
-    expect(evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: sar('1000000'), decision: null })).toMatchObject({ withinAuthority: true, matrixSource: 'demo_sandbox_policy' });
-    expect(evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: { kind: 'none' }, decision: null }).withinAuthority).toBe(true);
-    expect(evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: { kind: 'amount', money: { amount: '0.9', currency: 'SAR', unitScale: 1_000_000 } }, decision: null }).withinAuthority).toBe(true);
+    expect(evalApproval({ decisionTypeKey: 'baseline_approval', matrix: real, amount: { kind: 'none' }, decision: null })).toMatchObject({ withinAuthority: true, basis: 'delegated_authority', matrixSource: 'approved_matrix', matrixVersionId: 'mx1' });
+    expect(evalApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: sar('1000000'), decision: null })).toMatchObject({ withinAuthority: true, matrixSource: 'demo_sandbox_policy' });
+    expect(evalApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: { kind: 'none' }, decision: null }).withinAuthority).toBe(true);
+    expect(evalApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: { kind: 'amount', money: { amount: '0.9', currency: 'SAR', unitScale: 1_000_000 } }, decision: null }).withinAuthority).toBe(true);
   });
   it('above the limit, another currency, a reserved or unknown type → outside delegated authority, with the body to escalate to', () => {
-    const above = evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: sar('1500000'), decision: null });
+    const above = evalApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: sar('1500000'), decision: null });
     expect(above).toMatchObject({ withinAuthority: false, code: 'change_control.outside_delegated_authority', escalateTo: 'Delegating authority — to be confirmed' });
     expect(above.reason).toMatch(/exceeds the committee delegated limit/);
-    expect(evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: { kind: 'amount', money: { amount: '1', currency: 'USD', unitScale: 1 } }, decision: null }).code).toBe('change_control.outside_delegated_authority');
-    expect(evaluateDelegatedApproval({ decisionTypeKey: 'jv_signing_authorization', matrix: demo, amount: { kind: 'none' }, decision: null }).code).toBe('change_control.outside_delegated_authority');
-    expect(evaluateDelegatedApproval({ decisionTypeKey: 'unknown_type', matrix: demo, amount: { kind: 'none' }, decision: null }).code).toBe('change_control.outside_delegated_authority');
+    expect(evalApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: { kind: 'amount', money: { amount: '1', currency: 'USD', unitScale: 1 } }, decision: null }).code).toBe('change_control.outside_delegated_authority');
+    expect(evalApproval({ decisionTypeKey: 'jv_signing_authorization', matrix: demo, amount: { kind: 'none' }, decision: null }).code).toBe('change_control.outside_delegated_authority');
+    expect(evalApproval({ decisionTypeKey: 'unknown_type', matrix: demo, amount: { kind: 'none' }, decision: null }).code).toBe('change_control.outside_delegated_authority');
   });
   it('a monetary impact stated only as text is never assumed to be within a limit', () => {
-    const r = evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: { kind: 'unquantified', reason: 'The cost impact is stated as text only' }, decision: null });
+    const r = evalApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: { kind: 'unquantified', reason: 'The cost impact is stated as text only' }, decision: null });
     expect(r).toMatchObject({ withinAuthority: false, code: 'change_control.amount_unquantified' });
     // …but where the matrix sets no monetary limit for the type, the amount does not matter.
-    expect(evaluateDelegatedApproval({ decisionTypeKey: 'baseline_approval', matrix: demo, amount: { kind: 'unquantified', reason: 'mixed currencies' }, decision: null }).withinAuthority).toBe(true);
+    expect(evalApproval({ decisionTypeKey: 'baseline_approval', matrix: demo, amount: { kind: 'unquantified', reason: 'mixed currencies' }, decision: null }).withinAuthority).toBe(true);
   });
 
   const dec = (over: Partial<LinkedDecisionSnapshot> = {}): LinkedDecisionSnapshot => ({
@@ -157,17 +163,20 @@ describe('DOM-P2-03 — delegated authority for baseline and change-request appr
     decisionTypeKey: 'change_request_budget',
     amount: { amount: '1500000.0000', currency: 'SAR', unitScale: 1 },
     externalAuthorityReference: 'Synthetic external reference (test)',
+    subjectType: 'change_request',
+    subjectId: 'cr1',
+    externalEvidence: { linkId: 'l1', status: 'active', verified: true },
     ...over,
   });
   it('out-of-authority changes are approved on a final governance decision of the matching type that covers the amount', () => {
-    const r = evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: sar('1500000'), decision: dec() });
+    const r = evalApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: sar('1500000'), decision: dec() });
     expect(r).toMatchObject({ withinAuthority: true, basis: 'governance_decision', decisionId: 'd1' });
     // The decision route works even without a usable matrix today (the decision was evaluated when it was taken).
-    expect(evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: null, amount: sar('1500000'), decision: dec() }).withinAuthority).toBe(true);
-    expect(evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: sar('1500000'), decision: dec({ status: 'implementation_pending' }) }).withinAuthority).toBe(true);
+    expect(evalApproval({ decisionTypeKey: 'change_request_budget', matrix: null, amount: sar('1500000'), decision: dec() }).withinAuthority).toBe(true);
+    expect(evalApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: sar('1500000'), decision: dec({ status: 'implementation_pending' }) }).withinAuthority).toBe(true);
   });
   it('the decision must be final, of the right type, and cover the amount in the same currency', () => {
-    const e = (d: LinkedDecisionSnapshot, amount: ApprovalAmount = sar('1500000')) => evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount, decision: d }).code;
+    const e = (d: LinkedDecisionSnapshot, amount: ApprovalAmount = sar('1500000')) => evalApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount, decision: d }).code;
     expect(e(dec({ status: 'recommended' }))).toBe('change_control.decision_not_final');
     expect(e(dec({ status: 'under_review' }))).toBe('change_control.decision_not_final');
     expect(e(dec({ status: 'superseded' }))).toBe('change_control.decision_not_final');

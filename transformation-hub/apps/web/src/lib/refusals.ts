@@ -56,7 +56,31 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
       ? { key: 'governance.refusal.codes.outcome_vote_integrity', values: { round: f.formatNumber(round), count: votes } }
       : { key: 'governance.refusal.codes.outcome_vote_integrity_noCounts' };
   },
-  // Change control within delegated authority (DOM-P2-03)
+  // Voting closure (DOM-P2R-01) and declarations before voting (REQ-GOV-015)
+  'governance.outcome.votes_outstanding': (d, f) => {
+    const round = int(d?.['round']);
+    const count = int(d?.['outstanding']);
+    return round !== null && count !== null
+      ? { key: 'governance.refusal.codes.outcome_votes_outstanding', values: { round: f.formatNumber(round), count: f.formatNumber(count) } }
+      : { key: 'governance.refusal.codes.outcome_votes_outstanding_noCounts' };
+  },
+  'governance.voting.not_chair': 'governance.refusal.codes.voting_not_chair',
+  'governance.voting.no_chair': 'governance.refusal.codes.voting_no_chair',
+  'governance.voting.already_closed': 'governance.refusal.codes.voting_already_closed',
+  'governance.voting.not_open': 'governance.refusal.codes.voting_not_open',
+  'governance.voting.reason_required': 'governance.refusal.codes.voting_reason_required',
+  'governance.vote.voting_closed': 'governance.refusal.codes.vote_voting_closed',
+  'governance.vote.declaration_required': 'governance.refusal.codes.vote_declaration_required',
+  // The record a decision authorizes (DOM-P2R-03) and paper completeness (DOM-P2-14)
+  'governance.decision.subject_locked': 'governance.refusal.codes.decision_subject_locked',
+  'governance.decision.subject_not_open': 'governance.refusal.codes.decision_subject_not_open',
+  'governance.decision.subject_incomplete': 'governance.refusal.codes.decision_subject_incomplete',
+  'governance.decision.incomplete_paper': 'governance.refusal.codes.decision_incomplete_paper',
+  // Change control within delegated authority (DOM-P2-03, DOM-P2R-02/-03/-04)
+  'change_control.decision_no_subject': 'planning.refusal.codes.change_control_decision_no_subject',
+  'change_control.decision_other_subject': 'planning.refusal.codes.change_control_decision_other_subject',
+  'change_control.decision_evidence_invalid': 'planning.refusal.codes.change_control_decision_evidence_invalid',
+  'change_control.amount_unconfirmed': 'planning.refusal.codes.change_control_amount_unconfirmed',
   'change_control.no_usable_matrix': 'planning.refusal.codes.change_control_no_usable_matrix',
   'change_control.outside_delegated_authority': (d) => {
     const body = str(d?.['escalateTo']);
@@ -75,6 +99,16 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
     return count === null ? { key: 'planning.refusal.codes.prerequisite_pending_noCount' } : { key: 'planning.refusal.codes.prerequisite_pending', values: { count } };
   },
   'prerequisite.duplicate': 'planning.refusal.codes.prerequisite_duplicate',
+  'planning.prerequisite.reason_required': 'planning.refusal.codes.prerequisite_reason_required',
+  'planning.prerequisite.removal_by_blocked_party': 'planning.refusal.codes.prerequisite_removal_by_blocked_party',
+  // Perimeter versions (DOM-P2R-05) and gates (DOM-P2R-04, QA-P2-03, O-1)
+  'perimeter.version.decision_already_used': 'carveout.versions.refusal.decisionAlreadyUsed',
+  'perimeter.version.decision_other_subject': 'carveout.versions.refusal.decisionOtherSubject',
+  'gates.decide.decision_evidence_invalid': 'gates.refusal.decisionEvidenceInvalid',
+  'gates.assessment.review_stale': 'gates.refusal.reviewStale',
+  'gates.decide.decision_reused': 'gates.refusal.decisionReused',
+  // Decision-use registry backstop (a concurrent gate decision registered the decision first) — same meaning.
+  'gates.decide.decision_already_used': 'gates.refusal.decisionReused',
   'xproj.same_project': 'planning.refusal.codes.xproj_same_project',
   'xproj.already_closed': 'planning.refusal.codes.xproj_already_closed',
   'xproj.local_item_incomplete': 'planning.refusal.codes.xproj_local_item_incomplete',
