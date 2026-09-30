@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, owner, projectIdByCode, Client, DC } from '../helpers';
-import { setupProject, setupGovernance, gateByKey, crit, evidenceLinks, meetAllMandatory, startGate, gateDecision, Personas, Gov } from '../gates/gate-test-kit';
+import { setupProject, setupGovernance, gateByKey, crit, evidenceAdderFor, evidenceLinks, meetAllMandatory, startGate, gateDecision, Personas, Gov } from '../gates/gate-test-kit';
 import { Actors, DEMO_AUTHORITY_POLICY, P, decisionVersion, paper, tabledDecision, uniq, verifiedDecisionEvidence, vote } from '../governance/gov-fixtures';
 import { task, workstreams } from '../planning/fixtures';
 import { createWithVersion, login as docLogin } from '../documents/doc-helpers';
@@ -81,8 +81,11 @@ describe('QA-P2 adversarial — gate review under concurrency and stale state (G
     g0 = await gateByKey(p.pm, projectId, 'G0');
     expect(g0.assessment.status).toBe('ready_for_decision');
     const reviewedBasis = (await owner().query(`select review_basis from gate_assessment where id = $1`, [g0.assessment.id])).rows[0].review_basis as string;
-    // New evidence on G0-C02 after the submission (a person other than the reviewer and the submitter).
-    const late = await p.contributor.post(`${P(projectId)}/evidence`, { targetType: 'gate_criterion', targetId: crit(g0, 'G0-C02').id, note: 'QA probe: evidence added after submission (synthetic)' });
+    // New evidence on G0-C02 after the submission (a person other than the reviewer and the submitter). Setup change after
+    // the P2 security review (SEC-P2-05: only the criterion's owner role or a project manager may link evidence to a
+    // criterion): the kit's authorized evidence linker is used instead of the contributor, whose attempt is now 403.
+    const lateLinker = await evidenceAdderFor(p, projectId, crit(g0, 'G0-C02'));
+    const late = await lateLinker.post(`${P(projectId)}/evidence`, { targetType: 'gate_criterion', targetId: crit(g0, 'G0-C02').id, note: 'QA probe: evidence added after submission (synthetic)' });
     const evidenceRefused = late.status === 422 || late.status === 409;
     const d = await gateDecision(projectId, p, gov, 'G0', { externalApproval: true });
     expect(d.status).toBe('approved');
