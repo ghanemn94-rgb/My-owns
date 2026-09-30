@@ -29,7 +29,9 @@ import { PlanFields, planBody, planFormOf, type PlanForm } from '../../_componen
 type Cmd = 'edit' | 'rehearsal' | 'comms' | 'link' | 'submit' | 'back' | 'decide' | 'execute' | 'rollback' | 'accept' | null;
 const EDITABLE = ['planning', 'rehearsal'];
 const PREREQ_KEYS = ['hasRunbook', 'hasRollbackPlan', 'communicationsApproved', 'hasWindow', 'hasServiceImpact', 'hasAccountableOwner', 'testingDone', 'hasApprovedGoDecision'] as const;
-const HISTORY_KINDS = ['submitted', 'returned_to_planning', 'rehearsal', 'go', 'no_go', 'go_blocked', 'executed', 'rolled_back', 'accepted'];
+const HISTORY_KINDS = ['submitted', 'returned_to_planning', 'rehearsal', 'go', 'no_go', 'go_blocked', 'executed', 'rolled_back', 'accepted', 'go_flagged', 'execution_blocked', 'check_bound', 'check_unbound'];
+/** History entries that report a refusal or a flag (shown in the danger tone). */
+const DANGER_KINDS = ['go_blocked', 'no_go', 'rolled_back', 'go_flagged', 'execution_blocked'];
 /** Server labels of missing §7.4 prerequisites (domain `missingCutoverPrerequisites`) → translated prerequisite names. */
 const MISSING_KEY: Record<string, (typeof PREREQ_KEYS)[number]> = {
   runbook: 'hasRunbook',
@@ -71,7 +73,7 @@ function PlanDialogs({ p, cmd, onClose }: { p: CutoverPlanDetail; cmd: Cmd; onCl
       noteLabel={t('readiness.common.reason')}
       expectedVersion={p.version}
       danger={key === 'rollback'}
-      consequences={[t(`readiness.plan.${key}.effect`), t('common.command.audited')]}
+      consequences={[t(`readiness.plan.${key}.effect`), ...(key === 'back' && p.status === 'approved_go' ? [t('readiness.plan.back.goEffect')] : []), t('common.command.audited')]}
       onConfirm={async ({ note }) => {
         await api(route, { params, body: { expectedVersion: p.version, note } });
         await done(t(`readiness.plan.${key}.done`));
@@ -220,6 +222,11 @@ function GoEvaluation({ p }: { p: CutoverPlanDetail }) {
     <section className={cx(card, 'p-4', ev.allowed ? 'border-success/40' : 'border-danger/50')} data-testid="go-evaluation" data-allowed={ev.allowed ? 'true' : 'false'}>
       <h2 className="mb-2 text-lg font-semibold text-ink">{t('readiness.plan.go.title')}</h2>
       <Callout tone={ev.allowed ? 'info' : 'danger'}>{ev.allowed ? t('readiness.plan.go.allowed') : t('readiness.plan.go.blocked')}</Callout>
+      {p.status === 'approved_go' && ev.blockers.length ? (
+        <div className="mt-2" data-testid="go-flagged">
+          <Callout tone="danger">{t('readiness.plan.go.flagged')}</Callout>
+        </div>
+      ) : null}
       {ev.blockers.length ? (
         <div className="mt-3">
           <h3 className="text-sm font-semibold text-ink">{t('readiness.plan.go.blockers')}</h3>
@@ -234,6 +241,11 @@ function GoEvaluation({ p }: { p: CutoverPlanDetail }) {
                     {b.title}
                   </Link>
                   <span className="block text-xs text-muted">{b.blocker ? t('readiness.plan.go.blockerLabel') : t('readiness.plan.go.mandatoryLabel')}</span>
+                  {b.evidenceInvalid ? (
+                    <span className="block text-xs text-danger" data-testid="go-blocker-evidence-invalid">
+                      {t('readiness.plan.go.evidenceInvalid')}
+                    </span>
+                  ) : null}
                 </span>
               </li>
             ))}
@@ -265,12 +277,13 @@ function DecisionHistory({ p }: { p: CutoverPlanDetail }) {
       <ol className="space-y-3 border-s border-line ps-4">
         {p.decisionHistory.map((h) => {
           const known = HISTORY_KINDS.includes(h.kind);
-          const tone = h.kind === 'go' || h.kind === 'accepted' ? 'text-success' : h.kind === 'go_blocked' || h.kind === 'no_go' || h.kind === 'rolled_back' ? 'text-danger' : 'text-ink';
+          const tone = h.kind === 'go' || h.kind === 'accepted' ? 'text-success' : DANGER_KINDS.includes(h.kind) ? 'text-danger' : 'text-ink';
           return (
             <li key={h.id} data-testid="history-entry" data-kind={h.kind} className="text-sm">
               <p className={cx('font-semibold', tone)}>{known ? t(`readiness.plan.history.kinds.${h.kind}` as MessageKey) : h.kind}</p>
               <p className="text-xs text-muted">
-                <span className="tabular">{formatDateTime(h.createdAt)}</span> · <Person id={h.actorUserId} people={p.people} />
+                <span className="tabular">{formatDateTime(h.createdAt)}</span> ·{' '}
+                {h.actorUserId ? <Person id={h.actorUserId} people={p.people} /> : <span>{t('readiness.plan.history.system')}</span>}
                 {h.toStatus ? <> · {tStatus('cutoverStatuses', h.toStatus)}</> : null}
               </p>
               {h.rationale ? (
@@ -331,7 +344,8 @@ export default function CutoverPlanPage() {
   add(manage && EDITABLE.includes(st), 'rehearsal', t('readiness.plan.rehearsal.action'));
   add(manage && EDITABLE.includes(st), 'comms', t('readiness.plan.comms.action'));
   add(manage && ['planning', 'rehearsal', 'ready_for_decision'].includes(st), 'link', t('readiness.plan.decision.link'));
-  add(manage && ['ready_for_decision', 'no_go', 'rolled_back'].includes(st), 'back', t('readiness.plan.back.action'));
+  // DOM-P3-04: a GO (e.g. one flagged because a gating check is open again) can be withdrawn for a new decision.
+  add(manage && ['ready_for_decision', 'no_go', 'rolled_back', 'approved_go'].includes(st), 'back', t('readiness.plan.back.action'));
   add(manage && st === 'approved_go', 'execute', t('readiness.plan.execute.action'), 'primary');
   add(manage && (st === 'approved_go' || st === 'executed'), 'rollback', t('readiness.plan.rollback.action'), 'danger');
   add(manage && st === 'executed', 'accept', t('readiness.plan.accept.action'), 'primary');

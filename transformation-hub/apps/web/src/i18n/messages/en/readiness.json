@@ -307,7 +307,9 @@
       "blockers": "Open readiness blockers",
       "missing": "Missing prerequisites",
       "blockerLabel": "Blocker",
-      "mandatoryLabel": "Mandatory"
+      "mandatoryLabel": "Mandatory",
+      "flagged": "The GO is flagged: a gating readiness check is open again after the GO. Recording the execution is refused until it is cleared or waived — or return the plan to planning for a new GO on a new decision.",
+      "evidenceInvalid": "Signed off, but its sign-off evidence is no longer active (rejected, superseded or contested) — a fresh sign-off is required."
     },
     "checks": {
       "title": "Readiness checks gating this plan",
@@ -342,8 +344,13 @@
         "go_blocked": "GO refused by the server",
         "executed": "Execution recorded",
         "rolled_back": "Rollback recorded",
-        "accepted": "Post-transition acceptance"
-      }
+        "accepted": "Post-transition acceptance",
+        "go_flagged": "GO flagged — a gating check is open again",
+        "execution_blocked": "Execution record refused by the server",
+        "check_bound": "Readiness check now gates this transition",
+        "check_unbound": "Readiness check no longer gates this transition"
+      },
+      "system": "System"
     },
     "facts": {
       "status": "Status",
@@ -395,7 +402,8 @@
       "title": "Return to planning",
       "confirm": "Return to planning",
       "effect": "The plan can be changed again; earlier decisions stay in the history.",
-      "done": "Returned to planning."
+      "done": "Returned to planning.",
+      "goEffect": "The GO is withdrawn: the go/no-go decision it consumed cannot back a new GO — a new decision is needed."
     },
     "decide": {
       "action": "Record go/no-go",
@@ -658,7 +666,12 @@
       "tsa_extension_decision_other_subject": "This decision was raised for another record: it cannot authorize an extension of this TSA.",
       "go_decision_already_used": "This go/no-go decision already authorized the GO of another plan, or an earlier GO of this plan: a GO needs its own decision.",
       "go_decision_evidence_invalid": "The evidence of the external approval behind this go/no-go decision is no longer valid (rejected, superseded or conflicting): it cannot authorize a GO.",
-      "go_decision_other_subject": "This decision was raised for another record: it cannot authorize the GO of this plan."
+      "go_decision_other_subject": "This decision was raised for another record: it cannot authorize the GO of this plan.",
+      "rebind_failed": "A failed blocking or mandatory check keeps gating the transition it was raised for until it is cleared (passed, waived or not applicable).",
+      "rebind_plan_locked": "This open check gates a transition that is under go/no-go decision or has a GO: it cannot be taken out of that transition.",
+      "rebind_reason_required": "State the reason for re-binding the check to another transition.",
+      "determination_release_not_allowed": "A determination cannot release an open blocking or mandatory check. A waivable check is released only through the waiver register (basis, impact, waiver authority); a non-waivable one cannot be released.",
+      "execution_blocked": "The GO is flagged: a gating readiness check is open again after the GO. Clear or waive it, or return the plan to planning for a new GO."
     }
   }
 }

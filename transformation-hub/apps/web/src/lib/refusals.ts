@@ -131,6 +131,12 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'readiness.go_no_go.decision_already_used': 'readiness.refusal.codes.go_decision_already_used',
   'readiness.go_no_go.decision_evidence_invalid': 'readiness.refusal.codes.go_decision_evidence_invalid',
   'readiness.go_no_go.decision_other_subject': 'readiness.refusal.codes.go_decision_other_subject',
+  // Day-1 blockers keep blocking go-live (P3 domain review: DOM-P3-01, -02, -04)
+  'readiness.check.rebind_failed': 'readiness.refusal.codes.rebind_failed',
+  'readiness.check.rebind_plan_locked': 'readiness.refusal.codes.rebind_plan_locked',
+  'readiness.check.rebind_reason_required': 'readiness.refusal.codes.rebind_reason_required',
+  'readiness.determination.release_not_allowed': 'readiness.refusal.codes.determination_release_not_allowed',
+  'readiness.execution_blocked': 'readiness.refusal.codes.execution_blocked',
   'gates.decide.decision_evidence_invalid': 'gates.refusal.decisionEvidenceInvalid',
   'gates.assessment.review_stale': 'gates.refusal.reviewStale',
   'gates.decide.decision_reused': 'gates.refusal.decisionReused',

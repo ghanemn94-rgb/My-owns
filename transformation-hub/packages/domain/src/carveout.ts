@@ -307,14 +307,20 @@ export function assertDay1ContractPosition(c: {
 // ---------------------------------------------------------------------------------------------------------
 // Day-1 go/no-go (AT-09)
 
+/**
+ * Open gating checks of a GO. DOM-P3-09 (business-gates.md §4 rule 9 applied to Day-1 sign-offs; REQ-RDY-001 "signed off on
+ * evidence"): a `passed` check counts as cleared only while its sign-off evidence is still ACTIVE and not conflicting
+ * (`signoffEvidenceValid === true` — anything else fails closed); a passed check whose evidence was rejected, superseded or
+ * contested is listed with `evidenceInvalid: true`.
+ */
 export function goDecisionBlockers(
-  checks: { id: string; title: string; mandatory: boolean; blocker: boolean; status: ReadinessStatus; waivable?: boolean; hasApprovedWaiver?: boolean }[],
+  checks: { id: string; title: string; mandatory: boolean; blocker: boolean; status: ReadinessStatus; waivable?: boolean; hasApprovedWaiver?: boolean; signoffEvidenceValid?: boolean }[],
 ) {
   const cleared = (c: (typeof checks)[number]) =>
-    c.status === 'passed' || c.status === 'not_applicable' || (c.status === 'waived' && c.waivable === true && c.hasApprovedWaiver === true);
+    (c.status === 'passed' && c.signoffEvidenceValid === true) || c.status === 'not_applicable' || (c.status === 'waived' && c.waivable === true && c.hasApprovedWaiver === true);
   return checks
     .filter((c) => (c.blocker || c.mandatory) && !cleared(c))
-    .map((c) => ({ id: c.id, title: c.title, status: c.status, blocker: c.blocker }));
+    .map((c) => ({ id: c.id, title: c.title, status: c.status, blocker: c.blocker, ...(c.status === 'passed' ? { evidenceInvalid: true } : {}) }));
 }
 
 /**

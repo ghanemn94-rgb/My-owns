@@ -10,8 +10,11 @@ import {
 } from './carveout';
 import {
   CUTOVER_MACHINE,
+  GO_DECIDED_PLAN_STATUSES,
   READINESS_CHECK_MACHINE,
   DAY1_READINESS_AREAS,
+  assertExecutionAllowed,
+  assertReadinessCheckRebind,
   assertCutoverSubmittable,
   assertDecisionLinkable,
   assertExtensionRequestValid,
@@ -150,12 +153,80 @@ describe('Readiness checks (REQ-RDY-001/002, AT-09)', () => {
     expect(() => assertReadinessSignoffAllowed({ ...so, outcome: 'not_applicable', activeEvidenceCount: 0, note: 'Site has no generator' })).not.toThrow();
   });
   it('waivability determination: assigned specialist, not the author, authority role for waivable checks, basis', () => {
-    const d = { checkCode: 'RC-1', signoffRole: 'functional_approver' as const, actorRoles: ['functional_approver'], actorUserId: 'spec', creatorUserId: 'pm', waivable: true, waiverAuthorityRole: 'sponsor' as const, basis: 'Specialist basis' };
+    const d = {
+      checkCode: 'RC-1',
+      signoffRole: 'functional_approver' as const,
+      actorRoles: ['functional_approver'],
+      actorUserId: 'spec',
+      creatorUserId: 'pm',
+      waivable: true,
+      waiverAuthorityRole: 'sponsor' as const,
+      basis: 'Specialist basis',
+      status: 'not_started' as const,
+      current: { mandatory: true, blocker: true },
+      next: { mandatory: true, blocker: true },
+      gatesDecidedPlan: false,
+    };
     expect(() => assertReadinessDetermination(d)).not.toThrow();
     expect(codeOf(() => assertReadinessDetermination({ ...d, waiverAuthorityRole: null }))).toBe('rule_violation:readiness.determination.authority_required');
     expect(codeOf(() => assertReadinessDetermination({ ...d, creatorUserId: 'spec' }))).toBe('forbidden:readiness.determination.self');
     expect(codeOf(() => assertReadinessDetermination({ ...d, basis: '' }))).toBe('rule_violation:readiness.determination.basis_required');
     expect(codeOf(() => assertReadinessDetermination({ ...d, actorRoles: ['project_manager'] }))).toBe('forbidden:readiness.signoff.not_assigned_role');
+  });
+  it('DOM-P3-02: a determination never releases an open gating check (failed, or open while a plan is under decision / has a GO)', () => {
+    const d = {
+      checkCode: 'RC-2',
+      signoffRole: 'functional_approver' as const,
+      actorRoles: ['functional_approver'],
+      actorUserId: 'spec',
+      creatorUserId: 'pm',
+      waivable: false,
+      waiverAuthorityRole: null,
+      basis: 'Specialist basis',
+      status: 'failed' as const,
+      current: { mandatory: true, blocker: true },
+      next: { mandatory: true, blocker: false },
+      gatesDecidedPlan: false,
+    };
+    expect(codeOf(() => assertReadinessDetermination(d))).toBe('rule_violation:readiness.determination.release_not_allowed');
+    expect(codeOf(() => assertReadinessDetermination({ ...d, next: { mandatory: false, blocker: true } }))).toBe('rule_violation:readiness.determination.release_not_allowed');
+    expect(codeOf(() => assertReadinessDetermination({ ...d, status: 'in_progress', gatesDecidedPlan: true }))).toBe('rule_violation:readiness.determination.release_not_allowed');
+    // Not lowering (waivability only), an open check not under decision, or a cleared check: the specialist decides.
+    expect(() => assertReadinessDetermination({ ...d, next: { mandatory: true, blocker: true }, waivable: true, waiverAuthorityRole: 'sponsor' })).not.toThrow();
+    expect(() => assertReadinessDetermination({ ...d, status: 'in_progress' })).not.toThrow();
+    expect(() => assertReadinessDetermination({ ...d, status: 'passed', gatesDecidedPlan: true })).not.toThrow();
+  });
+});
+
+describe('DOM-P3-01 / DOM-P3-04 / DOM-P3-09 — a Day-1 blocker keeps blocking go-live', () => {
+  const plan = (code: string, status: 'planning' | 'ready_for_decision' | 'approved_go' | 'executed') => ({ id: code, code, status });
+  it('re-binding: reason required; a failed gating check never; an open one never leaves a plan under decision or with a GO', () => {
+    const r = { checkCode: 'RC-3', status: 'in_progress' as const, gating: true, cleared: false, leaving: [plan('CO-1', 'planning')], reason: 'Moved to the core transition' };
+    expect(() => assertReadinessCheckRebind(r)).not.toThrow();
+    expect(codeOf(() => assertReadinessCheckRebind({ ...r, reason: ' ' }))).toBe('rule_violation:readiness.check.rebind_reason_required');
+    expect(codeOf(() => assertReadinessCheckRebind({ ...r, status: 'failed', leaving: [] }))).toBe('rule_violation:readiness.check.rebind_failed');
+    expect(codeOf(() => assertReadinessCheckRebind({ ...r, leaving: [plan('CO-2', 'ready_for_decision')] }))).toBe('rule_violation:readiness.check.rebind_plan_locked');
+    expect(codeOf(() => assertReadinessCheckRebind({ ...r, leaving: [plan('CO-3', 'approved_go')] }))).toBe('rule_violation:readiness.check.rebind_plan_locked');
+    // Cleared or non-gating checks, or plans already executed: free to move.
+    expect(() => assertReadinessCheckRebind({ ...r, cleared: true, status: 'passed', leaving: [plan('CO-2', 'ready_for_decision')] })).not.toThrow();
+    expect(() => assertReadinessCheckRebind({ ...r, gating: false, status: 'failed' })).not.toThrow();
+    expect(() => assertReadinessCheckRebind({ ...r, leaving: [plan('CO-4', 'executed')] })).not.toThrow();
+  });
+  it('a passed check clears the GO only while its sign-off evidence is valid (fails closed when unknown)', () => {
+    const pre = cutoverPrerequisitesOf(
+      { runbookDocumentId: null, runbookSummary: 'R', windowStart: '2026-10-01T20:00:00Z', windowEnd: '2026-10-02T02:00:00Z', serviceImpact: 'S', accountableUserId: 'o', communicationsApproved: true, testingSummary: 'T', rehearsalDone: true, contingencyPlan: 'C', rollbackPlan: 'B' },
+      true,
+    );
+    const c = { id: 'c1', title: 'Connectivity', mandatory: true, blocker: true, status: 'passed' as const };
+    expect(evaluateGo([{ ...c, signoffEvidenceValid: true }], pre).allowed).toBe(true);
+    expect(evaluateGo([{ ...c, signoffEvidenceValid: false }], pre).blockers).toEqual([{ id: 'c1', title: 'Connectivity', status: 'passed', blocker: true, evidenceInvalid: true }]);
+    expect(evaluateGo([c], pre).allowed).toBe(false);
+  });
+  it('execution after a GO is refused while a gating check is open again; the GO can be withdrawn (return to planning)', () => {
+    expect(() => assertExecutionAllowed({ planCode: 'CO-1', blockers: [] })).not.toThrow();
+    expect(codeOf(() => assertExecutionAllowed({ planCode: 'CO-1', blockers: [{ id: 'c1', title: 'x', status: 'failed', blocker: true }] }))).toBe('rule_violation:readiness.execution_blocked');
+    expect(transition('cutover', CUTOVER_MACHINE, 'approved_go', 'return_to_planning')).toBe('planning');
+    expect(GO_DECIDED_PLAN_STATUSES).toEqual(['ready_for_decision', 'approved_go']);
   });
 });
 

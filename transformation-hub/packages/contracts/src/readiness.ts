@@ -119,7 +119,14 @@ export const ReadinessCheckDetailDto = ReadinessCheckDto.extend({
 
 const CheckCommandResult = z.object({ id: Uuid, status: RStatus, version: z.number().int() });
 
-export const GoBlockerDto = z.object({ id: Uuid, title: z.string(), status: RStatus, blocker: z.boolean() });
+export const GoBlockerDto = z.object({
+  id: Uuid,
+  title: z.string(),
+  status: RStatus,
+  blocker: z.boolean(),
+  /** DOM-P3-09: a `passed` check whose sign-off evidence is no longer active (rejected / superseded / conflicting). */
+  evidenceInvalid: z.boolean().optional(),
+});
 export const GoEvaluationDto = z.object({
   allowed: z.boolean(),
   blockers: z.array(GoBlockerDto),
@@ -177,7 +184,8 @@ export const CutoverDecisionRecordDto = z.object({
   kind: z.string(),
   fromStatus: CStatus.nullable(),
   toStatus: CStatus.nullable(),
-  actorUserId: Uuid,
+  /** Null for entries recorded by the system (a GO flagged by the evidence reaction — DOM-P3-09). */
+  actorUserId: Uuid.nullable(),
   rationale: z.string().nullable(),
   goDecisionId: Uuid.nullable(),
   evaluation: z.object({ blockers: z.array(GoBlockerDto), missing: z.array(z.string()) }).nullable(),
@@ -355,11 +363,28 @@ export const CreateReadinessCheckBody = z.object({
   signoffRole: Role.nullable().optional(),
 }).strict(); // unknown fields (e.g. status, waivable) are a 400 (QA-P1-12)
 
+/**
+ * Descriptive fields only (DOM-P3-01): which transition a check gates (`siteId`, `cutoverPlanId`) changes only through the
+ * re-binding command — a 400 here.
+ */
+const { siteId: _siteId, cutoverPlanId: _cutoverPlanId, ...checkEditable } = checkDescriptive;
+void _siteId;
+void _cutoverPlanId;
 export const UpdateReadinessCheckBody = z
   .object({
     expectedVersion: ExpectedVersion,
-    ...checkDescriptive,
+    ...checkEditable,
     title: RequiredText(300).optional(),
+  })
+  .strict();
+
+/** DOM-P3-01: re-bind the transition a check gates (plan / site), with a reason; the rules refuse it for open blockers. */
+export const RebindReadinessCheckBody = z
+  .object({
+    expectedVersion: ExpectedVersion,
+    siteId: Uuid.nullable().optional(),
+    cutoverPlanId: Uuid.nullable().optional(),
+    reason: RequiredText(4000),
   })
   .strict();
 
@@ -497,6 +522,19 @@ export const readinessRoutes = registerRoutes({
     access: 'readiness.check.manage',
     params: CheckParams,
     body: UpdateReadinessCheckBody,
+    response: VersionResult,
+  }),
+  rebindReadinessCheck: defineRoute({
+    id: 'readiness.rebindCheck',
+    method: 'POST',
+    path: `${P}/readiness-checks/:checkId/rebind`,
+    summary:
+      'Re-bind the transition (cutover plan / site) a check gates, with a reason — refused for a failed gating check and for an open one gating a plan under go/no-go decision or with a GO (DOM-P3-01)',
+    tags,
+    access: 'readiness.check.manage',
+    command: true,
+    params: CheckParams,
+    body: RebindReadinessCheckBody,
     response: VersionResult,
   }),
   determineReadinessCheck: defineRoute({

@@ -7,6 +7,7 @@ import {
   GO_DECISION_TYPE_KEYS,
   assertCutoverSubmittable,
   assertDecisionLinkable,
+  assertExecutionAllowed,
   assertGoAllowed,
   assertPostTransitionAcceptance,
   cutoverPrerequisitesOf,
@@ -131,7 +132,10 @@ export class CutoverService {
   }
 
   /** Checks gating the plan + the GO rule evaluated exactly as the go/no-go command evaluates it. */
-  private async evaluation(projectId: string, plan: PlanRow): Promise<{ checks: CheckRow[]; effective: Map<string, boolean>; evaluation: GoEvaluation; prerequisites: ReturnType<typeof cutoverPrerequisitesOf> }> {
+  private async evaluation(
+    projectId: string,
+    plan: PlanRow,
+  ): Promise<{ checks: CheckRow[]; inputs: Parameters<typeof evaluateGo>[0]; effective: Map<string, boolean>; evaluation: GoEvaluation; prerequisites: ReturnType<typeof cutoverPrerequisitesOf> }> {
     const c = schema.readinessCheck;
     const all = await this.s.db.tx().select().from(c).where(eq(c.projectId, projectId)).orderBy(asc(c.code));
     const checks = all.filter((x) => readinessCheckAppliesToPlan(x, plan));
@@ -140,16 +144,25 @@ export class CutoverService {
     const wBy = new Map(ws.map((w) => [w.id, w]));
     const today = this.s.today(await this.s.project(projectId));
     const effective = new Map(checks.map((x) => [x.id, waiverEffectiveFor(x, x.waiverId ? wBy.get(x.waiverId) : null, today)]));
+    // DOM-P3-09: a passed check clears the GO only while its sign-off evidence is still active and not contested.
+    const evidenceValid = await this.s.signoffEvidenceValid(projectId, checks.filter((x) => x.status === 'passed').map((x) => x.id));
     const d = await this.s.decisionRow(projectId, plan.goDecisionId);
     // DOM-P2F-09: a final decision counts only while it backs no other plan (nor an earlier GO of this one) and its external
     // approval is still evidenced.
     const approved = !!d && linkedDecisionIssue(this.s.linked(d), GO_DECISION_TYPE_KEYS, 'a go-live') === null && (await this.goReliance(projectId, plan, d, true)).issue === null;
     const prerequisites = cutoverPrerequisitesOf(plan, approved);
-    const evaluation = evaluateGo(
-      checks.map((x) => ({ id: x.id, title: `${x.code} — ${x.title}`, mandatory: x.mandatory, blocker: x.blocker, status: x.status, waivable: x.waivable, hasApprovedWaiver: effective.get(x.id) === true })),
-      prerequisites,
-    );
-    return { checks, effective, evaluation, prerequisites };
+    const inputs = checks.map((x) => ({
+      id: x.id,
+      title: `${x.code} — ${x.title}`,
+      mandatory: x.mandatory,
+      blocker: x.blocker,
+      status: x.status,
+      waivable: x.waivable,
+      hasApprovedWaiver: effective.get(x.id) === true,
+      signoffEvidenceValid: evidenceValid.get(x.id) === true,
+    }));
+    const evaluation = evaluateGo(inputs, prerequisites);
+    return { checks, inputs, effective, evaluation, prerequisites };
   }
 
   async get(ctx: RequestContext, projectId: string, planId: string) {
@@ -399,6 +412,9 @@ export class CutoverService {
    * missing; the refusal is recorded in the plan's decision history and the audit log although the command rolls back.
    */
   async decide(ctx: RequestContext, projectId: string, planId: string, body: { expectedVersion: number; outcome: 'go' | 'no_go'; rationale: string; decisionId?: string }) {
+    // DOM-P3-03: the GO evaluates the gating checks under the project readiness lock, which every command changing a gating
+    // input also takes — a failed test committed while the GO waits is seen (or waits for the GO), never missed.
+    await this.s.lockReadiness(projectId);
     let plan = await loadInProject(this.s.db, schema.cutoverPlan, projectId, planId);
     const cmd: CutoverCommand = body.outcome === 'go' ? 'decide_go' : 'decide_no_go';
     // Role → version / state / pending submission → not the submitter + authority (I-R3).
@@ -436,10 +452,7 @@ export class CutoverService {
           if (r.issue) throw ruleViolation(r.issue.code, r.issue.reason, r.issue.params);
           goDecision = { d, rule: r.rule, uses: r.uses };
         }
-        assertGoAllowed(
-          ev.checks.map((x) => ({ id: x.id, title: `${x.code} — ${x.title}`, mandatory: x.mandatory, blocker: x.blocker, status: x.status, waivable: x.waivable, hasApprovedWaiver: ev.effective.get(x.id) === true })),
-          ev.prerequisites,
-        );
+        assertGoAllowed(ev.inputs, ev.prerequisites);
       } catch (e) {
         if (e instanceof DomainError) await this.recordRefusedGo(ctx, plan, body.rationale, ev.evaluation);
         throw e;
@@ -494,11 +507,59 @@ export class CutoverService {
     });
   }
 
-  /** REQ-RDY-006: the platform records that the change was executed elsewhere — it never executes it. */
+  /**
+   * REQ-RDY-006: the platform records that the change was executed elsewhere — it never executes it. DOM-P3-04: the gating
+   * checks are re-evaluated under the readiness lock; a GO flagged because a gating check is open again (failed after the
+   * GO, reopened, sign-off evidence rejected) refuses the execution record until the check is cleared / waived or the GO
+   * is withdrawn (return to planning) for a new decision. The refusal stays in the decision history and the audit log.
+   */
   async recordExecution(ctx: RequestContext, projectId: string, planId: string, body: { expectedVersion: number; note: string }) {
+    await this.s.lockReadiness(projectId);
     const plan = await loadInProject(this.s.db, schema.cutoverPlan, projectId, planId);
     this.assertManage(ctx, projectId, plan);
+    assertVersion(plan, body.expectedVersion, 'cutover plan');
+    transition('cutover', CUTOVER_MACHINE, plan.status, 'record_execution'); // wrong state → 422 before the evaluation
+    const ev = await this.evaluation(projectId, plan);
+    try {
+      assertExecutionAllowed({ planCode: plan.code, blockers: ev.evaluation.blockers });
+    } catch (e) {
+      if (e instanceof DomainError) await this.recordRefusedExecution(ctx, plan, body.note, ev.evaluation);
+      throw e;
+    }
     return this.apply(ctx, plan, 'record_execution', body.expectedVersion, { executedBy: ctx.principal.userId, executedAt: this.s.clock.now(), executionNote: body.note }, { kind: 'executed', rationale: body.note });
+  }
+
+  /** Autonomous transaction: the refused execution record stays visible in the decision history and the audit log. */
+  private async recordRefusedExecution(ctx: RequestContext, plan: PlanRow, note: string, evaluation: GoEvaluation) {
+    try {
+      await this.s.db.runDetached(ctx, async (tx) => {
+        await tx.insert(schema.cutoverDecisionRecord).values({
+          id: newId(),
+          orgId: ctx.principal.orgId,
+          projectId: plan.projectId,
+          cutoverPlanId: plan.id,
+          kind: 'execution_blocked',
+          fromStatus: plan.status,
+          toStatus: plan.status,
+          actorUserId: ctx.principal.userId!,
+          rationale: note,
+          goDecisionId: plan.goDecisionId,
+          evaluation: { blockers: evaluation.blockers, missing: [] },
+          isDemo: plan.isDemo,
+        });
+      });
+    } catch (e) {
+      this.log.error(`failed to persist refused execution for ${plan.id}: ${(e as Error).message}`);
+    }
+    await this.s.audit.recordDetached(ctx, {
+      action: 'readiness.cutover.record_execution',
+      entityType: 'cutover_plan',
+      entityId: plan.id,
+      projectId: plan.projectId,
+      outcome: 'rejected',
+      reason: `Execution refused: the GO is flagged — ${evaluation.blockers.length} gating check(s) open again after the GO`,
+      after: { blockers: evaluation.blockers.map((b) => ({ id: b.id, status: b.status })) },
+    });
   }
 
   async recordRollback(ctx: RequestContext, projectId: string, planId: string, body: { expectedVersion: number; note: string }) {

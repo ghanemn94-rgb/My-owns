@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { forbidden, invalid, linkedDecisionIssue, linkedDecisionIssueCode, notFound, Classification, LinkedDecision, RoleKey } from '@hub/domain';
+import { forbidden, invalid, linkedDecisionIssue, linkedDecisionIssueCode, notFound, readinessCheckAppliesToPlan, Classification, CutoverStatus, LinkedDecision, ReadinessStatus, RoleKey } from '@hub/domain';
+import { newId } from '../../platform/ids';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
@@ -109,6 +110,107 @@ export class ReadinessSupport {
   /** Evidence counts FOR RULES (sign-off, TSA exit, cutover acceptance): every link counts. */
   evidence(projectId: string, targetType: 'readiness_check' | 'tsa_service' | 'cutover_plan', targetId: string) {
     return activeEvidenceCount(this.db, projectId, targetType, targetId);
+  }
+
+  /**
+   * DOM-P3-10 / SEC-P34-01 (access-matrix §5.1: "the person who recorded the status/evidence" is self): the people who
+   * linked the target's CURRENT evidence (active or conflicting links — rejected / superseded ones are no longer relied on).
+   */
+  async evidenceLinkers(projectId: string, targetType: 'readiness_check' | 'tsa_service' | 'cutover_plan', targetId: string): Promise<string[]> {
+    const r = await this.db.tx().execute<{ added_by: string }>(sql`
+      select distinct added_by from evidence_link
+       where project_id = ${projectId} and target_type = ${targetType} and target_id = ${targetId} and status in ('active', 'conflicting')`);
+    return r.rows.map((x) => x.added_by);
+  }
+
+  /**
+   * DOM-P3-09: per readiness check, whether its evidence can still support a sign-off (at least one ACTIVE link and no
+   * conflicting one). FOR RULES — every link counts, whatever the caller may see.
+   */
+  async signoffEvidenceValid(projectId: string, checkIds: string[]): Promise<Map<string, boolean>> {
+    if (checkIds.length === 0) return new Map();
+    const r = await this.db.tx().execute<{ target_id: string; active: number; conflicting: number }>(sql`
+      select target_id, count(*) filter (where status = 'active')::int as active, count(*) filter (where status = 'conflicting')::int as conflicting
+        from evidence_link
+       where project_id = ${projectId} and target_type = 'readiness_check' and target_id in (${sql.join(checkIds.map((i) => sql`${i}::uuid`), sql`, `)})
+       group by target_id`);
+    const m = new Map<string, boolean>(checkIds.map((id) => [id, false]));
+    for (const x of r.rows) m.set(x.target_id, Number(x.active) > 0 && Number(x.conflicting) === 0);
+    return m;
+  }
+
+  /**
+   * DOM-P3-03 — one writer of a project's Day-1 readiness state at a time: the transaction-scoped advisory lock
+   * `hub_readiness:<projectId>`, taken FIRST (before the rows are read) by every command that changes a gating input of a
+   * GO (test run, sign-off, determination, reopen, waiver application, re-binding, check creation, the evidence reaction)
+   * and by the GO / execution commands, so a GO never commits on an evaluation that missed a concurrently committed change.
+   * Lock order: `hub_readiness` → decision row (GO reliance). TSA commands do not take it.
+   */
+  async lockReadiness(projectId: string) {
+    await this.db.query(`select pg_advisory_xact_lock(hashtextextended('hub_readiness:' || $1, 0))`, [projectId]);
+  }
+
+  /** Cutover plans of the project that a check (as bound) gates (`readinessCheckAppliesToPlan`). */
+  async plansGatedBy(projectId: string, check: { cutoverPlanId: string | null; siteId: string | null }) {
+    const rows = await this.db
+      .tx()
+      .select({ id: schema.cutoverPlan.id, code: schema.cutoverPlan.code, siteId: schema.cutoverPlan.siteId, status: schema.cutoverPlan.status, goDecisionId: schema.cutoverPlan.goDecisionId, isDemo: schema.cutoverPlan.isDemo })
+      .from(schema.cutoverPlan)
+      .where(eq(schema.cutoverPlan.projectId, projectId));
+    return rows.filter((p) => readinessCheckAppliesToPlan(check, p));
+  }
+
+  /** Append an entry to a plan's go/no-go decision history (actor null = recorded by the system). */
+  async recordPlanHistory(
+    ctx: RequestContext,
+    plan: { id: string; status: CutoverStatus; goDecisionId: string | null; isDemo: boolean },
+    projectId: string,
+    kind: 'go_flagged' | 'execution_blocked' | 'check_bound' | 'check_unbound',
+    rationale: string,
+    evaluation: { blockers: { id: string; title: string; status: ReadinessStatus; blocker: boolean; evidenceInvalid?: boolean }[]; missing: string[] } | null,
+  ) {
+    await this.db
+      .tx()
+      .insert(schema.cutoverDecisionRecord)
+      .values({
+        id: newId(),
+        orgId: ctx.principal.orgId,
+        projectId,
+        cutoverPlanId: plan.id,
+        kind,
+        fromStatus: plan.status,
+        toStatus: plan.status,
+        actorUserId: ctx.principal.kind === 'service' ? null : (ctx.principal.userId ?? null),
+        rationale: rationale.slice(0, 4000),
+        goDecisionId: plan.goDecisionId,
+        evaluation,
+        isDemo: plan.isDemo,
+      });
+  }
+
+  /**
+   * DOM-P3-04 / DOM-P3-09: a gating check that is OPEN again (failed test, reopened, sign-off evidence rejected) flags the
+   * GO of every plan it gates that is at `approved_go`: an entry in the plan's decision history and an audit event. The GO
+   * itself is not changed (it is a recorded decision); recording the execution is refused until the check is cleared /
+   * waived or the GO is withdrawn for a new decision (`CutoverService.recordExecution`, `return_to_planning`).
+   */
+  async flagGoPlans(ctx: RequestContext, projectId: string, check: { id: string; code: string; title: string; status: ReadinessStatus; blocker: boolean; mandatory: boolean; cutoverPlanId: string | null; siteId: string | null }, why: string) {
+    if (!check.blocker && !check.mandatory) return [];
+    const plans = (await this.plansGatedBy(projectId, check)).filter((p) => p.status === 'approved_go');
+    for (const plan of plans) {
+      const blocker = { id: check.id, title: `${check.code} — ${check.title}`, status: check.status, blocker: check.blocker };
+      await this.recordPlanHistory(ctx, plan, projectId, 'go_flagged', `${check.code}: ${why}`, { blockers: [blocker], missing: [] });
+      await this.audit.record({
+        action: 'readiness.cutover.go_flagged',
+        entityType: 'cutover_plan',
+        entityId: plan.id,
+        projectId,
+        after: { status: plan.status, flagged: true, checkId: check.id, checkCode: check.code, checkStatus: check.status },
+        reason: `${check.code}: ${why} — the GO is flagged for re-decision; execution is refused until the check is cleared or the GO is withdrawn`,
+      });
+      await this.outbox.emit({ type: 'readiness.changed', projectId, aggregateType: 'cutover_plan', aggregateId: plan.id, payload: { reason: 'readiness:go_flagged', checkId: check.id } });
+    }
+    return plans.map((p) => p.code);
   }
 
   /** Evidence counts FOR DISPLAY: only links the caller could see in the evidence list (SEC-P1R-05). */
