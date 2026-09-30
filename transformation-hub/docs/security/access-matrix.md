@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | **Draft for P0 review.** Designed only: nothing in this document is implemented or tested yet. |
+| Status | **Implemented and tested; business inputs still to be confirmed.** The matrix in §11 is the source of `packages/domain/src/policy/policy-matrix.json` (drift test `policy.test.ts`) and is enforced by `PolicyService` in the API (P1/P2 gates). §2.2 was amended after the P2 security review (option B, `docs/reviews/P2-security-review.md` §3) to the stricter workstream rule the code implements; the §2.2.1 exception list is **pending confirmation by Mobily data governance**. Role holders, clearances, the authority matrix and the classification scheme remain Mobily inputs (row "Business inputs"). |
 | Author | security-privacy-reviewer (authoring mode). An author cannot approve their own work, so this needs independent review by solution-architect and qa-test-engineer in separate contexts. |
 | Implements | Master prompt §5 (multi-level roles, partner/clean-team separation), §8 (partner workspace), §12.3 (AI prohibitions), §15 (authorization and data security) |
 | Implementation target | `packages/domain/src/policy/` (pure policy evaluation) and `apps/api/src/platform/policy/` (`PolicyService.assert(ctx, permission, resource)`) |
@@ -29,6 +29,7 @@
 **Legend**
 
 - ● means the permission is granted to the role, but only within the scope of the assignment (§2.2) and only if every condition passes.
+- ⓟ after the conditions marks a project-level read (§2.2.1): a workstream-scoped grant of it also covers the project's records of that type with no workstream and no room.
 - **Cond.** column: `C` classification · `R` room · `T` clean_team · `S` not_self · `A` authority · `W` own_workstream · ⓐ an audited sensitive read. Each condition is defined normatively in §2.4.
 - **AI** column: `R` means the AI runtime may use the permission for retrieval on behalf of the user. `P` means the AI may *propose* the action, which runs only after a bound human approval (or under an approved autopilot policy). `–` means the AI can never exercise it. See §2.7.
 
@@ -67,10 +68,44 @@ The scope hierarchy is `organization ⊃ portfolio ⊃ project ⊃ {workstream, 
 | `organization` | All resources of the organization. Content access is still limited by the role's permission list (platform_admin has no content permissions). |
 | `portfolio` | Programs and projects in that portfolio, and everything below them. |
 | `project` | All resources with that `project_id`, including all its workstreams. **Room-bound resources additionally require the `room` condition.** |
-| `workstream` | Resources with that `workstream_id`. Permissions whose action is `read`/`search`/`view` **also** cover the parent project's project-level records (`workstream_id IS NULL`) that are not room-bound. Mutating permissions cover only the assigned workstream. |
+| `workstream` | Resources with that `workstream_id`. A workstream-scoped grant does **not** cover project-level records (`workstream_id IS NULL`, or record types without a workstream) nor other workstreams, **except** the read permissions listed in §2.2.1, which also cover the project's records of that type that belong to no workstream and are not room-bound; classification, room and clean-team conditions still apply. Mutating permissions cover only the assigned workstream. |
 | `partner_room` | Only resources with that `room_id`. It never covers project-level records. |
 
 The `app.project_ids` setting used by PostgreSQL RLS is computed server-side from the user's active assignments and room grants at the start of each transaction. It is **never** taken from request parameters or job payloads.
+
+Lists, counts and search apply the same coverage in SQL as the single-record check (§2.5): a list never shows a record — or a document title — that the same caller would be refused when opening it. **Known deviation (open, after the P2 security fixes):** the governance lists (decisions, committees, meetings, actions, escalations) and the activity feed's type filter still check the type's read permission RBAC-only, so a workstream-only principal lists governance titles / events that `GET` refuses (403). Pinned by the `OBSERVED` test in `apps/api/test/reviews/p2-sec-access-matrix.spec.ts`; the fix belongs to the governance and portfolio modules (require a project-wide grant, e.g. `PolicyService.grantSql(…, {})`, which is `false` for a workstream-only grant of a non-§2.2.1 permission).
+
+#### 2.2.1 Project-level read exceptions for workstream-scoped grants
+
+**Status: pending confirmation by Mobily data governance** (AMQ-09; P2 security review §3, option B). Until confirmed, the list below is the
+implemented rule; removing an entry makes the strict §2.2 rule apply to that permission as well.
+
+A workstream-scoped assignment (for example `workstream_lead`, or a workstream-scoped `contributor` / `functional_approver`)
+that grants one of these read permissions also covers the project's records **of that type** with no workstream and no room.
+Every other permission — every mutation, and every other read (finance, governance, planning aggregates, carve-out, NewCo,
+readiness, JV, AI, reports, imports) — covers only the assigned workstream(s). A record in a room is never covered through this
+exception (room grants and room-scoped roles apply as in §2.4).
+
+| Permission | Why the workstream role needs it | What becomes readable |
+|---|---|---|
+| `gates.gate.read` | Gate owner and reviewer roles can be workstream-scoped (a workstream lead owns G1/G4/G5/G6 and reviews several criteria); gates and criteria carry no workstream | The gate register: definitions, criteria, cycles, evaluations and waivers. Linked governance decisions stay governed by `governance.decision.read` (shown only to its project-wide holders) |
+| `documents.document.read` | Documents carry no workstream; the role reads the evidence of its own tasks and gate criteria (linking evidence is a mutation and stays strict: `documents.evidence.link` is not in this list) | Metadata, versions and evidence counters of project documents that are not room-bound, up to the caller's clearance; list and search show exactly these documents. The source register (`documents.document.read` is also its read permission) follows the same rule |
+| `documents.document.download` | As above (audited read) | Download of the same documents |
+| `portfolio.project.read` | The project header and status dimensions frame the role's work | Project overview, parties, status dimensions (counts inside it keep their own permission's reach) |
+
+Machine-readable list (`policy.test.ts` checks that it equals the permissions flagged `"projectLevelRead": true` in §11 and in
+`packages/domain/src/policy/policy-matrix.json`):
+
+```json
+{"projectLevelRead": ["gates.gate.read", "documents.document.read", "documents.document.download", "portfolio.project.read"], "status": "pending confirmation by Mobily data governance"}
+```
+
+Implementation: `PolicyService.check` (a workstream-scoped grant of a flagged permission applies to a resource with no
+workstream and no room), `PolicyService.permissionReach` / `reachSql` (`col in (…) or col is null` for flagged permissions) and
+`PolicyService.grantSql` (the same coverage for lists, including room-scoped roles). Tests:
+`apps/api/test/reviews/p2-sec-access-matrix.spec.ts` (gate register, project header, documents incl. restricted / room /
+room-grant cases, finance stays strict, decisions stay 403), `apps/api/test/reviews/p2-sec-probes.spec.ts` (§2.2 / SEC-P2-07 /
+SEC-P2-08), `finance-isolation.spec.ts` (project-level finance records stay hidden), `packages/domain/src/policy/policy.test.ts`.
 
 ### 2.3 Classification and clearance
 
@@ -147,7 +182,7 @@ A report snapshot, export, meeting pack, AI answer, AI summary, notification or 
 | `committee_chair` | Chairs committee; votes; records outcomes; approves minutes; gate decisions within committee mandate | portfolio, project | restricted | — | portfolio_admin | Room content without grant; content editing |
 | `secretary_cpmo` | Secretariat/CPMO: committee operations, agenda, packs, minutes, source register, imports, reporting | portfolio, project | restricted | — | portfolio_admin | Votes; gate/waiver approvals; rooms |
 | `project_manager` | Day-to-day delivery: plan, RAID, registers, rooms (create), DD coordination, imports | project | confidential | — | portfolio_admin | Approvals of own proposals; granting room access; disclosure release; closing |
-| `workstream_lead` | Leads one workstream: tasks, deliverable acceptance, readiness, updates | workstream | confidential | — | project_manager | Anything outside assigned workstream(s) except project-level reads |
+| `workstream_lead` | Leads one workstream: tasks, deliverable acceptance, readiness, updates | workstream | confidential | — | project_manager | Anything outside the assigned workstream(s), except the project-level reads of §2.2.1 |
 | `contributor` | Updates own tasks/actions, raises RAID, uploads evidence | project, workstream | internal | — | project_manager | Approvals; records not owned/assigned (own_workstream) |
 | `functional_approver` | Specialist reviewer/approver: deliverables, transfers, readiness sign-off, CP verification, evidence verification | project, workstream | confidential | — | portfolio_admin | Authoring the items they approve (not_self) |
 | `finance_restricted` | Finance specialists: budgets, snapshots, models, benefits, KPIs, funds flow, finance DD | project | confidential | finance → strictly_confidential | portfolio_admin | Legal-domain strictly_confidential content |
@@ -233,6 +268,7 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
   - `own_workstream`: 14
 - AI usage: `retrieve` 18, `propose` 19, `none` 153.
 - Audited reads (`auditRead`): `jv.room.read`, `jv.disclosure.view`, `jv.disclosure.download`, `documents.document.download`, `reports.snapshot.export`, `audit.event.export`.
+- Project-level reads for workstream-scoped grants (`projectLevelRead`, §2.2.1, pending confirmation by Mobily data governance): `portfolio.project.read`, `gates.gate.read`, `documents.document.read`, `documents.document.download`.
 - Permissions per role: PLA 25, PFA 25, SPO 75, CHR 37, SEC 63, PM 97, WSL 54, CON 27, FAP 40, FIN 58, LEG 74, CLT 10, AUD 35, EXT 7.
 
 #### Identity & administration (`admin.*`, 11 permissions)
@@ -258,7 +294,7 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
 | `portfolio.portfolio.read` | – | R | ● | ● | ● |  | ● |  |  |  |  |  |  |  | ● |  |
 | `portfolio.portfolio.manage` | – | – |  | ● |  |  |  |  |  |  |  |  |  |  |  |  |
 | `portfolio.project.create` | – | – |  | ● |  |  |  |  |  |  |  |  |  |  |  |  |
-| `portfolio.project.read` | C | R |  | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● |  |
+| `portfolio.project.read` | C ⓟ | R |  | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● |  |
 | `portfolio.project.update` | C | – |  |  | ● |  |  | ● |  |  |  |  |  |  |  |  |
 | `portfolio.project.archive` | A | – |  | ● |  |  |  |  |  |  |  |  |  |  |  |  |
 | `portfolio.dashboard.read` | C | R |  | ● | ● | ● | ● |  |  |  |  |  |  |  | ● |  |
@@ -331,7 +367,7 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
 
 | Permission | Cond. | AI | PLA | PFA | SPO | CHR | SEC | PM | WSL | CON | FAP | FIN | LEG | CLT | AUD | EXT |
 |---|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `gates.gate.read` | C | R |  | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● |  |
+| `gates.gate.read` | C ⓟ | R |  | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● |  |
 | `gates.definition.manage` | C | – |  |  |  |  | ● | ● |  |  |  |  |  |  |  |  |
 | `gates.definition.approve` | C,S,A | – |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |
 | `gates.criterion.set_waivability` | C | – |  |  |  |  |  |  |  |  | ● | ● | ● |  |  |  |
@@ -440,8 +476,8 @@ Gate roles (DOM-P2-16, REQ-LCY-010; business-gates.md §2.4). `gates.assessment.
 
 | Permission | Cond. | AI | PLA | PFA | SPO | CHR | SEC | PM | WSL | CON | FAP | FIN | LEG | CLT | AUD | EXT |
 |---|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `documents.document.read` | C,R,T | R |  |  | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |
-| `documents.document.download` | C,R,T ⓐ | – |  |  | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |
+| `documents.document.read` | C,R,T ⓟ | R |  |  | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |
+| `documents.document.download` | C,R,T ⓐ ⓟ | – |  |  | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |
 | `documents.document.upload` | C,R,T | – |  |  | ● |  | ● | ● | ● | ● |  | ● | ● | ● |  |  |
 | `documents.document.classify` | C | – |  |  |  |  | ● | ● |  |  |  | ● | ● |  |  |  |
 | `documents.document.declassify` | C,S | – |  |  | ● |  |  |  |  |  |  |  | ● |  |  |  |
@@ -452,6 +488,13 @@ Gate roles (DOM-P2-16, REQ-LCY-010; business-gates.md §2.4). `gates.assessment.
 | `documents.claim.verify` | C,S | – |  |  |  |  | ● |  |  |  | ● | ● | ● |  |  |  |
 | `documents.legal_hold.manage` | C | – |  |  |  |  |  |  |  |  |  |  | ● |  |  |  |
 | `documents.document.dispose` | C,S,A | – |  |  |  |  |  |  |  |  |  |  | ● |  |  |  |
+
+Evidence links (`documents.evidence.link`) also need the **target's** work permission (`EVIDENCE_TARGET_PERMISSION`, 403
+`evidence.target_permission` without it). On a gate criterion that permission is `gates.evidence.attach` with its `W`
+condition evaluated exactly as by the criterion commands (submit evidence, propose N/A, note): the criterion's `ownerRole`
+or the project manager (§2.4). Anyone else is refused (403) — linking is refused exactly like submitting (SEC-P2-05). For the
+other target types the link checks the RBAC grant of the target permission; their `W` conditions apply to the target's
+own commands.
 
 #### Reporting (`reports.*`, 5 permissions)
 
@@ -580,6 +623,7 @@ This block follows the requested schema, plus clearly optional **extensions** th
 
 - `permissions.<key>.ai` (`none | retrieve | propose`)
 - `permissions.<key>.auditRead` (boolean, present only when true)
+- `permissions.<key>.projectLevelRead` (boolean, present only when true; §2.2.1 — pending confirmation by Mobily data governance)
 - `roles.<key>.domainClearance` (map of domain to clearance, finance_restricted/legal_restricted only)
 - top-level `clearanceOrder`, `scopeOrder`, `servicePrincipals`
 
@@ -605,7 +649,7 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
     "portfolio.portfolio.read": {"description": "View portfolio/program structure and the names of projects in scope.", "conditions": [], "ai": "retrieve"},
     "portfolio.portfolio.manage": {"description": "Create and edit portfolios and programs.", "conditions": [], "ai": "none"},
     "portfolio.project.create": {"description": "Create a project from a published template version.", "conditions": [], "ai": "none"},
-    "portfolio.project.read": {"description": "View project overview, charter, parties, sites and the four independent status dimensions.", "conditions": ["classification"], "ai": "retrieve"},
+    "portfolio.project.read": {"description": "View project overview, charter, parties, sites and the four independent status dimensions.", "conditions": ["classification"], "ai": "retrieve", "projectLevelRead": true},
     "portfolio.project.update": {"description": "Edit the project profile through commands (objective, parties, sites list).", "conditions": ["classification"], "ai": "none"},
     "portfolio.project.archive": {"description": "Administratively archive a project once its handover criteria are met.", "conditions": ["authority"], "ai": "none"},
     "portfolio.dashboard.read": {"description": "View portfolio/program health aggregates computed only over records the caller may read.", "conditions": ["classification"], "ai": "retrieve"},
@@ -658,7 +702,7 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
     "planning.rag_override.review": {"description": "Review a manual RAG override.", "conditions": ["classification", "not_self"], "ai": "none"},
     "planning.status_update.submit": {"description": "Submit a periodic workstream update.", "conditions": ["classification", "own_workstream"], "ai": "propose"},
     "planning.status_update.review": {"description": "Review, accept or return a periodic update.", "conditions": ["classification", "not_self"], "ai": "none"},
-    "gates.gate.read": {"description": "View gate definitions, criteria, evidence status, assessments, waivers and decisions.", "conditions": ["classification"], "ai": "retrieve"},
+    "gates.gate.read": {"description": "View gate definitions, criteria, evidence status, assessments, waivers and decisions.", "conditions": ["classification"], "ai": "retrieve", "projectLevelRead": true},
     "gates.definition.manage": {"description": "Draft project gate definitions, criteria and prerequisites.", "conditions": ["classification"], "ai": "none"},
     "gates.definition.approve": {"description": "Approve changes to a project's gate definitions.", "conditions": ["classification", "not_self", "authority"], "ai": "none"},
     "gates.criterion.set_waivability": {"description": "Specialist determination of a criterion's waivability and waiver authority.", "conditions": ["classification"], "ai": "none"},
@@ -733,8 +777,8 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
     "jv.signing.record": {"description": "Record signing of a transaction agreement with the executed copy.", "conditions": ["classification", "not_self", "authority"], "ai": "none"},
     "jv.closing.declare": {"description": "Authorised closing confirmation. Refused while any mandatory CP is unverified and unwaived (AT-12).", "conditions": ["classification", "not_self", "authority"], "ai": "none"},
     "jv.funds_flow.manage": {"description": "Track closing funds flows (the platform never executes payments).", "conditions": ["classification"], "ai": "none"},
-    "documents.document.read": {"description": "List, search and view document metadata/preview. Titles, snippets and counts only for documents the caller may read.", "conditions": ["classification", "room", "clean_team"], "ai": "retrieve"},
-    "documents.document.download": {"description": "Download a document version through the authorised streaming endpoint. Audited.", "conditions": ["classification", "room", "clean_team"], "ai": "none", "auditRead": true},
+    "documents.document.read": {"description": "List, search and view document metadata/preview. Titles, snippets and counts only for documents the caller may read.", "conditions": ["classification", "room", "clean_team"], "ai": "retrieve", "projectLevelRead": true},
+    "documents.document.download": {"description": "Download a document version through the authorised streaming endpoint. Audited.", "conditions": ["classification", "room", "clean_team"], "ai": "none", "auditRead": true, "projectLevelRead": true},
     "documents.document.upload": {"description": "Upload a document or new version (enters quarantine/scan). Classification cannot exceed the uploader's clearance.", "conditions": ["classification", "room", "clean_team"], "ai": "none"},
     "documents.document.classify": {"description": "Set or raise a document's classification and domain tag.", "conditions": ["classification"], "ai": "none"},
     "documents.document.declassify": {"description": "Lower a document's classification.", "conditions": ["classification", "not_self"], "ai": "none"},
@@ -878,3 +922,4 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
 | AMQ-06 | Whether auditors may see strictly_confidential material by default or per engagement | Mobily Internal Audit | Auditor clearance |
 | AMQ-07 | Maximum room-grant and clearance-grant durations; periodic access-review cadence | Mobily Cybersecurity | Grant expiry defaults |
 | AMQ-08 | Document domain list | Mobily Data Governance | `domainClearance` |
+| AMQ-09 | Confirm the §2.2.1 project-level read exceptions for workstream-scoped roles (`gates.gate.read`, `documents.document.read`, `documents.document.download`, `portfolio.project.read`): may a workstream lead / workstream-scoped contributor read the gate register, the project's non-room documents up to its clearance, and the project header? | Mobily Data Governance | §2.2.1 (implemented, pending confirmation) |

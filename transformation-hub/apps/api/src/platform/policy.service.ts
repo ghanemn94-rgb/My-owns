@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { POLICY_MATRIX, permissionsOf, evaluateConditions, isKnownPermission, forbidden, notFound, clearanceAllows, AbacAttributes, AbacCondition, Classification, RoleKey } from '@hub/domain';
+import { POLICY_MATRIX, permissionsOf, evaluateConditions, isKnownPermission, isProjectLevelRead, forbidden, notFound, clearanceAllows, AbacAttributes, AbacCondition, Classification, RoleKey } from '@hub/domain';
 import { sql, SQL } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import { CLASSIFICATIONS } from '@hub/domain';
@@ -97,21 +97,58 @@ export class PolicyService {
   }
 
   /**
-   * Where a permission applies inside a project (ARCH-14): everywhere (project-wide role or service allowlist), or only
-   * in the workstreams of workstream-scoped roles. Room grants never extend to workstream-structured data.
+   * Where a permission applies inside a project (ARCH-14, access-matrix §2.2): everywhere (project-wide role or service
+   * allowlist), or only in the workstreams of workstream-scoped roles. `projectLevel: true` (present only then): the
+   * permission is a §2.2.1 project-level read held through a workstream-scoped grant, so it ALSO reaches records with no
+   * workstream (not room-bound). `all` stays "project-wide grant": a workstream-scoped holder never gets `all`, whatever the
+   * permission. Room grants never extend to workstream-structured data.
    */
-  permissionReach(ctx: RequestContext, permission: string, projectId: string): { all: true } | { all: false; workstreamIds: string[] } {
+  permissionReach(ctx: RequestContext, permission: string, projectId: string): { all: true } | { all: false; workstreamIds: string[]; projectLevel?: true } {
     if (ctx.principal.kind === 'service') return this.canInProject(ctx, permission, projectId) ? { all: true } : { all: false, workstreamIds: [] };
     if (this.projectPermissions(ctx.principal, projectId).has(permission)) return { all: true };
-    return { all: false, workstreamIds: [...(this.workstreamPermissions(ctx.principal, projectId).get(permission) ?? [])] };
+    const workstreamIds = [...(this.workstreamPermissions(ctx.principal, projectId).get(permission) ?? [])];
+    return workstreamIds.length > 0 && isProjectLevelRead(permission) ? { all: false, workstreamIds, projectLevel: true } : { all: false, workstreamIds };
   }
 
-  /** SQL predicate restricting a workstream column to the permission's reach (use in lists AND counts). */
+  /**
+   * SQL predicate restricting a workstream column to the permission's reach (use in lists AND counts). For a §2.2.1
+   * project-level read held through a workstream-scoped grant: `col in (…) or col is null`. Tables using it carry no room
+   * column (workstream-structured registers); for a table with rooms use `grantSql`, which also excludes room-bound rows.
+   */
   reachSql(ctx: RequestContext, permission: string, projectId: string, workstreamCol: PgColumn | SQL): SQL {
     const r = this.permissionReach(ctx, permission, projectId);
     if (r.all) return sql`true`;
     if (!r.workstreamIds.length) return sql`false`;
-    return sql`${workstreamCol} in (${sql.join(r.workstreamIds.map((w) => sql`${w}::uuid`), sql`, `)})`;
+    const inReach = sql`${workstreamCol} in (${sql.join(r.workstreamIds.map((w) => sql`${w}::uuid`), sql`, `)})`;
+    return r.projectLevel ? sql`(${inReach} or ${workstreamCol} is null)` : inReach;
+  }
+
+  /**
+   * SQL counterpart of the GRANT step of `check` for lists, counts and search (access-matrix §2.2 / §2.2.1 / §2.5): does the
+   * caller's grant of `permission` cover the row? A project-wide grant (or a service allowlist entry) covers every row; a
+   * workstream-scoped grant covers rows of its workstreams (`cols.workstream`) and — for a §2.2.1 project-level read only —
+   * rows with no workstream and no room; a room-scoped role (clean team) covers rows of its rooms (`cols.room`). Omit a
+   * column the table does not have (no workstream column = only the §2.2.1 exception or a project-wide grant reaches it).
+   * Visibility (classification, room grant, clean team, room-only principals) is separate: combine with `visibilitySql`.
+   */
+  grantSql(ctx: RequestContext, permission: string, projectId: string, cols: { workstream?: PgColumn | SQL; room?: PgColumn | SQL }): SQL {
+    this.assertKnown(permission);
+    const p = ctx.principal;
+    if (!p.projects.has(projectId)) return sql`false`;
+    if (p.kind === 'service') return this.canInProject(ctx, permission, projectId) ? sql`true` : sql`false`;
+    if (this.projectPermissions(p, projectId).has(permission)) return sql`true`;
+    const ids = (xs: Iterable<string>) => sql.join([...xs].map((x) => sql`${x}::uuid`), sql`, `);
+    const parts: SQL[] = [];
+    const ws = this.workstreamPermissions(p, projectId).get(permission);
+    if (ws?.size) {
+      if (cols.workstream) parts.push(sql`${cols.workstream} in (${ids(ws)})`);
+      if (isProjectLevelRead(permission)) {
+        parts.push(sql`(${cols.workstream ? sql`${cols.workstream} is null` : sql`true`} and ${cols.room ? sql`${cols.room} is null` : sql`true`})`);
+      }
+    }
+    const rooms = this.roomPermissions(p, projectId).get(permission);
+    if (rooms?.size && cols.room) parts.push(sql`${cols.room} in (${ids(rooms)})`);
+    return parts.length ? sql`(${sql.join(parts, sql` or `)})` : sql`false`;
   }
 
   canOrg(ctx: RequestContext, permission: string): boolean {
@@ -213,14 +250,18 @@ export class PolicyService {
     const projectWide = this.projectPermissions(p, res.projectId).has(permission);
     const wsGrants = this.workstreamPermissions(p, res.projectId).get(permission);
     let viaWorkstream = false;
-    if (!projectWide && wsGrants) {
-      // Workstream-scoped grants apply only to resources of those workstreams.
+    let viaProjectLevel = false;
+    if (!projectWide && wsGrants?.size) {
+      // Workstream-scoped grants apply only to resources of those workstreams (access-matrix §2.2)…
       viaWorkstream = !!res.workstreamId && wsGrants.has(res.workstreamId);
+      // …except a §2.2.1 project-level read, which also covers the project's records with no workstream and no room.
+      // Every condition below still applies (classification / room / clean team were checked by canSee above).
+      viaProjectLevel = !viaWorkstream && !res.workstreamId && !res.roomId && isProjectLevelRead(permission);
     }
     // Room-scoped grants (clean team / external partner) apply only to resources inside those rooms.
     const roomGrants = this.roomPermissions(p, res.projectId).get(permission);
-    const viaRoom = !projectWide && !viaWorkstream && !!roomGrants && !!res.roomId && roomGrants.has(res.roomId);
-    if (!projectWide && !viaWorkstream && !viaRoom) {
+    const viaRoom = !projectWide && !viaWorkstream && !viaProjectLevel && !!roomGrants && !!res.roomId && roomGrants.has(res.roomId);
+    if (!projectWide && !viaWorkstream && !viaProjectLevel && !viaRoom) {
       // A room-only principal must not learn that out-of-room resources exist.
       const roomOnly = scope.roles.size === 0 && scope.workstreamRoles.length === 0;
       return { allowed: false, hide: roomOnly, reason: `Missing permission ${permission}`, code: 'policy.forbidden' };

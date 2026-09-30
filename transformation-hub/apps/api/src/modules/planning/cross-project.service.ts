@@ -115,6 +115,9 @@ export class CrossProjectDependencyService {
     const target = await this.item(other.id, d.otherItemType as ScheduleNodeType, d.otherItemId);
     this.s.assertReadable(ctx, other, target.workstreamId);
     const local = d.localItemId ? await this.item(projectId, d.localItemType as ScheduleNodeType, d.localItemId) : null;
+    // The dependent side must be readable too, exactly as in the list (SEC-P2-07): a project-level dependency (no local item)
+    // needs a project-wide planning.plan.read grant — 404 otherwise, like a dependency that is not listed.
+    this.s.assertReadable(ctx, p, local?.workstreamId ?? null);
     this.s.assert(ctx, 'planning.dependency.manage', p, { workstreamId: local?.workstreamId ?? null });
     if (d.status === 'closed') throw ruleViolation('xproj.already_closed', 'The cross-project dependency is already closed');
     const row = await updateVersioned(this.s.db, schema.crossProjectDependency, { id: d.id, projectId, expectedVersion: body.expectedVersion }, {
@@ -129,7 +132,8 @@ export class CrossProjectDependencyService {
 
   /**
    * Outgoing (this project depends on another) and incoming (another project depends on this one) dependencies whose BOTH
-   * ends the caller can read. Filtering happens before paging, so totals never count hidden rows.
+   * ends the caller can read: the other item, and the dependent side (its local item, or the dependent project as a whole
+   * when there is no local item — SEC-P2-07). Filtering happens before paging, so totals never count hidden rows.
    */
   async list(ctx: RequestContext, projectId: string, q: z.infer<typeof CrossProjectDependencyListQuery>) {
     const p = await this.s.project(ctx, projectId);
@@ -156,7 +160,10 @@ export class CrossProjectDependencyService {
       const local = r.localItemId ? await this.item(depP.id, r.localItemType as ScheduleNodeType, r.localItemId).catch(() => null) : null;
       if (!other || (r.localItemId && !local)) continue;
       if (!this.canRead(ctx, othP, other.workstreamId)) continue;
-      if (local && !this.canRead(ctx, depP, local.workstreamId)) continue;
+      // The dependent side: its local item's workstream, or — for a project-level dependency without a local item — a
+      // project-wide planning.plan.read grant (SEC-P2-07; access-matrix §2.2: a workstream grant never covers project-level
+      // planning records).
+      if (!this.canRead(ctx, depP, local?.workstreamId ?? null)) continue;
       visible.push({ r, local, other, direction: r.projectId === projectId ? 'outgoing' : 'incoming' });
     }
     const key = q.sort?.replace(/^-/, '') ?? 'neededBy';

@@ -527,8 +527,8 @@ BEGIN
       ('ai_proposal', 'target_type', 'target_id', 'target'),
       ('dependency', 'predecessor_type', 'predecessor_id', 'predecessor'),
       ('dependency', 'successor_type', 'successor_id', 'successor'),
-      -- DOM-P2-18: the successor task / milestone of a non-schedule prerequisite (the predecessor is validated by the
-      -- service, its types are not all in hub_target_table).
+      -- DOM-P2-18: the successor task / milestone of a non-schedule prerequisite (the predecessor has its own guard below:
+      -- its types are not all in hub_target_table).
       ('record_dependency', 'successor_type', 'successor_id', 'successor'),
       -- DOM-P2-17: the dependent item of a cross-project dependency is a record of the OWNING project; the other end
       -- is in another project by design (other_project_id, bound to the organization below).
@@ -542,6 +542,72 @@ BEGIN
   END LOOP;
 END
 $poly$;
+
+-- 10b. Prerequisite predecessors and cross-project "other items" (SEC-P2-04, defence in depth behind the services'
+-- loadInProject checks). Both run as the invoker, so RLS applies: a row outside the caller's projects is indistinguishable
+-- from a missing one and is refused.
+-- record_dependency: the predecessor (decision | gate → gate_definition | agreement | approval_request | evidence_link) is a
+-- record of the SAME project as the prerequisite. A dedicated map: approval_request / evidence_link are deliberately NOT
+-- added to hub_target_table (that would widen the polymorphic targets accepted by every other table).
+CREATE OR REPLACE FUNCTION hub_record_dependency_predecessor() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  tbl text;
+  found boolean;
+BEGIN
+  tbl := CASE NEW.predecessor_type
+    WHEN 'decision' THEN 'decision' WHEN 'gate' THEN 'gate_definition' WHEN 'agreement' THEN 'agreement'
+    WHEN 'approval_request' THEN 'approval_request' WHEN 'evidence_link' THEN 'evidence_link'
+    ELSE NULL END;
+  IF tbl IS NULL THEN
+    RAISE EXCEPTION 'invalid_target_type: unsupported predecessor type %', NEW.predecessor_type USING ERRCODE = 'P0001';
+  END IF;
+  EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I WHERE id = $1 AND project_id = $2 AND org_id = $3)', tbl)
+    INTO found USING NEW.predecessor_id, NEW.project_id, NEW.org_id;
+  IF NOT found THEN
+    RAISE EXCEPTION 'cross_project_reference: predecessor % % is not a record of this project', NEW.predecessor_type, NEW.predecessor_id USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DO $recdep$
+BEGIN
+  IF to_regclass('public.record_dependency') IS NOT NULL THEN
+    DROP TRIGGER IF EXISTS hub_same_project_predecessor ON record_dependency;
+    CREATE TRIGGER hub_same_project_predecessor BEFORE INSERT OR UPDATE OF predecessor_type, predecessor_id, project_id ON record_dependency
+      FOR EACH ROW EXECUTE FUNCTION hub_record_dependency_predecessor();
+  END IF;
+END
+$recdep$;
+
+-- cross_project_dependency: the other item (task | milestone) is a record of other_project_id. Together with the composite
+-- FK (org_id, other_project_id) → project (org_id, id) (section 14) the other item is thereby in a project of the SAME
+-- organization. The organization is left to that FK on purpose, so each guard reports its own violation.
+CREATE OR REPLACE FUNCTION hub_cross_project_other_item() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  tbl text;
+  found boolean;
+BEGIN
+  tbl := CASE NEW.other_item_type::text WHEN 'task' THEN 'task' WHEN 'milestone' THEN 'milestone' ELSE NULL END;
+  IF tbl IS NULL THEN
+    RAISE EXCEPTION 'invalid_target_type: unsupported other item type %', NEW.other_item_type USING ERRCODE = 'P0001';
+  END IF;
+  EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I WHERE id = $1 AND project_id = $2)', tbl)
+    INTO found USING NEW.other_item_id, NEW.other_project_id;
+  IF NOT found THEN
+    RAISE EXCEPTION 'cross_project_reference: other item % % is not a record of the other project', NEW.other_item_type, NEW.other_item_id USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DO $xpother$
+BEGIN
+  IF to_regclass('public.cross_project_dependency') IS NOT NULL THEN
+    DROP TRIGGER IF EXISTS hub_other_project_item ON cross_project_dependency;
+    CREATE TRIGGER hub_other_project_item BEFORE INSERT OR UPDATE OF other_project_id, other_item_type, other_item_id ON cross_project_dependency
+      FOR EACH ROW EXECUTE FUNCTION hub_cross_project_other_item();
+  END IF;
+END
+$xpother$;
 
 -- 11. document_chunk ACL attributes are DERIVED from the parent document (ARCH-01 / ADR-0008) ----------------------
 CREATE OR REPLACE FUNCTION hub_chunk_acl_sync() RETURNS trigger LANGUAGE plpgsql AS $$

@@ -164,9 +164,12 @@ describe('DOM-P2-17/18 — database guards and history [REQ-ENT-010, REQ-PLN-006
       const pf2 = (await c.query<{ id: string }>(`insert into portfolio (org_id, name) values ($1, 'XP foreign portfolio (test)') returning id`, [org2])).rows[0]!.id;
       const pg2 = (await c.query<{ id: string }>(`insert into program (org_id, portfolio_id, code, name) values ($1, $2, 'XP-FOREIGN', 'XP foreign program (test)') returning id`, [org2, pf2])).rows[0]!.id;
       const p2 = (await c.query<{ id: string }>(`insert into project (id, org_id, program_id, template_version_id, code, name) values (gen_random_uuid(), $1, $2, $3, 'XP-FOREIGN', 'XP foreign project (test)') returning id`, [org2, pg2, tv])).rows[0]!.id;
+      // A real milestone of the foreign project, so the other-item trigger (SEC-P2-04: the item is in other_project_id)
+      // passes and the organization FK is what refuses the row.
+      const ms2 = (await c.query<{ id: string }>(`insert into milestone (id, org_id, project_id, code, title) values (gen_random_uuid(), $1, $2, 'XP-M1', 'XP foreign milestone (test)') returning id`, [org2, p2])).rows[0]!.id;
       await refused(
-        `insert into cross_project_dependency (id, org_id, project_id, other_project_id, other_item_type, other_item_id, description) values (gen_random_uuid(), $1, $2, $3, 'milestone', gen_random_uuid(), 'probe (test)')`,
-        [orgId, A, p2],
+        `insert into cross_project_dependency (id, org_id, project_id, other_project_id, other_item_type, other_item_id, description) values (gen_random_uuid(), $1, $2, $3, 'milestone', $4, 'probe (test)')`,
+        [orgId, A, p2, ms2],
         { code: '23503' },
       );
       // Positive control: the same row pointing at B (same organization) is accepted.
