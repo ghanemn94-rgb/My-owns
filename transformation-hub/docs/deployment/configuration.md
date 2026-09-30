@@ -54,7 +54,8 @@ Legend: **Req-prod** = production requirement enforced by config.ts (E) or by th
 | `HUB_DB_RUNTIME_ROLE` | `migrate` | Default `hub_app`. The entrypoint verifies the role exists and is `NOSUPERUSER NOBYPASSRLS` before migrating |
 | `HUB_ORG_NAME`, `HUB_BOOTSTRAP_ADMIN_EMAIL`, `HUB_BOOTSTRAP_ADMIN_NAME`, `HUB_BOOTSTRAP_ADMIN_OIDC_ISSUER`, `HUB_BOOTSTRAP_ADMIN_OIDC_SUBJECT` | `bootstrap` | See [installation.md](installation.md) §5 |
 | `HUB_APP_ROOT` | entrypoint | Override the application root (tests only) |
-| `HUB_WORKER_HEARTBEAT_FILE`, `HUB_WORKER_HEARTBEAT_MAX_AGE_MS` | `healthcheck worker` | Used when the worker writes a heartbeat file (proposed; see [operations.md](operations.md)). Otherwise the probe falls back to a DB ping |
+| `HUB_WORKER_HEARTBEAT_FILE`, `HUB_WORKER_HEARTBEAT_MAX_AGE_MS` | worker, `healthcheck worker` | When set, the worker writes the file after every successful loop iteration and the probe fails if it is older than the maximum age (default 120000 ms). Compose sets `/tmp/hub-worker.heartbeat`; the chart does not yet. When unset, the probe falls back to a DB ping ([operations.md](operations.md)) |
+| any `HUB_*` set to an empty string | entrypoint | Treated as **unset** (the entrypoint removes empty `HUB_*` values before starting). Compose passes optional settings such as `HUB_OIDC_ISSUER` as empty strings when they are not configured |
 
 ## Platform variables (set by the chart)
 

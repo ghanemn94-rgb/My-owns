@@ -9,7 +9,7 @@ process. This page covers routine operation.
 |---|---|---|
 | api | `GET /healthz` (liveness, startup) | Process is serving HTTP |
 | api | `GET /readyz` (readiness) | PostgreSQL reachable (`select 1`). 503 while the DB is unavailable. Pods leave the Service until it recovers |
-| worker | exec `node /app/hub-entrypoint.cjs healthcheck worker` every 60 s | Can connect to PostgreSQL with the runtime role. **Limitation:** this does not prove the loop is ticking. A heartbeat file is proposed (below) |
+| worker | exec `node /app/hub-entrypoint.cjs healthcheck worker` every 60 s | With `HUB_WORKER_HEARTBEAT_FILE` set, the worker writes the file after every successful loop iteration and the probe fails when it is older than `HUB_WORKER_HEARTBEAT_MAX_AGE_MS` (default 2 min). Compose sets it. Without the variable, the probe only checks that PostgreSQL is reachable with the runtime role, which does not prove the loop is ticking. The Helm chart does not set it yet (below) |
 | web | `GET /login` (readiness/startup), TCP (liveness) | Next.js server responds |
 | Containers | Docker `HEALTHCHECK` in both images (the same entrypoint probe; role auto-detected from PID 1) | Compose / plain Docker only. Kubernetes uses the probes above |
 
@@ -58,7 +58,7 @@ select kind, name, cron, timezone, next_run_at, last_run_at, last_status, left(l
 
 **Proposed (lead-owned) improvements:**
 
-- a worker heartbeat file (`HUB_WORKER_HEARTBEAT_FILE`, written each tick; the entrypoint probe already honours it);
+- set the worker heartbeat file in the Helm chart as well. The worker writes it when `HUB_WORKER_HEARTBEAT_FILE` is set, and the probe honours it. Compose already sets it (`/tmp/hub-worker.heartbeat`);
 - a metrics endpoint with queue depth and last tick (ADR-0016);
 - `HUB_JOBS_PAUSED` / `HUB_READ_ONLY` switches (IR runbook CA-14 / CA-15);
 - a first-class `held` job status in place of the restore-hold convention.
