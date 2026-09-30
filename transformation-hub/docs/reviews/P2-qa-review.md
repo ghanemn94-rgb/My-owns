@@ -587,6 +587,10 @@ $ TEST_DATABASE_URL=…/hub_test_p2r TEST_DATABASE_MIGRATION_URL=…/hub_test_p2
                              → the failure was the QA-P2-03 probe's setup (security-review merge, see above); after the
                                setup fix: vitest run test/reviews/p2-qa-adversarial.spec.ts → Tests 12 passed (12)
                              (the 8 expected failures are the open P4 domain-review probes, `it.fails`)
+  final commit f552cf5 (run 4): Test Files 90 passed (90), Tests 781 passed | 8 expected fail (789), 798.6 s
+                             (incl. p1-closure-empty-db on hub_test_p2r_boot)
+$ pnpm lint                                                  # exit 0 (packages, api tsc + module boundaries, web tsc + i18n
+                                                             #  + hard-coded strings, e2e tsc)
 $ full Playwright suite (API + worker + production web build as in CI: HUB_RATE_LIMIT_PUBLIC_PER_MINUTE=1000,
   env -u NODE_ENV HUB_API_URL=http://127.0.0.1:4217 pnpm --filter @hub/web run build; next start -p 3217;
   HUB_WEB_URL=http://127.0.0.1:3217 npx playwright test)      → 311 passed (24.5m)
