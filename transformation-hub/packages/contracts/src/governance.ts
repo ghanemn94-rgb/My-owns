@@ -5,6 +5,7 @@ import {
   AGENDA_SCREENING_STATUSES,
   ATTENDANCE_STATUSES,
   AUTHORITY_MATRIX_STATUSES,
+  CADENCE_FREQUENCIES,
   COMMITTEE_KINDS,
   COMMITTEE_MEMBER_ROLES,
   COMMITTEE_STATUSES,
@@ -12,6 +13,9 @@ import {
   DECISION_STATUSES,
   DECISION_SUBJECT_TYPES,
   ESCALATION_STATUSES,
+  INTERNAL_APPROVAL_LABEL_EN,
+  INTERNAL_APPROVAL_METHOD,
+  MAX_PROPOSED_MEETINGS,
   MEETING_STATUSES,
   VOTE_CHOICES,
 } from '@hub/domain';
@@ -96,6 +100,11 @@ export const CharterSchema = z.object({
   cadence: Text(2000).optional(),
   /** Cadence is a proposal until confirmed — never presented as a confirmed corporate schedule (REQ-GOV-009). */
   cadenceIsProposal: z.boolean().default(true),
+  /**
+   * REQ-GOV-009: the cadence as a rule the secretariat can generate PROPOSED meetings from (weekly, every two weeks, monthly);
+   * the free-text `cadence` describes it. Part of the charter, so a change needs the charter re-approved.
+   */
+  cadenceRule: z.object({ frequency: z.enum(CADENCE_FREQUENCIES) }).nullable().optional(),
   classification: Text(200).optional(),
   minutesRetention: Text(2000).optional(),
   escalation: Text(4000).optional(),
@@ -104,6 +113,12 @@ export const CharterSchema = z.object({
 });
 
 const VersionResult = z.object({ id: Uuid, version: z.number().int() });
+
+/**
+ * REQ-GOV-027: the label every approval record carries in API responses — an internal electronic approval, never a legally
+ * certified signature (the web translates `method`). Exports carry it too (P6).
+ */
+export const ApprovalLabelDto = z.object({ method: z.literal(INTERNAL_APPROVAL_METHOD), label: z.literal(INTERNAL_APPROVAL_LABEL_EN) });
 
 // ---------------------------------------------------------------------------------------------------------------
 // DTOs
@@ -154,6 +169,8 @@ export const CommitteeDto = z.object({
 export const CommitteeDetailDto = CommitteeDto.extend({
   charter: CharterSchema.partial(),
   charterApprovedBy: Uuid.nullable(),
+  /** REQ-GOV-027: label of the charter approval record (null while no charter version is approved). */
+  charterApproval: ApprovalLabelDto.nullable(),
   memberships: z.array(CommitteeMembershipDto),
 });
 
@@ -188,6 +205,8 @@ export const AuthorityMatrixVersionDto = z.object({
   approvalVerificationNote: z.string().nullable(),
   /** An approval is recorded on this draft and awaits verification of its evidence by a second person. */
   pendingVerification: z.boolean(),
+  /** REQ-GOV-027: label of the matrix approval record (null while no approval is recorded). */
+  approvalRecord: ApprovalLabelDto.nullable(),
   createdBy: Uuid.nullable(),
   createdAt: z.string(),
 });
@@ -205,6 +224,8 @@ export const AgendaItemDto = z.object({
   screeningStatus: z.enum(AGENDA_SCREENING_STATUSES),
   screeningNote: z.string().nullable(),
   screenedBy: Uuid.nullable(),
+  /** REQ-GOV-012: the request of the same meeting this one was merged into (screening status `merged`). */
+  mergedIntoAgendaItemId: Uuid.nullable(),
   presenterUserId: Uuid.nullable(),
   version: z.number().int(),
   createdAt: z.string(),
@@ -244,6 +265,8 @@ export const MeetingDto = z.object({
   responseDeadline: z.string().nullable(),
   packSnapshotId: Uuid.nullable(),
   minutesApprovedAt: z.string().nullable(),
+  /** REQ-GOV-009: the charter version whose cadence proposed this meeting (null = scheduled by hand). */
+  cadenceCharterVersionNo: z.number().int().nullable(),
   isDemo: z.boolean(),
   version: z.number().int(),
 });
@@ -254,6 +277,8 @@ export const MeetingDetailDto = MeetingDto.extend({
   minutesText: z.string().nullable(),
   minutesDraftedBy: Uuid.nullable(),
   minutesApprovedBy: Uuid.nullable(),
+  /** REQ-GOV-027: label of the minutes approval record (null while the minutes are not approved). */
+  minutesApproval: ApprovalLabelDto.nullable(),
   authorityMatrixVersionId: Uuid.nullable(),
   agenda: z.array(AgendaItemDto),
   attendance: z.array(AttendanceDto),
@@ -370,6 +395,8 @@ export const DecisionDetailDto = DecisionSummaryDto.extend({
   decidedViaCirculation: z.boolean(),
   outcomeRecordedAt: z.string().nullable(),
   outcomeRecordedBy: Uuid.nullable(),
+  /** REQ-GOV-027: label of the approval record (committee outcome or external decision recorded; null before). */
+  approvalRecord: ApprovalLabelDto.nullable(),
   tallySnapshot: z.record(z.string(), z.unknown()).nullable(),
   supersededByDecisionId: Uuid.nullable(),
   implementationStartedBy: Uuid.nullable(),
@@ -406,6 +433,8 @@ export const OutcomeResultDto = z.object({
   escalatedTo: z.string().nullable(),
   escalationId: Uuid.nullable(),
   explanation: z.string(),
+  /** REQ-GOV-027: the recorded outcome is an internal electronic approval record. */
+  approvalRecord: ApprovalLabelDto,
   version: z.number().int(),
 });
 
@@ -504,13 +533,37 @@ const subjectPair = <T extends { subjectType?: string | null; subjectId?: string
 };
 
 export const CreateDecisionBody = z.object({ committeeId: Uuid, title: RequiredText(300), ...paperFields }).superRefine(subjectPair);
-export const UpdateDecisionBody = z.object({ expectedVersion: ExpectedVersion, title: RequiredText(300).optional(), ...paperFields }).superRefine(subjectPair);
+/** Strict (REQ-DAT-013): an unknown field — `status` included — is refused with 400, never silently dropped. */
+export const UpdateDecisionBody = z.object({ expectedVersion: ExpectedVersion, title: RequiredText(300).optional(), ...paperFields }).strict().superRefine(subjectPair);
 
+export const SCREENING_OUTCOMES = ['accept', 'return', 'defer', 'merge', 'reject'] as const;
+/**
+ * REQ-GOV-012: accept onto a numbered agenda (meeting), return, defer, merge into another request of the same meeting
+ * (`mergeIntoAgendaItemId`; the meeting is `meetingId` or the request's own), or reject (screen out). A reason is required
+ * for every outcome but accept.
+ */
 export const ScreenAgendaBody = z
-  .object({ expectedVersion: ExpectedVersion, outcome: z.enum(['accept', 'return', 'defer']), meetingId: Uuid.optional(), note: Text(2000).optional() })
+  .object({
+    expectedVersion: ExpectedVersion,
+    outcome: z.enum(SCREENING_OUTCOMES),
+    meetingId: Uuid.optional(),
+    mergeIntoAgendaItemId: Uuid.optional(),
+    note: Text(2000).optional(),
+  })
   .superRefine((b, ctx) => {
-    if (b.outcome !== 'accept' && !b.note?.trim()) ctx.addIssue({ code: 'custom', path: ['note'], message: 'A reason is required to return or defer a request' });
+    if (b.outcome !== 'accept' && !b.note?.trim()) ctx.addIssue({ code: 'custom', path: ['note'], message: 'A reason is required to return, defer, merge or reject a request' });
+    if (b.outcome === 'merge' && !b.mergeIntoAgendaItemId) ctx.addIssue({ code: 'custom', path: ['mergeIntoAgendaItemId'], message: 'Choose the request this one is merged into' });
+    if (b.outcome !== 'merge' && b.mergeIntoAgendaItemId) ctx.addIssue({ code: 'custom', path: ['mergeIntoAgendaItemId'], message: 'Only a merge names a target request' });
   });
+
+/** REQ-GOV-009: generate PROPOSED meetings from the charter cadence; the first meeting (date and time) is given by the user. */
+export const ProposeMeetingSeriesBody = z.object({
+  expectedVersion: ExpectedVersion,
+  firstMeetingAt: IsoInstant,
+  count: z.number().int().min(1).max(MAX_PROPOSED_MEETINGS),
+  title: RequiredText(300),
+  location: Text(300).optional(),
+});
 
 const listOf = <T extends z.ZodTypeAny>(t: T) => z.object({ items: z.array(t) });
 
@@ -593,7 +646,7 @@ export const governanceRoutes = registerRoutes({
     command: true,
     params: CommitteeParams,
     body: z.object({ expectedVersion: ExpectedVersion, approvalReference: Text(300).optional(), note: Text(2000).optional() }),
-    response: z.object({ id: Uuid, version: z.number().int(), status: z.enum(COMMITTEE_STATUSES), charterApprovedVersionNo: z.number().int() }),
+    response: z.object({ id: Uuid, version: z.number().int(), status: z.enum(COMMITTEE_STATUSES), charterApprovedVersionNo: z.number().int(), approvalRecord: ApprovalLabelDto }),
   }),
   activateCommittee: defineRoute({
     id: 'governance.activateCommittee',
@@ -673,7 +726,7 @@ export const governanceRoutes = registerRoutes({
     command: true,
     params: MatrixParams,
     body: z.object({ approvalReference: RequiredText(300), approvalDocumentId: Uuid.optional(), effectiveFrom: IsoDate.optional(), note: Text(2000).optional() }),
-    response: z.object({ id: Uuid, status: z.enum(AUTHORITY_MATRIX_STATUSES), effectiveFrom: z.string(), supersededIds: z.array(Uuid), pendingVerification: z.boolean() }),
+    response: z.object({ id: Uuid, status: z.enum(AUTHORITY_MATRIX_STATUSES), effectiveFrom: z.string(), supersededIds: z.array(Uuid), pendingVerification: z.boolean(), approvalRecord: ApprovalLabelDto }),
   }),
   verifyAuthorityMatrixApproval: defineRoute({
     id: 'governance.verifyAuthorityMatrixApproval',
@@ -729,6 +782,36 @@ export const governanceRoutes = registerRoutes({
     body: z.object({ title: RequiredText(300), scheduledAt: IsoInstant, location: Text(300).optional() }),
     response: z.object({ id: Uuid, number: z.number().int(), version: z.number().int() }),
   }),
+  proposeMeetingSeries: defineRoute({
+    id: 'governance.proposeMeetingSeries',
+    method: 'POST',
+    path: `${P}/committees/:committeeId/cadence/proposed-meetings`,
+    summary:
+      'Generate a series of PROPOSED meetings from the charter cadence and the first meeting given by the secretariat (never scheduled or published automatically; idempotent — a slot that already has a meeting is skipped)',
+    tags,
+    access: 'governance.meeting.manage',
+    command: true,
+    params: CommitteeParams,
+    body: ProposeMeetingSeriesBody,
+    response: z.object({
+      frequency: z.enum(CADENCE_FREQUENCIES),
+      charterVersionNo: z.number().int(),
+      created: z.array(z.object({ id: Uuid, number: z.number().int(), scheduledAt: z.string(), localDate: z.string(), nonWorkingDay: z.boolean() })),
+      skipped: z.array(z.object({ scheduledAt: z.string(), localDate: z.string(), existingMeetingId: Uuid })),
+    }),
+  }),
+  confirmMeeting: defineRoute({
+    id: 'governance.confirmMeeting',
+    method: 'POST',
+    path: `${P}/meetings/:meetingId/confirm`,
+    summary: 'Confirm a proposed (cadence-generated) meeting into the schedule (Proposed → Planned)',
+    tags,
+    access: 'governance.meeting.manage',
+    command: true,
+    params: MeetingParams,
+    body: Cmd,
+    response: VersionResult,
+  }),
   publishAgenda: defineRoute({
     id: 'governance.publishAgenda',
     method: 'POST',
@@ -769,7 +852,7 @@ export const governanceRoutes = registerRoutes({
     id: 'governance.cancelMeeting',
     method: 'POST',
     path: `${P}/meetings/:meetingId/cancel`,
-    summary: 'Cancel a planned meeting (reason required)',
+    summary: 'Cancel a proposed or planned meeting (reason required)',
     tags,
     access: 'governance.meeting.manage',
     command: true,
@@ -834,13 +917,13 @@ export const governanceRoutes = registerRoutes({
     id: 'governance.approveMinutes',
     method: 'POST',
     path: `${P}/meetings/:meetingId/minutes/approve`,
-    summary: 'Approve minutes (not by their drafter)',
+    summary: 'Approve minutes (not by their drafter). Internal electronic approval — not a legal signature',
     tags,
     access: 'governance.minutes.approve',
     command: true,
     params: MeetingParams,
     body: Cmd,
-    response: VersionResult,
+    response: VersionResult.extend({ approvalRecord: ApprovalLabelDto }),
   }),
   freezePack: defineRoute({
     id: 'governance.freezePack',
@@ -916,13 +999,13 @@ export const governanceRoutes = registerRoutes({
     id: 'governance.screenAgendaRequest',
     method: 'POST',
     path: `${P}/agenda-requests/:agendaItemId/screen`,
-    summary: 'Secretariat screening: accept onto a numbered agenda, return or defer (not by the requester)',
+    summary: 'Secretariat screening: accept onto a numbered agenda, return, defer, merge into another request of the same meeting, or reject — with a reason except for accept (not by the requester)',
     tags,
     access: 'governance.agenda_request.screen',
     command: true,
     params: AgendaParams,
     body: ScreenAgendaBody,
-    response: z.object({ id: Uuid, screeningStatus: z.enum(AGENDA_SCREENING_STATUSES), number: z.number().int().nullable(), version: z.number().int() }),
+    response: z.object({ id: Uuid, screeningStatus: z.enum(AGENDA_SCREENING_STATUSES), number: z.number().int().nullable(), mergedIntoAgendaItemId: Uuid.nullable(), version: z.number().int() }),
   }),
 
   // ---- Decisions -------------------------------------------------------------------------------------------
@@ -1119,7 +1202,7 @@ export const governanceRoutes = registerRoutes({
       outcome: z.enum(['approved', 'rejected']).default('approved'),
       note: Text(2000).optional(),
     }),
-    response: z.object({ id: Uuid, status: z.enum(DECISION_STATUSES), version: z.number().int() }),
+    response: z.object({ id: Uuid, status: z.enum(DECISION_STATUSES), version: z.number().int(), approvalRecord: ApprovalLabelDto }),
   }),
   deferDecision: defineRoute({
     id: 'governance.deferDecision',
@@ -1239,13 +1322,15 @@ export const governanceRoutes = registerRoutes({
     tags,
     access: 'governance.action.manage',
     params: ActionParams,
-    body: z.object({
-      expectedVersion: ExpectedVersion,
-      title: RequiredText(300).optional(),
-      ownerUserId: Uuid.optional(),
-      dueDate: IsoDate.optional(),
-      reason: Text(1000).optional(),
-    }),
+    body: z
+      .object({
+        expectedVersion: ExpectedVersion,
+        title: RequiredText(300).optional(),
+        ownerUserId: Uuid.optional(),
+        dueDate: IsoDate.optional(),
+        reason: Text(1000).optional(),
+      })
+      .strict(),
     response: VersionResult,
   }),
   startAction: defineRoute({

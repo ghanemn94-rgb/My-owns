@@ -55,6 +55,8 @@ export const committee = pgTable(
         reservedMatters?: string;
         cadence?: string;
         cadenceIsProposal?: boolean;
+        /** REQ-GOV-009: structured cadence rule (weekly / every_two_weeks / monthly) used to PROPOSE meetings. */
+        cadenceRule?: { frequency: string } | null;
         classification?: string;
         minutesRetention?: string;
         escalation?: string;
@@ -172,6 +174,11 @@ export const meeting = pgTable(
     minutesApprovedBy: uuid('minutes_approved_by'),
     minutesApprovedAt: ts('minutes_approved_at'),
     authorityMatrixVersionId: uuid('authority_matrix_version_id'),
+    /**
+     * REQ-GOV-009: the charter version whose cadence proposed this meeting (null = scheduled by hand). Such a meeting is
+     * created `proposed` and becomes `planned` only by the secretariat's explicit confirmation.
+     */
+    cadenceCharterVersionNo: integer('cadence_charter_version_no'),
     isDemo: isDemo(),
     createdAt: createdAt(),
     createdBy: createdBy(),
@@ -283,6 +290,8 @@ export const agendaItem = pgTable(
     screeningStatus: agendaScreeningStatus('screening_status').notNull().default('requested'),
     screeningNote: text('screening_note'),
     screenedBy: uuid('screened_by'),
+    /** REQ-GOV-012: the request of the same meeting this one was merged into (screening status `merged`). */
+    mergedIntoAgendaItemId: uuid('merged_into_agenda_item_id'),
     presenterUserId: uuid('presenter_user_id'),
     minutesNote: text('minutes_note'),
     sortOrder: integer('sort_order').notNull().default(0),
@@ -298,6 +307,9 @@ export const agendaItem = pgTable(
     projectFk('agenda_item_committee_fk', t.projectId, t.committeeId, (): FkTarget => committee),
     projectFk('agenda_item_meeting_fk', t.projectId, t.meetingId, (): FkTarget => meeting),
     projectFk('agenda_item_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
+    projectFk('agenda_item_merged_into_fk', t.projectId, t.mergedIntoAgendaItemId, { projectId: t.projectId, id: t.id }),
+    // A merged request always names the request it joined (and only a merged request does).
+    check('agenda_item_merged_ck', sql`(${t.screeningStatus} = 'merged') = (${t.mergedIntoAgendaItemId} is not null)`),
   ],
 );
 
@@ -499,9 +511,17 @@ export const approvalRecord = pgTable(
     comment: text('comment'),
     authorityBasis: text('authority_basis'),
     payloadHash: text('payload_hash').notNull(),
+    /**
+     * REQ-GOV-027: how the approval was given. Always an internal electronic approval — never a legally certified signature
+     * (no approved signature solution is integrated); the check refuses any other method.
+     */
+    method: varchar('method', { length: 32 }).notNull().default('internal_electronic'),
     recordedAt: createdAt(),
   },
-  (t) => [projectFk('approval_record_request_fk', t.projectId, t.approvalRequestId, (): FkTarget => approvalRequest)],
+  (t) => [
+    projectFk('approval_record_request_fk', t.projectId, t.approvalRequestId, (): FkTarget => approvalRequest),
+    check('approval_record_method_ck', sql`${t.method} = 'internal_electronic'`),
+  ],
 );
 
 /**

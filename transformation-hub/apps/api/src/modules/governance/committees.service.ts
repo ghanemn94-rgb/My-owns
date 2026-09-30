@@ -3,12 +3,14 @@ import { and, asc, count, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-
 import { schema } from '@hub/db';
 import {
   AuthorityPolicy,
+  CADENCE_FREQUENCIES,
   COMMITTEE_KINDS,
   COMMITTEE_STATUSES,
   Classification,
   CommitteeMemberRole,
   assertMembershipSeat,
   conflict,
+  internalApprovalLabel,
   isMemberActiveOn,
   matrixApprovalPlan,
   matrixUsable,
@@ -85,6 +87,8 @@ export class CommitteesService {
       ...(await this.summary(c, p)),
       charter: c.charter,
       charterApprovedBy: c.charterApprovedBy,
+      // REQ-GOV-027: an approved charter version is an internal electronic approval record.
+      charterApproval: c.charterApprovedVersionNo !== null ? internalApprovalLabel() : null,
       memberships: members.map((m) => this.membershipDto(m, names, today)),
     };
   }
@@ -188,7 +192,7 @@ export class CommitteesService {
       after: { status, charterApprovedVersionNo: c.charterVersionNo, approvalReference: body.approvalReference ?? null, method: 'internal_electronic_approval' },
       reason: body.note ?? null,
     });
-    return { id: c.id, version: row['version'] as number, status, charterApprovedVersionNo: c.charterVersionNo };
+    return { id: c.id, version: row['version'] as number, status, charterApprovedVersionNo: c.charterVersionNo, approvalRecord: internalApprovalLabel() };
   }
 
   async activate(ctx: RequestContext, projectId: string, committeeId: string, body: { expectedVersion: number; note?: string }) {
@@ -403,7 +407,7 @@ export class CommitteesService {
       },
       reason: body.note ?? null,
     });
-    return { id: m.id, status, effectiveFrom, supersededIds: superseded.map((x) => x.id), pendingVerification: plan.requiresVerification };
+    return { id: m.id, status, effectiveFrom, supersededIds: superseded.map((x) => x.id), pendingVerification: plan.requiresVerification, approvalRecord: internalApprovalLabel() };
   }
 
   /**
@@ -591,6 +595,7 @@ export class CommitteesService {
       approvalVerifiedAt: iso(m.approvalVerifiedAt),
       approvalVerificationNote: m.approvalVerificationNote,
       pendingVerification: m.status === 'draft' && !!m.approvedBy,
+      approvalRecord: m.approvedBy ? internalApprovalLabel() : null,
       createdBy: m.createdBy,
       createdAt: m.createdAt.toISOString(),
     };
@@ -603,5 +608,8 @@ function cleanCharter(c: Charter): Charter {
   const keys = ['purpose', 'scope', 'delegatedAuthority', 'exclusions', 'reservedMatters', 'cadence', 'classification', 'minutesRetention', 'escalation', 'conflictsOfInterest', 'circulation'] as const;
   for (const k of keys) if (typeof c[k] === 'string' && c[k]!.length > 0) out[k] = c[k];
   out.cadenceIsProposal = c.cadenceIsProposal !== false;
+  // REQ-GOV-009: the structured cadence rule (a proposal; generates PROPOSED meetings only).
+  const f = c.cadenceRule?.frequency;
+  if (f && (CADENCE_FREQUENCIES as readonly string[]).includes(f)) out.cadenceRule = { frequency: f };
   return out;
 }

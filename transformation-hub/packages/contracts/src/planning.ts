@@ -798,9 +798,10 @@ export const UpdateRiskBody = z
 export const CreateIssueBody = z.object({ ...RaidCommon, severity: Scale5.default(3), resolution: Text(4000).optional() });
 export const UpdateIssueBody = z.object({ ...RaidCommonUpdate, severity: Scale5.optional(), resolution: Text(4000).nullable().optional() }).strict();
 export const CreateAssumptionBody = z.object({ ...RaidCommon, basis: Text(4000).optional(), validationPlan: Text(4000).optional() });
-export const UpdateAssumptionBody = z
-  .object({ ...RaidCommonUpdate, basis: Text(4000).nullable().optional(), validationPlan: Text(4000).nullable().optional(), verificationStatus: z.enum(['assumed', 'proposed', 'confirmed', 'conflicting', 'unknown']).optional() })
-  .strict();
+// REQ-DAT-013: the verification status is not a PATCH field — it changes through `setAssumptionVerification` (reason required).
+export const UpdateAssumptionBody = z.object({ ...RaidCommonUpdate, basis: Text(4000).nullable().optional(), validationPlan: Text(4000).nullable().optional() }).strict();
+export const ASSUMPTION_VERIFICATION_STATUSES = ['assumed', 'proposed', 'confirmed', 'conflicting', 'unknown'] as const;
+export const SetAssumptionVerificationBody = z.object({ expectedVersion: ExpectedVersion, verificationStatus: z.enum(ASSUMPTION_VERIFICATION_STATUSES), reason: Reason });
 export const CreateRaidDependencyBody = z.object({ ...RaidCommon, dependsOn: RequiredText(1000), neededBy: IsoDate.optional() });
 export const UpdateRaidDependencyBody = z.object({ ...RaidCommonUpdate, dependsOn: RequiredText(1000).optional(), neededBy: IsoDate.nullable().optional() }).strict();
 
@@ -977,6 +978,10 @@ export const MY_WORK_TYPES = [
   'minutes_approval',
   // DOM-P2-16: gate-level review for the gate's designated reviewer role (not the person who started the cycle)
   'gate_review',
+  // REQ-UX-018 (DOM-P2-09 residual): offered only to someone the command would accept
+  'agenda_screening',
+  'external_approval_recording',
+  'claim_review',
 ] as const;
 
 export const MyWorkItemDto = z.object({
@@ -1252,6 +1257,15 @@ export const planningRoutes = registerRoutes({
   closeRaid: cmd('planning.closeRaid', p('/raid/:kind/:itemId/close'), 'Close (reason required)', 'planning.raid.manage', raidP, ReasonCommand),
   cancelRaid: cmd('planning.cancelRaid', p('/raid/:kind/:itemId/cancel'), 'Cancel (reason required)', 'planning.raid.manage', raidP, ReasonCommand),
   reopenRaid: cmd('planning.reopenRaid', p('/raid/:kind/:itemId/reopen'), 'Reopen (reason required)', 'planning.raid.manage', raidP, ReasonCommand),
+  setAssumptionVerification: cmd(
+    'planning.setAssumptionVerification',
+    p('/raid/assumptions/:itemId/verification'),
+    'Set the verification status of an assumption (assumed / proposed / confirmed / conflicting / unknown) with a reason — a command, never a PATCH field (REQ-DAT-013)',
+    'planning.raid.manage',
+    idP('itemId'),
+    SetAssumptionVerificationBody,
+    z.object({ id: Uuid, verificationStatus: z.enum(ASSUMPTION_VERIFICATION_STATUSES), version: z.number().int() }),
+  ),
   assignRaidOwner: cmd('planning.assignRaidOwner', p('/raid/:kind/:itemId/owner'), 'Set the owner', 'planning.raid.manage', raidP, OwnerBody, VersionResult),
   raiseIssueFromRisk: cmd('planning.raiseIssueFromRisk', p('/raid/risks/:itemId/raise-issue'), 'Raise an issue from a materialised risk', 'planning.raid.manage', idP('itemId'), RaiseIssueBody, Created),
 

@@ -59,6 +59,8 @@
     "authority_matrix_create": "Drafted an authority matrix version",
     "authority_matrix_approve": "Approved an authority matrix version",
     "meeting_create": "Scheduled the meeting",
+    "meeting_propose_series": "Proposed a meeting series from the charter cadence",
+    "meeting_confirm_schedule": "Confirmed the proposed meeting",
     "meeting_publish_agenda": "Published the agenda",
     "meeting_start_session": "Opened the session",
     "meeting_close_session": "Closed the session",
@@ -187,6 +189,15 @@
         "confirm": "Activate",
         "effect": "The committee can hold meetings and circulations once active.",
         "done": "Committee activated."
+      },
+      "cadenceRule": {
+        "label": "Cadence rule (for proposed meetings)",
+        "hint": "Used only to propose meetings; each proposed meeting must be confirmed by the secretariat.",
+        "none": "No rule",
+        "weekly": "Weekly",
+        "every_two_weeks": "Every two weeks",
+        "monthly": "Monthly (same day of the month)",
+        "value": "Cadence rule: {rule} — proposal, not a confirmed corporate schedule."
       }
     },
     "seats": {
@@ -327,7 +338,22 @@
     },
     "meetings": {
       "title": "Meetings and circulations",
-      "viewAll": "All meetings of this committee"
+      "viewAll": "All meetings of this committee",
+      "propose": {
+        "action": "Propose meetings from cadence",
+        "title": "Propose a meeting series from the charter cadence",
+        "confirm": "Propose meetings",
+        "effect": "Creates Proposed meetings only: none is scheduled, published or opened until the secretariat confirms it.",
+        "effectIdempotent": "Running it again with the same first meeting creates no duplicates: a date that already has a meeting of this committee is skipped.",
+        "effectNoInvention": "Dates come only from the first meeting you give and the cadence rule; dates on a weekend or holiday are kept and flagged, never moved.",
+        "rule": "Cadence rule of charter version {version}: {rule}.",
+        "first": "First meeting — date and time (Riyadh time)",
+        "firstHint": "The following meetings keep this time of day.",
+        "count": "Number of meetings",
+        "countHint": "Between 1 and {max}.",
+        "done": "{created} meeting(s) proposed; {skipped} date(s) already had a meeting.",
+        "nonWorking": "{count} proposed date(s) fall on a weekend or holiday of the project calendar — review them before confirming."
+      }
     }
   },
   "meetings": {
@@ -387,7 +413,7 @@
       "kind": "Kind",
       "decision": "Decision paper",
       "meeting": "Preferred meeting",
-      "effect": "The secretariat screens the request (accept, return or defer) before it is numbered on an agenda.",
+      "effect": "The secretariat screens the request (accept, return, defer, merge or reject) before it is numbered on an agenda.",
       "done": "Agenda request sent."
     },
     "screen": {
@@ -401,8 +427,14 @@
       "defer": "Defer",
       "meeting": "Meeting",
       "effect": "Accepted items receive the next agenda number; a linked decision paper is tabled at that meeting. You cannot screen a request you made.",
-      "reasonRequired": "A reason is required to return or defer a request.",
-      "done": "Screening recorded."
+      "reasonRequired": "A reason is required to return, defer, merge or reject a request.",
+      "done": "Screening recorded.",
+      "merge": "Merge into another request of the meeting",
+      "reject": "Reject (screen out)",
+      "mergeInto": "Request to merge into",
+      "mergeEffect": "The request joins the chosen request of the same meeting and gets no agenda number of its own; a request for a decision paper merges only into a request for the same paper.",
+      "rejectEffect": "The request is screened out and does not reach an agenda; the requester sees the reason.",
+      "noMergeTargets": "No other open request for this meeting to merge into."
     },
     "agendaTitle": "Numbered agenda",
     "agendaEmpty": "No items accepted onto this agenda yet.",
@@ -415,6 +447,12 @@
     "responseDeadline": "Response deadline",
     "committee": "Committee",
     "cmd": {
+      "confirm": {
+        "label": "Confirm schedule",
+        "title": "Confirm proposed meeting #{number}",
+        "effect": "The proposed meeting becomes a planned meeting of the committee: its agenda can then be prepared and published. Nothing is published automatically.",
+        "done": "Meeting confirmed into the schedule."
+      },
       "publish": {
         "label": "Publish agenda",
         "title": "Publish the agenda of meeting #{number}",
@@ -550,7 +588,9 @@
     "decisions": {
       "title": "Decisions tabled",
       "empty": "No decisions tabled at this meeting."
-    }
+    },
+    "proposedFromCadence": "Proposed from the cadence of charter version {version} — not a confirmed meeting. The secretariat confirms it (or cancels it) before any agenda is prepared.",
+    "proposedNote": "Proposed — not a confirmed meeting. The secretariat confirms it (or cancels it) before any agenda is prepared."
   },
   "decisions": {
     "title": "Decisions",
@@ -1025,7 +1065,20 @@
       "decision_subject_locked": "The record this paper authorizes was fixed when the paper was submitted. Raise a new paper for another record.",
       "decision_subject_not_open": "A paper can be raised only for a record awaiting approval (a change request not yet decided, or a proposed baseline or perimeter version).",
       "decision_subject_incomplete": "Select both the record type and the record, or neither.",
-      "decision_incomplete_paper": "The paper is incomplete. Complete the fields listed on the paper (including supporting evidence, or \"none\" with a reason) and submit again."
+      "decision_incomplete_paper": "The paper is incomplete. Complete the fields listed on the paper (including supporting evidence, or \"none\" with a reason) and submit again.",
+      "agenda_merge_self": "A request cannot be merged into itself. Choose another request of the same meeting.",
+      "agenda_merge_other_committee": "The chosen request belongs to another committee. Merge only into a request of the same committee.",
+      "agenda_merge_meeting_required": "Choose the meeting first: a request is merged into another request of the same meeting.",
+      "agenda_merge_other_meeting": "The chosen request is for another meeting. Merge only into a request of the same meeting.",
+      "agenda_merge_target_closed": "The chosen request is no longer open (returned, deferred, merged or rejected). Merge into a requested or accepted request.",
+      "agenda_merge_decision_conflict": "This request carries a decision paper: it can only be merged into a request for the same paper.",
+      "agenda_merge_target_required": "Choose the request this one is merged into.",
+      "agenda_reason_required": "Give a reason to return, defer, merge or reject a request.",
+      "agenda_meeting_proposed": "This meeting is only proposed. The secretariat confirms it before items join its agenda.",
+      "cadence_not_configured": "The charter has no cadence rule. Amend the charter to set one (weekly, every two weeks or monthly) before proposing meetings.",
+      "cadence_monthly_day_unsupported": "A monthly cadence must start on day 1 to 28 of a month. Choose an earlier first meeting date.",
+      "cadence_invalid_count": "Choose between 1 and 12 meetings.",
+      "cadence_start_in_past": "The first proposed meeting must be in the future. Choose a later date and time."
     }
   },
   "external": {

@@ -25,7 +25,7 @@ flowchart LR
 | Step | Who | What the platform records | Rules |
 |---|---|---|---|
 | 1. Agenda request | Any project member with contribute permission | Requested item, linked issue/risk/gate/CP, urgency, latest safe decision date | Classification set at creation |
-| 2. Secretariat screening | `secretary_cpmo` | Accept, return with reasons, or merge | Returned items go back to Draft with the reasons kept |
+| 2. Secretariat screening | `secretary_cpmo` (never the requester) | Accept onto a numbered agenda; return, defer, merge into another request of the same meeting, or reject — each with reasons **[server]** (REQ-GOV-012) | Returned items go back to Draft with the reasons kept; a merged request gets no number of its own (a request for a decision paper merges only into a request for the same paper); every outcome emits `agenda_request.screened` for the requester's notification (delivery: P6) |
 | 3. Decision paper | Requester | Required paper fields (§2) | Cannot be submitted incomplete **[server]** |
 | 4. Agenda and meeting pack | `secretary_cpmo` | Numbered agenda; pack frozen as a snapshot | Changes after freeze create a new pack version **[server]** |
 | 5. Quorum and conflict checks | Chair, with `secretary_cpmo` | Attendance, declared conflicts, recusals per item | Quorum computed per item after recusals **[server]**; recusals before the member votes; attendance frozen while an item has votes and no outcome **[server]**; each voting member's own declaration for the item ("no conflict" or an interest; a conflict → recusal) before the vote **[server]** (REQ-GOV-015) |
@@ -176,11 +176,27 @@ evidence (transition 11). Reports show approved-but-not-implemented decisions se
    for the next meeting.
 5. Outcomes follow the same transitions (4–6) and are tabled for noting in the next minutes.
 
+### 7.1 Proposed meeting series from the charter cadence (سلسلة اجتماعات مقترحة من وتيرة الميثاق)
+
+The charter's cadence is a proposal (REQ-GOV-009). Its structured rule (`cadenceRule`: weekly, every two weeks, monthly —
+part of the charter, so a change needs re-approval) lets the secretariat generate a series of meetings from a first
+meeting (date and time) it gives: the dates come only from that meeting and the rule (monthly = the same day of the month,
+days 1–28 only), at the same local time; dates on non-working days are flagged, never moved. Every generated meeting is
+**Proposed**: it cannot take agenda items, be published or opened until the secretariat confirms it (`confirm`: Proposed →
+Planned) or declines it (cancel). Generation is idempotent — a date that already has a meeting of the committee (a
+declined one included) is skipped **[server]**.
+
 ## 8. Minutes approval (اعتماد المحضر)
 
 - Minutes are numbered, linked to the meeting, agenda items, decisions, votes, recusals and actions.
 - Draft minutes are circulated to attendees; approval is recorded at the next meeting or by circulation.
 - Approved minutes are immutable. Corrections create a new version with a reason; the previous version remains.
+- Minutes and frozen meeting packs inherit the committee's classification: a reader without that clearance does not see
+  the meeting, its minutes or its packs — lists, counts and the activity feed included (REQ-GOV-008). Retention of
+  minutes (charter field) is enforced with records retention in P7 (REQ-DAT-011).
+- Every approval (decision outcome, external decision, charter, authority matrix, minutes) is an internal electronic
+  approval: API responses label it "Internal electronic approval — not a legally certified signature" and approval
+  records carry `method = internal_electronic` (REQ-GOV-027).
 - Exports (DOCX/PDF) respect classification and are re-authorized at download.
 
 ## 9. Actions and verified closure (الإجراءات والإغلاق المتحقق منه)

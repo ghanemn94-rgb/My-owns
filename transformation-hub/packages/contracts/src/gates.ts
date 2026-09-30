@@ -434,7 +434,7 @@ export const gatesRoutes = registerRoutes({
     tags: ['gates'],
     access: 'gates.evidence.attach',
     params: CriterionParams,
-    body: z.object({ expectedVersion: ExpectedVersion, note: Text(4000) }),
+    body: z.object({ expectedVersion: ExpectedVersion, note: Text(4000) }).strict(),
     response: z.object({ criterionAssessmentId: Uuid, version: z.number().int() }),
   }),
   setWaivability: defineRoute({

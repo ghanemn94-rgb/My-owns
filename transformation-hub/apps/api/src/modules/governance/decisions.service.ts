@@ -30,6 +30,7 @@ import {
   conflict,
   decisionSubjectOf,
   forbidden,
+  internalApprovalLabel,
   notFound,
   DecisionSubject,
   DecisionSubjectType,
@@ -214,6 +215,8 @@ export class DecisionsService {
       decidedViaCirculation: d.decidedViaCirculation,
       outcomeRecordedAt: iso(d.outcomeRecordedAt),
       outcomeRecordedBy: d.outcomeRecordedBy,
+      // REQ-GOV-027: a recorded committee outcome or external decision is an internal electronic approval record.
+      approvalRecord: d.outcomeRecordedAt || d.externalAuthorityReference ? internalApprovalLabel() : null,
       tallySnapshot: d.tallySnapshot ?? null,
       supersededByDecisionId: d.supersededByDecisionId,
       implementationStartedBy: d.implementationStartedBy,
@@ -667,6 +670,7 @@ export class DecisionsService {
       escalatedTo: plan.escalateTo,
       escalationId,
       explanation: plan.explanation,
+      approvalRecord: internalApprovalLabel(),
       version: row.version,
     };
   }
@@ -761,7 +765,7 @@ export class DecisionsService {
       });
       await this.audit.record({ action: 'governance.escalation.resolve', entityType: 'escalation', entityId: e.id, projectId, before: { status: e.status }, after: { status: 'resolved', resolutionDecisionId: d.id } });
     }
-    return { id: d.id, status: to, version: r.version };
+    return { id: d.id, status: to, version: r.version, approvalRecord: internalApprovalLabel() };
   }
 
   // ---------------------------------------------------------------------------------------------------------

@@ -102,6 +102,16 @@ export class GovernanceController {
     return this.meetings.create(ctx, i.params.projectId, i.params.committeeId, i.body);
   }
 
+  @ApiRoute(R.proposeMeetingSeries)
+  proposeMeetingSeries(@Ctx() ctx: RequestContext, @Input() i: I<typeof R.proposeMeetingSeries>) {
+    return this.meetings.proposeSeries(ctx, i.params.projectId, i.params.committeeId, i.body);
+  }
+
+  @ApiRoute(R.confirmMeeting)
+  confirmMeeting(@Ctx() ctx: RequestContext, @Input() i: I<typeof R.confirmMeeting>) {
+    return this.meetings.command(ctx, i.params.projectId, i.params.meetingId, 'confirm_schedule', i.body);
+  }
+
   @ApiRoute(R.publishAgenda)
   publishAgenda(@Ctx() ctx: RequestContext, @Input() i: I<typeof R.publishAgenda>) {
     return this.meetings.command(ctx, i.params.projectId, i.params.meetingId, 'publish_agenda', i.body);

@@ -6,7 +6,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { governanceRoutes } from '@hub/contracts';
-import { COMMITTEE_MEMBER_ROLES, VOTING_SEAT_ROLES } from '@hub/domain';
+import { CADENCE_FREQUENCIES, COMMITTEE_MEMBER_ROLES, MAX_PROPOSED_MEETINGS, VOTING_SEAT_ROLES } from '@hub/domain';
 import { DataTable } from '@/components/DataTable';
 import { DemoBadge } from '@/components/DemoBadge';
 import { ErrorState } from '@/components/ErrorState';
@@ -29,7 +29,8 @@ type Seat = CommitteeDetail['memberships'][number];
 type MemberRole = (typeof COMMITTEE_MEMBER_ROLES)[number];
 const CHARTER_KEYS = ['purpose', 'scope', 'delegatedAuthority', 'exclusions', 'reservedMatters', 'cadence', 'classification', 'minutesRetention', 'escalation', 'conflictsOfInterest', 'circulation'] as const;
 type CharterKey = (typeof CHARTER_KEYS)[number];
-type Cmd = 'amend' | 'approveCharter' | 'activate' | 'addSeat' | 'endSeat' | 'approveMatrix' | 'verifyMatrix' | 'draftMatrix';
+type Cmd = 'amend' | 'approveCharter' | 'activate' | 'addSeat' | 'endSeat' | 'approveMatrix' | 'verifyMatrix' | 'draftMatrix' | 'proposeMeetings';
+type CadenceFrequency = (typeof CADENCE_FREQUENCIES)[number];
 
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Riyadh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
@@ -51,6 +52,12 @@ export default function CommitteeDetailPage() {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [charter, setCharter] = useState<Record<CharterKey, string>>(() => Object.fromEntries(CHARTER_KEYS.map((k) => [k, ''])) as Record<CharterKey, string>);
   const [cadenceIsProposal, setCadenceIsProposal] = useState(true);
+  const [cadenceFrequency, setCadenceFrequency] = useState<CadenceFrequency | ''>('');
+  // REQ-GOV-009: proposed meeting series (first meeting given by the secretariat; the cadence determines the rest).
+  const [firstAt, setFirstAt] = useState('');
+  const [seriesCount, setSeriesCount] = useState('4');
+  const [seriesTitle, setSeriesTitle] = useState('');
+  const [seriesLocation, setSeriesLocation] = useState('');
   const [reference, setReference] = useState('');
   const [seatUser, setSeatUser] = useState<PickedUser | null>(null);
   const [seatLabel, setSeatLabel] = useState('');
@@ -86,6 +93,13 @@ export default function CommitteeDetailPage() {
     if (k === 'amend') {
       setCharter(Object.fromEntries(CHARTER_KEYS.map((key) => [key, (d.charter[key] as string | undefined) ?? ''])) as Record<CharterKey, string>);
       setCadenceIsProposal(d.charter.cadenceIsProposal !== false);
+      setCadenceFrequency(d.charter.cadenceRule?.frequency ?? '');
+    }
+    if (k === 'proposeMeetings') {
+      setFirstAt('');
+      setSeriesCount('4');
+      setSeriesTitle('');
+      setSeriesLocation('');
     }
     if (k === 'addSeat') {
       setSeatUser(null);
@@ -124,7 +138,7 @@ export default function CommitteeDetailPage() {
       noteLabel: t('governance.common.reason'),
       version: d.version,
       run: async (note) => {
-        const body: Record<string, string | boolean> = { cadenceIsProposal };
+        const body: Record<string, string | boolean | { frequency: CadenceFrequency } | null> = { cadenceIsProposal, cadenceRule: cadenceFrequency ? { frequency: cadenceFrequency } : null };
         for (const k of CHARTER_KEYS) if (charter[k].trim()) body[k] = charter[k].trim();
         await api(governanceRoutes.updateCharter, { params: { projectId, committeeId }, body: { expectedVersion: d.version, charter: body, ...(note ? { reason: note } : {}) } });
         await done('governance.committee.charter.update.done');
@@ -138,6 +152,63 @@ export default function CommitteeDetailPage() {
             <input type="checkbox" checked={cadenceIsProposal} onChange={(e) => setCadenceIsProposal(e.target.checked)} />
             {t('governance.committee.charter.update.cadenceIsProposal')}
           </label>
+          <SelectField
+            label={t('governance.committee.charter.cadenceRule.label')}
+            value={cadenceFrequency}
+            onChange={(e) => setCadenceFrequency(e.target.value as CadenceFrequency | '')}
+            hint={t('governance.committee.charter.cadenceRule.hint')}
+            data-testid="charter-cadence-rule"
+          >
+            <option value="">{t('governance.committee.charter.cadenceRule.none')}</option>
+            {CADENCE_FREQUENCIES.map((f) => (
+              <option key={f} value={f}>
+                {t(`governance.committee.charter.cadenceRule.${f}`)}
+              </option>
+            ))}
+          </SelectField>
+        </div>
+      ),
+    },
+    proposeMeetings: {
+      title: t('governance.committee.meetings.propose.title'),
+      confirm: t('governance.committee.meetings.propose.confirm'),
+      consequences: [t('governance.committee.meetings.propose.effect'), t('governance.committee.meetings.propose.effectIdempotent'), t('governance.committee.meetings.propose.effectNoInvention')],
+      noteMode: 'none',
+      version: d.version,
+      disabled: !firstAt || !seriesTitle.trim() || !(Number(seriesCount) >= 1 && Number(seriesCount) <= MAX_PROPOSED_MEETINGS),
+      run: async () => {
+        // datetime-local is interpreted as Asia/Riyadh (UTC+3, no daylight saving), as for a meeting scheduled by hand.
+        const r = await api(governanceRoutes.proposeMeetingSeries, {
+          params: { projectId, committeeId },
+          body: { expectedVersion: d.version, firstMeetingAt: new Date(`${firstAt}:00+03:00`).toISOString(), count: Number(seriesCount), title: seriesTitle.trim(), ...(seriesLocation.trim() ? { location: seriesLocation.trim() } : {}) },
+        });
+        await refresh();
+        toast.show('success', t('governance.committee.meetings.propose.done', { created: r.created.length, skipped: r.skipped.length }));
+        // Dates on a weekend or holiday are kept (never moved) and pointed out for review before confirmation.
+        const offDays = r.created.filter((m) => m.nonWorkingDay).length;
+        if (offDays > 0) toast.show('info', t('governance.committee.meetings.propose.nonWorking', { count: offDays }));
+        setCmd(null);
+      },
+      children: (
+        <div className="space-y-4">
+          <p className="text-sm text-ink">
+            {d.charter.cadenceRule ? t('governance.committee.meetings.propose.rule', { rule: t(`governance.committee.charter.cadenceRule.${d.charter.cadenceRule.frequency}`), version: d.charterVersionNo }) : null}
+          </p>
+          <TextField label={t('governance.committee.meetings.propose.first')} required type="datetime-local" dir="ltr" value={firstAt} onChange={(e) => setFirstAt(e.target.value)} hint={t('governance.committee.meetings.propose.firstHint')} data-testid="propose-first" />
+          <TextField
+            label={t('governance.committee.meetings.propose.count')}
+            required
+            type="number"
+            dir="ltr"
+            min={1}
+            max={MAX_PROPOSED_MEETINGS}
+            value={seriesCount}
+            onChange={(e) => setSeriesCount(e.target.value)}
+            hint={t('governance.committee.meetings.propose.countHint', { max: MAX_PROPOSED_MEETINGS })}
+            data-testid="propose-count"
+          />
+          <TextField label={t('governance.meetings.create.titleField')} required value={seriesTitle} maxLength={300} onChange={(e) => setSeriesTitle(e.target.value)} data-testid="propose-title" />
+          <TextField label={t('governance.meetings.create.location')} value={seriesLocation} maxLength={300} onChange={(e) => setSeriesLocation(e.target.value)} />
         </div>
       ),
     },
@@ -402,6 +473,11 @@ export default function CommitteeDetailPage() {
             ) : (
               <p className="text-sm text-muted">{t('governance.committee.charter.empty')}</p>
             )}
+            {d.charter.cadenceRule ? (
+              <p className="text-sm text-ink" data-testid="charter-cadence-rule-value">
+                {t('governance.committee.charter.cadenceRule.value', { rule: t(`governance.committee.charter.cadenceRule.${d.charter.cadenceRule.frequency}`) })}
+              </p>
+            ) : null}
           </div>
           <details className={cx(card, 'p-4')}>
             <summary className="cursor-pointer font-semibold text-ink">{t('governance.committee.charter.versions')}</summary>
@@ -658,6 +734,11 @@ export default function CommitteeDetailPage() {
               <Link href={`${base}/meetings?committeeId=${d.id}`} className={cx(btn.link, 'text-sm')}>
                 {t('governance.committee.meetings.viewAll')}
               </Link>
+              {can('governance.meeting.manage') && d.status === 'active' && d.charter.cadenceRule ? (
+                <button type="button" className={btn.secondary} onClick={() => open('proposeMeetings')} data-testid="propose-meetings">
+                  {t('governance.committee.meetings.propose.action')}
+                </button>
+              ) : null}
               {can('governance.meeting.manage') && d.status === 'active' ? (
                 <button type="button" className={btn.secondary} onClick={() => setScheduleOpen(true)}>
                   {t('governance.meetings.create.action')}

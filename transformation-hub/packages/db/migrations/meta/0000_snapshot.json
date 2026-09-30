@@ -1,5 +1,5 @@
 {
-  "id": "159a5051-39a9-4b10-88e6-71efc3739111",
+  "id": "70a96642-fa04-4f57-9b3a-845ba03c36aa",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -6016,6 +6016,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "merged_into_agenda_item_id": {
+          "name": "merged_into_agenda_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "presenter_user_id": {
           "name": "presenter_user_id",
           "type": "uuid",
@@ -6145,6 +6151,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "agenda_item_merged_into_fk": {
+          "name": "agenda_item_merged_into_fk",
+          "tableFrom": "agenda_item",
+          "tableTo": "agenda_item",
+          "columnsFrom": [
+            "project_id",
+            "merged_into_agenda_item_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -6159,7 +6180,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "agenda_item_merged_ck": {
+          "name": "agenda_item_merged_ck",
+          "value": "(\"agenda_item\".\"screening_status\" = 'merged') = (\"agenda_item\".\"merged_into_agenda_item_id\" is not null)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.approval_record": {
@@ -6221,6 +6247,13 @@
           "primaryKey": false,
           "notNull": true
         },
+        "method": {
+          "name": "method",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'internal_electronic'"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -6263,7 +6296,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "approval_record_method_ck": {
+          "name": "approval_record_method_ck",
+          "value": "\"approval_record\".\"method\" = 'internal_electronic'"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.approval_request": {
@@ -8341,6 +8379,12 @@
         "authority_matrix_version_id": {
           "name": "authority_matrix_version_id",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cadence_charter_version_no": {
+          "name": "cadence_charter_version_no",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -25296,7 +25340,9 @@
         "accepted",
         "returned",
         "deferred",
-        "withdrawn"
+        "withdrawn",
+        "merged",
+        "rejected"
       ]
     },
     "public.agreement_stage": {
@@ -25933,6 +25979,7 @@
       "name": "meeting_status",
       "schema": "public",
       "values": [
+        "proposed",
         "planned",
         "agenda_published",
         "in_session",
