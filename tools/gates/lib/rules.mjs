@@ -466,16 +466,20 @@ export function collectRaisedFindings(repo, stageId, errors) {
       const rel = `docs/delivery/reviews/${stageId}/${round}/${file}`;
       const sidecar = file.match(/^(.+)\.findings\.json$/);
       if (sidecar) {
-        // A findings sidecar from an interrupted run whose verdict record was never written is kept by D-034 as honest
-        // evidence but was never imported into findings.json; skip it so its findings are not reported as "dropped"
-        // (D-037, F-DG0-243). A sidecar whose record file exists on disk is processed normally.
-        if (!existsSync(join(dir, round, `${sidecar[1]}.json`))) continue;
+        // import-findings imports a findings sidecar's findings whether or not the run wrote a verdict record, so the
+        // validator counts them as raised the same way -- otherwise a finding legitimately imported and later closed (its
+        // raising run interrupted before it wrote its record, e.g. the round-18 qa session limit) would look un-raised.
+        // A sidecar whose own <role>.json record does not exist is an interrupted run: its findings were never imported
+        // unless they already appear in findings.json, so `recordless` lets checkFindings NOT treat such an un-imported
+        // finding as a "dropped" one, while still requiring every finding that IS in findings.json to have a raising
+        // sidecar (D-037, F-DG0-243; the verifications side is skipped in collectVerifications).
+        const recordless = !existsSync(join(dir, round, `${sidecar[1]}.json`));
         const data = readJson(repo, rel, errors, "findings sidecar");
         for (const f of (data && data.findings) || []) {
           if (f.stage_id !== stageId) errors.push(`${rel}: finding ${f.id} is labelled ${f.stage_id} but was raised in ${stageId}`);
           if (!String(f.id).startsWith(`F-${stageId}-`)) errors.push(`${rel}: finding id ${f.id} does not belong to ${stageId}`);
           if (f.reported_by !== sidecar[1]) errors.push(`${rel}: finding ${f.id} reported_by ${f.reported_by} but the sidecar belongs to ${sidecar[1]}`);
-          raised.set(f.id, { finding: f, round, file: rel }); // later rounds supersede earlier versions
+          raised.set(f.id, { finding: f, round, file: rel, recordless }); // later rounds supersede earlier versions
         }
       } else if (/^[a-z-]+\.json$/.test(file) && REVIEW_ROLES.includes(file.slice(0, -5))) {
         const rec = readJson(repo, rel, errors, "review record");
@@ -507,10 +511,13 @@ export function checkFindings(repo, stage, reviewRecords, gate, errors) {
   for (const rec of reviewRecords) {
     for (const fid of rec.findings) if (!byId.has(fid)) errors.push(`review ${rec.reviewer_role}: finding ${fid} not in findings.json`);
   }
-  for (const [id, { finding, file }] of raised) {
+  for (const [id, { finding, file, recordless }] of raised) {
     const f = byId.get(id);
     if (!f) {
-      errors.push(`finding ${id} raised in ${file} is missing from findings.json (dropped)`);
+      // A finding raised only by a record-less (interrupted-run) sidecar and never imported into findings.json is not a
+      // "dropped" finding: import-findings never imported it either (D-037, F-DG0-243). A finding raised by a sidecar
+      // whose record exists but that is not in findings.json is a genuine drop.
+      if (!recordless) errors.push(`finding ${id} raised in ${file} is missing from findings.json (dropped)`);
       continue;
     }
     for (const k of IMMUTABLE_FINDING_FIELDS) {
