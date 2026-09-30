@@ -8,7 +8,7 @@ branch, not yet merged — not a verification status).
 Engineering verification is distinct from Mobily production approval, which requires Mobily infrastructure, security
 and business owners (see `docs/assumptions-and-open-questions.md`). Nothing here means "Production Ready".
 
-_Last updated: 2026-09-29 at revision `38f947c`. Per-requirement status with evidence is in
+_Last updated: 2026-09-30 at revision `d508929` (tests executed at `c1338f7`; `d508929` changes only the secret-scan allow-list). Per-requirement status with evidence is in
 `docs/requirements/requirements-traceability.md` (generated; `scripts/requirements/apply_status.py --check` verifies that
 every cited test file and title exists). Counts below are from runs executed at that revision on PostgreSQL 16._
 
@@ -16,25 +16,25 @@ every cited test file and title exists). Counts below are from runs executed at 
 |---|---|---|---|
 | Specification, requirements (394), PRD, backlog | Implemented | `docs/requirements/`, `docs/PRD.md` | P0 gate PASS (`docs/phases/P0-gate-report.json`) |
 | Agent definitions (11) | Implemented | `.claude/agents/` | Executed as subagents in the build session (ADR-0015) |
-| Domain rules (state machines, quorum/authority, gates, schedule/CPM, measurement, money, carve-out, readiness, AI authority, policy matrix) | Tested | 233 unit tests (`packages/domain`, 13 files) | Policy matrix kept in sync with `docs/security/access-matrix.md` by a drift test |
+| Domain rules (state machines, quorum/authority, gates, schedule/CPM, measurement, money, carve-out, readiness, finance, JV, AI authority, policy matrix) | Tested | 348 unit tests (`packages/domain`, 17 files); contracts 100 | Policy matrix kept in sync with `docs/security/access-matrix.md` by a drift test |
 | Database schema, migrations, RLS, append-only audit + hash chain, cross-project/org FK guards | Tested | API integration suite (below) | One pre-release migration; post-migrate SQL holds RLS, guards and triggers |
-| API integration suite (all modules) | Tested | 437 tests in 50 files (`apps/api/test`: p1, governance, planning, gates, documents, carveout, readiness, ai) | Run on a reset database with the demo seed loaded through the real services |
+| API integration suite (all modules) | Tested | 691 tests in 78 files (`apps/api/test`: p1, governance, planning, gates, documents, carveout, readiness, finance, jv, ai, reviews) | Run on a reset database with the demo seed loaded through the real services |
 | Identity: demo login, logout, user admin, account type (internal/external) | Tested | `p1/isolation-and-auth.spec.ts`, `p1/security-p1-fixes.spec.ts` | Demo login exists only in `HUB_MODE=demo`; demo sessions are rejected outside demo mode |
 | Enterprise SSO (OIDC) | Tested (against an in-process test IdP) · Not configured (Mobily IdP) | `p1/oidc-sso.spec.ts` | Authorization Code + PKCE, signed ID token, no auto-provisioning; connecting Mobily's IdP needs Q-04 |
 | Portfolio: projects from templates, members, workstreams, activity, setup gaps | Tested | `p1/projects-templates-audit.spec.ts`, `p1/arch-rereview-hardening.spec.ts` | AT-02, AT-16, AT-27 |
-| Governance (committees, charters, authority matrix, meetings, decisions, votes, recusal, actions) | Tested | `apps/api/test/governance`, e2e `p2-governance.spec.ts` | AT-04, AT-05 |
-| Planning (WBS, tasks, milestones, deliverables, dependencies/CPM, baselines, change requests, RAID, status updates, RAG) | Tested | `apps/api/test/planning`, e2e `p2-planning.spec.ts` | AT-15, AT-16 |
-| Business gates G0–G7 (criteria, evidence, designated reviewers, waivers, non-waivable, approvals) | Tested | `apps/api/test/gates`, e2e `p2-gates.spec.ts` | AT-04, AT-06, AT-12, AT-13, AT-14 |
+| Governance (committees, charters, authority matrix, meetings, decisions, votes, recusal, actions) | Tested | `apps/api/test/governance` (incl. `p2-governance-authority.spec.ts`), e2e `p2-governance.spec.ts` | AT-04, AT-05. P2 domain-review fixes merged (tally/quorum, round integrity, evidence-backed external and matrix approvals). Web: the external-approval dialog fails with 422 until the P2 web follow-ups merge (it must send a verified evidence link) |
+| Planning (WBS, tasks, milestones, deliverables, dependencies/CPM, baselines, change requests, RAID, status updates, RAG) | Tested | `apps/api/test/planning`, e2e `p2-planning.spec.ts` | AT-15, AT-16. Baseline / change-request approvals are checked against the in-force authority matrix (DOM-P2-03). Cross-project dependencies and prerequisites: API Tested, web screens In progress |
+| Business gates G0–G7 (criteria, evidence, designated reviewers, waivers, non-waivable, approvals) | Tested | `apps/api/test/gates`, e2e `p2-gates.spec.ts` | AT-04, AT-06, AT-12, AT-13, AT-14. Gate approvals need a final decision of a type the deciding committee's matrix assigns to the gate (DOM-P2-01). Gate-owner / gate-reviewer enforcement (DOM-P2-16) Planned |
 | Documents, evidence, source register, claims, partner rooms, legal hold | Tested | `apps/api/test/documents`, e2e `p2-documents.spec.ts` | AT-01, AT-03, AT-14, AT-25, AT-27; malware scanning is an adapter — Not configured (uploads marked unscanned; refused in production unless `HUB_ALLOW_UNSCANNED_FILES`) |
 | Carve-out (perimeter, sites, transfers, reconciliation, Day-1 contract positions, agreements, consents) and NewCo (legal entities, incorporation, regulatory register) — backend | Tested | `apps/api/test/carveout` | AT-06, AT-07, AT-08; register edits Legal-only (REQ-AGR-004) |
 | Readiness, Day-1 cutover, TSA — backend | Tested | `apps/api/test/readiness` | AT-09, AT-10 |
-| Carve-out / NewCo / readiness web screens | In progress | — | P3 UI agents |
-| Web client (portfolio, wizard, My Work, committee hub, plan, RAID, gates, documents, admin) | Tested | 24 Playwright tests (`e2e/tests`), run recorded in `docs/test-evidence/e2e-p1-p2-run.txt`; screenshots `e2e/screenshots/` | ar RTL / en LTR; axe accessibility checks In progress (REQ-ARC-008) |
+| Carve-out / NewCo / readiness web screens | Tested (e2e flows) | `e2e/tests/p3-carveout.spec.ts`, `p3-readiness.spec.ts`, executed in CI (e2e job green in run 23) | axe checks for the P3 screens In progress; P3 reviews not run |
+| Web client (portfolio, wizard, My Work, committee hub, plan, RAID, gates, documents, admin) | Tested | Playwright suite incl. `a11y.spec.ts` (axe), executed in CI (e2e job green in run 23, `a471265`); earlier local run in `docs/test-evidence/e2e-p1-p2-run.txt` | ar RTL / en LTR. `pnpm lint` enforces i18n parity and rejects hard-coded UI strings |
 | AI runtime PM (knowledge ingestion, ACL-aware retrieval, typed tools, proposals/approval binding, kill switch, budgets) | Tested (backend, mock provider) · Not configured (model endpoint) | `apps/api/test/ai` (AT-17..AT-22, AT-28) | Default mode Off; the mock provider is Simulated and labelled; no model is assumed to be deployable on Mobily infrastructure. Web UI Planned |
-| Finance, JV / due diligence / CPs | Planned | — | P4 |
+| Finance (snapshots, budget, models, benefits, KPIs, intercompany reconciliations) and JV / due diligence / CPs (partners, rooms, scenarios, DD, findings, closings, CPs, post-close) — backend | Tested | `apps/api/test/finance`, `apps/api/test/jv` | P4. All figures in the demo are synthetic. Web screens In progress; P4 reviews not run |
 | Reporting, imports, integrations, notifications delivery | Planned | — | P6; all external channels disabled |
 | Deployment: Dockerfiles, Compose, Helm chart, private-mode configs, backup/restore scripts | Implemented · restore drill Tested | `deploy/`, `scripts/ops/`; CI jobs "Backup/restore drill" and "Helm / kubeconform / compose / shellcheck" green on GitHub run 36643014027 | Images built only in CI (no Docker daemon here); Helm install NOT EXECUTED |
-| CI (`.github/workflows/transformation-hub-ci.yml`) | Implemented | GitHub Actions runs 1–6 | Run 5 (30f58a2): static, unit, API integration, OpenAPI, licence, audit, SBOM, Helm, restore drill green; web egress scan, image build and e2e red → fixed in 38f947c, awaiting a green run |
+| CI (`.github/workflows/transformation-hub-ci.yml`) | Implemented · Tested | GitHub Actions run 16 (`4f05318`) fully green | Runs 20–24 red only on the secret-scan job (synthetic config-test values). Fixed in `d508929` (allow-list; to be confirmed by the security reviewer); a green run is still to be confirmed |
 | Production approval by Mobily | Not configured | — | Requires Q-01..Q-14 answers |
 
 ## Environmental blockers

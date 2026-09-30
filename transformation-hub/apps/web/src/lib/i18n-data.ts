@@ -33,6 +33,7 @@ export function useLocalized() {
 const ENUM_PARAMS: Readonly<Record<string, Readonly<Record<string, StatusEnum>>>> = {
   'dimension.incorporation.status': { status: 'incorporationStatuses' },
   'gate.blocker.decision_not_approved': { status: 'decisionStatuses' },
+  'jv.closing.cp_unmet': { status: 'conditionStatuses' },
 };
 
 /**

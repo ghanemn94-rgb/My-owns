@@ -65,7 +65,22 @@ export function EntitiesPanel() {
   const [setup, setSetup] = useState(false);
   const hasNewco = (q.data?.items ?? []).some((e) => e.role === 'newco');
   const columns: Column<LegalEntity>[] = [
-    { key: 'name', header: t('newco.entities.name'), isRowHeader: true, sortValue: (e) => e.name, cell: (e) => <CodeLink href={entityHref(projectId, e.id)} code={e.name} testId="entity-link" /> },
+    {
+      key: 'name',
+      header: t('newco.entities.name'),
+      isRowHeader: true,
+      sortValue: (e) => e.name,
+      cell: (e) => (
+        <span className="flex flex-col gap-0.5">
+          <CodeLink href={entityHref(projectId, e.id)} code={e.name} testId="entity-link" />
+          {e.ownedByThisProject ? null : (
+            <span className="text-xs text-muted" data-testid="entity-not-owned-hint">
+              {t('newco.entities.managedElsewhere')}
+            </span>
+          )}
+        </span>
+      ),
+    },
     { key: 'role', header: t('newco.entities.role'), sortValue: (e) => tStatus('entityKinds', e.role), cell: (e) => tStatus('entityKinds', e.role) },
     { key: 'inc', header: t('newco.incorporation.recordedStatus'), cell: (e) => <IncorporationBadges inc={e.incorporation} /> },
     {
@@ -184,7 +199,8 @@ function SetupNewcoDialog({ open, onClose, entities }: { open: boolean; onClose:
   const { projectId } = useProjectContext();
   const refresh = useRefreshCarveout(projectId);
   const toast = useToast();
-  const candidates = entities.filter((e) => e.kind === 'newco');
+  // Only an entity owned by this project can be set up here (SEC-P1R-03: linked projects get 403 newco.legal_entity.not_owner).
+  const candidates = entities.filter((e) => e.kind === 'newco' && e.ownedByThisProject);
   const blank = { mode: (candidates.length ? 'existing' : 'new') as 'existing' | 'new', legalEntityId: candidates[0]?.id ?? '', name: '', status: 'unconfirmed' as (typeof SETUP_STATUSES)[number], registrationRef: '', evidenceNote: '', note: '' };
   const [f, setF] = useState(blank);
   useEffect(() => {

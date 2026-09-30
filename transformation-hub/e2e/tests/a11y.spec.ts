@@ -24,7 +24,7 @@ import { PERSONAS, apiSessionAs, loginAs } from './helpers';
  */
 
 type Locale = 'en' | 'ar';
-type PersonaKey = 'pm' | 'portfolioAdmin';
+type PersonaKey = 'pm' | 'portfolioAdmin' | 'partnerAlpha' | 'finance' | 'contributor';
 const LOCALES: readonly Locale[] = ['en', 'ar'];
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] as const;
 const FAILING_IMPACTS = new Set(['serious', 'critical']);
@@ -49,6 +49,19 @@ interface Ids {
   gate: string;
   document: string;
   source: string;
+  jvPartner: string;
+  jvRoom: string;
+  jvCleanRoom: string;
+  jvScenario: string;
+  jvDdRequest: string;
+  jvFinding: string;
+  jvClosing: string;
+  jvSigning: string;
+  jvCp: string;
+  budgetLine: string;
+  financeModel: string;
+  benefit: string;
+  kpi: string;
 }
 
 interface Screen {
@@ -199,6 +212,71 @@ const SCREENS: readonly Screen[] = [
   { id: 'documents-sources', persona: 'pm', path: (i) => `/projects/${i.dc}/documents?tab=sources` },
   { id: 'document-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/documents/${i.document}`, ready: visible('[data-testid="versions-table"]') },
   { id: 'source-detail-claims', persona: 'pm', path: (i) => `/projects/${i.dc}/documents/sources/${i.source}` },
+  // JV & Diligence (screen 11): every tab, the detail views, a restricted room, a command dialog and 390 px.
+  { id: 'jv-overview', persona: 'pm', path: (i) => `/projects/${i.dc}/jv`, ready: visible('[data-testid="jv-metrics"]') },
+  { id: 'jv-overview-390', persona: 'pm', path: (i) => `/projects/${i.dc}/jv`, ready: visible('[data-testid="jv-metrics"]'), viewport: MOBILE },
+  { id: 'jv-partners', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/partners`, ready: visible('[data-testid="partners-table"] table') },
+  { id: 'jv-partner-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/partners/${i.jvPartner}`, ready: visible('[data-testid="partner-detail"]') },
+  {
+    // A command dialog with a person picker (nothing is submitted).
+    id: 'jv-partner-conflict-dialog-open',
+    persona: 'pm',
+    path: (i) => `/projects/${i.dc}/jv/partners/${i.jvPartner}`,
+    ready: visible('[data-testid="partner-detail"]'),
+    prepare: async (page) => {
+      await page.getByTestId('cmd-conflict').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+    },
+  },
+  { id: 'jv-proposals', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/proposals?partnerId=${i.jvPartner}`, ready: visible('[data-testid="assessments-table"] table') },
+  { id: 'jv-scenarios', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/scenarios`, ready: visible('[data-testid="scenarios-table"] table') },
+  { id: 'jv-scenario-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/scenarios/${i.jvScenario}`, ready: visible('[data-testid="scenario-detail"]') },
+  { id: 'jv-negotiation', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/negotiation`, ready: visible('[data-testid="issues-table"]') },
+  { id: 'jv-rooms', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/rooms`, ready: visible('[data-testid="rooms-table"] table') },
+  { id: 'jv-room-index', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/rooms/${i.jvRoom}`, ready: visible('[data-testid="room-index-table"] table') },
+  { id: 'jv-room-disclosures', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/rooms/${i.jvRoom}?tab=disclosures`, ready: visible('[data-testid="disclosures-table"] table') },
+  { id: 'jv-room-grants', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/rooms/${i.jvRoom}?tab=grants`, ready: visible('[data-testid="grants-table"] table') },
+  { id: 'jv-room-history', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/rooms/${i.jvRoom}?tab=history`, ready: visible('[data-testid="history-table"] table') },
+  { id: 'jv-room-no-grant', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/rooms/${i.jvCleanRoom}`, ready: visible('[data-testid="room-content-restricted"]') },
+  { id: 'jv-diligence', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/diligence`, ready: visible('[data-testid="dd-table"] table') },
+  { id: 'jv-diligence-findings', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/diligence?tab=findings`, ready: visible('[data-testid="findings-table"] table') },
+  { id: 'jv-dd-request-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/diligence/requests/${i.jvDdRequest}`, ready: visible('[data-testid="dd-detail"]') },
+  { id: 'jv-finding-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/diligence/findings/${i.jvFinding}`, ready: visible('[data-testid="finding-detail"]') },
+  { id: 'jv-closing', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/closing`, ready: visible('[data-testid="closings-table"] table') },
+  { id: 'jv-cp-register', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/closing?tab=conditions`, ready: visible('[data-testid="conditions-table"] table') },
+  { id: 'jv-closing-blocked', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/closing/closings/${i.jvClosing}`, ready: visible('[data-testid="closing-blocked"]') },
+  { id: 'jv-closing-blocked-390', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/closing/closings/${i.jvClosing}`, ready: visible('[data-testid="closing-blocked"]'), viewport: MOBILE },
+  { id: 'jv-signing-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/closing/signings/${i.jvSigning}`, ready: visible('[data-testid="event-detail"]') },
+  { id: 'jv-cp-non-waivable', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/closing/conditions/${i.jvCp}`, ready: visible('[data-testid="cp-not-waivable"]') },
+  { id: 'jv-funds-flow', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/funds-flow`, ready: visible('[data-testid="flows-table"] table') },
+  { id: 'jv-obligations', persona: 'pm', path: (i) => `/projects/${i.dc}/jv/obligations`, ready: visible('[data-testid="obligations-table"] table') },
+  // Counterparty (external partner) view.
+  { id: 'jv-partner-access', persona: 'partnerAlpha', path: () => '/partner-access', ready: visible('[data-testid="external-room-link"]') },
+  { id: 'jv-partner-access-room', persona: 'partnerAlpha', path: (i) => `/partner-access/${i.dc}/${i.jvRoom}`, ready: visible('[data-testid="external-disclosures"] table') },
+  { id: 'jv-partner-access-room-390', persona: 'partnerAlpha', path: (i) => `/partner-access/${i.dc}/${i.jvRoom}`, ready: visible('[data-testid="external-disclosures"] table'), viewport: MOBILE },
+  // Finance & Value (screen 10): Finance persona (finance-domain clearance), plus the restricted state for a non-finance user.
+  { id: 'finance-summary', persona: 'finance', path: (i) => `/projects/${i.dc}/finance`, ready: visible('[data-testid="finance-summary"]') },
+  { id: 'finance-summary-390', persona: 'finance', path: (i) => `/projects/${i.dc}/finance`, ready: visible('[data-testid="finance-summary"]'), viewport: MOBILE },
+  { id: 'finance-figures', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/snapshots`, ready: visible('[data-testid="snapshots-table"]') },
+  {
+    id: 'finance-figure-form-open',
+    persona: 'finance',
+    path: (i) => `/projects/${i.dc}/finance/snapshots`,
+    ready: visible('[data-testid="create-snapshot"]'),
+    prepare: async (page) => {
+      await page.getByTestId('create-snapshot').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+    },
+  },
+  { id: 'finance-budget', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/budget`, ready: visible('[data-testid="separation-costs"]') },
+  { id: 'finance-budget-line', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/budget/${i.budgetLine}`, ready: visible('[data-testid="budget-detail"]') },
+  { id: 'finance-reconciliations', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/reconciliations`, ready: visible('[data-testid="recons-table"]') },
+  { id: 'finance-models', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/models`, ready: visible('[data-testid="models-table"]') },
+  { id: 'finance-model-detail', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/models/${i.financeModel}`, ready: visible('[data-testid="model-detail"]') },
+  { id: 'finance-benefits-kpis', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/benefits`, ready: visible('[data-testid="kpis-table"]') },
+  { id: 'finance-benefit-detail', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/benefits/${i.benefit}`, ready: visible('[data-testid="benefit-detail"]') },
+  { id: 'finance-kpi-detail', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/kpis/${i.kpi}`, ready: visible('[data-testid="kpi-detail"]') },
+  { id: 'finance-restricted', persona: 'contributor', path: (i) => `/projects/${i.dc}/finance`, ready: visible('[data-testid="restricted-state"]') },
   // Administration.
   { id: 'admin', persona: 'portfolioAdmin', path: () => '/admin' },
   // An open modal dialog (native <dialog>): the RAID "new risk" form.
@@ -277,6 +355,7 @@ async function findId(api: APIRequestContext, path: string, field: string, value
 
 async function lookupIds(baseURL: string): Promise<Ids> {
   const api = await apiSessionAs(baseURL, PERSONAS.pm);
+  const fin = await apiSessionAs(baseURL, PERSONAS.finance);
   try {
     const dc = await findId(api, '/api/v1/projects', 'code', 'DEMO-DC');
     const p = `/api/v1/projects/${dc}`;
@@ -296,9 +375,24 @@ async function lookupIds(baseURL: string): Promise<Ids> {
       gate: await findId(api, `${p}/gates`, 'key', 'G1'),
       document: await findId(api, `${p}/documents?pageSize=100`, 'title', 'Demo — charter excerpt'),
       source: await findId(api, `${p}/sources?pageSize=100`, 'code', 'SRC-001'),
+      jvPartner: await findId(api, `${p}/partners?pageSize=100`, 'code', 'DEMO-PA'),
+      jvRoom: await findId(api, `${p}/partner-rooms?pageSize=100`, 'name', 'Demo — Partner Alpha data room (fictional)'),
+      jvCleanRoom: await findId(api, `${p}/partner-rooms?pageSize=100`, 'type', 'clean_team'),
+      jvScenario: await findId(api, `${p}/deal-scenarios?pageSize=100`, 'name', 'DEMO — Illustrative JV structure (percentages TBD)'),
+      jvDdRequest: await findId(api, `${p}/diligence-requests?pageSize=100`, 'question', /^DEMO — Please share the synthetic list/),
+      jvFinding: await findId(api, `${p}/diligence-findings?pageSize=100`, 'title', /^DEMO — Synthetic finding/),
+      jvClosing: await findId(api, `${p}/closings?pageSize=100`, 'code', 'CLO-001'),
+      jvSigning: await findId(api, `${p}/signings?pageSize=100`, 'code', 'SIG-001'),
+      jvCp: await findId(api, `${p}/closing-conditions?pageSize=100`, 'reference', 'DEMO-CP-01'),
+      budgetLine: await findId(api, `${p}/budget-lines?pageSize=100`, 'code', 'BL-001'),
+      // The seeded valuation model is strictly confidential: only a Finance Restricted member can read it.
+      financeModel: await findId(fin, `${p}/financial-models?pageSize=100`, 'code', 'FM-001'),
+      benefit: await findId(api, `${p}/benefits?pageSize=100`, 'code', 'BEN-001'),
+      kpi: await findId(api, `${p}/kpis?pageSize=100`, 'key', 'action_closure_time'),
     };
   } finally {
     await api.dispose();
+    await fin.dispose();
   }
 }
 
@@ -332,11 +426,11 @@ async function waitForStableDom(page: Page) {
     .toBe(true);
 }
 
-/** Generic readiness: right language and direction, a visible <h1>, then a settled DOM. */
+/** Generic readiness: right language and direction, a visible <h1> (or the restricted-access state), then a settled DOM. */
 async function settle(page: Page, locale: Locale) {
   await expect(page.locator('html')).toHaveAttribute('lang', locale);
   await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
-  await expect(page.locator('h1').first()).toBeVisible();
+  await expect(page.locator('h1, [data-testid="restricted-state"]').first()).toBeVisible();
   await waitForStableDom(page);
 }
 
@@ -362,7 +456,7 @@ function summarise(results: Awaited<ReturnType<AxeBuilder['analyze']>>): Finding
 test.describe('REQ-ARC-008 accessibility (axe-core, WCAG 2.1 A/AA)', () => {
   test.beforeAll(async ({ browser, baseURL }) => {
     ids = await lookupIds(baseURL!);
-    for (const persona of ['pm', 'portfolioAdmin'] as const) {
+    for (const persona of ['pm', 'portfolioAdmin', 'partnerAlpha', 'finance', 'contributor'] as const) {
       const ctx = await browser.newContext();
       const page = await ctx.newPage();
       await loginAs(page, PERSONAS[persona]);

@@ -41,7 +41,9 @@ export default function LegalEntityPage() {
   const inc = e.incorporation;
   const pendingVerification = inc.verification === 'proposed';
   const iRecorded = inc.recordedBy?.userId === me.user.id;
-  const mayVerify = can('newco.incorporation.verify') && pendingVerification && !iRecorded;
+  // SEC-P1R-03: a shared legal entity is changed only in its owning project; linked projects read it (the server answers 403).
+  const owned = e.ownedByThisProject;
+  const mayVerify = owned && can('newco.incorporation.verify') && pendingVerification && !iRecorded;
   return (
     <SectionGuard section="newco">
       <BackLink href={`/projects/${projectId}/newco?tab=entities`} label={t('newco.entities.back')} />
@@ -57,13 +59,13 @@ export default function LegalEntityPage() {
         }
         actions={
           <>
-            {can('newco.legal_entity.manage') ? (
-              <button type="button" className={btn.secondary} onClick={() => setEdit(true)}>
+            {owned && can('newco.legal_entity.manage') ? (
+              <button type="button" className={btn.secondary} onClick={() => setEdit(true)} data-testid="entity-edit">
                 <Pencil aria-hidden="true" className="size-4" />
                 {t('newco.common.edit')}
               </button>
             ) : null}
-            {can('newco.incorporation.manage') ? (
+            {owned && can('newco.incorporation.manage') ? (
               <button type="button" className={btn.primary} onClick={() => setRecord(true)} data-testid="incorporation-record">
                 <ClipboardPen aria-hidden="true" className="size-4" />
                 {t('newco.incorporation.record')}
@@ -84,7 +86,12 @@ export default function LegalEntityPage() {
           </>
         }
       />
-      {pendingVerification && can('newco.incorporation.verify') && iRecorded ? <Notice tone="info">{t('newco.incorporation.youRecorded')}</Notice> : null}
+      {!owned ? (
+        <p className="mb-4 rounded-md border border-info/30 bg-info-soft p-3 text-sm text-ink" role="note" data-testid="entity-not-owned">
+          {t('newco.entities.managedByOwner')}
+        </p>
+      ) : null}
+      {owned && pendingVerification && can('newco.incorporation.verify') && iRecorded ? <Notice tone="info">{t('newco.incorporation.youRecorded')}</Notice> : null}
       <div className="grid gap-4 xl:grid-cols-2">
         <Section id="incorporation" title={t('newco.incorporation.title')} hint={t('newco.incorporation.hint')}>
           <dl className="grid gap-3 sm:grid-cols-2" data-testid="incorporation">
@@ -177,9 +184,13 @@ export default function LegalEntityPage() {
       <DimensionsSummary className="mt-4" />
       <ActivityHistory className="mt-6" projectId={projectId} entityType="legal_entity" entityId={e.id} />
 
-      <EditEntityDialog entity={e} open={edit} onClose={() => setEdit(false)} />
-      <RecordIncorporationDialog entity={e} open={record} onClose={() => setRecord(false)} />
-      <VerifyIncorporationDialog entity={e} outcome={verify} onClose={() => setVerify(null)} />
+      {owned ? (
+        <>
+          <EditEntityDialog entity={e} open={edit} onClose={() => setEdit(false)} />
+          <RecordIncorporationDialog entity={e} open={record} onClose={() => setRecord(false)} />
+          <VerifyIncorporationDialog entity={e} outcome={verify} onClose={() => setVerify(null)} />
+        </>
+      ) : null}
     </SectionGuard>
   );
 }

@@ -162,8 +162,8 @@
   security_rule: "Worker re-checks recipient authorization before rendering content"
   acceptance_tests: ["AT-19", "IT: notification suppressed after recipient loses project access"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Deferred
+  evidence: ['target P6 (notifications module, review finding DOM-P2-11); owner integration-reporting-engineer (notifications) with backend-data-engineer; reason: re-phased by the lead — there is no notification read API, inbox or outbox-based delivery (packages/contracts/src/notifications.ts registers no route); the gates module inserts notification rows directly', AT-19 and the IT (notification suppressed after the recipient loses project access) are not built; AT-19 is covered for AI outputs in P5 (ai at-19-ai-revocation.spec.ts) and for partner-room downloads in P4 (REQ-JV-009)]
 
 # ---------------------------------------------------------------- SRC
 
@@ -344,8 +344,8 @@
   security_rule: "n/a (model separation)"
   acceptance_tests: ["UT: gate definitions loaded from template version, not code constants"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['P1 projects-templates-audit.spec.ts "creates a DC carve-out project and a general transformation project through the API" (8 gates from the DC template version, 4 from the general template version, no code change)', 'P1 qa-p1-14-bilingual.spec.ts "gates: name/purpose in both languages; blockers carry codes + params rendered to the English message" (every project gate equals the pinned template definition)']
 - id: REQ-LCY-002
   section: "3"
   title: "G0 Mandate & Governance gate template"
@@ -360,8 +360,8 @@
   security_rule: "Criteria editable only through versioned template or change control"
   acceptance_tests: ["UT: G0 criteria seeded from DC template version"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['pnpm --filter @hub/db run validate:templates executed at 124f3d8 (PASS, 23735 checks): the DC template gates are exactly G0–G7; every criterion has an allowed evidence type; each gate has a mandatory criterion; G0 has 8 criteria', 'P1 qa-p1-14-bilingual.spec.ts "gates: name/purpose in both languages; blockers carry codes + params rendered to the English message" (instantiated gates equal the template; the first G0 criterion keeps its template text)', 'G0 content (programme and committee charters, delegation matrix, membership, baseline v1, classification/retention, RAID, stakeholders) checked against spec §3 by docs/reviews/P2-domain-review.md §3.2 (LCY-002 Correct) — a review, not a test']
 - id: REQ-LCY-003
   section: "3"
   title: "G1–G4 separation gate templates"
@@ -376,8 +376,8 @@
   security_rule: "Criteria editable only through versioned template or change control"
   acceptance_tests: ["UT: G1–G4 criteria seeded with evidence types"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['pnpm --filter @hub/db run validate:templates executed at 124f3d8 (PASS, 23735 checks): G1–G4 exist with 8 / 7 / 9 / 8 criteria, each with an allowed evidence type and a mandatory criterion', 'P1 qa-p1-14-bilingual.spec.ts "gates: name/purpose in both languages; blockers carry codes + params rendered to the English message" (instantiated gates equal the template)', 'seeded G1–G4 criteria are exercised by the gate tests, e.g. gates at-13-non-waivable.spec.ts "a waiver request on a non-waivable criterion is rejected (422), audited as rejected, and the criterion stays unmet" (G1-C02) and "a waivable criterion accepts a request with basis and impact" (G3-C08)', G1–G4 criterion content vs spec §3 checked by inspection only; the P3 domain review has not run]
 - id: REQ-LCY-004
   section: "3"
   title: "G5–G7 transaction gate templates"
@@ -392,8 +392,8 @@
   security_rule: "Criteria editable only through versioned template or change control"
   acceptance_tests: ["UT: G5–G7 criteria seeded with evidence types"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-demo-seed.spec.ts "UT (REQ-LCY-004): G5–G7 criteria are seeded from the template with their evidence types"', 'validate:templates executed at 124f3d8 (G5 9, G6 7, G7 8 criteria; G5 prerequisite closure G0, G1)', G5–G7 criterion content vs spec §3 checked by inspection only; the P4 domain review has not run]
 - id: REQ-LCY-005
   section: "3"
   title: "Gate evidence is a proposal; applicability set by specialists"
@@ -408,8 +408,8 @@
   security_rule: "Only roles mapped as specialist for the criterion's domain may set applicability"
   acceptance_tests: ["UT: non-specialist applicability change rejected and audited"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [gates gate-evaluation-rules.spec.ts "a proposed N/A blocks the gate until the criterion reviewer role (not the proposer) approves it"; "the proposer cannot approve their own N/A proposal (403)", 'gates p2-gate-authority-reassessment.spec.ts "another specialist cannot set waivability (403); a decided gate cannot be changed (422); the designated specialist can"; "an approved not-applicable determination sets applicability = not_applicable; a rejected one sets applicable (versioned, audited)"', 'template criteria start with applicability proposed (validate:templates); DOM-P2-15 fixed']
 - id: REQ-LCY-006
   section: "3"
   title: "Four independent status dimensions"
@@ -424,8 +424,8 @@
   security_rule: "Dimension states change only through their module commands"
   acceptance_tests: ["AT-06", "UT: confirming incorporation leaves transfer/operations/JV dimensions unchanged"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [gates at-06-status-dimensions.spec.ts "recompute keeps incorporation verified while perimeter and readiness stay pending; carve-out not complete"; "each change is versioned (record_version) and audited"; "recompute is a controlled command (contributor 403); other projects are invisible (404)", D rules.test.ts "incorporation confirmed while transfer/operations pending does not complete the carve-out"]
 - id: REQ-LCY-007
   section: "3"
   title: "Registered NewCo with incomplete transfer displayed accurately"
@@ -440,8 +440,8 @@
   security_rule: "Read limited to project members"
   acceptance_tests: ["AT-06", "E2E: cockpit shows Incorporated alongside Transfer In progress"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [carveout at-06-incorporation-separate.spec.ts "Legal verifies against evidence; incorporation is verified but transfers and operations stay pending → not complete", D newco.test.ts "incorporated_verified alongside transfer in progress and readiness pending", 'e2e p3-carveout.spec.ts "(b) AT-06: incorporation status recorded ≠ verified; recording and verifying it leaves transfers and the carve-out untouched" (passed at 124f3d8 in a separate run of tests (b)–(d); the full run skipped it after (a) failed)']
 - id: REQ-LCY-008
   section: "3"
   title: "Partner preparation in parallel with separation"
@@ -456,8 +456,8 @@
   security_rule: "Parallel work still requires its own authorization (e.g., outreach approval, room access)"
   acceptance_tests: ["AT-11", "UT: DD tasks schedulable before G3 unless an explicit dependency is configured"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv at-11-partner-parallel.spec.ts "REQ-LCY-008: G5 does not depend on G3/G4, and the DD tasks are schedulable before G3 unless an explicit dependency is configured"; "the partner process and DD proceed while separation gates are not approved — each step with its own authorization"', D jv.test.ts "DD tasks are schedulable before G3 unless an explicit dependency is configured", gates gate-evaluation-rules.spec.ts "G5 (JV signing readiness) depends only on G1 — partner preparation runs in parallel with separation (AT-11)"]
 - id: REQ-LCY-009
   section: "3"
   title: "Signing separate from Closing; multiple closings"
@@ -472,8 +472,8 @@
   security_rule: "Partner-room and Legal Restricted ABAC apply"
   acceptance_tests: ["AT-11", "UT: signing completion does not change closing status", "UT: two closings with independent CP sets and states"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv at-11-partner-parallel.spec.ts "UT: signing completion does not change closing status (signing is never mistaken for completion)"; "UT: two closings with independent CP sets and states; closing waits for its own signing"', D jv.test.ts "closing depends on its own confirmed signing; signing is a separate event"]
 - id: REQ-LCY-010
   section: "3"
   title: "Complete gate structure"
@@ -488,8 +488,8 @@
   security_rule: "Owner, reviewer and approver must be distinct where policy requires"
   acceptance_tests: ["UT: gate without approver cannot be assessed"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['gate structure: criteria with evidence, owner and reviewer roles, approver role, prerequisite gates, mandatory / blocking / waivable flags, decision, timestamps and waivers (packages/db/src/schema/gates.ts)', gates gate-evaluation-rules.spec.ts "the evidence owner cannot accept their own evidence (403); the PM cannot accept a criterion designated to another role (403)"; "G1 with every mandatory criterion met is still blocked while G0 is not approved", 'gates at-04-gate-blocked-by-recommendation.spec.ts "a decision of another project is invisible (404), and only the gate approver role may decide (403)"', 'open item DOM-P2-16 (Low): gate-level owner and reviewer roles are stored but not enforced and there is no gate-level review step — Planned (design in docs/reviews/P2-domain-review.md; the policy grant of gates.assessment.submit to the owner roles is merged); no test of the AT (a gate without an approver cannot be assessed)']
 - id: REQ-LCY-011
   section: "3"
   title: "Task completion never unlocks a gate"
@@ -504,8 +504,8 @@
   security_rule: "assessGate command evaluates criteria server-side via packages/domain gate evaluator"
   acceptance_tests: ["AT-12", "UT: all tasks complete but mandatory criterion unevidenced keeps gate Blocked"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['gates gate-evaluation-rules.spec.ts "all tasks, deliverables and milestones of G2 complete → G2 still not ready and cannot be submitted"', gates at-12-gate-side.spec.ts "G6 with every task done and workstreams reported green is still blocked by its unevidenced mandatory CP criterion", D rules.test.ts "blocks when a mandatory criterion is unmet"]
 - id: REQ-LCY-012
   section: "3"
   title: "Non-waivable conditions cannot be overridden"
@@ -520,8 +520,8 @@
   security_rule: "Server rejects waiver on non-waivable criterion regardless of caller role; audited"
   acceptance_tests: ["AT-13", "UT: waiver on non-waivable criterion rejected and audited"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['gates at-13-non-waivable.spec.ts "a waiver request on a non-waivable criterion is rejected (422), audited as rejected, and the criterion stays unmet"; "when a specialist makes a criterion non-waivable, a pending waiver can no longer be approved"', 'readiness readiness-waiver-n02.spec.ts "AT-13: a waiver request on a non-waivable blocker is rejected (422), audited, and the check stays unmet"', D rules.test.ts "rejects waiving a non-waivable condition"]
 - id: REQ-LCY-013
   section: "3"
   title: "Waivability, waiver authority and waiver record"
@@ -536,8 +536,8 @@
   security_rule: "Approver must hold the waiver authority defined in the approved authority matrix; no self-approval"
   acceptance_tests: ["AT-13", "UT: waiver approved by role without waiver authority rejected"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['gates at-13-non-waivable.spec.ts "unauthorized approvers are refused (403) and logged: no approve permission, or not the waiver authority role"; "self-approval is refused even for the waiver authority; the criterion stays unmet"; "the waiver authority (chair, not the requester) approves a documented waiver → criterion waived, gate shows the exception"', D rules.test.ts "rejects an approver without waiver authority"; "requires basis and impact"]
 - id: REQ-LCY-014
   section: "3"
   title: "Independence definition includes TSAs and enduring arrangements"
@@ -552,8 +552,8 @@
   security_rule: "Read limited to project members"
   acceptance_tests: ["UT: independence dimension lists active TSAs and enduring agreements"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [gates at-06-status-dimensions.spec.ts "TSAs and approved enduring arrangements are shown in the independence explanation (REQ-LCY-014)", 'readiness at-10-tsa-expiry.spec.ts "the status dimensions recompute from tsa.expiring: operational readiness is blocked by the expired TSA (REQ-LCY-014)"', 'D rules.test.ts "D-15: breached/expired TSAs block operational readiness; enduring arrangements are reported"']
 - id: REQ-LCY-015
   section: "3"
   title: "Controlled reassessment when evidence proves defective"
@@ -568,8 +568,8 @@
   security_rule: "Reopen requires reason and an authorized role; prior assessment immutable"
   acceptance_tests: ["AT-14", "UT: reopen creates new assessment version and keeps prior decision"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['gates at-14-reassessment.spec.ts "only authorized roles reopen, with a reason; reopen creates cycle 2 and leaves cycle 1 untouched"; "on an approved gate: the approval is NOT modified — it is flagged for reassessment with an escalation and notifications"', 'gates p2-gate-authority-reassessment.spec.ts "superseding evidence relied upon by the approved G0 flags the gate (REQ-DAT-014), escalates once, notifies and emits gate.blocked" (DOM-P2-05 fixed)', 'D rules.test.ts "D-09: reopen creates a new cycle and never mutates the decided assessment"']
 
 # ---------------------------------------------------------------- GOV
 
@@ -587,8 +587,8 @@
   security_rule: "Committee content visible to committee members and authorized PMO only"
   acceptance_tests: ["UT: non-member receives 404 for committee"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance governance-integrity.spec.ts "a Project-B user gets 404 for Project-A committees, decisions and meetings (no titles leak)"; "a restricted paper is invisible (404, not counted) to a reader cleared only for confidential"', 'Committee Hub screens (apps/web/src/app/(app)/projects/[projectId]/committee): charter, meetings, packs, decisions and actions', 'AT variance: non-member is read as a user without project access or clearance; committee visibility follows docs/security/access-matrix.md (governance.committee.read by role, plus classification), not the committee seat — to be accepted at the P2 gate']
 - id: REQ-GOV-002
   section: "4"
   title: "Multiple committees and delegated authority levels"
@@ -603,8 +603,8 @@
   security_rule: "Creating committees requires Portfolio Admin or Secretary/CPMO"
   acceptance_tests: ["UT: two committees with distinct authority levels"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['several committees per project with their own authority-matrix versions (committee kinds program_steering, newco_board, jv_board): governance governance-integrity.spec.ts "committee kinds are distinct (program committee ≠ NewCo/JV boards) and filterable; kind cannot be changed"', 'reserved matters escalate to the body named in the matrix: governance at-04-decision-outside-delegation.spec.ts "a passing vote on a reserved decision type is recorded as Recommended — pending external authority, with an escalation (never Approved)"', 'gap: no test of the AT (two committees with distinct approved authority levels)']
 - id: REQ-GOV-003
   section: "4"
   title: "Program committee distinct from NewCo and JV boards"
@@ -619,8 +619,8 @@
   security_rule: "Body type immutable after creation; board authority not inferred from committee"
   acceptance_tests: ["UT: decision of program committee cannot satisfy a board-only criterion"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [governance governance-integrity.spec.ts "committee kinds are distinct (program committee ≠ NewCo/JV boards) and filterable; kind cannot be changed", 'gates p2-gate-authority-reassessment.spec.ts "G0 passes on the dedicated reserved type once the authorized body approved it; the decision snapshot records type and matrix"; "link-decision refuses a decision raised for no gate, and one of a decision type not assigned to this gate (422, nothing linked)"', D gates.test.ts "a type reserved to a higher authority backs the gate only through the recorded external approval (deciding body)" (DOM-P2-01 fixed)]
 - id: REQ-GOV-004
   section: "4.1"
   title: "Approvable draft committee charter"
@@ -635,8 +635,8 @@
   security_rule: "Approval only by authority designated in approved delegation; drafts marked Proposed"
   acceptance_tests: ["UT: charter approval creates immutable version"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance governance-integrity.spec.ts "charter versions: amendments after approval need re-approval by someone other than the drafter" (approved version kept; an amendment is a new version needing a new approval)', 'charter fields purpose, scope, delegatedAuthority, exclusions, reservedMatters (committees.service.ts); demo committee DC Carve-out & JV Steering Committee (Demo): governance governance-integrity.spec.ts "seeds the steering committee, distinct boards, an approved DEMO matrix, meeting #1 and the five decision states"']
 - id: REQ-GOV-005
   section: "4.1"
   title: "Charter roles and proposed functional membership"
@@ -651,8 +651,8 @@
   security_rule: "Membership changes audited and require Secretary/CPMO"
   acceptance_tests: ["UT: membership seat without person shows 'Role — To be confirmed'"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance governance-integrity.spec.ts "seats: placeholders show ... non-voting roles cannot vote, one chair at a time"', 'D governance.p2.test.ts "only chair, sponsor and voting members may carry a vote"; "a placeholder seat (no person) never counts toward quorum"', the proposed functional membership list is a charter / seed proposal subject to the actual structure]
 - id: REQ-GOV-006
   section: "4.1"
   title: "Chair never defaulted"
@@ -667,8 +667,8 @@
   security_rule: "Seeds and bootstrap contain no chair assignment"
   acceptance_tests: ["UT: template and bootstrap leave chair seat unassigned"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['P1 p1-closure-empty-db.spec.ts "bootstrap on an empty database: one organization, templates, platform schedules and ONE IdP-bound first administrator — no password, no demo or fictional data; a second run changes nothing" (no committee or membership row after bootstrap)', 'templates hold no committee or chair (validate:templates field set); demo seed chair seat of the boards is Role to be confirmed: governance governance-integrity.spec.ts "seeds the steering committee, distinct boards, an approved DEMO matrix, meeting #1 and the five decision states"']
 - id: REQ-GOV-007
   section: "4.1"
   title: "Membership, quorum, voting and conflict rules"
@@ -683,8 +683,8 @@
   security_rule: "Rules effective only once the charter version is approved"
   acceptance_tests: ["UT: quorum rule read from approved charter version"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance p2-governance-authority.spec.ts "8 appointed, 3 recused, 3 eligible present: 50% of 8 = 4 required → no quorum; a fourth eligible member present → quorum"; "three approve and two abstain → approved; two approve, one reject, two abstain → rejected; eligible votes include abstentions"', governance governance-integrity.spec.ts "responses are flagged via_circulation; enough responders → outcome recorded; the circulation closes", 'D governance.p2.test.ts "present and remote count; absent, apologies and delegated do not"', 'AT variance: quorum, thresholds, ties and recusal rules are read from the approved authority-matrix version (versioned, approved), not from the charter version; abstention and casting-vote rules await governance-owner confirmation (Q-40, Q-41)']
 - id: REQ-GOV-008
   section: "4.1"
   title: "Classification, access, minutes retention and escalation"
@@ -699,8 +699,8 @@
   security_rule: "Classification on minutes/packs enforced by ABAC; retention blocks deletion"
   acceptance_tests: ["UT: minutes inherit charter classification and retention"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['charter fields classification, minutesRetention and escalation (committees.service.ts); meetings, minutes and packs inherit the committee classification in SQL visibility; approved minutes change only through a new version', 'gap: minutes retention is a charter text field and is not enforced on committee records; no test of the AT (minutes inherit charter classification and retention)']
 - id: REQ-GOV-009
   section: "4.1"
   title: "Configurable proposed meeting cadence"
@@ -715,8 +715,8 @@
   security_rule: "Only Secretary/CPMO may change cadence"
   acceptance_tests: ["UT: generated meeting series labelled Proposed"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['the cadence is a charter field flagged as a proposal (cadenceIsProposal defaults to true; only the secretariat edits the charter): governance governance-integrity.spec.ts "charter versions: amendments after approval need re-approval by someone other than the drafter"', 'gap: no meeting series is generated from the cadence, so the AT (generated meeting series labelled Proposed) is not exercised']
 - id: REQ-GOV-010
   section: "4.1"
   title: "No production approval authority before delegation approved"
@@ -731,8 +731,8 @@
   security_rule: "recordApproval rejects when no approved authority matrix version is effective"
   acceptance_tests: ["AT-04", "UT: approval attempt without approved matrix rejected"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance governance-integrity.spec.ts "the Demo matrix can be drafted but not approved (422, audited); no authority is in force"', 'governance p2-governance-authority.spec.ts "baseline approval is refused while no approved matrix exists (422, audited)"; "a non-demo matrix needs its approval document (422 without); with it the approval awaits a second-person verification and is not in force"', 'D governance.test.ts "rejects approval without an approved, effective matrix"']
 - id: REQ-GOV-011
   section: "4.1"
   title: "Quorum, thresholds and limits from approved data"
@@ -747,8 +747,8 @@
   security_rule: "Demo policy flagged is_demo and unusable in non-demo projects"
   acceptance_tests: ["UT: demo authority matrix cannot be activated for a non-demo project"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance governance-integrity.spec.ts "the Demo matrix can be drafted but not approved (422, audited); no authority is in force"', D governance.test.ts "a demo policy never authorizes a non-demo project"]
 - id: REQ-GOV-012
   section: "4.2"
   title: "Agenda request and secretariat screening"
@@ -763,8 +763,8 @@
   security_rule: "Screening restricted to Secretary/CPMO"
   acceptance_tests: ["UT: screened-out request records reason and requester notified"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [governance decision-lifecycle.spec.ts "1. agenda request for a draft decision paper → secretariat screening onto a numbered agenda" (only the secretariat screens; return needs a reason), 'D governance.p2.test.ts "accepts, returns or defers requested items; a returned item stays returned"', 'gap: screening outcomes are accept / return / defer only (no merge, no reject); the requester is not notified (no outbox event on screening; notifications re-phased to P6 with REQ-PLT-008)']
 - id: REQ-GOV-013
   section: "4.2"
   title: "Numbered agendas linked to issues and decisions"
@@ -779,8 +779,8 @@
   security_rule: "Cross-project links rejected by composite FK"
   acceptance_tests: ["UT: agenda numbering stable and unique per meeting"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['governance decision-lifecycle.spec.ts "1. agenda request for a draft decision paper → secretariat screening onto a numbered agenda"; "4. agenda published, meeting pack frozen (immutable snapshot), session, attendance, conflict declarations, quorum" (agenda numbered 1; meetings numbered per committee, unique index)', 'gap: agenda item numbers are computed as max + 1 without a unique constraint or lock per meeting, so uniqueness under concurrent screening is not guaranteed and not tested']
 - id: REQ-GOV-014
   section: "4.2"
   title: "Decision paper completeness"
@@ -795,8 +795,8 @@
   security_rule: "submitDecision validates mandatory fields server-side"
   acceptance_tests: ["UT: submitDecision rejects paper missing latest safe decision date"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [governance decision-lifecycle.spec.ts "2. an incomplete paper cannot be submitted (422 lists missing fields); stale edits are rejected (AT-16 → 409)" (latestSafeDate among the missing fields), 'D governance.test.ts "requires a complete decision paper incl. all three impacts, dependencies, authority and requester"', 'open: DOM-P2-14 (Low) — evidence and attachments are not required at submission (packages/domain/src/governance.ts missingDecisionPaperFields)']
 - id: REQ-GOV-015
   section: "4.2"
   title: "Quorum and conflict checks before voting"
@@ -811,8 +811,8 @@
   security_rule: "Quorum computed server-side only; client-supplied quorum ignored"
   acceptance_tests: ["AT-05", "UT: vote rejected when quorum not met or voter recused"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['governance at-05-quorum-recusal-self-approval.spec.ts "a vote without quorum present is rejected (422), audited, and no vote is stored"; "a recused member cannot vote (422, audited) and is excluded from quorum"', 'governance p2-governance-authority.spec.ts "the secretariat cannot recuse a member who already voted in the round (422, audited, nothing recorded); nor can the member" (DOM-P2-06 fixed)', 'gap: conflict-of-interest declarations are recorded and shown but not required before a member votes (decisions.service.ts castVote has no declaration check)']
 - id: REQ-GOV-016
   section: "4.2"
   title: "Voting, circulation and attendance/vote/recusal records"
@@ -827,8 +827,8 @@
   security_rule: "Only eligible, non-recused voting members may vote; one vote per member per decision version; vote records append-only"
   acceptance_tests: ["AT-05", "UT: duplicate vote rejected; tie handled per charter rule", "UT: attendance and votes persisted with capacity"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance decision-lifecycle.spec.ts "5. votes → server-computed outcome: approved within the mandate (and duplicate votes are refused)"; "4. agenda published, meeting pack frozen (immutable snapshot), session, attendance, conflict declarations, quorum"', 'governance p2-governance-authority.spec.ts "a tie (approve = reject + abstain) under the DEMO ... rule is never approved: the decision stays under review, escalated"', governance governance-integrity.spec.ts "responses are flagged via_circulation; enough responders → outcome recorded; the circulation closes", governance at-05-quorum-recusal-self-approval.spec.ts "vote rows are immutable in the database (even for the owner role)", 'votes store the capacity (member role at vote), round and matrix version']
 - id: REQ-GOV-017
   section: "4.2"
   title: "Minutes drafting and approval"
@@ -843,8 +843,8 @@
   security_rule: "Approval by chair or designated authority per charter"
   acceptance_tests: ["UT: edit after approval creates new version, original retained"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance decision-lifecycle.spec.ts "9. minutes: drafted by the secretariat, approved by the chair; approved minutes change only through a new version with a reason"', D governance.p2.test.ts "approved minutes can only change through a new draft version; a held meeting cannot be cancelled"]
 - id: REQ-GOV-018
   section: "4.2"
   title: "Actions, implementation tracking and verified closure"
@@ -859,8 +859,8 @@
   security_rule: "Owner cannot verify own closure where policy requires"
   acceptance_tests: ["AT-30", "UT: closure without evidence rejected; owner self-verification rejected"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance decision-lifecycle.spec.ts "7. action closure: owner reports done with evidence; self-verification is rejected; a different person verifies"; "6. approval ≠ implementation: approved is not implemented; tracking needs an owned, dated action"', 'D governance.p2.test.ts "verification requires evidence, all live actions verified closed, and a verifier who owns none of them"', AT-30 is verified with REQ-PLT-003 (P8)]
 - id: REQ-GOV-019
   section: "4.2"
   title: "Decision state machine"
@@ -875,8 +875,8 @@
   security_rule: "No generic PATCH may change decision status; invalid transitions return 409"
   acceptance_tests: ["UT: decision state machine rejects every illegal transition"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['DECISION_MACHINE (packages/domain/src/workflows.ts); status changes only through commands: governance decision-lifecycle.spec.ts "2. an incomplete paper cannot be submitted (422 lists missing fields); stale edits are rejected (AT-16 → 409)" (a PATCH with status leaves the status unchanged)', D governance.test.ts "the state machine only allows record_approval from under_review / recommended (guards are separate)"; "approved decisions do not become implemented automatically", governance governance-integrity.spec.ts "votes from a previous round do not count after resume; supersede requires an approved successor", 'gap: no test walks every illegal transition of the machine (AT); illegal transitions return 422 decision.invalid_transition, the register says 409']
 - id: REQ-GOV-020
   section: "4.2"
   title: "Approval separate from execution"
@@ -891,8 +891,8 @@
   security_rule: "Implemented-Verified requires verified actions/evidence"
   acceptance_tests: ["UT: approval leaves decision in Implementation Pending"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [D governance.test.ts "approved decisions do not become implemented automatically", 'governance decision-lifecycle.spec.ts "6. approval ≠ implementation: approved is not implemented; tracking needs an owned, dated action"; "8. implementation verified with evidence by someone other than the person who started tracking"']
 - id: REQ-GOV-021
   section: "4.2"
   title: "Frozen meeting packs with versioned changes"
@@ -907,8 +907,8 @@
   security_rule: "Pack access re-checks viewer classification clearance"
   acceptance_tests: ["UT: source change after freeze does not alter pack figures"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [governance decision-lifecycle.spec.ts "10. the frozen pack is unchanged by later changes; re-freezing creates a linked new version; the DB rejects edits"]
 - id: REQ-GOV-022
   section: "4.2"
   title: "Approvals enforce delegated authority"
@@ -923,8 +923,8 @@
   security_rule: "recordApproval checks authority server-side even if UI is bypassed"
   acceptance_tests: ["AT-04", "AT-05", "IT: direct API approval beyond authority rejected and logged"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance at-04-decision-outside-delegation.spec.ts "an amount above the delegated limit, or in another currency without a conversion basis, is only a recommendation; within the limit it is approved"', governance p2-governance-authority.spec.ts "above the limit → 422 outside_delegated_authority with the body to escalate to (audited); another currency is not compared" (direct API approval beyond authority rejected and logged; DOM-P2-03 fixed), 'gates p2-gate-authority-reassessment.spec.ts "link-decision refuses a decision raised for no gate, and one of a decision type not assigned to this gate (422, nothing linked)" (DOM-P2-01 fixed)', 'governance at-05-quorum-recusal-self-approval.spec.ts "the requester cannot vote on their own decision (separation of duties → 403, audited as denied)"']
 - id: REQ-GOV-023
   section: "4.2"
   title: "Out-of-mandate decisions become recommendations"
@@ -939,8 +939,8 @@
   security_rule: "External outcome recorded only by authorized Secretary/CPMO with evidence"
   acceptance_tests: ["AT-04", "UT: out-of-mandate approval yields Recommended and gate stays Blocked"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance at-04-decision-outside-delegation.spec.ts "a passing vote on a reserved decision type is recorded as Recommended — pending external authority, with an escalation (never Approved)"', gates at-04-gate-blocked-by-recommendation.spec.ts "a committee recommendation on a reserved matter is linked as the blocker; approving the gate is refused (422) and logged", 'governance p2-governance-authority.spec.ts "no evidence, unverified evidence, evidence of another decision → 422; the verifier cannot record (403); verified evidence → recorded" (external outcome rests on verified evidence, DOM-P2-12)', 'web: the external-approval dialog must send evidenceLinkId and fails with 422 until the P2 web follow-up merges']
 - id: REQ-GOV-024
   section: "4.2"
   title: "Historical votes immutable despite membership changes"
@@ -955,8 +955,8 @@
   security_rule: "Votes reference membership/matrix versions; DB rejects update of vote rows"
   acceptance_tests: ["UT: ending membership leaves historical votes and tallies unchanged"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance governance-integrity.spec.ts "ending a seat keeps the seat, its votes and the recorded tally; the ex-member cannot take part in later meetings"', governance at-05-quorum-recusal-self-approval.spec.ts "vote rows are immutable in the database (even for the owner role)"]
 - id: REQ-GOV-025
   section: "4.2"
   title: "Escalations with action, deadline and options"
@@ -971,8 +971,8 @@
   security_rule: "Escalations visible only within project scope"
   acceptance_tests: ["UT: escalation without deadline or options rejected"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance governance-integrity.spec.ts "escalations need a requested action, deadline and at least one option; they are resolved by someone else"', 'decision escalations link to their source decision: governance at-04-decision-outside-delegation.spec.ts "a passing vote on a reserved decision type is recorded as Recommended — pending external authority, with an escalation (never Approved)"']
 - id: REQ-GOV-026
   section: "4.2"
   title: "Committee exports respect classification"
@@ -1003,8 +1003,8 @@
   security_rule: "n/a (labelling); approval records carry method=internal"
   acceptance_tests: ["UT: approval record and exports labelled 'Internal electronic approval'"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [meeting packs carry the label Internal electronic approvals — not legally certified signatures (meetings.service.ts); charter approval contract summary and the web text governance.internalApprovals say the same, 'gap: no test asserts the label on approval records; exports are P6']
 
 # ---------------------------------------------------------------- ENT
 
@@ -1070,8 +1070,8 @@
   security_rule: "Lists filtered by membership inside SQL; totals computed in scope"
   acceptance_tests: ["UT: portfolio view excludes unauthorized projects and their counts"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 isolation-and-auth.spec.ts "lists only authorized projects" (unauthorized projects neither listed nor counted), 'P1 arch-rereview-hardening.spec.ts "permission reach: a workstream-only grant reaches only its workstreams (counts use it)"', e2e p1-smoke.spec.ts "(a) Demo Project Manager sees DEMO-DC with a Demo badge and not DEMO-TRANSFORM" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265), 'the portfolio view is Portfolio Home and the programme view is Program Overview & Charter (project scope); the registers proposed GET /portfolios/:id and /programs/:id endpoints are not built (portfolio / programme administration is P6 with REQ-ENT-002)']
 - id: REQ-ENT-005
   section: "5"
   title: "Per-project template and multiple template types"
@@ -1166,8 +1166,8 @@
   security_rule: "Remote end redacted unless caller has access to the other project"
   acceptance_tests: ["AT-03", "IT: cross-project dependency shows redacted remote item for non-member"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['API: planning cross-project-and-prerequisites.spec.ts "a PM of both projects records that a task of A waits for a milestone of B"; "a reader of only one of the two projects sees nothing — not listed, not counted, and its id answers 404"; "a manager who cannot read the other project cannot point at its items (404); the same project is refused" (DOM-P2-17)', 'AT variance: a user who can read only one end sees nothing at all rather than a redacted remote item (date and status); the Integrated Plan screen for cross-project dependencies is in progress (P2 web follow-up)']
 - id: REQ-ENT-011
   section: "5"
   title: "Multi-level role scopes"
@@ -1198,8 +1198,8 @@
   security_rule: "Room ACL enforced in SQL for documents, search and AI retrieval"
   acceptance_tests: ["AT-03", "IT: non-room member cannot list or retrieve room documents"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv at-03-partner-room-isolation.spec.ts "a project member without a grant cannot open a room nor count its content; an administrator sees metadata only"; "only Legal assigns clean-team membership, with the clean_team role and an attestation"', 'documents clean-team-room.spec.ts "sees nothing outside the room: other documents, versions and rooms are 404 and absent from lists"', documents at-03-documents-isolation.spec.ts "a user without the room grant cannot place documents in (or discover) that room"]
 - id: REQ-ENT-013
   section: "5"
   title: "No inference of confidential documents"
@@ -1214,8 +1214,8 @@
   security_rule: "ACL applied inside SQL before counting/searching; out-of-scope ids return 404"
   acceptance_tests: ["AT-03", "IT: search and totals identical to a user without the restricted document existing"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [documents at-03-documents-isolation.spec.ts "list totals equal the count of rows the caller may see — restricted and room documents are neither listed nor counted"; "title and content search never return hidden titles or snippets"; "direct reads and downloads of hidden documents are 404 (existence not revealed)"]
 
 # ---------------------------------------------------------------- WS
 
@@ -1265,8 +1265,8 @@
   security_rule: "Workstream Lead edits own workstream only"
   acceptance_tests: ["UT: workstream without accountable owner flagged in data quality"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['workstream health lists data-quality issues (no accountable workstream lead, stale / not-updated reporting) in apps/api/src/modules/planning/health.service.ts; project setup gaps list owners: planning measurement.spec.ts "an open blocker makes the workstream red and the project red despite a green workstream" (dataQualityIssues)', 'gap: no test asserts the no-accountable-lead flag (AT); the other required elements (objective, RACI, deliverables, milestones, budget, risks, dependencies, acceptance evidence, linked gates) are not checked per workstream; per-element minimum-scope coverage (REQ-WS-002, QA-P1-10) is still open']
 - id: REQ-WS-004
   section: "6"
   title: "Proposed WBS of at least 80 useful activities"
@@ -1348,8 +1348,8 @@
   security_rule: "Reference values visible only to Finance Restricted where classified"
   acceptance_tests: ["UT: perimeter item contract validation"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['C carveout.test.ts "accepts the §7.1 attributes with typed values and defaults the disposition to Pending"; "rejects unknown types, float/exponent money, non-ISO dates and invalid gate keys"', carveout carveout-rules.spec.ts "reference values are shown only to holders of finance.record.read"]
 - id: REQ-PER-002
   section: "7.1"
   title: "Included/Excluded/Shared/Pending classification"
@@ -1364,8 +1364,8 @@
   security_rule: "Classification change after baseline requires change request"
   acceptance_tests: ["UT: classification enum enforced; change creates version"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['carveout at-07-perimeter-change-control.spec.ts "before any baseline, an item is added and classified directly (justified and versioned)"; "reclassifying a baselined item raises a change request instead of changing it; one open change at a time"', 'C carveout.test.ts "no body can set a status: transfer statuses, disposition via PATCH, stages and consent status are rejected (strict)"']
 - id: REQ-PER-003
   section: "7.1"
   title: "Full perimeter category coverage"
@@ -1380,8 +1380,8 @@
   security_rule: "Reconciliation counts computed within caller scope"
   acceptance_tests: ["UT: reconciliation flags categories with zero assessed items"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [carveout carveout-rules.spec.ts "reconciliation flags unassessed categories; a reviewed category is recorded with its conclusion", 'D perimeter.test.ts "UT: lists an item with no transfer record/plan; flags unassessed categories (physical assets are not the perimeter)"', 'carveout carveout-isolation.spec.ts "classification is enforced inside SQL: lists, totals and reconciliation exclude records above clearance"']
 - id: REQ-PER-004
   section: "7.1"
   title: "Perimeter change impact analysis"
@@ -1396,8 +1396,8 @@
   security_rule: "Impact assessment visible per section classification"
   acceptance_tests: ["AT-07", "IT: adding shared asset produces impact entries across affected modules"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['carveout at-07-perimeter-change-control.spec.ts "after baseline approval, adding a site and a shared asset raises change requests with cross-module impacts"; "manual impact assessment (REQ-PER-004) is appended to the item history of assessments"', 'D perimeter.test.ts "adding a shared site produces entries across every module, figures left to specialists"']
 - id: REQ-PER-005
   section: "7.1"
   title: "Post-baseline perimeter change via change request"
@@ -1412,8 +1412,8 @@
   security_rule: "Direct edits to baselined perimeter rejected; CR approval per authority matrix"
   acceptance_tests: ["AT-07", "IT: post-baseline site addition creates CR and preserves prior version"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['carveout at-07-perimeter-change-control.spec.ts "after baseline approval, adding a site and a shared asset raises change requests with cross-module impacts"; "an undecided change request cannot be applied; the requester cannot approve it; an approved one is applied"', carveout setup-wizard.spec.ts "after approval a new item needs a change request; a stale snapshot cannot be approved", D perimeter.test.ts "a new site / shared asset after approval needs a CR that re-baselines"]
 - id: REQ-PER-006
   section: "7.1"
   title: "Reconciliation of items lacking plan or evidence"
@@ -1428,8 +1428,8 @@
   security_rule: "Scope-filtered"
   acceptance_tests: ["UT: reconciliation lists item with no transfer record"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['D perimeter.test.ts "UT: lists an item with no transfer record/plan; flags unassessed categories (physical assets are not the perimeter)"; "legal verified but economic pending is not fully verified (D-05)"', 'carveout at-08-day1-contract-position.spec.ts "Legal classifies ... consent outstanding → interim arrangement, owners and remediation required" (reconciliation findings incl. no_transfer_plan)']
 - id: REQ-PER-007
   section: "14"
   title: "Transfer records verified by command"
@@ -1444,8 +1444,8 @@
   security_rule: "verifyTransfer restricted to Legal/Functional Approver; not the submitter"
   acceptance_tests: ["AT-06", "UT: verifyTransfer without evidence rejected"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['carveout at-08-day1-contract-position.spec.ts "once consent is granted with evidence the transfer is reported; verifyTransfer needs evidence and another person"; "separation of duties: a person who reported a transfer cannot verify it, even holding the verify role (not_self)"', 'D perimeter.test.ts "UT: verifyTransfer without evidence rejected; the reporter cannot verify"']
 
 # ---------------------------------------------------------------- AGR
 
@@ -1463,8 +1463,8 @@
   security_rule: "Legal Restricted classification enforced on agreement content"
   acceptance_tests: ["UT: agreement types include ATA, TSA, MSA, SHA/JV"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['D perimeter.test.ts "UT: agreement types include ATA, TSA, MSA, SHA/JV (as source labels)"', carveout carveout-rules.spec.ts "a record cannot be classified above the creator clearance (403)"]
 - id: REQ-AGR-002
   section: "7.2"
   title: "No assumed abbreviation expansions"
@@ -1479,8 +1479,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: agreement type expansion defaults to 'Unconfirmed'"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [carveout carveout-rules.spec.ts "labels are stored as found; a proposed expansion stays ... until the owner confirms it", 'D perimeter.test.ts "UT: agreement type expansion defaults to ... Unconfirmed"']
 - id: REQ-AGR-003
   section: "7.2"
   title: "Agreement tracking attributes"
@@ -1495,8 +1495,8 @@
   security_rule: "Executed copy access limited by classification"
   acceptance_tests: ["UT: agreement without legal reviewer cannot advance to Signing"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['carveout carveout-rules.spec.ts "stage is a command: PATCH cannot move it; signing needs a legal reviewer and the executed copy"', 'D perimeter.test.ts "UT: agreement without legal reviewer cannot advance to Signing"; "signing needs the executed copy and a past date; effective date not before signing"']
 - id: REQ-AGR-004
   section: "7.2"
   title: "Regulatory approval register"
@@ -1511,8 +1511,8 @@
   security_rule: "Regulatory register restricted to Legal/Regulatory roles for edits"
   acceptance_tests: ["UT: expired validity flagged"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [carveout carveout-rules.spec.ts "an outcome needs evidence; a conditional grant keeps conditions open until evidenced; expired validity is flagged"; "only Legal maintains the register; an entry from a source starts ... Assessment pending — specialist", 'D newco.test.ts "UT: expired validity flagged"']
 - id: REQ-AGR-005
   section: "7.2"
   title: "External-party and internal approval registers"
@@ -1527,8 +1527,8 @@
   security_rule: "Approvals recorded only by authorized recorder with evidence"
   acceptance_tests: ["UT: approval with condition shows condition until evidenced"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['D newco.test.ts "UT: approval with condition shows condition until evidenced"', carveout carveout-rules.spec.ts "an outcome needs evidence; a conditional grant keeps conditions open until evidenced; expired validity is flagged"; "the registrant cannot assess its own entry (not_self)", 'e2e p3-carveout.spec.ts "(c) approvals register: new entries start ... the registrant is refused (403 reason shown), another specialist assesses" (passed at 124f3d8 in the separate run of tests (b)–(d))']
 - id: REQ-AGR-006
   section: "7.2"
   title: "Contract transferability classification by specialists"
@@ -1543,8 +1543,8 @@
   security_rule: "Only Legal Restricted/specialist may set transferability"
   acceptance_tests: ["AT-08", "UT: non-specialist transferability change rejected"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['carveout at-08-day1-contract-position.spec.ts "UT/IT: a non-specialist cannot set transferability (403, audited); the class stays unknown"', 'D rules.test.ts "D-17: a ... class without specialist assessment is not accepted"']
 - id: REQ-AGR-007
   section: "7.2"
   title: "No assertion that licenses/approvals are mandatory or obtained"
@@ -1559,8 +1559,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-01", "UT: image-sourced requirement defaults to applicability pending"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['D newco.test.ts "UT: image-sourced requirement defaults to applicability pending, shown as ... Assessment pending — specialist"', carveout carveout-rules.spec.ts "nothing is submitted or recorded as obtained before a specialist applicability assessment"]
 - id: REQ-AGR-008
   section: "7.2"
   title: "Consent tracking and Day-1 contract exceptions"
@@ -1575,8 +1575,8 @@
   security_rule: "Consent evidence classified Legal Restricted"
   acceptance_tests: ["AT-08", "IT: contract with consent pending requires interim arrangement and accountable owners before G3"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['carveout at-08-day1-contract-position.spec.ts "Legal classifies ... consent outstanding → interim arrangement, owners and remediation required"; "consents: requested → a response needs evidence; conditional needs conditions; ... needs a specialist"; "accountable owners must be project members; a complete interim position makes the Day-1 position OK"', 'D perimeter.test.ts "consent outstanding → interim arrangement, owners and remediation are required"', 'the G3 link is criterion G3-C02 (consent or approved interim arrangement), reviewed by its designated reviewer; the register does not gate G3 automatically']
 
 # ---------------------------------------------------------------- TSA
 
@@ -1594,8 +1594,8 @@
   security_rule: "Charge basis visible to Finance Restricted only where classified"
   acceptance_tests: ["UT: TSA without exit milestones cannot be Approved"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['readiness at-10-tsa-expiry.spec.ts "REQ-TSA-001: a TSA without exit milestones (and other §7.3 essentials) cannot be approved"; "charge basis and amount are shown to finance readers only"', 'D readiness.test.ts "REQ-TSA-001: a TSA without exit milestones (or owner / end date / replacement) cannot be approved"']
 - id: REQ-TSA-002
   section: "7.3"
   title: "TSA state machine"
@@ -1610,8 +1610,8 @@
   security_rule: "No generic PATCH on status; illegal transitions return 409"
   acceptance_tests: ["UT: TSA state machine rejects illegal transitions"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['D readiness.test.ts "REQ-TSA-002: the TSA state machine rejects illegal transitions"', 'readiness at-10-tsa-expiry.spec.ts "REQ-TSA-002: illegal transitions are rejected; guarded commands are not reachable through the generic transition"']
 - id: REQ-TSA-003
   section: "7.3"
   title: "End date is not a successful exit"
@@ -1626,8 +1626,8 @@
   security_rule: "Worker job runs under restricted service identity"
   acceptance_tests: ["AT-10", "IT: TSA past end date without acceptance becomes Expired-unresolved with escalation"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['readiness at-10-tsa-expiry.spec.ts "AT-10 / REQ-TSA-003: past the end date without an accepted replacement → expired_unresolved + escalation, never an exit"; "the expiry job (per-project schedule, service identity) warns once before the end date — idempotent"', 'D readiness.test.ts "REQ-TSA-003 / D-25: end date passed is never an exit"']
 - id: REQ-TSA-004
   section: "7.3"
   title: "Replacement failure triggers escalation and continuity planning"
@@ -1642,8 +1642,8 @@
   security_rule: "Escalation routing follows authority matrix"
   acceptance_tests: ["AT-10", "UT: replacement failure creates escalation and decision request"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['readiness at-10-tsa-expiry.spec.ts "REQ-TSA-004: a replacement failure escalates with continuity / extension options; nothing is extended"']
 - id: REQ-TSA-005
   section: "7.3"
   title: "No automatic TSA extension"
@@ -1658,8 +1658,8 @@
   security_rule: "Transition to Extended requires linked Approved decision"
   acceptance_tests: ["AT-10", "UT: Extended transition without approved decision rejected"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['readiness at-10-tsa-expiry.spec.ts "REQ-TSA-005: the extension awaits a FINAL approved decision — never automatic"', 'D readiness.test.ts "REQ-TSA-005: an extension needs an approved decision, a later end date and a continuity plan"']
 - id: REQ-TSA-006
   section: "14"
   title: "approveTSAExit requires replacement acceptance evidence"
@@ -1674,8 +1674,8 @@
   security_rule: "Approver distinct from TSA owner; audited"
   acceptance_tests: ["AT-10", "UT: approveTSAExit without acceptance evidence rejected"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['readiness at-10-tsa-expiry.spec.ts "REQ-TSA-006: no exit without an accepted replacement with evidence"; "REQ-TSA-006: exit = accepted replacement with evidence + an independent approver bound to the request"', 'D readiness.test.ts "REQ-TSA-006: approveTSAExit without acceptance evidence is rejected; the approver is independent"']
 
 # ---------------------------------------------------------------- RDY
 
@@ -1693,8 +1693,8 @@
   security_rule: "Sign-off only by the specialist role assigned to the check"
   acceptance_tests: ["AT-09", "UT: sign-off by non-assigned role rejected"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['readiness at-09-readiness-go-no-go.spec.ts "REQ-RDY-001: sign-off only by the assigned specialist role, never by whoever recorded the latest test, and on evidence"', 'D readiness.test.ts "REQ-RDY-001: sign-off by a non-assigned role is rejected (403)"']
 - id: REQ-RDY-002
   section: "7.4"
   title: "Readiness domain coverage"
@@ -1709,8 +1709,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: DC template readiness checklist covers all listed domains"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['readiness at-09-readiness-go-no-go.spec.ts "REQ-RDY-002: the template checklist is instantiated per site (all 14 areas), idempotently; project-level defaults are recognised"', 'D readiness.test.ts "REQ-RDY-002: the Day-1 areas are the fourteen §7.4 domains"']
 - id: REQ-RDY-003
   section: "7.4"
   title: "Cutover plan required elements"
@@ -1725,8 +1725,8 @@
   security_rule: "Plan approval per authority matrix"
   acceptance_tests: ["UT: cutover plan without rollback cannot be submitted for go/no-go"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['readiness at-09-readiness-go-no-go.spec.ts "REQ-RDY-003: a plan without a rollback plan cannot be submitted for go/no-go"', 'D readiness.test.ts "REQ-RDY-003: a plan without rollback (or contingency, window, testing…) cannot be submitted for go/no-go"']
 - id: REQ-RDY-004
   section: "7.4"
   title: "Failed blocker prevents go-live, with contingency and history"
@@ -1741,8 +1741,8 @@
   security_rule: "go-no-go command evaluates blockers server-side"
   acceptance_tests: ["AT-09", "IT: go decision rejected while a mandatory blocker is failed"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [readiness at-09-readiness-go-no-go.spec.ts "GO is refused while the connectivity blocker is failed — even with an approved decision; refusal kept in the history"; "NO-GO is recorded with its rationale; the plan returns to planning with the history preserved", 'D readiness.test.ts "AT-09 / REQ-RDY-004: a failed mandatory blocker blocks GO even with every prerequisite and an approved decision"', 'e2e p3-readiness.spec.ts "AT-09: a failed connectivity test blocks GO; contingency and decision history are shown" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)']
 - id: REQ-RDY-005
   section: "7.4"
   title: "Post-transition acceptance"
@@ -1757,8 +1757,8 @@
   security_rule: "Acceptor distinct from executor where policy requires"
   acceptance_tests: ["UT: acceptance without evidence rejected"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['readiness at-09-readiness-go-no-go.spec.ts "REQ-RDY-006 / REQ-RDY-005: execution is recorded (never performed); acceptance needs evidence, by the accountable owner, not the executor"', 'D readiness.test.ts "REQ-RDY-005: acceptance without evidence is rejected; only the accountable owner, never the executor"']
 - id: REQ-RDY-006
   section: "7.4"
   title: "No control of data center devices"
@@ -1773,8 +1773,8 @@
   security_rule: "No adapters with device/network/power write access exist"
   acceptance_tests: ["REVIEW: architecture review confirms no operational control integrations"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['execution of a transition is recorded, never performed: readiness at-09-readiness-go-no-go.spec.ts "REQ-RDY-006 / REQ-RDY-005: execution is recorded (never performed); acceptance needs evidence, by the accountable owner, not the executor"', 'no adapter with device, network or power write access exists (apps/api/src/modules/integrations is a shell)', 'REVIEW AT: the architecture reviewer confirms at the P3 gate (P3 reviews not run)']
 
 # ---------------------------------------------------------------- FIN
 
@@ -1792,8 +1792,8 @@
   security_rule: "Finance Restricted ABAC"
   acceptance_tests: ["UT: snapshot without currency/unit/period rejected"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['finance at-29-currency-unit-aggregation.spec.ts "UT: snapshot without currency/unit/period rejected"', D finance.test.ts "a figure without any source is rejected; an import keeps document + sheet + cell", 'finance finance-figures.spec.ts "a third person approves; the approval record is appended, the approval date is the project-local date, the figure is locked"', 'backend only: the Finance & Value screen is in progress (REQ-UX-013)']
 - id: REQ-FIN-002
   section: "7.5"
   title: "Separation cost categories without double counting"
@@ -1808,8 +1808,8 @@
   security_rule: "Finance Restricted ABAC"
   acceptance_tests: ["UT: TSA charge counted once across TSA and cost views"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['finance finance-registers.spec.ts "UT: TSA charge counted once across TSA and cost views"; "a line keeps one category across kinds and a TSA is charged under one line reference"', 'D finance.test.ts "UT: TSA charge counted once across TSA and cost views"']
 - id: REQ-FIN-003
   section: "7.5"
   title: "Committed versus spent"
@@ -1824,8 +1824,8 @@
   security_rule: "Finance Restricted ABAC"
   acceptance_tests: ["UT: committed and spent tracked separately"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['finance finance-registers.spec.ts "UT: committed and spent tracked separately"; "spend above commitments and commitments above the approved budget are flagged; dates are checked"', 'D finance.test.ts "UT: committed and spent tracked separately"']
 - id: REQ-FIN-004
   section: "7.5"
   title: "Working capital, opening balances and intercompany reconciliation"
@@ -1840,8 +1840,8 @@
   security_rule: "Finance Restricted ABAC"
   acceptance_tests: ["UT: unreconciled intercompany difference flagged"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['finance finance-figures.spec.ts "UT: unreconciled intercompany difference flagged"; "reconciling needs an explained difference and a reviewer other than the preparer"; "a balance without its counterparty confirmation is flagged; working capital is tracked as a reference figure"', 'D finance.test.ts "UT: unreconciled intercompany difference flagged"']
 - id: REQ-FIN-005
   section: "7.5"
   title: "Versioned business plans and valuation cases"
@@ -1856,8 +1856,8 @@
   security_rule: "Finance Restricted ABAC"
   acceptance_tests: ["UT: new version preserves prior assumptions"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['finance finance-registers.spec.ts "UT: new version preserves prior assumptions"; "a version is frozen: the database refuses to change or delete it; a new version derives from the latest only"', 'D finance.test.ts "UT: new version preserves prior assumptions"']
 - id: REQ-FIN-006
   section: "7.5"
   title: "Proposed versus approved valuation and ownership"
@@ -1872,8 +1872,8 @@
   security_rule: "Approval per authority matrix; human validation required"
   acceptance_tests: ["UT: approved value field empty until approval recorded"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['finance finance-registers.spec.ts "UT: approved value field empty until approval recorded"; "approved values are immutable and can never exist without an approval decision (database)"']
 - id: REQ-FIN-007
   section: "7.5"
   title: "EV/equity and unit/currency confusion checks"
@@ -1888,8 +1888,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-29", "UT: EV compared with equity value flagged; mixed units rejected"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['finance at-29-currency-unit-aggregation.spec.ts "a version mixing EV and equity value is flagged (a consistency check, not a valuation)"; "comparing EV with equity, units with thousands, SAR with USD produces no difference — each is reported"', 'D finance.test.ts "EV compared with equity value is flagged (a check, not a valuation)"', D rules.test.ts "flags EV vs equity value confusion"]
 - id: REQ-FIN-008
   section: "7.5"
   title: "Import financial model outputs linked to sources"
@@ -1904,8 +1904,8 @@
   security_rule: "Import approval by Finance Restricted"
   acceptance_tests: ["UT: imported output retains source and cell reference"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['finance finance-figures.spec.ts "UT: imported output retains source and cell reference"; "an import without sheet / cell, or with an invalid cell, is rejected"; "a source document of another project is never accepted (404)"']
 - id: REQ-FIN-009
   section: "7.5"
   title: "Benefits Register"
@@ -1920,8 +1920,8 @@
   security_rule: "Verification by owner-independent role"
   acceptance_tests: ["UT: benefit realization requires verification source"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['finance finance-registers.spec.ts "UT: benefit realization requires verification source"; "the owner / reporter cannot verify, nor can a service identity; an independent Finance verifier can"', 'D finance.test.ts "UT: benefit realization requires verification source"']
 - id: REQ-FIN-010
   section: "7.5"
   title: "Human financial validation before approval"
@@ -1936,8 +1936,8 @@
   security_rule: "Approve rejected unless validated by a human Finance role; AI identities cannot validate"
   acceptance_tests: ["UT: approve without validation rejected; service identity cannot validate"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['finance finance-figures.spec.ts "UT: approve without validation rejected; service identity cannot validate"; "the validator cannot approve; a change after validation invalidates it (approval binds to the validated content)"; "the database refuses an approved figure without a distinct validator and approver"', 'D finance.test.ts "UT: approve without validation rejected; service identity cannot validate"']
 
 # ---------------------------------------------------------------- JV
 
@@ -1955,8 +1955,8 @@
   security_rule: "Room membership ABAC; non-members receive 404"
   acceptance_tests: ["AT-03", "IT: partner A room invisible to partner B users"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv at-03-partner-room-isolation.spec.ts "partner B ... user sees only its own room, disclosures and DD requests — A ... are 404 (never 403), counts exclude them"; "RLS (defence in depth): partner B ... database context holds no row of room A"', 'backend only: the JV & Diligence screen (partner workspace) is in progress (REQ-UX-014)']
 - id: REQ-JV-002
   section: "8"
   title: "Partner longlist/shortlist with criteria and conflicts"
@@ -1971,8 +1971,8 @@
   security_rule: "No partner seed names outside labelled Demo"
   acceptance_tests: ["UT: bootstrap has no partners; weights sum validated"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-partner-rules.spec.ts "UT: a new project has no partners (no real default names); weights must sum to 100"; "shortlist, conflict disclosures and the comparison (scores only when complete, never estimated)"', D jv.test.ts "weights must be positive and sum to exactly 100"]
 - id: REQ-JV-003
   section: "8"
   title: "Partner engagement stages"
@@ -1987,8 +1987,8 @@
   security_rule: "Stage transitions require the authorization of the target stage"
   acceptance_tests: ["AT-11", "UT: partner stage machine rejects skipped stages"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv at-11-partner-parallel.spec.ts "REQ-JV-003: the stage machine rejects skipped stages; NDA needs the outreach approval; approval stages need their own command"', D jv.test.ts "follows the ordered stages and rejects every skipped or reversed stage"]
 - id: REQ-JV-004
   section: "8"
   title: "Outreach approval separate"
@@ -2003,8 +2003,8 @@
   security_rule: "Approval by authorized role per authority matrix; AI cannot request contact execution"
   acceptance_tests: ["UT: advance to NDA without outreach approval rejected"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-partner-rules.spec.ts "UT: advance to NDA without outreach approval is rejected; approval needs a pending request by someone else"; "a person with an open conflict disclosure on the partner cannot approve its outreach"', D jv.test.ts "advancing to NDA without outreach approval is rejected; approval stages need their own command"]
 - id: REQ-JV-005
   section: "8"
   title: "NDA alone does not grant document access"
@@ -2019,8 +2019,8 @@
   security_rule: "Access grants explicit per folder/document; NDA status alone never satisfies ACL"
   acceptance_tests: ["IT: partner with executed NDA but no grant cannot list room documents"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv at-03-partner-room-isolation.spec.ts "IT: partner with an executed NDA but no grant cannot list room documents"; "a grant is refused while the partner is only at NDA (Materials access is a separate step)"', 'D jv.test.ts "an NDA alone grants nothing: a partner below Materials access cannot be granted"']
 - id: REQ-JV-006
   section: "8"
   title: "Proposals and assessments separating fact from judgement"
@@ -2035,8 +2035,8 @@
   security_rule: "Clean Team/Legal Restricted ABAC"
   acceptance_tests: ["UT: assessment entries require fact/judgement tag"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-partner-rules.spec.ts "UT: assessment entries require the fact/judgement tag; a fact needs its source"', D jv.test.ts "every entry is tagged fact or judgement; a fact cites its source; scores stay on the 0–5 scale"]
 - id: REQ-JV-007
   section: "8"
   title: "Versioned ownership and governance scenarios"
@@ -2051,8 +2051,8 @@
   security_rule: "Finance/Legal Restricted ABAC"
   acceptance_tests: ["UT: scenario has no default ownership percentage"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-partner-rules.spec.ts "UT: scenario has no default ownership percentage; a complete split totals 100; versions are immutable"', D jv.test.ts "a new scenario lists parties with NO percentage (never assumed)"]
 - id: REQ-JV-008
   section: "8"
   title: "Terms and negotiation issues register"
@@ -2067,8 +2067,8 @@
   security_rule: "Legal Restricted ABAC"
   acceptance_tests: ["UT: issue requiring approval links a decision"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-partner-rules.spec.ts "UT: an issue requiring approval links a decision, and is agreed only after the decision is a FINAL approval"', D jv.test.ts "requires the link and a FINAL approval before agreement"]
 - id: REQ-JV-009
   section: "8"
   title: "VDR index, permissions and disclosure history"
@@ -2083,8 +2083,8 @@
   security_rule: "Revocation effective immediately including signed download URLs"
   acceptance_tests: ["AT-19", "IT: revoked grant blocks further downloads; history retained"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv at-03-partner-room-isolation.spec.ts "download → revoke → 404, and the access/disclosure history keeps every event"; "withdrawing a disclosure stops downloads of it; locking a room suspends every grant immediately"', 'D jv.test.ts "only usable versions filed in a partner room are disclosed, released by a separate person"', an internal VDR (no external VDR integration); no promise of screenshot or copy prevention after download]
 - id: REQ-JV-010
   section: "8"
   title: "DD requests and Q&A workflow"
@@ -2099,8 +2099,8 @@
   security_rule: "Release requires approval by a role other than the drafter"
   acceptance_tests: ["UT: release without approval rejected"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-diligence.spec.ts "UT: release without approval is rejected (and logged); the drafter never reviews or releases"; "the counterparty raises a question in its room; the deal team sees the internal projection"', 'D jv.test.ts "release requires the approved review, a separate reviewer and releaser"']
 - id: REQ-JV-011
   section: "8"
   title: "Diligence findings with implications"
@@ -2115,8 +2115,8 @@
   security_rule: "Clean Team/Legal Restricted ABAC"
   acceptance_tests: ["UT: material finding requires remediation owner"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-diligence.spec.ts "UT: a material finding requires a remediation owner (API and database)"', D jv.test.ts "a material finding requires a remediation owner and plan"]
 - id: REQ-JV-012
   section: "8"
   title: "Separate signing and closing checklists"
@@ -2131,8 +2131,8 @@
   security_rule: "Legal Restricted ABAC"
   acceptance_tests: ["AT-11", "UT: checklist items belong to exactly one of signing or closing"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv at-11-partner-parallel.spec.ts "UT: checklist items belong to exactly one of signing or closing"']
 - id: REQ-JV-013
   section: "8"
   title: "Condition precedent attributes and verification"
@@ -2147,8 +2147,8 @@
   security_rule: "verifyCP restricted to authorized verifier; AI identities excluded"
   acceptance_tests: ["AT-12", "UT: verifyCP without evidence rejected"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv at-12-closing-blocked-cp.spec.ts "UT: verifyCP without evidence is rejected (and logged); submitting without evidence is rejected"', 'jv at-13-cp-non-waivable.spec.ts "only a specialist determines waivability (documented basis); the PM cannot"; "a waiver needs the specialist-set authority: approval outside it is refused; the CP stays unmet"', D jv.test.ts "verifyCP without evidence is rejected; the owner / evidence submitter cannot verify"]
 - id: REQ-JV-014
   section: "8"
   title: "Closing deliverables, decisions and executed documents"
@@ -2163,8 +2163,8 @@
   security_rule: "Legal Restricted ABAC"
   acceptance_tests: ["UT: deliverable acceptance requires executed document"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-closing-rules.spec.ts "UT: deliverable acceptance requires an executed document; never by its owner or deliverer"']
 - id: REQ-JV-015
   section: "8"
   title: "Track financial flows without executing payments"
@@ -2179,8 +2179,8 @@
   security_rule: "No payment adapters exist; Finance Restricted ABAC"
   acceptance_tests: ["UT: funds flow is record-only; no payment endpoint"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-closing-rules.spec.ts "UT: funds flow is record-only; no payment endpoint exists"', 'D jv.test.ts "funds flow is record-only: its machine has no execute/pay command"']
 - id: REQ-JV-016
   section: "8"
   title: "Conditions subsequent and post-close obligations"
@@ -2195,8 +2195,8 @@
   security_rule: "Scope-filtered"
   acceptance_tests: ["UT: overdue obligation escalates"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-closing-rules.spec.ts "UT: overdue obligation escalates (worker job, durable per-project schedule, project timezone) — idempotent"', D jv.test.ts "an overdue obligation (project-timezone business date) is detected; verified/cancelled never are"]
 - id: REQ-JV-017
   section: "8"
   title: "Task completion does not close the transaction"
@@ -2211,8 +2211,8 @@
   security_rule: "confirmClosing restricted to authorized role per authority matrix"
   acceptance_tests: ["AT-12", "UT: all tasks done but no confirmation keeps closing open"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv at-12-closing-blocked-cp.spec.ts "UT: all tasks done but no confirmation keeps the closing open (task completion is not an input)"; "mark_ready is refused while the CP is unmet"']
 - id: REQ-JV-018
   section: "20"
   title: "Missing mandatory CP blocks closing"
@@ -2227,8 +2227,8 @@
   security_rule: "Server evaluates CP set inside the confirm transaction"
   acceptance_tests: ["AT-12", "AT-13", "IT: confirm with one unverified blocking CP rejected and logged"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv at-12-closing-blocked-cp.spec.ts "IT: confirm with one unverified blocking CP is rejected and logged — the CP set is re-evaluated inside the confirm transaction"; "the AI / any service identity cannot confirm a closing, verify a CP or create a waiver — even with the permission allow-listed"', 'jv at-13-cp-non-waivable.spec.ts "an authorized waiver of a waivable CP (sponsor, not the requester) clears the blocker; a non-waivable one never does"', D jv.test.ts "one unverified blocking CP blocks closing even when everything else is complete (no task input exists)"]
 - id: REQ-JV-019
   section: "8"
   title: "Program closure follows its own handover criteria"
@@ -2243,8 +2243,8 @@
   security_rule: "Requires G7 pass and authorized confirmation"
   acceptance_tests: ["UT: program closure rejected before G7 passes"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-closing-rules.spec.ts "UT: program closure rejected before G7 passes (and logged); then an authorized second person confirms"', D jv.test.ts "program closure is rejected before G7 passes and by the requester"]
 
 # ---------------------------------------------------------------- PLN
 
@@ -2262,8 +2262,8 @@
   security_rule: "Links only within same project (composite FK) unless cross-project dependency rules apply"
   acceptance_tests: ["UT: link across projects rejected"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [P1 architecture-hardening.spec.ts "rejects a Project-B evidence link that targets a Project-A task (reviewer probe 8)"; "rejects unsupported polymorphic target types and cross-project schedule dependencies", planning schedule-rules.spec.ts "never links records of another project (404 without leaking existence)", documents at-14-conflicting-evidence.spec.ts "evidence can never be linked to another project ... record (API 404 + database trigger)", 'typed links per module (dependencies, prerequisites, evidence links, decision links); no generic /links endpoint']
 - id: REQ-PLN-002
   section: "9"
   title: "WBS list, table, Kanban and Gantt views"
@@ -2278,8 +2278,8 @@
   security_rule: "Views read through scoped APIs only"
   acceptance_tests: ["E2E: status change in Kanban reflected in Gantt and table"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['WBS table and Gantt timeline over the same persisted data: e2e p2-planning.spec.ts "(a) PM confirms a Draft task into the plan, reports progress, and a stale version gets 409 ... review" and "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no Kanban view exists; the AT (status change in Kanban reflected in Gantt and table) is not built']
 - id: REQ-PLN-003
   section: "9"
   title: "Single accountable owner plus RACI"
@@ -2294,8 +2294,8 @@
   security_rule: "Owner must be a project member"
   acceptance_tests: ["UT: second accountable owner rejected"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['planning acceptance-and-access.spec.ts "RACI: accountability is only through the single owner; R assignees may report progress" (a second accountable (A) assignment is rejected with raci.accountable_via_owner); "changing an existing accountable owner requires ownership.reassign (a contributor cannot)"']
 - id: REQ-PLN-004
   section: "9"
   title: "Baseline versions with separate forecast and actual"
@@ -2310,8 +2310,8 @@
   security_rule: "Baseline approval per authority matrix; approved baselines immutable"
   acceptance_tests: ["AT-16", "UT: forecast change does not alter baseline values"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['planning at-16-baseline-concurrency.spec.ts "a PM proposes baseline v1 with a frozen snapshot and hash; only one proposal can be pending"; "two approvers with the same expectedVersion: exactly one succeeds, the other gets 409 and nothing is lost"', P1 arch-rereview-hardening.spec.ts "a baseline snapshot/hash can never be rewritten (even by the owner role)", planning at-15-delay-impact.spec.ts "an owner-entered forecast finish on a critical task extends the schedule-based forecast"; "the demo scenario shows the seeded forecast slip against baseline v1 on the WS02 driving network" (forecast kept apart from the baseline), 'approval checked against the in-force authority matrix: governance p2-governance-authority.spec.ts "with the verified matrix in force, the sponsor approves the baseline within the baseline_approval delegation (audited basis)"']
 - id: REQ-PLN-005
   section: "9"
   title: "Acyclic dependency graph"
@@ -2326,8 +2326,8 @@
   security_rule: "Same-project or authorized cross-project only"
   acceptance_tests: ["UT: dependency creating a cycle rejected with path"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [planning schedule-rules.spec.ts "rejects a direct or transitive cycle with 422 and stores nothing", D schedule.test.ts "detects cycles"]
 - id: REQ-PLN-006
   section: "9"
   title: "Dependencies link approvals, agreements, evidence, decisions and gates"
@@ -2342,8 +2342,8 @@
   security_rule: "Target must be in scope"
   acceptance_tests: ["UT: task blocked by pending agreement dependency"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['planning cross-project-and-prerequisites.spec.ts "a task is blocked by a pending agreement dependency (422, audited) and the prerequisite is listed as unsatisfied"; "evidence as a prerequisite: blocked until verified by someone else, then the task starts"; "a gate prerequisite is unsatisfied until the gate is approved; removal needs the manage permission and is audited" (DOM-P2-18)', D planning.test.ts "a task is blocked by a pending agreement dependency until the agreement is signed or effective"; "a decision counts only when final — a recommendation pending the external authority does not", 'API only: the prerequisites screen is in progress (P2 web follow-up); prerequisites are not CPM nodes']
 - id: REQ-PLN-007
   section: "9"
   title: "FS relationships, lag and working calendars first"
@@ -2358,8 +2358,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: FS with lag across weekend and holiday", "UT: SS/FF/SF disabled until their tests pass"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['planning schedule-rules.spec.ts "rejects SS, FF and SF as ... (only FS is exposed until tested)"; "lag is applied in working days on the FS link"', D calendar.test.ts "adds working days across the weekend and holidays", D schedule.test.ts "applies working-day lag"; "does not silently compute unsupported dependency types"]
 - id: REQ-PLN-008
   section: "9"
   title: "Critical path and float only for supported relationships"
@@ -2374,8 +2374,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-15", "UT: CPM on reference network matches expected critical path and float"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['D schedule.test.ts "computes early/late dates, float and critical path"', 'planning at-15-delay-impact.spec.ts "computes critical path, float and finish on the working calendar (schedule-based forecast)"']
 - id: REQ-PLN-009
   section: "9"
   title: "Incomplete schedule when data missing"
@@ -2390,8 +2390,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-15", "UT: task without duration yields Incomplete schedule with gap list"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [planning schedule-rules.spec.ts "a missing duration yields an Incomplete schedule listing the gap and no critical path"; "the whole template plan is Incomplete while TBD durations remain (no false precision)", D schedule.test.ts "reports Incomplete schedule (no critical path) when a duration is missing"]
 - id: REQ-PLN-010
   section: "9"
   title: "Asia/Riyadh calendar, UTC timestamps and local business dates"
@@ -2406,8 +2406,8 @@
   security_rule: "Holiday edits by Project Manager/Portfolio Admin; audited"
   acceptance_tests: ["UT: due date stored as date and not shifted by timezone", "UT: holiday skipped in working-day arithmetic"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [D calendar.test.ts "adds working days across the weekend and holidays"; "derives local business dates and hours in Asia/Riyadh from UTC instants"; "treats Friday and Saturday as non-working by default", planning at-15-delay-impact.spec.ts "corporate holidays on the project calendar shift the forecast (Asia/Riyadh Sun–Thu calendar)", 'planning raid-lookahead.spec.ts "lists what starts / is due in the window and what is overdue, on local business dates"', due dates are PostgreSQL date columns; timestamps timestamptz]
 - id: REQ-PLN-011
   section: "9"
   title: "Task states, verified progress and acceptance"
@@ -2422,8 +2422,8 @@
   security_rule: "Acceptor distinct from owner where policy requires"
   acceptance_tests: ["UT: acceptance-required task stays Awaiting acceptance after owner marks done"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [planning acceptance-and-access.spec.ts "the submitter cannot accept their own task (not_self) and the attempt is audited as denied"; "the approver sees it in My Work; acceptance needs active evidence; then verified progress is 100"; "a task that does not require acceptance can be completed — but is not evidence-verified", planning approver-role-and-my-work.spec.ts "a sponsor-approved task is neither offered to nor accepted or returned by a functional approver; its approver role is locked while submitted" (DOM-P2-07 fixed)]
 - id: REQ-PLN-012
   section: "9"
   title: "RAID register"
@@ -2438,8 +2438,8 @@
   security_rule: "Classified risks restricted by ABAC"
   acceptance_tests: ["UT: exposure computed from probability and impact scales"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['planning raid-lookahead.spec.ts "scores exposure (probability × impact), keeps optional money exposure exact, and filters"; "escalation must raise the level; closing needs a reason; closed items reopen with a reason"; "assumptions and RAID dependencies are tracked with the same lifecycle; the open blocking issue turns the workstream red"', D planning.test.ts "scores exposure as probability × impact with bands"]
 - id: REQ-PLN-013
   section: "9"
   title: "Change requests with impacts and rebaselining"
@@ -2454,8 +2454,8 @@
   security_rule: "Approval per authority matrix; requester cannot approve (proposeBaselineChange command)"
   acceptance_tests: ["AT-07", "AT-16", "UT: rebaseline creates new baseline version and keeps previous"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [planning at-16-baseline-concurrency.spec.ts "re-baselining after approval requires an approved change request; the previous baseline is preserved (superseded)", 'governance p2-governance-authority.spec.ts "within the DEMO limit (quantified cost) → approved, the authority basis is audited"; "the requester is refused by separation of duties (403) before any authority evaluation" (DOM-P2-03 fixed)', 'e2e p2-planning.spec.ts "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'web: the costImpact money field and the decision picker are in progress (P2 web follow-up); a cost impact typed only as text is refused at approval (422 amount_unquantified)']
 - id: REQ-PLN-014
   section: "9"
   title: "Responsibility matrix and owner conflicts"
@@ -2470,8 +2470,8 @@
   security_rule: "Scope-filtered"
   acceptance_tests: ["UT: owner with overlapping critical tasks flagged"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [planning raid-lookahead.spec.ts "shows owner load and conflicts without claiming resource optimisation"]
 - id: REQ-PLN-015
   section: "9"
   title: "Periodic updates with review and frozen versions"
@@ -2486,8 +2486,8 @@
   security_rule: "Reviewer distinct from submitter"
   acceptance_tests: ["UT: accepted update immutable; later edits create new version"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['planning measurement.spec.ts "a baselined, fresh, on-plan workstream is green" (the submitter cannot accept; accepted updates are frozen and cannot be edited); "an update older than the freshness window is Data stale — never green" (return needs a reason)', planning acceptance-and-access.spec.ts "reviewers see pending updates and overrides; the requester does not see their own override to review"]
 - id: REQ-PLN-016
   section: "9-M1"
   title: "Progress weighted by approved deliverable weights"
@@ -2502,8 +2502,8 @@
   security_rule: "Weights editable only via approval"
   acceptance_tests: ["UT: weighted progress differs from task count on reference data"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['planning measurement.spec.ts "unapproved weights are excluded with a reason; approval needs baseline authority"; "only accepted (evidence-verified) deliverables count; a cancelled one is excluded, never complete"; "changing a weight withdraws its approval; the person who set a weight cannot approve it"', D rules.test.ts "weights deliverables and excludes cancelled items from both numerator and denominator"]
 - id: REQ-PLN-017
   section: "9-M2"
   title: "Show denominator and exclusions"
@@ -2518,8 +2518,8 @@
   security_rule: "Contributors limited to caller scope"
   acceptance_tests: ["UT: cancelled task excluded with reason, not counted complete"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['planning measurement.spec.ts "only accepted (evidence-verified) deliverables count; a cancelled one is excluded, never complete"', 'D planning.test.ts "counts only accepted deliverables, excludes cancelled and unapproved weights with reasons"']
 - id: REQ-PLN-018
   section: "9-M3"
   title: "Green average never hides red CP or blocker"
@@ -2534,8 +2534,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-12", "UT: overall health cannot be Green while a blocking CP is Red"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [planning measurement.spec.ts "an open blocker makes the workstream red and the project red despite a green workstream", 'D rules.test.ts "a green average cannot hide a red critical item"; "DOM-P2-10: a project override never displays better than red while a red critical item (open blocker) exists [REQ-PLN-018]"', the CP side of AT-12 is REQ-JV-018 (P4)]
 - id: REQ-PLN-019
   section: "9-M4"
   title: "Configurable RAG thresholds with explanations"
@@ -2550,8 +2550,8 @@
   security_rule: "Threshold changes audited; Project Manager/Portfolio Admin only"
   acceptance_tests: ["UT: status explanation shows threshold applied"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Deferred
+  evidence: ['target P6 (configuration module, review finding DOM-P2-08); owner backend-data-engineer (project-config); reason: re-phased by the lead — RAG thresholds are the code defaults (DEFAULT_RAG_THRESHOLDS in health.service.ts), the template ragPolicy is not read and no API changes them', 'built so far: every calculated RAG carries an explanation (planning measurement.spec.ts "an update older than the freshness window is Data stale — never green")']
 - id: REQ-PLN-020
   section: "9-M5"
   title: "Unknown and stale data never Green"
@@ -2566,8 +2566,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: stale update yields Data stale status not Green"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [planning measurement.spec.ts "an update older than the freshness window is Data stale — never green" (also not_updated), D rules.test.ts "unknown / stale / not updated are never green", D planning.test.ts "freshness cannot be pre-dated into the future and stale is never green"]
 - id: REQ-PLN-021
   section: "9-M6"
   title: "Manual RAG override with reason, expiry and reviewer"
@@ -2582,8 +2582,8 @@
   security_rule: "Reviewer distinct from requester; override auto-expires"
   acceptance_tests: ["UT: override without expiry rejected; expired override reverts to calculated"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [planning measurement.spec.ts "validates expiry and allows one pending request per item"; "the requester cannot approve their own override; a reviewer can — the blocker still shows as red critical", D rules.test.ts "overrides need reviewer/expiry and keep the calculated value" (an expired override reverts to the calculated value)]
 - id: REQ-PLN-022
   section: "9-M7"
   title: "Recalculate metrics while preserving snapshots"
@@ -2598,8 +2598,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: source change updates live metric but not the published snapshot"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [planning measurement.spec.ts "an open blocker makes the workstream red and the project red despite a green workstream" (the frozen WS01 update keeps its snapshot while the live RAG changes), governance decision-lifecycle.spec.ts "10. the frozen pack is unchanged by later changes; re-freezing creates a linked new version; the DB rejects edits", published report snapshots (reporting module) are P6]
 - id: REQ-PLN-023
   section: "9-M8"
   title: "Schedule-based forecasts, no LLM delay probabilities"
@@ -2614,8 +2614,8 @@
   security_rule: "AI output schema has no probability field"
   acceptance_tests: ["AT-15", "UT: AI response schema rejects delay probability"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['planning at-15-delay-impact.spec.ts "computes critical path, float and finish on the working calendar (schedule-based forecast)" (label Schedule-based forecast; no probability or confidence field in the payload)', 'e2e p2-planning.spec.ts "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (forecast label on the cockpit tile) (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: the AT (the AI response schema rejects a delay probability) has no test — re-phased to P5 (ai-runtime-engineer)']
 - id: REQ-PLN-024
   section: "9"
   title: "Predecessor delay impact analysis"
@@ -2630,8 +2630,8 @@
   security_rule: "Read-only simulation; no data change"
   acceptance_tests: ["AT-15", "UT: what-if of 10 working-day slip reproduces identical impact on rerun"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['planning at-15-delay-impact.spec.ts "delaying the critical predecessor A by 3 working days slips C, M and the finish by 3 working days"; "a delay within the float of a non-critical activity does not move the finish"', D schedule.test.ts "propagates a 3-working-day delay on A to C and M and the project finish", 'D planning.test.ts "applies the what-if delay to the current forecast finish, not only to the duration"', 'reproducible: both tests rerun the analysis and assert an identical result']
 
 # ---------------------------------------------------------------- UX
 
@@ -2713,8 +2713,8 @@
   security_rule: "Cockpit aggregates computed within caller scope"
   acceptance_tests: ["AT-06", "E2E: cockpit shows four status dimensions and top decisions"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['cockpit (apps/web/src/app/(app)/projects/[projectId]/page.tsx): four status dimensions, next gate, delay-impact tile with the schedule-based forecast label: e2e p1-smoke.spec.ts "(a) Demo Project Manager sees DEMO-DC with a Demo badge and not DEMO-TRANSFORM" (four dimension cards); e2e p2-planning.spec.ts "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: the top-decisions / blockers tile and the committee-asks tile still render NotImplementedYet (labelled P2); no overall-health tile; the AT E2E (four dimensions and top decisions) is therefore not met']
 - id: REQ-UX-006
   section: "10"
   title: "Screen 3: Program Overview & Charter"
@@ -2729,8 +2729,8 @@
   security_rule: "Scope-filtered"
   acceptance_tests: ["E2E: overview renders charter version and baseline"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['project charter screen (charter/page.tsx): objective, programme, legal entities (parties), phases; charter edit with optimistic concurrency: e2e p1-smoke.spec.ts "(e) charter edit with a stale version gets the real 409 ... state (no data changed)" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: the screen does not show the committee charter version or the approved baseline, so the AT (overview renders charter version and baseline) is not met']
 - id: REQ-UX-007
   section: "10"
   title: "Screen 4: Committee Hub"
@@ -2745,8 +2745,8 @@
   security_rule: "Committee membership ABAC"
   acceptance_tests: ["AT-04", "E2E: decision lifecycle executed from Committee Hub"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['Committee Hub (committee/*): charter, members, meetings, packs, voting, decisions, actions, escalations: e2e p2-governance.spec.ts "a decision goes from draft to a server-computed outcome through the UI; a recused vote is refused and shown" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'known regression: recording an external-authority approval from the decision page returns 422 (the API now requires a verified evidence link, DOM-P2-12); the evidence picker and the matrix approval-document / verification actions are P2 web follow-ups in progress; AT-04 in the UI is shown only as the Recommended — pending external authority metric']
 - id: REQ-UX-008
   section: "10"
   title: "Screen 5: Integrated Plan"
@@ -2761,8 +2761,8 @@
   security_rule: "Scope-filtered"
   acceptance_tests: ["AT-15", "E2E: Gantt renders critical path and baseline variance"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['Integrated Plan tabs: WBS, timeline (Gantt), milestones, deliverables, dependencies, baselines, look-ahead, what-if, health: e2e p2-planning.spec.ts "(a) PM confirms a Draft task into the plan, reports progress, and a stale version gets 409 ... review"; "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves"; "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no test asserts the critical path or baseline variance on the Gantt (AT); cross-project dependency and prerequisite screens are P2 web follow-ups in progress']
 - id: REQ-UX-009
   section: "10"
   title: "Screen 6: Workstream Workspace"
@@ -2777,8 +2777,8 @@
   security_rule: "Workstream-level role scoping"
   acceptance_tests: ["E2E: lead submits update from workspace"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['Workstream Workspace with tasks, deliverables, updates, risks and readiness tabs: e2e p2-planning.spec.ts "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (tasks tab) (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no E2E of a lead submitting an update from the workspace (AT)']
 - id: REQ-UX-010
   section: "10"
   title: "Screen 7: Perimeter & Transfers"
@@ -2793,8 +2793,8 @@
   security_rule: "Classified values hidden per ABAC"
   acceptance_tests: ["AT-07", "E2E: add perimeter item and see reconciliation update"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['Perimeter & Transfers screen (perimeter register, transfers, agreements, consents, reconciliation tabs); rendering in English, Arabic and 390px: e2e p3-carveout.spec.ts "(d) screens in English and Arabic (RTL), and at 390px without horizontal page scroll" (passed at 124f3d8 in the separate run of tests (b)–(d))', 'FAILED at 124f3d8: e2e p3-carveout.spec.ts "(a) AT-07: an addition after baseline is held Pending with an impact assessment and enters scope only once its change request is approved and applied" — the Demo Sponsor approval of the perimeter change request returns 422 change_control.amount_unquantified (the change request states its budget effect as text; the UI has no costImpact money field). Regression from the DOM-P2-03 fix (3e2a29d); the test passed in CI run 23 at a471265, before that fix. Fix: the costImpact field of the P2 web follow-up (finding F-13)', 'gap: no E2E asserts that the reconciliation view updates after an item is added (AT)']
 - id: REQ-UX-011
   section: "10"
   title: "Screen 8: NewCo & Regulatory Readiness"
@@ -2809,8 +2809,8 @@
   security_rule: "Legal Restricted ABAC"
   acceptance_tests: ["AT-06", "E2E: record incorporation with evidence"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['e2e p3-carveout.spec.ts "(b) AT-06: incorporation status recorded ≠ verified; recording and verifying it leaves transfers and the carve-out untouched"; "(c) approvals register: new entries start ... the registrant is refused (403 reason shown), another specialist assesses" (both passed at 124f3d8 in the separate run of tests (b)–(d))']
 - id: REQ-UX-012
   section: "10"
   title: "Screen 9: Day-1 & TSA Center"
@@ -2825,8 +2825,8 @@
   security_rule: "Scope-filtered"
   acceptance_tests: ["AT-09", "AT-10", "E2E: failed blocker shown and go blocked"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['e2e p3-readiness.spec.ts "AT-09: a failed connectivity test blocks GO; contingency and decision history are shown"; "AT-10: end date is not an exit; failure escalates; extension waits for an approved decision; exit needs evidence and an independent approver" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)']
 - id: REQ-UX-013
   section: "10"
   title: "Screen 10: Finance & Value"
@@ -2842,7 +2842,7 @@
   acceptance_tests: ["AT-29", "E2E: restricted user sees restricted-access state"]
   phase: P4
   status: Planned
-  evidence: []
+  evidence: ['the Finance & Value screen is a placeholder (apps/web/src/app/(app)/projects/[projectId]/finance/page.tsx renders PlaceholderSection, phase P4); the web screens are being built by another agent (in progress)', 'backend Tested: finance snapshots, budget lines, models, benefits, KPIs and reconciliations (apps/api/test/finance, 5 files); restricted access: finance finance-isolation.spec.ts "a project member without finance.record.read is refused (403); with it, lower clearance sees nothing above it"', the AT E2E (restricted user sees the restricted-access state) is not built]
 - id: REQ-UX-014
   section: "10"
   title: "Screen 11: JV & Diligence"
@@ -2858,7 +2858,7 @@
   acceptance_tests: ["AT-11", "AT-12", "E2E: closing blocked message shows unmet CPs"]
   phase: P4
   status: Planned
-  evidence: []
+  evidence: ['the JV & Diligence screen is a placeholder (apps/web/src/app/(app)/projects/[projectId]/jv/page.tsx renders PlaceholderSection, phase P4); the web screens are being built by another agent (in progress)', 'backend Tested: partners, rooms, scenarios, DD requests and findings, signings, closings, CPs, post-close (apps/api/test/jv, 8 files); closing blocked with unmet CPs: jv at-12-closing-blocked-cp.spec.ts "IT: confirm with one unverified blocking CP is rejected and logged — the CP set is re-evaluated inside the confirm transaction"', the AT E2E (closing blocked message shows unmet CPs) is not built]
 - id: REQ-UX-015
   section: "10"
   title: "Screen 12: RAID & Change Control"
@@ -2873,8 +2873,8 @@
   security_rule: "Scope-filtered"
   acceptance_tests: ["AT-07", "E2E: raise CR from risk"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['RAID & Change Control screen: e2e p2-planning.spec.ts "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: raising a change request from a risk (AT) is not tested; the costImpact money field is a P2 web follow-up in progress (a cost impact typed only as text cannot be approved)']
 - id: REQ-UX-016
   section: "10"
   title: "Screen 13: Document & Evidence Center"
@@ -2889,8 +2889,8 @@
   security_rule: "Document ACL in SQL; no title leakage"
   acceptance_tests: ["AT-03", "E2E: upload version and link as evidence"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['e2e p2-documents.spec.ts "(a) upload → new version → evidence link → verification by another person"; "(b) project B sees nothing of project A documents, evidence or sources"; "(c) AT-01: historical claims are shown as historical-unverified and cannot be confirmed" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'searchable index and source register behind it: documents at-03-documents-isolation.spec.ts "title and content search never return hidden titles or snippets"']
 - id: REQ-UX-017
   section: "10"
   title: "Screen 14: AI PM Center"
@@ -2921,8 +2921,8 @@
   security_rule: "Items across projects filtered by membership"
   acceptance_tests: ["AT-30", "E2E: assigned approval appears in inbox"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['My Work / Inbox (apps/web/src/app/(app)/inbox): an assigned approval appears in the approver inbox: e2e p2-planning.spec.ts "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'API item types with the command checks: planning approver-role-and-my-work.spec.ts "unverified evidence is offered to a verifier, never to the person who linked it; it leaves My Work once verified"; gates p2-gate-authority-reassessment.spec.ts "a gate ready for decision is offered to its approver role, not to the submitter or another approver role" (DOM-P2-09 fixed)', 'gap: agenda screening, external-authority recording and claim reviews are not My Work item types (DOM-P2-09 residual); no comments; notifications re-phased to P6 with REQ-PLT-008; AT-30 with REQ-PLT-003 (P8)']
 - id: REQ-UX-019
   section: "10"
   title: "Screen 16a: Administration (templates, users, permissions, identity)"
@@ -2969,8 +2969,8 @@
   security_rule: "Search executed in SQL with ACL; totals in scope"
   acceptance_tests: ["AT-03", "IT: list endpoints enforce pageSize<=100 and scoped totals"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['P1 qa-p1-sec016-injection.spec.ts "REQ-DAT-015: pageSize > 100, page < 1 and non-numeric paging are rejected with 400 problem+json"', 'P1 qa-p1-13-list-sort.spec.ts "every list route: each declared key works in both directions without changing the total; any other value is 400"', 'scoped totals: documents at-03-documents-isolation.spec.ts "list totals equal the count of rows the caller may see — restricted and room documents are neither listed nor counted"', 'screens of later phases (finance, JV, AI, reports) get their search and filters with those screens']
 - id: REQ-UX-022
   section: "10"
   title: "Loading, empty, error and restricted-access states"
@@ -2985,8 +2985,8 @@
   security_rule: "Restricted state rendered from 404 without detail"
   acceptance_tests: ["E2E: each screen renders all four states"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['shared loading / empty / error / restricted components (SectionGuard, ApiErrorNotice, restricted state from 404): e2e p1-smoke.spec.ts "(c) Demo PM — Project B opening the DC project URL sees the restricted state" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no E2E renders all four states on each screen (AT)']
 - id: REQ-UX-023
   section: "10"
   title: "Activity history and source links"
@@ -3001,8 +3001,8 @@
   security_rule: "History filtered by record ACL"
   acceptance_tests: ["E2E: edit shows in record history with actor and reason"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['ActivityHistory on project, record and decision pages: e2e p2-governance.spec.ts "a decision goes from draft to a server-computed outcome through the UI; a recused vote is refused and shown" (decision history lists each command) (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no E2E edits a record and checks the history entry with actor and reason (AT)']
 - id: REQ-UX-024
   section: "10"
   title: "Metric drill-down to contributing records"
@@ -3017,8 +3017,8 @@
   security_rule: "Contributors limited to scope; restricted contributors counted only if authorized"
   acceptance_tests: ["E2E: click KPI tile opens filtered list matching the count"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['metric links to filtered lists (Committee Hub metrics, workstream metric cards): e2e p2-governance.spec.ts "a decision goes from draft to a server-computed outcome through the UI; a recused vote is refused and shown" (hub metric link visible) (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no E2E clicks a KPI tile and compares the opened list with the count (AT); the metric contributors API is not built']
 - id: REQ-UX-025
   section: "10"
   title: "Desktop, tablet and mobile browsers"
@@ -4293,8 +4293,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-29", "UT: SAR + USD sum without basis rejected; with basis shows source"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['finance at-29-currency-unit-aggregation.spec.ts "SAR + USD without a conversion basis is rejected (422) and the rejection is audited"; "with an explicit basis (rate, source, date) the total shows its basis and source"; "a basis without its source or date is refused (the platform never invents a rate)"', D finance.test.ts "SAR + USD without a basis is rejected"; "with an explicit basis the result shows the basis and its source"]
 - id: REQ-DAT-005
   section: "14"
   title: "Optimistic concurrency"
@@ -4389,8 +4389,8 @@
   security_rule: "Hold placement/release by Legal Restricted only"
   acceptance_tests: ["AT-27", "IT: delete of held document rejected and audited"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['documents at-27-legal-hold.spec.ts "disposal requested before a hold is refused once the hold is placed — 422 + audited, the document is untouched"; "the database refuses soft deletion under hold or retention even when the API is bypassed (hub_app role)"; "new disposal requests and new versions are refused while the hold is active"', P1 projects-templates-audit.spec.ts "hard delete and soft delete under hold are rejected"]
 - id: REQ-DAT-011
   section: "14"
   title: "Authorized disposal procedure"
@@ -4437,8 +4437,8 @@
   security_rule: "Contract schemas for update endpoints exclude status fields"
   acceptance_tests: ["UT: PATCH containing status field rejected on every resource"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['status changes only through commands: governance decision-lifecycle.spec.ts "2. an incomplete paper cannot be submitted (422 lists missing fields); stale edits are rejected (AT-16 → 409)" (status in a PATCH is stripped); P1 qa-p1-sec016-injection.spec.ts "a PATCH cannot change the project status column"; carveout at-07-perimeter-change-control.spec.ts "a generic PATCH cannot change disposition or transfer status (strict body → 400)"; finance finance-registers.spec.ts "no PATCH of the approved amount or state; the database refuses an approved amount on an unapproved line"', C carveout.test.ts "every route declares a permission key and status changes are commands" (carve-out and NewCo routes only), 'gap: no registry-wide test that no PATCH contract of any module accepts a status field (AT: every resource); some PATCH routes strip a status field (200) instead of rejecting it']
 - id: REQ-DAT-014
   section: "14"
   title: "Reassessment and cache invalidation on change"
@@ -4453,8 +4453,8 @@
   security_rule: "Invalidation jobs run with service identity"
   acceptance_tests: ["AT-14", "IT: superseding evidence flags gate for reassessment"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['gates p2-gate-authority-reassessment.spec.ts "superseding evidence relied upon by the approved G0 flags the gate (REQ-DAT-014), escalates once, notifies and emits gate.blocked"', 'documents at-03-documents-isolation.spec.ts "declassification: never by the document owner; otherwise audited with permission.changed and index invalidation"', gates at-06-status-dimensions.spec.ts "a perimeter change reaches the dimensions through the worker (perimeter.changed → gates.recompute_dimensions)"]
 - id: REQ-DAT-015
   section: "14"
   title: "API versioning, pagination and filtering"
@@ -4568,8 +4568,8 @@
   security_rule: "Approval command compares approver with requester and delegation chain; server check independent of UI; denial audited"
   acceptance_tests: ["AT-05", "UT: requester approval rejected", "IT: direct API self-approval rejected and audited"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance at-05-quorum-recusal-self-approval.spec.ts "the requester cannot vote on their own decision (separation of duties → 403, audited as denied)"', planning at-16-baseline-concurrency.spec.ts "the proposer cannot approve their own baseline (not_self) and the attempt is audited as denied", 'second role: planning measurement.spec.ts "a baselined, fresh, on-plan workstream is green" (the submitter granted secretary_cpmo still cannot accept their own update, 403, audited)', 'D policy.test.ts "not_self: the requester themself -> denied (not ... someone else -> allowed"']
 - id: REQ-SEC-005
   section: "15"
   title: "Protected quorum calculation"
@@ -4584,8 +4584,8 @@
   security_rule: "Quorum inputs read from DB inside vote transaction"
   acceptance_tests: ["AT-05", "IT: client-supplied quorum flag ignored"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['governance at-05-quorum-recusal-self-approval.spec.ts "a client cannot supply its own quorum: extra body fields are ignored and the server recomputes"', 'governance p2-governance-authority.spec.ts "after the first vote, attendance cannot change (422, audited); after the outcome is recorded it can again"; "tally integrity: a vote of a member recused behind the API (owner pool) refuses the outcome instead of being dropped" (DOM-P2-06, DOM-P2-20 fixed)']
 - id: REQ-SEC-006
   section: "15"
   title: "Isolation in APIs and database row policies"
@@ -4712,8 +4712,8 @@
   security_rule: "Files remain quarantined until scan passes; scanner via adapter"
   acceptance_tests: ["AT-25", "IT: EICAR test file quarantined; oversized upload rejected"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['documents at-25-file-safety.spec.ts "an oversized upload is refused (413) and nothing is stored"; "the EICAR test file and executables are quarantined: never current, never downloadable, never indexed or linked"; "types outside the allowlist, extension/content mismatches, bare ZIPs and macro-enabled files are rejected, audited, not stored"', D documents.test.ts "flags the EICAR test signature anywhere in the file", the built-in check is not an antivirus engine; the enterprise malware scanner adapter is Not configured (uploads marked unscanned; refused in production unless HUB_ALLOW_UNSCANNED_FILES)]
 - id: REQ-SEC-014
   section: "15"
   title: "Path traversal and SSRF prevention"
@@ -4808,8 +4808,8 @@
   security_rule: "Read-audit rows written for classified resources"
   acceptance_tests: ["IT: download of Legal Restricted file produces access audit event"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['documents at-27-legal-hold.spec.ts "every successful download is audited with the actor, version and checksum; there is no public URL" (every download is audited, a superset of the AT)', 'partner rooms: jv at-03-partner-room-isolation.spec.ts "download → revoke → 404, and the access/disclosure history keeps every event"', exports and report snapshots are P6]
 - id: REQ-SEC-020
   section: "15"
   title: "Incident-response runbook"
@@ -5748,8 +5748,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-04", "AT-05", "REVIEW: docs/phases/P2-gate-report.json"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['the decision journey (request → authorized approval → action → verified closure) passes: governance decision-lifecycle.spec.ts "8. implementation verified with evidence by someone other than the person who started tracking"; blocking outside authority: governance at-04-decision-outside-delegation.spec.ts "a passing vote on a reserved decision type is recorded as Recommended — pending external authority, with an escalation (never Approved)"', 'domain review docs/reviews/P2-domain-review.md FAIL at 4f05318 (5 High); High and Medium fixes merged (3e2a29d, c1338f7); open: DOM-P2-14 and DOM-P2-16 (Low); domain re-review and QA review not run; closes with docs/phases/P2-gate-report.json']
 - id: REQ-PHS-005
   section: "19"
   title: "P3 exit: separation states, blockers and perimeter impact"
@@ -5764,8 +5764,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-06", "AT-07", "AT-08", "AT-09", "AT-10", "REVIEW: docs/phases/P3-gate-report.json"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['P3 exit behaviours are tested at API level: AT-06 carveout at-06-incorporation-separate.spec.ts, AT-07 carveout at-07-perimeter-change-control.spec.ts, AT-08 carveout at-08-day1-contract-position.spec.ts, AT-09 readiness at-09-readiness-go-no-go.spec.ts, AT-10 readiness at-10-tsa-expiry.spec.ts; e2e p3-readiness.spec.ts passed at 124f3d8; e2e p3-carveout.spec.ts (a) AT-07 FAILED at 124f3d8 (finding F-13), (b)–(d) passed', 'P3 domain, security and QA reviews not run; P3 screens not yet in the axe scan list; closes with docs/phases/P3-gate-report.json']
 - id: REQ-PHS-006
   section: "19"
   title: "P4 exit: CP blocking, partner isolation, NDA, reconciliation"
@@ -5780,8 +5780,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-11", "AT-12", "AT-13", "AT-29", "REVIEW: docs/phases/P4-gate-report.json"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['P4 exit behaviours tested at API level: missing CP blocks closing (jv at-12-closing-blocked-cp.spec.ts), partner isolation (jv at-03-partner-room-isolation.spec.ts), NDA alone grants no access (REQ-JV-005), financial reconciliation (REQ-FIN-004)', 'finance and JV web screens in progress; P4 domain, security and QA reviews not run; closes with docs/phases/P4-gate-report.json']
 - id: REQ-PHS-007
   section: "19"
   title: "P5 exit: durable, grounded, safe AI"
@@ -6183,8 +6183,8 @@
   security_rule: "Demo partner names obviously fictional"
   acceptance_tests: ["AT-03", "UT: demo partners flagged is_demo and fictional"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['jv jv-demo-seed.spec.ts "UT: demo partners flagged is_demo and fictional — exactly two, no real names"']
 - id: REQ-SET-003
   section: "21"
   title: "Second transformation project for isolation tests"
@@ -6215,8 +6215,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-04", "AT-10", "AT-12", "E2E: demo scenarios reproduce blocked states"]
   phase: P4
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['blocked CP: jv jv-demo-seed.spec.ts "REQ-SET-004: the demo closing is blocked by an unverified, non-waivable blocking CP"; decision outside authority: governance governance-integrity.spec.ts "seeds the steering committee, distinct boards, an approved DEMO matrix, meeting #1 and the five decision states" (recommended, pending external authority); blocked Day-1 GO: readiness readiness-demo-seed.spec.ts "the Day-1 demo plan shows a blocked GO with the failed connectivity test and its contingency"', 'gap: the demo TSA is only in negotiation with dates, charges and replacement to be confirmed (readiness readiness-demo-seed.spec.ts "the non-waivable waiver attempt was rejected and audited; the TSA is in negotiation with no dates or amounts"), which is not a TSA issue scenario (expired, breached or failed replacement); no E2E reproduces the blocked states (AT)']
 - id: REQ-SET-005
   section: "21"
   title: "Demo data labelled and excluded from actual reporting"
@@ -6311,8 +6311,8 @@
   security_rule: "Incorporated requires evidence; default unconfirmed"
   acceptance_tests: ["AT-06", "UT: incorporated without evidence rejected"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [carveout setup-wizard.spec.ts "... without evidence is rejected; with evidence it is recorded as proposed; one NewCo per project", 'carveout at-06-incorporation-separate.spec.ts "UT/IT: recording ... without evidence is rejected, audited, and changes nothing"', 'D newco.test.ts "UT: incorporated without evidence rejected; in progress also needs evidence; unconfirmed needs none"']
 - id: REQ-SET-011
   section: "21"
   title: "Wizard step 3: import sources and review claims"
@@ -6343,8 +6343,8 @@
   security_rule: "Approval per authority matrix"
   acceptance_tests: ["E2E: wizard perimeter approval creates baseline perimeter version"]
   phase: P3
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [carveout setup-wizard.spec.ts "pending dispositions or in-scope items without workstream/owner block the proposal"; "the PM proposes; approval needs the sponsor with a FINAL governance decision"; "after approval a new item needs a change request; a stale snapshot cannot be approved", D perimeter.test.ts "pending dispositions and in-scope items without workstream/owner block; missing lead warns", 'AT variance: verified through the API (POST .../setup/steps/perimeter and the perimeter-version commands); no Playwright test drives the wizard step']
 - id: REQ-SET-013
   section: "21"
   title: "Wizard step 5: committee, delegation and quorum"
@@ -6359,8 +6359,8 @@
   security_rule: "Authority inactive until approved"
   acceptance_tests: ["AT-04", "E2E: wizard committee step leaves matrix pending approval"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['committee, authority matrix (draft, approve, second-person verification) and quorum rules are set up in the Committee Hub; project setup gaps list committee and authority_matrix until an active committee and an approved matrix exist: P1 qa-p1-sec016-injection.spec.ts "setup gaps reflect current records: DEMO-DC has an active committee and an approved authority matrix"', 'gap: no setup-wizard step 5 (POST .../setup/steps/committee not built); no E2E (AT)']
 - id: REQ-SET-014
   section: "21"
   title: "Wizard step 6: baseline and gates"
@@ -6375,8 +6375,8 @@
   security_rule: "Baseline approval per authority matrix"
   acceptance_tests: ["E2E: wizard baseline step creates draft baseline"]
   phase: P2
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [baseline proposal and approval in the Integrated Plan (planning at-16-baseline-concurrency.spec.ts "a PM proposes baseline v1 with a frozen snapshot and hash; only one proposal can be pending"); gates G0–G7 reviewed on the gates screen; setup gaps list baseline until one is approved, 'gap: no setup-wizard step 6 (POST .../setup/steps/baseline not built); no E2E (AT)']
 - id: REQ-SET-015
   section: "21"
   title: "Wizard step 7: confidentiality, retention, integrations and AI mode"
