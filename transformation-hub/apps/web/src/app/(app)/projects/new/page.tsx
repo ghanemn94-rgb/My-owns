@@ -229,6 +229,7 @@ export default function NewProjectPage() {
                     <input
                       type="radio"
                       name="template"
+                      data-testid={`template-${tpl.templateKey}`}
                       className="mt-1 size-4 accent-[var(--hub-primary)]"
                       checked={form.templateVersionId === tpl.id}
                       onChange={() => set('templateVersionId', tpl.id)}

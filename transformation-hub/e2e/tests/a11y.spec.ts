@@ -68,7 +68,8 @@ const visible = (selector: string) => async (page: Page) => {
 };
 
 async function wizardTo(page: Page, step: 'details' | 'people' | 'review' | 'people-open') {
-  await page.getByRole('radio', { name: /General Transformation/ }).check();
+  // By template key, not display name: the Arabic UI shows the template's Arabic name (QA-P1-14).
+  await page.getByTestId('template-general-transformation').check();
   await page.getByTestId('wizard-next').click();
   if (step === 'details') return;
   await page.getByTestId('wizard-code').fill('A11Y-SCAN');

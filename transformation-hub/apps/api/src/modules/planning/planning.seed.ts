@@ -40,8 +40,12 @@ export const planningSeed: ModuleSeed = {
     for (const [code, persona] of Object.entries(DEMO_WS)) {
       const w = ws.get(code)!;
       if (!w.leadUserId) await asUser('pm', (ctx) => portfolio.assignWorkstreamLead(ctx, pid, w.id, uid[persona]!, w.version));
-      const r = await asUser('pm', (ctx) => wbs.activateWorkstreamTasks(ctx, pid, w.id, 'Demo: plan confirmed for the demo scenario'));
-      if (r.activated) log(`planning: activated ${r.activated} ${code} tasks`);
+      // Idempotent: on a re-run nothing is left in Draft, so the (audited) bulk activation is not invoked again.
+      const drafts = await asUser('pm', (ctx) => wbs.listTasks(ctx, pid, { page: 1, pageSize: 1, workstreamId: w.id, status: ['draft'] }));
+      if (drafts.total > 0) {
+        const r = await asUser('pm', (ctx) => wbs.activateWorkstreamTasks(ctx, pid, w.id, 'Demo: plan confirmed for the demo scenario'));
+        if (r.activated) log(`planning: activated ${r.activated} ${code} tasks`);
+      }
       const tasks = await asUser('pm', (ctx) => wbs.listTasks(ctx, pid, { page: 1, pageSize: 100, workstreamId: w.id }));
       for (const t of tasks.items) {
         if (t.accountableUserId || t.status === 'draft') continue;
