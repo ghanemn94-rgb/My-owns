@@ -1,0 +1,37 @@
+# cmd: git show 7edacdc:tools/gates/lib/rules.mjs | sed -n 597,605p   (commitPresent header -- still says anchor 1 applies 'when it resolves')
+   597	// Whether a commit object is present in this repository. Gate validation runs on a COMPLETE clone (validateGate refuses
+   598	// a shallow one, F-DG0-160), so every commit a genuine record references is present. The ONLY absence tolerance is
+   599	// findManifest's (D-035): a superseded review round's write-once manifest may name a `source_commit` that no longer
+   600	// resolves (round 18 was rewritten by the D-034 write-once repair), and that is accepted because the manifest's entries
+   601	// must still hash to its `candidate_id` -- a content-preserving check, not a skipped one. checkClosure and
+   602	// checkInvocation are STRICT (D-039..D-041): a CLOSED_VERIFIED `fix_revision` and a run's `head_commit_at_start` must be
+   603	// present, and the fix must be an ancestor of THREE anchors -- the verifying round's frozen source_commit (when it
+   604	// resolves; this findManifest tolerance covers the one case it may not), the verifying run's real head, and the gate
+   605	// candidate -- so no single forgeable metadata value decides a closure (D-041, F-DG0-166/168/249).
+
+# cmd: git show 7edacdc:tools/gates/lib/rules.mjs | sed -n 726,750p   (checkClosure -- anchor 1 unconditional, comment updated by D-042)
+   726	  if (f.status === "CLOSED_VERIFIED") {
+   727	    // Strict, with no absent-commit escape (D-039). Gate validation runs on a COMPLETE clone (validateGate refuses a
+   728	    // shallow one, F-DG0-160), so every real fix commit is present. A CLOSED_VERIFIED fix must be a full 40-hex commit
+   729	    // that is PRESENT and an ancestor of THREE independent anchors, ALL of which are enforced unconditionally (D-041 +
+   730	    // D-042, F-DG0-168/169):
+   731	    //   1. the verifying round's frozen candidate (`round.source_commit`): it pins the fix to exactly the FROZEN
+   732	    //      candidate the reviewer was assigned, so a fix committed after the freeze is caught. This anchor is NOT
+   733	    //      conditional: a closure verified in a round whose `source_commit` does not resolve (the findManifest/D-035
+   734	    //      tolerance is content-preserving for the manifest, but cannot supply the frozen candidate for this check) is
+   735	    //      REJECTED outright -- no real closure is (round 18's, the only absent-source round, were re-verified in a
+   736	    //      retained round). Otherwise a fix committed after that round's freeze could slip through where anchor 1 was skipped.
+   737	    //   2. the verifying RUN's `head_commit_at_start` (present, 40-hex, containing the round manifest -- checkInvocation
+   738	    //      enforced this): REAL, run-bound evidence of what the reviewer's checkout held (D-040, F-DG0-166/249).
+   739	    //   3. the gate candidate (`gate.source_commit`, which checkCandidate requires present and branch-reachable).
+   740	    // An all-zero, typo'd, absent, or committed-after-the-freeze/run fix is therefore always rejected, whatever the
+   741	    // round metadata says. Anchor 1 was wrongly REPLACED by anchor 2 in D-040 (D-041 restored it) and made
+   742	    // unconditional in D-042.
+   743	    if (!f.fix_revision || !/^[0-9a-f]{40}$/.test(f.fix_revision)) errors.push(`${where}: CLOSED_VERIFIED needs a full fix_revision commit id`);
+   744	    else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
+   745	    else {
+   746	      if (!commitPresent(repo, round.source_commit))
+   747	        errors.push(`${where}: verified in ${v.roundDir}, whose frozen candidate source_commit ${String(round.source_commit).slice(0, 10)} is not present; a closure must be verified against a retained candidate (F-DG0-169)`);
+   748	      else if (!isAncestor(repo, f.fix_revision, round.source_commit))
+   749	        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verified ${v.roundDir} candidate (${round.source_commit.slice(0, 10)})`);
+   750	      const vhead = (readJson(repo, runFiles(stage.id, v.record.invocation_reference.run_id)[0], errors, `${where} verifying run`) || {}).head_commit_at_start;

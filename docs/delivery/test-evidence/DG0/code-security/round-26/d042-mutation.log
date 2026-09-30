@@ -1,0 +1,16 @@
+# mutation: --no-local clone at 7edacdc with tools/gates/lib/rules.mjs reverted to 2386a0f (pre-D-042); the D-042 unit test must FAIL there and PASS on the candidate
+$ git diff --stat (mutated clone)
+ tools/gates/lib/rules.mjs | 22 ++++++++--------------
+ 1 file changed, 8 insertions(+), 14 deletions(-)
+$ node --test --test-name-pattern='D-042' tools/gates/tests/validator.test.mjs  [pre-D-042 rules.mjs]
+# Subtest: D-042 / F-DG0-169: a closure verified in a round whose source_commit is absent is rejected (anchor 1 is unconditional)
+not ok 1 - D-042 / F-DG0-169: a closure verified in a round whose source_commit is absent is rejected (anchor 1 is unconditional)
+  error: |-
+    expected an error matching /whose frozen candidate source_commit .* is not present/, got:
+# pass 0
+# fail 1
+exit=0
+$ same, candidate rules.mjs
+ok 1 - D-042 / F-DG0-169: a closure verified in a round whose source_commit is absent is rejected (anchor 1 is unconditional)
+# pass 1
+# fail 0

@@ -1,0 +1,225 @@
+# clone: --no-local, shallow=false, HEAD=2386a0fbd0795f3f09ec2802112e84fae2d616f9
+SEC24-1 fix-in-verifier-head: genuine=false forged=false
+SEC24-1 genuine round 2 errors: 2
+  finding F-DG0-101 (High, mandatory): fix 5d71f8be40 is not in the verified round-2 candidate (bdbf35deac)
+  finding F-DG0-101 (High, mandatory): fix 5d71f8be40 is not in the verifying run's starting history (cc3fd9a432); it was not in the candidate the reviewer saw
+SEC24-1 forged round 2 errors: 1
+  finding F-DG0-101 (High, mandatory): fix 3287f28012 is not in the verifying run's starting history (4b1f465ec3); it was not in the candidate the reviewer saw
+SEC24-1 run-head rejection: genuine=true forged=true
+SEC24-2 errors: 0
+SEC24-3 rejected? {"zeros":true,"absent":true,"typo":true,"short":true,"upper":true}
+SEC24-4 rejected? {"unknown":true,"HEAD":true,"missing":true,"null":true,"zeros":true,"absent-40hex":true,"UPPERHEX":true,"short":true}
+SEC24-5 (a) downgrade errors: 4
+  docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json: finding F-DG0-101 severity ("Low") differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json ("High"); a later round cannot reclassify a finding
+  docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json: finding F-DG0-101 mandatory_violation (false) differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json (true); a later round cannot reclassify a finding
+  finding F-DG0-101: severity in findings.json ("Low") differs from the reviewer's ("High")
+  finding F-DG0-101: mandatory_violation in findings.json (false) differs from the reviewer's (true)
+SEC24-5 (c) identical re-listing errors: 0
+SEC24-6 fix in round-2 frozen candidate (source_commit b2e0386e81): false; verifier head content hashes to round-2 candidate: false
+SEC24-6 errors: 1
+  finding F-DG0-101 (High, mandatory): fix 0d5e2a6421 is not in the verified round-2 candidate (b2e0386e81)
+SEC25-1 fix in round-2 frozen candidate: false; anchors fired: {"a1":true,"a2":false,"a3":false}
+SEC25-1 errors: 1
+  finding F-DG0-101 (High, mandatory): fix 8ce7e57e35 is not in the verified round-2 candidate (b2e0386e81)
+SEC25-2 anchors fired: {"a1":false,"a2":true,"a3":false}
+SEC25-2 errors: 1
+  finding F-DG0-101 (High, mandatory): fix 97ffcaad12 is not in the verifying run's starting history (dbe2d26114); it was not in the candidate the reviewer saw
+SEC25-3 fix committed after the round-2 freeze commit: true; verifier head content == round-2 candidate: false; anchors fired: {"a1":false,"a2":false,"a3":false}
+SEC25-3 errors: 0
+SEC25-4 errors: 0
+SEC26-1 errors: 0
+SEC26-1 anchor-1-absent rejection fired: false
+SEC26-2 errors: 0
+SEC26-3 errors: 0
+SEC26-4 errors: 1
+  review rounds: DG0 round 2 frozen_at/source_commit differ from its committed manifest
+SEC26-5 errors: 4
+  review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): reviewed candidate sha256:616b10c62e172d677a81154a578ccb1d95cdec81ad062297d903be0b9b728781 != gate candidate sha256:7b801799923d2fcecbc8fbfd348dbc073f4eaf0646edcac761e2e8cf21907272
+  review code-security-reviewer (docs/delivery/reviews/DG0/round-2/code-security-reviewer.json): reviewed candidate sha256:616b10c62e172d677a81154a578ccb1d95cdec81ad062297d903be0b9b728781 != gate candidate sha256:7b801799923d2fcecbc8fbfd348dbc073f4eaf0646edcac761e2e8cf21907272
+  review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): reviewed candidate sha256:616b10c62e172d677a81154a578ccb1d95cdec81ad062297d903be0b9b728781 != gate candidate sha256:7b801799923d2fcecbc8fbfd348dbc073f4eaf0646edcac761e2e8cf21907272
+  review release-auditor (docs/delivery/reviews/DG0/round-2/release-auditor.json): reviewed candidate sha256:616b10c62e172d677a81154a578ccb1d95cdec81ad062297d903be0b9b728781 != gate candidate sha256:7b801799923d2fcecbc8fbfd348dbc073f4eaf0646edcac761e2e8cf21907272
+✔ SEC24-1 F-DG0-166/249: the round-23 forge (superseded round, absent source_commit, genuine verifier run, fix committed AFTER the run started) -- genuine and forged (977.644746ms)
+✔ SEC24-2 control: forged superseded round with a REAL fix (in the verifier's head and the gate candidate) passes -- no regression; findManifest D-035 tolerance only (383.704198ms)
+✔ SEC24-3 F-DG0-164/246 still hold: absent / typo'd / short / uppercase fix_revision rejected (forged round) (1743.20244ms)
+✔ SEC24-4 F-DG0-164 still holds: the verifying run's head_commit_at_start missing/unknown/HEAD/null/zeros/absent/UPPER/short is rejected (2799.932729ms)
+✔ SEC24-5 F-DG0-165 still holds: later-round severity/mandatory downgrade rejected; identical re-listing accepted (834.072052ms)
+✔ SEC24-6 new probe (GENUINE round, no forged metadata): a candidate-scope fix committed AFTER the round-2 freeze but BEFORE the verifier's run started (567.571139ms)
+✔ SEC25-1 F-DG0-168 (my round-24 SEC24-6): GENUINE round 2, candidate-scope fix committed AFTER the freeze and BEFORE the verifier's run started (451.662485ms)
+✔ SEC25-2 F-DG0-166/249 (round-23 forge): superseded round, ABSENT source_commit, fix committed AFTER the verifier's run started (425.776161ms)
+✔ SEC25-3 NEW PROBE (the two combined): superseded round with a self-declared ABSENT source_commit, fix committed AFTER that round's freeze but BEFORE the verifier's run started (454.430901ms)
+✔ SEC25-4 control: genuine round, fix committed BEFORE the freeze (the stock fixture) -- 0 errors, no regression (343.200773ms)
+✖ SEC26-1 F-DG0-169 (my round-25 SEC25-3): superseded round, self-declared ABSENT source_commit (self-consistent manifest), fix committed after that round's freeze but before the verifier ran -> must now be REJECTED by anchor 1 (396.372596ms)
+✖ SEC26-2 (was SEC24-2 control): forged superseded round with a REAL fix, closure verified IN that round -> now rejected by design (no closure may be verified in an absent-source round) (377.026662ms)
+✔ SEC26-3 control (no regression; the surviving findManifest tolerance): absent-source round 2 is NOT the verifying round; the finding is re-verified in retained gate round 3 -> 0 errors (382.730432ms)
+✖ SEC26-4 the committed D-042 test's fixture: stages.json source_commit alone forged absent (manifest disagrees) -> anchor 1 AND checkReviewRounds both reject (313.09716ms)
+✔ SEC26-5 REJECTED_INVALID / ACCEPTED_OBSERVATION paths are unaffected: a REJECTED_INVALID verified in the absent-source round needs no fix and is not anchored (observe) (290.154431ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 12
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12581.603561
+
+✖ failing tests:
+
+test at tools/gates/tests/sec26.test.mjs:1516:1
+✖ SEC26-1 F-DG0-169 (my round-25 SEC25-3): superseded round, self-declared ABSENT source_commit (self-consistent manifest), fix committed after that round's freeze but before the verifier ran -> must now be REJECTED by anchor 1 (396.372596ms)
+  AssertionError [ERR_ASSERTION]: a closure verified in an absent-source round must be rejected
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.XcWtPo/claude-0/sec26-repro.rBf8NA/c/tools/gates/tests/sec26.test.mjs:1527:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools/gates/tests/sec26.test.mjs:1530:1
+✖ SEC26-2 (was SEC24-2 control): forged superseded round with a REAL fix, closure verified IN that round -> now rejected by design (no closure may be verified in an absent-source round) (377.026662ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(errs.some((e) => SEC26_A1ABSENT.test(e)))
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.XcWtPo/claude-0/sec26-repro.rBf8NA/c/tools/gates/tests/sec26.test.mjs:1538:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools/gates/tests/sec26.test.mjs:1558:1
+✖ SEC26-4 the committed D-042 test's fixture: stages.json source_commit alone forged absent (manifest disagrees) -> anchor 1 AND checkReviewRounds both reject (313.09716ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(errs.some((e) => SEC26_A1ABSENT.test(e)))
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.XcWtPo/claude-0/sec26-repro.rBf8NA/c/tools/gates/tests/sec26.test.mjs:1564:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit=1
+
+# clone: --no-local, shallow=false, HEAD=7edacdc28dd745d8e155402de26416ef89f56faf
+SEC24-1 fix-in-verifier-head: genuine=false forged=false
+SEC24-1 genuine round 2 errors: 2
+  finding F-DG0-101 (High, mandatory): fix 514bde6063 is not in the verified round-2 candidate (fe4c00b406)
+  finding F-DG0-101 (High, mandatory): fix 514bde6063 is not in the verifying run's starting history (c1b470b150); it was not in the candidate the reviewer saw
+SEC24-1 forged round 2 errors: 2
+  finding F-DG0-101 (High, mandatory): verified in round-2, whose frozen candidate source_commit deadbeefde is not present; a closure must be verified against a retained candidate (F-DG0-169)
+  finding F-DG0-101 (High, mandatory): fix eda6d75d53 is not in the verifying run's starting history (40b253f5e8); it was not in the candidate the reviewer saw
+SEC24-1 run-head rejection: genuine=true forged=true
+SEC24-2 errors: 1
+  finding F-DG0-101 (High, mandatory): verified in round-2, whose frozen candidate source_commit deadbeefde is not present; a closure must be verified against a retained candidate (F-DG0-169)
+SEC24-3 rejected? {"zeros":true,"absent":true,"typo":true,"short":true,"upper":true}
+SEC24-4 rejected? {"unknown":true,"HEAD":true,"missing":true,"null":true,"zeros":true,"absent-40hex":true,"UPPERHEX":true,"short":true}
+SEC24-5 (a) downgrade errors: 4
+  docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json: finding F-DG0-101 severity ("Low") differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json ("High"); a later round cannot reclassify a finding
+  docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json: finding F-DG0-101 mandatory_violation (false) differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json (true); a later round cannot reclassify a finding
+  finding F-DG0-101: severity in findings.json ("Low") differs from the reviewer's ("High")
+  finding F-DG0-101: mandatory_violation in findings.json (false) differs from the reviewer's (true)
+SEC24-5 (c) identical re-listing errors: 0
+SEC24-6 fix in round-2 frozen candidate (source_commit 35f0a1e774): false; verifier head content hashes to round-2 candidate: false
+SEC24-6 errors: 1
+  finding F-DG0-101 (High, mandatory): fix 9baf8f194a is not in the verified round-2 candidate (35f0a1e774)
+SEC25-1 fix in round-2 frozen candidate: false; anchors fired: {"a1":true,"a2":false,"a3":false}
+SEC25-1 errors: 1
+  finding F-DG0-101 (High, mandatory): fix 1ff32757c0 is not in the verified round-2 candidate (7ab5f99af5)
+SEC25-2 anchors fired: {"a1":false,"a2":true,"a3":false}
+SEC25-2 errors: 2
+  finding F-DG0-101 (High, mandatory): verified in round-2, whose frozen candidate source_commit deadbeefde is not present; a closure must be verified against a retained candidate (F-DG0-169)
+  finding F-DG0-101 (High, mandatory): fix 14b30ecfc0 is not in the verifying run's starting history (eb5631f4e3); it was not in the candidate the reviewer saw
+SEC25-3 fix committed after the round-2 freeze commit: true; verifier head content == round-2 candidate: false; anchors fired: {"a1":false,"a2":false,"a3":false}
+SEC25-3 errors: 1
+  finding F-DG0-101 (High, mandatory): verified in round-2, whose frozen candidate source_commit deadbeefde is not present; a closure must be verified against a retained candidate (F-DG0-169)
+SEC25-4 errors: 0
+SEC26-1 errors: 1
+  finding F-DG0-101 (High, mandatory): verified in round-2, whose frozen candidate source_commit deadbeefde is not present; a closure must be verified against a retained candidate (F-DG0-169)
+SEC26-1 anchor-1-absent rejection fired: true
+SEC26-2 errors: 1
+  finding F-DG0-101 (High, mandatory): verified in round-2, whose frozen candidate source_commit deadbeefde is not present; a closure must be verified against a retained candidate (F-DG0-169)
+SEC26-3 errors: 0
+SEC26-4 errors: 2
+  review rounds: DG0 round 2 frozen_at/source_commit differ from its committed manifest
+  finding F-DG0-101 (High, mandatory): verified in round-2, whose frozen candidate source_commit aaaaaaaaaa is not present; a closure must be verified against a retained candidate (F-DG0-169)
+SEC26-5 errors: 4
+  review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): reviewed candidate sha256:616b10c62e172d677a81154a578ccb1d95cdec81ad062297d903be0b9b728781 != gate candidate sha256:7b801799923d2fcecbc8fbfd348dbc073f4eaf0646edcac761e2e8cf21907272
+  review code-security-reviewer (docs/delivery/reviews/DG0/round-2/code-security-reviewer.json): reviewed candidate sha256:616b10c62e172d677a81154a578ccb1d95cdec81ad062297d903be0b9b728781 != gate candidate sha256:7b801799923d2fcecbc8fbfd348dbc073f4eaf0646edcac761e2e8cf21907272
+  review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): reviewed candidate sha256:616b10c62e172d677a81154a578ccb1d95cdec81ad062297d903be0b9b728781 != gate candidate sha256:7b801799923d2fcecbc8fbfd348dbc073f4eaf0646edcac761e2e8cf21907272
+  review release-auditor (docs/delivery/reviews/DG0/round-2/release-auditor.json): reviewed candidate sha256:616b10c62e172d677a81154a578ccb1d95cdec81ad062297d903be0b9b728781 != gate candidate sha256:7b801799923d2fcecbc8fbfd348dbc073f4eaf0646edcac761e2e8cf21907272
+✔ SEC24-1 F-DG0-166/249: the round-23 forge (superseded round, absent source_commit, genuine verifier run, fix committed AFTER the run started) -- genuine and forged (1021.694257ms)
+✖ SEC24-2 control: forged superseded round with a REAL fix (in the verifier's head and the gate candidate) passes -- no regression; findManifest D-035 tolerance only (375.200453ms)
+✔ SEC24-3 F-DG0-164/246 still hold: absent / typo'd / short / uppercase fix_revision rejected (forged round) (1850.442211ms)
+✔ SEC24-4 F-DG0-164 still holds: the verifying run's head_commit_at_start missing/unknown/HEAD/null/zeros/absent/UPPER/short is rejected (2698.7591ms)
+✔ SEC24-5 F-DG0-165 still holds: later-round severity/mandatory downgrade rejected; identical re-listing accepted (693.870815ms)
+✔ SEC24-6 new probe (GENUINE round, no forged metadata): a candidate-scope fix committed AFTER the round-2 freeze but BEFORE the verifier's run started (540.100859ms)
+✔ SEC25-1 F-DG0-168 (my round-24 SEC24-6): GENUINE round 2, candidate-scope fix committed AFTER the freeze and BEFORE the verifier's run started (438.428808ms)
+✔ SEC25-2 F-DG0-166/249 (round-23 forge): superseded round, ABSENT source_commit, fix committed AFTER the verifier's run started (424.789871ms)
+✔ SEC25-3 NEW PROBE (the two combined): superseded round with a self-declared ABSENT source_commit, fix committed AFTER that round's freeze but BEFORE the verifier's run started (433.587357ms)
+✔ SEC25-4 control: genuine round, fix committed BEFORE the freeze (the stock fixture) -- 0 errors, no regression (352.422756ms)
+✔ SEC26-1 F-DG0-169 (my round-25 SEC25-3): superseded round, self-declared ABSENT source_commit (self-consistent manifest), fix committed after that round's freeze but before the verifier ran -> must now be REJECTED by anchor 1 (409.620599ms)
+✔ SEC26-2 (was SEC24-2 control): forged superseded round with a REAL fix, closure verified IN that round -> now rejected by design (no closure may be verified in an absent-source round) (315.898749ms)
+✔ SEC26-3 control (no regression; the surviving findManifest tolerance): absent-source round 2 is NOT the verifying round; the finding is re-verified in retained gate round 3 -> 0 errors (341.936475ms)
+✔ SEC26-4 the committed D-042 test's fixture: stages.json source_commit alone forged absent (manifest disagrees) -> anchor 1 AND checkReviewRounds both reject (274.420905ms)
+✔ SEC26-5 REJECTED_INVALID / ACCEPTED_OBSERVATION paths are unaffected: a REJECTED_INVALID verified in the absent-source round needs no fix and is not anchored (observe) (251.575305ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 14
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11494.580494
+
+✖ failing tests:
+
+test at tools/gates/tests/sec26.test.mjs:1338:1
+✖ SEC24-2 control: forged superseded round with a REAL fix (in the verifier's head and the gate candidate) passes -- no regression; findManifest D-035 tolerance only (375.200453ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'finding F-DG0-101 (High, mandatory): verified in round-2, whose frozen candidate source_commit deadbeefde is not present; a closure must be verified against a retained candidate (F-DG0-169)'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.XcWtPo/claude-0/sec26-repro.iUyEx2/c/tools/gates/tests/sec26.test.mjs:1346:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'finding F-DG0-101 (High, mandatory): verified in round-2, whose frozen candidate source_commit deadbeefde is not present; a closure must be verified against a retained candidate (F-DG0-169)' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+exit=1

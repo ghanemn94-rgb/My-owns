@@ -1,0 +1,33 @@
+RAG trajectory not task completion: 11 rows e.g. ['REQ-PB-015', 'REQ-PB-063', 'REQ-PB-069', 'REQ-PB-071', 'REQ-PB-085', 'REQ-S01-005', 'REQ-S04-002', 'REQ-S04-004']
+separate delivery/adoption/value/closure: 1 rows e.g. ['REQ-S03-003']
+forecast never validated: 7 rows e.g. ['REQ-PB-027', 'REQ-PB-055', 'REQ-S08-001', 'REQ-S08-008', 'REQ-S13-008', 'REQ-S16-010', 'REQ-S20-010']
+Finance validates: 16 rows e.g. ['REQ-PB-013', 'REQ-PB-027', 'REQ-PB-053', 'REQ-PB-055', 'REQ-PB-075', 'REQ-DLV-036', 'REQ-S07-014', 'REQ-S08-003']
+double counting / allocation <=100%: 7 rows e.g. ['REQ-PB-049', 'REQ-PB-058', 'REQ-PB-063', 'REQ-PB-072', 'REQ-PB-093', 'REQ-S08-013', 'REQ-S20-030']
+gate evidence snapshot: 18 rows e.g. ['REQ-PB-015', 'REQ-DLV-007', 'REQ-DLV-026', 'REQ-DLV-037', 'REQ-S04-002', 'REQ-S04-012', 'REQ-S04-014', 'REQ-S07-016']
+G6 != DG7: 6 rows e.g. ['REQ-PB-021', 'REQ-DLV-002', 'REQ-DLV-041', 'REQ-S04-008', 'REQ-S18-003', 'REQ-S21-001']
+admin not approver: 1 rows e.g. ['REQ-S10-015']
+
+REQ-PB-075 | Implement Template 14 Benefits Register as a native register | Users record benefits with Type (Revenue | Cost | CX | ...), Value (SAR) and Realized amounts, evidence source and Status R/A/G; IDs B01, B02... |ACC A10: T14 persists all 10 columns; realized value awaiting Finance validation is labelled pending and excluded from validated totals
+
+REQ-PB-058 | Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link | System rejects a benefit without a single owner, baseline, formula and a financial statement line or agreed non-financial KPI; initiatives link to canonical benefits via allocations, parent/child relationships and shared-benefit groups; portfolio totals sum canonical benefits, not links, so a shared benefit rolls up once |ACC A10: a benefit with two owners is rejected; a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the portfolio total
+
+REQ-PB-015 | Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required | Owner assembles evidence, submits the gate; approver records decision against the evidence snapshot; gates are never inferred from task completion |ACC A08: submission with missing mandatory evidence is rejected; approval by a non-approver returns 403; approval of a stale submission version is rejected
+
+REQ-PB-021 | G6 Sustain: require benefits evidence, ownership transfer, controls and continuous improvement backlog as gate evidence | G6 checklist links validated benefit evidence, accepted BAU handover, controls and the CI backlog |ACC A08;A11: G6 submission without an accepted BAU handover is rejected listing 'Ownership transfer'
+
+REQ-PB-012 | Seed the six minimum governance roles with their source accountabilities and assign them per transformation | Admin seeds roles; Transformation Lead/Office assign named people to roles per transformation; accountability text shown on the role assignment |ACC A12: a user assigned Workstream Lead on transformation X cannot read transformation Y; role accountability text matches B0018
+
+REQ-S03-003 | Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses | Each status has its own state machine and owner; none is derived from another; views show all four side by side |ACC A11: setting delivery to Complete leaves adoption, validated value and closure unchanged; the API rejects a closure request while validated value is pending unless a transition decision exists
+
+REQ-S08-001 | Track planned, forecast, measured, submitted-for-validation, validated, rejected and sustained benefit values separately | Each benefit keeps separate value series per state; aggregations never combine states |ACC A10: a forecast amount never appears in the validated total; a rejected measurement is retained and shown as rejected
+
+REQ-S08-013 | Reject allocations over 100% and show any share below 100% as unallocated | The server sums allocations per benefit; above 100% is rejected; below 100% shows the remaining share as unallocated |ACC A10: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated
+
+REQ-S10-015 | Support sequential or parallel approval rules | Approval routes are configured per procedure or record type |ACC A06;A08: in a sequential route step 2 is not notified until step 1 approves; in a parallel route both are notified at once
+
+REQ-S04-008 | Run the Realize phase procedure and G6 Sustain decision | Measure and validate benefits; correct gaps; transfer ownership and controls; establish sustained monitoring and improvement; submit G6 with the decision 'value is embedded in BAU' |ACC A02;A11: G6 submission without an accepted BAU handover is rejected; product G6 approval changes no engineering DG record
+26:| ADM | System administrator (technical, access, or methodology admin sub-profiles) | Implementation (M0187) | Organization (technical configuration only) |
+112:| Evidence item (upload, review, download) | as parent | as parent | as parent | as parent | as parent | as parent | as parent | as parent | as parent | V as parent | — (storage administration only; no content access by default) |
+115:| Methodology config (Playbook Studio, procedures, forms, formulas library) | — | Rv (reviewer, where configured) | — | — | Rv (formula changes) | Rv | — | — | — | V | Cf (draft, preview, publish; methodology admin) |
+119:| Access administration (scoped assignments) | — | assign within own transformation (non-approver roles) | — | — | — | assign within portfolio | — | — | — | V | Cf (access admin) |
+126:2. **Technical administrators are not business approvers** (REQ-S10-003, REQ-S06-010).

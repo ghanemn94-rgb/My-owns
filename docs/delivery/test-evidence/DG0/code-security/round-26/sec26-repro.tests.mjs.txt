@@ -1,0 +1,71 @@
+// code-security-reviewer, DG0 round 26 (T-DG0-REV-SEC-R26): reproduction tests for the D-042 change (anchor 1 unconditional).
+// Appended AFTER ../round-24/sec24-repro.tests.mjs.txt and ../round-25/sec25-repro.tests.mjs.txt to a DISPOSABLE copy of
+// tools/gates/tests/validator.test.mjs (reuses its fixture helpers and the SEC24/SEC25 helpers). See run-sec26-repro.sh.
+// Run against the round-25 baseline (2386a0f) and the round-26 candidate (7edacdc) to show before/after.
+
+const SEC26_A1ABSENT = /F-DG0-101.*whose frozen candidate source_commit .* is not present; a closure must be verified against a retained candidate/;
+const sec26Report = (label, errs) => console.log(`${label} errors: ${errs.length}${errs.length ? "\n  " + errs.join("\n  ") : ""}`);
+
+test("SEC26-1 F-DG0-169 (my round-25 SEC25-3): superseded round, self-declared ABSENT source_commit (self-consistent manifest), fix committed after that round's freeze but before the verifier ran -> must now be REJECTED by anchor 1", () => {
+  const { repo, cid } = buildValidRepo();
+  sec24ForgeRound2(repo, cid);
+  const { fix, cid3, mp3, r3head } = sec24FixAndFreeze3(repo);
+  sec25SetRound2Heads(repo, fix);
+  sec24GateRound3(repo, cid3, fix, mp3, r3head);
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = fix));
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  sec26Report("SEC26-1", errs);
+  console.log(`SEC26-1 anchor-1-absent rejection fired: ${errs.some((e) => SEC26_A1ABSENT.test(e))}`);
+  assert.ok(errs.some((e) => SEC26_A1ABSENT.test(e)), "a closure verified in an absent-source round must be rejected");
+});
+
+test("SEC26-2 (was SEC24-2 control): forged superseded round with a REAL fix, closure verified IN that round -> now rejected by design (no closure may be verified in an absent-source round)", () => {
+  const { repo, cid, head } = buildValidRepo();
+  const mp = `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`;
+  const f = sec24ForgeRound2(repo, cid);
+  sec24GateRound3(repo, cid, head, mp, f.round2Head);
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  sec26Report("SEC26-2", errs);
+  assert.ok(errs.some((e) => SEC26_A1ABSENT.test(e)));
+  assert.equal(errs.length, 1, "the only error is the anchor-1 rejection (findManifest D-035 tolerance unchanged)");
+});
+
+test("SEC26-3 control (no regression; the surviving findManifest tolerance): absent-source round 2 is NOT the verifying round; the finding is re-verified in retained gate round 3 -> 0 errors", () => {
+  const { repo, cid, head } = buildValidRepo();
+  const mp = `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`;
+  const f = sec24ForgeRound2(repo, cid);
+  sec24GateRound3(repo, cid, head, mp, f.round2Head);
+  const cs3 = get(repo, "docs/delivery/reviews/DG0/round-3/code-security-reviewer.json");
+  const sc3 = "docs/delivery/reviews/DG0/round-3/code-security-reviewer.verifications.json";
+  put(repo, sc3, { verifications: [{ finding_id: "F-DG0-101", result: "PASS", status_after: "CLOSED_VERIFIED", note: "re-verified in a retained round", evidence: [] }] });
+  bindOutputs(repo, cs3.invocation_reference, ["docs/delivery/reviews/DG0/round-3/code-security-reviewer.json", sc3]);
+  edit(repo, "docs/delivery/findings.json", (d) => { d.findings[0].verification.invocation_reference = cs3.invocation_reference; d.findings[0].verification.note = "re-verified in a retained round"; });
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  sec26Report("SEC26-3", errs);
+  assert.deepEqual(errs, []);
+});
+
+test("SEC26-4 the committed D-042 test's fixture: stages.json source_commit alone forged absent (manifest disagrees) -> anchor 1 AND checkReviewRounds both reject", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  edit(repo, "docs/delivery/stages.json", (d) => { d.stages[0].review_rounds[1].source_commit = "a".repeat(40); });
+  const errs = validateGate(repo, "DG0");
+  sec26Report("SEC26-4", errs);
+  assert.ok(errs.some((e) => SEC26_A1ABSENT.test(e)));
+  assert.ok(errs.some((e) => /frozen_at\/source_commit differ from its committed manifest/.test(e)));
+});
+
+test("SEC26-5 REJECTED_INVALID / ACCEPTED_OBSERVATION paths are unaffected: a REJECTED_INVALID verified in the absent-source round needs no fix and is not anchored (observe)", () => {
+  const { repo, cid } = buildValidRepo();
+  sec24ForgeRound2(repo, cid);
+  edit(repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json", (d) => (d.verifications[0].status_after = "REJECTED_INVALID"));
+  const cs2 = get(repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json");
+  bindOutputs(repo, cs2.invocation_reference, ["docs/delivery/reviews/DG0/round-2/code-security-reviewer.json", "docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json"]);
+  edit(repo, "docs/delivery/findings.json", (d) => { d.findings[0].status = "REJECTED_INVALID"; delete d.findings[0].fix_revision; });
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  sec26Report("SEC26-5", errs);
+});

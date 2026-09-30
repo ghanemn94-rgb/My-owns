@@ -1,0 +1,31 @@
+# id: uid=0(root) gid=0(root) groups=0(root)
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+NoNewPrivs:	1
+Seccomp:	2
+Seccomp_filters:	1
+# residual 7 (non-destructive): writability of /proc/sys entries via access(2) -- NO write performed (residual 7 already discloses direct shell writes)
+/proc/sys/vm/swappiness test-w=yes
+/proc/sys/kernel/shmmax test-w=yes
+/proc/sys/net/ipv4/ip_forward test-w=yes
+/proc/sys/vm/drop_caches test-w=yes
+/proc/sys/kernel/panic test-w=yes
+# residual 8: visible pids: 5
+/proc/1/root readable: no (denied)
+# write confinement (shell) -- each must fail
+tools/gates: /bin/bash: line 23: tools/gates/zz-probe-sec26: Read-only file system
+tools/agents: /bin/bash: line 23: tools/agents/zz-probe-sec26: Read-only file system
+tools/source: /bin/bash: line 23: tools/source/zz-probe-sec26: Read-only file system
+.github: /bin/bash: line 23: .github/zz-probe-sec26: Read-only file system
+docs/delivery/reviews/DG0: /bin/bash: line 23: docs/delivery/reviews/DG0/zz-probe-sec26: Read-only file system
+docs/delivery/test-evidence/DG0/qa: /bin/bash: line 23: docs/delivery/test-evidence/DG0/qa/zz-probe-sec26: Read-only file system
+docs/delivery/test-evidence/DG0/audit: /bin/bash: line 23: docs/delivery/test-evidence/DG0/audit/zz-probe-sec26: Read-only file system
+docs/delivery/test-evidence/DG0/domain: /bin/bash: line 23: docs/delivery/test-evidence/DG0/domain/zz-probe-sec26: Read-only file system
+.git: /bin/bash: line 23: .git/zz-probe-sec26: Read-only file system
+.claude: /bin/bash: line 23: .claude/zz-probe-sec26: Read-only file system
+docs/source: /bin/bash: line 23: docs/source/zz-probe-sec26: Read-only file system
+docs/delivery: /bin/bash: line 23: docs/delivery/zz-probe-sec26: Read-only file system
+# own evidence dir writable: yes
+# network (sandbox must have none):
+bash: connect: Network is unreachable
+bash: line 1: /dev/tcp/1.1.1.1/443: Network is unreachable

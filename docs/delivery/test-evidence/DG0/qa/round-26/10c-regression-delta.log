@@ -1,0 +1,11 @@
+# qa-verifier round 26: interpretation of the regression reruns 10-r25-suite-rerun.log and 10-r24-suite-rerun.log
+QA25-N2 (not ok): the forged-absent round-23 shape was REJECTED by anchor 2 as the ONLY error in round 25; on the round-26
+  candidate it is REJECTED by anchor 2 AND the new D-042 error "verified in round-3, whose frozen candidate source_commit
+  cdcdcdcdcd is not present; ... (F-DG0-169)" -> total=2. The assertion "total=1" was written for pre-D-042 behaviour;
+  the change is strictly stricter and is the intended D-042 effect (QA26-N5 asserts the new expectation A0+A2).
+QA24-N2 forged-absent-round (not ok): same reason ("REJECTED (+1 other)"; the extra error is the F-DG0-169 rejection).
+QA25-P1 (probe, asserts nothing): round 25 printed ACCEPTED; round 26 prints REJECTED with exactly the F-DG0-169 error
+  -> the round-25 residual case is closed (QA26-N1 asserts it).
+QA24-P1 (probe): ACCEPTED as in round 25 -- known harness limitation documented in round 24 (round 3 shares the gate
+  candidate id, so moveGate also moves its source_commit; it does not isolate a post-freeze fix). Not a product defect.
+All other cases of both suites pass unchanged.

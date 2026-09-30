@@ -1,0 +1,18 @@
+import csv,json,re,random,collections
+reg=list(csv.DictReader(open('docs/delivery/requirements.csv',encoding='utf-8')))
+print('register rows',len(reg),'cols',list(reg[0].keys()))
+ids={r['id'] if 'id' in r else r[list(r.keys())[0]] for r in reg}
+sc=list(csv.DictReader(open('docs/analysis/source-coverage.csv',encoding='utf-8')))
+print('source-coverage cols',list(sc[0].keys()))
+bk=[r[list(r.keys())[0]] for r in sc]
+print('blocks exact B0001-B0165 in order:',bk==['B%04d'%i for i in range(1,166)])
+disp=collections.Counter()
+bad=[]
+for r in sc:
+    vals=list(r.values()); d=[v for v in vals if v in('REQUIREMENT','CONTEXT','HEADING','NON-CONTENT','EXAMPLE','GUIDANCE','REFERENCE')]
+    disp[tuple(d)]+=1
+    reqs=[x for x in re.findall(r'REQ-[A-Z0-9]+-\d+',' '.join(vals))]
+    if 'REQUIREMENT' in vals and not reqs: bad.append(r)
+    for q in reqs:
+        if q not in ids: bad.append(('unknown',q))
+print('dispositions',dict(disp)); print('bad',bad[:5])

@@ -1,0 +1,28 @@
+# code-security-reviewer DG0 round 26: candidate and scope (2026-09-30T14:10:57Z)
+$ git rev-parse HEAD (live tree)
+2f480e430c9c08d474d1f478e1deff324bce76e7
+$ git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG0 (live tree)
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:7ac7119044c899d4fa7363cb43d209173095d06b37eed75697532b092b7236df","files":91}
+exit=0
+$ git diff --stat 7edacdc..HEAD (post-freeze commits: metadata only)
+ docs/delivery/assignments/DG0/round-26/audit.md    |  33 ++
+ .../DG0/round-26/review-code-security-reviewer.md  |  22 +
+ .../assignments/DG0/round-26/review-common.md      |  42 ++
+ .../DG0/round-26/review-domain-reviewer.md         |  24 ++
+ .../assignments/DG0/round-26/review-qa-verifier.md |  21 +
+ .../candidates/DG0/7ac7119044c899d4.manifest.json  | 473 +++++++++++++++++++++
+ docs/delivery/stages.json                          |  27 +-
+ 7 files changed, 637 insertions(+), 5 deletions(-)
+# disposable --no-local clone at 7edacdc
+shallow=false HEAD=7edacdc28dd745d8e155402de26416ef89f56faf
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:7ac7119044c899d4fa7363cb43d209173095d06b37eed75697532b092b7236df","files":91}
+exit=0
+$ git diff --stat 2386a0f..7edacdc -- ':!docs/delivery/reviews' ':!docs/delivery/runs' ':!docs/delivery/test-evidence' ':!docs/delivery/assignments' ':!docs/delivery/candidates'
+ docs/delivery/decisions.md           |  1 +
+ docs/delivery/findings.json          | 64 ++++++++++++++++++++++++++++++++++--
+ docs/delivery/stages.json            | 30 ++++++++++++++---
+ tools/gates/lib/rules.mjs            | 22 ++++++++-----
+ tools/gates/tests/validator.test.mjs | 10 ++++++
+ 5 files changed, 113 insertions(+), 14 deletions(-)

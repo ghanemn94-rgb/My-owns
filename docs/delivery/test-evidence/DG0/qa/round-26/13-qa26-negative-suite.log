@@ -1,0 +1,84 @@
+# qa-verifier round 26 | 2026-09-30T14:16:58Z | QA_REPO_ROOT=$TMPDIR/nl (git clone --no-local, HEAD 2f480e430c9c08d474d1f478e1deff324bce76e7). Second run after fixing a QA-harness bug in QA26-N4 (see 13a).'
+$ QA_REPO_ROOT=$TMPDIR/nl node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs
+TAP version 13
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-G0 errors (0): []
+#   QA26-G0 result: ACCEPTED anchors=- total=0
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N1 after-freeze-excl errors (1): ["finding F-DG0-201 (High): verified in round-3, whose frozen candidate source_commit cdcdcdcdcd is not present; a closure must be verified against a retained candidate (F-DG0-169)"]
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N1 after-freeze-cand errors (1): ["finding F-DG0-201 (High): verified in round-3, whose frozen candidate source_commit cdcdcdcdcd is not present; a closure must be verified against a retained candidate (F-DG0-169)"]
+#   QA26-N1 CLI exit=1 mentions F-DG0-169=true
+#   QA26-N1 result: {"after-freeze-excl":"REJECTED anchors=A0 total=1","after-freeze-cand":"REJECTED anchors=A0 total=1","cli-exit-nonzero":true}
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N2 errors (1): ["finding F-DG0-201 (High): verified in round-3, whose frozen candidate source_commit cdcdcdcdcd is not present; a closure must be verified against a retained candidate (F-DG0-169)"]
+#   QA26-N2 result: REJECTED anchors=A0 total=1
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N3 tree errors (2): ["review rounds: DG0 round 3 manifest docs/delivery/candidates/DG0/12931c58af60924c.manifest.json does not describe its source_commit 3f37b86952 (recomputes to sha256:96c1e05362e98cd2c0964789ac72d48d165bc2cc7aa062ef382f098970efadb7)","finding F-DG0-201 (High): verified in round-3, whose frozen candidate source_commit 3f37b86952 is not present; a closure must be verified against a retained candidate (F-DG0-169)"]
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N3 blob errors (1): ["finding F-DG0-201 (High): verified in round-3, whose frozen candidate source_commit 626799f0f8 is not present; a closure must be verified against a retained candidate (F-DG0-169)"]
+#   QA26-N3 result: {"tree":"REJECTED-by-F-DG0-169","blob":"REJECTED-by-F-DG0-169"}
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N4 errors (0): []
+#   QA26-N4 result: {"f169":false,"total":0}
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N5 errors (2): ["finding F-DG0-201 (High): verified in round-3, whose frozen candidate source_commit cdcdcdcdcd is not present; a closure must be verified against a retained candidate (F-DG0-169)","finding F-DG0-201 (High): fix 8ecf200026 is not in the verifying run's starting history (fc9ee03f9e); it was not in the candidate the reviewer saw"]
+#   QA26-N5 result: REJECTED anchors=A0+A2 total=2
+#   (moveGate write-once artefacts excluded: 4)
+#   (moveGate write-once artefacts excluded: 4)
+#   (moveGate write-once artefacts excluded: 4)
+#   (moveGate write-once artefacts excluded: 4)
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N6 result: {"post-freeze-fix":"REJECTED anchors=A1 total=1","fix-all-zero":"REJECTED","fix-absent":"REJECTED","head-absent":"REJECTED","head-unknown":"REJECTED","downgrade-both":"severity-drift=true mandatory-drift=true","shallow-refused":true}
+# Subtest: QA26-G0 control: genuine present-round closure with the fix in the frozen round candidate is ACCEPTED
+ok 1 - QA26-G0 control: genuine present-round closure with the fix in the frozen round candidate is ACCEPTED
+  ---
+  duration_ms: 614.218738
+  type: 'test'
+  ...
+# Subtest: QA26-N1 round-25 case: forged-absent round, fix after the claimed freeze but before the run -> REJECTED by F-DG0-169 only
+ok 2 - QA26-N1 round-25 case: forged-absent round, fix after the claimed freeze but before the run -> REJECTED by F-DG0-169 only
+  ---
+  duration_ms: 1267.66046
+  type: 'test'
+  ...
+# Subtest: QA26-N2 absent round source_commit with a fix that is in every other anchor -> still REJECTED (no absence escape)
+ok 3 - QA26-N2 absent round source_commit with a fix that is in every other anchor -> still REJECTED (no absence escape)
+  ---
+  duration_ms: 485.477749
+  type: 'test'
+  ...
+# Subtest: QA26-N3 round source_commit is a PRESENT 40-hex object that is not a commit (tree, blob) -> REJECTED
+ok 4 - QA26-N3 round source_commit is a PRESENT 40-hex object that is not a commit (tree, blob) -> REJECTED
+  ---
+  duration_ms: 947.240931
+  type: 'test'
+  ...
+# Subtest: QA26-N4 scope: an absent-source superseded round that verifies NO closure raises no F-DG0-169 error
+ok 5 - QA26-N4 scope: an absent-source superseded round that verifies NO closure raises no F-DG0-169 error
+  ---
+  duration_ms: 413.238336
+  type: 'test'
+  ...
+# Subtest: QA26-N5 round-23 forge (absent source, fix after the run) -> REJECTED by anchor 1 (absent) AND anchor 2
+ok 6 - QA26-N5 round-23 forge (absent source, fix after the run) -> REJECTED by anchor 1 (absent) AND anchor 2
+  ---
+  duration_ms: 457.314875
+  type: 'test'
+  ...
+# Subtest: QA26-N6 standing: present-round post-freeze fix; bad fix_revision; bad run head; F-DG0-165 downgrade; shallow clone
+ok 7 - QA26-N6 standing: present-round post-freeze fix; bad fix_revision; bad run head; F-DG0-165 downgrade; shallow clone
+  ---
+  duration_ms: 3031.422262
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7333.377551
+exit=0

@@ -1,0 +1,26 @@
+# agents.md claims vs raw evidence, 2026-09-30T14:19:25Z, repo HEAD a6fc577
+$ git diff --stat 2386a0f 7edacdc -- docs/delivery/agents.md .claude/agents tools/agents
+(empty = unchanged since the round-25 candidate)
+$ ls .claude/agents | wc -l; ls .claude/agents
+10
+backend-workflow-engineer.md code-security-reviewer.md devops-engineer.md domain-reviewer.md frontend-ux-engineer.md kpi-benefits-engineer.md qa-verifier.md release-auditor.md solution-architect.md transformation-analyst.md 
+$ grep -o "model: [a-z0-9-]*" .claude/agents/*.md | sort | uniq -c
+     10 model: inherit
+$ grep -n -i "inherit\|--agent\|session\|write guard\|bubblewrap" docs/delivery/agents.md | head -12
+36:claude -p --agent <agent> --model <orchestrator model> --permission-mode auto \
+37:       --session-id <fresh uuid> --settings tools/agents/settings/<agent>.settings.json \
+62:2. `claude -p --agent <name>` **does** load the definition from `.claude/agents/`. The agent reported its role text from the definition.
+63:3. **Frontmatter `hooks` did not execute in `--agent` main-session mode.** An out-of-scope write succeeded in smoke tests 1 and 2. The same hook supplied through `--settings` **does** execute and blocks with exit code
+64:4. `model: inherit` in a separate CLI process resolved to the CLI default (`claude-sonnet-5`), not the orchestrator's model. The runner passes `--model` explicitly, set to the orchestrator's model (`claude-opus-5-5`),
+65:5. Without `--session-id`, a nested run reported the parent session's ID. A fresh UUID per run gives every invocation a distinct, stable reference.
+92:**Observation:** `Grep` and `Glob` are declared in the definitions but aren't exposed in `--agent` sessions of this CLI build. The agents use `grep`/`find` through Bash instead, which doesn't affect the guard. Since D
+100:Every agent's shell runs in an OS sandbox (bubblewrap). The runner generates the configuration per run with `tools/agents/agent_settings.py` and keeps it as `runs/<DGx>/<run-id>/settings.json`.
+109:The whole agent process, `claude` included, runs in a second bubblewrap sandbox built per run by `tools/agents/agent_sandbox.py`. The Bash sandbox above is nested inside it. It closes F-DG0-145: the guard checks a pa
+114:- **Process:** only `CAP_SETFCAP` is kept and `no_new_privs` is set. The IPC namespace is private (`--unshare-ipc`), but the PID namespace is shared with the host and the host procfs is bound read-write, so a reviewe
+$ own run meta (this invocation): model / session / head
+settings.json
+stderr.log
+transcript.jsonl
+$ census over all committed DG0 run metas (keys: invocation_reference.session_id, model_requested, role) -- previous query used wrong key names (session_id/model), corrected here
+metas 99 distinct session_ids 99 distinct run_ids 99 model_requested {"claude-opus-5-5":99} roles 10 backend-workflow-engineer code-security-reviewer devops-engineer domain-reviewer frontend-ux-engineer kpi-benefits-engineer qa-verifier release-auditor solution-architect transformation-analyst
+note: HEAD moved to a6fc577 during this run through run-agent.sh auto-commits of the round-26 domain/code-security run evidence (metadata only); candidate recomputes to sha256:7ac7119044c899d4fa7363cb43d209173095d06b37eed75697532b092b7236df. I did not read those reviewers' records.

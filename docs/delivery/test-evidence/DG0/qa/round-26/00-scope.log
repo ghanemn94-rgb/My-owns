@@ -1,0 +1,24 @@
+# qa-verifier round 26 scope/candidate confirmation, 2026-09-30T14:19:51Z
+$ sha256sum docs/delivery/assignments/DG0/round-26/review-qa-verifier.md
+7f2fd217e065c6fbfb26c3bed5a2927d2ea426f7d3092e8e56bb55157f5e1083  docs/delivery/assignments/DG0/round-26/review-qa-verifier.md
+$ git rev-parse HEAD (at start)
+2f480e430c9c08d474d1f478e1deff324bce76e7
+$ git rev-parse --is-shallow-repository
+false
+$ git diff --stat 7edacdc 2f480e4 (freeze commit -> HEAD at start: metadata only)
+ docs/delivery/assignments/DG0/round-26/audit.md    |  33 ++
+ .../DG0/round-26/review-code-security-reviewer.md  |  22 +
+ .../assignments/DG0/round-26/review-common.md      |  42 ++
+ .../DG0/round-26/review-domain-reviewer.md         |  24 ++
+ .../assignments/DG0/round-26/review-qa-verifier.md |  21 +
+ .../candidates/DG0/7ac7119044c899d4.manifest.json  | 473 +++++++++++++++++++++
+ docs/delivery/stages.json                          |  27 +-
+ 7 files changed, 637 insertions(+), 5 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:7ac7119044c899d4fa7363cb43d209173095d06b37eed75697532b092b7236df","files":91}
+$ git diff --stat 2386a0f 7edacdc -- tools/ docs/delivery/decisions.md CLAUDE.md docs/analysis docs/source .claude .github (candidate change since round 25)
+ docs/delivery/decisions.md           |  1 +
+ tools/gates/lib/rules.mjs            | 22 ++++++++++++++--------
+ tools/gates/tests/validator.test.mjs | 10 ++++++++++
+ 3 files changed, 25 insertions(+), 8 deletions(-)
+note: review-common.md says 'Review round: 23' while the task ID/paths say round 26; I used round 26 (clerical, excluded metadata)

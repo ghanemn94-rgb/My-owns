@@ -1,0 +1,197 @@
+# qa-verifier round 26 | 2026-09-30T14:17:16Z | QA_REPO_ROOT=$TMPDIR/base = --no-local clone checked out at the round-25 candidate 2386a0f (PRE-D-042). Expected: N1/N2/N3 fail (closures ACCEPTED or not rejected by F-DG0-169) -- detection evidence; exit 1 is expected.
+$ QA_REPO_ROOT=$TMPDIR/base node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs
+TAP version 13
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-G0 errors (0): []
+#   QA26-G0 result: ACCEPTED anchors=- total=0
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N1 after-freeze-excl errors (0): []
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N1 after-freeze-cand errors (0): []
+#   QA26-N1 CLI exit=1 mentions F-DG0-169=false
+#   QA26-N1 result: {"after-freeze-excl":"ACCEPTED anchors=- total=0","after-freeze-cand":"ACCEPTED anchors=- total=0","cli-exit-nonzero":false}
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N2 errors (0): []
+#   QA26-N2 result: ACCEPTED anchors=- total=0
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N3 tree errors (1): ["review rounds: DG0 round 3 manifest docs/delivery/candidates/DG0/12931c58af60924c.manifest.json does not describe its source_commit 76b01a03d3 (recomputes to sha256:96c1e05362e98cd2c0964789ac72d48d165bc2cc7aa062ef382f098970efadb7)"]
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N3 blob errors (0): []
+#   QA26-N3 result: {"tree":"REJECTED-other [\\"review rounds: DG0 round 3 manifest docs/delivery/candidates/DG0/12931c58af60924c.manifest.json does not describe its source_commit 76b01a03d3 (recomputes to sha256:96c1e05362e98cd2c0964789ac72d48d165bc2cc7aa062ef382f098970efadb7)\\"]","blob":"ACCEPTED"}
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N4 errors (0): []
+#   QA26-N4 result: {"f169":false,"total":0}
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N5 errors (1): ["finding F-DG0-201 (High): fix 4a21c12aa8 is not in the verifying run's starting history (4b8fa76ce7); it was not in the candidate the reviewer saw"]
+#   QA26-N5 result: REJECTED anchors=A2 total=1
+#   (moveGate write-once artefacts excluded: 4)
+#   (moveGate write-once artefacts excluded: 4)
+#   (moveGate write-once artefacts excluded: 4)
+#   (moveGate write-once artefacts excluded: 4)
+#   (moveGate write-once artefacts excluded: 4)
+#   QA26-N6 result: {"post-freeze-fix":"REJECTED anchors=A1 total=1","fix-all-zero":"REJECTED","fix-absent":"REJECTED","head-absent":"REJECTED","head-unknown":"REJECTED","downgrade-both":"severity-drift=true mandatory-drift=true","shallow-refused":true}
+# Subtest: QA26-G0 control: genuine present-round closure with the fix in the frozen round candidate is ACCEPTED
+ok 1 - QA26-G0 control: genuine present-round closure with the fix in the frozen round candidate is ACCEPTED
+  ---
+  duration_ms: 603.568496
+  type: 'test'
+  ...
+# Subtest: QA26-N1 round-25 case: forged-absent round, fix after the claimed freeze but before the run -> REJECTED by F-DG0-169 only
+not ok 2 - QA26-N1 round-25 case: forged-absent round, fix after the claimed freeze but before the run -> REJECTED by F-DG0-169 only
+  ---
+  duration_ms: 1289.461955
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs:186:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   'after-freeze-cand': 'ACCEPTED anchors=- total=0',
+    +   'after-freeze-excl': 'ACCEPTED anchors=- total=0',
+    +   'cli-exit-nonzero': false
+    -   'after-freeze-cand': 'REJECTED anchors=A0 total=1',
+    -   'after-freeze-excl': 'REJECTED anchors=A0 total=1',
+    -   'cli-exit-nonzero': true
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    after-freeze-excl: 'REJECTED anchors=A0 total=1'
+    after-freeze-cand: 'REJECTED anchors=A0 total=1'
+    cli-exit-nonzero: true
+  actual:
+    after-freeze-excl: 'ACCEPTED anchors=- total=0'
+    after-freeze-cand: 'ACCEPTED anchors=- total=0'
+    cli-exit-nonzero: false
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs:204:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: QA26-N2 absent round source_commit with a fix that is in every other anchor -> still REJECTED (no absence escape)
+not ok 3 - QA26-N2 absent round source_commit with a fix that is in every other anchor -> still REJECTED (no absence escape)
+  ---
+  duration_ms: 560.739649
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs:207:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'ACCEPTED anchors=- total=0'
+    - 'REJECTED anchors=A0 total=1'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REJECTED anchors=A0 total=1'
+  actual: 'ACCEPTED anchors=- total=0'
+  operator: 'strictEqual'
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs:213:10
+    withF (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs:73:72)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs:207:129)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA26-N3 round source_commit is a PRESENT 40-hex object that is not a commit (tree, blob) -> REJECTED
+not ok 4 - QA26-N3 round source_commit is a PRESENT 40-hex object that is not a commit (tree, blob) -> REJECTED
+  ---
+  duration_ms: 1063.184564
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs:216:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   blob: 'ACCEPTED',
+    +   tree: 'REJECTED-other ["review rounds: DG0 round 3 manifest docs/delivery/candidates/DG0/12931c58af60924c.manifest.json does not describe its source_commit 76b01a03d3 (recomputes to sha256:96c1e05362e98cd2c0964789ac72d48d165bc2cc7aa062ef382f098970efadb7)"]'
+    -   blob: 'REJECTED-by-F-DG0-169',
+    -   tree: 'REJECTED-by-F-DG0-169'
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    tree: 'REJECTED-by-F-DG0-169'
+    blob: 'REJECTED-by-F-DG0-169'
+  actual:
+    tree: 'REJECTED-other ["review rounds: DG0 round 3 manifest docs/delivery/candidates/DG0/12931c58af60924c.manifest.json does not describe its source_commit 76b01a03d3 (recomputes to sha256:96c1e05362e98cd2c0964789ac72d48d165bc2cc7aa062ef382f098970efadb7)"]'
+    blob: 'ACCEPTED'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs:228:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA26-N4 scope: an absent-source superseded round that verifies NO closure raises no F-DG0-169 error
+ok 5 - QA26-N4 scope: an absent-source superseded round that verifies NO closure raises no F-DG0-169 error
+  ---
+  duration_ms: 499.201841
+  type: 'test'
+  ...
+# Subtest: QA26-N5 round-23 forge (absent source, fix after the run) -> REJECTED by anchor 1 (absent) AND anchor 2
+not ok 6 - QA26-N5 round-23 forge (absent source, fix after the run) -> REJECTED by anchor 1 (absent) AND anchor 2
+  ---
+  duration_ms: 754.360498
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs:241:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'REJECTED anchors=A2 total=1'
+    - 'REJECTED anchors=A0+A2 total=2'
+                         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REJECTED anchors=A0+A2 total=2'
+  actual: 'REJECTED anchors=A2 total=1'
+  operator: 'strictEqual'
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs:247:10
+    withF (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs:73:72)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r26.test.mjs:241:119)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA26-N6 standing: present-round post-freeze fix; bad fix_revision; bad run head; F-DG0-165 downgrade; shallow clone
+ok 7 - QA26-N6 standing: present-round post-freeze fix; bad fix_revision; bad run head; F-DG0-165 downgrade; shallow clone
+  ---
+  duration_ms: 3780.850068
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 3
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8678.846888
+exit=1

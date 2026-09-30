@@ -1,0 +1,29 @@
+# requirement-to-code spot checks in --no-local clone at 2f480e430c9c08d474d1f478e1deff324bce76e7
+## REQ-DLV-004: agent definitions
+10
+name: backend-workflow-engineer tools: Read, Grep, Glob, Write, Edit, Bash model: inherit 
+name: code-security-reviewer tools: Read, Grep, Glob, Bash, Write model: inherit 
+name: devops-engineer tools: Read, Grep, Glob, Write, Edit, Bash model: inherit 
+name: domain-reviewer tools: Read, Grep, Glob, Bash, Write model: inherit 
+name: frontend-ux-engineer tools: Read, Grep, Glob, Write, Edit, Bash model: inherit 
+name: kpi-benefits-engineer tools: Read, Grep, Glob, Write, Edit, Bash model: inherit 
+name: qa-verifier tools: Read, Grep, Glob, Bash, Write, Edit model: inherit 
+name: release-auditor tools: Read, Grep, Glob, Bash, Write model: inherit 
+name: solution-architect tools: Read, Grep, Glob, Write, Edit, Bash model: inherit 
+name: transformation-analyst tools: Read, Grep, Glob, Write, Edit, Bash model: inherit 
+## REQ-DLV-016/023: validate.mjs exits non-zero while the gate is not approved
+validate --stage DG0 exit=1
+## REQ-S20-024: pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+exit=0
+## REQ-DLV-023: historical validation of the (non-existent) previous gate is N/A for DG0
+FAIL gate DG0 (historical) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+exit=1
+## REQ-DLV-007: write scopes (reviewer entries)
+{"allow": ["docs/delivery/reviews/*/round-*/code-security-reviewer.*", "docs/delivery/test-evidence/*/code-security/**"], "deny": ["@protected_config"]}
+## REQ-DLV-017/013 schemas present
+findings.schema.json
+gate.schema.json
+review.schema.json
+stages.schema.json
