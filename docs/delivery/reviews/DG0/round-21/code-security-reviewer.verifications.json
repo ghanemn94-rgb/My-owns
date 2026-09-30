@@ -1,0 +1,16 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-157",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fixed and verified against the finding's stated expectations. Reproduced the original: at a23c4d4, agent_sandbox.py still said '/proc/sys kernel tunables are read-only for the agent's SHELL', and threat-model residual 7 credited D-033 with closing a '/proc/<peer>/sys via /proc/<peer>/root' amplification. At the frozen commit 9e3c27f (fix 5f624d7 is an ancestor), (1) the agent_sandbox.py comment (lines 149-154) no longer makes the shell claim; it states the host-global framing and says the shell claim is withdrawn. (2) threat-model.md:60 now says Landlock (handled_access_fs=0) does not restrict /proc/sys, and that reaching it through a peer's /proc/<peer>/root writes the same host-wide tunable, so there is no cross-run amplification. This is accurate: /proc/sys resolves namespaced sysctls against the opener's own namespaces, and the per-run IPC namespace makes kernel.shm*/msg* even run-local. It is consistent with residual 8 (D-033 closes /proc/<peer>/root|cwd and cross-run signals) and with D-036. The agent_sandbox.py change is comment-only (no argument changed). Two new observations from the same area are raised separately as Low F-DG0-162: the shell can in fact open /proc/sys entries for write, and the new '(userns default)' parenthetical names the wrong mechanism. Neither is a defect of this finding's scope.",
+      "evidence": [
+        "tools/agents/agent_sandbox.py#L150",
+        "docs/delivery/threat-model.md#residual-7",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/18-sandbox-unchanged-landlock.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/13-procsys-probe.log"
+      ]
+    }
+  ]
+}

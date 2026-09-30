@@ -1,0 +1,140 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-158",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "D-037 record-less exemption lets the orchestrator silently delete an imported finding (any status or severity) from findings.json when its raising sidecar has no <role>.json record",
+      "reproduction": "tools/gates/lib/rules.mjs:476 sets recordless=true for a findings sidecar with no <role>.json on disk. rules.mjs:514-521 then skips the 'missing from findings.json (dropped)' error for it. But tools/gates/import-findings.mjs:39-52 imports such a sidecar's findings with or without a record, so the validator can no longer tell 'never imported' from 'imported, then deleted'. Such a finding is listed in no review record, so the independent 'referenced' check (rules.mjs:507-510) is silent too. Reproduced in a disposable --no-local clone of HEAD with a drafted APPROVED gate (docs/delivery/test-evidence/DG0/code-security/round-21/r21-recordless-drop.mjs, log 03-recordless-drop.log). F-DG0-239 is raised only in the record-less round-18 qa-verifier.findings.json and was imported. Deleting it from findings.json gives 0 errors about it (D-037 rules), against 1 'dropped' error with the round-20 rules (a23c4d4). With F-DG0-239 re-statused OPEN, validateGate reports 'unresolved (OPEN)'; deleting it then gives 0 errors. The same path applies to any future interrupted reviewer run that raises a Critical/High finding. Aggravating detail: recordless is taken from the LATEST raising sidecar only (raised.set supersedes, rules.mjs:482). A later record-less sidecar re-listing an earlier, properly raised finding also clears its 'dropped' error (r21-recordless-supersede.mjs, log 01, scenario C). There, only the original record's findings[] listing still catches the drop.",
+      "expected": "A finding that was ever imported into findings.json can leave it only through a reviewer-verified terminal status. The only tolerated case is a finding that was provably never imported, for example an explicit allowlist such as F-DG0-238, or a git-history check that the id never appeared in findings.json. Simpler still: import F-DG0-238 and let its reporter close it as REJECTED_INVALID (a duplicate of F-DG0-150), so no exemption is needed. If any exemption remains, recordless must hold only when EVERY raising sidecar is record-less.",
+      "actual": "Deleting an imported, even unresolved, finding raised by a record-less sidecar produces no validator error. The gate rule 'zero unresolved Critical/High findings' can be met by deletion for this class of findings. Before D-037 this was an error.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-21/r21-recordless-drop.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/03-recordless-drop.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/r21-recordless-supersede.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/01-recordless-supersede.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/02-raised-vs-referenced.log",
+        "tools/gates/lib/rules.mjs#L476",
+        "tools/gates/import-findings.mjs#L39"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": []
+    },
+    {
+      "id": "F-DG0-159",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-013",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "checkInvocation's D-037 tolerance also accepts a missing, non-hex or fabricated head_commit_at_start, including for gate-round records, not only a 'genuinely pruned' commit",
+      "reproduction": "tools/gates/lib/rules.mjs:393 runs the F-DG0-212 manifest-containment check only if commitPresent(meta.head_commit_at_start). commitPresent returns false for undefined, a non-hex string or any 40-hex id that does not exist, and the branch applies to every binding, including checkReview for gate records. In a disposable clone (r21-commitpresent-probe.mjs, log 04, P3), the real round-20 qa run's meta.head_commit_at_start was set to (c) a non-existent 40-hex, (d) the field removed, and (e) 'not-a-sha'. The head check is now 'accepted' for all three, where the round-20 rules (a23c4d4) rejected all three. A present commit lacking the manifest (b) is still rejected (control). Census (P2): absent heads occur only in rounds 1-12, beyond the shallow boundary; rounds >= 13, including the gate round, have none. Forging meta.json is otherwise within threat-model residual 1, hence Low.",
+      "expected": "Only a well-formed 40-hex head_commit_at_start that is genuinely unavailable (beyond the shallow boundary or pruned) is tolerated, and only for superseded rounds. For the gate round the commit must be present and contain the manifest. A missing or malformed field is an error.",
+      "actual": "Missing, malformed or fabricated values skip the check in every round, including the gate round.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-21/r21-commitpresent-probe.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/04-commitpresent-probe.log",
+        "tools/gates/lib/rules.mjs#L393"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": []
+    },
+    {
+      "id": "F-DG0-160",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The repository is SHALLOW (not 'pruned'), and the validator never detects shallowness: write-once, back-dating and the D-035/D-037 commit tolerances silently depend on clone depth",
+      "reproduction": "(1) git rev-parse --is-shallow-repository prints true. .git/shallow lists e8361b8 ('DG0 round 12 ...'), whose parent dcb289c is simply not fetched (log 06). D-035 and D-037 (decisions.md rows D-035 and D-037) describe this as a history 'truncated'/'pruned' in an earlier session. The commits are outside a shallow boundary, and a full clone (CI uses fetch-depth: 0) may contain them. No file in tools/gates or tools/agents mentions 'shallow'. (2) Consequence for write-once: r21-shallow-writeonce.mjs (log 05). In clone A, commit M rewrites the write-once round-20/qa-verifier.findings.json (F-DG0-242 High -> Low) and findings.json to match, then commit N follows. checkWriteOnce(A) reports 2 errors ('M event', '2 different contents'). In B = git clone --depth 2 file://A, checkWriteOnce(B) reports 0 errors, and no output says the repository is shallow. The same applies today to every write-once file changed before e8361b8 in every local validation (prefreeze, the qa dry-run, the auditor's clone). (3) Consequence for D-037: in a complete clone, every ancestor of the present gate/round source_commit is present, so an ABSENT fix_revision is provably not in that candidate. The tolerance at rules.mjs:696-698 then accepts exactly the failing case. The unit test 'D-037 / F-DG0-242' even accepts fix_revision '0'x40 for a closure verified in the gate round. The census (log 04, P1) finds 3 closures (F-DG0-226/227/228) whose verifying round-13 source_commit is present while the fix is absent, which is possible only because of the shallow boundary.",
+      "expected": "The validator detects a shallow repository (git rev-parse --is-shallow-repository). It reports this, and either refuses or runs history checks only when a documented shallow boundary is explicitly allowed. Commit-absence tolerances apply only to commits beyond that boundary, or only when the verifying round's own source_commit is also unavailable, never to a closure in the gate round. D-035/D-037 are corrected to say 'outside the shallow boundary' and state what a full-history (CI) run is expected to show.",
+      "actual": "History-based integrity checks pass or fail depending on clone depth, without any warning. Tolerances meant for 'pruned' commits also accept fabricated SHAs in a complete clone.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-21/r21-shallow-writeonce.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/05-shallow-writeonce.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/06-main-repo-shallow.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/04-commitpresent-probe.log",
+        "tools/gates/lib/rules.mjs#L581",
+        "tools/gates/lib/rules.mjs#L747",
+        "docs/delivery/decisions.md#D-037"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": []
+    },
+    {
+      "id": "F-DG0-161",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-017",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The D-037 re-point of F-DG0-150/151 to 421c922 leaves a permanent gate error in any clone that carries the backup branch, while a single-branch clone (CI) passes: the gate verdict depends on which refs the clone has",
+      "reproduction": "F-DG0-150/151 were last verified by code-security in round 18. stages.json round 18 has source_commit 450c756, which exists only on the local, unpushed branch backup/pre-writeonce-repair-565ab3f and is not an ancestor of HEAD (log 12). D-037 re-pointed their fix_revision to 421c922, which is an ancestor of HEAD but NOT of 450c756 (cb76260, the original, is). Running qa's dry-run docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs on a --no-local clone of HEAD (log 10) therefore reports 2 errors that finishing round 21 cannot clear: 'finding F-DG0-150 (Low): fix 421c922233 is not in the verified round-18 candidate (450c756f67)' and the same for F-DG0-151. The harness buckets them as 'PRUNED', but both commits are present. In a --single-branch clone, 450c756 is absent (log 12), so rules.mjs:696 skips the check and the same gate passes. This contradicts D-037's claim that the dry-run is clean of permanent blockers.",
+      "expected": "A gate's validation result does not depend on which unrelated refs a clone happens to contain, and F-DG0-150/151's metadata is consistent with the round that verified them. For example, their reporter re-verifies them in a round whose candidate contains 421c922. Alternatively, the fix_revision stays cb76260 and the round-18 source commit is preserved on a pushed ref.",
+      "actual": "Locally, with the backup branch, validateGate fails permanently on F-DG0-150/151. In CI or a single-branch clone it passes. Fail-closed locally, so no false approval, but the gate cannot pass on this repository as it stands.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-21/10-real-repo-dry-run.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/12-f150-151-repoint.log",
+        "docs/delivery/findings.json#F-DG0-150",
+        "tools/gates/lib/rules.mjs#L696"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": []
+    },
+    {
+      "id": "F-DG0-162",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Residual 7 still frames the /proc/sys write as a file-tool path, but the agent's Bash shell can open DAC-writable host-global /proc/sys entries for write directly; the new comment's '(userns default)' names the wrong mechanism",
+      "reproduction": "Probes open(O_WRONLY) and close without writing, so no tunable was changed (logs 13 and 14). From the agent shell (uid 0, NoNewPrivs 1, in its own PID namespace), /proc/sys/vm/swappiness, kernel/shmmax, net/ipv4/ip_forward, vm/drop_caches and kernel/panic all open for write. docs/delivery/threat-model.md:60 (residual 7) describes the exposure as a file tool writing 'directly or by racing a symlink past the guard', and only withdraws the shell claim as 'unverified'. It is now verified that a plain shell redirect reaches these entries, with no race needed. The impact class is unchanged: host availability / kernel tunables, not repository or gate integrity. The /proc/sysrq-trigger vector does not exist on this kernel. Separately, tools/agents/agent_sandbox.py:153 says candidate code in the reviewer's fresh-procfs sandboxes sees /proc/sys read-only '(userns default)'. That holds for tools/gates/sandbox-run.sh only because of its explicit '--ro-bind /proc/sys /proc/sys' (log 13: EROFS). A plain nested 'bwrap --unshare-user --proc /proc' leaves /proc/sys writable.",
+      "expected": "Residual 7 states that the agent shell, as well as the file tools, can write uid-0 DAC-writable /proc/sys entries directly. The comment attributes the read-only /proc/sys in sandbox-run.sh to its explicit --ro-bind.",
+      "actual": "The residual understates the vector (shell, no race needed), though not the impact. The comment names the wrong mechanism. I would accept this as an observation: the disclosed impact scope (host-global availability, no integrity effect) is accurate, and F-DG0-149 already carries it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-21/13-procsys-probe.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/14-sysrq-probe.log",
+        "docs/delivery/threat-model.md#residual-7",
+        "tools/agents/agent_sandbox.py#L153"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": []
+    },
+    {
+      "id": "F-DG0-163",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Schema subset validator: additionalProperties:false does not reject keys named after Object.prototype members (constructor, toString, __proto__, hasOwnProperty)",
+      "reproduction": "tools/gates/lib/schema.mjs:59 looks up props[key] on a plain object literal, so props['constructor'] resolves to Object.prototype.constructor, which is truthy. The value is then 'validated' against a keyword-less function and accepted, and the additionalProperties:false branch is never reached. With schema {properties:{a:string}, additionalProperties:false}, validate() reports 'zzz' as unexpected but accepts 'constructor', 'toString', '__proto__' and 'hasOwnProperty' (r21-schema-proto-keys.mjs, log 17). The gate rules read only named fields, so an extra key of this kind cannot change a verdict today.",
+      "expected": "Use Object.hasOwn(props, key) (and Object.hasOwn(value, key) for required), so every unexpected key is reported.",
+      "actual": "Prototype-named extra keys pass records, findings and gate schemas silently. I would accept this as an observation: no rule reads such keys.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-21/r21-schema-proto-keys.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-21/17-schema-proto-keys.log",
+        "tools/gates/lib/schema.mjs#L59"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": []
+    }
+  ]
+}
