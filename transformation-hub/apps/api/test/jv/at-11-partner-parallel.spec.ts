@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, owner } from '../helpers';
 import { gateByKey, runWorker } from '../gates/gate-test-kit';
-import { P, doc, finalDecision, ok, partner, partnerAt, room, setupJvProject, JvProject } from './jv-kit';
+import { P, doc, finalDecision, ok, partner, partnerAt, passG5, room, setupJvProject, JvProject } from './jv-kit';
 
 /**
  * AT-11 — partner preparation runs in parallel with separation (REQ-LCY-008) while every step keeps its own
@@ -144,7 +144,13 @@ describe('REQ-LCY-009 / REQ-JV-012 — signing is separate from closing; two clo
     let sv = (await pm.get(`${P(pid)}/signings/${signing}`).expect(200)).body.version;
     sv = (await ok(await pm.post(`${P(pid)}/transaction-events/${signing}/transition`, { expectedVersion: sv, command: 'start_preparation' }))).version;
     sv = (await ok(await pm.post(`${P(pid)}/transaction-events/${signing}/transition`, { expectedVersion: sv, command: 'mark_ready' }))).version;
-    const decisionId = await finalDecision(j, 'jv_signing_authorization');
+    // DOM-P4-02 (REQ-LCY-009 "signing and its dependencies"): a FINAL signing authorization alone records no signing while
+    // gate G5 has not passed; the decision that approved G5 does — and G5 passes while separation (G3) is not approved.
+    const early = await pm.post(`${P(pid)}/transaction-events/${signing}/request-confirmation`, { expectedVersion: sv, decisionId: await finalDecision(j, 'jv_signing_authorization'), executedDocumentId: executed.id });
+    expect(early.status, JSON.stringify(early.body)).toBe(422);
+    expect(early.body.code).toBe('jv.signing.g5_not_passed');
+    const decisionId = await passG5(j);
+    expect(['approved', 'approved_with_exceptions']).not.toContain((await gateByKey(j.gp.pm, pid, 'G3')).assessment.status);
     const req = await ok(await pm.post(`${P(pid)}/transaction-events/${signing}/request-confirmation`, { expectedVersion: sv, decisionId, executedDocumentId: executed.id }));
     const rec = await ok(await j.p.sponsor.post(`${P(pid)}/signings/${signing}/record`, { expectedVersion: req.version }));
     expect(rec.status).toBe('confirmed');

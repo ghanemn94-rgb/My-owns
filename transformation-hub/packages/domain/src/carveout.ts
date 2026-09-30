@@ -29,6 +29,13 @@ export interface DimensionInput {
   /** The G4 approval is flagged for controlled reassessment (relied-upon evidence changed — DOM-P2-05): it does not count. */
   standaloneUnderReassessment?: boolean;
   closings: { kind: ClosingKind; status: ClosingStatus }[];
+  /**
+   * Stages of the project's partners (partner process) — the `jv_transaction` dimension starts with partner preparation
+   * and diligence (business-gates.md §1; DOM-P4-10). Omitted = no partner recorded.
+   */
+  partners?: { stage: PartnerStage }[];
+  /** The current cycle of gate G5 (JV Signing Readiness) is approved and not flagged for reassessment. */
+  signingGatePassed?: boolean;
   /** TSAs and approved enduring arrangements affect the independence picture (spec §3, D-15). */
   tsas?: { status: TsaStatus; isEnduringArrangement: boolean }[];
   /** Whether the approved definition of operational independence exists (spec §3). */
@@ -72,9 +79,14 @@ export const DIMENSION_MESSAGES_EN: Readonly<Record<string, string>> = {
   'dimension.readiness.definition_pending': 'The definition of operational independence is not yet approved.',
   'dimension.jv.closed': 'All {closings} closing(s) confirmed.',
   'dimension.jv.partially_closed': '{confirmed} of {closings} closing(s) confirmed.',
+  'dimension.jv.closing_conditions_in_progress': 'Signing confirmed; {inProgress} closing(s) in preparation (conditions precedent being satisfied).',
   'dimension.jv.signed': 'Signing confirmed; closing pending.',
-  'dimension.jv.preparing': 'Signing/closing in preparation.',
-  'dimension.jv.not_started': 'No signing/closing events defined.',
+  'dimension.jv.signing_ready': 'Gate G5 (JV Signing Readiness) approved; the signing is not yet recorded.',
+  'dimension.jv.diligence_and_negotiation': 'Due diligence, negotiation or signing preparation in progress.',
+  'dimension.jv.partner_preparation': 'Partner preparation in progress (before due diligence).',
+  'dimension.jv.terminated': 'Every partner withdrawn and every signing / closing aborted.',
+  'dimension.jv.aborted_excluded': '{aborted} aborted signing / closing event(s) not counted.',
+  'dimension.jv.not_started': 'No partner, signing or closing recorded.',
 };
 
 /** Message of a dimension that has never been computed (created with the project). */
@@ -153,16 +165,31 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
     return dimension(k, 'in_progress', [...reassess, m('dimension.readiness.in_progress', { passed, required: required.length }), ...dep, ...def]);
   })();
 
-  const signing = input.closings.filter((c) => c.kind === 'signing');
-  const closing = input.closings.filter((c) => c.kind === 'closing');
   const jv: DimensionState = (() => {
+    // DOM-P4-10 (business-gates.md §1): not_started → partner_preparation → diligence_and_negotiation → signing_ready →
+    // signed → closing_conditions_in_progress → partially_closed → closed; or terminated. Aborted events are not counted
+    // (one confirmed and one aborted closing is `closed`), and they are disclosed in the explanation.
     const k = 'jv_transaction' as const;
+    const live = input.closings.filter((c) => c.status !== 'aborted');
+    const aborted = input.closings.length - live.length;
+    const note = aborted > 0 ? [m('dimension.jv.aborted_excluded', { aborted })] : [];
+    const signing = live.filter((c) => c.kind === 'signing');
+    const closing = live.filter((c) => c.kind === 'closing');
     const closingsConfirmed = closing.filter((c) => c.status === 'confirmed').length;
-    if (closing.length > 0 && closingsConfirmed === closing.length) return dimension(k, 'closed', [m('dimension.jv.closed', { closings: closing.length })]);
-    if (closingsConfirmed > 0) return dimension(k, 'partially_closed', [m('dimension.jv.partially_closed', { confirmed: closingsConfirmed, closings: closing.length })]);
-    if (signing.some((s) => s.status === 'confirmed')) return dimension(k, 'signed', [m('dimension.jv.signed')]);
-    if (signing.length + closing.length > 0) return dimension(k, 'preparing', [m('dimension.jv.preparing')]);
-    return dimension(k, 'not_started', [m('dimension.jv.not_started')]);
+    if (closing.length > 0 && closingsConfirmed === closing.length) return dimension(k, 'closed', [m('dimension.jv.closed', { closings: closing.length }), ...note]);
+    if (closingsConfirmed > 0) return dimension(k, 'partially_closed', [m('dimension.jv.partially_closed', { confirmed: closingsConfirmed, closings: closing.length }), ...note]);
+    if (signing.some((s) => s.status === 'confirmed')) {
+      const inProgress = closing.filter((c) => c.status === 'in_preparation' || c.status === 'ready_for_confirmation').length;
+      if (inProgress > 0) return dimension(k, 'closing_conditions_in_progress', [m('dimension.jv.closing_conditions_in_progress', { inProgress }), ...note]);
+      return dimension(k, 'signed', [m('dimension.jv.signed'), ...note]);
+    }
+    const partners = input.partners ?? [];
+    const activePartners = partners.filter((p) => p.stage !== 'withdrawn');
+    if ((partners.length > 0 || input.closings.length > 0) && activePartners.length === 0 && live.length === 0) return dimension(k, 'terminated', [m('dimension.jv.terminated'), ...note]);
+    if (input.signingGatePassed) return dimension(k, 'signing_ready', [m('dimension.jv.signing_ready'), ...note]);
+    if (live.length > 0 || activePartners.some((p) => partnerStageAtLeast(p.stage, 'dd'))) return dimension(k, 'diligence_and_negotiation', [m('dimension.jv.diligence_and_negotiation'), ...note]);
+    if (activePartners.length > 0) return dimension(k, 'partner_preparation', [m('dimension.jv.partner_preparation'), ...note]);
+    return dimension(k, 'not_started', [m('dimension.jv.not_started'), ...note]);
   })();
 
   return [inc, perimeter, ops, jv];

@@ -4,7 +4,7 @@ import { demoEmail } from '../../src/cli/seed-demo';
 import { getApp, owner } from '../helpers';
 import { TEST_ENV } from '../test-env';
 import { createWithVersion, getBinary, DocClient } from '../documents/doc-helpers';
-import { gateDecision, Gov, Personas } from '../gates/gate-test-kit';
+import { approveGate, gateByKey, gateDecision, makeReady, Gov, Personas } from '../gates/gate-test-kit';
 import { setupCommittee, openMeeting, Actors } from '../governance/gov-fixtures';
 import { localDate, addCalendarDays } from '@hub/domain';
 
@@ -194,6 +194,40 @@ export async function finalDecision(j: JvProject, decisionTypeKey: string) {
   const d = await gateDecision(j.projectId, j.gp, j.gov, 'G6', { decisionTypeKey, externalApproval: true });
   expect(d.status).toBe('approved');
   return d.id;
+}
+
+const APPROVED = ['approved', 'approved_with_exceptions'];
+
+/**
+ * DOM-P4-02: a signing is requested and recorded only after gate G5 (JV Signing Readiness) passed, on the decision that
+ * approved it. Takes G0 → G1 → G5 through the real gate and governance APIs (criteria met by their designated reviewers,
+ * the gate reviewer's endorsement, a FINAL decision raised for the gate, the approver's decision) and returns the decision
+ * that approved the current G5 cycle (type `jv_signing_authorization`, approved by the authorized body — synthetic).
+ */
+export async function passG5(j: JvProject): Promise<string> {
+  for (const key of ['G0', 'G1']) {
+    const g = await gateByKey(j.gp.pm, j.projectId, key);
+    if (APPROVED.includes(g.assessment.status)) continue;
+    await makeReady(j.gp, j.projectId, key);
+    await approveGate(j.gp, j.gov, j.projectId, key);
+  }
+  const g5 = await gateByKey(j.gp.pm, j.projectId, 'G5');
+  if (APPROVED.includes(g5.assessment.status) && !g5.assessment.reassessment.needsReassessment && g5.assessment.decisionId) return g5.assessment.decisionId;
+  await makeReady(j.gp, j.projectId, 'G5');
+  return (await approveGate(j.gp, j.gov, j.projectId, 'G5')).decisionId;
+}
+
+/** A confirmed signing through the ordinary path: G5 passed, executed copy, requested by the PM, recorded by the sponsor. */
+export async function confirmedSigning(j: JvProject, name: string, opts: { partnerId?: string; decisionId?: string } = {}): Promise<string> {
+  const pid = j.projectId;
+  const decisionId = opts.decisionId ?? (await passG5(j));
+  const s = await ok(await j.p.pm.post(`${P(pid)}/signings`, { name, ...(opts.partnerId ? { partnerId: opts.partnerId } : {}) }));
+  let v = (await ok(await j.p.pm.post(`${P(pid)}/transaction-events/${s.id}/transition`, { expectedVersion: 1, command: 'start_preparation' }))).version;
+  v = (await ok(await j.p.pm.post(`${P(pid)}/transaction-events/${s.id}/transition`, { expectedVersion: v, command: 'mark_ready' }))).version;
+  const executed = await doc(j.p.pm, pid, `${name} — executed agreement (synthetic)`, { kind: 'agreement' });
+  const req = await ok(await j.p.pm.post(`${P(pid)}/transaction-events/${s.id}/request-confirmation`, { expectedVersion: v, decisionId, executedDocumentId: executed.id }));
+  await ok(await j.p.sponsor.post(`${P(pid)}/signings/${s.id}/record`, { expectedVersion: req.version }));
+  return s.id as string;
 }
 
 export async function auditRows(projectId: string, action: string, entityId: string) {

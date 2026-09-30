@@ -5,6 +5,7 @@ import {
   DD_RELEASE_MACHINE,
   FINDING_MACHINE,
   allowedCommands,
+  assertDdEvidencePinned,
   assertDdReleaseAllowed,
   assertDdReviewAllowed,
   assertFindingRemediation,
@@ -20,6 +21,7 @@ import {
   Classification,
   DdReleaseStatus,
   FindingCommand,
+  PinnedEvidence,
 } from '@hub/domain';
 import type { RouteInput, jvRoutes } from '@hub/contracts';
 import type { RequestContext } from '../../platform/context';
@@ -152,13 +154,42 @@ export class DiligenceService {
     return { ...pageOf(rows.map((r) => this.requestDto(r)), Number(total), q), people: await this.s.people(rows.flatMap((r) => [r.assigneeUserId, r.reviewerUserId, r.createdBy])) };
   }
 
+  /**
+   * DOM-P4-05: the pinned evidence (document → version) of an answer, resolved server-side from the pinned version ids
+   * (rule evaluation — no visibility filter; never returned beyond ids).
+   */
+  private async pinnedEvidence(projectId: string, r: RequestRow): Promise<PinnedEvidence[]> {
+    const ids = r.evidenceVersionIds ?? [];
+    if (!ids.length) return [];
+    const rows = await this.s.db
+      .tx()
+      .select({ id: schema.documentVersion.id, documentId: schema.documentVersion.documentId })
+      .from(schema.documentVersion)
+      .where(and(eq(schema.documentVersion.projectId, projectId), inArray(schema.documentVersion.id, ids)));
+    return rows.map((v) => ({ documentId: v.documentId, versionId: v.id }));
+  }
+
+  /** Current version of each evidence document (rule evaluation, no visibility filter). */
+  private async currentVersions(projectId: string, documentIds: readonly string[]): Promise<Record<string, string | null>> {
+    if (!documentIds.length) return {};
+    const rows = await this.s.db
+      .tx()
+      .select({ id: schema.document.id, currentVersionId: schema.document.currentVersionId })
+      .from(schema.document)
+      .where(and(eq(schema.document.projectId, projectId), inArray(schema.document.id, [...documentIds])));
+    return Object.fromEntries(rows.map((d) => [d.id, d.currentVersionId]));
+  }
+
   async get(ctx: RequestContext, projectId: string, id: string) {
     const r = await this.loadRequest(ctx, projectId, id, 'jv.dd_request.read');
+    const pinned = await this.pinnedEvidence(projectId, r);
+    const current = await this.currentVersions(projectId, pinned.map((x) => x.documentId));
     return {
       ...this.requestDto(r),
       answerDraft: r.answerDraft,
       draftedBy: r.draftedBy,
       evidenceDocumentIds: r.evidenceDocumentIds,
+      evidenceVersions: pinned.filter((x) => r.evidenceDocumentIds.includes(x.documentId)).map((x) => ({ ...x, current: current[x.documentId] === x.versionId })),
       submittedForReviewBy: r.submittedForReviewBy,
       submittedForReviewAt: iso(r.submittedForReviewAt),
       releaseApprovedBy: r.releaseApprovedBy,
@@ -209,7 +240,7 @@ export class DiligenceService {
       const d = await this.s.visibleDocument(ctx, projectId, docId);
       if (d.roomId !== r.roomId) throw ruleViolation('jv.dd.evidence_not_in_room', 'Evidence documents of an answer must be filed in the same room');
     }
-    const row = await updateVersioned(this.s.db, schema.diligenceRequest, { id, projectId, expectedVersion: body.expectedVersion }, { answerDraft: body.answerDraft, draftedBy: ctx.principal.userId, evidenceDocumentIds: [...new Set(body.evidenceDocumentIds)] });
+    const row = await updateVersioned(this.s.db, schema.diligenceRequest, { id, projectId, expectedVersion: body.expectedVersion }, { answerDraft: body.answerDraft, draftedBy: ctx.principal.userId, evidenceDocumentIds: [...new Set(body.evidenceDocumentIds)], evidenceVersionIds: [] });
     await this.s.audit.record({ action: 'jv.dd_answer.draft', entityType: 'diligence_request', entityId: id, projectId, after: { evidenceDocuments: body.evidenceDocumentIds.length } });
     return { id, version: row['version'] as number };
   }
@@ -219,8 +250,18 @@ export class DiligenceService {
     this.s.policy.assert(ctx, 'jv.dd_answer.draft', { ...(await this.attrsOf(r)), ownerUserIds: [r.assigneeUserId, r.draftedBy] });
     if (!r.answerDraft?.trim()) throw ruleViolation('jv.dd.answer_missing', 'Draft an answer before submitting it for review');
     const to = transition('diligence_request', DD_RELEASE_MACHINE, r.releaseStatus, 'submit_for_review');
-    const row = await updateVersioned(this.s.db, schema.diligenceRequest, { id, projectId, expectedVersion: body.expectedVersion }, { releaseStatus: to, submittedForReviewBy: ctx.principal.userId, submittedForReviewAt: this.s.clock.now() });
-    await this.s.audit.record({ action: 'jv.dd_answer.submit', entityType: 'diligence_request', entityId: id, projectId, before: { releaseStatus: r.releaseStatus }, after: { releaseStatus: to }, reason: body.note ?? null });
+    // DOM-P4-05: pin the current (usable) version of every evidence document — the version the reviewer will see, approve
+    // and the release will disclose.
+    const pinned: string[] = [];
+    for (const docId of r.evidenceDocumentIds) {
+      const d = await this.s.visibleDocument(ctx, projectId, docId);
+      if (d.roomId !== r.roomId) throw ruleViolation('jv.dd.evidence_not_in_room', 'An evidence document was moved out of the room — update the answer');
+      const { version, usable } = await this.s.documentVersion(projectId, d.id, null, d.currentVersionId);
+      if (!usable) throw ruleViolation('jv.disclosure.version_not_usable', `Evidence document "${d.title}" has no usable version`);
+      pinned.push(version.id);
+    }
+    const row = await updateVersioned(this.s.db, schema.diligenceRequest, { id, projectId, expectedVersion: body.expectedVersion }, { releaseStatus: to, submittedForReviewBy: ctx.principal.userId, submittedForReviewAt: this.s.clock.now(), evidenceVersionIds: pinned });
+    await this.s.audit.record({ action: 'jv.dd_answer.submit', entityType: 'diligence_request', entityId: id, projectId, before: { releaseStatus: r.releaseStatus }, after: { releaseStatus: to, evidenceVersionIds: pinned }, reason: body.note ?? null });
     return { id, version: row['version'] as number };
   }
 
@@ -235,9 +276,14 @@ export class DiligenceService {
     });
     assertDdReviewAllowed({ reviewerUserId: ctx.principal.userId!, drafterUserId: r.draftedBy });
     if (r.reviewerUserId && r.reviewerUserId !== ctx.principal.userId) throw forbidden('jv.dd.not_designated_reviewer', 'Only the designated reviewer may review this answer');
+    if (cmd === 'approve_release') {
+      // DOM-P4-05: the reviewer approves the versions pinned at submission — a newer version was never submitted for review.
+      assertDdEvidencePinned({ evidenceDocumentIds: r.evidenceDocumentIds, pinned: await this.pinnedEvidence(projectId, r), currentVersionByDocument: await this.currentVersions(projectId, r.evidenceDocumentIds) });
+    }
     const values: Record<string, unknown> = { releaseStatus: to, reviewNote: body.note ?? null };
     if (cmd === 'approve_release') Object.assign(values, { releaseApprovedBy: ctx.principal.userId, releaseApprovedAt: this.s.clock.now() });
     else Object.assign(values, { releaseApprovedBy: null, releaseApprovedAt: null });
+    if (cmd === 'return_to_draft') values['evidenceVersionIds'] = [];
     const row = await updateVersioned(this.s.db, schema.diligenceRequest, { id, projectId, expectedVersion: body.expectedVersion }, values);
     await this.s.audit.record({ action: `jv.dd_answer.${cmd}`, entityType: 'diligence_request', entityId: id, projectId, before: { releaseStatus: r.releaseStatus }, after: { releaseStatus: to }, reason: body.note ?? null });
     return { id, releaseStatus: to as DdReleaseStatus, version: row['version'] as number };
@@ -265,13 +311,16 @@ export class DiligenceService {
       throw e;
     }
     assertVersion(r, body.expectedVersion, 'DD request');
-    // Evidence documents are disclosed with the answer (their current, usable versions — never a quarantined file).
+    // DOM-P4-05: evidence documents are disclosed with the answer in exactly the versions pinned at submission and approved
+    // by the reviewer (never a later, unreviewed version; never a quarantined file).
+    const pinned = await this.pinnedEvidence(projectId, r);
+    assertDdEvidencePinned({ evidenceDocumentIds: r.evidenceDocumentIds, pinned });
     const project = await this.s.project(projectId);
     const releasedDocs: { disclosureId: string; versionId: string }[] = [];
     for (const docId of r.evidenceDocumentIds) {
       const d = await this.s.visibleDocument(ctx, projectId, docId);
       if (d.roomId !== room.id) throw ruleViolation('jv.dd.evidence_not_in_room', 'An evidence document was moved out of the room — update the answer');
-      const { version, usable } = await this.s.documentVersion(projectId, d.id, null, d.currentVersionId);
+      const { version, usable } = await this.s.documentVersion(projectId, d.id, pinned.find((x) => x.documentId === d.id)!.versionId, d.currentVersionId);
       if (!usable) throw ruleViolation('jv.disclosure.version_not_usable', `Evidence document "${d.title}" has no usable version`);
       if (version.uploadedBy === ctx.principal.userId) throw forbidden('jv.disclosure.self_release', 'The uploader of an evidence document cannot release it');
       const [live] = await this.s.db

@@ -1,5 +1,5 @@
 {
-  "id": "7a218147-004a-4c14-8625-7ed992df08cc",
+  "id": "ab4c9e17-5717-417f-a8d8-0a2b9ada7674",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -16504,6 +16504,24 @@
           "primaryKey": false,
           "notNull": false
         },
+        "long_stop_extension_decision_id": {
+          "name": "long_stop_extension_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "long_stop_extended_by": {
+          "name": "long_stop_extended_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "long_stop_extended_at": {
+          "name": "long_stop_extended_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "status": {
           "name": "status",
           "type": "condition_status",
@@ -16646,6 +16664,21 @@
           "columnsFrom": [
             "project_id",
             "waiver_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "closing_condition_extension_decision_fk": {
+          "name": "closing_condition_extension_decision_fk",
+          "tableFrom": "closing_condition",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "long_stop_extension_decision_id"
           ],
           "columnsTo": [
             "project_id",
@@ -17712,6 +17745,13 @@
         },
         "evidence_document_ids": {
           "name": "evidence_document_ids",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "evidence_version_ids": {
+          "name": "evidence_version_ids",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true,

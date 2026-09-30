@@ -374,6 +374,10 @@ export class JvController {
   determineConditionWaivability(@Ctx() ctx: RequestContext, @Input() i: I<typeof R.determineConditionWaivability>) {
     return this.tx.determineWaivability(ctx, i.params.projectId, i.params.conditionId, i.body);
   }
+  @ApiRoute(R.extendConditionLongStop)
+  extendConditionLongStop(@Ctx() ctx: RequestContext, @Input() i: I<typeof R.extendConditionLongStop>) {
+    return this.tx.extendLongStop(ctx, i.params.projectId, i.params.conditionId, i.body);
+  }
   @ApiRoute(R.submitConditionEvidence)
   submitConditionEvidence(@Ctx() ctx: RequestContext, @Input() i: I<typeof R.submitConditionEvidence>) {
     return this.tx.submitEvidence(ctx, i.params.projectId, i.params.conditionId, i.body);

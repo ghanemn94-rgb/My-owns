@@ -483,7 +483,7 @@ export function reconciliationState(r: { code: string; our: Money; their: Money 
  * Marking a reconciliation reconciled: the counterparty balance is recorded in the same currency and unit; a non-zero
  * difference needs an explanation (reconciling items); the reviewer is a human who did not prepare it.
  */
-export function assertReconcilable(r: { our: Money; their: Money | null; status: ReconciliationStatus; explanation: string | null; preparedBy: string | null }, actor: Actor): void {
+export function assertReconcilable(r: { our: Money; their: Money | null; status: ReconciliationStatus; explanation: string | null; preparedBy: string | null; createdBy?: string | null }, actor: Actor): void {
   assertHumanActor(actor, 'Reconciliation review');
   if (r.status === 'reconciled') throw ruleViolation('finance.recon.already_reconciled', 'The reconciliation is already reconciled');
   if (!r.their) throw ruleViolation('finance.recon.counterparty_missing', 'Record the counterparty balance before reconciling');
@@ -492,6 +492,8 @@ export function assertReconcilable(r: { our: Money; their: Money | null; status:
     throw ruleViolation('finance.recon.unexplained_difference', `A difference of ${diff.amount} remains unexplained: explain the reconciling items before reconciling`, { difference: diff.amount });
   }
   if (actor.userId === r.preparedBy) throw forbidden('finance.recon.self', 'Separation of duties: the preparer cannot review the reconciliation');
+  // DOM-P4-16: `preparedBy` is the LAST editor; the person who recorded the balance prepared it too and is never its reviewer.
+  if (r.createdBy && actor.userId === r.createdBy) throw forbidden('finance.recon.self', 'Separation of duties: the person who recorded the balance cannot review the reconciliation');
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -642,7 +644,7 @@ export const BUDGET_DECISION_TYPE_KEYS: readonly string[] = ['baseline_approval'
 // Benefits register (REQ-FIN-009)
 
 export type BenefitStatus = (typeof BENEFIT_STATUSES)[number];
-export type BenefitCommand = 'approve' | 'start_tracking' | 'record_realization' | 'verify' | 'reject_realization' | 'cancel';
+export type BenefitCommand = 'approve' | 'start_tracking' | 'record_realization' | 'verify' | 'reject_realization' | 'cancel' | 'revise_definition';
 
 export const BENEFIT_MACHINE: Machine<BenefitStatus, BenefitCommand> = {
   approve: { from: ['proposed'], to: 'approved', description: 'Benefit definition accepted into the register by an independent Finance reviewer' },
@@ -651,7 +653,34 @@ export const BENEFIT_MACHINE: Machine<BenefitStatus, BenefitCommand> = {
   verify: { from: ['realized_unverified'], to: 'realized_verified', description: 'Realization verified against the source by a person independent of owner and reporter' },
   reject_realization: { from: ['realized_unverified'], to: 'tracking', description: 'Reported realization not supported by the source' },
   cancel: { from: ['proposed', 'approved', 'tracking', 'realized_unverified'], to: 'cancelled', description: 'Benefit withdrawn (reason required)' },
+  revise_definition: { from: ['approved', 'tracking'], to: 'proposed', description: 'Definition, baseline or target reopened for revision — needs a fresh independent acceptance (DOM-P4-12)' },
 };
+
+/**
+ * What an independent Finance reviewer accepts into the register (spec §7.5 "measurement definition, baseline, target";
+ * G7-C04 "baselined"): the measurement definition, the baseline and target values, their unit and the estimated value.
+ */
+export const BENEFIT_ACCEPTED_FIELDS = ['measurementDefinition', 'baselineValue', 'targetValue', 'unit', 'valueAmount', 'valueCurrency', 'valueUnitScale'] as const;
+
+/**
+ * DOM-P4-12: once accepted (approved / tracking / realization reported) the accepted fields are not edited in place — the
+ * benefit is first reopened for revision (explicit command, reason required: back to `proposed`) and accepted again by
+ * an independent reviewer. While a realization awaits verification the definition is fixed (reject the realization first).
+ */
+export function assertBenefitDefinitionEditable(status: BenefitStatus, changedFields: readonly string[]): void {
+  const touched = changedFields.filter((f) => (BENEFIT_ACCEPTED_FIELDS as readonly string[]).includes(f));
+  if (!touched.length || status === 'proposed') return;
+  if (status === 'approved' || status === 'tracking') {
+    throw ruleViolation(
+      'finance.benefit.accepted_definition_locked',
+      'The measurement definition, baseline, target and value of an accepted benefit change only through a revision: reopen the definition (with a reason) and have it accepted again',
+      { fields: touched },
+    );
+  }
+  if (status === 'realized_unverified') {
+    throw ruleViolation('finance.benefit.realization_pending', 'The definition, baseline and target are fixed while a reported realization awaits verification', { fields: touched });
+  }
+}
 
 /** Recording a realization needs the measured value, its date (not in the future) and the verification source. */
 export function assertRealizationRecordable(r: { actualValue: string | null | undefined; realizedOn: string; verificationSource: string | null | undefined; today: string }): void {

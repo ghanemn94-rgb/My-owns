@@ -244,15 +244,10 @@ export class PostCloseService {
   // ---------------------------------------------------------------------------------------------------------
   // Program closure (REQ-JV-019)
 
-  private async g7(projectId: string): Promise<{ assessmentId: string | null; status: GateAssessmentStatus | null }> {
-    const [g] = await this.s.db
-      .tx()
-      .select({ id: schema.gateAssessment.id, status: schema.gateAssessment.status })
-      .from(schema.gateAssessment)
-      .innerJoin(schema.gateDefinition, and(eq(schema.gateDefinition.id, schema.gateAssessment.gateId), eq(schema.gateDefinition.projectId, schema.gateAssessment.projectId)))
-      .where(and(eq(schema.gateAssessment.projectId, projectId), eq(schema.gateDefinition.key, 'G7'), eq(schema.gateAssessment.isCurrent, true)))
-      .limit(1);
-    return { assessmentId: g?.id ?? null, status: (g?.status as GateAssessmentStatus | undefined) ?? null };
+  /** Current G7 cycle — with its reassessment flag (DOM-P4-11: a flagged approval does not count). */
+  private async g7(projectId: string): Promise<{ assessmentId: string | null; status: GateAssessmentStatus | null; underReassessment: boolean }> {
+    const g = await this.s.gateCycle(projectId, 'G7');
+    return { assessmentId: g.assessmentId, status: g.status, underReassessment: g.underReassessment };
   }
 
   private async closureRow(projectId: string) {
@@ -267,7 +262,7 @@ export class PostCloseService {
     const g7 = await this.g7(projectId);
     let passed = true;
     try {
-      assertG7Passed(g7.status);
+      assertG7Passed(g7.status, g7.underReassessment);
     } catch {
       passed = false;
     }
@@ -286,9 +281,9 @@ export class PostCloseService {
     this.s.policy.assert(ctx, 'jv.closing_checklist.manage', { projectId });
     const g7 = await this.g7(projectId);
     try {
-      assertG7Passed(g7.status);
+      assertG7Passed(g7.status, g7.underReassessment);
     } catch (e) {
-      await this.s.audit.recordDetached(ctx, { action: 'jv.program_closure.request', entityType: 'project', entityId: projectId, projectId, outcome: 'rejected', reason: (e as Error).message, before: { g7Status: g7.status } });
+      await this.s.audit.recordDetached(ctx, { action: 'jv.program_closure.request', entityType: 'project', entityId: projectId, projectId, outcome: 'rejected', reason: (e as Error).message, before: { g7Status: g7.status, g7UnderReassessment: g7.underReassessment } });
       throw e;
     }
     const existing = await this.closureRow(projectId);
@@ -332,9 +327,9 @@ export class PostCloseService {
     const g7 = await this.g7(projectId);
     if (body.outcome === 'confirm') {
       try {
-        assertProgramClosureAllowed({ g7Status: g7.status, confirmerUserId: ctx.principal.userId!, requesterUserId: c.requestedBy });
+        assertProgramClosureAllowed({ g7Status: g7.status, g7UnderReassessment: g7.underReassessment, confirmerUserId: ctx.principal.userId!, requesterUserId: c.requestedBy });
       } catch (e) {
-        await this.s.audit.recordDetached(ctx, { action: 'jv.program_closure.confirm', entityType: 'project', entityId: projectId, projectId, outcome: e instanceof DomainError && e.kind === 'forbidden' ? 'denied' : 'rejected', reason: (e as Error).message, before: { g7Status: g7.status } });
+        await this.s.audit.recordDetached(ctx, { action: 'jv.program_closure.confirm', entityType: 'project', entityId: projectId, projectId, outcome: e instanceof DomainError && e.kind === 'forbidden' ? 'denied' : 'rejected', reason: (e as Error).message, before: { g7Status: g7.status, g7UnderReassessment: g7.underReassessment } });
         throw e;
       }
     } else if (ctx.principal.userId === c.requestedBy) {

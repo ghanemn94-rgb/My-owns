@@ -1,18 +1,26 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { and, asc, count, eq, ilike, inArray, or } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, inArray, isNotNull, or } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
+  APPROVED_GATE_STATUSES,
   CLOSING_DECISION_TYPE_KEYS,
   CLOSING_MACHINE,
   CONDITION_MACHINE,
+  CP_LONG_STOP_EXTENSION_DECISION_TYPE_KEYS,
+  CP_LONG_STOP_WARN_DAYS,
   FUNDS_FLOW_MACHINE,
   FUNDS_FLOW_NOTICE,
   SIGNING_DECISION_TYPE_KEYS,
+  SIGNING_GATE_KEY,
   allowedCommands,
   assertChecklistItemAcceptable,
+  assertCpDatesEditable,
+  assertCpLongStopExtension,
   assertCpVerifiable,
   assertCpWaivabilityDetermination,
   assertEventConfirmable,
+  assertSigningGatePassed,
+  assessCpLongStop,
   conflict,
   eventBlockers,
   notFound,
@@ -26,15 +34,17 @@ import {
   DomainError,
   EventBlocker,
   FundsFlowCommand,
+  GateCycleState,
   RoleKey,
 } from '@hub/domain';
 import type { RouteInput, jvRoutes } from '@hub/contracts';
 import type { RequestContext } from '../../platform/context';
-import { assertVersion, likeContains, loadInProject, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
 import { orderBySort } from '../../platform/sort';
 import { newId } from '../../platform/ids';
+import { nextCronRun } from '../../platform/jobs/worker.service';
 import { WaiverService, WaiverRecord } from '../gates/waiver.service';
-import { JvSupport, iso, money, versionUsable } from './jv.support';
+import { JvSupport, ProjectRow, iso, money, versionUsable } from './jv.support';
 
 type Q<K extends keyof typeof jvRoutes> = RouteInput<(typeof jvRoutes)[K]>;
 type EventRow = typeof schema.closing.$inferSelect;
@@ -44,6 +54,15 @@ type FlowRow = typeof schema.fundsFlowItem.$inferSelect;
 
 const PREPARATION_COMMANDS = ['start_preparation', 'mark_ready', 'back_to_preparation', 'abort'] as const;
 const FROZEN_EVENT_STATUSES = ['confirmed', 'aborted'];
+
+/** DOM-P4-04: daily per-project long-stop scan of the CP register (project timezone) — lapses and escalations. */
+export const CP_LONG_STOP_JOB = 'jv.cp_long_stop_scan';
+export const CP_LONG_STOP_CRON = '0 6 * * *';
+
+/** G5 open for a signing: current cycle approved and not flagged for reassessment (DOM-P4-02). */
+function signingGateOpen(g: GateCycleState): boolean {
+  return !!g.status && APPROVED_GATE_STATUSES.includes(g.status) && !g.underReassessment;
+}
 
 /**
  * Signing and closing (REQ-LCY-009, REQ-JV-012..018; AT-11, AT-12, AT-13). A signing and each closing are separate
@@ -155,6 +174,9 @@ export class TransactionsService implements OnModuleInit {
       waivabilityDeterminedBy: c.waivabilityDeterminedBy,
       validTo: c.validTo,
       longStopDate: c.longStopDate,
+      longStopExtensionDecisionId: c.longStopExtensionDecisionId,
+      longStopExtendedBy: c.longStopExtendedBy,
+      longStopExtendedAt: iso(c.longStopExtendedAt),
       status: c.status,
       evidenceSubmittedBy: c.evidenceSubmittedBy,
       verifiedBy: c.verifiedBy,
@@ -164,7 +186,8 @@ export class TransactionsService implements OnModuleInit {
       waiverEffective,
       gateKey: c.gateKey,
       evidence,
-      allowedCommands: allowedCommands(CONDITION_MACHINE, c.status).filter((x) => x !== 'waive' && x !== 'mark_failed' && x !== 'mark_lapsed'),
+      // waive / extend_long_stop have their own commands (waiver register, approved extension); lapsing is the scan's.
+      allowedCommands: allowedCommands(CONDITION_MACHINE, c.status).filter((x) => x !== 'waive' && x !== 'mark_failed' && x !== 'mark_lapsed' && x !== 'extend_long_stop'),
       isDemo: c.isDemo,
       updatedAt: c.updatedAt.toISOString(),
       version: c.version,
@@ -322,8 +345,10 @@ export class TransactionsService implements OnModuleInit {
     // Blockers use every piece of evidence (r.*Evidence); the displayed counters only what the caller may see.
     const itemEv = await this.s.visibleEvidenceMap(ctx, projectId, 'closing_deliverable', r.items.map((i) => i.id));
     const cpEv = await this.s.visibleEvidenceMap(ctx, projectId, 'closing_condition', r.cps.map((c) => c.id));
+    const g5 = kind === 'signing' ? await this.s.gateCycle(projectId, SIGNING_GATE_KEY) : null;
     return {
       ...this.eventDto(e),
+      signingGate: g5 ? { gateKey: SIGNING_GATE_KEY, assessmentId: g5.assessmentId, status: g5.status, underReassessment: g5.underReassessment, passed: signingGateOpen(g5) } : null,
       description: e.description,
       executedDocumentId: e.executedDocumentId,
       confirmationDecisionId: e.confirmationDecisionId,
@@ -376,6 +401,9 @@ export class TransactionsService implements OnModuleInit {
     const d = await this.s.decision(ctx, projectId, body.decisionId);
     if (!d.decisionTypeKey || !types.includes(d.decisionTypeKey)) throw ruleViolation('jv.closing.decision_wrong_type', `The ${e.kind} confirmation needs a governance decision of type ${types.join(' / ')}`);
     if (d.status === 'rejected' || d.status === 'superseded') throw ruleViolation('jv.closing.decision_not_linkable', `A ${d.status} decision cannot authorize the ${e.kind}`);
+    // DOM-P4-02 (business-gates.md §8 rule 5): a signing only after gate G5 passed, on the decision that approved it.
+    const g5 = e.kind === 'signing' ? await this.s.gateCycle(projectId, SIGNING_GATE_KEY) : null;
+    if (g5) assertSigningGatePassed({ gate: g5, decisionId: d.id });
     const executedDocumentId = body.executedDocumentId ?? e.executedDocumentId;
     if (e.kind === 'signing' && !executedDocumentId) throw ruleViolation('jv.signing.executed_copy_required', 'Recording a signing requires the executed copy of the agreement');
     if (body.executedDocumentId) await this.s.visibleDocument(ctx, projectId, body.executedDocumentId);
@@ -389,7 +417,7 @@ export class TransactionsService implements OnModuleInit {
       subjectVersion: e.version + 1,
       action: permission,
       requiredPermission: permission,
-      payload: { eventId: e.id, kind: e.kind, decisionId: d.id, executedDocumentId: executedDocumentId ?? null },
+      payload: { eventId: e.id, kind: e.kind, decisionId: d.id, executedDocumentId: executedDocumentId ?? null, ...(g5 ? { signingGateAssessmentId: g5.assessmentId } : {}) },
       note: body.note ?? `Confirmation of ${e.code ?? e.name}`,
     });
     const row = (await updateVersioned(this.s.db, schema.closing, { id: e.id, projectId, expectedVersion: body.expectedVersion }, { confirmationRequestId: reqId, confirmationDecisionId: d.id, executedDocumentId: executedDocumentId ?? null })) as EventRow;
@@ -413,8 +441,11 @@ export class TransactionsService implements OnModuleInit {
     const p = await this.s.project(projectId);
     const r = await this.readiness(e, this.s.today(p));
     const decision = await this.s.decisionRow(projectId, e.confirmationDecisionId);
+    const g5 = kind === 'signing' ? await this.s.gateCycle(projectId, SIGNING_GATE_KEY) : null;
     try {
       assertEventConfirmable({ kind, blockers: r.blockers, confirmerUserId: ctx.principal.userId!, requesterUserId: req.requestedBy, decision: this.s.decisionState(decision) });
+      // DOM-P4-02: G5 re-evaluated inside the recording transaction (approved, not under reassessment, same decision).
+      if (g5) assertSigningGatePassed({ gate: g5, decisionId: decision?.id ?? null });
     } catch (err) {
       const denied = err instanceof DomainError && err.kind === 'forbidden';
       await this.s.audit.recordDetached(ctx, {
@@ -424,7 +455,7 @@ export class TransactionsService implements OnModuleInit {
         projectId,
         outcome: denied ? 'denied' : 'rejected',
         reason: (err as Error).message.slice(0, 1000),
-        before: { status: e.status, blockers: r.blockers.map((b) => ({ kind: b.kind, ref: b.ref, message: b.message })) },
+        before: { status: e.status, blockers: r.blockers.map((b) => ({ kind: b.kind, ref: b.ref, message: b.message })), ...(g5 ? { signingGate: { status: g5.status, underReassessment: g5.underReassessment } } : {}) },
       });
       throw err;
     }
@@ -441,6 +472,7 @@ export class TransactionsService implements OnModuleInit {
       conditions: r.cps.map((c) => ({ reference: c.reference, status: c.status, blocking: c.blocking, evidence: r.cpEvidence.get(c.id)?.active ?? 0, waiverEffective: r.waiverOk.get(c.id) ?? false })),
       checklist: r.items.map((i) => ({ ref: i.code ?? i.title, status: i.status })),
       signing: r.signing ? { code: r.signing.code, status: r.signing.status } : null,
+      ...(g5 ? { signingGate: { gateKey: SIGNING_GATE_KEY, assessmentId: g5.assessmentId, status: g5.status, decisionId: g5.decisionId } } : {}),
     };
     const row = (await updateVersioned(this.s.db, schema.closing, { id: e.id, projectId, expectedVersion: body.expectedVersion }, { status: to, confirmedBy: ctx.principal.userId, confirmedAt: now, confirmationAuthority: authority, readinessSnapshot: snapshot })) as EventRow;
     await this.s.decideApproval(ctx, projectId, req, 'approve', body.note ?? null, authority);
@@ -587,7 +619,7 @@ export class TransactionsService implements OnModuleInit {
         decidedAt: iso(w.decidedAt),
         version: w.version,
       })),
-      people: await this.s.people([c.ownerUserId, c.verifiedBy, c.evidenceSubmittedBy, c.waivabilityDeterminedBy, c.createdBy, ...ws.flatMap((w) => [w.requestedBy, w.decidedBy])]),
+      people: await this.s.people([c.ownerUserId, c.verifiedBy, c.evidenceSubmittedBy, c.waivabilityDeterminedBy, c.longStopExtendedBy, c.createdBy, ...ws.flatMap((w) => [w.requestedBy, w.decidedBy])]),
     };
   }
 
@@ -620,27 +652,168 @@ export class TransactionsService implements OnModuleInit {
       createdBy: ctx.principal.userId,
     });
     await this.s.audit.record({ action: 'jv.cp.create', entityType: 'closing_condition', entityId: id, projectId, after: { closingId: e.id, reference, blocking: body.blocking, waivable: false } });
+    if (body.longStopDate) await this.ensureLongStopSchedule(ctx, project);
     await this.dimensionsChanged(projectId, `cp:${id}:1`);
     return { id, code: reference, version: 1 };
   }
 
+  /**
+   * DOM-P4-04: the validity of a verified / waived CP changes only after a reopen (and a fresh verification); a long-stop
+   * date is set or brought forward here, and moved later / cleared only through `extendLongStop` (approved decision).
+   */
   async updateCp(ctx: RequestContext, projectId: string, id: string, body: Q<'updateCondition'>['body']) {
     const c = await this.loadCp(ctx, projectId, id, 'jv.cp.manage');
     await this.assertCpEditable(c);
     if (body.ownerUserId) await this.s.assertMember(projectId, body.ownerUserId, 'ownerUserId');
+    assertCpDatesEditable({ status: c.status, current: { validTo: c.validTo, longStopDate: c.longStopDate }, next: { validTo: body.validTo, longStopDate: body.longStopDate } });
     const values: Record<string, unknown> = {};
     for (const k of ['title', 'description', 'ownerUserId', 'parties', 'validTo', 'longStopDate'] as const) if (body[k] !== undefined) values[k] = body[k];
     const row = await updateVersioned(this.s.db, schema.closingCondition, { id, projectId, expectedVersion: body.expectedVersion }, values);
     await this.s.audit.record({ action: 'jv.cp.update', entityType: 'closing_condition', entityId: id, projectId, before: Object.fromEntries(Object.keys(values).map((k) => [k, (c as Record<string, unknown>)[k]])), after: values });
+    if (body.longStopDate) await this.ensureLongStopSchedule(ctx, await this.s.project(projectId));
     await this.dimensionsChanged(projectId, `cp:${id}:${row['version']}`);
     return { id, version: row['version'] as number };
   }
 
+  /**
+   * DOM-P4-04 (G6-C03 "no CP is past its long-stop date without an approved extension recorded"): a later long-stop date
+   * on a FINAL approved decision (PROPOSED type: the closing authority's `jv_closing_confirmation` until Legal confirms the
+   * authority); a lapsed CP is open again. Human only; audited with the previous date; the dimension recomputes.
+   */
+  async extendLongStop(ctx: RequestContext, projectId: string, id: string, body: Q<'extendConditionLongStop'>['body']) {
+    this.s.assertHuman(ctx, 'Recording a long-stop extension');
+    const c = await this.loadCp(ctx, projectId, id, 'jv.cp.manage');
+    await this.assertCpEditable(c);
+    const p = await this.s.project(projectId);
+    const d = await this.s.decision(ctx, projectId, body.decisionId);
+    assertCpLongStopExtension({
+      status: c.status,
+      currentLongStop: c.longStopDate,
+      newLongStop: body.longStopDate,
+      today: this.s.today(p),
+      decisionId: d.id,
+      decision: this.s.decisionState(d),
+      previousExtensionDecisionId: c.longStopExtensionDecisionId,
+    });
+    const values = { longStopDate: body.longStopDate, longStopExtensionDecisionId: d.id, longStopExtendedBy: ctx.principal.userId, longStopExtendedAt: this.s.clock.now(), statusNote: body.reason };
+    let row: CpRow;
+    if (c.status === 'lapsed') {
+      const to = transition('closing_condition', CONDITION_MACHINE, c.status, 'extend_long_stop');
+      row = (await updateVersioned(this.s.db, schema.closingCondition, { id, projectId, expectedVersion: body.expectedVersion }, { ...values, status: to })) as CpRow;
+    } else {
+      row = (await updateVersioned(this.s.db, schema.closingCondition, { id, projectId, expectedVersion: body.expectedVersion }, values)) as CpRow;
+    }
+    await this.s.audit.record({
+      action: 'jv.cp.extend_long_stop',
+      entityType: 'closing_condition',
+      entityId: id,
+      projectId,
+      before: { status: c.status, longStopDate: c.longStopDate },
+      after: { status: row.status, longStopDate: body.longStopDate, decisionId: d.id, decisionCode: d.code, decisionTypes: CP_LONG_STOP_EXTENSION_DECISION_TYPE_KEYS },
+      reason: body.reason,
+    });
+    await this.ensureLongStopSchedule(ctx, p);
+    await this.dimensionsChanged(projectId, `cp:${id}:${row.version}`);
+    return { id, status: row.status, version: row.version };
+  }
+
+  async ensureLongStopSchedule(ctx: RequestContext, p: ProjectRow) {
+    await this.s.db.query(`select pg_advisory_xact_lock(hashtextextended('hub_jv_cp_long_stop_schedule:' || $1, 0))`, [p.id]);
+    await this.s.db.query(
+      `insert into scheduled_job (id, org_id, project_id, kind, name, cron, timezone, payload, enabled, next_run_at, created_by)
+       select gen_random_uuid(), $1::uuid, $2::uuid, $3::varchar, $4::text, $5::varchar, $6::text, '{}'::jsonb, true, $7::timestamptz, $8::uuid
+        where not exists (select 1 from scheduled_job where org_id = $1::uuid and project_id = $2::uuid and kind = $3::varchar)`,
+      [p.orgId, p.id, CP_LONG_STOP_JOB, `CP long-stop scan (${p.code})`, CP_LONG_STOP_CRON, p.timezone, nextCronRun(CP_LONG_STOP_CRON, p.timezone, this.s.clock.now()), ctx.principal.userId],
+    );
+  }
+
+  /**
+   * DOM-P4-04 (business-gates.md §7 "approaching [the long-stop date] without evidence raises an escalation; passing it
+   * without an approved extension makes the CP lapsed and blocks closing"): worker job, project timezone, idempotent.
+   * An unsatisfied CP past its long-stop date moves to `lapsed` (audited, `cp.changed`); at most one system-generated
+   * escalation is raised per CP and long-stop date (approaching inside the PROPOSED 30-day window without evidence, or
+   * lapsed). Nothing is extended, waived or sent externally.
+   */
+  async scanLongStops(ctx: RequestContext, projectId: string) {
+    this.s.policy.assert(ctx, 'jv.cp.manage', { projectId });
+    const p = await this.s.project(projectId);
+    const today = this.s.today(p);
+    const t = schema.closingCondition;
+    const rows = await this.s.db
+      .tx()
+      .select()
+      .from(t)
+      .where(and(eq(t.projectId, projectId), isNotNull(t.longStopDate), inArray(t.status, ['open', 'evidence_submitted', 'lapsed'])))
+      .orderBy(asc(t.reference));
+    const ev = await this.s.evidenceMap(projectId, 'closing_condition', rows.map((c) => c.id));
+    const out = { scanned: rows.length, markedLapsed: 0, escalations: 0 };
+    for (const c of rows) {
+      const a = assessCpLongStop({ status: c.status, longStopDate: c.longStopDate, activeEvidence: ev.get(c.id)?.active ?? 0, today, warnDays: CP_LONG_STOP_WARN_DAYS });
+      if (a.action === 'none') continue;
+      if (a.action === 'mark_lapsed') {
+        if (c.closingId) {
+          const e = await loadInProject(this.s.db, schema.closing, projectId, c.closingId);
+          if (FROZEN_EVENT_STATUSES.includes(e.status)) continue; // a confirmed / aborted closing's CP set is frozen
+        }
+        await this.applyCp(ctx, c, 'mark_lapsed', c.version, { statusNote: `Long-stop date ${c.longStopDate} passed without an approved extension (${a.daysPast} day(s), project timezone)` }, `Long-stop date ${c.longStopDate} passed`);
+        out.markedLapsed++;
+      }
+      if (await this.raiseLongStopEscalation(ctx, p, c, a)) out.escalations++;
+    }
+    return out;
+  }
+
+  /** One system-generated escalation per CP and long-stop date (decision deadline = the long-stop date). */
+  private async raiseLongStopEscalation(ctx: RequestContext, p: ProjectRow, c: CpRow, a: ReturnType<typeof assessCpLongStop>): Promise<boolean> {
+    const [existing] = await this.s.db
+      .tx()
+      .select({ id: schema.escalation.id })
+      .from(schema.escalation)
+      .where(and(eq(schema.escalation.projectId, p.id), eq(schema.escalation.sourceType, 'closing_condition'), eq(schema.escalation.sourceId, c.id), eq(schema.escalation.decisionDeadline, c.longStopDate!)));
+    if (existing) return false;
+    const passed = a.action !== 'escalate_approaching';
+    const id = newId();
+    const code = await nextCode(this.s.db, schema.escalation, p.id, 'ESC');
+    await this.s.db
+      .tx()
+      .insert(schema.escalation)
+      .values({
+        id,
+        orgId: p.orgId,
+        projectId: p.id,
+        code,
+        title: passed ? `Condition ${c.reference} passed its long-stop date — lapsed, closing blocked` : `Condition ${c.reference} approaches its long-stop date without evidence`,
+        sourceType: 'closing_condition',
+        sourceId: c.id,
+        requestedAction: passed
+          ? `${c.reference} (${c.title}) passed its long-stop date ${c.longStopDate} without an approved extension: it is lapsed and blocks its closing. Decide on an extension (an approved decision recorded on the condition) or the consequence under the transaction documents.`
+          : `${c.reference} (${c.title}) reaches its long-stop date ${c.longStopDate} and has no evidence yet. Passing it without an approved extension makes the condition lapsed and blocks its closing.`,
+        decisionDeadline: c.longStopDate,
+        options: [
+          { title: 'Obtain and submit the evidence before the long-stop date', impact: 'The condition can then be verified by an independent reviewer' },
+          { title: 'Seek an extension of the long-stop date', impact: 'Needs an approved decision of the authorized body (to be confirmed); recorded on the condition' },
+          { title: 'Escalate to the counterparty / authorized body', impact: 'Per the transaction documents — to be confirmed' },
+        ],
+        target: 'Steering committee / authorized body — to be confirmed',
+        status: 'open',
+        raisedBy: ctx.principal.userId,
+        isSystemGenerated: true,
+        isDemo: p.isDemo,
+      });
+    await this.s.audit.record({ action: 'jv.cp.escalate_long_stop', entityType: 'escalation', entityId: id, projectId: p.id, after: { code, conditionId: c.id, reference: c.reference, longStopDate: c.longStopDate, kind: passed ? 'lapsed' : 'approaching' } });
+    await this.s.outbox.emit({ type: 'cp.changed', projectId: p.id, aggregateType: 'closing_condition', aggregateId: c.id, payload: { reason: 'long_stop', kind: passed ? 'lapsed' : 'approaching', escalationId: id }, dedupeKey: `cp.long_stop:${c.id}:${c.longStopDate}:${passed ? 'lapsed' : 'approaching'}` });
+    return true;
+  }
+
+  /**
+   * Legal specialist determination (business-gates.md §7; DOM-P4-03): `jv.cp.set_waivability` (legal_restricted only),
+   * human only; the determination never releases a blocking condition (non-waivable: never; waivable: waiver register).
+   */
   async determineWaivability(ctx: RequestContext, projectId: string, id: string, body: Q<'determineConditionWaivability'>['body']) {
     this.s.assertHuman(ctx, 'Determining waivability');
-    const c = await this.loadCp(ctx, projectId, id, 'gates.criterion.set_waivability');
+    const c = await this.loadCp(ctx, projectId, id, 'jv.cp.set_waivability');
     await this.assertCpEditable(c);
-    assertCpWaivabilityDetermination(body);
+    assertCpWaivabilityDetermination({ ...body, current: { blocking: c.blocking, waivable: c.waivable } });
     if (c.status === 'waived' && !body.waivable) throw ruleViolation('jv.cp.waived_reopen_first', `${c.reference} is waived; reopen it before determining it non-waivable`);
     const row = await updateVersioned(this.s.db, schema.closingCondition, { id, projectId, expectedVersion: body.expectedVersion }, {
       blocking: body.blocking,

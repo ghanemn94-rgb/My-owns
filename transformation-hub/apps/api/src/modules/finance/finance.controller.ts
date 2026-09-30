@@ -259,6 +259,11 @@ export class FinanceController {
     return this.benefits.rejectRealization(ctx, i.params.projectId, i.params.benefitId, i.body);
   }
 
+  @ApiRoute(R.reviseBenefitDefinition)
+  reviseBenefitDefinition(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.reviseBenefitDefinition>) {
+    return this.benefits.reviseDefinition(ctx, i.params.projectId, i.params.benefitId, i.body);
+  }
+
   @ApiRoute(R.cancelBenefit)
   cancelBenefit(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.cancelBenefit>) {
     return this.benefits.cancel(ctx, i.params.projectId, i.params.benefitId, i.body);

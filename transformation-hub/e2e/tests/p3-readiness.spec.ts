@@ -402,4 +402,24 @@ test.describe('P3 Day-1 & TSA Center', () => {
       await sponsor.close();
     }
   });
+
+  test('REQ-SET-004 / AT-10 (DOM-P4-09): the demo TSA issue — past its synthetic end date without an accepted replacement — is shown expired and escalated', async ({ browser }) => {
+    const pm = await asPersona(browser, P.pm);
+    try {
+      const { page } = pm;
+      await page.goto(`/projects/${pid}/readiness/tsa`);
+      await page.getByLabel('Search code or name').fill('Legacy monitoring bridge');
+      const row = page.getByTestId('tsa-table').getByRole('row').filter({ hasText: 'Legacy monitoring bridge — DEMO TSA issue (synthetic)' });
+      await expect(row).toHaveCount(1);
+      await row.getByRole('link').first().click();
+      const detail = page.getByTestId('tsa-detail');
+      await expect(detail).toHaveAttribute('data-status', 'expired_unresolved');
+      await expect(page.getByTestId('end-not-exit')).toContainText('Reaching the end date is not an exit');
+      await expect(page.getByTestId('tsa-escalation').locator('[data-status="decision_requested"]')).toHaveCount(1);
+      await expect(page.getByTestId('demo-badge').first()).toBeVisible();
+      expect(pm.problems(), pm.problems().join('\n')).toEqual([]);
+    } finally {
+      await pm.close();
+    }
+  });
 });

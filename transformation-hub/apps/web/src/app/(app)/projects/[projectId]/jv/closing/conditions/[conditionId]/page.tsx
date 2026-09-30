@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
 import { jvRoutes } from '@hub/contracts';
-import { ROLE_KEYS, type RoleKey } from '@hub/domain';
+import { CP_LONG_STOP_EXTENSION_DECISION_TYPE_KEYS, ROLE_KEYS, type RoleKey } from '@hub/domain';
 import { ActivityHistory } from '@/components/ActivityHistory';
 import { DataTable } from '@/components/DataTable';
 import { DemoBadge } from '@/components/DemoBadge';
@@ -24,9 +24,11 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
 import { jk, jvHref, useJvRefresh, type ConditionDetail } from '@/lib/jv';
 import { useProjectContext } from '@/lib/project-context';
-import { ButtonRow, Callout, CmdButton, Facts, Flag, JvCommandDialog, Panel, Person, UText, WaivabilityBadge } from '../../../_components/jv';
+import { ButtonRow, Callout, CmdButton, DecisionSelect, Facts, Flag, JvCommandDialog, Panel, Person, UText, WaivabilityBadge } from '../../../_components/jv';
 
-type Cmd = 'submit' | 'verify' | 'reopen' | 'determine' | 'waiver' | 'edit' | null;
+type Cmd = 'submit' | 'verify' | 'reopen' | 'determine' | 'waiver' | 'edit' | 'extend' | null;
+/** DOM-P4-04: a long-stop date moves later only through an approved extension, while the condition is unsatisfied. */
+const EXTENDABLE: readonly string[] = ['open', 'evidence_submitted', 'lapsed'];
 type Waiver = ConditionDetail['waivers'][number];
 
 function ConditionDialogs({ c, cmd, onClose }: { c: ConditionDetail; cmd: Cmd; onClose: () => void }) {
@@ -49,6 +51,9 @@ function ConditionDialogs({ c, cmd, onClose }: { c: ConditionDetail; cmd: Cmd; o
   const [parties, setParties] = useState(c.parties ?? '');
   const [validTo, setValidTo] = useState(c.validTo ?? '');
   const [longStop, setLongStop] = useState(c.longStopDate ?? '');
+  const [extDate, setExtDate] = useState('');
+  const [extDecision, setExtDecision] = useState('');
+  const validityLocked = c.status === 'verified' || c.status === 'waived';
   const done = async (msg: string) => {
     await refresh();
     toast.show('success', msg);
@@ -118,7 +123,7 @@ function ConditionDialogs({ c, cmd, onClose }: { c: ConditionDetail; cmd: Cmd; o
           noteMode="none"
           expectedVersion={c.version}
           confirmDisabled={!basis.trim() || (waivable && !authority)}
-          consequences={[t('jv.cp.cmd.determine.effect'), t('common.command.audited')]}
+          consequences={[t('jv.cp.cmd.determine.effect'), t('jv.cp.cmd.determine.legalOnly'), ...(c.blocking ? [t('jv.cp.cmd.determine.blockingLocked')] : []), t('common.command.audited')]}
           onConfirm={async () => {
             await api(jvRoutes.determineConditionWaivability, { params, body: { expectedVersion: c.version, blocking, waivable, waiverAuthorityRole: waivable && authority ? authority : null, basis: basis.trim() } });
             await done(t('jv.common.saved'));
@@ -126,7 +131,7 @@ function ConditionDialogs({ c, cmd, onClose }: { c: ConditionDetail; cmd: Cmd; o
         >
           <div className="flex flex-wrap gap-4">
             <label className="inline-flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={blocking} onChange={(e) => setBlocking(e.target.checked)} />
+              <input type="checkbox" checked={blocking} disabled={c.blocking} onChange={(e) => setBlocking(e.target.checked)} data-testid="determine-blocking" />
               {t('jv.cp.fields.blockingCheckbox')}
             </label>
             <label className="inline-flex items-center gap-2 text-sm">
@@ -168,6 +173,27 @@ function ConditionDialogs({ c, cmd, onClose }: { c: ConditionDetail; cmd: Cmd; o
           <TextField label={t('jv.cp.waivers.expiresOn')} type="date" value={expiresOn} onChange={(e) => setExpiresOn(e.target.value)} />
         </JvCommandDialog>
       );
+    case 'extend':
+      return (
+        <JvCommandDialog
+          open
+          onClose={onClose}
+          title={t('jv.cp.cmd.extend.title')}
+          confirmLabel={t('jv.cp.cmd.extend.confirm')}
+          noteMode="required"
+          noteLabel={t('jv.common.reason')}
+          expectedVersion={c.version}
+          confirmDisabled={!extDate || !extDecision}
+          consequences={[t('jv.cp.cmd.extend.effect'), t('jv.cp.cmd.extend.decisionRule'), ...(c.status === 'lapsed' ? [t('jv.cp.cmd.extend.reopens')] : []), t('common.command.audited')]}
+          onConfirm={async ({ note }) => {
+            const r = await api(jvRoutes.extendConditionLongStop, { params, body: { expectedVersion: c.version, longStopDate: extDate, decisionId: extDecision, reason: note } });
+            await done(t('jv.common.statusNow', { status: tStatus('conditionStatuses', r.status) }));
+          }}
+        >
+          <TextField label={t('jv.cp.cmd.extend.newDate')} type="date" required value={extDate} min={c.longStopDate ?? undefined} onChange={(e) => setExtDate(e.target.value)} data-testid="extend-date" />
+          <DecisionSelect typeKeys={CP_LONG_STOP_EXTENSION_DECISION_TYPE_KEYS} value={extDecision} onChange={setExtDecision} testId="extend-decision" />
+        </JvCommandDialog>
+      );
     case 'edit':
       return (
         <JvCommandDialog
@@ -182,7 +208,16 @@ function ConditionDialogs({ c, cmd, onClose }: { c: ConditionDetail; cmd: Cmd; o
           onConfirm={async () => {
             await api(jvRoutes.updateCondition, {
               params,
-              body: { expectedVersion: c.version, title: title.trim(), description: description.trim() || null, parties: parties.trim() || null, validTo: validTo || null, longStopDate: longStop || null, ...(owner ? { ownerUserId: owner.id } : {}) },
+              body: {
+                expectedVersion: c.version,
+                title: title.trim(),
+                description: description.trim() || null,
+                parties: parties.trim() || null,
+                // Unchanged dates are not sent, so a locked validity / long-stop date never blocks an edit of other fields.
+                ...((validTo || null) !== c.validTo ? { validTo: validTo || null } : {}),
+                ...((longStop || null) !== c.longStopDate ? { longStopDate: longStop || null } : {}),
+                ...(owner ? { ownerUserId: owner.id } : {}),
+              },
             });
             await done(t('jv.common.saved'));
           }}
@@ -192,8 +227,8 @@ function ConditionDialogs({ c, cmd, onClose }: { c: ConditionDetail; cmd: Cmd; o
           <UserPicker label={t('jv.cp.fields.ownerChange')} value={owner} onChange={setOwner} />
           <TextField label={t('jv.cp.fields.parties')} value={parties} maxLength={1000} onChange={(e) => setParties(e.target.value)} />
           <div className="grid gap-4 sm:grid-cols-2">
-            <TextField label={t('jv.cp.fields.validTo')} type="date" value={validTo} onChange={(e) => setValidTo(e.target.value)} />
-            <TextField label={t('jv.cp.fields.longStop')} type="date" value={longStop} onChange={(e) => setLongStop(e.target.value)} />
+            <TextField label={t('jv.cp.fields.validTo')} type="date" value={validTo} disabled={validityLocked} hint={validityLocked ? t('jv.cp.cmd.edit.validityLocked') : undefined} onChange={(e) => setValidTo(e.target.value)} />
+            <TextField label={t('jv.cp.fields.longStop')} type="date" value={longStop} disabled={c.status === 'lapsed'} hint={t('jv.cp.cmd.edit.longStopRule')} onChange={(e) => setLongStop(e.target.value)} />
           </div>
         </JvCommandDialog>
       );
@@ -266,7 +301,9 @@ export default function ConditionPage() {
     { key: 'reopen' as const, show: can('jv.cp.manage') && c.allowedCommands.includes('reopen') },
     // AT-13: a waiver is requestable only for a CP a specialist determined waivable — never for a non-waivable one.
     { key: 'waiver' as const, show: can('jv.cp.manage') && c.waivable && open && !pendingWaiver },
-    { key: 'determine' as const, show: can('gates.criterion.set_waivability') && open },
+    // business-gates.md §7 (DOM-P4-03): blocking status and waivability are determined by Legal specialists only.
+    { key: 'determine' as const, show: can('jv.cp.set_waivability') && open },
+    { key: 'extend' as const, show: can('jv.cp.manage') && !!c.longStopDate && EXTENDABLE.includes(c.status) },
     { key: 'edit' as const, show: can('jv.cp.manage') },
   ].filter((x) => x.show);
 
@@ -305,6 +342,11 @@ export default function ConditionPage() {
           <Callout testId="cp-waivable-notice">{t('jv.cp.waivableNotice', { role: c.waiverAuthorityRole ? tStatus('roleKeys', c.waiverAuthorityRole) : EM_DASH })}</Callout>
         )}
         {c.status === 'waived' && !c.waiverEffective ? <Callout tone="danger">{t('jv.cp.waiverNotEffective')}</Callout> : null}
+        {c.status === 'lapsed' ? (
+          <Callout tone="danger" testId="cp-lapsed">
+            {t('jv.cp.lapsedNotice', { date: formatDate(c.longStopDate) })}
+          </Callout>
+        ) : null}
 
         <Panel
           title={t('jv.common.commands')}
@@ -355,6 +397,17 @@ export default function ConditionPage() {
               { label: t('jv.cp.fields.parties'), value: <UText value={c.parties} /> },
               { label: t('jv.cp.fields.validTo'), value: <span className="tabular">{formatDate(c.validTo)}</span> },
               { label: t('jv.cp.fields.longStop'), value: <span className="tabular">{formatDate(c.longStopDate)}</span> },
+              {
+                label: t('jv.cp.fields.longStopExtension'),
+                value: c.longStopExtendedBy ? (
+                  <span>
+                    <Person id={c.longStopExtendedBy} people={people} /> · <span className="tabular">{formatDateTime(c.longStopExtendedAt)}</span>
+                  </span>
+                ) : (
+                  EM_DASH
+                ),
+                testId: 'cp-long-stop-extension',
+              },
               { label: t('jv.cp.fields.gate'), value: c.gateKey ? <span dir="ltr">{c.gateKey}</span> : EM_DASH },
               { label: t('jv.common.updated'), value: <span className="tabular">{formatDateTime(c.updatedAt)}</span> },
             ]}

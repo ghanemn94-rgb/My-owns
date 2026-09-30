@@ -381,6 +381,8 @@ export const TRANSLATED_ERROR_CODES = [
   'finance.benefit.verify_self',
   'finance.benefit.approve_self',
   'finance.benefit.verification_source_required',
+  'finance.benefit.accepted_definition_locked',
+  'finance.benefit.realization_pending',
   'finance.model.approval_not_configured',
   'finance.model.superseded',
   'finance.model.decision_not_final',

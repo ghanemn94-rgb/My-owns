@@ -434,6 +434,33 @@ export function assertDdReviewAllowed(i: { reviewerUserId: string; drafterUserId
   if (i.drafterUserId && i.reviewerUserId === i.drafterUserId) throw forbidden('jv.dd.self_review', 'The drafter of an answer cannot review it');
 }
 
+/** One evidence document of a DD answer pinned to the version submitted for review. */
+export interface PinnedEvidence {
+  documentId: string;
+  versionId: string;
+}
+
+/**
+ * DOM-P4-05 (spec §8 DD Q&A "reviewer, release approval, disclosed version"; REQ-JV-010): the evidence versions shown to
+ * the reviewer are pinned when the answer is submitted for review, and the release discloses exactly those versions.
+ * Every evidence document must have a pinned version; with `currentVersionByDocument` (at the review), a document whose
+ * current version is no longer the pinned one was changed after submission — the reviewer never saw that version, so the
+ * answer goes back to draft and is submitted again.
+ */
+export function assertDdEvidencePinned(i: { evidenceDocumentIds: readonly string[]; pinned: readonly PinnedEvidence[]; currentVersionByDocument?: Readonly<Record<string, string | null>> }): void {
+  for (const documentId of i.evidenceDocumentIds) {
+    const p = i.pinned.find((x) => x.documentId === documentId);
+    if (!p) throw ruleViolation('jv.dd.evidence_not_pinned', 'The evidence of this answer was not pinned when it was submitted for review: return the answer to draft and submit it again', { documentId });
+    if (i.currentVersionByDocument && i.currentVersionByDocument[documentId] !== p.versionId) {
+      throw ruleViolation(
+        'jv.dd.evidence_changed',
+        'An evidence document has a newer version than the one submitted for review: return the answer to draft and submit it again, so that the reviewer approves the version that will be disclosed',
+        { documentId },
+      );
+    }
+  }
+}
+
 /** Release requires a reviewed and approved answer, released by someone other than the drafter (REQ-JV-010). */
 export function assertDdReleaseAllowed(i: { status: DdReleaseStatus; releaserUserId: string; drafterUserId: string | null; reviewerUserId: string | null; answer: string | null }): void {
   if (i.status !== 'approved_for_release') {
@@ -477,11 +504,128 @@ export function assertCpVerifiable(i: { activeEvidence: number; verifierUserId: 
   if (i.verifierUserId === i.evidenceSubmittedBy) throw forbidden('jv.cp.self_verification', 'The person who submitted the evidence cannot verify the condition');
 }
 
-/** Specialist determination of waivability: a waivable CP names its waiver authority; the basis is always documented. */
-export function assertCpWaivabilityDetermination(i: { waivable: boolean; waiverAuthorityRole: string | null; basis: string }): void {
+/**
+ * Specialist determination of waivability (business-gates.md §7: set only by authorized LEGAL specialists — permission
+ * `jv.cp.set_waivability`): a waivable CP names its waiver authority; the basis is always documented.
+ *
+ * DOM-P4-03: the determination never RELEASES a blocking condition (blocking → non-blocking). Spec §3: "an exception
+ * cannot override a non-waivable condition" — a non-waivable blocking CP stays blocking; a waivable one is released only
+ * through the waiver register (basis, impact, approval by the designated authority who is not the requester). `current`
+ * is the condition as stored (omit it only when there is none yet).
+ */
+export function assertCpWaivabilityDetermination(i: { waivable: boolean; waiverAuthorityRole: string | null; basis: string; blocking?: boolean; current?: { blocking: boolean; waivable: boolean } }): void {
   if (!i.basis.trim()) throw ruleViolation('jv.cp.waivability_basis_required', 'The waivability determination needs a documented basis');
   if (i.waivable && !i.waiverAuthorityRole) throw ruleViolation('jv.cp.waiver_authority_required', 'A waivable condition must name the role with waiver authority');
   if (!i.waivable && i.waiverAuthorityRole) throw ruleViolation('jv.cp.non_waivable_no_authority', 'A non-waivable condition has no waiver authority');
+  if (i.current?.blocking && i.blocking === false) {
+    throw ruleViolation(
+      'jv.cp.blocking_release_not_allowed',
+      i.current.waivable
+        ? 'A blocking condition is not made non-blocking by a determination: a waivable condition is released only through an approved waiver (basis, impact, approval by the waiver authority)'
+        : 'A non-waivable blocking condition stays blocking: an exception cannot override a non-waivable condition (spec §3)',
+      { waivable: i.current.waivable },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// CP validity and long-stop dates (DOM-P4-04; business-gates.md §7, G6-C03)
+
+/**
+ * Decision types that approve the extension of a CP long-stop date. PROPOSED (DOM-P4-04): the DEMO authority matrix has no
+ * dedicated type; the closing authority's type (`jv_closing_confirmation`, gate G6 — G6-C03 "no CP is past its long-stop
+ * date without an approved extension recorded") is required until Legal confirms the actual authority.
+ */
+export const CP_LONG_STOP_EXTENSION_DECISION_TYPE_KEYS: readonly string[] = ['jv_closing_confirmation'];
+/**
+ * Warning window before a long-stop date (days) in which an open CP without evidence is escalated. PROPOSED default
+ * (the specification gives no window; same value as the TSA end-date warning window) — to be confirmed.
+ */
+export const CP_LONG_STOP_WARN_DAYS = 30;
+
+/**
+ * PATCH of a CP's dates (business-gates.md §7 "an expired approval re-opens the CP"; "passing [the long-stop date]
+ * without an approved extension makes the CP lapsed"):
+ *  - the validity (`validTo`) of a verified or waived CP is what its verification / waiver relied on: it changes only
+ *    after the CP is reopened (explicit command with a reason) and is then verified again;
+ *  - a long-stop date is SET freely when none is recorded, and may be brought forward; moving it later, clearing it, or
+ *    changing it on a lapsed CP needs an approved extension (`extend-long-stop`).
+ */
+export function assertCpDatesEditable(i: {
+  status: ConditionStatus;
+  current: { validTo: string | null; longStopDate: string | null };
+  next: { validTo?: string | null; longStopDate?: string | null };
+}): void {
+  if (i.next.validTo !== undefined && i.next.validTo !== i.current.validTo && (i.status === 'verified' || i.status === 'waived')) {
+    throw ruleViolation(
+      'jv.cp.validity_locked',
+      `The validity date of a ${i.status} condition is what its ${i.status === 'verified' ? 'verification' : 'waiver'} relied on: reopen the condition (with a reason) and have it verified again to change it`,
+      { status: i.status },
+    );
+  }
+  if (i.next.longStopDate !== undefined && i.next.longStopDate !== i.current.longStopDate) {
+    const cur = i.current.longStopDate;
+    const nxt = i.next.longStopDate;
+    if (i.status === 'lapsed' || (cur !== null && (nxt === null || nxt > cur))) {
+      throw ruleViolation(
+        'jv.cp.long_stop_extension_required',
+        `Moving the long-stop date${cur ? ` ${cur}` : ''} later, clearing it or changing it on a lapsed condition needs an approved extension (extend the long-stop date with the approving decision)`,
+        { longStopDate: cur },
+      );
+    }
+  }
+}
+
+/** Extension of a CP long-stop date: a later date, not in the past, on a FINAL approved decision not used for the current extension. */
+export function assertCpLongStopExtension(i: {
+  status: ConditionStatus;
+  currentLongStop: string | null;
+  newLongStop: string;
+  today: string;
+  decisionId: string;
+  decision: LinkedDecisionState | null;
+  previousExtensionDecisionId: string | null;
+}): void {
+  if (!(['open', 'evidence_submitted', 'lapsed'] as ConditionStatus[]).includes(i.status)) {
+    throw ruleViolation('jv.cp.extension_invalid_state', `A ${i.status} condition needs no long-stop extension`, { status: i.status });
+  }
+  if (!i.currentLongStop) throw ruleViolation('jv.cp.extension_no_long_stop', 'The condition has no long-stop date to extend (record it on the condition first)');
+  if (i.newLongStop <= i.currentLongStop || i.newLongStop < i.today) {
+    throw ruleViolation('jv.cp.extension_date_invalid', `The extended long-stop date must be later than ${i.currentLongStop} and not in the past`, { longStopDate: i.currentLongStop });
+  }
+  if (!decisionIsFinalApproval(i.decision, CP_LONG_STOP_EXTENSION_DECISION_TYPE_KEYS)) {
+    throw ruleViolation(
+      'jv.cp.extension_decision_not_final',
+      `A long-stop extension needs a FINAL approved governance decision of type ${CP_LONG_STOP_EXTENSION_DECISION_TYPE_KEYS.join(' / ')} (within the mandate or approved by the authorized body)`,
+      { decisionStatus: i.decision?.status ?? null },
+    );
+  }
+  if (i.previousExtensionDecisionId && i.previousExtensionDecisionId === i.decisionId) {
+    throw ruleViolation('jv.cp.extension_decision_already_used', 'This decision already authorized the current extension; a further extension needs a new decision');
+  }
+}
+
+export type CpLongStopAction =
+  | { action: 'none' }
+  | { action: 'escalate_approaching'; daysLeft: number }
+  | { action: 'mark_lapsed'; daysPast: number }
+  | { action: 'ensure_escalation'; daysPast: number };
+
+const dayDiff = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
+
+/**
+ * Long-stop evaluation for the daily scan (business dates in the project timezone). An unsatisfied CP (open / evidence
+ * submitted) past its long-stop date lapses; an open CP without evidence inside the warning window is escalated; a lapsed
+ * CP keeps (at most) one escalation per long-stop date.
+ */
+export function assessCpLongStop(i: { status: ConditionStatus; longStopDate: string | null; activeEvidence: number; today: string; warnDays?: number }): CpLongStopAction {
+  if (!i.longStopDate) return { action: 'none' };
+  if (i.status === 'lapsed') return { action: 'ensure_escalation', daysPast: Math.max(0, dayDiff(i.longStopDate, i.today)) };
+  if (i.status !== 'open' && i.status !== 'evidence_submitted') return { action: 'none' };
+  if (i.longStopDate < i.today) return { action: 'mark_lapsed', daysPast: dayDiff(i.longStopDate, i.today) };
+  const daysLeft = dayDiff(i.today, i.longStopDate);
+  if (i.status === 'open' && i.activeEvidence <= 0 && daysLeft <= (i.warnDays ?? CP_LONG_STOP_WARN_DAYS)) return { action: 'escalate_approaching', daysLeft };
+  return { action: 'none' };
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -529,6 +673,47 @@ export function eventBlockers(i: EventReadinessInput): EventBlocker[] {
     if (it.status !== 'verified' && it.status !== 'not_required') out.push(blocker('checklist_item', it.ref, serverMessage('jv.closing.item_not_accepted', { ref: it.ref })));
   }
   return out;
+}
+
+/** The business gate whose approval establishes signing readiness (business-gates.md §3 G5, §8 rule 5). */
+export const SIGNING_GATE_KEY = 'G5';
+
+/** The current cycle of a business gate, as the JV rules need it. */
+export interface GateCycleState {
+  assessmentId: string | null;
+  status: GateAssessmentStatus | null;
+  /** The approval is flagged for controlled reassessment (relied-upon evidence changed — DOM-P2-05). */
+  underReassessment: boolean;
+  /** The governance decision that backed the cycle's approval. */
+  decisionId: string | null;
+}
+
+/**
+ * DOM-P4-02 (business-gates.md §8 rule 5 "a recorded signing (after G5)"; spec §3 enforceable gates): a signing is
+ * requested and recorded only while the CURRENT cycle of gate G5 (JV Signing Readiness) is approved (with or without
+ * exceptions) and not flagged for reassessment, and on the decision that approved that cycle — `jv_signing_authorization`
+ * is the decision type the authority matrix assigns to G5, so the decision that passes G5 is the signing authorization.
+ * Evaluated at the request AND again inside the recording transaction.
+ */
+export function assertSigningGatePassed(i: { gate: GateCycleState | null; decisionId: string | null }): void {
+  const status = i.gate?.status ?? null;
+  if (!i.gate || !status || !APPROVED_GATE_STATUSES.includes(status)) {
+    throw ruleViolation(
+      'jv.signing.g5_not_passed',
+      `A signing can be recorded only after gate ${SIGNING_GATE_KEY} (JV Signing Readiness) is approved (${SIGNING_GATE_KEY} is ${status ?? 'not assessed'})`,
+      { gateKey: SIGNING_GATE_KEY, gateStatus: status },
+    );
+  }
+  if (i.gate.underReassessment) {
+    throw ruleViolation(
+      'jv.signing.g5_under_reassessment',
+      `The approval of gate ${SIGNING_GATE_KEY} is flagged for controlled reassessment (evidence it relied upon changed): no signing can be recorded until it is reassessed`,
+      { gateKey: SIGNING_GATE_KEY, gateStatus: status },
+    );
+  }
+  if (!i.decisionId || i.gate.decisionId !== i.decisionId) {
+    throw ruleViolation('jv.signing.decision_not_g5', `The signing must be authorized by the decision that approved the current ${SIGNING_GATE_KEY} cycle`, { gateKey: SIGNING_GATE_KEY });
+  }
 }
 
 /** Authorized confirmation: separate person, a FINAL approved decision of the right type, and no blocker (AT-12). */
@@ -601,16 +786,22 @@ export function assertObligationVerifiable(i: { activeEvidence: number; verifier
 // ---------------------------------------------------------------------------------------------------------
 // Program closure (REQ-JV-019)
 
-/** Program closure needs gate G7 (Stabilization & Handover) passed — approved, or approved with recorded exceptions. */
-export function assertG7Passed(g7Status: GateAssessmentStatus | null): void {
+/**
+ * Program closure needs gate G7 (Stabilization & Handover) passed — approved, or approved with recorded exceptions — and
+ * that approval not flagged for controlled reassessment (DOM-P4-11; DOM-P2-05: a flagged approval no longer counts).
+ */
+export function assertG7Passed(g7Status: GateAssessmentStatus | null, underReassessment = false): void {
   if (!g7Status || !APPROVED_GATE_STATUSES.includes(g7Status)) {
     throw ruleViolation('jv.program_closure.g7_not_passed', `Program closure requires gate G7 (Stabilization & Handover) to pass (G7 is ${g7Status ?? 'not assessed'})`, { g7Status });
+  }
+  if (underReassessment) {
+    throw ruleViolation('jv.program_closure.g7_under_reassessment', 'The approval of gate G7 is flagged for controlled reassessment (evidence it relied upon changed): program closure waits for the reassessment', { g7Status });
   }
 }
 
 /** Program closure is separate from transaction closing: it requires gate G7 to have passed, and a second person. */
-export function assertProgramClosureAllowed(i: { g7Status: GateAssessmentStatus | null; confirmerUserId: string; requesterUserId: string }): void {
-  assertG7Passed(i.g7Status);
+export function assertProgramClosureAllowed(i: { g7Status: GateAssessmentStatus | null; g7UnderReassessment?: boolean; confirmerUserId: string; requesterUserId: string }): void {
+  assertG7Passed(i.g7Status, i.g7UnderReassessment ?? false);
   if (i.confirmerUserId === i.requesterUserId) throw forbidden('jv.program_closure.self_confirmation', 'The requester cannot confirm the program closure');
 }
 

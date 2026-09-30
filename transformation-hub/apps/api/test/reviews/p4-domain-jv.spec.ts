@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools } from '../helpers';
 import { gateByKey } from '../gates/gate-test-kit';
-import { P, doc, finalDecision, gateDecision, grant, in30, ok, partnerAt, plusDays, room, setupJvProject, syntheticUser, DocClient, JvProject } from '../jv/jv-kit';
+import { P, doc, finalDecision, gateDecision, grant, in30, ok, partnerAt, passG5, plusDays, room, setupJvProject, syntheticUser, DocClient, JvProject } from '../jv/jv-kit';
 import { docsPath } from '../documents/doc-helpers';
 
 /**
@@ -15,6 +15,12 @@ import { docsPath } from '../documents/doc-helpers';
  * one encoding the required behaviour, and all setup runs in plain `it` steps before it.
  *
  * All data is synthetic (a demo-flagged project created by the test through the API).
+ *
+ * Fixed findings (docs/reviews/P4-domain-review.md): DOM-P4-02, -03, -04 and -05 are plain regression tests (`… (fixed,
+ * regression)`), with their assertions unchanged. Because a signing now needs gate G5 passed (DOM-P4-02), the fixture passes
+ * G5 through the real gate API before the first signing and uses the decision that approved it; the DOM-P4-02 setup then
+ * reopens G5 (controlled reopen by the chair) so that its precondition "G5 is not passed" holds. DOM-P4-01 and -08
+ * (decision reuse / evidence re-check) stay open probes.
  */
 const probe = process.env['P4_PROBE_PLAIN'] ? it : it.fails;
 
@@ -36,12 +42,13 @@ beforeAll(async () => {
   j = await setupJvProject('DRP4-JV');
   pid = j.projectId;
   partnerId = await partnerAt(j, 'P4 probe partner (fictional)');
-  // A confirmed signing through the ordinary path (as in AT-12): a FINAL jv_signing_authorization decision, the executed
-  // copy, requested by the PM and recorded by the sponsor.
+  // A confirmed signing through the ordinary path (as in AT-12): gate G5 passed (DOM-P4-02) and the FINAL
+  // jv_signing_authorization decision that approved it, the executed copy, requested by the PM and recorded by the sponsor.
+  const g5Approval = await passG5(j);
   const s = await ok(await j.p.pm.post(`${P(pid)}/signings`, { name: 'P4 probe signing (synthetic)', partnerId }));
   const v = await readyEvent(s.id);
   const executed = await doc(j.p.pm, pid, 'P4 probe executed agreement (synthetic)', { kind: 'agreement' });
-  const req = await ok(await j.p.pm.post(`${P(pid)}/transaction-events/${s.id}/request-confirmation`, { expectedVersion: v, decisionId: await finalDecision(j, 'jv_signing_authorization'), executedDocumentId: executed.id }));
+  const req = await ok(await j.p.pm.post(`${P(pid)}/transaction-events/${s.id}/request-confirmation`, { expectedVersion: v, decisionId: g5Approval, executedDocumentId: executed.id }));
   await ok(await j.p.sponsor.post(`${P(pid)}/signings/${s.id}/record`, { expectedVersion: req.version }));
   signingId = s.id;
 }, 600_000);
@@ -83,6 +90,9 @@ describe('P4 domain review — JV defect probes [docs/reviews/P4-domain-review.m
   let executed2: string;
 
   it('setup DOM-P4-02: G5 is not passed; a second signing is ready; a FINAL jv_signing_authorization decision raised for G5 exists', async () => {
+    // The fixture passed G5 for the first signing: the chair reopens it (controlled reopen) — its current cycle is not passed.
+    const passed = await gateByKey(j.gp.pm, pid, 'G5');
+    await ok(await j.gp.chair.post(`/api/v1/projects/${pid}/gates/${passed.id}/assessment/reopen`, { expectedVersion: passed.assessment.version, reason: 'P4 probe: G5 reopened (synthetic)' }));
     const g5 = await gateByKey(j.gp.pm, pid, 'G5');
     expect(['approved', 'approved_with_exceptions']).not.toContain(g5.assessment?.status ?? null);
     const s = await ok(await j.p.pm.post(`${P(pid)}/signings`, { name: 'P4 probe signing #2 before G5 (synthetic)', partnerId }));
@@ -93,7 +103,7 @@ describe('P4 domain review — JV defect probes [docs/reviews/P4-domain-review.m
     executed2 = (await doc(j.p.pm, pid, 'P4 probe executed agreement #2 (synthetic)', { kind: 'agreement' })).id;
   });
 
-  probe('DEFECT DOM-P4-02: a signing cannot be recorded before gate G5 (JV Signing Readiness) has passed (business-gates.md §8 rule 5, spec §3 enforceable gates)', async () => {
+  it('DOM-P4-02: a signing cannot be recorded before gate G5 (JV Signing Readiness) has passed (business-gates.md §8 rule 5, spec §3 enforceable gates) (fixed, regression)', async () => {
     const req = await j.p.pm.post(`${P(pid)}/transaction-events/${signing2.id}/request-confirmation`, { expectedVersion: signing2.version, decisionId: g5Decision, executedDocumentId: executed2 });
     if (req.status === 201) await j.p.sponsor.post(`${P(pid)}/signings/${signing2.id}/record`, { expectedVersion: req.body.version });
     const s = await event(j.p.pm, 'signings', signing2.id);
@@ -116,7 +126,7 @@ describe('P4 domain review — JV defect probes [docs/reviews/P4-domain-review.m
     expect((await event(j.p.pm, 'closings', closing3)).blockers.map((b: { ref: string }) => b.ref)).toContain(c.code);
   });
 
-  probe('DEFECT DOM-P4-03: a functional approver (not a Legal specialist) cannot make a non-waivable blocking CP non-blocking, and the CP keeps blocking the closing (business-gates.md §7; AT-13)', async () => {
+  it('DOM-P4-03: a functional approver (not a Legal specialist) cannot make a non-waivable blocking CP non-blocking, and the CP keeps blocking the closing (business-gates.md §7; AT-13) (fixed, regression)', async () => {
     const r = await j.p.approver.post(`${P(pid)}/closing-conditions/${cpBlock.id}/determine-waivability`, {
       expectedVersion: cpBlock.version,
       blocking: false,
@@ -146,7 +156,7 @@ describe('P4 domain review — JV defect probes [docs/reviews/P4-domain-review.m
     expect(bl.map((b: { messageI18n: { code: string }[] }) => b.messageI18n[0]!.code)).toEqual(['jv.closing.cp_validity_lapsed']);
   });
 
-  probe('DEFECT DOM-P4-04: moving the validity date of a verified CP after it lapsed does not clear the blocker without re-verification (business-gates.md §7 "an expired approval re-opens the CP")', async () => {
+  it('DOM-P4-04: moving the validity date of a verified CP after it lapsed does not clear the blocker without re-verification (business-gates.md §7 "an expired approval re-opens the CP") (fixed, regression)', async () => {
     const r = await j.p.pm.patch(`${P(pid)}/closing-conditions/${cpValid.id}`, { expectedVersion: cpValid.version, validTo: plusDays(30) });
     const refs = ((await event(j.p.pm, 'closings', closing3)).blockers ?? []).map((b: { ref: string }) => b.ref);
     expect(refs, `the lapsed CP stopped blocking after a PATCH of validTo by the CP manager (status ${r.status})`).toContain(cpValid.code);
@@ -185,7 +195,7 @@ describe('P4 domain review — JV defect probes [docs/reviews/P4-domain-review.m
     expect(evidenceV2).not.toBe(evidenceV1);
   });
 
-  probe('DEFECT DOM-P4-05: releasing a reviewed DD answer never discloses an evidence version the reviewer did not see (REQ-JV-010 release after review; spec §8 "disclosed version")', async () => {
+  it('DOM-P4-05: releasing a reviewed DD answer never discloses an evidence version the reviewer did not see (REQ-JV-010 release after review; spec §8 "disclosed version") (fixed, regression)', async () => {
     await j.p.legal.post(`${P(pid)}/diligence-requests/${ddRequest.id}/release`, { expectedVersion: ddRequest.version, note: 'Release (probe)' });
     const list = (await j.p.legal.get(`${P(pid)}/partner-rooms/${ddRoom}/disclosures`)).body as { items?: { documentVersionId: string; diligenceRequestId: string | null; status: string }[] };
     const disclosed = (list.items ?? []).filter((x) => x.diligenceRequestId === ddRequest.id && x.status === 'released').map((x) => x.documentVersionId);

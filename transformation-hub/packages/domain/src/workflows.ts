@@ -243,7 +243,7 @@ export const PARTNER_MACHINE: Machine<PartnerStage, PartnerCommand> = {
   },
 };
 
-export type ConditionCommand = 'submit_evidence' | 'verify' | 'reject_evidence' | 'waive' | 'mark_failed' | 'mark_lapsed' | 'reopen';
+export type ConditionCommand = 'submit_evidence' | 'verify' | 'reject_evidence' | 'waive' | 'mark_failed' | 'mark_lapsed' | 'reopen' | 'extend_long_stop';
 export const CONDITION_MACHINE: Machine<ConditionStatus, ConditionCommand> = {
   submit_evidence: { from: ['open'], to: 'evidence_submitted', description: 'Evidence submitted' },
   verify: { from: ['evidence_submitted'], to: 'verified', description: 'Verified by authorized reviewer' },
@@ -252,6 +252,7 @@ export const CONDITION_MACHINE: Machine<ConditionStatus, ConditionCommand> = {
   mark_failed: { from: ['open', 'evidence_submitted'], to: 'failed', description: 'Failed' },
   mark_lapsed: { from: ['open', 'evidence_submitted'], to: 'lapsed', description: 'Long-stop date passed' },
   reopen: { from: ['verified', 'waived'], to: 'open', description: 'Reopened (defective evidence)' },
+  extend_long_stop: { from: ['lapsed'], to: 'open', description: 'Long-stop date extended on an approved decision (DOM-P4-04) — the condition is open again' },
 };
 
 export type ClosingCommand = 'start_preparation' | 'mark_ready' | 'confirm' | 'abort' | 'back_to_preparation';

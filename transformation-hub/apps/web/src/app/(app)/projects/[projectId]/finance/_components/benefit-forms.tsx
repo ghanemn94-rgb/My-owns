@@ -111,7 +111,7 @@ export function BenefitFormDialog({ open, onClose, benefit, onCreated }: { open:
   );
 }
 
-export type BenefitCommand = 'approve' | 'start_tracking' | 'record_realization' | 'verify' | 'reject_realization' | 'cancel';
+export type BenefitCommand = 'approve' | 'start_tracking' | 'record_realization' | 'verify' | 'reject_realization' | 'cancel' | 'revise_definition';
 
 export function BenefitCommandDialog({ b, cmd, onClose }: { b: BenefitDetail; cmd: BenefitCommand | null; onClose: () => void }) {
   const { t, tStatus } = useI18n();
@@ -198,6 +198,18 @@ export function BenefitCommandDialog({ b, cmd, onClose }: { b: BenefitDetail; cm
           noteLabel={t('finance.common.reason')}
           consequences={[t('finance.benefits.rejectRealization.effect'), t('common.command.audited')]}
           onConfirm={async ({ note }) => done((await api(financeRoutes.rejectBenefitRealization, { params, body: { expectedVersion: v, note } })).status)}
+        />
+      );
+    case 'revise_definition':
+      return (
+        <FinCommandDialog
+          {...common}
+          title={t('finance.benefits.reviseDefinition.title', { code: b.code })}
+          confirmLabel={t('finance.benefits.commands.revise_definition')}
+          noteMode="required"
+          noteLabel={t('finance.common.reason')}
+          consequences={[t('finance.benefits.reviseDefinition.effect'), t('finance.benefits.reviseDefinition.reaccept'), t('common.command.audited')]}
+          onConfirm={async ({ note }) => done((await api(financeRoutes.reviseBenefitDefinition, { params, body: { expectedVersion: v, note } })).status)}
         />
       );
     case 'cancel':
