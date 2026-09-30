@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Bot, CircleAlert, FlaskConical, OctagonX, RefreshCw, ShieldAlert } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { DemoBadge } from '@/components/DemoBadge';
 import { StatusBadge, type Tone } from '@/components/StatusBadge';
 import { btn, card, cx } from '@/components/ui';
@@ -246,11 +246,16 @@ export function useAiErrorText() {
 export function AiErrorNotice({ error, context = 'generic', onReload, className, testId = 'ai-error' }: { error: unknown; context?: ErrorContext; onReload?: () => void; className?: string; testId?: string }) {
   const { t } = useI18n();
   const text = useAiErrorText();
+  const ref = useRef<HTMLDivElement>(null);
+  // A refusal may appear below the fold of a long dialog: bring it into view (role="alert" also announces it).
+  useEffect(() => {
+    if (error) ref.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [error]);
   if (!error) return null;
   const e = text(error, context);
   const code = isApiError(error) ? error.code : undefined;
   return (
-    <div role="alert" className={cx('rounded-md border border-danger/40 bg-danger-soft p-3 text-sm text-danger', className)} data-testid={testId} data-code={code}>
+    <div ref={ref} role="alert" className={cx('rounded-md border border-danger/40 bg-danger-soft p-3 text-sm text-danger', className)} data-testid={testId} data-code={code}>
       <div className="flex items-start gap-2">
         <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
         <div className="min-w-0 space-y-1">
