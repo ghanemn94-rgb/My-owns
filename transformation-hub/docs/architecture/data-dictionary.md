@@ -1,7 +1,7 @@
 # Data dictionary
 
 > Generated from the live PostgreSQL schema by `packages/db/src/cli/data-dictionary.ts` — do not edit by hand.
-> Tables: 120. RLS enabled: 115.
+> Tables: 121. RLS enabled: 116.
 
 ## Spec §14 entity coverage
 
@@ -833,7 +833,7 @@ Foreign keys:
 
 ### `cross_project_dependency`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_local_item, hub_scope_immutable
+RLS: enabled (hub_project_isolation) · Triggers: hub_other_project_item, hub_same_project_local_item, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -944,6 +944,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_subject, hub_
 | `cost_impact_amount` | numeric | yes |  |
 | `cost_impact_currency` | character varying | yes |  |
 | `cost_impact_unit_scale` | integer | yes |  |
+| `cost_impact_recorded_by` | uuid | yes |  |
 | `subject_type` | character varying | yes |  |
 | `subject_id` | uuid | yes |  |
 | `proposed_change` | jsonb | yes |  |
@@ -964,6 +965,7 @@ Foreign keys:
 - `change_request_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
 - `change_request_project_id_project_id_fk`: (project_id) → `project`(id)
 - `hub_opfk_change_request`: (org_id,project_id) → `project`(org_id,id)
+- `hub_ufk_change_request_cost_impact_recorded_by`: (org_id,cost_impact_recorded_by) → `app_user`(org_id,id)
 - `hub_ufk_change_request_decided_by`: (org_id,decided_by) → `app_user`(org_id,id)
 - `hub_ufk_change_request_requested_by`: (org_id,requested_by) → `app_user`(org_id,id)
 - `hub_ufk_change_request_reviewed_by`: (org_id,reviewed_by) → `app_user`(org_id,id)
@@ -1189,7 +1191,7 @@ Foreign keys:
 
 ### `record_dependency`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_successor, hub_scope_immutable
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_predecessor, hub_same_project_successor, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1448,7 +1450,7 @@ Foreign keys:
 
 ### `decision`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
+RLS: enabled (hub_project_isolation) · Triggers: hub_same_project_subject, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -1493,6 +1495,14 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
 | `implementation_verified_at` | timestamp with time zone | yes |  |
 | `classification` | enum classification | no | `'confidential'::classification` |
 | `gate_key` | character varying | yes |  |
+| `subject_type` | character varying | yes |  |
+| `subject_id` | uuid | yes |  |
+| `first_submitted_at` | timestamp with time zone | yes |  |
+| `evidence_none_reason` | text | yes |  |
+| `voting_closed_round` | integer | yes |  |
+| `voting_closed_by` | uuid | yes |  |
+| `voting_closed_at` | timestamp with time zone | yes |  |
+| `voting_close_reason` | text | yes |  |
 | `is_demo` | boolean | no | `false` |
 | `created_at` | timestamp with time zone | no | `now()` |
 | `created_by` | uuid | yes |  |
@@ -1514,6 +1524,7 @@ Foreign keys:
 - `hub_ufk_decision_outcome_recorded_by`: (org_id,outcome_recorded_by) → `app_user`(org_id,id)
 - `hub_ufk_decision_recommendation_recorded_by`: (org_id,recommendation_recorded_by) → `app_user`(org_id,id)
 - `hub_ufk_decision_requester_user_id`: (org_id,requester_user_id) → `app_user`(org_id,id)
+- `hub_ufk_decision_voting_closed_by`: (org_id,voting_closed_by) → `app_user`(org_id,id)
 
 ### `vote`
 
@@ -1707,6 +1718,29 @@ Foreign keys:
 - `hub_opfk_conflict_declaration`: (org_id,project_id) → `project`(org_id,id)
 - `hub_ufk_conflict_declaration_recorded_by`: (org_id,recorded_by) → `app_user`(org_id,id)
 - `hub_ufk_conflict_declaration_user_id`: (org_id,user_id) → `app_user`(org_id,id)
+
+### `decision_use`
+
+RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_same_project_subject, hub_scope_immutable
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | uuid | no | `gen_random_uuid()` |
+| `org_id` | uuid | no |  |
+| `project_id` | uuid | no |  |
+| `decision_id` | uuid | no |  |
+| `use_kind` | character varying | no |  |
+| `subject_type` | character varying | no |  |
+| `subject_id` | uuid | no |  |
+| `used_at` | timestamp with time zone | no | `now()` |
+| `used_by` | uuid | yes |  |
+
+Foreign keys:
+
+- `decision_use_decision_fk`: (project_id,decision_id) → `decision`(project_id,id) — composite project-scoped FK
+- `decision_use_project_id_project_id_fk`: (project_id) → `project`(id)
+- `hub_opfk_decision_use`: (org_id,project_id) → `project`(org_id,id)
+- `hub_ufk_decision_use_used_by`: (org_id,used_by) → `app_user`(org_id,id)
 
 ## Gates
 
