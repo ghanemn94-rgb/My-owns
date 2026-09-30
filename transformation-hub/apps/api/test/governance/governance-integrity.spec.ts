@@ -7,6 +7,7 @@ import {
   TestCommittee,
   actors,
   auditCount,
+  closeVoting,
   decisionRow,
   decisionVersion,
   meetingVersion,
@@ -18,6 +19,7 @@ import {
   today,
   uniq,
   vote,
+  voteOutstanding,
 } from './gov-fixtures';
 import { createWithVersion, login as docLogin } from '../documents/doc-helpers';
 
@@ -42,6 +44,8 @@ async function approvedDecision(meetingId: string, over: Record<string, unknown>
   const d = await tabledDecision(pid, a, a.pm, tc.id, meetingId, over);
   const v = await decisionVersion(a.chair, pid, d.id);
   for (const k of ['chair', 'sponsor', 'finance'] as const) expect((await vote(pid, a[k], d.id, 'approve', v)).status).toBe(201);
+  // DOM-P2R-01: the other present members vote too before the outcome.
+  await voteOutstanding(pid, a, d.id, 'approve');
   await a.chair.post(`${P(pid)}/decisions/${d.id}/record-outcome`, { expectedVersion: v }).expect(201);
   return d;
 }
@@ -52,7 +56,7 @@ describe('REQ-GOV-024 — historical votes are unchanged when membership ends', 
     const m = await openMeeting(pid, a, own, ['chair', 'sponsor', 'finance', 'legal', 'approver']);
     const d = await tabledDecision(pid, a, a.pm, own.id, m.id);
     const v = await decisionVersion(a.chair, pid, d.id);
-    for (const k of ['chair', 'sponsor', 'finance'] as const) expect((await vote(pid, a[k], d.id, 'approve', v)).status).toBe(201);
+    for (const k of ['chair', 'sponsor', 'finance', 'legal', 'approver'] as const) expect((await vote(pid, a[k], d.id, 'approve', v)).status).toBe(201);
     await a.chair.post(`${P(pid)}/decisions/${d.id}/record-outcome`, { expectedVersion: v }).expect(201);
     const votesBefore = (await a.pm.get(`${P(pid)}/decisions/${d.id}/votes`).expect(200)).body.items;
     const tallyBefore = (await decisionRow(d.id)).tally_snapshot;
@@ -108,7 +112,11 @@ describe('Defer / resume opens a new voting round; supersede links decisions of 
     expect(resumed.voteRound).toBe(2);
     const out = await a.chair.post(`${P(pid)}/decisions/${d.id}/record-outcome`, { expectedVersion: resumed.version });
     expect(out.status).toBe(422);
-    expect(out.body.code).toBe('governance.outcome.insufficient_votes');
+    // Round 2 starts empty: the sponsor's round-1 vote does not count — all five present members are outstanding (DOM-P2R-01).
+    expect(out.body.code).toBe('governance.outcome.votes_outstanding');
+    expect(out.body.details).toMatchObject({ round: 2, outstanding: 5 });
+    const round2 = (await a.chair.get(`${P(pid)}/decisions/${d.id}`).expect(200)).body;
+    expect(round2.voting.outstandingUserIds).toContain(a.sponsor.userId);
     // Round-1 vote is kept (immutable history) and a new vote is possible in round 2.
     expect((await vote(pid, a.sponsor, d.id, 'approve', resumed.version)).status).toBe(201);
     const votes = (await a.pm.get(`${P(pid)}/decisions/${d.id}/votes`).expect(200)).body.items;
@@ -135,7 +143,13 @@ describe('Resolution by circulation (assumption: quorum = voting members who res
     for (const k of ['chair', 'sponsor', 'finance'] as const) expect((await vote(pid, a[k], d.id, 'approve', c.body.version)).status).toBe(201);
     const flags = await owner().query(`select via_circulation from vote where decision_id = $1`, [d.id]);
     expect(flags.rows.every((r) => r.via_circulation === true)).toBe(true);
-    const r = await a.secretary.post(`${P(pid)}/decisions/${d.id}/record-outcome`, { expectedVersion: c.body.version });
+    // DOM-P2R-01 (proposed, Q-40): before the response deadline, a circulation is decided once every eligible appointed
+    // member responded — or when the chair closes it; here the chair closes it with two members not responding.
+    const early = await a.secretary.post(`${P(pid)}/decisions/${d.id}/record-outcome`, { expectedVersion: c.body.version });
+    expect(early.body.code).toBe('governance.outcome.votes_outstanding');
+    const closed = await closeVoting(pid, a.chair, d.id, 'Circulation closed: enough responses received (test)');
+    expect(closed.notVoted).toBe(2);
+    const r = await a.secretary.post(`${P(pid)}/decisions/${d.id}/record-outcome`, { expectedVersion: closed.version });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
     expect(r.body.status).toBe('approved');
     expect(await decisionRow(d.id)).toMatchObject({ decided_via_circulation: true });
@@ -146,8 +160,10 @@ describe('Resolution by circulation (assumption: quorum = voting members who res
     const d = await tabledDecision(pid, a, a.pm, tc.id, null);
     const c = (await a.chair.post(`${P(pid)}/decisions/${d.id}/circulate`, { expectedVersion: d.version, responseDeadline: plusDays(3) }).expect(201)).body;
     for (const k of ['chair', 'sponsor'] as const) expect((await vote(pid, a[k], d.id, 'approve', c.version)).status).toBe(201);
+    // The chair closes the circulation (DOM-P2R-01); two responders are below the quorum of 3.
+    const closed = await closeVoting(pid, a.chair, d.id, 'Circulation closed (test)');
     const before = await auditCount('governance.recordOutcome', a.secretary.userId, 'rejected');
-    const r = await a.secretary.post(`${P(pid)}/decisions/${d.id}/record-outcome`, { expectedVersion: c.version });
+    const r = await a.secretary.post(`${P(pid)}/decisions/${d.id}/record-outcome`, { expectedVersion: closed.version });
     expect(r.status).toBe(422);
     expect(r.body.code).toBe('governance.outcome.no_quorum');
     expect(await auditCount('governance.recordOutcome', a.secretary.userId, 'rejected')).toBe(before + 1);

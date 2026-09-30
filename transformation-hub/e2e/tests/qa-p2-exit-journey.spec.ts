@@ -80,6 +80,7 @@ async function approvedDecision(baseURL: string): Promise<{ dc: string; id: stri
       dependencies: 'None identified',
       latestSafeDate: riyadh(60, false),
       requiredAuthority: 'Steering committee (DEMO matrix)',
+      evidenceNoneReason: 'Synthetic QA paper: no supporting documents exist',
     });
     const m = await sec.post<{ id: string; version: number }>(`${base}/committees/${committeeId}/meetings`, { title: `QA exit journey meeting ${RUN}`, scheduledAt: riyadh() });
     const req = await pm.post<{ id: string; version: number }>(`${base}/agenda-requests`, { committeeId, title: `Decision ${d.code}`, kind: 'decision', decisionId: d.id, meetingId: m.id });
@@ -93,9 +94,10 @@ async function approvedDecision(baseURL: string): Promise<{ dc: string; id: stri
     const present = [P.chair, P.sponsor, P.finance, P.legal, P.secretary, P.approver] as string[];
     await sec.post(`${base}/meetings/${m.id}/attendance`, { entries: detail.memberships.filter((s) => s.activeToday && s.displayName && present.includes(s.displayName)).map((s) => ({ membershipId: s.id, status: 'present' })) });
     await sec.post(`${base}/meetings/${m.id}/quorum-check`, { expectedVersion: mv });
-    for (const persona of [P.chair, P.sponsor, P.finance]) {
+    // Every present voting member votes (DOM-P2R-01), declaring "no conflict" for the item (REQ-GOV-015).
+    for (const persona of [P.chair, P.sponsor, P.finance, P.legal, P.approver]) {
       const voter = await client(baseURL, persona);
-      await voter.post(`${base}/decisions/${d.id}/votes`, { expectedVersion: (await voter.get<{ version: number }>(`${base}/decisions/${d.id}`)).version, choice: 'approve' });
+      await voter.post(`${base}/decisions/${d.id}/votes`, { expectedVersion: (await voter.get<{ version: number }>(`${base}/decisions/${d.id}`)).version, choice: 'approve', conflictDeclaration: 'no_conflict' });
       await voter.dispose();
     }
     const chair = await client(baseURL, P.chair);

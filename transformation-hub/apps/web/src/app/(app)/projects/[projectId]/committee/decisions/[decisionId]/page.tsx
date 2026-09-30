@@ -48,6 +48,7 @@ type CmdKey =
   | 'startReview'
   | 'return'
   | 'vote'
+  | 'closeVoting'
   | 'recordOutcome'
   | 'circulate'
   | 'recuse'
@@ -140,6 +141,8 @@ export default function DecisionDetailPage() {
   const [successor, setSuccessor] = useState('');
   const [evidenceLinkId, setEvidenceLinkId] = useState('');
   const [recuseUserId, setRecuseUserId] = useState('');
+  // REQ-GOV-015: the member's conflict-of-interest declaration for the item, made in the vote dialog.
+  const [conflictChoice, setConflictChoice] = useState<'' | 'no_conflict' | 'conflict'>('');
 
   const q = useQuery({
     queryKey: gk.decision(projectId, decisionId),
@@ -186,6 +189,11 @@ export default function DecisionDetailPage() {
         : (seatHolders.get(uid) ?? (committee.data ? t('governance.decision.recusals.recordedByOther') : t('governance.decision.recusals.recordedByUnknown')));
   const myVote = votes.data?.items.find((v) => v.userId === me_ && v.round === d.voteRound);
   const base = hubHref(projectId);
+  const voting = d.voting;
+  const declared = voting?.declaredUserIds.includes(me_) ?? false;
+  // A recused member has already declared the conflict: no declaration step (the server refuses the vote as recused).
+  const needsDeclaration = !declared && !recused;
+  const isChair = !!voting?.chairUserId && voting.chairUserId === me_;
 
   const openCmd = (k: CmdKey) => {
     setChoice('approve');
@@ -196,13 +204,16 @@ export default function DecisionDetailPage() {
     setSuccessor('');
     setEvidenceLinkId('');
     setRecuseUserId('');
+    setConflictChoice('');
     setCmd(k);
   };
 
   const commands: { key: CmdKey; label: string; show: boolean; primary?: boolean }[] = [
     { key: 'submit', label: t('governance.decision.cmd.submit.label'), show: allowed.has('submit') && can('governance.decision.submit'), primary: true },
     { key: 'startReview', label: t('governance.decision.cmd.startReview.label'), show: allowed.has('start_review') && can('governance.decision.review'), primary: true },
-    { key: 'vote', label: t('governance.decision.cmd.vote.label'), show: d.status === 'under_review' && can('governance.decision.vote'), primary: true },
+    { key: 'vote', label: t('governance.decision.cmd.vote.label'), show: d.status === 'under_review' && can('governance.decision.vote') && !voting?.closed, primary: true },
+    // DOM-P2R-01: only the committee's chair closes voting on the round.
+    { key: 'closeVoting', label: t('governance.decision.cmd.closeVoting.label'), show: d.status === 'under_review' && !!voting && !voting.closed && isChair && can('governance.decision.record_outcome') },
     { key: 'recordOutcome', label: t('governance.decision.cmd.recordOutcome.label'), show: d.status === 'under_review' && can('governance.decision.record_outcome'), primary: true },
     { key: 'external', label: t('governance.decision.cmd.external.label'), show: d.status === 'recommended' && can('governance.decision.record_external_approval'), primary: true },
     { key: 'startImplementation', label: t('governance.decision.cmd.startImplementation.label'), show: allowed.has('start_implementation') && can('governance.action.manage'), primary: true },
@@ -261,22 +272,64 @@ export default function DecisionDetailPage() {
     },
     vote: {
       consequences: [t('governance.decision.cmd.vote.effect')],
-      noteLabel: t('governance.decision.cmd.vote.comment'),
+      // REQ-GOV-015: a member with a conflict records a recusal (reason required) instead of voting.
+      noteMode: conflictChoice === 'conflict' ? 'required' : 'optional',
+      noteLabel: conflictChoice === 'conflict' ? t('governance.decision.cmd.vote.recuseReason') : t('governance.decision.cmd.vote.comment'),
+      disabled: needsDeclaration && !conflictChoice,
       confirm: async () => undefined,
       noteRun: (note) =>
-        run(() => api(governanceRoutes.castVote, { params: { projectId, decisionId }, body: { expectedVersion: d.version, choice, ...(note ? { comment: note } : {}) } }), 'governance.decision.cmd.vote.done'),
+        conflictChoice === 'conflict'
+          ? run(() => api(governanceRoutes.declareRecusal, { params: { projectId, decisionId }, body: { reason: note } }), 'governance.decision.cmd.vote.recusedDone')
+          : run(
+              () =>
+                api(governanceRoutes.castVote, {
+                  params: { projectId, decisionId },
+                  body: { expectedVersion: d.version, choice, ...(note ? { comment: note } : {}), ...(needsDeclaration ? { conflictDeclaration: 'no_conflict' as const } : {}) },
+                }),
+              'governance.decision.cmd.vote.done',
+            ),
       children: (
         <div className="space-y-3">
           {isRequester ? <Hint tone="warning">{t('governance.decision.cmd.vote.requesterHint')}</Hint> : null}
           {recused ? <Hint tone="warning">{t('governance.decision.cmd.vote.recusedHint')}</Hint> : null}
           {myVote ? <Hint tone="info">{t('governance.decision.cmd.vote.alreadyVoted', { choice: tStatus('voteChoices', myVote.choice) })}</Hint> : null}
-          <Hint tone="info">{t('governance.decision.cmd.vote.conflictFirst')}</Hint>
-          <ChoiceGroup legend={t('governance.decision.cmd.vote.choice')} value={choice} onChange={(v) => setChoice(v as VoteChoice)} options={VOTE_CHOICES.map((c) => ({ value: c, label: tStatus('voteChoices', c) }))} />
+          {declared ? (
+            <Hint tone="info">{t('governance.decision.cmd.vote.declared')}</Hint>
+          ) : !needsDeclaration ? null : (
+            <div data-testid="vote-conflict">
+              <ChoiceGroup
+                legend={t('governance.decision.cmd.vote.conflictLegend')}
+                value={conflictChoice}
+                onChange={(v) => setConflictChoice(v as 'no_conflict' | 'conflict')}
+                options={[
+                  { value: 'no_conflict', label: t('governance.decision.cmd.vote.noConflict') },
+                  { value: 'conflict', label: t('governance.decision.cmd.vote.hasConflict') },
+                ]}
+              />
+            </div>
+          )}
+          {conflictChoice !== 'conflict' ? (
+            <>
+              <Hint tone="info">{t('governance.decision.cmd.vote.conflictFirst')}</Hint>
+              <ChoiceGroup legend={t('governance.decision.cmd.vote.choice')} value={choice} onChange={(v) => setChoice(v as VoteChoice)} options={VOTE_CHOICES.map((c) => ({ value: c, label: tStatus('voteChoices', c) }))} />
+            </>
+          ) : null}
         </div>
       ),
     },
+    closeVoting: {
+      consequences: [t('governance.decision.cmd.closeVoting.effect1'), t('governance.decision.cmd.closeVoting.effect2')],
+      noteMode: 'required',
+      noteLabel: t('governance.common.reason'),
+      confirm: async () => undefined,
+      noteRun: (note) => run(() => api(governanceRoutes.closeVoting, { params: { projectId, decisionId }, body: { expectedVersion: d.version, reason: note } }), 'governance.decision.cmd.closeVoting.done'),
+      children: voting ? <Hint tone="info">{t('governance.decision.cmd.closeVoting.outstanding', { count: voting.outstanding })}</Hint> : null,
+    },
     recordOutcome: {
-      consequences: [t('governance.decision.cmd.recordOutcome.effect1'), t('governance.decision.cmd.recordOutcome.effect2'), t('governance.decision.cmd.recordOutcome.integrity'), t('governance.hub.internalApprovals')],
+      consequences: [t('governance.decision.cmd.recordOutcome.effect1'), t('governance.decision.cmd.recordOutcome.effect2'), t('governance.decision.cmd.recordOutcome.complete'), t('governance.decision.cmd.recordOutcome.integrity'), t('governance.hub.internalApprovals')],
+      // DOM-P2R-01: not before every eligible member voted, or the chair closed voting (the server re-checks).
+      disabled: !!voting && !voting.complete,
+      children: voting && !voting.complete ? <Hint tone="warning">{t('governance.decision.cmd.recordOutcome.outstanding', { count: voting.outstanding })}</Hint> : null,
       confirm: async () => undefined,
       noteRun: async (note) => {
         const r = await api(governanceRoutes.recordOutcome, { params: { projectId, decisionId }, body: { expectedVersion: d.version, ...(note ? { note } : {}) } });
@@ -491,6 +544,27 @@ export default function DecisionDetailPage() {
 
         <Lifecycle d={d} />
 
+        {d.status === 'under_review' && voting ? (
+          <div className={cx(card, 'p-4')} data-testid="voting-state" data-complete={voting.complete ? 'true' : 'false'}>
+            <h2 className="mb-2 text-lg font-semibold text-ink">{t('governance.decision.votingState.title', { round: voting.round })}</h2>
+            {voting.closed ? (
+              <p className="text-sm text-ink" data-testid="voting-closed">
+                {t('governance.decision.votingState.closed', { at: formatDateTime(voting.closedAt) })}{' '}
+                <span className="text-muted">{t('governance.common.reason')}: </span>
+                <UText value={voting.closeReason} />
+              </p>
+            ) : voting.outstanding > 0 ? (
+              <p className="text-sm text-ink" data-testid="voting-outstanding">
+                {t('governance.decision.votingState.outstanding', { count: voting.outstanding })}{' '}
+                <span dir="auto">{voting.outstandingUserIds.map((u) => seatHolders.get(u) ?? t('governance.decision.recusals.recordedByUnknown')).join(', ')}</span>
+              </p>
+            ) : (
+              <p className="text-sm text-ink">{t('governance.decision.votingState.allVoted')}</p>
+            )}
+            <p className="mt-2 text-xs text-muted">{t('governance.decision.votingState.rule')}</p>
+          </div>
+        ) : null}
+
         {d.status === 'draft' ? (
           d.missingFields.length ? (
             <div role="note" className="rounded-lg border border-warning/40 bg-warning-soft p-4 text-sm" data-testid="missing-fields">
@@ -533,6 +607,37 @@ export default function DecisionDetailPage() {
                   ),
                 },
                 { label: t('governance.paper.amount'), value: <Money value={d.amount} /> },
+                {
+                  label: t('governance.paper.subject.fact'),
+                  testId: 'decision-subject',
+                  value: d.subject ? (
+                    <span>
+                      {t(`governance.paper.subject.types.${d.subject.type}`)}
+                      {d.subject.label ? (
+                        <>
+                          {' — '}
+                          <span dir="auto">{d.subject.label}</span>
+                        </>
+                      ) : null}
+                    </span>
+                  ) : (
+                    <span className="text-muted">{t('governance.paper.subject.factNone')}</span>
+                  ),
+                },
+                {
+                  label: t('governance.paper.supportingEvidence'),
+                  value: (
+                    <span className="flex flex-col gap-1">
+                      <span>{t('governance.paper.supportingEvidenceCount', { count: d.supportingEvidenceLinks })}</span>
+                      {d.evidenceNoneReason ? (
+                        <span>
+                          <span className="text-muted">{t('governance.paper.evidenceNoneReason')}: </span>
+                          <UText value={d.evidenceNoneReason} />
+                        </span>
+                      ) : null}
+                    </span>
+                  ),
+                },
                 { label: t('governance.paper.issue'), value: <UText value={d.issue} multiline />, wide: true },
                 { label: t('governance.paper.whyNow'), value: <UText value={d.whyNow} multiline />, wide: true },
                 {

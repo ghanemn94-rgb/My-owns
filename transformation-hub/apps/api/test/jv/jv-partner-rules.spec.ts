@@ -179,7 +179,7 @@ describe('REQ-JV-008 — terms & negotiation issues', () => {
     expect(unlink.body.code).toBe('jv.negotiation.decision_required');
     // The committee approves the decision (votes + outcome) — now the issue can be agreed.
     const dv = await decisionVersion(j.gp.chair, pid, d.id);
-    for (const k of ['chair', 'sponsor', 'finance', 'legal'] as const) expect((await vote(pid, j.gp[k], d.id, 'approve', dv)).status).toBe(201);
+    for (const k of ['chair', 'sponsor', 'finance', 'legal', 'approver'] as const) expect((await vote(pid, j.gp[k], d.id, 'approve', dv)).status).toBe(201);
     await ok(await j.gp.secretary.post(`${P(pid)}/decisions/${d.id}/record-outcome`, { expectedVersion: dv }));
     const agreed = await ok(await j.p.legal.post(`${P(pid)}/negotiation-issues/${issue.id}/transition`, { expectedVersion: v, command: 'agree' }));
     expect(agreed.status).toBe('agreed');

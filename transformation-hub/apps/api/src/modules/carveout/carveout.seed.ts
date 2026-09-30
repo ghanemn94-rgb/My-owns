@@ -78,13 +78,14 @@ export const carveoutSeed: ModuleSeed = {
       if (!r.changeRequest || !s.approve) continue;
       const crId = r.changeRequest.id;
       await asUser('pm', (ctx) => cc.crCommand(ctx, pid, crId, 'start_review', { expectedVersion: 2, note: 'Demo review' }));
-      // DOM-P2-03: the budget impact must be quantified before approval so the delegated limit can be checked.
-      await asUser('pm', (ctx) =>
+      // DOM-P2-03: the budget impact must be quantified before approval so the delegated limit can be checked. DOM-P2R-02: it
+      // is recorded by an assessor other than the requester (the PM) — here the Finance demo persona.
+      await asUser('finance', (ctx) =>
         cc.assessChangeRequest(ctx, pid, crId, {
           expectedVersion: 3,
           impacts: {},
           costImpact: { amount: '0.0000', currency: 'SAR', unitScale: 1 },
-          note: `${DEMO} — synthetic assessment (not a Finance assessment): no budget amount is attached to this demo change`,
+          note: `${DEMO} — synthetic assessment by the Finance demo persona (not a real Finance assessment): no budget amount is attached to this demo change`,
         }),
       );
       await asUser('sponsor', (ctx) => cc.crCommand(ctx, pid, crId, 'approve', { expectedVersion: 4, note: 'Demo approval (synthetic persona)' }));

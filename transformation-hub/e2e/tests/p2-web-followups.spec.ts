@@ -86,9 +86,10 @@ function riyadhNow(): string {
 
 /**
  * Fixture (API), phase 1: a change-request budget decision of 1,500,000 SAR — above the DEMO committee limit of 1,000,000 —
- * drafted by the PM and tabled under review in a new steering meeting with attendance recorded and quorum checked.
+ * drafted by the PM FOR the change request `changeRequestId` (its subject, DOM-P2R-03) and tabled under review in a new
+ * steering meeting with attendance recorded and quorum checked.
  */
-async function tabledBudgetDecision(baseURL: string, dc: string): Promise<{ id: string; code: string; title: string }> {
+async function tabledBudgetDecision(baseURL: string, dc: string, changeRequestId: string): Promise<{ id: string; code: string; title: string }> {
   const base = `/api/v1/projects/${dc}`;
   const pm = await client(baseURL, P.pm);
   const sec = await client(baseURL, P.secretary);
@@ -110,6 +111,10 @@ async function tabledBudgetDecision(baseURL: string, dc: string): Promise<{ id: 
       dependencies: 'None identified',
       latestSafeDate: '2026-12-15',
       requiredAuthority: 'Delegating authority (above the DEMO committee limit)',
+      // DOM-P2R-03: the paper authorizes this change request; DOM-P2-14: no supporting documents, with the reason.
+      subjectType: 'change_request',
+      subjectId: changeRequestId,
+      evidenceNoneReason: 'Synthetic E2E paper: no supporting documents exist',
     });
     // Agenda request by the PM, screened onto the new meeting's agenda by the secretariat (tables the decision there).
     const m = await sec.post<{ id: string; version: number }>(`${base}/committees/${committeeId}/meetings`, { title: `E2E follow-up meeting ${RUN}`, scheduledAt: riyadhNow() });
@@ -134,14 +139,14 @@ async function tabledBudgetDecision(baseURL: string, dc: string): Promise<{ id: 
   }
 }
 
-/** Fixture (API), phase 2: `personas` vote approve (the current round). */
+/** Fixture (API), phase 2: `personas` vote approve (the current round), each declaring "no conflict" (REQ-GOV-015). */
 async function castApprovals(baseURL: string, dc: string, decisionId: string, personas: string[]) {
   const base = `/api/v1/projects/${dc}`;
   for (const persona of personas) {
     const voter = await client(baseURL, persona);
     try {
       const { version } = await voter.get<{ version: number }>(`${base}/decisions/${decisionId}`);
-      await voter.post(`${base}/decisions/${decisionId}/votes`, { expectedVersion: version, choice: 'approve' });
+      await voter.post(`${base}/decisions/${decisionId}/votes`, { expectedVersion: version, choice: 'approve', conflictDeclaration: 'no_conflict' });
     } finally {
       await voter.dispose();
     }
@@ -191,8 +196,6 @@ test.describe('P2 web follow-ups of the domain review (DOM-P2-03, -12, -17, -18)
   test('(a) recusals on behalf; external approval rests on evidence verified by a second person; a change above the delegated limit is approved on that final decision', async ({ browser, baseURL }) => {
     test.setTimeout(480_000);
     const dc = await dcProjectId(baseURL!);
-    const decision = await tabledBudgetDecision(baseURL!, dc);
-    const decisionUrl = `/projects/${dc}/committee/decisions/${decision.id}`;
     const noteA = `E2E synthetic record A of the delegating authority's decision ${RUN}`;
     const noteB = `E2E synthetic record B of the delegating authority's decision ${RUN}`;
 
@@ -201,6 +204,30 @@ test.describe('P2 web follow-ups of the domain review (DOM-P2-03, -12, -17, -18)
     const legal = await asPersona(browser, P.legal);
     const sponsor = await asPersona(browser, P.sponsor);
     try {
+      // --- Change control: the PM raises a change whose cost impact is stated in text only. It is the subject of the
+      // budget decision paper drafted next (DOM-P2R-03: a decision backs the record it was drafted for).
+      await pm.page.goto(`/projects/${dc}/raid?tab=changes`);
+      await pm.page.getByTestId('cr-create').click();
+      const form = pm.page.getByTestId('cr-form');
+      const crTitle = `E2E rehearsal tooling change ${RUN} (synthetic)`;
+      await form.getByLabel(/^Title/).fill(crTitle);
+      await form.getByLabel(/^Rationale/).fill('Synthetic E2E rationale: rehearsal tooling is required.');
+      await form.getByRole('textbox', { name: /^Cost/ }).fill('Synthetic: tooling licences (stated in text only)');
+      await pm.page.getByTestId('cr-form-submit').click();
+      await expect(pm.page.getByRole('dialog')).toBeHidden();
+      await pm.page.getByTestId('cr-table').getByRole('link', { name: crTitle }).click();
+      await pm.page.waitForURL(/\/raid\/changes\/[0-9a-f-]{36}$/);
+      const crUrl = new URL(pm.page.url()).pathname;
+      const crId = crUrl.split('/').pop()!;
+      await expect(pm.page.getByTestId('cr-cost-impact-fact')).toContainText('Described in text only');
+      await pm.page.locator('[data-command="submit"]').click();
+      await confirm(pm.page, 'Submit');
+      await pm.page.locator('[data-command="start_review"]').click();
+      await confirm(pm.page, 'Start review');
+
+      const decision = await tabledBudgetDecision(baseURL!, dc, crId);
+      const decisionUrl = `/projects/${dc}/committee/decisions/${decision.id}`;
+
       // --- DOM-P2-06: the secretariat records a recusal on behalf of Legal before any vote; the recorder is shown.
       await sec.page.goto(decisionUrl);
       await expect(sec.page.getByTestId('decision-status')).toContainText('Under review');
@@ -216,8 +243,9 @@ test.describe('P2 web follow-ups of the domain review (DOM-P2-03, -12, -17, -18)
       await pm.page.goto(decisionUrl);
       await expect(pm.page.getByTestId('recusal').filter({ hasText: P.legal }).getByTestId('recusal-recorder')).toContainText(`Recorded by ${P.secretary}`);
 
-      // --- Votes are cast (fixture); a recusal on behalf of a member who already voted is refused and explained.
-      await castApprovals(baseURL!, dc, decision.id, [P.chair, P.sponsor, P.finance]);
+      // --- Votes are cast (fixture: every present eligible voting member — Legal is recused — so the vote is complete,
+      // DOM-P2R-01); a recusal on behalf of a member who already voted is refused and explained.
+      await castApprovals(baseURL!, dc, decision.id, [P.chair, P.sponsor, P.finance, P.approver]);
       await sec.page.reload();
       await sec.page.locator('[data-command="recuseOnBehalf"]').click();
       dialog = sec.page.getByRole('dialog');
@@ -278,26 +306,7 @@ test.describe('P2 web follow-ups of the domain review (DOM-P2-03, -12, -17, -18)
       await expect(sec.page.getByTestId('external-evidence-fact')).toBeVisible();
       await expect(sec.page.getByTestId('gov-history')).toContainText('Recorded the external');
 
-      // --- Change control: the PM raises a change whose cost impact is stated in text only.
-      await pm.page.goto(`/projects/${dc}/raid?tab=changes`);
-      await pm.page.getByTestId('cr-create').click();
-      const form = pm.page.getByTestId('cr-form');
-      const crTitle = `E2E rehearsal tooling change ${RUN} (synthetic)`;
-      await form.getByLabel(/^Title/).fill(crTitle);
-      await form.getByLabel(/^Rationale/).fill('Synthetic E2E rationale: rehearsal tooling is required.');
-      await form.getByRole('textbox', { name: /^Cost/ }).fill('Synthetic: tooling licences (stated in text only)');
-      await pm.page.getByTestId('cr-form-submit').click();
-      await expect(pm.page.getByRole('dialog')).toBeHidden();
-      await pm.page.getByTestId('cr-table').getByRole('link', { name: crTitle }).click();
-      await pm.page.waitForURL(/\/raid\/changes\/[0-9a-f-]{36}$/);
-      const crUrl = new URL(pm.page.url()).pathname;
-      await expect(pm.page.getByTestId('cr-cost-impact-fact')).toContainText('Described in text only');
-      await pm.page.locator('[data-command="submit"]').click();
-      await confirm(pm.page, 'Submit');
-      await pm.page.locator('[data-command="start_review"]').click();
-      await confirm(pm.page, 'Start review');
-
-      // --- The sponsor cannot approve a text-only cost impact (translated refusal).
+      // --- The sponsor cannot approve the change's text-only cost impact (translated refusal).
       await sponsor.page.goto(crUrl);
       await sponsor.page.locator('[data-command="approve"]').click();
       dialog = sponsor.page.getByRole('dialog');
@@ -307,16 +316,20 @@ test.describe('P2 web follow-ups of the domain review (DOM-P2-03, -12, -17, -18)
       await expect(dialog.getByTestId('refusal-explanation')).toContainText('Record it as an amount with currency and unit');
       await dialog.getByRole('button', { name: 'Cancel' }).click();
 
-      // --- The PM records the cost impact as money in the impact assessment.
-      await pm.page.getByTestId('cr-assess-open').click();
-      const assess = pm.page.getByTestId('cr-assess');
+      // --- An assessor other than the requester (Legal, a functional approver) records the cost impact as money in the
+      // impact assessment (DOM-P2R-02: an amount stated by the requester alone cannot decide the approval path).
+      await legal.page.goto(crUrl);
+      await legal.page.getByTestId('cr-assess-open').click();
+      const assess = legal.page.getByTestId('cr-assess');
       await expect(assess.getByTestId('cr-cost-text-only')).toBeVisible();
       await assess.getByTestId('cr-cost-impact-amount').fill('1500000');
       await expect(assess.getByTestId('cr-cost-impact-currency')).toHaveValue('SAR');
       await expect(assess.getByTestId('cr-cost-text-only')).toHaveCount(0);
-      await pm.page.getByTestId('cr-assess-submit').click();
-      await expect(pm.page.getByRole('dialog')).toBeHidden();
-      await expect(pm.page.getByTestId('cr-cost-impact-value')).toContainText('1,500,000 SAR');
+      await legal.page.getByTestId('cr-assess-submit').click();
+      await expect(legal.page.getByRole('dialog')).toBeHidden();
+      await expect(legal.page.getByTestId('cr-cost-impact-value')).toContainText('1,500,000 SAR');
+      await expect(legal.page.getByTestId('cr-cost-impact-confirmation')).toHaveAttribute('data-confirmed', 'true');
+      await expect(legal.page.getByTestId('cr-cost-impact-confirmation')).toContainText('Recorded by an assessor other than the requester.');
 
       // --- Above the DEMO limit without a decision: refused, the translated explanation names the body to escalate to.
       await sponsor.page.reload();
@@ -504,10 +517,13 @@ test.describe('P2 web follow-ups of the domain review (DOM-P2-03, -12, -17, -18)
     test.setTimeout(180_000);
     const dc = await dcProjectId(baseURL!);
     const api = await client(baseURL!, P.pm);
-    const tasks = (await api.get<{ items: { id: string; wbsCode: string; allowedCommands: string[] }[] }>(`/api/v1/projects/${dc}/tasks?status=not_started&pageSize=100&sort=-updatedAt`)).items;
+    const me = (await api.get<{ user: { id: string } }>('/api/v1/me')).user.id;
+    const tasks = (await api.get<{ items: { id: string; wbsCode: string; accountableUserId: string | null; allowedCommands: string[] }[] }>(`/api/v1/projects/${dc}/tasks?status=not_started&pageSize=100&sort=-updatedAt`)).items;
     const g7 = (await api.get<{ items: { id: string; key: string }[] }>(`/api/v1/projects/${dc}/gates`)).items.find((g) => g.key === 'G7')!;
     await api.dispose();
-    const task = tasks.find((x) => x.allowedCommands.includes('start'));
+    // DOM-P2R-07: a prerequisite that still blocks is not removed by the person accountable for the task, so the PM
+    // (who removes it below) works on a task someone else is accountable for.
+    const task = tasks.find((x) => x.allowedCommands.includes('start') && x.accountableUserId !== me);
     expect(task, 'a not-started task that may be started').toBeTruthy();
 
     const pm = await asPersona(browser, P.pm);
@@ -548,8 +564,11 @@ test.describe('P2 web follow-ups of the domain review (DOM-P2-03, -12, -17, -18)
       await pm.page.context().addCookies([{ name: 'hub_locale', value: 'en', url: baseURL! }]);
       await pm.page.reload();
 
-      // --- Removed again (rerun-safe); the list is empty.
+      // --- Removed again with a reason (rerun-safe; DOM-P2R-07); the list is empty.
       await pm.page.getByTestId('prerequisite').filter({ hasText: 'G7' }).getByTestId('prerequisite-remove').click();
+      dialog = pm.page.getByRole('dialog');
+      await expect(dialog).toContainText('A reason is required');
+      await dialog.getByLabel(/^Reason/).fill('Synthetic E2E: prerequisite added for the test only');
       await confirm(pm.page, 'Remove prerequisite');
       await expect(pm.page.getByTestId('prerequisite').filter({ hasText: 'G7' })).toHaveCount(0);
       expect(pm.problems(), pm.problems().join('\n')).toEqual([]);

@@ -77,8 +77,9 @@ export const gatesSeed: ModuleSeed = {
       }
     };
     /**
-     * Evidence added by the PM (the contributor for PM-designated criteria), accepted by the persona holding the
-     * criterion's DESIGNATED reviewer role — never by the evidence submitter (separation of duties).
+     * Evidence added by the PM — or, for PM-designated criteria, by the persona holding the criterion's OWNER role (only the
+     * owner role or a project manager may link evidence to a criterion, SEC-P2-05) — and accepted by the persona holding the
+     * criterion's DESIGNATED reviewer role, never by the evidence submitter (separation of duties).
      */
     const meet = async (gateKey: string, critKey: string) => {
       let { g, c } = await criterion(gateKey, critKey);
@@ -86,7 +87,10 @@ export const gatesSeed: ModuleSeed = {
       const reviewer = DEMO_REVIEWER[c.reviewerRole];
       if (!reviewer) throw new Error(`no demo persona holds reviewer role ${c.reviewerRole} (${critKey})`);
       if (c.evidence.active === 0) {
-        const adder = c.reviewerRole === 'project_manager' ? 'contributor' : 'pm';
+        const owners: Record<string, string> = { ...DEMO_OWNER, finance_restricted: 'finance' };
+        const criterionOwner = owners[c.ownerRole as string];
+        if (c.reviewerRole === 'project_manager' && (!criterionOwner || criterionOwner === 'pm')) throw new Error(`no demo persona other than the reviewer owns ${critKey}`);
+        const adder = c.reviewerRole === 'project_manager' ? criterionOwner! : 'pm';
         await asUser(adder, (ctx) => evidence.link(ctx, pid, { targetType: 'gate_criterion', targetId: c.id, note: DEMO_EVIDENCE(critKey), purpose: 'Demo sandbox — synthetic note evidence (no real document)' }));
         ({ g, c } = await criterion(gateKey, critKey));
       }

@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from 'vitest';
-import { closeApp, closePools } from '../helpers';
+import { closeApp, closePools, owner } from '../helpers';
 import { gateDecision, insertDecisionRow, setupGovernance } from '../gates/gate-test-kit';
 import { Personas, approveChangeRequest, base, carveoutProject, createItem, item, newcoId, ok, workstreamId } from './carveout-kit';
 
@@ -54,6 +54,9 @@ describe('Perimeter version — setup wizard step 4 [REQ-SET-012]', () => {
     expect(d.status).toBe('approved');
     const a = await ok<{ status: string }>(q.sponsor.post(`${base(pv)}/perimeter/versions/${v.id}/approve`, { expectedVersion: 1, decisionId: d.id, note: 'Approved (test)' }));
     expect(a.status).toBe('approved');
+    // Decision-use registry (DOM-P2R-05): the decision now backs this perimeter version (one version per decision).
+    const uses = (await owner().query(`select use_kind, subject_type, subject_id, used_by from decision_use where decision_id = $1`, [d.id])).rows;
+    expect(uses).toContainEqual({ use_kind: 'perimeter_version', subject_type: 'perimeter_version', subject_id: v.id, used_by: q.sponsor.userId });
     const items = (await q.pm.get(`${base(pv)}/perimeter-items`).expect(200)).body.items as { disposition: string; inApprovedBaseline: boolean }[];
     expect(items.filter((x) => x.disposition === 'included').every((x) => x.inApprovedBaseline)).toBe(true);
   });

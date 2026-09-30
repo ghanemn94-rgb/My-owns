@@ -4,6 +4,7 @@ import { WorkerService } from '../../src/platform/jobs/worker.service';
 import { JobRegistry } from '../../src/platform/jobs/job-registry';
 import { registerJobHandlers } from '../../src/jobs';
 import { Actors, setupCommittee, openMeeting, tabledDecision, vote, decisionVersion, verifiedDecisionEvidence } from '../governance/gov-fixtures';
+import { demoEmail } from '../../src/cli/seed-demo';
 
 /**
  * Test kit for the gates acceptance tests. Each spec creates its OWN DC project through the portfolio API (isolated from
@@ -61,6 +62,7 @@ export interface GateView {
     blocking: boolean;
     waivable: boolean;
     version: number;
+    ownerRole: string;
     reviewerRole: string;
     evidence: { active: number; conflicting: number };
     assessment: { id: string; status: string; version: number; waiverId: string | null; notApplicable: { approved: boolean } };
@@ -182,10 +184,17 @@ export interface Gov {
   secretary2: Client;
 }
 
-/** Real governance set-up through the governance API: active committee, approved DEMO matrix, open meeting with quorum. */
-export async function setupGovernance(projectId: string, p: Personas): Promise<Gov> {
+/**
+ * Real governance set-up through the governance API: active committee, approved DEMO matrix, open meeting with quorum.
+ * Present by default: chair, sponsor, secretary, finance and legal — the four voting members who vote in the kits (the
+ * approver seat holder is not recorded present), so a round in which those four voted is complete (DOM-P2R-01: every
+ * present eligible member voted) and quorum holds (4 of 5 appointed voting members; DEMO minimum 3).
+ * `allVotingMembersPresent`: the approver is present too (every voting member present).
+ */
+export async function setupGovernance(projectId: string, p: Personas, opts: { allVotingMembersPresent?: boolean } = {}): Promise<Gov> {
   const tc = await setupCommittee(projectId, p as unknown as Actors);
-  const meetingId = (await openMeeting(projectId, p as unknown as Actors, tc, ['chair', 'sponsor', 'secretary', 'finance', 'legal', 'approver'])).id;
+  const present = ['chair', 'sponsor', 'secretary', 'finance', 'legal', ...(opts.allVotingMembersPresent ? ['approver'] : [])];
+  const meetingId = (await openMeeting(projectId, p as unknown as Actors, tc, present)).id;
   const admin = await loginAs('portfolio.admin');
   const opsLead = await loginAs('ops.lead');
   await admin.post(`/api/v1/projects/${projectId}/members`, { userId: opsLead.userId, role: 'secretary_cpmo', reason: 'gates test: second secretariat member' }).expect(201);
@@ -224,6 +233,7 @@ export async function gateDecision(
     const r = await vote(projectId, p[k], d.id, 'approve', v);
     expect(r.status, JSON.stringify(r.body)).toBe(201);
   }
+  await completeVoting(projectId, p, d.id, 'approve');
   const out = await p.secretary.post(`/api/v1/projects/${projectId}/decisions/${d.id}/record-outcome`, { expectedVersion: v });
   expect(out.status, JSON.stringify(out.body)).toBe(201);
   let status = out.body.status as string;
@@ -242,6 +252,20 @@ export async function gateDecision(
     status = ext.body.status;
   }
   return { id: d.id, code: d.code, status };
+}
+
+/**
+ * DOM-P2R-01: every eligible member expected to vote in the current round and not voted yet casts `choice` (declaring "no
+ * conflict"), so the outcome can be recorded without the chair closing the vote. Uses the server's voting state.
+ */
+export async function completeVoting(projectId: string, p: Personas, decisionId: string, choice: 'approve' | 'reject' | 'abstain') {
+  const d = (await p.chair.get(`/api/v1/projects/${projectId}/decisions/${decisionId}`).expect(200)).body as { version: number; voting: { outstandingUserIds: string[] } | null };
+  for (const uid of d.voting?.outstandingUserIds ?? []) {
+    const who = (['chair', 'sponsor', 'finance', 'legal', 'approver'] as const).find((k) => p[k].userId === uid);
+    if (!who) throw new Error(`no test persona for outstanding voter ${uid}`);
+    const r = await vote(projectId, p[who], decisionId, choice, d.version);
+    expect(r.status, JSON.stringify(r.body)).toBe(201);
+  }
 }
 
 /**
@@ -291,16 +315,58 @@ export function reviewerFor(p: Personas, reviewerRole: string): Client {
   return p[k];
 }
 
-/** Someone other than the reviewer links the evidence (not_self): the PM, or the contributor when the PM reviews. */
-export function evidenceAdderFor(p: Personas, reviewerRole: string): Client {
-  return reviewerRole === 'project_manager' ? p.contributor : p.pm;
+/** Project-wide holders of a criterion OWNER role among the kit personas (they also hold `gates.evidence.attach`). */
+const CRITERION_OWNER_PERSONA: Record<string, keyof Personas> = {
+  finance_restricted: 'finance',
+  legal_restricted: 'legal',
+};
+
+/**
+ * A second project manager per project, granted on first use: a dedicated synthetic test persona (`gates.pm2`, created with
+ * the owner pool like the JV kit's synthetic users — no provisioning API exists). Not a demo persona on purpose: `pm.b` and
+ * the others are outsiders / inbox owners in other specs, and a grant here would change what they see.
+ */
+const SECOND_PM = 'gates.pm2';
+const secondPms = new Map<string, Promise<Client>>();
+function secondPm(projectId: string): Promise<Client> {
+  let c = secondPms.get(projectId);
+  if (!c) {
+    c = (async () => {
+      await owner().query(
+        `insert into app_user (id, org_id, email, display_name, title, clearance, is_demo, locale, account_type)
+         select gen_random_uuid(), org_id, $2, 'Test second project manager (synthetic)', 'Synthetic test persona', 'confidential', true, 'en', 'internal'
+           from project where id = $1
+         on conflict (org_id, email) do nothing`,
+        [projectId, demoEmail(SECOND_PM)],
+      );
+      const admin = await loginAs('portfolio.admin');
+      const pm2 = await loginAs(SECOND_PM);
+      await admin.post(`/api/v1/projects/${projectId}/members`, { userId: pm2.userId, role: 'project_manager', reason: 'gates test: second project manager (evidence linker)' }).expect(201);
+      return pm2;
+    })();
+    secondPms.set(projectId, c);
+  }
+  return c;
+}
+
+/**
+ * Someone other than the reviewer links the evidence (not_self), and — SEC-P2-05 — only the criterion's OWNER role or a
+ * project manager may link evidence to a criterion (the `W` condition of gates.evidence.attach, as for submitting it).
+ * The PM links, unless the PM is the designated reviewer: then a project-wide holder of the owner role (finance / legal),
+ * or else a second project manager (`gates.pm2`, granted on demand) — the workstream lead is workstream-scoped in the kit, and
+ * a workstream-scoped grant does not reach gate criteria (access-matrix §2.2).
+ */
+export async function evidenceAdderFor(p: Personas, projectId: string, c: { reviewerRole: string; ownerRole: string }): Promise<Client> {
+  if (c.reviewerRole !== 'project_manager') return p.pm;
+  const owner = CRITERION_OWNER_PERSONA[c.ownerRole];
+  return owner ? p[owner] : secondPm(projectId);
 }
 
 /** A different person links evidence; the criterion's designated reviewer accepts it as met. */
 export async function meetCriterion(p: Personas, projectId: string, gateKey: string, critKey: string) {
   const g = await gateByKey(p.pm, projectId, gateKey);
   const c = crit(g, critKey);
-  if (c.evidence.active === 0) await addEvidence(evidenceAdderFor(p, c.reviewerRole), projectId, c.id);
+  if (c.evidence.active === 0) await addEvidence(await evidenceAdderFor(p, projectId, c), projectId, c.id);
   const res = await reviewerFor(p, c.reviewerRole).post(`/api/v1/projects/${projectId}/gates/${g.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'met', note: 'test review' });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
 }

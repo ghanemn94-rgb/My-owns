@@ -456,6 +456,10 @@ export class MeetingsService {
         requiredAuthority: d.requiredAuthority,
         requesterUserId: d.requesterUserId,
         classification: d.classification,
+        // DOM-P2R-03 / DOM-P2-14: the record the paper authorizes and its supporting-evidence statement.
+        subjectType: d.subjectType,
+        subjectId: d.subjectId,
+        evidenceNoneReason: d.evidenceNoneReason,
       })),
       openActions: openActions.map((a) => ({ id: a.id, code: a.code, title: a.title, ownerUserId: a.ownerUserId, dueDate: a.dueDate, status: a.status, decisionId: a.decisionId, overdue: !!a.dueDate && a.dueDate < today && (a.status === 'open' || a.status === 'in_progress') })),
       quorum: m.quorumSnapshot ?? null,
@@ -561,6 +565,9 @@ export class MeetingsService {
       if (!meetingId) throw ruleViolation('governance.agenda.meeting_required', 'Choose the meeting whose agenda the item joins');
       const m = await loadInProject(this.db, schema.meeting, projectId, meetingId);
       this.assertAgendaOpen(m, c.id);
+      // F-03 (REQ-GOV-013): concurrent acceptances onto the same meeting are serialized on the meeting row, so each gets
+      // the next number (a partial unique index on (meeting_id, number) backs it up → 409).
+      await this.db.tx().execute(sql`select id from meeting where id = ${m.id} and project_id = ${projectId} for update`);
       const [{ n }] = (await this.db
         .tx()
         .select({ n: sql<number>`coalesce(max(${schema.agendaItem.number}), 0)::int` })

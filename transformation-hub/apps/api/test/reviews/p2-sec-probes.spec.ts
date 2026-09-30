@@ -13,6 +13,8 @@ import { createWithVersion, login as docLogin } from '../documents/doc-helpers';
  *    (update it together with the fix);
  *  - `CONTROL` confirms a control the review relies on.
  * Every project is created by the test (synthetic data only).
+ * Fix round (lead): the §2.2 decision (option B) and SEC-P2-04/-05/-07/-08 are fixed; their OBSERVED tests now assert the
+ * fixed behaviour and are named "(fixed, regression)" like the DEFECT tests of SEC-P2-01/-02/-03/-06.
  */
 let projectId: string;
 let p: Personas;
@@ -36,23 +38,25 @@ afterAll(async () => {
 });
 
 describe('§2.2 design question — a workstream-only workstream lead (G1 owner) [access-matrix §2.2, DOM-P2-16]', () => {
-  it('OBSERVED: can start G1 as its owner, but GET /gates and GET /gates/:id answer 403 (the stricter reach rule)', async () => {
+  // Decided: option B (access-matrix §2.2 amended to the strict rule + the §2.2.1 project-level read exceptions).
+  it('§2.2 (option B applied, regression): the G1 owner reads the gate register (§2.2.1: GET /gates and /gates/:id 200) and starts G1', async () => {
     const scope = await owner().query(`select role, workstream_id from project_membership where project_id = $1 and user_id = $2 and revoked_at is null`, [projectId, p.techLead.userId]);
     expect(scope.rows).toHaveLength(1); // workstream_lead on ONE workstream, no project-wide role
     expect(scope.rows[0].role).toBe('workstream_lead');
     expect(scope.rows[0].workstream_id).not.toBeNull();
     const g1 = await gateByKey(p.pm, projectId, 'G1');
-    expect((await p.techLead.get(`${G(projectId)}/gates`)).status).toBe(403);
-    expect((await p.techLead.get(`${G(projectId)}/gates/${g1.id}`)).status).toBe(403);
+    expect((await p.techLead.get(`${G(projectId)}/gates`)).status).toBe(200); // fixed: was 403
+    const own = await p.techLead.get(`${G(projectId)}/gates/${g1.id}`);
+    expect(own.status).toBe(200); // fixed: was 403
+    expect(own.body.id).toBe(g1.id);
     const start = await p.techLead.post(gateCmd(projectId, g1.id, 'start'), { expectedVersion: g1.assessment.version });
     expect(start.status, JSON.stringify(start.body)).toBe(201);
-    // …and the command response itself carries the gate evaluation the read routes refuse.
     expect(start.body.evaluation).toBeTruthy();
-    // Project-level planning aggregates are refused the same way (assertProjectRead).
+    // Not in §2.2.1: project-level planning aggregates stay refused (assertProjectRead, strict rule).
     expect((await p.techLead.get(`${G(projectId)}/schedule`)).status).toBe(403);
   });
 
-  it('OBSERVED SEC-P2-08: the same principal LISTS and SEARCHES project documents (titles) but GET /documents/:id answers 403', async () => {
+  it('SEC-P2-08 (fixed, regression): list, search and GET agree — the principal lists, finds AND opens an internal project-level document (§2.2.1)', async () => {
     const pmDocs = await docLogin('pm');
     const d = await createWithVersion(pmDocs, projectId, { title: 'Internal project memo SECP2 (synthetic)', classification: 'internal' }, { bytes: Buffer.from('synthetic,3\n', 'utf8'), name: 'memo.csv' });
     expect(d.upload.status, JSON.stringify(d.upload.body)).toBe(201);
@@ -60,7 +64,7 @@ describe('§2.2 design question — a workstream-only workstream lead (G1 owner)
     expect(list.items.map((i) => i.id)).toContain(d.id);
     const search = (await p.techLead.get(`${G(projectId)}/documents/search?q=SECP2`).expect(200)).body as { items: { documentId: string }[] };
     expect(search.items.map((i) => i.documentId)).toContain(d.id);
-    expect((await p.techLead.get(`${G(projectId)}/documents/${d.id}`)).status).toBe(403);
+    expect((await p.techLead.get(`${G(projectId)}/documents/${d.id}`)).status).toBe(200); // fixed: was 403 (§2.2.1)
   });
 });
 
@@ -127,7 +131,8 @@ describe('SEC-P2-02 — decision separation of duties: the paper editor / submit
     expect(own.status, JSON.stringify(own.body)).toBe(201);
     const rev = await p.secretary.post(`${G(projectId)}/decisions/${d.id}/start-review`, { expectedVersion: own.body.version, meetingId: gov.meetingId });
     expect(rev.status, JSON.stringify(rev.body)).toBe(201);
-    const v = await p.finance.post(`${G(projectId)}/decisions/${d.id}/votes`, { expectedVersion: rev.body.version, choice: 'approve' });
+    // (Setup change for REQ-GOV-015: the member declares "no conflict" for the item with the vote; assertion unchanged.)
+    const v = await p.finance.post(`${G(projectId)}/decisions/${d.id}/votes`, { expectedVersion: rev.body.version, choice: 'approve', conflictDeclaration: 'no_conflict' });
     expect(v.status, JSON.stringify(v.body)).toBe(201);
   });
 });
@@ -152,14 +157,19 @@ describe('SEC-P2-03 — My Work offers a gate decision the command refuses (gate
 });
 
 describe('SEC-P2-05 — evidence can be linked to a gate criterion the caller does not own [gates.evidence.attach C,W]', () => {
-  it('OBSERVED: a contributor links evidence to a legal-owned G2 criterion (201) but may not submit it (403)', async () => {
+  it('SEC-P2-05 (fixed, regression): a contributor may neither link evidence to a legal-owned G2 criterion nor submit it (403); the owner role links (201)', async () => {
     const g2 = await gateByKey(p.pm, projectId, 'G2');
     expect(g2.ownerRole).toBe('legal_restricted');
-    const c = g2.criteria[0]!;
+    const c = g2.criteria.find((x) => x.ownerRole === 'legal_restricted')!;
     const link = await p.contributor.post(`${G(projectId)}/evidence`, { targetType: 'gate_criterion', targetId: c.id, note: 'Linked by a contributor (synthetic probe)' });
-    expect(link.status, JSON.stringify(link.body)).toBe(201);
+    expect(link.status, JSON.stringify(link.body)).toBe(403); // fixed: was 201 — refused like the submit (own_workstream)
+    const byContributor = await owner().query(`select count(*)::int n from evidence_link where target_id = $1 and added_by = $2`, [c.id, p.contributor.userId]);
+    expect(byContributor.rows[0].n).toBe(0);
     const submit = await p.contributor.post(`${G(projectId)}/gates/${g2.id}/criteria/${c.id}/submit-evidence`, { expectedVersion: c.assessment.version });
     expect(submit.status).toBe(403);
+    // The criterion's owner role (legal_restricted) links evidence to it.
+    const own = await p.legal.post(`${G(projectId)}/evidence`, { targetType: 'gate_criterion', targetId: c.id, note: 'Linked by the owner role (synthetic probe)' });
+    expect(own.status, JSON.stringify(own.body)).toBe(201);
   });
 });
 
@@ -191,6 +201,8 @@ describe('Cross-project dependencies and prerequisites — minimum disclosure an
   let B: string;
   let msB: string;
   let taskA: string;
+  let taskAws02: string;
+  let agrA: string;
   let agrB: string;
 
   beforeAll(async () => {
@@ -202,39 +214,66 @@ describe('Cross-project dependencies and prerequisites — minimum disclosure an
     await grant(admin, A, opsLead, 'workstream_lead', wsA.get('WS02')!.id); // workstream-only in A
     await grant(admin, B, opsLead, 'contributor'); // project-wide reader in B
     taskA = await task(pm, A, wsA.get('WS03')!.id, 'Task in A (synthetic)', { durationDays: 2 });
+    taskAws02 = await task(pm, A, wsA.get('WS02')!.id, 'Task in A, workstream WS02 (synthetic)', { durationDays: 2 });
     msB = await milestone(pm, B, (await workstreams(pm, B)).get('WS01')!.id, 'Milestone in B (synthetic)', { plannedDate: '2026-12-15' });
     const agr = await pm.post(`${G(B)}/agreements`, { kindLabel: 'TSA', title: 'Agreement of B (synthetic)', ownerUserId: pm.userId });
     expect(agr.status, JSON.stringify(agr.body)).toBe(201);
     agrB = agr.body.id;
+    const agrOfA = await pm.post(`${G(A)}/agreements`, { kindLabel: 'TSA', title: 'Agreement of A (synthetic)', ownerUserId: pm.userId });
+    expect(agrOfA.status, JSON.stringify(agrOfA.body)).toBe(201);
+    agrA = agrOfA.body.id;
   }, 300_000);
 
-  it('OBSERVED SEC-P2-07: a project-level dependency of A (no local item) is shown to a workstream-only reader of A', async () => {
+  it('SEC-P2-07 (fixed, regression): a project-level dependency of A (no local item) is neither listed to nor closable by a workstream-only reader of A', async () => {
     const r = await pm.post(`${G(A)}/cross-project-dependencies`, { otherProjectId: B, otherItemType: 'milestone', otherItemId: msB, description: 'Project-level dependency of A on B (synthetic)' });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
+    // Control: a dependency whose local item is in the lead's own workstream (WS02) stays visible to it.
+    const mine = await pm.post(`${G(A)}/cross-project-dependencies`, { otherProjectId: B, otherItemType: 'milestone', otherItemId: msB, localItemType: 'task', localItemId: taskAws02, description: 'WS02 task of A waits for B (synthetic)' });
+    expect(mine.status, JSON.stringify(mine.body)).toBe(201);
     expect((await opsLead.get(`${G(A)}/schedule`)).status).toBe(403); // no project-level planning read in A
     const list = (await opsLead.get(`${G(A)}/cross-project-dependencies`).expect(200)).body as { total: number; items: { id: string; description: string }[] };
-    expect(list.items.map((i) => i.id)).toContain(r.body.id); // OBSERVED (lenient §2.2 reading), unlike schedule / gates
+    expect(list.items.map((i) => i.id)).not.toContain(r.body.id); // fixed: was listed (lenient reading)
+    expect(list.items.map((i) => i.id)).toContain(mine.body.id);
+    expect(list.total).toBe(list.items.length); // the total never counts the hidden row
+    const close = await opsLead.post(`${G(A)}/cross-project-dependencies/${r.body.id}/close`, { expectedVersion: 1, reason: 'probe' });
+    expect(close.status).toBe(404); // not visible → 404, like an unknown id
+    // The project-wide reader (PM of A and B) still sees both.
+    const pmList = (await pm.get(`${G(A)}/cross-project-dependencies`).expect(200)).body as { items: { id: string }[] };
+    expect(pmList.items.map((i) => i.id)).toEqual(expect.arrayContaining([r.body.id, mine.body.id]));
   });
 
   it('CONTROL: the activity feed never lists cross_project_dependency events to non-auditors (404 for the type)', async () => {
     expect((await pm.get(`${G(A)}/activity?entityType=cross_project_dependency`)).status).toBe(404);
   });
 
-  it('OBSERVED SEC-P2-04: the database accepts a prerequisite predecessor of another project, and an other-item that is not in the other project', async () => {
+  it('SEC-P2-04 (fixed, regression): the database refuses a prerequisite predecessor of another project, and an other-item that is not in the other project (rolled back)', async () => {
     const c = await owner().connect();
     try {
       await c.query('begin');
       const orgId = (await c.query<{ org_id: string }>('select org_id from project where id = $1', [A])).rows[0]!.org_id;
-      // record_dependency in A whose predecessor is an agreement of B: no trigger / FK refuses it.
-      await c.query(
-        `insert into record_dependency (id, org_id, project_id, successor_type, successor_id, predecessor_type, predecessor_id) values (gen_random_uuid(), $1, $2, 'task', $3, 'agreement', $4)`,
-        [orgId, A, taskA, agrB],
-      );
-      // cross_project_dependency A → B whose "other item" is a task of A (not of B): accepted as well.
-      await c.query(
-        `insert into cross_project_dependency (id, org_id, project_id, other_project_id, other_item_type, other_item_id, description) values (gen_random_uuid(), $1, $2, $3, 'task', $4, 'probe (synthetic)')`,
-        [orgId, A, B, taskA],
-      );
+      const refused = async (q: string, params: unknown[]) => {
+        await c.query('savepoint probe');
+        await expect(c.query(q, params)).rejects.toThrow(/cross_project_reference/);
+        await c.query('rollback to savepoint probe');
+      };
+      const gateOf = async (pid: string) => (await c.query<{ id: string }>(`select id from gate_definition where project_id = $1 and key = 'G1'`, [pid])).rows[0]!.id;
+      const PREREQ = `insert into record_dependency (id, org_id, project_id, successor_type, successor_id, predecessor_type, predecessor_id) values (gen_random_uuid(), $1, $2, 'task', $3, $4, $5)`;
+      // record_dependency in A whose predecessor is an agreement / a gate of B: refused (was accepted).
+      await refused(PREREQ, [orgId, A, taskA, 'agreement', agrB]);
+      await refused(PREREQ, [orgId, A, taskA, 'gate', await gateOf(B)]);
+      await refused(PREREQ, [orgId, A, taskA, 'decision', '0192f0c0-0000-7000-8000-00000000d001']); // no such record
+      // Positive controls: predecessors of A itself (a gate maps to gate_definition).
+      await c.query(PREREQ, [orgId, A, taskA, 'agreement', agrA]);
+      await c.query(PREREQ, [orgId, A, taskA, 'gate', await gateOf(A)]);
+      const XDEP = `insert into cross_project_dependency (id, org_id, project_id, other_project_id, other_item_type, other_item_id, description) values (gen_random_uuid(), $1, $2, $3, $4, $5, 'probe (synthetic)') returning id`;
+      // cross_project_dependency A → B whose "other item" is a task of A (not of B): refused (was accepted)…
+      await refused(XDEP, [orgId, A, B, 'task', taskA]);
+      // …and so is a milestone of a third project of the same organization.
+      const third = (await c.query<{ id: string }>(`select m.id from milestone m join project p on p.id = m.project_id where p.org_id = $1 and m.project_id not in ($2, $3) limit 1`, [orgId, A, B])).rows[0]!.id;
+      await refused(XDEP, [orgId, A, B, 'milestone', third]);
+      // Positive control: the milestone of B is accepted; re-pointing the row at a task of A afterwards is refused.
+      const ok = (await c.query<{ id: string }>(XDEP, [orgId, A, B, 'milestone', msB])).rows[0]!.id;
+      await refused(`update cross_project_dependency set other_item_type = 'task', other_item_id = $2 where id = $1`, [ok, taskA]);
     } finally {
       await c.query('rollback');
       c.release();

@@ -90,6 +90,8 @@ describe('AT-05 — missing quorum, recused-member vote and prohibited self-appr
     for (const k of ['chair', 'sponsor', 'approver'] as const) expect((await vote(pid, a[k], d1.id, 'approve', v1)).status).toBe(201);
     const dupe = await vote(pid, a.chair, d1.id, 'reject', v1);
     expect(dupe.status).toBe(409);
+    // Every present eligible member votes before the outcome (DOM-P2R-01): Finance abstains.
+    expect((await vote(pid, a.finance, d1.id, 'abstain', v1)).status).toBe(201);
     const r = await a.secretary.post(`${P(pid)}/decisions/${d1.id}/record-outcome`, { expectedVersion: v1 });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
     expect(r.body.status).toBe('approved');
@@ -101,6 +103,7 @@ describe('AT-05 — missing quorum, recused-member vote and prohibited self-appr
     // d2: requested by finance (a voting member) → finance is excluded from quorum for that item.
     const v2 = await decisionVersion(a.chair, pid, d2.id);
     for (const k of ['chair', 'sponsor', 'legal'] as const) expect((await vote(pid, a[k], d2.id, 'approve', v2)).status).toBe(201);
+    expect((await vote(pid, a.approver, d2.id, 'abstain', v2)).status).toBe(201);
     const r2 = await a.chair.post(`${P(pid)}/decisions/${d2.id}/record-outcome`, { expectedVersion: v2 });
     expect(r2.status, JSON.stringify(r2.body)).toBe(201);
     expect(((await decisionRow(d2.id)).tally_snapshot as { quorum: { eligibleVoting: number } }).quorum.eligibleVoting).toBe(4);

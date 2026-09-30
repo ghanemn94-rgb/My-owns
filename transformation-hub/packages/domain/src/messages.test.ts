@@ -108,6 +108,10 @@ describe('QA-P1-14 — server messages', () => {
       gateDecisionIssue({ id: 'd', status: 'recommended', authorityOutcome: 'pending_external_authority' }, 'G1')!,
       gateDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'pending_external_authority' }, 'G1')!,
       gateDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'not_assessed' }, 'G1')!,
+      // DOM-P2R-04: the evidence of the recorded external approval
+      gateDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'pending_external_authority', externalAuthorityReference: 'R', externalEvidence: null }, 'G1')!,
+      gateDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'pending_external_authority', externalAuthorityReference: 'R', externalEvidence: { linkId: 'l', status: 'rejected', verified: true } }, 'G1')!,
+      gateDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'pending_external_authority', externalAuthorityReference: 'R', externalEvidence: { linkId: 'l', status: 'active', verified: false } }, 'G1')!,
       // DOM-P2-01
       gateApprovalDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'within_mandate', gateKey: null }, 'G1', null)!,
       gateApprovalDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'within_mandate', gateKey: 'G1', decisionTypeKey: 'x' }, 'G1', null)!,

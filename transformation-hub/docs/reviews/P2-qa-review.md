@@ -554,3 +554,49 @@ green in all 14 jobs.
   `docs/test-evidence/a11y-report.md` rewritten by the full e2e run were restored with `git checkout`. The temporary O-1 probe file was
   deleted. The review databases (`hub_test_p2qa`, `hub_test_p2qa_boot`, `hub_test_p2qa_e2e`, `hub_test_p2qa_probe`) are left in place
   (test data only).
+
+---
+
+## Fix status (implementation, 2026-09-30) — QA-P2-01, QA-P2-03, O-1, F-03 (and the P2 domain re-review findings)
+
+Appended by the implementing `backend-data-engineer` (not the reviewer); the text above is unchanged. Branch
+`worktree-agent-a667570d205e1a5d2`, with `claude/mobily-transformation-hub` merged up to `1c6b375` (P4 domain review, P2
+security review, cockpit). The same branch fixes the P2 domain re-review findings (`P2-domain-rereview.md`, "Fix status").
+The three `.fails` probes of this review (QA-P2-01, QA-P2-03, F-03) were turned into plain tests and pass. One setup line of
+the QA-P2-03 probe changed after the security-review merge: the late evidence is linked by the kit's authorized linker
+(`evidenceAdderFor`, SEC-P2-05 lets only the criterion's owner role or a project manager link criterion evidence — the
+contributor now gets 403, which is not the refusal the probe looks for); its assertion is unchanged.
+
+| Finding | Status | What changed |
+|---|---|---|
+| QA-P2-01 (High) | Fixed | Generic decision-use registry: every approval that relies on a decision locks the decision row (`SELECT … FOR UPDATE`), re-reads it with its registered uses and refuses a decision already used for another record of the same kind (422 `change_control.decision_already_used` / `perimeter.version.decision_already_used` / `gates.decide.decision_reused`); the use is written in the same transaction (`decision_use`, unique per decision and kind). Backstops: the registry's unique index and partial unique indexes `change_request_decision_uq`, `baseline_version_decision_uq`, `perimeter_version_decision_uq`; a violation is 409 `…decision_already_used`, never 500. Documented for other modules in `docs/architecture/module-guide.md` ("Relying on a governance decision"). |
+| QA-P2-03 (Low) | Fixed | `decide` re-checks the gate reviewer's endorsement against the CURRENT criterion basis: an approval on a basis the reviewer did not endorse is 422 `gates.assessment.review_stale` (the owner sends the gate back for a fresh review); rejections are unaffected. |
+| O-1 (observation) | Fixed — PROPOSED, pending the governance owner | A decision linked to ANY earlier cycle of the gate — approved or rejected — cannot back a later cycle (`gates.decide.decision_reused`); the rejected cycle's reliance is recorded in the registry (`gate_cycle`). `business-gates.md` rule 12, `assumptions-and-open-questions.md` A-52. |
+| F-03 (Low) | Fixed | Screening locks the meeting row before `max(number) + 1`; partial unique index `agenda_item_number_uq` (meeting, number of accepted items). REQ-GOV-013 → Tested. |
+
+Verification on this branch (own databases `hub_test_p2r`, `hub_test_p2r_boot`, `hub_test_p2r_e2e`; own stack on ports
+4217 / 3217):
+
+```
+$ pnpm build:packages                                        # OK
+$ (cd packages/domain && npx vitest run)                     → Test Files 18 passed (18), Tests 386 passed (386)
+$ (cd packages/contracts && npx vitest run)                  → Test Files 2 passed (2), Tests 100 passed (100)
+$ TEST_DATABASE_URL=…/hub_test_p2r TEST_DATABASE_MIGRATION_URL=…/hub_test_p2r pnpm --filter @hub/api test
+  before the 1c6b375 merge:  Test Files 87 passed (87), Tests 763 passed (763)
+  after the merge (run 3):   Test Files 1 failed | 89 passed (90), Tests 1 failed | 780 passed | 8 expected fail (789)
+                             → the failure was the QA-P2-03 probe's setup (security-review merge, see above); after the
+                               setup fix: vitest run test/reviews/p2-qa-adversarial.spec.ts → Tests 12 passed (12)
+                             (the 8 expected failures are the open P4 domain-review probes, `it.fails`)
+  final commit f552cf5 (run 4): Test Files 90 passed (90), Tests 781 passed | 8 expected fail (789), 798.6 s
+                             (incl. p1-closure-empty-db on hub_test_p2r_boot)
+$ pnpm lint                                                  # exit 0 (packages, api tsc + module boundaries, web tsc + i18n
+                                                             #  + hard-coded strings, e2e tsc)
+$ full Playwright suite (API + worker + production web build as in CI: HUB_RATE_LIMIT_PUBLIC_PER_MINUTE=1000,
+  env -u NODE_ENV HUB_API_URL=http://127.0.0.1:4217 pnpm --filter @hub/web run build; next start -p 3217;
+  HUB_WEB_URL=http://127.0.0.1:3217 npx playwright test)      → 311 passed (24.5m)
+  (includes the known-remainder `test.fail` of qa-p2-arabic-rtl, QA-P2-04, failing as expected)
+$ python3 scripts/requirements/apply_status.py --check       → status-evidence.yaml OK (263 entries); applied
+```
+The API, worker and web server started for the e2e run were stopped by PID after checking their command lines. The
+tracked screenshots rewritten by the run were restored with `git checkout`; `docs/test-evidence/a11y-report.md` was
+regenerated by this full run (240 scans, 0 serious/critical) and kept.

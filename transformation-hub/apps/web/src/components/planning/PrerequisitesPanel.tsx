@@ -143,11 +143,16 @@ export function PrerequisitesPanel({ successorType, successorId, successorCode }
           title={t('planning.prerequisites.removeTitle')}
           confirmLabel={t('planning.prerequisites.remove')}
           danger
-          noteMode="optional"
+          noteMode="required"
           noteLabel={t('planning.common.reason')}
-          consequences={[t('planning.prerequisites.removeEffect', { code: successorCode, label: removing.predecessorLabel, type: t(`planning.prerequisites.types.${removing.predecessorType}`) }), t('common.command.audited')]}
+          consequences={[
+            t('planning.prerequisites.removeEffect', { code: successorCode, label: removing.predecessorLabel, type: t(`planning.prerequisites.types.${removing.predecessorType}`) }),
+            // DOM-P2R-07: a reason, and — while it still blocks — not by the person accountable for the task / milestone.
+            t('planning.prerequisites.removeRule'),
+            t('common.command.audited'),
+          ]}
           onConfirm={async ({ note }) => {
-            await api(P.removePrerequisite, { params: { projectId, prerequisiteId: removing.id }, body: { reason: note || undefined } });
+            await api(P.removePrerequisite, { params: { projectId, prerequisiteId: removing.id }, body: { reason: note } });
             await refresh();
             toast.show('success', t('planning.prerequisites.removed'));
             setRemoving(null);

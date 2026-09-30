@@ -52,6 +52,11 @@ export const ReassessmentFlagDto = z.object({
   requestedAt: z.string().nullable(),
   /** `reason`: conflicting evidence (AT-14), evidence rejected as defective, or superseded evidence relied upon (DOM-P2-05). */
   criteria: z.array(z.object({ criterionId: Uuid, key: z.string(), evidenceLinkIds: z.array(Uuid), reason: z.enum(REASSESSMENT_REASONS) })),
+  /**
+   * DOM-P2R-04: the governance decision the approval relied on lost the evidence of its external approval (evidence link
+   * rejected as defective, superseded or conflicting). The decision and the approved cycle are preserved.
+   */
+  decisionEvidence: z.object({ decisionId: Uuid, code: z.string(), evidenceLinkId: Uuid, reason: z.enum(REASSESSMENT_REASONS) }).nullable(),
   escalationId: Uuid.nullable(),
   /** Upstream gates whose approval is flagged (downstream gates are flagged for review, never reverted). */
   upstreamGateKeys: z.array(z.string()),

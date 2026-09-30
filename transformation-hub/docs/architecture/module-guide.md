@@ -85,6 +85,35 @@ human principal at execution time and returns `null` when access was revoked (AT
   emit events.
 - Approvals: use the `approval_request` / `approval_record` tables for approvals that are not committee votes (gate decision
   support, waivers, baselines, TSA exit, closing confirmation). Bind to `subjectVersion` + `payloadHash`.
+- **Relying on a governance decision** (DOM-P2R-03/-04/-05, QA-P2-01, O-1 — one mechanism for every module). Whenever a
+  committee decision backs one of your records (an approval, a closing, a valuation, a budget line…), in the command's
+  request transaction:
+  1. `loadInProject(db, schema.decision, projectId, decisionId)` + your visibility check (404 outside scope);
+  2. `lockDecisionForReliance(db, projectId, decisionId)` (`apps/api/src/modules/governance/decision-reliance.ts`):
+     `SELECT … FOR UPDATE` on the decision row, then it re-reads the decision, the CURRENT state of its external-approval
+     evidence link and its registered uses — concurrent commands relying on the same decision serialize here;
+  3. `assertDecisionReliance` / `decisionRelianceIssue` (`@hub/domain`, `decision-reliance.ts`), in this order: the decision
+     is a FINAL approval (within mandate, or a recommendation with the external approval recorded) → the evidence of that
+     external approval is still an ACTIVE link VERIFIED by a second person (rejected / superseded / conflicting / unverified →
+     `<prefix>.decision_evidence_invalid`) → its type is allowed (`decisionTypeKeys`) → it has not been used for another
+     record of the same kind (`<prefix>.decision_already_used`) → it was raised for this record (`subjectRule`: `required`
+     — the default for new consumers; `if_set`; `none` when bound otherwise, e.g. by gate key). Codes are
+     `<codePrefix>.decision_{not_final,evidence_invalid,type_mismatch,already_used,no_subject,other_subject}`, HTTP 422.
+     Your module rules (amount coverage, gate key, authority matrix) come after it;
+  4. write your record, then `registerDecisionUse(db, { …, kind, subjectId, codePrefix })`: a `decision_use` row (decision,
+     use kind, record), **unique per decision and kind** — one decision backs ONE record of each kind (a G1 decision may back
+     the G1 gate cycle and one perimeter version, never two perimeter versions). A unique violation (a caller that skipped the
+     lock lost a race) is answered **409** `<prefix>.decision_already_used`. The registry is append-only and its record is
+     checked to be of the same project (post-migrate.sql); `onExisting: 'keep'` for a reliance that must not fail when the
+     decision is already consumed (a gate REJECTION citing a decision).
+  Use kinds registered today (`DECISION_USE_KINDS` → record type): `change_request` → change_request (change-request
+  approval), `baseline_version` → baseline_version (baseline approval), `perimeter_version` → perimeter_version (perimeter
+  version approval, G1 decision), `gate_cycle` → gate_assessment (gate cycle decision — approve or reject; O-1). A new
+  consumer adds its kind and record type to `DECISION_USE_KINDS` / `DECISION_USE_SUBJECT_TYPE` (the record type must be in
+  `hub_target_table()`); a paper raised FOR such a record also needs the type in `DECISION_SUBJECT_TYPES` and its open
+  states in `DECISION_SUBJECT_OPEN_STATES`. A reliance that does NOT consume the decision (prerequisite satisfaction) calls
+  the domain check with `use.kind = null` (final + evidence only). The per-table partial unique indexes
+  (`change_request_decision_uq`, `baseline_version_decision_uq`, `perimeter_version_decision_uq`) remain as backstops.
 
 ### Mandatory patterns added after the P0 architecture review (read carefully)
 - **Every submitted id** (path, body, query) is loaded with `loadInProject(db, table, projectId, id)` before use — the DB

@@ -11,19 +11,28 @@ import {
   VoteChoice,
   allowedCommands,
   assertApprovalAllowed,
+  assertConflictDeclared,
+  assertDecisionSubjectChangeable,
+  assertDecisionSubjectOpen,
   assertImplementationStartable,
   assertImplementationVerifiable,
   assertExternalApprovalEvidence,
   assertMayVote,
   assertTallyIntegrity,
   assertVotesUnderMatrix,
+  assertVotingClosable,
+  assertVotingComplete,
+  assertVotingOpen,
   checkAuthority,
   circulationResponders,
   clearanceAllows,
   computeQuorum,
   conflict,
+  decisionSubjectOf,
   forbidden,
-
+  notFound,
+  DecisionSubject,
+  DecisionSubjectType,
   missingDecisionPaperFields,
   planDecisionOutcome,
   presentUserIds,
@@ -62,9 +71,19 @@ export interface PaperInput {
   requiredAuthority?: string | null;
   classification?: Classification;
   gateKey?: string | null;
+  subjectType?: DecisionSubjectType | null;
+  subjectId?: string | null;
+  evidenceNoneReason?: string | null;
 }
 
 const DECIDED_STATES: DecisionStatus[] = ['approved', 'implementation_pending', 'implemented_verified'];
+
+/** Subject records (DOM-P2R-03): their table and the permission needed to reference / read them. */
+const SUBJECTS: Record<DecisionSubjectType, { table: typeof schema.changeRequest | typeof schema.baselineVersion | typeof schema.perimeterVersion; read: string }> = {
+  change_request: { table: schema.changeRequest, read: 'planning.plan.read' },
+  baseline_version: { table: schema.baselineVersion, read: 'planning.plan.read' },
+  perimeter_version: { table: schema.perimeterVersion, read: 'carveout.register.read' },
+};
 
 /** Decision papers and their lifecycle (spec §4.2; AT-04, AT-05, AT-16). Every state change is an explicit command. */
 @Injectable()
@@ -93,6 +112,10 @@ export class DecisionsService {
       meetingId?: string;
       status?: DecisionStatus;
       authorityOutcome?: AuthorityOutcome;
+      subjectType?: DecisionSubjectType;
+      subjectId?: string;
+      decisionTypeKey?: string;
+      gateKey?: string;
       sort?: RouteInput<typeof governanceRoutes.listDecisions>['query']['sort'];
     },
   ) {
@@ -104,6 +127,10 @@ export class DecisionsService {
       q.meetingId ? eq(d.meetingId, q.meetingId) : undefined,
       q.status ? eq(d.status, q.status) : undefined,
       q.authorityOutcome ? eq(d.authorityOutcome, q.authorityOutcome) : undefined,
+      q.subjectType ? eq(d.subjectType, q.subjectType) : undefined,
+      q.subjectId ? eq(d.subjectId, q.subjectId) : undefined,
+      q.decisionTypeKey ? eq(d.decisionTypeKey, q.decisionTypeKey) : undefined,
+      q.gateKey ? eq(d.gateKey, q.gateKey) : undefined,
       q.q ? or(ilike(d.title, likeContains(q.q)), ilike(d.code, likeContains(q.q))) : undefined,
     );
     const tx = this.db.tx();
@@ -127,8 +154,33 @@ export class DecisionsService {
     const d = await this.sup.decision(ctx, projectId, decisionId);
     const recusals = await this.db.tx().select().from(schema.recusal).where(eq(schema.recusal.decisionId, d.id)).orderBy(asc(schema.recusal.declaredAt));
     const names = await this.sup.displayNames([d.requesterUserId, ...recusals.map((r) => r.userId)]);
+    const evidenceLinks = await this.sup.activeEvidenceLinks(projectId, d.id);
+    const subject = decisionSubjectOf(d.subjectType, d.subjectId);
+    let voting = null;
+    if (d.status === 'under_review' && d.meetingId) {
+      const m = await loadInProject(this.db, schema.meeting, projectId, d.meetingId);
+      const s = await this.sup.votingState(d, m, await this.sup.project(projectId));
+      const declared = (await this.sup.declarations(d.id)).filter((x) => x.recordedBy === x.userId && (x.declaration === 'no_conflict' || x.declaration === 'interest_declared')).map((x) => x.userId);
+      voting = {
+        round: d.voteRound,
+        outstandingUserIds: s.outstanding,
+        outstanding: s.outstanding.length,
+        complete: s.complete,
+        closed: s.closed,
+        closedBy: s.closed ? d.votingClosedBy : null,
+        closedAt: s.closed ? iso(d.votingClosedAt) : null,
+        closeReason: s.closed ? d.votingCloseReason : null,
+        chairUserId: s.chairUserId,
+        declaredUserIds: [...new Set(declared)],
+      };
+    }
     return {
       ...this.summaryDto(d, names),
+      subject: subject ? { ...subject, label: await this.subjectLabel(ctx, projectId, subject) } : null,
+      firstSubmittedAt: iso(d.firstSubmittedAt),
+      evidenceNoneReason: d.evidenceNoneReason,
+      supportingEvidenceLinks: evidenceLinks,
+      voting,
       issue: d.issue,
       whyNow: d.whyNow,
       alternatives: d.alternatives,
@@ -138,7 +190,6 @@ export class DecisionsService {
       risks: d.risks,
       dependencies: d.dependencies,
       requiredAuthority: d.requiredAuthority,
-      gateKey: d.gateKey,
       authorityReason: d.authorityReason,
       recommendationRecordedBy: d.recommendationRecordedBy,
       externalAuthorityReference: d.externalAuthorityReference,
@@ -153,7 +204,7 @@ export class DecisionsService {
       implementationEvidenceNote: d.implementationEvidenceNote,
       implementationVerifiedBy: d.implementationVerifiedBy,
       implementationVerifiedAt: iso(d.implementationVerifiedAt),
-      missingFields: d.status === 'draft' ? missingDecisionPaperFields(d) : [],
+      missingFields: d.status === 'draft' ? missingDecisionPaperFields(d, { activeEvidenceLinks: evidenceLinks }) : [],
       recusals: recusals.map((r) => ({
         userId: r.userId,
         displayName: names.get(r.userId) ?? null,
@@ -196,6 +247,9 @@ export class DecisionsService {
     if (c.status === 'dissolved') throw ruleViolation('governance.committee.dissolved', 'The committee is dissolved');
     const classification = body.classification ?? c.classification;
     this.assertClassifiable(ctx, classification);
+    // DOM-P2R-03: the record this paper authorizes (validated in the project, awaiting approval).
+    const subject = decisionSubjectOf(body.subjectType, body.subjectId);
+    if (subject) await this.assertSubject(ctx, projectId, subject);
     const p = await this.sup.project(projectId);
     const id = newId();
     const code = await nextCode(this.db, schema.decision, projectId, 'DEC');
@@ -215,7 +269,13 @@ export class DecisionsService {
     };
     await this.db.tx().insert(schema.decision).values(values as typeof schema.decision.$inferInsert);
     await this.versions.snapshot({ projectId, entityType: 'decision', entityId: id, versionNo: 1, snapshot: this.paperSnapshot({ ...values, version: 1 }), reason: 'draft' });
-    await this.audit.record({ action: 'governance.decision.draft', entityType: 'decision', entityId: id, projectId, after: { code, title: body.title, committeeId: c.id, decisionTypeKey: body.decisionTypeKey ?? null } });
+    await this.audit.record({
+      action: 'governance.decision.draft',
+      entityType: 'decision',
+      entityId: id,
+      projectId,
+      after: { code, title: body.title, committeeId: c.id, decisionTypeKey: body.decisionTypeKey ?? null, subjectType: subject?.type ?? null, subjectId: subject?.id ?? null },
+    });
     return { id, code, version: 1 };
   }
 
@@ -224,6 +284,12 @@ export class DecisionsService {
     if (d.status !== 'draft') throw ruleViolation('governance.decision.not_draft', `Only a draft paper can be edited (current: ${d.status}); ask the secretariat to return it`);
     this.assertPaperAuthor(ctx, d);
     if (body.classification) this.assertClassifiable(ctx, body.classification);
+    if (body.subjectType !== undefined || body.subjectId !== undefined) {
+      // DOM-P2R-03: fixed from the first submission; a new subject must be a record of the project awaiting approval.
+      const next = decisionSubjectOf(body.subjectType ?? null, body.subjectId ?? null);
+      assertDecisionSubjectChangeable({ current: decisionSubjectOf(d.subjectType, d.subjectId), next, submittedBefore: !!d.firstSubmittedAt });
+      if (next && (next.type !== d.subjectType || next.id !== d.subjectId)) await this.assertSubject(ctx, projectId, next);
+    }
     const values: Record<string, unknown> = this.paperValues(body);
     if (body.title !== undefined) values['title'] = body.title;
     if (body.classification !== undefined) values['classification'] = body.classification;
@@ -251,9 +317,11 @@ export class DecisionsService {
     assertVersion(d, body.expectedVersion, 'decision');
     const to = transition('decision', DECISION_MACHINE, d.status as DecisionStatus, 'submit');
     this.assertPaperAuthor(ctx, d);
-    const missing = missingDecisionPaperFields(d);
+    const missing = missingDecisionPaperFields(d, { activeEvidenceLinks: await this.sup.activeEvidenceLinks(projectId, d.id) });
     if (missing.length) throw ruleViolation('governance.decision.incomplete_paper', `The decision paper is incomplete: ${missing.join(', ')}`, { missing });
-    return this.applyTransition(ctx, d, 'submit', to, body.expectedVersion, {}, body.note);
+    // DOM-P2R-03: the subject (if any) is fixed from the first submission on.
+    const extra = d.firstSubmittedAt ? {} : { firstSubmittedAt: new Date() };
+    return this.applyTransition(ctx, d, 'submit', to, body.expectedVersion, extra, body.note, { subjectType: d.subjectType, subjectId: d.subjectId });
   }
 
   async startReview(ctx: RequestContext, projectId: string, decisionId: string, body: { expectedVersion: number; meetingId?: string; note?: string }) {
@@ -309,13 +377,15 @@ export class DecisionsService {
   // ---------------------------------------------------------------------------------------------------------
   // Voting & circulation
 
-  async castVote(ctx: RequestContext, projectId: string, decisionId: string, body: { expectedVersion: number; choice: VoteChoice; comment?: string }) {
+  async castVote(ctx: RequestContext, projectId: string, decisionId: string, body: { expectedVersion: number; choice: VoteChoice; comment?: string; conflictDeclaration?: 'no_conflict' }) {
     const d = await loadInProject(this.db, schema.decision, projectId, decisionId);
     // RBAC + classification + separation of duties (the requester may not vote on their own decision).
     this.policy.assert(ctx, 'governance.decision.vote', { projectId, classification: d.classification, requesterUserId: d.requesterUserId });
     assertVersion(d, body.expectedVersion, 'decision paper');
     if (d.status !== 'under_review') throw ruleViolation('governance.vote.not_open', `Votes are only accepted while the decision is under review (current: ${d.status})`);
     if (!d.meetingId) throw ruleViolation('governance.vote.not_tabled', 'The decision is not tabled at a meeting or circulated');
+    // DOM-P2R-01: the chair closed voting on this round.
+    assertVotingOpen({ closedRound: d.votingClosedRound, round: d.voteRound });
     const m = await loadInProject(this.db, schema.meeting, projectId, d.meetingId);
     if (m.status !== 'in_session') throw ruleViolation('governance.vote.session_not_open', `Voting is open only during the session / circulation (meeting status: ${m.status})`);
     const p = await this.sup.project(projectId);
@@ -344,6 +414,16 @@ export class DecisionsService {
       .from(schema.vote)
       .where(and(eq(schema.vote.decisionId, d.id), eq(schema.vote.userId, voter), eq(schema.vote.round, d.voteRound)));
     if (dup) throw conflict('governance.vote.duplicate', 'You already voted in this round; votes cannot be changed');
+    // REQ-GOV-015: the voter's own conflict-of-interest declaration for this item precedes the vote (given now, or earlier).
+    if (body.conflictDeclaration === 'no_conflict') {
+      await this.db
+        .tx()
+        .insert(schema.conflictDeclaration)
+        .values({ id: newId(), orgId: ctx.principal.orgId, projectId, committeeId: d.committeeId, meetingId: m.id, decisionId: d.id, userId: voter, declaration: 'no_conflict', description: null, recordedBy: voter });
+      await this.audit.record({ action: 'governance.conflict.declare', entityType: 'meeting', entityId: m.id, projectId, after: { userId: voter, decisionId: d.id, declaration: 'no_conflict', recusalRecorded: false, via: 'vote' } });
+    } else {
+      assertConflictDeclared({ voterUserId: voter, declarations: await this.sup.declarations(d.id) });
+    }
     const id = newId();
     await this.db
       .tx()
@@ -451,6 +531,13 @@ export class DecisionsService {
     // requester, or (in a meeting) of a member no longer recorded present refuses the outcome instead of being dropped.
     assertTallyIntegrity({ votes, recusedUserIds: recused, requesterUserId: d.requesterUserId, round: d.voteRound, ...(m.isCirculation ? {} : { presentUserIds: present }) });
     const quorum = computeQuorum({ members, presentUserIds: present, recusedUserIds: recused, onDate, policy: mx.policy, requesterUserId: d.requesterUserId });
+    // In a meeting, quorum is fixed by the attendance before anyone votes (votes are refused without it), so a missing
+    // quorum is the reason reported first. In a circulation, quorum counts responders: completeness comes first.
+    if (!m.isCirculation && !quorum.met) throw ruleViolation('governance.outcome.no_quorum', quorum.explanation, { quorum });
+    // DOM-P2R-01 (proposed default, Q-40): the vote is complete — every eligible member expected to vote has voted, or the
+    // chair closed voting with a reason (a circulation also completes at its deadline).
+    const voting = await this.sup.votingState(d, m, p);
+    assertVotingComplete({ outstanding: voting.outstanding, closedByChair: voting.closed, circulationDeadlinePassed: voting.deadlinePassed, round: d.voteRound });
     const tally = tallyVotes({ votes: votes.map((v) => ({ userId: v.userId, choice: v.choice })), chairUserId: this.sup.chairOn(members, onDate), quorumMet: quorum.met, policy: mx.policy });
     const amount = amountOf(d);
     const authority = checkAuthority({ policy: mx.policy, decisionTypeKey: d.decisionTypeKey ?? '', amount });
@@ -467,6 +554,13 @@ export class DecisionsService {
       authority,
       // Cast votes are never disregarded any more (DOM-P2-06); kept at 0 for readers of older snapshots.
       disregardedVotes: 0,
+      // DOM-P2R-01: how the vote was completed; members who had not voted are listed and not counted.
+      voting: {
+        complete: voting.outstanding.length === 0 ? 'all_voted' : voting.closed ? 'closed_by_chair' : 'circulation_deadline',
+        notVoted: voting.outstanding,
+        closedBy: voting.closed ? d.votingClosedBy : null,
+        closeReason: voting.closed ? d.votingCloseReason : null,
+      },
       recusals: recusals.map((r) => ({ userId: r.userId, recordedBy: r.recordedBy, onBehalf: !!r.recordedBy && r.recordedBy !== r.userId })),
       recordedAt: new Date().toISOString(),
       recordedBy: ctx.principal.userId,
@@ -512,7 +606,19 @@ export class DecisionsService {
       entityId: d.id,
       projectId,
       before: { status: d.status },
-      after: { status: to, outcome: tally.outcome, approve: tally.approve, reject: tally.reject, abstain: tally.abstain, quorumMet: quorum.met, authorityOutcome: plan.authorityOutcome, escalatedTo: plan.escalateTo, escalationId },
+      after: {
+        status: to,
+        outcome: tally.outcome,
+        approve: tally.approve,
+        reject: tally.reject,
+        abstain: tally.abstain,
+        notVoted: voting.outstanding.length,
+        votingClosedByChair: voting.closed,
+        quorumMet: quorum.met,
+        authorityOutcome: plan.authorityOutcome,
+        escalatedTo: plan.escalateTo,
+        escalationId,
+      },
       reason: body.note ?? null,
     });
     if (to !== d.status) {
@@ -536,6 +642,42 @@ export class DecisionsService {
       explanation: plan.explanation,
       version: row.version,
     };
+  }
+
+  /**
+   * DOM-P2R-01 (proposed default, pending the governance owner — Q-40): the committee's chair closes voting on the current
+   * round with a reason. Role (record_outcome; not the requester) → state → the actor is the chair seat holder on the
+   * meeting date → reason. Members who have not voted are recorded (audit, then the tally snapshot) and are not counted;
+   * no vote is accepted in the round afterwards. A new round (resume / return) reopens voting.
+   */
+  async closeVoting(ctx: RequestContext, projectId: string, decisionId: string, body: { expectedVersion: number; reason: string }) {
+    const d = await loadInProject(this.db, schema.decision, projectId, decisionId);
+    // authority (explicit, I-R3): a procedural step of the committee's chair — no delegated amount applies.
+    this.policy.assert(ctx, 'governance.decision.record_outcome', { projectId, classification: d.classification, requesterUserId: d.requesterUserId, withinAuthority: true });
+    assertVersion(d, body.expectedVersion, 'decision');
+    const m = d.meetingId ? await loadInProject(this.db, schema.meeting, projectId, d.meetingId) : null;
+    const p = await this.sup.project(projectId);
+    const s = m ? await this.sup.votingState(d, m, p) : null;
+    assertVotingClosable({ status: d.status, actorUserId: ctx.principal.userId, chairUserId: s?.chairUserId ?? null, closedRound: d.votingClosedRound, round: d.voteRound, reason: body.reason, tabled: !!m });
+    if (m && m.status !== 'in_session' && !(!m.isCirculation && ['held', 'minutes_draft'].includes(m.status))) {
+      throw ruleViolation('governance.outcome.meeting_state', `Cannot close voting for a meeting in status ${m.status}`);
+    }
+    const row = (await updateVersioned(this.db, schema.decision, { id: d.id, projectId, expectedVersion: body.expectedVersion }, {
+      votingClosedRound: d.voteRound,
+      votingClosedBy: ctx.principal.userId,
+      votingClosedAt: new Date(),
+      votingCloseReason: body.reason.trim(),
+    })) as unknown as DecisionRow;
+    await this.audit.record({
+      action: 'governance.decision.close_voting',
+      entityType: 'decision',
+      entityId: d.id,
+      projectId,
+      before: { votingClosedRound: d.votingClosedRound },
+      after: { round: d.voteRound, notVoted: s!.outstanding, meetingId: m!.id, viaCirculation: m!.isCirculation },
+      reason: body.reason.trim(),
+    });
+    return { id: d.id, version: row.version, round: d.voteRound, notVoted: s!.outstanding.length };
   }
 
   /**
@@ -758,6 +900,30 @@ export class DecisionsService {
     return id;
   }
 
+  /**
+   * DOM-P2R-03: the subject is a record of THIS project that the drafter can read (404 otherwise — no existence oracle) and
+   * that is still awaiting its approval. The same-project rule is also enforced by a trigger (post-migrate.sql).
+   */
+  private async assertSubject(ctx: RequestContext, projectId: string, subject: DecisionSubject) {
+    const s = SUBJECTS[subject.type];
+    if (!this.policy.canInProject(ctx, s.read, projectId)) throw notFound();
+    const row = (await loadInProject(this.db, s.table as typeof schema.changeRequest, projectId, subject.id)) as unknown as { status: string };
+    assertDecisionSubjectOpen(subject, row.status);
+  }
+
+  /** Display label of the subject for a reader who can read that record type (otherwise null). */
+  private async subjectLabel(ctx: RequestContext, projectId: string, subject: DecisionSubject): Promise<string | null> {
+    if (!this.policy.canInProject(ctx, SUBJECTS[subject.type].read, projectId)) return null;
+    const tx = this.db.tx();
+    if (subject.type === 'change_request') {
+      const [r] = await tx.select({ code: schema.changeRequest.code, title: schema.changeRequest.title }).from(schema.changeRequest).where(and(eq(schema.changeRequest.id, subject.id), eq(schema.changeRequest.projectId, projectId)));
+      return r ? `${r.code} — ${r.title}` : null;
+    }
+    const t = subject.type === 'baseline_version' ? schema.baselineVersion : schema.perimeterVersion;
+    const [r] = await tx.select({ n: t.versionNo }).from(t).where(and(eq(t.id, subject.id), eq(t.projectId, projectId)));
+    return r ? `v${r.n}` : null;
+  }
+
   private assertClassifiable(ctx: RequestContext, c: Classification) {
     if (!clearanceAllows(ctx.principal.clearance, c)) throw ruleViolation('governance.decision.classification_above_clearance', 'You cannot classify a paper above your own clearance');
   }
@@ -786,11 +952,37 @@ export class DecisionsService {
     if (b.latestSafeDate !== undefined) v['latestSafeDate'] = b.latestSafeDate;
     if (b.requiredAuthority !== undefined) v['requiredAuthority'] = b.requiredAuthority;
     if (b.gateKey !== undefined) v['gateKey'] = b.gateKey;
+    if (b.subjectType !== undefined) v['subjectType'] = b.subjectType;
+    if (b.subjectId !== undefined) v['subjectId'] = b.subjectId;
+    if (b.evidenceNoneReason !== undefined) v['evidenceNoneReason'] = b.evidenceNoneReason?.trim() ? b.evidenceNoneReason.trim() : null;
     return v;
   }
 
   private paperSnapshot(d: Record<string, unknown>) {
-    const keys = ['code', 'title', 'decisionTypeKey', 'issue', 'whyNow', 'alternatives', 'recommendation', 'impacts', 'amountAmount', 'amountCurrency', 'amountUnitScale', 'risks', 'dependencies', 'latestSafeDate', 'requiredAuthority', 'requesterUserId', 'classification', 'gateKey', 'version'];
+    const keys = [
+      'code',
+      'title',
+      'decisionTypeKey',
+      'issue',
+      'whyNow',
+      'alternatives',
+      'recommendation',
+      'impacts',
+      'amountAmount',
+      'amountCurrency',
+      'amountUnitScale',
+      'risks',
+      'dependencies',
+      'latestSafeDate',
+      'requiredAuthority',
+      'requesterUserId',
+      'classification',
+      'gateKey',
+      'subjectType',
+      'subjectId',
+      'evidenceNoneReason',
+      'version',
+    ];
     return pick(d, keys);
   }
 
@@ -810,6 +1002,9 @@ export class DecisionsService {
       escalatedTo: d.escalatedTo,
       meetingId: d.meetingId,
       voteRound: d.voteRound,
+      subjectType: (d.subjectType as DecisionSubjectType | null) ?? null,
+      subjectId: d.subjectId,
+      gateKey: d.gateKey,
       classification: d.classification,
       isDemo: d.isDemo,
       version: d.version,

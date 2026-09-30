@@ -1,9 +1,10 @@
 'use client';
 
 import { Plus, Trash2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { governanceRoutes } from '@hub/contracts';
-import { AGENDA_ITEM_KINDS, CLASSIFICATIONS, clearanceAllows } from '@hub/domain';
+import { carveoutRoutes, governanceRoutes, planningRoutes } from '@hub/contracts';
+import { AGENDA_ITEM_KINDS, CLASSIFICATIONS, DECISION_SUBJECT_TYPES, clearanceAllows } from '@hub/domain';
 import { ApiErrorNotice } from '@/components/ApiErrorNotice';
 import { Dialog } from '@/components/Dialog';
 import { SelectField, TextAreaField, TextField } from '@/components/Field';
@@ -41,10 +42,22 @@ interface PaperState {
   latestSafeDate: string;
   requiredAuthority: string;
   classification: Classification;
+  /** DOM-P2R-03: the record the paper authorizes ('' = none). */
+  subjectType: '' | SubjectType;
+  subjectId: string;
+  /** DOM-P2-14: "no supporting evidence — reason". */
+  evidenceNoneReason: string;
 }
 
-function fromDecision(d: DecisionDetail | null, committeeId: string): PaperState {
+type SubjectType = (typeof DECISION_SUBJECT_TYPES)[number];
+/** Decision type that usually goes with a subject (pre-filled when the type is still empty). */
+const SUBJECT_DECISION_TYPE: Partial<Record<SubjectType, string>> = { change_request: 'change_request_budget', baseline_version: 'baseline_approval' };
+
+function fromDecision(d: DecisionDetail | null, committeeId: string, subject?: { type: SubjectType; id: string } | null): PaperState {
   return {
+    subjectType: d?.subject?.type ?? subject?.type ?? '',
+    subjectId: d?.subject?.id ?? subject?.id ?? '',
+    evidenceNoneReason: d?.evidenceNoneReason ?? '',
     committeeId: d?.committeeId ?? committeeId,
     title: d?.title ?? '',
     decisionTypeKey: d?.decisionTypeKey ?? '',
@@ -73,6 +86,7 @@ export function DecisionPaperDialog({
   onClose,
   decision,
   defaultCommitteeId,
+  defaultSubject,
   onCreated,
 }: {
   open: boolean;
@@ -80,6 +94,8 @@ export function DecisionPaperDialog({
   /** Edit this draft; null = create a new paper. */
   decision: DecisionDetail | null;
   defaultCommitteeId?: string;
+  /** Pre-selected record the new paper authorizes (e.g. raised from a change request). */
+  defaultSubject?: { type: SubjectType; id: string } | null;
   onCreated?: (id: string) => void;
 }) {
   const { t, tStatus, locale } = useI18n();
@@ -87,19 +103,22 @@ export function DecisionPaperDialog({
   const refresh = useGovRefresh();
   const toast = useToast();
   const committees = useCommitteeList(open && !decision);
-  const [s, setS] = useState<PaperState>(() => fromDecision(decision, defaultCommitteeId ?? ''));
+  const [s, setS] = useState<PaperState>(() => fromDecision(decision, defaultCommitteeId ?? '', defaultSubject));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [touched, setTouched] = useState(false);
   const types = useDecisionTypes(s.committeeId || null);
+  // DOM-P2R-03: the subject is fixed from the first submission (the server refuses a change).
+  const subjectLocked = !!decision?.firstSubmittedAt;
+  const subjects = useSubjectOptions(open && !subjectLocked ? s.subjectType : '', s.subjectId);
 
   useEffect(() => {
     if (open) {
-      setS(fromDecision(decision, defaultCommitteeId ?? ''));
+      setS(fromDecision(decision, defaultCommitteeId ?? '', defaultSubject));
       setError(null);
       setTouched(false);
     }
-  }, [open, decision, defaultCommitteeId]);
+  }, [open, decision, defaultCommitteeId, defaultSubject]);
   useEffect(() => {
     if (open && !decision && !s.committeeId && committees.data?.items[0]) setS((x) => ({ ...x, committeeId: committees.data!.items[0]!.id }));
   }, [open, decision, s.committeeId, committees.data]);
@@ -107,11 +126,12 @@ export function DecisionPaperDialog({
   const up = <K extends keyof PaperState>(k: K, v: PaperState[K]) => setS((x) => ({ ...x, [k]: v }));
   const amountBad = s.amount.trim() !== '' && !DECIMAL.test(s.amount.trim());
   const titleMissing = s.title.trim() === '';
+  const subjectMissing = s.subjectType !== '' && !s.subjectId;
   const classes = CLASSIFICATIONS.filter((c) => clearanceAllows(me.user.clearance, c));
 
   const submit = async () => {
     setTouched(true);
-    if (titleMissing || amountBad || !s.committeeId) return;
+    if (titleMissing || amountBad || subjectMissing || !s.committeeId) return;
     setBusy(true);
     setError(null);
     const alternatives = s.alternatives.filter((a) => a.title.trim()).map((a) => (a.summary.trim() ? { title: a.title.trim(), summary: a.summary.trim() } : { title: a.title.trim() }));
@@ -133,6 +153,9 @@ export function DecisionPaperDialog({
       latestSafeDate: s.latestSafeDate || null,
       requiredAuthority: orNull(s.requiredAuthority),
       classification: s.classification,
+      evidenceNoneReason: orNull(s.evidenceNoneReason),
+      // The subject is sent only while it may change (a locked subject is left untouched).
+      ...(subjectLocked ? {} : s.subjectType ? { subjectType: s.subjectType, subjectId: s.subjectId } : { subjectType: null, subjectId: null }),
     };
     try {
       if (decision) {
@@ -194,6 +217,48 @@ export function DecisionPaperDialog({
             <option value={s.decisionTypeKey}>{t('governance.paper.notInMatrix', { key: s.decisionTypeKey })}</option>
           ) : null}
         </SelectField>
+        <fieldset className="space-y-2 rounded-md border border-line p-3" data-testid="paper-subject">
+          <legend className="px-1 text-sm font-medium text-ink">{t('governance.paper.subject.legend')}</legend>
+          <p className={hint}>{subjectLocked ? t('governance.paper.subject.locked') : t('governance.paper.subject.hint')}</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <SelectField
+              label={t('governance.paper.subject.type')}
+              value={s.subjectType}
+              disabled={subjectLocked}
+              onChange={(e) => {
+                const type = e.target.value as PaperState['subjectType'];
+                setS((x) => ({ ...x, subjectType: type, subjectId: '', decisionTypeKey: x.decisionTypeKey || (type ? (SUBJECT_DECISION_TYPE[type] ?? '') : '') }));
+              }}
+              data-testid="paper-subject-type"
+            >
+              <option value="">{t('governance.paper.subject.none')}</option>
+              {DECISION_SUBJECT_TYPES.map((k) => (
+                <option key={k} value={k}>
+                  {t(`governance.paper.subject.types.${k}`)}
+                </option>
+              ))}
+            </SelectField>
+            {s.subjectType ? (
+              <SelectField
+                label={t('governance.paper.subject.record')}
+                required
+                value={s.subjectId}
+                disabled={subjectLocked}
+                onChange={(e) => up('subjectId', e.target.value)}
+                error={touched && subjectMissing ? t('common.validation.required') : null}
+                data-testid="paper-subject-record"
+              >
+                <option value="">{subjects.loading ? t('governance.common.loadingList') : subjects.restricted ? t('governance.paper.subject.restricted') : t('governance.common.select')}</option>
+                {subjects.options.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+                {decision?.subject && !subjects.options.some((o) => o.id === decision.subject!.id) ? <option value={decision.subject.id}>{decision.subject.label ?? decision.subject.id}</option> : null}
+              </SelectField>
+            ) : null}
+          </div>
+        </fieldset>
         <TextAreaField label={t('governance.paper.issue')} value={s.issue} maxLength={8000} onChange={(e) => up('issue', e.target.value)} />
         <TextAreaField label={t('governance.paper.whyNow')} value={s.whyNow} maxLength={8000} onChange={(e) => up('whyNow', e.target.value)} />
         <fieldset className="space-y-2">
@@ -269,10 +334,54 @@ export function DecisionPaperDialog({
           </SelectField>
         </div>
         <TextField label={t('governance.paper.requiredAuthority')} value={s.requiredAuthority} maxLength={500} onChange={(e) => up('requiredAuthority', e.target.value)} />
+        <TextAreaField
+          label={t('governance.paper.evidenceNoneReason')}
+          hint={t('governance.paper.evidenceNoneReasonHint')}
+          value={s.evidenceNoneReason}
+          maxLength={2000}
+          onChange={(e) => up('evidenceNoneReason', e.target.value)}
+          data-testid="paper-evidence-none"
+        />
         <ApiErrorNotice error={error} />
       </div>
     </Dialog>
   );
+}
+
+/**
+ * Records a paper can be raised for (DOM-P2R-03), awaiting their approval: change requests not yet decided, proposed
+ * baseline / perimeter versions. Loaded only for readers of those registers (the server re-checks).
+ */
+function useSubjectOptions(type: '' | SubjectType, currentId: string) {
+  const { t } = useI18n();
+  const { projectId, can } = useProjectContext();
+  const planRead = can('planning.plan.read');
+  const perimeterRead = can('carveout.register.read');
+  const crs = useQuery({
+    queryKey: ['gov', projectId, 'paper-subjects', 'change_request'],
+    queryFn: ({ signal }) => api(planningRoutes.listChangeRequests, { params: { projectId }, query: { status: 'draft,submitted,under_review', pageSize: 100 }, signal }),
+    enabled: type === 'change_request' && planRead,
+  });
+  const baselines = useQuery({
+    queryKey: ['gov', projectId, 'paper-subjects', 'baseline_version'],
+    queryFn: ({ signal }) => api(planningRoutes.listBaselines, { params: { projectId }, signal }),
+    enabled: type === 'baseline_version' && planRead,
+  });
+  const versions = useQuery({
+    queryKey: ['gov', projectId, 'paper-subjects', 'perimeter_version'],
+    queryFn: ({ signal }) => api(carveoutRoutes.listPerimeterVersions, { params: { projectId }, signal }),
+    enabled: type === 'perimeter_version' && perimeterRead,
+  });
+  const restricted = (type === 'perimeter_version' && !perimeterRead) || ((type === 'change_request' || type === 'baseline_version') && !planRead);
+  const options: { id: string; label: string }[] =
+    type === 'change_request'
+      ? (crs.data?.items ?? []).map((c) => ({ id: c.id, label: `${c.code} — ${c.title}` }))
+      : type === 'baseline_version'
+        ? (baselines.data?.items ?? []).filter((b) => b.status === 'proposed' || b.id === currentId).map((b) => ({ id: b.id, label: t('governance.paper.subject.versionLabel', { version: b.versionNo }) }))
+        : type === 'perimeter_version'
+          ? (versions.data?.items ?? []).filter((v) => v.status === 'proposed' || v.id === currentId).map((v) => ({ id: v.id, label: t('governance.paper.subject.versionLabel', { version: v.versionNo }) }))
+          : [];
+  return { options, restricted, loading: crs.isLoading || baselines.isLoading || versions.isLoading };
 }
 
 // ---------------------------------------------------------------------------------------------------------------

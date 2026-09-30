@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, loginAs, owner, Client } from '../helpers';
 import { setupProject, setupGovernance, Personas, Gov } from '../gates/gate-test-kit';
-import { Actors, DEMO_AUTHORITY_POLICY, P, auditCount, decisionRow, decisionVersion, tabledDecision, uniq, verifiedDecisionEvidence, vote } from './gov-fixtures';
+import { Actors, DEMO_AUTHORITY_POLICY, P, auditCount, closeVoting, decisionRow, decisionVersion, tabledDecision, uniq, verifiedDecisionEvidence, vote } from './gov-fixtures';
 import { createProject, grant, task, workstreams } from '../planning/fixtures';
 import { createWithVersion, login as docLogin } from '../documents/doc-helpers';
 
@@ -26,7 +26,7 @@ const A = () => a as unknown as Actors;
 
 beforeAll(async () => {
   ({ projectId: pA, p: a } = await setupProject('GOVFIX-A'));
-  govA = await setupGovernance(pA, a);
+  govA = await setupGovernance(pA, a, { allVotingMembersPresent: true });
   admin = await loginAs('portfolio.admin');
   pN = await createProject(admin, a.pm, 'GOVFIX-N');
   await grant(admin, pN, a.sponsor, 'sponsor');
@@ -76,7 +76,9 @@ describe('DOM-P2-02 — abstentions count as not approving (authority-matrix.md 
     for (const k of ['chair', 'sponsor'] as const) expect((await vote(pA, a[k], t.id, 'approve', v)).status).toBe(201);
     expect((await vote(pA, a.finance, t.id, 'reject', v)).status).toBe(201);
     expect((await vote(pA, a.legal, t.id, 'abstain', v)).status).toBe(201);
-    const r = await outcome(pA, a.secretary, t.id, v);
+    // Five voting members are present: a tie needs the chair to close voting with the fifth vote outstanding (DOM-P2R-01).
+    await closeVoting(pA, a.chair, t.id, 'Operations member unavailable for this item (test)');
+    const r = await outcome(pA, a.secretary, t.id, await decisionVersion(a.chair, pA, t.id));
     expect(r.status, JSON.stringify(r.body)).toBe(201);
     expect(r.body).toMatchObject({ status: 'under_review', outcome: 'tie_escalate' });
     expect(r.body.escalationId).toBeTruthy();
@@ -118,6 +120,8 @@ describe('DOM-P2-06 — no recusal after voting; recusals on behalf need a reaso
     // Round 2: the outcome counts only round-2 votes and the snapshot shows who recused whom.
     const v2 = await decisionVersion(a.chair, pA, d.id);
     for (const k of ['chair', 'sponsor', 'legal'] as const) expect((await vote(pA, a[k], d.id, 'approve', v2)).status).toBe(201);
+    // Every present, non-recused voting member votes before the outcome (DOM-P2R-01).
+    expect((await vote(pA, a.approver, d.id, 'abstain', v2)).status).toBe(201);
     const r = await outcome(pA, a.secretary, d.id, v2);
     expect(r.status, JSON.stringify(r.body)).toBe(201);
     const snap = (await decisionRow(d.id)).tally_snapshot as { round: number; recusals: unknown[]; disregardedVotes: number; tally: { approve: number; reject: number } };
@@ -181,7 +185,7 @@ describe('DOM-P2-20 — attendance is frozen while voting is open [REQ-GOV-015, 
     expect(r.body.detail).toContain(d.code);
     expect(await rejectedCount(a.secretary.userId, 'governance.recordAttendance')).toBe(before + 1);
     expect((await owner().query(`select status from attendance where meeting_id = $1 and user_id = $2`, [meetingId, a.approver.userId])).rows[0].status).toBe('present');
-    for (const k of ['chair', 'sponsor'] as const) expect((await vote(pA, a[k], d.id, 'approve', v)).status).toBe(201);
+    for (const k of ['chair', 'sponsor', 'finance', 'legal'] as const) expect((await vote(pA, a[k], d.id, 'approve', v)).status).toBe(201);
     expect((await outcome(pA, a.secretary, d.id, v)).status).toBe(201);
     await a.secretary.post(`${P(pA)}/meetings/${meetingId}/attendance`, { entries: [{ membershipId: seat.get(a.approver.userId)!, status: 'present' }] }).expect(201);
   });
@@ -189,7 +193,7 @@ describe('DOM-P2-20 — attendance is frozen while voting is open [REQ-GOV-015, 
   it('defense in depth: a voter marked absent behind the API makes the outcome refuse (votes of absent members are never counted silently)', async () => {
     const d = await tabledDecision(pA, A(), a.pm, govA.committeeId, meetingId);
     const v = await decisionVersion(a.chair, pA, d.id);
-    for (const k of ['chair', 'sponsor', 'finance'] as const) expect((await vote(pA, a[k], d.id, 'approve', v)).status).toBe(201);
+    for (const k of ['chair', 'sponsor', 'finance', 'legal', 'approver'] as const) expect((await vote(pA, a[k], d.id, 'approve', v)).status).toBe(201);
     await owner().query(`update attendance set status = 'absent' where meeting_id = $1 and user_id = $2`, [meetingId, a.finance.userId]);
     const r = await outcome(pA, a.secretary, d.id, v);
     expect(r.status).toBe(422);
@@ -254,9 +258,16 @@ describe('DOM-P2-03 — change requests act on the approved authority matrix; ab
     expect(cr.status, JSON.stringify(cr.body)).toBe(201);
     await a.pm.post(`${P(pA)}/change-requests/${cr.body.id}/submit`, { expectedVersion: 1 }).expect(201);
     await a.pm.post(`${P(pA)}/change-requests/${cr.body.id}/start-review`, { expectedVersion: 2 }).expect(201);
+    // DOM-P2R-02: the cost impact stated by the requester is confirmed by an assessor who is not the requester (Finance).
+    if (over.costImpact) {
+      await a.finance
+        .post(`${P(pA)}/change-requests/${cr.body.id}/assess`, { expectedVersion: 3, impacts: { scope: 'Synthetic scope change' }, costImpact: over.costImpact, note: 'Cost impact confirmed by Finance (test)' })
+        .expect(201);
+    }
     return cr.body.id as string;
   };
-  const approve = (id: string, body: Record<string, unknown> = {}) => a.sponsor.post(`${P(pA)}/change-requests/${id}/approve`, { expectedVersion: 3, note: 'test', ...body });
+  const version = async (id: string) => (await a.pm.get(`${P(pA)}/change-requests/${id}`).expect(200)).body.version as number;
+  const approve = async (id: string, body: Record<string, unknown> = {}) => a.sponsor.post(`${P(pA)}/change-requests/${id}/approve`, { expectedVersion: await version(id), note: 'test', ...body });
   let above: string;
   let recommendationId: string;
 
@@ -288,15 +299,21 @@ describe('DOM-P2-03 — change requests act on the approved authority matrix; ab
 
   it('the requester is refused by separation of duties (403) before any authority evaluation', async () => {
     await grant(admin, pA, a.pm, 'sponsor');
-    const own = await a.pm.post(`${P(pA)}/change-requests/${above}/approve`, { expectedVersion: 3 });
+    const own = await a.pm.post(`${P(pA)}/change-requests/${above}/approve`, { expectedVersion: await version(above) });
     expect(own.status).toBe(403);
     expect(own.body.detail).toMatch(/Separation of duties/);
   });
 
   it('routed to the committee: a recommendation is not enough; the externally approved decision of the matching type backs the approval', async () => {
-    const d = await tabledDecision(pA, A(), a.pm, govA.committeeId, govA.meetingId, { decisionTypeKey: 'change_request_budget', amount: { amount: '1500000.0000', currency: 'SAR', unitScale: 1 } });
+    // DOM-P2R-03: the paper is raised FOR this change request (its subject).
+    const d = await tabledDecision(pA, A(), a.pm, govA.committeeId, govA.meetingId, {
+      decisionTypeKey: 'change_request_budget',
+      amount: { amount: '1500000.0000', currency: 'SAR', unitScale: 1 },
+      subjectType: 'change_request',
+      subjectId: above,
+    });
     const v = await decisionVersion(a.chair, pA, d.id);
-    for (const k of ['chair', 'sponsor', 'finance', 'legal'] as const) expect((await vote(pA, a[k], d.id, 'approve', v)).status).toBe(201);
+    for (const k of ['chair', 'sponsor', 'finance', 'legal', 'approver'] as const) expect((await vote(pA, a[k], d.id, 'approve', v)).status).toBe(201);
     const out = await outcome(pA, a.secretary, d.id, v);
     expect(out.body).toMatchObject({ status: 'recommended', authorityOutcome: 'pending_external_authority' });
     recommendationId = d.id;
@@ -322,13 +339,18 @@ describe('DOM-P2-03 — change requests act on the approved authority matrix; ab
     // A final decision of another type (the probe's operational gate decisions are within mandate).
     const gateType = await tabledDecision(pA, A(), a.pm, govA.committeeId, govA.meetingId, { decisionTypeKey: 'gate_decision_operational', amount: null });
     const gv = await decisionVersion(a.chair, pA, gateType.id);
-    for (const k of ['chair', 'sponsor', 'finance'] as const) expect((await vote(pA, a[k], gateType.id, 'approve', gv)).status).toBe(201);
+    for (const k of ['chair', 'sponsor', 'finance', 'legal', 'approver'] as const) expect((await vote(pA, a[k], gateType.id, 'approve', gv)).status).toBe(201);
     expect((await outcome(pA, a.secretary, gateType.id, gv)).body.status).toBe('approved');
     expect((await approve(other, { decisionId: gateType.id })).body.code).toBe('change_control.decision_type_mismatch');
-    // A smaller approved amount does not cover the change.
-    const small = await tabledDecision(pA, A(), a.pm, govA.committeeId, govA.meetingId, { decisionTypeKey: 'change_request_budget', amount: { amount: '100000.0000', currency: 'SAR', unitScale: 1 } });
+    // A smaller approved amount does not cover the change (the paper is raised for this change request — DOM-P2R-03).
+    const small = await tabledDecision(pA, A(), a.pm, govA.committeeId, govA.meetingId, {
+      decisionTypeKey: 'change_request_budget',
+      amount: { amount: '100000.0000', currency: 'SAR', unitScale: 1 },
+      subjectType: 'change_request',
+      subjectId: other,
+    });
     const sv = await decisionVersion(a.chair, pA, small.id);
-    for (const k of ['chair', 'sponsor', 'finance'] as const) expect((await vote(pA, a[k], small.id, 'approve', sv)).status).toBe(201);
+    for (const k of ['chair', 'sponsor', 'finance', 'legal', 'approver'] as const) expect((await vote(pA, a[k], small.id, 'approve', sv)).status).toBe(201);
     expect((await outcome(pA, a.secretary, small.id, sv)).body.status).toBe('approved');
     expect((await approve(other, { decisionId: small.id })).body.code).toBe('change_control.decision_amount_insufficient');
     // A decision id of another project is never trusted (404).
@@ -411,7 +433,7 @@ describe('DOM-P2-12 — an external authority decision rests on a verified evide
   it('no evidence, unverified evidence, evidence of another decision → 422; the verifier cannot record (403); verified evidence → recorded', async () => {
     const d = await tabledDecision(pA, A(), a.pm, govA.committeeId, govA.meetingId, { decisionTypeKey: 'jv_signing_authorization', amount: null, requiredAuthority: 'Board of Directors — to be confirmed' });
     const v = await decisionVersion(a.chair, pA, d.id);
-    for (const k of ['chair', 'sponsor', 'finance', 'legal'] as const) expect((await vote(pA, a[k], d.id, 'approve', v)).status).toBe(201);
+    for (const k of ['chair', 'sponsor', 'finance', 'legal', 'approver'] as const) expect((await vote(pA, a[k], d.id, 'approve', v)).status).toBe(201);
     expect((await outcome(pA, a.secretary, d.id, v)).body.status).toBe('recommended');
     const rec = (body: Record<string, unknown>, who: Client = a.chair) =>
       decisionVersion(a.chair, pA, d.id).then((ev) => who.post(`${P(pA)}/decisions/${d.id}/record-external-approval`, { expectedVersion: ev, outcome: 'approved', externalReference: 'DEMO-BOARD-RESOLUTION (synthetic)', ...body }));

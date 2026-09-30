@@ -68,6 +68,7 @@ async function governanceDecision(baseURL: string, pid: string, decisionTypeKey:
       dependencies: 'None identified (synthetic)',
       latestSafeDate: isoDate(30),
       requiredAuthority: 'Per the DEMO authority matrix (synthetic)',
+      evidenceNoneReason: 'Synthetic e2e paper: no supporting documents exist',
     };
     const d = await post(pm, `${base}/decisions`, paper);
     if (!vote) return d.id;
@@ -87,7 +88,7 @@ async function governanceDecision(baseURL: string, pid: string, decisionTypeKey:
       if (!persona) continue;
       const voter = await apiSessionAs(baseURL, persona);
       const v = (await get(voter, `${base}/decisions/${d.id}`)).version;
-      await post(voter, `${base}/decisions/${d.id}/votes`, { expectedVersion: v, choice: 'approve' });
+      await post(voter, `${base}/decisions/${d.id}/votes`, { expectedVersion: v, choice: 'approve', conflictDeclaration: 'no_conflict' });
       await voter.dispose();
     }
     const out = await post(sec, `${base}/decisions/${d.id}/record-outcome`, { expectedVersion: (await get(sec, `${base}/decisions/${d.id}`)).version });

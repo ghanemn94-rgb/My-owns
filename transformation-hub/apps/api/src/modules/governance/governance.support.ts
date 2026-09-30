@@ -12,6 +12,8 @@ import {
   localDate,
   matrixUsable,
   notFound,
+  outstandingVoters,
+  presentUserIds,
   ruleViolation,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
@@ -170,6 +172,56 @@ export class GovernanceSupport {
 
   async attendance(meetingId: string) {
     return this.db.tx().select().from(schema.attendance).where(eq(schema.attendance.meetingId, meetingId));
+  }
+
+  /** Active evidence links on the decision paper (documents module; DOM-P2-14 supporting evidence / attachments). */
+  async activeEvidenceLinks(projectId: string, decisionId: string): Promise<number> {
+    const [r] = (await this.db
+      .tx()
+      .select({ n: sql<number>`count(*)::int` })
+      .from(schema.evidenceLink)
+      .where(and(eq(schema.evidenceLink.projectId, projectId), eq(schema.evidenceLink.targetType, 'decision'), eq(schema.evidenceLink.targetId, decisionId), eq(schema.evidenceLink.status, 'active')))) as [{ n: number }];
+    return Number(r.n);
+  }
+
+  /** Conflict-of-interest declarations recorded for the decision (REQ-GOV-015). */
+  async declarations(decisionId: string): Promise<{ userId: string; recordedBy: string | null; declaration: string }[]> {
+    return this.db
+      .tx()
+      .select({ userId: schema.conflictDeclaration.userId, recordedBy: schema.conflictDeclaration.recordedBy, declaration: schema.conflictDeclaration.declaration })
+      .from(schema.conflictDeclaration)
+      .where(eq(schema.conflictDeclaration.decisionId, decisionId))
+      .orderBy(asc(schema.conflictDeclaration.declaredAt));
+  }
+
+  /**
+   * DOM-P2R-01: who still has a vote to cast in the decision's current round, whether the chair closed voting, and whether
+   * the outcome may be recorded. Circulation: every appointed eligible voting member is expected to respond (the deadline
+   * also completes it); meeting: the eligible members recorded present.
+   */
+  async votingState(d: DecisionRow, m: MeetingRow, p: ProjectInfo) {
+    const onDate = this.localDateOf(m.scheduledAt, p);
+    const members = this.memberSnapshots(await this.memberships(d.committeeId));
+    const recused = await this.recusedUserIds(d.id);
+    const votes = await this.db
+      .tx()
+      .select({ userId: schema.vote.userId })
+      .from(schema.vote)
+      .where(and(eq(schema.vote.decisionId, d.id), eq(schema.vote.round, d.voteRound)));
+    const present = m.isCirculation ? null : presentUserIds(await this.attendance(m.id));
+    const outstanding = outstandingVoters({
+      members,
+      onDate,
+      presentUserIds: present,
+      recusedUserIds: recused,
+      requesterUserId: d.requesterUserId,
+      // Platform invariant (authority-matrix.md §2.1; AuthorityPolicySchema literal): the requester never votes.
+      selfApprovalProhibited: true,
+      votedUserIds: votes.map((v) => v.userId),
+    });
+    const closed = d.votingClosedRound === d.voteRound;
+    const deadlinePassed = m.isCirculation && !!m.responseDeadline && this.today(p) > m.responseDeadline;
+    return { onDate, members, outstanding, closed, deadlinePassed, complete: outstanding.length === 0 || closed || deadlinePassed, chairUserId: this.chairOn(members, onDate) };
   }
 
   /**

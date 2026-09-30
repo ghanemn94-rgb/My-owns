@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, owner, projectIdByCode, Client, DC } from '../helpers';
-import { setupProject, setupGovernance, gateByKey, crit, evidenceLinks, meetAllMandatory, startGate, gateDecision, Personas, Gov } from '../gates/gate-test-kit';
+import { setupProject, setupGovernance, gateByKey, crit, evidenceAdderFor, evidenceLinks, meetAllMandatory, startGate, gateDecision, Personas, Gov } from '../gates/gate-test-kit';
 import { Actors, DEMO_AUTHORITY_POLICY, P, decisionVersion, paper, tabledDecision, uniq, verifiedDecisionEvidence, vote } from '../governance/gov-fixtures';
 import { task, workstreams } from '../planning/fixtures';
 import { createWithVersion, login as docLogin } from '../documents/doc-helpers';
@@ -73,7 +73,7 @@ describe('QA-P2 adversarial — gate review under concurrency and stale state (G
   // QA-P2-03 (docs/reviews/P2-qa-review.md): the endorsement is checked at submission only. Evidence of a criterion can still
   // change while the cycle is ready for decision (the documents module does not look at the gate state) and `decide` does not
   // re-check the review basis, so the approver decides on a state the gate reviewer never reviewed.
-  it.fails('after submission, a change to a criterion’s evidence is not decided on without a fresh review (evidence refused or decision refused)', async () => {
+  it('after submission, a change to a criterion’s evidence is not decided on without a fresh review (evidence refused or decision refused)', async () => {
     let g0 = await gateByKey(p.pm, projectId, 'G0');
     await review(p.pm, g0.id, g0.assessment.version, 'endorse', 'Re-endorsed after the verification (synthetic)').expect(201);
     g0 = await gateByKey(p.pm, projectId, 'G0');
@@ -81,8 +81,11 @@ describe('QA-P2 adversarial — gate review under concurrency and stale state (G
     g0 = await gateByKey(p.pm, projectId, 'G0');
     expect(g0.assessment.status).toBe('ready_for_decision');
     const reviewedBasis = (await owner().query(`select review_basis from gate_assessment where id = $1`, [g0.assessment.id])).rows[0].review_basis as string;
-    // New evidence on G0-C02 after the submission (a person other than the reviewer and the submitter).
-    const late = await p.contributor.post(`${P(projectId)}/evidence`, { targetType: 'gate_criterion', targetId: crit(g0, 'G0-C02').id, note: 'QA probe: evidence added after submission (synthetic)' });
+    // New evidence on G0-C02 after the submission (a person other than the reviewer and the submitter). Setup change after
+    // the P2 security review (SEC-P2-05: only the criterion's owner role or a project manager may link evidence to a
+    // criterion): the kit's authorized evidence linker is used instead of the contributor, whose attempt is now 403.
+    const lateLinker = await evidenceAdderFor(p, projectId, crit(g0, 'G0-C02'));
+    const late = await lateLinker.post(`${P(projectId)}/evidence`, { targetType: 'gate_criterion', targetId: crit(g0, 'G0-C02').id, note: 'QA probe: evidence added after submission (synthetic)' });
     const evidenceRefused = late.status === 422 || late.status === 409;
     const d = await gateDecision(projectId, p, gov, 'G0', { externalApproval: true });
     expect(d.status).toBe('approved');
@@ -111,7 +114,7 @@ describe('QA-P2 adversarial — votes and re-used decisions under concurrency [R
   // unique constraint (change-control.service.ts evaluateAuthority), so approvals of different change requests running at
   // the same time can all rely on the same committee decision. (Also reproduced without the lock below: 4 simultaneous
   // approvals → 2 approved on one decision in 2 of 4 runs.)
-  it.fails('two change requests above the delegated limit approved at the same time on ONE final decision: at most one is approved', async () => {
+  it('two change requests above the delegated limit approved at the same time on ONE final decision: at most one is approved', async () => {
     // The authorized body's decision: 1,500,000 SAR (above the DEMO committee limit) → recommendation → external approval.
     const d = await tabledDecision(projectId, A(), p.pm, gov.committeeId, gov.meetingId, { title: uniq('QA reuse race decision'), decisionTypeKey: 'change_request_budget', amount: { amount: '1500000.0000', currency: 'SAR', unitScale: 1 } });
     const v = await decisionVersion(p.chair, projectId, d.id);
@@ -254,7 +257,7 @@ describe('QA-P2 adversarial — separation of duties on external authority decis
 describe('QA-P2 adversarial — agenda numbering under concurrency [REQ-GOV-013]', () => {
   // F-03 (docs/phases/P2-P4-requirement-disposition.md §5, still open): the agenda number is max(number) + 1 without a lock or
   // a unique index per meeting.
-  it.fails('three agenda requests accepted onto the same meeting at the same instant get distinct numbers', async () => {
+  it('three agenda requests accepted onto the same meeting at the same instant get distinct numbers', async () => {
     const m = await p.secretary.post(`${P(projectId)}/committees/${gov.committeeId}/meetings`, { title: uniq('QA numbering probe meeting'), scheduledAt: new Date().toISOString() });
     expect(m.status, JSON.stringify(m.body)).toBe(201);
     const reqs = [];

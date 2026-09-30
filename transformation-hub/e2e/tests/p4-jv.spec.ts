@@ -102,6 +102,7 @@ async function finalJvDecision(baseURL: string, pid: string, decisionTypeKey: st
       dependencies: 'None identified (synthetic)',
       latestSafeDate: isoDate(30),
       requiredAuthority: 'Per the DEMO authority matrix (synthetic)',
+      evidenceNoneReason: 'Synthetic e2e paper: no supporting documents exist',
     });
     const detail = await get(sec, `${base}/committees/${committee.id}`);
     const members = (detail.memberships as { id: string; userId: string | null; voting: boolean; activeToday: boolean }[]).filter((m) => m.userId && m.activeToday);
@@ -120,7 +121,7 @@ async function finalJvDecision(baseURL: string, pid: string, decisionTypeKey: st
       if (!persona) continue;
       const voter = await apiSessionAs(baseURL, persona);
       const v = (await get(voter, `${base}/decisions/${d.id}`)).version;
-      await post(voter, `${base}/decisions/${d.id}/votes`, { expectedVersion: v, choice: 'approve' });
+      await post(voter, `${base}/decisions/${d.id}/votes`, { expectedVersion: v, choice: 'approve', conflictDeclaration: 'no_conflict' });
       await voter.dispose();
     }
     const out = await post(sec, `${base}/decisions/${d.id}/record-outcome`, { expectedVersion: (await get(sec, `${base}/decisions/${d.id}`)).version });

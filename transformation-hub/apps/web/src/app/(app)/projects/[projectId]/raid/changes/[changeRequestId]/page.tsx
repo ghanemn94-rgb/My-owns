@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { ClipboardCheck, Pencil } from 'lucide-react';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { ClipboardCheck, Gavel, Pencil } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { planningRoutes as P } from '@hub/contracts';
 import { ActivityHistory } from '@/components/ActivityHistory';
 import { DemoBadge } from '@/components/DemoBadge';
@@ -28,6 +28,7 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { baselineHref, pk, useRefreshPlanning, type ChangeRequest } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
+import { DecisionPaperDialog } from '../../../committee/_components/dialogs';
 
 function AssessDialog({ open, onClose, cr }: { open: boolean; onClose: () => void; cr: ChangeRequest }) {
   const { t } = useI18n();
@@ -95,6 +96,9 @@ export default function ChangeRequestPage() {
   const commands = useChangeRequestCommands(q.data);
   const [edit, setEdit] = useState(false);
   const [assess, setAssess] = useState(false);
+  const [paper, setPaper] = useState(false);
+  const router = useRouter();
+  const paperSubject = useMemo(() => ({ type: 'change_request' as const, id: changeRequestId }), [changeRequestId]);
   if (q.isLoading) return <LoadingState />;
   if (q.error || !q.data) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   const c = q.data;
@@ -127,8 +131,22 @@ export default function ChangeRequestPage() {
                 {t('planning.common.edit')}
               </button>
             ) : null}
+            {['draft', 'submitted', 'under_review'].includes(c.status) && can('governance.decision.draft') ? (
+              // DOM-P2R-03: a committee paper raised FOR this change request (its subject is pre-selected).
+              <button type="button" className={btn.secondary} onClick={() => setPaper(true)} data-testid="cr-raise-paper">
+                <Gavel aria-hidden="true" className="size-4" />
+                {t('planning.cr.raisePaper')}
+              </button>
+            ) : null}
           </>
         }
+      />
+      <DecisionPaperDialog
+        open={paper}
+        onClose={() => setPaper(false)}
+        decision={null}
+        defaultSubject={paperSubject}
+        onCreated={(id) => router.push(`/projects/${projectId}/committee/decisions/${id}`)}
       />
       {c.status === 'under_review' && c.requestedBy === me.user.id ? <Notice tone="info">{t('planning.cr.selfNotice')}</Notice> : null}
       {c.status === 'approved' && c.rebaseline && !c.linkedBaselineId ? (
@@ -193,7 +211,13 @@ export default function ChangeRequestPage() {
           <dl className="mb-3 grid gap-3" data-testid="cr-cost-impact-fact">
             <Fact label={t('planning.cr.costImpact')}>
               {c.costImpact ? (
-                <MoneyText value={c.costImpact} testId="cr-cost-impact-value" />
+                <span className="flex flex-col gap-1">
+                  <MoneyText value={c.costImpact} testId="cr-cost-impact-value" />
+                  {/* DOM-P2R-02: a requester-stated amount decides authority only once an assessor other than the requester confirms it. */}
+                  <span className={c.costImpactConfirmed ? 'text-xs text-muted' : 'text-xs text-warning'} data-testid="cr-cost-impact-confirmation" data-confirmed={c.costImpactConfirmed ? 'true' : 'false'}>
+                    {c.costImpactConfirmed ? t('planning.cr.costConfirmed') : t('planning.cr.costUnconfirmed')}
+                  </span>
+                </span>
               ) : c.impacts.cost ? (
                 <span className="text-warning">{t('planning.cr.costNotQuantified')}</span>
               ) : (

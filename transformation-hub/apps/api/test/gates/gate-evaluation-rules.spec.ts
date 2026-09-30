@@ -54,7 +54,16 @@ describe('Criterion review — evidence, separation of duties and the designated
     const g0 = await gateByKey(p.pm, projectId, 'G0');
     const c = crit(g0, 'G0-C03');
     expect(c.reviewerRole).toBe('legal_restricted');
-    await addEvidence(p.legal, projectId, c.id);
+    // SEC-P2-05: the designated reviewer does not hold the criterion's owner role (secretary_cpmo) nor project_manager, so it
+    // may not link evidence to it through the API (403, like submitting it)…
+    const link = await p.legal.post(`/api/v1/projects/${projectId}/evidence`, { targetType: 'gate_criterion', targetId: c.id, note: 'Test evidence note (synthetic)' });
+    expect(link.status, JSON.stringify(link.body)).toBe(403);
+    // …but separation of duties must still bind a reviewer who linked evidence (e.g. while also holding the owner role or
+    // project_manager): that evidence row is recorded with the owner pool, a state this persona can no longer produce here.
+    await owner().query(
+      `insert into evidence_link (org_id, project_id, target_type, target_id, note, added_by) select org_id, id, 'gate_criterion', $2, 'Test evidence note linked by the reviewer (fixture)', $3 from project where id = $1`,
+      [projectId, c.id, p.legal.userId],
+    );
     const self = await p.legal.post(reviewUrl(g0.id, c.id), { expectedVersion: c.assessment.version, outcome: 'met' });
     expect(self.status).toBe(403);
     expect(self.body.code).toBe('policy.forbidden'); // not_self: the designated reviewer submitted this evidence

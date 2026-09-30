@@ -229,6 +229,11 @@ export class GovernanceController {
     return this.decisions.castVote(ctx, i.params.projectId, i.params.decisionId, i.body);
   }
 
+  @ApiRoute(R.closeVoting)
+  closeVoting(@Ctx() ctx: RequestContext, @Input() i: I<typeof R.closeVoting>) {
+    return this.decisions.closeVoting(ctx, i.params.projectId, i.params.decisionId, i.body);
+  }
+
   @ApiRoute(R.initiateCirculation)
   initiateCirculation(@Ctx() ctx: RequestContext, @Input() i: I<typeof R.initiateCirculation>) {
     return this.decisions.initiateCirculation(ctx, i.params.projectId, i.params.decisionId, i.body);

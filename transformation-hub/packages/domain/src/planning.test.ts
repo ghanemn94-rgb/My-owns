@@ -163,7 +163,12 @@ describe('DOM-P2-18 — non-schedule prerequisites: decisions, gates, agreements
     expect(prerequisiteSatisfied({ ...d, status: 'approved', authorityOutcome: 'within_mandate' })).toBe(true);
     expect(prerequisiteSatisfied({ ...d, status: 'recommended', authorityOutcome: 'pending_external_authority' })).toBe(false);
     expect(prerequisiteSatisfied({ ...d, status: 'approved', authorityOutcome: 'pending_external_authority' })).toBe(false);
-    expect(prerequisiteSatisfied({ ...d, status: 'approved', authorityOutcome: 'pending_external_authority', externalAuthorityReference: 'DEMO-REF' })).toBe(true);
+    // DOM-P2R-04: an external approval satisfies the prerequisite only while its evidence is active and verified.
+    const ext = { ...d, status: 'approved' as const, authorityOutcome: 'pending_external_authority' as const, externalAuthorityReference: 'DEMO-REF' };
+    expect(prerequisiteSatisfied({ ...ext, externalEvidence: { linkId: 'l1', status: 'active', verified: true } })).toBe(true);
+    expect(prerequisiteSatisfied(ext)).toBe(false);
+    expect(prerequisiteSatisfied({ ...ext, externalEvidence: { linkId: 'l1', status: 'rejected', verified: true } })).toBe(false);
+    expect(prerequisiteSatisfied({ ...ext, externalEvidence: { linkId: 'l1', status: 'active', verified: false } })).toBe(false);
     expect(prerequisiteSatisfied({ ...d, status: 'under_review', authorityOutcome: 'not_assessed' })).toBe(false);
   });
   it('gates, approval requests and evidence', () => {

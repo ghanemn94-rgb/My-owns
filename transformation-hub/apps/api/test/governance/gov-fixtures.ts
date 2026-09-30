@@ -96,8 +96,17 @@ export function paper(committeeId: string, over: Record<string, unknown> = {}) {
     dependencies: 'None identified',
     latestSafeDate: plusDays(30),
     requiredAuthority: 'Steering committee (DEMO matrix)',
+    // DOM-P2-14: a paper cites supporting evidence or states "none" with a reason.
+    evidenceNoneReason: 'No supporting documents for this synthetic test paper',
     ...over,
   };
+}
+
+/** DOM-P2R-01: the committee's chair closes voting on the current round with a reason. */
+export async function closeVoting(pid: string, chair: Client, decisionId: string, reason = 'Voting closed by the chair (synthetic test)') {
+  const r = await chair.post(`${P(pid)}/decisions/${decisionId}/close-voting`, { expectedVersion: await decisionVersion(chair, pid, decisionId), reason });
+  expect(r.status, JSON.stringify(r.body)).toBe(201);
+  return r.body as { id: string; version: number; round: number; notVoted: number };
 }
 
 /**
@@ -143,9 +152,27 @@ export async function tabledDecision(pid: string, a: Actors, requester: Client, 
   return { id: d.id as string, code: d.code as string, version: r.body.version as number };
 }
 
-export async function vote(pid: string, c: Client, decisionId: string, choice: 'approve' | 'reject' | 'abstain', expectedVersion?: number) {
+/**
+ * Cast a vote with the member's own conflict-of-interest declaration for the item ("no conflict", REQ-GOV-015), as the vote
+ * dialog does. `declare: false` casts the vote without a declaration (the member must have declared before).
+ */
+export async function vote(pid: string, c: Client, decisionId: string, choice: 'approve' | 'reject' | 'abstain', expectedVersion?: number, opts: { declare?: boolean } = {}) {
   const v = expectedVersion ?? (await decisionVersion(c, pid, decisionId));
-  return c.post(`${P(pid)}/decisions/${decisionId}/votes`, { expectedVersion: v, choice });
+  return c.post(`${P(pid)}/decisions/${decisionId}/votes`, { expectedVersion: v, choice, ...(opts.declare === false ? {} : { conflictDeclaration: 'no_conflict' }) });
+}
+
+/**
+ * Every eligible member who has not voted yet in the current round votes `choice` (DOM-P2R-01: an outcome is recorded only
+ * once every present, eligible, non-recused voting member voted — or the chair closed voting). Uses the server's list.
+ */
+export async function voteOutstanding(pid: string, a: Actors, decisionId: string, choice: 'approve' | 'reject' | 'abstain' = 'approve') {
+  const d = (await a.chair.get(`${P(pid)}/decisions/${decisionId}`).expect(200)).body as { version: number; voting: { outstandingUserIds: string[] } | null };
+  for (const uid of d.voting?.outstandingUserIds ?? []) {
+    const who = (Object.keys(a) as (keyof Actors)[]).find((k) => a[k].userId === uid);
+    if (!who) throw new Error(`no test actor for outstanding voter ${uid}`);
+    const r = await vote(pid, a[who], decisionId, choice);
+    expect(r.status, JSON.stringify(r.body)).toBe(201);
+  }
 }
 
 export async function auditCount(action: string, actorUserId: string, outcome: 'rejected' | 'denied' | 'success'): Promise<number> {

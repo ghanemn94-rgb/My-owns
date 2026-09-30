@@ -295,7 +295,14 @@ flowchart LR
    reassessment with the reason, an escalation, notifications to the reopen authorities and a `gate.blocked` event;
    downstream approved gates are flagged for review, the gate RAG turns red and a flagged G4 approval no longer counts as
    standalone acceptance in the status dimensions. On a cycle not yet decided, a criterion accepted as met whose accepted
-   evidence is later rejected as defective returns to `unmet` for a fresh review (audited).
+   evidence is later rejected as defective returns to `unmet` for a fresh review (audited). **Decision evidence (P2
+   re-review DOM-P2R-04):** the same applies to the evidence of the governance decision behind the approval — when the
+   decision was approved by the external authority and the evidence link of that approval is later rejected as defective,
+   superseded or marked conflicting, the approved cycle is flagged (`reassessment.decisionEvidence` with the decision and
+   the reason; escalation, notifications, `gate.blocked`, downstream review flags, status dimensions recomputed). While the
+   evidence does not stand, the decision backs no new gate approval (blocker `gate.blocker.decision_external_evidence_*`,
+   decide refused with `gates.decide.decision_evidence_invalid`). The recorded decision and the approved cycle are never
+   modified.
 7. **Evidence conflicts** between sources are flagged as `conflicting` and must be resolved before the criterion can be
    `met` again.
 8. **Parallel preparation.** Gates control approvals, not the start of preparatory work. Activities may start before
@@ -315,7 +322,13 @@ flowchart LR
 11. **Owner, reviewer and approver are three people [server] (DOM-P2-16).** The owner role (or the project manager) runs
    the cycle; the gate's reviewer role endorses the assessment before it can be submitted, and a criterion change after
    the endorsement requires a fresh one; the approver decides. The reviewer never started the cycle and never submits it;
-   the approver is neither the submitter nor the reviewer (§2.4).
+   the approver is neither the submitter nor the reviewer (§2.4). **QA-P2-03:** the endorsement is re-checked when the
+   approver decides an approval — if evidence, status, waiver or applicability of a criterion changed after the
+   submission, the decision is refused (`422 gates.assessment.review_stale`); the owner sends the cycle back to assessment
+   for a fresh review. A rejection is not affected.
+12. **A fresh decision per cycle (O-1 of the P2 QA review; proposed, pending the governance owner).** A governance
+   decision linked to any earlier cycle of the same gate — approved or **rejected** — cannot back a later cycle
+   (`gates.decide.decision_reused`).
 
 ## 5. Day-1 readiness and go/no-go (جاهزية اليوم الأول)
 

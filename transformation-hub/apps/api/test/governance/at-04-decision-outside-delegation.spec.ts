@@ -30,7 +30,8 @@ afterAll(async () => {
 
 async function passingVote(decisionId: string) {
   const v = await decisionVersion(a.chair, pid, decisionId);
-  for (const k of ['chair', 'sponsor', 'finance', 'legal'] as const) {
+  // Every present voting member votes (DOM-P2R-01: the outcome waits for all eligible present members).
+  for (const k of ['chair', 'sponsor', 'finance', 'legal', 'approver'] as const) {
     const r = await vote(pid, a[k], decisionId, 'approve', v);
     expect(r.status, JSON.stringify(r.body)).toBe(201);
   }

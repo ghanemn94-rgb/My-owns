@@ -121,10 +121,10 @@ describe('decision lifecycle — approval ≠ implementation', () => {
     expect(() => transition('decision', DECISION_MACHINE, 'draft', 'record_approval')).toThrow();
   });
   it('requires a complete decision paper incl. all three impacts, dependencies, authority and requester', () => {
-    expect(missingDecisionPaperFields({ issue: 'x', impacts: { financial: 'none' } })).toEqual(
-      expect.arrayContaining(['whyNow', 'alternatives', 'recommendation', 'impacts.operational', 'impacts.schedule', 'risks', 'dependencies', 'latestSafeDate', 'requiredAuthority', 'decisionTypeKey', 'requesterUserId']),
+    expect(missingDecisionPaperFields({ issue: 'x', impacts: { financial: 'none' } }, { activeEvidenceLinks: 0 })).toEqual(
+      expect.arrayContaining(['whyNow', 'alternatives', 'recommendation', 'impacts.operational', 'impacts.schedule', 'risks', 'dependencies', 'latestSafeDate', 'requiredAuthority', 'decisionTypeKey', 'requesterUserId', 'supportingEvidence']),
     );
-    expect(missingDecisionPaperFields({ issue: 'x' })).not.toContain('issue');
+    expect(missingDecisionPaperFields({ issue: 'x' }, { activeEvidenceLinks: 0 })).not.toContain('issue');
   });
 });
 

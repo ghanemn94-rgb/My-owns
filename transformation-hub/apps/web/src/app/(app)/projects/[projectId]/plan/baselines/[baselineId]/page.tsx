@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'next/navigation';
+import { Gavel } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { planningRoutes as P } from '@hub/contracts';
 import { ActivityHistory } from '@/components/ActivityHistory';
 import { DataTable } from '@/components/DataTable';
@@ -20,14 +22,18 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { changeRequestHref, pk, taskHref, useRefreshPlanning } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
+import { DecisionPaperDialog } from '../../../committee/_components/dialogs';
 
 type Snap = { id: string; wbsCode: string; status: string; durationDays: number | null; plannedStart: string | null; plannedFinish: string | null };
 
 export default function BaselinePage() {
   const { t, formatDateTime, formatNumber } = useI18n();
   const { baselineId } = useParams<{ baselineId: string }>();
-  const { projectId, me } = useProjectContext();
+  const { projectId, me, can } = useProjectContext();
   const refresh = useRefreshPlanning(projectId);
+  const router = useRouter();
+  const [paper, setPaper] = useState(false);
+  const paperSubject = useMemo(() => ({ type: 'baseline_version' as const, id: baselineId }), [baselineId]);
   const q = useQuery({ queryKey: pk.baseline(projectId, baselineId), queryFn: ({ signal }) => api(P.getBaseline, { params: { projectId, baselineId }, signal }) });
   if (q.isLoading) return <LoadingState />;
   if (q.error || !q.data) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
@@ -42,7 +48,7 @@ export default function BaselinePage() {
       noteMode: 'optional',
       primary: true,
       hidden: mine,
-      extra: approvalDecisionExtra('baseline_approval'),
+      extra: approvalDecisionExtra('baseline_approval', { subjectType: 'baseline_version', subjectId: b.id }),
       run: ({ note, expectedVersion, extra }) => api(P.approveBaseline, { params: { projectId, baselineId }, body: { expectedVersion, note: note || undefined, decisionId: extra || undefined } }),
     },
     { key: 'reject', label: t('planning.baseline.reject'), effects: [t('planning.baseline.rejectEffect')], permission: 'planning.baseline.approve', noteMode: 'required', noteLabel: t('planning.common.reason'), danger: true, hidden: mine, run: ({ note, expectedVersion }) => api(P.rejectBaseline, { params: { projectId, baselineId }, body: { expectedVersion, reason: note } }) },
@@ -51,7 +57,21 @@ export default function BaselinePage() {
   return (
     <SectionGuard section="plan">
       <BackLink href={`/projects/${projectId}/plan?tab=baselines`} label={t('planning.baseline.back')} />
-      <PageHeader title={t('planning.baseline.titleV', { version: b.versionNo })} badges={<StatusBadge enumName="baselineStatuses" value={b.status} size="md" />} description={b.note ? <span dir="auto">{b.note}</span> : null} />
+      <PageHeader
+        title={t('planning.baseline.titleV', { version: b.versionNo })}
+        badges={<StatusBadge enumName="baselineStatuses" value={b.status} size="md" />}
+        description={b.note ? <span dir="auto">{b.note}</span> : null}
+        actions={
+          b.status === 'proposed' && can('governance.decision.draft') ? (
+            // DOM-P2R-03: a committee paper raised FOR this baseline version (subject pre-selected).
+            <button type="button" className={btn.secondary} onClick={() => setPaper(true)} data-testid="baseline-raise-paper">
+              <Gavel aria-hidden="true" className="size-4" />
+              {t('planning.baseline.raisePaper')}
+            </button>
+          ) : null
+        }
+      />
+      <DecisionPaperDialog open={paper} onClose={() => setPaper(false)} decision={null} defaultSubject={paperSubject} onCreated={(id) => router.push(`/projects/${projectId}/committee/decisions/${id}`)} />
       {b.status === 'proposed' && mine ? <Notice tone="info">{t('planning.baseline.selfNotice')}</Notice> : null}
       <CommandBar className="mb-6" commands={commands} allowed={b.status === 'proposed' ? ['approve', 'reject'] : []} expectedVersion={b.version} onDone={refresh} onReload={() => void q.refetch()} />
       <div className="grid gap-4 lg:grid-cols-2">

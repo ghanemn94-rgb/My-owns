@@ -10,6 +10,7 @@ import {
   COMMITTEE_STATUSES,
   DECISION_AUTHORITY_OUTCOMES,
   DECISION_STATUSES,
+  DECISION_SUBJECT_TYPES,
   ESCALATION_STATUSES,
   MEETING_STATUSES,
   VOTE_CHOICES,
@@ -298,6 +299,10 @@ export const DecisionSummaryDto = z.object({
   escalatedTo: z.string().nullable(),
   meetingId: Uuid.nullable(),
   voteRound: z.number().int(),
+  /** The record this decision authorizes (DOM-P2R-03): change request / baseline version / perimeter version. */
+  subjectType: z.enum(DECISION_SUBJECT_TYPES).nullable(),
+  subjectId: Uuid.nullable(),
+  gateKey: z.string().nullable(),
   classification: ClassificationSchema,
   isDemo: z.boolean(),
   version: z.number().int(),
@@ -315,7 +320,33 @@ export const RecusalDto = z.object({
   onBehalf: z.boolean(),
 });
 
+/** Voting state of the current round (DOM-P2R-01) — computed by the server from attendance, recusals and votes. */
+export const VotingStateDto = z.object({
+  round: z.number().int(),
+  /** Eligible members expected to vote who have not voted yet (meeting: present; circulation: every appointed member). */
+  outstandingUserIds: z.array(Uuid),
+  outstanding: z.number().int(),
+  /** The outcome may be recorded: nobody outstanding, the chair closed voting, or the circulation deadline passed. */
+  complete: z.boolean(),
+  closed: z.boolean(),
+  closedBy: Uuid.nullable(),
+  closedAt: z.string().nullable(),
+  closeReason: z.string().nullable(),
+  /** The committee chair on the meeting date (the only person who may close voting). */
+  chairUserId: Uuid.nullable(),
+  /** Members of the committee who declared (own declaration) for this item: no conflict / interest declared. */
+  declaredUserIds: z.array(Uuid),
+});
+
 export const DecisionDetailDto = DecisionSummaryDto.extend({
+  /** Subject record with a display label (code / version) when the caller can see it. */
+  subject: z.object({ type: z.enum(DECISION_SUBJECT_TYPES), id: Uuid, label: z.string().nullable() }).nullable(),
+  /** First submission (the subject is fixed from then on). */
+  firstSubmittedAt: z.string().nullable(),
+  /** DOM-P2-14: explicit "no supporting evidence" reason; `supportingEvidenceLinks` = active evidence links on the paper. */
+  evidenceNoneReason: z.string().nullable(),
+  supportingEvidenceLinks: z.number().int(),
+  voting: VotingStateDto.nullable(),
   issue: z.string().nullable(),
   whyNow: z.string().nullable(),
   alternatives: z.array(z.object({ title: z.string(), summary: z.string().optional() })),
@@ -325,7 +356,6 @@ export const DecisionDetailDto = DecisionSummaryDto.extend({
   risks: z.string().nullable(),
   dependencies: z.string().nullable(),
   requiredAuthority: z.string().nullable(),
-  gateKey: z.string().nullable(),
   authorityReason: z.string().nullable(),
   recommendationRecordedBy: Uuid.nullable(),
   externalAuthorityReference: z.string().nullable(),
@@ -451,10 +481,24 @@ const paperFields = {
   requiredAuthority: Text(500).nullable().optional(),
   classification: ClassificationSchema.optional(),
   gateKey: z.string().trim().max(16).nullable().optional(),
+  /**
+   * DOM-P2R-03: the record this paper authorizes — both or neither. Set while drafting; fixed from the first submission.
+   * An approval of that record can rest only on a decision raised for it.
+   */
+  subjectType: z.enum(DECISION_SUBJECT_TYPES).nullable().optional(),
+  subjectId: Uuid.nullable().optional(),
+  /** DOM-P2-14: "no supporting evidence or attachment — reason" (otherwise at least one evidence link on the paper). */
+  evidenceNoneReason: Text(2000).nullable().optional(),
 };
 
-export const CreateDecisionBody = z.object({ committeeId: Uuid, title: RequiredText(300), ...paperFields });
-export const UpdateDecisionBody = z.object({ expectedVersion: ExpectedVersion, title: RequiredText(300).optional(), ...paperFields });
+const subjectPair = <T extends { subjectType?: string | null; subjectId?: string | null }>(b: T, ctx: z.RefinementCtx) => {
+  const t = b.subjectType === undefined ? undefined : b.subjectType === null;
+  const i = b.subjectId === undefined ? undefined : b.subjectId === null;
+  if (t !== i) ctx.addIssue({ code: 'custom', path: ['subjectId'], message: 'subjectType and subjectId are given (or cleared) together' });
+};
+
+export const CreateDecisionBody = z.object({ committeeId: Uuid, title: RequiredText(300), ...paperFields }).superRefine(subjectPair);
+export const UpdateDecisionBody = z.object({ expectedVersion: ExpectedVersion, title: RequiredText(300).optional(), ...paperFields }).superRefine(subjectPair);
 
 export const ScreenAgendaBody = z
   .object({ expectedVersion: ExpectedVersion, outcome: z.enum(['accept', 'return', 'defer']), meetingId: Uuid.optional(), note: Text(2000).optional() })
@@ -890,6 +934,11 @@ export const governanceRoutes = registerRoutes({
       meetingId: Uuid.optional(),
       status: z.enum(DECISION_STATUSES).optional(),
       authorityOutcome: z.enum(DECISION_AUTHORITY_OUTCOMES).optional(),
+      /** Decisions raised for one record (DOM-P2R-03 — the approval pickers offer only matching decisions). */
+      subjectType: z.enum(DECISION_SUBJECT_TYPES).optional(),
+      subjectId: Uuid.optional(),
+      decisionTypeKey: DecisionTypeKey.optional(),
+      gateKey: z.string().trim().regex(/^[A-Za-z0-9_-]{1,16}$/, 'gate key').optional(),
       sort: SortParam(['code', 'title', 'status', 'latestSafeDate', 'createdAt', 'updatedAt']),
     }),
     response: paged(DecisionSummaryDto),
@@ -990,13 +1039,37 @@ export const governanceRoutes = registerRoutes({
     id: 'governance.castVote',
     method: 'POST',
     path: `${P}/decisions/:decisionId/votes`,
-    summary: 'Cast a vote (active voting member, present, quorum present, not recused, not the requester)',
+    summary:
+      'Cast a vote (active voting member, present, quorum present, not recused, not the requester, own conflict-of-interest declaration for the item recorded — or given now as "no conflict" — and voting not closed by the chair)',
     tags,
     access: 'governance.decision.vote',
     command: true,
     params: DecisionParams,
-    body: z.object({ expectedVersion: ExpectedVersion, choice: z.enum(VOTE_CHOICES), comment: Text(2000).optional() }),
+    body: z.object({
+      expectedVersion: ExpectedVersion,
+      choice: z.enum(VOTE_CHOICES),
+      comment: Text(2000).optional(),
+      /**
+       * REQ-GOV-015: the voter's own declaration for this item, recorded (append-only, audited) just before the vote in the
+       * same transaction. A conflict is not declared here: the member recuses instead (recusal command). Not needed when the
+       * member already declared for the item.
+       */
+      conflictDeclaration: z.literal('no_conflict').optional(),
+    }),
     response: z.object({ id: Uuid, round: z.number().int() }),
+  }),
+  closeVoting: defineRoute({
+    id: 'governance.closeVoting',
+    method: 'POST',
+    path: `${P}/decisions/:decisionId/close-voting`,
+    summary:
+      "Close voting on the current round (the committee's chair only, with a reason; DOM-P2R-01). Members who have not voted are listed in the tally snapshot and not counted; no further vote is accepted in the round",
+    tags,
+    access: 'governance.decision.record_outcome',
+    command: true,
+    params: DecisionParams,
+    body: z.object({ expectedVersion: ExpectedVersion, reason: RequiredText(2000) }),
+    response: z.object({ id: Uuid, version: z.number().int(), round: z.number().int(), notVoted: z.number().int() }),
   }),
   initiateCirculation: defineRoute({
     id: 'governance.initiateCirculation',

@@ -4,7 +4,8 @@ import type { WeightedItem } from './measurement';
 import { addCalendarDays } from './calendar';
 import { canonicalJson } from './canonical';
 import { forbidden, ruleViolation } from './errors';
-import { APPROVED_GATE_STATUSES, gateDecisionIssue } from './gates';
+import { APPROVED_GATE_STATUSES } from './gates';
+import { decisionRelianceIssue, type ExternalEvidenceState } from './decision-reliance';
 
 /**
  * Planning rules that are not schedule/measurement maths (spec §9): RAID lifecycle and exposure, open blockers,
@@ -78,7 +79,14 @@ export const PREREQUISITE_TYPES = ['decision', 'gate', 'agreement', 'approval_re
 export type PrerequisiteType = (typeof PREREQUISITE_TYPES)[number];
 
 export type PrerequisiteState =
-  | { type: 'decision'; status: DecisionStatus; authorityOutcome: DecisionAuthorityOutcome; externalAuthorityReference: string | null }
+  | {
+      type: 'decision';
+      status: DecisionStatus;
+      authorityOutcome: DecisionAuthorityOutcome;
+      externalAuthorityReference: string | null;
+      /** DOM-P2R-04: the evidence of a recorded external approval as it is now (must still be active and verified). */
+      externalEvidence?: ExternalEvidenceState | null;
+    }
   | { type: 'gate'; status: GateAssessmentStatus | 'not_started'; needsReassessment: boolean }
   | { type: 'agreement'; stage: AgreementStage }
   | { type: 'approval_request'; status: ApprovalRequestStatus }
@@ -92,7 +100,26 @@ export type PrerequisiteState =
 export function prerequisiteSatisfied(s: PrerequisiteState): boolean {
   switch (s.type) {
     case 'decision':
-      return gateDecisionIssue({ id: 'prerequisite', status: s.status, authorityOutcome: s.authorityOutcome, externalAuthorityReference: s.externalAuthorityReference }, 'prerequisite') === null;
+      // The generic reliance check without consuming the decision (no use kind, no subject binding): final, and an external
+      // approval still evidenced by an active, verified link (DOM-P2R-04).
+      return (
+        decisionRelianceIssue({
+          decision: {
+            id: 'prerequisite',
+            code: 'prerequisite',
+            status: s.status,
+            authorityOutcome: s.authorityOutcome,
+            externalAuthorityReference: s.externalAuthorityReference,
+            subjectType: null,
+            subjectId: null,
+            externalEvidence: s.externalEvidence ?? null,
+          },
+          use: { kind: null, subjectType: 'prerequisite', subjectId: 'prerequisite' },
+          uses: [],
+          subjectRule: 'none',
+          codePrefix: 'planning.prerequisite',
+        }) === null
+      );
     case 'gate':
       return (APPROVED_GATE_STATUSES as readonly string[]).includes(s.status) && !s.needsReassessment;
     case 'agreement':

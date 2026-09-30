@@ -30,7 +30,9 @@ let wsD: Map<string, { id: string; version: number }>;
 
 beforeAll(async () => {
   ({ projectId: pA, p: a } = await setupProject('DRP2-A'));
-  govA = await setupGovernance(pA, a);
+  // Setup (unchanged premise, explicit since the gate kit's default meeting now records four of the five voting members
+  // present — DOM-P2R-01): every voting member is present, as the comment above states.
+  govA = await setupGovernance(pA, a, { allVotingMembersPresent: true });
   await makeReady(a, pA, 'G0');
 
   admin = await loginAs('portfolio.admin');
@@ -81,7 +83,8 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
       requiredAuthority: 'Steering committee (DEMO matrix)',
     });
     const v = await decisionVersion(a.chair, pA, x.id);
-    for (const k of ['chair', 'sponsor', 'finance', 'legal'] as const) expect((await vote(pA, a[k], x.id, 'approve', v)).status).toBe(201);
+    // (Setup change for DOM-P2R-01: every present voting member votes before the outcome; assertions unchanged.)
+    for (const k of ['chair', 'sponsor', 'finance', 'legal', 'approver'] as const) expect((await vote(pA, a[k], x.id, 'approve', v)).status).toBe(201);
     const out = await a.secretary.post(`${P(pA)}/decisions/${x.id}/record-outcome`, { expectedVersion: v });
     expect(out.status, JSON.stringify(out.body)).toBe(201);
     expect(out.body.status).toBe('approved');

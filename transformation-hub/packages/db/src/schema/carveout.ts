@@ -358,6 +358,8 @@ export const perimeterVersion = pgTable(
     uniqueIndex('perimeter_version_no_uq').on(t.projectId, t.versionNo),
     uniqueIndex('perimeter_version_one_proposed_uq').on(t.projectId).where(sql`status = 'proposed'`),
     uniqueIndex('perimeter_version_one_approved_uq').on(t.projectId).where(sql`status = 'approved'`),
+    // DOM-P2R-05 / QA-P2-01 backstop: one governance decision backs one perimeter version.
+    uniqueIndex('perimeter_version_decision_uq').on(t.decisionId).where(sql`decision_id is not null and status in ('approved', 'superseded')`),
     projectFk('perimeter_version_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
     check('perimeter_version_status_ck', sql`${t.status} in ('proposed', 'approved', 'rejected', 'superseded')`),
   ],

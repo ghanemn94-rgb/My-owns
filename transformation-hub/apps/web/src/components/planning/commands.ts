@@ -6,15 +6,18 @@ import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { localToday, type ChangeRequest, type Deliverable, type Milestone, type RaidItem, type RaidKindPath, type StatusUpdate, type Task } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
-import { ApprovalDecisionPicker, type ApprovalDecisionType } from './ApprovalDecisionPicker';
+import { ApprovalDecisionPicker, type ApprovalDecisionType, type ApprovalSubject } from './ApprovalDecisionPicker';
 import type { CommandExtra, CommandSpec } from './CommandBar';
 import { groupDecimal } from './money';
 
 const opt = (s: string) => (s ? s : undefined);
 
-/** Optional governance decision backing an approval outside delegated authority (DOM-P2-03). */
-export function approvalDecisionExtra(decisionTypeKey: ApprovalDecisionType): CommandExtra {
-  return { kind: 'custom', required: false, render: (value, onChange) => createElement(ApprovalDecisionPicker, { decisionTypeKey, value, onChange }) };
+/**
+ * Optional governance decision backing an approval outside delegated authority (DOM-P2-03), raised for the record being
+ * approved (DOM-P2R-03): only decisions whose subject is that record are offered.
+ */
+export function approvalDecisionExtra(decisionTypeKey: ApprovalDecisionType, subject: ApprovalSubject): CommandExtra {
+  return { kind: 'custom', required: false, render: (value, onChange) => createElement(ApprovalDecisionPicker, { decisionTypeKey, subject, value, onChange }) };
 }
 
 /** Task lifecycle (TASK_MACHINE) — reported vs evidence-verified progress; acceptance by someone other than the submitter. */
@@ -121,7 +124,7 @@ export function useChangeRequestCommands(cr: ChangeRequest | undefined): Command
       noteMode: 'optional',
       primary: true,
       hidden: mine,
-      extra: approvalDecisionExtra('change_request_budget'),
+      extra: approvalDecisionExtra('change_request_budget', { subjectType: 'change_request', subjectId: cr.id }),
       run: ({ note, expectedVersion, extra }) => api(P.approveChangeRequest, { params, body: { expectedVersion, note: opt(note), decisionId: opt(extra) } }),
     },
     { key: 'reject', label: t('planning.commands.cr.reject'), effects: [t('planning.commands.cr.rejectEffect')], permission: 'planning.change_request.approve', noteMode: 'required', noteLabel: t('planning.common.reason'), danger: true, hidden: mine, run: ({ note, expectedVersion }) => api(P.rejectChangeRequest, { params, body: { expectedVersion, reason: note } }) },

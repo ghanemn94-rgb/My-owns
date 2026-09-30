@@ -1,6 +1,7 @@
 import { forbidden, ruleViolation } from './errors';
 import { formatMessage, serverMessage, type ServerMessage } from './messages';
 import { canonicalJson } from './canonical';
+import { externalApprovalEvidenceIssue, type ExternalEvidenceState } from './decision-reliance';
 import type { CriterionStatus, GateAssessmentStatus, DecisionStatus, DecisionAuthorityOutcome, GateReviewOutcome, GateReviewState } from './enums';
 
 /**
@@ -56,6 +57,10 @@ export const GATE_MESSAGES_EN: Readonly<Record<string, string>> = {
   'gate.blocker.decision_recommended': 'The linked decision is recommended — pending the external authority; it is not a final approval and the gate stays blocked',
   'gate.blocker.decision_not_approved': 'The linked decision is {status}; only an approved decision can back a gate approval',
   'gate.blocker.decision_external_unrecorded': 'The linked decision is outside the committee delegation and no approval by the authorized body is recorded',
+  // DOM-P2R-04: the external approval counts only while its evidence link is active and verified.
+  'gate.blocker.decision_external_evidence_missing': 'The approval by the authorized body recorded on the linked decision has no evidence link; it cannot back the gate',
+  'gate.blocker.decision_external_evidence_invalid': 'The evidence of the approval by the authorized body recorded on the linked decision is now {status}; the decision no longer backs the gate',
+  'gate.blocker.decision_external_evidence_unverified': 'The evidence of the approval by the authorized body recorded on the linked decision is not verified by a second person',
   'gate.blocker.decision_no_authority': 'The linked decision has no authority assessment (within mandate / external authority)',
   // DOM-P2-01: the decision must be of a type the approved authority matrix assigns to THIS gate.
   'gate.blocker.decision_no_gate': 'The linked decision was not raised for a gate; only a decision raised for gate {gate} can back it',
@@ -188,7 +193,19 @@ export interface GateDecisionBacking {
   gateKey?: string | null;
   /** Decision type key (decision.decision_type_key). Required by `gateApprovalDecisionIssue`. */
   decisionTypeKey?: string | null;
+  /**
+   * The evidence link of the external approval as it is NOW (DOM-P2R-04). Required when the decision was approved by the
+   * external authority: missing, inactive or unverified evidence keeps the decision from backing anything (fail closed).
+   */
+  externalEvidence?: ExternalEvidenceState | null;
 }
+
+/** Blocker codes about the evidence of a recorded external approval (DOM-P2R-04). */
+export const GATE_DECISION_EVIDENCE_CODES: readonly string[] = [
+  'gate.blocker.decision_external_evidence_missing',
+  'gate.blocker.decision_external_evidence_invalid',
+  'gate.blocker.decision_external_evidence_unverified',
+];
 
 /**
  * A decision type row of an approved authority matrix, as far as gate approvals are concerned (authority-matrix.md §2.2,
@@ -256,7 +273,14 @@ export function gateDecisionIssue(d: GateDecisionBacking | null, gateKey: string
       : blocker('decision', d.id, 'gate.blocker.decision_not_approved', { status: d.status });
   }
   if (d.authorityOutcome === 'within_mandate') return null;
-  if (d.authorityOutcome === 'pending_external_authority' && d.externalAuthorityReference?.trim()) return null;
+  if (d.authorityOutcome === 'pending_external_authority' && d.externalAuthorityReference?.trim()) {
+    // DOM-P2R-04: the external approval is final only while its evidence is still active and verified.
+    const ev = externalApprovalEvidenceIssue(d);
+    if (!ev) return null;
+    if (ev.kind === 'missing') return blocker('decision', d.id, 'gate.blocker.decision_external_evidence_missing');
+    if (ev.kind === 'not_active') return blocker('decision', d.id, 'gate.blocker.decision_external_evidence_invalid', { status: ev.status });
+    return blocker('decision', d.id, 'gate.blocker.decision_external_evidence_unverified');
+  }
   return d.authorityOutcome === 'pending_external_authority'
     ? blocker('decision', d.id, 'gate.blocker.decision_external_unrecorded')
     : blocker('decision', d.id, 'gate.blocker.decision_no_authority');
@@ -324,8 +348,17 @@ export function assertGateDecisionAllowed(input: {
   decision: GateDecisionBacking | null;
   /** Authority of the deciding committee for this decision (DOM-P2-01) — always passed explicitly (null fails closed). */
   authority: GateDecisionAuthority | null;
-  /** Decisions that already backed an earlier cycle of the same gate (a reopened gate needs a fresh decision). */
+  /**
+   * Decisions linked to an earlier cycle of the same gate — approved OR rejected (O-1 of the P2 QA review: a decision that
+   * backed a rejected cycle cannot back a later cycle either; proposed, pending the governance owner). A reopened gate needs
+   * a fresh decision.
+   */
   decisionIdsUsedByPriorCycles: string[];
+  /**
+   * QA-P2-03: the gate reviewer's review state of the cycle NOW (`gateReviewState` against the current criterion basis). An
+   * approval is decided only on the state the reviewer endorsed; omitted (legacy callers) = not checked.
+   */
+  reviewState?: GateReviewState;
   note: string;
 }): void {
   if (input.outcome === 'reject') {
@@ -335,9 +368,17 @@ export function assertGateDecisionAllowed(input: {
   if (!input.evaluation.ready) {
     throw ruleViolation('gates.decide.not_ready', `Gate ${input.gateKey} is not ready at decision time`, { blockers: input.evaluation.blockers });
   }
+  if (input.reviewState !== undefined && input.reviewState !== 'endorsed') {
+    throw ruleViolation(
+      'gates.assessment.review_stale',
+      `The criteria of gate ${input.gateKey} changed after the gate reviewer's endorsement (evidence, status, waiver or applicability); the owner sends the gate back to assessment for a fresh review before it is decided`,
+      { reviewState: input.reviewState },
+    );
+  }
   const issue = gateApprovalDecisionIssue(input.decision, input.gateKey, input.authority);
   if (issue) {
-    throw ruleViolation(isNotForGateBlocker(issue) ? 'gates.decide.decision_not_for_gate' : 'gates.decide.decision_not_final', issue.message, {
+    const code = issue.messageI18n[0]?.code ?? '';
+    throw ruleViolation(isNotForGateBlocker(issue) ? 'gates.decide.decision_not_for_gate' : GATE_DECISION_EVIDENCE_CODES.includes(code) ? 'gates.decide.decision_evidence_invalid' : 'gates.decide.decision_not_final', issue.message, {
       decisionId: input.decision?.id ?? null,
       decisionStatus: input.decision?.status ?? null,
       authorityOutcome: input.decision?.authorityOutcome ?? null,
