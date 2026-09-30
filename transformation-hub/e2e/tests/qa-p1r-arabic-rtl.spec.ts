@@ -39,7 +39,8 @@ function englishCatalogue(): { whole: Set<string>; fragments: string[] } {
     const ar = flatten(JSON.parse(readFileSync(join(MESSAGES, 'ar', file), 'utf8')), file);
     for (const [k, v] of Object.entries(en)) {
       if (ar[k] === v || !/[A-Za-z]{3}/.test(v)) continue;
-      if (!/[{}]/.test(v)) whole.add(v.trim());
+      // The locale switch (components/LocaleSwitch.tsx) names the other language in that language: "English" is intended.
+      if (!/[{}]/.test(v) && v.trim() !== 'English') whole.add(v.trim());
       for (const frag of v.split(/\{[^}]*\}/)) {
         const f = frag.trim().replace(/^[\s:·,.;—–-]+|[\s:·,.;—–-]+$/g, '');
         if (f.length >= 10 && /[A-Za-z]+\s+[A-Za-z]+/.test(f)) fragments.add(f);

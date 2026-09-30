@@ -54,9 +54,9 @@ done
 if [ -n "$(git -C "$REPO_ROOT" ls-files -- ':(glob)**/.gitleaksignore' 2>/dev/null)" ]; then
   echo "FAIL  a committed .gitleaksignore exists: fingerprint suppressions are not allowed" >&2; exit 1
 fi
-for f in "$PWD/.gitleaksignore"; do
-  if [ -e "$f" ]; then echo "FAIL  $f exists in the working directory: fingerprint suppressions are not allowed" >&2; exit 1; fi
-done
+if [ -e "$PWD/.gitleaksignore" ]; then
+  echo "FAIL  $PWD/.gitleaksignore exists in the working directory: fingerprint suppressions are not allowed" >&2; exit 1
+fi
 case "$MODE" in
   history)
     REPO="$(git -C "$ROOT" rev-parse --show-toplevel)"

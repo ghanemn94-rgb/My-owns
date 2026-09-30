@@ -22,12 +22,19 @@ function flatten(o: unknown, prefix = '', out: Record<string, string> = {}): Rec
 function englishCatalogue(): { whole: Set<string>; fragments: string[] } {
   const whole = new Set<string>();
   const fragments = new Set<string>();
+  // Texts the Arabic catalogue itself shows verbatim (e.g. the language switch's autonym "English") are intentional in the
+  // Arabic UI: an English message with exactly that text is not evidence of an untranslated string.
+  // The locale switch (components/LocaleSwitch.tsx) names the other language in that language — "English" in the Arabic UI.
+  const arabicShown = new Set<string>(['English']);
+  for (const file of readdirSync(join(MESSAGES, 'ar'))) {
+    for (const v of Object.values(flatten(JSON.parse(readFileSync(join(MESSAGES, 'ar', file), 'utf8')), file))) arabicShown.add(v.trim());
+  }
   for (const file of readdirSync(join(MESSAGES, 'en'))) {
     const en = flatten(JSON.parse(readFileSync(join(MESSAGES, 'en', file), 'utf8')), file);
     const ar = flatten(JSON.parse(readFileSync(join(MESSAGES, 'ar', file), 'utf8')), file);
     for (const [k, v] of Object.entries(en)) {
       if (ar[k] === v || !/[A-Za-z]{3}/.test(v)) continue;
-      if (!/[{}]/.test(v)) whole.add(v.trim());
+      if (!/[{}]/.test(v) && !arabicShown.has(v.trim())) whole.add(v.trim());
       for (const frag of v.split(/\{[^}]*\}/)) {
         const f = frag.trim().replace(/^[\s:·,.;—–-]+|[\s:·,.;—–-]+$/g, '');
         if (f.length >= 10 && /[A-Za-z]+\s+[A-Za-z]+/.test(f)) fragments.add(f);
