@@ -431,7 +431,14 @@ export class CommitteesService {
       throw ruleViolation('governance.authority_matrix.evidence_not_visible', 'You cannot read the approval document, so you cannot verify it');
     }
     const tx = this.db.tx();
-    const cur = and(eq(schema.authorityMatrixVersion.id, m.id), eq(schema.authorityMatrixVersion.projectId, projectId), eq(schema.authorityMatrixVersion.status, 'draft'), eq(schema.authorityMatrixVersion.approvedBy, m.approvedBy));
+    // Concurrency: the approval verified is exactly the one read (same approver, same approval instant).
+    const cur = and(
+      eq(schema.authorityMatrixVersion.id, m.id),
+      eq(schema.authorityMatrixVersion.projectId, projectId),
+      eq(schema.authorityMatrixVersion.status, 'draft'),
+      eq(schema.authorityMatrixVersion.approvedBy, m.approvedBy),
+      m.approvedAt ? eq(schema.authorityMatrixVersion.approvedAt, m.approvedAt) : undefined,
+    );
     if (body.decision === 'reject') {
       if (!body.note?.trim()) throw ruleViolation('governance.authority_matrix.rejection_reason_required', 'A reason is required to reject the approval evidence');
       const r = await tx

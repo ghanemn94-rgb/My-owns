@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  ApprovalAmount,
   AuthorityPolicy,
   GoverningMatrix,
   LinkedDecisionSnapshot,
@@ -166,7 +167,7 @@ describe('DOM-P2-03 — delegated authority for baseline and change-request appr
     expect(evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount: sar('1500000'), decision: dec({ status: 'implementation_pending' }) }).withinAuthority).toBe(true);
   });
   it('the decision must be final, of the right type, and cover the amount in the same currency', () => {
-    const e = (d: LinkedDecisionSnapshot, amount = sar('1500000')) => evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount, decision: d }).code;
+    const e = (d: LinkedDecisionSnapshot, amount: ApprovalAmount = sar('1500000')) => evaluateDelegatedApproval({ decisionTypeKey: 'change_request_budget', matrix: demo, amount, decision: d }).code;
     expect(e(dec({ status: 'recommended' }))).toBe('change_control.decision_not_final');
     expect(e(dec({ status: 'under_review' }))).toBe('change_control.decision_not_final');
     expect(e(dec({ status: 'superseded' }))).toBe('change_control.decision_not_final');
