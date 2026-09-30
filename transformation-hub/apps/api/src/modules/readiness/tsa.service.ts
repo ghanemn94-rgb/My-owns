@@ -168,11 +168,7 @@ export class TsaService {
     const [{ total }] = (await tx.select({ total: count() }).from(t).where(where)) as [{ total: number }];
     const rows = await tx.select().from(t).where(where).orderBy(asc(t.code)).limit(q.pageSize).offset(offsetOf(q));
     const today = this.s.today(p);
-    return pageOf(
-      rows.map((r) => this.dto(r, today)),
-      Number(total),
-      q,
-    );
+    return { ...pageOf(rows.map((r) => this.dto(r, today)), Number(total), q), people: await this.s.people(rows.map((r) => r.ownerUserId)) };
   }
 
   async get(ctx: RequestContext, projectId: string, id: string) {
@@ -222,6 +218,7 @@ export class TsaService {
         : null,
       extensionDecision: this.s.decisionSummary(ctx, projectId, d, TSA_DECISION_TYPE_KEYS, 'a TSA extension'),
       allowedCommands: allowedCommands(TSA_MACHINE, t.status),
+      people: await this.s.people([t.ownerUserId, t.createdBy, t.replacementAcceptedBy, t.extensionRequestedBy, req?.requestedBy, t.exitApprovedBy]),
     };
   }
 

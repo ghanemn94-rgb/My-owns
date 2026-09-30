@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import { forbidden, invalid, linkedDecisionIssue, notFound, Classification, LinkedDecision, RoleKey } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
@@ -96,6 +96,14 @@ export class ReadinessSupport {
         .where(and(eq(schema.projectEntity.projectId, projectId), eq(schema.projectEntity.legalEntityId, le)));
       if (!pe) throw notFound();
     }
+  }
+
+  /** Display names of referenced users (same organization; resolved server-side so the UI never shows bare ids). */
+  async people(ids: (string | null | undefined)[]): Promise<Record<string, string>> {
+    const uniq = [...new Set(ids.filter((x): x is string => !!x))];
+    if (!uniq.length) return {};
+    const rows = await this.db.tx().select({ id: schema.appUser.id, name: schema.appUser.displayName }).from(schema.appUser).where(inArray(schema.appUser.id, uniq));
+    return Object.fromEntries(rows.map((r) => [r.id, r.name]));
   }
 
   evidence(projectId: string, targetType: 'readiness_check' | 'tsa_service' | 'cutover_plan', targetId: string) {

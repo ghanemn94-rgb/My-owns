@@ -88,7 +88,7 @@ export class CutoverService {
     const tx = this.s.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(c).where(where)) as [{ total: number }];
     const rows = await tx.select().from(c).where(where).orderBy(asc(c.code)).limit(q.pageSize).offset(offsetOf(q));
-    return pageOf(rows.map(planDto), Number(total), q);
+    return { ...pageOf(rows.map(planDto), Number(total), q), people: await this.s.people(rows.flatMap((r) => [r.accountableUserId, r.submittedForDecisionBy])) };
   }
 
   /** Checks gating the plan + the GO rule evaluated exactly as the go/no-go command evaluates it. */
@@ -168,6 +168,7 @@ export class CutoverService {
       goDecision: this.s.decisionSummary(ctx, projectId, d, GO_DECISION_TYPE_KEYS, 'a go-live'),
       decisionHistory: history.map(recordDto),
       acceptanceEvidence: await this.s.evidence(projectId, 'cutover_plan', plan.id),
+      people: await this.s.people([plan.accountableUserId, plan.submittedForDecisionBy, plan.goNoGoDecidedBy, plan.executedBy, plan.postTransitionAcceptedBy, plan.createdBy, ...history.map((h) => h.actorUserId)]),
     };
   }
 
