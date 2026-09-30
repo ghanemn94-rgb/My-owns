@@ -959,8 +959,8 @@ CREATE OR REPLACE FUNCTION hub_room_grant_guard() RETURNS trigger LANGUAGE plpgs
 DECLARE acct text; ct boolean;
 BEGIN
   IF TG_OP = 'UPDATE' THEN
-    IF (NEW.room_id, NEW.user_id, NEW.role, NEW.access_level, NEW.granted_by, NEW.granted_at, NEW.expires_at)
-       IS DISTINCT FROM (OLD.room_id, OLD.user_id, OLD.role, OLD.access_level, OLD.granted_by, OLD.granted_at, OLD.expires_at) THEN
+    IF (NEW.room_id, NEW.user_id, NEW.role, NEW.access_level, NEW.granted_by, NEW.created_at, NEW.expires_at)
+       IS DISTINCT FROM (OLD.room_id, OLD.user_id, OLD.role, OLD.access_level, OLD.granted_by, OLD.created_at, OLD.expires_at) THEN
       RAISE EXCEPTION 'append_only_violation: a room grant is revoked and re-granted, never edited' USING ERRCODE = 'P0001';
     END IF;
     IF OLD.revoked_at IS NOT NULL AND NEW.revoked_at IS DISTINCT FROM OLD.revoked_at THEN

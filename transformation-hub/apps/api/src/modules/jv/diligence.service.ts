@@ -78,19 +78,29 @@ export class DiligenceService {
     };
   }
 
-  /** Next request number within the partner (or the room when it has no partner). */
-  private async nextNumber(projectId: string, partnerId: string | null): Promise<number> {
-    const r = await this.s.db.query<{ n: number }>(
-      `select coalesce(max(number), 0)::int + 1 as n from diligence_request where project_id = $1 and partner_id is not distinct from $2::uuid`,
-      [projectId, partnerId],
-    );
+  /**
+   * Next request number within the ROOM: every member of a room sees all of its requests, so the number never depends
+   * on rows the caller cannot see (and reveals nothing about other rooms).
+   */
+  private async nextNumber(projectId: string, roomId: string): Promise<number> {
+    const r = await this.s.db.query<{ n: number }>(`select coalesce(max(number), 0)::int + 1 as n from diligence_request where project_id = $1 and room_id = $2`, [projectId, roomId]);
     return r.rows[0]?.n ?? 1;
+  }
+
+  /** Finding code: per room for room-bound findings (FND-<room>-NNN), per project otherwise — never a hidden count. */
+  private async findingCode(projectId: string, roomId: string | null): Promise<string> {
+    if (!roomId) return this.s.nextCode('diligence_finding', 'code', projectId, 'FND');
+    const r = await this.s.db.query<{ n: number }>(
+      `select coalesce(max(nullif(substring(code from '[0-9]+$'), '')::int), 0)::int + 1 as n from diligence_finding where project_id = $1 and room_id = $2`,
+      [projectId, roomId],
+    );
+    return `FND-${roomId.replace(/-/g, '').slice(-6).toUpperCase()}-${String(r.rows[0]?.n ?? 1).padStart(3, '0')}`;
   }
 
   private async insertRequest(ctx: RequestContext, room: RoomRow, v: { question: string; domain: string; origin: 'internal' | 'partner'; requesterLabel: string | null; dueDate: string | null; classification: Classification }) {
     const project = await this.s.project(room.projectId);
     const id = newId();
-    const number = await this.nextNumber(room.projectId, room.partnerId);
+    const number = await this.nextNumber(room.projectId, room.id);
     await this.s.db.tx().insert(schema.diligenceRequest).values({
       id,
       orgId: ctx.principal.orgId,
@@ -427,7 +437,7 @@ export class DiligenceService {
     }
     assertFindingRemediation({ materiality: body.materiality, remediationOwnerUserId: body.remediationOwnerUserId, remediation: body.remediation });
     await this.findingRefs(ctx, projectId, body);
-    const code = await this.s.nextCode('diligence_finding', 'code', projectId, 'FND');
+    const code = await this.findingCode(projectId, roomId);
     const id = newId();
     await this.s.db.tx().insert(schema.diligenceFinding).values({
       id,

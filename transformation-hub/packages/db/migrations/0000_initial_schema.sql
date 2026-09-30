@@ -3143,7 +3143,7 @@ CREATE UNIQUE INDEX "closing_deliverable_code_uq" ON "closing_deliverable" USING
 CREATE UNIQUE INDEX "deal_scenario_code_uq" ON "deal_scenario" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "deal_scenario_version_uq" ON "deal_scenario_version" USING btree ("scenario_id","version_no");--> statement-breakpoint
 CREATE UNIQUE INDEX "diligence_finding_code_uq" ON "diligence_finding" USING btree ("project_id","code");--> statement-breakpoint
-CREATE UNIQUE INDEX "diligence_request_number_uq" ON "diligence_request" USING btree ("project_id","partner_id","number");--> statement-breakpoint
+CREATE UNIQUE INDEX "diligence_request_number_uq" ON "diligence_request" USING btree ("project_id","room_id","number");--> statement-breakpoint
 CREATE UNIQUE INDEX "funds_flow_item_code_uq" ON "funds_flow_item" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "negotiation_issue_code_uq" ON "negotiation_issue" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "partner_code_uq" ON "partner" USING btree ("project_id","code");--> statement-breakpoint

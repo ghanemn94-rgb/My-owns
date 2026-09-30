@@ -54,7 +54,7 @@ export class PostCloseService {
       ownerUserId: o.ownerUserId,
       dueDate: o.dueDate,
       status: o.status,
-      overdue: a.overdue,
+      overdue: o.status === 'overdue' || a.overdue,
       daysOverdue: a.daysOverdue,
       overdueSince: o.overdueSince,
       escalationId: o.escalationId,

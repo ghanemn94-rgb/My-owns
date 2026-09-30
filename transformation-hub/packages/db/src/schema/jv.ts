@@ -487,7 +487,8 @@ export const diligenceRequest = pgTable(
   },
   (t) => [
     unique('diligence_request_pid_uq').on(t.projectId, t.id),
-    uniqueIndex('diligence_request_number_uq').on(t.projectId, t.partnerId, t.number),
+    // Numbered per room: every member of a room (including a counterparty) sees all of the room's requests.
+    uniqueIndex('diligence_request_number_uq').on(t.projectId, t.roomId, t.number),
     projectFk('diligence_request_partner_fk', t.projectId, t.partnerId, (): FkTarget => partner),
     projectFk('diligence_request_room_fk', t.projectId, t.roomId, (): FkTarget => partnerRoom),
     check('diligence_request_origin_ck', sql`${t.origin} in ('internal', 'partner')`),
