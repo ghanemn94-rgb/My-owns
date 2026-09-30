@@ -853,12 +853,15 @@ function addMonthsKeepDay(date: string, months: number): string {
  * local time in the project timezone. A monthly cadence starting after the 28th is refused (the day would not exist in
  * every month and the platform does not pick another day). Dates falling on non-working days are flagged, not moved.
  */
-export function proposedMeetingSeries(input: { frequency: CadenceFrequency; firstMeetingAt: Date; count: number; calendar: WorkingCalendar }): ProposedMeetingSlot[] {
+export function proposedMeetingSeries(input: { frequency: CadenceFrequency; firstMeetingAt: Date; count: number; calendar: WorkingCalendar; now?: Date }): ProposedMeetingSlot[] {
   if (!CADENCE_FREQUENCIES.includes(input.frequency)) throw ruleViolation('governance.cadence.unknown_frequency', `Unknown cadence ${String(input.frequency)}`);
   if (!Number.isInteger(input.count) || input.count < 1 || input.count > MAX_PROPOSED_MEETINGS) {
     throw ruleViolation('governance.cadence.invalid_count', `Between 1 and ${MAX_PROPOSED_MEETINGS} meetings can be proposed at a time`, { max: MAX_PROPOSED_MEETINGS });
   }
   if (Number.isNaN(input.firstMeetingAt.getTime())) throw ruleViolation('governance.cadence.invalid_start', 'The first meeting date and time are required');
+  if (input.now && input.firstMeetingAt.getTime() < input.now.getTime()) {
+    throw ruleViolation('governance.cadence.start_in_past', 'The first proposed meeting must be in the future');
+  }
   const tz = input.calendar.timezone;
   const d0 = localDate(input.firstMeetingAt, tz);
   assertIsoDate(d0);

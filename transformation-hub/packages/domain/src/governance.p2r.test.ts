@@ -220,6 +220,10 @@ describe('REQ-GOV-009 — proposed meeting series (cadence + first meeting given
     ]);
     expect(domainError(() => proposedMeetingSeries({ frequency: 'weekly', firstMeetingAt: new Date(), count: 0, calendar: cal })).code).toBe('governance.cadence.invalid_count');
     expect(domainError(() => proposedMeetingSeries({ frequency: 'weekly', firstMeetingAt: new Date(), count: 13, calendar: cal })).code).toBe('governance.cadence.invalid_count');
+    // A series never starts in the past.
+    const now = new Date('2026-10-01T00:00:00.000Z');
+    expect(domainError(() => proposedMeetingSeries({ frequency: 'weekly', firstMeetingAt: new Date('2026-09-30T07:00:00.000Z'), count: 2, calendar: cal, now })).code).toBe('governance.cadence.start_in_past');
+    expect(proposedMeetingSeries({ frequency: 'weekly', firstMeetingAt: new Date('2026-10-04T07:00:00.000Z'), count: 2, calendar: cal, now })).toHaveLength(2);
   });
 
   it('a proposed meeting is never published or opened: only confirm_schedule (→ planned) or cancel apply', () => {

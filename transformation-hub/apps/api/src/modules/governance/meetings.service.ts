@@ -241,7 +241,7 @@ export class MeetingsService {
     const tx = this.db.tx();
     await tx.execute(sql`select id from committee where id = ${c.id} and project_id = ${projectId} for update`);
     const calendar = await this.sup.calendar(projectId);
-    const slots = proposedMeetingSeries({ frequency, firstMeetingAt: new Date(body.firstMeetingAt), count: body.count, calendar });
+    const slots = proposedMeetingSeries({ frequency, firstMeetingAt: new Date(body.firstMeetingAt), count: body.count, calendar, now: this.sup.clock.now() });
     const existing = await tx
       .select({ id: schema.meeting.id, scheduledAt: schema.meeting.scheduledAt })
       .from(schema.meeting)

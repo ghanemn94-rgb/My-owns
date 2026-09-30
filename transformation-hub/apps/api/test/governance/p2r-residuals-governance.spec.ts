@@ -292,6 +292,10 @@ describe('REQ-GOV-009 — a meeting series generated from the charter cadence is
     expect(r.body.code).toBe('governance.cadence.not_configured');
     const stale = await a.secretary.post(path(weekly.id), { ...body, expectedVersion: weekly.version - 1 });
     expect(stale.status).toBe(409);
+    const past = await a.secretary.post(path(weekly.id), { ...body, firstMeetingAt: '2026-01-04T07:00:00.000Z' });
+    expect(past.status).toBe(422);
+    expect(past.body.code).toBe('governance.cadence.start_in_past');
+    expect((await owner().query(`select count(*)::int n from meeting where committee_id = $1`, [weekly.id])).rows[0].n).toBe(0);
   });
 
   it('creates Proposed meetings on the dates the cadence determines from the first meeting (nothing else invented)', async () => {

@@ -90,6 +90,7 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'governance.cadence.not_configured': 'governance.refusal.codes.cadence_not_configured',
   'governance.cadence.monthly_day_unsupported': 'governance.refusal.codes.cadence_monthly_day_unsupported',
   'governance.cadence.invalid_count': 'governance.refusal.codes.cadence_invalid_count',
+  'governance.cadence.start_in_past': 'governance.refusal.codes.cadence_start_in_past',
   // Change control within delegated authority (DOM-P2-03, DOM-P2R-02/-03/-04)
   'change_control.decision_no_subject': 'planning.refusal.codes.change_control_decision_no_subject',
   'change_control.decision_other_subject': 'planning.refusal.codes.change_control_decision_other_subject',
