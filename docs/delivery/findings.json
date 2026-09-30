@@ -5687,14 +5687,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-19/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-30T09:28:18Z",
           "status": "OPEN",
           "note": "Raised in round 19 by code-security-reviewer. Proposal: correct residual 7 (host-global scope; remove the '/proc/<peer>/sys amplification' claim; state and demonstrate the actual shell-layer protection), have the user re-decide D-030 option A on the corrected text, and spike a narrower control for the process-sandbox layer (for example a user namespace that does not map to host uid 0 for the claude process, or restricting file-tool writes to the role's areas at the kernel level) that keeps the reviewers' nested bwrap working."
+        },
+        {
+          "at": "2026-09-30T09:48:20Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 4008588"
         }
-      ]
+      ],
+      "fix_revision": "4008588",
+      "fix_summary": "D-036: threat-model residual 7 corrected -- /proc/sys is host-global kernel state (not own-run); the unverified shell read-only claim withdrawn. Residual disclosed at its accurate host-global availability scope."
     },
     {
       "id": "F-DG0-155",
@@ -5714,14 +5721,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-19/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-30T09:28:18Z",
           "status": "OPEN",
           "note": "Raised in round 19 by code-security-reviewer. D-035 itself, for superseded rounds, is judged an acceptable loosening of a redundant check; only its extension to the gate round is flagged. Low: content identity is preserved, and historical mode catches it."
+        },
+        {
+          "at": "2026-09-30T09:48:20Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 4008588"
         }
-      ]
+      ],
+      "fix_revision": "4008588",
+      "fix_summary": "D-036: same fix as F-DG0-240 -- checkCandidate requires gate.source_commit reachable, scoping the D-035 tolerance to non-gate rounds in effect."
     },
     {
       "id": "F-DG0-156",
@@ -5739,14 +5753,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-19/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-30T09:28:18Z",
           "status": "OPEN",
           "note": "Raised in round 19. Low and non-mandatory; the reporter would accept it as an observation (kernel-level containment holds), but recommends moving the rules to local settings."
+        },
+        {
+          "at": "2026-09-30T09:48:20Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 4008588"
         }
-      ]
+      ],
+      "fix_revision": "4008588",
+      "fix_summary": "D-036: removed the git allow-rules from .claude/settings.json (needed only for the one-time D-034 rewrite); back to Bash(bwrap:*) only."
     },
     {
       "id": "F-DG0-240",
@@ -5769,14 +5790,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-19/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-30T09:40:00Z",
           "status": "OPEN",
           "note": "Raised in the DG0 round-19 QA review of candidate 6720ad2c (0a65201). Medium, not mandatory."
+        },
+        {
+          "at": "2026-09-30T09:48:20Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 4008588"
         }
-      ]
+      ],
+      "fix_revision": "4008588",
+      "fix_summary": "D-036: checkCandidate now requires gate.source_commit to resolve to a real commit in BOTH modes, so current-mode validation rejects a missing gate source_commit; the D-035 findManifest tolerance is non-gate in effect. Test in validator.test.mjs."
     }
   ]
 }

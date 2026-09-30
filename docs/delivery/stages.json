@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -450,6 +450,11 @@
           "state": "FIXING",
           "at": "2026-09-30T10:05:00Z",
           "note": "Round 19: domain PASS; code-security FAIL; qa FAIL. F-DG0-152 (High) CLOSED_VERIFIED (D-033 Landlock domain independently verified), plus F-DG0-150/151/153/236/237/239 CLOSED and F-DG0-147 accepted; D-034 history repair confirmed sound. Blocked on repairs to the round-18/19 infra changes: F-DG0-240 (Medium, qa) + F-DG0-155 (Low, sec) \u2014 D-035's findManifest tolerance also covers the gate round and checkCandidate never checks gate.source_commit in current mode, so a missing gate source_commit passes current-mode validation; F-DG0-154 (Medium, sec) + F-DG0-149 reopened \u2014 threat-model residual 7 wrongly narrowed /proc/sys to 'own-run' (it is host-global) and the shell-layer read-only claim is unsupported; F-DG0-156 (Low, sec) \u2014 the git allow-rules in .claude/settings.json reach sandboxed agents (contained)."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-09-30T10:20:00Z",
+          "note": "Round-19 findings repaired (D-036): checkCandidate requires gate.source_commit to be a real commit in both modes (F-DG0-240/155); threat-model residual 7 corrected to its accurate host-global scope and the unverified shell read-only claim withdrawn (F-DG0-154; F-DG0-149 re-scoped, awaits reviewer acceptance); git allow-rules removed from .claude/settings.json (F-DG0-156). F-DG0-152 (High) stays CLOSED_VERIFIED. Sandboxed prefreeze all PASS; candidate re-frozen for review round 20."
         }
       ]
     },
