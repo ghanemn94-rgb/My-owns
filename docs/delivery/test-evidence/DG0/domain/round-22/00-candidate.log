@@ -1,0 +1,13 @@
+$ git -C /home/user/My-owns rev-parse HEAD
+7cf94dbc895b021c110b5efa9539b637fede4bf1
+$ (clone) git rev-parse HEAD
+480cd3ff2b1048439bafebf0bf40151a11d84ea7
+$ git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:09072ce5f5cb64417bb0c417a10252b4101679dd0332d6b4016296404c6b5600","files":91}
+exit=0
+$ (main) node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:09072ce5f5cb64417bb0c417a10252b4101679dd0332d6b4016296404c6b5600","files":91}
+$ git diff --stat 9e3c27f..480cd3f -- docs/source docs/analysis docs/delivery/requirements.csv docs/delivery/requirements-spec.md CLAUDE.md docs/delivery/agent-protocol.md .claude/agents
+exit=0 (empty = no spec change since round 21)

@@ -1,0 +1,10 @@
+$ git clone -q --no-local /home/user/My-owns c450 && git -C c450 cat-file -e 450c756f679a911b4c736e856fc9dd5e9b2c89a8^{commit}
+absent
+for-each-ref --contains: 0 refs
+$ git clone -q (local default) /home/user/My-owns c450 && git -C c450 cat-file -e 450c756f679a911b4c736e856fc9dd5e9b2c89a8^{commit}
+present
+for-each-ref --contains: 0 refs
+$ (main repo) git fsck --unreachable --no-reflogs | grep 450c756
+unreachable commit 450c756f679a911b4c736e856fc9dd5e9b2c89a8
+$ grep -o "uniformly absent[^.]*" docs/delivery/decisions.md
+uniformly absent in every clone of the branch (removing the clone-ref dependence of F-DG0-161)

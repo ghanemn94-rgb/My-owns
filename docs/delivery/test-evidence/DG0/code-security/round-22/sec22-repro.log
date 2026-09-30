@@ -1,0 +1,72 @@
+TAP version 13
+# SEC22-1 baseline (fake round-2 source_commit, real fix_revision) errors: 0
+# SEC22-2 errors with fix_revision=000..0: 0
+# SEC22-3 errors with a typo'd fix_revision: 0
+# SEC22-4 errors with an off-branch present fix: 1
+# finding F-DG0-101 (High, mandatory): fix 42398fdf5b is not in the gate candidate
+# SEC22-5 rejected? {"unknown":true,"HEAD":true,"missing":true,"null":true,"zeros":true,"UPPERHEX":true,"short":true,"fix=0000…":true,"fix=ffff…":true}
+# SEC22-6 dropped-detected=true recordless-verification-cannot-close=true
+# (b) errors:
+# finding F-DG0-998 (High, mandatory): CLOSED_VERIFIED but no reviewer verifications sidecar verifies it
+# SEC22-7 rejected? [["constructor",true],["toString",true],["hasOwnProperty",true],["valueOf",true],["__proto__",true],["__defineGetter__",true],["isPrototypeOf",true],["required-constructor-absent",true]]
+# SEC22-8 control errors: 0
+# SEC22-8 tampered (High->Low, mandatory->false via an unbound round-2 sidecar) errors: 0
+# SEC22-8 negative control (findings.json downgraded, no forged sidecar): finding F-DG0-101: severity in findings.json ("Low") differs from the reviewer's ("High")
+# Subtest: SEC22-1 control: a 3-round fixture with a GENUINE round-2 source_commit passes, and an all-zero fix_revision is rejected
+ok 1 - SEC22-1 control: a 3-round fixture with a GENUINE round-2 source_commit passes, and an all-zero fix_revision is rejected
+  ---
+  duration_ms: 369.921884
+  type: 'test'
+  ...
+# Subtest: SEC22-2 BYPASS: a fabricated source_commit on a superseded round lets a CLOSED_VERIFIED finding carry an absent (all-zero) fix_revision
+ok 2 - SEC22-2 BYPASS: a fabricated source_commit on a superseded round lets a CLOSED_VERIFIED finding carry an absent (all-zero) fix_revision
+  ---
+  duration_ms: 299.610286
+  type: 'test'
+  ...
+# Subtest: SEC22-3 BYPASS: same, with a present-looking typo'd fix_revision and the GATE-ancestry check skipped
+ok 3 - SEC22-3 BYPASS: same, with a present-looking typo'd fix_revision and the GATE-ancestry check skipped
+  ---
+  duration_ms: 354.1246
+  type: 'test'
+  ...
+# Subtest: SEC22-4 negative control: the same 3-round fixture with a PRESENT fix that is NOT in the gate candidate is still caught
+ok 4 - SEC22-4 negative control: the same 3-round fixture with a PRESENT fix that is NOT in the gate candidate is still caught
+  ---
+  duration_ms: 422.347576
+  type: 'test'
+  ...
+# Subtest: SEC22-5 gate-round/retained controls: all-zero head_commit_at_start and fix_revision are rejected in retained rounds (QA21-C3/C4/C5)
+ok 5 - SEC22-5 gate-round/retained controls: all-zero head_commit_at_start and fix_revision are rejected in retained rounds (QA21-C3/C4/C5)
+  ---
+  duration_ms: 2591.148235
+  type: 'test'
+  ...
+# Subtest: SEC22-6 F-DG0-158: a deleted finding whose raising sidecar is record-less is 'dropped'; a record-less verifications sidecar cannot close anything
+ok 6 - SEC22-6 F-DG0-158: a deleted finding whose raising sidecar is record-less is 'dropped'; a record-less verifications sidecar cannot close anything
+  ---
+  duration_ms: 523.231516
+  type: 'test'
+  ...
+# Subtest: SEC22-7 F-DG0-163: prototype-named extra keys are rejected by additionalProperties:false; required prototype-named keys are enforced
+ok 7 - SEC22-7 F-DG0-163: prototype-named extra keys are rejected by additionalProperties:false; required prototype-named keys are enforced
+  ---
+  duration_ms: 0.548613
+  type: 'test'
+  ...
+# Subtest: SEC22-8 an UNBOUND later-round findings sidecar supersedes the reviewer's immutable fields (severity/mandatory downgrade passes)
+ok 8 - SEC22-8 an UNBOUND later-round findings sidecar supersedes the reviewer's immutable fields (severity/mandatory downgrade passes)
+  ---
+  duration_ms: 924.380092
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5985.563702
+exit=0

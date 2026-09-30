@@ -1,0 +1,194 @@
+// code-security-reviewer, DG0 round 22 (T-DG0-REV-SEC-R22) reproduction tests.
+// This fragment is APPENDED to a disposable copy of tools/gates/tests/validator.test.mjs (it reuses that file's fixture
+// helpers: buildValidRepo, makeRun, bindOutputs, edit, put, get, sh, freezeCommit, ...). See run-sec22-repro.sh.
+// It never runs in the candidate tree.
+
+const SEC22_FAKE = "deadbeef".repeat(5); // a well-formed 40-hex id that no commit has
+
+/**
+ * Turns the fixture into a 3-round history: round 2 (which verifies F-DG0-101) becomes a SUPERSEDED round whose frozen
+ * manifest records `roundSource` as its source_commit, and a new round 3 becomes the gate round on the real candidate.
+ */
+function sec22ThreeRounds(roundSource) {
+  const { repo, cid, head } = buildValidRepo();
+  if (roundSource === null) return sec22AddGateRound3(repo, cid, head); // round 2 stays a GENUINE superseded round
+  const m1 = get(repo, `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`);
+  // A distinct round-2 candidate: same content, one entry hash differs (as a genuinely earlier candidate would).
+  const entries2 = m1.entries.map((e, i) => (i === 0 ? { ...e, sha256: "1".repeat(64) } : e));
+  const cid2 = candidateId(entries2);
+  const mp2 = `docs/delivery/candidates/DG0/${cid2.slice(7, 23)}.manifest.json`;
+  put(repo, mp2, { ...m1, candidate_id: cid2, source_commit: roundSource, entries: entries2 });
+  sh(repo, "add", "--", mp2); // commit ONLY the round-2 manifest (the round's freeze), so round-2 runs can start from it
+  sh(repo, "commit", "-q", "-m", "freeze round 2 (manifest)");
+  const round2Head = sh(repo, "rev-parse", "HEAD");
+  // Round-2 records now review cid2 and their runs started from the commit that contains the round-2 manifest.
+  for (const role of ROLES) {
+    const rel = `docs/delivery/reviews/DG0/round-2/${role}.json`;
+    edit(repo, rel, (r) => { r.candidate_id = cid2; r.source_commit = roundSource; });
+    const ref = get(repo, rel).invocation_reference;
+    edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (mm) => (mm.head_commit_at_start = round2Head));
+    bindOutputs(repo, ref, [rel]);
+  }
+  return sec22AddGateRound3(repo, cid, head, cid2);
+}
+
+function sec22AddGateRound3(repo, cid, head, cid2 = null) {
+  // Round 3: the gate round, on the real candidate.
+  const rec3 = {};
+  for (const role of ROLES) {
+    const assignment = `docs/delivery/assignments/DG0/round-3/${role}.md`;
+    put(repo, assignment, `assignment for ${role} round 3\n`);
+    const rel = `docs/delivery/reviews/DG0/round-3/${role}.json`;
+    const r2 = get(repo, `docs/delivery/reviews/DG0/round-2/${role}.json`);
+    put(repo, rel, { ...r2, round: 3, candidate_id: cid, source_commit: head, assignment,
+      invocation_reference: makeRun(repo, role, { assignment, task: "T-REV-R3" }) });
+    bindOutputs(repo, get(repo, rel).invocation_reference, [rel]);
+    rec3[role] = rel;
+  }
+  edit(repo, "docs/delivery/stages.json", (d) => {
+    if (cid2) {
+      const r2 = d.stages[0].review_rounds.find((r) => r.round === 2);
+      r2.candidate_id = cid2;
+      r2.source_commit = get(repo, `docs/delivery/candidates/DG0/${cid2.slice(7, 23)}.manifest.json`).source_commit;
+    }
+    d.stages[0].review_rounds.push({ round: 3, candidate_id: cid, frozen_at: T_FREEZE, source_commit: head,
+      records: Object.fromEntries(REQUIRED.map((r) => [r, rec3[r]])) });
+  });
+  editGate(repo, (g) => {
+    g.reviews = Object.fromEntries(REQUIRED.map((r) => [r, rec3[r]]));
+    g.release_audit = rec3["release-auditor"];
+    g.invocation_reference = get(repo, rec3["release-auditor"]).invocation_reference;
+  });
+  bindOutputs(repo, get(repo, rec3["release-auditor"]).invocation_reference, ["docs/delivery/gates/DG0.json"]);
+  return { repo, cid, cid2, head };
+}
+
+test("SEC22-1 control: a 3-round fixture with a GENUINE round-2 source_commit passes, and an all-zero fix_revision is rejected", () => {
+  // A genuine round-2 source_commit: the manifest's entries don't describe it, so use the real head and real entries
+  // would collide with cid -- instead record the round-2 source_commit as `head` and expect only the recompute error.
+  const { repo } = sec22ThreeRounds(SEC22_FAKE);
+  approveAndCommit(repo);
+  const base = validateGate(repo, "DG0");
+  console.log(`SEC22-1 baseline (fake round-2 source_commit, real fix_revision) errors: ${base.length}\n${base.join("\n")}`);
+  assert.deepEqual(base, [], "the 3-round fixture with a fabricated superseded-round source_commit passes the gate");
+});
+
+test("SEC22-2 BYPASS: a fabricated source_commit on a superseded round lets a CLOSED_VERIFIED finding carry an absent (all-zero) fix_revision", () => {
+  const { repo } = sec22ThreeRounds(SEC22_FAKE);
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = "0".repeat(40)));
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  console.log(`SEC22-2 errors with fix_revision=000..0: ${errs.length}\n${errs.join("\n")}`);
+  // The desired behaviour: in a complete clone, an absent fix_revision cannot be an ancestor of the gate candidate.
+  assert.ok(!errs.some((e) => /F-DG0-101/.test(e)), "OBSERVED: no error names F-DG0-101 -- the absent fix is accepted");
+});
+
+test("SEC22-3 BYPASS: same, with a present-looking typo'd fix_revision and the GATE-ancestry check skipped", () => {
+  const { repo, head } = sec22ThreeRounds(SEC22_FAKE);
+  const typo = head.slice(0, 39) + (head[39] === "0" ? "1" : "0"); // one-character typo of the real fix commit
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = typo));
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  console.log(`SEC22-3 errors with a typo'd fix_revision: ${errs.length}\n${errs.join("\n")}`);
+  assert.ok(!errs.some((e) => /F-DG0-101/.test(e)), "OBSERVED: the typo'd fix is accepted and never checked against the gate candidate");
+});
+
+test("SEC22-4 negative control: the same 3-round fixture with a PRESENT fix that is NOT in the gate candidate is still caught", () => {
+  const { repo } = sec22ThreeRounds(SEC22_FAKE);
+  sh(repo, "checkout", "-q", "-b", "side");
+  sh(repo, "commit", "--allow-empty", "-q", "-m", "off-branch fix");
+  const off = sh(repo, "rev-parse", "HEAD");
+  sh(repo, "checkout", "-q", "main");
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = off));
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  console.log(`SEC22-4 errors with an off-branch present fix: ${errs.length}\n${errs.join("\n")}`);
+  assert.ok(errs.some((e) => /F-DG0-101.*is not in the gate candidate/.test(e)), "a present off-branch fix must be caught");
+});
+
+test("SEC22-5 gate-round/retained controls: all-zero head_commit_at_start and fix_revision are rejected in retained rounds (QA21-C3/C4/C5)", () => {
+  const { repo, records } = buildValidRepo();
+  approveAndCommit(repo);
+  const metaRel = (role) => `docs/delivery/runs/DG0/${get(repo, records[role]).invocation_reference.run_id}/meta.json`;
+  const results = {};
+  for (const [label, v] of [["unknown", "unknown"], ["HEAD", "HEAD"], ["missing", undefined], ["null", null], ["zeros", "0".repeat(40)], ["UPPERHEX", "A".repeat(40)], ["short", "abc1234"]]) {
+    const { repo: r } = buildValidRepo();
+    approveAndCommit(r);
+    const rel = `docs/delivery/runs/DG0/${get(r, "docs/delivery/reviews/DG0/round-2/qa-verifier.json").invocation_reference.run_id}/meta.json`;
+    edit(r, rel, (m) => { if (v === undefined) delete m.head_commit_at_start; else m.head_commit_at_start = v; });
+    const errs = validateGate(r, "DG0");
+    results[label] = errs.some((e) => /head_commit_at_start .* is not a 40-hex|absent from this repository, but its review round is retained/.test(e));
+  }
+  for (const fx of ["0".repeat(40), "f".repeat(40)]) {
+    const { repo: r } = buildValidRepo();
+    edit(r, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = fx));
+    approveAndCommit(r);
+    results[`fix=${fx.slice(0, 4)}…`] = validateGate(r, "DG0").some((e) => /is not a commit in this repository, but round-2 is retained/.test(e));
+  }
+  console.log(`SEC22-5 rejected? ${JSON.stringify(results)}`);
+  assert.ok(Object.values(results).every(Boolean), "every malformed/absent value in a retained/gate round must be rejected");
+  void metaRel;
+});
+
+test("SEC22-6 F-DG0-158: a deleted finding whose raising sidecar is record-less is 'dropped'; a record-less verifications sidecar cannot close anything", () => {
+  // (a) import a record-less-raised finding, then delete it from findings.json.
+  const { repo } = buildValidRepo();
+  const r1 = "docs/delivery/reviews/DG0/round-1";
+  const f = { id: "F-DG0-998", stage_id: "DG0", requirement: "REQ-DLV-001", reported_by: "qa-verifier", severity: "High", mandatory_violation: true,
+    title: "raised by an interrupted run", reproduction: "reproduce it", expected: "expected behaviour", actual: "actual behaviour", evidence: [],
+    reported_in: `${r1}/qa-verifier.findings.json`, owner: "delivery-orchestrator", status: "OPEN", history: [] };
+  put(repo, `${r1}/qa-verifier.findings.json`, { findings: [f] }); // no round-1/qa-verifier.json record exists
+  approveAndCommit(repo);
+  const a = validateGate(repo, "DG0");
+  const dropped = a.some((e) => /F-DG0-998 raised in .* is missing from findings.json \(dropped\)/.test(e));
+  // (b) import it (OPEN -> CLOSED_VERIFIED) and 'close' it only via a record-less verifications sidecar of its reporter.
+  const { repo: r2, head } = buildValidRepo();
+  put(r2, `${r1}/qa-verifier.findings.json`, { findings: [f] });
+  put(r2, `${r1}/qa-verifier.verifications.json`, { verifications: [{ finding_id: "F-DG0-998", result: "PASS", status_after: "CLOSED_VERIFIED", note: "note text", evidence: [] }] });
+  edit(r2, "docs/delivery/findings.json", (d) => d.findings.push({ ...f, status: "CLOSED_VERIFIED", fix_revision: head,
+    verification: { by_role: "qa-verifier", invocation_reference: d.findings[0].verification.invocation_reference, at: T_RUN, result: "PASS", evidence: [], note: "n" },
+    acceptance: null }));
+  approveAndCommit(r2);
+  const b = validateGate(r2, "DG0");
+  const notClosed = b.some((e) => /F-DG0-998.*no reviewer verifications sidecar verifies it/.test(e));
+  console.log(`SEC22-6 dropped-detected=${dropped} recordless-verification-cannot-close=${notClosed}\n(b) errors:\n${b.join("\n")}`);
+  assert.ok(dropped && notClosed);
+});
+
+test("SEC22-7 F-DG0-163: prototype-named extra keys are rejected by additionalProperties:false; required prototype-named keys are enforced", () => {
+  const s = { type: "object", properties: { a: { type: "string" } }, additionalProperties: false };
+  const out = Object.create(null);
+  for (const k of ["constructor", "toString", "hasOwnProperty", "valueOf", "__proto__", "__defineGetter__", "isPrototypeOf"]) {
+    const v = JSON.parse(`{"a":"x","${k}":1}`); // JSON.parse creates an OWN __proto__ key
+    out[k] = validateSchema(s, v).some((e) => e.includes(`unexpected property '${k}'`));
+  }
+  const req = { type: "object", required: ["constructor"], properties: { constructor: { type: "string" } } };
+  out["required-constructor-absent"] = validateSchema(req, {}).some((e) => e.includes("missing required property 'constructor'"));
+  console.log(`SEC22-7 rejected? ${JSON.stringify(Object.entries(out))}`);
+  assert.ok(Object.values(out).every(Boolean));
+});
+
+test("SEC22-8 an UNBOUND later-round findings sidecar supersedes the reviewer's immutable fields (severity/mandatory downgrade passes)", () => {
+  // Genuine history: round 2 is an ordinary superseded round (real commit), round 3 is the gate round.
+  const control = sec22ThreeRounds(null);
+  approveAndCommit(control.repo);
+  const c0 = validateGate(control.repo, "DG0");
+  // Tamper: without any reviewer run, add a code-security findings sidecar to the (non-gate) round 2 re-listing
+  // F-DG0-101 as Low / non-mandatory, and edit findings.json to match. The round-1 sidecar (High, mandatory) is untouched.
+  const { repo } = sec22ThreeRounds(null);
+  const orig = get(repo, "docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json").findings[0];
+  put(repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json", { findings: [{ ...orig, severity: "Low", mandatory_violation: false }] });
+  edit(repo, "docs/delivery/findings.json", (d) => { d.findings[0].severity = "Low"; d.findings[0].mandatory_violation = false; });
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  console.log(`SEC22-8 control errors: ${c0.length}${c0.length ? "\n" + c0.join("\n") : ""}\nSEC22-8 tampered (High->Low, mandatory->false via an unbound round-2 sidecar) errors: ${errs.length}\n${errs.join("\n")}`);
+  // And the same edit WITHOUT the forged sidecar is caught (the immutable-field control works when not superseded):
+  const { repo: r3 } = sec22ThreeRounds(null);
+  edit(r3, "docs/delivery/findings.json", (d) => { d.findings[0].severity = "Low"; });
+  approveAndCommit(r3);
+  const e3 = validateGate(r3, "DG0");
+  console.log(`SEC22-8 negative control (findings.json downgraded, no forged sidecar): ${e3.filter((e) => /severity/.test(e)).join(" | ")}`);
+  assert.deepEqual(c0, []);
+  assert.ok(e3.some((e) => /F-DG0-101: severity in findings.json/.test(e)));
+  assert.ok(!errs.some((e) => /F-DG0-101/.test(e)), "OBSERVED: the downgrade via an unbound later-round sidecar is accepted");
+});

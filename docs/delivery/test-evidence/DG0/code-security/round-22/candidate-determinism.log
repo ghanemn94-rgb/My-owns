@@ -1,0 +1,14 @@
+$ node tools/gates/candidate.mjs --stage DG0 --ref 480cd3ff...
+{"stage":"DG0","source":"480cd3ff2b1048439bafebf0bf40151a11d84ea7","candidate_id":"sha256:09072ce5f5cb64417bb0c417a10252b4101679dd0332d6b4016296404c6b5600","files":91}
+$ (in $TMPDIR/full, no-local clone) node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:e7826332492ca64e452152faf3221da14479265663f172a7b0ab377c19c306fa","files":92}
+$ manifest self-hash
+sha256:09072ce5f5cb64417bb0c417a10252b4101679dd0332d6b4016296404c6b5600 mth-candidate-v2 480cd3ff2b1048439bafebf0bf40151a11d84ea7
+$ git diff --stat 9e3c27f..480cd3f -- tools/ .github/ .claude/
+ tools/agents/agent_sandbox.py        | 13 +++---
+ tools/gates/lib/rules.mjs            | 87 +++++++++++++++++++++++++-----------
+ tools/gates/lib/schema.mjs           |  8 +++-
+ tools/gates/tests/validator.test.mjs | 84 ++++++++++++++++++++++------------
+ 4 files changed, 130 insertions(+), 62 deletions(-)
+NOTE: the 92-file id above was caused by the reviewer's own stray probe.py copied into $TMPDIR/full (untracked); removed and recomputed:
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:09072ce5f5cb64417bb0c417a10252b4101679dd0332d6b4016296404c6b5600","files":91}

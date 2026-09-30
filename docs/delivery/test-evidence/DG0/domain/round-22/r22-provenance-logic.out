@@ -1,0 +1,103 @@
+columns ['req_id', 'class', 'title', 'source_ref', 'source_heading', 'template_id', 'input_fields', 'procedure', 'output', 'owner_roles', 'permissions', 'automation', 'screen_api', 'acceptance', 'increments', 'final_gate', 'status', 'evidence', 'notes']
+SOURCE rows 93 label issues [('REQ-PB-042', 'no Playbook( label'), ('REQ-PB-042', 'M refs, no MP label'), ('REQ-PB-042', 'no Interpretations label'), ('REQ-PB-058', 'no Playbook( label'), ('REQ-PB-058', 'M refs, no MP label'), ('REQ-PB-058', 'no Interpretations label'), ('REQ-PB-069', 'no Playbook( label'), ('REQ-PB-069', 'M refs, no MP label'), ('REQ-PB-069', 'no Interpretations label')]
+   REQ-PB-042 notes: Source-grounded core (cited B blocks). AN-04 consolidation: absorbs former REQ-S05-004 (Run the facilitated 90-120-minute TOM workshop mode with agenda, captured contributions and conversion of unresolved items into decisions or actions); its anchors M0147 and acceptance are carried here. The agenda, per-dimension contribution capture, conversion into actions and the no-close-with-unconverted-items rule are master prompt §5 additions (M0147), not playbook content; the 90-120-minute workshop with business owners and conversion into design decisions with owners is source (B0063).
+   REQ-PB-058 notes: Shared-benefit allocation rules detailed in master prompt §8. AN-04 consolidation: absorbs former REQ-S08-012 (Prevent double counting through a canonical benefit register, parent/child relationships, shared-benefit groups and contribution allocations so portfolio aggregation counts a shared benefit once); its anchors M0173 and acceptance are carried here. The canonical benefit register, parent/child relationships, shared-benefit groups and contribution allocations are the master prompt §8 mechanism (M0173); the unique owner, baseline, formula and statement/KPI link is source (B0088). Allocation limits: REQ-S08-013; overlap warnings: REQ-S08-014.
+   REQ-PB-069 notes: Source-grounded core (cited B blocks). AN-04 consolidation: absorbs former REQ-S11-003 (Track adoption actuals against adoption trajectories and create corrective interventions when gaps appear); its anchors M0216 and acceptance are carried here. Trajectory-based adoption tracking and the exactly-one-intervention rule are master prompt §11 additions (M0216); adoption as an outcome with leading indicators, separate from delivery, is source (B0105). Indicators: REQ-PB-071/072.
+USER/ENGINEERING rows citing no M block: []
+USER/ENGINEERING rows citing only B blocks: []
+honesty hits without nearby negation/provisional qualifier: 5
+   ('docs/analysis/field-inventory.md', 7, 'official PMI', ', Brightline Transformation Compass and PMI Benefits Realization Management, extended with a custom Target Operating Model toolkit (B0004). Nothing here claims official PMI status.')
+   ('docs/analysis/parts/req-pb.csv', 2, 'official PMI', '(Source / Used for). Master-prompt additions (§2): showing the statement in the reader, the About page and report footers, and the automated scan for claims of official PMI status or certification. Interpretations: none beyond where the statement is displayed. The Arabic rendering of the statement needs linguistic review."')
+   ('docs/analysis/permissions-matrix.md', 10, 'official PMI', "The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, with custom extensions. Nothing here is an official PMI standard, a certified role model or a Mobily-approved access policy. Default assignments are a **configurable starting point**. Mobily's business owners must c")
+   ('docs/analysis/permissions-matrix.md', 10, 'PMI standard', "The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, with custom extensions. Nothing here is an official PMI standard, a certified role model or a Mobily-approved access policy. Default assignments are a **configurable starting point**. Mobily's business owners must confirm th")
+   ('docs/delivery/requirements.csv', 2, 'official PMI', '(Source / Used for). Master-prompt additions (§2): showing the statement in the reader, the About page and report footers, and the automated scan for claims of official PMI status or certification. Interpretations: none beyond where the statement is displayed. The Arabic rendering of the statement needs linguistic review."')
+
+== RAG from trajectory, not task completion
+   REQ-PB-063 [SOURCE/SPECIFIED/final DG4] Apply the area-specific T10 RAG logic
+      P: Each area computes status by its own rule; outcome RAG never uses task completion; missing data shows Unknown/Stale
+      A: A04;A05: an outcome whose tasks are 100% complete but KPI is below trajectory is Red/Amber, not Green; a KPI with no actual shows Unknown
+   REQ-PB-064 [SOURCE/SPECIFIED/final DG4] Show a Decisions area Red when an executive decision is overdue
+      P: Any open executive decision past its due date turns the Decisions area Red and lists the overdue item
+      A: A09: with one open T16 decision due yesterday (Asia/Riyadh), Decisions area is Red and lists it; after the decision is recorded it no longer counts
+   REQ-S07-007 [USER/SPECIFIED/final DG4] Compute RAG from the approved expected trajectory with configurable thresholds and never from project task completion
+      P: RAG = evaluation of actual versus expected-to-date by polarity using configured thresholds; task completion is not an input
+      A: A04;A05: with all tasks complete and actual below the red threshold the KPI is Red; changing the threshold version recomputes RAG
+   REQ-S01-005 [ENGINEERING/SPECIFIED/final DG6] Never imply an external operational change happened because a task was marked complete; require verified evidence or a confirmed integration result
+      P: Deliverables flagged as external changes carry a separate confirmation state that only reviewed evidence or a confirmed connector result can set; task completion alone leaves it Unconfirmed
+      A: A11;A17: marking the task complete leaves the deliverable Unconfirmed; a filename-only link does not confirm it; reviewed evidence or a test-adapter confirmation sets it and records the source
+   REQ-S04-002 [USER/SPECIFIED/final DG4] Make gates explicit approval records tied to a versioned, immutable evidence snapshot, never inferred from task completion
+      P: Submitting a gate freezes the linked evidence record versions into a snapshot; approvers decide on that snapshot; completing all tasks never changes gate state
+      A: A07;A08: completing every phase task leaves the gate Draft; editing a record after submission does not change the snapshot content shown to approvers
+
+== separate delivery/adoption/value/closure
+   REQ-PB-009 [SOURCE/SPECIFIED/final DG4] Apply 'Benefits before closure': an initiative is complete only when value is realized and sustained, not when delivered
+      P: Initiatives carry separate delivery, value-realization and sustainment statuses; closure requires validated benefits and sustainment owner or a documented transition decision
+      A: A11: an initiative with delivery=Complete and no validated benefit cannot be closed (API 409); UI shows 'Delivered — value validation pending'
+   REQ-S03-003 [USER/SPECIFIED/final DG4] Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses
+      P: Each status has its own state machine and owner; none is derived from another; views show all four side by side
+      A: A11: setting delivery to Complete leaves adoption, validated value and closure unchanged; the API rejects a closure request while validated value is pending unless a transition decision exists
+
+== forecast never validated value
+   REQ-PB-058 [SOURCE/SPECIFIED/final DG4] Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link
+      P: System rejects a benefit without a single owner, baseline, formula and a financial statement line or agreed non-financial KPI; initiatives link to canonical benefits via allocations, parent/child relationships and shared-benefit groups; portfolio totals sum canonical benefits, not links, so a shared benefit rolls up once
+      A: A10: a benefit with two owners is rejected; a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the portfolio total
+   REQ-PB-076 [SOURCE/SPECIFIED/final DG4] Allow non-financial benefits with Value (SAR) n/a and Realized expressed as KPI actual
+      P: For non-financial types (e.g. CX) Value (SAR) is n/a and Realized holds the KPI actual; no automatic monetization
+      A: A10: a CX benefit saved with Value n/a is excluded from SAR totals and not counted as zero
+   REQ-S08-001 [USER/SPECIFIED/final DG4] Track planned, forecast, measured, submitted-for-validation, validated, rejected and sustained benefit values separately
+      P: Each benefit keeps separate value series per state; aggregations never combine states
+      A: A10: a forecast amount never appears in the validated total; a rejected measurement is retained and shown as rejected
+   REQ-S13-008 [USER/SPECIFIED/final DG5] Label provisional or unvalidated values clearly in reports and exports
+      P: Values not validated carry a 'provisional' label
+      A: A10;A15: a pending benefit value is labelled provisional in the PDF pack
+
+== Finance validates, Business Owner accountable
+   REQ-PB-012 [SOURCE/SPECIFIED/final DG2] Seed the six minimum governance roles with their source accountabilities and assign them per transformation
+      P: Admin seeds roles; Transformation Lead/Office assign named people to roles per transformation; accountability text shown on the role assignment
+      A: A12: a user assigned Workstream Lead on transformation X cannot read transformation Y; role accountability text matches B0018
+   REQ-PB-013 [SOURCE/SPECIFIED/final DG4] Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role
+      P: Only users holding FIN on the transformation can mark a baseline, benefit formula or realized value as validated; others can submit for validation
+      A: A10;A12: a Business Owner calling the validate endpoint receives 403; a Finance user succeeds and the audit event records validator identity
+   REQ-PB-055 [SOURCE/SPECIFIED/final DG3] Require Finance validation of baseline and benefit logic early, before G4, not after delivery
+      P: A business case cannot be submitted as G4 evidence until Finance has validated its baseline and benefit formulas
+      A: A08;A10: G4 submission with a business case whose benefit formula is unvalidated is rejected listing 'Finance validation'
+   REQ-PB-075 [SOURCE/SPECIFIED/final DG4] Implement Template 14 Benefits Register as a native register
+      P: Users record benefits with Type (Revenue | Cost | CX | ...), Value (SAR) and Realized amounts, evidence source and Status R/A/G; IDs B01, B02...
+      A: A10: T14 persists all 10 columns; realized value awaiting Finance validation is labelled pending and excluded from validated totals
+
+== shared benefit once / allocation <=100% / unallocated
+   REQ-PB-059 [SOURCE/SPECIFIED/final DG3] Record owners and capacity for mobilization
+      P: Users record owners and capacity per initiative/wave; capacity shortfalls are shown for G4 and Wave 2 entry
+      A: A01: a capacity demand exceeding availability shows a conflict indicator; G4 lists initiatives without owners
+   REQ-S08-013 [USER/SPECIFIED/final DG4] Reject allocations over 100% and show any share below 100% as unallocated
+      P: The server sums allocations per benefit; above 100% is rejected; below 100% shows the remaining share as unallocated
+      A: A10: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated
+
+== gates evidence-tied approvals
+   REQ-PB-015 [SOURCE/SPECIFIED/final DG4] Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required
+      P: Owner assembles evidence, submits the gate; approver records decision against the evidence snapshot; gates are never inferred from task completion
+      A: A08: submission with missing mandatory evidence is rejected; approval by a non-approver returns 403; approval of a stale submission version is rejected
+   REQ-PB-016 [SOURCE/SPECIFIED/final DG2] G1 Case for Change: require diagnostic, baseline, root causes and value pools as gate evidence
+      P: G1 checklist auto-links T01, baseline records and value pools; missing items block submission
+      A: A08: G1 submission without any value pool record returns a validation error listing 'Value pools'
+   REQ-S04-012 [USER/SPECIFIED/final DG4] Block gate submission when mandatory evidence is missing unless a specifically authorized exception is recorded
+      P: Gate readiness is evaluated live and the gate page lists missing mandatory evidence; on submit the server checks each mandatory evidence item; missing items are listed and submission is refused unless an authorized, unexpired exception covers the item
+      A: A08: the gate page lists missing items; submission with one missing mandatory item returns 422 listing it; with a valid exception it succeeds and the snapshot records the exception
+
+== DG0-DG7 separate from G1-G6
+   REQ-DLV-004 [ENGINEERING/IMPLEMENTED/final DG0] Define the ten project agents in .claude/agents with supported frontmatter, role instructions, handback contracts and verified loading and execution
+      P: Orchestrator writes the ten definitions (transformation-analyst, solution-architect, frontend-ux-engineer, backend-workflow-engineer, kpi-benefits-engineer, devops-engineer, domain-reviewer, code-security-reviewer, qa-verifier, release-auditor), then invokes each through the runner to confirm it loads, runs and is write-guarded; the main session is the eleventh role, delivery-orchestrator
+      A: A23: all ten definitions exist, and each has a recorded load run with a distinct session ID, a blocked out-of-scope write and a successful in-scope write (agents.md table)
+   REQ-DLV-005 [ENGINEERING/SPECIFIED/final DG7] Apply each role's independence rule at every gate: no role reviews, certifies or approves its own work, and the orchestrator never records a review verdict
+      P: For each gate the orchestrator assigns reviewers who authored nothing in the reviewed scope; each review record declares independence; the validator rejects a reviewer who is an implementation author or owner, or who shares an invocation with another reviewer
+      A: A23: at every gate DG0-DG7 the validator accepts only review records whose reviewer_role is not in the gate's implementation authors and whose invocation references are distinct; the P0 test 'A23: a reviewer who authored the scope, or who is an owner, is rejected' passes
+
+-- regex double count ['REQ-PB-058', 'REQ-DLV-036', 'REQ-S05-005']
+
+-- regex forecast ['REQ-PB-061', 'REQ-S08-001', 'REQ-S09-007', 'REQ-S09-010', 'REQ-S11-007', 'REQ-S12-012', 'REQ-S20-010']
+
+-- regex unallocated ['REQ-S08-013']
+
+-- regex task completion ['REQ-PB-015', 'REQ-PB-063', 'REQ-S01-005', 'REQ-S04-002', 'REQ-S07-007']
+
+-- regex Business Owner accountable ['REQ-S08-003']

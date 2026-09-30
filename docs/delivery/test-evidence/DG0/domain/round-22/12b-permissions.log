@@ -1,0 +1,45 @@
+$ grep -n -i -E "ADM|admin|approv|Finance|FIN\b|T11|RACI" docs/analysis/permissions-matrix.md | head -60
+6:  - playbook minimum governance roles (B0018), T11 (B0099) and T12 RACI (B0101), through REQ-PB-012/013/065/067;
+10:The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, with custom extensions. Nothing here is an official PMI standard, a certified role model or a Mobily-approved access policy. Default assignments are a **configurable starting point**. Mobily's business owners must confirm them before production.
+20:| FIN | Finance / Value Office | Source (B0018) | Transformation, or business unit (validator pool) |
+26:| ADM | System administrator (technical, access, or methodology admin sub-profiles) | Implementation (M0187) | Organization (technical configuration only) |
+45:5. **Background jobs and connectors** act under the initiating user or a constrained service identity scoped to the rule (REQ-S12-003). A service identity never holds approval rights.
+54:| S | Submit (for review, approval or validation) |
+55:| Rv | Review, recommend, comment or consult (per T11/RACI "Consult"/"Recommend") |
+56:| Ap | Approve or decide (business approval; the record keeps assignee, request version, due date, rationale, comments and timestamp, per REQ-S10-014) |
+57:| Va | Finance validation (attestation) |
+67:| Record / action area | SP | TL | BO | WL | FIN | TO | KDS | TD | CM/SEC | AUD | ADM |
+74:| KPI definition (dictionary) | V | C U S | Ap (per approval policy) | V | Rv | V | C U S | V | V | V | — |
+79:| TOM canvas, T03 gaps, capabilities, journeys/processes, workshops | Rv (RACI C for Target Operating Model) | C U S | C U Ap (per T11 Target-state design) | C U (own) | Rv | V | V | C U Rv | V | V | — |
+82:| Gate decision (approve, reject, request changes, defer) | Ap (default) | — (the submitter cannot approve; SoD) | Ap where configured (G3 per T11 Target-state design; G5 per T11 Go-live / scale) | — | Rv (Finance criteria) | — | — | — | — | V | — (never) |
+84:| Conditional approval (extension, disabled by default) | Ap | S | Ap where configured | — | — | — | — | — | — | V | Cf (enable only) |
+86:| T05 initiative card | V | C U S | Ap (RACI A: Initiative Delivery) | C U S | Rv | V | V | Rv | V | V | — |
+87:| Business case (transformation, initiative) | Ap (RACI A) | C U S | Rv | C U (initiative case) | U Va (RACI R) | V | V | Rv | V | V | — |
+90:| Proposed ranking / portfolio selection / funding approval | V / Ap / Ap (SteerCo per T11) | C / S / S | Rv | V | Rv / Rv / Rv (co-recommender per T11) | V | V | V | V (SteerCo members vote as CM) | V | — |
+91:| T07 waves and roadmap, milestones, rebaseline | Ap (rebaseline per T11) | C U S | Rv | U (own) | Rv (budget) | U | V | V | V | V | — |
+96:| Benefit measurement / submit for validation | V | S | S | S | V | V | C S | V | V | V | — |
+97:| Finance validation (baseline, formula, realized value, amendments or reversals) | — | — | — | — | Va (only FIN) | — | — | — | — | V | — (never) |
+100:| T11 decision rights matrix | Ap | U | Rv | V | Rv | U | V | V | V | V | — |
+101:| T11 decision "Go-live / scale" for an initiative (B0099: Recommend Initiative owner; Approve Business owner; Consult Risk / Tech / CX; Inform SteerCo) | V | Rv | Ap (Business owner) | S Rv (as initiative owner: Recommend) | V | Rv (Risk consult, via RAID) | V | Rv (Tech consult) | V (SteerCo members: Inform) | V | — |
+102:| T12 RACI (per transformation, versioned) | Ap | U | Rv | V | Rv | U | V | V | V | V | — |
+110:| BAU handover | V | C U S | Ac (receiving owner only; A/R per RACI) | C U S | Rv | V | Ac (as KPI owner, where named) | Rv | V | V | — |
+112:| Evidence item (upload, review, download) | as parent | as parent | as parent | as parent | as parent | as parent | as parent | as parent | as parent | V as parent | — (storage administration only; no content access by default) |
+115:| Methodology config (Playbook Studio, procedures, forms, formulas library) | — | Rv (reviewer, where configured) | — | — | Rv (formula changes) | Rv | — | — | — | V | Cf (draft, preview, publish; methodology admin) |
+119:| Access administration (scoped assignments) | — | assign within own transformation (non-approver roles) | — | — | — | assign within portfolio | — | — | — | V | Cf (access admin) |
+123:## 5. Separation of duties and approval rules
+125:1. **Requester ≠ approver** (REQ-S10-016). Under the default policy the server rejects an approval by the requester, or by the requester's delegate acting for the requester. A configured exception must be named in the policy and audited.
+126:2. **Technical administrators are not business approvers** (REQ-S10-003, REQ-S06-010).
+127:   - ADM has no Ap or Va right on any business record.
+128:   - A person who also holds a business role gets approvals only through that separately assigned scoped role, and the assignment is audited.
+129:   - Studio refuses configurations that make ADM an automatic approver (REQ-S06-006).
+130:3. **Finance validation is exclusive to FIN** (REQ-PB-013). This holds even where the Business Owner remains accountable (M0211).
+131:4. **Stale approvals are rejected.** An approval must reference the current submitted version (REQ-S10-017).
+132:5. **Automation never approves.** Timers escalate, route and remind. They never set approve or validate outcomes (REQ-S10-019, REQ-S12-026).
+134:7. **Gate approvals** default to SP. The playbook's gate table (B0023) names no approver, and B0018 gives the Sponsor "approves major trade-offs". Where a T11 decision (B0099) matches what a gate decides, the gate's approver can be configured to the T11 approver:
+135:   - G3 Target State: BO, per T11 "Target-state design" (REQ-PB-018, REQ-S04-005);
+136:   - G5 Scale: BO, per T11 "Go-live / scale" (REQ-PB-020, REQ-S04-007).
+138:   The default is configurable per gate. G5 is the **transformation-level** gate ("Are pilots/results sufficient to scale?"). T11 "Go-live / scale" decisions taken on **individual initiatives** (Recommend: initiative owner; Approve: BO; Consult: Risk/Tech/CX; Inform: SteerCo) are separate decision records, with their own row in the matrix above, and they feed G5's decision-log evidence. An initiative-level go-live approval never approves G5, and G5 approval does not replace the initiative-level decisions. The G6 product gate has no relation to engineering gate DG7. (AN-05, finding F-DG0-002.)
+139:8. **Waivers** cannot be approved by the requester or by ADM (REQ-S04-013).
+150:- The action codes per cell, the default gate approver (SP) and the sub-profiles of ADM (technical, access, methodology) are **implementation assumptions** derived from B0018, T11 and T12 and from §10. The domain reviewer and Mobily business owners must confirm them.
+152:- In the T11 "Go-live / scale" row, the T11 roles map to matrix roles as follows. "Initiative owner" is the initiative's named owner, recorded on T05 and typically the WL, or the BO where the BO owns it. "Risk" consultees act through the TO's RAID responsibility (B0018). "Tech" is TD. "CX" has no separate matrix role and is consulted as a named person under Rv on the decision record. "SteerCo" is its CM members. This mapping is an implementation assumption.
+153:- Revision T-DG0-AN-05 (finding F-DG0-002): SP now has Rv (RACI "C", B0101) instead of V on the TOM row; the T11 "Go-live / scale" row was added; rule 7 was clarified.

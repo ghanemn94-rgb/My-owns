@@ -1,0 +1,16 @@
+$ (complete clone @480cd3f) git rev-list --count HEAD; merge-base --is-ancestor for pruned-era commits
+198
+73c48546 (73c485466a17cbb785e8f4ecee9bd967fe8333be) ancestor-of-HEAD
+6c67698 (6c676980acb91b91bb535e800e3a530b8f5016d8) ancestor-of-HEAD
+d1352f48 (d1352f4817677d408dc65f16adebb946a1f647e4) ancestor-of-HEAD
+421c922 (421c922233dc49adb4e8684628faa32b98506758) ancestor-of-HEAD
+450c756 NOT ancestor
+$ node tools/gates/validate.mjs --stage DG0 (complete clone)
+FAIL gate DG0 (current) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+exit=0
+$ (git clone --depth=1 of main HEAD 7cf94db) git rev-parse --is-shallow-repository
+true
+$ node tools/gates/validate.mjs --stage DG0 (shallow clone)
+  - gate DG0: the repository is a shallow clone, so ancestry, write-once and history-tolerance checks are unreliable; validate the gate against the complete history (git fetch --unshallow, or clone with fetch-depth: 0 as CI does) (D-038, F-DG0-160)
+(grep for shallow error above)

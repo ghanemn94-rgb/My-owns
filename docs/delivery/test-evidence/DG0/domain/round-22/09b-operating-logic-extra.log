@@ -1,0 +1,31 @@
+$ python3 (register rows: DG7/G6 separation, BO accountability, forecast)
+REQ-PB-010 [SOURCE/SPECIFIED/DG4] Apply 'One source of truth': keep the charter, roadmap, initiative portfolio and benefits register linked as canonical records
+  P: Charter, roadmap, portfolio and benefits register reference the same canonical records (no copies); editing an initiative updates its roadmap and benefits views
+  A: A01: renaming an initiative changes it in roadmap, scorecard and benefits register views in one update; no duplicate initiative rows exist in the database
+REQ-PB-011 [SOURCE/SPECIFIED/DG5] Show the four guiding questions and tag each deliverable with the question it answers
+  P: Each methodology template/deliverable carries one of the four questions, shown in form headers and the Playbook reader
+  A: A01: all four questions render verbatim (en) with ar translations; every seeded template has exactly one question tag
+REQ-PB-021 [SOURCE/SPECIFIED/DG4] G6 Sustain: require benefits evidence, ownership transfer, controls and continuous improvement backlog as gate evidence
+  P: G6 checklist links validated benefit evidence, accepted BAU handover, controls and the CI backlog
+  A: A08;A11: G6 submission without an accepted BAU handover is rejected listing 'Ownership transfer'
+REQ-PB-061 [SOURCE/SPECIFIED/DG4] Produce each forum's source outputs as native meeting records
+  P: Meeting record captures the outputs defined for its layer (e.g. Value Review: benefit evidence, forecast, corrective action) linked to canonical records
+  A: A01: a Value Review meeting cannot be published without a benefit evidence or forecast entry; decisions recorded appear in T16
+REQ-DLV-002 [ENGINEERING/IMPLEMENTED/DG0] Keep engineering delivery gates DG0-DG7 separate from product business approvals G1-G6 in records, authority and meaning
+  P: DG records live only under docs/delivery; G1-G6 are product records; project rules and every agent definition state that an engineering agent cannot grant a real business, Finance or IT approval
+  A: A23;A28: gate records validate only with stage_id DG0-DG7; CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval
+REQ-DLV-041 [ENGINEERING/SPECIFIED/DG7] Seal the DG7 release after approval: approve the frozen payload whose hash excludes review and gate metadata, append the DG7 gate record to the evidence envelope, run A28 integrity verification, and record the payload hash and archive checksum separately
+  P: After the DG7 audit the orchestrator builds the envelope, runs the A28 check and declares delivery complete only if sealing passes; a sealing failure blocks delivery and a payload change requires new candidate reviews
+  A: A28: the sealing check verifies that all eight gate records, the ten agent definitions, the register and the findings are present and match their checksums, that the payload hash equals the DG7 candidate ID, and that no DG record is confused with G1-G6
+REQ-S04-008 [USER/SPECIFIED/DG4] Run the Realize phase procedure and G6 Sustain decision
+  P: Measure and validate benefits; correct gaps; transfer ownership and controls; establish sustained monitoring and improvement; submit G6 with the decision 'value is embedded in BAU'
+  A: A02;A11: G6 submission without an accepted BAU handover is rejected; product G6 approval changes no engineering DG record
+REQ-S08-003 [USER/SPECIFIED/DG4] Record for each benefit a unique ID, type, accountable business owner, Finance validator where applicable, baseline/counterfactual, formula, driver units, target, timing, one-off/recurring classification, currency, measurement source, evidence, confidence, assumptions, contribution links and financial-statement mapping or agreed non-financial KPI
+  P: Benefit profile form with server-side validation of required fields
+  A: A10: a financial benefit without a financial-statement mapping, or a non-financial one without an agreed KPI, is rejected
+REQ-S18-003 [USER/SPECIFIED/DG5] Keep an empty production initialization path that excludes demo records and demo credentials
+  P: Production initialization creates only reference data and a secure admin bootstrap; demo seeding is refused in production mode
+  A: A22;A18: after production initialization, a query finds zero demo records and zero demo users; the demo seed command exits with an error in production mode
+REQ-S21-001 [USER/SPECIFIED/DG5] Label product gates, phases and demo approvals so that product gate G6 never implies engineering release DG7, and a demo Sponsor approval never approves a real Mobily transformation
+  P: Product gate screens and exports show business-gate wording only; demo approvals carry a synthetic label; no product screen shows DG status
+  A: A28;A22: a text scan of UI strings and export templates finds no DG0-DG7 references; demo G-approvals display 'Synthetic demonstration - approves nothing real'

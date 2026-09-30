@@ -1,0 +1,15 @@
+== agent shell (no write performed; open(O_WRONLY)+close only)
+OPEN-WRITABLE /proc/sys/vm/swappiness
+OPEN-WRITABLE /proc/sys/kernel/shmmax
+OPEN-WRITABLE /proc/sys/net/ipv4/ip_forward
+OPEN-WRITABLE /proc/sys/kernel/panic
+OPEN-WRITABLE /proc/sys/vm/drop_caches
+uid 0 ['CapEff:\t000001ffffffffff', 'NoNewPrivs:\t1']
+== inside tools/gates/sandbox-run.sh HEAD
+REFUSED /proc/sys/vm/swappiness Read-only file system
+REFUSED /proc/sys/kernel/shmmax Read-only file system
+REFUSED /proc/sys/net/ipv4/ip_forward Read-only file system
+REFUSED /proc/sys/kernel/panic Read-only file system
+REFUSED /proc/sys/vm/drop_caches Read-only file system
+uid 0 ['CapEff:\t000001ffffffffff', 'NoNewPrivs:\t1']
+exit=0

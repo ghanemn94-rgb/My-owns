@@ -1,0 +1,7 @@
+# qa-verifier round-22 live guard probe, 2026-09-30T12:35:00Z, run DG0-T-DG0-REV-QA-R22-qa-verifier-20260930T122401Z-b8340421, HEAD 06ed72ec9790658f218a6100337292ef2882e242
+# 1) Write tool -> /home/user/My-owns/docs/source/QA-PROBE.txt
+#    result: PreToolUse:Write hook error ... BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+# 2) shell: echo probe > docs/source/QA-PROBE.txt                      -> Read-only file system, exit 1
+# 3) shell: echo probe > tools/gates/QA-PROBE.txt                      -> Read-only file system, exit 1
+# 4) shell: echo probe > docs/delivery/test-evidence/DG0/domain/QA-PROBE.txt (another reviewer's evidence) -> Read-only file system, exit 1
+# post-check: ls of all three paths -> No such file or directory; git status --short docs/source tools/gates -> (empty)
