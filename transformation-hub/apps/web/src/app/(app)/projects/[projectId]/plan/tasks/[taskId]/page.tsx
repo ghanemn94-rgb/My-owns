@@ -22,11 +22,19 @@ import { NodeDependencies, RaciPanel } from '@/components/planning/RaciPanel';
 import { PrerequisitesPanel } from '@/components/planning/PrerequisitesPanel';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
+import { useLocalized, useServerMessages } from '@/lib/i18n-data';
 import { useRefreshPlanning, useTask, workstreamHref } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
 
+/** Evidence types of the templates (gates.evidenceTypes) and the duration bases of the task contract. */
+const EVIDENCE_TYPES = ['approved_document', 'committee_decision', 'register_extract', 'regulatory_record', 'board_resolution', 'test_report', 'sign_off', 'signed_agreement', 'reconciliation'] as const;
+const DURATION_BASES = ['assumed', 'estimated', 'confirmed', 'tbd'] as const;
+const isOneOf = <T extends string>(list: readonly T[], v: string): v is T => (list as readonly string[]).includes(v);
+
 export default function TaskPage() {
-  const { t, tStatus, formatNumber, formatDateTime, locale } = useI18n();
+  const { t, tStatus, formatNumber, formatDateTime } = useI18n();
+  const loc = useLocalized();
+  const serverText = useServerMessages();
   const { taskId } = useParams<{ taskId: string }>();
   const { projectId, can } = useProjectContext();
   const q = useTask(projectId, taskId);
@@ -42,7 +50,12 @@ export default function TaskPage() {
   const closed = ['accepted', 'done', 'cancelled'].includes(x.status);
   const canProgress = can('planning.task.update_progress') && ['not_started', 'in_progress', 'blocked', 'submitted_for_acceptance'].includes(x.status);
   const canOwner = can(x.accountableUserId ? 'planning.ownership.reassign' : 'planning.task.manage');
-  const title = locale === 'ar' && x.titleAr ? x.titleAr : x.title;
+  const title = loc(x.title, x.titleAr);
+  // Template vocabularies (QA-P2-04): evidence types and duration bases are keys, translated when known; a value a planner
+  // typed is shown as entered. The template's effort estimate comes as codes.
+  const evidenceType = x.evidenceType ? (isOneOf(EVIDENCE_TYPES, x.evidenceType) ? t(`gates.evidenceTypes.${x.evidenceType}`) : x.evidenceType) : null;
+  const durationBasis = x.durationBasis ? (isOneOf(DURATION_BASES, x.durationBasis) ? t(`planning.task.durationBases.${x.durationBasis}`) : x.durationBasis) : null;
+  const effort = serverText(x.effortI18n, x.effort);
 
   return (
     <SectionGuard section="plan">
@@ -62,7 +75,7 @@ export default function TaskPage() {
           </span>
         }
         title={<span dir="auto">{title}</span>}
-        documentTitle={`${x.wbsCode} — ${x.title}`}
+        documentTitle={`${x.wbsCode} — ${title}`}
         badges={
           <>
             <StatusBadge enumName="taskStatuses" value={x.status} size="md" />
@@ -123,7 +136,7 @@ export default function TaskPage() {
         <Section id="t-plan" title={t('planning.task.planSection')}>
           <dl className="grid gap-3 sm:grid-cols-3">
             <Fact label={t('planning.task.duration')}>{x.durationDays === null ? t('planning.task.tbd') : formatNumber(x.durationDays)}</Fact>
-            <Fact label={t('planning.task.durationBasis')}>{x.durationBasis ?? EM_DASH}</Fact>
+            <Fact label={t('planning.task.durationBasis')}>{durationBasis ? <span dir="auto">{durationBasis}</span> : EM_DASH}</Fact>
             <Fact label={t('planning.common.gate')}>
               <span dir="ltr">{x.gateKey ?? EM_DASH}</span>
             </Fact>
@@ -160,21 +173,21 @@ export default function TaskPage() {
               <span dir="auto">{x.proposedOwnerFunction ?? EM_DASH}</span>
             </Fact>
             <Fact label={t('planning.task.approverRole')}>{x.approverRole ? tStatus('roleKeys', x.approverRole) : EM_DASH}</Fact>
-            <Fact label={t('planning.task.evidenceType')}>{x.evidenceType ?? EM_DASH}</Fact>
+            <Fact label={t('planning.task.evidenceType')}>{evidenceType ? <span dir="auto">{evidenceType}</span> : EM_DASH}</Fact>
           </dl>
         </Section>
         <Section id="t-def" title={t('planning.task.definitionSection')}>
           <dl className="grid gap-3">
             <Fact label={t('planning.task.description')} wide>
-              <span dir="auto">{x.description ?? EM_DASH}</span>
+              <span dir="auto">{loc(x.description, x.descriptionAr) ?? EM_DASH}</span>
             </Fact>
             <Fact label={t('planning.task.output')} wide>
-              <span dir="auto">{x.output ?? EM_DASH}</span>
+              <span dir="auto">{loc(x.output, x.outputAr) ?? EM_DASH}</span>
             </Fact>
             <Fact label={t('planning.task.acceptanceCriteria')} wide>
-              <span dir="auto">{x.acceptanceCriteria ?? EM_DASH}</span>
+              <span dir="auto">{loc(x.acceptanceCriteria, x.acceptanceCriteriaAr) ?? EM_DASH}</span>
             </Fact>
-            <Fact label={t('planning.task.effort')}>{x.effort ?? EM_DASH}</Fact>
+            <Fact label={t('planning.task.effort')}>{effort ? <span dir="auto">{effort}</span> : EM_DASH}</Fact>
           </dl>
         </Section>
         <RaciPanel entityType="task" entityId={x.id} />

@@ -6,6 +6,7 @@ import { canonicalJson } from './canonical';
 import { forbidden, ruleViolation } from './errors';
 import { APPROVED_GATE_STATUSES } from './gates';
 import { decisionRelianceIssue, type ExternalEvidenceState } from './decision-reliance';
+import { planMessage, planningEn } from './planning-messages';
 
 /**
  * Planning rules that are not schedule/measurement maths (spec §9): RAID lifecycle and exposure, open blockers,
@@ -166,13 +167,17 @@ export function inWindow(d: string | null | undefined, w: { from: string; to: st
  * Maps a deliverable to a weighted-progress item. Only ACCEPTED deliverables count as complete (evidence-verified);
  * cancelled deliverables are excluded (never complete); unapproved weights are excluded with a reason.
  */
-export function deliverableProgressItem(d: { id: string; code?: string; title?: string; status: DeliverableStatus; weight: number; weightApproved: boolean }): WeightedItem {
+export function deliverableProgressItem(d: { id: string; code?: string; title?: string; titleAr?: string | null; status: DeliverableStatus; weight: number; weightApproved: boolean }): WeightedItem {
   const label = d.code ? `${d.code} ${d.title ?? ''}`.trim() : d.title;
-  if (d.status === 'cancelled') return { id: d.id, label, weight: d.weight, state: 'cancelled', exclusionReason: 'Cancelled — excluded from the denominator, not counted as complete' };
-  if (!d.weightApproved) return { id: d.id, label, weight: d.weight, state: 'excluded', exclusionReason: 'Weight not approved' };
-  if (d.status === 'accepted') return { id: d.id, label, weight: d.weight, state: 'accepted' };
-  if (d.status === 'planned') return { id: d.id, label, weight: d.weight, state: 'not_started' };
-  return { id: d.id, label, weight: d.weight, state: 'in_progress' };
+  // QA-P2-04: the Arabic label when the deliverable has an Arabic title (template-seeded); null otherwise.
+  const labelAr = d.titleAr === undefined ? undefined : d.titleAr ? (d.code ? `${d.code} ${d.titleAr}` : d.titleAr) : null;
+  const base = { id: d.id, label, ...(labelAr !== undefined ? { labelAr } : {}), weight: d.weight };
+  const excluded = (code: string) => ({ exclusionReason: planningEn([planMessage(code)]), exclusionReasonI18n: [planMessage(code)] });
+  if (d.status === 'cancelled') return { ...base, state: 'cancelled', ...excluded('plan.progress.deliverable_cancelled') };
+  if (!d.weightApproved) return { ...base, state: 'excluded', ...excluded('plan.progress.weight_not_approved') };
+  if (d.status === 'accepted') return { ...base, state: 'accepted' };
+  if (d.status === 'planned') return { ...base, state: 'not_started' };
+  return { ...base, state: 'in_progress' };
 }
 
 // ---------------------------------------------------------------------------------------------------------

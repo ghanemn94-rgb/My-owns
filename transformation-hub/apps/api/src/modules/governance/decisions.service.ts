@@ -39,6 +39,7 @@ import {
   ruleViolation,
   tallyVotes,
   transition,
+  type ServerMessage,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
@@ -55,6 +56,18 @@ import { likeContains } from '../../platform/helpers';
 
 type AuthorityOutcome = (typeof DECISION_AUTHORITY_OUTCOMES)[number];
 type Money = { amount: string; currency: string; unitScale: 1 | 1000 | 1000000 };
+
+/**
+ * QA-P2-04: the authority reason the decision page shows (`authorityReason`, else the outcome snapshot's) as codes — taken
+ * from the outcome's tally snapshot, and only when that snapshot recorded exactly the same English reason. Outcomes
+ * recorded before the codes existed return null (the client then shows the English sentence).
+ */
+export function authorityReasonI18n(d: Pick<DecisionRow, 'authorityReason' | 'tallySnapshot'>): ServerMessage[] | null {
+  const a = (d.tallySnapshot as { authority?: { reason?: unknown; reasonI18n?: unknown } } | null)?.authority;
+  const shown = d.authorityReason ?? (typeof a?.reason === 'string' ? a.reason : null);
+  if (!shown || !a || a.reason !== shown || !Array.isArray(a.reasonI18n) || a.reasonI18n.length === 0) return null;
+  return a.reasonI18n as ServerMessage[];
+}
 
 export interface PaperInput {
   title?: string;
@@ -191,6 +204,7 @@ export class DecisionsService {
       dependencies: d.dependencies,
       requiredAuthority: d.requiredAuthority,
       authorityReason: d.authorityReason,
+      authorityReasonI18n: authorityReasonI18n(d),
       recommendationRecordedBy: d.recommendationRecordedBy,
       externalAuthorityReference: d.externalAuthorityReference,
       externalEvidenceLinkId: d.externalEvidenceLinkId,

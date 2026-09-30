@@ -61,8 +61,8 @@ async function asPersona(browser: Browser, persona: string) {
 
 /**
  * Opens a gate command, confirms it, and expects the server's refusal in the dialog (role="alert" with the server's reason);
- * the dialog is then cancelled. Gate refusal codes have no translated explanation in apps/web/src/lib/refusals.ts, so the
- * server detail is what the user reads (QA-P2-04) — recorded, not asserted as a translation.
+ * the dialog is then cancelled. Since the QA-P2-04 fix every gate refusal code has a translated explanation
+ * (apps/web/src/lib/refusals.ts); the server's detail is still shown next to it, and that is what is asserted here.
  */
 async function expectRefused(page: Page, action: string, confirm: string, serverReason: RegExp) {
   await page.getByTestId(`gate-action-${action}`).click();

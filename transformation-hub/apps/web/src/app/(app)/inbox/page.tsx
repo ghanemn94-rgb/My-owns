@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { MY_WORK_TYPES } from '@hub/contracts';
 import { DataTable, type Column } from '@/components/DataTable';
 import { DemoBadge } from '@/components/DemoBadge';
@@ -14,6 +14,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { cx } from '@/components/ui';
 import { DateText, FilterSelect, FilterToggle } from '@/components/planning/bits';
 import { useI18n, type StatusEnum } from '@/i18n/provider';
+import { useLocalized, useServerMessages } from '@/lib/i18n-data';
 import { useMyWork, type MyWorkItem } from '@/lib/planning';
 
 type WorkType = (typeof MY_WORK_TYPES)[number];
@@ -42,7 +43,12 @@ const STATUS_ENUM: Record<WorkType, StatusEnum> = {
 /** Screen 15 — My Work / Inbox: what needs the caller's action across their projects (server-filtered by permission). */
 export default function InboxPage() {
   const { t, formatNumber, formatDateTime } = useI18n();
+  const loc = useLocalized();
+  const serverText = useServerMessages();
   const work = useMyWork();
+  // QA-P2-04: server-composed titles are translated from their codes; bilingual record titles use their Arabic text;
+  // free text typed by a user (change requests, decisions, actions …) is shown as entered.
+  const titleOf = useCallback((i: MyWorkItem) => serverText(i.titleI18n, null) ?? loc(i.title, i.titleAr), [serverText, loc]);
   const [type, setType] = useState('');
   const [project, setProject] = useState('');
   const [overdue, setOverdue] = useState(false);
@@ -52,9 +58,9 @@ export default function InboxPage() {
   const rows = useMemo(() => {
     const needle = q.toLocaleLowerCase();
     return (work.data?.items ?? []).filter(
-      (i) => (!type || i.type === type) && (!project || i.projectCode === project) && (!overdue || i.overdue) && (!needle || `${i.code ?? ''} ${i.title}`.toLocaleLowerCase().includes(needle)),
+      (i) => (!type || i.type === type) && (!project || i.projectCode === project) && (!overdue || i.overdue) && (!needle || `${i.code ?? ''} ${i.title} ${titleOf(i)}`.toLocaleLowerCase().includes(needle)),
     );
-  }, [work.data, type, project, overdue, q]);
+  }, [work.data, type, project, overdue, q, titleOf]);
 
   const columns: Column<MyWorkItem>[] = [
     { key: 'type', header: t('planning.inbox.type'), sortValue: (i) => i.type, cell: (i) => <span className="text-sm font-medium">{t(`planning.inbox.type_${i.type}`)}</span> },
@@ -63,7 +69,7 @@ export default function InboxPage() {
       key: 'item',
       header: t('planning.inbox.item'),
       isRowHeader: true,
-      sortValue: (i) => i.title,
+      sortValue: (i) => titleOf(i),
       cell: (i) => (
         <Link href={i.linkPath} className="group inline-flex flex-col" data-testid="inbox-link">
           {i.code ? (
@@ -72,8 +78,7 @@ export default function InboxPage() {
             </span>
           ) : null}
           <span className="text-ink group-hover:text-primary" dir="auto">
-            {/* The server titles baselines generically in English; show the translated wording instead. */}
-            {i.type === 'baseline_approval' ? t('planning.inbox.baselineTitle') : i.title}
+            {titleOf(i)}
           </span>
         </Link>
       ),

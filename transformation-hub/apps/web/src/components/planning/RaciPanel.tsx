@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { planningRoutes as P } from '@hub/contracts';
 import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
+import { useLocalized } from '@/lib/i18n-data';
 import { nodeHref, pk, useRefreshPlanning } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
 import { ConfirmCommandDialog } from '../ConfirmCommandDialog';
@@ -137,6 +138,7 @@ function AddRaciDialog({ open, onClose, entityType, entityId }: { open: boolean;
 /** Predecessors / successors of one schedule node. */
 export function NodeDependencies({ nodeId }: { nodeId: string }) {
   const { t, tStatus } = useI18n();
+  const loc = useLocalized();
   const { projectId } = useProjectContext();
   const deps = useQuery({ queryKey: pk.dependencies(projectId, nodeId), queryFn: ({ signal }) => api(P.listDependencies, { params: { projectId }, query: { nodeId }, signal }) });
   const items = deps.data?.items ?? [];
@@ -145,9 +147,9 @@ export function NodeDependencies({ nodeId }: { nodeId: string }) {
   const row = (d: (typeof items)[number], other: 'pred' | 'succ') => (
     <li key={d.id} className="flex items-center justify-between gap-2 py-1.5">
       {other === 'pred' ? (
-        <CodeLink href={nodeHref(projectId, d.predecessorType, d.predecessorId)} code={d.predecessorCode} title={d.predecessorTitle} />
+        <CodeLink href={nodeHref(projectId, d.predecessorType, d.predecessorId)} code={d.predecessorCode} title={loc(d.predecessorTitle, d.predecessorTitleAr)} />
       ) : (
-        <CodeLink href={nodeHref(projectId, d.successorType, d.successorId)} code={d.successorCode} title={d.successorTitle} />
+        <CodeLink href={nodeHref(projectId, d.successorType, d.successorId)} code={d.successorCode} title={loc(d.successorTitle, d.successorTitleAr)} />
       )}
       <span className="shrink-0 text-xs text-muted">
         {tStatus('dependencyTypes', d.type)}

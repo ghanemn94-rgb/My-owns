@@ -9,6 +9,7 @@ export * from './governance';
 export * from './decision-reliance';
 export * from './gates';
 export * from './measurement';
+export * from './planning-messages';
 export * from './canonical';
 export * from './planning';
 export * from './carveout';

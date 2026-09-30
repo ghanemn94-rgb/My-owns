@@ -20,6 +20,7 @@ import { useToast } from '@/components/Toast';
 import { btn, card, cx } from '@/components/ui';
 import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
 import { api } from '@/lib/api';
+import { useServerMessages } from '@/lib/i18n-data';
 import { useProjectContext } from '@/lib/project-context';
 import { AgendaRequestDialog, CreateActionDialog, DecisionPaperDialog } from '../../_components/dialogs';
 import { ExternalEvidenceFact, ExternalEvidencePicker } from '../../_components/evidence';
@@ -125,6 +126,7 @@ function num(v: unknown): number {
 export default function DecisionDetailPage() {
   const { decisionId } = useParams<{ decisionId: string }>();
   const { t, tStatus, formatDate, formatDateTime, locale } = useI18n();
+  const serverText = useServerMessages();
   const { projectId, can, me } = useProjectContext();
   const refresh = useGovRefresh();
   const toast = useToast();
@@ -480,6 +482,10 @@ export default function DecisionDetailPage() {
   const tallyCounts = (tally?.tally ?? null) as Record<string, unknown> | null;
   const tallyQuorum = (tally?.quorum ?? null) as Record<string, unknown> | null;
   const tallyAuthority = (tally?.authority ?? null) as Record<string, unknown> | null;
+  // QA-P2-04: the authority reason in the active language (codes from the outcome snapshot); the decision type is named as
+  // the matrix names it. Outcomes recorded before the codes existed keep the server's English sentence.
+  const authorityReasonCodes = d.authorityReasonI18n?.map((m) => (typeof m.params['decisionType'] === 'string' ? { ...m, params: { ...m.params, decisionType: typeName(types, m.params['decisionType'], locale) } } : m));
+  const authorityReasonText = d.authorityReason ?? (typeof tallyAuthority?.reason === 'string' ? tallyAuthority.reason : '');
 
   return (
     <>
@@ -489,7 +495,12 @@ export default function DecisionDetailPage() {
       </Link>
       <PageHeader
         eyebrow={<span dir="ltr">{d.code}</span>}
-        title={<span dir="auto">{d.title}</span>}
+        // Free text typed by the requester in the decision paper: shown as entered (data-user-text).
+        title={
+          <span dir="auto" data-user-text>
+            {d.title}
+          </span>
+        }
         documentTitle={`${d.code} — ${d.title}`}
         badges={
           <>
@@ -713,10 +724,12 @@ export default function DecisionDetailPage() {
                     ? [
                         {
                           label: t('governance.decision.facts.authorityReason'),
-                          // Server-generated rule explanation (English); the translated outcome is the badge in the header.
-                          value: (
-                            <span dir="ltr" lang="en">
-                              {d.authorityReason ?? String(tallyAuthority?.reason ?? '')}
+                          // Server rule explanation, translated from its codes; older outcomes: the English sentence.
+                          value: authorityReasonCodes?.length ? (
+                            <span data-testid="authority-reason">{serverText(authorityReasonCodes, authorityReasonText)}</span>
+                          ) : (
+                            <span dir="ltr" lang="en" data-testid="authority-reason">
+                              {authorityReasonText}
                             </span>
                           ),
                           wide: true,

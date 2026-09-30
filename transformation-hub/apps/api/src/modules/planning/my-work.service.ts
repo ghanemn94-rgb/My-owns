@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { Classification, CRITERION_EDITABLE_GATE_STATUSES, EVIDENCE_TARGET_READ_PERMISSION, NO_HUMAN_REQUESTER, RoleKey, isOverdue , separationSubject } from '@hub/domain';
+import { Classification, CRITERION_EDITABLE_GATE_STATUSES, EVIDENCE_TARGET_READ_PERMISSION, NO_HUMAN_REQUESTER, RoleKey, ServerMessage, isOverdue, planText, separationSubject } from '@hub/domain';
 import type { MY_WORK_TYPES } from '@hub/contracts';
 import type { RequestContext } from '../../platform/context';
 import { isFullScope } from '../../platform/context';
@@ -17,6 +17,10 @@ interface Item {
   entityId: string;
   code: string | null;
   title: string;
+  /** Only for records with a bilingual title (QA-P2-04); free text typed by a user has none. */
+  titleAr?: string | null;
+  /** Titles composed by the server, as codes (QA-P2-04). */
+  titleI18n?: ServerMessage[];
   status: string;
   dueDate: string | null;
   overdue: boolean;
@@ -61,7 +65,7 @@ export class MyWorkService {
     const mine = await tx.select().from(T).where(and(inArray(T.projectId, pids), eq(T.accountableUserId, me), inArray(T.status, ['not_started', 'in_progress', 'blocked'])));
     for (const t of mine) {
       const due = t.plannedFinish ?? t.forecastFinish;
-      push(byId.get(t.projectId)!, { type: 'task_accountable', entityId: t.id, code: t.wbsCode, title: t.title, status: t.status, dueDate: due, overdue: isOverdue(due, today(t.projectId), true), linkPath: `/projects/${t.projectId}/plan/tasks/${t.id}` }, t.isDemo);
+      push(byId.get(t.projectId)!, { type: 'task_accountable', entityId: t.id, code: t.wbsCode, title: t.title, titleAr: t.titleAr, status: t.status, dueDate: due, overdue: isOverdue(due, today(t.projectId), true), linkPath: `/projects/${t.projectId}/plan/tasks/${t.id}` }, t.isDemo);
     }
     // Tasks awaiting my acceptance
     const subT = await tx.select().from(T).where(and(inArray(T.projectId, pids), eq(T.status, 'submitted_for_acceptance')));
@@ -69,7 +73,7 @@ export class MyWorkService {
       if (!can('planning.deliverable.accept', t.projectId, { workstreamId: t.workstreamId, requesterUserId: t.submittedBy })) continue;
       // DOM-P2-07: only the task's designated approver role is asked to accept it.
       if (t.approverRole && !this.s.rolesFor(ctx, t.projectId, t.workstreamId).includes(t.approverRole)) continue;
-      push(byId.get(t.projectId)!, { type: 'task_acceptance', entityId: t.id, code: t.wbsCode, title: t.title, status: t.status, dueDate: t.plannedFinish, overdue: false, linkPath: `/projects/${t.projectId}/plan/tasks/${t.id}` }, t.isDemo);
+      push(byId.get(t.projectId)!, { type: 'task_acceptance', entityId: t.id, code: t.wbsCode, title: t.title, titleAr: t.titleAr, status: t.status, dueDate: t.plannedFinish, overdue: false, linkPath: `/projects/${t.projectId}/plan/tasks/${t.id}` }, t.isDemo);
     }
     // Deliverables awaiting my acceptance
     const D = schema.deliverable;
@@ -77,14 +81,14 @@ export class MyWorkService {
     for (const { d, approverRole } of subD) {
       if (!can('planning.deliverable.accept', d.projectId, { workstreamId: d.workstreamId, requesterUserId: d.submittedBy })) continue;
       if (approverRole && !this.s.rolesFor(ctx, d.projectId, d.workstreamId).includes(approverRole)) continue;
-      push(byId.get(d.projectId)!, { type: 'deliverable_acceptance', entityId: d.id, code: d.code, title: d.title, status: d.status, dueDate: d.dueDate, overdue: isOverdue(d.dueDate, today(d.projectId), true), linkPath: `/projects/${d.projectId}/plan/deliverables/${d.id}` }, d.isDemo);
+      push(byId.get(d.projectId)!, { type: 'deliverable_acceptance', entityId: d.id, code: d.code, title: d.title, titleAr: d.titleAr, status: d.status, dueDate: d.dueDate, overdue: isOverdue(d.dueDate, today(d.projectId), true), linkPath: `/projects/${d.projectId}/plan/deliverables/${d.id}` }, d.isDemo);
     }
     // Milestones awaiting evidence verification
     const M = schema.milestone;
     const pendM = await tx.select().from(M).where(and(inArray(M.projectId, pids), eq(M.status, 'achieved_pending_evidence')));
     for (const m of pendM) {
       if (!can('planning.deliverable.accept', m.projectId, { workstreamId: m.workstreamId, requesterUserId: m.reportedBy })) continue;
-      push(byId.get(m.projectId)!, { type: 'milestone_verification', entityId: m.id, code: m.code, title: m.title, status: m.status, dueDate: m.plannedDate, overdue: false, linkPath: `/projects/${m.projectId}/plan/milestones/${m.id}` }, m.isDemo);
+      push(byId.get(m.projectId)!, { type: 'milestone_verification', entityId: m.id, code: m.code, title: m.title, titleAr: m.titleAr, status: m.status, dueDate: m.plannedDate, overdue: false, linkPath: `/projects/${m.projectId}/plan/milestones/${m.id}` }, m.isDemo);
     }
     // Status updates to review
     const U = schema.statusUpdate;
@@ -94,7 +98,8 @@ export class MyWorkService {
     for (const u of subU) {
       if (!can('planning.status_update.review', u.projectId, { workstreamId: u.workstreamId, requesterUserId: u.submittedBy })) continue;
       const label = u.workstreamId ? (wsCodes.get(u.workstreamId) ?? 'Workstream') : 'Project';
-      push(byId.get(u.projectId)!, { type: 'status_update_review', entityId: u.id, code: label, title: `${label} update — period ending ${u.periodEnd}`, status: u.status, dueDate: null, overdue: false, linkPath: `/projects/${u.projectId}/plan/updates/${u.id}` }, u.isDemo);
+      const title = u.workstreamId ? planText('plan.work.status_update_workstream', { workstream: label, date: u.periodEnd }) : planText('plan.work.status_update_project', { date: u.periodEnd });
+      push(byId.get(u.projectId)!, { type: 'status_update_review', entityId: u.id, code: label, title: title.text, titleI18n: title.i18n, status: u.status, dueDate: null, overdue: false, linkPath: `/projects/${u.projectId}/plan/updates/${u.id}` }, u.isDemo);
     }
     // RAG overrides to review
     const O = schema.ragOverride;
@@ -102,7 +107,9 @@ export class MyWorkService {
     for (const o of pendO) {
       if (!can('planning.rag_override.review', o.projectId, { workstreamId: o.entityType === 'workstream' ? o.entityId : null, requesterUserId: o.requestedBy })) continue;
       const label = o.entityType === 'workstream' ? (wsCodes.get(o.entityId) ?? 'Workstream') : 'Project';
-      push(byId.get(o.projectId)!, { type: 'rag_override_review', entityId: o.id, code: label, title: `RAG override to ${o.overrideStatus} (calculated ${o.calculatedStatus}) — ${label}`, status: 'pending', dueDate: o.expiresOn, overdue: false, linkPath: `/projects/${o.projectId}/plan?tab=health` }, o.isDemo);
+      const rag = { status: o.overrideStatus, calculated: o.calculatedStatus };
+      const title = o.entityType === 'workstream' ? planText('plan.work.rag_override_workstream', { ...rag, workstream: label }) : planText('plan.work.rag_override_project', rag);
+      push(byId.get(o.projectId)!, { type: 'rag_override_review', entityId: o.id, code: label, title: title.text, titleI18n: title.i18n, status: 'pending', dueDate: o.expiresOn, overdue: false, linkPath: `/projects/${o.projectId}/plan?tab=health` }, o.isDemo);
     }
     // Change requests to assess / approve
     const C = schema.changeRequest;
@@ -118,7 +125,8 @@ export class MyWorkService {
     for (const b of bls) {
       if (!can('planning.baseline.approve', b.projectId, { requesterUserId: b.proposedBy })) continue;
       const p = byId.get(b.projectId)!;
-      push(p, { type: 'baseline_approval', entityId: b.id, code: `BL v${b.versionNo}`, title: `Baseline version ${b.versionNo} awaiting approval`, status: 'proposed', dueDate: null, overdue: false, linkPath: `/projects/${b.projectId}/plan/baselines/${b.id}` }, p.isDemo);
+      const title = planText('plan.work.baseline', { version: b.versionNo });
+      push(p, { type: 'baseline_approval', entityId: b.id, code: `BL v${b.versionNo}`, title: title.text, titleI18n: title.i18n, status: 'proposed', dueDate: null, overdue: false, linkPath: `/projects/${b.projectId}/plan/baselines/${b.id}` }, p.isDemo);
     }
     // Governance action items I own
     const A = schema.actionItem;
@@ -156,7 +164,7 @@ export class MyWorkService {
     const GD = schema.gateDefinition;
     const GA = schema.gateAssessment;
     const ready = await tx
-      .select({ a: GA, g: { id: GD.id, key: GD.key, name: GD.name, approverRole: GD.approverRole } })
+      .select({ a: GA, g: { id: GD.id, key: GD.key, name: GD.name, nameAr: GD.nameAr, approverRole: GD.approverRole } })
       .from(GA)
       .innerJoin(GD, and(eq(GD.id, GA.gateId), eq(GD.projectId, GA.projectId)))
       .where(and(inArray(GA.projectId, pids), eq(GA.isCurrent, true), eq(GA.status, 'ready_for_decision')));
@@ -166,7 +174,7 @@ export class MyWorkService {
       if (!withinAuthority) continue;
       // Same subjects as the decide command (SEC-P2-03): neither the submitter nor the gate reviewer.
       if (!this.s.policy.can(ctx, 'gates.assessment.decide', { projectId: p.id, classification: p.classification, requesterUserId: separationSubject(ctx.principal.userId, [a.submittedBy, a.reviewedBy]), withinAuthority })) continue;
-      push(p, { type: 'gate_decision', entityId: a.id, code: g.key, title: g.name, status: a.status, dueDate: null, overdue: false, linkPath: `/projects/${p.id}/gates/${g.id}` }, p.isDemo);
+      push(p, { type: 'gate_decision', entityId: a.id, code: g.key, title: g.name, titleAr: g.nameAr, status: a.status, dueDate: null, overdue: false, linkPath: `/projects/${p.id}/gates/${g.id}` }, p.isDemo);
     }
 
     // Gate assessments awaiting my gate-level review (DOM-P2-16) as the gate's DESIGNATED reviewer role: a cycle in
@@ -181,7 +189,7 @@ export class MyWorkService {
     for (const pid of reviewProjects) {
       const p = byId.get(pid)!;
       for (const r of await this.gates.pendingGateReviews(ctx, pid)) {
-        push(p, { type: 'gate_review', entityId: r.assessmentId, code: r.key, title: r.name, status: r.state, dueDate: null, overdue: false, linkPath: `/projects/${pid}/gates/${r.gateId}` }, p.isDemo);
+        push(p, { type: 'gate_review', entityId: r.assessmentId, code: r.key, title: r.name, titleAr: r.nameAr, status: r.state, dueDate: null, overdue: false, linkPath: `/projects/${pid}/gates/${r.gateId}` }, p.isDemo);
       }
     }
 
@@ -189,7 +197,7 @@ export class MyWorkService {
     const GC = schema.gateCriterion;
     const CA = schema.criterionAssessment;
     const toReview = await tx
-      .select({ ca: CA, c: { id: GC.id, key: GC.key, description: GC.description, reviewerRole: GC.reviewerRole }, g: { id: GD.id }, a: { status: GA.status } })
+      .select({ ca: CA, c: { id: GC.id, key: GC.key, description: GC.description, descriptionAr: GC.descriptionAr, reviewerRole: GC.reviewerRole }, g: { id: GD.id }, a: { status: GA.status } })
       .from(CA)
       .innerJoin(GA, and(eq(GA.id, CA.assessmentId), eq(GA.projectId, CA.projectId)))
       .innerJoin(GC, and(eq(GC.id, CA.criterionId), eq(GC.projectId, CA.projectId)))
@@ -214,7 +222,7 @@ export class MyWorkService {
         requester = subs.length ? (me && subs.includes(me) ? me : subs[0]!) : NO_HUMAN_REQUESTER;
       }
       if (!this.s.policy.can(ctx, 'gates.assessment.review', { projectId: p.id, classification: p.classification, requesterUserId: requester, workstreamId: viaWs?.workstreamId ?? null })) continue;
-      push(p, { type: 'gate_criterion_review', entityId: c.id, code: c.key, title: c.description, status: ca.status, dueDate: null, overdue: false, linkPath: `/projects/${p.id}/gates/${g.id}` }, p.isDemo);
+      push(p, { type: 'gate_criterion_review', entityId: c.id, code: c.key, title: c.description, titleAr: c.descriptionAr, status: ca.status, dueDate: null, overdue: false, linkPath: `/projects/${p.id}/gates/${g.id}` }, p.isDemo);
     }
 
     // Waivers awaiting me as the waiver authority (gate criteria and readiness checks): current authority role of the target.

@@ -17,7 +17,7 @@ import { LoadingState } from '../../LoadingState';
 import { StatusBadge } from '../../StatusBadge';
 import { useToast } from '../../Toast';
 import { btn, cx } from '../../ui';
-import { DateText, ProgressBar, RagBadge, Section } from '../bits';
+import { DateText, ProgressBar, RagBadge, Section, ServerText } from '../bits';
 import { FormDialog } from '../dialogs';
 import { useLocalized } from '@/lib/i18n-data';
 
@@ -26,6 +26,7 @@ type Weighted = Progress['project']['progress'];
 /** Weighted progress with its denominator and every exclusion + reason (measurement rules 1–2). */
 export function WeightedProgressBlock({ p, label }: { p: Weighted; label: string }) {
   const { t, formatNumber } = useI18n();
+  const loc = useLocalized();
   return (
     <div className="space-y-2" data-testid="weighted-progress">
       <ProgressBar percent={p.percent} label={label} />
@@ -38,13 +39,25 @@ export function WeightedProgressBlock({ p, label }: { p: Weighted; label: string
           <ul className="mt-1 max-h-48 list-disc space-y-0.5 overflow-y-auto ps-5 text-xs text-muted">
             {p.exclusions.map((e) => (
               <li key={e.id}>
-                <span dir="auto">{e.label ?? e.id}</span> — <span dir="ltr">{e.reason}</span>
+                <span dir="auto">{loc(e.label ?? e.id, e.labelAr)}</span> — <ServerText messages={e.reasonI18n} text={e.reason} />
               </li>
             ))}
           </ul>
         </details>
       ) : null}
     </div>
+  );
+}
+
+/** A workstream's data-quality gaps, translated from their codes (one message per entry; English when no codes). */
+export function DataQualityList({ w, className }: { w: WorkstreamHealth; className?: string }) {
+  const codes = w.dataQualityI18n?.length === w.dataQuality.length ? w.dataQualityI18n : null;
+  return (
+    <ul className={className}>
+      {w.dataQuality.map((x, i) => (
+        <ServerText key={`${i}-${x}`} as="li" messages={codes ? [codes[i]!] : null} text={x} />
+      ))}
+    </ul>
   );
 }
 
@@ -58,15 +71,13 @@ export function RagTriple({ rag }: { rag: WorkstreamHealth['rag'] }) {
         {rag.overridden ? <span className="text-xs text-muted">{t('planning.health.calculatedWas')}</span> : null}
         {rag.overridden ? <RagBadge value={rag.calculated.status} /> : null}
       </div>
-      <p className="text-xs text-muted" lang="en" dir="ltr">
-        {rag.calculated.explanation}
-      </p>
+      <ServerText as="p" className="text-xs text-muted" messages={rag.calculated.explanationI18n} text={rag.calculated.explanation} />
     </div>
   );
 }
 
 export function HealthTab() {
-  const { t, formatNumber } = useI18n();
+  const { t, formatNumber, formatDate } = useI18n();
   const loc = useLocalized();
   const { projectId, project } = useProjectContext();
   const prog = useProgress(projectId);
@@ -82,7 +93,7 @@ export function HealthTab() {
     { key: 'finish', header: t('planning.health.finish'), cell: (w) => <span className="text-xs">{t('planning.health.baselineVsForecast')}<br /><DateText value={w.baselineFinish} /> → <DateText value={w.forecastFinish} /></span> },
     { key: 'updated', header: t('planning.health.lastUpdate'), cell: (w) => (w.lastAcceptedUpdate ? <DateText value={w.lastAcceptedUpdate.periodEnd} /> : <StatusBadge enumName="ragStatuses" value="not_updated" tone="warning" />) },
     { key: 'blockers', header: t('planning.health.blockers'), sortValue: (w) => w.openBlockers.length, cell: (w) => <span className={cx('tabular', w.openBlockers.length > 0 && 'font-semibold text-danger')}>{formatNumber(w.openBlockers.length)}</span> },
-    { key: 'dq', header: t('planning.health.dataQuality'), cell: (w) => (w.dataQuality.length ? <ul className="list-disc ps-4 text-xs text-muted" lang="en" dir="ltr">{w.dataQuality.map((x) => <li key={x}>{x}</li>)}</ul> : <span className="text-xs text-success">{t('planning.health.noGaps')}</span>) },
+    { key: 'dq', header: t('planning.health.dataQuality'), cell: (w) => (w.dataQuality.length ? <DataQualityList w={w} className="list-disc ps-4 text-xs text-muted" /> : <span className="text-xs text-success">{t('planning.health.noGaps')}</span>) },
   ];
 
   return (
@@ -99,9 +110,7 @@ export function HealthTab() {
                 {t('planning.health.calculated')}: <RagBadge value={d.project.rag.calculated.status} />
               </p>
             ) : null}
-            <p className="text-xs text-muted" lang="en" dir="ltr">
-              {d.project.aggregate.explanation}
-            </p>
+            <ServerText as="p" className="text-xs text-muted" messages={d.project.aggregate.explanationI18n} text={d.project.aggregate.explanation} />
             <p className="text-xs text-muted">
               {t('planning.health.thresholds', { green: d.thresholds.greenMaxSlipDays, amber: d.thresholds.amberMaxSlipDays, stale: d.thresholds.staleAfterDays })}
             </p>
@@ -116,11 +125,9 @@ export function HealthTab() {
               {d.project.redCritical.map((r) => (
                 <li key={r.id} className="rounded-md border border-danger/30 bg-danger-soft p-2">
                   <p className="font-medium text-danger" dir="auto">
-                    {r.type === 'workstream' ? <Link href={workstreamHref(projectId, r.id, 'progress')} className="hover:underline">{r.label}</Link> : r.label}
+                    {r.type === 'workstream' ? <Link href={workstreamHref(projectId, r.id, 'progress')} className="hover:underline">{loc(r.label, r.labelAr)}</Link> : loc(r.label, r.labelAr)}
                   </p>
-                  <p className="text-xs text-ink" lang="en" dir="ltr">
-                    {r.reason}
-                  </p>
+                  <ServerText as="p" className="text-xs text-ink" messages={r.reasonI18n} text={r.reason} />
                 </li>
               ))}
             </ul>
@@ -133,7 +140,7 @@ export function HealthTab() {
           <ul className="list-disc space-y-0.5 ps-5 text-sm" data-testid="data-quality">
             {d.project.dataQualityIssues.map((i, k) => (
               <li key={`${i.id}-${k}`}>
-                <span dir="auto">{i.label}</span>: <span className="text-muted" lang="en" dir="ltr">{i.issue}</span>
+                <span dir="auto">{loc(i.label, i.labelAr)}</span>: <ServerText className="text-muted" messages={i.issueI18n} text={i.issue} />
               </li>
             ))}
           </ul>
@@ -142,13 +149,14 @@ export function HealthTab() {
 
       <DataTable caption={t('planning.health.workstreams')} columns={columns} rows={d.workstreams} rowKey={(w) => w.id} emptyTitle={t('planning.health.noWorkstreams')} testId="health-table" />
       <OverridesSection progress={d} />
-      <p className="text-xs text-muted">{t('planning.health.asOf', { date: d.today, tz: project.timezone })}</p>
+      <p className="text-xs text-muted">{t('planning.health.asOf', { date: formatDate(d.today), tz: project.timezone })}</p>
     </div>
   );
 }
 
 function OverridesSection({ progress }: { progress: Progress }) {
-  const { t, formatDateTime } = useI18n();
+  const { t, tStatus, formatDate, formatDateTime } = useI18n();
+  const loc = useLocalized();
   const { projectId, can, me } = useProjectContext();
   const refresh = useRefreshPlanning(projectId);
   const toast = useToast();
@@ -157,7 +165,7 @@ function OverridesSection({ progress }: { progress: Progress }) {
   const [review, setReview] = useState<{ o: RagOverride; approve: boolean } | null>(null);
 
   const columns: Column<RagOverride>[] = [
-    { key: 'entity', header: t('planning.override.item'), isRowHeader: true, cell: (o) => <span dir="auto">{o.entityLabel}</span> },
+    { key: 'entity', header: t('planning.override.item'), isRowHeader: true, cell: (o) => <span dir="auto">{loc(o.entityLabel, o.entityLabelAr)}</span> },
     { key: 'state', header: t('planning.common.status'), cell: (o) => <StatusBadge enumName="approvalRequestStatuses" value={o.state} label={t(`planning.override.state_${o.state}`)} /> },
     { key: 'change', header: t('planning.override.change'), cell: (o) => <span className="inline-flex flex-wrap items-center gap-1"><RagBadge value={o.calculatedAtRequest} /> → <RagBadge value={o.overrideStatus} /></span> },
     { key: 'reason', header: t('planning.common.reason'), cell: (o) => <span dir="auto" className="text-sm">{o.reason}</span> },
@@ -206,7 +214,7 @@ function OverridesSection({ progress }: { progress: Progress }) {
           noteMode={review.approve ? 'optional' : 'required'}
           noteLabel={review.approve ? undefined : t('planning.common.reason')}
           expectedVersion={review.o.version}
-          consequences={[review.approve ? t('planning.override.approveEffect', { status: review.o.overrideStatus, date: review.o.expiresOn }) : t('planning.override.rejectEffect'), t('planning.commands.notSelf'), t('common.command.audited')]}
+          consequences={[review.approve ? t('planning.override.approveEffect', { status: tStatus('ragStatuses', review.o.overrideStatus), date: formatDate(review.o.expiresOn) }) : t('planning.override.rejectEffect'), t('planning.commands.notSelf'), t('common.command.audited')]}
           onReload={() => void refresh()}
           onConfirm={async ({ note }) => {
             const params = { projectId, overrideId: review.o.id };

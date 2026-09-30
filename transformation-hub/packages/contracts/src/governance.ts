@@ -27,6 +27,7 @@ import {
   PageQuery,
   ProjectParams,
   RequiredText,
+  ServerMessageSchema,
   SortParam,
   Text,
   UnitScale,
@@ -357,6 +358,11 @@ export const DecisionDetailDto = DecisionSummaryDto.extend({
   dependencies: z.string().nullable(),
   requiredAuthority: z.string().nullable(),
   authorityReason: z.string().nullable(),
+  /**
+   * `authorityReason` as codes + parameters (QA-P2-04; web: `governance.messages.<code>`) — from the outcome's tally
+   * snapshot when it recorded the same reason; null for older outcomes (the client then shows the English sentence).
+   */
+  authorityReasonI18n: z.array(ServerMessageSchema).nullable(),
   recommendationRecordedBy: Uuid.nullable(),
   externalAuthorityReference: z.string().nullable(),
   /** Verified evidence link (documents module) of the external authority's decision (DOM-P2-12). */

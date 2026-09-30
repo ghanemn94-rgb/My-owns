@@ -16,6 +16,7 @@ import {
   notFound,
   isOverdue,
   assertDesignatedApprover,
+  effortMessages,
 } from '@hub/domain';
 import type { z } from 'zod';
 import type {
@@ -85,15 +86,19 @@ export class WbsService {
       title: t.title,
       titleAr: t.titleAr,
       description: t.description,
+      descriptionAr: t.descriptionAr,
       status: t.status as TaskStatus,
       accountableUserId: t.accountableUserId,
       accountableName: t.accountableUserId ? (names.get(t.accountableUserId) ?? null) : null,
       proposedOwnerFunction: t.proposedOwnerFunction,
       output: t.output,
+      outputAr: t.outputAr,
       acceptanceCriteria: t.acceptanceCriteria,
+      acceptanceCriteriaAr: t.acceptanceCriteriaAr,
       approverRole: t.approverRole,
       evidenceType: t.evidenceType,
       effort: t.effort,
+      effortI18n: effortMessages(t.effort),
       durationDays: t.durationDays,
       durationBasis: t.durationBasis,
       plannedStart: t.plannedStart,
@@ -180,11 +185,14 @@ export class WbsService {
       title: body.title,
       titleAr: body.titleAr ?? null,
       description: body.description ?? null,
+      descriptionAr: body.descriptionAr ?? null,
       // Created deliberately by a planner → confirmed into the plan (template activities start as Draft instead).
       status: 'not_started',
       accountableUserId: body.accountableUserId ?? null,
       output: body.output ?? null,
+      outputAr: body.outputAr ?? null,
       acceptanceCriteria: body.acceptanceCriteria ?? null,
+      acceptanceCriteriaAr: body.acceptanceCriteriaAr ?? null,
       approverRole: body.approverRole ?? null,
       evidenceType: body.evidenceType ?? null,
       effort: body.effort ?? null,
@@ -223,6 +231,17 @@ export class WbsService {
     if (body.description !== undefined) c.description = body.description;
     if (body.output !== undefined) c.output = body.output;
     if (body.acceptanceCriteria !== undefined) c.acceptanceCriteria = body.acceptanceCriteria;
+    // QA-P2-04: the Arabic of a definition field follows its English text. Given explicitly, it is stored; when only the
+    // English text changes, the (template) Arabic no longer matches it and is cleared, so the Arabic UI never shows a stale
+    // translation (it shows the English text as entered instead).
+    const arabicOf = (field: 'description' | 'output' | 'acceptanceCriteria', arField: 'descriptionAr' | 'outputAr' | 'acceptanceCriteriaAr') => {
+      const ar = body[arField];
+      if (ar !== undefined) c[arField] = ar;
+      else if (body[field] !== undefined && body[field] !== t[field] && t[arField] !== null) c[arField] = null;
+    };
+    arabicOf('description', 'descriptionAr');
+    arabicOf('output', 'outputAr');
+    arabicOf('acceptanceCriteria', 'acceptanceCriteriaAr');
     if (body.approverRole !== undefined) c.approverRole = body.approverRole;
     if (body.evidenceType !== undefined) c.evidenceType = body.evidenceType;
     if (body.effort !== undefined) c.effort = body.effort;
