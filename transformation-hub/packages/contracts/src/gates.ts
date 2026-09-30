@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CRITERION_STATUSES, GATE_ASSESSMENT_STATUSES, ROLE_KEYS, STATUS_DIMENSION_KEYS, WAIVER_STATUSES, DECISION_STATUSES, DECISION_AUTHORITY_OUTCOMES } from '@hub/domain';
+import { CRITERION_STATUSES, GATE_ASSESSMENT_STATUSES, ROLE_KEYS, STATUS_DIMENSION_KEYS, WAIVER_STATUSES, DECISION_STATUSES, DECISION_AUTHORITY_OUTCOMES, REASSESSMENT_REASONS } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
 import { Uuid, IsoDate, ProjectParams, ExpectedVersion, Text, RequiredText, idParams, NoSort, ServerMessageSchema } from './common';
 
@@ -39,7 +39,8 @@ export const GateEvaluationDto = z.object({
 export const ReassessmentFlagDto = z.object({
   needsReassessment: z.boolean(),
   requestedAt: z.string().nullable(),
-  criteria: z.array(z.object({ criterionId: Uuid, key: z.string(), evidenceLinkIds: z.array(Uuid) })),
+  /** `reason`: conflicting evidence (AT-14), evidence rejected as defective, or superseded evidence relied upon (DOM-P2-05). */
+  criteria: z.array(z.object({ criterionId: Uuid, key: z.string(), evidenceLinkIds: z.array(Uuid), reason: z.enum(REASSESSMENT_REASONS) })),
   escalationId: Uuid.nullable(),
   /** Upstream gates whose approval is flagged (downstream gates are flagged for review, never reverted). */
   upstreamGateKeys: z.array(z.string()),
@@ -120,7 +121,11 @@ export const CriterionDto = z.object({
   reviewerRole: Role,
   applicability: z.string(),
   version: z.number().int(),
-  evidence: z.object({ active: z.number().int(), conflicting: z.number().int() }),
+  /**
+   * `verified` = active links also accepted in the documents module's evidence verification. Advisory for gate criteria:
+   * the criterion's designated reviewer (never the evidence owner) is the checker (business-gates.md §4, DOM-P2-21).
+   */
+  evidence: z.object({ active: z.number().int(), conflicting: z.number().int(), verified: z.number().int() }),
   assessment: z.object({
     /** Null for a criterion added after the cycle started (its row is created by the first command). */
     id: Uuid.nullable(),

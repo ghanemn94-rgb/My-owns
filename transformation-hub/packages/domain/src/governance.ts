@@ -24,6 +24,8 @@ export interface AuthorityPolicy {
     unitScale: number;
     withinCommitteeAuthority: boolean;
     escalateTo: string;
+    /** Gates whose passage this decision type may approve (authority-matrix.md §2.2; none when absent — DOM-P2-01). */
+    gateKeys?: string[];
   }[];
   selfApprovalProhibited: boolean;
   recusedMembersExcludedFromQuorum: boolean;

@@ -158,7 +158,7 @@ export const governanceSeed: ModuleSeed = {
         title: 'Demo — Recommend passage of gate G0 (Mandate & Governance) to the delegating authority',
         gateKey: 'G0',
         ...paper({
-          decisionTypeKey: 'charter_amendment',
+          decisionTypeKey: 'gate_decision_mandate',
           issue: 'DEMO — The programme mandate, charters and delegation (G0 criteria) are evidenced; G0 passage is reserved to the delegating authority.',
           recommendation: 'DEMO — Recommend that the delegating authority approves passage of G0.',
           impacts: { financial: 'DEMO — None identified.', operational: 'DEMO — Enables gate G1 assessment to conclude.', schedule: 'DEMO — Keeps the synthetic G1 date.' },

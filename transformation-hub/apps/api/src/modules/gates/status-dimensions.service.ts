@@ -112,7 +112,7 @@ export class StatusDimensionsService {
       )
       .where(eq(schema.readinessCheck.projectId, projectId));
     const g4 = await tx
-      .select({ status: schema.gateAssessment.status })
+      .select({ status: schema.gateAssessment.status, evaluation: schema.gateAssessment.evaluation })
       .from(schema.gateAssessment)
       .innerJoin(schema.gateDefinition, eq(schema.gateDefinition.id, schema.gateAssessment.gateId))
       .where(and(eq(schema.gateAssessment.projectId, projectId), eq(schema.gateDefinition.key, STANDALONE_GATE_KEY), eq(schema.gateAssessment.isCurrent, true)));
@@ -134,6 +134,8 @@ export class StatusDimensionsService {
         waivedValid: r.status === 'waived' && r.waivable && waiverIsEffective(w, today),
       })),
       standaloneAccepted: g4.some((a) => APPROVED_GATE_STATUSES.includes(a.status)),
+      // DOM-P2-05: an approval flagged for controlled reassessment (relied-upon evidence changed) no longer counts.
+      standaloneUnderReassessment: g4.some((a) => APPROVED_GATE_STATUSES.includes(a.status) && (a.evaluation as { needsReassessment?: boolean } | null)?.needsReassessment === true),
       closings,
       tsas,
       independenceDefinitionApproved: defs.length ? defs.some((d) => d.status === 'approved') : undefined,

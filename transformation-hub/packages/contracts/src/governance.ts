@@ -64,6 +64,8 @@ export const AuthorityPolicySchema = z
           escalateTo: RequiredText(300),
           conditions: z.array(Text(500)).max(20).optional(),
           requiredRecommenders: z.array(Text(200)).max(20).optional(),
+          /** Gates whose passage this decision type may approve (DOM-P2-01); a type without gate keys backs no gate. */
+          gateKeys: z.array(z.string().trim().regex(/^[A-Za-z0-9_-]{1,16}$/, 'gate key')).max(20).optional(),
         }),
       )
       .min(1)

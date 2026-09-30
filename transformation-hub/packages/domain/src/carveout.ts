@@ -26,6 +26,8 @@ export interface DimensionInput {
   /** `waivedValid` = waivable check with an approved waiver (a bare "waived" status does not count — D-02). */
   readiness: { mandatory: boolean; blocker: boolean; status: ReadinessStatus; waivedValid?: boolean }[];
   standaloneAccepted: boolean; // G4 approved
+  /** The G4 approval is flagged for controlled reassessment (relied-upon evidence changed — DOM-P2-05): it does not count. */
+  standaloneUnderReassessment?: boolean;
   closings: { kind: ClosingKind; status: ClosingStatus }[];
   /** TSAs and approved enduring arrangements affect the independence picture (spec §3, D-15). */
   tsas?: { status: TsaStatus; isEnduringArrangement: boolean }[];
@@ -60,6 +62,7 @@ export const DIMENSION_MESSAGES_EN: Readonly<Record<string, string>> = {
   'dimension.perimeter.in_progress': '{verified} of {inScope} in-scope items verified; {pending} item(s) with pending disposition.',
   'dimension.perimeter.not_started': '{inScope} in-scope items; none transferred.',
   'dimension.readiness.standalone_accepted': 'Standalone operations accepted (G4).',
+  'dimension.readiness.standalone_reassessment': 'The standalone acceptance (G4) is under controlled reassessment: evidence it relied upon changed.',
   'dimension.readiness.tsa_blocked': '{tsaProblems} TSA(s) breached or expired without an accepted exit.',
   'dimension.readiness.no_checks': 'No mandatory readiness checks defined.',
   'dimension.readiness.blockers_failed': '{failedBlockers} blocking readiness check(s) failed or improperly waived.',
@@ -139,14 +142,15 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
   const enduring = tsas.filter((t) => t.isEnduringArrangement).length;
   const dep: ServerMessage[] = tsas.length ? [m('dimension.readiness.dependencies', { active: tsaActive, enduring })] : [];
   const def: ServerMessage[] = input.independenceDefinitionApproved === false ? [m('dimension.readiness.definition_pending')] : [];
+  const reassess: ServerMessage[] = input.standaloneAccepted && input.standaloneUnderReassessment ? [m('dimension.readiness.standalone_reassessment')] : [];
   const ops: DimensionState = (() => {
     const k = 'operational_readiness' as const;
-    if (input.standaloneAccepted) return dimension(k, 'standalone_accepted', [m('dimension.readiness.standalone_accepted'), ...dep]);
-    if (tsaProblems > 0) return dimension(k, 'blocked', [m('dimension.readiness.tsa_blocked', { tsaProblems }), ...dep]);
-    if (required.length === 0) return dimension(k, 'not_assessed', [m('dimension.readiness.no_checks'), ...dep, ...def]);
-    if (failedBlockers > 0) return dimension(k, 'blocked', [m('dimension.readiness.blockers_failed', { failedBlockers }), ...dep]);
-    if (passed === required.length) return dimension(k, 'day1_ready', [m('dimension.readiness.all_passed'), ...dep, ...def]);
-    return dimension(k, 'in_progress', [m('dimension.readiness.in_progress', { passed, required: required.length }), ...dep, ...def]);
+    if (input.standaloneAccepted && !input.standaloneUnderReassessment) return dimension(k, 'standalone_accepted', [m('dimension.readiness.standalone_accepted'), ...dep]);
+    if (tsaProblems > 0) return dimension(k, 'blocked', [...reassess, m('dimension.readiness.tsa_blocked', { tsaProblems }), ...dep]);
+    if (required.length === 0) return dimension(k, 'not_assessed', [...reassess, m('dimension.readiness.no_checks'), ...dep, ...def]);
+    if (failedBlockers > 0) return dimension(k, 'blocked', [...reassess, m('dimension.readiness.blockers_failed', { failedBlockers }), ...dep]);
+    if (passed === required.length) return dimension(k, 'day1_ready', [...reassess, m('dimension.readiness.all_passed'), ...dep, ...def]);
+    return dimension(k, 'in_progress', [...reassess, m('dimension.readiness.in_progress', { passed, required: required.length }), ...dep, ...def]);
   })();
 
   const signing = input.closings.filter((c) => c.kind === 'signing');
