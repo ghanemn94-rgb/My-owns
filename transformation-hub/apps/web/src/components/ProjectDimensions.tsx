@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { ProjectSummary } from '@hub/contracts';
 import { STATUS_DIMENSION_KEYS } from '@hub/domain';
 import { useI18n } from '@/i18n/provider';
+import { useServerMessages } from '@/lib/i18n-data';
 import { StatusBadge } from './StatusBadge';
 import { card, cx } from './ui';
 
@@ -43,19 +44,21 @@ export function DimensionCards({
   linkLabel?: string;
 }) {
   const { t, tStatus } = useI18n();
+  const serverText = useServerMessages();
   if (dimensions.length === 0) return <p className="text-sm text-muted">{t('portfolio.noDimensions')}</p>;
   return (
     <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-testid="dimension-cards">
       {ordered(dimensions).map((d) => {
         const href = hrefFor(d.key);
+        const explanation = serverText(d.explanationI18n, d.explanation);
         return (
           <li key={d.key} className={cx(card, 'flex flex-col gap-2 p-4')} data-dimension={d.key}>
             <h3 className="text-sm font-semibold text-ink">{tStatus('statusDimensionKeys', d.key)}</h3>
             <StatusBadge enumName="dimensionStates" value={d.state} size="md" />
-            {d.explanation ? (
+            {explanation ? (
               <p className="text-xs text-muted" dir="auto">
                 <span className="sr-only">{t('project.cockpit.explanation')}: </span>
-                {d.explanation}
+                {explanation}
               </p>
             ) : null}
             {href ? (

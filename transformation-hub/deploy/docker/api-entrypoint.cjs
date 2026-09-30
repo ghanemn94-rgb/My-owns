@@ -122,8 +122,19 @@ async function healthcheck(root, role) {
   process.exit(0); // one-shot commands (migrate, seed) have no long-running health
 }
 
+/**
+ * Orchestrators and compose files pass optional settings as EMPTY strings (`HUB_OIDC_ISSUER: ${HUB_OIDC_ISSUER:-}`),
+ * while the application reads an unset variable as "not configured" and validates a set one (an empty issuer is an
+ * invalid URL and would stop the API from booting). Here an empty HUB_* value means "unset" — it never means anything
+ * else — so it is removed before the application starts. Non-empty values are passed through unchanged.
+ */
+function dropEmptyHubSettings(env = process.env) {
+  for (const k of Object.keys(env)) if (k.startsWith('HUB_') && env[k] === '') delete env[k];
+}
+
 async function main() {
   const [cmd = 'api', ...rest] = process.argv.slice(2);
+  dropEmptyHubSettings();
   const root = appRoot();
   switch (cmd) {
     case 'api':

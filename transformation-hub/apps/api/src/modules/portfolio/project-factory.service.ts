@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { schema } from '@hub/db';
-import type { ProjectTemplateDefinition } from '@hub/domain';
+import { DIMENSION_MESSAGES_EN, DIMENSION_NOT_YET_ASSESSED, renderMessagesEn, type ProjectTemplateDefinition } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { newId } from '../../platform/ids';
 
@@ -221,7 +221,14 @@ export class ProjectFactory {
     for (const chunk of chunks(checks, 200)) await tx.insert(schema.readinessCheck).values(chunk);
 
     // Status dimensions (only those the template defines)
-    const dims = def.statusDimensions.map((d) => ({ ...base, id: newId(), key: d.key as 'incorporation', state: 'not_assessed', explanation: 'Not yet assessed' }));
+    const dims = def.statusDimensions.map((d) => ({
+      ...base,
+      id: newId(),
+      key: d.key as 'incorporation',
+      state: 'not_assessed',
+      explanation: renderMessagesEn(DIMENSION_NOT_YET_ASSESSED, DIMENSION_MESSAGES_EN),
+      explanationI18n: DIMENSION_NOT_YET_ASSESSED,
+    }));
     if (dims.length) await tx.insert(schema.statusDimension).values(dims);
 
     // AI starts OFF for every project (spec §12.3)

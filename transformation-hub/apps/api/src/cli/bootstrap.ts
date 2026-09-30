@@ -28,6 +28,12 @@ export async function bootstrap(env = process.env, log: (m: string) => void = co
   await runMigrations(ownerUrl, log);
   const pool = new Pool({ connectionString: ownerUrl, max: 1 });
   try {
+    // Refuse BEFORE writing anything: a refused bootstrap must not rename or otherwise touch a demo organization.
+    const demoUsers = await pool.query<{ n: number }>(
+      `select count(*)::int n from app_user u join organization o on o.id = u.org_id where o.slug = $1 and u.is_demo`,
+      [slug],
+    );
+    if (demoUsers.rows[0]!.n > 0) throw new Error('Demo users exist in this organization — refusing to bootstrap production over a demo database');
     const org = await pool.query<{ id: string }>(
       `insert into organization (id, name, slug) values (gen_random_uuid(), $1, $2)
        on conflict (slug) do update set name = excluded.name returning id`,

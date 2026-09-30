@@ -21,6 +21,8 @@ import {
 } from '@hub/domain';
 import type { RequestContext } from '../../platform/context';
 import { likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, readinessRoutes } from '@hub/contracts';
 import { newId } from '../../platform/ids';
 import { WaiverService, WaiverRecord } from '../gates/waiver.service';
 import { ReadinessSupport, iso } from './readiness.support';
@@ -41,6 +43,7 @@ export interface CheckListQuery {
   workstreamId?: string;
   cutoverPlanId?: string;
   blocker?: 'true' | 'false';
+  sort?: RouteInput<typeof readinessRoutes.listReadinessChecks>['query']['sort'];
 }
 
 /**
@@ -109,8 +112,9 @@ export class ReadinessChecksService implements OnModuleInit {
     );
     const tx = this.s.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(c).where(where)) as [{ total: number }];
-    const rows = await tx.select().from(c).where(where).orderBy(asc(c.code)).limit(q.pageSize).offset(offsetOf(q));
-    return pageOf(await this.dtos(projectId, rows), Number(total), q);
+    const order = orderBySort(q.sort, { code: c.code, title: c.title, area: c.area, status: c.status, dueDate: c.dueDate, updatedAt: c.updatedAt }, c.id, [asc(c.code), asc(c.id)]);
+    const rows = await tx.select().from(c).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
+    return { ...pageOf(await this.dtos(projectId, rows), Number(total), q), people: await this.s.people(rows.flatMap((r) => [r.ownerUserId, r.signedOffBy])) };
   }
 
   async get(ctx: RequestContext, projectId: string, checkId: string) {
@@ -119,10 +123,12 @@ export class ReadinessChecksService implements OnModuleInit {
     const runs = await this.s.db.tx().select().from(schema.readinessTestRun).where(eq(schema.readinessTestRun.readinessCheckId, c.id)).orderBy(asc(schema.readinessTestRun.seq));
     const p = await this.s.project(projectId);
     const ws = await this.waivers.list(projectId, 'readiness_check');
+    const own = ws.filter((w) => w.targetId === c.id);
     return {
       ...dto!,
       testRuns: runs.map(runDto),
-      waivers: ws.filter((w) => w.targetId === c.id).map((w) => waiverDto(w, c.code, this.s.today(p))),
+      waivers: own.map((w) => waiverDto(w, c.code, this.s.today(p))),
+      people: await this.s.people([c.ownerUserId, c.createdBy, c.signedOffBy, c.waivabilityDeterminedBy, ...runs.map((r) => r.recordedBy), ...own.flatMap((w) => [w.requestedBy, w.decidedBy])]),
     };
   }
 
@@ -516,7 +522,8 @@ export class ReadinessChecksService implements OnModuleInit {
       : [];
     const codes = new Map(visible.map((v) => [v.id, v.code]));
     const today = this.s.today(p);
-    return { items: rows.filter((w) => codes.has(w.targetId)).map((w) => waiverDto(w, codes.get(w.targetId)!, today)) };
+    const items = rows.filter((w) => codes.has(w.targetId));
+    return { items: items.map((w) => waiverDto(w, codes.get(w.targetId)!, today)), people: await this.s.people(items.flatMap((w) => [w.requestedBy, w.decidedBy])) };
   }
 
   async approveWaiver(ctx: RequestContext, projectId: string, waiverId: string, body: { expectedVersion: number; note?: string }) {

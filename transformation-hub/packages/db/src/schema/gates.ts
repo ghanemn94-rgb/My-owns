@@ -189,7 +189,10 @@ export const statusDimension = pgTable(
     projectId: projectIdCol().references(() => project.id),
     key: statusDimensionKey('key').notNull(),
     state: varchar('state', { length: 48 }).notNull(),
+    /** English explanation (audit, record history, AI context). */
     explanation: text('explanation'),
+    /** The same explanation as translatable codes + parameters (QA-P1-14); null for rows computed before it. */
+    explanationI18n: jsonb('explanation_i18n').$type<{ code: string; params: Record<string, string | number> }[]>(),
     counts: jsonb('counts').$type<Record<string, number>>(),
     computedAt: ts('computed_at').notNull().defaultNow(),
     version: versionCol(),

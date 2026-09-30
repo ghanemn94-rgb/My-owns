@@ -11,9 +11,10 @@ import {
   TSA_STATUSES,
   WAIVER_STATUSES,
   APPROVAL_REQUEST_STATUSES,
+  LINKED_DECISION_ISSUE_CODES,
 } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
-import { ClassificationSchema, ExpectedVersion, IsoDate, IsoInstant, MoneySchema, PageQuery, ProjectParams, RequiredText, Text, Uuid, paged } from './common';
+import { ClassificationSchema, ExpectedVersion, IsoDate, IsoInstant, MoneySchema, NoSort, PageQuery, ProjectParams, RequiredText, SortParam, Text, Uuid, paged } from './common';
 
 /**
  * Day-1 readiness checks, cutover plans / go-no-go and TSA services (spec §7.3, §7.4; AT-09, AT-10; REQ-RDY-*,
@@ -31,6 +32,8 @@ const Cmd = z.object({ expectedVersion: ExpectedVersion, note: Text(4000).option
 const CmdWithNote = z.object({ expectedVersion: ExpectedVersion, note: RequiredText(4000) });
 const VersionResult = z.object({ id: Uuid, version: z.number().int() });
 const listOf = <T extends z.ZodTypeAny>(t: T) => z.object({ items: z.array(t) });
+/** Display names of the users referenced in the response (so the UI never shows bare ids). */
+export const PeopleDto = z.record(z.string(), z.string());
 const BoolQuery = z.enum(['true', 'false']).optional();
 
 const CheckParams = ProjectParams.extend({ checkId: Uuid });
@@ -111,6 +114,7 @@ export const ReadinessCheckDetailDto = ReadinessCheckDto.extend({
   /** Every test run, oldest first (append-only: a failure stays visible after a later pass). */
   testRuns: z.array(ReadinessTestRunDto),
   waivers: z.array(ReadinessWaiverDto),
+  people: PeopleDto,
 });
 
 const CheckCommandResult = z.object({ id: Uuid, status: RStatus, version: z.number().int() });
@@ -188,6 +192,8 @@ export const LinkedDecisionSummaryDto = z.object({
   decisionTypeKey: z.string().nullable(),
   /** Why the decision does not (yet) authorize the action; null when it does. */
   issue: z.string().nullable(),
+  /** The same reason as a code (translated by the web); null when the decision authorizes the action. */
+  issueCode: z.enum(LINKED_DECISION_ISSUE_CODES).nullable(),
 });
 
 export const CutoverPlanDetailDto = CutoverPlanDto.extend({
@@ -220,6 +226,7 @@ export const CutoverPlanDetailDto = CutoverPlanDto.extend({
   /** Go/no-go decision history, oldest first (AT-09). */
   decisionHistory: z.array(CutoverDecisionRecordDto),
   acceptanceEvidence: Evidence,
+  people: PeopleDto,
 });
 
 const CutoverCommandResult = z.object({ id: Uuid, status: CStatus, goNoGo: z.enum(GO_NO_GO), version: z.number().int() });
@@ -297,6 +304,7 @@ export const TsaServiceDetailDto = TsaServiceDto.extend({
   extensionDecision: LinkedDecisionSummaryDto.nullable(),
   /** State-machine commands currently allowed (guards are still checked by each command). */
   allowedCommands: z.array(z.string()),
+  people: PeopleDto,
 });
 
 const TsaCommandResult = z.object({ id: Uuid, status: TStatus, version: z.number().int() });
@@ -437,8 +445,10 @@ export const readinessRoutes = registerRoutes({
       workstreamId: Uuid.optional(),
       cutoverPlanId: Uuid.optional(),
       blocker: BoolQuery,
+      // Default order: code. `area` and `status` sort in enum order.
+      sort: SortParam(['code', 'title', 'area', 'status', 'dueDate', 'updatedAt']),
     }),
-    response: paged(ReadinessCheckDto),
+    response: paged(ReadinessCheckDto).extend({ people: PeopleDto }),
   }),
   getReadinessCheck: defineRoute({
     id: 'readiness.getCheck',
@@ -564,8 +574,8 @@ export const readinessRoutes = registerRoutes({
     tags,
     access: 'readiness.register.read',
     params: ProjectParams,
-    query: z.object({ status: z.enum(WAIVER_STATUSES).optional() }),
-    response: listOf(ReadinessWaiverDto),
+    query: z.object({ status: z.enum(WAIVER_STATUSES).optional(), sort: NoSort }),
+    response: listOf(ReadinessWaiverDto).extend({ people: PeopleDto }),
   }),
   approveReadinessWaiver: defineRoute({
     id: 'readiness.approveWaiver',
@@ -601,8 +611,9 @@ export const readinessRoutes = registerRoutes({
     tags,
     access: 'readiness.register.read',
     params: ProjectParams,
-    query: PageQuery.extend({ status: CStatus.optional(), siteId: Uuid.optional() }),
-    response: paged(CutoverPlanDto),
+    // Default order: code.
+    query: PageQuery.extend({ status: CStatus.optional(), siteId: Uuid.optional(), sort: SortParam(['code', 'title', 'status', 'windowStart', 'updatedAt']) }),
+    response: paged(CutoverPlanDto).extend({ people: PeopleDto }),
   }),
   getCutoverPlan: defineRoute({
     id: 'readiness.getCutoverPlan',
@@ -754,8 +765,9 @@ export const readinessRoutes = registerRoutes({
     tags,
     access: 'readiness.register.read',
     params: ProjectParams,
-    query: PageQuery.extend({ status: TStatus.optional(), workstreamId: Uuid.optional(), enduring: BoolQuery }),
-    response: paged(TsaServiceDto),
+    // Default order: code.
+    query: PageQuery.extend({ status: TStatus.optional(), workstreamId: Uuid.optional(), enduring: BoolQuery, sort: SortParam(['code', 'name', 'status', 'startDate', 'endDate', 'updatedAt']) }),
+    response: paged(TsaServiceDto).extend({ people: PeopleDto }),
   }),
   getTsaService: defineRoute({
     id: 'readiness.getTsaService',

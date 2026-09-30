@@ -44,6 +44,7 @@ import type {
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { RecordVersionService, assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { ChangeControlService } from '../planning/change-control.service';
@@ -159,7 +160,8 @@ export class PerimeterService {
     if (q.q) conds.push(or(ilike(PI.name, likeContains(q.q)), ilike(PI.code, likeContains(q.q)))!);
     const where = and(...conds);
     const [{ n }] = (await this.tx.select({ n: count() }).from(PI).where(where)) as [{ n: number }];
-    const rows = await this.tx.select().from(PI).where(where).orderBy(asc(PI.code)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { code: PI.code, name: PI.name, type: PI.type, disposition: PI.disposition, updatedAt: PI.updatedAt }, PI.id, [asc(PI.code), asc(PI.id)]);
+    const rows = await this.tx.select().from(PI).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     void p;
     return pageOf(await this.summaries(projectId, rows), Number(n), q);
   }
@@ -357,7 +359,7 @@ export class PerimeterService {
    * Whether a scope change needs a change request. Existence of an approved baseline is read directly; when one exists,
    * the authoritative membership check is ChangeControlService.isInApprovedBaseline / currentBaseline (planning).
    */
-  private async changeControlFor(ctx: RequestContext, p: CarveoutProject, item: Item | null, toDisposition: PerimeterDisposition) {
+  private async changeControlFor(ctx: RequestContext, p: CarveoutProject, item: Item | null, toDisposition: PerimeterDisposition, newItemWorkstreamId: string | null = null) {
     const scope = await this.s.baselineScope(p.id);
     let planningApproved = false;
     let inPlanning = false;
@@ -367,7 +369,8 @@ export class PerimeterService {
         planningApproved = r.baselineExists;
         inPlanning = r.inBaseline;
       } else {
-        planningApproved = !!(await this.changeControl.currentBaseline(ctx, p.id)).baseline;
+        // A new item: read the baseline through the item's workstream (workstream-scoped leads — planning reach).
+        planningApproved = !!(await this.changeControl.currentBaseline(ctx, p.id, { workstreamId: newItemWorkstreamId })).baseline;
       }
     }
     const inVersion = !!item && !!scope.perimeterVersion?.itemIds.has(item.id);
@@ -521,7 +524,7 @@ export class PerimeterService {
     if (body.referenceValue && !this.canSeeReferenceValues(ctx, projectId)) {
       throw forbidden('carveout.reference_value_restricted', 'Reference values are recorded by holders of finance.record.read');
     }
-    const cc = await this.changeControlFor(ctx, p, null, body.disposition);
+    const cc = await this.changeControlFor(ctx, p, null, body.disposition, body.workstreamId ?? null);
     if (cc.requiresChangeRequest && !body.justification?.trim()) {
       throw ruleViolation('perimeter.justification_required', 'An approved baseline exists: adding an item raises a change request — state the justification');
     }
@@ -842,7 +845,8 @@ export class PerimeterService {
       reviewedCategories: reviews.map((x) => x.category as PerimeterItemType),
     });
     const conclusion = new Map(reviews.map((x) => [x.category, x.conclusion]));
-    return { findings: r.findings, categories: r.categories.map((c) => ({ ...c, conclusion: conclusion.get(c.category) ?? null })), summary: r.summary };
+    const reviewVersion = new Map(reviews.map((x) => [x.category, x.version]));
+    return { findings: r.findings, categories: r.categories.map((c) => ({ ...c, conclusion: conclusion.get(c.category) ?? null, reviewVersion: reviewVersion.get(c.category) ?? null })), summary: r.summary };
   }
 
   async reviewCategory(ctx: RequestContext, projectId: string, category: PerimeterItemType, body: { conclusion: string; expectedVersion?: number }) {

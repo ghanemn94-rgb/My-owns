@@ -12,7 +12,7 @@ fonts and core functions keep working internally.
 | AI | Default mode **off**; mock refused in production; AI egress only in the Local-AI / Gateway overlays | `values-private-*.yaml` | Validated per mode (AI-off renders no AI env and no AI rule) |
 | Web assets | Fonts bundled from `@fontsource` (`url(../media/*.woff2)`); no CDN; CSP `connect-src 'self'`, `font-src 'self' data:` | apps/web | Verified in the build output (below) |
 | Telemetry | `NEXT_TELEMETRY_DISABLED=1` at build and run time (web scripts, Dockerfiles, chart, compose); OTEL only to an **internal** collector (SDK not wired yet); MinIO `MINIO_UPDATE=off` | Dockerfiles, chart, compose | Configured |
-| Dev stack | Compose `backend` network `internal: true`: db, migrate, worker and MinIO have no outbound route | compose.dev.yml | `docker compose config` PASS; not run |
+| Dev stack | Compose `backend` network `internal: true`: db, migrate, worker and MinIO have no outbound route | compose.dev.yml | `docker compose config` PASS. The CI job `compose` checks that the worker has no route to a public address (`scripts/ops/compose-smoke.sh`) |
 | Proxy | If a corporate proxy is mandatory, Node needs `NODE_USE_ENV_PROXY=1` (verified: Node 22.22.2 ignores `HTTPS_PROXY` for `fetch` without it) | chart `proxy.*` | Configured |
 
 ## Static check of built artefacts — `scripts/ops/egress-check.sh`

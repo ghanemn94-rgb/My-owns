@@ -19,6 +19,7 @@ import type { RecordTransferBody, TransferListQuery } from '@hub/contracts';
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { RecordVersionService, assertVersion, loadInProject, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { CarveoutProject, CarveoutSupport } from './carveout.support';
@@ -60,7 +61,8 @@ export class TransfersService {
     const where = and(...conds);
     const join = and(eq(PI.id, TR.perimeterItemId), eq(PI.projectId, TR.projectId));
     const [{ n }] = (await this.tx.select({ n: count() }).from(TR).innerJoin(PI, join).where(where)) as [{ n: number }];
-    const rows = await this.tx.select({ r: TR, code: PI.code }).from(TR).innerJoin(PI, join).where(where).orderBy(desc(TR.recordedAt), desc(TR.id)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { recordedAt: TR.recordedAt, effectiveDate: TR.effectiveDate, itemCode: PI.code }, TR.id, [desc(TR.recordedAt), desc(TR.id)]);
+    const rows = await this.tx.select({ r: TR, code: PI.code }).from(TR).innerJoin(PI, join).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     const names = await this.s.userNames(rows.map((x) => x.r.recordedBy));
     return pageOf(
       rows.map(({ r, code }) => ({

@@ -14,7 +14,7 @@ Related runbooks: [configuration](configuration.md) · [secrets](secrets.md) · 
 |---|---|---|---|
 | P-1 | Kubernetes ≥ 1.27 **or** OpenShift 4.x | A namespace per environment. Pod Security `restricted` or the OpenShift `restricted-v2` SCC is sufficient | The chart needs no cluster-scoped objects, no RBAC and no privileged pods |
 | P-2 | Private container registry | Pull access from the namespace (`imagePullSecrets`). Mobily's pipeline pushes the images | [supply-chain.md](supply-chain.md) |
-| P-3 | PostgreSQL 16 (managed service or operator) | One database per environment and two roles: **`hub_owner`** (owns the schema; used only by the migration and bootstrap Jobs) and **`hub_app`** (`LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE`; runtime). Extensions `pgcrypto` and `citext`. `REVOKE ALL ON DATABASE … FROM PUBLIC; GRANT CONNECT … TO hub_app` | Reference implementation: `scripts/ops/db-init-roles.sh`. The API refuses to start in production if its role is superuser, has BYPASSRLS or owns tables |
+| P-3 | PostgreSQL 16 (managed service or operator) | One database per environment and two roles: **`hub_owner`** (owns the schema; used only by the migration and bootstrap Jobs) and **`hub_app`** (`LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE`; runtime). Extensions `pgcrypto` and `citext`. The server must be built with **ICU** (collation `und-x-icu` present — standard in PGDG/Debian/RHEL builds): list sorting uses it so the order is identical on every server. `REVOKE ALL ON DATABASE … FROM PUBLIC; GRANT CONNECT … TO hub_app` | Reference implementation: `scripts/ops/db-init-roles.sh`. The API refuses to start in production if its role is superuser, has BYPASSRLS or owns tables, or if the ICU collation is missing |
 | P-4 | S3-compatible object storage | A private bucket, versioning or object lock where available, server-side encryption, and credentials limited to the bucket | **The S3 adapter is *Not configured* at this application version.** Uploads fail closed until it is implemented |
 | P-5 | Identity provider | OIDC (Authorization Code + PKCE), MFA enforced at the IdP. SAML-only IdPs through an OIDC-capable broker. A confidential client with redirect URI `https://<host>/api/v1/auth/oidc/callback` | [user-provisioning.md](user-provisioning.md) |
 | P-6 | TLS certificate and custom CA | A certificate for the public host name from Mobily PKI. A CA bundle (PEM) for any internal endpoints with private certificates | Ingress `tls.secretName`, OpenShift Route, `customCA.*` |
@@ -118,14 +118,52 @@ the Demo seed (`seed-demo`) in staging or production. The seed itself refuses `N
 | Sign-in | First administrator signs in through the IdP | session created; an unprovisioned user is refused |
 | Backup | Run `scripts/ops/backup.sh` against the new database, then a restore drill into a scratch database | [backup-restore.md](backup-restore.md) |
 
-## 7. Development and evaluation (not production)
+## 7. Development and evaluation with Docker Compose (not production, no high availability)
 
-`deploy/compose/compose.dev.yml` runs PostgreSQL 16 (with the role init script), the migration Job, api, worker and
-web, with optional `demo` and `s3` (MinIO) profiles. It is a single host with no high availability, no backups and
-local passwords. The file was validated with `docker compose config`. **NOT EXECUTED** (no Docker daemon):
+`deploy/compose/compose.dev.yml` runs PostgreSQL 16 (with the role init script), the one-shot migration container,
+api, worker and web, with optional `demo` and `s3` (MinIO) profiles. **It is for development and evaluation only:**
+one host and one container per service, so there is **no high availability** (no replicas, no failover), no backups,
+local passwords and local-filesystem object storage. Production uses the Helm chart (§1–§6).
+
+Prerequisites: Docker Engine 25 or later with the Compose plugin (v2.21 or later; the health checks use
+`start_interval`). Pull access to the `node` and `postgres` base images and to the npm registry, which are needed
+only to build the images. The running stack calls no external service: the `backend` network is `internal`.
+
+Run from `transformation-hub/`:
 
 ```bash
-cp deploy/compose/.env.example deploy/compose/.env   # replace CHANGE_ME values
-docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env up -d --build
+# 1. Local configuration: copies .env.example to deploy/compose/.env and replaces every CHANGE_ME value with a random
+#    local-only value (not printed; file mode 600; gitignored). Equivalent to: cp .env.example .env + edit by hand.
+bash scripts/ops/compose-env-init.sh
+
+# 2. Build the images locally and start. --wait returns when db, api, worker and web are healthy and migrate exited 0.
+docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env up --build --wait --wait-timeout 300
+
+# 3. Load the Demo sandbox (synthetic data, labelled Demo; refused in production).
 docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env --profile demo run --rm seed-demo
+
+# 4. Open http://127.0.0.1:3000/login and pick a Demo persona. Optional: the smoke checks that CI runs.
+bash scripts/ops/compose-smoke.sh
+
+# 5. Stop and DELETE everything (containers, networks, volumes, including the database).
+docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env down -v
 ```
+
+Health checks: `db` uses `pg_isready` over TCP (a socket probe would report ready during first-time initialisation).
+`api` uses `GET /readyz` (database reachable). `worker` uses `healthcheck worker` with the heartbeat file
+`HUB_WORKER_HEARTBEAT_FILE` (written after every good loop iteration; stale after 2 minutes). `web` uses `GET /login`.
+
+`scripts/ops/compose-smoke.sh` checks the following:
+
+- container health, and that migrate exited 0;
+- API `/healthz` and `/readyz`;
+- web `/login` with the security headers;
+- through the web origin: the Demo persona list, demo login, authenticated `GET /api/v1/me` and `/api/v1/projects`, CSRF enforcement (403 without the header, 2xx with it), and logout (then 401);
+- worker heartbeat freshness, `healthcheck worker`, and outbox drained by the worker;
+- no route from the internal `backend` network to a public address.
+
+**Verification status.** The CI job `compose` in `.github/workflows/transformation-hub-ci.yml` runs steps 1–5
+verbatim on a GitHub-hosted runner. It builds the images in the job and never pushes them. The build environment has
+no Docker daemon, so `docker compose config`, shellcheck and actionlint were run there. The smoke script's HTTP,
+worker and outbox checks were also run against a local (non-container) stack started through the container
+entrypoint. The compose run itself was **NOT EXECUTED** in the build environment.

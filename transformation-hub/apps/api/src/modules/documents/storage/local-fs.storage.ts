@@ -45,8 +45,9 @@ export class LocalFsStorage implements ObjectStorage {
   }
 
   async exists(key: string): Promise<boolean> {
+    const p = this.pathOf(key); // an invalid key is an error, not "does not exist"
     try {
-      await stat(this.pathOf(key));
+      await stat(p);
       return true;
     } catch {
       return false;

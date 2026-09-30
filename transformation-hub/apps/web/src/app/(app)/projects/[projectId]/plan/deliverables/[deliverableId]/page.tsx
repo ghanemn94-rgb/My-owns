@@ -26,6 +26,7 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { pk, taskHref, useRefreshPlanning, type Deliverable } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
+import { useLocalized } from '@/lib/i18n-data';
 
 function EditDeliverableDialog({ open, onClose, d }: { open: boolean; onClose: () => void; d: Deliverable }) {
   const { t } = useI18n();
@@ -68,6 +69,7 @@ function EditDeliverableDialog({ open, onClose, d }: { open: boolean; onClose: (
 
 export default function DeliverablePage() {
   const { t, formatNumber, formatDateTime } = useI18n();
+  const loc = useLocalized();
   const { deliverableId } = useParams<{ deliverableId: string }>();
   const { projectId, can } = useProjectContext();
   const refresh = useRefreshPlanning(projectId);
@@ -83,8 +85,8 @@ export default function DeliverablePage() {
       <BackLink href={`/projects/${projectId}/plan?tab=deliverables`} label={t('planning.deliverable.back')} />
       <PageHeader
         eyebrow={<span dir="ltr">{d.code}</span>}
-        title={<span dir="auto">{d.title}</span>}
-        documentTitle={`${d.code} — ${d.title}`}
+        title={<span dir="auto">{loc(d.title, d.titleAr)}</span>}
+        documentTitle={`${d.code} — ${loc(d.title, d.titleAr)}`}
         badges={
           <>
             <StatusBadge enumName="deliverableStatuses" value={d.status} size="md" />

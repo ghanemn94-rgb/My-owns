@@ -8,6 +8,7 @@ import { useProjectContext } from '@/lib/project-context';
 import { LoadingState } from '../LoadingState';
 import { btn, card, cx } from '../ui';
 import { DateText, ForecastLabel } from './bits';
+import { useLocalized } from '@/lib/i18n-data';
 
 /**
  * Cockpit tile (Screen 2): schedule-based forecast signals — whole-plan schedule status and the workstreams whose
@@ -15,6 +16,7 @@ import { DateText, ForecastLabel } from './bits';
  */
 export function DelayImpactTile() {
   const { t, formatNumber, formatDate } = useI18n();
+  const loc = useLocalized();
   const { projectId } = useProjectContext();
   const prog = useProgress(projectId);
   const sched = useSchedule(projectId);
@@ -53,7 +55,7 @@ export function DelayImpactTile() {
                       <span dir="ltr" className="font-medium">
                         {w.code}
                       </span>{' '}
-                      <span dir="auto">{w.name}</span>
+                      <span dir="auto">{loc(w.name, w.nameAr)}</span>
                     </Link>
                     <span className="shrink-0 text-end text-xs">
                       <span className="font-semibold text-danger">{t('planning.tile.slip', { days: formatNumber(w.rag.calculated.slipDays ?? 0) })}</span>

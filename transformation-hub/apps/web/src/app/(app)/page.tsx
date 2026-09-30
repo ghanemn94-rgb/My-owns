@@ -19,6 +19,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { btn, card, cx } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { canInOrg, useMe, useProjects } from '@/lib/queries';
+import { useLocalized } from '@/lib/i18n-data';
 
 const PAGE_SIZE = 12;
 
@@ -38,6 +39,7 @@ function Count({ value }: { value: number | null }) {
 
 function NextGate({ gate }: { gate: ProjectSummary['nextGate'] }) {
   const { t } = useI18n();
+  const loc = useLocalized();
   if (!gate) {
     return (
       <span title={t('portfolio.notVisible')}>
@@ -49,7 +51,7 @@ function NextGate({ gate }: { gate: ProjectSummary['nextGate'] }) {
   return (
     <span className="inline-flex flex-wrap items-center gap-1.5">
       <span className="font-medium" dir="auto">
-        <span dir="ltr">{gate.key}</span> — {gate.name}
+        <span dir="ltr">{gate.key}</span> — {loc(gate.name, gate.nameAr)}
       </span>
       <StatusBadge enumName="gateAssessmentStatuses" value={gate.status} />
     </span>
@@ -87,35 +89,37 @@ function ProjectCard({ p }: { p: ProjectSummary }) {
           {p.myRoles.length ? formatList(p.myRoles.map((r) => tStatus('roleKeys', r))) : EM_DASH}
         </p>
       </div>
-      <section aria-label={t('portfolio.dimensions')}>
+      {/* A heading, not a named landmark: one region per card would repeat the same landmark name on the page. */}
+      <div>
         <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">{t('portfolio.dimensions')}</h3>
         <DimensionList dimensions={p.dimensions} />
-      </section>
-      <dl className="grid grid-cols-1 gap-2 border-t border-line pt-3 text-sm sm:grid-cols-3">
-        <div className="sm:col-span-3">
-          <dt className="text-muted">{t('portfolio.nextGate')}</dt>
-          <dd className="mt-0.5">
-            <NextGate gate={p.nextGate} />
-          </dd>
-        </div>
-        <div>
-          <dt className="text-muted">{t('portfolio.openRisks')}</dt>
-          <dd className="font-semibold">
-            <Count value={p.openRisks} />
-          </dd>
-        </div>
-        <div>
-          <dt className="text-muted">{t('portfolio.overdueActions')}</dt>
-          <dd className="font-semibold">
-            <Count value={p.overdueActions} />
-          </dd>
-        </div>
-        <div className="flex items-end sm:justify-end">
-          <Link href={`/projects/${p.id}`} className={btn.link}>
-            {t('portfolio.openProject')}
-          </Link>
-        </div>
-      </dl>
+      </div>
+      {/* The link sits outside the <dl>: a description list may only contain dt/dd groups. */}
+      <div className="flex flex-col gap-2 border-t border-line pt-3 text-sm sm:flex-row sm:items-end sm:justify-between">
+        <dl className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <dt className="text-muted">{t('portfolio.nextGate')}</dt>
+            <dd className="mt-0.5">
+              <NextGate gate={p.nextGate} />
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted">{t('portfolio.openRisks')}</dt>
+            <dd className="font-semibold">
+              <Count value={p.openRisks} />
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted">{t('portfolio.overdueActions')}</dt>
+            <dd className="font-semibold">
+              <Count value={p.overdueActions} />
+            </dd>
+          </div>
+        </dl>
+        <Link href={`/projects/${p.id}`} className={cx(btn.link, 'shrink-0')}>
+          {t('portfolio.openProject')}
+        </Link>
+      </div>
     </li>
   );
 }

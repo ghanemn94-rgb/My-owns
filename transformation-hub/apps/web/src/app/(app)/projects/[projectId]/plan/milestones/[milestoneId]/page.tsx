@@ -26,6 +26,7 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { pk, useRefreshPlanning, type Milestone } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
+import { useLocalized } from '@/lib/i18n-data';
 
 function EditMilestoneDialog({ open, onClose, m }: { open: boolean; onClose: () => void; m: Milestone }) {
   const { t } = useI18n();
@@ -70,6 +71,7 @@ function EditMilestoneDialog({ open, onClose, m }: { open: boolean; onClose: () 
 
 export default function MilestonePage() {
   const { t, formatNumber } = useI18n();
+  const loc = useLocalized();
   const { milestoneId } = useParams<{ milestoneId: string }>();
   const { projectId, can } = useProjectContext();
   const refresh = useRefreshPlanning(projectId);
@@ -85,8 +87,8 @@ export default function MilestonePage() {
       <BackLink href={`/projects/${projectId}/plan?tab=milestones`} label={t('planning.milestone.back')} />
       <PageHeader
         eyebrow={<span dir="ltr">{m.code}</span>}
-        title={<span dir="auto">{m.title}</span>}
-        documentTitle={`${m.code} — ${m.title}`}
+        title={<span dir="auto">{loc(m.title, m.titleAr)}</span>}
+        documentTitle={`${m.code} — ${loc(m.title, m.titleAr)}`}
         badges={
           <>
             <StatusBadge enumName="milestoneStatuses" value={m.status} size="md" />

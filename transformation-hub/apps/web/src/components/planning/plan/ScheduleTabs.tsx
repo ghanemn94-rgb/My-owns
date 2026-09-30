@@ -35,16 +35,21 @@ import { useToast } from '../../Toast';
 import { btn, card, cx } from '../../ui';
 import { CodeLink, DateText, FilterSelect, ForecastLabel, Section } from '../bits';
 import { FormDialog } from '../dialogs';
+import { localized, useLocalized } from '@/lib/i18n-data';
+import type { Locale } from '@/i18n/config';
+import { ScrollRegion } from '../../ScrollRegion';
 
-function nodeLabel(n: Pick<ScheduleNode, 'code' | 'title'>) {
-  return `${n.code} — ${n.title}`;
+/** `code — title`, in the active locale when the node has an Arabic title (QA-P1-14). */
+function nodeLabel(n: Pick<ScheduleNode, 'code' | 'title' | 'titleAr'>, locale: Locale) {
+  return `${n.code} — ${localized(locale, n.title, n.titleAr)}`;
 }
 
 // =============================================================================================================
 // Dependencies
 
 export function DependenciesTab() {
-  const { t, tStatus } = useI18n();
+  const { t, tStatus, locale } = useI18n();
+  const loc = useLocalized();
   const { projectId, can } = useProjectContext();
   const refresh = useRefreshPlanning(projectId);
   const toast = useToast();
@@ -57,8 +62,8 @@ export function DependenciesTab() {
   const canManage = can('planning.dependency.manage');
 
   const columns: Column<Dependency>[] = [
-    { key: 'pred', header: t('planning.dependency.predecessor'), isRowHeader: true, cell: (d) => <CodeLink href={nodeHref(projectId, d.predecessorType, d.predecessorId)} code={d.predecessorCode} title={d.predecessorTitle} /> },
-    { key: 'succ', header: t('planning.dependency.successor'), cell: (d) => <CodeLink href={nodeHref(projectId, d.successorType, d.successorId)} code={d.successorCode} title={d.successorTitle} /> },
+    { key: 'pred', header: t('planning.dependency.predecessor'), isRowHeader: true, cell: (d) => <CodeLink href={nodeHref(projectId, d.predecessorType, d.predecessorId)} code={d.predecessorCode} title={loc(d.predecessorTitle, d.predecessorTitleAr)} /> },
+    { key: 'succ', header: t('planning.dependency.successor'), cell: (d) => <CodeLink href={nodeHref(projectId, d.successorType, d.successorId)} code={d.successorCode} title={loc(d.successorTitle, d.successorTitleAr)} /> },
     { key: 'type', header: t('planning.dependency.type'), cell: (d) => tStatus('dependencyTypes', d.type) },
     { key: 'lag', header: t('planning.dependency.lag'), cell: (d) => <span className="tabular">{d.lagDays}</span> },
     ...(canManage
@@ -83,7 +88,7 @@ export function DependenciesTab() {
           <option value="">{t('planning.dependency.all')}</option>
           {nodes.map((n) => (
             <option key={n.id} value={n.id}>
-              {nodeLabel(n)}
+              {nodeLabel(n, locale)}
             </option>
           ))}
         </FilterSelect>
@@ -129,7 +134,7 @@ export function DependenciesTab() {
 }
 
 function CreateDependencyDialog({ open, onClose, nodes }: { open: boolean; onClose: () => void; nodes: ScheduleNode[] }) {
-  const { t, tStatus } = useI18n();
+  const { t, tStatus, locale } = useI18n();
   const { projectId } = useProjectContext();
   const refresh = useRefreshPlanning(projectId);
   const toast = useToast();
@@ -162,7 +167,7 @@ function CreateDependencyDialog({ open, onClose, nodes }: { open: boolean; onClo
         <option value="">{t('planning.common.choose')}</option>
         {nodes.map((n) => (
           <option key={n.id} value={n.id}>
-            {nodeLabel(n)}
+            {nodeLabel(n, locale)}
           </option>
         ))}
       </SelectField>
@@ -170,7 +175,7 @@ function CreateDependencyDialog({ open, onClose, nodes }: { open: boolean; onClo
         <option value="">{t('planning.common.choose')}</option>
         {nodes.map((n) => (
           <option key={n.id} value={n.id}>
-            {nodeLabel(n)}
+            {nodeLabel(n, locale)}
           </option>
         ))}
       </SelectField>
@@ -329,6 +334,7 @@ export function LookAheadTab() {
 
 function LookList({ id, title, items, tone }: { id: string; title: string; items: LookAheadItem[]; tone?: 'danger' }) {
   const { t, tStatus, formatNumber } = useI18n();
+  const loc = useLocalized();
   const { projectId } = useProjectContext();
   return (
     <Section id={id} title={`${title} (${formatNumber(items.length)})`}>
@@ -338,7 +344,7 @@ function LookList({ id, title, items, tone }: { id: string; title: string; items
         <ul className="divide-y divide-line" data-testid={id}>
           {items.map((i) => (
             <li key={`${i.type}-${i.id}-${i.dateKind}`} className="flex items-start justify-between gap-2 py-2">
-              <CodeLink href={nodeHref(projectId, i.type, i.id)} code={i.code} title={i.title} />
+              <CodeLink href={nodeHref(projectId, i.type, i.id)} code={i.code} title={loc(i.title, i.titleAr)} />
               <div className="flex shrink-0 flex-col items-end gap-1 text-xs">
                 <DateText value={i.date} overdue={tone === 'danger'} />
                 <span className="text-muted">
@@ -358,7 +364,8 @@ function LookList({ id, title, items, tone }: { id: string; title: string; items
 // What-if: delay impact (AT-15)
 
 export function WhatIfTab({ initialNodeId }: { initialNodeId?: string }) {
-  const { t, formatDate, formatNumber } = useI18n();
+  const { t, formatDate, formatNumber, locale } = useI18n();
+  const loc = useLocalized();
   const { projectId } = useProjectContext();
   const sched = useSchedule(projectId);
   const nodes = useMemo(() => (sched.data?.nodes ?? []).filter((n) => n.status !== 'cancelled'), [sched.data]);
@@ -386,7 +393,7 @@ export function WhatIfTab({ initialNodeId }: { initialNodeId?: string }) {
             <option value="">{t('planning.common.choose')}</option>
             {nodes.map((n) => (
               <option key={n.id} value={n.id}>
-                {nodeLabel(n)}
+                {nodeLabel(n, locale)}
               </option>
             ))}
           </SelectField>
@@ -397,7 +404,7 @@ export function WhatIfTab({ initialNodeId }: { initialNodeId?: string }) {
               .filter((n) => n.type === 'milestone')
               .map((n) => (
                 <option key={n.id} value={n.id}>
-                  {nodeLabel(n)}
+                  {nodeLabel(n, locale)}
                 </option>
               ))}
           </SelectField>
@@ -447,7 +454,7 @@ export function WhatIfTab({ initialNodeId }: { initialNodeId?: string }) {
             </p>
           ) : null}
           {d.affected.length ? (
-            <div className="overflow-x-auto">
+            <ScrollRegion label={t('planning.whatIf.affected')} className="overflow-x-auto">
               <table className="w-full text-sm">
                 <caption className="sr-only">{t('planning.whatIf.affected')}</caption>
                 <thead className="bg-surface-muted">
@@ -463,7 +470,7 @@ export function WhatIfTab({ initialNodeId }: { initialNodeId?: string }) {
                   {d.affected.map((a) => (
                     <tr key={a.id} className="border-b border-line">
                       <th scope="row" className="px-3 py-2 text-start font-normal">
-                        <CodeLink href={nodeHref(projectId, a.type, a.id)} code={a.code} title={a.title} />
+                        <CodeLink href={nodeHref(projectId, a.type, a.id)} code={a.code} title={loc(a.title, a.titleAr)} />
                         {a.critical ? <span className="ms-2 text-xs font-semibold text-danger">{t('planning.gantt.critical')}</span> : null}
                       </th>
                       <td className="px-3 py-2">
@@ -477,7 +484,7 @@ export function WhatIfTab({ initialNodeId }: { initialNodeId?: string }) {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollRegion>
           ) : null}
           <details>
             <summary className="cursor-pointer text-sm text-primary">{t('planning.schedule.assumptions', { count: d.assumptions.length })}</summary>

@@ -1,0 +1,651 @@
+{
+  "tabs": {
+    "label": "Day-1 & TSA Center sections",
+    "overview": "Overview",
+    "checks": "Readiness checks",
+    "cutover": "Cutover & go/no-go",
+    "tsa": "TSA register",
+    "waivers": "Waivers"
+  },
+  "common": {
+    "all": "All",
+    "filters": "Filters",
+    "clearFilters": "Clear filters",
+    "select": "Select…",
+    "you": "You",
+    "unknownUser": "User {id}",
+    "notSet": "Not set",
+    "yes": "Yes",
+    "no": "No",
+    "projectLevel": "Project level",
+    "policyReason": "Server reason",
+    "reason": "Reason",
+    "view": "Open",
+    "details": "Details",
+    "back": "Back",
+    "edit": "Edit",
+    "save": "Save changes",
+    "saved": "Changes saved.",
+    "noChanges": "Nothing changed — no new version was created.",
+    "commands": "Commands",
+    "noCommands": "No command is available to you in this state.",
+    "decisionPicker": "Governance decision",
+    "decisionNoneAvailable": "No decision of the required type exists yet. Governance decisions are raised in the Committee Hub.",
+    "decisionIssue": {
+      "missing": "No governance decision is linked.",
+      "wrong_type": "The linked decision is not of the required type.",
+      "recommended": "The linked decision is recommended — pending the external authority; it is not a final approval.",
+      "not_approved": "Linked decision status: {status} — only an approved decision counts.",
+      "external_approval_missing": "The decision is outside the committee delegation and no approval by the authorized body is recorded.",
+      "authority_unassessed": "The decision has no authority assessment (within mandate / external authority)."
+    },
+    "openCommittee": "Open the Committee Hub",
+    "days": "{days} d",
+    "noControl": "This centre documents readiness and transition work. It never controls devices, networks or power: changes happen in the approved operational systems and are recorded here with evidence."
+  },
+  "overview": {
+    "title": "Day-1 & TSA Center",
+    "subtitle": "Site and service readiness, transition plans with the go/no-go decision, TSAs and their exits.",
+    "checksTotal": "Readiness checks",
+    "openBlockers": "Open blockers",
+    "failedBlockers": "Failed blockers",
+    "plansTotal": "Cutover plans",
+    "tsasTotal": "TSA services",
+    "expiringSoon": "TSAs expiring within 30 days",
+    "expiredUnresolved": "TSAs expired without exit",
+    "enduring": "Approved enduring arrangements",
+    "coverageTitle": "Day-1 coverage",
+    "coverageAll": "Every Day-1 readiness area has at least one check.",
+    "coverageMissing": "Areas without any check: {areas}",
+    "plansByStatus": "Cutover plans by status",
+    "tsasByStatus": "TSAs by status",
+    "checksByStatus": "Checks by status",
+    "none": "None"
+  },
+  "checks": {
+    "title": "Readiness checks",
+    "subtitle": "Site and workstream Day-1 checklists: mandatory blockers, test history and specialist sign-off.",
+    "search": "Search code or title",
+    "filterArea": "Area",
+    "filterStatus": "Status",
+    "filterCriticality": "Criticality",
+    "filterSite": "Site",
+    "filterWorkstream": "Workstream",
+    "blockersOnly": "Blockers only",
+    "nonBlockers": "Non-blockers",
+    "columns": {
+      "code": "Code",
+      "title": "Check",
+      "area": "Area",
+      "scope": "Scope",
+      "criticality": "Criticality",
+      "status": "Status",
+      "latestTest": "Latest test",
+      "evidence": "Evidence"
+    },
+    "mandatory": "Mandatory",
+    "blocker": "Blocker",
+    "optional": "Optional",
+    "waivable": "Waivable",
+    "nonWaivable": "Not waivable",
+    "evidenceCount": "{active} active · {conflicting} conflicting",
+    "noTest": "No test yet",
+    "empty": "No readiness checks yet",
+    "emptySearch": "No check matches these filters",
+    "scopeSite": "Site {site}",
+    "scopePlan": "Bound to {plan}",
+    "create": {
+      "action": "New check",
+      "title": "New readiness check",
+      "confirm": "Create check",
+      "effect": "Creates a check that starts non-waivable; waivability is a later specialist determination.",
+      "area": "Readiness area",
+      "titleField": "Check",
+      "titleAr": "Arabic title",
+      "mandatory": "Mandatory",
+      "blocker": "Blocks go-live",
+      "signoffRole": "Specialist sign-off role",
+      "signoffHint": "Only holders of this role (with the sign-off permission) can sign the check off.",
+      "site": "Site",
+      "workstream": "Workstream",
+      "plan": "Bind to cutover plan",
+      "owner": "Accountable owner",
+      "contingency": "Contingency if the check fails",
+      "dueDate": "Due date",
+      "done": "Check {code} created."
+    },
+    "instantiate": {
+      "action": "Add template checklist",
+      "title": "Add the template's Day-1 checklist",
+      "confirm": "Add checklist",
+      "effect": "Creates the project template's default checks (all Day-1 areas) for the selected site. Existing template checks are kept — nothing is duplicated.",
+      "site": "Site (empty = project level)",
+      "done": "{created} check(s) created, {existing} already present."
+    }
+  },
+  "check": {
+    "facts": {
+      "area": "Area",
+      "scope": "Scope",
+      "criticality": "Criticality",
+      "signoffRole": "Specialist sign-off role",
+      "owner": "Accountable owner",
+      "signedOff": "Signed off",
+      "dueDate": "Due date",
+      "waivability": "Waivability",
+      "waiverAuthority": "Waiver authority",
+      "waivabilityBasis": "Specialist basis",
+      "determinedBy": "Determined by",
+      "testResult": "Latest result summary",
+      "createdBy": "Created by"
+    },
+    "notDetermined": "Not yet determined by a specialist",
+    "signedOffBy": "{name} on {date}",
+    "contingencyTitle": "Contingency if this check fails",
+    "contingencyNone": "No contingency recorded.",
+    "tests": {
+      "title": "Test history",
+      "hint": "Append-only: a failed test stays visible after a later pass. A passing test never signs the check off.",
+      "empty": "No test recorded yet.",
+      "seq": "#",
+      "result": "Result",
+      "note": "Note",
+      "by": "Recorded by",
+      "at": "Recorded at"
+    },
+    "record": {
+      "action": "Record test",
+      "title": "Record a test run",
+      "confirm": "Record test",
+      "effect": "Appends a test run to the history (never edited).",
+      "effectFail": "A failed test sets the check to failed; a failed blocker blocks GO.",
+      "result": "Result",
+      "passed": "Passed",
+      "failed": "Failed",
+      "done": "Test run #{seq} recorded."
+    },
+    "signoff": {
+      "action": "Specialist sign-off",
+      "title": "Specialist sign-off",
+      "confirm": "Sign off",
+      "effect": "Only the assigned specialist role signs off, on active evidence, when the latest test did not fail.",
+      "sod": "Separation of duties: the owner and whoever recorded the latest test or evidence cannot sign off.",
+      "outcome": "Determination",
+      "passed": "Passed — ready",
+      "notApplicable": "Not applicable (basis required)",
+      "done": "Sign-off recorded."
+    },
+    "determine": {
+      "action": "Specialist determination",
+      "title": "Criticality and waivability (specialist)",
+      "confirm": "Record determination",
+      "effect": "Records the criticality, waivability and waiver authority with a documented basis. Pending waiver approvals become stale.",
+      "mandatory": "Mandatory",
+      "blocker": "Blocks go-live",
+      "waivable": "Waivable",
+      "authority": "Waiver authority role",
+      "basis": "Basis",
+      "done": "Determination recorded."
+    },
+    "reopen": {
+      "action": "Reopen",
+      "title": "Reopen the check",
+      "confirm": "Reopen",
+      "effect": "Returns a passed / not-applicable / waived check to in progress; its history is kept.",
+      "done": "Check reopened."
+    },
+    "edit": {
+      "title": "Edit check",
+      "effect": "Changes descriptive fields only — never the status, criticality, waivability or sign-off."
+    },
+    "waivers": {
+      "title": "Waivers of this check",
+      "empty": "No waiver requested.",
+      "request": "Request waiver",
+      "requestTitle": "Request a waiver",
+      "requestConfirm": "Request waiver",
+      "requestEffect": "Creates a waiver request bound to this version of the check, for approval by the waiver authority.",
+      "nonWaivable": "This check is not waivable: an exception can never override it. A request is refused and logged.",
+      "authority": "Approval needs the {role} role (not the requester).",
+      "basis": "Basis",
+      "impact": "Impact",
+      "conditions": "Conditions",
+      "expiresOn": "Expires on",
+      "done": "Waiver requested."
+    },
+    "evidenceTitle": "Readiness evidence"
+  },
+  "waivers": {
+    "title": "Readiness waivers",
+    "subtitle": "Waivers of readiness checks: basis, impact, the specialist-set authority and the approval.",
+    "filterStatus": "Status",
+    "columns": {
+      "check": "Check",
+      "basis": "Basis and impact",
+      "authority": "Authority",
+      "status": "Status",
+      "requested": "Requested by",
+      "decided": "Decision",
+      "commands": "Commands"
+    },
+    "effective": "Effective",
+    "notEffective": "Not effective",
+    "empty": "No readiness waiver",
+    "approve": {
+      "action": "Approve",
+      "title": "Approve waiver of {code}",
+      "confirm": "Approve waiver",
+      "effect": "Marks the check waived with this waiver; a waived blocker no longer blocks GO while the waiver is effective.",
+      "authorityHint": "Only the holder of the waiver authority role — never the requester — can approve.",
+      "done": "Waiver approved."
+    },
+    "reject": {
+      "action": "Reject",
+      "title": "Reject waiver of {code}",
+      "confirm": "Reject waiver",
+      "effect": "The waiver is rejected; the check stays unmet.",
+      "done": "Waiver rejected."
+    }
+  },
+  "cutover": {
+    "title": "Cutover & go/no-go",
+    "subtitle": "Transition plans: runbook, window, service impact, accountable owner, communications, testing, contingency/rollback and the go/no-go decision.",
+    "search": "Search code or title",
+    "filterStatus": "Status",
+    "columns": {
+      "code": "Code",
+      "title": "Plan",
+      "scope": "Scope",
+      "status": "Status",
+      "goNoGo": "Go/no-go",
+      "window": "Window",
+      "owner": "Accountable owner"
+    },
+    "projectWide": "Project-wide (Day-1)",
+    "empty": "No cutover plan yet",
+    "emptySearch": "No plan matches these filters",
+    "create": {
+      "action": "New plan",
+      "title": "New cutover plan",
+      "confirm": "Create plan",
+      "effect": "Creates a plan in planning. It can go to go/no-go only when every §7.4 element is documented.",
+      "done": "Plan {code} created."
+    },
+    "fields": {
+      "title": "Title",
+      "site": "Site (empty = project-wide Day-1 plan)",
+      "workstream": "Workstream",
+      "accountable": "Accountable owner",
+      "runbook": "Runbook summary",
+      "windowStart": "Window start",
+      "windowEnd": "Window end",
+      "serviceImpact": "Service-impact assessment",
+      "testing": "Testing summary",
+      "contingency": "Contingency plan",
+      "rollback": "Rollback plan"
+    }
+  },
+  "plan": {
+    "prereq": {
+      "title": "Transition prerequisites (§7.4)",
+      "hint": "Fail-closed: every element is required before a GO; anything not documented counts as missing.",
+      "hasRunbook": "Runbook",
+      "hasRollbackPlan": "Contingency and rollback plan",
+      "communicationsApproved": "Approved communications",
+      "hasWindow": "Transition window",
+      "hasServiceImpact": "Service-impact assessment",
+      "hasAccountableOwner": "Accountable owner",
+      "testingDone": "Testing / rehearsal",
+      "hasApprovedGoDecision": "Approved go/no-go decision (governance)",
+      "met": "Documented",
+      "missing": "Missing"
+    },
+    "go": {
+      "title": "GO evaluation (server)",
+      "allowed": "GO is allowed: no open blocker and every prerequisite is documented.",
+      "blocked": "GO is blocked. The server refuses a GO until the items below are cleared.",
+      "blockers": "Open readiness blockers",
+      "missing": "Missing prerequisites",
+      "blockerLabel": "Blocker",
+      "mandatoryLabel": "Mandatory"
+    },
+    "checks": {
+      "title": "Readiness checks gating this plan",
+      "hint": "A project-wide plan is gated by every check not bound to another plan; a site plan by its site's checks and the checks bound to it.",
+      "empty": "No readiness check gates this plan.",
+      "contingency": "Contingency"
+    },
+    "decision": {
+      "title": "Go/no-go decision (governance)",
+      "none": "No governance decision linked.",
+      "hidden": "A decision is linked but you cannot view it.",
+      "ok": "Final approval — can back a GO.",
+      "link": "Link decision",
+      "linkTitle": "Link the go/no-go decision",
+      "linkConfirm": "Link decision",
+      "linkEffect": "Links a governance decision of type Day-1 go/no-go. Only a final approval can back a GO; the link itself approves nothing.",
+      "done": "Decision linked."
+    },
+    "goNoGoBadge": "Go/no-go: {value}",
+    "history": {
+      "title": "Decision history",
+      "hint": "Every submission, decision and refused GO — with the blockers at that moment. Never edited.",
+      "empty": "No decision recorded yet.",
+      "blockersAtTime": "Blockers at the time",
+      "missingAtTime": "Missing at the time",
+      "kinds": {
+        "submitted": "Submitted for go/no-go",
+        "returned_to_planning": "Returned to planning",
+        "rehearsal": "Rehearsal recorded",
+        "go": "GO",
+        "no_go": "NO-GO",
+        "go_blocked": "GO refused by the server",
+        "executed": "Execution recorded",
+        "rolled_back": "Rollback recorded",
+        "accepted": "Post-transition acceptance"
+      }
+    },
+    "facts": {
+      "status": "Status",
+      "goNoGo": "Go/no-go",
+      "scope": "Scope",
+      "workstream": "Workstream",
+      "accountable": "Accountable owner",
+      "window": "Window",
+      "runbook": "Runbook",
+      "serviceImpact": "Service impact",
+      "communications": "Communications approval",
+      "testing": "Testing",
+      "contingency": "Contingency plan",
+      "rollback": "Rollback plan",
+      "submitted": "Submitted for decision",
+      "decided": "Decided",
+      "rationale": "Rationale",
+      "executed": "Execution",
+      "accepted": "Post-transition acceptance"
+    },
+    "runbookDocument": "Runbook document linked",
+    "rehearsed": "Rehearsed",
+    "notRehearsed": "Not rehearsed",
+    "rehearsal": {
+      "action": "Record rehearsal",
+      "title": "Record rehearsal / testing",
+      "confirm": "Record rehearsal",
+      "effect": "Records the testing summary and marks the transition rehearsed.",
+      "testing": "Testing summary",
+      "done": "Rehearsal recorded."
+    },
+    "comms": {
+      "action": "Record communications approval",
+      "title": "Record communications approval",
+      "confirm": "Record approval",
+      "effect": "Records the reference of the approval of the transition communications.",
+      "ref": "Approval reference",
+      "done": "Communications approval recorded."
+    },
+    "submit": {
+      "action": "Submit for go/no-go",
+      "title": "Submit for go/no-go",
+      "confirm": "Submit",
+      "effect": "Only possible with every §7.4 element documented. You will not be able to decide it yourself.",
+      "done": "Submitted for go/no-go."
+    },
+    "back": {
+      "action": "Return to planning",
+      "title": "Return to planning",
+      "confirm": "Return to planning",
+      "effect": "The plan can be changed again; earlier decisions stay in the history.",
+      "done": "Returned to planning."
+    },
+    "decide": {
+      "action": "Record go/no-go",
+      "title": "Record the go/no-go decision",
+      "confirm": "Record decision",
+      "effect": "A GO is re-evaluated by the server now: an open blocker or a missing prerequisite refuses it, and the refusal is recorded in the history.",
+      "sod": "The person who submitted the plan cannot decide it.",
+      "outcome": "Outcome",
+      "go": "GO",
+      "noGo": "NO-GO",
+      "rationale": "Rationale",
+      "done": "Decision recorded: {outcome}."
+    },
+    "execute": {
+      "action": "Record execution",
+      "title": "Record the execution",
+      "confirm": "Record execution",
+      "effect": "Records that the transition was executed in the approved operational systems (reference it in the note). Nothing is executed from here.",
+      "done": "Execution recorded."
+    },
+    "rollback": {
+      "action": "Record rollback",
+      "title": "Record the rollback",
+      "confirm": "Record rollback",
+      "effect": "Records that the contingency / rollback was invoked.",
+      "done": "Rollback recorded."
+    },
+    "accept": {
+      "action": "Accept transition",
+      "title": "Post-transition acceptance",
+      "confirm": "Accept",
+      "effect": "Only the accountable owner, not the person who recorded the execution, accepts — on active acceptance evidence.",
+      "done": "Transition accepted."
+    },
+    "edit": {
+      "title": "Edit cutover plan",
+      "effect": "Only while planning or rehearsing; never changes the status or the decision.",
+      "locked": "The plan is locked in this state — return it to planning to change it."
+    },
+    "acceptanceEvidence": "Post-transition acceptance evidence"
+  },
+  "tsa": {
+    "title": "TSA register",
+    "subtitle": "Transitional services: owner, end date, replacement and exit. Reaching the end date is never an exit.",
+    "search": "Search code or name",
+    "filterStatus": "Status",
+    "filterType": "Type",
+    "transitional": "Transitional service",
+    "enduring": "Approved enduring arrangement",
+    "columns": {
+      "code": "Code",
+      "name": "Service",
+      "status": "Status",
+      "owner": "Owner",
+      "endDate": "End date",
+      "expiry": "End-date check",
+      "replacement": "Replacement"
+    },
+    "expiry": {
+      "ok": "No action",
+      "expiring": "Ends in {days} day(s)",
+      "expired_unresolved": "Ended {days} day(s) ago — unresolved",
+      "exit_acceptance_pending": "Ended {days} day(s) ago — exit approval pending"
+    },
+    "replacementAccepted": "Accepted",
+    "replacementOpen": "Not accepted",
+    "empty": "No TSA service registered",
+    "emptySearch": "No TSA matches these filters",
+    "create": {
+      "action": "New TSA",
+      "title": "Register a TSA service",
+      "confirm": "Register",
+      "effect": "Creates the service as proposed. Approval needs a complete record and a final governance decision.",
+      "done": "TSA {code} registered."
+    },
+    "fields": {
+      "name": "Service",
+      "scope": "Scope",
+      "dependentServices": "Dependent services, assets and systems",
+      "sla": "SLA",
+      "metricMethod": "Metric / method",
+      "chargeBasis": "Charge basis",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "extensionTerms": "Extension terms",
+      "terminationTerms": "Termination terms",
+      "owner": "Owner",
+      "workstream": "Workstream",
+      "replacementService": "Replacement service",
+      "replacementPlan": "Replacement plan",
+      "replacementDueDate": "Replacement due",
+      "milestones": "Exit milestones (one per line)",
+      "residualRisks": "Residual risks",
+      "enduring": "Approved enduring arrangement (not transitional)",
+      "classification": "Classification"
+    }
+  },
+  "tsaDetail": {
+    "endNotExit": "Reaching the end date is not an exit: an unreplaced service becomes expired-unresolved and is escalated. Extensions need an approved decision; the exit needs accepted replacement evidence and an independent approver.",
+    "facts": {
+      "status": "Status",
+      "type": "Type",
+      "owner": "Owner",
+      "workstream": "Workstream",
+      "classification": "Classification",
+      "dates": "Start – end",
+      "scope": "Scope",
+      "dependent": "Dependent services",
+      "sla": "SLA",
+      "metric": "Metric / method",
+      "charge": "Charge",
+      "chargeBasis": "Charge basis",
+      "extensionTerms": "Extension terms",
+      "terminationTerms": "Termination terms",
+      "residualRisks": "Residual risks",
+      "approvalDecision": "Terms approved by decision",
+      "openDecision": "Open the decision"
+    },
+    "chargeRedacted": "Visible to finance readers only.",
+    "milestones": "Exit milestones",
+    "milestonesEmpty": "No exit milestone yet (required for approval).",
+    "replacement": {
+      "title": "Replacement service",
+      "service": "Replacement",
+      "acceptance": "Acceptance",
+      "plan": "Plan",
+      "due": "Due",
+      "accepted": "Accepted",
+      "notAccepted": "Not accepted",
+      "failed": "Failure reported",
+      "continuity": "Continuity plan"
+    },
+    "escalation": {
+      "title": "Escalation",
+      "none": "No escalation.",
+      "hidden": "An escalation exists; open the Committee Hub to view it.",
+      "target": "Routed to",
+      "deadline": "Decision deadline",
+      "options": "Options",
+      "std": {
+        "extend": {
+          "title": "Extend the TSA",
+          "impact": "Requires an approved decision recorded against the TSA (request extension, then record extension); cost and obligations continue"
+        },
+        "interim": {
+          "title": "Alternative interim / continuity arrangement",
+          "impact": "The continuity plan is executed; the TSA stays unresolved until an exit is accepted with evidence"
+        },
+        "replan": {
+          "title": "Accelerate / re-plan the replacement service",
+          "impact": "Exit only after the replacement is accepted with evidence and the exit is approved"
+        }
+      }
+    },
+    "extension": {
+      "title": "Extension",
+      "none": "No extension requested.",
+      "proposedEnd": "Proposed end date",
+      "requested": "Requested",
+      "decision": "Decision",
+      "ok": "Final approval — can back the extension."
+    },
+    "exit": {
+      "title": "Exit approval",
+      "none": "No exit approval requested.",
+      "status": "Request",
+      "requestedBy": "Requested by",
+      "approved": "Approved"
+    },
+    "transition": {
+      "action": "State command",
+      "title": "TSA state command",
+      "confirm": "Apply",
+      "effect": "Applies an allowed state-machine command. Exit, extension and expiry have their own guarded commands.",
+      "command": "Command",
+      "done": "Status: {status}.",
+      "commands": {
+        "start_negotiation": "Start negotiation",
+        "activate": "Activate service",
+        "start_exit": "Start exit",
+        "record_breach": "Record breach",
+        "remedy_breach": "Remedy breach"
+      }
+    },
+    "approve": {
+      "action": "Approve terms",
+      "title": "Approve TSA terms",
+      "confirm": "Approve terms",
+      "effect": "Needs a complete record (owner, scope, dates, exit milestones, replacement) and a FINAL governance decision of type TSA approval/extension.",
+      "done": "TSA terms approved."
+    },
+    "acceptReplacement": {
+      "action": "Accept replacement",
+      "title": "Accept the replacement service",
+      "confirm": "Accept replacement",
+      "effect": "Needs active, non-conflicting acceptance evidence linked to this TSA (evidence panel below).",
+      "done": "Replacement accepted."
+    },
+    "failure": {
+      "action": "Report replacement failure",
+      "title": "Report a replacement failure",
+      "confirm": "Report failure",
+      "effect": "Withdraws any replacement acceptance and raises an escalation (decision requested) with continuity and extension options. Nothing is extended.",
+      "summary": "What failed",
+      "continuity": "Continuity plan",
+      "deadline": "Decision deadline",
+      "done": "Failure reported; an escalation was raised."
+    },
+    "requestExtension": {
+      "action": "Request extension",
+      "title": "Request an extension",
+      "confirm": "Link decision",
+      "effect": "Links the extension decision with the proposed end date and continuity plan. Nothing is extended until the decision is finally approved.",
+      "proposedEnd": "Proposed end date",
+      "continuity": "Continuity plan",
+      "done": "Extension requested — awaiting the approved decision."
+    },
+    "recordExtension": {
+      "action": "Record extension",
+      "title": "Record the approved extension",
+      "confirm": "Record extension",
+      "effect": "Applies the proposed end date ONLY if the linked decision is a final approval; otherwise the server refuses it.",
+      "done": "Extension recorded."
+    },
+    "requestExit": {
+      "action": "Request exit approval",
+      "title": "Request exit approval",
+      "confirm": "Request approval",
+      "effect": "Binds the request to this version of the TSA and to the accepted replacement evidence; a later change invalidates it.",
+      "done": "Exit approval requested."
+    },
+    "approveExit": {
+      "action": "Approve exit",
+      "title": "Approve the TSA exit",
+      "confirm": "Approve exit",
+      "effect": "Accepts the exit on the accepted replacement evidence.",
+      "sod": "The TSA owner, the requester and the replacement acceptor cannot approve.",
+      "done": "Exit approved."
+    },
+    "rejectExit": {
+      "action": "Reject exit",
+      "title": "Reject the exit approval",
+      "confirm": "Reject",
+      "effect": "The request is rejected; the TSA stays in its current state.",
+      "done": "Exit approval rejected."
+    },
+    "edit": {
+      "title": "Edit TSA",
+      "effect": "Descriptive fields only. Dates of an approved TSA change only through an approved extension; the status never changes here."
+    },
+    "evidenceTitle": "Replacement acceptance evidence"
+  }
+}

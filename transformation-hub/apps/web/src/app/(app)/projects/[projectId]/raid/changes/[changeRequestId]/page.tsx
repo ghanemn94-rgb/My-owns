@@ -12,6 +12,7 @@ import { ErrorState } from '@/components/ErrorState';
 import { TextAreaField } from '@/components/Field';
 import { LoadingState } from '@/components/LoadingState';
 import { PageHeader } from '@/components/PageHeader';
+import { ScrollRegion } from '@/components/ScrollRegion';
 import { SectionGuard } from '@/components/SectionGuard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useToast } from '@/components/Toast';
@@ -142,7 +143,18 @@ export default function ChangeRequestPage() {
                 EM_DASH
               )}
             </Fact>
-            <Fact label={t('planning.cr.subject')}>{c.subjectType ? <span dir="ltr">{c.subjectType}</span> : EM_DASH}</Fact>
+            <Fact label={t('planning.cr.subject')}>
+              {c.subjectType === 'perimeter_item' && c.subjectId ? (
+                // Perimeter changes (AT-07): the decided outcome is applied from the item page.
+                <Link className={btn.link} href={`/projects/${projectId}/perimeter/items/${c.subjectId}`} data-testid="cr-subject-link" dir="ltr">
+                  {c.subjectType}
+                </Link>
+              ) : c.subjectType ? (
+                <span dir="ltr">{c.subjectType}</span>
+              ) : (
+                EM_DASH
+              )}
+            </Fact>
             <Fact label={t('planning.cr.linkedBaseline')}>
               {c.linkedBaselineId ? (
                 <Link className={btn.link} href={baselineHref(projectId, c.linkedBaselineId)}>
@@ -154,9 +166,9 @@ export default function ChangeRequestPage() {
             </Fact>
             {c.proposedChange ? (
               <Fact label={t('planning.cr.proposedChange')} wide>
-                <pre className="max-h-48 overflow-auto rounded bg-surface-muted p-2 text-xs" dir="ltr">
+                <ScrollRegion as="pre" label={t('planning.cr.proposedChange')} className="max-h-48 overflow-auto rounded bg-surface-muted p-2 text-xs" dir="ltr">
                   {JSON.stringify(c.proposedChange, null, 2)}
-                </pre>
+                </ScrollRegion>
               </Fact>
             ) : null}
           </dl>

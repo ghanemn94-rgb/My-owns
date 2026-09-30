@@ -15,6 +15,7 @@ import { card, cx } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { isApiError } from '@/lib/api';
 import { useGate, type GateDetail } from '@/lib/gates';
+import { useLocalized } from '@/lib/i18n-data';
 import { useProjectContext } from '@/lib/project-context';
 import { sectionHref } from '@/lib/sections';
 import { BlockerList, CriteriaCounts, GateStatusBadges, PrerequisiteList } from '../_components/GateBits';
@@ -137,6 +138,7 @@ function CyclesPanel({ gate }: { gate: GateDetail }) {
 export default function GateDetailPage() {
   const { gateId } = useParams<{ gateId: string }>();
   const { t, tStatus, formatList } = useI18n();
+  const loc = useLocalized();
   const { projectId, project } = useProjectContext();
   const q = useGate(projectId, gateId);
 
@@ -160,14 +162,14 @@ export default function GateDetailPage() {
                 eyebrow={<span dir="ltr">{project.code}</span>}
                 title={
                   <span data-testid="gate-title">
-                    <span dir="ltr">{gate.key}</span> — <span dir="auto">{gate.name}</span>
+                    <span dir="ltr">{gate.key}</span> — <span dir="auto">{loc(gate.name, gate.nameAr)}</span>
                   </span>
                 }
                 documentTitle={`${gate.key} — ${t('gates.title')}`}
                 badges={<GateStatusBadges gate={gate} size="md" />}
                 description={
                   <div className="space-y-1">
-                    {gate.purpose ? <p dir="auto">{gate.purpose}</p> : null}
+                    {gate.purpose ? <p dir="auto">{loc(gate.purpose, gate.purposeAr)}</p> : null}
                     <p>
                       {t('gates.roles.line', {
                         owner: tStatus('roleKeys', gate.ownerRole),

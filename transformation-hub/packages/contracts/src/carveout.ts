@@ -18,6 +18,7 @@ import {
   PageQuery,
   ProjectParams,
   RequiredText,
+  SortParam,
   Text,
   Uuid,
   VerificationStatusSchema,
@@ -189,6 +190,8 @@ export const PerimeterListQuery = PageQuery.extend({
   disposition: PerimeterDispositionSchema.optional(),
   siteId: Uuid.optional(),
   workstreamId: Uuid.optional(),
+  /** Default order: code. */
+  sort: SortParam(['code', 'name', 'type', 'disposition', 'updatedAt']),
 });
 
 export const CreatePerimeterItemBody = z
@@ -311,7 +314,12 @@ export const InterimArrangementResult = z.object({ id: Uuid, version: z.number()
 // ---------------------------------------------------------------------------------------------------------
 // Transfers
 
-export const TransferListQuery = PageQuery.extend({ perimeterItemId: Uuid.optional(), aspect: TransferAspectSchema.optional() });
+export const TransferListQuery = PageQuery.extend({
+  perimeterItemId: Uuid.optional(),
+  aspect: TransferAspectSchema.optional(),
+  /** Default order: most recently recorded first. `itemCode` is the perimeter item code. */
+  sort: SortParam(['recordedAt', 'effectiveDate', 'itemCode']),
+});
 export const RecordTransferBody = z
   .object({
     perimeterItemId: Uuid,
@@ -347,6 +355,8 @@ export const ReconciliationDto = z.object({
       reviewed: z.boolean(),
       status: z.enum(['items_registered', 'reviewed_none_in_perimeter', 'unassessed']),
       conclusion: z.string().nullable(),
+      /** Version of the category review (pass it as expectedVersion to update the review); null when not reviewed. */
+      reviewVersion: z.number().int().nullable(),
     }),
   ),
   summary: z.object({
@@ -448,7 +458,11 @@ export const AgreementDetailDto = AgreementSummaryDto.extend({
   allowedCommands: z.array(z.string()),
   createdAt: z.string(),
 });
-export const AgreementListQuery = PageQuery.extend({ stage: AgreementStageSchema.optional() });
+export const AgreementListQuery = PageQuery.extend({
+  stage: AgreementStageSchema.optional(),
+  /** Default order: code. */
+  sort: SortParam(['code', 'title', 'stage', 'signingDate', 'effectiveDate', 'expiryDate', 'updatedAt']),
+});
 export const CreateAgreementBody = z
   .object({
     kindLabel: RequiredText(64),
@@ -527,7 +541,12 @@ export const ConsentDto = z.object({
   isDemo: z.boolean(),
   version: z.number().int(),
 });
-export const ConsentListQuery = PageQuery.extend({ perimeterItemId: Uuid.optional(), status: ConsentStatusSchema.optional() });
+export const ConsentListQuery = PageQuery.extend({
+  perimeterItemId: Uuid.optional(),
+  status: ConsentStatusSchema.optional(),
+  /** Default order: code. */
+  sort: SortParam(['code', 'counterparty', 'status', 'dueDate', 'updatedAt']),
+});
 export const CreateConsentBody = z
   .object({
     perimeterItemId: Uuid.optional(),

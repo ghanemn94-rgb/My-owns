@@ -26,6 +26,7 @@ import {
   PageQuery,
   ProjectParams,
   RequiredText,
+  SortParam,
   Text,
   UnitScale,
   Uuid,
@@ -458,7 +459,8 @@ export const governanceRoutes = registerRoutes({
     tags,
     access: 'governance.committee.read',
     params: ProjectParams,
-    query: PageQuery.extend({ kind: z.enum(COMMITTEE_KINDS).optional(), status: z.enum(COMMITTEE_STATUSES).optional() }),
+    // Default order: kind, then creation.
+    query: PageQuery.extend({ kind: z.enum(COMMITTEE_KINDS).optional(), status: z.enum(COMMITTEE_STATUSES).optional(), sort: SortParam(['name', 'kind', 'status', 'createdAt']) }),
     response: paged(CommitteeDto),
   }),
   getCommittee: defineRoute({
@@ -611,7 +613,13 @@ export const governanceRoutes = registerRoutes({
     tags,
     access: 'governance.meeting.read',
     params: ProjectParams,
-    query: PageQuery.extend({ committeeId: Uuid.optional(), status: z.enum(MEETING_STATUSES).optional(), isCirculation: z.enum(['true', 'false']).optional() }),
+    // Default order: latest scheduled first (then number, descending).
+    query: PageQuery.extend({
+      committeeId: Uuid.optional(),
+      status: z.enum(MEETING_STATUSES).optional(),
+      isCirculation: z.enum(['true', 'false']).optional(),
+      sort: SortParam(['number', 'title', 'scheduledAt', 'status']),
+    }),
     response: paged(MeetingDto),
   }),
   getMeeting: defineRoute({
@@ -791,7 +799,13 @@ export const governanceRoutes = registerRoutes({
     tags,
     access: 'governance.meeting.read',
     params: ProjectParams,
-    query: PageQuery.extend({ committeeId: Uuid.optional(), meetingId: Uuid.optional(), screeningStatus: z.enum(AGENDA_SCREENING_STATUSES).optional() }),
+    // Default order: newest request first.
+    query: PageQuery.extend({
+      committeeId: Uuid.optional(),
+      meetingId: Uuid.optional(),
+      screeningStatus: z.enum(AGENDA_SCREENING_STATUSES).optional(),
+      sort: SortParam(['number', 'title', 'screeningStatus', 'createdAt']),
+    }),
     response: paged(AgendaItemDto),
   }),
   createAgendaRequest: defineRoute({
@@ -835,11 +849,13 @@ export const governanceRoutes = registerRoutes({
     tags,
     access: 'governance.decision.read',
     params: ProjectParams,
+    // Default order: newest first. `status` sorts in lifecycle (enum) order.
     query: PageQuery.extend({
       committeeId: Uuid.optional(),
       meetingId: Uuid.optional(),
       status: z.enum(DECISION_STATUSES).optional(),
       authorityOutcome: z.enum(DECISION_AUTHORITY_OUTCOMES).optional(),
+      sort: SortParam(['code', 'title', 'status', 'latestSafeDate', 'createdAt', 'updatedAt']),
     }),
     response: paged(DecisionSummaryDto),
   }),
@@ -1057,12 +1073,14 @@ export const governanceRoutes = registerRoutes({
     tags,
     access: 'governance.decision.read',
     params: ProjectParams,
+    // Default order: newest first.
     query: PageQuery.extend({
       status: z.enum(ACTION_ITEM_STATUSES).optional(),
       decisionId: Uuid.optional(),
       meetingId: Uuid.optional(),
       ownerUserId: Uuid.optional(),
       overdue: z.enum(['true', 'false']).optional(),
+      sort: SortParam(['code', 'title', 'dueDate', 'status', 'createdAt']),
     }),
     response: paged(ActionDto),
   }),
@@ -1182,7 +1200,13 @@ export const governanceRoutes = registerRoutes({
     tags,
     access: 'governance.decision.read',
     params: ProjectParams,
-    query: PageQuery.extend({ status: z.enum(ESCALATION_STATUSES).optional(), sourceType: z.enum(ESCALATION_SOURCE_TYPES).optional(), sourceId: Uuid.optional() }),
+    // Default order: newest first.
+    query: PageQuery.extend({
+      status: z.enum(ESCALATION_STATUSES).optional(),
+      sourceType: z.enum(ESCALATION_SOURCE_TYPES).optional(),
+      sourceId: Uuid.optional(),
+      sort: SortParam(['code', 'title', 'decisionDeadline', 'status', 'createdAt']),
+    }),
     response: paged(EscalationDto),
   }),
   getEscalation: defineRoute({

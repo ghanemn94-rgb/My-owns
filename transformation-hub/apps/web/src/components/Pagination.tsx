@@ -10,12 +10,15 @@ export function Pagination({
   total,
   onPageChange,
   className,
+  label,
 }: {
   page: number;
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
   className?: string;
+  /** What is paginated (e.g. the table caption): keeps navigation landmarks unique when a page has several lists. */
+  label?: string;
 }) {
   const { t, formatNumber } = useI18n();
   const pages = Math.max(1, Math.ceil(total / pageSize));
@@ -23,7 +26,7 @@ export function Pagination({
   const from = (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
   return (
-    <nav aria-label={t('common.pagination.label')} className={cx('flex flex-wrap items-center justify-between gap-3 text-sm', className)}>
+    <nav aria-label={label ? t('common.pagination.labelFor', { name: label }) : t('common.pagination.label')} className={cx('flex flex-wrap items-center justify-between gap-3 text-sm', className)}>
       <p className="text-muted" aria-live="polite">
         {t('common.pagination.range', { from: formatNumber(from), to: formatNumber(to), total: formatNumber(total) })}
       </p>

@@ -21,6 +21,7 @@ import { useToast } from '../../Toast';
 import { btn, cx } from '../../ui';
 import { CodeLink, DateText, FilterSelect, FilterToggle } from '../bits';
 import { FormDialog } from '../dialogs';
+import { useLocalized } from '@/lib/i18n-data';
 
 const PAGE = 25;
 
@@ -34,6 +35,7 @@ function useWsOptions() {
 /** Milestones register — filters, pagination, overdue/critical; commands live on the detail page. */
 export function MilestonesTab({ workstreamId: fixedWs }: { workstreamId?: string }) {
   const { t, tStatus } = useI18n();
+  const loc = useLocalized();
   const { projectId, can } = useProjectContext();
   const wsOptions = useWsOptions();
   const [q, setQ] = useState('');
@@ -48,7 +50,7 @@ export function MilestonesTab({ workstreamId: fixedWs }: { workstreamId?: string
   const list = useQuery({ queryKey: pk.milestones(projectId, query), queryFn: ({ signal }) => api(P.listMilestones, { params: { projectId }, query, signal }), placeholderData: keepPreviousData });
 
   const columns: Column<Milestone>[] = [
-    { key: 'code', header: t('planning.common.code'), isRowHeader: true, cell: (m) => <CodeLink href={milestoneHref(projectId, m.id)} code={m.code} title={m.title} /> },
+    { key: 'code', header: t('planning.common.code'), isRowHeader: true, cell: (m) => <CodeLink href={milestoneHref(projectId, m.id)} code={m.code} title={loc(m.title, m.titleAr)} /> },
     { key: 'status', header: t('planning.common.status'), cell: (m) => <StatusBadge enumName="milestoneStatuses" value={m.status} /> },
     { key: 'planned', header: t('planning.milestone.plannedDate'), cell: (m) => <DateText value={m.plannedDate} overdue={m.overdue} /> },
     { key: 'forecast', header: t('planning.milestone.forecastDate'), cell: (m) => <DateText value={m.forecastDate} /> },
@@ -56,7 +58,7 @@ export function MilestonesTab({ workstreamId: fixedWs }: { workstreamId?: string
     { key: 'critical', header: t('planning.milestone.critical'), cell: (m) => (m.isCritical ? t('planning.common.yes') : t('planning.common.no')) },
     { key: 'owner', header: t('planning.common.owner'), cell: (m) => (m.ownerName ? <span dir="auto">{m.ownerName}</span> : <span className="text-muted">{t('planning.common.unassigned')}</span>) },
     { key: 'evidence', header: t('planning.common.evidence'), cell: (m) => <span className="tabular">{m.evidenceCount}</span> },
-    { key: 'demo', header: '', cell: (m) => (m.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (m) => (m.isDemo ? <DemoBadge /> : null) },
   ];
 
   return (
@@ -158,6 +160,7 @@ function CreateMilestoneDialog({ open, onClose, defaultWs }: { open: boolean; on
 /** Deliverables register with weights (only approved weights count toward progress). */
 export function DeliverablesTab({ workstreamId: fixedWs }: { workstreamId?: string }) {
   const { t, tStatus, formatNumber } = useI18n();
+  const loc = useLocalized();
   const { projectId, can, me } = useProjectContext();
   const refresh = useRefreshPlanning(projectId);
   const toast = useToast();
@@ -175,7 +178,7 @@ export function DeliverablesTab({ workstreamId: fixedWs }: { workstreamId?: stri
   const approvable = (list.data?.items ?? []).filter((d) => !d.weightApproved && d.status !== 'cancelled' && d.weightSetBy !== me.user.id);
 
   const columns: Column<Deliverable>[] = [
-    { key: 'code', header: t('planning.common.code'), isRowHeader: true, cell: (d) => <CodeLink href={deliverableHref(projectId, d.id)} code={d.code} title={d.title} /> },
+    { key: 'code', header: t('planning.common.code'), isRowHeader: true, cell: (d) => <CodeLink href={deliverableHref(projectId, d.id)} code={d.code} title={loc(d.title, d.titleAr)} /> },
     { key: 'status', header: t('planning.common.status'), cell: (d) => <StatusBadge enumName="deliverableStatuses" value={d.status} /> },
     {
       key: 'weight',
@@ -191,7 +194,7 @@ export function DeliverablesTab({ workstreamId: fixedWs }: { workstreamId?: stri
     { key: 'ws', header: t('planning.common.workstream'), cell: (d) => <span dir="ltr">{d.workstreamCode ?? '—'}</span> },
     { key: 'owner', header: t('planning.common.owner'), cell: (d) => (d.ownerName ? <span dir="auto">{d.ownerName}</span> : <span className="text-muted">{t('planning.common.unassigned')}</span>) },
     { key: 'evidence', header: t('planning.common.evidence'), cell: (d) => <span className="tabular">{d.evidenceCount}</span> },
-    { key: 'demo', header: '', cell: (d) => (d.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (d) => (d.isDemo ? <DemoBadge /> : null) },
   ];
 
   return (

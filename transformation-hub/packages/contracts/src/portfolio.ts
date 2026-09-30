@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { PROJECT_STATUSES, TEMPLATE_KINDS, INCORPORATION_STATUSES, ROLE_KEYS, STATUS_DIMENSION_KEYS } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
-import { Uuid, IsoDate, ClassificationSchema, PageQuery, paged, Text, RequiredText, ProjectParams, Ok, ExpectedVersion } from './common';
+import { Uuid, IsoDate, ClassificationSchema, PageQuery, NoSort, SortParam, ServerMessageSchema, paged, Text, RequiredText, ProjectParams, Ok, ExpectedVersion } from './common';
 
 export const TemplateVersionDto = z.object({
   id: Uuid,
@@ -9,6 +9,8 @@ export const TemplateVersionDto = z.object({
   templateKey: z.string(),
   kind: z.enum(TEMPLATE_KINDS),
   name: z.string(),
+  /** Arabic template name from the (bilingual) template definition. */
+  nameAr: z.string().nullable(),
   versionNo: z.number().int(),
   status: z.string(),
   counts: z.object({ gates: z.number(), workstreams: z.number(), activities: z.number(), kpis: z.number() }),
@@ -27,10 +29,12 @@ export const ProjectSummaryDto = z.object({
   templateVersionNo: z.number().int(),
   programName: z.string().nullable(),
   myRoles: z.array(z.enum(ROLE_KEYS)),
-  dimensions: z.array(z.object({ key: z.enum(STATUS_DIMENSION_KEYS), state: z.string(), explanation: z.string().nullable() })),
+  dimensions: z.array(
+    z.object({ key: z.enum(STATUS_DIMENSION_KEYS), state: z.string(), explanation: z.string().nullable(), explanationI18n: z.array(ServerMessageSchema) }),
+  ),
   openRisks: z.number().int().nullable(),
   overdueActions: z.number().int().nullable(),
-  nextGate: z.object({ key: z.string(), name: z.string(), status: z.string() }).nullable(),
+  nextGate: z.object({ key: z.string(), name: z.string(), nameAr: z.string().nullable(), status: z.string() }).nullable(),
 });
 export type ProjectSummary = z.infer<typeof ProjectSummaryDto>;
 
@@ -42,7 +46,8 @@ export const ProjectDetailDto = ProjectSummaryDto.extend({
   plannedStart: z.string().nullable(),
   version: z.number().int(),
   setupState: z.record(z.string(), z.unknown()),
-  phases: z.array(z.object({ key: z.string(), name: z.string(), gateKeys: z.array(z.string()) })),
+  /** Template phases: `name` is English, `nameAr` Arabic (clients pick by locale). */
+  phases: z.array(z.object({ key: z.string(), name: z.string(), nameAr: z.string().nullable(), gateKeys: z.array(z.string()) })),
   entities: z.array(z.object({ id: Uuid, name: z.string(), role: z.string(), incorporationStatus: z.string(), verification: z.string(), isDemo: z.boolean() })),
   counts: z.record(z.string(), z.number()),
 });
@@ -105,7 +110,8 @@ export const portfolioRoutes = registerRoutes({
     summary: 'Projects the caller is authorized to see (Portfolio Home)',
     tags: ['portfolio'],
     access: 'authenticated',
-    query: PageQuery.extend({ includeDemo: z.enum(['true', 'false']).default('true') }),
+    // Default order: Demo sandbox first, then code. `status` sorts in lifecycle (enum) order.
+    query: PageQuery.extend({ includeDemo: z.enum(['true', 'false']).default('true'), sort: SortParam(['code', 'name', 'status']) }),
     response: paged(ProjectSummaryDto),
   }),
   getProject: defineRoute({
@@ -171,7 +177,8 @@ export const portfolioRoutes = registerRoutes({
     summary: 'Search people for assignment (name/email only)',
     tags: ['identity'],
     access: 'authenticated',
-    query: z.object({ q: z.string().trim().max(100).default('') }),
+    // Bounded people search ordered by name; no pagination or sort.
+    query: z.object({ q: z.string().trim().max(100).default(''), sort: NoSort }),
     response: z.object({ items: z.array(DirectoryUserDto) }),
   }),
   listMembers: defineRoute({
@@ -238,7 +245,8 @@ export const portfolioRoutes = registerRoutes({
     tags: ['audit'],
     access: 'portfolio.project.read',
     params: ProjectParams,
-    query: PageQuery.extend({ entityType: z.string().max(48).optional(), entityId: Uuid.optional() }),
+    // Append-only feed in audit sequence order (newest first): no sort (the order is the audit chain order).
+    query: PageQuery.extend({ entityType: z.string().max(48).optional(), entityId: Uuid.optional(), sort: NoSort }),
     response: paged(
       z.object({
         id: Uuid,

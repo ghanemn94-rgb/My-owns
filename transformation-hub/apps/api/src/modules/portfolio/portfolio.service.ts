@@ -24,6 +24,8 @@ import type { RequestContext, ProjectScope } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { ProjectFactory } from './project-factory.service';
 import { likeContains } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, portfolioRoutes } from '@hub/contracts';
 
 /** Roles a project manager may grant (higher-authority roles need portfolio/platform administration). */
 const PM_GRANTABLE: RoleKey[] = ['workstream_lead', 'contributor', 'functional_approver', 'finance_restricted', 'legal_restricted', 'clean_team', 'external_partner_limited', 'secretary_cpmo'];
@@ -117,7 +119,7 @@ export class PortfolioService {
   ) {}
 
   // ---------------------------------------------------------------------------------------------------------
-  async listProjects(ctx: RequestContext, q: { page: number; pageSize: number; q?: string; includeDemo: 'true' | 'false' }) {
+  async listProjects(ctx: RequestContext, q: RouteInput<typeof portfolioRoutes.listProjects>['query']) {
     const tx = this.db.tx();
     const ids = ctx.projectIds;
     if (ids.length === 0) return { items: [], page: q.page, pageSize: q.pageSize, total: 0 };
@@ -137,8 +139,15 @@ export class PortfolioService {
       .innerJoin(schema.projectTemplate, eq(schema.projectTemplate.id, schema.projectTemplateVersion.templateId))
       .leftJoin(schema.program, eq(schema.program.id, schema.project.programId))
       .where(and(...conds))
-      .orderBy(desc(schema.project.isDemo), asc(schema.project.code));
+      .orderBy(
+        ...orderBySort(q.sort, { code: schema.project.code, name: schema.project.name, status: schema.project.status }, schema.project.id, [
+          desc(schema.project.isDemo),
+          asc(schema.project.code),
+          asc(schema.project.id),
+        ]),
+      );
     // Visibility: project classification vs clearance and project.read permission (no counts for hidden projects).
+    // Filtering keeps the SQL order, so the requested sort applies to exactly the visible projects.
     const visible = rows.filter(
       (r) => this.policy.canInProject(ctx, 'portfolio.project.read', r.p.id) && clearanceAllows(ctx.principal.clearance, r.p.classification as Classification),
     );
@@ -187,10 +196,10 @@ export class PortfolioService {
           )[0]!.n,
         )
       : null;
-    let nextGate: { key: string; name: string; status: string } | null = null;
+    let nextGate: { key: string; name: string; nameAr: string | null; status: string } | null = null;
     if (canGates) {
       const g = await tx
-        .select({ key: schema.gateDefinition.key, name: schema.gateDefinition.name, status: schema.gateAssessment.status })
+        .select({ key: schema.gateDefinition.key, name: schema.gateDefinition.name, nameAr: schema.gateDefinition.nameAr, status: schema.gateAssessment.status })
         .from(schema.gateDefinition)
         .innerJoin(schema.gateAssessment, and(eq(schema.gateAssessment.gateId, schema.gateDefinition.id), eq(schema.gateAssessment.isCurrent, true)))
         .where(and(eq(schema.gateDefinition.projectId, pid), sql`${schema.gateAssessment.status} not in ('approved','approved_with_exceptions')`))
@@ -211,7 +220,7 @@ export class PortfolioService {
       templateVersionNo: r.versionNo,
       programName: r.programName,
       myRoles: scope ? [...new Set([...scope.roles, ...scope.workstreamRoles.map((w) => w.role)])] : [],
-      dimensions: dims.map((d) => ({ key: d.key, state: d.state, explanation: d.explanation })),
+      dimensions: dims.map((d) => ({ key: d.key, state: d.state, explanation: d.explanation, explanationI18n: d.explanationI18n ?? [] })),
       openRisks,
       overdueActions,
       nextGate,
@@ -264,7 +273,8 @@ export class PortfolioService {
       plannedStart: r.p.plannedStart,
       version: r.p.version,
       setupState: { ...(r.p.setupState as Record<string, unknown>), gaps: await this.setupGaps(projectId, r.tplKind, this.clock.today(r.p.timezone)), gapsComputedAt: this.clock.now().toISOString() },
-      phases: (def.phases ?? []).map((ph) => ({ key: ph.key, name: ctx.locale === 'ar' ? ph.name.ar : ph.name.en, gateKeys: ph.gateKeys })),
+      // Both languages (QA-P1-14): the client picks by its active locale.
+      phases: (def.phases ?? []).map((ph) => ({ key: ph.key, name: ph.name.en, nameAr: ph.name.ar || null, gateKeys: ph.gateKeys })),
       entities: entities.map((e) => ({ id: e.id, name: e.name, role: e.role, incorporationStatus: e.inc, verification: e.ver, isDemo: e.isDemo })),
       counts,
     };
@@ -322,6 +332,7 @@ export class PortfolioService {
           templateKey: t.key,
           kind: t.kind,
           name: t.name,
+          nameAr: d.name?.ar || null,
           versionNo: v.versionNo,
           status: v.status,
           counts: { gates: d.gates?.length ?? 0, workstreams: d.workstreams?.length ?? 0, activities: d.wbs?.length ?? 0, kpis: d.kpis?.length ?? 0 },

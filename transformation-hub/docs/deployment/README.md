@@ -26,9 +26,9 @@ inside an environment chosen by Mobily's teams. No provider, registry, identity 
 | Path | What |
 |---|---|
 | `apps/api/Dockerfile`, `apps/web/Dockerfile`, `.dockerignore`, `deploy/docker/api-entrypoint.cjs` | Images (api/worker/migrate/bootstrap in one image; optional `api-chromium`; web standalone) |
-| `deploy/compose/` | Development/evaluation stack only (not HA) |
+| `deploy/compose/` | Development/evaluation stack only (not HA); commands in [installation.md](installation.md) §7 |
 | `deploy/helm/transformation-hub/` | Helm chart for Kubernetes/OpenShift + `values-private-{ai-off,local-ai,ai-gateway}.yaml` |
-| `scripts/ops/` | `backup.sh`, `restore.sh`, `restore-drill.sh`, `egress-check.sh`, `licence-check.mjs` (+ policy), `db-init-roles.sh`, `validate-deploy.sh` |
+| `scripts/ops/` | `backup.sh`, `restore.sh`, `restore-drill.sh`, `egress-check.sh`, `licence-check.mjs` (+ policy), `db-init-roles.sh`, `validate-deploy.sh`, `compose-env-init.sh`, `compose-smoke.sh`, `secret-scan.sh` (+ `gitleaks.toml`) |
 | `../.github/workflows/transformation-hub-ci.yml` | CI (repository root) |
 
 ## Verification status (build environment, 2026-09-29)
@@ -37,9 +37,10 @@ inside an environment chosen by Mobily's teams. No provider, registry, identity 
 |---|---|---|
 | Backup → restore drill against PostgreSQL 16 | **Executed — PASS** (2.85 s and 8.26 s to verified) | [restore-drill-results.md](restore-drill-results.md) |
 | Helm lint, template (5 variants), 8 refusal cases, security invariants, kubeconform | **Executed — PASS** (Helm v3.19.0 and kubeconform v0.7.0 built from their official sources) | `bash scripts/ops/validate-deploy.sh` |
-| Compose file | **Validated** with `docker compose config` | `up` NOT EXECUTED |
+| Compose stack (dev/eval, not HA) | **Validated** with `docker compose config`. The documented commands (`up --build --wait`, Demo seed, `compose-smoke.sh`, `down -v`) run in the CI job `compose` | Not executed in the build environment (no Docker daemon) |
 | Dockerfile RUN steps and runtime layouts | **Executed without Docker** (same commands; runtime booted) | `docker build …` NOT EXECUTED ([supply-chain.md](supply-chain.md)) |
 | Egress check, licence check, source SBOM | **Executed** | [private-mode.md](private-mode.md), [supply-chain.md](supply-chain.md) |
-| CI workflow | actionlint **PASS** (with shellcheck) | Pipeline NOT EXECUTED |
+| Secret scan (history, tree, web bundle, test reports) | **Executed** locally with gitleaks 8.30.1: 0 findings; planted values detected. CI job `secret-scan` | [secrets.md](secrets.md#secret-scanning-ci) |
+| CI workflow | actionlint **PASS** (with shellcheck). CI run 8 (id 36645986422) all green on `7959b44`, as reported by the lead, before the `compose` and `secret-scan` jobs were added | The new jobs need a CI run |
 | shellcheck `-S warning` on ops scripts | **PASS** | |
 | Cluster install, image push, OpenShift run, NetworkPolicy enforcement, S3 path | **NOT EXECUTED** | Requires Mobily infrastructure |

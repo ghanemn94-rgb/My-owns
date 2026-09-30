@@ -21,6 +21,7 @@ import type { AgreementListQuery, AgreementStageBody, ConsentListQuery, CreateAg
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { RecordVersionService, assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { CarveoutProject, CarveoutSupport, iso } from './carveout.support';
@@ -92,7 +93,13 @@ export class AgreementsService {
     if (q.q) conds.push(or(ilike(A.title, likeContains(q.q)), ilike(A.code, likeContains(q.q)), ilike(A.kindLabel, likeContains(q.q)))!);
     const where = and(...conds);
     const [{ n }] = (await this.tx.select({ n: count() }).from(A).where(where)) as [{ n: number }];
-    const rows = await this.tx.select().from(A).where(where).orderBy(asc(A.code)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(
+      q.sort,
+      { code: A.code, title: A.title, stage: A.stage, signingDate: A.signingDate, effectiveDate: A.effectiveDate, expiryDate: A.expiryDate, updatedAt: A.updatedAt },
+      A.id,
+      [asc(A.code), asc(A.id)],
+    );
+    const rows = await this.tx.select().from(A).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     return pageOf(await this.summaries(rows), Number(n), q);
   }
 
@@ -339,7 +346,8 @@ export class AgreementsService {
     if (q.q) conds.push(or(ilike(C.counterparty, likeContains(q.q)), ilike(C.code, likeContains(q.q)))!);
     const where = and(...conds);
     const [{ n }] = (await this.tx.select({ n: count() }).from(C).where(where)) as [{ n: number }];
-    const rows = await this.tx.select().from(C).where(where).orderBy(asc(C.code)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { code: C.code, counterparty: C.counterparty, status: C.status, dueDate: C.dueDate, updatedAt: C.updatedAt }, C.id, [asc(C.code), asc(C.id)]);
+    const rows = await this.tx.select().from(C).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     return pageOf(await this.consentDtos(projectId, rows, this.s.today(p)), Number(n), q);
   }
 

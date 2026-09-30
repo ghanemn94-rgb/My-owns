@@ -199,7 +199,7 @@ export class LegalEntitiesService {
   private async dimensions(ctx: RequestContext, projectId: string) {
     await this.dims.recomputeDimensions(projectId);
     const v = await this.dims.get(ctx, projectId);
-    return { items: v.items.map((d) => ({ key: d.key, state: d.state, explanation: d.explanation })), carveOutComplete: v.carveOutComplete };
+    return { items: v.items.map((d) => ({ key: d.key, state: d.state, explanation: d.explanation, explanationI18n: d.explanationI18n })), carveOutComplete: v.carveOutComplete };
   }
 
   async recordIncorporation(ctx: RequestContext, projectId: string, entityId: string, body: { expectedVersion: number; status: IncorporationStatus; evidenceNote?: string; note?: string }) {

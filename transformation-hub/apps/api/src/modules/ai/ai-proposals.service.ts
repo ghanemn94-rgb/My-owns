@@ -30,6 +30,8 @@ import { JobContextFactory } from '../../platform/jobs/job-context';
 import { DeliveryService } from '../../platform/delivery.service';
 import { isFullScope, RequestContext } from '../../platform/context';
 import { loadInProject } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, aiRoutes } from '@hub/contracts';
 import { newId, payloadHash } from '../../platform/ids';
 import { AiConfig } from './ai-config';
 import { AiSettingsService, autopilotStatus, type AutopilotPolicyStored, type SettingsRow } from './ai-settings.service';
@@ -352,7 +354,7 @@ export class AiProposalsService {
     return dto!;
   }
 
-  async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; status?: string }) {
+  async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; status?: string; sort?: RouteInput<typeof aiRoutes.listProposals>['query']['sort'] }) {
     this.policy.assert(ctx, 'ai.proposal.read', { projectId });
     const conds: SQL[] = [eq(schema.aiProposal.projectId, projectId), this.targetVisibleSql(ctx, projectId)];
     if (q.status) conds.push(eq(schema.aiProposal.status, q.status as ProposalRow['status']));
@@ -363,7 +365,14 @@ export class AiProposalsService {
       .select()
       .from(schema.aiProposal)
       .where(where)
-      .orderBy(desc(schema.aiProposal.createdAt))
+      .orderBy(
+        ...orderBySort(
+          q.sort,
+          { createdAt: schema.aiProposal.createdAt, updatedAt: schema.aiProposal.updatedAt, status: schema.aiProposal.status, actionType: schema.aiProposal.actionType },
+          schema.aiProposal.id,
+          [desc(schema.aiProposal.createdAt), desc(schema.aiProposal.id)],
+        ),
+      )
       .limit(q.pageSize)
       .offset((q.page - 1) * q.pageSize);
     return { items: await this.toDtos(projectId, rows), page: q.page, pageSize: q.pageSize, total: n };

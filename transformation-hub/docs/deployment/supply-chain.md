@@ -64,6 +64,10 @@ node_modules). `@cyclonedx/cyclonedx-npm` covers npm only and does not read pnpm
 - Mobily's own registry scanner (for example Trivy, Clair or Prisma) is authoritative for images in the private registry.
 - **Not executed here:** grype and `pnpm audit` (no network access to advisory databases was attempted in the build environment).
 
+## Secret scanning
+
+- **CI:** job `secret-scan` runs gitleaks **8.30.1** (MIT licence) over the repository history and tree, the web client bundle, and the CI test reports and logs. It **fails the build** on any finding. The binary is downloaded from the GitHub release `gitleaks_8.30.1_linux_x64.tar.gz` and verified against the SHA-256 pinned in the workflow (`551f6fc8…f2470eb`, taken from the release checksums file and checked in the build environment on 2026-09-30). When mirroring into Mobily's CI, fetch the same file from the internal artifact mirror and keep the checksum pin. Scope, allow-list policy and limits: [secrets.md](secrets.md#secret-scanning-ci).
+
 ## Licence checks
 
 - `scripts/ops/licence-check.mjs` reads `pnpm licenses list --json --prod` and applies `scripts/ops/licence-policy.json` (a **proposal** pending Mobily Legal / OSS office):

@@ -5,13 +5,15 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { cx } from '@/components/ui';
 import { useI18n } from '@/i18n/provider';
 import type { GateBlocker, GateSummary } from '@/lib/gates';
+import { useServerMessages } from '@/lib/i18n-data';
 
 /**
- * Blockers rendered from their structured kind + reference (translated); the server's English sentence is kept as the
- * accessible description so no nuance is lost.
+ * Blockers rendered from their structured kind + reference, with the server's explanation translated from its message
+ * codes (QA-P1-14) — the English sentence is shown only for a blocker that carries no codes.
  */
 export function BlockerList({ blockers, limit, className }: { blockers: GateBlocker[]; limit?: number; className?: string }) {
   const { t, formatNumber } = useI18n();
+  const serverText = useServerMessages();
   if (blockers.length === 0) {
     return (
       <p className={cx('flex items-center gap-1.5 text-sm text-success', className)} data-testid="gate-no-blockers">
@@ -30,9 +32,15 @@ export function BlockerList({ blockers, limit, className }: { blockers: GateBloc
             <span>
               {t(`gates.blockers.${b.kind}`, { ref: b.ref })}
               <span className="sr-only"> — </span>
-              <span className="block text-xs text-muted" dir="ltr" lang="en">
-                {b.message}
-              </span>
+              {b.messageI18n.length ? (
+                <span className="block text-xs text-muted" dir="auto">
+                  {serverText(b.messageI18n, b.message)}
+                </span>
+              ) : (
+                <span className="block text-xs text-muted" dir="ltr" lang="en">
+                  {b.message}
+                </span>
+              )}
             </span>
           </li>
         ))}

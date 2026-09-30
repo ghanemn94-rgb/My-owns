@@ -7,6 +7,7 @@ import { EmptyState } from './EmptyState';
 import { ErrorState } from './ErrorState';
 import { LoadingState } from './LoadingState';
 import { Pagination } from './Pagination';
+import { ScrollRegion } from './ScrollRegion';
 import { card, cx } from './ui';
 
 export interface Column<T> {
@@ -18,6 +19,8 @@ export interface Column<T> {
   className?: string;
   /** Row header cell for screen readers (usually the name/code column). */
   isRowHeader?: boolean;
+  /** Header text only for assistive technology (e.g. the Demo-badge column); a header cell is never left empty. */
+  headerHidden?: boolean;
 }
 
 type SortState = { key: string; dir: 'asc' | 'desc' } | null;
@@ -99,7 +102,7 @@ export function DataTable<T>({
   return (
     <div className={cx(card, 'overflow-hidden', className)} data-testid={testId}>
       {body ?? (
-        <div className="relative overflow-x-auto">
+        <ScrollRegion label={caption} className="relative overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <caption className="sr-only">{caption}</caption>
             <thead className="bg-surface-muted">
@@ -132,6 +135,8 @@ export function DataTable<T>({
                           )}
                           <span className="sr-only">{t('common.table.sortHint')}</span>
                         </button>
+                      ) : c.headerHidden ? (
+                        <span className="sr-only">{c.header}</span>
                       ) : (
                         c.header
                       )}
@@ -158,16 +163,16 @@ export function DataTable<T>({
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
       )}
       {!body && pagination ? (
         <div className="border-t border-line px-3 py-2">
-          <Pagination {...pagination} />
+          <Pagination {...pagination} label={caption} />
         </div>
       ) : null}
       {!body && !pagination && clientPageSize && sorted.length > clientPageSize ? (
         <div className="border-t border-line px-3 py-2">
-          <Pagination page={clientPage} pageSize={clientPageSize} total={sorted.length} onPageChange={setClientPage} />
+          <Pagination page={clientPage} pageSize={clientPageSize} total={sorted.length} onPageChange={setClientPage} label={caption} />
         </div>
       ) : null}
     </div>

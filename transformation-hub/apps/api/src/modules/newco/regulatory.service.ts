@@ -22,6 +22,7 @@ import type { z } from 'zod';
 import type { CreateRegulatoryBody, RegulatoryListQuery, RequirementOutcomeBody, RequirementProgressBody, UpdateRegulatoryBody } from '@hub/contracts';
 import { AuditService } from '../../platform/audit.service';
 import { RecordVersionService, activeEvidenceCount, assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { NewcoProject, NewcoSupport } from './newco.support';
@@ -107,7 +108,13 @@ export class RegulatoryService {
     if (q.q) conds.push(or(ilike(RR.title, likeContains(q.q)), ilike(RR.code, likeContains(q.q)), ilike(RR.authority, likeContains(q.q)))!);
     const where = and(...conds);
     const [{ n }] = (await this.tx.select({ n: count() }).from(RR).where(where)) as [{ n: number }];
-    const rows = await this.tx.select().from(RR).where(where).orderBy(asc(RR.code)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(
+      q.sort,
+      { code: RR.code, title: RR.title, authority: RR.authority, category: RR.category, status: RR.status, validTo: RR.validTo, updatedAt: RR.updatedAt },
+      RR.id,
+      [asc(RR.code), asc(RR.id)],
+    );
+    const rows = await this.tx.select().from(RR).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     return pageOf(await this.dtos(projectId, rows, today), Number(n), q);
   }
 

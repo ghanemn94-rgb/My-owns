@@ -269,18 +269,35 @@ export function assertDecisionLinkable(d: LinkedDecision, allowedTypeKeys: reado
  * authorized body with its reference recorded — as for gates, AT-04); otherwise the reason it is not.
  */
 export function linkedDecisionIssue(d: LinkedDecision | null, allowedTypeKeys: readonly string[], purpose: string): string | null {
-  if (!d) return `No governance decision is linked for ${purpose}`;
-  if (!d.decisionTypeKey || !allowedTypeKeys.includes(d.decisionTypeKey)) return `The linked decision is not of type ${allowedTypeKeys.join(' / ')}`;
-  if (!FINAL_APPROVED_DECISION_STATUSES.includes(d.status)) {
-    return d.status === 'recommended'
-      ? 'The linked decision is recommended — pending the external authority; it is not a final approval'
-      : `The linked decision is ${d.status}; only an approved decision counts`;
+  switch (linkedDecisionIssueCode(d, allowedTypeKeys)) {
+    case null:
+      return null;
+    case 'missing':
+      return `No governance decision is linked for ${purpose}`;
+    case 'wrong_type':
+      return `The linked decision is not of type ${allowedTypeKeys.join(' / ')}`;
+    case 'recommended':
+      return 'The linked decision is recommended — pending the external authority; it is not a final approval';
+    case 'not_approved':
+      return `The linked decision is ${d!.status}; only an approved decision counts`;
+    case 'external_approval_missing':
+      return 'The linked decision is outside the committee delegation and no approval by the authorized body is recorded';
+    case 'authority_unassessed':
+      return 'The linked decision has no authority assessment (within mandate / external authority)';
   }
+}
+
+/** Machine-readable reason behind {@link linkedDecisionIssue} (the web translates it); null when the decision authorizes. */
+export const LINKED_DECISION_ISSUE_CODES = ['missing', 'wrong_type', 'recommended', 'not_approved', 'external_approval_missing', 'authority_unassessed'] as const;
+export type LinkedDecisionIssueCode = (typeof LINKED_DECISION_ISSUE_CODES)[number];
+
+export function linkedDecisionIssueCode(d: LinkedDecision | null, allowedTypeKeys: readonly string[]): LinkedDecisionIssueCode | null {
+  if (!d) return 'missing';
+  if (!d.decisionTypeKey || !allowedTypeKeys.includes(d.decisionTypeKey)) return 'wrong_type';
+  if (!FINAL_APPROVED_DECISION_STATUSES.includes(d.status)) return d.status === 'recommended' ? 'recommended' : 'not_approved';
   if (d.authorityOutcome === 'within_mandate') return null;
   if (d.authorityOutcome === 'pending_external_authority' && d.externalAuthorityReference?.trim()) return null;
-  return d.authorityOutcome === 'pending_external_authority'
-    ? 'The linked decision is outside the committee delegation and no approval by the authorized body is recorded'
-    : 'The linked decision has no authority assessment (within mandate / external authority)';
+  return d.authorityOutcome === 'pending_external_authority' ? 'external_approval_missing' : 'authority_unassessed';
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -289,6 +306,17 @@ export function linkedDecisionIssue(d: LinkedDecision | null, allowedTypeKeys: r
 /** Commands executable through the generic transition endpoint; guarded commands have dedicated endpoints. */
 export const TSA_SIMPLE_COMMANDS = ['start_negotiation', 'activate', 'start_exit', 'record_breach', 'remedy_breach'] as const;
 export type TsaSimpleCommand = (typeof TSA_SIMPLE_COMMANDS)[number];
+
+/**
+ * The continuity options attached to every TSA escalation (expiry or replacement failure). The server stores the
+ * English title/impact on the escalation record; the web shows the translated text for these keys.
+ */
+export const TSA_ESCALATION_OPTIONS = [
+  { key: 'extend', title: 'Extend the TSA', impact: 'Requires an approved decision recorded against the TSA (request-extension → record-extension); cost and obligations continue' },
+  { key: 'interim', title: 'Alternative interim / continuity arrangement', impact: 'Continuity plan executed; the TSA stays unresolved until an exit is accepted with evidence' },
+  { key: 'replan', title: 'Accelerate / re-plan the replacement service', impact: 'Exit only after the replacement is accepted with evidence and the exit approved' },
+] as const;
+export type TsaEscalationOptionKey = (typeof TSA_ESCALATION_OPTIONS)[number]['key'];
 
 /** REQ-TSA-001 (proposed test "a TSA without exit milestones cannot be Approved"): approval needs a complete record. */
 export function assertTsaApprovable(t: {

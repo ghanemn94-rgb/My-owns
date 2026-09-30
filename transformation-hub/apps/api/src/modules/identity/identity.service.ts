@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, asc, count, eq, ilike, or, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import { notFound, ruleViolation, invalid } from '@hub/domain';
-import type { Me } from '@hub/contracts';
+import type { Me, RouteInput, identityRoutes } from '@hub/contracts';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
@@ -12,6 +12,7 @@ import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { OutboxService } from '../../platform/outbox.service';
 import { likeContains } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
 
 @Injectable()
 export class IdentityService {
@@ -97,7 +98,7 @@ export class IdentityService {
   // ------------------------------------------------------------------------------------------------------------
   // Account administration (no transaction content)
 
-  async listUsers(ctx: RequestContext, q: { page: number; pageSize: number; q?: string }) {
+  async listUsers(ctx: RequestContext, q: { page: number; pageSize: number; q?: string; sort?: RouteInput<typeof identityRoutes.listUsers>['query']['sort'] }) {
     this.policy.assertOrg(ctx, 'admin.users.read');
     const tx = this.db.tx();
     const where = q.q ? or(ilike(schema.appUser.displayName, likeContains(q.q)), ilike(schema.appUser.email, likeContains(q.q))) : undefined;
@@ -106,7 +107,14 @@ export class IdentityService {
       .select()
       .from(schema.appUser)
       .where(where)
-      .orderBy(asc(schema.appUser.displayName))
+      .orderBy(
+        ...orderBySort(
+          q.sort,
+          { displayName: schema.appUser.displayName, email: schema.appUser.email, lastLoginAt: schema.appUser.lastLoginAt },
+          schema.appUser.id,
+          [asc(schema.appUser.displayName), asc(schema.appUser.id)],
+        ),
+      )
       .limit(q.pageSize)
       .offset((q.page - 1) * q.pageSize);
     return {

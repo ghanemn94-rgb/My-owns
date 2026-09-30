@@ -23,6 +23,7 @@ import {
   ruleViolation,
   transition,
   tsaExpiryAction,
+  TSA_ESCALATION_OPTIONS,
   Classification,
   DomainError,
   TsaCommand,
@@ -32,6 +33,8 @@ import {
 } from '@hub/domain';
 import type { RequestContext } from '../../platform/context';
 import { assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, readinessRoutes } from '@hub/contracts';
 import { newId, payloadHash } from '../../platform/ids';
 import { nextCronRun } from '../../platform/jobs/worker.service';
 import { ReadinessSupport, ProjectRow, iso } from './readiness.support';
@@ -153,7 +156,11 @@ export class TsaService {
     };
   }
 
-  async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; status?: TsaStatus; workstreamId?: string; enduring?: 'true' | 'false' }) {
+  async list(
+    ctx: RequestContext,
+    projectId: string,
+    q: { page: number; pageSize: number; q?: string; status?: TsaStatus; workstreamId?: string; enduring?: 'true' | 'false'; sort?: RouteInput<typeof readinessRoutes.listTsaServices>['query']['sort'] },
+  ) {
     const p = await this.s.project(projectId);
     this.s.assertListable(ctx, projectId);
     const t = schema.tsaService;
@@ -166,13 +173,10 @@ export class TsaService {
     );
     const tx = this.s.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(t).where(where)) as [{ total: number }];
-    const rows = await tx.select().from(t).where(where).orderBy(asc(t.code)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { code: t.code, name: t.name, status: t.status, startDate: t.startDate, endDate: t.endDate, updatedAt: t.updatedAt }, t.id, [asc(t.code), asc(t.id)]);
+    const rows = await tx.select().from(t).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     const today = this.s.today(p);
-    return pageOf(
-      rows.map((r) => this.dto(r, today)),
-      Number(total),
-      q,
-    );
+    return { ...pageOf(rows.map((r) => this.dto(r, today)), Number(total), q), people: await this.s.people(rows.map((r) => r.ownerUserId)) };
   }
 
   async get(ctx: RequestContext, projectId: string, id: string) {
@@ -222,6 +226,7 @@ export class TsaService {
         : null,
       extensionDecision: this.s.decisionSummary(ctx, projectId, d, TSA_DECISION_TYPE_KEYS, 'a TSA extension'),
       allowedCommands: allowedCommands(TSA_MACHINE, t.status),
+      people: await this.s.people([t.ownerUserId, t.createdBy, t.replacementAcceptedBy, t.extensionRequestedBy, req?.requestedBy, t.exitApprovedBy]),
     };
   }
 
@@ -583,11 +588,7 @@ export class TsaService {
         sourceId: t.id,
         requestedAction: e.requestedAction,
         decisionDeadline: e.decisionDeadline,
-        options: [
-          { title: 'Extend the TSA', impact: 'Requires an approved decision recorded against the TSA (request-extension → record-extension); cost and obligations continue' },
-          { title: 'Alternative interim / continuity arrangement', impact: 'Continuity plan executed; the TSA stays unresolved until an exit is accepted with evidence' },
-          { title: 'Accelerate / re-plan the replacement service', impact: 'Exit only after the replacement is accepted with evidence and the exit approved' },
-        ],
+        options: TSA_ESCALATION_OPTIONS.map((o) => ({ title: o.title, impact: o.impact })),
         raisedToCommitteeId: committeeId,
         target,
         status: 'decision_requested',

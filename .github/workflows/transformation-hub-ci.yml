@@ -3,10 +3,12 @@
 # transformation-hub/). Jobs: static checks, unit tests, template validator, integration tests (PostgreSQL 16 service),
 # OpenAPI, web build + private-mode egress check, Playwright smoke, backup/restore drill, deployment validation
 # (helm/kubeconform/compose/shellcheck), container images + image SBOM + vulnerability report, source SBOM
-# (syft / CycloneDX), pnpm audit (report only) and licence policy check.
+# (syft / CycloneDX), pnpm audit (report only), licence policy check, Docker Compose dev/eval stack (documented
+# commands, up --wait, smoke, down -v) and secret scan (gitleaks: history + tree, web bundle, CI test reports).
 # Supply chain: pin every action to a full commit SHA when mirroring this workflow into Mobily's CI (tags are used here
 # because SHAs could not be verified in the build environment). Images are built but never pushed from this workflow.
-# The pipeline was NOT EXECUTED in the build environment (no GitHub runner); it was validated with actionlint.
+# Downloaded tools are pinned by version and verified by SHA-256 (gitleaks) where the job installs them itself.
+# Artifacts under hidden directories (.dev/, .next/) need `include-hidden-files: true` (actions/upload-artifact >= 4.4).
 # =====================================================================================================================
 name: transformation-hub-ci
 
@@ -95,7 +97,7 @@ jobs:
         with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
       - run: pnpm install --frozen-lockfile
       - name: Create roles hub_owner / hub_app (NOBYPASSRLS) and the test database
-        run: HUB_OWNER_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_APP_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_DATABASES=hub_test bash scripts/ops/db-init-roles.sh
+        run: HUB_OWNER_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_APP_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_DATABASES="hub_test hub_test_boot" bash scripts/ops/db-init-roles.sh
       - run: pnpm build:packages
       - run: pnpm --filter @hub/api test
 
@@ -134,6 +136,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: egress-report, path: transformation-hub/egress-report.txt }
+      # The client bundle served to browsers; the secret-scan job scans exactly this artifact (REQ-ARC-015 / REQ-SEC-012).
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-bundle
+          path: transformation-hub/apps/web/.next/static
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
 
   e2e:
     name: Playwright smoke (demo stack)
@@ -188,6 +198,8 @@ jobs:
         if: always()
         with:
           name: e2e-report
+          # .dev/ is a hidden directory: without include-hidden-files the api/worker/web logs are silently left out.
+          include-hidden-files: true
           path: |
             transformation-hub/e2e/playwright-report
             transformation-hub/e2e/test-results
@@ -223,6 +235,7 @@ jobs:
         if: always()
         with:
           name: restore-drill
+          include-hidden-files: true   # everything lives under .dev/ (hidden); otherwise nothing is uploaded
           path: |
             transformation-hub/.dev/drill/*/drill.log
             transformation-hub/.dev/drill/*/restore-report.txt
@@ -241,6 +254,123 @@ jobs:
           curl -fsSL -o /tmp/kubeconform.tgz https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz
           tar -xzf /tmp/kubeconform.tgz -C /tmp kubeconform
       - run: KUBECONFORM=/tmp/kubeconform bash scripts/ops/validate-deploy.sh
+
+  compose:
+    # REQ-DEP-002 / REQ-DEP-007. Docker Compose is for DEVELOPMENT / EVALUATION ONLY: one host, one container per service,
+    # NO HIGH AVAILABILITY, no backups, local throwaway passwords. Production uses the Helm chart.
+    # This job runs the DOCUMENTED commands (docs/deployment/installation.md §7, deploy/compose/compose.dev.yml header)
+    # from a clean checkout: images are built locally in the job and never pushed; only the base images and npm packages
+    # are pulled; the running stack calls no external service (the backend network is internal).
+    name: Docker Compose dev/eval stack (documented commands, up --wait, smoke, down -v; no HA)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Docker Compose is for development/evaluation only (no high availability)
+        run: |
+          echo "::notice title=Docker Compose = development/evaluation only::Single host, one container per service, no high availability, no backups, local throwaway passwords. Production uses the Helm chart (docs/deployment/installation.md)."
+          docker version --format 'Docker Engine {{.Server.Version}}'
+          docker compose version
+      - name: "Documented: create deploy/compose/.env (CHANGE_ME -> random local-only values, never printed)"
+        run: |
+          bash scripts/ops/compose-env-init.sh
+          # Defence in depth: mask the generated throwaway values in the log (they are not printed anywhere).
+          grep -E '^(POSTGRES_PASSWORD|HUB_OWNER_DB_PASSWORD|HUB_APP_DB_PASSWORD|MINIO_ROOT_USER|MINIO_ROOT_PASSWORD)=' deploy/compose/.env \
+            | cut -d= -f2- | sed 's/^/::add-mask::/'
+      - name: "Documented: docker compose up --build --wait (healthy db, api, worker, web; migrate exited 0)"
+        run: docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env up --build --wait --wait-timeout 300
+      - name: "Documented: load the Demo sandbox"
+        run: docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env --profile demo run --rm seed-demo
+      - name: "Documented: smoke checks (API readyz, web login, demo login + authenticated API calls via the web origin, worker heartbeat)"
+        run: |
+          mkdir -p "$RUNNER_TEMP/compose-smoke"
+          bash scripts/ops/compose-smoke.sh | tee "$RUNNER_TEMP/compose-smoke/smoke.txt"
+      - name: Collect container state and logs
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/compose-smoke"
+          docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env ps -a > "$RUNNER_TEMP/compose-smoke/ps.txt" 2>&1 || true
+          docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env logs --no-color --timestamps > "$RUNNER_TEMP/compose-smoke/logs.txt" 2>&1 || true
+      - name: On failure, print container state, health-probe output and recent logs
+        if: failure()
+        run: |
+          C="docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env"
+          $C ps -a || true
+          for id in $($C ps -aq); do
+            echo "== $(docker inspect --format '{{.Name}} status={{.State.Status}} exit={{.State.ExitCode}} restarts={{.RestartCount}}' "$id")"
+            docker inspect --format '{{if .State.Health}}{{range .State.Health.Log}}probe exit={{.ExitCode}} {{.Output}}{{end}}{{end}}' "$id" | tail -n 20 || true
+          done
+          for s in migrate api worker web; do echo "== logs: $s"; $C logs --no-color --tail 80 "$s" || true; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: compose-smoke, path: "${{ runner.temp }}/compose-smoke", if-no-files-found: warn }
+      - name: "Documented: docker compose down -v (removes containers, networks and volumes)"
+        if: always()
+        run: docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env down -v
+
+  secret-scan:
+    # REQ-SEC-012 / REQ-ARC-015 / REQ-SET-008: no secrets in (a) the repository history and tree, (b) the built web client
+    # bundle, (c) the test reports and logs produced by this workflow (Playwright report and traces, api/worker/web logs,
+    # restore-drill and compose logs) or the committed test evidence. Scanner: gitleaks (MIT), pinned version, SHA-256
+    # verified; rules and the allow-list policy (synthetic dev/CI values only) in scripts/ops/gitleaks.toml. Any other
+    # finding fails the job. Runs after the producing jobs, also when one of them failed (failed runs keep traces).
+    name: Secret scan (gitleaks — history + tree, web bundle, CI test reports)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs: [web, e2e, restore-drill, compose]
+    if: ${{ !cancelled() }}
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      # sha256 of gitleaks_8.30.1_linux_x64.tar.gz (release checksums file, verified in the build environment 2026-09-30)
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }   # full history of this revision
+      - name: Install gitleaks (pinned release, SHA-256 verified)
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/gitleaks.tgz" "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/gitleaks.tgz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/gitleaks" && tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP/gitleaks" gitleaks
+          echo "GITLEAKS=$RUNNER_TEMP/gitleaks/gitleaks" >> "$GITHUB_ENV"
+          echo "SECRET_SCAN_REPORT_DIR=$RUNNER_TEMP/secret-scan" >> "$GITHUB_ENV"
+      - name: (a) repository history — every commit reachable from this revision
+        run: bash scripts/ops/secret-scan.sh history
+      - name: (a) repository tree at this revision
+        if: ${{ !cancelled() }}
+        run: bash scripts/ops/secret-scan.sh tree
+      - uses: actions/download-artifact@v4
+        if: ${{ !cancelled() }}
+        continue-on-error: ${{ needs.web.result != 'success' }}
+        with: { name: web-bundle, path: "${{ runner.temp }}/scan/web-bundle" }
+      - name: (b) built web client bundle (apps/web/.next/static)
+        if: ${{ !cancelled() }}
+        run: bash scripts/ops/secret-scan.sh bundle "$RUNNER_TEMP/scan/web-bundle"
+      # Report artifacts: a download may only be missing when its producing job failed (then that job is already red).
+      - uses: actions/download-artifact@v4
+        if: ${{ !cancelled() }}
+        continue-on-error: ${{ needs.e2e.result != 'success' }}
+        with: { name: e2e-report, path: "${{ runner.temp }}/scan/reports/e2e-report" }
+      - uses: actions/download-artifact@v4
+        if: ${{ !cancelled() }}
+        continue-on-error: ${{ needs.restore-drill.result != 'success' }}
+        with: { name: restore-drill, path: "${{ runner.temp }}/scan/reports/restore-drill" }
+      - uses: actions/download-artifact@v4
+        if: ${{ !cancelled() }}
+        continue-on-error: ${{ needs.compose.result != 'success' }}
+        with: { name: compose-smoke, path: "${{ runner.temp }}/scan/reports/compose-smoke" }
+      - uses: actions/download-artifact@v4
+        if: ${{ !cancelled() }}
+        continue-on-error: ${{ needs.web.result != 'success' }}
+        with: { name: egress-report, path: "${{ runner.temp }}/scan/reports/egress-report" }
+      - name: (c) CI test reports and logs + committed test evidence
+        if: ${{ !cancelled() }}
+        run: |
+          shopt -s nullglob
+          reports=("$RUNNER_TEMP"/scan/reports/*)
+          bash scripts/ops/secret-scan.sh reports "${reports[@]}" docs/test-evidence
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with: { name: secret-scan-report, path: "${{ runner.temp }}/secret-scan", if-no-files-found: warn }
 
   images:
     name: Container images (build only) + image SBOM + vulnerability report

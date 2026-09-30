@@ -32,7 +32,7 @@ Enum values already exist in `packages/domain/src/enums.ts` for all modules — 
 
 - **Contract first** (`packages/contracts/src/<module>.ts`): `export const <module>Routes = registerRoutes({ ... defineRoute({...}) })`.
   Every route has `access` = a permission key from `packages/domain/src/policy/policy-matrix.json` (project routes) or
-  `{ org: '<perm>' }`. Lists use `PageQuery` + `paged(Item)`. Mutations that change status are **commands**
+  `{ org: '<perm>' }`. Lists use `PageQuery` + `paged(Item)` and declare their sort keys (`sort: SortParam([...])`, see "List sorting" below). Mutations that change status are **commands**
   (`POST .../:id/<verb>`, `command: true`) with body `{ expectedVersion, note? , ...}`. Generic PATCH routes may only
   change descriptive fields and must never touch `status`/approval fields.
 - **Controller**: thin; `@ApiRoute(R.x) handler(@Ctx() ctx, @Input() i: RouteInput<typeof R.x>)` → service.
@@ -99,6 +99,31 @@ human principal at execution time and returns `null` when access was revoked (AT
   Do not keep a `tx` handle beyond the request: it throws once the transaction has finished.
 - **Response contracts are strict:** fields not declared in the route's `response` schema are stripped in every mode
   and fail tests (`contract.response_mismatch: undeclared field(s) …`). Declare what the screen needs; nothing more.
+- **List sorting is an allow-list (QA-P1-13):** every list route declares its sort keys in its contract —
+  `PageQuery.extend({ sort: SortParam(['code', 'title', 'dueDate', 'updatedAt']) })` accepts `key` (ascending) and
+  `-key` (descending) and rejects anything else with 400 `validation_failed`. A list without a meaningful order
+  (relevance ranking, audit feed) declares none (`sort: NoSort`, the `PageQuery` default) and rejects every `sort`.
+  The service maps each key to its column(s) with `orderBySort(q.sort, { code: T.code, … }, T.id, defaultOrder)`
+  (`apps/api/src/platform/sort.ts`; the compiler requires every declared key): NULLs last, the row id in the same
+  direction as tiebreaker, `defaultOrder` when no sort is given. Only the ORDER BY changes — never the WHERE clause,
+  so scope, visibility, reach and totals are unaffected. `packages/contracts/src/sort.test.ts` checks every list route.
+- **Bilingual server strings (QA-P1-14, REQ-UX-001/002):** the API returns both languages and the web picks by locale;
+  the server never selects a language for data and never machine-translates.
+  - *Bilingual data* (template-seeded names/titles, bilingual user input): `<field>` = English/primary text,
+    `<field>Ar: string | null` = Arabic text (null when there is no Arabic source). Examples: `name`/`nameAr`
+    (templates, gates, workstreams, phases, next gate), `title`/`titleAr` (tasks, milestones, deliverables, schedule
+    nodes, readiness checks), `description`/`descriptionAr` (criteria), `purpose`/`purposeAr` (gates — from the pinned
+    template version while the stored purpose is still the template's). Web: `useLocalized()` / `localized(locale, x, xAr)`
+    from `apps/web/src/lib/i18n-data.ts`; with no Arabic text the primary text is shown as-is.
+  - *Server-computed explanations*: the rule returns codes + parameters (`ServerMessage { code, params }`, see
+    `packages/domain/src/messages.ts`) and renders the English sentence from the same messages with its code → English
+    template table (e.g. `DIMENSION_MESSAGES_EN`, `GATE_MESSAGES_EN`). The API returns `<field>` (English — kept for
+    audit rows, record history, AI context) plus `<field>I18n: ServerMessage[]` (e.g. `explanation`/`explanationI18n`,
+    `message`/`messageI18n`, `blocker`/`blockerI18n`). Parameters are numbers, record keys or enum values (the web
+    translates enum values; register them in `ENUM_PARAMS` of `i18n-data.ts`). Web: `useServerMessages()(xI18n, x)`
+    translates `gates.messages.<code>` (en + ar); `node apps/web/scripts/check-i18n.mjs` fails when a domain code has no
+    translation, when placeholders differ, or when the catalogue keeps a stale code. Adding a code = domain template +
+    en/ar catalogue entry in the same change.
 
 ### Conventions the DATABASE enforces (post-migrate.sql — your tests will fail if you ignore them)
 - `project_id` and `org_id` are **immutable** after insert (`immutable_scope`). Moving a record between projects is a

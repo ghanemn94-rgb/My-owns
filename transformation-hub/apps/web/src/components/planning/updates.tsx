@@ -37,7 +37,7 @@ export function StatusUpdatesPanel({ workstreamId }: { workstreamId?: string }) 
     { key: 'calc', header: t('planning.health.calculated'), cell: (u) => (u.ragCalculated ? <RagBadge value={u.ragCalculated} /> : '—') },
     { key: 'summary', header: t('planning.update.summary'), cell: (u) => <span dir="auto" className="line-clamp-2 text-sm">{u.summary}</span> },
     { key: 'by', header: t('planning.update.submittedBy'), cell: (u) => (u.submittedByName ? <span dir="auto">{u.submittedByName} · {formatDateTime(u.submittedAt)}</span> : '—') },
-    { key: 'demo', header: '', cell: (u) => (u.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (u) => (u.isDemo ? <DemoBadge /> : null) },
   ];
   return (
     <div className="space-y-3" data-testid="updates-panel">
