@@ -19,7 +19,7 @@ const MODULES: Record<string, string[]> = {
   ],
   Governance: [
     'committee', 'committee_membership', 'authority_matrix_version', 'meeting', 'agenda_item', 'attendance', 'recusal',
-    'decision', 'vote', 'action_item', 'escalation', 'approval_request', 'approval_record', 'conflict_declaration',
+    'decision', 'vote', 'action_item', 'escalation', 'approval_request', 'approval_record', 'conflict_declaration', 'decision_use',
   ],
   Gates: ['gate_definition', 'gate_criterion', 'gate_assessment', 'criterion_assessment', 'waiver', 'status_dimension'],
   'Carve-out, NewCo, readiness & TSA': [

@@ -68,6 +68,9 @@ export class MeetingsService {
     const where = and(
       eq(m.projectId, projectId),
       this.policy.visibilitySql(ctx, projectId, { classification: c.classification }),
+      // Workstream-only grants do not cover project-level governance records (access-matrix §2.2 strict rule): lists show
+      // only what the detail would open (SEC-P2-08 shape, residual of the §2.2 change).
+      this.policy.grantSql(ctx, 'governance.meeting.read', projectId, {}),
       q.committeeId ? eq(m.committeeId, q.committeeId) : undefined,
       q.status ? eq(m.status, q.status) : undefined,
       q.isCirculation ? eq(m.isCirculation, q.isCirculation === 'true') : undefined,
@@ -141,6 +144,7 @@ export class MeetingsService {
     const where = and(
       eq(a.projectId, projectId),
       this.policy.visibilitySql(ctx, projectId, { classification: c.classification }),
+      this.policy.grantSql(ctx, 'governance.meeting.read', projectId, {}), // §2.2 strict rule (see list above)
       q.committeeId ? eq(a.committeeId, q.committeeId) : undefined,
       q.meetingId ? eq(a.meetingId, q.meetingId) : undefined,
       q.screeningStatus ? eq(a.screeningStatus, q.screeningStatus) : undefined,

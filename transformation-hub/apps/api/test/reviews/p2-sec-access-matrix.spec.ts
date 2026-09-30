@@ -82,11 +82,17 @@ describe('§2.2.1 gate register and project header — readable by a workstream-
     expect(dec.status).toBe(403); // decisions stay strict (not in §2.2.1)
   });
 
-  it('OBSERVED (outside this change, reported to the lead): the decision LIST applies classification only, so it still shows the title the detail refuses', async () => {
-    // governance lists (decisions, committees, meetings, actions) have the SEC-P2-08 shape; not fixed here (governance module).
+  it('governance lists (fixed, regression): a workstream-only reader is never listed a decision (or committee / meeting / action) the detail refuses', async () => {
+    // Fixed by the lead after this change: the governance lists apply grantSql (strict §2.2) in addition to classification.
     const list = await p.techLead.get(`${G(projectId)}/decisions?pageSize=100`);
     expect(list.status).toBe(200);
-    expect((list.body.items as { id: string }[]).map((d) => d.id)).toContain(decisionId);
+    expect((list.body.items as { id: string }[]).map((d) => d.id)).not.toContain(decisionId);
+    expect(list.body.total).toBe(0);
+    for (const path of ['committees', 'meetings', 'actions', 'escalations', 'agenda-requests']) {
+      const r = await p.techLead.get(`${G(projectId)}/${path}?pageSize=100`);
+      expect(r.status, path).toBe(200);
+      expect(r.body.total, path).toBe(0);
+    }
   });
 
   it('project header: GET /projects/:id and /status-dimensions answer 200 (portfolio.project.read); planning aggregates stay 403', async () => {
