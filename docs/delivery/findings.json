@@ -7504,7 +7504,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-27/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T14:37:00Z",
@@ -7515,10 +7515,125 @@
           "at": "2026-09-30T14:48:17Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 8fec92f88fa44a42b56932a4090b0e9854b5a24a"
+        },
+        {
+          "at": "2026-09-30T15:05:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 28: PASS"
         }
       ],
       "fix_revision": "8fec92f88fa44a42b56932a4090b0e9854b5a24a",
-      "fix_summary": "D-044: checkClosure requires objectType(fix_revision)==commit (rejects a tag); checkInvocation requires the same for head_commit_at_start. Matches the gate source_commit rule. Test in validator.test.mjs."
+      "fix_summary": "D-044: checkClosure requires objectType(fix_revision)==commit (rejects a tag); checkInvocation requires the same for head_commit_at_start. Matches the gate source_commit rule. Test in validator.test.mjs.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R28-qa-verifier-20260930T145119Z-9c4b5a52",
+          "session_id": "9c4b5a52-3794-4d23-9de4-8831f154d703"
+        },
+        "at": "2026-09-30T15:05:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-28/13-qa28-negative-suite.log",
+          "docs/delivery/test-evidence/DG0/qa/round-28/22-f250-closure-anchors.log",
+          "docs/delivery/test-evidence/DG0/qa/round-28/11-r27-suite-rerun.log",
+          "docs/delivery/test-evidence/DG0/qa/round-28/02-gates-selftests.log",
+          "docs/delivery/test-evidence/DG0/qa/round-28/08b-dry-run-classification.log",
+          "docs/delivery/test-evidence/DG0/qa/round-28/21-fix-revision-anchors-nl.log",
+          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r28.test.mjs"
+        ],
+        "note": "Verified against the round-28 candidate sha256:1af91e8f... (source 331407e9), in a complete git clone --no-local. F-DG0-250 (Low, non-mandatory): checkClosure accepted an annotated-TAG object id as a CLOSED_VERIFIED fix_revision because commitPresent/isAncestor peel a tag. REPRODUCED, THEN SHOWN FIXED: QA28-T1 builds a genuine three-anchor round-3 closure, sets fix_revision to a tag object peeling to the fix, and runs BOTH validators. The pre-D-044 rules.mjs (49b5ad79, git archive) ACCEPTS it with 0 errors (reproduction); the candidate REJECTS it with exactly one error: 'fix <sha> is a tag object, not a commit; a fix_revision must name the fix commit itself'. QA28-T4 (a tag of a tag) is also rejected. My round-27 case QA27-N3 now prints REJECTED with the D-044 error. The unit test 'D-044 / F-DG0-250' passes (gate suite 64/64). NO REGRESSION: QA28-T6 shows old and new rules.mjs give identical error lists on 8 commit-object fixtures; the full-history dry-run has no 'is a tag object' error and 0 PRUNED/RECORD-LESS/DROPPED errors; the census finds all 118 real fix_revisions and all 100 present run heads to be commit objects. The head_commit_at_start extension also works: QA28-T2 (verifying run) and QA28-T3 (gate auditor run) are rejected with 'started from <sha>, a tag object, not a commit', and this is the only error the new validator adds over the old one. ANCHORS: fix 8fec92f8 is a commit object, is an ancestor of the round-28 frozen source_commit and gate candidate 331407e9 (anchors 1 and 3) and of this verifying run's starting HEAD 57d7a53 (anchor 2), and rules.mjs is identical at 8fec92f8 and 331407e9. Residual: a round's source_commit can still be a tag object. That field was outside F-DG0-250's defect (listed there as 'Not tested') and is raised separately as F-DG0-251 (Low). I am the reporter (qa-verifier); the owner is delivery-orchestrator, so this is not an author self-close."
+      }
+    },
+    {
+      "id": "F-DG0-171",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-044 claims every commit-id field the gate depends on must be a commit object, but a review round's source_commit (stages.json review_rounds[].source_commit and the round manifest) still accepts an annotated-tag object id",
+      "reproduction": "Candidate 331407e (sha256:1af91e8f...). D-044 (docs/delivery/decisions.md:39) says the change closes 'the whole \"tag object id where a commit is required\" class in one pass' and lists 'every commit-id field the gate depends on'. The gate source_commit (rules.mjs:966, D-037), fix_revision (rules.mjs:744) and head_commit_at_start (rules.mjs:399) are type-checked. A review round's source_commit is not: findManifest recomputes the round manifest with manifestFromRef(repo, m.source_commit, ...) (rules.mjs:918), which peels a tag to its tree; checkReviewRounds (rules.mjs:774-775) only compares the manifest's source_commit with stages.json; and checkClosure's anchor 1 uses commitPresent(round.source_commit) (cat-file -e <sha>^{commit}, which peels) and isAncestor (merge-base --is-ancestor, which peels) at rules.mjs:750-752. Probe SEC28-8 (test-evidence/DG0/code-security/round-28/sec28b-roundsource.tests.mjs.txt, run in a disposable --no-local clone at 331407e): in the stock fixture, `git tag -a sec28round <frozen commit>` gives a tag object; a round manifest with source_commit set to that tag id makes findManifest return 0 errors, and `merge-base --is-ancestor <fix> <tag>` is true (peeled). Not reachable through the tooling: candidate.mjs --freeze writes `git rev-parse HEAD` (candidate.mjs:49/68/71), so only a hand-forged freeze could store a tag id. The gate ROUND can't hold one either, because its manifest source_commit must equal the commit-typed gate source_commit. The real repository is clean: all 27 resolvable round source_commits are commit objects; round 18 is the known D-034/D-035 absent one (objtype-census.log).",
+      "expected": "Consistent with D-044's stated scope: every commit-id field that a gate decision depends on, including review_rounds[].source_commit and the round manifest's source_commit, must be a commit object (objectType === 'commit'), with a tag rejected as for the gate source_commit. Otherwise D-044 should say that round source_commits are excluded, and why.",
+      "actual": "A tag-object round source_commit is accepted by findManifest, checkReviewRounds and checkClosure anchor 1: each peels it to the commit it names. This fails closed rather than open. The tag only aliases the same commit, so the content recompute and the ancestry anchors judge the correct commit. If the tag is deleted, a fresh clone lacks the tag object (SEC28-8: after tag -d + gc it's absent), and anchor 1 then rejects any closure verified in that round (F-DG0-169, SEC27-3). The residual is the same ref-dependent traceability-pointer inconsistency that F-DG0-250 fixed for fix_revision, plus the overstated completeness claim in D-044. It is not a gate bypass.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-28/sec28b-roundsource.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-28/sec28b-roundsource.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-28/objtype-census.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-28/sec28-repro.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-28/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "FIXED_PENDING_VERIFICATION",
+      "history": [
+        {
+          "at": "2026-09-30T15:05:00Z",
+          "status": "OPEN",
+          "note": "Raised in round 28 (code-security-reviewer). Proposed remediation (a later stage is fine): in checkReviewRounds, require objectType(repo, r.source_commit) to be 'commit' whenever the object is present (the D-035 absent case stays tolerated), and correct D-044's scope sentence. The reporter concurs with accepting it as an observation (see code-security-reviewer.verifications.json); the release-auditor must concur too."
+        },
+        {
+          "at": "2026-09-30T15:08:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by code-security-reviewer round 28: PASS"
+        },
+        {
+          "at": "2026-09-30T15:16:25Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 83721ced8f6453712d3af949e98f43bd08aeff7f"
+        }
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R28-code-security-reviewer-20260930T145114Z-6aacc7c7",
+          "session_id": "6aacc7c7-51e8-48a7-9d47-bf3c4299ead9"
+        },
+        "at": "2026-09-30T15:08:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-28/sec28b-roundsource.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-28/objtype-census.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-28/sec28-repro.log"
+        ],
+        "note": "Reporter's concurrence that this can be accepted as an observation. The release-auditor must concur in its own sidecar before it takes effect. F-DG0-171 is Low, and mandatory_violation is false. A review round's source_commit is not required to be a commit object, so a hand-forged annotated-tag id there is peeled and accepted. Why an observation and not a blocker, against docs/delivery/threat-model.md: (1) It is not reachable through the tooling. candidate.mjs --freeze always writes `git rev-parse HEAD`, a commit, and only a hand-edited write-once freeze could store a tag. (2) The gate round can't hold a tag: its manifest source_commit must equal the gate source_commit, which is commit-typed (D-037). (3) It fails closed. The tag aliases the same commit, so the content recompute and ancestry anchors judge the right commit. A deleted tag makes the round absent in a fresh clone, and anchor 1 then rejects any closure verified there (F-DG0-169). (4) The real repository is clean: every resolvable round source_commit, all 118 fix_revisions and all 100 resolvable head_commit_at_start ids are commit objects (objtype-census.log). What remains is a consistency gap in a traceability pointer, plus D-044's overstated scope sentence. If the orchestrator fixes it instead (objectType check in checkReviewRounds when the object is present; D-044 wording), I will re-verify it as CLOSED_VERIFIED in a later round."
+      },
+      "fix_revision": "83721ced8f6453712d3af949e98f43bd08aeff7f",
+      "fix_summary": "checkReviewRounds now requires objectType(r.source_commit)==='commit' when the object is present (D-045); a tag-object round source_commit is rejected, the D-035 absent case stays tolerated. This is the fix the reporter's round-28 verification anticipated ('I will re-verify it as CLOSED_VERIFIED in a later round'). Fourth and last commit-id field in D-044's class."
+    },
+    {
+      "id": "F-DG0-251",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A review round's frozen source_commit (closure anchor 1) may still be an annotated-TAG object id; D-044 states every commit-id field the gate depends on is now a commit object, but the round source_commit was not covered",
+      "reproduction": "QA_REPO_ROOT=<complete --no-local clone of 57d7a53 (candidate 1af91e8f)> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r28.test.mjs, case QA28-T7: on the round-9/21 fixture, commit a fix, freeze round 3 at commit frz3, create `git tag -a qa28-round3-freeze frz3`, and write the round-3 manifest (entries recomputed from frz3) and the stages.json review_rounds[round 3].source_commit as the TAG OBJECT id (git cat-file -t prints 'tag'), each written once (no write-once artefacts); round 3's qa-verifier then CLOSED_VERIFIES F-DG0-201 with that fix. validateGate on the candidate returns 0 errors (13-qa28-negative-suite.log: 'QA28-T7 result: old=ACCEPTED new=ACCEPTED new-names-the-tag=false'). Cause: checkClosure anchor 1 (tools/gates/lib/rules.mjs:750-753) resolves round.source_commit with commitPresent() (`cat-file -e <sha>^{commit}`) and isAncestor() (`merge-base --is-ancestor`), both of which PEEL a tag; findManifest (:917-918) recomputes the round manifest via manifestFromRef(m.source_commit), which also peels. D-044 added objectType(...) === 'commit' only to fix_revision (:744) and head_commit_at_start (:399); the gate source_commit already had it (:966, D-037). My round-27 F-DG0-250 listed this field explicitly as 'Not tested'.",
+      "expected": "Per D-044's own consequence ('Every commit-id field the gate depends on ... is now required to be a commit object present and reachable, never a tag or other ref-dependent object') and its fix note ('closing the whole \"tag object id where a commit is required\" class in one pass'), a review round's source_commit (stages.json review_rounds[].source_commit and the round manifest's source_commit), which is anchor 1 of every closure, is also required to be a commit object (git cat-file -t == commit). Alternatively, D-044's scope statement names only the fields it actually covers.",
+      "actual": "A present annotated-tag object id that peels to the frozen round commit is accepted as a round's frozen source_commit and as closure anchor 1. Impact is traceability and consistency only (the same class as F-DG0-250, Low). The peeled commit must still contain the fix and match the round manifest content, so no unreviewed fix can close a finding. If the tag is later deleted and gc'd, the round source becomes absent and anchor 1 fails closed (F-DG0-169). No real record is affected: the round-28 census (fix-revision-anchors-r28.mjs) finds all 27 present review_rounds source_commits, all 118 fix_revisions, all 100 present run heads and the gate candidate to be commit objects. The only non-commit ids are the known D-034/D-035 round-18 orphans (ABSENT, no closure verified in round 18). Secondary: validator.test.mjs has a unit test only for the fix_revision branch of D-044 ('D-044 / F-DG0-250'); the new checkInvocation head_commit_at_start branch has no unit test in tools/gates/tests (it is exercised here by QA28-T2/T3). Low under threat-model.md: no gate-integrity effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r28.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-28/13-qa28-negative-suite.log",
+        "docs/delivery/test-evidence/DG0/qa/round-28/21-fix-revision-anchors-nl.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-28/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "FIXED_PENDING_VERIFICATION",
+      "history": [
+        {
+          "at": "2026-09-30T15:03:00Z",
+          "status": "OPEN",
+          "note": "Raised in round 28 (qa-verifier)."
+        },
+        {
+          "at": "2026-09-30T15:16:25Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 83721ced8f6453712d3af949e98f43bd08aeff7f"
+        }
+      ],
+      "fix_revision": "83721ced8f6453712d3af949e98f43bd08aeff7f",
+      "fix_summary": "Same D-045 fix: review_rounds[].source_commit (closure anchor 1) must be a commit object when present. Added the two unit tests qa flagged as missing (tag-object head_commit_at_start; tag-object round source_commit)."
     }
   ]
 }
