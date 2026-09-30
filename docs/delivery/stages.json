@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -467,6 +467,11 @@
           "state": "REVIEWING",
           "at": "2026-09-30T10:20:00Z",
           "note": "Round-19 findings repaired (D-036): checkCandidate requires gate.source_commit to be a real commit in both modes (F-DG0-240/155); threat-model residual 7 corrected to its accurate host-global scope and the unverified shell read-only claim withdrawn (F-DG0-154; F-DG0-149 re-scoped, awaits reviewer acceptance); git allow-rules removed from .claude/settings.json (F-DG0-156). F-DG0-152 (High) stays CLOSED_VERIFIED. Sandboxed prefreeze all PASS; candidate re-frozen for review round 20."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-09-30T10:40:00Z",
+          "note": "Round 20: domain PASS; code-security PASS (D-036 fixes F-DG0-154/155/156 CLOSED_VERIFIED; F-DG0-149 residual-7 ACCEPTED_OBSERVATION at its corrected host-global scope; new F-DG0-157 Low leftover-wording accepted); qa PASS-verified F-DG0-240 but FAIL overall after a full dry-run gate on the real repository, finding pre-existing history-damage blockers: F-DG0-242 (High) checkClosure/checkInvocation hard-fail on pruned fix_revision/head_commit (history truncated before round 12; D-035 only covered findManifest) -> 195 errors; F-DG0-243 (High) the D-034-kept record-less round-17/18 qa sidecars trip 'record not listed' and F-DG0-238 is dropped; F-DG0-244 (Medium) round-19 test evidence uncommitted + abbreviated/null fix_revisions; F-DG0-241 (Low) D-036 checks resolution not branch-ancestry. F-DG0-152 (High) stays CLOSED_VERIFIED. Repairs (D-037) in progress."
         }
       ]
     },

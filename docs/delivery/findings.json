@@ -5351,7 +5351,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-16/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "ACCEPTED_OBSERVATION",
       "history": [
         {
           "at": "2026-09-29T10:40:00Z",
@@ -5372,21 +5372,28 @@
           "at": "2026-09-30T09:28:18Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 19: FAIL"
+        },
+        {
+          "at": "2026-09-30T09:56:02Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by code-security-reviewer round 20: PASS"
         }
       ],
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R19-code-security-reviewer-20260930T092002Z-d6ea66b3",
-          "session_id": "d6ea66b3-26b4-46bf-873c-e06eb6bef5d1"
+          "run_id": "DG0-T-DG0-REV-SEC-R20-code-security-reviewer-20260930T095031Z-fc5d7da5",
+          "session_id": "fc5d7da5-74cb-4661-841c-8bd12730b22c"
         },
-        "at": "2026-09-30T09:28:18Z",
-        "result": "FAIL",
+        "at": "2026-09-30T09:56:02Z",
+        "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-19/05-residual7-readonly.log"
+          "docs/delivery/threat-model.md#residual-7",
+          "tools/agents/guard-write.mjs#L141-L144",
+          "tools/agents/agent_sandbox.py#L154-L155"
         ],
-        "note": "Not accepted as an observation this round. The read-only assessment (no /proc/sys write) shows that the residual it restates is described with the wrong scope: the process sandbox creates only an IPC namespace and binds the host procfs, so the reachable tunables are host-global, not 'of its own run', and the 'cross-run /proc/<peer>/sys amplification' that D-033 is said to close does not exist as a separate path. The shell-layer 'read-only /proc/sys' claim is also not supported by that layer's mount flags. D-033 does correctly close the cross-run /proc/<peer>/root|cwd path (F-DG0-152). See F-DG0-154. I would re-assess acceptance once residual 7 states its real scope and the user re-confirms, or a narrower control is adopted."
+        "note": "Re-assessed at the corrected host-global scope, read-only (no /proc/sys access). I accept it as an observation for four reasons. (1) It is host availability and kernel tunables only. Repository, reviewer-artefact, gate-record and other-run integrity are held by read-only binds, the private /tmp and /var/tmp tmpfs, the capability drop and the per-run Landlock domain, none of which depend on /proc/sys. (2) The reachable set is small: only root-owned entries with a DAC-writable mode, because CAP_SYS_ADMIN and the other capabilities are dropped. (3) A file tool reaches it only by racing a symlink past the write guard, which refuses any path whose hop-by-hop resolution visits /proc, /sys or /dev (guard-write.mjs:110,141-144). (4) It is inherent to option A, which the user chose (D-030). The residual is now disclosed at its real scope. I still recommend a narrower control as a follow-up spike, not a DG0 blocker: run the claude process at a non-zero uid inside the process sandbox (a user namespace that does not map to host uid 0), provided the nested Bash and reviewer bwrap still obtain their required mapping. The release-auditor must concur for this to take effect."
       }
     },
     {
@@ -5687,7 +5694,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-19/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T09:28:18Z",
@@ -5698,10 +5705,31 @@
           "at": "2026-09-30T09:48:20Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 4008588"
+        },
+        {
+          "at": "2026-09-30T09:56:02Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 20: PASS"
         }
       ],
       "fix_revision": "4008588",
-      "fix_summary": "D-036: threat-model residual 7 corrected -- /proc/sys is host-global kernel state (not own-run); the unverified shell read-only claim withdrawn. Residual disclosed at its accurate host-global availability scope."
+      "fix_summary": "D-036: threat-model residual 7 corrected -- /proc/sys is host-global kernel state (not own-run); the unverified shell read-only claim withdrawn. Residual disclosed at its accurate host-global availability scope.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R20-code-security-reviewer-20260930T095031Z-fc5d7da5",
+          "session_id": "fc5d7da5-74cb-4661-841c-8bd12730b22c"
+        },
+        "at": "2026-09-30T09:56:02Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/threat-model.md#residual-7",
+          "tools/agents/agent_sandbox.py#L154-L155",
+          "docs/delivery/test-evidence/DG0/code-security/round-20/06-scope-diff-secrets-wording.log"
+        ],
+        "note": "Verified by document and code review only; no /proc access. Threat-model residual 7 (threat-model.md:60) now states the following: the agent is uid 0 with only CAP_SETFCAP and no_new_privs; most /proc/sys tunables need CAP_SYS_ADMIN; the residual is the uid-0 DAC-writable subset; /proc/sys is host-global, so a write affects the whole host and every run; and the round-15 read-only-shell claim is withdrawn. This matches agent_sandbox.py:154-155 (--unshare-ipc only, --bind /proc /proc), and D-033's row carries the correction note. The integrity conclusion (no repository path, reviewer artefact, gate record or other run's scratch becomes writable) rests on the read-only binds and private tmpfs, independent of /proc/sys, and is sound. The substance of the finding (residual understated, and acceptance premised on the wrong scope) is fixed. Two leftover stale sentences (the agent_sandbox.py:149-151 comment and the '/proc/<peer>/sys' parenthetical) are raised separately as Low observation F-DG0-157, because they neither change a control nor understate the residual."
+      }
     },
     {
       "id": "F-DG0-155",
@@ -5721,7 +5749,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-19/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T09:28:18Z",
@@ -5732,10 +5760,31 @@
           "at": "2026-09-30T09:48:20Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 4008588"
+        },
+        {
+          "at": "2026-09-30T09:56:02Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 20: PASS"
         }
       ],
       "fix_revision": "4008588",
-      "fix_summary": "D-036: same fix as F-DG0-240 -- checkCandidate requires gate.source_commit reachable, scoping the D-035 tolerance to non-gate rounds in effect."
+      "fix_summary": "D-036: same fix as F-DG0-240 -- checkCandidate requires gate.source_commit reachable, scoping the D-035 tolerance to non-gate rounds in effect.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R20-code-security-reviewer-20260930T095031Z-fc5d7da5",
+          "session_id": "fc5d7da5-74cb-4661-841c-8bd12730b22c"
+        },
+        "at": "2026-09-30T09:56:02Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-20/r20-d036-repro.mjs",
+          "docs/delivery/test-evidence/DG0/code-security/round-20/04-d036-repro.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-20/01-node-tests.log"
+        ],
+        "note": "Reproduced against the candidate: my round-19 repro, re-run as r20-d036-repro.mjs in a disposable clone at ce6d9b6 (a23c4d4 plus freeze metadata). checkCandidate in CURRENT mode with the gate and manifest source_commit set to ffff...ffff now returns 'candidate: gate source_commit ffffffffff is not a commit in this repository' (B1). In round 19 it returned 0 errors. The real-commit control returns 0 errors (B0). Historical mode rejects too (C1). A reachable but wrong commit is still rejected by findManifest (B2). Because the gate round's manifest must carry the same source_commit as the gate (rules.mjs:842), the existence check forces findManifest's recompute to run for the gate round, so the D-035 tolerance is non-gate in effect. The D-035 tolerance still holds for the genuinely pruned rounds 1-12 (0 errors each). Round 18's commit is present at its rewritten SHA and is recomputed cleanly. The unit test 'D-036: a gate whose source_commit does not exist is rejected in current mode too' passes (94/94)."
+      }
     },
     {
       "id": "F-DG0-156",
@@ -5753,7 +5802,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-19/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T09:28:18Z",
@@ -5764,10 +5813,29 @@
           "at": "2026-09-30T09:48:20Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 4008588"
+        },
+        {
+          "at": "2026-09-30T09:56:02Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 20: PASS"
         }
       ],
       "fix_revision": "4008588",
-      "fix_summary": "D-036: removed the git allow-rules from .claude/settings.json (needed only for the one-time D-034 rewrite); back to Bash(bwrap:*) only."
+      "fix_summary": "D-036: removed the git allow-rules from .claude/settings.json (needed only for the one-time D-034 rewrite); back to Bash(bwrap:*) only.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R20-code-security-reviewer-20260930T095031Z-fc5d7da5",
+          "session_id": "fc5d7da5-74cb-4661-841c-8bd12730b22c"
+        },
+        "at": "2026-09-30T09:56:02Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-20/05-settings-allow-rules.log"
+        ],
+        "note": "At a23c4d4, .claude/settings.json has permissions.allow = [\"Bash(bwrap:*)\"] only. There is no git filter-branch/branch/push/update-ref rule (0 'git ' matches). .claude/settings.local.json is not tracked. The diff 0a65201..a23c4d4 shows exactly that removal."
+      }
     },
     {
       "id": "F-DG0-240",
@@ -5790,7 +5858,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-19/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T09:40:00Z",
@@ -5801,10 +5869,194 @@
           "at": "2026-09-30T09:48:20Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 4008588"
+        },
+        {
+          "at": "2026-09-30T10:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 20: PASS"
         }
       ],
       "fix_revision": "4008588",
-      "fix_summary": "D-036: checkCandidate now requires gate.source_commit to resolve to a real commit in BOTH modes, so current-mode validation rejects a missing gate source_commit; the D-035 findManifest tolerance is non-gate in effect. Test in validator.test.mjs."
+      "fix_summary": "D-036: checkCandidate now requires gate.source_commit to resolve to a real commit in BOTH modes, so current-mode validation rejects a missing gate source_commit; the D-035 findManifest tolerance is non-gate in effect. Test in validator.test.mjs.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R20-qa-verifier-20260930T095036Z-21c1a794",
+          "session_id": "21c1a794-2fa7-48a1-a091-48e0f1e7489d"
+        },
+        "at": "2026-09-30T10:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-20/10-qa20-negative-tests.log#QA20-S1",
+          "docs/delivery/test-evidence/DG0/qa/round-20/12-d036-real-repo.log",
+          "docs/delivery/test-evidence/DG0/qa/round-20/11-d036-unit-test-mutation.log",
+          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs#QA20-S1",
+          "tools/gates/lib/rules.mjs#checkCandidate",
+          "tools/gates/tests/validator.test.mjs#D-036"
+        ],
+        "note": "Reproduced the original case and confirmed it is now rejected. (1) My independent QA20-S1 (= round-19 QA19-P1/P4: accepted-observation gate fixture, every source_commit pointer set to a non-existent 40-hex SHA) now fails in current mode with 'candidate: gate source_commit 5a1e5a1e5a is not a commit in this repository'. In round 19 it returned 0 errors. Historical mode rejects it too. (2) The same check on a --no-local copy of the real repository (HEAD ce6d9b6) with a drafted APPROVED gate: the D-036 error is absent with the real frozen commit a23c4d4. It is present when only the gate, or the gate plus the manifest and stages.json copies, point at a non-existent SHA (`validate.mjs --stage DG0`, log 12). (3) Tree ids, blob ids, abbreviated or upper-case ids and an off-branch commit with different content are all rejected in current mode (QA20-S2..S6). (4) The D-035 tolerance still holds for pruned non-gate rounds: QA20-N1 'pruned' gives 0 errors, and a present-but-different round commit is still rejected. In the real history, rounds 1-12 and 18 are absent from a fresh clone and checkReviewRounds reports no manifest error for them. QA5-N57 behaves as designed. (5) The new unit test 'D-036: a gate whose source_commit does not exist is rejected in current mode too' fails against the pre-D-036 rules.mjs (0a65201) and passes on the candidate, so it is a real regression test. The residual reachability gap (an off-branch commit with the same content) is a separate Low, F-DG0-241. It is not part of F-DG0-240's scope (a non-existent commit)."
+      }
+    },
+    {
+      "id": "F-DG0-157",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Leftover residual-7 wording after D-036: the agent_sandbox.py comment still claims /proc/sys is read-only for the agent's shell (the claim D-036 withdrew), and threat-model residual 7 still credits D-033 with closing a '/proc/<peer>/sys via /proc/<peer>/root' amplification that has no separate effect on a host-global tunable",
+      "reproduction": "Read-only document and code review; no /proc access was performed. (1) tools/agents/agent_sandbox.py:149-151 still says '/proc/sys kernel tunables are read-only for the agent's SHELL (the Claude Code Bash sandbox's user namespace, as in round 15)'. docs/delivery/threat-model.md:60 (residual 7, as corrected in D-036) withdraws this as unverified, so the code comment contradicts the threat model. (2) threat-model.md:60 still says the Landlock domain 'does close the cross-run amplification (reaching another run's /proc/<peer>/sys via /proc/<peer>/root, F-DG0-152)'. The same residual now correctly says /proc/sys is host-global kernel state that every run already reaches through the same host procfs bind (agent_sandbox.py:155), so reaching it through a peer's root adds no reach. D-033 does close the real cross-run path, /proc/<peer>/root|cwd into another run's writable areas, and residual 8 describes that correctly. Evidence: docs/delivery/test-evidence/DG0/code-security/round-20/06-scope-diff-secrets-wording.log.",
+      "expected": "The in-code comment matches the corrected threat model: no unverified claim of a read-only shell /proc/sys. Residual 7 credits D-033 only with the /proc/<peer>/root|cwd cross-run closure (residual 8) and not with a /proc/sys narrowing.",
+      "actual": "The authoritative residual-7 text now states the correct host-global scope, so the residual is no longer understated. Two stale sentences remain: an unverified claim in a code comment, and an extra claimed benefit of D-033. Neither changes any control or makes the disclosed residual larger than stated. I would accept this as an observation; fix it at the next edit to agent_sandbox.py or the threat model.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-20/06-scope-diff-secrets-wording.log",
+        "tools/agents/agent_sandbox.py#L149-L151",
+        "docs/delivery/threat-model.md#residual-7"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-20/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "ACCEPTED_OBSERVATION",
+      "history": [
+        {
+          "at": "2026-09-30T09:56:02Z",
+          "status": "OPEN",
+          "note": "Raised in DG0 round 20 by code-security-reviewer. Low and non-mandatory: documentation only. The reporter would accept it as an observation."
+        },
+        {
+          "at": "2026-09-30T09:56:02Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by code-security-reviewer round 20: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R20-code-security-reviewer-20260930T095031Z-fc5d7da5",
+          "session_id": "fc5d7da5-74cb-4661-841c-8bd12730b22c"
+        },
+        "at": "2026-09-30T09:56:02Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-20/06-scope-diff-secrets-wording.log"
+        ],
+        "note": "Reporter's acceptance as an observation, raised this round: the finding is documentation-only and Low, and it does not change any control or understate residual 7, which is now stated at its correct host-global scope. Fix it at the next edit to agent_sandbox.py or threat-model.md. The release-auditor must concur."
+      }
+    },
+    {
+      "id": "F-DG0-241",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-036 checks only that gate.source_commit resolves (git cat-file -e <sha>^{commit}), not that it is on the branch. An APPROVED gate whose source_commit is an off-branch (unreachable) commit with identical content, or an annotated tag object that peels to the commit, passes current and historical validation in the local repository. The off-branch case then fails in every fresh clone.",
+      "reproduction": "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs, cases QA20-S7 and QA20-S8 (QA_REPO_ROOT=<clone at a23c4d4>). QA20-S7 builds the independent accepted-observation gate fixture and points every source_commit pointer at `git commit-tree <freeze-tree> -m ...`. That is a real commit with the same tree, but it is not an ancestor of HEAD, as happens when a frozen commit is later amended, rebased or filter-branched (compare D-034). Result: current mode 0 errors, historical mode 0 errors (apart from the fixture's VERIFYING-state artefact). Then `git clone --no-local` of the same fixture (only reachable objects, as CI or a remote reviewer gets) gives: current mode `candidate: gate source_commit a11f2bdee4 is not a commit in this repository`, historical mode the same plus `cannot recompute`. QA20-S8: an annotated tag object id that peels to the real commit is accepted in both modes and in the fresh clone (object type `tag`, not `commit`).",
+      "expected": "D-036 says the gate's source_commit must be a real commit, so that the traceability pointer survives into CI and later clones. Current-mode validation should also require the commit to be reachable, for example `git merge-base --is-ancestor <gate.source_commit> HEAD`, and optionally `git cat-file -t` == commit. An approved gate that is valid locally but invalid in every fresh clone would then be caught before approval, not afterwards by `--pipeline`.",
+      "actual": "Content integrity holds: the frozen manifest must still describe the commit (QA20-S6: an off-branch commit with different content is rejected), and the reviews bind to the candidate_id. The gap is reachability only. It needs an honest post-freeze history rewrite, and CI `--pipeline` in a fresh clone detects it after the fact. Low. As the reporting specialist, I would accept this as an observation if the owner chooses not to add the ancestry check. The tag-object case is harmless (identical content, reachable) and is included for completeness.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs#QA20-S7",
+        "docs/delivery/test-evidence/DG0/qa/round-20/10-qa20-negative-tests.log#QA20-S7",
+        "docs/delivery/test-evidence/DG0/qa/round-20/10-qa20-negative-tests.log#QA20-S8",
+        "tools/gates/lib/rules.mjs#checkCandidate",
+        "docs/delivery/decisions.md#D-036"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-20/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T10:12:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-20 QA review of candidate ef3ec3f2 (a23c4d4). Low, not mandatory; acceptable as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-242",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "High",
+      "mandatory_violation": false,
+      "title": "The DG0 gate cannot be approved on this repository's real history with the frozen validator. 66 CLOSED_VERIFIED findings have a fix_revision that no longer exists (history truncated before round 12, round 18 rewritten by D-034), which gives 132 isAncestor errors. The verifier runs of 63 closures have a head_commit_at_start that no longer exists, which gives 63 more errors. D-035 tolerated pruned commits only in findManifest; checkClosure and checkInvocation still hard-fail on them.",
+      "reproduction": "docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs <clone of HEAD ce6d9b6> (log: docs/delivery/test-evidence/DG0/qa/round-20/13-real-repo-gate-blockers.log). The script clones the real repository with --no-local, drafts a schema-valid APPROVED docs/delivery/gates/DG0.json on the real frozen candidate (ef3ec3f2, source_commit a23c4d4), runs validateGate(repo,'DG0') in current mode and classifies all 263 errors. 8 (+ the per-requirement 'did not check it' lines, F-DG0-147/149 and the four FIXED_PENDING findings) only mean that round 20 is not finished. The following can never be cleared by finishing round 20: 66 x 'finding F-DG0-xxx: fix <sha> is not in the verified round-N candidate', 66 x '... is not in the gate candidate', and 63 x 'verification: invocation ... started from <sha>, which does not contain docs/delivery/candidates/DG0/<id>.manifest.json'. Every commit these name (73c485466a, 6c676980ac, bf7f5e251d, 29b52557ad, 1474a96244, ... 23 in total) is absent from the local repository as well as from the clone (`git cat-file -t` fails in /home/user/My-owns). The earliest retained commit is e8361b8, 'DG0 round 12 ...'. Affected findings are F-DG0-001..011, 101..121, 130..139, 150, 151 and 201..228 (listed in the log).",
+      "expected": "D-035 says it found this latent pruned-history condition 'which would have blocked the DG0 gate at the first completed audit' and resolved it. A stage candidate that is REVIEWING for its gate should be able to pass that gate on the repository it will be audited in. A pre-freeze dry-run gate (like real-repo-gate-blockers.mjs) should show no errors except those of the unfinished round. The resolution should be a recorded decision, for example one of these: (a) extend the D-035 reasoning to closures in pruned rounds, with a clear rule. A closure whose fix_revision / verifier head commit is genuinely absent is accepted only if its verification record and sidecar are intact, and a retained commit is shown to contain the fix. (b) Re-verify the affected findings in a round whose commits are retained, and re-point fix_revision at a retained commit that contains the fix. Either way, add a test that runs the gate dry-run against the real history.",
+      "actual": "Fail-closed: nothing is wrongly approved, so this is not a mandatory violation. But the required workflow is broken. With this candidate, the auditor's `validate.mjs --stage DG0` can never exit 0 on this branch, however round 20 ends, so DG0 cannot pass. This is the same class of latent blocker as D-034 and D-035, and it is still present. High.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-20/13-real-repo-gate-blockers.log",
+        "docs/delivery/test-evidence/DG0/qa/round-20/12-d036-real-repo.log",
+        "tools/gates/lib/rules.mjs#checkClosure",
+        "tools/gates/lib/rules.mjs#isAncestor",
+        "docs/delivery/decisions.md#D-035"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-20/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T10:12:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-20 QA review of candidate ef3ec3f2 (a23c4d4). High, not mandatory (fail-closed), blocks DG0 approval."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-243",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "High",
+      "mandatory_violation": false,
+      "title": "The D-034 policy of keeping record-less (interrupted-run) sidecars in place conflicts with the frozen validator, and the gate cannot pass. The round-17 and round-18 qa-verifier sidecars each give 'record ... is not listed in stages.json review_rounds', and F-DG0-238 (raised in the round-17 qa findings sidecar) is reported as dropped from findings.json.",
+      "reproduction": "Same dry-run as F-DG0-242 (real-repo-gate-blockers.mjs, log 13, buckets RECORD-LESS and DROPPED). validateGate on the real history reports: 'docs/delivery/reviews/DG0/round-17/qa-verifier.verifications.json: qa-verifier's record for round-17 is not listed in stages.json review_rounds', the same for round-18, and 'finding F-DG0-238 raised in docs/delivery/reviews/DG0/round-17/qa-verifier.findings.json is missing from findings.json (dropped)'. Source: tools/gates/lib/rules.mjs line ~588 (collectVerifications). D-034 says import-findings now 'skips an interrupted run's record-less verifications ... the sidecars are left in place as honest evidence'. They cannot be deleted (write-once) and cannot be listed (no record exists), so the validator error is permanent.",
+      "expected": "The validator should treat a record-less sidecar the same way import-findings does. It should be ignored as non-binding evidence of an interrupted run, and never close anything, rather than being a hard gate error. Add a test for this, and decide how a finding raised only in a record-less findings sidecar is handled: either import F-DG0-238 into findings.json (it duplicates F-DG0-150, which is CLOSED_VERIFIED) or exempt record-less findings sidecars explicitly.",
+      "actual": "Fail-closed and not a mandatory violation, but a permanent DG0 gate blocker that the candidate's own tooling policy (D-034) created. High.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-20/13-real-repo-gate-blockers.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs",
+        "tools/gates/lib/rules.mjs#collectVerifications",
+        "docs/delivery/decisions.md#D-034",
+        "docs/delivery/reviews/DG0/round-17/qa-verifier.findings.json"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-20/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T10:12:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-20 QA review of candidate ef3ec3f2 (a23c4d4). High, not mandatory (fail-closed), blocks DG0 approval."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-244",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-019",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Delivery-metadata gaps that also fail gate validation (fixable without a candidate change). The round-19 test evidence of every reviewer was never committed, so the verification evidence of F-DG0-152/236/237/239 does not exist in any clone. CLOSED_VERIFIED findings have no fix_revision, or an abbreviated one: F-DG0-232 null, F-DG0-152/153 '1a99d13', F-DG0-239 '38ffd1d'. The pending F-DG0-154/155/156/240 carry '4008588'.",
+      "reproduction": "(1) `git ls-files docs/delivery/test-evidence/DG0/qa/round-19 | wc -l` gives 0, while 13 files are on disk. `git status` shows docs/delivery/test-evidence/DG0/{qa,code-security,domain}/round-19/ as untracked (round-18 evidence is tracked, committed in 38ffd1d). The dry-run gate (log 13, bucket OTHER) reports 'verification evidence is not an existing repository file' for F-DG0-236, 237, 239 (x2) and 152 (x2). (2) The same log reports 'CLOSED_VERIFIED needs a full fix_revision commit id' for F-DG0-232, 152, 153 and 239. findings.json has fix_revision null / '1a99d13' / '1a99d13' / '38ffd1d', and '4008588' for 154/155/156/240, which will fail the same way when they close.",
+      "expected": "Commit each round's reviewer test evidence together with the round's records (as was done for round 18). Record fix_revision as the full 40-hex commit id (rules.mjs checkClosure requires ^[0-9a-f]{40}$). Run the gate dry-run before the audit.",
+      "actual": "Six verification-evidence errors and four fix_revision errors in current-mode gate validation. All of them can be repaired in delivery metadata (findings.json, committing the evidence), which is outside the candidate. Medium.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-20/13-real-repo-gate-blockers.log",
+        "tools/gates/lib/rules.mjs#checkClosure"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-20/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T10:12:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-20 QA review of candidate ef3ec3f2 (a23c4d4). Medium, delivery metadata, not mandatory."
+        }
+      ]
     }
   ]
 }
