@@ -38,6 +38,9 @@ const STATUS_ENUM: Record<WorkType, StatusEnum> = {
   action_closure_verification: 'actionItemStatuses',
   minutes_approval: 'meetingStatuses',
   gate_review: 'gateReviewStates',
+  agenda_screening: 'agendaScreeningStatuses',
+  external_approval_recording: 'decisionStatuses',
+  claim_review: 'verificationStatuses',
 };
 
 /** Screen 15 — My Work / Inbox: what needs the caller's action across their projects (server-filtered by permission). */

@@ -27,7 +27,7 @@ import { ScreenAgendaDialog } from '../../_components/screen';
 
 type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
 type Declaration = 'no_conflict' | 'interest_declared' | 'recused';
-type MeetingCmd = 'publish' | 'freeze' | 'start' | 'close' | 'cancel' | 'quorum' | 'draftMinutes' | 'approveMinutes';
+type MeetingCmd = 'confirm' | 'publish' | 'freeze' | 'start' | 'close' | 'cancel' | 'quorum' | 'draftMinutes' | 'approveMinutes';
 
 const riyadhDate = (iso: string) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Riyadh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
 
@@ -166,6 +166,8 @@ export default function MeetingDetailPage() {
   const heading = m.isCirculation ? t('governance.common.circulationNumber', { number: m.number }) : t('governance.common.meetingNumber', { number: m.number });
   const st = m.status;
   const commands: { key: MeetingCmd; label: string; show: boolean; primary?: boolean; danger?: boolean }[] = [
+    // REQ-GOV-009: a proposed (cadence-generated) meeting joins the schedule only by this explicit confirmation.
+    { key: 'confirm', label: t('governance.meeting.cmd.confirm.label'), show: manage && !m.isCirculation && st === 'proposed', primary: true },
     { key: 'publish', label: t('governance.meeting.cmd.publish.label'), show: manage && !m.isCirculation && st === 'planned', primary: true },
     { key: 'freeze', label: t('governance.meeting.cmd.freeze.label'), show: manage && st !== 'cancelled' },
     { key: 'start', label: t('governance.meeting.cmd.start.label'), show: manage && !m.isCirculation && st === 'agenda_published', primary: true },
@@ -177,7 +179,7 @@ export default function MeetingDetailPage() {
       show: can('governance.minutes.draft') && !m.isCirculation && ['held', 'minutes_draft', 'minutes_approved'].includes(st),
     },
     { key: 'approveMinutes', label: t('governance.meeting.cmd.approveMinutes.label'), show: can('governance.minutes.approve') && st === 'minutes_draft', primary: true },
-    { key: 'cancel', label: t('governance.meeting.cmd.cancel.label'), show: manage && !m.isCirculation && (st === 'planned' || st === 'agenda_published'), danger: true },
+    { key: 'cancel', label: t('governance.meeting.cmd.cancel.label'), show: manage && !m.isCirculation && (st === 'proposed' || st === 'planned' || st === 'agenda_published'), danger: true },
   ];
   const visible = commands.filter((c) => c.show);
   const params = { projectId, meetingId };
@@ -188,6 +190,14 @@ export default function MeetingDetailPage() {
   };
 
   const meetingDialogs: Record<MeetingCmd, { consequences: ReactNode[]; noteMode: 'none' | 'optional' | 'required'; run: (note: string) => Promise<void>; children?: ReactNode; disabled?: boolean }> = {
+    confirm: {
+      consequences: [t('governance.meeting.cmd.confirm.effect'), t('common.command.audited')],
+      noteMode: 'optional',
+      run: async (note) => {
+        await api(governanceRoutes.confirmMeeting, { params, body: { expectedVersion: m.version, ...(note ? { note } : {}) } });
+        await done('governance.meeting.cmd.confirm.done');
+      },
+    },
     publish: {
       consequences: [t('governance.meeting.cmd.publish.effect')],
       noteMode: 'optional',
@@ -321,6 +331,11 @@ export default function MeetingDetailPage() {
       ) : null}
 
       <div className="space-y-6">
+        {st === 'proposed' ? (
+          <p className="rounded-lg border border-warning/40 bg-warning-soft p-3 text-sm text-ink" data-testid="meeting-proposed-note">
+            {m.cadenceCharterVersionNo !== null ? t('governance.meeting.proposedFromCadence', { version: m.cadenceCharterVersionNo }) : t('governance.meeting.proposedNote')}
+          </p>
+        ) : null}
         <div className={cx(card, 'p-4')}>
           <Facts
             items={[
