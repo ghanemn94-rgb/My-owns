@@ -199,6 +199,7 @@ CREATE TABLE "legal_entity" (
 	"incorporation_verified_at" timestamp with time zone,
 	"incorporation_verification_note" text,
 	"jurisdiction" text,
+	"owner_project_id" uuid NOT NULL,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
@@ -2511,6 +2512,7 @@ ALTER TABLE "session" ADD CONSTRAINT "session_user_id_app_user_id_fk" FOREIGN KE
 ALTER TABLE "session" ADD CONSTRAINT "session_org_id_organization_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organization"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "calendar_holiday" ADD CONSTRAINT "calendar_holiday_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "legal_entity" ADD CONSTRAINT "legal_entity_org_id_organization_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organization"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "legal_entity" ADD CONSTRAINT "legal_entity_owner_project_id_project_id_fk" FOREIGN KEY ("owner_project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "portfolio" ADD CONSTRAINT "portfolio_org_id_organization_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organization"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "program" ADD CONSTRAINT "program_org_id_organization_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organization"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "program" ADD CONSTRAINT "program_portfolio_id_portfolio_id_fk" FOREIGN KEY ("portfolio_id") REFERENCES "public"."portfolio"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

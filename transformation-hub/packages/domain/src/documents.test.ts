@@ -13,7 +13,11 @@ import {
   assertDisposable,
   disposalAuthority,
   MAX_FILENAME_LENGTH,
+  EVIDENCE_TARGET_TYPES,
+  EVIDENCE_TARGET_PERMISSION,
+  EVIDENCE_TARGET_READ_PERMISSION,
 } from './documents';
+import { POLICY_MATRIX } from './policy';
 
 const bytes = (s: string) => new TextEncoder().encode(s);
 
@@ -106,6 +110,22 @@ describe('Evidence conflicts (AT-14) [REQ-SRC]', () => {
     expect(() => verifiedStatusAfterAccept('conflicting', 'conflicting')).toThrow(/Resolve the conflict/);
     expect(verifiedStatusAfterAccept('conflicting', 'superseded')).toBe('active');
     expect(() => verifiedStatusAfterAccept('rejected', null)).toThrow();
+  });
+});
+
+describe('Evidence target read permissions (SEC-P1R-04) [REQ-SEC]', () => {
+  it('every evidence target type has a known READ permission, distinct from the link (manage) permission', () => {
+    for (const t of EVIDENCE_TARGET_TYPES) {
+      const read = EVIDENCE_TARGET_READ_PERMISSION[t];
+      expect(read, t).toMatch(/\.read$/);
+      expect(POLICY_MATRIX.permissions[read], `${t} -> ${read}`).toBeDefined();
+      expect(read).not.toBe(EVIDENCE_TARGET_PERMISSION[t]);
+    }
+  });
+  it('JV closing records need jv.deal.read, which a contributor does not hold', () => {
+    expect(EVIDENCE_TARGET_READ_PERMISSION.closing_condition).toBe('jv.deal.read');
+    expect(POLICY_MATRIX.roles.contributor.permissions).not.toContain('jv.deal.read');
+    expect(POLICY_MATRIX.roles.contributor.permissions).toContain('documents.document.read');
   });
 });
 

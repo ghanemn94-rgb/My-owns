@@ -147,6 +147,14 @@ export const legalEntity = pgTable('legal_entity', {
   incorporationVerifiedAt: ts('incorporation_verified_at'),
   incorporationVerificationNote: text('incorporation_verification_note'),
   jurisdiction: text('jurisdiction'),
+  /**
+   * The OWNING project (SEC-P1R-03): the project that created the entity. The entity may be linked to other projects
+   * (project_entity), which read it; only the owning project may change it (API 403 `newco.legal_entity.not_owner`,
+   * restrictive RLS on UPDATE, immutable column — post-migrate §17). Composite (org_id, owner_project_id) FK in post-migrate.
+   */
+  ownerProjectId: uuid('owner_project_id')
+    .notNull()
+    .references(() => project.id),
   isDemo: isDemo(),
   createdAt: createdAt(),
   createdBy: createdBy(),

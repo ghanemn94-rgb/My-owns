@@ -11,6 +11,7 @@ async function main() {
   app.enableShutdownHooks();
   await app.listen(config.port, '0.0.0.0');
   Logger.log(`${config.appName} API listening on :${config.port} (mode=${config.demoMode ? 'DEMO' : 'standard'}, env=${config.nodeEnv})`, 'bootstrap');
+  for (const w of config.warnings) Logger.warn(`configuration: ${w}`, 'bootstrap');
 }
 
 main().catch((e) => {

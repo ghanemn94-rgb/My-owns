@@ -120,14 +120,19 @@ export class OidcService {
     const claims = tokens.claims();
     if (!claims?.sub || !claims.iss) throw forbidden('oidc.no_subject', 'The identity provider did not return a subject');
     const orgId = await this.orgs.defaultOrgId();
-    type UserRow = { id: string; org_id: string; is_active: boolean; is_demo: boolean; locale: string };
+    type UserRow = { id: string; org_id: string; is_active: boolean; is_demo: boolean; is_service_account: boolean; locale: string };
     let user: UserRow | undefined = (await this.db.pool.query<UserRow>(`select * from hub_auth_user_by_subject($1, $2)`, [claims.iss, claims.sub])).rows[0];
     const email = typeof claims.email === 'string' ? claims.email.toLowerCase() : null;
     // Link-by-email is a FIRST-login binding only (SEC-P1-01): the IdP must assert a verified email, and the pre-provisioned
     // user must not be bound to any identity yet. An already-bound account is never reachable through another subject.
     if (!user && email && this.config.oidc.linkByEmail && claims.email_verified === true) {
       const byEmail: UserRow | undefined = (await this.db.pool.query<UserRow>(`select * from hub_auth_user_by_email($1, $2)`, [orgId, email])).rows[0];
-      if (byEmail && !byEmail.is_demo && (await this.linkSubject(byEmail.id, claims.iss, claims.sub))) user = byEmail;
+      if (byEmail && !byEmail.is_demo && !byEmail.is_service_account && (await this.linkSubject(byEmail.id, claims.iss, claims.sub))) user = byEmail;
+    }
+    // Service / non-person accounts never sign in interactively (I-R5): refused even when an IdP subject maps to one.
+    if (user?.is_service_account) {
+      this.log.warn(`OIDC login refused for subject at ${claims.iss} (service account)`);
+      throw forbidden('oidc.service_account', 'Service accounts cannot sign in interactively');
     }
     if (!user || !user.is_active || user.is_demo) {
       this.log.warn(`OIDC login refused for subject at ${claims.iss} (not provisioned or inactive)`);
@@ -149,7 +154,7 @@ export class OidcService {
       const org = await this.orgs.defaultOrgId();
       await client.query(`select set_config('app.org_id', $1, true), set_config('app.user_id', $2, true)`, [org, userId]);
       const r = await client.query(
-        `update app_user set oidc_issuer = $2, oidc_subject = $3, updated_at = now() where id = $1 and oidc_subject is null and oidc_issuer is null and is_active and not is_demo`,
+        `update app_user set oidc_issuer = $2, oidc_subject = $3, updated_at = now() where id = $1 and oidc_subject is null and oidc_issuer is null and is_active and not is_demo and not is_service_account`,
         [userId, issuer, subject],
       );
       if (r.rowCount !== 1) {

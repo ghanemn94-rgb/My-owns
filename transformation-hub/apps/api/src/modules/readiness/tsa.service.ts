@@ -220,7 +220,7 @@ export class TsaService {
       exitApprovalRequestedBy: req?.requestedBy ?? null,
       exitApprovedBy: t.exitApprovedBy,
       exitApprovedAt: iso(t.exitApprovedAt),
-      evidence: await this.s.evidence(projectId, 'tsa_service', t.id),
+      evidence: await this.s.visibleEvidence(ctx, projectId, 'tsa_service', t.id), // display: SEC-P1R-05
       escalation: esc
         ? { id: esc.id, code: esc.code, status: esc.status, requestedAction: esc.requestedAction, decisionDeadline: esc.decisionDeadline, options: esc.options, target: esc.target }
         : null,
@@ -500,10 +500,11 @@ export class TsaService {
   /** approveTSAExit (REQ-TSA-006, AT-10): replacement accepted with evidence; independent approver; binding checked. */
   async approveExit(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note?: string }) {
     const t = await loadInProject(this.s.db, schema.tsaService, projectId, id);
-    // RBAC first (a caller without the permission learns nothing about the request), then not_self against the requester.
-    this.s.policy.assert(ctx, 'readiness.tsa.approve_exit', { projectId, workstreamId: t.workstreamId, classification: t.classification });
+    // Role-level first (a caller without the permission learns nothing about the request), then not_self against the
+    // requester and the authority basis recorded on the approval record (the policy-matrix role; explicit, I-R3).
+    this.s.policy.assertGranted(ctx, 'readiness.tsa.approve_exit', { projectId, workstreamId: t.workstreamId, classification: t.classification });
     const req = await this.pendingExitRequest(t);
-    this.s.policy.assert(ctx, 'readiness.tsa.approve_exit', { projectId, workstreamId: t.workstreamId, classification: t.classification, requesterUserId: req.requestedBy });
+    this.s.policy.assert(ctx, 'readiness.tsa.approve_exit', { projectId, workstreamId: t.workstreamId, classification: t.classification, requesterUserId: req.requestedBy, withinAuthority: true });
     assertTsaExitApprovalSeparation({ approverUserId: ctx.principal.userId!, requesterUserId: req.requestedBy, ownerUserId: t.ownerUserId, replacementAcceptedBy: t.replacementAcceptedBy });
     assertVersion(t, body.expectedVersion, 'TSA service');
     const ev = await this.s.evidence(projectId, 'tsa_service', t.id);
@@ -520,10 +521,11 @@ export class TsaService {
 
   async rejectExit(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note: string }) {
     const t = await loadInProject(this.s.db, schema.tsaService, projectId, id);
-    // RBAC first (a caller without the permission learns nothing about the request), then not_self against the requester.
-    this.s.policy.assert(ctx, 'readiness.tsa.approve_exit', { projectId, workstreamId: t.workstreamId, classification: t.classification });
+    // Role-level first (a caller without the permission learns nothing about the request), then not_self against the
+    // requester and the authority basis recorded on the approval record (the policy-matrix role; explicit, I-R3).
+    this.s.policy.assertGranted(ctx, 'readiness.tsa.approve_exit', { projectId, workstreamId: t.workstreamId, classification: t.classification });
     const req = await this.pendingExitRequest(t);
-    this.s.policy.assert(ctx, 'readiness.tsa.approve_exit', { projectId, workstreamId: t.workstreamId, classification: t.classification, requesterUserId: req.requestedBy });
+    this.s.policy.assert(ctx, 'readiness.tsa.approve_exit', { projectId, workstreamId: t.workstreamId, classification: t.classification, requesterUserId: req.requestedBy, withinAuthority: true });
     assertVersion(t, body.expectedVersion, 'TSA service');
     await this.s.db.tx().insert(schema.approvalRecord).values({ id: newId(), orgId: ctx.principal.orgId, projectId, approvalRequestId: req.id, approverUserId: ctx.principal.userId!, decision: 'reject', comment: body.note, authorityBasis: 'readiness.tsa.approve_exit (policy matrix)', payloadHash: req.payloadHash });
     await updateVersioned(this.s.db, schema.approvalRequest, { id: req.id, projectId, expectedVersion: req.version }, { status: 'rejected' });

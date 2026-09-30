@@ -174,7 +174,7 @@ export class CutoverService {
       }),
       goDecision: this.s.decisionSummary(ctx, projectId, d, GO_DECISION_TYPE_KEYS, 'a go-live'),
       decisionHistory: history.map(recordDto),
-      acceptanceEvidence: await this.s.evidence(projectId, 'cutover_plan', plan.id),
+      acceptanceEvidence: await this.s.visibleEvidence(ctx, projectId, 'cutover_plan', plan.id), // display: SEC-P1R-05
       people: await this.s.people([plan.accountableUserId, plan.submittedForDecisionBy, plan.goNoGoDecidedBy, plan.executedBy, plan.postTransitionAcceptedBy, plan.createdBy, ...history.map((h) => h.actorUserId)]),
     };
   }
@@ -362,17 +362,24 @@ export class CutoverService {
    */
   async decide(ctx: RequestContext, projectId: string, planId: string, body: { expectedVersion: number; outcome: 'go' | 'no_go'; rationale: string; decisionId?: string }) {
     let plan = await loadInProject(this.s.db, schema.cutoverPlan, projectId, planId);
-    this.s.policy.assert(ctx, 'readiness.go_no_go.decide', {
-      projectId,
-      workstreamId: plan.workstreamId,
-      requesterUserId: plan.submittedForDecisionBy,
-      // Authority for a GO is carried by the linked FINAL governance decision (checked by the domain rule below).
-      withinAuthority: this.s.policy.permissionReach(ctx, 'readiness.go_no_go.decide', projectId).all,
-    });
-    assertVersion(plan, body.expectedVersion, 'cutover plan');
     const cmd: CutoverCommand = body.outcome === 'go' ? 'decide_go' : 'decide_no_go';
-    transition('cutover', CUTOVER_MACHINE, plan.status, cmd); // state check before evaluating (422 on a wrong state)
-    if (!plan.submittedForDecisionBy) throw ruleViolation('readiness.go_no_go.no_request', 'A go/no-go needs a pending submission by another person');
+    // Role → version / state / pending submission → not the submitter + authority (I-R3).
+    this.s.policy.assertApproval(
+      ctx,
+      'readiness.go_no_go.decide',
+      {
+        projectId,
+        workstreamId: plan.workstreamId,
+        requesterUserId: plan.submittedForDecisionBy,
+        // Authority for a GO is carried by the linked FINAL governance decision (checked by the domain rule below).
+        withinAuthority: this.s.policy.permissionReach(ctx, 'readiness.go_no_go.decide', projectId).all,
+      },
+      () => {
+        assertVersion(plan, body.expectedVersion, 'cutover plan');
+        transition('cutover', CUTOVER_MACHINE, plan.status, cmd); // state check before evaluating (422 on a wrong state)
+        if (!plan.submittedForDecisionBy) throw ruleViolation('readiness.go_no_go.no_request', 'A go/no-go needs a pending submission by another person');
+      },
+    );
     if (body.decisionId && body.decisionId !== plan.goDecisionId) {
       const d = await this.s.decision(ctx, projectId, body.decisionId);
       assertDecisionLinkable(this.s.linked(d), GO_DECISION_TYPE_KEYS, 'A go-live');

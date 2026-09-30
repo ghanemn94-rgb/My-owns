@@ -4114,8 +4114,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: CI runs unit, integration, E2E and axe checks"]
   phase: P1
-  status: Implemented
-  evidence: ['GitHub Actions transformation-hub-ci run 36645986422 (7959b44), all jobs green: unit tests, API integration tests against PostgreSQL 16 and Playwright E2E (24 tests against a production web build)', 'gap: no accessibility (axe) checks in CI yet — axe checks in progress']
+  status: Tested
+  evidence: ['GitHub Actions transformation-hub-ci run 16 (id 36691248333, revision 4f05318), all jobs green: unit tests, API integration tests against PostgreSQL 16, Playwright E2E against a production web build including e2e a11y.spec.ts (axe-core WCAG 2.1 A/AA scans of 57 screen states in English and Arabic, failing on serious/critical violations; keyboard checks)', 'docs/test-evidence/a11y-report.md (0 violations of any impact after the fixes; automated checks are not a WCAG conformance claim — manual screen-reader, zoom and high-contrast testing outstanding)', 'P3 screens (perimeter, NewCo, readiness) not yet in the a11y scan list — follow-up assigned']
 - id: REQ-ARC-009
   section: "13"
   title: "OpenTelemetry to internal collector"
@@ -5244,7 +5244,7 @@
   acceptance_tests: ["IT: CI workflow passes on main"]
   phase: P1
   status: Tested
-  evidence: ['GitHub Actions transformation-hub-ci run 36645986422 (7959b44), all jobs green', '.github/workflows/transformation-hub-ci.yml (repository root): static (fresh-checkout typecheck and lint, apply_status.py --check), unit, API integration against PostgreSQL 16, web build and private-mode egress scan, container images with image SBOM and grype report, OpenAPI, licence policy, pnpm audit, source SBOM, Helm/kubeconform/compose/shellcheck, backup/restore drill, Playwright e2e', 'security scans present: egress scan, grype, pnpm audit, licence policy; no secret scan yet (REQ-SEC-012); CI holds no production credentials']
+  evidence: ['GitHub Actions transformation-hub-ci run 16 (id 36691248333, revision 4f05318), all jobs green incl. compose dev/eval stack, gitleaks secret scan and the full e2e suite with axe scans', 'GitHub Actions transformation-hub-ci run 36645986422 (7959b44), all jobs green', '.github/workflows/transformation-hub-ci.yml (repository root): static (fresh-checkout typecheck and lint, apply_status.py --check), unit, API integration against PostgreSQL 16, web build and private-mode egress scan, container images with image SBOM and grype report, OpenAPI, licence policy, pnpm audit, source SBOM, Helm/kubeconform/compose/shellcheck, backup/restore drill, Playwright e2e', 'security scans present: egress scan, grype, pnpm audit, licence policy; no secret scan yet (REQ-SEC-012); CI holds no production credentials']
 
 # ---------------------------------------------------------------- INT
 
@@ -6069,7 +6069,7 @@
   acceptance_tests: ["IT: clean clone builds, migrates, seeds and passes tests"]
   phase: P1
   status: Tested
-  evidence: ['GitHub Actions transformation-hub-ci run 36645986422 (7959b44), all jobs green: a clean checkout builds, migrates, seeds the demo sandbox and passes unit, integration and e2e tests', 'repository contains migrations (packages/db/migrations), tests (apps/api/test, packages/*/src, e2e/tests), demo fixtures (apps/api/src/cli/seed-demo.ts), production bootstrap (apps/api/src/cli/bootstrap.ts), deployment configuration (deploy/) and CI (.github/workflows/transformation-hub-ci.yml)']
+  evidence: ['GitHub Actions transformation-hub-ci run 16 (id 36691248333, revision 4f05318), all jobs green incl. compose dev/eval stack, gitleaks secret scan and the full e2e suite with axe scans', 'GitHub Actions transformation-hub-ci run 36645986422 (7959b44), all jobs green: a clean checkout builds, migrates, seeds the demo sandbox and passes unit, integration and e2e tests', 'repository contains migrations (packages/db/migrations), tests (apps/api/test, packages/*/src, e2e/tests), demo fixtures (apps/api/src/cli/seed-demo.ts), production bootstrap (apps/api/src/cli/bootstrap.ts), deployment configuration (deploy/) and CI (.github/workflows/transformation-hub-ci.yml)']
 - id: REQ-PHS-025
   section: "22"
   title: "Delivery status document"

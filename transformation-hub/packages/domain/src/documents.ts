@@ -278,6 +278,34 @@ export const EVIDENCE_TARGET_PERMISSION: Record<EvidenceTargetType, string> = {
   consent: 'carveout.consent.manage',
 };
 
+/**
+ * Reading evidence of a record requires the permission that lets the caller READ that record (SEC-P1R-04): the evidence
+ * list, the counters and the link commands answer 404 when the caller cannot read the target (no existence oracle), on
+ * top of the target's own visibility (classification, room, workstream reach).
+ */
+export const EVIDENCE_TARGET_READ_PERMISSION: Record<EvidenceTargetType, string> = {
+  gate_criterion: 'gates.gate.read',
+  closing_condition: 'jv.deal.read',
+  perimeter_item: 'carveout.register.read',
+  transfer: 'carveout.register.read',
+  readiness_check: 'readiness.register.read',
+  tsa_service: 'readiness.register.read',
+  decision: 'governance.decision.read',
+  action_item: 'governance.decision.read',
+  task: 'planning.plan.read',
+  deliverable: 'planning.plan.read',
+  milestone: 'planning.plan.read',
+  legal_entity: 'newco.register.read',
+  regulatory_requirement: 'newco.register.read',
+  agreement: 'carveout.register.read',
+  benefit: 'finance.record.read',
+  financial_snapshot: 'finance.record.read',
+  post_close_obligation: 'jv.deal.read',
+  closing_deliverable: 'jv.deal.read',
+  cutover_plan: 'readiness.register.read',
+  consent: 'carveout.register.read',
+};
+
 export type EvidenceLinkStatus = 'active' | 'superseded' | 'conflicting' | 'rejected';
 
 /**

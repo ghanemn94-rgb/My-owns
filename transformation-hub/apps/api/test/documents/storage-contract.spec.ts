@@ -145,12 +145,22 @@ describe('S3-compatible adapter specifics', () => {
       HUB_STORAGE_DRIVER: 's3',
     } as NodeJS.ProcessEnv;
     expect(() => loadConfig(prod)).toThrow(/HUB_STORAGE_DRIVER=s3 needs HUB_S3_ENDPOINT/);
-    const full = { ...prod, HUB_S3_BUCKET: 'hub-documents', HUB_S3_ACCESS_KEY_ID: 'k', HUB_S3_SECRET_ACCESS_KEY: 's' };
+    // (I-R2 / I-R4: production also refuses default or very short S3 credentials and objects without SSE — see below.)
+    const full = { ...prod, HUB_S3_BUCKET: 'hub-documents', HUB_S3_ACCESS_KEY_ID: 'hub-documents-writer', HUB_S3_SECRET_ACCESS_KEY: 'k8s-secret-ref-7fQ2mZx9LwP4', HUB_S3_SSE: 'AES256' };
     expect(() => loadConfig({ ...full, HUB_S3_ENDPOINT: 'http://objects.example.invalid' })).toThrow(/HUB_S3_ENDPOINT must use https/);
     expect(() => loadConfig({ ...full, HUB_S3_ENDPOINT: 'https://objects.example.invalid' })).toThrow(/HUB_S3_ENDPOINT host objects\.example\.invalid is not on HUB_EGRESS_ALLOWLIST/);
     const ok = loadConfig({ ...full, HUB_S3_ENDPOINT: 'https://objects.example.invalid', HUB_EGRESS_ALLOWLIST: 'objects.example.invalid' });
-    expect(ok.storage.s3).toMatchObject({ endpoint: 'https://objects.example.invalid', bucket: 'hub-documents', sse: 'none' });
+    expect(ok.storage.s3).toMatchObject({ endpoint: 'https://objects.example.invalid', bucket: 'hub-documents', sse: 'AES256' });
     expect(() => loadConfig({ ...full, HUB_S3_ENDPOINT: 'https://objects.example.invalid', HUB_EGRESS_ALLOWLIST: 'objects.example.invalid', HUB_S3_SSE: 'aws:kms' })).toThrow(/HUB_S3_KMS_KEY_ID/);
+    // I-R4: no per-object SSE is refused unless the bucket default encryption is explicitly assured
+    const noSse = { ...full, HUB_S3_ENDPOINT: 'https://objects.example.invalid', HUB_EGRESS_ALLOWLIST: 'objects.example.invalid', HUB_S3_SSE: 'none' };
+    expect(() => loadConfig(noSse)).toThrow(/HUB_S3_SSE must be AES256 or aws:kms/);
+    expect(loadConfig({ ...noSse, HUB_S3_BUCKET_DEFAULT_ENCRYPTION: 'assured' }).storage.s3).toMatchObject({ sse: 'none' });
+    // I-R2: default / example / very short credentials are refused
+    const base = { ...full, HUB_S3_ENDPOINT: 'https://objects.example.invalid', HUB_EGRESS_ALLOWLIST: 'objects.example.invalid' };
+    expect(() => loadConfig({ ...base, HUB_S3_ACCESS_KEY_ID: 'minioadmin', HUB_S3_SECRET_ACCESS_KEY: 'minioadmin' })).toThrow(/default or example credentials/);
+    expect(() => loadConfig({ ...base, HUB_S3_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE', HUB_S3_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' })).toThrow(/default or example credentials/);
+    expect(() => loadConfig({ ...base, HUB_S3_SECRET_ACCESS_KEY: 's' })).toThrow(/shorter than 16/);
   });
 });
 

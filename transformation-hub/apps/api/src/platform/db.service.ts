@@ -183,12 +183,16 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
 
   private async applyContext(client: PoolClient, ctx: RequestContext) {
     withDbScope(ctx);
+    // jit=off: request/job transactions are short OLTP statements. Visibility predicates resolved in SQL (e.g. the activity
+    // feed's per-type CASE, SEC-P1R-02) have inflated cost estimates that trigger PostgreSQL JIT: measured 42 s of JIT
+    // compilation (5 446 functions) for a query that executes in 74 ms without it.
     await client.query(
       `select set_config('app.org_id', $1, true), set_config('app.user_id', $2, true),
               set_config('app.project_ids', $3, true), set_config('app.correlation_id', $4, true),
               set_config('app.full_project_ids', $5, true), set_config('app.room_ids', $6, true),
               set_config('statement_timeout', $7, true), set_config('lock_timeout', $8, true),
-              set_config('idle_in_transaction_session_timeout', $9, true), set_config('app.room_only', $10, true)`,
+              set_config('idle_in_transaction_session_timeout', $9, true), set_config('app.room_only', $10, true),
+              set_config('jit', 'off', true)`,
       [
         ctx.principal.orgId,
         ctx.principal.userId ?? '',

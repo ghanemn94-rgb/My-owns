@@ -7,7 +7,7 @@ import { PolicyService } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { Clock } from '../../platform/clock';
-import { RecordVersionService, activeEvidenceCount, loadInProject } from '../../platform/helpers';
+import { RecordVersionService, activeEvidenceCount, loadInProject, visibleEvidenceCounts } from '../../platform/helpers';
 import type { RequestContext } from '../../platform/context';
 
 export type ProjectRow = typeof schema.project.$inferSelect;
@@ -106,8 +106,14 @@ export class ReadinessSupport {
     return Object.fromEntries(rows.map((r) => [r.id, r.name]));
   }
 
+  /** Evidence counts FOR RULES (sign-off, TSA exit, cutover acceptance): every link counts. */
   evidence(projectId: string, targetType: 'readiness_check' | 'tsa_service' | 'cutover_plan', targetId: string) {
     return activeEvidenceCount(this.db, projectId, targetType, targetId);
+  }
+
+  /** Evidence counts FOR DISPLAY: only links the caller could see in the evidence list (SEC-P1R-05). */
+  async visibleEvidence(ctx: RequestContext, projectId: string, targetType: 'readiness_check' | 'tsa_service' | 'cutover_plan', targetId: string) {
+    return (await visibleEvidenceCounts(this.db, this.policy, ctx, projectId, targetType, [targetId])).get(targetId) ?? { active: 0, conflicting: 0 };
   }
 
   /**
