@@ -6,9 +6,10 @@
  *  3. {placeholders} are identical between languages;
  *  4. statuses.<enumName> covers every value of every enum exported by packages/domain/src/enums.ts;
  *     (plus the JV vocabularies declared in packages/domain/src/jv.ts — room types, access levels, disclosure statuses, …);
- *  5. every server message code the domain emits (status dimensions, gate blockers, JV signing/closing blockers — QA-P1-14) has a translation
- *     `gates.messages.<code>` in en and ar with the same placeholders as the domain's English template, and no stale code
- *     is left in the catalogue.
+ *  5. every server message code the domain emits (status dimensions, gate blockers, JV signing/closing blockers — QA-P1-14;
+ *     finance explanations and EV / equity / currency / unit findings — FINANCE_MESSAGES_EN) has a translation
+ *     `<namespace>.messages.<code>` (gates / finance) in en and ar with the same placeholders as the domain's English
+ *     template, and no stale code is left in the catalogue.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -79,20 +80,26 @@ for (const locale of ['en', 'ar']) {
   }
 }
 
-// 5. Server message codes (packages/domain: DIMENSION_MESSAGES_EN, GATE_MESSAGES_EN, JV_MESSAGES_EN) ↔ gates.messages.*
+// 5. Server message codes ↔ <namespace>.messages.* (gates: DIMENSION_MESSAGES_EN + GATE_MESSAGES_EN + JV_MESSAGES_EN;
+//    finance: FINANCE_MESSAGES_EN)
 const { DIMENSION_MESSAGES_EN } = require('@hub/domain/dist/carveout.js');
 const { GATE_MESSAGES_EN } = require('@hub/domain/dist/gates.js');
+const { FINANCE_MESSAGES_EN } = require('@hub/domain/dist/finance.js');
 const { JV_MESSAGES_EN } = jv;
-const serverCodes = { ...DIMENSION_MESSAGES_EN, ...GATE_MESSAGES_EN, ...JV_MESSAGES_EN };
-for (const locale of ['en', 'ar']) {
-  const catalogue = flatten(load(locale, 'gates').messages ?? {});
-  for (const [code, template] of Object.entries(serverCodes)) {
-    if (!catalogue.has(code)) errors.push(`${locale} gates.messages.${code} missing (server message code)`);
-    else if (placeholders(catalogue.get(code)) !== placeholders(template)) {
-      errors.push(`placeholder mismatch ${locale} gates.messages.${code} (server: ${placeholders(template)} / ${locale}: ${placeholders(catalogue.get(code))})`);
+const serverCatalogues = { gates: { ...DIMENSION_MESSAGES_EN, ...GATE_MESSAGES_EN, ...JV_MESSAGES_EN }, finance: FINANCE_MESSAGES_EN };
+let serverCodeCount = 0;
+for (const [ns, serverCodes] of Object.entries(serverCatalogues)) {
+  serverCodeCount += Object.keys(serverCodes).length;
+  for (const locale of ['en', 'ar']) {
+    const catalogue = flatten(load(locale, ns).messages ?? {});
+    for (const [code, template] of Object.entries(serverCodes)) {
+      if (!catalogue.has(code)) errors.push(`${locale} ${ns}.messages.${code} missing (server message code)`);
+      else if (placeholders(catalogue.get(code)) !== placeholders(template)) {
+        errors.push(`placeholder mismatch ${locale} ${ns}.messages.${code} (server: ${placeholders(template)} / ${locale}: ${placeholders(catalogue.get(code))})`);
+      }
     }
+    for (const code of catalogue.keys()) if (!(code in serverCodes)) errors.push(`${locale} ${ns}.messages.${code} is not a server message code`);
   }
-  for (const code of catalogue.keys()) if (!(code in serverCodes)) errors.push(`${locale} gates.messages.${code} is not a server message code`);
 }
 
 if (errors.length) {
@@ -100,5 +107,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${Object.keys(serverCodes).length} server message codes.`,
+  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV + finance).`,
 );
