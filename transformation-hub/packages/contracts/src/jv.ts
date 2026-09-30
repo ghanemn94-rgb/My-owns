@@ -27,6 +27,7 @@ import {
   APPROVAL_STATES,
   APPROVAL_REQUEST_STATUSES,
   GATE_ASSESSMENT_STATUSES,
+  JV_DECISION_ISSUE_CODES,
 } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
 import {
@@ -58,6 +59,14 @@ import { LinkedDecisionSummaryDto } from './readiness';
  */
 
 const P = '/api/v1/projects/:projectId';
+
+/**
+ * A governance decision linked to a JV record (signing / closing confirmation, negotiation issue). `issueCode` adds the
+ * reliance checks to the linked-decision codes (DOM-P4-01/08): `evidence_invalid` (the evidence of its external approval
+ * is no longer active and verified — also shown on a confirmed event), `already_used` (it already backs another closing),
+ * `other_subject` (raised for another record). Null when the decision backs the record.
+ */
+const JvLinkedDecisionSummaryDto = LinkedDecisionSummaryDto.extend({ issueCode: z.enum(JV_DECISION_ISSUE_CODES).nullable() });
 const tags = ['jv'];
 
 const Stage = z.enum(PARTNER_STAGES);
@@ -252,7 +261,7 @@ export const NegotiationIssueDto = z.object({
   requiresApproval: z.boolean(),
   decisionId: Uuid.nullable(),
   /** The linked governance decision — null when none is linked or the caller cannot read it. */
-  decision: LinkedDecisionSummaryDto.nullable(),
+  decision: JvLinkedDecisionSummaryDto.nullable(),
   documentId: Uuid.nullable(),
   documentRef: z.string().nullable(),
   resolution: z.string().nullable(),
@@ -548,7 +557,7 @@ export const EventDetailDto = EventDto.extend({
   confirmationAuthority: z.string().nullable(),
   confirmationRequest: ApprovalStep.nullable(),
   /** The decision linked to the pending confirmation — null when none or the caller cannot read it. */
-  decision: LinkedDecisionSummaryDto.nullable(),
+  decision: JvLinkedDecisionSummaryDto.nullable(),
   statusReason: z.string().nullable(),
   allowedCommands: z.array(z.string()),
   /**

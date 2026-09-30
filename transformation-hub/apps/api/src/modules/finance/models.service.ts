@@ -29,6 +29,7 @@ import type { RequestContext } from '../../platform/context';
 import { assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
 import { orderBySort } from '../../platform/sort';
 import { newId, payloadHash } from '../../platform/ids';
+import { assertCurrentDecisionReliance, lockDecisionAndRecheck, registerDecisionUse, type RelianceRule } from '../governance/decision-reliance';
 import { FinanceSupport, messagesOf } from './finance.support';
 import { SnapshotsService } from './snapshots.service';
 
@@ -408,6 +409,11 @@ export class ModelsService {
    * FINAL governance decision of type valuation_and_ownership_terms (approved within mandate, or approved by the
    * authorized body with its reference recorded). Until then they stay empty. Business plan approval is not configured
    * in the authority matrix (to be confirmed).
+   * DOM-P4-06: one decision approves the values of ONE model version (decision-use registry, kind
+   * `financial_model_version`: the decision that approved v1 never records v2's values — pre-check 422, then row lock and
+   * re-check, a concurrent approval on the same decision is 409); a decision raised for a specific record backs only that
+   * record (`if_set` — a paper cannot name a model version yet). DOM-P4-08: an external approval counts only while its
+   * evidence is an active link verified by a second person.
    */
   async approveValues(ctx: RequestContext, projectId: string, modelId: string, versionId: string, body: { expectedVersion: number; decisionId: string; note?: string }) {
     const { m, v } = await this.loadWritable(ctx, projectId, modelId, versionId);
@@ -419,12 +425,20 @@ export class ModelsService {
     const d = await this.s.decision(ctx, projectId, body.decisionId);
     const issue = this.s.decisionIssue(d, VALUATION_DECISION_TYPE_KEYS, 'approved valuation / ownership values');
     if (issue.issue) throw ruleViolation('finance.model.decision_not_final', issue.issue, { decisionId: d.id, issueCode: issue.code });
+    const rule: RelianceRule = {
+      use: { kind: 'financial_model_version', subjectType: 'financial_model_version', subjectId: v.id },
+      subjectRule: 'if_set',
+      decisionTypeKeys: VALUATION_DECISION_TYPE_KEYS,
+      codePrefix: 'finance.model',
+    };
+    const usesBefore = await assertCurrentDecisionReliance(this.s.db, projectId, d, rule);
     this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: v.classification, requesterUserId: v.preparedBy, withinAuthority: true });
     assertFigureApprovable({ state: v.approvalState, createdBy: v.createdBy, preparedBy: v.preparedBy, validatedBy: v.validatedBy, validatedHash: v.validatedHash, currentHash: contentHash(v) }, actorOf(ctx), describe(m, v));
     assertVersion(v, body.expectedVersion, 'model version');
     const req = await this.s.approvalRequest(projectId, v.approvalRequestId);
     if (!req || req.status !== 'pending') throw ruleViolation('finance.approval.not_requested', 'No pending approval request exists for this version: validate it first');
     const to = transition('figure', FIGURE_APPROVAL_MACHINE, v.approvalState, 'approve');
+    await lockDecisionAndRecheck(this.s.db, projectId, d.id, rule, usesBefore);
     const row = (await updateVersioned(this.s.db, V, { id: v.id, projectId, expectedVersion: body.expectedVersion }, {
       approvalState: to,
       approvedValues: v.outputs,
@@ -432,6 +446,7 @@ export class ModelsService {
       approvedAt: this.s.clock.now(),
       approvalDecisionId: d.id,
     })) as VersionRow;
+    await registerDecisionUse(this.s.db, { orgId: ctx.principal.orgId, projectId, decisionId: d.id, decisionCode: d.code, kind: 'financial_model_version', subjectId: v.id, usedBy: ctx.principal.userId, codePrefix: 'finance.model' });
     await this.s.closeApprovalRequest(ctx, projectId, v.approvalRequestId, 'approve', body.note ?? null, `governance decision ${d.code} (${d.decisionTypeKey})`);
     await this.s.snapshotVersion(projectId, 'financial_model_version', row, 'values approved');
     await this.s.audit.record({

@@ -20,9 +20,10 @@ import { docsPath } from '../documents/doc-helpers';
  * regression)`), with their assertions unchanged. Because a signing now needs gate G5 passed (DOM-P4-02), the fixture passes
  * G5 through the real gate API before the first signing and uses the decision that approved it; the DOM-P4-02 setup then
  * reopens G5 (controlled reopen by the chair) so that its precondition "G5 is not passed" holds. DOM-P4-01 and -08
- * (decision reuse / evidence re-check) stay open probes.
+ * (decision reuse / evidence re-check) are fixed too (decision-use registry kind `closing`; external-approval evidence
+ * re-checked at the request and at the confirmation): every probe of this file is now a plain regression test, its
+ * assertion unchanged (so `P4_PROBE_PLAIN` no longer changes anything here).
  */
-const probe = process.env['P4_PROBE_PLAIN'] ? it : it.fails;
 
 let j: JvProject;
 let pid: string;
@@ -76,7 +77,7 @@ describe('P4 domain review — JV defect probes [docs/reviews/P4-domain-review.m
     expect((await event(j.p.pm, 'closings', c2.id)).ready).toBe(true);
   });
 
-  probe('DEFECT DOM-P4-01: the decision that confirmed closing #1 must not also confirm closing #2 (G6-C06 "for this closing"; P2 rule: a decision backs one approval only)', async () => {
+  it('DOM-P4-01: the decision that confirmed closing #1 must not also confirm closing #2 (G6-C06 "for this closing"; P2 rule: a decision backs one approval only) (fixed, regression)', async () => {
     const req = await j.p.pm.post(`${P(pid)}/transaction-events/${closing2.id}/request-confirmation`, { expectedVersion: closing2.version, decisionId: decisionD });
     if (req.status === 201) await j.p.sponsor.post(`${P(pid)}/closings/${closing2.id}/confirm`, { expectedVersion: req.body.version, note: 'Reuse attempt (synthetic)' });
     const c2 = await event(j.p.pm, 'closings', closing2.id);
@@ -221,7 +222,7 @@ describe('P4 domain review — JV defect probes [docs/reviews/P4-domain-review.m
     expect(d.status).toBe('approved'); // the decision itself is unchanged
   });
 
-  probe('DEFECT DOM-P4-08: a closing is not confirmed on an external approval whose only evidence was rejected as defective (DOM-P2-12 carried into P4; spec §3 defective evidence → controlled reassessment)', async () => {
+  it('DOM-P4-08: a closing is not confirmed on an external approval whose only evidence was rejected as defective (DOM-P2-12 carried into P4; spec §3 defective evidence → controlled reassessment) (fixed, regression)', async () => {
     const req = await j.p.pm.post(`${P(pid)}/transaction-events/${closing4.id}/request-confirmation`, { expectedVersion: closing4.version, decisionId: decisionE });
     if (req.status === 201) await j.p.sponsor.post(`${P(pid)}/closings/${closing4.id}/confirm`, { expectedVersion: req.body.version, note: 'Confirmation on rejected evidence (probe)' });
     const c4 = await event(j.p.pm, 'closings', closing4.id);

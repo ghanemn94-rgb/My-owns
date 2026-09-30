@@ -163,8 +163,12 @@ For every approval command the server evaluates, in one transaction, and logs th
     on `decision_id` — as the backstop (409). Gate decisions are bound by the gate key (rule 11) and cannot back a later
     cycle of the same gate, whether the earlier cycle was approved or rejected (`gates.decide.decision_reused`; the
     rejected-cycle case is a proposed rule, pending the governance owner — QA observation O-1). The mechanism is generic
-    (docs/architecture/module-guide.md, "Relying on a governance decision") for later consumers (JV closings, valuations,
-    budget lines).
+    (docs/architecture/module-guide.md, "Relying on a governance decision"); since the P4 fixes it also covers a JV
+    closing confirmation (kind `closing`: one `jv_closing_confirmation` decision confirms one closing — DOM-P4-01), the
+    approved values of a valuation model version (kind `financial_model_version`, DOM-P4-06) and the approved budget of a
+    line (kind `budget_line`, within the amount the paper STATES — a paper without an amount backs no budget approval,
+    DOM-P4-07). A JV signing rests on the decision that approved the current G5 cycle (rule 11) and adds no registry row
+    of its own. Every JV and finance reliance re-checks the evidence of an external approval (DOM-P4-08).
 
 ### 3.1 Individual approvals under delegated authority — baselines and change requests (P2 fix DOM-P2-03)
 

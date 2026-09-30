@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { and, asc, count, eq, ilike, inArray, ne, or, SQL } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
+  assertBudgetApprovalWithinDecision,
   assertNonNegative,
   assertNotDeclassified,
   assertSameUnit,
@@ -22,6 +23,7 @@ import type { RequestContext } from '../../platform/context';
 import { assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
 import { orderBySort } from '../../platform/sort';
 import { newId } from '../../platform/ids';
+import { assertCurrentDecisionReliance, lockDecisionAndRecheck, registerDecisionUse, type RelianceRule } from '../governance/decision-reliance';
 import { FinanceSupport, iso, messagesOf, money, moneyOrNull, Money } from './finance.support';
 
 type LineRow = typeof schema.budgetLine.$inferSelect;
@@ -252,9 +254,23 @@ export class BudgetService {
   }
 
   /**
+   * How a budget-line approval relies on its decision (docs/architecture/module-guide.md, "Relying on a governance decision";
+   * DOM-P4-07/-08): it consumes it — kind `budget_line`, one decision backs ONE budget line, so the approvals recorded from a
+   * decision never exceed its amount in total; the evidence of an external approval is re-checked. Subject rule `none`: a
+   * budget decision is raised for the change request / baseline version it approves, and the line records the amount of that
+   * approval.
+   */
+  private relianceRule(lineId: string): RelianceRule {
+    return { use: { kind: 'budget_line', subjectType: 'budget_line', subjectId: lineId }, subjectRule: 'none', decisionTypeKeys: BUDGET_DECISION_TYPE_KEYS, codePrefix: 'finance.budget' };
+  }
+
+  /**
    * The approved budget is RECORDED from a final governance decision (baseline / budget change / spend commitment) —
-   * never set by this module on its own. The amount must be in the line's currency and unit and within the decision's
-   * amount when the decision paper states one in the same currency / unit.
+   * never set by this module on its own. DOM-P4-07: the decision states its amount (a decision without one sets no limit
+   * and cannot back an approval — fail closed), in the line's currency and unit, and the approved amount is within it; the
+   * decision backs no other budget line (decision-use registry: pre-check 422, then row lock and re-check — a concurrent
+   * approval on the same decision is 409). DOM-P4-08: an external approval counts only while its evidence is active and
+   * verified.
    */
   async recordApproval(ctx: RequestContext, projectId: string, id: string, body: RouteInput<R['recordBudgetApproval']>['body']) {
     const r = await loadInProject(this.s.db, T, projectId, id);
@@ -265,18 +281,15 @@ export class BudgetService {
     const approved = parseMoney(body.approvedAmount);
     assertSameUnit({ currency: r.currency, unitScale: r.unitScale }, approved, `Budget line ${r.code}`);
     assertNonNegative(approved, 'approvedAmount');
-    if (d.amountAmount !== null && d.amountCurrency && d.amountUnitScale) {
-      const decided = money(d.amountAmount, d.amountCurrency, d.amountUnitScale);
-      if (decided.currency !== approved.currency || decided.unitScale !== approved.unitScale) {
-        throw ruleViolation('finance.budget.decision_unit_mismatch', `Decision ${d.code} states its amount in ${decided.currency} / unit scale ${decided.unitScale}; the line is kept in ${r.currency} / unit scale ${r.unitScale} — no conversion is applied`, {
-          decisionCurrency: decided.currency,
-          decisionUnitScale: decided.unitScale,
-        });
-      }
-      if (compareMoney(approved, decided) > 0) throw ruleViolation('finance.budget.exceeds_decision', `The approved amount exceeds the amount of decision ${d.code}`, { decisionAmount: decided.amount });
+    const rule = this.relianceRule(r.id);
+    const usesBefore = await assertCurrentDecisionReliance(this.s.db, projectId, d, rule);
+    assertBudgetApprovalWithinDecision({ decisionCode: d.code, decisionAmount: moneyOrNull(d.amountAmount, d.amountCurrency, d.amountUnitScale), approved });
+    // The decision already recorded on THIS line (now, or before a later change): a change needs a new decision.
+    if (r.approvalDecisionId === d.id || usesBefore.some((u) => u.kind === 'budget_line' && u.subjectId === r.id)) {
+      throw conflict('finance.budget.decision_already_recorded', 'This decision is already recorded as the line’s approval; a change needs a new decision');
     }
-    if (r.approvalDecisionId === d.id) throw conflict('finance.budget.decision_already_recorded', 'This decision is already recorded as the line’s approval; a change needs a new decision');
     assertVersion(r, body.expectedVersion, 'budget line');
+    await lockDecisionAndRecheck(this.s.db, projectId, d.id, rule, usesBefore);
     const row = (await updateVersioned(this.s.db, T, { id: r.id, projectId, expectedVersion: body.expectedVersion }, {
       approvedAmount: approved.amount,
       approvalDecisionId: d.id,
@@ -284,6 +297,7 @@ export class BudgetService {
       approvedAt: this.s.clock.now(),
       approvalState: 'approved',
     })) as LineRow;
+    await registerDecisionUse(this.s.db, { orgId: ctx.principal.orgId, projectId, decisionId: d.id, decisionCode: d.code, kind: 'budget_line', subjectId: r.id, usedBy: ctx.principal.userId, codePrefix: 'finance.budget' });
     await this.s.snapshotVersion(projectId, 'budget_line', row, 'approval recorded');
     await this.s.audit.record({
       action: 'finance.budget.record_approval',

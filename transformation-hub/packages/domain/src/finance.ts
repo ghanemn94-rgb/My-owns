@@ -640,6 +640,40 @@ export const OPENING_BALANCE_DECISION_TYPE_KEYS: readonly string[] = ['opening_b
 /** Decision types whose final approval may set a budget line's approved amount (change control, spec §7.5 / §9). */
 export const BUDGET_DECISION_TYPE_KEYS: readonly string[] = ['baseline_approval', 'change_request_budget', 'separation_spend_commitment'];
 
+/**
+ * DOM-P4-07 (REQ-FIN-003; spec §4 "decisions within approved limits"): the approved budget recorded on a line from a
+ * governance decision stays within the amount the decision STATES. The same rule as change control's decision amount
+ * (`change_control.decision_amount_missing` / `_currency` / `_insufficient`), in the finance code family:
+ *  - an approved amount other than zero needs a decision that states its amount — a decision without a stated amount sets
+ *    no limit, so it cannot back a budget approval (fail closed: `finance.budget.decision_amount_missing`);
+ *  - the amounts are in the same currency AND unit scale — no conversion or unit normalization is applied to a booked
+ *    amount (AT-29; stricter than change control, which normalizes unit scales): `finance.budget.decision_unit_mismatch`;
+ *  - the approved amount does not exceed the decision's amount: `finance.budget.exceeds_decision`.
+ * One decision backs ONE budget line (decision-use registry, kind `budget_line`), so the approvals recorded from one decision
+ * never exceed its amount in total.
+ */
+export function assertBudgetApprovalWithinDecision(i: { decisionCode: string; decisionAmount: Money | null; approved: Money }): void {
+  if (isZeroMoney(i.approved)) return;
+  const decided = i.decisionAmount;
+  if (!decided) {
+    throw ruleViolation(
+      'finance.budget.decision_amount_missing',
+      `Decision ${i.decisionCode} states no amount: it sets no limit, so it cannot back an approved budget of ${i.approved.amount} ${i.approved.currency} (unit ${i.approved.unitScale}) — the decision paper must state the approved amount`,
+      { approvedAmount: i.approved.amount, currency: i.approved.currency, unitScale: i.approved.unitScale },
+    );
+  }
+  if (decided.currency !== i.approved.currency || decided.unitScale !== i.approved.unitScale) {
+    throw ruleViolation(
+      'finance.budget.decision_unit_mismatch',
+      `Decision ${i.decisionCode} states its amount in ${decided.currency} / unit scale ${decided.unitScale}; the line is kept in ${i.approved.currency} / unit scale ${i.approved.unitScale} — no conversion is applied`,
+      { decisionCurrency: decided.currency, decisionUnitScale: decided.unitScale },
+    );
+  }
+  if (new Decimal(i.approved.amount).gt(new Decimal(decided.amount))) {
+    throw ruleViolation('finance.budget.exceeds_decision', `The approved amount exceeds the amount of decision ${i.decisionCode}`, { decisionAmount: decided.amount });
+  }
+}
+
 // ---------------------------------------------------------------------------------------------------------
 // Benefits register (REQ-FIN-009)
 

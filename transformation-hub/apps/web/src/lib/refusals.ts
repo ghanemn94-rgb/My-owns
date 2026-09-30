@@ -127,6 +127,13 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'jv.dd.evidence_changed': 'jv.refusal.codes.dd_evidence_changed',
   'jv.dd.evidence_not_pinned': 'jv.refusal.codes.dd_evidence_not_pinned',
   'jv.program_closure.g7_under_reassessment': 'jv.refusal.codes.program_closure_g7_under_reassessment',
+  // JV: one decision confirms one closing (DOM-P4-01); external approvals re-checked at every reliance (DOM-P4-08)
+  'jv.closing.decision_already_used': 'jv.refusal.codes.closing_decision_already_used',
+  'jv.closing.decision_evidence_invalid': 'jv.refusal.codes.closing_decision_evidence_invalid',
+  'jv.closing.decision_other_subject': 'jv.refusal.codes.closing_decision_other_subject',
+  'jv.signing.decision_evidence_invalid': 'jv.refusal.codes.signing_decision_evidence_invalid',
+  'jv.cp.decision_evidence_invalid': 'jv.refusal.codes.cp_decision_evidence_invalid',
+  'jv.negotiation.decision_evidence_invalid': 'jv.refusal.codes.negotiation_decision_evidence_invalid',
 };
 
 /** `(error) => translated explanation | null` for the active locale. */

@@ -16,6 +16,7 @@ import {
   DecisionStatus,
   GateAssessmentStatus,
   GateCycleState,
+  JvDecisionIssueCode,
   LinkedDecision,
   RoleKey,
   RoomAccessEventKind,
@@ -32,6 +33,7 @@ import { APP_CONFIG, AppConfig } from '../../platform/config';
 import { activeEvidenceCount, loadInProject, updateVersioned, visibleEvidenceCounts } from '../../platform/helpers';
 import { newId, payloadHash } from '../../platform/ids';
 import type { RequestContext } from '../../platform/context';
+import { currentDecisionReliance, type RelianceRule } from '../governance/decision-reliance';
 
 export type ProjectRow = typeof schema.project.$inferSelect;
 export type RoomRow = typeof schema.partnerRoom.$inferSelect;
@@ -318,6 +320,29 @@ export class JvSupport {
       issue: linkedDecisionIssue(linked, keys, purpose),
       issueCode: linkedDecisionIssueCode(linked, keys),
     };
+  }
+
+  /**
+   * `decisionSummary` with the reliance state of the decision for the record (DOM-P4-01/08, shared facility
+   * governance/decision-reliance.ts): when the decision is otherwise final and of the right type, `issueCode` also reports
+   * `evidence_invalid` (the evidence of its external approval is no longer an active, verified link — on a confirmed event
+   * this flags that the confirmation rests on an external approval no longer evidenced), `already_used` (it backs another
+   * record of the same kind) and `other_subject` (raised for another record). `rule` null = no reliance state.
+   */
+  async relianceSummary(ctx: RequestContext, projectId: string, d: DecisionRow | null, allowedTypeKeys: readonly string[] | null, purpose: string, rule: RelianceRule | null) {
+    const s = this.decisionSummary(ctx, projectId, d, allowedTypeKeys, purpose);
+    if (!s || !d || !rule || s.issueCode) return s;
+    const { issue } = await currentDecisionReliance(this.db, projectId, d, rule);
+    const code: JvDecisionIssueCode | null = !issue
+      ? null
+      : issue.kind === 'evidence_invalid' || issue.kind === 'already_used' || issue.kind === 'other_subject'
+        ? issue.kind
+        : issue.kind === 'no_subject'
+          ? 'other_subject'
+          : issue.kind === 'type_mismatch'
+            ? 'wrong_type'
+            : 'not_approved';
+    return code ? { ...s, issue: issue!.reason, issueCode: code } : s;
   }
 
   /**

@@ -12,8 +12,12 @@ import { P, decisionOfType, sar, setupFinance, setupGovernance, Gov, Personas } 
  * Setup runs in plain `it` steps; the probe bodies contain no throwing helper, only the required assertion.
  *
  * All data is synthetic (a demo-flagged project created by the test through the API).
+ *
+ * Fixed findings: DOM-P4-06 (one valuation decision approves the values of one model version — decision-use registry kind
+ * `financial_model_version`) and DOM-P4-07 (one budget decision backs one budget line, within its stated amount — kind
+ * `budget_line`) are plain regression tests (`… (fixed, regression)`), with their assertions unchanged; no open probe
+ * remains in this file (so `P4_PROBE_PLAIN` no longer changes anything here).
  */
-const probe = process.env['P4_PROBE_PLAIN'] ? it : it.fails;
 
 let projectId: string;
 let p: Personas;
@@ -60,7 +64,7 @@ describe('P4 domain review — finance defect probes [docs/reviews/P4-domain-rev
     v2 = { id: b.body.id, version: val2.body.version };
   });
 
-  probe('DEFECT DOM-P4-06: the decision that approved the values of v1 cannot record different values of v2 as approved (REQ-FIN-006; P2 rule: a decision backs one approval only)', async () => {
+  it('DOM-P4-06: the decision that approved the values of v1 cannot record different values of v2 as approved (REQ-FIN-006; P2 rule: a decision backs one approval only) (fixed, regression)', async () => {
     const r = await p.legal.post(`${vpath(v2.id)}/approve-values`, { expectedVersion: v2.version, decisionId: decisionV, note: 'Reuse attempt (synthetic)' });
     const cur = (await p.finance.get(vpath(v2.id))).body as { approvedValues?: unknown };
     expect(cur.approvedValues ?? null, `v2 (EV 900 SAR m) recorded as approved on the decision that approved v1 (EV 500 SAR m) — status ${r.status}`).toBeNull();
@@ -84,7 +88,7 @@ describe('P4 domain review — finance defect probes [docs/reviews/P4-domain-rev
     lineB = { id: b.body.id, version: b.body.version };
   });
 
-  probe('DEFECT DOM-P4-07: approvals recorded from one decision never exceed its amount in total (REQ-FIN-003; spec §4 delegated authority)', async () => {
+  it('DOM-P4-07: approvals recorded from one decision never exceed its amount in total (REQ-FIN-003; spec §4 delegated authority) (fixed, regression)', async () => {
     const r = await p.finance.post(`${P(projectId)}/budget-lines/${lineB.id}/record-approval`, { expectedVersion: lineB.version, decisionId: decisionB, approvedAmount: sar('100000') });
     const cur = (await p.finance.get(`${P(projectId)}/budget-lines/${lineB.id}`)).body as { approved?: unknown };
     expect(cur.approved ?? null, `line B approved 100 000 SAR on a 100 000 SAR decision already fully recorded on line A (status ${r.status})`).toBeNull();

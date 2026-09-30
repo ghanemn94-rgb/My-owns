@@ -31,6 +31,7 @@ import {
   ClosingCommand,
   ClosingKind,
   ConditionCommand,
+  DecisionUseRecord,
   DomainError,
   EventBlocker,
   FundsFlowCommand,
@@ -43,6 +44,7 @@ import { assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf,
 import { orderBySort } from '../../platform/sort';
 import { newId } from '../../platform/ids';
 import { nextCronRun } from '../../platform/jobs/worker.service';
+import { assertCurrentDecisionReliance, lockDecisionAndRecheck, registerDecisionUse, type RelianceRule } from '../governance/decision-reliance';
 import { WaiverService, WaiverRecord } from '../gates/waiver.service';
 import { JvSupport, ProjectRow, iso, money, versionUsable } from './jv.support';
 
@@ -258,6 +260,23 @@ export class TransactionsService implements OnModuleInit {
     return { items, cps, signing, cpEvidence, itemEvidence, waiverOk, blockers };
   }
 
+  /**
+   * How a signing / closing relies on its confirmation decision (docs/architecture/module-guide.md, "Relying on a governance
+   * decision"; checked at the request and again inside the confirmation transaction):
+   *  - a CLOSING consumes the decision (DOM-P4-01): kind `closing`, one decision confirms ONE closing (G6-C06 "for this
+   *    closing"). A decision raised for a specific record backs only that record (`if_set` — a paper cannot name a closing
+   *    yet, so one raised for no record is accepted and bound by the registry);
+   *  - a SIGNING relies on the decision that approved the current G5 cycle (DOM-P4-02): the signing is part of that gate
+   *    approval, whose use is the `gate_cycle` row, so it does not consume the decision again (no registry row);
+   *  - both: the decision's type, and the evidence of its external approval still an active link verified by a second
+   *    person (DOM-P4-08 — rejected / superseded / conflicting → `…decision_evidence_invalid`).
+   */
+  private relianceRule(e: EventRow): RelianceRule {
+    return e.kind === 'closing'
+      ? { use: { kind: 'closing', subjectType: 'closing', subjectId: e.id }, subjectRule: 'if_set', decisionTypeKeys: CLOSING_DECISION_TYPE_KEYS, codePrefix: 'jv.closing' }
+      : { use: { kind: null, subjectType: 'closing', subjectId: e.id }, subjectRule: 'none', decisionTypeKeys: SIGNING_DECISION_TYPE_KEYS, codePrefix: 'jv.signing' };
+  }
+
   private async assertEventOpen(e: EventRow) {
     if (FROZEN_EVENT_STATUSES.includes(e.status)) throw ruleViolation('jv.event.frozen', `The ${e.kind} is ${e.status}; its checklist and conditions are frozen`);
   }
@@ -354,7 +373,9 @@ export class TransactionsService implements OnModuleInit {
       confirmationDecisionId: e.confirmationDecisionId,
       confirmationAuthority: e.confirmationAuthority,
       confirmationRequest: this.s.approvalStep(req),
-      decision: this.s.decisionSummary(ctx, projectId, decision, kind === 'closing' ? CLOSING_DECISION_TYPE_KEYS : SIGNING_DECISION_TYPE_KEYS, `the ${kind} confirmation`),
+      // With the reliance state (DOM-P4-01/08): already used for another closing, or its external approval's evidence no
+      // longer valid — shown on a pending request and on a confirmed event alike.
+      decision: await this.s.relianceSummary(ctx, projectId, decision, kind === 'closing' ? CLOSING_DECISION_TYPE_KEYS : SIGNING_DECISION_TYPE_KEYS, `the ${kind} confirmation`, this.relianceRule(e)),
       statusReason: e.statusReason,
       allowedCommands: allowedCommands(CLOSING_MACHINE, e.status).filter((c) => c !== 'confirm'),
       blockers: r.blockers,
@@ -404,6 +425,9 @@ export class TransactionsService implements OnModuleInit {
     // DOM-P4-02 (business-gates.md §8 rule 5): a signing only after gate G5 passed, on the decision that approved it.
     const g5 = e.kind === 'signing' ? await this.s.gateCycle(projectId, SIGNING_GATE_KEY) : null;
     if (g5) assertSigningGatePassed({ gate: g5, decisionId: d.id });
+    // DOM-P4-01 / -08: the decision may still be pending here (finality is required at the confirmation), but it must not
+    // already back another closing, nor rest on an external approval whose evidence is no longer active and verified.
+    await assertCurrentDecisionReliance(this.s.db, projectId, d, { ...this.relianceRule(e), requireFinal: false });
     const executedDocumentId = body.executedDocumentId ?? e.executedDocumentId;
     if (e.kind === 'signing' && !executedDocumentId) throw ruleViolation('jv.signing.executed_copy_required', 'Recording a signing requires the executed copy of the agreement');
     if (body.executedDocumentId) await this.s.visibleDocument(ctx, projectId, body.executedDocumentId);
@@ -442,10 +466,15 @@ export class TransactionsService implements OnModuleInit {
     const r = await this.readiness(e, this.s.today(p));
     const decision = await this.s.decisionRow(projectId, e.confirmationDecisionId);
     const g5 = kind === 'signing' ? await this.s.gateCycle(projectId, SIGNING_GATE_KEY) : null;
+    const rule = this.relianceRule(e);
+    let usesBefore: DecisionUseRecord[] = [];
     try {
       assertEventConfirmable({ kind, blockers: r.blockers, confirmerUserId: ctx.principal.userId!, requesterUserId: req.requestedBy, decision: this.s.decisionState(decision) });
       // DOM-P4-02: G5 re-evaluated inside the recording transaction (approved, not under reassessment, same decision).
       if (g5) assertSigningGatePassed({ gate: g5, decisionId: decision?.id ?? null });
+      // DOM-P4-01 / -08: the decision (FINAL, checked above) does not already back another closing, and the evidence of its
+      // external approval is still an active link verified by a second person.
+      usesBefore = await assertCurrentDecisionReliance(this.s.db, projectId, decision!, rule);
     } catch (err) {
       const denied = err instanceof DomainError && err.kind === 'forbidden';
       await this.s.audit.recordDetached(ctx, {
@@ -465,6 +494,9 @@ export class TransactionsService implements OnModuleInit {
     assertVersion(e, body.expectedVersion, kind);
     if (req.subjectVersion !== e.version) throw conflict('jv.closing.confirmation_stale', `The ${kind} changed after the confirmation was requested — a fresh request is required`);
     const to = transition(kind, CLOSING_MACHINE, e.status, 'confirm');
+    // DOM-P4-01: a closing consumes its decision — the decision row is locked until the end of this transaction and
+    // re-checked; a concurrent confirmation that relied on the same decision first makes this one 409.
+    const locked = rule.use.kind ? await lockDecisionAndRecheck(this.s.db, projectId, decision!.id, rule, usesBefore) : null;
     const now = this.s.clock.now();
     const authority = `${decision!.code} (${decision!.decisionTypeKey}) — ${decision!.authorityOutcome === 'within_mandate' ? 'within the committee mandate' : `approved by the authorized body: ${decision!.externalAuthorityReference}`}`;
     const snapshot = {
@@ -473,10 +505,17 @@ export class TransactionsService implements OnModuleInit {
       checklist: r.items.map((i) => ({ ref: i.code ?? i.title, status: i.status })),
       signing: r.signing ? { code: r.signing.code, status: r.signing.status } : null,
       ...(g5 ? { signingGate: { gateKey: SIGNING_GATE_KEY, assessmentId: g5.assessmentId, status: g5.status, decisionId: g5.decisionId } } : {}),
+      // The decision relied upon, with the evidence of its external approval (DOM-P4-08: a later rejection of that link is
+      // shown on the event as `evidence_invalid`).
+      decision: { id: decision!.id, code: decision!.code, externalEvidenceLinkId: (locked?.row ?? decision!).externalEvidenceLinkId, registeredUse: rule.use.kind },
     };
     const row = (await updateVersioned(this.s.db, schema.closing, { id: e.id, projectId, expectedVersion: body.expectedVersion }, { status: to, confirmedBy: ctx.principal.userId, confirmedAt: now, confirmationAuthority: authority, readinessSnapshot: snapshot })) as EventRow;
+    // DOM-P4-01: the decision now backs this closing (decision-use registry; its unique index answers a race with 409).
+    if (rule.use.kind) {
+      await registerDecisionUse(this.s.db, { orgId: ctx.principal.orgId, projectId, decisionId: decision!.id, decisionCode: decision!.code, kind: rule.use.kind, subjectId: e.id, usedBy: ctx.principal.userId, codePrefix: rule.codePrefix });
+    }
     await this.s.decideApproval(ctx, projectId, req, 'approve', body.note ?? null, authority);
-    await this.s.audit.record({ action: permission, entityType: 'closing', entityId: e.id, projectId, before: { status: e.status }, after: { status: to, decisionId: decision!.id, authority }, reason: body.note ?? null });
+    await this.s.audit.record({ action: permission, entityType: 'closing', entityId: e.id, projectId, before: { status: e.status }, after: { status: to, decisionId: decision!.id, authority, decisionUse: rule.use.kind }, reason: body.note ?? null });
     await this.dimensionsChanged(projectId, `event:${e.id}:${row.version}`);
     return { id: e.id, status: row.status, version: row.version };
   }
@@ -694,6 +733,15 @@ export class TransactionsService implements OnModuleInit {
       decisionId: d.id,
       decision: this.s.decisionState(d),
       previousExtensionDecisionId: c.longStopExtensionDecisionId,
+    });
+    // DOM-P4-08: an external approval counts only while its evidence is an active link verified by a second person. The
+    // extension relies on the decision without consuming it (one decision may extend several conditions' long-stop dates —
+    // never the current extension of the same condition again, above).
+    await assertCurrentDecisionReliance(this.s.db, projectId, d, {
+      use: { kind: null, subjectType: 'closing_condition', subjectId: c.id },
+      subjectRule: 'none',
+      decisionTypeKeys: CP_LONG_STOP_EXTENSION_DECISION_TYPE_KEYS,
+      codePrefix: 'jv.cp',
     });
     const values = { longStopDate: body.longStopDate, longStopExtensionDecisionId: d.id, longStopExtendedBy: ctx.principal.userId, longStopExtendedAt: this.s.clock.now(), statusNote: body.reason };
     let row: CpRow;
