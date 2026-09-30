@@ -9,7 +9,9 @@
  *  5. every server message code the domain emits (status dimensions, gate blockers, JV signing/closing blockers — QA-P1-14;
  *     finance explanations and EV / equity / currency / unit findings — FINANCE_MESSAGES_EN) has a translation
  *     `<namespace>.messages.<code>` (gates / finance) in en and ar with the same placeholders as the domain's English
- *     template, and no stale code is left in the catalogue.
+ *     template, and no stale code is left in the catalogue;
+ *  6. every AI refusal code raised in apps/api/src/modules/ai has `ai.errors.<code>` in en and ar, and every AI detection
+ *     code / proposable action has its label.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -102,10 +104,32 @@ for (const [ns, serverCodes] of Object.entries(serverCatalogues)) {
   }
 }
 
+// 6. AI PM Center (`ai` namespace). The AI module emits no `<field>I18n` codes, but its refusals carry codes the screens
+//    translate (`ai.errors.<code>`): every code raised with ruleViolation / conflict / forbidden in apps/api/src/modules/ai
+//    must have a translation in en and ar, so a new refusal never reaches an Arabic user as an English sentence. Likewise
+//    every rules-only detection code (contracts AI_DETECTION_CODES) and every proposable action (domain AI_PROPOSABLE_ACTIONS).
+const aiModuleDir = join(here, '..', '..', 'api', 'src', 'modules', 'ai');
+// Raised indirectly through `ruleViolation(v.code, …)` in ai-proposals.service.ts (the scan below only sees literals).
+const aiCodes = new Set(['AI_TOOL_DENIED', 'DESTINATION_NOT_APPROVED']);
+for (const f of readdirSync(aiModuleDir).filter((x) => x.endsWith('.ts'))) {
+  const src = readFileSync(join(aiModuleDir, f), 'utf8');
+  for (const m of src.matchAll(/\b(?:ruleViolation|conflict|forbidden)\(\s*'([^']+)'/g)) aiCodes.add(m[1]);
+}
+const { AI_DETECTION_CODES } = require('@hub/contracts/dist/ai.js');
+const { AI_PROPOSABLE_ACTIONS } = require('@hub/domain/dist/ai.js');
+if (aiCodes.size < 10) errors.push(`only ${aiCodes.size} AI refusal codes found in ${aiModuleDir} — scan broken?`);
+for (const locale of ['en', 'ar']) {
+  const cat = load(locale, 'ai');
+  const errs = flatten(cat.errors ?? {});
+  for (const code of aiCodes) if (!errs.has(code)) errors.push(`${locale} ai.errors.${code} missing (AI refusal code raised in apps/api/src/modules/ai)`);
+  for (const c of AI_DETECTION_CODES) if (!cat.detections?.codes?.[c]) errors.push(`${locale} ai.detections.codes.${c} missing (AI_DETECTION_CODES)`);
+  for (const a of AI_PROPOSABLE_ACTIONS) if (!cat.actions?.[a]) errors.push(`${locale} ai.actions.${a} missing (AI_PROPOSABLE_ACTIONS)`);
+}
+
 if (errors.length) {
   console.error(`i18n check FAILED (${errors.length} problems):\n  ${errors.join('\n  ')}`);
   process.exit(1);
 }
 console.log(
-  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV + finance).`,
+  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV + finance), ${aiCodes.size} AI refusal codes.`,
 );

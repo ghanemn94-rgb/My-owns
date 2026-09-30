@@ -136,6 +136,14 @@ describe('Briefing schedules, status, costs, tool matrix, runs isolation [REQ-AI
     expect(st.body.providerLabel).toMatch(/Simulated/);
     expect(st.body.nextRunAt).not.toBeNull(); // pm's seeded 07:30 briefing
     expect(st.body.manualFallback).toMatch(/optional/);
+    // Every provider type's deployment status (UI: the real model endpoints read "Not configured", the mock "Simulated").
+    // Statuses only: no URL, host or secret is part of the response.
+    expect(st.body.endpoints).toEqual([
+      { provider: 'mock', status: 'simulated', simulated: true },
+      { provider: 'openai_compatible', status: 'not_configured', simulated: false },
+      { provider: 'anthropic', status: 'not_configured', simulated: false },
+    ]);
+    expect(JSON.stringify(st.body.endpoints)).not.toMatch(/https?:|\/\//);
     expect((await pm.get(`${aiPath(f.dcId)}/costs`)).status).toBe(403); // ai.operations.read only
     const auditor = await login('auditor');
     const c = await auditor.get(`${aiPath(f.dcId)}/costs`).expect(200);
@@ -158,7 +166,12 @@ describe('Briefing schedules, status, costs, tool matrix, runs isolation [REQ-AI
     const pm = await login('pm');
     const run = await pm.post(`${aiPath(f.dcId)}/ask`, { question: 'What is overdue?' }).expect(201);
     expect(run.body.status).toBe('succeeded');
-    await pm.get(`${aiPath(f.dcId)}/runs/${run.body.id}`).expect(200);
+    // The run record names the typed read tools the runtime used ("overdue" → list_overdue_work; documents are always searched).
+    expect(run.body.toolsUsed).toEqual(expect.arrayContaining(['search_documents', 'list_overdue_work']));
+    const detail = await pm.get(`${aiPath(f.dcId)}/runs/${run.body.id}`).expect(200);
+    expect(detail.body.toolsUsed).toEqual(run.body.toolsUsed);
+    const mine = await pm.get(`${aiPath(f.dcId)}/runs`).expect(200);
+    expect(mine.body.items[0]).not.toHaveProperty('toolsUsed'); // list rows stay summaries
     const sponsor = await login('sponsor');
     await sponsor.get(`${aiPath(f.dcId)}/runs/${run.body.id}`).expect(404);
     const list = await sponsor.get(`${aiPath(f.dcId)}/runs`).expect(200);
