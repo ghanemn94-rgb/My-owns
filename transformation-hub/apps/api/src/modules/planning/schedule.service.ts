@@ -16,6 +16,9 @@ import {
   ScheduleResult,
   DependencyType,
   SUPPORTED_DEPENDENCY_TYPES,
+  ServerMessage,
+  planMessage,
+  planningEn,
 } from '@hub/domain';
 import { PLANNING_SCHEDULE_LABEL } from '@hub/contracts';
 import { AuditService } from '../../platform/audit.service';
@@ -127,6 +130,7 @@ export class ScheduleService {
     return {
       id: n.id,
       label: `${n.code} ${n.title}`,
+      code: n.code,
       durationDays: n.durationDays,
       // Planned start acts as a start-no-earlier-than constraint (documented assumption).
       earliestStart: n.type === 'task' ? n.plannedStart : null,
@@ -146,17 +150,24 @@ export class ScheduleService {
     return { nodes: g.nodes.filter((n) => keep.has(n.id)), edges: edges.filter((e) => keep.has(e.predecessorId) && keep.has(e.successorId)), kind: 'driving_network' as const };
   }
 
-  private serviceAssumptions(nodes: GraphNode[], kind: 'project' | 'driving_network') {
+  /** Assumptions added by the service, as codes (QA-P2-04); `assumptions` = their English rendering, same order. */
+  private serviceAssumptions(nodes: GraphNode[], kind: 'project' | 'driving_network'): ServerMessage[] {
     const drafts = nodes.filter((n) => n.type === 'task' && n.status === 'draft').length;
     const out = [
-      'Planned start dates act as start-no-earlier-than constraints.',
-      'Owner-entered forecast finish dates can only extend an activity; actual dates replace plan dates.',
-      'Cancelled activities and their links are ignored.',
-      'Milestones have zero duration.',
+      planMessage('plan.assumption.planned_start_snet'),
+      planMessage('plan.assumption.forecast_extends'),
+      planMessage('plan.assumption.cancelled_ignored'),
+      planMessage('plan.assumption.milestones_zero'),
     ];
-    if (drafts > 0) out.push(`${drafts} activit${drafts === 1 ? 'y is' : 'ies are'} still Draft (proposed, not yet confirmed into the plan) and included as proposed.`);
-    if (kind === 'driving_network') out.push('Scope: the selected activity and every activity that drives it (transitive predecessors) — other activities are not shown.');
+    if (drafts > 0) out.push(drafts === 1 ? planMessage('plan.assumption.draft_one') : planMessage('plan.assumption.drafts', { count: drafts }));
+    if (kind === 'driving_network') out.push(planMessage('plan.assumption.driving_network'));
     return out;
+  }
+
+  /** Engine + service assumptions, English and codes (one message per assumption, same order). */
+  private assumptions(engine: ServerMessage[], extra: ServerMessage[]) {
+    const assumptionsI18n = [...engine, ...extra];
+    return { assumptions: assumptionsI18n.map((m) => planningEn([m])), assumptionsI18n };
   }
 
   private async baselineFinishes(projectId: string): Promise<Map<string, string | null>> {
@@ -180,6 +191,7 @@ export class ScheduleService {
         status: 'incomplete',
         issues: [{ code: 'missing_project_start', nodeIds: [], message: 'The project has no planned start date' }],
         assumptions: [],
+        assumptionsI18n: [],
         projectStart: '',
         projectFinish: null,
         nodes: {},
@@ -206,7 +218,7 @@ export class ScheduleService {
       projectStart: result.projectStart || null,
       projectFinish: result.projectFinish,
       issues: result.issues,
-      assumptions: [...result.assumptions, ...this.serviceAssumptions(sc.nodes, sc.kind)],
+      ...this.assumptions(result.assumptionsI18n, this.serviceAssumptions(sc.nodes, sc.kind)),
       criticalPath: result.criticalPath
         ? result.criticalPath.map((id) => ({ id, type: byId.get(id)!.type, code: byId.get(id)!.code, title: byId.get(id)!.title, titleAr: byId.get(id)!.titleAr }))
         : null,
@@ -258,7 +270,7 @@ export class ScheduleService {
       scope: { kind: sc.kind, targetNodeId: body.targetNodeId ?? null, nodeCount: sc.nodes.filter((n) => n.status !== 'cancelled').length },
     };
     if (!p.plannedStart) {
-      return { ...base, status: 'incomplete' as const, finishBeforeDelay: null, forecastFinish: null, projectSlipWorkingDays: null, affected: [], affectedGateKeys: [], issues: [{ code: 'missing_project_start', nodeIds: [], message: 'The project has no planned start date' }], assumptions: [] };
+      return { ...base, status: 'incomplete' as const, finishBeforeDelay: null, forecastFinish: null, projectSlipWorkingDays: null, affected: [], affectedGateKeys: [], issues: [{ code: 'missing_project_start', nodeIds: [], message: 'The project has no planned start date' }], assumptions: [], assumptionsI18n: [] };
     }
     const r = delayImpact(sc.nodes.map((n) => this.toScheduleNode(n)), sc.edges, p.plannedStart, body.nodeId, body.delayWorkingDays, cal);
     const affected = r.affected.map((a) => {
@@ -274,7 +286,7 @@ export class ScheduleService {
       affected,
       affectedGateKeys: [...new Set(affected.map((a) => a.gateKey).filter((k): k is string => !!k))].sort(),
       issues: r.issues,
-      assumptions: [...r.assumptions, ...this.serviceAssumptions(sc.nodes, sc.kind), 'Deterministic: the same plan, calendar and inputs always give the same result. No probability is estimated.'],
+      ...this.assumptions(r.assumptionsI18n, [...this.serviceAssumptions(sc.nodes, sc.kind), planMessage('plan.assumption.deterministic')]),
     };
   }
 

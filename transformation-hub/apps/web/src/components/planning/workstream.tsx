@@ -7,6 +7,7 @@ import { planningRoutes as P } from '@hub/contracts';
 import { TASK_STATUSES } from '@hub/domain';
 import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
+import { useLocalized } from '@/lib/i18n-data';
 import { raidHref, taskHref, useProgress, useRefreshPlanning, useTasks, type Task } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
 import type { Workstream } from '@/lib/workstreams';
@@ -22,7 +23,7 @@ import { useToast } from '../Toast';
 import { btn, cx } from '../ui';
 import { CodeLink, DateText, FilterSelect, FilterToggle, RagBadge, Section } from './bits';
 import { TaskFormDialog } from './dialogs';
-import { RagTriple, WeightedProgressBlock } from './plan/HealthTab';
+import { DataQualityList, RagTriple, WeightedProgressBlock } from './plan/HealthTab';
 
 const PAGE = 25;
 
@@ -115,6 +116,7 @@ export function WorkstreamTasks({ ws }: { ws: Workstream }) {
 /** Workstream progress & health: weighted progress, calculated vs effective vs reported RAG, blockers, data quality. */
 export function WorkstreamProgress({ ws }: { ws: Workstream }) {
   const { t } = useI18n();
+  const loc = useLocalized();
   const { projectId } = useProjectContext();
   const prog = useProgress(projectId);
   if (prog.isLoading) return <LoadingState />;
@@ -162,7 +164,7 @@ export function WorkstreamProgress({ ws }: { ws: Workstream }) {
           <ul className="space-y-1 text-sm" data-testid="ws-blockers">
             {h.openBlockers.map((b) => (
               <li key={b.id}>
-                <CodeLink href={b.type === 'task' ? taskHref(projectId, b.id) : raidHref(projectId, 'issues', b.id)} code={b.code} title={b.title} />
+                <CodeLink href={b.type === 'task' ? taskHref(projectId, b.id) : raidHref(projectId, 'issues', b.id)} code={b.code} title={loc(b.title, b.titleAr)} />
               </li>
             ))}
           </ul>
@@ -172,11 +174,7 @@ export function WorkstreamProgress({ ws }: { ws: Workstream }) {
         {h.dataQuality.length === 0 ? (
           <p className="text-sm text-success">{t('planning.health.noGaps')}</p>
         ) : (
-          <ul className="list-disc space-y-0.5 ps-5 text-sm text-muted" lang="en" dir="ltr">
-            {h.dataQuality.map((x) => (
-              <li key={x}>{x}</li>
-            ))}
-          </ul>
+          <DataQualityList w={h} className="list-disc space-y-0.5 ps-5 text-sm text-muted" />
         )}
       </Section>
     </div>

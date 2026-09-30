@@ -191,10 +191,20 @@ human principal at execution time and returns `null` when access was revoked (AT
     template table (e.g. `DIMENSION_MESSAGES_EN`, `GATE_MESSAGES_EN`). The API returns `<field>` (English — kept for
     audit rows, record history, AI context) plus `<field>I18n: ServerMessage[]` (e.g. `explanation`/`explanationI18n`,
     `message`/`messageI18n`, `blocker`/`blockerI18n`). Parameters are numbers, record keys or enum values (the web
-    translates enum values; register them in `ENUM_PARAMS` of `i18n-data.ts`). Web: `useServerMessages()(xI18n, x)`
-    translates `gates.messages.<code>` (en + ar); `node apps/web/scripts/check-i18n.mjs` fails when a domain code has no
-    translation, when placeholders differ, or when the catalogue keeps a stale code. Adding a code = domain template +
-    en/ar catalogue entry in the same change.
+    translates enum values; register them in `ENUM_PARAMS` of `i18n-data.ts`, business dates in `DATE_PARAMS`). Web:
+    `useServerMessages()(xI18n, x)` translates `<namespace>.messages.<code>` (en + ar; `serverMessageKey`): `plan.*`
+    codes (`PLANNING_MESSAGES_EN`) → `planning.messages`, `authority.*` (`AUTHORITY_MESSAGES_EN`) →
+    `governance.messages`, every other code → `gates.messages` (finance uses its own `finance.messages`);
+    `node apps/web/scripts/check-i18n.mjs` fails when a domain code has no translation, when placeholders differ, when the
+    catalogue keeps a stale code, or when a code uses another catalogue's prefix. Adding a code = domain template +
+    en/ar catalogue entry in the same change. The English UI text may be worded for the UI; it need not repeat the
+    server's sentence (QA-P2-04).
+  - *Lists mixing record kinds* (e.g. My Work): `<field>Ar` is present only for items whose record has a bilingual field
+    (null when that record has no Arabic); free text typed by a user carries no `<field>Ar` and is shown as entered.
+    Server-composed titles carry `<field>I18n`. On screens, free text typed by a user (e.g. a decision title) may be marked
+    `data-user-text`; never template or server text.
+  - *Refusals*: every refusal code a module raises should have a translated explanation in `apps/web/src/lib/refusals.ts`
+    (the server's English detail is still shown next to it). For the gates module this is checked by `check-i18n.mjs`.
 
 - **Separation of duties and authority fail CLOSED (I-R3).** For a permission with `not_self`, pass the subject's
   requester / submitter / recorder id; a missing (undefined or null) id is **403 `policy.sod_subject_unknown`** — nobody

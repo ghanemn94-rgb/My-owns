@@ -11,7 +11,7 @@ import { ErrorState } from '../../ErrorState';
 import { LoadingState } from '../../LoadingState';
 import { StatusBadge } from '../../StatusBadge';
 import { card, cx } from '../../ui';
-import { FilterSelect, FilterToggle, ForecastLabel } from '../bits';
+import { AssumptionList, FilterSelect, FilterToggle, ForecastLabel } from '../bits';
 import { Gantt, type GanttRow } from '../Gantt';
 import { localized, useLocalized } from '@/lib/i18n-data';
 
@@ -78,11 +78,7 @@ export function ScheduleStatus({ s }: { s: Schedule }) {
       ) : null}
       <details>
         <summary className="cursor-pointer text-sm text-primary">{t('planning.schedule.assumptions', { count: s.assumptions.length })}</summary>
-        <ul className="mt-2 list-disc space-y-0.5 ps-5 text-xs text-muted" lang="en" dir="ltr">
-          {s.assumptions.map((a) => (
-            <li key={a}>{a}</li>
-          ))}
-        </ul>
+        <AssumptionList assumptions={s.assumptions} codes={s.assumptionsI18n} className="mt-2 list-disc space-y-0.5 ps-5 text-xs text-muted" />
       </details>
     </div>
   );

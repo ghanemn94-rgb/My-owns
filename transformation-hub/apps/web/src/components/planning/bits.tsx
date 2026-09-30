@@ -2,10 +2,43 @@
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import type { ServerMessageDto } from '@hub/contracts';
 import { EM_DASH, useI18n } from '@/i18n/provider';
+import { useServerMessages } from '@/lib/i18n-data';
 import { ragTone } from '@/lib/planning';
 import { StatusBadge } from '../StatusBadge';
 import { card, cx, input } from '../ui';
+
+/**
+ * A server-computed explanation (QA-P2-04): translated from its codes in the active language; without codes (older rows)
+ * the server's English sentence is shown, marked `lang="en"` so screen readers switch language.
+ */
+export function ServerText({ messages, text, className, as: Tag = 'span', testId }: { messages: readonly ServerMessageDto[] | null | undefined; text: string | null | undefined; className?: string; as?: 'span' | 'p' | 'li'; testId?: string }) {
+  const serverText = useServerMessages();
+  const out = serverText(messages, text);
+  if (!out) return null;
+  return messages?.length ? (
+    <Tag className={className} data-testid={testId}>
+      {out}
+    </Tag>
+  ) : (
+    <Tag className={className} data-testid={testId} lang="en" dir="ltr">
+      {out}
+    </Tag>
+  );
+}
+
+/** Schedule assumptions (one message per assumption, same order), translated; English when the codes are missing. */
+export function AssumptionList({ assumptions, codes, className }: { assumptions: readonly string[]; codes: readonly ServerMessageDto[] | null | undefined; className?: string }) {
+  const aligned = codes && codes.length === assumptions.length ? codes : null;
+  return (
+    <ul className={className}>
+      {assumptions.map((a, i) => (
+        <ServerText key={`${i}-${a}`} as="li" messages={aligned ? [aligned[i]!] : null} text={a} />
+      ))}
+    </ul>
+  );
+}
 
 /** RAG as text + icon + colour (never colour alone); unknown/stale/not updated are never shown green. */
 export function RagBadge({ value, size = 'sm', label }: { value: string | null | undefined; size?: 'sm' | 'md'; label?: string }) {

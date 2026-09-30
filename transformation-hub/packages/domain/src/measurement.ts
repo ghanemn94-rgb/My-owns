@@ -1,17 +1,27 @@
 import type { RagStatus } from './enums';
 import { workingDaySlip, WorkingCalendar, DEFAULT_CALENDAR } from './calendar';
+import type { ServerMessage } from './messages';
+import { planMessage, planningEn } from './planning-messages';
 
 /**
  * Measurement rules (spec §9 "Measurement rules" 1–8).
+ *
+ * Every explanation is returned twice (QA-P2-04): as the English sentence (`explanation`, `reason` — audit, AI context,
+ * compatibility) and as codes + parameters (`explanationI18n`, `reasonI18n`) rendered from the same templates
+ * (PLANNING_MESSAGES_EN), which the client translates.
  */
 
 export interface WeightedItem {
   id: string;
   label?: string;
+  /** Arabic label of the item when its source record has one (template-seeded deliverables). */
+  labelAr?: string | null;
   weight: number; // approved deliverable weight (> 0)
   /** Accepted = counts as complete. Anything else counts as incomplete. */
   state: 'accepted' | 'in_progress' | 'not_started' | 'cancelled' | 'excluded';
   exclusionReason?: string;
+  /** Codes of `exclusionReason` (a custom reason without codes is shown as given). */
+  exclusionReasonI18n?: ServerMessage[];
 }
 
 export interface WeightedProgress {
@@ -19,21 +29,27 @@ export interface WeightedProgress {
   numeratorWeight: number;
   denominatorWeight: number;
   includedCount: number;
-  exclusions: { id: string; label?: string; reason: string }[];
+  exclusions: { id: string; label?: string; labelAr?: string | null; reason: string; reasonI18n: ServerMessage[] | null }[];
   explanation: string;
+  explanationI18n: ServerMessage[];
 }
 
 /** Rule 1 & 2: weighted progress with an explicit denominator; cancelled items are excluded, never "complete". */
 export function weightedProgress(items: WeightedItem[]): WeightedProgress {
   const exclusions: WeightedProgress['exclusions'] = [];
+  const excluded = (it: WeightedItem, fallback: string) => {
+    const reasonI18n = it.exclusionReason ? (it.exclusionReasonI18n ?? null) : [planMessage(fallback)];
+    const reason = it.exclusionReason ?? planningEn(reasonI18n!);
+    exclusions.push({ id: it.id, label: it.label, ...(it.labelAr !== undefined ? { labelAr: it.labelAr } : {}), reason, reasonI18n });
+  };
   let num = 0, den = 0, included = 0;
   for (const it of items) {
     if (it.state === 'cancelled' || it.state === 'excluded') {
-      exclusions.push({ id: it.id, label: it.label, reason: it.exclusionReason ?? (it.state === 'cancelled' ? 'Cancelled' : 'Excluded') });
+      excluded(it, it.state === 'cancelled' ? 'plan.progress.excluded_cancelled' : 'plan.progress.excluded');
       continue;
     }
     if (!(it.weight > 0)) {
-      exclusions.push({ id: it.id, label: it.label, reason: 'No approved weight' });
+      excluded({ ...it, exclusionReason: undefined }, 'plan.progress.no_approved_weight');
       continue;
     }
     included++;
@@ -41,16 +57,15 @@ export function weightedProgress(items: WeightedItem[]): WeightedProgress {
     if (it.state === 'accepted') num += it.weight;
   }
   const percent = den === 0 ? null : Math.round((num / den) * 1000) / 10;
+  const explanationI18n = den === 0 ? [planMessage('plan.progress.none')] : [planMessage('plan.progress.basis', { num, den, count: included, excluded: exclusions.length })];
   return {
     percent,
     numeratorWeight: num,
     denominatorWeight: den,
     includedCount: included,
     exclusions,
-    explanation:
-      den === 0
-        ? 'No weighted deliverables in scope — progress cannot be calculated.'
-        : `${num} of ${den} weight points accepted across ${included} deliverable(s); ${exclusions.length} excluded.`,
+    explanation: planningEn(explanationI18n),
+    explanationI18n,
   };
 }
 
@@ -78,27 +93,30 @@ export interface RagInput {
 export interface RagResult {
   status: RagStatus;
   explanation: string;
+  /** The explanation as codes + parameters (same content as `explanation`). */
+  explanationI18n: ServerMessage[];
   slipDays: number | null;
 }
+
+const rag = (status: RagStatus, slipDays: number | null, code: string, params: Record<string, string | number> = {}): RagResult => {
+  const explanationI18n = [planMessage(code, params)];
+  return { status, explanation: planningEn(explanationI18n), explanationI18n, slipDays };
+};
 
 /** Rule 4 & 5: configurable thresholds; unknown/stale/not updated are never green. */
 export function calculateRag(input: RagInput): RagResult {
   const t = input.thresholds ?? DEFAULT_RAG_THRESHOLDS;
   const cal = input.calendar ?? DEFAULT_CALENDAR;
   // A known open blocker is always red — data-quality labels must never hide it (P0 review D-10).
-  if (input.hasOpenBlocker) return { status: 'red', explanation: 'An open blocker is recorded.', slipDays: null };
-  if (!input.lastUpdatedOn) return { status: 'not_updated', explanation: 'No accepted update has been recorded.', slipDays: null };
+  if (input.hasOpenBlocker) return rag('red', null, 'plan.rag.open_blocker');
+  if (!input.lastUpdatedOn) return rag('not_updated', null, 'plan.rag.not_updated');
   const ageDays = Math.round((Date.parse(input.today) - Date.parse(input.lastUpdatedOn)) / 86_400_000);
-  if (ageDays > t.staleAfterDays) {
-    return { status: 'stale', explanation: `Last accepted update is ${ageDays} days old (stale after ${t.staleAfterDays}).`, slipDays: null };
-  }
-  if (!input.baselineFinish || !input.forecastFinish) {
-    return { status: 'unknown', explanation: 'Baseline or forecast finish is missing.', slipDays: null };
-  }
+  if (ageDays > t.staleAfterDays) return rag('stale', null, 'plan.rag.stale', { age: ageDays, limit: t.staleAfterDays });
+  if (!input.baselineFinish || !input.forecastFinish) return rag('unknown', null, 'plan.rag.unknown');
   const slip = workingDaySlip(input.baselineFinish, input.forecastFinish, cal);
-  if (slip <= t.greenMaxSlipDays) return { status: 'green', explanation: `Forecast within tolerance (slip ${slip} working days).`, slipDays: slip };
-  if (slip <= t.amberMaxSlipDays) return { status: 'amber', explanation: `Forecast slip of ${slip} working days (amber ≤ ${t.amberMaxSlipDays}).`, slipDays: slip };
-  return { status: 'red', explanation: `Forecast slip of ${slip} working days exceeds ${t.amberMaxSlipDays}.`, slipDays: slip };
+  if (slip <= t.greenMaxSlipDays) return rag('green', slip, 'plan.rag.green', { slip });
+  if (slip <= t.amberMaxSlipDays) return rag('amber', slip, 'plan.rag.amber', { slip, limit: t.amberMaxSlipDays });
+  return rag('red', slip, 'plan.rag.red', { slip, limit: t.amberMaxSlipDays });
 }
 
 const SEVERITY: Record<RagStatus, number> = { green: 0, amber: 1, unknown: 2, not_updated: 2, stale: 2, red: 3 };
@@ -112,17 +130,23 @@ export function aggregateRag(items: { id: string; status: RagStatus; critical?: 
   redCritical: string[];
   dataQualityIssues: string[];
   explanation: string;
+  explanationI18n: ServerMessage[];
 } {
-  if (items.length === 0) return { status: 'unknown', redCritical: [], dataQualityIssues: [], explanation: 'No items to aggregate.' };
+  if (items.length === 0) {
+    const explanationI18n = [planMessage('plan.rag.aggregate_empty')];
+    return { status: 'unknown', redCritical: [], dataQualityIssues: [], explanation: planningEn(explanationI18n), explanationI18n };
+  }
   let worst: RagStatus = 'green';
   for (const it of items) if (SEVERITY[it.status] > SEVERITY[worst]) worst = it.status;
   const redCritical = items.filter((i) => i.status === 'red' && i.critical).map((i) => i.id);
   const dq = items.filter((i) => ['unknown', 'stale', 'not_updated'].includes(i.status)).map((i) => i.id);
+  const explanationI18n = [planMessage('plan.rag.aggregate', { count: items.length, status: worst, red: redCritical.length, gaps: dq.length })];
   return {
     status: worst,
     redCritical,
     dataQualityIssues: dq,
-    explanation: `Worst-of ${items.length} item(s): ${worst}. ${redCritical.length} critical red, ${dq.length} with data-quality gaps.`,
+    explanation: planningEn(explanationI18n),
+    explanationI18n,
   };
 }
 
@@ -137,12 +161,16 @@ export interface RagOverride {
 /** Rule 6: overrides need reason/expiry/reviewer; calculated value is always retained. */
 export function effectiveRag(calculated: RagResult, override: RagOverride | null, today: string) {
   const active = !!override && override.approved && !!override.reviewerUserId && override.reason.trim().length > 0 && override.expiresOn >= today;
+  const explanationI18n: ServerMessage[] = active
+    ? [planMessage('plan.rag.override', { reason: override!.reason, until: override!.expiresOn, calculated: calculated.status })]
+    : (calculated.explanationI18n ?? []);
   return {
     calculated: calculated.status,
     effective: active ? override!.overrideStatus : calculated.status,
     overridden: active,
     overrideExpired: !!override && override.expiresOn < today,
-    explanation: active ? `Manual override (${override!.reason}) until ${override!.expiresOn}; calculated: ${calculated.status}.` : calculated.explanation,
+    explanation: active ? planningEn(explanationI18n) : calculated.explanation,
+    explanationI18n,
   };
 }
 
@@ -153,10 +181,12 @@ export function effectiveRag(calculated: RagResult, override: RagOverride | null
  */
 export function capOverrideAtOpenBlockers(eff: ReturnType<typeof effectiveRag>, openCriticalRed: number): ReturnType<typeof effectiveRag> {
   if (!eff.overridden || openCriticalRed <= 0 || eff.effective === 'red') return eff;
+  const explanationI18n = [planMessage('plan.rag.override_capped', { status: eff.effective, count: openCriticalRed, calculated: eff.calculated })];
   return {
     ...eff,
     effective: 'red',
     overridden: false,
-    explanation: `Manual override to ${eff.effective} is not applied while ${openCriticalRed} red critical item(s) (open blocker / critical milestone) exist — an override cannot conceal them; calculated: ${eff.calculated}.`,
+    explanation: planningEn(explanationI18n),
+    explanationI18n,
   };
 }

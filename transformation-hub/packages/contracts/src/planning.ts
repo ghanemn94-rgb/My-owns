@@ -15,7 +15,7 @@ import {
   PREREQUISITE_TYPES,
 } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
-import { Uuid, IsoDate, PageQuery, NoSort, SortParam, paged, Text, RequiredText, ProjectParams, ExpectedVersion, MoneySchema, Ok } from './common';
+import { Uuid, IsoDate, PageQuery, NoSort, SortParam, paged, Text, RequiredText, ProjectParams, ExpectedVersion, MoneySchema, Ok, ServerMessageSchema } from './common';
 
 /**
  * Planning module contracts (spec §6, §9, §14): WBS/tasks, milestones, deliverables, dependencies, schedule
@@ -56,6 +56,8 @@ const RaciEntityType = z.enum(['task', 'milestone', 'deliverable', 'workstream']
 export const PLANNING_SCHEDULE_LABEL = 'Schedule-based forecast' as const;
 
 const p = (suffix: string) => `/api/v1/projects/:projectId${suffix}`;
+/** Server-computed explanation as codes + parameters (QA-P2-04; web: `planning.messages.<code>`). */
+const Messages = z.array(ServerMessageSchema);
 const idP = <K extends string>(key: K) => ProjectParams.extend({ [key]: Uuid } as { [P in K]: typeof Uuid });
 
 // ---------------------------------------------------------------------------------------------------------
@@ -70,15 +72,22 @@ export const TaskDto = z.object({
   title: z.string(),
   titleAr: z.string().nullable(),
   description: z.string().nullable(),
+  /** Arabic of the template-seeded description / output / acceptance criteria (null when no Arabic source exists). */
+  descriptionAr: z.string().nullable(),
   status: z.enum(TASK_STATUSES),
   accountableUserId: Uuid.nullable(),
   accountableName: z.string().nullable(),
   proposedOwnerFunction: z.string().nullable(),
   output: z.string().nullable(),
+  outputAr: z.string().nullable(),
   acceptanceCriteria: z.string().nullable(),
+  acceptanceCriteriaAr: z.string().nullable(),
   approverRole: z.string().nullable(),
+  /** Evidence type key (template vocabulary, e.g. `approved_document`) or text a planner entered. */
   evidenceType: z.string().nullable(),
   effort: z.string().nullable(),
+  /** The template's effort estimate ("Assumed: N person-days", "TBD") as codes; null for text a planner entered. */
+  effortI18n: Messages.nullable(),
   durationDays: z.number().int().nullable(),
   durationBasis: z.string().nullable(),
   plannedStart: z.string().nullable(),
@@ -127,8 +136,11 @@ export const CreateTaskBody = z.object({
   title: RequiredText(300),
   titleAr: Text(300).optional(),
   description: Text(4000).optional(),
+  descriptionAr: Text(4000).optional(),
   output: Text(2000).optional(),
+  outputAr: Text(2000).optional(),
   acceptanceCriteria: Text(2000).optional(),
+  acceptanceCriteriaAr: Text(2000).optional(),
   approverRole: z.enum(ROLE_KEYS).optional(),
   evidenceType: Text(32).optional(),
   effort: Text(64).optional(),
@@ -147,9 +159,16 @@ export const UpdateTaskBody = z
     expectedVersion: ExpectedVersion,
     title: RequiredText(300).optional(),
     titleAr: Text(300).nullable().optional(),
+    /**
+     * Changing the English description / output / acceptance criteria without its Arabic clears the Arabic text, so a
+     * stale translation is never shown (QA-P2-04).
+     */
     description: Text(4000).nullable().optional(),
+    descriptionAr: Text(4000).nullable().optional(),
     output: Text(2000).nullable().optional(),
+    outputAr: Text(2000).nullable().optional(),
     acceptanceCriteria: Text(2000).nullable().optional(),
+    acceptanceCriteriaAr: Text(2000).nullable().optional(),
     approverRole: z.enum(ROLE_KEYS).nullable().optional(),
     evidenceType: Text(32).nullable().optional(),
     effort: Text(64).nullable().optional(),
@@ -450,6 +469,8 @@ export const ScheduleDto = z.object({
   projectFinish: z.string().nullable(),
   issues: z.array(ScheduleIssue),
   assumptions: z.array(z.string()),
+  /** One message per assumption, same order (QA-P2-04). */
+  assumptionsI18n: Messages,
   criticalPath: z.array(z.object({ id: Uuid, type: z.enum(SCHEDULE_NODE_TYPES), code: z.string(), title: z.string(), titleAr: z.string().nullable() })).nullable(),
   nodes: z.array(
     z.object({
@@ -509,6 +530,7 @@ export const DelayImpactDto = z.object({
   affectedGateKeys: z.array(z.string()),
   issues: z.array(ScheduleIssue),
   assumptions: z.array(z.string()),
+  assumptionsI18n: Messages,
 });
 
 export const HolidayDto = z.object({ id: Uuid, date: z.string(), name: z.string(), isProposed: z.boolean() });
@@ -788,7 +810,7 @@ export const RaiseIssueBody = z.object({ expectedVersion: ExpectedVersion, title
 // ---------------------------------------------------------------------------------------------------------
 // Status updates, RAG overrides, progress & health
 
-const RagResultDto = z.object({ status: z.enum(RAG_STATUSES), explanation: z.string(), slipDays: z.number().int().nullable() });
+const RagResultDto = z.object({ status: z.enum(RAG_STATUSES), explanation: z.string(), explanationI18n: Messages, slipDays: z.number().int().nullable() });
 
 export const StatusUpdateDto = z.object({
   id: Uuid,
@@ -849,6 +871,8 @@ export const RagOverrideDto = z.object({
   entityType: z.enum(['workstream', 'project']),
   entityId: Uuid,
   entityLabel: z.string(),
+  /** Arabic label (workstream code + Arabic name) when the workstream has an Arabic name; the project code otherwise. */
+  entityLabelAr: z.string().nullable(),
   calculatedAtRequest: z.enum(RAG_STATUSES),
   overrideStatus: z.enum(RAG_STATUSES),
   reason: z.string(),
@@ -860,7 +884,7 @@ export const RagOverrideDto = z.object({
   reviewedAt: z.string().nullable(),
   reviewNote: z.string().nullable(),
   state: z.enum(['pending', 'approved', 'rejected', 'expired']),
-  current: z.object({ calculated: z.enum(RAG_STATUSES), effective: z.enum(RAG_STATUSES), overridden: z.boolean(), explanation: z.string() }),
+  current: z.object({ calculated: z.enum(RAG_STATUSES), effective: z.enum(RAG_STATUSES), overridden: z.boolean(), explanation: z.string(), explanationI18n: Messages }),
   isDemo: z.boolean(),
   version: z.number().int(),
 });
@@ -878,8 +902,9 @@ const WeightedProgressDto = z.object({
   numeratorWeight: z.number(),
   denominatorWeight: z.number(),
   includedCount: z.number().int(),
-  exclusions: z.array(z.object({ id: z.string(), label: z.string().optional(), reason: z.string() })),
+  exclusions: z.array(z.object({ id: z.string(), label: z.string().optional(), labelAr: z.string().nullable().optional(), reason: z.string(), reasonI18n: Messages.nullable() })),
   explanation: z.string(),
+  explanationI18n: Messages,
 });
 
 const EffectiveRagDto = z.object({
@@ -888,6 +913,7 @@ const EffectiveRagDto = z.object({
   overridden: z.boolean(),
   overrideExpired: z.boolean(),
   explanation: z.string(),
+  explanationI18n: Messages,
   reported: z.enum(RAG_STATUSES).nullable(),
 });
 
@@ -898,9 +924,11 @@ export const ProgressDto = z.object({
   project: z.object({
     progress: WeightedProgressDto,
     rag: EffectiveRagDto,
-    aggregate: z.object({ status: z.enum(RAG_STATUSES), explanation: z.string() }),
-    redCritical: z.array(z.object({ id: Uuid, type: z.enum(['workstream', 'milestone']), label: z.string(), reason: z.string() })),
-    dataQualityIssues: z.array(z.object({ id: z.string(), label: z.string(), issue: z.string() })),
+    aggregate: z.object({ status: z.enum(RAG_STATUSES), explanation: z.string(), explanationI18n: Messages }),
+    /** `labelAr`: code + Arabic name / title when the record has one (null otherwise). */
+    redCritical: z.array(z.object({ id: Uuid, type: z.enum(['workstream', 'milestone']), label: z.string(), labelAr: z.string().nullable(), reason: z.string(), reasonI18n: Messages })),
+    /** `labelAr`: workstream code + Arabic name, or the project code (language-neutral) for project-level issues. */
+    dataQualityIssues: z.array(z.object({ id: z.string(), label: z.string(), labelAr: z.string().nullable(), issue: z.string(), issueI18n: Messages })),
   }),
   workstreams: z.array(
     z.object({
@@ -914,10 +942,13 @@ export const ProgressDto = z.object({
       baselineFinish: z.string().nullable(),
       forecastFinish: z.string().nullable(),
       lastAcceptedUpdate: z.object({ id: Uuid, periodEnd: z.string(), acceptedAt: z.string() }).nullable(),
-      openBlockers: z.array(z.object({ id: Uuid, type: z.enum(['task', 'issue']), code: z.string(), title: z.string() })),
+      /** `titleAr` only for blocked tasks (bilingual titles); issue titles are free text as entered. */
+      openBlockers: z.array(z.object({ id: Uuid, type: z.enum(['task', 'issue']), code: z.string(), title: z.string(), titleAr: z.string().nullable().optional() })),
       taskCounts: z.record(z.string(), z.number().int()),
       reportedProgressAvg: z.number().nullable(),
       dataQuality: z.array(z.string()),
+      /** One message per `dataQuality` entry, same order (QA-P2-04). */
+      dataQualityI18n: Messages,
     }),
   ),
 });
@@ -955,6 +986,14 @@ export const MyWorkItemDto = z.object({
   entityId: Uuid,
   code: z.string().nullable(),
   title: z.string(),
+  /**
+   * Arabic title of the source record — present only for items whose record has a bilingual title (tasks, milestones,
+   * deliverables, gates, gate criteria; null when no Arabic source exists). Absent for free text typed by a user
+   * (change requests, decisions, actions, waivers, evidence, minutes), which is shown as entered.
+   */
+  titleAr: z.string().nullable().optional(),
+  /** Titles composed by the server (status update / RAG override review, baseline approval) as codes (QA-P2-04). */
+  titleI18n: Messages.optional(),
   status: z.string(),
   dueDate: z.string().nullable(),
   overdue: z.boolean(),

@@ -33,7 +33,7 @@ import { LoadingState } from '../../LoadingState';
 import { StatusBadge } from '../../StatusBadge';
 import { useToast } from '../../Toast';
 import { btn, card, cx } from '../../ui';
-import { CodeLink, DateText, FilterSelect, ForecastLabel, Section } from '../bits';
+import { AssumptionList, CodeLink, DateText, FilterSelect, ForecastLabel, Section } from '../bits';
 import { FormDialog } from '../dialogs';
 import { localized, useLocalized } from '@/lib/i18n-data';
 import type { Locale } from '@/i18n/config';
@@ -488,11 +488,7 @@ export function WhatIfTab({ initialNodeId }: { initialNodeId?: string }) {
           ) : null}
           <details>
             <summary className="cursor-pointer text-sm text-primary">{t('planning.schedule.assumptions', { count: d.assumptions.length })}</summary>
-            <ul className="mt-2 list-disc space-y-0.5 ps-5 text-xs text-muted" lang="en" dir="ltr">
-              {d.assumptions.map((a) => (
-                <li key={a}>{a}</li>
-              ))}
-            </ul>
+            <AssumptionList assumptions={d.assumptions} codes={d.assumptionsI18n} className="mt-2 list-disc space-y-0.5 ps-5 text-xs text-muted" />
           </details>
           <p className="text-xs text-muted">{t('planning.common.noProbability')}</p>
         </section>

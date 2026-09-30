@@ -94,7 +94,7 @@ describe('measurement rules', () => {
     expect(r.denominatorWeight).toBe(10);
     expect(r.numeratorWeight).toBe(6);
     expect(r.percent).toBe(60);
-    expect(r.exclusions).toEqual([{ id: 'd4', label: undefined, reason: 'Cancelled' }]);
+    expect(r.exclusions).toEqual([{ id: 'd4', label: undefined, reason: 'Cancelled', reasonI18n: [{ code: 'plan.progress.excluded_cancelled', params: {} }] }]);
   });
   it('D-10: an open blocker is red even when the update is stale', () => {
     expect(calculateRag({ baselineFinish: '2026-10-01', forecastFinish: '2026-10-01', lastUpdatedOn: '2026-08-01', today: '2026-09-29', hasOpenBlocker: true }).status).toBe('red');
@@ -116,14 +116,14 @@ describe('measurement rules', () => {
     expect(r.redCritical).toEqual(['cp1']);
   });
   it('overrides need reviewer/expiry and keep the calculated value', () => {
-    const calc = { status: 'red' as const, explanation: 'x', slipDays: 12 };
+    const calc = { status: 'red' as const, explanation: 'x', explanationI18n: [], slipDays: 12 };
     const ov = { overrideStatus: 'amber' as const, reason: 'Recovery plan approved', expiresOn: '2026-10-15', reviewerUserId: 'rev', approved: true };
     expect(effectiveRag(calc, ov, '2026-09-29')).toMatchObject({ calculated: 'red', effective: 'amber', overridden: true });
     expect(effectiveRag(calc, { ...ov, reviewerUserId: null }, '2026-09-29').effective).toBe('red');
     expect(effectiveRag(calc, ov, '2026-10-16')).toMatchObject({ effective: 'red', overrideExpired: true });
   });
   it('DOM-P2-10: a project override never displays better than red while a red critical item (open blocker) exists [REQ-PLN-018]', () => {
-    const calc = { status: 'red' as const, explanation: 'Worst-of: red', slipDays: null };
+    const calc = { status: 'red' as const, explanation: 'Worst-of: red', explanationI18n: [], slipDays: null };
     const ov = { overrideStatus: 'green' as const, reason: 'Sponsor judgement', expiresOn: '2026-10-15', reviewerUserId: 'rev', approved: true };
     const eff = effectiveRag(calc, ov, '2026-09-29');
     expect(eff.effective).toBe('green');
