@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -20,10 +20,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:09072ce5f5cb64417bb0c417a10252b4101679dd0332d6b4016296404c6b5600",
-        "source_commit": "480cd3ff2b1048439bafebf0bf40151a11d84ea7",
-        "frozen_at": "2026-09-30T12:20:48Z",
-        "manifest_path": "docs/delivery/candidates/DG0/09072ce5f5cb6441.manifest.json"
+        "candidate_id": "sha256:e6df2e1ebccbd87f01fa80a17ddd0f89ca469658e2511d0e9bff47b319da51c5",
+        "source_commit": "6438e20c076359ff5eda879f1e31ff6fbda0b57f",
+        "frozen_at": "2026-09-30T12:54:57Z",
+        "manifest_path": "docs/delivery/candidates/DG0/e6df2e1ebccbd87f.manifest.json"
       },
       "review_rounds": [
         {
@@ -283,6 +283,18 @@
             "qa-verifier": "docs/delivery/reviews/DG0/round-22/qa-verifier.json"
           },
           "note": "Round 22: re-review after the D-038 scoping repairs. Gate round: domain+code-security together check all 19 DG0-final requirements. code-security re-verifies F-DG0-150/151 (fix 421c922) against this candidate; qa closes F-DG0-238 (dup of CLOSED_VERIFIED F-DG0-150). Reviewers verify F-DG0-158/159/160/161/162/163/245."
+        },
+        {
+          "round": 23,
+          "candidate_id": "sha256:e6df2e1ebccbd87f01fa80a17ddd0f89ca469658e2511d0e9bff47b319da51c5",
+          "frozen_at": "2026-09-30T12:54:57Z",
+          "source_commit": "6438e20c076359ff5eda879f1e31ff6fbda0b57f",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG0/round-23/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG0/round-23/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG0/round-23/qa-verifier.json"
+          },
+          "note": "Round 23: re-review after the D-039 strict-validator repairs. Gate round: domain+code-security together check all 19 DG0-final requirements; reviewers verify F-DG0-013/164/165/246/247/248; auditor concurs on F-DG0-147/149."
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
@@ -516,6 +528,11 @@
           "state": "FIXING",
           "at": "2026-09-30T12:45:00Z",
           "note": "Round 22: domain PASS (F-DG0-013 Low obs); code-security FAIL (F-DG0-164 Med, F-DG0-165 Low); qa FAIL (F-DG0-246 Med, F-DG0-247/248 Low). Verified CLOSED_VERIFIED: F-DG0-150/151 (re-verified vs current candidate), 158/159/160/161/162/163 (D-038 fixes), 238 (dup of 150), 245. New findings converge on removing the tolerance: F-DG0-164+246 (the absent-commit tolerance is forgeable and, with complete history + 150/151 re-verified, unnecessary -> drop it); F-DG0-013+247 (dangling 450c756 in local-path clones -> gc); F-DG0-165 (immutable-field drift across sidecar versions); F-DG0-248 (add shallow-refusal unit test). Repairs (D-039) drop the checkClosure/checkInvocation absent-commit tolerance for a strict complete-history validator, keeping only the content-preserving findManifest tolerance."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-09-30T13:05:00Z",
+          "note": "Round-22 findings repaired (D-039): the absent-commit tolerance is REMOVED from checkClosure/checkInvocation (forgeable via round metadata, and unnecessary on the complete history; F-DG0-164/246); only findManifest content-preserving D-035 tolerance remains for round-18 write-once orphan manifest. Immutable-field drift across sidecar versions now errors (F-DG0-165). Dangling 450c756/cb76260 gc-pruned so local-path clones no longer carry them (F-DG0-013/247). Added a shallow-refusal unit test (F-DG0-248). Real-repo dry-run on the full history: 0 in every history bucket; only round-not-finished artifacts remain. Prefreeze all PASS; candidate re-frozen for review round 23."
         }
       ]
     },
