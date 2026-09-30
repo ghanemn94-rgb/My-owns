@@ -11,6 +11,7 @@ import {
   TSA_STATUSES,
   WAIVER_STATUSES,
   APPROVAL_REQUEST_STATUSES,
+  LINKED_DECISION_ISSUE_CODES,
 } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
 import { ClassificationSchema, ExpectedVersion, IsoDate, IsoInstant, MoneySchema, PageQuery, ProjectParams, RequiredText, Text, Uuid, paged } from './common';
@@ -191,6 +192,8 @@ export const LinkedDecisionSummaryDto = z.object({
   decisionTypeKey: z.string().nullable(),
   /** Why the decision does not (yet) authorize the action; null when it does. */
   issue: z.string().nullable(),
+  /** The same reason as a code (translated by the web); null when the decision authorizes the action. */
+  issueCode: z.enum(LINKED_DECISION_ISSUE_CODES).nullable(),
 });
 
 export const CutoverPlanDetailDto = CutoverPlanDto.extend({

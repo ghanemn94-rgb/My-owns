@@ -276,7 +276,7 @@ export default function ReadinessCheckPage() {
           <p className="mt-2 text-sm">{c.failureContingency ? <UText value={c.failureContingency} multiline /> : <span className="text-muted">{t('readiness.check.contingencyNone')}</span>}</p>
         </Panel>
 
-        <Panel title={t('readiness.common.view')}>
+        <Panel title={t('readiness.common.details')}>
           <Facts
             items={[
               { label: t('readiness.check.facts.area'), value: tStatus('readinessAreas', c.area) },

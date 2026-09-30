@@ -11,7 +11,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { SearchInput } from '@/components/SearchInput';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useToast } from '@/components/Toast';
-import { btn } from '@/components/ui';
+import { btn, cx } from '@/components/ui';
 import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { useProjectContext } from '@/lib/project-context';
@@ -72,7 +72,7 @@ export default function TsaRegisterPage() {
       sortValue: (x) => x.code,
       cell: (x) => (
         <span className="flex flex-wrap items-center gap-1">
-          <Link href={`${base}/tsa/${x.id}`} className={btn.link} dir="ltr">
+          <Link href={`${base}/tsa/${x.id}`} className={cx(btn.link, 'whitespace-nowrap')} dir="ltr">
             {x.code}
           </Link>
           {x.isDemo ? <DemoBadge /> : null}

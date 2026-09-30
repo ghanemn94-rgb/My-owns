@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { forbidden, invalid, linkedDecisionIssue, notFound, Classification, LinkedDecision, RoleKey } from '@hub/domain';
+import { forbidden, invalid, linkedDecisionIssue, linkedDecisionIssueCode, notFound, Classification, LinkedDecision, RoleKey } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
@@ -163,6 +163,7 @@ export class ReadinessSupport {
       authorityOutcome: d.authorityOutcome,
       decisionTypeKey: d.decisionTypeKey,
       issue: linkedDecisionIssue(this.linked(d), allowedTypeKeys, purpose),
+      issueCode: linkedDecisionIssueCode(this.linked(d), allowedTypeKeys),
     };
   }
 }

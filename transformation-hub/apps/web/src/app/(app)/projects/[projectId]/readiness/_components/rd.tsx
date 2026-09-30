@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { SelectField } from '@/components/Field';
 import { StatusBadge } from '@/components/StatusBadge';
 import { btn, card, cx } from '@/components/ui';
-import { EM_DASH, useI18n } from '@/i18n/provider';
+import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
 import { useProjectContext } from '@/lib/project-context';
 import { rdHref, useDecisionsOfTypes, useSites, type People } from '@/lib/readiness';
 import { useWorkstreams } from '@/lib/queries';
@@ -93,6 +93,16 @@ export function CriticalityBadges({ mandatory, blocker, waivable }: { mandatory:
 }
 
 /** Pass/fail line used by the prerequisite checklist (text + icon, never colour alone). */
+/**
+ * Whether a linked governance decision authorizes the action, in the user's language (the server's issue code is
+ * translated; `okKey` names what a final approval can back).
+ */
+export function DecisionIssue({ d, okKey }: { d: { status: string; issueCode: string | null }; okKey: MessageKey }) {
+  const { t, tStatus } = useI18n();
+  if (!d.issueCode) return <span className="text-success">{t(okKey)}</span>;
+  return <span className="text-danger">{t(`readiness.common.decisionIssue.${d.issueCode}` as MessageKey, { status: tStatus('decisionStatuses', d.status) })}</span>;
+}
+
 export function Tick({ ok, label, testId }: { ok: boolean; label: string; testId?: string }) {
   const { t } = useI18n();
   const Icon = ok ? CircleCheck : CircleX;

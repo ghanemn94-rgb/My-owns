@@ -11,7 +11,7 @@ import { SearchInput } from '@/components/SearchInput';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useToast } from '@/components/Toast';
-import { btn } from '@/components/ui';
+import { btn, cx } from '@/components/ui';
 import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { useProjectContext } from '@/lib/project-context';
@@ -68,7 +68,7 @@ export default function CutoverPlansPage() {
       sortValue: (p) => p.code,
       cell: (p) => (
         <span className="flex flex-wrap items-center gap-1">
-          <Link href={`${base}/cutover/${p.id}`} className={btn.link} dir="ltr">
+          <Link href={`${base}/cutover/${p.id}`} className={cx(btn.link, 'whitespace-nowrap')} dir="ltr">
             {p.code}
           </Link>
           {p.isDemo ? <DemoBadge /> : null}

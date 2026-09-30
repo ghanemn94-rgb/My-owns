@@ -112,6 +112,13 @@ function dialog(page: Page) {
   return page.getByRole('dialog');
 }
 
+/** Full-page screenshot without transient toasts covering the content. */
+async function shot(page: Page, file: string) {
+  const toastButtons = page.getByRole('status').getByRole('button');
+  while ((await toastButtons.count()) > 0) await toastButtons.first().click();
+  await page.screenshot({ path: join(SHOTS, file), fullPage: true });
+}
+
 async function noHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
@@ -169,7 +176,7 @@ test.describe('P3 Day-1 & TSA Center', () => {
       await expect(page.getByRole('heading', { level: 1, name: 'Day-1 & TSA Center' })).toBeVisible();
       await expect(page.getByTestId('no-device-control')).toContainText('never controls devices');
       await expect(page.getByTestId('readiness-summary')).toBeVisible();
-      await page.screenshot({ path: join(SHOTS, 'readiness-en-overview.png'), fullPage: true });
+      await shot(page, 'readiness-en-overview.png');
 
       // The connectivity check is created through the UI, bound to the plan, with its contingency.
       await page.getByTestId('readiness-tabs').getByRole('link', { name: 'Readiness checks' }).click();
@@ -183,7 +190,9 @@ test.describe('P3 Day-1 & TSA Center', () => {
       await dlg.getByRole('button', { name: 'Create check', exact: true }).click();
       await expect(dlg).toBeHidden();
       await page.getByLabel('Search code or title').fill(`Connectivity to customers and NOC tested ${STAMP}`);
-      await page.getByTestId('checks-table').getByRole('row').nth(1).getByRole('link').first().click();
+      const checkRows = page.getByTestId('checks-table').getByRole('row');
+      await expect(checkRows).toHaveCount(2);
+      await checkRows.filter({ hasText: `Connectivity to customers and NOC tested ${STAMP}` }).getByRole('link').first().click();
       await expect(page.getByTestId('check-detail')).toHaveAttribute('data-status', 'not_started');
 
       // A failed test sets the check failed and stays in the append-only history.
@@ -224,7 +233,7 @@ test.describe('P3 Day-1 & TSA Center', () => {
       await expect(sp.getByTestId('plan-checks')).toContainText('keep traffic on the current carrier path');
       await expect(sp.getByTestId('go-decision')).toContainText('Final approval');
       await sp.getByTestId('go-evaluation').scrollIntoViewIfNeeded();
-      await sp.screenshot({ path: join(SHOTS, 'readiness-en-go-blocked.png'), fullPage: true });
+      await shot(sp, 'readiness-en-go-blocked.png');
 
       // NO-GO is recorded with its rationale.
       await sp.getByTestId('cmd-decide').click();
@@ -241,11 +250,11 @@ test.describe('P3 Day-1 & TSA Center', () => {
         await expect(sp.locator('html')).toHaveAttribute('dir', 'rtl');
         await expect(sp.getByTestId('readiness-tabs').getByRole('link', { name: 'الانتقال وقرار المضي' })).toBeVisible();
         await expect(sp.locator('[data-testid="history-entry"][data-kind="go_blocked"]')).toContainText('رفض الخادم قرار المضي');
-        await sp.screenshot({ path: join(SHOTS, 'readiness-ar-go-blocked.png'), fullPage: true });
+        await shot(sp, 'readiness-ar-go-blocked.png');
         await sp.setViewportSize({ width: 390, height: 844 });
         await sp.reload();
         await expect(sp.getByTestId('decision-history')).toBeVisible();
-        await sp.screenshot({ path: join(SHOTS, 'readiness-ar-390-go-blocked.png'), fullPage: true });
+        await shot(sp, 'readiness-ar-390-go-blocked.png');
         await noHorizontalOverflow(sp);
       } finally {
         await setSavedLocale(sp, 'en');
@@ -287,7 +296,8 @@ test.describe('P3 Day-1 & TSA Center', () => {
       const { page } = pm;
       await page.goto(`/projects/${pid}/readiness/tsa`);
       await page.getByLabel('Search code or name').fill(name);
-      const row = page.getByTestId('tsa-table').getByRole('row').nth(1);
+      await expect(page.getByTestId('tsa-table').getByRole('row')).toHaveCount(2);
+      const row = page.getByTestId('tsa-table').getByRole('row').filter({ hasText: name });
       await expect(row).toContainText('Ended 5 day(s) ago — unresolved');
       await row.getByRole('link').first().click();
       const detail = page.getByTestId('tsa-detail');
@@ -307,7 +317,7 @@ test.describe('P3 Day-1 & TSA Center', () => {
       await expect(esc).toContainText('Extend the TSA');
       await expect(esc).toContainText('within its delegated authority');
       await expect(detail).toHaveAttribute('data-status', 'active');
-      await page.screenshot({ path: join(SHOTS, 'readiness-en-tsa-escalated.png'), fullPage: true });
+      await shot(page, 'readiness-en-tsa-escalated.png');
 
       // The extension is linked to a decision that is only drafted → recording it is refused (never automatic).
       await page.getByTestId('cmd-requestExtension').click();
@@ -359,7 +369,7 @@ test.describe('P3 Day-1 & TSA Center', () => {
       await dialog(sp).getByRole('button', { name: 'Approve exit', exact: true }).click();
       await expect(sp.getByTestId('tsa-detail')).toHaveAttribute('data-status', 'exit_accepted');
       await expect(sp.getByTestId('exit-approved')).toBeVisible();
-      await sp.screenshot({ path: join(SHOTS, 'readiness-en-tsa-exit.png'), fullPage: true });
+      await shot(sp, 'readiness-en-tsa-exit.png');
 
       // Arabic (RTL), desktop and 390 px.
       try {
@@ -367,21 +377,21 @@ test.describe('P3 Day-1 & TSA Center', () => {
         await sp.goto(`/projects/${pid}/readiness/tsa`);
         await expect(sp.locator('html')).toHaveAttribute('dir', 'rtl');
         await expect(sp.getByRole('heading', { level: 1, name: 'سجل الخدمات الانتقالية' })).toBeVisible();
-        await sp.screenshot({ path: join(SHOTS, 'readiness-ar-tsa-register.png'), fullPage: true });
+        await shot(sp, 'readiness-ar-tsa-register.png');
         await sp.goto(`/projects/${pid}/readiness/tsa/${created.id}`);
         await expect(sp.getByTestId('end-not-exit')).toContainText('بلوغ تاريخ الانتهاء ليس خروجاً');
-        await sp.screenshot({ path: join(SHOTS, 'readiness-ar-tsa.png'), fullPage: true });
+        await shot(sp, 'readiness-ar-tsa.png');
         await sp.setViewportSize({ width: 390, height: 844 });
         await sp.reload();
         await expect(sp.getByTestId('tsa-escalation')).toBeVisible();
-        await sp.screenshot({ path: join(SHOTS, 'readiness-ar-390-tsa.png'), fullPage: true });
+        await shot(sp, 'readiness-ar-390-tsa.png');
         await noHorizontalOverflow(sp);
       } finally {
         await setSavedLocale(sp, 'en');
       }
       await sp.goto(`/projects/${pid}/readiness/checks`);
       await expect(sp.getByTestId('checks-table')).toBeVisible();
-      await sp.screenshot({ path: join(SHOTS, 'readiness-en-390-checks.png'), fullPage: true });
+      await shot(sp, 'readiness-en-390-checks.png');
       await noHorizontalOverflow(sp);
       expect(pm.problems(), pm.problems().join('\n')).toEqual([]);
       expect(approver.problems(), approver.problems().join('\n')).toEqual([]);

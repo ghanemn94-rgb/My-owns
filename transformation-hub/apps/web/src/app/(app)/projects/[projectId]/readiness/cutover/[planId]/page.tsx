@@ -23,7 +23,7 @@ import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
 import { useProjectContext } from '@/lib/project-context';
 import { rdHref, rk, useReadinessRefresh, type CutoverPlanDetail } from '@/lib/readiness';
-import { ButtonRow, Callout, CmdButton, DecisionSelect, Facts, Panel, Person, RdCommandDialog, Tick, UText, useScopeLabels } from '../../_components/rd';
+import { ButtonRow, Callout, CmdButton, DecisionIssue, DecisionSelect, Facts, Panel, Person, RdCommandDialog, Tick, UText, useScopeLabels } from '../../_components/rd';
 import { PlanFields, planBody, planFormOf, type PlanForm } from '../../_components/plan-form';
 
 type Cmd = 'edit' | 'rehearsal' | 'comms' | 'link' | 'submit' | 'back' | 'decide' | 'execute' | 'rollback' | 'accept' | null;
@@ -223,14 +223,18 @@ function GoEvaluation({ p }: { p: CutoverPlanDetail }) {
       {ev.blockers.length ? (
         <div className="mt-3">
           <h3 className="text-sm font-semibold text-ink">{t('readiness.plan.go.blockers')}</h3>
-          <ul className="mt-1 space-y-1" data-testid="go-blockers">
+          <ul className="mt-1 divide-y divide-line" data-testid="go-blockers">
             {ev.blockers.map((b) => (
-              <li key={b.id} className="flex flex-wrap items-center gap-2 text-sm">
-                <StatusBadge enumName="readinessStatuses" value={b.status} />
-                <Link className={btn.link} href={`${rdHref(projectId)}/checks/${b.id}`} dir="auto">
-                  {b.title}
-                </Link>
-                <span className="text-xs text-muted">{b.blocker ? t('readiness.plan.go.blockerLabel') : t('readiness.plan.go.mandatoryLabel')}</span>
+              <li key={b.id} className="flex items-start gap-2 py-1.5 text-sm">
+                <span className="shrink-0">
+                  <StatusBadge enumName="readinessStatuses" value={b.status} />
+                </span>
+                <span className="min-w-0">
+                  <Link className={cx(btn.link, 'break-words')} href={`${rdHref(projectId)}/checks/${b.id}`} dir="auto">
+                    {b.title}
+                  </Link>
+                  <span className="block text-xs text-muted">{b.blocker ? t('readiness.plan.go.blockerLabel') : t('readiness.plan.go.mandatoryLabel')}</span>
+                </span>
               </li>
             ))}
           </ul>
@@ -277,10 +281,16 @@ function DecisionHistory({ p }: { p: CutoverPlanDetail }) {
               {h.evaluation && (h.evaluation.blockers.length || h.evaluation.missing.length) ? (
                 <div className="mt-1 rounded-md bg-surface-muted p-2 text-xs">
                   {h.evaluation.blockers.length ? (
-                    <p>
-                      <span className="font-semibold">{t('readiness.plan.history.blockersAtTime')}: </span>
-                      <span dir="auto">{h.evaluation.blockers.map((b) => `${b.title} (${tStatus('readinessStatuses', b.status)})`).join(' · ')}</span>
-                    </p>
+                    <div>
+                      <p className="font-semibold">{t('readiness.plan.history.blockersAtTime')}</p>
+                      <ul className="list-disc ps-4">
+                        {h.evaluation.blockers.map((b, i) => (
+                          <li key={i}>
+                            <span dir="auto">{b.title}</span> ({tStatus('readinessStatuses', b.status)})
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   ) : null}
                   {h.evaluation.missing.length ? (
                     <p>
@@ -352,7 +362,7 @@ export default function CutoverPlanPage() {
         badges={
           <>
             <StatusBadge enumName="cutoverStatuses" value={p.status} size="md" />
-            <StatusBadge enumName="goNoGo" value={p.goNoGo} size="md" />
+            {p.goNoGo !== p.status ? <StatusBadge enumName="goNoGo" value={p.goNoGo} size="md" label={t('readiness.plan.goNoGoBadge', { value: tStatus('goNoGo', p.goNoGo) })} /> : null}
             {p.isDemo ? <DemoBadge /> : null}
           </>
         }
@@ -380,9 +390,7 @@ export default function CutoverPlanPage() {
                 {p.goDecision.code}
               </Link>
               <StatusBadge enumName="decisionStatuses" value={p.goDecision.status} />
-              <span className={p.goDecision.issue ? 'text-danger' : 'text-success'} dir="auto">
-                {p.goDecision.issue ?? t('readiness.plan.decision.ok')}
-              </span>
+              <DecisionIssue d={p.goDecision} okKey="readiness.plan.decision.ok" />
             </div>
           ) : (
             <p className="text-sm text-muted">{p.goDecisionId ? t('readiness.plan.decision.hidden') : t('readiness.plan.decision.none')}</p>
@@ -401,7 +409,7 @@ export default function CutoverPlanPage() {
                 isRowHeader: true,
                 sortValue: (c) => c.code,
                 cell: (c) => (
-                  <Link className={btn.link} href={`${base}/checks/${c.id}`} dir="ltr">
+                  <Link className={cx(btn.link, 'whitespace-nowrap')} href={`${base}/checks/${c.id}`} dir="ltr">
                     {c.code}
                   </Link>
                 ),
@@ -429,7 +437,7 @@ export default function CutoverPlanPage() {
           />
         </section>
         <DecisionHistory p={p} />
-        <Panel title={t('readiness.common.view')}>
+        <Panel title={t('readiness.common.details')}>
           <Facts
             items={[
               { label: t('readiness.plan.facts.scope'), value: p.siteId ? siteName(p.siteId) : t('readiness.cutover.projectWide') },
