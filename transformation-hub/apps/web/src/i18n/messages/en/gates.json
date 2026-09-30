@@ -102,7 +102,11 @@
     "decide": "Record gate decision",
     "recordDecision": "Record decision",
     "reopen": "Reopen (new cycle)",
-    "approverOnly": "Only the gate approver ({role}) records this decision."
+    "approverOnly": "Only the gate approver ({role}) records this decision.",
+    "review": "Review assessment",
+    "recordReview": "Record review",
+    "ownerOnly": "Only the gate owner ({role}) or the project manager starts, submits or links a decision for this gate.",
+    "reviewerIsStarter": "You started this cycle, so another holder of the gate reviewer role must review it."
   },
   "commands": {
     "start": {
@@ -116,7 +120,10 @@
       "effect": "The cycle moves to Ready for decision; the server re-checks every criterion, evidence and prerequisite now.",
       "notReady": "The server will refuse: {count} blocker(s) remain.",
       "frozen": "Criteria are frozen until the gate is sent back to assessment.",
-      "done": "{gate} is ready for decision."
+      "endorsed": "The gate reviewer's endorsement of the current assessment is recorded.",
+      "done": "{gate} is ready for decision.",
+      "needsEndorsement": "The server will refuse: the gate reviewer ({role}) has not endorsed the current assessment.",
+      "notReviewer": "The person who endorsed the assessment cannot submit it."
     },
     "back": {
       "title": "Back to assessment — {gate}",
@@ -128,6 +135,20 @@
       "effect": "The chosen committee decision is linked to this cycle.",
       "blocked": "A recommendation pending external authority, or any decision that is not finally approved, keeps the gate blocked.",
       "done": "Decision linked to {gate}."
+    },
+    "review": {
+      "title": "Review assessment — {gate}",
+      "effect": {
+        "endorse": "The assessment of this cycle is endorsed; its owner may then submit it for decision.",
+        "return": "The assessment is returned to its owner for rework; it cannot be submitted until it is endorsed."
+      },
+      "stale": "Any later change of evidence, criterion status, waiver or applicability makes an endorsement out of date.",
+      "incomplete": "The server will refuse the endorsement: some criteria are not satisfied yet — return it instead.",
+      "sod": "You may not review a cycle you started, and the person who endorses cannot submit or decide the gate.",
+      "done": {
+        "endorse": "Assessment of {gate} endorsed.",
+        "return": "Assessment of {gate} returned for rework."
+      }
     },
     "decide": {
       "title": "Gate decision — {gate}",
@@ -175,7 +196,22 @@
     "final": "Final authorized decision — it can back the gate approval.",
     "notFinal": "Not a final authorized decision — the gate stays blocked.",
     "raisedForGate": "Decisions raised for this gate",
-    "rule": "The gate is decided by the {role}, who must not be the person who submitted it."
+    "rule": "The gate is decided by the {role}, who must be neither the person who submitted it nor the gate reviewer."
+  },
+  "review": {
+    "title": "Gate review",
+    "outcome": "Review outcome",
+    "note": "Review note",
+    "stateHint": {
+      "not_reviewed": "The gate reviewer ({role}) has not reviewed the current assessment.",
+      "endorsed": "The gate reviewer ({role}) endorsed the current assessment; it can be submitted for decision.",
+      "returned": "Returned for rework by the gate reviewer ({role}); a new endorsement is needed.",
+      "stale": "A criterion changed after the endorsement; the gate reviewer ({role}) must review the current assessment again."
+    },
+    "recorded": "{outcome} by {name} on {at}",
+    "noteShown": "Note: {note}",
+    "startedBy": "Cycle started by {name}",
+    "rule": "Reviewed by the {role}, who must not have started the cycle; the owner then submits it and the approver decides — the reviewer does neither."
   },
   "criteria": {
     "title": "Criteria",

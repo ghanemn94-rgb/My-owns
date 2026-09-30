@@ -14,6 +14,7 @@ const P = {
   chair: 'Demo Committee Chair',
   contributor: 'Demo Contributor',
   secretary: 'Demo Secretary / CPMO',
+  techLead: 'Demo Technology Lead',
 } as const;
 /** Demo persona holding each designated reviewer role in DEMO-DC (only that role may accept a criterion). */
 const REVIEWER: Record<string, string> = {
@@ -38,6 +39,7 @@ interface Gate {
   id: string;
   key: string;
   assessment: { status: string; version: number };
+  review: { state: string; startedBy: string | null };
   criteria: Criterion[];
 }
 
@@ -162,10 +164,12 @@ test.describe('P2 business gates', () => {
     expect(problems(), problems().join('\n')).toEqual([]);
   });
 
-  test('(d) a gate cannot be approved on a decision that is not final (AT-04, DOM-P2-01)', async ({ page, baseURL }) => {
+  test('(d) a gate cannot be approved on a decision that is not final (AT-04, DOM-P2-01); the gate review precedes submission (DOM-P2-16)', async ({ page, baseURL }) => {
     const problems = watchConsole(page);
-    // Fixture: make G1 ready for decision through the API. Evidence is linked by the PM (by the contributor on
-    // PM-designated criteria), each criterion is accepted by its designated reviewer, and the PM submits.
+    // Fixture: make G1 ready for decision. Evidence is linked by the PM (by the contributor on PM-designated criteria) and
+    // each criterion is accepted by its designated reviewer through the API. DOM-P2-16: the G1 gate reviewer (the PM, who
+    // did not start the cycle — the demo seed's workstream lead did) endorses the assessment IN THE UI, and the G1 owner
+    // (the workstream lead) submits it — never the reviewer.
     const pm = await apiSessionAs(baseURL!, P.pm);
     const sessions = new Map<string, APIRequestContext>([[P.pm, pm]]);
     const as = async (persona: string) => {
@@ -182,7 +186,28 @@ test.describe('P2 business gates', () => {
         await post(await as(reviewer!), `/api/v1/projects/${pid}/gates/${g1.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'met' });
       }
       g1 = await gateByKey(pm, pid, 'G1');
-      await post(pm, `/api/v1/projects/${pid}/gates/${g1.id}/assessment/mark-ready`, { expectedVersion: g1.assessment.version });
+      if (g1.review.state !== 'endorsed') {
+        // The owner (workstream lead) cannot submit before the gate reviewer's endorsement.
+        const early = await (await as(P.techLead)).post(`/api/v1/projects/${pid}/gates/${g1.id}/assessment/mark-ready`, {
+          data: { expectedVersion: g1.assessment.version },
+          headers: { 'x-csrf-token': await csrfOf(await as(P.techLead)) },
+        });
+        expect(early.status()).toBe(422);
+        expect((await early.json()).code).toBe('gates.assessment.review_required');
+        await loginAs(page, P.pm);
+        await page.goto(`/projects/${pid}/gates/${g1.id}`);
+        await expect(page.getByTestId('gate-review')).toHaveAttribute('data-review-state', 'not_reviewed');
+        await page.getByTestId('gate-action-review').click();
+        const rd = page.getByRole('dialog');
+        await rd.getByTestId('review-outcome').selectOption('endorse');
+        await rd.getByRole('textbox', { name: /Review note/ }).fill('E2E: G1 assessment reviewed against the synthetic evidence');
+        await rd.getByRole('button', { name: 'Record review' }).click();
+        await expect(rd).toBeHidden();
+        await expect(page.getByTestId('gate-review')).toHaveAttribute('data-review-state', 'endorsed');
+        await expect(page.getByTestId('gate-review-outcome')).toContainText('Demo Project Manager');
+        g1 = await gateByKey(pm, pid, 'G1');
+      }
+      await post(await as(P.techLead), `/api/v1/projects/${pid}/gates/${g1.id}/assessment/mark-ready`, { expectedVersion: g1.assessment.version });
     }
     // DOM-P2-01: only a decision RAISED FOR G1, of a type the approved (DEMO) authority matrix assigns to G1, can back it —
     // the demo's JV-signing recommendation (raised for no gate) can no longer be linked. Fixture: a G1 passage decision of
