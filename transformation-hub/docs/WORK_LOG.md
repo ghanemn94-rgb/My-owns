@@ -11,11 +11,11 @@
 
 - **P0:** PASS.
 - **P1:** gate PASS WITH CONDITIONS at `65b53e9` (`docs/phases/P1-gate-report.json`). The P2 reviews confirmed every P1 closure.
-- **P2:** all findings of the three P2 reviews are fixed and merged.
+- **P2:** gate **PASS WITH CONDITIONS** at `bddb637` (`docs/phases/P2-gate-report.json`; CI run 50 green: API 871 passed + 14 expected fail, Playwright 314 passed). Conditions: the P2 residuals (19 musts) before the P3 gate; the domain part of C2 in the P3 domain review; Low items with owners; governance-owner questions.
+  All findings of the three P2 reviews are fixed and merged.
   - Security review: PASS WITH CONDITIONS. Access-matrix §2.2 option B is in place: the strict rule, plus 4 project-level read exceptions pending Mobily data governance (AMQ-09). The governance lists apply the grant filter.
   - Domain final review (`docs/reviews/P2-domain-final-review.md`): PASS WITH CONDITIONS. DOM-P2F-01 and -03 fixed by the lead; DOM-P2F-08 and -09 fixed with the P4 decision-reuse fixes (part 2). The Low items DOM-P2F-02, -04, -05, -06, -07, -10 and DOM-P2R-06, -08 go to the P2 gate report with owners.
   - QA final re-review (`docs/reviews/P2-qa-final-review.md`): PASS WITH CONDITIONS. QA-P2F-02, QA-P2F-03 and the QA-P2-05 residual are fixed; C1 (disposition of the 23 P2 musts still Implemented) and C4 addressed; C2 goes into the P3/P4 reviews.
-  - Next: the P2 gate report on a revision with a green CI run.
   - Open questions for the governance owner: Q-40, Q-43, O-1, A-50/52/53, DOM-P2R-06/08; from P4: the 30-day long-stop warning, an extension decision type, and whether a decision paper can name a closing / model version / TSA / cutover plan (subject rule `required`).
 - **P3 and P4 security review** (`docs/reviews/P3-P4-security-review.md`, at `5bf274b`): P3 PASS WITH CONDITIONS (Medium SEC-P34-01 P3 part, -02, -05, -07 to fix before the P3 gate), P4 PASS WITH CONDITIONS (Medium SEC-P34-01 P4 part, -03, -04 before the P4 gate); the P2 closure re-check (C2) confirmed SEC-P2-02/03/05/06 and SEC-P2-01 with Low residuals SEC-P34-12/13. Fixes assigned.
 - **P3:** backends and web screens merged. DOM-P2R-05, DOM-P2F-08 and DOM-P2F-09 fixed (readiness now uses the shared decision-use registry: kinds `tsa_service`, `tsa_extension`, `cutover_plan`). Reviews not run.
@@ -78,9 +78,10 @@
   The domain re-review will say which of them block the P2 gate.
 - **Low findings carried** in `docs/phases/P1-gate-report.json`: QA-P1-09, QA-P1R-04/05, SEC-P1S-05/06/08.
 - **Build-machine capacity:** 4 cores and 15 GB shared by the lead and every agent. On 2026-09-30 the session process was
-  restarted after memory ran out, with five agents running full API suites and two e2e stacks at once. Keep at most three
-  agents with test runs in parallel; an agent starts a full suite or a Playwright run only with at least 4 GB free, never
-  both at once, and stops its e2e stack by PID when done.
+  restarted after memory ran out, with five agents running full API suites and two e2e stacks at once, and the whole
+  container restarted again with four (PostgreSQL then needs `pnpm db:start`). Keep at most TWO agents with test runs in
+  parallel; an agent starts a full suite or a Playwright run only with at least 6 GB free, never both at once, and stops
+  its e2e stack by PID when done.
 - **Environment limits:**
   - The reference image and Excel workbook are not available (image extraction NOT performed).
   - There is no Docker daemon here: images, Compose and Helm are validated only in CI, and Helm install is NOT EXECUTED.
@@ -88,8 +89,9 @@
 
 ## Next action
 
-1. Merge the P2 QA focused re-review; fix what it finds.
-2. Write `docs/phases/P2-gate-report.json`.
+1. Finish the P2 residuals, the P3 domain review, the P3/P4 QA review and the P3/P4 security fixes (agents; at most two
+   running tests at once).
+2. P3 and P4 gate reports.
 3. P3 reviews (domain, security, QA) → P3 gate. P4 reviews → P4 gate.
 4. Merge the AI UI → P5 reviews → P6 → P7 → P8.
 

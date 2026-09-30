@@ -1,0 +1,250 @@
+{
+  "phase": "P2",
+  "title": "Governance & Delivery",
+  "revision": "bddb637 (gate revision; CI run 50 green on it). Later commits are P3/P4/P2-residual work and are not part of this gate.",
+  "requirements": {
+    "source": "docs/requirements/requirements.yaml at the gate revision (generated from docs/requirements/status-evidence.yaml; apply_status.py --check OK)",
+    "p2_musts": 85,
+    "tested": 60,
+    "implemented": 23,
+    "deferred": 2,
+    "planned": 0,
+    "deferred_ids": [
+      "REQ-PLT-008 (to P6, in-app notifications through the outbox; integration-reporting-engineer)",
+      "REQ-PLN-019 (to P6, configurable RAG thresholds; backend-data-engineer, project-config)"
+    ],
+    "disposition": "docs/phases/P2-P4-requirement-disposition.md, section 'Update at the P2 gate': every P2 must still Implemented has what is missing, an owner and a target (QA condition C1). 19 of them are assigned to the 'P2 residuals' follow-up, which must finish before the P3 gate; REQ-GOV-008 retention to P7, REQ-GOV-012 notification and REQ-WS-003 per-element checks to P6, REQ-PLN-023 to the P5 review cycle, REQ-ENT-010 awaits the governance owner (F-08 variance)."
+  },
+  "exit_criteria": [
+    {
+      "criterion": "Decision request → authorized approval → action → closure evidence",
+      "evidence": "API: apps/api/test/governance/decision-lifecycle.spec.ts steps 1–8 (agenda request, screening, paper with evidence, conflict declarations, vote, server-computed outcome, implementation verified with evidence by someone other than the starter). UI: e2e p2-governance.spec.ts and the QA final e2e qa-p2-final-authority-ui.spec.ts in English and Arabic (docs/reviews/P2-qa-final-review.md §5).",
+      "status": "Met"
+    },
+    {
+      "criterion": "Block decisions outside authority",
+      "evidence": "API: governance at-04-decision-outside-delegation.spec.ts (a reserved decision is Recommended — pending external authority, never Approved); change control refuses an approval outside the delegated limit (DOM-P2-03); one decision backs one record of each kind (decision-use registry; QA race probes 15/15, 18/18). UI: qa-p2-final-authority-ui.spec.ts — decision subject, paper evidence, conflict declaration, chair closing the vote, cost impact confirmed by a non-requester, each also refused through the API; axe 0 violations in 11 dialog scans.",
+      "status": "Met"
+    },
+    {
+      "criterion": "Domain review plus QA review (and the security review of P2)",
+      "evidence": "See reviewers.",
+      "status": "Met (all three PASS WITH CONDITIONS, no open Critical or High)"
+    }
+  ],
+  "implemented": [
+    "Governance: committees and charters (versions, second-person approval), authority-matrix versions with evidence-backed approval and second-person verification, meetings, agenda requests and secretariat screening, decision papers (requester-only edit and submit, evidence or a 'none — reason' at submission), conflict declarations before voting, recusals, votes, server-computed outcomes, chair closing of voting (not when recused), external approvals resting on verified evidence, actions and escalations",
+    "Decision-use registry shared by every module that relies on a governance decision (one decision backs one record of each kind; subject binding; external-approval evidence re-checked at every use)",
+    "Planning: WBS, tasks, milestones, deliverables, dependencies and CPM on the working calendar, baselines with frozen snapshot and hash, change requests with quantified and independently confirmed cost impact, RAID, status updates, RAG, cross-project dependencies and prerequisites, My Work",
+    "Gates G0–G7: criteria, evidence, designated reviewers, gate-level review step, waivers, non-waivable criteria, approvals on a final decision of the right type, controlled reassessment after evidence changes, one writer of a project's gate state at a time",
+    "Documents and evidence, source register and claims, partner rooms, legal hold, disposal",
+    "Web: portfolio, cockpit (UX-005), Committee Hub, Integrated Plan, RAID & Change Control, gates, documents, My Work — Arabic RTL and English LTR"
+  ],
+  "tests_executed": [
+    {
+      "command": "GitHub Actions transformation-hub-ci (run 50, id 36783528373, at bddb637 — conclusion success, 14/14 jobs green)",
+      "result": "success — every job green: unit + template validator, typecheck + lint + requirement check, API integration (PostgreSQL 16), Playwright e2e, web build + private-mode egress check, images + SBOM + vulnerability report, Helm/kubeconform/compose/shellcheck, Compose stack, backup/restore drill, licence policy, gitleaks secret scan, OpenAPI, audit report",
+      "revision": "bddb637 (gate revision; CI run 50 green on it). Later commits are P3/P4/P2-residual work and are not part of this gate.",
+      "environment": "GitHub-hosted runners"
+    },
+    {
+      "command": "cd apps/api && TEST_DATABASE_URL=… pnpm test (full API integration suite, PostgreSQL 16)",
+      "result": "103 files, 871 passed + 14 expected fail (open review DEFECT probes: DOM-P2F-02/04 and the 12 SEC-P34 probes) in CI run 50; locally at 3735be4 on PostgreSQL 16: 101 files, 856 passed + 2 expected fail",
+      "revision": "bddb637 (CI) / 3735be4 (local)",
+      "environment": "GitHub-hosted runners (CI run 50) and the build container (local run at 3735be4)"
+    },
+    {
+      "command": "pnpm --filter @hub/domain test; pnpm --filter @hub/contracts test",
+      "result": "domain 424/424, contracts 100/100",
+      "revision": "bddb637 (gate revision; CI run 50 green on it). Later commits are P3/P4/P2-residual work and are not part of this gate.",
+      "environment": "build container"
+    },
+    {
+      "command": "pnpm lint (incl. i18n parity, hard-coded strings, module boundaries); pnpm typecheck",
+      "result": "exit 0",
+      "revision": "bddb637 (gate revision; CI run 50 green on it). Later commits are P3/P4/P2-residual work and are not part of this gate.",
+      "environment": "build container"
+    },
+    {
+      "command": "full Playwright suite",
+      "result": "314 passed (18.6 min) in CI run 50 at bddb637, against a production web build on a fresh demo seed",
+      "revision": "bddb637 (gate revision; CI run 50 green on it). Later commits are P3/P4/P2-residual work and are not part of this gate.",
+      "environment": "GitHub-hosted runners (CI run 50)"
+    },
+    {
+      "command": "QA final re-review runs (docs/reviews/P2-qa-final-review.md §2)",
+      "result": "API 816 passed + 5 expected fail (94 files) at e2bce79; Playwright 314 passed at 8f8d72b and at 9b8d59f; race probes 15/15 and 18/18",
+      "revision": "8f8d72b / 9b8d59f / e2bce79",
+      "environment": "build container (reviewer)"
+    }
+  ],
+  "reviewers": [
+    {
+      "agent": "carveout-domain-analyst",
+      "verdict": "PASS WITH CONDITIONS",
+      "evidence": [
+        "docs/reviews/P2-domain-review.md (FAIL, 5 High — fixed)",
+        "docs/reviews/P2-domain-rereview.md (FAIL, 3 High — fixed)",
+        "docs/reviews/P2-domain-final-review.md at 8f8d72b: PASS WITH CONDITIONS; DOM-P2F-01 (Medium) and -03 fixed by the lead; DOM-P2F-08 and -09 (P3 scope, High) fixed with the P4 decision-reuse fixes (part 2); the Lows below carried"
+      ]
+    },
+    {
+      "agent": "security-privacy-reviewer",
+      "verdict": "PASS WITH CONDITIONS",
+      "evidence": [
+        "docs/reviews/P2-security-review.md: SEC-P2-01 and -02 (Medium) fixed with their DEFECT probes green; Lows SEC-P2-03 to -09 fixed; access-matrix §2.2 decided (option B, projectLevelRead exceptions pending AMQ-09); P1 closures SEC-P1S-01/-03/-04/-07 CONFIRMED, -02 CONFIRMED with the residual fixed (SEC-P2-09)"
+      ]
+    },
+    {
+      "agent": "qa-test-engineer",
+      "verdict": "PASS WITH CONDITIONS",
+      "evidence": [
+        "docs/reviews/P2-qa-review.md (FAIL — QA-P2-01 High, fixed)",
+        "docs/reviews/P2-qa-final-review.md at 8f8d72b and 9b8d59f: PASS WITH CONDITIONS; C3 and C5 met; C1, C2, C4 addressed as recorded in conditions below; QA-P2F-02, QA-P2F-03 and the QA-P2-05 residual fixed after the review"
+      ]
+    }
+  ],
+  "conditions": [
+    {
+      "id": "C1",
+      "status": "Addressed",
+      "detail": "Every P2 must still Implemented has a phase, an owner and a reason (disposition document, 'Update at the P2 gate'). 19 are in the 'P2 residuals' assignment, which must finish before the P3 gate."
+    },
+    {
+      "id": "C2",
+      "status": "Met for security; domain part in the P3 domain review",
+      "detail": "The final domain review reports no open High in P2 scope. The P3/P4 security review (docs/reviews/P3-P4-security-review.md, 'P2 closure re-check') re-checked the implementer-adapted probes independently: SEC-P2-02 CONFIRMED WITH RESIDUAL (not weakened; residual SEC-P34-13, Low), SEC-P2-03, -05, -06 CONFIRMED, SEC-P2-01 CONFIRMED WITH RESIDUAL (SEC-P34-12, Low). The re-check of the adapted domain probes is part of the P3 domain review, which is running."
+    },
+    {
+      "id": "C3",
+      "status": "Met",
+      "detail": "CI green on the gate revision: run 50, id 36783528373, at bddb637 — conclusion success, 14/14 jobs green."
+    },
+    {
+      "id": "C4",
+      "status": "Met",
+      "detail": "DELIVERY_STATUS.md, the WORK_LOG checkpoint, REQ-PHS-004 / REQ-UX-007 evidence and the disposition refreshed at the gate revision."
+    },
+    {
+      "id": "C5",
+      "status": "Met",
+      "detail": "QA-P2-04 fix merged (88f1a88 and later). Remainders carried below (QA-P1R-05 and the English escalation titles)."
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "DOM-P2F-02",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "backend-data-engineer (governance/documents)",
+      "gate": "P3 gate",
+      "detail": "External-approval evidence re-verified by the approval's own recorder counts again"
+    },
+    {
+      "id": "DOM-P2F-04",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "backend-data-engineer (planning)",
+      "gate": "P3 gate",
+      "detail": "Prerequisite removal fails open without an accountable person; the 'blocked party' is narrower than who can start the task"
+    },
+    {
+      "id": "DOM-P2F-05",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "backend-data-engineer (governance) — with a generic reassessment job",
+      "gate": "P6",
+      "detail": "After external-approval evidence fails, approvals that relied on it (other than gate cycles) are not flagged; no command re-evidences the decision"
+    },
+    {
+      "id": "DOM-P2F-06",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "backend-data-engineer (planning)",
+      "gate": "P3 gate",
+      "detail": "The cost confirmation is not bound to what was assessed"
+    },
+    {
+      "id": "DOM-P2F-07",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "backend-data-engineer (governance) after the governance owner's ruling",
+      "gate": "P3 gate or owner decision",
+      "detail": "Conflict declarations carry over to later meetings and rounds; a declared interest votes without a ruling (governance-owner rule, A-50)"
+    },
+    {
+      "id": "DOM-P2F-10",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "backend-data-engineer (gates)",
+      "gate": "P3 gate",
+      "detail": "The gate path ignores the decision's subject; kind exclusivity rests on matrix types"
+    },
+    {
+      "id": "DOM-P2R-06",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "governance owner (Role — To be confirmed) then backend-data-engineer (gates)",
+      "gate": "owner decision",
+      "detail": "Gate ownership at role level: PM override on G0/G1 and 'any workstream lead' (governance-owner decision)"
+    },
+    {
+      "id": "DOM-P2R-08",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "governance owner (Role — To be confirmed) then backend-data-engineer (governance)",
+      "gate": "owner decision",
+      "detail": "A secretariat recusal on behalf of a member before the member votes needs only a reason (governance-owner ruling)"
+    },
+    {
+      "id": "C5 remainders",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "ux-frontend-engineer + backend-data-engineer",
+      "gate": "P6",
+      "detail": "Escalation titles composed in English, template values without Arabic, the server's refusal detail in English (QA-P1R-05)"
+    },
+    {
+      "id": "SEC-P34-12",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "backend-data-engineer (security fixes, in progress)",
+      "gate": "P3 gate",
+      "detail": "SEC-P2-01 residual: a prerequisite label applies the read permission without its reach (a workstream-only reader sees an agreement's code and title)"
+    },
+    {
+      "id": "SEC-P34-13",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "backend-data-engineer (security fixes, in progress)",
+      "gate": "P3 gate",
+      "detail": "SEC-P2-02 residual: a voting member who is not the requester can add evidence to the requester's draft paper"
+    },
+    {
+      "id": "QA-P1-09 (partial), QA-P1R-04, SEC-P1S-05/06/08",
+      "severity": "Low",
+      "status": "Open",
+      "owner": "devops-platform-engineer / security-privacy-reviewer",
+      "gate": "P7",
+      "detail": "Carried from the P1 gate report"
+    }
+  ],
+  "governance_owner_questions": [
+    "Q-40 (who closes voting when the chair is recused), Q-41 (abstentions and ties), Q-43 (cost confirmation rule)",
+    "O-1 / A-52: a decision linked to any earlier gate cycle (including a rejected one) cannot back a later cycle; one decision backs one record of each kind",
+    "A-50: conflict declarations required before voting; A-53",
+    "DOM-P2R-06, DOM-P2R-08 (above)",
+    "From P4: the 30-day long-stop warning, an extension decision type, and whether a decision paper can name a closing / model version / TSA / cutover plan (subject rule 'required')"
+  ],
+  "assumptions": [
+    "docs/assumptions-and-open-questions.md"
+  ],
+  "external_dependencies": [
+    "Reference image and Excel workbook not provided — image extraction NOT performed",
+    "Mobily IdP, object store, malware scanner, SMTP/Teams, SIEM, approved model endpoint, infrastructure: Not configured",
+    "No Docker daemon in the build environment: images, Compose and Helm validated only in CI; Helm install NOT EXECUTED"
+  ],
+  "gate": "PASS WITH CONDITIONS",
+  "gate_note": "All three independent reviews (domain, security, QA) returned PASS WITH CONDITIONS with no open Critical or High finding in P2 scope, and every required verification was executed at the gate revision. The open items are Low, each with an owner and a target, plus governance-owner decisions. This is an engineering gate, not Mobily production approval; nothing here means Production Ready.",
+  "next_action": "P2 residuals (C1) and the P3/P4 reviews in parallel; C2 re-check inside those reviews; then the P3 and P4 gates."
+}
