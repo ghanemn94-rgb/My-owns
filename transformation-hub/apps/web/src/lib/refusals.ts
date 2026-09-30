@@ -172,6 +172,21 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'xproj.same_project': 'planning.refusal.codes.xproj_same_project',
   'xproj.already_closed': 'planning.refusal.codes.xproj_already_closed',
   'xproj.local_item_incomplete': 'planning.refusal.codes.xproj_local_item_incomplete',
+  // JV: signing after G5 (DOM-P4-02), CP determinations and dates (DOM-P4-03/04), DD evidence (DOM-P4-05), G7 (DOM-P4-11)
+  'jv.signing.g5_not_passed': 'jv.refusal.codes.signing_g5_not_passed',
+  'jv.signing.g5_under_reassessment': 'jv.refusal.codes.signing_g5_under_reassessment',
+  'jv.signing.decision_not_g5': 'jv.refusal.codes.signing_decision_not_g5',
+  'jv.cp.blocking_release_not_allowed': (d) => ({ key: d?.['waivable'] === true ? 'jv.refusal.codes.cp_blocking_release_waivable' : 'jv.refusal.codes.cp_blocking_release_non_waivable' }),
+  'jv.cp.validity_locked': 'jv.refusal.codes.cp_validity_locked',
+  'jv.cp.long_stop_extension_required': 'jv.refusal.codes.cp_long_stop_extension_required',
+  'jv.cp.extension_invalid_state': 'jv.refusal.codes.cp_extension_invalid_state',
+  'jv.cp.extension_no_long_stop': 'jv.refusal.codes.cp_extension_no_long_stop',
+  'jv.cp.extension_date_invalid': 'jv.refusal.codes.cp_extension_date_invalid',
+  'jv.cp.extension_decision_not_final': 'jv.refusal.codes.cp_extension_decision_not_final',
+  'jv.cp.extension_decision_already_used': 'jv.refusal.codes.cp_extension_decision_already_used',
+  'jv.dd.evidence_changed': 'jv.refusal.codes.dd_evidence_changed',
+  'jv.dd.evidence_not_pinned': 'jv.refusal.codes.dd_evidence_not_pinned',
+  'jv.program_closure.g7_under_reassessment': 'jv.refusal.codes.program_closure_g7_under_reassessment',
 };
 
 /** `(error) => translated explanation | null` for the active locale. */

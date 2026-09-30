@@ -96,7 +96,7 @@ function RequestDialogs({ r, cmd, onClose }: { r: DdRequestDetail; cmd: Cmd; onC
           {...common}
           title={t('jv.dd.cmd.submit.title')}
           confirmLabel={t('jv.dd.cmd.submit.confirm')}
-          consequences={[t('jv.dd.cmd.submit.effect'), t('common.command.audited')]}
+          consequences={[t('jv.dd.cmd.submit.effect'), ...(r.evidenceDocumentIds.length ? [t('jv.dd.cmd.submit.pins')] : []), t('common.command.audited')]}
           onConfirm={async ({ note }) => {
             await api(jvRoutes.submitDdAnswer, { params, body: { expectedVersion: r.version, ...(note ? { note } : {}) } });
             await done(t('jv.common.saved'));
@@ -110,7 +110,7 @@ function RequestDialogs({ r, cmd, onClose }: { r: DdRequestDetail; cmd: Cmd; onC
           title={t('jv.dd.cmd.review.title')}
           confirmLabel={t(`jv.dd.cmd.review.${outcome}`)}
           danger={outcome === 'withhold'}
-          consequences={[t(`jv.dd.cmd.review.effect.${outcome}`), t('jv.dd.cmd.review.sod'), t('common.command.audited')]}
+          consequences={[t(`jv.dd.cmd.review.effect.${outcome}`), t('jv.dd.cmd.review.sod'), ...(outcome === 'approve' && r.evidenceDocumentIds.length ? [t('jv.dd.cmd.review.pinnedRule')] : []), t('common.command.audited')]}
           onConfirm={async ({ note }) => {
             await api(jvRoutes.reviewDdAnswer, { params, body: { expectedVersion: r.version, outcome, ...(note ? { note } : {}) } });
             await done(t('jv.common.saved'));
@@ -224,9 +224,20 @@ export default function DdRequestPage() {
                   label: t('jv.dd.fields.evidence'),
                   value: r.evidenceDocumentIds.length ? (
                     <span className="flex flex-col">
-                      {r.evidenceDocumentIds.map((id) => (
-                        <DocumentLink key={id} id={id} />
-                      ))}
+                      {r.evidenceDocumentIds.map((id) => {
+                        // DOM-P4-05: the version pinned at submission is the one reviewed and disclosed.
+                        const pin = r.evidenceVersions.find((x) => x.documentId === id);
+                        return (
+                          <span key={id} className="flex flex-wrap items-center gap-x-2">
+                            <DocumentLink id={id} />
+                            {pin ? (
+                              <span className={cx('text-xs', pin.current ? 'text-muted' : 'text-danger')} data-testid="dd-evidence-pin" data-current={pin.current ? 'true' : 'false'}>
+                                {pin.current ? t('jv.dd.evidencePinned') : t('jv.dd.evidencePinnedStale')}
+                              </span>
+                            ) : null}
+                          </span>
+                        );
+                      })}
                     </span>
                   ) : (
                     EM_DASH

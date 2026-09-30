@@ -393,7 +393,7 @@
   acceptance_tests: ["UT: G5–G7 criteria seeded with evidence types"]
   phase: P4
   status: Tested
-  evidence: ['jv jv-demo-seed.spec.ts "UT (REQ-LCY-004): G5–G7 criteria are seeded from the template with their evidence types"', 'validate:templates executed at 124f3d8 (G5 9, G6 7, G7 8 criteria; G5 prerequisite closure G0, G1)', G5–G7 criterion content vs spec §3 checked by inspection only; the P4 domain review has not run]
+  evidence: ['jv jv-demo-seed.spec.ts "UT (REQ-LCY-004): G5–G7 criteria are seeded from the template with their evidence types"', 'validate:templates executed at 124f3d8 (G5 9, G6 7, G7 8 criteria; G5 prerequisite closure G0, G1)', 'G5–G7 criterion content vs spec §3 checked by the P4 domain review (docs/reviews/P4-domain-review.md §5: matches; G7-C02 "100-day" wording traced to spec §6 workstream 12 and marked a template label to be confirmed in docs/governance/business-gates.md, DOM-P4-17)']
 - id: REQ-LCY-005
   section: "3"
   title: "Gate evidence is a proposal; applicability set by specialists"
@@ -441,7 +441,7 @@
   acceptance_tests: ["AT-06", "E2E: cockpit shows Incorporated alongside Transfer In progress"]
   phase: P3
   status: Tested
-  evidence: [carveout at-06-incorporation-separate.spec.ts "Legal verifies against evidence; incorporation is verified but transfers and operations stay pending → not complete", D newco.test.ts "incorporated_verified alongside transfer in progress and readiness pending", 'e2e p3-carveout.spec.ts "(b) AT-06: incorporation status recorded ≠ verified; recording and verifying it leaves transfers and the carve-out untouched" (passed at 124f3d8 in a separate run of tests (b)–(d); the full run skipped it after (a) failed)']
+  evidence: [carveout at-06-incorporation-separate.spec.ts "Legal verifies against evidence; incorporation is verified but transfers and operations stay pending → not complete", D newco.test.ts "incorporated_verified alongside transfer in progress and readiness pending", 'e2e p3-carveout.spec.ts "(b) AT-06: incorporation status recorded ≠ verified; recording and verifying it leaves transfers and the carve-out untouched" (passed at 124f3d8 in a separate run of tests (b)–(d); the full run skipped it after (a) failed)', 'jv_transaction states as documented (DOM-P4-10): jv p4-domain-fixes.spec.ts "DOM-P4-10: not started → partner preparation → diligence and negotiation, from the partner process"; "DOM-P4-10: closing in preparation → closing_conditions_in_progress; an aborted closing is not counted and is disclosed"; D p4-domain-fixes.test.ts "aborted events are not counted (one confirmed + one aborted closing is closed) and are disclosed"']
 - id: REQ-LCY-008
   section: "3"
   title: "Partner preparation in parallel with separation"
@@ -473,7 +473,7 @@
   acceptance_tests: ["AT-11", "UT: signing completion does not change closing status", "UT: two closings with independent CP sets and states"]
   phase: P4
   status: Implemented
-  evidence: ['status lowered to Implemented at the P4 domain review (docs/reviews/P4-domain-review.md, DOM-P4-02 open; probes in apps/api/test/reviews/p4-domain-*.spec.ts)', 'jv at-11-partner-parallel.spec.ts "UT: signing completion does not change closing status (signing is never mistaken for completion)"; "UT: two closings with independent CP sets and states; closing waits for its own signing"', D jv.test.ts "closing depends on its own confirmed signing; signing is a separate event"]
+  evidence: ['DOM-P4-02 fixed (signing only after gate G5, on the decision that approved it): jv p4-domain-fixes.spec.ts "DOM-P4-02: before G5 passes, a FINAL signing authorization is refused (422 jv.signing.g5_not_passed); the detail shows G5"; "DOM-P4-02 / -10: with G5 approved the dimension is signing_ready; only the decision that approved G5 authorizes the signing"; "DOM-P4-02: G5 flagged for reassessment after the request → recording refused inside the transaction and audited"; "DOM-P4-02: after G5 is reassessed on a fresh decision, the pending request on the old decision is refused; a new one records the signing"', 'probe turned regression: reviews p4-domain-jv.spec.ts "DOM-P4-02: a signing cannot be recorded before gate G5 (JV Signing Readiness) has passed ... (fixed, regression)"; D p4-domain-fixes.test.ts "refuses an approval flagged for controlled reassessment"', 'stays Implemented: DOM-P4-01 open (one closing-confirmation decision confirms several closings; decision-use facility pending — docs/reviews/P4-domain-review.md)', 'jv at-11-partner-parallel.spec.ts "UT: signing completion does not change closing status (signing is never mistaken for completion)"; "UT: two closings with independent CP sets and states; closing waits for its own signing"', D jv.test.ts "closing depends on its own confirmed signing; signing is a separate event"]
 - id: REQ-LCY-010
   section: "3"
   title: "Complete gate structure"
@@ -1793,7 +1793,7 @@
   acceptance_tests: ["UT: snapshot without currency/unit/period rejected"]
   phase: P4
   status: Tested
-  evidence: ['finance at-29-currency-unit-aggregation.spec.ts "UT: snapshot without currency/unit/period rejected"', D finance.test.ts "a figure without any source is rejected; an import keeps document + sheet + cell", 'finance finance-figures.spec.ts "a third person approves; the approval record is appended, the approval date is the project-local date, the figure is locked"', 'backend only: the Finance & Value screen is in progress (REQ-UX-013)']
+  evidence: ['finance at-29-currency-unit-aggregation.spec.ts "UT: snapshot without currency/unit/period rejected"', D finance.test.ts "a figure without any source is rejected; an import keeps document + sheet + cell", 'finance finance-figures.spec.ts "a third person approves; the approval record is appended, the approval date is the project-local date, the figure is locked"', 'screen: e2e p4-finance.spec.ts "Finance & Value screens in en / ar / 390 px with the Demo badge on seeded records"']
 - id: REQ-FIN-002
   section: "7.5"
   title: "Separation cost categories without double counting"
@@ -1841,7 +1841,7 @@
   acceptance_tests: ["UT: unreconciled intercompany difference flagged"]
   phase: P4
   status: Tested
-  evidence: ['finance finance-figures.spec.ts "UT: unreconciled intercompany difference flagged"; "reconciling needs an explained difference and a reviewer other than the preparer"; "a balance without its counterparty confirmation is flagged; working capital is tracked as a reference figure"', 'D finance.test.ts "UT: unreconciled intercompany difference flagged"']
+  evidence: ['finance finance-figures.spec.ts "UT: unreconciled intercompany difference flagged"; "reconciling needs an explained difference and a reviewer other than the preparer"; "a balance without its counterparty confirmation is flagged; working capital is tracked as a reference figure"', 'D finance.test.ts "UT: unreconciled intercompany difference flagged"', 'reviewer independent of the creator and the last preparer (DOM-P4-16): finance p4-domain-fixes-finance.spec.ts "the creator cannot review after another person edited the explanation; a third person can"']
 - id: REQ-FIN-005
   section: "7.5"
   title: "Versioned business plans and valuation cases"
@@ -1921,7 +1921,7 @@
   acceptance_tests: ["UT: benefit realization requires verification source"]
   phase: P4
   status: Tested
-  evidence: ['finance finance-registers.spec.ts "UT: benefit realization requires verification source"; "the owner / reporter cannot verify, nor can a service identity; an independent Finance verifier can"', 'D finance.test.ts "UT: benefit realization requires verification source"']
+  evidence: ['finance finance-registers.spec.ts "UT: benefit realization requires verification source"; "the owner / reporter cannot verify, nor can a service identity; an independent Finance verifier can"', 'D finance.test.ts "UT: benefit realization requires verification source"', 'accepted definition, baseline, target and value need re-acceptance (DOM-P4-12): finance p4-domain-fixes-finance.spec.ts "definition / baseline / target / value locked after acceptance; revision returns it to proposed; a fresh independent acceptance"']
 - id: REQ-FIN-010
   section: "7.5"
   title: "Human financial validation before approval"
@@ -1956,7 +1956,7 @@
   acceptance_tests: ["AT-03", "IT: partner A room invisible to partner B users"]
   phase: P4
   status: Tested
-  evidence: ['jv at-03-partner-room-isolation.spec.ts "partner B ... user sees only its own room, disclosures and DD requests — A ... are 404 (never 403), counts exclude them"; "RLS (defence in depth): partner B ... database context holds no row of room A"', 'backend only: the JV & Diligence screen (partner workspace) is in progress (REQ-UX-014)']
+  evidence: ['jv at-03-partner-room-isolation.spec.ts "partner B ... user sees only its own room, disclosures and DD requests — A ... are 404 (never 403), counts exclude them"; "RLS (defence in depth): partner B ... database context holds no row of room A"', 'screen: e2e p4-jv.spec.ts "AT-03: the partner-A user sees only its own room" (REQ-UX-014)']
 - id: REQ-JV-002
   section: "8"
   title: "Partner longlist/shortlist with criteria and conflicts"
@@ -2099,8 +2099,8 @@
   security_rule: "Release requires approval by a role other than the drafter"
   acceptance_tests: ["UT: release without approval rejected"]
   phase: P4
-  status: Implemented
-  evidence: ['status lowered to Implemented at the P4 domain review (docs/reviews/P4-domain-review.md, DOM-P4-05 open; probes in apps/api/test/reviews/p4-domain-*.spec.ts)', 'jv jv-diligence.spec.ts "UT: release without approval is rejected (and logged); the drafter never reviews or releases"; "the counterparty raises a question in its room; the deal team sees the internal projection"', 'D jv.test.ts "release requires the approved review, a separate reviewer and releaser"']
+  status: Tested
+  evidence: ['DOM-P4-05 fixed (the evidence versions pinned at submission are the ones reviewed and disclosed): reviews p4-domain-jv.spec.ts "DOM-P4-05: releasing a reviewed DD answer never discloses an evidence version the reviewer did not see ... (fixed, regression)"; jv p4-domain-fixes.spec.ts "a newer evidence version before the review refuses the approval; after resubmission the pinned version is disclosed"', 'jv jv-diligence.spec.ts "UT: release without approval is rejected (and logged); the drafter never reviews or releases"; "the counterparty raises a question in its room; the deal team sees the internal projection"', 'D jv.test.ts "release requires the approved review, a separate reviewer and releaser"; D p4-domain-fixes.test.ts "every evidence document needs its pinned version; a newer current version refuses the review"']
 - id: REQ-JV-011
   section: "8"
   title: "Diligence findings with implications"
@@ -2147,8 +2147,8 @@
   security_rule: "verifyCP restricted to authorized verifier; AI identities excluded"
   acceptance_tests: ["AT-12", "UT: verifyCP without evidence rejected"]
   phase: P4
-  status: Implemented
-  evidence: ['status lowered to Implemented at the P4 domain review (docs/reviews/P4-domain-review.md, DOM-P4-01/03/04/08 open; probes in apps/api/test/reviews/p4-domain-*.spec.ts)', 'jv at-12-closing-blocked-cp.spec.ts "UT: verifyCP without evidence is rejected (and logged); submitting without evidence is rejected"', 'jv at-13-cp-non-waivable.spec.ts "only a specialist determines waivability (documented basis); the PM cannot"; "a waiver needs the specialist-set authority: approval outside it is refused; the CP stays unmet"', D jv.test.ts "verifyCP without evidence is rejected; the owner / evidence submitter cannot verify"]
+  status: Tested
+  evidence: ['DOM-P4-03 and DOM-P4-04 fixed (the two findings the P4 domain review held against this requirement): jv p4-domain-fixes.spec.ts "a functional approver and a Finance member (both hold gates.criterion.set_waivability) are refused (403)"; "Legal cannot release a blocking CP (non-waivable or waivable); the refusal is logged; raising blocking is a recorded determination"; "the validity of a verified CP changes only after a reopen and a fresh verification"; "a long-stop date is set or brought forward; moving it later or clearing it needs an approved extension"; "the daily scan lapses an unsatisfied CP past its long-stop date and escalates it once; an open CP without evidence near its date is escalated"; "a lapsed CP is open again only on an approved extension (FINAL decision, later date, not reused); it cannot be verified meanwhile"', 'probes turned regressions: reviews p4-domain-jv.spec.ts "DOM-P4-03: a functional approver (not a Legal specialist) cannot make a non-waivable blocking CP non-blocking, and the CP keeps blocking the closing ... (fixed, regression)"; "DOM-P4-04: moving the validity date of a verified CP after it lapsed does not clear the blocker without re-verification ... (fixed, regression)"', 'jv at-12-closing-blocked-cp.spec.ts "UT: verifyCP without evidence is rejected (and logged); submitting without evidence is rejected"', 'jv at-13-cp-non-waivable.spec.ts "only a specialist determines waivability (documented basis); the PM cannot"; "a waiver needs the specialist-set authority: approval outside it is refused; the CP stays unmet"', 'D jv.test.ts "verifyCP without evidence is rejected; the owner / evidence submitter cannot verify"; D p4-domain-fixes.test.ts "the validity of a verified or waived CP changes only after it is reopened"; "long-stop scan: lapse past the date, escalate an open CP without evidence inside the (proposed) window"']
 - id: REQ-JV-014
   section: "8"
   title: "Closing deliverables, decisions and executed documents"
@@ -2228,7 +2228,7 @@
   acceptance_tests: ["AT-12", "AT-13", "IT: confirm with one unverified blocking CP rejected and logged"]
   phase: P4
   status: Implemented
-  evidence: ['status lowered to Implemented at the P4 domain review (docs/reviews/P4-domain-review.md, DOM-P4-01 open; probes in apps/api/test/reviews/p4-domain-*.spec.ts)', 'jv at-12-closing-blocked-cp.spec.ts "IT: confirm with one unverified blocking CP is rejected and logged — the CP set is re-evaluated inside the confirm transaction"; "the AI / any service identity cannot confirm a closing, verify a CP or create a waiver — even with the permission allow-listed"', 'jv at-13-cp-non-waivable.spec.ts "an authorized waiver of a waivable CP (sponsor, not the requester) clears the blocker; a non-waivable one never does"', D jv.test.ts "one unverified blocking CP blocks closing even when everything else is complete (no task input exists)"]
+  evidence: ['DOM-P4-03 and DOM-P4-04 fixed (the block can no longer be removed by a non-legal determination or a validity edit): reviews p4-domain-jv.spec.ts "DOM-P4-03: a functional approver (not a Legal specialist) cannot make a non-waivable blocking CP non-blocking, and the CP keeps blocking the closing ... (fixed, regression)"; "DOM-P4-04: moving the validity date of a verified CP after it lapsed does not clear the blocker without re-verification ... (fixed, regression)"; jv p4-domain-fixes.spec.ts "the daily scan lapses an unsatisfied CP past its long-stop date and escalates it once; an open CP without evidence near its date is escalated"', 'stays Implemented: DOM-P4-01 and DOM-P4-08 open (decision reuse, external approval on rejected evidence — decision-use / evidence re-check facility pending; docs/reviews/P4-domain-review.md)', 'jv at-12-closing-blocked-cp.spec.ts "IT: confirm with one unverified blocking CP is rejected and logged — the CP set is re-evaluated inside the confirm transaction"; "the AI / any service identity cannot confirm a closing, verify a CP or create a waiver — even with the permission allow-listed"', 'jv at-13-cp-non-waivable.spec.ts "an authorized waiver of a waivable CP (sponsor, not the requester) clears the blocker; a non-waivable one never does"', D jv.test.ts "one unverified blocking CP blocks closing even when everything else is complete (no task input exists)"]
 - id: REQ-JV-019
   section: "8"
   title: "Program closure follows its own handover criteria"
@@ -2244,7 +2244,7 @@
   acceptance_tests: ["UT: program closure rejected before G7 passes"]
   phase: P4
   status: Tested
-  evidence: ['jv jv-closing-rules.spec.ts "UT: program closure rejected before G7 passes (and logged); then an authorized second person confirms"', D jv.test.ts "program closure is rejected before G7 passes and by the requester"]
+  evidence: ['jv jv-closing-rules.spec.ts "UT: program closure rejected before G7 passes (and logged); then an authorized second person confirms"', D jv.test.ts "program closure is rejected before G7 passes and by the requester", 'G7 approval flagged for reassessment refused (DOM-P4-11): jv p4-domain-fixes.spec.ts "flagged: G7 not passed and the request is refused (logged); unflagged: allowed"']
 
 # ---------------------------------------------------------------- PLN
 
@@ -5781,7 +5781,7 @@
   acceptance_tests: ["AT-11", "AT-12", "AT-13", "AT-29", "REVIEW: docs/phases/P4-gate-report.json"]
   phase: P4
   status: Implemented
-  evidence: ['P4 exit behaviours tested at API level: missing CP blocks closing (jv at-12-closing-blocked-cp.spec.ts), partner isolation (jv at-03-partner-room-isolation.spec.ts), NDA alone grants no access (REQ-JV-005), financial reconciliation (REQ-FIN-004)', 'finance and JV web screens in progress; P4 domain, security and QA reviews not run; closes with docs/phases/P4-gate-report.json']
+  evidence: ['P4 exit behaviours tested at API level: missing CP blocks closing (jv at-12-closing-blocked-cp.spec.ts), partner isolation (jv at-03-partner-room-isolation.spec.ts), NDA alone grants no access (REQ-JV-005), financial reconciliation (REQ-FIN-004)', 'finance and JV web screens merged and tested (REQ-UX-013, REQ-UX-014); P4 domain review run (FAIL at 40fac20 — DOM-P4-02/03/04/05/09/10/11/12/16 fixed since, DOM-P4-01/06/07/08 open, re-review pending); P4 security and QA reviews not run; closes with docs/phases/P4-gate-report.json']
 - id: REQ-PHS-007
   section: "19"
   title: "P5 exit: durable, grounded, safe AI"
@@ -6215,8 +6215,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-04", "AT-10", "AT-12", "E2E: demo scenarios reproduce blocked states"]
   phase: P4
-  status: Implemented
-  evidence: ['blocked CP: jv jv-demo-seed.spec.ts "REQ-SET-004: the demo closing is blocked by an unverified, non-waivable blocking CP"; decision outside authority: governance governance-integrity.spec.ts "seeds the steering committee, distinct boards, an approved DEMO matrix, meeting #1 and the five decision states" (recommended, pending external authority); blocked Day-1 GO: readiness readiness-demo-seed.spec.ts "the Day-1 demo plan shows a blocked GO with the failed connectivity test and its contingency"', 'gap: the demo TSA is only in negotiation with dates, charges and replacement to be confirmed (readiness readiness-demo-seed.spec.ts "the non-waivable waiver attempt was rejected and audited; the TSA is in negotiation with no dates or amounts"), which is not a TSA issue scenario (expired, breached or failed replacement); no E2E reproduces the blocked states (AT)']
+  status: Tested
+  evidence: ['blocked CP: jv jv-demo-seed.spec.ts "REQ-SET-004: the demo closing is blocked by an unverified, non-waivable blocking CP"; e2e p4-jv.spec.ts "AT-12: closing blocked — the message names the unmet CPs and the confirmation is refused" (demo CLO-001 blocked by DEMO-CP-01)', 'TSA issue (DOM-P4-09 fixed, AT-10): readiness readiness-demo-seed.spec.ts "REQ-SET-004 / AT-10 (DOM-P4-09): a synthetic TSA past its end date without an accepted replacement is expired_unresolved and escalated; nothing is extended"; e2e p3-readiness.spec.ts "REQ-SET-004 / AT-10 (DOM-P4-09): the demo TSA issue — past its synthetic end date without an accepted replacement — is shown expired and escalated"', 'decision outside authority: governance governance-integrity.spec.ts "seeds the steering committee, distinct boards, an approved DEMO matrix, meeting #1 and the five decision states" (recommended, pending external authority)', 'blocked Day-1 GO: readiness readiness-demo-seed.spec.ts "the Day-1 demo plan shows a blocked GO with the failed connectivity test and its contingency"']
 - id: REQ-SET-005
   section: "21"
   title: "Demo data labelled and excluded from actual reporting"

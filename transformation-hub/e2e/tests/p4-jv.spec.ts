@@ -5,9 +5,10 @@ import { apiSessionAs, loginAs, watchConsole } from './helpers';
 
 /**
  * P4 JV & Diligence (spec §10 screen 11; spec §8; AT-03, AT-11, AT-12, AT-13) against the real API and demo seed.
- * Fixtures that are not the behaviour under test (documents, governance decisions voted through the DEMO committee, a
- * confirmed signing, a closing ready for confirmation, a partner-B room with a released item) are prepared through the
- * APIs as the real demo personas; every behaviour under test is driven and observed through the UI:
+ * Fixtures that are not the behaviour under test (documents, governance decisions voted through the DEMO committee, gate
+ * G5 approved — DOM-P4-02: a signing is recorded only after G5, on the decision that approved it —, a confirmed signing, a
+ * closing ready for confirmation, a partner-B room with a released item) are prepared through the APIs as the real demo
+ * personas; every behaviour under test is driven and observed through the UI:
  *  - AT-11: partner preparation and DD run while separation gate G3 is not approved; stages are never skipped (the UI
  *    offers only the next stage and the server refuses a skip when the UI is bypassed).
  *  - AT-12: a closing with an unmet CP shows "closing blocked" naming the CPs; the authorized confirmation is refused by
@@ -28,7 +29,18 @@ const P = {
   secretary: 'Demo Secretary / CPMO',
   contributor: 'Demo Contributor',
   partnerAlpha: 'Demo Partner Alpha User',
+  techLead: 'Demo Technology Lead',
 } as const;
+/** Demo persona holding each gate role in DEMO-DC (designated criterion / gate reviewers, gate owners). */
+const GATE_ROLE_PERSONA: Record<string, string> = {
+  project_manager: 'Demo Project Manager',
+  finance_restricted: 'Demo Finance Member',
+  legal_restricted: 'Demo Legal Member',
+  functional_approver: 'Demo Functional Approver',
+  secretary_cpmo: 'Demo Secretary / CPMO',
+  sponsor: 'Demo Sponsor',
+  workstream_lead: 'Demo Technology Lead',
+};
 const STAMP = Date.now().toString(36);
 const MOBILE = { width: 390, height: 844 } as const;
 
@@ -67,7 +79,7 @@ async function uploadDoc(ctx: APIRequestContext, pid: string, title: string, opt
  * delegation: the committee votes a recommendation (recorded by the secretariat) and the authorized body's approval is
  * recorded by another person (the chair) with a synthetic reference — the path the server accepts as a final approval.
  */
-async function finalJvDecision(baseURL: string, pid: string, decisionTypeKey: string): Promise<string> {
+async function finalJvDecision(baseURL: string, pid: string, decisionTypeKey: string, gateKey?: string): Promise<string> {
   const base = `/api/v1/projects/${pid}`;
   const pm = await apiSessionAs(baseURL, P.pm);
   const sec = await apiSessionAs(baseURL, P.secretary);
@@ -80,6 +92,7 @@ async function finalJvDecision(baseURL: string, pid: string, decisionTypeKey: st
       committeeId: committee.id,
       title: `E2E ${decisionTypeKey} ${STAMP} (synthetic)`,
       decisionTypeKey,
+      ...(gateKey ? { gateKey } : {}),
       issue: 'Synthetic e2e issue',
       whyNow: 'Needed for the synthetic e2e scenario',
       alternatives: [{ title: 'Proceed' }, { title: 'Do not proceed' }],
@@ -112,6 +125,7 @@ async function finalJvDecision(baseURL: string, pid: string, decisionTypeKey: st
       await voter.dispose();
     }
     const out = await post(sec, `${base}/decisions/${d.id}/record-outcome`, { expectedVersion: (await get(sec, `${base}/decisions/${d.id}`)).version });
+    if (out.status === 'approved') return d.id; // within the committee's DEMO delegation (e.g. gate_decision_operational)
     expect(out.status, `${decisionTypeKey} is outside the committee delegation → recommendation`).toBe('recommended');
     // DOM-P2-12: the external decision rests on an evidence link on the decision that another person verified (PM links,
     // Legal verifies; the chair records the approval).
@@ -135,6 +149,71 @@ async function finalJvDecision(baseURL: string, pid: string, decisionTypeKey: st
     await pm.dispose();
     await sec.dispose();
     await chair.dispose();
+  }
+}
+
+interface GateView {
+  id: string;
+  ownerRole: string;
+  reviewerRole: string;
+  assessment: { status: string; version: number; decisionId: string | null; reassessment: { needsReassessment: boolean } };
+  review: { state: string };
+  criteria: { id: string; key: string; mandatory: boolean; ownerRole: string; reviewerRole: string; evidence: { active: number }; assessment: { status: string; version: number } }[];
+}
+
+/**
+ * DOM-P4-02 fixture: a signing is recorded only after gate G5 (JV Signing Readiness) is approved, on the decision that
+ * approved it. Takes G1 and then G5 of the demo project through the real gate and governance APIs (idempotent — a gate
+ * already approved and not under reassessment is kept): the gate owner starts the cycle, the mandatory criteria are
+ * evidenced (PM, or the contributor where the PM reviews) and accepted by their designated reviewers, the gate reviewer
+ * endorses, the owner submits, and the chair approves on a FINAL decision raised for the gate (G1 within the DEMO
+ * delegation; G5 — a reserved matter — approved by the authorized body with a synthetic reference). Returns the decision
+ * that approved G5. Note: this leaves G1 and G5 approved in the demo database (re-seed to re-run p1-smoke / p2-gates).
+ */
+async function ensureG5Approved(baseURL: string, pid: string): Promise<string> {
+  const base = `/api/v1/projects/${pid}`;
+  const sessions = new Map<string, APIRequestContext>();
+  const as = async (persona: string) => {
+    if (!sessions.has(persona)) sessions.set(persona, await apiSessionAs(baseURL, persona));
+    return sessions.get(persona)!;
+  };
+  const gate = async (key: string): Promise<GateView> => {
+    const list = (await get(await as(P.pm), `${base}/gates`)).items as { id: string; key: string }[];
+    return get(await as(P.pm), `${base}/gates/${list.find((g) => g.key === key)!.id}`);
+  };
+  try {
+    for (const key of ['G1', 'G5']) {
+      let g = await gate(key);
+      if (['approved', 'approved_with_exceptions'].includes(g.assessment.status) && !g.assessment.reassessment.needsReassessment) {
+        if (key === 'G5') return g.assessment.decisionId!;
+        continue;
+      }
+      const owner = GATE_ROLE_PERSONA[g.ownerRole]!;
+      if (['not_started', 'reopened'].includes(g.assessment.status)) await post(await as(owner), `${base}/gates/${g.id}/assessment/start`, { expectedVersion: g.assessment.version });
+      g = await gate(key);
+      if (g.assessment.status === 'in_assessment') {
+        for (const c of g.criteria.filter((x) => x.mandatory && x.assessment.status !== 'met')) {
+          const reviewer = GATE_ROLE_PERSONA[c.reviewerRole];
+          expect(reviewer, `a demo persona holds reviewer role ${c.reviewerRole}`).toBeTruthy();
+          // SEC-P2-05: evidence is linked by the criterion's owner role or the PM; on PM-reviewed criteria, by the owner role.
+          const adder = c.reviewerRole === 'project_manager' ? GATE_ROLE_PERSONA[c.ownerRole] : P.pm;
+          expect(adder, `a demo persona holds owner role ${c.ownerRole} of ${c.key}`).toBeTruthy();
+          if (c.evidence.active === 0) await post(await as(adder!), `${base}/evidence`, { targetType: 'gate_criterion', targetId: c.id, note: `E2E synthetic evidence for ${c.key}` });
+          await post(await as(reviewer!), `${base}/gates/${g.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'met', note: 'E2E review (synthetic)' });
+        }
+        g = await gate(key);
+        if (g.review.state !== 'endorsed') await post(await as(GATE_ROLE_PERSONA[g.reviewerRole]!), `${base}/gates/${g.id}/assessment/review`, { expectedVersion: g.assessment.version, outcome: 'endorse', note: 'E2E: assessment reviewed against the synthetic evidence' });
+        g = await gate(key);
+        await post(await as(owner), `${base}/gates/${g.id}/assessment/mark-ready`, { expectedVersion: g.assessment.version });
+      }
+      const decisionId = await finalJvDecision(baseURL, pid, key === 'G5' ? 'jv_signing_authorization' : 'gate_decision_operational', key);
+      g = await gate(key);
+      await post(await as(P.chair), `${base}/gates/${g.id}/assessment/decide`, { expectedVersion: g.assessment.version, outcome: 'approve', decisionId, note: `E2E: ${key} approved (synthetic)` });
+      if (key === 'G5') return decisionId;
+    }
+    throw new Error('unreachable');
+  } finally {
+    for (const s of sessions.values()) await s.dispose();
   }
 }
 
@@ -354,7 +433,7 @@ test.describe('P4 JV & Diligence', () => {
 
     // (b) Fixture: a confirmed signing and a closing READY for confirmation (CP verified with evidence, confirmation
     //     requested with a final approved decision) — prepared through the APIs as the real personas.
-    const signingDecision = await finalJvDecision(baseURL!, pid, 'jv_signing_authorization');
+    const signingDecision = await ensureG5Approved(baseURL!, pid);
     const closingDecision = await finalJvDecision(baseURL!, pid, 'jv_closing_confirmation');
     const pmApi = await apiSessionAs(baseURL!, P.pm);
     const legalApi = await apiSessionAs(baseURL!, P.legal);
@@ -371,6 +450,16 @@ test.describe('P4 JV & Diligence', () => {
       let sv = (await post(pmApi, `${base}/transaction-events/${signing.id}/transition`, { expectedVersion: 1, command: 'start_preparation' })).version;
       sv = (await post(pmApi, `${base}/transaction-events/${signing.id}/transition`, { expectedVersion: sv, command: 'mark_ready' })).version;
       sv = (await post(pmApi, `${base}/transaction-events/${signing.id}/request-confirmation`, { expectedVersion: sv, decisionId: signingDecision, executedDocumentId: executed })).version;
+      // DOM-P4-02: the signing screen states that G5 is approved — the server re-checks it inside the recording.
+      const signer = await asPersona(browser, P.sponsor);
+      try {
+        await signer.page.goto(`/projects/${pid}/jv/closing/signings/${signing.id}`);
+        await expect(signer.page.getByTestId('signing-gate-state')).toHaveAttribute('data-passed', 'true');
+        await expect(signer.page.getByTestId('signing-gate')).toContainText('Gate G5 (JV Signing Readiness) is approved');
+        expect(signer.problems(), signer.problems().join('\n')).toEqual([]);
+      } finally {
+        await signer.close();
+      }
       const rec = await post(sponsorApi, `${base}/signings/${signing.id}/record`, { expectedVersion: sv });
       expect(rec.status).toBe('confirmed');
       const closing = await post(pmApi, `${base}/closings`, { signingId: signing.id, name: `E2E closing ${STAMP} (synthetic)` });
@@ -450,6 +539,8 @@ test.describe('P4 JV & Diligence', () => {
       await expect(page.getByTestId('cp-not-waivable')).toContainText('NOT waivable');
       await expect(page.getByTestId('cmd-waiver')).toHaveCount(0);
       await expect(page.getByTestId('waivers-table')).toContainText('this condition is not waivable');
+      // DOM-P4-03: only Legal determines blocking status / waivability (the PM is not offered it) …
+      await expect(page.getByTestId('cmd-determine')).toHaveCount(0);
 
       // Bypassing the UI: the request is refused and logged; the condition stays unmet.
       const res = await api.post(`${base}/closing-conditions/${nonWaivable.id}/waivers`, {
@@ -474,6 +565,19 @@ test.describe('P4 JV & Diligence', () => {
       await expect(sp.getByTestId('cp-not-waivable')).toContainText('غير قابل للتنازل');
       await shot(sp, 'jv-ar-cp-non-waivable.png');
       await useLocale(sp, baseURL!, 'en');
+      // … and a Legal determination never releases the blocking status of a blocking CP (the box is locked).
+      const legal = await asPersona(browser, P.legal);
+      try {
+        await legal.page.goto(`/projects/${pid}/jv/closing/conditions/${nonWaivable.id}`);
+        await legal.page.getByTestId('cmd-determine').click();
+        await expect(dialog(legal.page).getByTestId('determine-blocking')).toBeChecked();
+        await expect(dialog(legal.page).getByTestId('determine-blocking')).toBeDisabled();
+        await expect(dialog(legal.page)).toContainText('A blocking condition is never released by a determination');
+        await dialog(legal.page).getByRole('button', { name: 'Cancel' }).click();
+        expect(legal.problems(), legal.problems().join('\n')).toEqual([]);
+      } finally {
+        await legal.close();
+      }
       expect(pm.problems(), pm.problems().join('\n')).toEqual([]);
       expect(sponsor.problems(), sponsor.problems().join('\n')).toEqual([]);
     } finally {

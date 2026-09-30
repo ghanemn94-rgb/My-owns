@@ -466,6 +466,11 @@ export const diligenceRequest = pgTable(
     answerDraft: text('answer_draft'),
     draftedBy: uuid('drafted_by'),
     evidenceDocumentIds: jsonb('evidence_document_ids').$type<string[]>().notNull().default([]),
+    /**
+     * DOM-P4-05: the version of each evidence document pinned when the answer was submitted for review — the versions the
+     * reviewer approves and the release discloses (same-project trigger, post-migrate §16).
+     */
+    evidenceVersionIds: jsonb('evidence_version_ids').$type<string[]>().notNull().default([]),
     reviewerUserId: uuid('reviewer_user_id').references(() => appUser.id),
     submittedForReviewBy: uuid('submitted_for_review_by'),
     submittedForReviewAt: ts('submitted_for_review_at'),
@@ -613,6 +618,13 @@ export const closingCondition = pgTable(
     waivabilityDeterminedAt: ts('waivability_determined_at'),
     validTo: date('valid_to', { mode: 'string' }),
     longStopDate: date('long_stop_date', { mode: 'string' }),
+    /**
+     * DOM-P4-04 (G6-C03): the last approved extension of the long-stop date — the FINAL governance decision that approved
+     * it, who recorded it and when (the previous date is in the audit trail).
+     */
+    longStopExtensionDecisionId: uuid('long_stop_extension_decision_id'),
+    longStopExtendedBy: uuid('long_stop_extended_by'),
+    longStopExtendedAt: ts('long_stop_extended_at'),
     status: conditionStatus('status').notNull().default('open'),
     evidenceSubmittedBy: uuid('evidence_submitted_by'),
     evidenceSubmittedAt: ts('evidence_submitted_at'),
@@ -629,6 +641,7 @@ export const closingCondition = pgTable(
   },
   (t) => [
     projectFk('closing_condition_waiver_fk', t.projectId, t.waiverId, (): FkTarget => waiver),
+    projectFk('closing_condition_extension_decision_fk', t.projectId, t.longStopExtensionDecisionId, (): FkTarget => decision),
     unique('closing_condition_pid_uq').on(t.projectId, t.id),
     uniqueIndex('closing_condition_ref_uq').on(t.projectId, t.reference),
     projectFk('closing_condition_closing_fk', t.projectId, t.closingId, (): FkTarget => closing),

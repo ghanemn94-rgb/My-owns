@@ -243,7 +243,7 @@ are checked by `apply_status.py --check`.
 
 | ID | Title | Status | Evidence (tests cited in status-evidence.yaml) | Gap / note | Disposition | Owner |
 |---|---|---|---|---|---|---|
-| REQ-LCY-004 | G5–G7 transaction gate templates | Tested | validate:templates; jv jv-demo-seed | G5–G7 content vs spec §3 inspected only (P4 domain review not run) | Done | — |
+| REQ-LCY-004 | G5–G7 transaction gate templates | Tested | validate:templates; jv jv-demo-seed | G5–G7 content vs spec §3 checked by the P4 domain review (§5: matches; G7-C02 "100-day" wording noted, DOM-P4-17) | Done | — |
 | REQ-LCY-008 | Partner preparation in parallel with separation | Tested | jv at-11-partner-parallel; D jv; gates gate-evaluation-rules | — | Done | — |
 | REQ-LCY-009 | Signing separate from Closing; multiple closings | Tested | jv at-11-partner-parallel; D jv | — | Done | — |
 | REQ-ENT-012 | Partner, advisor and Clean Team data separation | Tested | jv at-03-partner-room-isolation; documents clean-team-room; documents at-03-documents-isolation | — | Done | — |
@@ -380,9 +380,9 @@ are checked by `apply_status.py --check`.
 | AT-07 perimeter change after baseline | PER-002, PER-004, PER-005, PLN-013, UX-010, UX-015, PHS-005 | Tested (API); UI E2E FAILED at `124f3d8` (F-13) | `carveout at-07-perimeter-change-control.spec.ts`, `carveout setup-wizard.spec.ts`, D `perimeter.test.ts`; e2e `p3-carveout.spec.ts` (a) FAILED |
 | AT-08 Day-1 contract that cannot transfer | AGR-006, AGR-008 | Tested | `carveout at-08-day1-contract-position.spec.ts`, D `perimeter.test.ts` |
 | AT-09 failed readiness blocks go-live | RDY-001, RDY-004, UX-012, PHS-005 | Tested | `readiness at-09-readiness-go-no-go.spec.ts`, `readiness readiness-demo-seed.spec.ts`, D `readiness.test.ts`; e2e `p3-readiness.spec.ts` AT-09 |
-| AT-10 TSA end date is not an exit | TSA-003, TSA-004, TSA-005, TSA-006, UX-012, SET-004 | Tested | `readiness at-10-tsa-expiry.spec.ts`, D `readiness.test.ts`; e2e `p3-readiness.spec.ts` AT-10 |
-| AT-11 partner work in parallel; signing ≠ closing | LCY-008, LCY-009, JV-003, JV-012, UX-014 | Tested (API); screen Planned | `jv at-11-partner-parallel.spec.ts`, `gates gate-evaluation-rules.spec.ts` (G5 needs only G1), D `jv.test.ts` |
-| AT-12 missing CP blocks closing | LCY-011, PLN-018, JV-013, JV-017, JV-018, JV-019, UX-014, SET-004 | Tested (API); screen Planned | `jv at-12-closing-blocked-cp.spec.ts`, `gates at-12-gate-side.spec.ts`, `planning measurement.spec.ts`, D `jv.test.ts`, D `rules.test.ts` |
+| AT-10 TSA end date is not an exit | TSA-003, TSA-004, TSA-005, TSA-006, UX-012, SET-004 | Tested; demo TSA issue scenario added (DOM-P4-09) | `readiness at-10-tsa-expiry.spec.ts`, `readiness readiness-demo-seed.spec.ts` (demo TSA issue), D `readiness.test.ts`; e2e `p3-readiness.spec.ts` AT-10 and demo TSA issue |
+| AT-11 partner work in parallel; signing ≠ closing | LCY-008, LCY-009, JV-003, JV-012, UX-014 | Tested (API + screen); signing after G5 fixed (DOM-P4-02) | `jv at-11-partner-parallel.spec.ts`, `jv p4-domain-fixes.spec.ts` (DOM-P4-02), `gates gate-evaluation-rules.spec.ts` (G5 needs only G1), D `jv.test.ts`; e2e `p4-jv.spec.ts` AT-11 |
+| AT-12 missing CP blocks closing | LCY-011, PLN-018, JV-013, JV-017, JV-018, JV-019, UX-014, SET-004 | Tested (API + screen); DOM-P4-01/08 open | `jv at-12-closing-blocked-cp.spec.ts`, `jv p4-domain-fixes.spec.ts` (DOM-P4-03/04), `gates at-12-gate-side.spec.ts`, `planning measurement.spec.ts`, D `jv.test.ts`, D `rules.test.ts`; e2e `p4-jv.spec.ts` AT-12 |
 | AT-13 non-waivable condition | LCY-012, LCY-013, JV-013, JV-018 | Tested | `gates at-13-non-waivable.spec.ts`, `jv at-13-cp-non-waivable.spec.ts`, `readiness readiness-waiver-n02.spec.ts`, D `rules.test.ts` |
 | AT-14 conflicting / defective evidence | LCY-015, DAT-014 | Tested | `gates at-14-reassessment.spec.ts`, `gates p2-gate-authority-reassessment.spec.ts` (DOM-P2-05), `documents at-14-conflicting-evidence.spec.ts`, `documents at-01-claim-verification.spec.ts` (DOM-P2-19) |
 | AT-15 predecessor delay impact | PLN-008, PLN-009, PLN-023, PLN-024, UX-008 | Tested (AI-schema part of PLN-023 → P5) | `planning at-15-delay-impact.spec.ts`, `planning schedule-rules.spec.ts`, D `schedule.test.ts` |
@@ -390,7 +390,7 @@ are checked by `apply_status.py --check`.
 | AT-19 access revoked after scheduling | PLT-008, JV-009 | JV side Tested; notification side Deferred to P6 | `jv at-03-partner-room-isolation.spec.ts` (revoked grant blocks downloads, history kept); AI side is P5 (`ai at-19-ai-revocation.spec.ts`) |
 | AT-25 malicious / oversized upload | SEC-013 | Tested (enterprise scanner Not configured) | `documents at-25-file-safety.spec.ts`, D `documents.test.ts` |
 | AT-27 legal hold | DAT-010 | Tested | `documents at-27-legal-hold.spec.ts`, `P1 projects-templates-audit.spec.ts` |
-| AT-29 currency / unit aggregation | DAT-004, FIN-007, UX-013, PHS-006 | Tested (API); screen Planned | `finance at-29-currency-unit-aggregation.spec.ts`, D `finance.test.ts`, D `rules.test.ts` |
+| AT-29 currency / unit aggregation | DAT-004, FIN-007, UX-013, PHS-006 | Tested (API + screen) | `finance at-29-currency-unit-aggregation.spec.ts`, D `finance.test.ts`, D `rules.test.ts`; e2e `p4-finance.spec.ts` AT-29 |
 | AT-30 governance journey (part) | GOV-018, UX-018 | Governance part Tested; AT-30 as a whole with REQ-PLT-003 (P8) | `governance decision-lifecycle.spec.ts`; e2e `p2-planning.spec.ts` (b) (approval found in My Work) |
 
 ## 8. Recommended follow-ups for other documents (not edited here)

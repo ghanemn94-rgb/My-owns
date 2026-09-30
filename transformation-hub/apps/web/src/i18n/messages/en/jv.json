@@ -681,7 +681,8 @@
         "action": "Submit for review",
         "title": "Submit the answer for review",
         "confirm": "Submit",
-        "effect": "The reviewer can approve the release, return it to draft or withhold it."
+        "effect": "The reviewer can approve the release, return it to draft or withhold it.",
+        "pins": "The current version of each evidence document is recorded: it is the version the reviewer approves and the release discloses."
       },
       "review": {
         "action": "Review",
@@ -694,7 +695,8 @@
           "approve": "The answer is approved for release (it is not released yet).",
           "return": "The answer goes back to draft.",
           "withhold": "The answer is withheld from the partner."
-        }
+        },
+        "pinnedRule": "You review the evidence versions submitted for review; the release discloses exactly those versions."
       },
       "release": {
         "action": "Release to partner",
@@ -704,7 +706,9 @@
         "evidence": "Evidence documents released with it: {count}",
         "done": "Released — evidence documents disclosed: {count}."
       }
-    }
+    },
+    "evidencePinned": "Version submitted for review",
+    "evidencePinnedStale": "A newer version exists — not reviewed; the release discloses the reviewed version"
   },
   "findings": {
     "title": "DD findings",
@@ -858,7 +862,8 @@
       "finalDecision": "Link the governance decision of the required type; only its final approval authorizes the confirmation.",
       "executedCopy": "A signing needs the executed copy of the agreement.",
       "executedDocument": "Executed document",
-      "done": "Confirmation requested."
+      "done": "Confirmation requested.",
+      "g5Rule": "A signing needs gate G5 approved: link the decision that approved it (checked again when the signing is recorded)."
     },
     "confirm": {
       "closing": "Confirm closing",
@@ -872,6 +877,12 @@
       "blockedReason": "Not available: the event has open blockers (see Readiness).",
       "ownRequest": "You requested this confirmation: another authorized person must confirm it.",
       "notYet": "Confirmation becomes available when the event is ready and a confirmation has been requested."
+    },
+    "signingGate": {
+      "passed": "Gate G5 (JV Signing Readiness) is approved: the signing is recorded on the decision that approved it.",
+      "pending": "Gate G5 (JV Signing Readiness) is {status}: a signing can be requested and recorded only after G5 is approved.",
+      "notAssessed": "not assessed",
+      "reassessment": "The approval of gate G5 is flagged for controlled reassessment: no signing can be requested or recorded until it is reassessed."
     }
   },
   "checklist": {
@@ -957,7 +968,8 @@
       "evidence": "Evidence",
       "evidenceSubmittedBy": "Evidence submitted by",
       "verifiedBy": "Verified by",
-      "gate": "Gate"
+      "gate": "Gate",
+      "longStopExtension": "Long-stop extension"
     },
     "add": {
       "action": "Add CP",
@@ -995,7 +1007,9 @@
         "title": "Determine blocking status and waivability",
         "confirm": "Record determination",
         "waivable": "Waivable",
-        "effect": "Records the specialist determination with its documented basis."
+        "effect": "Records the specialist determination with its documented basis.",
+        "legalOnly": "Legal specialists only; the determination is recorded with its basis and audited.",
+        "blockingLocked": "A blocking condition is never released by a determination (a waivable one only through an approved waiver)."
       },
       "waiver": {
         "action": "Request waiver"
@@ -1003,7 +1017,18 @@
       "edit": {
         "action": "Edit",
         "title": "Edit the condition",
-        "effect": "Changes descriptive fields only (never status or waivability)."
+        "effect": "Changes descriptive fields only (never status or waivability).",
+        "validityLocked": "The validity of a verified or waived condition changes only after it is reopened.",
+        "longStopRule": "A long-stop date can be set or brought forward here; moving it later needs an approved extension."
+      },
+      "extend": {
+        "action": "Extend long-stop date",
+        "title": "Record an approved extension of the long-stop date",
+        "confirm": "Record extension",
+        "effect": "The long-stop date moves to the new date on the approving decision (recorded on the condition and audited).",
+        "newDate": "New long-stop date",
+        "decisionRule": "Only a final approved decision of the closing authority counts (proposed type: JV closing confirmation — to be confirmed by Legal).",
+        "reopens": "A lapsed condition becomes open again; it still needs evidence and an independent verification."
       }
     },
     "waivers": {
@@ -1028,7 +1053,8 @@
       "rejectEffect": "The waiver is rejected; the condition stays unmet.",
       "sod": "Waiver authority only; not the requester; human only.",
       "ownRequest": "Your request — another person decides"
-    }
+    },
+    "lapsedNotice": "The long-stop date {date} passed without an approved extension: the condition is lapsed and blocks its closing. Only an approved extension opens it again."
   },
   "funds": {
     "title": "Funds flow",
@@ -1145,7 +1171,8 @@
     "decide": "Decide program closure",
     "confirm": "Confirm closure",
     "reject": "Reject",
-    "confirmEffect": "Confirms or rejects the program closure (not the requester; G7 is re-checked)."
+    "confirmEffect": "Confirms or rejects the program closure (not the requester; G7 is re-checked).",
+    "allowedNoReassessment": "No — the G7 approval is under controlled reassessment"
   },
   "external": {
     "title": "Partner rooms",
@@ -1172,5 +1199,24 @@
     "askSubmit": "Send question",
     "asked": "Question #{number} sent.",
     "recorded": "Your access to this room is recorded in its access history."
+  },
+  "refusal": {
+    "codes": {
+      "signing_g5_not_passed": "A signing can be requested and recorded only after gate G5 (JV Signing Readiness) is approved.",
+      "signing_g5_under_reassessment": "The approval of gate G5 is flagged for controlled reassessment (evidence it relied upon changed): no signing can be requested or recorded until G5 is reassessed.",
+      "signing_decision_not_g5": "Link the decision that approved the current gate G5 cycle: only that decision authorizes the signing.",
+      "cp_blocking_release_waivable": "A blocking condition is not made non-blocking by a determination: a waivable condition is released only through an approved waiver.",
+      "cp_blocking_release_non_waivable": "A non-waivable blocking condition stays blocking: an exception cannot override a non-waivable condition.",
+      "cp_validity_locked": "The validity date of a verified or waived condition is what its verification relied on: reopen the condition with a reason and have it verified again.",
+      "cp_long_stop_extension_required": "Moving the long-stop date later, clearing it or changing it on a lapsed condition needs an approved extension (Extend long-stop date).",
+      "cp_extension_invalid_state": "This condition is satisfied or closed: it needs no long-stop extension.",
+      "cp_extension_no_long_stop": "The condition has no long-stop date to extend.",
+      "cp_extension_date_invalid": "The extended long-stop date must be later than the current one and not in the past.",
+      "cp_extension_decision_not_final": "A long-stop extension needs a final approved decision of the closing authority (proposed type: JV closing confirmation — to be confirmed by Legal).",
+      "cp_extension_decision_already_used": "This decision already authorized the current extension; a further extension needs a new decision.",
+      "dd_evidence_changed": "An evidence document has a newer version than the one submitted for review: return the answer to draft and submit it again.",
+      "dd_evidence_not_pinned": "The evidence versions were not recorded when the answer was submitted: return the answer to draft and submit it again.",
+      "program_closure_g7_under_reassessment": "The approval of gate G7 is flagged for controlled reassessment: program closure waits for the reassessment."
+    }
   }
 }

@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, or, SQL } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
   allowedCommands,
+  assertBenefitDefinitionEditable,
   assertBenefitVerifiable,
   assertHumanActor,
   assertNotDeclassified,
@@ -178,6 +179,9 @@ export class BenefitsService {
       return { id: b.id, version: b.version };
     }
     if (LOCKED.includes(b.status)) throw ruleViolation('finance.benefit.locked', `A ${b.status} benefit is closed`);
+    // DOM-P4-12: what the independent reviewer accepted (definition, baseline, target, unit, value) changes only through a
+    // revision (explicit command → proposed → fresh acceptance), never in place.
+    assertBenefitDefinitionEditable(b.status, Object.keys(changes));
     if (b.status === 'realized_unverified' && ('verificationSource' in changes || 'ownerUserId' in changes)) {
       throw ruleViolation('finance.benefit.realization_pending', 'The verification source and owner are fixed while a reported realization awaits verification');
     }
@@ -200,6 +204,18 @@ export class BenefitsService {
     await this.s.audit.record({ action: `finance.benefit.${cmd}`, entityType: 'benefit', entityId: b.id, projectId: b.projectId, before: { status: b.status }, after: { status: to, ...extraAudit }, reason });
     void ctx;
     return { id: b.id, status: row.status, version: row.version };
+  }
+
+  /**
+   * DOM-P4-12: reopen an accepted benefit (approved / tracking) for revision of its definition, baseline or target — back to
+   * `proposed` with a documented reason; the previous acceptance is kept in the record history and it needs a fresh
+   * acceptance by an independent Finance reviewer (G7-C04 "baselined").
+   */
+  async reviseDefinition(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note: string }) {
+    const b = await loadInProject(this.s.db, T, projectId, id);
+    this.s.assert(ctx, 'finance.benefit.manage', { projectId, classification: b.classification, workstreamId: b.workstreamId });
+    assertHumanActor(actorOf(ctx), 'Reopening a benefit definition');
+    return this.apply(ctx, b, 'revise_definition', body.expectedVersion, { approvedBy: null, approvedAt: null, statusNote: body.note }, body.note, { previousApprovedBy: b.approvedBy });
   }
 
   /** Register acceptance of the definition — by a Finance reviewer independent of the creator and the owner. */

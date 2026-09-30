@@ -9,6 +9,8 @@ import { DEMO_AUTHORITY_POLICY } from './demo-policy';
 import { EvidenceService } from '../documents/evidence.service';
 
 export const DEMO_STEERING_COMMITTEE = 'DC Carve-out & JV Steering Committee (Demo)';
+/** (f) The DEMO decision approving the terms of the demo TSA issue scenario (readiness seed — DOM-P4-09, REQ-SET-004). */
+export const DEMO_TSA_DECISION_TITLE = 'Demo — Approve the terms of the legacy monitoring bridge TSA (synthetic)';
 
 const DEMO_NOTE = 'DEMO — synthetic sandbox data (not a Mobily record)';
 
@@ -18,7 +20,8 @@ const DEMO_NOTE = 'DEMO — synthetic sandbox data (not a Mobily record)';
  * frozen pack and approved minutes, and five decisions — (a) approved within mandate → implementation pending with an
  * action, (b) outside delegated authority → recommended / pending external authority with an escalation,
  * (c) submitted awaiting review, (d) draft, (e) gate G0 passage recommended to the delegating authority whose (synthetic)
- * approval is then recorded — it backs the demo G0 gate decision in the gates seed. Everything goes through the services (policy, rules, audit, outbox);
+ * approval is then recorded — it backs the demo G0 gate decision in the gates seed, and (f) the terms of a DEMO TSA approved within
+ * the DEMO limit — it backs the demo TSA issue scenario in the readiness seed (DOM-P4-09). Everything goes through the services (policy, rules, audit, outbox);
  * every record is is_demo because the project is a demo project. Idempotent: skipped when the committee exists.
  */
 export const governanceSeed: ModuleSeed = {
@@ -178,21 +181,36 @@ export const governanceSeed: ModuleSeed = {
         issue: 'DEMO — A shared cooling asset was identified after the perimeter draft.',
       }),
     );
+    // (f) DOM-P4-09 / REQ-SET-004: the terms of a DEMO TSA, within the DEMO limit (synthetic amount) — the readiness seed
+    //     approves the demo TSA issue scenario on it (a TSA past its end date without an accepted replacement, AT-10).
+    const t = await asUser('pm', (ctx) =>
+      decisions.create(ctx, pid, {
+        committeeId: sc.id,
+        title: DEMO_TSA_DECISION_TITLE,
+        ...paper({
+          decisionTypeKey: 'tsa_approval_or_extension',
+          issue: 'DEMO — The legacy monitoring bridge must continue under a transitional service until the replacement is accepted (synthetic).',
+          recommendation: 'DEMO — Approve the TSA terms at 120,000 DEMO-SAR (synthetic).',
+          amount: { amount: '120000.0000', currency: 'SAR', unitScale: 1 },
+          requiredAuthority: 'Steering committee (within DEMO limit of 2,000,000 DEMO-SAR)',
+        }),
+      }),
+    );
 
     // 5. Meeting #1: agenda requests screened onto the agenda, pack frozen, session, attendance, conflicts, quorum.
     const m = await asUser('secretary', (ctx) => meetings.create(ctx, pid, sc.id, { title: 'Demo — Steering Committee meeting #1', scheduledAt: new Date().toISOString(), location: 'DEMO — virtual meeting room' }));
-    for (const d of [a, b, g0]) {
+    for (const d of [a, b, g0, t]) {
       const req = await asUser('pm', (ctx) => meetings.createAgendaRequest(ctx, pid, { committeeId: sc.id, title: `Decision ${d.code}`, kind: 'decision', decisionId: d.id, meetingId: m.id }));
       await asUser('secretary', (ctx) => meetings.screenAgendaRequest(ctx, pid, req.id, { expectedVersion: req.version, outcome: 'accept', meetingId: m.id, note: DEMO_NOTE }));
     }
     const version = async (id: string) => (await asUser('secretary', (ctx) => decisions.get(ctx, pid, id))).version;
-    for (const d of [a, b, g0]) {
+    for (const d of [a, b, g0, t]) {
       const ev = await version(d.id);
       await asUser('pm', (ctx) => decisions.submit(ctx, pid, d.id, { expectedVersion: ev }));
     }
     const cv = await version(c.id);
     await asUser('finance', (ctx) => decisions.submit(ctx, pid, c.id, { expectedVersion: cv }));
-    for (const d of [a, b, g0]) {
+    for (const d of [a, b, g0, t]) {
       const ev = await version(d.id);
       await asUser('secretary', (ctx) => decisions.startReview(ctx, pid, d.id, { expectedVersion: ev }));
     }
@@ -212,16 +230,19 @@ export const governanceSeed: ModuleSeed = {
     const av = await version(a.id);
     const bv = await version(b.id);
     const gv = await version(g0.id);
+    const tv = await version(t.id);
     // REQ-GOV-015: each member declares "no conflict" for the item when casting the vote; every present voting member votes
     // (DOM-P2R-01), so the outcomes can be recorded without closing the vote.
     for (const k of ['chair', 'sponsor', 'finance', 'legal', 'approver']) {
       await asUser(k, (ctx) => decisions.castVote(ctx, pid, a.id, { expectedVersion: av, choice: 'approve', conflictDeclaration: 'no_conflict' }));
       await asUser(k, (ctx) => decisions.castVote(ctx, pid, b.id, { expectedVersion: bv, choice: k === 'legal' ? 'abstain' : 'approve', comment: DEMO_NOTE, conflictDeclaration: 'no_conflict' }));
       await asUser(k, (ctx) => decisions.castVote(ctx, pid, g0.id, { expectedVersion: gv, choice: 'approve', comment: DEMO_NOTE, conflictDeclaration: 'no_conflict' }));
+      await asUser(k, (ctx) => decisions.castVote(ctx, pid, t.id, { expectedVersion: tv, choice: 'approve', comment: DEMO_NOTE, conflictDeclaration: 'no_conflict' }));
     }
     await asUser('chair', (ctx) => decisions.recordOutcome(ctx, pid, a.id, { expectedVersion: av, note: DEMO_NOTE }));
     await asUser('chair', (ctx) => decisions.recordOutcome(ctx, pid, b.id, { expectedVersion: bv, note: DEMO_NOTE }));
     await asUser('chair', (ctx) => decisions.recordOutcome(ctx, pid, g0.id, { expectedVersion: gv, note: DEMO_NOTE }));
+    await asUser('chair', (ctx) => decisions.recordOutcome(ctx, pid, t.id, { expectedVersion: tv, note: DEMO_NOTE }));
 
     // 7. Close, minutes (secretary drafts, chair approves).
     mv = (await asUser('secretary', (ctx) => meetings.command(ctx, pid, m.id, 'close_session', { expectedVersion: mv }))).version;
@@ -229,7 +250,7 @@ export const governanceSeed: ModuleSeed = {
       await asUser('secretary', (ctx) =>
         meetings.draftMinutes(ctx, pid, m.id, {
           expectedVersion: mv,
-          text: `DEMO minutes (synthetic). Quorum met. ${a.code} approved within the DEMO mandate. ${b.code} recommended — pending external authority (reserved matter). ${g0.code} (gate G0) recommended to the delegating authority. No conflicts declared.`,
+          text: `DEMO minutes (synthetic). Quorum met. ${a.code} approved within the DEMO mandate. ${b.code} recommended — pending external authority (reserved matter). ${g0.code} (gate G0) recommended to the delegating authority. ${t.code} (TSA terms) approved within the DEMO mandate. No conflicts declared.`,
         }),
       )
     ).version;
@@ -263,7 +284,7 @@ export const governanceSeed: ModuleSeed = {
     await asUser('secretary', (ctx) => actions.create(ctx, pid, { title: 'Demo — Book rehearsal environment and confirm vendor slots', decisionId: a.id, meetingId: m.id, ownerUserId: pmId, dueDate: in14 }));
     const av2 = await version(a.id);
     await asUser('secretary', (ctx) => decisions.startImplementation(ctx, pid, a.id, { expectedVersion: av2, note: DEMO_NOTE }));
-    log(`governance demo scenario: committee ${sc.id}, meeting #${m.number}, decisions ${a.code} (implementation pending), ${b.code} (recommended), ${c.code} (submitted), ${g0.code} (G0, approved by the delegating authority), + 1 draft`);
+    log(`governance demo scenario: committee ${sc.id}, meeting #${m.number}, decisions ${a.code} (implementation pending), ${b.code} (recommended), ${c.code} (submitted), ${g0.code} (G0, approved by the delegating authority), ${t.code} (TSA terms, approved), + 1 draft`);
     void v;
   },
 };

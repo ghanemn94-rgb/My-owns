@@ -412,11 +412,13 @@ describe('Demo seed — governance scenario (spec §21)', () => {
     expect(m.rows[0].status).toBe('minutes_approved');
     expect(m.rows[0].pack_snapshot_id).toBeTruthy();
     const d = await owner().query(`select status, authority_outcome, is_demo, gate_key, external_authority_reference from decision where committee_id = $1 order by code`, [sc]);
-    expect(d.rows.map((r) => r.status)).toEqual(['implementation_pending', 'recommended', 'submitted', 'approved', 'draft']);
+    expect(d.rows.map((r) => r.status)).toEqual(['implementation_pending', 'recommended', 'submitted', 'approved', 'draft', 'approved']);
     expect(d.rows[1].authority_outcome).toBe('pending_external_authority');
     // (e) gate G0: recommended to the delegating authority, whose (synthetic) approval was then recorded
     expect(d.rows[3]).toMatchObject({ gate_key: 'G0', authority_outcome: 'pending_external_authority' });
     expect(d.rows[3].external_authority_reference).toMatch(/synthetic/);
+    // (f) DOM-P4-09: TSA terms approved within the DEMO limit — backs the demo TSA issue scenario (readiness seed)
+    expect(d.rows[5]).toMatchObject({ gate_key: null, authority_outcome: 'within_mandate', external_authority_reference: null });
     expect(d.rows.every((r) => r.is_demo)).toBe(true);
     const esc = await owner().query(`select e.status from escalation e join decision d on d.id = e.source_id where d.committee_id = $1 order by d.code`, [sc]);
     expect(esc.rows.map((r) => r.status)).toEqual(['decision_requested', 'resolved']);

@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
+  APPROVED_GATE_STATUSES,
   accessLevelAllows,
   clearanceAllows,
   forbidden,
@@ -13,6 +14,8 @@ import {
   Classification,
   DecisionAuthorityOutcome,
   DecisionStatus,
+  GateAssessmentStatus,
+  GateCycleState,
   LinkedDecision,
   RoleKey,
   RoomAccessEventKind,
@@ -216,6 +219,14 @@ export class JvSupport {
       });
   }
 
+  /**
+   * The gates module owns the `jv_transaction` status dimension; `cp.changed` triggers its recompute job (as for signing /
+   * closing events). Partner stages move the dimension too (DOM-P4-10: partner preparation, diligence and negotiation).
+   */
+  async jvDimensionChanged(projectId: string, key: string) {
+    await this.outbox.emit({ type: 'cp.changed', projectId, aggregateType: 'partner', aggregateId: key.split(':')[1] ?? projectId, payload: { reason: key }, dedupeKey: `cp.changed:${projectId}:${key}`.slice(0, 200) });
+  }
+
   /** Grants and their room revocations change who may read what: other modules (AI index, notifications) react. */
   async permissionChanged(projectId: string, roomId: string, change: string, extra: Record<string, unknown> = {}) {
     await this.outbox.emit({ type: 'permission.changed', projectId, aggregateType: 'partner_room', aggregateId: roomId, payload: { roomId, change, ...extra } });
@@ -244,6 +255,27 @@ export class JvSupport {
       .where(and(eq(schema.documentVersion.id, id), eq(schema.documentVersion.projectId, projectId), eq(schema.documentVersion.documentId, documentId)));
     if (!v) throw notFound();
     return { version: v, usable: versionUsable(v.scanStatus, this.config.storage.allowUnscanned) };
+  }
+
+  // ---------------------------------------------------------------------------------------------------------
+  // Business gates (owned by the gates module; read here — G5 before a signing, G7 before program closure)
+
+  /**
+   * The CURRENT cycle of a business gate of the project (read-only use of the gates tables, as the status dimensions do):
+   * status, the decision that backed its approval, and whether the approval is flagged for controlled reassessment
+   * (DOM-P2-05: `evaluation.needsReassessment`).
+   */
+  async gateCycle(projectId: string, gateKey: string): Promise<GateCycleState> {
+    const [g] = await this.db
+      .tx()
+      .select({ id: schema.gateAssessment.id, status: schema.gateAssessment.status, decisionId: schema.gateAssessment.decisionId, evaluation: schema.gateAssessment.evaluation })
+      .from(schema.gateAssessment)
+      .innerJoin(schema.gateDefinition, and(eq(schema.gateDefinition.id, schema.gateAssessment.gateId), eq(schema.gateDefinition.projectId, schema.gateAssessment.projectId)))
+      .where(and(eq(schema.gateAssessment.projectId, projectId), eq(schema.gateDefinition.key, gateKey), eq(schema.gateAssessment.isCurrent, true)))
+      .limit(1);
+    const status = (g?.status as GateAssessmentStatus | undefined) ?? null;
+    const flagged = (g?.evaluation as { needsReassessment?: boolean } | null | undefined)?.needsReassessment === true;
+    return { assessmentId: g?.id ?? null, status, underReassessment: !!status && APPROVED_GATE_STATUSES.includes(status) && flagged, decisionId: g?.decisionId ?? null };
   }
 
   // ---------------------------------------------------------------------------------------------------------

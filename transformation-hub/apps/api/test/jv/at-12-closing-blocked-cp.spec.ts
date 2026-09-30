@@ -7,7 +7,7 @@ import { ScopeService } from '../../src/platform/auth/scope.service';
 import { withDbScope, RequestContext } from '../../src/platform/context';
 import { TransactionsService } from '../../src/modules/jv/transactions.service';
 import { WaiverService } from '../../src/modules/gates/waiver.service';
-import { P, auditRows, doc, finalDecision, ok, partnerAt, setupJvProject, JvProject } from './jv-kit';
+import { P, auditRows, doc, finalDecision, ok, partnerAt, passG5, setupJvProject, JvProject } from './jv-kit';
 
 /**
  * AT-12 — all workstreams are green but a mandatory CP lacks evidence: closing is blocked; the AI (or any service
@@ -25,7 +25,8 @@ async function confirmedSigning(partnerId: string) {
   let v = (await ok(await pm.post(`${P(pid)}/transaction-events/${s.id}/transition`, { expectedVersion: 1, command: 'start_preparation' }))).version;
   v = (await ok(await pm.post(`${P(pid)}/transaction-events/${s.id}/transition`, { expectedVersion: v, command: 'mark_ready' }))).version;
   const executed = await doc(pm, pid, 'AT-12 executed agreement (synthetic)', { kind: 'agreement' });
-  const req = await ok(await pm.post(`${P(pid)}/transaction-events/${s.id}/request-confirmation`, { expectedVersion: v, decisionId: await finalDecision(j, 'jv_signing_authorization'), executedDocumentId: executed.id }));
+  // DOM-P4-02: the signing is authorized by the decision that approved gate G5 (passed through the gate API first).
+  const req = await ok(await pm.post(`${P(pid)}/transaction-events/${s.id}/request-confirmation`, { expectedVersion: v, decisionId: await passG5(j), executedDocumentId: executed.id }));
   await ok(await j.p.sponsor.post(`${P(pid)}/signings/${s.id}/record`, { expectedVersion: req.version }));
   return s.id as string;
 }

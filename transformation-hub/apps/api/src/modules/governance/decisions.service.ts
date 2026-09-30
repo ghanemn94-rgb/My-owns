@@ -136,6 +136,9 @@ export class DecisionsService {
     const where = and(
       eq(d.projectId, projectId),
       this.policy.visibilitySql(ctx, projectId, { classification: d.classification }),
+      // Workstream-only grants do not cover project-level governance records (access-matrix §2.2 strict rule): lists show
+      // only what the detail would open (SEC-P2-08 shape, residual of the §2.2 change).
+      this.policy.grantSql(ctx, 'governance.decision.read', projectId, {}),
       q.committeeId ? eq(d.committeeId, q.committeeId) : undefined,
       q.meetingId ? eq(d.meetingId, q.meetingId) : undefined,
       q.status ? eq(d.status, q.status) : undefined,

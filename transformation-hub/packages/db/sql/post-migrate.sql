@@ -860,7 +860,8 @@ DO $idlists$
 DECLARE r record;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-      ('diligence_request', 'evidence_document_ids', 'document')
+      ('diligence_request', 'evidence_document_ids', 'document'),
+      ('diligence_request', 'evidence_version_ids', 'document_version')
     ) AS v(tbl, col, target)
   LOOP
     IF to_regclass(r.tbl) IS NULL THEN CONTINUE; END IF;

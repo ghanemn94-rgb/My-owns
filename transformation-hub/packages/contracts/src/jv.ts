@@ -395,6 +395,11 @@ export const DdRequestDetailDto = DdRequestDto.extend({
   answerDraft: z.string().nullable(),
   draftedBy: Uuid.nullable(),
   evidenceDocumentIds: z.array(Uuid),
+  /**
+   * DOM-P4-05: the version of each evidence document pinned when the answer was submitted for review — the version the
+   * reviewer approves and the release discloses. `current` = still the document's current version.
+   */
+  evidenceVersions: z.array(z.object({ documentId: Uuid, versionId: Uuid, current: z.boolean() })),
   submittedForReviewBy: Uuid.nullable(),
   submittedForReviewAt: z.string().nullable(),
   releaseApprovedBy: Uuid.nullable(),
@@ -496,6 +501,10 @@ export const ConditionDto = z.object({
   waivabilityDeterminedBy: Uuid.nullable(),
   validTo: z.string().nullable(),
   longStopDate: z.string().nullable(),
+  /** DOM-P4-04 (G6-C03): the approved extension of the long-stop date, when one was recorded. */
+  longStopExtensionDecisionId: Uuid.nullable(),
+  longStopExtendedBy: Uuid.nullable(),
+  longStopExtendedAt: z.string().nullable(),
   status: z.enum(CONDITION_STATUSES),
   evidenceSubmittedBy: Uuid.nullable(),
   verifiedBy: Uuid.nullable(),
@@ -542,6 +551,19 @@ export const EventDetailDto = EventDto.extend({
   decision: LinkedDecisionSummaryDto.nullable(),
   statusReason: z.string().nullable(),
   allowedCommands: z.array(z.string()),
+  /**
+   * For a signing: gate G5 (JV Signing Readiness) — the signing is requested and recorded only while its current cycle is
+   * approved and not flagged for reassessment, on the decision that approved it (DOM-P4-02). Null for a closing.
+   */
+  signingGate: z
+    .object({
+      gateKey: z.string(),
+      assessmentId: Uuid.nullable(),
+      status: z.enum(GATE_ASSESSMENT_STATUSES).nullable(),
+      underReassessment: z.boolean(),
+      passed: z.boolean(),
+    })
+    .nullable(),
   /** Live server evaluation — the same rule the confirm command enforces inside its transaction. */
   blockers: z.array(EventBlockerDto),
   ready: z.boolean(),
@@ -595,8 +617,13 @@ export const ProgramClosureDto = z.object({
       version: z.number().int(),
     })
     .nullable(),
-  g7: z.object({ assessmentId: Uuid.nullable(), status: z.enum(GATE_ASSESSMENT_STATUSES).nullable() }),
-  /** Program closure is allowed only after G7 passes (REQ-JV-019). */
+  g7: z.object({
+    assessmentId: Uuid.nullable(),
+    status: z.enum(GATE_ASSESSMENT_STATUSES).nullable(),
+    /** The G7 approval is flagged for controlled reassessment: it no longer counts (DOM-P4-11). */
+    underReassessment: z.boolean(),
+  }),
+  /** Program closure is allowed only after G7 passes (REQ-JV-019) and while that approval is not under reassessment. */
   g7Passed: z.boolean(),
 });
 
@@ -1491,7 +1518,8 @@ export const jvRoutes = registerRoutes({
     id: 'jv.updateCondition',
     method: 'PATCH',
     path: `${P}/closing-conditions/:conditionId`,
-    summary: 'Edit CP description, owner, parties, validity and long-stop date (never status or waivability)',
+    summary:
+      'Edit CP description, owner, parties, validity and long-stop date (never status or waivability). The validity of a verified / waived CP changes only after a reopen; a long-stop date moves later only through an approved extension',
     tags,
     access: 'jv.cp.manage',
     params: idP('conditionId'),
@@ -1510,13 +1538,25 @@ export const jvRoutes = registerRoutes({
     id: 'jv.determineConditionWaivability',
     method: 'POST',
     path: `${P}/closing-conditions/:conditionId/determine-waivability`,
-    summary: 'Specialist determination of blocking status, waivability and waiver authority (documented basis)',
+    summary: 'Legal specialist determination of blocking status, waivability and waiver authority (documented basis; never releases a blocking CP)',
     tags,
-    access: 'gates.criterion.set_waivability',
+    access: 'jv.cp.set_waivability',
     command: true,
     params: idP('conditionId'),
     body: z.object({ expectedVersion: ExpectedVersion, blocking: z.boolean(), waivable: z.boolean(), waiverAuthorityRole: Role.nullable(), basis: RequiredText(4000) }),
     response: VersionResult,
+  }),
+  extendConditionLongStop: defineRoute({
+    id: 'jv.extendConditionLongStop',
+    method: 'POST',
+    path: `${P}/closing-conditions/:conditionId/extend-long-stop`,
+    summary: 'Record an approved extension of the CP long-stop date (FINAL decision; a lapsed CP is open again)',
+    tags,
+    access: 'jv.cp.manage',
+    command: true,
+    params: idP('conditionId'),
+    body: z.object({ expectedVersion: ExpectedVersion, longStopDate: IsoDate, decisionId: Uuid, reason: RequiredText(4000) }),
+    response: z.object({ id: Uuid, status: z.enum(CONDITION_STATUSES), version: z.number().int() }),
   }),
   submitConditionEvidence: defineRoute({
     id: 'jv.submitConditionEvidence',

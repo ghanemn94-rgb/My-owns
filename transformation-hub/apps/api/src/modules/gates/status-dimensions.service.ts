@@ -6,6 +6,7 @@ import {
   isCarveOutComplete,
   waiverIsEffective,
   APPROVED_GATE_STATUSES,
+  SIGNING_GATE_KEY,
   DimensionInput,
   DimensionState,
   notFound,
@@ -117,6 +118,14 @@ export class StatusDimensionsService {
       .innerJoin(schema.gateDefinition, eq(schema.gateDefinition.id, schema.gateAssessment.gateId))
       .where(and(eq(schema.gateAssessment.projectId, projectId), eq(schema.gateDefinition.key, STANDALONE_GATE_KEY), eq(schema.gateAssessment.isCurrent, true)));
     const closings = await tx.select({ kind: schema.closing.kind, status: schema.closing.status }).from(schema.closing).where(eq(schema.closing.projectId, projectId));
+    // DOM-P4-10: the jv_transaction dimension also reflects the partner process and signing readiness (gate G5 approved and
+    // not flagged for reassessment) — business-gates.md §1.
+    const partners = await tx.select({ stage: schema.partner.stage }).from(schema.partner).where(eq(schema.partner.projectId, projectId));
+    const g5 = await tx
+      .select({ status: schema.gateAssessment.status, evaluation: schema.gateAssessment.evaluation })
+      .from(schema.gateAssessment)
+      .innerJoin(schema.gateDefinition, eq(schema.gateDefinition.id, schema.gateAssessment.gateId))
+      .where(and(eq(schema.gateAssessment.projectId, projectId), eq(schema.gateDefinition.key, SIGNING_GATE_KEY), eq(schema.gateAssessment.isCurrent, true)));
     const tsas = await tx
       .select({ status: schema.tsaService.status, isEnduringArrangement: schema.tsaService.isEnduringArrangement })
       .from(schema.tsaService)
@@ -137,6 +146,8 @@ export class StatusDimensionsService {
       // DOM-P2-05: an approval flagged for controlled reassessment (relied-upon evidence changed) no longer counts.
       standaloneUnderReassessment: g4.some((a) => APPROVED_GATE_STATUSES.includes(a.status) && (a.evaluation as { needsReassessment?: boolean } | null)?.needsReassessment === true),
       closings,
+      partners,
+      signingGatePassed: g5.some((a) => APPROVED_GATE_STATUSES.includes(a.status) && (a.evaluation as { needsReassessment?: boolean } | null)?.needsReassessment !== true),
       tsas,
       independenceDefinitionApproved: defs.length ? defs.some((d) => d.status === 'approved') : undefined,
     };

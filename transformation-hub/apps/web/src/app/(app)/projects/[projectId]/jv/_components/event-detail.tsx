@@ -119,7 +119,7 @@ function EventDialogs({ e, pending, onClose }: { e: TxEventDetail; pending: Pend
           confirmLabel={t('jv.event.request.confirm')}
           expectedVersion={e.version}
           confirmDisabled={!decisionId || (e.kind === 'signing' && !docId && !e.executedDocumentId)}
-          consequences={[t('jv.event.request.effect', { kind: kindLabel }), t('jv.event.request.finalDecision'), ...(e.kind === 'signing' ? [t('jv.event.request.executedCopy')] : []), t('common.command.audited')]}
+          consequences={[t('jv.event.request.effect', { kind: kindLabel }), t('jv.event.request.finalDecision'), ...(e.kind === 'signing' ? [t('jv.event.request.g5Rule'), t('jv.event.request.executedCopy')] : []), t('common.command.audited')]}
           onConfirm={({ note }) =>
             refusal.wrap(async () => {
               await api(jvRoutes.requestEventConfirmation, { params: { projectId, eventId: e.id }, body: { expectedVersion: e.version, decisionId, ...(docId ? { executedDocumentId: docId } : {}), ...(note ? { note } : {}) } });
@@ -280,12 +280,33 @@ function EventDialogs({ e, pending, onClose }: { e: TxEventDetail; pending: Pend
   }
 }
 
+/**
+ * DOM-P4-02: a signing is requested and recorded only while gate G5 (JV Signing Readiness) is approved and not under
+ * reassessment, on the decision that approved it — the server evaluates it at the request and inside the recording.
+ */
+function SigningGateNotice({ g }: { g: NonNullable<TxEventDetail['signingGate']> }) {
+  const { t, tStatus } = useI18n();
+  const common = { testId: 'signing-gate' } as const;
+  if (g.underReassessment) return <Callout tone="danger" {...common}>{t('jv.event.signingGate.reassessment')}</Callout>;
+  if (g.passed) return <Callout tone="success" {...common}>{t('jv.event.signingGate.passed')}</Callout>;
+  return (
+    <Callout tone="warning" {...common}>
+      {t('jv.event.signingGate.pending', { status: g.status ? tStatus('gateAssessmentStatuses', g.status) : t('jv.event.signingGate.notAssessed') })}
+    </Callout>
+  );
+}
+
 function ReadinessPanel({ e }: { e: TxEventDetail }) {
   const { t, tStatus } = useI18n();
   const refs = blockingCpRefs(e.blockers);
   const frozen = e.status === 'confirmed' || e.status === 'aborted';
   return (
     <Panel title={t('jv.event.readinessTitle')} description={t('jv.event.readinessHint')} testId="event-readiness">
+      {e.signingGate && !frozen ? (
+        <div className="mb-3" data-passed={e.signingGate.passed ? 'true' : 'false'} data-testid="signing-gate-state">
+          <SigningGateNotice g={e.signingGate} />
+        </div>
+      ) : null}
       <div data-ready={e.ready ? 'true' : 'false'} data-testid="event-ready-state">
         {frozen ? (
           <Callout tone={e.status === 'confirmed' ? 'success' : 'warning'}>{t('jv.event.frozen', { status: tStatus('closingStatuses', e.status) })}</Callout>

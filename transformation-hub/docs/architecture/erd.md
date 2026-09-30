@@ -434,8 +434,8 @@ erDiagram
     numeric cost_impact_amount
     varchar cost_impact_currency
     int4 cost_impact_unit_scale
+    uuid cost_impact_recorded_by
     varchar subject_type
-    uuid subject_id
     more more_columns
   }
   risk {
@@ -586,6 +586,7 @@ erDiagram
   app_user ||--o{ baseline_version : "org_id,proposed_by"
   app_user ||--o{ baseline_version : "org_id,rejected_by"
   decision ||--o{ change_request : "decision_id"
+  app_user ||--o{ change_request : "org_id,cost_impact_recorded_by"
   app_user ||--o{ change_request : "org_id,decided_by"
   app_user ||--o{ change_request : "org_id,requested_by"
   app_user ||--o{ change_request : "org_id,reviewed_by"
@@ -833,6 +834,17 @@ erDiagram
     timestamptz created_at
     uuid recorded_by
   }
+  decision_use {
+    uuid id
+    uuid org_id
+    uuid project_id
+    uuid decision_id
+    varchar use_kind
+    varchar subject_type
+    uuid subject_id
+    timestamptz used_at
+    uuid used_by
+  }
   document ||--o{ committee : "charter_document_id"
   program ||--o{ committee : "program_id"
   program ||--o{ committee : "org_id,program_id"
@@ -880,6 +892,7 @@ erDiagram
   app_user ||--o{ decision : "org_id,outcome_recorded_by"
   app_user ||--o{ decision : "org_id,recommendation_recorded_by"
   app_user ||--o{ decision : "org_id,requester_user_id"
+  app_user ||--o{ decision : "org_id,voting_closed_by"
   app_user ||--o{ vote : "org_id,user_id"
   decision ||--o{ vote : "decision_id"
   authority_matrix_version ||--o{ vote : "authority_matrix_version_id"
@@ -905,6 +918,8 @@ erDiagram
   meeting ||--o{ conflict_declaration : "meeting_id"
   app_user ||--o{ conflict_declaration : "org_id,recorded_by"
   app_user ||--o{ conflict_declaration : "org_id,user_id"
+  decision ||--o{ decision_use : "decision_id"
+  app_user ||--o{ decision_use : "org_id,used_by"
 ```
 
 ## Gates
@@ -1923,10 +1938,12 @@ erDiagram
   app_user ||--o{ closing : "org_id,confirmed_by"
   app_user ||--o{ closing : "org_id,created_by"
   closing ||--o{ closing_condition : "closing_id"
+  decision ||--o{ closing_condition : "long_stop_extension_decision_id"
   app_user ||--o{ closing_condition : "owner_user_id"
   waiver ||--o{ closing_condition : "waiver_id"
   app_user ||--o{ closing_condition : "org_id,created_by"
   app_user ||--o{ closing_condition : "org_id,evidence_submitted_by"
+  app_user ||--o{ closing_condition : "org_id,long_stop_extended_by"
   app_user ||--o{ closing_condition : "org_id,owner_user_id"
   app_user ||--o{ closing_condition : "org_id,verified_by"
   app_user ||--o{ closing_condition : "org_id,waivability_determined_by"

@@ -10,34 +10,32 @@
 ### Phases
 
 - **P0:** PASS.
-- **P1:** gate PASS WITH CONDITIONS at `65b53e9` (`docs/phases/P1-gate-report.json`).
-  - CI run 32 was fully green on that revision.
-  - Both independent reviews passed with conditions.
-  - The P2 gate reviews must re-verify the lead's closures.
-- **P2:**
-  - All domain-review findings are fixed and merged, including DOM-P2-16 (gate owner and reviewer roles, gate-level review step).
-  - The web follow-ups are merged.
-  - DOM-P2-14 (Low) is open. DOM-P2-08 and DOM-P2-11 are re-phased to P6.
-  - Security review (`docs/reviews/P2-security-review.md`): PASS WITH CONDITIONS.
-    - SEC-P2-01/02 (Medium) and SEC-P2-03/06/09 are fixed at `e75f7fd`.
-    - §2.2 option B and SEC-P2-04/05/07/08 are being fixed.
-  - Domain re-review (`docs/reviews/P2-domain-rereview.md`, on the reviewer's branch): FAIL.
-    - New High findings DOM-P2R-03/04, plus DOM-P2R-05 (P3). Medium DOM-P2R-01.
-    - GOV-015 and UX-005 block the gate.
-    - Fixes are being built.
-  - QA review running.
-- **P3:** backends and web screens merged; reviews not run.
-- **P4:** finance and JV/DD backends and web screens merged; reviews not run.
-- **P5:** AI backend and AI PM web screens merged (`e75f7fd`; mock provider labelled Simulated, endpoints Not configured); reviews not run. Possible defect reported by the UI agent: `ai-proposals.service.ts approve()` audits the invalidation before throwing, so the rollback may lose it — for the P5 review.
+- **P1:** gate PASS WITH CONDITIONS at `65b53e9` (`docs/phases/P1-gate-report.json`). The P2 reviews confirmed every P1 closure.
+- **P2:** all findings of the three P2 reviews are fixed and merged (`f8fdf01`).
+  - Security review: PASS WITH CONDITIONS. Access-matrix §2.2 option B is in place: the strict rule, plus 4 project-level read exceptions pending Mobily data governance (AMQ-09). The governance lists now apply the grant filter.
+  - Domain re-review (FAIL) and QA review (FAIL):
+    - DOM-P2R-01/02/03/04/05/07 and QA-P2-01/03, O-1, F-03 fixed;
+    - GOV-014 and GOV-015 (conflict declarations required before voting) fixed;
+    - UX-005 cockpit built.
+    - Shared decision-reliance / decision-use registry: `docs/architecture/module-guide.md`, "Relying on a governance decision".
+  - QA-P2-04 (English remainders on P2 screens in the Arabic UI) is being fixed.
+  - Next: a focused re-review of the fixes, then the P2 gate report.
+  - Open questions for the governance owner: Q-40, Q-43, O-1, A-50/52/53, DOM-P2R-06/08.
+- **P3:** backends and web screens merged. DOM-P2R-05 (perimeter-version decision reuse) is fixed. Reviews not run.
+- **P4:**
+  - Backends and web screens merged.
+  - Domain review FAIL (`docs/reviews/P4-domain-review.md`, 5 High). 7 requirements were lowered to Implemented.
+  - Part 1 of the fixes (DOM-P4-02/03/04/05/09 and Lows) is in progress.
+  - Part 2 (DOM-P4-01/06/07/08 on the decision-use registry) comes next.
+- **P5:** AI backend and AI PM web screens merged (mock provider labelled Simulated); reviews not run.
 - **P6–P8:** not started.
 
 ### Verified
 
-- **API integration suite:** 709/709 in 80 files at the DOM-P2-16 merge (own test database, PostgreSQL 16).
-- **Playwright, full suite:** 261/261 at `ef8ea27` plus the JV fixture fix. The stack was set up like the CI e2e job, and the a11y report was regenerated from that run. DOM-P2-16 changed the gate flow afterwards: only its gate-related specs were run after the merge, and CI will run the full suite.
-- **Lint:** root `pnpm lint` passes. This includes i18n parity, the hard-coded string check and the module-boundary check.
-- **Secret scan:** gitleaks tree and history pass.
-- **Evidence file:** `apply_status.py --check` passes.
+- **API integration suite:** 748 passed + 11 expected fail (reviewers' `it.fails` probes) at `1c6b375`.
+  - The governance fix agent ran 781 passed + 8 expected fail on its branch, and the full Playwright suite passed there: 311 tests.
+- **CI:** run 34 fully green at `4fadf91`. Run 38 at `40fac20` was red: shellcheck and a false positive in the RTL detector. Both are fixed in `a58218b`.
+- **Lint:** root `pnpm lint` passes. Secret scan: tree and history pass.
 
 ## Done in this session (highlights)
 
@@ -63,11 +61,10 @@
 
 ## In progress (parallel agents, worktree branches)
 
-- Fixes for DOM-P2R-01/02/03/04/05/07, GOV-015 (conflict declarations before voting) and DOM-P2-14 (full stack).
-- UX-005: executive cockpit tiles (top decisions, committee asks).
-- Access-matrix §2.2 option B and SEC-P2-04/05/07/08.
-
-- P2 QA review, which also re-verifies the P1 QA closures → `docs/reviews/P2-qa-review.md`.
+- P4 fixes, part 1: DOM-P4-02 (signing after G5), -03 (Legal-only CP waivability), -04 (CP dates, lapse), -05 (DD disclosure pins the reviewed version), -09 (demo TSA issue), and the Lows.
+- QA-P2-04: Arabic remainders on the P2 screens.
+- Next, part 2 of the P4 fixes: DOM-P4-01/06/07/08 on the decision-use registry.
+- Then: focused P2 re-reviews, P2 gate report, P3 and P4 reviews and gates, P5 reviews.
 
 ## Known failures, risks and open questions
 

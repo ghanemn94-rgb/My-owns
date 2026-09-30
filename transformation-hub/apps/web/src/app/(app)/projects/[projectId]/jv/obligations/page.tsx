@@ -237,7 +237,11 @@ function ProgramClosurePanel() {
         <Facts
           items={[
             { label: t('jv.programClosure.g7'), value: pc.g7.status ? <StatusBadge enumName="gateAssessmentStatuses" value={pc.g7.status} /> : t('jv.programClosure.g7NotAssessed'), testId: 'g7-status' },
-            { label: t('jv.programClosure.allowed'), value: pc.g7Passed ? t('jv.programClosure.allowedYes') : t('jv.programClosure.allowedNo') },
+            {
+              label: t('jv.programClosure.allowed'),
+              value: pc.g7Passed ? t('jv.programClosure.allowedYes') : pc.g7.underReassessment ? t('jv.programClosure.allowedNoReassessment') : t('jv.programClosure.allowedNo'),
+              testId: 'program-closure-allowed',
+            },
             { label: t('jv.common.status'), value: closure ? <StatusBadge enumName="programClosureStatuses" value={closure.status} /> : t('jv.programClosure.none') },
             { label: t('jv.common.requestedBy'), value: closure ? <span><Person id={closure.requestedBy} people={members} /> · <span className="tabular">{formatDateTime(closure.requestedAt)}</span></span> : EM_DASH },
             { label: t('jv.programClosure.handover'), value: <UText value={closure?.handoverNote} multiline />, wide: true },

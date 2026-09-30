@@ -35,6 +35,14 @@ Rules:
    against the approved definition of independence, which may include approved enduring arrangements.
 5. **Multiple closings.** `partially_closed` applies while at least one closing is confirmed and at least one remains.
 6. Each state change is an explicit command with actor, timestamp, evidence reference and reason, and is audited.
+7. **`jv_transaction` as implemented (DOM-P4-10) [server].** Computed from the partner process, gate G5 and the signing /
+   closing events: `partner_preparation` while an active partner is before due diligence; `diligence_and_negotiation`
+   when a partner is at DD or later, or a signing / closing event is being prepared; `signing_ready` when the current G5
+   cycle is approved and not flagged for reassessment and no signing is recorded; `signed` once a signing is confirmed;
+   `closing_conditions_in_progress` while a closing of a confirmed signing is in preparation or ready for confirmation;
+   `partially_closed` / `closed` from the confirmed closings; `terminated` when every partner has withdrawn and every
+   event was aborted. **Aborted events are not counted** (one confirmed and one aborted closing is `closed`); the
+   explanation states how many were excluded. Partner and event changes trigger the recompute.
 
 ## 2. Gate model (نموذج البوابة)
 
@@ -249,6 +257,11 @@ flowchart LR
 | G7-C07 | Program records archived under the approved retention policy and administrative closure approved. | Yes | Yes | No | `committee_decision` |
 | G7-C08 | Lessons learned captured and shared. | No | No | No | `approved_document` |
 
+> **Note on G7-C02 (DOM-P4-17).** Spec §3 names the G7 deliverable a "post-close plan"; the "100-day" wording comes from spec
+> §6 (workstream 12 "JV Execution & Post-close": "…closing/deliverables, 100-day plan, benefits"), not from the G7 row. The
+> duration is a template label, **not** a confirmed plan length: the actual post-close plan period is to be confirmed by
+> the owning function (Proposed — to be confirmed).
+
 ## 4. Gate evaluation rules (قواعد تقييم البوابات)
 
 1. **Task progress never passes a gate [server].** 100% task or deliverable completion is not an input to gate status.
@@ -374,9 +387,9 @@ Rules **[server]**:
 | Closing | Each CP belongs to a specific closing; multiple closings each have their own CP set and checklist |
 | Evidence | Required for verification; evidence type per CP |
 | `blocking` | A blocking CP that is not verified or validly waived prevents the closing confirmation **[server]** (AT-12) |
-| Waivability and authority | Set only by authorized legal specialists per the agreement; records which party may waive and within which approved authority |
-| Validity | Approvals that satisfy CPs carry validity periods; an expired approval re-opens the CP |
-| Long-stop date | Business date from the agreement; approaching it without evidence raises an escalation; passing it without an approved extension makes the CP `lapsed` and blocks closing |
+| Waivability and authority | Set only by authorized legal specialists per the agreement; records which party may waive and within which approved authority. **As implemented (DOM-P4-03) [server]:** permission `jv.cp.set_waivability`, held by `legal_restricted` only (human only, documented basis, audited). A determination never **releases** a blocking CP: a non-waivable blocking CP stays blocking (spec §3 "an exception cannot override a non-waivable condition"); a waivable one is released only through the waiver register (basis, impact, approval by the designated authority, not the requester) — 422 `jv.cp.blocking_release_not_allowed`. Raising a CP to blocking is a recorded determination |
+| Validity | Approvals that satisfy CPs carry validity periods; an expired approval re-opens the CP. **As implemented (DOM-P4-04) [server]:** a verified or waived CP whose validity has passed blocks its closing (`jv.closing.cp_validity_lapsed`); its validity date changes only after the CP is reopened (explicit command with a reason) and verified again (422 `jv.cp.validity_locked`) |
+| Long-stop date | Business date from the agreement; approaching it without evidence raises an escalation; passing it without an approved extension makes the CP `lapsed` and blocks closing. **As implemented (DOM-P4-04) [server]:** a long-stop date is set, or brought forward, by the CP manager; moving it later, clearing it or changing it on a lapsed CP needs an **approved extension** (`extend-long-stop`: a later date, a FINAL decision — *Proposed:* type `jv_closing_confirmation` of the closing authority until Legal confirms the authority —, never the decision of the current extension; 422 `jv.cp.long_stop_extension_required`). A daily worker scan (project timezone) moves an open / evidence-submitted CP past its long-stop date to `lapsed` (audited, service identity) and raises one system-generated escalation per CP and long-stop date — also for an open CP without evidence inside a *Proposed* 30-day warning window (the specification gives no window). A lapsed CP is open again only through an approved extension |
 | States | `open` → `evidence_submitted` → `verified` · `waived` (by the entitled party, with evidence) · `lapsed` · `at_risk` (derived flag) |
 | Verification | By a reviewer other than the evidence submitter; AI and task completion cannot change CP state |
 
@@ -396,12 +409,34 @@ Stages: `identified` → `approved_for_contact` → `nda` → `materials_access`
    logged.
 3. **Clean team.** Competitively sensitive material is visible only to clean-team members; partner users never see
    internal deliberations, other partners' data or counts that reveal them.
-4. **Forward progression.** Stages advance in order; skipping requires a recorded reason and the approvals of the skipped
-   stage (e.g. an NDA cannot be skipped to reach materials access).
-5. **Signing and closing stages** require the corresponding records: `signing` needs a recorded signing (after G5), and
-   `closing` needs at least one authorized closing confirmation.
+4. **Forward progression [server].** Stages advance one at a time, in order; **no stage can be skipped** (stricter than a
+   skip with a recorded reason: the only way forward is through each stage and its own approval, e.g. an NDA cannot be
+   skipped to reach materials access — `jv.partner.stage_skipped`). *As implemented (DOM-P4-15, open):* the move to
+   `materials_access` records the person who moved the stage (`materialsAccessApprovedBy`); it is not a separate
+   authority check — actual document access still needs a room grant by another person (rule 2).
+5. **Signing and closing [server] (DOM-P4-02, DOM-P4-17).** The partner stages mark the phase: `signing` = the signing is
+   being prepared; `closing` needs a **confirmed signing** of this partner (`jv.partner.signing_not_confirmed`). The
+   **signing itself** is recorded on the signing event, and only while the **current cycle of gate G5 is approved and not
+   flagged for reassessment**, on **the decision that approved that cycle** (`jv_signing_authorization` is the decision
+   type the authority matrix assigns to G5, so the decision that passes G5 is the signing authorization) — checked at the
+   request and again inside the recording transaction (422 `jv.signing.g5_not_passed`, `jv.signing.g5_under_reassessment`,
+   `jv.signing.decision_not_g5`). Each closing is confirmed separately by the authorized body (G6-C06).
 6. **Withdrawal** revokes all active access grants for that partner immediately and keeps the history.
 7. Partner longlists contain no default real names; comparisons separate facts from team judgment.
+
+### 8.1 Open points recorded at the P4 domain review (documented, not changed)
+
+- **Negotiation issues (DOM-P4-13).** Spec §8 requires "required approval" per issue; neither the specification nor the
+  authority matrix names a decision type for negotiation positions, and nothing says one decision may not approve the
+  positions of several issues. As implemented, an issue that requires approval is agreed only on a FINAL approved decision
+  of any type, and one decision may back several issues. *Proposed — to be confirmed:* a dedicated decision type (or the
+  `valuation_and_ownership_terms` / `jv_signing_authorization` types) for negotiated terms.
+- **Single-person steps (DOM-P4-14).** A closing checklist item set `not_required` (documented reason, visible to the
+  confirmer and in the confirmation snapshot) and the funds-flow steps (create / confirm / report settled, record-only) are
+  not subject to a separation-of-duties rule in the access matrix (`jv.closing_checklist.manage`, `jv.funds_flow.manage`
+  carry no `not_self`); the specification does not require one (§15: "separate request creation from approval **where
+  policy requires**"). *Proposed — to be confirmed:* G6-C05 "approved by Finance" read as a second Finance person
+  confirming a funds-flow line, and a second person for `not_required` on executed-document items.
 
 ## 9. Acceptance tests covered (اختبارات القبول)
 

@@ -1,17 +1,23 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, ilike, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { DomainError } from '@hub/domain';
+import { DomainError, addCalendarDays, localDate } from '@hub/domain';
 import type { ModuleSeed } from '../../cli/seed-modules';
 import { DbService } from '../../platform/db.service';
 import { JobQueue } from '../../platform/jobs/job-queue.service';
+import { JobContextFactory } from '../../platform/jobs/job-context';
 import { StatusDimensionsService } from '../gates/status-dimensions.service';
 import { RECOMPUTE_DIMENSIONS_JOB } from '../gates/gates.service';
 import { ReadinessChecksService } from './checks.service';
 import { CutoverService } from './cutover.service';
 import { TsaService } from './tsa.service';
+import { READINESS_SERVICE_PERMISSIONS } from './readiness.jobs';
 
 const PLAN_TITLE = 'Day-1 go-live — DEMO (synthetic)';
 const TSA_NAME = 'NOC monitoring during transition — DEMO (synthetic)';
+/** DOM-P4-09 / REQ-SET-004: the demo TSA issue scenario (AT-10). */
+export const TSA_ISSUE_NAME = 'Legacy monitoring bridge — DEMO TSA issue (synthetic)';
+/** Title pattern of the governance seed's DEMO TSA decision (f) that approves the terms of the TSA issue scenario. */
+const DEMO_TSA_DECISION_TITLE_MATCH = '%legacy monitoring bridge TSA (synthetic)%';
 /** Project-level default check created by the project factory from the DC template (connectivity, blocker). */
 const CONNECTIVITY_CODE = 'connectivity-connectivity_tested';
 const NOC_CODE = 'noc-noc_monitoring_coverage';
@@ -23,7 +29,9 @@ const NOC_CODE = 'noc-noc_monitoring_coverage';
  *  - AT-09 illustration: a Day-1 plan whose GO is blocked — a FAILED connectivity test (with its contingency) plus the
  *    open template checks and the missing §7.4 prerequisites (window, testing, communications, decision);
  *  - AT-13 illustration: a waiver request on a non-waivable Day-1 blocker is rejected and audited;
- *  - TSA register: one proposed TSA in negotiation with an owner and a replacement "to be confirmed".
+ *  - TSA register: one proposed TSA in negotiation with an owner and a replacement "to be confirmed";
+ *  - TSA issue (REQ-SET-004, AT-10 — DOM-P4-09): a second, synthetic TSA approved on the demo committee decision, active,
+ *    past its SYNTHETIC end date without an accepted replacement → expired_unresolved with an escalation (expiry scan).
  */
 export const readinessSeed: ModuleSeed = {
   name: 'readiness',
@@ -128,6 +136,62 @@ export const readinessSeed: ModuleSeed = {
       );
       await asUser('pm', (ctx) => tsa.transitionSimple(ctx, pid, created.id, { expectedVersion: created.version, command: 'start_negotiation', note: 'DEMO: terms under negotiation' }));
       log('readiness: demo TSA registered (in negotiation; dates and charges TBD)');
+    }
+
+    // 5. TSA issue scenario (REQ-SET-004, AT-10 — DOM-P4-09): a second, clearly synthetic TSA whose terms were approved on the
+    //    demo committee's TSA decision (governance seed, synthetic amount within the DEMO limit), active, and whose SYNTHETIC
+    //    end date passed without an accepted replacement. The daily expiry scan — the worker job, run once here as its own
+    //    service identity so the scenario is visible right after seeding — moves it to expired_unresolved and escalates.
+    //    Nothing is extended (only an approved decision can) and the end date is never treated as an exit.
+    const existingIssue = await asUser('pm', async () => {
+      const [t] = await db.tx().select({ id: schema.tsaService.id }).from(schema.tsaService).where(and(eq(schema.tsaService.projectId, pid), eq(schema.tsaService.name, TSA_ISSUE_NAME)));
+      return t ?? null;
+    });
+    if (!existingIssue) {
+      const decision = await asUser('pm', async () => {
+        // The governance seed's decision (f): type tsa_approval_or_extension, title "Demo — Approve the terms of the legacy
+        // monitoring bridge TSA (synthetic)" (module boundary: matched by type and title, not imported).
+        const [d] = await db
+          .tx()
+          .select({ id: schema.decision.id, status: schema.decision.status })
+          .from(schema.decision)
+          .where(and(eq(schema.decision.projectId, pid), eq(schema.decision.decisionTypeKey, 'tsa_approval_or_extension'), ilike(schema.decision.title, DEMO_TSA_DECISION_TITLE_MATCH)));
+        return d ?? null;
+      });
+      if (!decision || decision.status !== 'approved') {
+        log('readiness: TSA issue scenario skipped — no approved demo TSA decision (governance seed)');
+      } else {
+        const [ws07, orgId] = await asUser('pm', async () => {
+          const [w] = await db.tx().select({ id: schema.workstream.id }).from(schema.workstream).where(and(eq(schema.workstream.projectId, pid), eq(schema.workstream.code, 'WS07')));
+          const [p] = await db.tx().select({ orgId: schema.project.orgId }).from(schema.project).where(eq(schema.project.id, pid));
+          return [w?.id ?? null, p!.orgId] as const;
+        });
+        const today = localDate(new Date(), 'Asia/Riyadh');
+        const created = await asUser('pm', (ctx) =>
+          tsa.create(ctx, pid, {
+            name: TSA_ISSUE_NAME,
+            scope: 'DEMO: bridge between the legacy monitoring tools and the transferred perimeter during the transition (synthetic)',
+            sla: 'DEMO — synthetic SLA placeholder (illustrative only)',
+            metricMethod: 'To be confirmed',
+            chargeBasis: 'To be confirmed — no charge recorded (DEMO)',
+            extensionTerms: 'Extension only by an approved decision — never automatic',
+            // SYNTHETIC demo dates relative to the seeding day (labelled DEMO) — not real contract dates.
+            startDate: addCalendarDays(today, -120),
+            endDate: addCalendarDays(today, -7),
+            ownerUserId: opsLeadId,
+            workstreamId: ws07,
+            replacementService: 'DEMO — replacement monitoring on the NewCo platform (synthetic); acceptance pending',
+            exitMilestones: [{ title: 'Replacement monitoring accepted with evidence (DEMO)' }],
+            residualRisks: 'Assessment pending — specialist (DEMO)',
+          }),
+        );
+        let v = (await asUser('pm', (ctx) => tsa.transitionSimple(ctx, pid, created.id, { expectedVersion: created.version, command: 'start_negotiation', note: 'DEMO: terms negotiated (synthetic)' }))).version;
+        v = (await asUser('pm', (ctx) => tsa.approveTerms(ctx, pid, created.id, { expectedVersion: v, decisionId: decision.id, note: 'DEMO — terms approved on the demo committee decision (synthetic)' }))).version;
+        await asUser('pm', (ctx) => tsa.transitionSimple(ctx, pid, created.id, { expectedVersion: v, command: 'activate', note: 'DEMO — service started on its synthetic start date' }));
+        const svc = app.get(JobContextFactory).forService({ org_id: orgId, project_id: pid, id: 'demo-seed-tsa-expiry' }, 'svc-readiness', READINESS_SERVICE_PERMISSIONS);
+        const scan = await db.run(svc, () => tsa.scanExpiry(svc, pid));
+        log(`readiness: TSA issue scenario — ${created.code} past its synthetic end date without an accepted replacement (scan: ${JSON.stringify(scan)})`);
+      }
     }
     void planId;
 

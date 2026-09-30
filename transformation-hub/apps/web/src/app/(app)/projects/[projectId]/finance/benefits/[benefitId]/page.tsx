@@ -18,7 +18,7 @@ import { useProjectContext } from '@/lib/project-context';
 import { BenefitCommandDialog, BenefitFormDialog, type BenefitCommand } from '../../_components/benefit-forms';
 import { Amount, BackToList, ButtonRow, CmdButton, Facts, FinanceEvidence, FinanceHistory, Panel, Person, UText, useWorkstreamLabel } from '../../_components/fin';
 
-const MANAGE_COMMANDS: BenefitCommand[] = ['start_tracking', 'record_realization', 'cancel'];
+const MANAGE_COMMANDS: BenefitCommand[] = ['start_tracking', 'record_realization', 'revise_definition', 'cancel'];
 const VERIFY_COMMANDS: BenefitCommand[] = ['approve', 'verify', 'reject_realization'];
 
 /** A benefit (REQ-FIN-009): definition, realization reported with its source, verified by someone independent. */

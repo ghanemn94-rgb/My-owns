@@ -1966,6 +1966,9 @@ CREATE TABLE "closing_condition" (
 	"waivability_determined_at" timestamp with time zone,
 	"valid_to" date,
 	"long_stop_date" date,
+	"long_stop_extension_decision_id" uuid,
+	"long_stop_extended_by" uuid,
+	"long_stop_extended_at" timestamp with time zone,
 	"status" "condition_status" DEFAULT 'open' NOT NULL,
 	"evidence_submitted_by" uuid,
 	"evidence_submitted_at" timestamp with time zone,
@@ -2097,6 +2100,7 @@ CREATE TABLE "diligence_request" (
 	"answer_draft" text,
 	"drafted_by" uuid,
 	"evidence_document_ids" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"evidence_version_ids" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"reviewer_user_id" uuid,
 	"submitted_for_review_by" uuid,
 	"submitted_for_review_at" timestamp with time zone,
@@ -3150,6 +3154,7 @@ ALTER TABLE "closing" ADD CONSTRAINT "closing_executed_document_fk" FOREIGN KEY 
 ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_waiver_fk" FOREIGN KEY ("project_id","waiver_id") REFERENCES "public"."waiver"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_extension_decision_fk" FOREIGN KEY ("project_id","long_stop_extension_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_closing_fk" FOREIGN KEY ("project_id","closing_id") REFERENCES "public"."closing"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_deliverable" ADD CONSTRAINT "closing_deliverable_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_deliverable" ADD CONSTRAINT "closing_deliverable_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

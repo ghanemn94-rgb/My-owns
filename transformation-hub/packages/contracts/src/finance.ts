@@ -1276,6 +1276,18 @@ export const financeRoutes = registerRoutes({
     body: ReasonBody,
     response: BenefitCommandResult,
   }),
+  reviseBenefitDefinition: defineRoute({
+    id: 'finance.reviseBenefitDefinition',
+    method: 'POST',
+    path: `${P}/benefits/:benefitId/revise-definition`,
+    summary: 'Reopen an accepted benefit for revision of its definition, baseline or target (back to proposed; needs a fresh acceptance)',
+    tags,
+    access: 'finance.benefit.manage',
+    command: true,
+    params: BenefitParams,
+    body: ReasonBody,
+    response: BenefitCommandResult,
+  }),
   cancelBenefit: defineRoute({
     id: 'finance.cancelBenefit',
     method: 'POST',

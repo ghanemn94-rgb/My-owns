@@ -131,6 +131,7 @@ export class PartnersService {
   private async setStage(ctx: RequestContext, p: PartnerRow, to: PartnerStage, expectedVersion: number, extra: Record<string, unknown>, reason: string | null, action: string) {
     const row = (await updateVersioned(this.s.db, schema.partner, { id: p.id, projectId: p.projectId, expectedVersion }, { stage: to, stageChangedAt: this.s.clock.now(), ...extra })) as PartnerRow;
     await this.s.audit.record({ action, entityType: 'partner', entityId: p.id, projectId: p.projectId, before: { stage: p.stage }, after: { stage: to, ...stringify(extra) }, reason });
+    await this.s.jvDimensionChanged(p.projectId, `partner:${p.id}:${row.version}`);
     return row;
   }
 
@@ -225,6 +226,7 @@ export class PartnersService {
         stageChangedAt: this.s.clock.now(),
       });
     await this.s.audit.record({ action: 'jv.partner.create', entityType: 'partner', entityId: id, projectId, after: { code, stage: 'identified', classification: body.classification } });
+    await this.s.jvDimensionChanged(projectId, `partner:${id}:1`);
     return { id, code, version: 1 };
   }
 
