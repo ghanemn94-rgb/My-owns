@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 19,
+  "candidate_id": "sha256:6720ad2c5ea1d5bddb27a430536d27a962ded8224a373db101891e81d652922a",
+  "source_commit": "0a652018bdf4975f83e580796d0775141a3dae9a",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-QA-R19-qa-verifier-20260930T092007Z-f29d73ab",
+    "session_id": "f29d73ab-4ac9-4ecf-9deb-bd30fc4d7d0b"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am qa-verifier. I didn't author any analysis, register, agent definition, runner, guard, gate tooling, CI or delivery record in the reviewed scope. I wrote only QA tests and evidence under docs/delivery/test-evidence/DG0/qa/ and my own round-19 review files. I read no other round-19 review record. Disclosure: at 09:35Z HEAD had moved to another reviewer's metadata-only auto-commit. My `validate.mjs --reconcile` in a fresh HEAD clone (log 14) printed a one-line status of another round-19 record. By then I had already formed my verdict from QA19-P4 (log 12, 09:32Z). I didn't open that record, and it didn't influence this review."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-19/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-001",
+    "REQ-DLV-002",
+    "REQ-DLV-003",
+    "REQ-DLV-004",
+    "REQ-DLV-006",
+    "REQ-DLV-007",
+    "REQ-DLV-013",
+    "REQ-DLV-015",
+    "REQ-DLV-016",
+    "REQ-DLV-017",
+    "REQ-DLV-019",
+    "REQ-DLV-020",
+    "REQ-DLV-022",
+    "REQ-DLV-023",
+    "REQ-DLV-026",
+    "REQ-DLV-029",
+    "REQ-DLV-032",
+    "REQ-S20-024",
+    "REQ-S20-025"
+  ],
+  "checks_run": [
+    {
+      "id": "QA19-C00",
+      "procedure": "Confirm the frozen candidate and the assignment before reviewing",
+      "command": "sha256sum docs/delivery/assignments/DG0/round-19/review-qa-verifier.md; git rev-parse HEAD; git diff --stat 0a65201 HEAD; node tools/gates/candidate.mjs --stage DG0; (fresh clone at 0a65201) node tools/gates/candidate.mjs --stage DG0",
+      "environment": "shared repository /home/user/My-owns (read-only use) and a git clone in $TMPDIR/r19/cand; node v22.22.2; agent process sandbox + nested shell sandbox",
+      "expected": "assignment sha 3418653413306b22...; candidate sha256:6720ad2c...; only metadata commits after 0a65201",
+      "actual": "Assignment sha matches. HEAD was 3ffb28c. The diff 0a65201..HEAD touches only assignments/round-19, the candidate manifest and stages.json. candidate.mjs in the shared tree and in the clone at 0a65201 both print sha256:6720ad2c5ea1d5bddb27a430536d27a962ded8224a373db101891e81d652922a, 91 files. The shared tree held other runs' sandbox stubs at the time, and they didn't change the ID.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/01-step1-required-commands.log",
+        "docs/delivery/candidates/DG0/6720ad2c5ea1d5bd.manifest.json"
+      ]
+    },
+    {
+      "id": "QA19-C01",
+      "procedure": "Step 1: run every required command in a disposable clone of the candidate",
+      "command": "tools/source/check_extraction.sh; node --test tools/gates/tests/*.test.mjs; node --test tools/agents/tests/*.test.mjs; node tools/gates/validate.mjs --register DG0; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --reconcile; node tools/gates/candidate.mjs --stage DG0",
+      "environment": "git clone at 0a652018 in $TMPDIR/r19/cand; node v22.22.2",
+      "expected": "all exit 0; extraction reproducible; all tests pass; candidate 6720ad2c",
+      "actual": "All exit 0. Extraction: PASS (docx sha 2584a352...548ad2, 165 playbook blocks, 423 master-prompt blocks). Gate tests 54/54 pass. Agent tests 39/39 pass. register PASS. pipeline PASS (in the clone at 0a65201, stages.json is still at the pre-freeze FIXING state, as expected because the freeze commit follows). reconcile PASS (structure). Candidate 6720ad2c, 91 files. At HEAD the reconcile shows REVIEWING, frozen 6720ad2c, working tree matches (log 14).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/01-step1-required-commands.log",
+        "docs/delivery/test-evidence/DG0/qa/round-19/14-d034-history-and-prefreeze.log"
+      ]
+    },
+    {
+      "id": "QA19-C02",
+      "procedure": "D-033: run the process-sandbox suite, including the F-DG0-152 positive control, directly (not nested in a PID namespace), so the cross-run sub-checks actually execute rather than skip",
+      "command": "node --test tools/agents/tests/process-sandbox.test.mjs",
+      "environment": "clone at 0a65201; this run's shell (Landlock ABI 7 on this kernel)",
+      "expected": "10/10 pass. The F-DG0-152 case runs fully: without Landlock the cross-run writes and signal succeed, with Landlock they are refused, own areas stay writable and nested bwrap works",
+      "actual": "10/10 pass, 0 skipped. Diagnostics: without Landlock {viaProcRoot:WROTE, viaProcCwd:WROTE, viaProcRootTmp:WROTE, signal:allowed, nested:works}. With Landlock {viaProcRoot:refused, viaProcCwd:refused, viaProcRootTmp:refused, ownEvidence:WROTE, ownTmp:WROTE, signal:refused, nested:works}. So the new skip path in 0a65201 wasn't taken here, and the control really ran.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/02-process-sandbox-full.log"
+      ]
+    },
+    {
+      "id": "QA19-C03",
+      "procedure": "Step 2 (A24/A25): independent round-19 suite. G0 control; G1 re-runs my 94-case round-9 A24/A25 suite (missing reviewer, author-reviewer, shared invocation, failed/blocked check, unresolved High, incomplete requirement, non-existent anchor, SOURCE row without block, coverage gaps, change after freeze, tampered manifest, metadata invariance) on a fixture reshaped to the D-030/D-033 evidence rules. New cases not in tools/gates/tests: L1 (6 Landlock record variants), P1/P2/P3/P4 (D-035), W1 (D-034 delete + re-add), I1 (import-findings record-less sidecar), M1 (metadata invariance on the real candidate)",
+      "command": "QA_REPO_ROOT=$TMPDIR/r19/cand node --test --test-reporter=spec docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r19.test.mjs",
+      "environment": "disposable fixture git repos under $TMPDIR; validator code from the clone at 0a65201; node v22.22.2",
+      "expected": "every invalid fixture rejected; controls clean; metadata doesn't change the candidate; content edits do",
+      "actual": "9/10 pass. G0 control: 0 errors. G1: 94 cases. The only failures are the expected ones: 3 cwd-binding controls, the superseded QA7-N83, and QA5-N57, which now fails by design of D-035 because a pruned-commit round is accepted. L1: all 6 Landlock variants rejected (handled_access_net=1, scoped without SIGNAL, per_run_domain 'true', landlock:true, handled_access_fs '0', scoped as a string). P1 rejected (via fix_revision). P2: a reachable but mismatched commit is still rejected. P3: a tree id as source_commit recomputes fine; same on the pre-D-035 code, so harmless. W1: delete + same-blob re-add and delete + different-blob re-add are both rejected by checkWriteOnce. I1: the record-less sidecar is skipped (finding stays pending, sidecar kept), and it is imported once the record exists. M1: metadata keeps 6720ad2c, a glossary edit changes it. FAIL: P4. A current-mode APPROVED gate whose source_commit doesn't exist validates with 0 errors (F-DG0-240).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r19.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-19/12-qa19-new-cases.log"
+      ]
+    },
+    {
+      "id": "QA19-C04",
+      "procedure": "D-035 assessment: run P1-P4 against the candidate and against 695ab30 (before D-035) to isolate the behaviour change",
+      "command": "for R in cand pre035; do QA_REPO_ROOT=$TMPDIR/r19/$R node --test --test-name-pattern='QA19-P' docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r19.test.mjs; done",
+      "environment": "clones at 0a65201 and 695ab30 in $TMPDIR/r19",
+      "expected": "D-035 loosens only non-gate rounds; the gate's own commit stays checked in the mode used at approval",
+      "actual": "P4 current mode: 0 errors on 0a65201, 2 errors on 695ab30 ('round 1/2 manifest ... cannot recompute from its source_commit'). Historical mode rejects on both. In current mode, checkCandidate recomputes from the working tree, not from gate.source_commit, so D-035's claim holds only for --historical. For superseded non-gate rounds, the loosening is acceptable: self-consistency, round-record equality, and mismatch on a reachable commit (P2) are all still enforced. Finding F-DG0-240, Medium.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/13-qa19-d035-before-after.log",
+        "tools/gates/lib/rules.mjs#findManifest",
+        "docs/delivery/decisions.md#D-035"
+      ]
+    },
+    {
+      "id": "QA19-C05",
+      "procedure": "D-034: write-once history soundness in a fresh clone of HEAD",
+      "command": "checkWriteOnce(DG0); git ls-tree HEAD docs/delivery/reviews/DG0/round-17/; git log --diff-filter=DMT -- docs/delivery/reviews docs/delivery/runs docs/delivery/candidates",
+      "environment": "fresh clone of HEAD 06214cc in $TMPDIR/r19/head",
+      "expected": "0 errors; round-17 qa sidecars present at blobs 862693f / 276e32c; no D/M/T events",
+      "actual": "checkWriteOnce: 0 errors. Both round-17 qa-verifier sidecars are at 862693f98291... and 276e32c201e2.... No D/M/T events under reviews/runs/candidates. 96 commits; the earliest is 'DG0 round 12 ...'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/14-d034-history-and-prefreeze.log"
+      ]
+    },
+    {
+      "id": "QA19-C06",
+      "procedure": "Run tools/gates/prefreeze.sh DG0 in a fresh clone of the candidate commit",
+      "command": "tools/gates/prefreeze.sh DG0",
+      "environment": "fresh clone at 0a65201 in $TMPDIR/r19/pf; nested bubblewrap",
+      "expected": "every line PASS; working-tree candidate equals HEAD",
+      "actual": "All 11 lines PASS, including sandboxed gate/guard tests, runner tests, register, parts merge, pipeline, the 4 analysis checks, and working tree = HEAD (6720ad2c). Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/15-prefreeze-fresh-clone.log"
+      ]
+    },
+    {
+      "id": "QA19-C07",
+      "procedure": "Step 3: independent register integrity (own RFC 4180 parser). Checks: columns, no VERIFIED rows, evidence paths of IMPLEMENTED rows, A01-A28 coverage, final_gate/increments consistency, counts, exact coverage matrices. Also spot-read the IMPLEMENTED DG0 evidence changed this round (candidate.mjs stub rule, rules.mjs landlock/findManifest, import-findings.mjs, agent_sandbox.py, landlock_exec.py)",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/register-integrity.mjs $TMPDIR/r19/cand",
+      "environment": "clone at 0a65201",
+      "expected": "0 integrity errors",
+      "actual": "412 rows (SOURCE 93, ENGINEERING 131, USER 188). 19 IMPLEMENTED, 393 SPECIFIED, 0 VERIFIED. 19 final_gate DG0 rows, all IMPLEMENTED with existing evidence. Coverage matrices: 165 playbook and 423 master-prompt blocks, 0 reverse gaps. 0 errors. 13 notes: evidence pointing to delivery metadata or CLAUDE.md, and REQ-DLV-021 SPECIFIED with evidence (the same notes as earlier rounds). REQ-DLV-023's 'candidate match' is affected by F-DG0-240.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/20-register-integrity.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/register-integrity.mjs"
+      ]
+    },
+    {
+      "id": "QA19-C08",
+      "procedure": "Step 4: agent setup from the raw load-check evidence (meta.json, result.json, transcript.jsonl.gz of the ten T-DG0-LOAD runs)",
+      "command": "(cd $TMPDIR/r19/cand) node docs/delivery/test-evidence/DG0/qa/tests/agent-load-evidence.mjs",
+      "environment": "clone at 0a65201",
+      "expected": "10 runs, 10 distinct session IDs, model claude-opus-5-5, the out-of-scope docs/source probe blocked in every run, result success",
+      "actual": "runs 10, distinct sessions 10. Each: init_model claude-opus-5-5, meta session = transcript session = result session, result success, the out-of-scope docs/source/LOAD-PROBE-<role>.txt write BLOCKED by the write guard. Overall PASS. .claude/agents holds 10 definitions.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/30-agent-load-evidence.log"
+      ]
+    },
+    {
+      "id": "QA19-C09",
+      "procedure": "Step 4: live guard re-verification. Write tool and shell write to docs/source/QA-PROBE.txt from this run",
+      "command": "Write docs/source/QA-PROBE.txt; echo x > docs/source/QA-PROBE.txt; test -e docs/source/QA-PROBE.txt",
+      "environment": "this qa-verifier run (process sandbox + shell sandbox)",
+      "expected": "both blocked; file absent",
+      "actual": "Write tool: 'BLOCKED by write guard: qa-verifier may not write docs/source/QA-PROBE.txt (protected path)'. Shell: 'Read-only file system', exit 1. File absent.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/31-live-guard-probe.log"
+      ]
+    },
+    {
+      "id": "QA19-C10",
+      "procedure": "Step 4: agents.md claims vs the code and raw evidence (load-check result line, process-sandbox line, Landlock wiring)",
+      "command": "grep agents.md; grep agent_sandbox.py / landlock_exec.py; Landlock ABI syscall",
+      "environment": "clone at 0a65201",
+      "expected": "claims match the code and evidence",
+      "actual": "Line 90 '10/10 ... 10 distinct session IDs ... orchestrator's model ... blocked 10/10' matches QA19-C08. Line 114 matches the bwrap args (--unshare-ipc, --bind /proc /proc, no --unshare-pid) and the sandbox.json landlock block written by agent_sandbox.py. landlock_exec.py uses a scope-only ruleset (0, 0, SIGNAL|ABSTRACT_UNIX_SOCKET) and raises on failure (fail-closed). Kernel ABI is 7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/32-agents-md-vs-evidence.log"
+      ]
+    },
+    {
+      "id": "QA19-C11",
+      "procedure": "Step 5: feasibility. The acceptance map and stage plan assign every A01-A28 to a test level, a first stage and a gate, and none is untestable",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/acceptance-feasibility.mjs $TMPDIR/r19/cand",
+      "environment": "clone at 0a65201",
+      "expected": "28/28 scenarios mapped with level, stage and gate; register rows citing each; 0 errors",
+      "actual": "All 28 mapped (e.g. A24 unit(validator);CI P0 DG0, A25 unit P0 DG0, A28 ops P7 DG7). proved = citing counts for each. The stage plan covers all 28. 0 errors, RESULT PASS.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/40-acceptance-feasibility.log"
+      ]
+    },
+    {
+      "id": "QA19-C12",
+      "procedure": "Verify my findings F-DG0-236, F-DG0-237, F-DG0-239 (reproduce pre-fix where possible)",
+      "command": "bwrap --dev-bind / / --ro-bind /dev/null <clone>/.qa19stub ... & candidate.mjs (pre-fix bb062dc and 0a65201); live mkdir probes; grep agents.md/threat-model.md",
+      "environment": "disposable clones in $TMPDIR/r19; this run's sandbox",
+      "expected": "pre-fix reproduces, candidate fixed; docs match behaviour",
+      "actual": "F-DG0-236: pre-fix, the candidate ID flips 87 to 89 files while real bwrap stubs (0444, empty) exist. On the candidate it stays 6720ad2c/91. F-DG0-237: the threat-model text matches the live probes. F-DG0-239: the agents.md wording is corrected. All three are CLOSED_VERIFIED.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/10-f236-live-stub-repro.log",
+        "docs/delivery/test-evidence/DG0/qa/round-19/11-f237-f239-live-probes.log",
+        "docs/delivery/reviews/DG0/round-19/qa-verifier.verifications.json"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG0-240"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/qa/round-19/01-step1-required-commands.log",
+    "docs/delivery/test-evidence/DG0/qa/round-19/02-process-sandbox-full.log",
+    "docs/delivery/test-evidence/DG0/qa/round-19/10-f236-live-stub-repro.log",
+    "docs/delivery/test-evidence/DG0/qa/round-19/11-f237-f239-live-probes.log",
+    "docs/delivery/test-evidence/DG0/qa/round-19/12-qa19-new-cases.log",
+    "docs/delivery/test-evidence/DG0/qa/round-19/13-qa19-d035-before-after.log",
+    "docs/delivery/test-evidence/DG0/qa/round-19/14-d034-history-and-prefreeze.log",
+    "docs/delivery/test-evidence/DG0/qa/round-19/15-prefreeze-fresh-clone.log",
+    "docs/delivery/test-evidence/DG0/qa/round-19/20-register-integrity.log",
+    "docs/delivery/test-evidence/DG0/qa/round-19/30-agent-load-evidence.log",
+    "docs/delivery/test-evidence/DG0/qa/round-19/31-live-guard-probe.log",
+    "docs/delivery/test-evidence/DG0/qa/round-19/32-agents-md-vs-evidence.log",
+    "docs/delivery/test-evidence/DG0/qa/round-19/40-acceptance-feasibility.log",
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r19.test.mjs"
+  ],
+  "reviewed_at": "2026-09-30T09:42:00Z",
+  "summary": "FAIL for DG0 candidate 6720ad2c (0a65201), because of one Medium finding: F-DG0-240. D-035's pruned-commit tolerance also applies to the gate's own round, so current-mode validation accepts an APPROVED gate whose source_commit doesn't exist. Before D-035 that was rejected; --historical still rejects it. Everything else passes: all required commands, prefreeze (11/11), the F-DG0-152 positive control run fully, the A24/A25 regression suite, 6 new Landlock negatives, the D-034 history and import-findings checks, register integrity, the agent load evidence, the live guard probe and feasibility. F-DG0-236, 237 and 239 are verified fixed."
+}

@@ -1,0 +1,34 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-240",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "D-035's pruned-source_commit tolerance also covers the gate's own round. In current mode (the mode the gate is validated in before approval), validateGate now accepts an APPROVED gate record whose source_commit, and its gate-round manifest's source_commit, name a commit that does not exist. Before D-035 this was rejected. D-035 says the gate candidate is still recomputed from the retained gate.source_commit, but that is true only in --historical mode",
+      "reproduction": "Independent test QA19-P4 in docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r19.test.mjs. It builds a disposable fixture: a complete four-record DG0 gate, decision APPROVED, with one Low finding accepted as an observation (so no fix_revision check applies). Every source_commit pointer (gate record, frozen manifest, stages.json candidate and rounds, review records) is set to 5a1e...5a1e (40 hex chars, not an object in the repository). The committed content is unchanged, so the working tree still hashes to the candidate_id. Run with QA_REPO_ROOT=<clone>. (1) Candidate 0a65201: validateGate(repo,'DG0') in current mode returns 0 errors. The control with the real commit also returns 0 errors. --historical returns 'candidate: cannot recompute from 5a1e...'. (2) Same test at 695ab30, the commit before D-035 (28f99e3): current mode returns 2 errors ('review rounds: DG0 round 1/2 manifest ... cannot recompute from its source_commit'), and the test passes. The r9 regression case QA5-N57 ('a round whose manifest names a source_commit that does not exist is rejected') now fails for the same reason: 'validator accepted an invalid gate (no errors)'. Cause: findManifest (tools/gates/lib/rules.mjs) tolerates a missing source_commit for every round, the gate's candidate round included. In current mode checkCandidate recomputes from the working tree (manifestFromWorkingTree), never from gate.source_commit, so no current-mode check is left that the gate's commit exists.",
+      "expected": "D-035 describes this as a loosening 'on non-gate rounds only' and says the gate candidate is 'recomputed independently from the retained gate.source_commit'. Current-mode gate validation should therefore still reject a gate (and its own round) whose source_commit does not exist, or does not describe the candidate. Suggested fix: apply the D-035 tolerance only to rounds whose candidate_id differs from the gate's / stage.candidate's candidate_id. Or have checkCandidate in current mode also require that gate.source_commit exists (git cat-file -e <sha>^{commit}) and that manifestFromRef(gate.source_commit) hashes to gate.candidate_id. Add QA19-P4 (or an equivalent) as a regression test. Correct the D-035 wording to cover both modes.",
+      "actual": "An APPROVED DG0 gate record with an untraceable, fabricated commit pointer passes `validate.mjs --stage DG0` (current mode) with exit 0. Detection comes later, through `--pipeline` (historical mode for every approved gate, run in CI and before the next stage). By then the gate record and its evidence are covered by approval immutability, so the fix would need a history rewrite. Integrity of the approved content itself is not weakened: the working tree still has to hash to the candidate_id, and the reviews bind to that candidate_id. So this is not Critical/High, and not a mandatory violation. It is a material defect in the approval-time check (REQ-DLV-023 'candidate match'), introduced by this candidate, and it contradicts the decision record's stated scope. Medium. For non-gate, superseded rounds, I agree the D-035 tolerance is acceptable (QA19-P2 shows a reachable but mismatched commit is still rejected).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r19.test.mjs#QA19-P4",
+        "docs/delivery/test-evidence/DG0/qa/round-19/12-qa19-new-cases.log#QA19-P4",
+        "docs/delivery/test-evidence/DG0/qa/round-19/13-qa19-d035-before-after.log",
+        "tools/gates/lib/rules.mjs#findManifest",
+        "tools/gates/lib/rules.mjs#checkCandidate",
+        "docs/delivery/decisions.md#D-035"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-19/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T09:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-19 QA review of candidate 6720ad2c (0a65201). Medium, not mandatory."
+        }
+      ]
+    }
+  ]
+}

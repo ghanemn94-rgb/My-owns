@@ -1,0 +1,38 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-236",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced live with real bubblewrap mount stubs in disposable clones (bwrap --ro-bind /dev/null over two non-existent paths, observed from outside the bwrap). Seen from outside, each stub is a 'regular empty file size=0 mode=444'. Pre-fix (bb062dc = fe722c8^): the working-tree candidate flips from b7f60ed3 (87 files) to 79a7b26c (89 files) while the stub exists. Candidate 0a65201: it stays 6720ad2c (91 files). isSandboxStub skips only untracked, zero-length, unwritable regular files, so real empty files still count (validator test 'F-DG0-146/F-DG0-236'). run-agent.sh pre-creates docs/delivery/gates and the per-stage evidence directories; docs/delivery/gates is a directory in the shared tree. During this round the shared tree held the other runs' stubs, and `candidate.mjs --stage DG0` still printed 6720ad2c/91. Fix complete.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/10-f236-live-stub-repro.log",
+        "tools/gates/lib/candidate.mjs#isSandboxStub",
+        "tools/agents/run-agent.sh#L71",
+        "tools/gates/tests/validator.test.mjs#F-DG0-146/F-DG0-236"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-237",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "threat-model.md row 'New untracked files' now applies to implementers only. It states that for confined roles a new top-level path lands in the process sandbox's throwaway tmpfs, and every other new path outside the role's areas has a read-only parent (D-030). Live in this run: mkdir under docs/architecture, tests/unit, docs/delivery/__pycache__, docs/source, another reviewer's evidence dir and reviews/round-19 all fail with 'Read-only file system'. New top-level paths (src/, __pycache__/) can be created, which matches the stated tmpfs behaviour. The round-15 finding was that the text understated the scope; the corrected text matches the observed behaviour. Fix complete.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/11-f237-f239-live-probes.log",
+        "docs/delivery/threat-model.md#L43"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-239",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "docs/delivery/agents.md line 114 now reads: IPC namespace private (--unshare-ipc), PID namespace shared with the host, host procfs bound read-write, plus a per-run Landlock domain (D-033). This matches agent_sandbox.py (bwrap args '--unshare-ipc', '--bind /proc /proc', no --unshare-pid; the sandbox.json record has unshare ['ipc'], procfs 'host-bind' and the landlock block), and threat-model residuals 7 and 8. Fix complete.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-19/32-agents-md-vs-evidence.log",
+        "docs/delivery/test-evidence/DG0/qa/round-19/11-f237-f239-live-probes.log",
+        "docs/delivery/agents.md#L114",
+        "tools/agents/agent_sandbox.py#bwrap_args"
+      ]
+    }
+  ]
+}
