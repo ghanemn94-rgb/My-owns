@@ -7,6 +7,46 @@
 | Status source | `docs/requirements/status-evidence.yaml` (checked with `python3 scripts/requirements/apply_status.py --check` → `status-evidence.yaml OK (102 entries)`), applied to `requirements.yaml` and the traceability matrix by the lead. |
 | Scope | All 82 requirements with `phase: P1` and `priority: must` in `docs/requirements/requirements.yaml` (register total unchanged: 394) |
 
+## Update at the P1 gate (lead, 2026-09-30) — closes QA-P1R-02 / QA-P1R-03
+
+**Source of truth:** the register (`docs/requirements/requirements.yaml`, generated from
+`docs/requirements/status-evidence.yaml`). The tables below this section were written at `7959b44` and are kept as
+history. Where they disagree with the register, the register wins.
+
+**Register counts for the 82 P1 musts at the gate revision:** Tested **58** · Implemented **22** · Deferred **2** ·
+Planned 0.
+
+Changes since `7959b44`:
+- **REQ-SRC-002 → Tested.**
+  - `packages/db/scripts/validate-templates.mjs` now checks that each of the 7 reference heading claims (CLM-002..008)
+    maps to at least one DC template workstream, and that every mapped WBS activity belongs to a mapped workstream.
+  - The mapping is in `packages/db/seed/source-maps/dc-carveout.v1.json` (status proposed).
+  - A negative probe fails the validator.
+- **REQ-ARC-011 → Tested.**
+  - `apps/api/scripts/check-module-boundaries.mjs` runs in the API lint (CI static job). It checks that cross-module
+    imports go only through published surfaces and that the module graph is acyclic.
+  - A negative probe fails the check.
+  - Variance: this is a dependency-free checker instead of dependency-cruiser.
+- **Tested earlier through the P1 closure and security fixes:** REQ-ARC-005 and the P1 closure tests (see register
+  evidence).
+
+The 24 P1 musts that are not Tested:
+
+| ID | Status | Disposition | Owner |
+|---|---|---|---|
+| REQ-UX-003, REQ-ARC-001, REQ-ARC-013, REQ-AGT-011, REQ-PHS-003, REQ-PHS-011, REQ-PHS-012, REQ-PHS-013 | Implemented | Close at the P1 gate by review (see `docs/phases/P1-gate-report.json`) | P1 gate reviewers / delivery-orchestrator |
+| REQ-SRC-005, REQ-SRC-007 | Implemented | Re-phased to P2 (source register fields; evidence in the P2 disposition) | backend-data-engineer (documents) |
+| REQ-SRC-006 | Implemented | UT re-phased to P2; data-quality view to P6 | backend-data-engineer; integration-reporting-engineer |
+| REQ-WS-002 | Implemented | Re-phased to P2 (with REQ-WS-003) | carveout-domain-analyst |
+| REQ-UX-001 | Implemented | Server explanations are translated (QA-P1-14). The remaining English (refusal detail text, audit action codes, demo seed text) is re-phased to P6 (QA-P1R-05) | ux-frontend-engineer |
+| REQ-PHS-001 | Implemented | Re-phased to P2 | qa-test-engineer |
+| REQ-PLT-001, REQ-PLT-007, REQ-ENT-007, REQ-ENT-008, REQ-SET-005 | Implemented | Re-phased to P6 | backend / integration-reporting engineers |
+| REQ-UX-019 | Implemented | Templates tab re-phased to P6; users, permissions, identity and E2E to P7 | ux-frontend-engineer |
+| REQ-ARC-012 | Implemented | Re-phased to P7 | devops-platform-engineer |
+| REQ-SEC-010 | Implemented | AI unit tests re-phased to P5; BI and integration accounts to P6 | ai-runtime-engineer; integration-reporting-engineer |
+| REQ-ENT-009 | Deferred | Deferred to P6 | backend-data-engineer (project-config) |
+| REQ-SET-009 | Deferred | Deferred to P3 | ux-frontend-engineer (carve-out UI) |
+
 ## Evidence baseline
 
 - **CI:** GitHub Actions `transformation-hub-ci` run 8, id **36645986422**, on revision **7959b44**: all jobs green (static incl. fresh-checkout typecheck/lint and `apply_status.py --check`, unit, API integration against PostgreSQL 16, web build + private-mode egress scan, container images + image SBOM + grype, OpenAPI, licence policy, pnpm audit, source SBOM, Helm/kubeconform/compose/shellcheck, backup/restore drill, Playwright e2e with 24 tests against a production web build). This result was reported by the lead; I did not re-query GitHub (no `gh` CLI here).

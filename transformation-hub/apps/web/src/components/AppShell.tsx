@@ -46,6 +46,8 @@ function TopNav({ me }: { me: Me }) {
   const items = [
     { href: '/', label: t('nav.portfolio'), active: pathname === '/' || pathname.startsWith('/projects') },
     { href: '/inbox', label: t('nav.inbox'), active: pathname.startsWith('/inbox') },
+    // Counterparty (external partner) accounts: their granted partner rooms (JV & Diligence, partner-access projection).
+    ...(me.projects.some((p) => p.permissions.includes('jv.disclosure.view')) ? [{ href: '/partner-access', label: t('nav.partnerAccess'), active: pathname.startsWith('/partner-access') }] : []),
     ...(showAdmin(me) ? [{ href: '/admin', label: t('nav.admin'), active: pathname.startsWith('/admin') }] : []),
   ];
   return (

@@ -239,6 +239,34 @@ const dcGate = Object.fromEntries(dc.tpl.wbs.map((a) => [a.id, a.gateKey]));
 const leak = [...jvSigning].filter((id) => ["G3", "G4"].includes(dcGate[id]));
 ok(leak.length === 0, `dc: JV signing (WS12-A06) transitively depends on G3/G4 activities: ${leak.join(",")}`);
 
+// REQ-SRC-002: every reference heading claim of the source register (docs/source-register.md rows "Heading: …") is mapped to
+// at least one workstream of the DC template, and every mapped WBS activity exists and belongs to a mapped workstream.
+{
+  const mapPath = join(DIR, "..", "source-maps", "dc-carveout.v1.json");
+  const map = JSON.parse(readFileSync(mapPath, "utf8"));
+  const register = readFileSync(join(DIR, "..", "..", "..", "..", "docs", "source-register.md"), "utf8");
+  const headingClaims = [...register.matchAll(/^\| (CLM-\d{3}) \|[^|]*\|[^|]*\| Heading: /gm)].map((m) => m[1]);
+  ok(headingClaims.length === 7, `source register: expected 7 reference heading claims, found ${headingClaims.length}`);
+  ok(map.template === "dc-carveout" && map.version === 1, "source map: not for dc-carveout v1");
+  ok(map.verificationStatus === "proposed", "source map: a mapping stays proposed (design trace, not a determination)");
+  const wsKeys = new Set(dc.tpl.workstreams.map((w) => w.key ?? w.code));
+  const wbsWs = new Map(dc.tpl.wbs.map((a) => [a.id, a.workstreamKey]));
+  const mapped = new Map(map.claims.map((c) => [c.claimId, c]));
+  for (const id of headingClaims) {
+    const c = mapped.get(id);
+    ok(!!c, `source map: reference heading ${id} is not mapped to the template`);
+    if (!c) continue;
+    ok(Array.isArray(c.workstreams) && c.workstreams.length > 0, `source map ${id}: no workstream`);
+    for (const w of c.workstreams ?? []) ok(wsKeys.has(w), `source map ${id}: unknown workstream ${w}`);
+    for (const a of c.wbs ?? []) {
+      ok(wbsWs.has(a), `source map ${id}: unknown WBS activity ${a}`);
+      ok(!wbsWs.has(a) || (c.workstreams ?? []).includes(wbsWs.get(a)), `source map ${id}: ${a} belongs to ${wbsWs.get(a)}, not a mapped workstream`);
+    }
+  }
+  for (const id of mapped.keys()) ok(headingClaims.includes(id), `source map: ${id} is not a reference heading claim of the source register`);
+  console.log(`source map dc-carveout.v1: ${headingClaims.length} reference headings → ${new Set(map.claims.flatMap((c) => c.workstreams)).size} workstreams, ${map.claims.flatMap((c) => c.wbs ?? []).length} WBS activities`);
+}
+
 const gen = validate("general-transformation.v1.json", {
   key: "general-transformation", kind: "general_transformation", dims: [], gates: ["T0", "T1", "T2", "T3"],
   minCrit: 3, maxCrit: 5, phases: 4, ws: 4, wsNames: ["Governance & PMO", "Process & Organization", "Technology Enablement", "Change & Adoption"],
