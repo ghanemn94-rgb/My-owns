@@ -92,8 +92,8 @@
 1. Finish the P2 residuals, the P3 domain review, the P3/P4 QA review and the P3/P4 security fixes (agents; at most two
    running tests at once).
 2. P3 and P4 gate reports.
-3. P3 reviews (domain, security, QA) → P3 gate. P4 reviews → P4 gate.
-4. Merge the AI UI → P5 reviews → P6 → P7 → P8.
+3. P5 security and QA reviews (briefs ready), then P6 in three packages (reporting/exports; imports/integrations/
+   notifications; configuration/setup wizard), P7 (enterprise readiness), P8 (pilot and handover).
 
 Before every push:
 - run the full API suite and `pnpm lint`;
