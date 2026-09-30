@@ -1,0 +1,14 @@
+# commitPresent / absence-tolerance census on rules.mjs at 6db3b83, 2026-09-30T13:36:54Z
+$ grep -n 'commitPresent(\|cat-file\|present = \|!present\|if (present)' tools/gates/lib/rules.mjs
+397:      } else if (!commitPresent(repo, head)) {
+401:          execFileSync("git", ["-C", repo, "cat-file", "-e", `${head}:${binding.manifestPath}`], { stdio: "ignore" });
+605:function commitPresent(repo, sha) {
+607:    execFileSync("git", ["-C", repo, "cat-file", "-e", `${sha}^{commit}`], { stdio: "ignore" });
+618:    return execFileSync("git", ["-C", repo, "cat-file", "-t", String(sha)], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+735:    else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
+738:      if (typeof vhead === "string" && /^[0-9a-f]{40}$/.test(vhead) && commitPresent(repo, vhead) && !isAncestor(repo, f.fix_revision, vhead))
+913:    let present = true;
+915:      execFileSync("git", ["-C", repo, "cat-file", "-e", `${m.source_commit}^{commit}`], { stdio: "ignore" });
+917:      present = false;
+919:    if (present) errors.push(`${label} manifest ${rel}: cannot recompute from its source_commit (${e.message.split("\n")[0]})`);
+944:  //   (1) a missing commit -- caught by the object-type check (cat-file -t fails) and D-036.

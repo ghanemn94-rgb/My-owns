@@ -1,0 +1,81 @@
+## F-DG0-014 reproduce at round-23 baseline 6438e20 (git show 6438e20:tools/gates/lib/rules.mjs | sed -n 596,601p)
+
+// Whether a commit object is present in this repository. A commit referenced in write-once metadata (a fix_revision,
+// a run's head_commit_at_start, a round's source_commit) can be pruned by a later legitimate history correction -- this
+// branch's pre-round-12 history was truncated in an earlier session, and round 18 was rewritten by the D-034 write-once
+// repair. Provenance checks that need such a commit tolerate its genuine absence (D-035 for findManifest; D-037 for
+// checkClosure and checkInvocation), while every check whose commit IS present still runs (D-037, F-DG0-242).
+
+## at candidate 6db3b83 (sed -n 597,604p)
+// Whether a commit object is present in this repository. Gate validation runs on a COMPLETE clone (validateGate refuses
+// a shallow one, F-DG0-160), so every commit a genuine record references is present. The ONLY absence tolerance is
+// findManifest's (D-035): a superseded review round's write-once manifest may name a `source_commit` that no longer
+// resolves (round 18 was rewritten by the D-034 write-once repair), and that is accepted because the manifest's entries
+// must still hash to its `candidate_id` -- a content-preserving check, not a skipped one. checkClosure and
+// checkInvocation are STRICT (D-039/D-040): a CLOSED_VERIFIED `fix_revision` and a run's `head_commit_at_start` must be
+// present, and the fix must be an ancestor of the verifying run's head and of the gate candidate. checkClosure skips the
+// round-side check only via the run's real head, never a round's self-declared source_commit (D-040, F-DG0-166/249).
+
+## callers of commitPresent at 6db3b83
+397:      } else if (!commitPresent(repo, head)) {
+605:function commitPresent(repo, sha) {
+735:    else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
+738:      if (typeof vhead === "string" && /^[0-9a-f]{40}$/.test(vhead) && commitPresent(repo, vhead) && !isAncestor(repo, f.fix_revision, vhead))
+
+## findManifest comment at 6db3b83
+  try {
+    const fromCommit = candidateId(manifestFromRef(repo, m.source_commit, m.spec), m.hash_algorithm || "mth-candidate-v1");
+    if (fromCommit !== cid) errors.push(`${label} manifest ${rel} does not describe its source_commit ${String(m.source_commit).slice(0, 10)} (recomputes to ${fromCommit})`);
+  } catch (e) {
+    // The recompute needs the source_commit to still be present. Gate validation runs on a COMPLETE clone (validateGate
+    // refuses a shallow one, F-DG0-160), so a genuinely absent source_commit means a superseded (non-gate) review round
+    // whose freeze commit was orphaned by a later, legitimate history correction -- on this branch, round 18's commit,
+    // rewritten by the D-034 write-once repair (its pre-rewrite source_commit is on no branch). This is the ONLY absence
+    // tolerance in the validator, and it is content-preserving, not a skipped check: the manifest file itself remains and
+    // its entries still self-consistently hash to its candidate_id (verified just above), it must equal the review round
+    // record's source_commit (checkReviewRounds), and the GATE candidate is recomputed independently from the retained,
+    // branch-reachable gate.source_commit (checkCandidate). So a genuinely MISSING source_commit is tolerated here; every
+    // other recompute failure -- including a reachable commit whose content does not match -- is still an error (D-035).
+    let present = true;
+    try {
+      execFileSync("git", ["-C", repo, "cat-file", "-e", `${m.source_commit}^{commit}`], { stdio: "ignore" });
+
+## grep for residual 'D-037' tolerance wording
+479:        // sidecar (an earlier D-037 "recordless" exemption is withdrawn -- it could not tell "never imported" from
+615:// gate's source_commit to be a commit object itself, not an annotated tag that merely peels to one (D-037, F-DG0-241).
+669:        // unlisted is still a real inconsistency (D-037, F-DG0-243).
+948:  //       AND an ancestor of HEAD rejects both (D-037, F-DG0-241; QA20-S7 off-branch, QA20-S8 annotated tag).
+exit(grep)=0
+## fix_revision 81f036d ancestry
+ancestor of candidate 6db3b83: exit=0
+ancestor of my run head 79fb0f8: exit=0
+## commitPresent header comment at 81f036d
+597:// Whether a commit object is present in this repository. Gate validation runs on a COMPLETE clone (validateGate refuses
+598-// a shallow one, F-DG0-160), so every commit a genuine record references is present. The ONLY absence tolerance is
+599-// findManifest's (D-035): a superseded review round's write-once manifest may name a `source_commit` that no longer
+600-// resolves (round 18 was rewritten by the D-034 write-once repair), and that is accepted because the manifest's entries
+601-// must still hash to its `candidate_id` -- a content-preserving check, not a skipped one. checkClosure and
+602-// checkInvocation are STRICT (D-039/D-040): a CLOSED_VERIFIED `fix_revision` and a run's `head_commit_at_start` must be
+603-// present, and the fix must be an ancestor of the verifying run's head and of the gate candidate. checkClosure skips the
+604-// round-side check only via the run's real head, never a round's self-declared source_commit (D-040, F-DG0-166/249).
+## diff of rules.mjs 81f036d..6db3b83
+ tools/gates/lib/rules.mjs | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+--- a/tools/gates/lib/rules.mjs
++++ b/tools/gates/lib/rules.mjs
+-    // The recompute needs the source_commit to still be present. A superseded (non-gate) review round's source_commit
+-    // can be pruned by a later, legitimate history correction (this branch's pre-round-12 history was truncated before
+-    // this session; round 18's commit was rewritten by the D-034 write-once repair). The manifest file itself remains
+-    // and its entries still self-consistently hash to its candidate_id (verified just above), it must equal the review
+-    // round record's source_commit (checkReviewRounds), and the GATE candidate is recomputed independently from the
+-    // retained gate.source_commit (checkCandidate). So a genuinely MISSING source_commit is tolerated here; every other
+-    // recompute failure is still an error (decision D-035).
++    // The recompute needs the source_commit to still be present. Gate validation runs on a COMPLETE clone (validateGate
++    // refuses a shallow one, F-DG0-160), so a genuinely absent source_commit means a superseded (non-gate) review round
++    // whose freeze commit was orphaned by a later, legitimate history correction -- on this branch, round 18's commit,
++    // rewritten by the D-034 write-once repair (its pre-rewrite source_commit is on no branch). This is the ONLY absence
++    // tolerance in the validator, and it is content-preserving, not a skipped check: the manifest file itself remains and
++    // its entries still self-consistently hash to its candidate_id (verified just above), it must equal the review round
++    // record's source_commit (checkReviewRounds), and the GATE candidate is recomputed independently from the retained,
++    // branch-reachable gate.source_commit (checkCandidate). So a genuinely MISSING source_commit is tolerated here; every
++    // other recompute failure -- including a reachable commit whose content does not match -- is still an error (D-035).

@@ -1,0 +1,54 @@
+# git rev-parse HEAD
+79fb0f8bf5fe7b41b2921f7901dac8d717129f1e
+# is-shallow: false
+# candidate commit 6db3b83 in HEAD history:
+yes
+# files changed 6db3b83..HEAD (must be metadata only)
+docs/delivery/assignments/DG0/round-24/audit.md
+docs/delivery/assignments/DG0/round-24/review-code-security-reviewer.md
+docs/delivery/assignments/DG0/round-24/review-common.md
+docs/delivery/assignments/DG0/round-24/review-domain-reviewer.md
+docs/delivery/assignments/DG0/round-24/review-qa-verifier.md
+docs/delivery/candidates/DG0/f0f3a93a1fcf33e5.manifest.json
+docs/delivery/stages.json
+# candidate.mjs --stage DG0 (working tree)
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:f0f3a93a1fcf33e58b1d553e39205cc8bc1764407189b69904d2d58e976f351a","files":91}
+# candidate.mjs --stage DG0 --ref 6db3b83
+{"stage":"DG0","source":"6db3b8388699b767032b4f92547ceb79edf74519","candidate_id":"sha256:f0f3a93a1fcf33e58b1d553e39205cc8bc1764407189b69904d2d58e976f351a","files":91}
+# candidate.mjs --stage DG0 --ref HEAD
+{"stage":"DG0","source":"HEAD","candidate_id":"sha256:f0f3a93a1fcf33e58b1d553e39205cc8bc1764407189b69904d2d58e976f351a","files":91}
+# frozen manifest
+sha256:f0f3a93a1fcf33e58b1d553e39205cc8bc1764407189b69904d2d58e976f351a 6db3b8388699b767032b4f92547ceb79edf74519 2026-09-30T13:21:05Z 91
+# diff stat 6438e20..6db3b83 in candidate scope (excludes metadata)
+ docs/delivery/decisions.md           |  1 +
+ tools/gates/lib/rules.mjs            | 49 ++++++++++++++++++++----------------
+ tools/gates/tests/validator.test.mjs | 17 +++++++------
+ 3 files changed, 38 insertions(+), 29 deletions(-)
+# F-DG0-014/167: commitPresent + findManifest comments at 6db3b83
+// Whether a commit object is present in this repository. Gate validation runs on a COMPLETE clone (validateGate refuses
+// a shallow one, F-DG0-160), so every commit a genuine record references is present. The ONLY absence tolerance is
+// findManifest's (D-035): a superseded review round's write-once manifest may name a `source_commit` that no longer
+// resolves (round 18 was rewritten by the D-034 write-once repair), and that is accepted because the manifest's entries
+// must still hash to its `candidate_id` -- a content-preserving check, not a skipped one. checkClosure and
+// checkInvocation are STRICT (D-039/D-040): a CLOSED_VERIFIED `fix_revision` and a run's `head_commit_at_start` must be
+// present, and the fix must be an ancestor of the verifying run's head and of the gate candidate. checkClosure skips the
+// round-side check only via the run's real head, never a round's self-declared source_commit (D-040, F-DG0-166/249).
+    // The recompute needs the source_commit to still be present. Gate validation runs on a COMPLETE clone (validateGate
+    // refuses a shallow one, F-DG0-160), so a genuinely absent source_commit means a superseded (non-gate) review round
+    // whose freeze commit was orphaned by a later, legitimate history correction -- on this branch, round 18's commit,
+    // rewritten by the D-034 write-once repair (its pre-rewrite source_commit is on no branch). This is the ONLY absence
+    // tolerance in the validator, and it is content-preserving, not a skipped check: the manifest file itself remains and
+    // its entries still self-consistently hash to its candidate_id (verified just above), it must equal the review round
+    // record's source_commit (checkReviewRounds), and the GATE candidate is recomputed independently from the retained,
+    // branch-reachable gate.source_commit (checkCandidate). So a genuinely MISSING source_commit is tolerated here; every
+    // other recompute failure -- including a reachable commit whose content does not match -- is still an error (D-035).
+    let present = true;
+# absence-tolerance census (cat-file -e / commitPresent call sites)
+397:      } else if (!commitPresent(repo, head)) {
+401:          execFileSync("git", ["-C", repo, "cat-file", "-e", `${head}:${binding.manifestPath}`], { stdio: "ignore" });
+605:function commitPresent(repo, sha) {
+607:    execFileSync("git", ["-C", repo, "cat-file", "-e", `${sha}^{commit}`], { stdio: "ignore" });
+735:    else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
+738:      if (typeof vhead === "string" && /^[0-9a-f]{40}$/.test(vhead) && commitPresent(repo, vhead) && !isAncestor(repo, f.fix_revision, vhead))
+915:      execFileSync("git", ["-C", repo, "cat-file", "-e", `${m.source_commit}^{commit}`], { stdio: "ignore" });
+917:      present = false;

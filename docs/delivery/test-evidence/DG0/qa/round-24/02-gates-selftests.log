@@ -1,0 +1,385 @@
+$ node --test tools/gates/tests/sandbox.test.mjs tools/gates/tests/validator.test.mjs
+env: v22.22.2 git 2.43.0 Linux 6.18.44-fc-v50 HEAD=79fb0f8bf5fe7b41b2921f7901dac8d717129f1e date=2026-09-30T13:24:56Z
+TAP version 13
+# Subtest: sandbox-run: requires bubblewrap (a missing sandbox is a failure, not a pass)
+ok 1 - sandbox-run: requires bubblewrap (a missing sandbox is a failure, not a pass)
+  ---
+  duration_ms: 0.985641
+  type: 'test'
+  ...
+# Subtest: F-DG0-229: ignored or untracked files in the working tree never reach the sandboxed clone
+ok 2 - F-DG0-229: ignored or untracked files in the working tree never reach the sandboxed clone
+  ---
+  duration_ms: 74.979774
+  type: 'test'
+  ...
+# Subtest: F-DG0-140: inside the sandbox the source repository is read-only, there is no network, and cwd is not on sys.path
+ok 3 - F-DG0-140: inside the sandbox the source repository is read-only, there is no network, and cwd is not on sys.path
+  ---
+  duration_ms: 110.757761
+  type: 'test'
+  ...
+# Subtest: sandbox-run: the command's exit status is returned
+ok 4 - sandbox-run: the command's exit status is returned
+  ---
+  duration_ms: 61.499433
+  type: 'test'
+  ...
+# Subtest: D-030: candidate code runs with /proc/sys read-only (kernel tunables cannot be changed)
+ok 5 - D-030: candidate code runs with /proc/sys read-only (kernel tunables cannot be changed)
+  ---
+  duration_ms: 60.006773
+  type: 'test'
+  ...
+# Subtest: F-DG0-141: the clone, checkout and command run inside the sandbox, in a work area no other process can see
+ok 6 - F-DG0-141: the clone, checkout and command run inside the sandbox, in a work area no other process can see
+  ---
+  duration_ms: 3066.171395
+  type: 'test'
+  ...
+# Subtest: a fully evidenced DG0 gate passes in current and historical mode
+ok 7 - a fully evidenced DG0 gate passes in current and historical mode
+  ---
+  duration_ms: 942.269187
+  type: 'test'
+  ...
+# Subtest: A24: a missing specialist reviewer fails the gate
+ok 8 - A24: a missing specialist reviewer fails the gate
+  ---
+  duration_ms: 88.842895
+  type: 'test'
+  ...
+# Subtest: A23: a reviewer who authored the scope, or who is an owner, is rejected
+ok 9 - A23: a reviewer who authored the scope, or who is an owner, is rejected
+  ---
+  duration_ms: 697.426742
+  type: 'test'
+  ...
+# Subtest: A23: reviewers sharing one invocation are not independent
+ok 10 - A23: reviewers sharing one invocation are not independent
+  ---
+  duration_ms: 224.34151
+  type: 'test'
+  ...
+# Subtest: A24 / F-DG0-102: fabricated or incomplete provenance is rejected
+ok 11 - A24 / F-DG0-102: fabricated or incomplete provenance is rejected
+  ---
+  duration_ms: 907.634608
+  type: 'test'
+  ...
+# Subtest: F-DG0-201: a review bound to an unrelated run of the same role is rejected
+ok 12 - F-DG0-201: a review bound to an unrelated run of the same role is rejected
+  ---
+  duration_ms: 473.043794
+  type: 'test'
+  ...
+# Subtest: A24: failed or BLOCKED checks and non-PASS verdicts fail the gate
+ok 13 - A24: failed or BLOCKED checks and non-PASS verdicts fail the gate
+  ---
+  duration_ms: 790.596055
+  type: 'test'
+  ...
+# Subtest: A24: unresolved blocking findings fail the gate; owners cannot verify their own fix
+ok 14 - A24: unresolved blocking findings fail the gate; owners cannot verify their own fix
+  ---
+  duration_ms: 457.831123
+  type: 'test'
+  ...
+# Subtest: F-DG0-101: findings cannot escape by relabelling, dropping or downgrading
+ok 15 - F-DG0-101: findings cannot escape by relabelling, dropping or downgrading
+  ---
+  duration_ms: 1045.608789
+  type: 'test'
+  ...
+# Subtest: A24 / F-DG0-106 / F-DG0-202: incomplete requirements, placeholder evidence and coverage gaps fail
+ok 16 - A24 / F-DG0-106 / F-DG0-202: incomplete requirements, placeholder evidence and coverage gaps fail
+  ---
+  duration_ms: 2296.743956
+  type: 'test'
+  ...
+# Subtest: A25: a source change invalidates the approval; review metadata does not
+ok 17 - A25: a source change invalidates the approval; review metadata does not
+  ---
+  duration_ms: 738.304504
+  type: 'test'
+  ...
+# Subtest: A25 / F-DG0-103: symlinks are part of the candidate identity; submodules are refused
+ok 18 - A25 / F-DG0-103: symlinks are part of the candidate identity; submodules are refused
+  ---
+  duration_ms: 86.595412
+  type: 'test'
+  ...
+# Subtest: F-DG0-104: the manifest spec must equal the stage spec and the approved policy
+ok 19 - F-DG0-104: the manifest spec must equal the stage spec and the approved policy
+  ---
+  duration_ms: 444.838081
+  type: 'test'
+  ...
+# Subtest: A25: a tampered manifest or a stale review candidate is detected
+ok 20 - A25: a tampered manifest or a stale review candidate is detected
+  ---
+  duration_ms: 461.324759
+  type: 'test'
+  ...
+# Subtest: F-DG0-102: approval records are immutable after approval (historical mode)
+ok 21 - F-DG0-102: approval records are immutable after approval (historical mode)
+  ---
+  duration_ms: 1607.052858
+  type: 'test'
+  ...
+# Subtest: the gate record must be written by the audited release-auditor invocation
+ok 22 - the gate record must be written by the audited release-auditor invocation
+  ---
+  duration_ms: 230.221463
+  type: 'test'
+  ...
+# Subtest: A24: the pipeline cannot advance past a gate that is not APPROVED
+ok 23 - A24: the pipeline cannot advance past a gate that is not APPROVED
+  ---
+  duration_ms: 776.979171
+  type: 'test'
+  ...
+# Subtest: illegal stage transitions are rejected
+ok 24 - illegal stage transitions are rejected
+  ---
+  duration_ms: 81.485795
+  type: 'test'
+  ...
+# Subtest: an APPROVED gate with a BLOCKED decision or blocking conditions fails
+ok 25 - an APPROVED gate with a BLOCKED decision or blocking conditions fails
+  ---
+  duration_ms: 247.28554
+  type: 'test'
+  ...
+# Subtest: F-DG0-107: the CSV parser rejects text after a closing quote and ragged rows
+ok 26 - F-DG0-107: the CSV parser rejects text after a closing quote and ragged rows
+  ---
+  duration_ms: 0.568634
+  type: 'test'
+  ...
+# Subtest: F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification sidecar and bound run
+ok 27 - F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification sidecar and bound run
+  ---
+  duration_ms: 1324.525673
+  type: 'test'
+  ...
+# Subtest: F-DG0-101 residual: deleting an earlier review round is detected
+ok 28 - F-DG0-101 residual: deleting an earlier review round is detected
+  ---
+  duration_ms: 638.211412
+  type: 'test'
+  ...
+# Subtest: F-DG0-205: evidence that is a symlink to a file outside the repository is rejected
+ok 29 - F-DG0-205: evidence that is a symlink to a file outside the repository is rejected
+  ---
+  duration_ms: 218.842532
+  type: 'test'
+  ...
+# Subtest: F-DG0-112 / F-DG0-206: file mode and entry type are part of the candidate identity
+ok 30 - F-DG0-112 / F-DG0-206: file mode and entry type are part of the candidate identity
+  ---
+  duration_ms: 51.516193
+  type: 'test'
+  ...
+# Subtest: F-DG0-115: reviewer artefacts cannot be edited after the run, committed or not
+ok 31 - F-DG0-115: reviewer artefacts cannot be edited after the run, committed or not
+  ---
+  duration_ms: 921.512501
+  type: 'test'
+  ...
+# Subtest: F-DG0-208: round metadata must match the committed manifest of its candidate
+ok 32 - F-DG0-208: round metadata must match the committed manifest of its candidate
+  ---
+  duration_ms: 221.743899
+  type: 'test'
+  ...
+# Subtest: F-DG0-102 residual: a verifying record must be the round's listed, schema-valid record
+ok 33 - F-DG0-102 residual: a verifying record must be the round's listed, schema-valid record
+  ---
+  duration_ms: 405.801815
+  type: 'test'
+  ...
+# Subtest: F-DG0-117: observations are accepted only through specialist and auditor sidecars
+ok 34 - F-DG0-117: observations are accepted only through specialist and auditor sidecars
+  ---
+  duration_ms: 448.396524
+  type: 'test'
+  ...
+# Subtest: F-DG0-116: with core.fileMode=false tracked modes come from the index
+ok 35 - F-DG0-116: with core.fileMode=false tracked modes come from the index
+  ---
+  duration_ms: 46.4771
+  type: 'test'
+  ...
+# Subtest: F-DG0-115 residual: an evil merge cannot rewrite committed evidence
+ok 36 - F-DG0-115 residual: an evil merge cannot rewrite committed evidence
+  ---
+  duration_ms: 306.059409
+  type: 'test'
+  ...
+# Subtest: F-DG0-118: skip-worktree / assume-unchanged cannot hide edited evidence
+ok 37 - F-DG0-118: skip-worktree / assume-unchanged cannot hide edited evidence
+  ---
+  duration_ms: 262.278594
+  type: 'test'
+  ...
+# Subtest: F-DG0-119: only content replayed from the run's own successful Write/Edit calls is bound
+ok 38 - F-DG0-119: only content replayed from the run's own successful Write/Edit calls is bound
+  ---
+  duration_ms: 226.048045
+  type: 'test'
+  ...
+# Subtest: F-DG0-121 / F-DG0-211: the gate file must be what the auditor run wrote
+ok 39 - F-DG0-121 / F-DG0-211: the gate file must be what the auditor run wrote
+  ---
+  duration_ms: 234.116844
+  type: 'test'
+  ...
+# Subtest: F-DG0-212: a round manifest must describe its source commit; runs start from a commit containing it
+ok 40 - F-DG0-212: a round manifest must describe its source commit; runs start from a commit containing it
+  ---
+  duration_ms: 496.591281
+  type: 'test'
+  ...
+# Subtest: F-DG0-115 residual: a back-dated side branch merged in cannot replace committed evidence
+ok 41 - F-DG0-115 residual: a back-dated side branch merged in cannot replace committed evidence
+  ---
+  duration_ms: 301.769865
+  type: 'test'
+  ...
+# Subtest: F-DG0-115 defence in depth: meta.tool_authored cannot vouch for content the transcript never wrote
+ok 42 - F-DG0-115 defence in depth: meta.tool_authored cannot vouch for content the transcript never wrote
+  ---
+  duration_ms: 233.459536
+  type: 'test'
+  ...
+# Subtest: D-022: only a CLI-replayed prompt binds a transcript to its run; the same text in a tool result does not
+ok 43 - D-022: only a CLI-replayed prompt binds a transcript to its run; the same text in a tool result does not
+  ---
+  duration_ms: 226.763163
+  type: 'test'
+  ...
+# Subtest: F-DG0-132: an empty or newline-only transcript fails every transcript check
+ok 44 - F-DG0-132: an empty or newline-only transcript fails every transcript check
+  ---
+  duration_ms: 449.628238
+  type: 'test'
+  ...
+# Subtest: F-DG0-133: the assignment named in the replayed prompt must be the one recorded in meta
+ok 45 - F-DG0-133: the assignment named in the replayed prompt must be the one recorded in meta
+  ---
+  duration_ms: 220.222944
+  type: 'test'
+  ...
+# Subtest: F-DG0-223: a genuine prompt binds when the checkout path contains spaces
+ok 46 - F-DG0-223: a genuine prompt binds when the checkout path contains spaces
+  ---
+  duration_ms: 227.223313
+  type: 'test'
+  ...
+# Subtest: F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters
+ok 47 - F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters
+  ---
+  duration_ms: 95.036592
+  type: 'test'
+  ...
+# Subtest: D-024: a run that changed configuration outside the candidate is rejected
+ok 48 - D-024: a run that changed configuration outside the candidate is rejected
+  ---
+  duration_ms: 223.920515
+  type: 'test'
+  ...
+# Subtest: D-025: gate records must come from Bash-sandboxed runs
+ok 49 - D-025: gate records must come from Bash-sandboxed runs
+  ---
+  duration_ms: 461.919107
+  type: 'test'
+  ...
+# Subtest: F-DG0-145/D-030: gate records must come from runs whose whole agent process was confined to the role's own areas
+ok 50 - F-DG0-145/D-030: gate records must come from runs whose whole agent process was confined to the role's own areas
+  ---
+  duration_ms: 3155.088027
+  type: 'test'
+  ...
+# Subtest: F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory
+ok 51 - F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory
+  ---
+  duration_ms: 243.166483
+  type: 'test'
+  ...
+# Subtest: F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the replayed prompt)
+ok 52 - F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the replayed prompt)
+  ---
+  duration_ms: 758.915714
+  type: 'test'
+  ...
+# Subtest: F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does
+ok 53 - F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does
+  ---
+  duration_ms: 158.103182
+  type: 'test'
+  ...
+# Subtest: D-035: findManifest tolerates a pruned (missing) source_commit but still enforces entries self-consistency
+ok 54 - D-035: findManifest tolerates a pruned (missing) source_commit but still enforces entries self-consistency
+  ---
+  duration_ms: 153.951436
+  type: 'test'
+  ...
+# Subtest: D-036: a gate whose source_commit does not exist is rejected in current mode too (F-DG0-240/155)
+ok 55 - D-036: a gate whose source_commit does not exist is rejected in current mode too (F-DG0-240/155)
+  ---
+  duration_ms: 180.663719
+  type: 'test'
+  ...
+# Subtest: D-037 / F-DG0-241: a gate source_commit that exists but is OFF this branch is rejected (D-036 only checked resolvability)
+ok 56 - D-037 / F-DG0-241: a gate source_commit that exists but is OFF this branch is rejected (D-036 only checked resolvability)
+  ---
+  duration_ms: 491.689748
+  type: 'test'
+  ...
+# Subtest: D-039/D-040 / F-DG0-164/166/246/249: checkClosure binds the fix to the verifying run's head, not forgeable round metadata
+ok 57 - D-039/D-040 / F-DG0-164/166/246/249: checkClosure binds the fix to the verifying run's head, not forgeable round metadata
+  ---
+  duration_ms: 591.412667
+  type: 'test'
+  ...
+# Subtest: D-039 / F-DG0-164: checkInvocation requires a present head_commit_at_start that contains the manifest -- no absent-round escape
+ok 58 - D-039 / F-DG0-164: checkInvocation requires a present head_commit_at_start that contains the manifest -- no absent-round escape
+  ---
+  duration_ms: 706.11626
+  type: 'test'
+  ...
+# Subtest: D-039 / F-DG0-165: a later-round findings sidecar cannot reclassify a finding's immutable fields
+ok 59 - D-039 / F-DG0-165: a later-round findings sidecar cannot reclassify a finding's immutable fields
+  ---
+  duration_ms: 271.283338
+  type: 'test'
+  ...
+# Subtest: D-039 / F-DG0-248: validateGate refuses a shallow clone
+ok 60 - D-039 / F-DG0-248: validateGate refuses a shallow clone
+  ---
+  duration_ms: 569.56481
+  type: 'test'
+  ...
+# Subtest: D-038 / F-DG0-158: every finding a sidecar raises must be in findings.json; the record-less drop exemption is withdrawn
+ok 61 - D-038 / F-DG0-158: every finding a sidecar raises must be in findings.json; the record-less drop exemption is withdrawn
+  ---
+  duration_ms: 519.045352
+  type: 'test'
+  ...
+# Subtest: D-038 / F-DG0-163: the schema subset validator rejects extra keys named after Object.prototype members
+ok 62 - D-038 / F-DG0-163: the schema subset validator rejects extra keys named after Object.prototype members
+  ---
+  duration_ms: 0.668793
+  type: 'test'
+  ...
+1..62
+# tests 62
+# suites 0
+# pass 62
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 30371.817875
+exit=0

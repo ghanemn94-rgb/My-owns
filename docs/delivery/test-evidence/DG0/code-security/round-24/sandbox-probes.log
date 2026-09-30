@@ -1,0 +1,34 @@
+# id: uid=0(root) gid=0(root) groups=0(root)
+# CapEff/CapBnd/NoNewPrivs/Seccomp:
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+NoNewPrivs:	1
+Seccomp:	2
+# residual 7 (non-destructive): writability of /proc/sys entries via access(2) -- NO write performed
+/proc/sys/vm/swappiness mode=644 owner=root test-w=yes
+/proc/sys/kernel/shmmax mode=644 owner=root test-w=yes
+/proc/sys/net/ipv4/ip_forward mode=644 owner=root test-w=yes
+/proc/sys/vm/drop_caches mode=200 owner=root test-w=yes
+/proc/sys/kernel/panic mode=644 owner=root test-w=yes
+/proc/sys/kernel/hostname mode=644 owner=root test-w=yes
+# /proc/sys mount options:
+/ /proc ro,nosuid,nodev,relatime proc rw
+/ /proc ro,nosuid,nodev,relatime proc rw
+/ /proc rw,nosuid,nodev,relatime proc rw
+/ /proc rw,nosuid,nodev,noexec,relatime proc rw
+# residual 8: host PID visibility
+visible pids: 5
+# cross-run /proc/<pid>/root reach (first 10 foreign claude/node processes)
+/bin/bash: line 1: /proc/36/cmdline: No such file or directory
+pid 1: /proc/self/fd/3 /bin/bash -c export TMPDIR=/var/tmp/mth-run. -> ls: cannot access '/proc/1/root/': Permission denied
+pid 34: /bin/bash -c export TMPDIR=/var/tmp/mth-run.nN23tT/claude-0  -> bin
+pid 36:  -> ls: cannot access '/proc/36/root/': No such file or directory
+# write confinement (shell)
+tools/gates/zz-probe: /bin/bash: line 1: tools/gates/zz-probe: Read-only file system
+docs/delivery/reviews/DG0/round-24/zz-probe: /bin/bash: line 1: docs/delivery/reviews/DG0/round-24/zz-probe: No such file or directory
+docs/delivery/test-evidence/DG0/qa/zz-probe: /bin/bash: line 1: docs/delivery/test-evidence/DG0/qa/zz-probe: Read-only file system
+.git/zz-probe: /bin/bash: line 1: .git/zz-probe: Read-only file system
+.claude/zz-probe: /bin/bash: line 1: .claude/zz-probe: Read-only file system
+docs/source/zz-probe: /bin/bash: line 1: docs/source/zz-probe: Read-only file system
+# own evidence dir writable:
+yes

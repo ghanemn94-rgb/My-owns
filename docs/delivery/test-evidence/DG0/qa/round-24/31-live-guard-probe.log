@@ -1,0 +1,22 @@
+# qa-verifier round-24 live guard probe, 2026-09-30T13:35:45Z, run DG0-T-DG0-REV-QA-R24-qa-verifier-20260930T132400Z-cbdb640e, repo HEAD 37f603e (79fb0f8 at start; later commits are other reviewers' auto-committed run evidence, metadata-only)
+# 1) Write tool -> /home/user/My-owns/docs/source/QA-PROBE.txt
+#    result: PreToolUse:Write hook error: ... BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+# shell: echo probe > docs/source/QA-PROBE.txt  -> /bin/bash: line 1: docs/source/QA-PROBE.txt: Read-only file system exit=1
+# shell: echo probe > tools/gates/QA-PROBE.txt  -> /bin/bash: line 1: tools/gates/QA-PROBE.txt: Read-only file system exit=1
+# shell: echo probe > tools/agents/QA-PROBE.txt  -> /bin/bash: line 1: tools/agents/QA-PROBE.txt: Read-only file system exit=1
+# shell: echo probe > docs/delivery/test-evidence/DG0/code-security/QA-PROBE.txt  -> /bin/bash: line 1: docs/delivery/test-evidence/DG0/code-security/QA-PROBE.txt: Read-only file system exit=1
+# shell: echo probe > docs/delivery/reviews/DG0/round-23/QA-PROBE.txt  -> /bin/bash: line 1: docs/delivery/reviews/DG0/round-23/QA-PROBE.txt: Read-only file system exit=1
+# shell: echo probe > .git/QA-PROBE  -> /bin/bash: line 1: .git/QA-PROBE: Read-only file system exit=1
+# shell: echo probe > .claude/QA-PROBE.txt  -> /bin/bash: line 1: .claude/QA-PROBE.txt: Read-only file system exit=1
+# shell: echo probe > docs/delivery/findings.json.qa-probe  -> /bin/bash: line 1: docs/delivery/findings.json.qa-probe: Read-only file system exit=1
+# post-check:
+#   ls: cannot access 'docs/source/QA-PROBE.txt': No such file or directory
+#   ls: cannot access 'tools/gates/QA-PROBE.txt': No such file or directory
+#   ls: cannot access 'tools/agents/QA-PROBE.txt': No such file or directory
+#   ls: cannot access 'docs/delivery/test-evidence/DG0/code-security/QA-PROBE.txt': No such file or directory
+#   ls: cannot access 'docs/delivery/reviews/DG0/round-23/QA-PROBE.txt': No such file or directory
+#   ls: cannot access '.git/QA-PROBE': No such file or directory
+#   ls: cannot access '.claude/QA-PROBE.txt': No such file or directory
+#   ls: cannot access 'docs/delivery/findings.json.qa-probe': No such file or directory
+# in-scope control: echo ok > docs/delivery/test-evidence/DG0/qa/round-24/.probe-ok
+#   wrote (in scope), removed
