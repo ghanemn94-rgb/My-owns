@@ -7564,7 +7564,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-28/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T15:05:00Z",
@@ -7580,23 +7580,31 @@
           "at": "2026-09-30T15:16:25Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 83721ced8f6453712d3af949e98f43bd08aeff7f"
+        },
+        {
+          "at": "2026-09-30T15:31:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 29: PASS"
         }
       ],
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R28-code-security-reviewer-20260930T145114Z-6aacc7c7",
-          "session_id": "6aacc7c7-51e8-48a7-9d47-bf3c4299ead9"
+          "run_id": "DG0-T-DG0-REV-SEC-R29-code-security-reviewer-20260930T152357Z-44f7f3d7",
+          "session_id": "44f7f3d7-5840-4af2-bdcf-858ca3bc37d9"
         },
-        "at": "2026-09-30T15:08:00Z",
+        "at": "2026-09-30T15:31:30Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-28/sec28b-roundsource.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-28/objtype-census.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-28/sec28-repro.log"
+          "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro-baseline.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro-candidate.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro.tests.mjs.txt",
+          "docs/delivery/test-evidence/DG0/code-security/round-29/objtype-census.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-29/fix-revision-check.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-29/node-tests.log"
         ],
-        "note": "Reporter's concurrence that this can be accepted as an observation. The release-auditor must concur in its own sidecar before it takes effect. F-DG0-171 is Low, and mandatory_violation is false. A review round's source_commit is not required to be a commit object, so a hand-forged annotated-tag id there is peeled and accepted. Why an observation and not a blocker, against docs/delivery/threat-model.md: (1) It is not reachable through the tooling. candidate.mjs --freeze always writes `git rev-parse HEAD`, a commit, and only a hand-edited write-once freeze could store a tag. (2) The gate round can't hold a tag: its manifest source_commit must equal the gate source_commit, which is commit-typed (D-037). (3) It fails closed. The tag aliases the same commit, so the content recompute and ancestry anchors judge the right commit. A deleted tag makes the round absent in a fresh clone, and anchor 1 then rejects any closure verified there (F-DG0-169). (4) The real repository is clean: every resolvable round source_commit, all 118 fix_revisions and all 100 resolvable head_commit_at_start ids are commit objects (objtype-census.log). What remains is a consistency gap in a traceability pointer, plus D-044's overstated scope sentence. If the orchestrator fixes it instead (objectType check in checkReviewRounds when the object is present; D-044 wording), I will re-verify it as CLOSED_VERIFIED in a later round."
+        "note": "Reproduced, then shown fixed, in disposable --no-local clones.\n\nReproduction on the round-28 baseline 331407e (SEC29-1): a consistent forge in which the round manifest and both review_rounds entries name an annotated-tag object of the freeze commit gives checkReviewRounds 0 rule-relevant errors. The only error is the fixture's own write-once artefact. There is no manifest mismatch and no recompute error, because manifestFromRef peels the tag. So the baseline accepted the tag.\n\nFix, on candidate 1e4c022: checkReviewRounds (rules.mjs:785-787) computes objectType(r.source_commit) and rejects the object when it is present but not a commit. The same forge now yields 'round 1/2 source_commit ... is a tag object, not a commit'. Tree and blob ids are rejected with their own type (SEC29-3), and so is a nested tag (SEC29-4). The stages-only tag is rejected in both current and historical mode (SEC29-2).\n\nThe absent case is still tolerated: a 40-hex id that doesn't resolve does not trip the type rule (SEC29-4 and the unit test). A closure verified in such a round is still rejected by the unconditional anchor 1 (SEC29-5, F-DG0-169 standing). SEC29-6 shows the stages schema pins the round source_commit to 40-hex, so objectType is never handed a ref name or an option string.\n\nThe new unit tests 'D-045 / F-DG0-171 / F-DG0-251' and 'D-044 / F-DG0-251' pass, and the full suite passes 105/105.\n\nNo genuine record regressed. In the census, all 28 present round source_commits, all 120 fix_revisions and all 103 present run heads are commit objects. Round 18 and its 3 run heads are the known absent D-034/D-035 orphan, and all 118 closures pass the three anchors. The real-repo dry-run shows no object-type error and 0 in every history bucket.\n\nfix_revision 83721ced is a commit object, is a descendant of the round-28 freeze and an ancestor of 1e4c022, and contains the check."
       },
       "fix_revision": "83721ced8f6453712d3af949e98f43bd08aeff7f",
       "fix_summary": "checkReviewRounds now requires objectType(r.source_commit)==='commit' when the object is present (D-045); a tag-object round source_commit is rejected, the D-035 absent case stays tolerated. This is the fix the reporter's round-28 verification anticipated ('I will re-verify it as CLOSED_VERIFIED in a later round'). Fourth and last commit-id field in D-044's class."
@@ -7619,7 +7627,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-28/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T15:03:00Z",
@@ -7630,10 +7638,82 @@
           "at": "2026-09-30T15:16:25Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 83721ced8f6453712d3af949e98f43bd08aeff7f"
+        },
+        {
+          "at": "2026-09-30T15:38:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 29: PASS"
         }
       ],
       "fix_revision": "83721ced8f6453712d3af949e98f43bd08aeff7f",
-      "fix_summary": "Same D-045 fix: review_rounds[].source_commit (closure anchor 1) must be a commit object when present. Added the two unit tests qa flagged as missing (tag-object head_commit_at_start; tag-object round source_commit)."
+      "fix_summary": "Same D-045 fix: review_rounds[].source_commit (closure anchor 1) must be a commit object when present. Added the two unit tests qa flagged as missing (tag-object head_commit_at_start; tag-object round source_commit).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R29-qa-verifier-20260930T152401Z-51ad2679",
+          "session_id": "51ad2679-72ba-4fe8-937c-5aa9c2ac27d3"
+        },
+        "at": "2026-09-30T15:38:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-29/13-qa29-negative-suite.log",
+          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r29.test.mjs",
+          "docs/delivery/test-evidence/DG0/qa/round-29/12-r28-suite-rerun.log",
+          "docs/delivery/test-evidence/DG0/qa/round-29/14-real-repo-round-tag-forge.log",
+          "docs/delivery/test-evidence/DG0/qa/round-29/21-fix-revision-anchors-nl.log",
+          "docs/delivery/test-evidence/DG0/qa/round-29/22-f251-closure-anchors.log",
+          "docs/delivery/test-evidence/DG0/qa/round-29/02-gates-selftests.log",
+          "docs/delivery/test-evidence/DG0/qa/round-29/08b-dry-run-classification.log"
+        ],
+        "note": "Verified against the round-29 candidate sha256:84130c62... (source 1e4c0226) in a complete git clone --no-local (shallow=false). F-DG0-251 (Low, non-mandatory): a review_rounds[].source_commit (closure anchor 1, and the ref findManifest recomputes from) that was an annotated-TAG object id was accepted because commitPresent/isAncestor/manifestFromRef peel a tag. REPRODUCED, THEN SHOWN FIXED: QA29-R1 repeats my round-28 QA28-T7 construction exactly (the round-3 manifest and stages.json both name a tag peeling to the freeze, with a closure verified in that round) and runs both validators. The pre-D-045 rules.mjs (331407e9, git archive) ACCEPTS it with 0 errors, reproducing the bug. The candidate REJECTS it with exactly one error: 'review rounds: DG0 round 3 source_commit <sha> is a tag object, not a commit; a round's frozen source_commit must name the freeze commit itself'. The original round-28 file also flips: QA28-T7 now prints new=REJECTED(1) new-names-the-tag=true. A nested tag (QA29-N1) is accepted by the old validator and rejected by D-045 alone. Beyond the unit test, D-045 also closes non-commit objects in CLOSURE-FREE rounds, where no closure anchor applies. A tree-tag (N2), a bare tree (N3) and a blob (N4; the old validator's ^{commit} probe treated it as absent and tolerated it) were all accepted by the old validator and are rejected by the candidate with exactly the D-045 error. ABSENCE TOLERANCE KEPT: a genuinely absent 40-hex round source_commit with a content-preserving manifest produces no D-045 error and 0 errors (N5, the round-18 shape). The same absent round carrying a closure is still rejected by D-042 anchor 1. REAL REPOSITORY: a forged tag on round 27's source_commit in a disposable --no-local clone is rejected by D-045, and absent round 18 does not trip it. The census finds all 28 present round source_commits, 120/120 fix_revisions and 103 present run heads to be commit objects (round 18 and its 3 run heads are the known absent D-034/D-035 orphans). The full-history dry-run shows no 'object, not a commit' error. Unit tests 'D-045 / F-DG0-171 / F-DG0-251' and 'D-044 / F-DG0-251' pass (gate suite 66/66); the latter covers the previously untested checkInvocation head_commit_at_start tag branch. ANCHORS: fix 83721ced is a commit object, an ancestor of the round-29 frozen source_commit and gate candidate 1e4c0226 (anchors 1 and 3) and of this run's starting HEAD ffa3fae (anchor 2), and rules.mjs and validator.test.mjs are identical at 83721ced and 1e4c0226. I am the reporter (qa-verifier) and the owner is delivery-orchestrator, so this is not an author self-close."
+      }
+    },
+    {
+      "id": "F-DG0-015",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The D-045 decision-log row says the round-28 reviewers were 'all three reviewers PASS; each raised one Low', but the round-28 domain-reviewer raised no finding; the same row's context column correctly says 'domain PASS with no findings'",
+      "reproduction": "At candidate commit 1e4c022, `grep -E '^\\| D-045 ' docs/delivery/decisions.md` shows the heading '**Round-28 repairs (all three reviewers PASS; each raised one Low): …**'. Reading the round-28 records gives: domain-reviewer PASS findings=[]; code-security-reviewer PASS findings=['F-DG0-171']; qa-verifier PASS findings=['F-DG0-251']. So two reviewers raised one Low each and the domain reviewer raised none. The row's own context column says 'domain PASS with no findings', which contradicts its heading. See docs/delivery/test-evidence/DG0/domain/round-29/11-d045-wording.log.",
+      "expected": "The decision log states accurately who raised the round-28 findings, for example '(all three reviewers PASS; code-security and qa each raised one Low, domain none)', consistent with the row's context column and the round-28 review records.",
+      "actual": "The heading says each of the three reviewers raised one Low. This is an internal contradiction in an engineering decision record only. It makes no business, operating-logic or source-provenance claim. The rest of D-045 is accurate: it presents itself as delivery tooling completing D-044's commit-object class with review_rounds[].source_commit as the fourth and last field; the census (27 present round source_commits are commit objects, round 18 the absent orphan) and '105 pass' reproduce; the fix, its tests and the tag forge all behave as described. It has no effect on gate logic or on any product requirement, so it is Low and non-mandatory.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-29/11-d045-wording.log",
+        "docs/delivery/decisions.md#D-045",
+        "docs/delivery/reviews/DG0/round-28/domain-reviewer.json"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-29/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "ACCEPTED_OBSERVATION",
+      "history": [
+        {
+          "at": "2026-09-30T15:33:23Z",
+          "status": "OPEN",
+          "note": "raised by domain-reviewer in DG0 round 29 (Low, non-mandatory; wording in the decision log only; reporter concurs with acceptance as an observation in its verifications sidecar, pending the release-auditor's concurrence)"
+        },
+        {
+          "at": "2026-09-30T15:40:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by domain-reviewer round 29: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-DOM-R29-domain-reviewer-20260930T152352Z-59934241",
+          "session_id": "59934241-9f23-4831-a04f-fa358009d926"
+        },
+        "at": "2026-09-30T15:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/domain/round-29/11-d045-wording.log"
+        ],
+        "note": "Reporter's concurrence that this can be accepted as an observation. It takes effect only if the release-auditor also concurs in its own sidecar. F-DG0-015 is Low, and mandatory_violation is false. The D-045 heading's phrase 'each raised one Low' overstates the round-28 findings: the domain reviewer raised none. The error is confined to a parenthetical in an engineering decision record. The same row's context column states the facts correctly ('domain PASS with no findings'), and the authoritative round-28 review records and findings.json are unaffected. It carries no business, operating-logic, Finance, PMI or Mobily-brand claim and cannot change any gate check. If the orchestrator corrects the wording instead, I will re-verify it as CLOSED_VERIFIED in a later round."
+      }
     }
   ]
 }
