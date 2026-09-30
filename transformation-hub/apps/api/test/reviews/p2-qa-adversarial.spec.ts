@@ -114,6 +114,10 @@ describe('QA-P2 adversarial — votes and re-used decisions under concurrency [R
   // unique constraint (change-control.service.ts evaluateAuthority), so approvals of different change requests running at
   // the same time can all rely on the same committee decision. (Also reproduced without the lock below: 4 simultaneous
   // approvals → 2 approved on one decision in 2 of 4 runs.)
+  // Final re-review note (docs/reviews/P2-qa-final-review.md): since DOM-P2R-03 a change-request approval needs a decision
+  // raised FOR that change request. The decision below is raised for no record, so both approvals are now refused with
+  // `change_control.decision_no_subject` before the single-use check: this probe still guards "at most one", but the race
+  // on a decision that CAN back one of the records is exercised by p2-qa-final-race.spec.ts.
   it('two change requests above the delegated limit approved at the same time on ONE final decision: at most one is approved', async () => {
     // The authorized body's decision: 1,500,000 SAR (above the DEMO committee limit) → recommendation → external approval.
     const d = await tabledDecision(projectId, A(), p.pm, gov.committeeId, gov.meetingId, { title: uniq('QA reuse race decision'), decisionTypeKey: 'change_request_budget', amount: { amount: '1500000.0000', currency: 'SAR', unitScale: 1 } });
