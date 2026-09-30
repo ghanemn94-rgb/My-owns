@@ -26,3 +26,16 @@ the proxy to overwrite `X-Forwarded-For`); otherwise all clients share the proxy
   share the web server's public-route bucket.
 - An ingress-level limiter remains recommended in production (multi-replica API).
 
+## Amendment (P1 security re-review SEC-P1R-01, I-R2) — 2026-09-30
+- **Order in the guard:** session → **per-session rate limit** → CSRF → scope → RBAC. A request without a valid CSRF
+  token now consumes the session's mutation budget, so one session cannot produce more than
+  `HUB_RATE_LIMIT_MUTATIONS_PER_MINUTE` CSRF failures per minute (the rest get 429, logged, not audited).
+- **CSRF security events are coalesced** per session and minute (`RateLimiter.tally`): the first denial of each window is
+  audited (`auth.csrf`, with its correlation id), then one row when the window's count reaches 10, 100, 1000 …, each
+  carrying `after.deniedInCurrentMinute`. At the default budget that is at most 3 audit rows per session per minute
+  (previously one row — and one pooled connection — per request). Every denial is still logged with session and
+  correlation id.
+- **Trust-everyone proxy ranges are refused in production**: `0.0.0.0/0`, `0/0`, `::/0`, IPv4 prefixes wider than /8,
+  IPv6 wider than /16 and IPv4-mapped ranges wider than `::ffff:0:0/104` (`trustsEveryone` in `config.ts`). They would
+  let any client pick its own rate-limit bucket and audited IP through `X-Forwarded-For`.
+

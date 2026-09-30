@@ -20,7 +20,7 @@ import {
   RoleKey,
 } from '@hub/domain';
 import type { RequestContext } from '../../platform/context';
-import { likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned, visibleEvidenceCounts } from '../../platform/helpers';
 import { orderBySort } from '../../platform/sort';
 import type { RouteInput, readinessRoutes } from '@hub/contracts';
 import { newId } from '../../platform/ids';
@@ -114,12 +114,12 @@ export class ReadinessChecksService implements OnModuleInit {
     const [{ total }] = (await tx.select({ total: count() }).from(c).where(where)) as [{ total: number }];
     const order = orderBySort(q.sort, { code: c.code, title: c.title, area: c.area, status: c.status, dueDate: c.dueDate, updatedAt: c.updatedAt }, c.id, [asc(c.code), asc(c.id)]);
     const rows = await tx.select().from(c).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
-    return { ...pageOf(await this.dtos(projectId, rows), Number(total), q), people: await this.s.people(rows.flatMap((r) => [r.ownerUserId, r.signedOffBy])) };
+    return { ...pageOf(await this.dtos(ctx, projectId, rows), Number(total), q), people: await this.s.people(rows.flatMap((r) => [r.ownerUserId, r.signedOffBy])) };
   }
 
   async get(ctx: RequestContext, projectId: string, checkId: string) {
     const c = await this.loadReadable(ctx, projectId, checkId);
-    const [dto] = await this.dtos(projectId, [c]);
+    const [dto] = await this.dtos(ctx, projectId, [c]);
     const runs = await this.s.db.tx().select().from(schema.readinessTestRun).where(eq(schema.readinessTestRun.readinessCheckId, c.id)).orderBy(asc(schema.readinessTestRun.seq));
     const p = await this.s.project(projectId);
     const ws = await this.waivers.list(projectId, 'readiness_check');
@@ -133,7 +133,7 @@ export class ReadinessChecksService implements OnModuleInit {
   }
 
   /** Latest run per check, evidence counts and waiver effectiveness, in three set-based queries. */
-  async dtos(projectId: string, rows: CheckRow[]) {
+  async dtos(ctx: RequestContext, projectId: string, rows: CheckRow[]) {
     if (rows.length === 0) return [];
     const ids = rows.map((r) => r.id);
     const tx = this.s.db.tx();
@@ -143,7 +143,8 @@ export class ReadinessChecksService implements OnModuleInit {
       .where(and(eq(schema.readinessTestRun.projectId, projectId), inArray(schema.readinessTestRun.readinessCheckId, ids)))
       .orderBy(schema.readinessTestRun.readinessCheckId, desc(schema.readinessTestRun.seq));
     const latestBy = new Map(latest.map((r) => [r.readinessCheckId, r]));
-    const evidence = await this.evidenceCounts(projectId, 'readiness_check', ids);
+    // Display counters: the evidence list's visibility (SEC-P1R-05); sign-off rules use the unfiltered count.
+    const evidence = await visibleEvidenceCounts(this.s.db, this.s.policy, ctx, projectId, 'readiness_check', ids);
     const waiverIds = rows.map((r) => r.waiverId).filter((x): x is string => !!x);
     const ws = waiverIds.length ? await tx.select().from(schema.waiver).where(and(eq(schema.waiver.projectId, projectId), inArray(schema.waiver.id, waiverIds))) : [];
     const wBy = new Map(ws.map((w) => [w.id, w]));
@@ -187,16 +188,6 @@ export class ReadinessChecksService implements OnModuleInit {
         version: c.version,
       };
     });
-  }
-
-  async evidenceCounts(projectId: string, targetType: string, ids: string[]): Promise<Map<string, { active: number; conflicting: number }>> {
-    if (!ids.length) return new Map();
-    const r = await this.s.db.tx().execute<{ target_id: string; active: number; conflicting: number }>(sql`
-      select target_id, count(*) filter (where status = 'active')::int as active, count(*) filter (where status = 'conflicting')::int as conflicting
-        from evidence_link where project_id = ${projectId} and target_type = ${targetType}
-         and target_id in (${sql.join(ids.map((i) => sql`${i}::uuid`), sql`, `)})
-       group by target_id`);
-    return new Map(r.rows.map((x) => [x.target_id, { active: x.active, conflicting: x.conflicting }]));
   }
 
   // ---------------------------------------------------------------------------------------------------------
@@ -486,7 +477,8 @@ export class ReadinessChecksService implements OnModuleInit {
 
   async reopen(ctx: RequestContext, projectId: string, checkId: string, body: { expectedVersion: number; note: string }) {
     const c = await loadInProject(this.s.db, schema.readinessCheck, projectId, checkId);
-    this.s.policy.assert(ctx, 'readiness.check.signoff', { projectId, workstreamId: c.workstreamId });
+    // Reopening is not an approval of someone's request: role-level check (no separation-of-duties subject), I-R3.
+    this.s.policy.assertGranted(ctx, 'readiness.check.signoff', { projectId, workstreamId: c.workstreamId });
     assertAssignedSpecialist('reopening', c.code, c.signoffRole, this.s.rolesOf(ctx, projectId, c.workstreamId));
     const to = transition('readiness_check', READINESS_CHECK_MACHINE, c.status, 'reopen');
     const row = (await updateVersioned(this.s.db, schema.readinessCheck, { id: c.id, projectId, expectedVersion: body.expectedVersion }, {

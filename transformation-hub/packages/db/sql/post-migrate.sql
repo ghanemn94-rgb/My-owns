@@ -356,8 +356,9 @@ RETURNS TABLE (
   user_active boolean, user_clearance text, user_locale text, user_display_name text, user_email text,
   user_is_demo boolean
 ) LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+  -- user_active is false for service / non-person accounts: they never hold an interactive session (I-R5).
   SELECT s.id, s.user_id, s.org_id, s.csrf_hash, s.auth_method, s.idle_expires_at, s.absolute_expires_at,
-         s.revoked_at, u.is_active, u.clearance::text, u.locale, u.display_name, u.email, u.is_demo
+         s.revoked_at, (u.is_active AND NOT u.is_service_account), u.clearance::text, u.locale, u.display_name, u.email, u.is_demo
   FROM session s JOIN app_user u ON u.id = s.user_id
   WHERE s.token_hash = p_token_hash
 $$;
@@ -414,7 +415,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_te
   WHERE ora.user_id = p_user AND ora.scope_type = 'portfolio' AND ora.revoked_at IS NULL
     AND ora.valid_from <= now() AND (ora.valid_to IS NULL OR ora.valid_to > now())
   UNION ALL
-  -- partner / clean-team room grants (a LOCKED room suspends every grant immediately — jv.room.lock, section 21)
+  -- partner / clean-team room grants (a LOCKED room suspends every grant immediately — jv.room.lock, section 23)
   SELECT 'room_grant', rg.project_id, rg.role::text, NULL::uuid, rg.room_id, r.is_clean_team
   FROM room_grant rg JOIN partner_room r ON r.id = rg.room_id AND r.locked_at IS NULL
   JOIN app_user u ON u.id = rg.user_id AND u.is_active AND u.org_id = rg.org_id
@@ -852,7 +853,150 @@ BEGIN
 END
 $acct$;
 
--- 21. JV: partner rooms, disclosures, due diligence, signing/closing (P4 — REQ-JV-*, REQ-ENT-012, ARCH-22) -------------
+-- An INTERNAL account holding roles cannot be switched to EXTERNAL (I-R1): the guard above fires on role and grant rows;
+-- this one fires on the account itself, so the order "grant first, then flip the type" is refused too. Revoke / end the
+-- internal grants first. (Future-dated grants count: they would become active on an external account.)
+CREATE OR REPLACE FUNCTION hub_account_type_flip_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+BEGIN
+  IF NEW.account_type IS DISTINCT FROM 'external' OR OLD.account_type IS NOT DISTINCT FROM 'external' THEN RETURN NEW; END IF;
+  IF EXISTS (SELECT 1 FROM project_membership m WHERE m.user_id = NEW.id AND m.revoked_at IS NULL AND (m.valid_to IS NULL OR m.valid_to > now()))
+     OR EXISTS (SELECT 1 FROM org_role_assignment a WHERE a.user_id = NEW.id AND a.revoked_at IS NULL AND (a.valid_to IS NULL OR a.valid_to > now()))
+     OR EXISTS (SELECT 1 FROM committee_membership c WHERE c.user_id = NEW.id AND (c.valid_to IS NULL OR c.valid_to >= current_date))
+     OR EXISTS (SELECT 1 FROM room_grant g WHERE g.user_id = NEW.id AND g.revoked_at IS NULL AND g.role <> 'external_partner_limited') THEN
+    RAISE EXCEPTION 'external_account_role: the account still holds internal roles or grants — revoke them before making it external'
+      USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+REVOKE ALL ON FUNCTION hub_account_type_flip_guard() FROM PUBLIC;
+DROP TRIGGER IF EXISTS hub_account_type_flip_guard ON app_user;
+CREATE TRIGGER hub_account_type_flip_guard BEFORE UPDATE OF account_type ON app_user FOR EACH ROW EXECUTE FUNCTION hub_account_type_flip_guard();
+
+-- 21. Shared legal entities have ONE owning project (SEC-P1R-03) --------------------------------------------------------
+-- legal_entity is organization-level and may be linked to several projects (project_entity). Only the OWNING project (the
+-- one that created it, legal_entity.owner_project_id) may change it; linked projects read it. The API refuses with 403
+-- `newco.legal_entity.not_owner`; here: the owner reference is org-bound and immutable, rows are inserted only for an
+-- in-scope project, and UPDATE is restricted (RESTRICTIVE policy, ANDed with the org policy) to full members of the owner.
+DO $leowner$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'legal_entity_owner_project_org_fk') THEN
+    ALTER TABLE legal_entity ADD CONSTRAINT legal_entity_owner_project_org_fk FOREIGN KEY (org_id, owner_project_id) REFERENCES project (org_id, id);
+  END IF;
+END
+$leowner$;
+DROP POLICY IF EXISTS hub_legal_entity_owner_insert ON legal_entity;
+CREATE POLICY hub_legal_entity_owner_insert ON legal_entity AS RESTRICTIVE FOR INSERT
+  WITH CHECK (owner_project_id = ANY (app_project_ids()));
+DROP POLICY IF EXISTS hub_legal_entity_owner_update ON legal_entity;
+CREATE POLICY hub_legal_entity_owner_update ON legal_entity AS RESTRICTIVE FOR UPDATE
+  USING (owner_project_id = ANY (app_full_project_ids()))
+  WITH CHECK (owner_project_id = ANY (app_full_project_ids()));
+CREATE OR REPLACE FUNCTION hub_legal_entity_owner_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.owner_project_id IS DISTINCT FROM OLD.owner_project_id THEN
+    RAISE EXCEPTION 'immutable_owner: the owning project of a legal entity cannot change' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_legal_entity_owner_immutable ON legal_entity;
+CREATE TRIGGER hub_legal_entity_owner_immutable BEFORE UPDATE OF owner_project_id ON legal_entity FOR EACH ROW EXECUTE FUNCTION hub_legal_entity_owner_immutable();
+
+-- Projects linked to a legal entity other than its owner (ids only), for the owning project's change fan-out
+-- (`legal_entity.changed` outbox events): under RLS the owner cannot see other projects' project_entity rows. Callable
+-- only by full members of the OWNING project; returns nothing otherwise.
+CREATE OR REPLACE FUNCTION hub_legal_entity_linked_projects(p_entity uuid) RETURNS SETOF uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+  SELECT DISTINCT pe.project_id
+    FROM project_entity pe JOIN legal_entity le ON le.id = pe.legal_entity_id
+   WHERE pe.legal_entity_id = p_entity AND le.org_id = app_org_id() AND pe.org_id = le.org_id
+     AND le.owner_project_id = ANY (app_full_project_ids()) AND pe.project_id <> le.owner_project_id
+$$;
+REVOKE ALL ON FUNCTION hub_legal_entity_linked_projects(uuid) FROM PUBLIC;
+DO $legrant$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
+    EXECUTE 'GRANT EXECUTE ON FUNCTION hub_legal_entity_linked_projects(uuid) TO hub_app';
+  END IF;
+END
+$legrant$;
+
+-- 22. Finance (REQ-FIN-001..010, AT-29) -----------------------------------------------------------------------------------
+-- (a) A business plan / valuation version is frozen at insert: its assumptions, outputs and source never change (a change
+--     is a NEW version, so prior assumptions are preserved — REQ-FIN-005). Approved values, once recorded from a final
+--     governance decision, never change either (REQ-FIN-006). Versions are never deleted.
+CREATE OR REPLACE FUNCTION hub_finance_model_version_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    RAISE EXCEPTION 'append_only_violation: financial model versions are never deleted' USING ERRCODE = 'P0001';
+  END IF;
+  IF (NEW.model_id, NEW.kind, NEW.version_no, NEW.version_label, NEW.model_case, NEW.based_on_version_id, NEW.assumptions, NEW.outputs,
+      NEW.headline_basis, NEW.source_type, NEW.source_document_id, NEW.source_document_version_id, NEW.source_ref, NEW.import_batch_id,
+      NEW.prepared_by, NEW.created_by, NEW.created_at)
+     IS DISTINCT FROM (OLD.model_id, OLD.kind, OLD.version_no, OLD.version_label, OLD.model_case, OLD.based_on_version_id, OLD.assumptions, OLD.outputs,
+      OLD.headline_basis, OLD.source_type, OLD.source_document_id, OLD.source_document_version_id, OLD.source_ref, OLD.import_batch_id,
+      OLD.prepared_by, OLD.created_by, OLD.created_at) THEN
+    RAISE EXCEPTION 'append_only_violation: a financial model version is frozen — create a new version' USING ERRCODE = 'P0001';
+  END IF;
+  IF OLD.approved_values IS NOT NULL AND NEW.approved_values IS DISTINCT FROM OLD.approved_values THEN
+    RAISE EXCEPTION 'append_only_violation: approved values are immutable once recorded' USING ERRCODE = 'P0001';
+  END IF;
+  IF OLD.superseded_by_id IS NOT NULL AND NEW.superseded_by_id IS DISTINCT FROM OLD.superseded_by_id THEN
+    RAISE EXCEPTION 'append_only_violation: the successor of a model version cannot change' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_finance_model_version_guard ON financial_model_version;
+CREATE TRIGGER hub_finance_model_version_guard BEFORE UPDATE OR DELETE ON financial_model_version FOR EACH ROW EXECUTE FUNCTION hub_finance_model_version_guard();
+
+-- (b) An APPROVED figure is immutable while approved: its content changes only after an explicit reopen (state → proposed,
+--     recorded in audit + record_version). Approved budget amounts change only with a new approval decision.
+CREATE OR REPLACE FUNCTION hub_finance_approved_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_TABLE_NAME = 'financial_snapshot' THEN
+    IF OLD.approval_state = 'approved' AND NEW.approval_state = 'approved'
+       AND (NEW.kind, NEW.category, NEW.line_ref, NEW.label, NEW.period, NEW.amount, NEW.currency, NEW.unit_scale, NEW.tsa_service_id,
+            NEW.source_ref, NEW.source_document_id, NEW.source_document_version_id, NEW.source_sheet, NEW.source_cell,
+            NEW.validated_by, NEW.validated_hash, NEW.approved_by, NEW.approved_at, NEW.approval_decision_id)
+           IS DISTINCT FROM (OLD.kind, OLD.category, OLD.line_ref, OLD.label, OLD.period, OLD.amount, OLD.currency, OLD.unit_scale, OLD.tsa_service_id,
+            OLD.source_ref, OLD.source_document_id, OLD.source_document_version_id, OLD.source_sheet, OLD.source_cell,
+            OLD.validated_by, OLD.validated_hash, OLD.approved_by, OLD.approved_at, OLD.approval_decision_id) THEN
+      RAISE EXCEPTION 'append_only_violation: an approved financial figure is immutable — reopen it first' USING ERRCODE = 'P0001';
+    END IF;
+  ELSIF TG_TABLE_NAME = 'budget_line' THEN
+    IF OLD.approved_amount IS NOT NULL AND NEW.approved_amount IS DISTINCT FROM OLD.approved_amount
+       AND NEW.approval_decision_id IS NOT DISTINCT FROM OLD.approval_decision_id THEN
+      RAISE EXCEPTION 'append_only_violation: an approved budget changes only with a new approval decision' USING ERRCODE = 'P0001';
+    END IF;
+    IF OLD.approved_amount IS NOT NULL AND (NEW.currency, NEW.unit_scale) IS DISTINCT FROM (OLD.currency, OLD.unit_scale) THEN
+      RAISE EXCEPTION 'append_only_violation: the currency / unit of an approved budget line cannot change' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_finance_approved_guard ON financial_snapshot;
+CREATE TRIGGER hub_finance_approved_guard BEFORE UPDATE ON financial_snapshot FOR EACH ROW EXECUTE FUNCTION hub_finance_approved_guard();
+DROP TRIGGER IF EXISTS hub_finance_approved_guard ON budget_line;
+CREATE TRIGGER hub_finance_approved_guard BEFORE UPDATE ON budget_line FOR EACH ROW EXECUTE FUNCTION hub_finance_approved_guard();
+
+-- (c) KPI observations are append-only (a correction is a new observation); finance registers are never hard-deleted.
+DROP TRIGGER IF EXISTS hub_append_only ON kpi_observation;
+CREATE TRIGGER hub_append_only BEFORE UPDATE OR DELETE ON kpi_observation FOR EACH ROW EXECUTE FUNCTION hub_reject_mutation();
+DROP TRIGGER IF EXISTS hub_no_truncate ON kpi_observation;
+CREATE TRIGGER hub_no_truncate BEFORE TRUNCATE ON kpi_observation FOR EACH STATEMENT EXECUTE FUNCTION hub_reject_mutation();
+DO $finance_grants$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
+    EXECUTE 'REVOKE UPDATE, DELETE ON kpi_observation FROM hub_app';
+    EXECUTE 'REVOKE DELETE ON financial_snapshot, budget_line, financial_model, financial_model_version, intercompany_reconciliation, benefit, kpi FROM hub_app';
+  END IF;
+END
+$finance_grants$;
+
+-- 23. JV: partner rooms, disclosures, due diligence, signing/closing (P4 — REQ-JV-*, REQ-ENT-012, ARCH-22) -------------
 -- (a) A DD finding's room is DERIVED from the DD request it was raised from (never client-set) and cascaded when the
 --     request's room changes, exactly like document_version.room_id (ARCH-22). RLS on diligence_finding then limits a
 --     room's findings to that room's members. A standalone finding keeps the room the service validated.

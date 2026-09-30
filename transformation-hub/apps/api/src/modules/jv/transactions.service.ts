@@ -90,7 +90,8 @@ export class TransactionsService implements OnModuleInit {
     if (this.s.policy.isRoomOnly(ctx.principal, projectId)) throw notFound();
     const e = await loadInProject(this.s.db, schema.closing, projectId, eventId);
     if (kind && e.kind !== kind) throw notFound();
-    this.s.policy.assert(ctx, permission, { projectId });
+    // Role-level pre-check (I-R3): confirmation asserts not_self / authority with the requester and the decision.
+    this.s.policy.assertGranted(ctx, permission, { projectId });
     return e;
   }
 
@@ -318,6 +319,9 @@ export class TransactionsService implements OnModuleInit {
     const closings = kind === 'signing' ? await tx.select().from(schema.closing).where(and(eq(schema.closing.projectId, projectId), eq(schema.closing.signingId, e.id))).orderBy(asc(schema.closing.sequence)) : [];
     const req = await this.s.approvalRequest(projectId, e.confirmationRequestId);
     const decision = await this.s.decisionRow(projectId, e.confirmationDecisionId);
+    // Blockers use every piece of evidence (r.*Evidence); the displayed counters only what the caller may see.
+    const itemEv = await this.s.visibleEvidenceMap(ctx, projectId, 'closing_deliverable', r.items.map((i) => i.id));
+    const cpEv = await this.s.visibleEvidenceMap(ctx, projectId, 'closing_condition', r.cps.map((c) => c.id));
     return {
       ...this.eventDto(e),
       description: e.description,
@@ -330,8 +334,8 @@ export class TransactionsService implements OnModuleInit {
       allowedCommands: allowedCommands(CLOSING_MACHINE, e.status).filter((c) => c !== 'confirm'),
       blockers: r.blockers,
       ready: r.blockers.length === 0,
-      checklist: r.items.map((i) => this.itemDto(i, r.itemEvidence.get(i.id) ?? { active: 0, conflicting: 0 })),
-      conditions: r.cps.map((c) => this.cpDto(c, r.cpEvidence.get(c.id) ?? { active: 0, conflicting: 0 }, r.waiverOk.get(c.id) ?? false)),
+      checklist: r.items.map((i) => this.itemDto(i, itemEv.get(i.id) ?? { active: 0, conflicting: 0 })),
+      conditions: r.cps.map((c) => this.cpDto(c, cpEv.get(c.id) ?? { active: 0, conflicting: 0 }, r.waiverOk.get(c.id) ?? false)),
       fundsFlows: flows.map((f) => this.flowDto(f)),
       closings: closings.map((c) => ({ id: c.id, code: c.code, status: c.status })),
       people: await this.s.people([e.createdBy, e.confirmedBy, req?.requestedBy, ...r.items.flatMap((i) => [i.ownerUserId, i.deliveredBy, i.verifiedBy]), ...r.cps.flatMap((c) => [c.ownerUserId, c.verifiedBy, c.evidenceSubmittedBy])]),
@@ -341,7 +345,7 @@ export class TransactionsService implements OnModuleInit {
   async checklist(ctx: RequestContext, projectId: string, eventId: string, kind: ClosingKind) {
     const e = await this.loadEvent(ctx, projectId, eventId, kind);
     const items = await this.s.db.tx().select().from(schema.closingDeliverable).where(and(eq(schema.closingDeliverable.projectId, projectId), eq(schema.closingDeliverable.closingId, e.id))).orderBy(asc(schema.closingDeliverable.code), asc(schema.closingDeliverable.id));
-    const ev = await this.s.evidenceMap(projectId, 'closing_deliverable', items.map((i) => i.id));
+    const ev = await this.s.visibleEvidenceMap(ctx, projectId, 'closing_deliverable', items.map((i) => i.id));
     return { eventId: e.id, kind: e.kind, items: items.map((i) => this.itemDto(i, ev.get(i.id) ?? { active: 0, conflicting: 0 })) };
   }
 
@@ -404,7 +408,8 @@ export class TransactionsService implements OnModuleInit {
     this.s.assertHuman(ctx, kind === 'closing' ? 'Confirming a closing' : 'Recording a signing');
     const req = await this.s.approvalRequest(projectId, e.confirmationRequestId);
     if (!req || req.status !== 'pending') throw ruleViolation('jv.closing.not_requested', `No pending confirmation request exists for this ${kind} (a request by another person is required)`);
-    this.s.policy.assert(ctx, permission, { projectId, requesterUserId: req.requestedBy });
+    // Role (loadEvent) → state (pending request above; separation, blockers and the decision below, audited on refusal) →
+    // policy not_self + authority once the requester and the decision are known (I-R3).
     const p = await this.s.project(projectId);
     const r = await this.readiness(e, this.s.today(p));
     const decision = await this.s.decisionRow(projectId, e.confirmationDecisionId);
@@ -423,7 +428,8 @@ export class TransactionsService implements OnModuleInit {
       });
       throw err;
     }
-    // The decision authorizes (checked above); the policy's `authority` condition records the same result.
+    // Decision-bound authority: assertEventConfirmable above refused unless the linked decision is a FINAL approval of the
+    // right type (within the committee mandate or approved by the authorized body) — `withinAuthority` is that evaluation.
     this.s.policy.assert(ctx, permission, { projectId, requesterUserId: req.requestedBy, withinAuthority: true });
     assertVersion(e, body.expectedVersion, kind);
     if (req.subjectVersion !== e.version) throw conflict('jv.closing.confirmation_stale', `The ${kind} changed after the confirmation was requested — a fresh request is required`);
@@ -475,7 +481,7 @@ export class TransactionsService implements OnModuleInit {
   private async loadItem(ctx: RequestContext, projectId: string, id: string, permission: string) {
     if (this.s.policy.isRoomOnly(ctx.principal, projectId)) throw notFound();
     const i = await loadInProject(this.s.db, schema.closingDeliverable, projectId, id);
-    this.s.policy.assert(ctx, permission, { projectId });
+    this.s.policy.assertGranted(ctx, permission, { projectId }); // role-level; acceptance asserts not_self with the deliverer
     const e = await loadInProject(this.s.db, schema.closing, projectId, i.closingId);
     return { i, e };
   }
@@ -496,14 +502,16 @@ export class TransactionsService implements OnModuleInit {
     this.s.assertHuman(ctx, 'Accepting a closing deliverable');
     const { i, e } = await this.loadItem(ctx, projectId, id, 'jv.cp.verify');
     await this.assertEventOpen(e);
-    this.s.policy.assert(ctx, 'jv.cp.verify', { projectId, requesterUserId: i.deliveredBy });
     let usable: boolean | null = null;
     if (i.executedVersionId && i.documentId) {
       const [v] = await this.s.db.tx().select().from(schema.documentVersion).where(and(eq(schema.documentVersion.id, i.executedVersionId), eq(schema.documentVersion.projectId, projectId)));
       const [d] = await this.s.db.tx().select({ deletedAt: schema.document.deletedAt }).from(schema.document).where(and(eq(schema.document.id, i.documentId), eq(schema.document.projectId, projectId)));
       usable = !!v && !!d && !d.deletedAt && versionUsable(v.scanStatus, this.s.config.storage.allowUnscanned);
     }
-    assertChecklistItemAcceptable({ status: i.status, executedVersionUsable: usable, acceptorUserId: ctx.principal.userId!, ownerUserId: i.ownerUserId, deliveredBy: i.deliveredBy });
+    // Role → state (delivered, executed document usable: 422) → separation from the deliverer (not_self, I-R3).
+    this.s.policy.assertApproval(ctx, 'jv.cp.verify', { projectId, requesterUserId: i.deliveredBy }, () =>
+      assertChecklistItemAcceptable({ status: i.status, executedVersionUsable: usable, acceptorUserId: ctx.principal.userId!, ownerUserId: i.ownerUserId, deliveredBy: i.deliveredBy }),
+    );
     const row = (await updateVersioned(this.s.db, schema.closingDeliverable, { id, projectId, expectedVersion: body.expectedVersion }, { status: 'verified', verifiedBy: ctx.principal.userId, verifiedAt: this.s.clock.now(), statusNote: body.note ?? i.statusNote })) as ItemRow;
     await this.s.audit.record({ action: 'jv.checklist_item.accept', entityType: 'closing_deliverable', entityId: id, projectId, before: { status: i.status }, after: { status: 'verified', executedVersionId: i.executedVersionId }, reason: body.note ?? null });
     return { id, status: row.status, version: row.version };
@@ -524,7 +532,7 @@ export class TransactionsService implements OnModuleInit {
   private async loadCp(ctx: RequestContext, projectId: string, id: string, permission: string, extra: Record<string, unknown> = {}): Promise<CpRow> {
     if (this.s.policy.isRoomOnly(ctx.principal, projectId)) throw notFound();
     const c = await loadInProject(this.s.db, schema.closingCondition, projectId, id);
-    this.s.policy.assert(ctx, permission, { projectId, ...extra });
+    this.s.policy.assertGranted(ctx, permission, { projectId, ...extra }); // role-level; verify asserts not_self with the submitter
     return c;
   }
 
@@ -549,7 +557,7 @@ export class TransactionsService implements OnModuleInit {
     const [{ total }] = (await tx.select({ total: count() }).from(t).where(where)) as [{ total: number }];
     const order = orderBySort(q.sort, { reference: t.reference, status: t.status, longStopDate: t.longStopDate, updatedAt: t.updatedAt }, t.id, [asc(t.reference), asc(t.id)]);
     const rows = await tx.select().from(t).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
-    const ev = await this.s.evidenceMap(projectId, 'closing_condition', rows.map((r) => r.id));
+    const ev = await this.s.visibleEvidenceMap(ctx, projectId, 'closing_condition', rows.map((r) => r.id));
     const wv = await this.waiverEffectiveMap(projectId, rows, this.s.today(p));
     return {
       ...pageOf(rows.map((c) => this.cpDto(c, ev.get(c.id) ?? { active: 0, conflicting: 0 }, wv.get(c.id) ?? false)), Number(total), q),
@@ -560,7 +568,7 @@ export class TransactionsService implements OnModuleInit {
   async getCp(ctx: RequestContext, projectId: string, id: string) {
     const c = await this.loadCp(ctx, projectId, id, 'jv.deal.read');
     const p = await this.s.project(projectId);
-    const ev = await this.s.evidence(projectId, 'closing_condition', c.id);
+    const ev = (await this.s.visibleEvidenceMap(ctx, projectId, 'closing_condition', [c.id])).get(c.id) ?? { active: 0, conflicting: 0 };
     const wv = await this.waiverEffectiveMap(projectId, [c], this.s.today(p));
     const ws = (await this.waivers.list(projectId, 'closing_condition')).filter((w) => w.targetId === c.id);
     return {
@@ -663,20 +671,28 @@ export class TransactionsService implements OnModuleInit {
     return this.applyCp(ctx, c, 'submit_evidence', body.expectedVersion, { evidenceSubmittedBy: ctx.principal.userId, evidenceSubmittedAt: this.s.clock.now(), statusNote: body.note ?? null }, body.note ?? null);
   }
 
-  /** verifyCP: evidence first (a refusal is logged against the CP), then separation of duties, then the state machine. */
+  /**
+   * verifyCP: role → evidence and state (a refusal is logged against the CP) → separation of duties from the evidence
+   * submitter and the owner (policy not_self, fail-closed when the submitter is unknown — I-R3).
+   */
   async verify(ctx: RequestContext, projectId: string, id: string, body: Q<'verifyCondition'>['body']) {
     this.s.assertHuman(ctx, 'Verifying a condition');
     const c = await this.loadCp(ctx, projectId, id, 'jv.cp.verify');
     await this.assertCpEditable(c);
-    this.s.policy.assert(ctx, 'jv.cp.verify', { projectId, requesterUserId: c.evidenceSubmittedBy });
-    if (body.outcome === 'reject_evidence') return this.applyCp(ctx, c, 'reject_evidence', body.expectedVersion, { statusNote: body.note ?? null }, body.note ?? null);
+    const cmd = body.outcome === 'reject_evidence' ? 'reject_evidence' : 'verify';
     const ev = await this.s.evidence(projectId, 'closing_condition', c.id);
     try {
-      assertCpVerifiable({ activeEvidence: ev.active, verifierUserId: ctx.principal.userId!, ownerUserId: c.ownerUserId, evidenceSubmittedBy: c.evidenceSubmittedBy });
+      this.s.policy.assertApproval(ctx, 'jv.cp.verify', { projectId, requesterUserId: c.evidenceSubmittedBy }, () => {
+        if (cmd === 'verify') assertCpVerifiable({ activeEvidence: ev.active, verifierUserId: ctx.principal.userId!, ownerUserId: c.ownerUserId, evidenceSubmittedBy: c.evidenceSubmittedBy });
+        transition('closing_condition', CONDITION_MACHINE, c.status, cmd);
+      });
     } catch (e) {
-      await this.s.audit.recordDetached(ctx, { action: 'jv.cp.verify', entityType: 'closing_condition', entityId: c.id, projectId, outcome: e instanceof DomainError && e.kind === 'forbidden' ? 'denied' : 'rejected', reason: (e as Error).message, before: { status: c.status, activeEvidence: ev.active } });
+      if (cmd === 'verify') {
+        await this.s.audit.recordDetached(ctx, { action: 'jv.cp.verify', entityType: 'closing_condition', entityId: c.id, projectId, outcome: e instanceof DomainError && e.kind === 'forbidden' ? 'denied' : 'rejected', reason: (e as Error).message, before: { status: c.status, activeEvidence: ev.active } });
+      }
       throw e;
     }
+    if (cmd === 'reject_evidence') return this.applyCp(ctx, c, 'reject_evidence', body.expectedVersion, { statusNote: body.note ?? null }, body.note ?? null);
     return this.applyCp(ctx, c, 'verify', body.expectedVersion, { verifiedBy: ctx.principal.userId, verifiedAt: this.s.clock.now(), statusNote: body.note ?? null }, body.note ?? null);
   }
 

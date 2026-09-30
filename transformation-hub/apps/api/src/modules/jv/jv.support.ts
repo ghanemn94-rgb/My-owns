@@ -26,7 +26,7 @@ import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { Clock } from '../../platform/clock';
 import { APP_CONFIG, AppConfig } from '../../platform/config';
-import { activeEvidenceCount, loadInProject, updateVersioned } from '../../platform/helpers';
+import { activeEvidenceCount, loadInProject, updateVersioned, visibleEvidenceCounts } from '../../platform/helpers';
 import { newId, payloadHash } from '../../platform/ids';
 import type { RequestContext } from '../../platform/context';
 
@@ -118,11 +118,20 @@ export class JvSupport {
     return Object.fromEntries(rows.map((r) => [r.id, r.name]));
   }
 
+  /** Evidence count FOR RULES (verification, readiness): every link counts, visible to the caller or not. */
   evidence(projectId: string, targetType: 'closing_condition' | 'closing_deliverable' | 'post_close_obligation', targetId: string) {
     return activeEvidenceCount(this.db, projectId, targetType, targetId);
   }
 
-  /** Active-evidence counts for many targets of one type (set-based). */
+  /**
+   * Evidence counters FOR DISPLAY (SEC-P1R-05): counted with the evidence list's visibility, so a counter never reveals
+   * that restricted / room evidence exists on a CP, deliverable or obligation.
+   */
+  visibleEvidenceMap(ctx: RequestContext, projectId: string, targetType: 'closing_condition' | 'closing_deliverable' | 'post_close_obligation', ids: string[]) {
+    return visibleEvidenceCounts(this.db, this.policy, ctx, projectId, targetType, ids);
+  }
+
+  /** Active-evidence counts FOR RULES for many targets of one type (set-based; unfiltered — see visibleEvidenceMap). */
   async evidenceMap(projectId: string, targetType: string, ids: string[]): Promise<Map<string, { active: number; conflicting: number }>> {
     const out = new Map<string, { active: number; conflicting: number }>();
     if (!ids.length) return out;

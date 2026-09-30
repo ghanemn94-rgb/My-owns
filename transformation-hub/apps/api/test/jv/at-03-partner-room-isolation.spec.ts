@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { PoolClient } from 'pg';
-import { closeApp, closePools, loginAs, owner, runtimePool } from '../helpers';
-import { P, auditRows, doc, getBinary, grant, in30, ok, partnerAt, room, setupJvProject, syntheticUser, DocClient, JvProject } from './jv-kit';
+import { closeApp, closePools, owner, runtimePool } from '../helpers';
+import { P, auditRows, doc, getBinary, grant, in30, login, ok, partnerAt, room, setupJvProject, syntheticUser, DocClient, JvProject } from './jv-kit';
 
 /**
  * AT-03 (partner rooms) — partner A's room is invisible to partner B's users in lists, counts, search, AI and downloads,
@@ -90,10 +90,18 @@ describe('AT-03 — partner A vs partner B isolation [AT-03, REQ-JV-001, REQ-ENT
     expect(q.status).toBe(404);
     const dd = (await extB.get(`${P(pid)}/partner-access/rooms/${roomB}/dd-requests`).expect(200)).body;
     expect(dd.items).toEqual([]);
+    // The counterparty lists are session-level routes: the service asserts the external permission, so an internal member
+    // (no jv.disclosure.view / jv.dd_request.read_external) is refused: 403 (the PM holds the room's manage grant, so the
+    // room's existence is no secret to them), and the finance lead without any grant on room A gets 404.
+    expect((await j.p.pm.get(`${P(pid)}/partner-access/rooms`)).status).toBe(403);
+    expect((await j.p.pm.get(`${P(pid)}/partner-access/rooms/${roomA}/disclosures`)).status).toBe(403);
+    expect((await j.p.pm.get(`${P(pid)}/partner-access/rooms/${roomA}/dd-requests`)).status).toBe(403);
+    expect((await j.p.finance.get(`${P(pid)}/partner-access/rooms/${roomA}/disclosures`)).status).toBe(404);
+    expect((await j.p.finance.get(`${P(pid)}/partner-access/rooms/${roomA}/dd-requests`)).status).toBe(404);
   });
 
   it('a Project-B user gets 404 for every JV record of this project (no title, no count)', async () => {
-    const pmB = await loginAs('pm.b');
+    const pmB = await login('pm.b');
     for (const path of ['/partners', `/partners/${A}`, '/partner-rooms', `/partner-rooms/${roomA}`, `/partner-access/rooms/${roomA}/disclosures`, '/diligence-requests', '/closings', '/deal-scenarios']) {
       const r = await pmB.get(`${P(pid)}${path}`);
       expect(r.status, path).toBe(404);

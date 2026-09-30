@@ -50,7 +50,8 @@ export class PartnersService {
   async loadVisible(ctx: RequestContext, projectId: string, partnerId: string, permission = 'jv.partner.read'): Promise<PartnerRow> {
     if (this.s.policy.isRoomOnly(ctx.principal, projectId)) throw notFound();
     const p = await loadInProject(this.s.db, schema.partner, projectId, partnerId);
-    this.s.policy.assert(ctx, permission, this.attrs(p));
+    // Role-level pre-check (I-R3): approvals assert not_self / authority with the pending request's requester.
+    this.s.policy.assertGranted(ctx, permission, this.attrs(p));
     return p;
   }
 

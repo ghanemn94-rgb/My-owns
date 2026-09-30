@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
-import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import { alias, type PgColumn, type PgTable } from 'drizzle-orm/pg-core';
 import { schema } from '@hub/db';
 import {
   Classification,
   EVIDENCE_TARGET_PERMISSION,
+  EVIDENCE_TARGET_READ_PERMISSION,
   EvidenceTargetType,
   EvidenceLinkStatus,
   assertConflictMarkable,
@@ -19,7 +20,8 @@ import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
-import { assertVersion, loadInProject, updateVersioned } from '../../platform/helpers';
+import { assertVersion, evidenceLinkVisibleSql, loadInProject, updateVersioned } from '../../platform/helpers';
+import { RecordVisibility } from '../../platform/record-visibility';
 import { APP_CONFIG, AppConfig } from '../../platform/config';
 import { DocumentsService, LoadedDoc, scanUsable } from './documents.service';
 
@@ -62,9 +64,21 @@ export class EvidenceService {
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
-  /** The target must be a record of the same project that the caller can see (404 otherwise — never trust the id). */
+  /**
+   * The target must be a record of the same project that the caller can READ (SEC-P1R-04) — never trust the id:
+   *  - the target type's read permission (`EVIDENCE_TARGET_READ_PERMISSION`, e.g. `jv.deal.read` for a closing condition);
+   *  - the record's own visibility resolved in SQL (classification — own or inherited —, room, workstream reach of that
+   *    permission), i.e. the answer the target's own module gives;
+   *  - a full project member: evidence targets are registers, never room records, so room-only principals see none.
+   * Everything else is 404, the same answer as an unknown id (no existence oracle).
+   */
   async loadTarget(ctx: RequestContext, projectId: string, targetType: EvidenceTargetType, targetId: string): Promise<void> {
+    const readPermission = EVIDENCE_TARGET_READ_PERMISSION[targetType];
+    if (!readPermission || !this.policy.canInProject(ctx, readPermission, projectId) || !this.policy.canSee(ctx, { projectId })) throw notFound();
     if (targetType === 'legal_entity') {
+      // The NewCo module's read rule: a project-wide read grant and the project's classification (NewcoSupport.assertProjectRead).
+      const [p] = await this.db.tx().select({ classification: schema.project.classification }).from(schema.project).where(eq(schema.project.id, projectId));
+      if (!p || !this.policy.permissionReach(ctx, readPermission, projectId).all || !this.policy.can(ctx, readPermission, { projectId, classification: p.classification as Classification })) throw notFound();
       const [pe] = await this.db
         .tx()
         .select({ id: schema.projectEntity.id })
@@ -75,9 +89,10 @@ export class EvidenceService {
     }
     const table = TARGET_TABLES[targetType];
     if (!table) throw notFound();
-    const row = (await loadInProject(this.db, table, projectId, targetId)) as Record<string, unknown>;
-    const classification = (row['classification'] as Classification | undefined) ?? null;
-    if (classification && !this.policy.canSee(ctx, { projectId, classification })) throw notFound();
+    await loadInProject(this.db, table, projectId, targetId);
+    const rv = new RecordVisibility(this.policy, ctx, projectId, { reach: true });
+    const r = await this.db.tx().execute<{ ok: boolean }>(sql`select ${rv.exists(targetType, sql`${targetId}::uuid`)} as ok`);
+    if (!r.rows[0]?.ok) throw notFound();
   }
 
   private emitChanged(projectId: string, link: Pick<LinkRow, 'id' | 'targetType' | 'targetId'>, change: string, isConflict: boolean) {
@@ -98,21 +113,26 @@ export class EvidenceService {
     return l;
   }
 
-  private async loadLink(projectId: string, linkId: string) {
-    return loadInProject(this.db, schema.evidenceLink, projectId, linkId);
+  /** A link is reachable only through a target the caller can read (SEC-P1R-04): 404 otherwise, like an unknown link id. */
+  private async loadLink(ctx: RequestContext, projectId: string, linkId: string) {
+    const link = await loadInProject(this.db, schema.evidenceLink, projectId, linkId);
+    await this.loadTarget(ctx, projectId, link.targetType as EvidenceTargetType, link.targetId);
+    return link;
   }
 
   // ------------------------------------------------------------------------------------------------ reads
   async listForTarget(ctx: RequestContext, projectId: string, q: { targetType: EvidenceTargetType; targetId: string; includeInactive: 'true' | 'false' }) {
     await this.loadTarget(ctx, projectId, q.targetType, q.targetId);
-    const e = schema.evidenceLink;
-    const d = schema.document;
+    // aliases `e` / `d` are what evidenceLinkVisibleSql refers to
+    const e = alias(schema.evidenceLink, 'e');
+    const d = alias(schema.document, 'd');
     const conds = [
       eq(e.projectId, projectId),
       eq(e.targetType, q.targetType),
       eq(e.targetId, q.targetId),
-      // Links to documents the caller cannot read are omitted entirely (no title, no count — AT-03).
-      or(isNull(e.documentId), this.policy.visibilitySql(ctx, projectId, { classification: d.classification, room: d.roomId })),
+      // Links to documents the caller cannot read are omitted entirely (no title, no count — AT-03); the register counters
+      // use the same predicate (visibleEvidenceCounts, SEC-P1R-05).
+      evidenceLinkVisibleSql(this.policy, ctx, projectId),
     ];
     if (q.includeInactive === 'false') conds.push(inArray(e.status, ['active', 'conflicting']));
     const rows = await this.db
@@ -179,7 +199,7 @@ export class EvidenceService {
 
     let earlier: LinkRow | null = null;
     if (body.conflictsWithLinkId) {
-      earlier = await this.loadLink(projectId, body.conflictsWithLinkId);
+      earlier = await this.loadLink(ctx, projectId, body.conflictsWithLinkId);
       await this.linkDoc(ctx, earlier, 'documents.document.read');
       assertConflictMarkable({ id: earlier.id, targetType: earlier.targetType, targetId: earlier.targetId, status: earlier.status as EvidenceLinkStatus }, { id: 'new', targetType: body.targetType, targetId: body.targetId, status: 'active' });
     }
@@ -224,14 +244,15 @@ export class EvidenceService {
   }
 
   async verify(ctx: RequestContext, projectId: string, linkId: string, body: { expectedVersion: number; decision: 'accept' | 'reject'; note?: string }) {
-    const link = await this.loadLink(projectId, linkId);
+    const link = await this.loadLink(ctx, projectId, linkId);
     const l = await this.linkDoc(ctx, link, 'documents.document.read');
     const attrs = l ? this.docs.attrs(l) : { projectId };
     let version: typeof schema.documentVersion.$inferSelect | null = null;
     if (link.documentVersionId) version = await loadInProject(this.db, schema.documentVersion, projectId, link.documentVersionId);
     // Separation of duties: neither the linker nor the uploader of the version may verify it.
-    for (const self of new Set([link.addedBy, version?.uploadedBy].filter(Boolean) as string[])) {
-      this.policy.assert(ctx, 'documents.evidence.verify', { ...attrs, requesterUserId: self });
+    const selves = [...new Set([link.addedBy, version?.uploadedBy].filter(Boolean) as string[])];
+    for (const self of selves.length ? selves : [null]) {
+      this.policy.assert(ctx, 'documents.evidence.verify', { ...attrs, requesterUserId: self }); // none known → fail closed (I-R3)
     }
     assertVersion(link, body.expectedVersion, 'evidence link');
     let status: EvidenceLinkStatus;
@@ -262,8 +283,8 @@ export class EvidenceService {
   }
 
   async flagConflict(ctx: RequestContext, projectId: string, linkId: string, body: { expectedVersion: number; withLinkId: string; note: string }) {
-    const a = await this.loadLink(projectId, linkId);
-    const b = await this.loadLink(projectId, body.withLinkId);
+    const a = await this.loadLink(ctx, projectId, linkId);
+    const b = await this.loadLink(ctx, projectId, body.withLinkId);
     const la = await this.linkDoc(ctx, a, 'documents.evidence.link');
     await this.linkDoc(ctx, b, 'documents.document.read');
     if (!la) this.policy.assert(ctx, 'documents.evidence.link', { projectId });
@@ -279,7 +300,7 @@ export class EvidenceService {
   }
 
   async supersede(ctx: RequestContext, projectId: string, linkId: string, body: { expectedVersion: number; note: string }) {
-    const link = await this.loadLink(projectId, linkId);
+    const link = await this.loadLink(ctx, projectId, linkId);
     const l = await this.linkDoc(ctx, link, 'documents.evidence.link');
     if (!l) this.policy.assert(ctx, 'documents.evidence.link', { projectId });
     if (link.status === 'superseded' || link.status === 'rejected') throw ruleViolation('evidence.not_active', `Evidence link is already ${link.status}`);

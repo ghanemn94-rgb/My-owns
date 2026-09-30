@@ -4,6 +4,7 @@ import type { Readable } from 'node:stream';
 import { and, asc, count, desc, eq, inArray, isNull, sql, SQL } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
+  EVIDENCE_TARGET_READ_PERMISSION,
   CLASSIFICATIONS,
   Classification,
   classificationRank,
@@ -29,7 +30,8 @@ import { Clock } from '../../platform/clock';
 import { APP_CONFIG, AppConfig } from '../../platform/config';
 import type { RequestContext } from '../../platform/context';
 import { newId, payloadHash } from '../../platform/ids';
-import { assertVersion, likeContains, loadInProject, pageOf, offsetOf, updateVersioned } from '../../platform/helpers';
+import { assertVersion, evidenceLinkVisibleSql, likeContains, loadInProject, pageOf, offsetOf, updateVersioned } from '../../platform/helpers';
+import { RecordVisibility } from '../../platform/record-visibility';
 import { orderBySort } from '../../platform/sort';
 import type { RouteInput, documentsRoutes } from '@hub/contracts';
 import { OBJECT_STORAGE, ObjectStorage, storageKey } from './storage/object-storage';
@@ -267,9 +269,14 @@ export class DocumentsService {
       .where(and(eq(schema.documentVersion.documentId, documentId), eq(schema.documentVersion.projectId, projectId)))
       .orderBy(desc(schema.documentVersion.versionNo));
     const current = versions.find((v) => v.id === l.doc.currentVersionId) ?? null;
+    // Counted like the evidence lists (SEC-P1R-04/05): only links whose target the caller can read.
+    const targets = new RecordVisibility(this.policy, ctx, projectId, { reach: true, readPermission: (t) => (EVIDENCE_TARGET_READ_PERMISSION as Record<string, string>)[t] });
     const ev = await tx.execute<{ active: number; conflicting: number }>(sql`
-      select count(*) filter (where status = 'active')::int as active, count(*) filter (where status = 'conflicting')::int as conflicting
-        from evidence_link where project_id = ${projectId} and document_id = ${documentId}`);
+      select count(*) filter (where e.status = 'active')::int as active, count(*) filter (where e.status = 'conflicting')::int as conflicting
+        from evidence_link e left join document d on d.id = e.document_id and d.project_id = e.project_id
+       where e.project_id = ${projectId} and e.document_id = ${documentId}
+         and ${evidenceLinkVisibleSql(this.policy, ctx, projectId)}
+         and ${targets.targetSql(sql.raw('e.target_type'), sql.raw('e.target_id'))}`);
     const [pending] = await tx
       .select()
       .from(schema.approvalRequest)
@@ -487,10 +494,12 @@ export class DocumentsService {
   async changeClassification(ctx: RequestContext, projectId: string, documentId: string, body: { expectedVersion: number; classification: Classification; reason: string }, direction: 'raise' | 'lower') {
     const l = await this.loadDoc(projectId, documentId);
     const perm = direction === 'raise' ? 'documents.document.classify' : 'documents.document.declassify';
-    this.policy.assert(ctx, perm, this.attrs(l));
-    if (direction === 'lower') {
-      // Separation of duties: the document's owner/creator cannot lower its classification.
-      for (const self of new Set([l.doc.createdBy, l.doc.ownerUserId].filter(Boolean) as string[])) this.policy.assert(ctx, perm, { ...this.attrs(l), requesterUserId: self });
+    if (direction === 'raise') this.policy.assert(ctx, perm, this.attrs(l));
+    else {
+      // Separation of duties: the document's owner/creator cannot lower its classification; neither known → fail closed (I-R3).
+      this.policy.assertGranted(ctx, perm, this.attrs(l));
+      const selves = [...new Set([l.doc.createdBy, l.doc.ownerUserId].filter(Boolean) as string[])];
+      for (const self of selves.length ? selves : [null]) this.policy.assert(ctx, perm, { ...this.attrs(l), requesterUserId: self });
     }
     if (l.doc.deletedAt) throw notFound();
     const cur = classificationRank(l.doc.classification as Classification);
@@ -626,7 +635,8 @@ export class DocumentsService {
       .limit(1);
     const authority = disposalAuthority({ matrix: matrix ?? null, today, projectIsDemo: p.isDemo, demoMode: this.config.demoMode });
     // not_self against the requester AND the document owner/creator; authority from the matrix (or demo policy).
-    for (const self of new Set([req.requestedBy, l.doc.createdBy, l.doc.ownerUserId].filter(Boolean) as string[])) {
+    const selves = [...new Set([req.requestedBy, l.doc.createdBy, l.doc.ownerUserId].filter(Boolean) as string[])];
+    for (const self of selves.length ? selves : [null]) {
       this.policy.assert(ctx, 'documents.document.dispose', { ...this.attrs(l), requesterUserId: self, withinAuthority: authority.within });
     }
     // Retention / legal hold first: the refusal reason that matters is audited against the document (AT-27).

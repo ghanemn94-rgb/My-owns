@@ -359,8 +359,8 @@ export class HealthService {
     const p = await this.s.project(ctx, projectId);
     const u = await this.s.lockInProject(schema.statusUpdate, projectId, id);
     if (command === 'submit') this.s.assert(ctx, 'planning.status_update.submit', p, { workstreamId: u.workstreamId, ownerUserIds: [u.createdBy, u.submittedBy] });
-    // Review by someone other than the submitter (not_self).
-    else this.s.assert(ctx, 'planning.status_update.review', p, { workstreamId: u.workstreamId, requesterUserId: u.submittedBy });
+    // Review by someone other than the submitter (not_self) — after the state check (I-R3).
+    else this.s.assertApproval(ctx, 'planning.status_update.review', p, { workstreamId: u.workstreamId, requesterUserId: u.submittedBy }, () => transition('status_update', STATUS_UPDATE_MACHINE, u.status as UpdateStatus, command));
     this.s.assertVersion(u, body.expectedVersion, 'status update');
     const to = transition('status_update', STATUS_UPDATE_MACHINE, u.status as UpdateStatus, command);
     const extra: Partial<typeof schema.statusUpdate.$inferInsert> = {};

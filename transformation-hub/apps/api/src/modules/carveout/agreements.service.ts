@@ -121,7 +121,7 @@ export class AgreementsService {
       .from(C)
       .where(and(eq(C.projectId, projectId), eq(C.agreementId, a.id), this.s.policy.visibilitySql(ctx, projectId, { classification: C.classification })))
       .orderBy(asc(C.code));
-    const ev = (await this.s.evidenceCounts(projectId, 'agreement', [a.id])).get(a.id) ?? { active: 0, conflicting: 0 };
+    const ev = (await this.s.visibleEvidenceCounts(ctx, projectId, 'agreement', [a.id])).get(a.id) ?? { active: 0, conflicting: 0 }; // display: SEC-P1R-05
     return {
       ...summary!,
       kindExpansionProposed: a.kindExpansion,

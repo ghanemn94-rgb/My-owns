@@ -85,7 +85,8 @@ export class RoomsService {
   /** Room CONTENT: the permission with room + clean-team + classification conditions (grant required) — 404 otherwise. */
   private async loadRoomContent(ctx: RequestContext, projectId: string, roomId: string, permission: string): Promise<RoomRow> {
     const room = await this.s.room(projectId, roomId);
-    this.s.policy.assert(ctx, permission, this.s.roomAttrs(room));
+    // Role-level pre-check (I-R3): the release asserts not_self with the disclosure's requester.
+    this.s.policy.assertGranted(ctx, permission, this.s.roomAttrs(room));
     return room;
   }
 
@@ -456,9 +457,11 @@ export class RoomsService {
     const x = await this.loadDisclosure(projectId, roomId, disclosureId);
     const doc = await this.s.visibleDocument(ctx, projectId, x.documentId);
     const { version, usable } = await this.s.documentVersion(projectId, doc.id, x.documentVersionId, null);
-    // not_self: never the requester (policy) nor the uploader of the version (domain).
-    this.s.policy.assert(ctx, 'jv.disclosure.release', { ...this.s.roomAttrs(room, doc.classification as Classification), requesterUserId: x.requestedBy });
-    assertDisclosureReleasable({ status: x.status as DisclosureStatus, releaserUserId: ctx.principal.userId!, requesterUserId: x.requestedBy, uploaderUserId: version.uploadedBy, versionUsable: usable, roomLocked: !!room.lockedAt });
+    // Role → state (requested, usable version, room not locked: 422) → not_self: never the requester (policy) nor the
+    // uploader of the version (domain) — I-R3.
+    this.s.policy.assertApproval(ctx, 'jv.disclosure.release', { ...this.s.roomAttrs(room, doc.classification as Classification), requesterUserId: x.requestedBy }, () =>
+      assertDisclosureReleasable({ status: x.status as DisclosureStatus, releaserUserId: ctx.principal.userId!, requesterUserId: x.requestedBy, uploaderUserId: version.uploadedBy, versionUsable: usable, roomLocked: !!room.lockedAt }),
+    );
     assertVersion(x, body.expectedVersion, 'disclosure');
     const release = body.outcome === 'release';
     const now = this.s.clock.now();
@@ -518,6 +521,8 @@ export class RoomsService {
   }
 
   async externalRooms(ctx: RequestContext, projectId: string) {
+    // The route is session-level (project scope enforced by the guard): the counterparty permission is asserted here.
+    if (!this.s.policy.canInProject(ctx, 'jv.disclosure.view', projectId)) throw forbidden('policy.forbidden', 'Missing permission jv.disclosure.view');
     const ids = this.externalRoomIds(ctx, projectId);
     if (!ids.length) return { items: [] };
     const t = schema.partnerRoom;

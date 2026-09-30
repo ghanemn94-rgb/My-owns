@@ -269,8 +269,9 @@ export class PerimeterService {
       if (a && this.s.policy.canSee(ctx, { projectId: p.id, classification: a.classification as Classification })) agreement = { id: a.id, code: a.code };
     }
     const transfers = await this.transferRows(p.id, [item.id], item.code);
-    const ev = await this.s.evidenceCounts(p.id, 'perimeter_item', [item.id]);
-    const evT = await this.s.evidenceCounts(p.id, 'transfer', [item.id]);
+    // Display counters: the evidence list's visibility (SEC-P1R-05).
+    const ev = await this.s.visibleEvidenceCounts(ctx, p.id, 'perimeter_item', [item.id]);
+    const evT = await this.s.visibleEvidenceCounts(ctx, p.id, 'transfer', [item.id]);
     const hist = await this.versions.history('perimeter_item', item.id);
     const histNames = await this.s.userNames(hist.map((h) => h.changedBy));
     const seeValue = this.canSeeReferenceValues(ctx, p.id);

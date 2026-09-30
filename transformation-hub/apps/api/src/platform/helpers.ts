@@ -5,6 +5,8 @@ import { schema } from '@hub/db';
 import { conflict, notFound } from '@hub/domain';
 import { DbService } from './db.service';
 import { newId } from './ids';
+import type { PolicyService } from './policy.service';
+import type { RequestContext } from './context';
 
 /** Standard paginated response. Totals are computed inside the caller's scope only. */
 export function pageOf<T>(items: T[], total: number, q: { page: number; pageSize: number }) {
@@ -111,7 +113,41 @@ export async function nextCode(db: DbService, table: PgTable & { projectId: PgCo
   return `${prefix}-${String((r[0]?.n ?? 0) + 1).padStart(3, '0')}`;
 }
 
-/** Count active evidence links for a target (shared read used by gates, CPs, readiness, transfers…). */
+/**
+ * Evidence links the caller may see (SEC-P1R-05): the link's own (document-derived) room and, when a document is linked,
+ * the document's classification and room — the same predicate as the evidence list (`documents.listEvidence`). Expects the
+ * query to alias `evidence_link` as `e` and LEFT JOIN `document` as `d` on `d.id = e.document_id`.
+ */
+export function evidenceLinkVisibleSql(policy: PolicyService, ctx: RequestContext, projectId: string): SQL {
+  const col = (s: string) => sql.raw(s) as unknown as PgColumn;
+  return sql`(${policy.visibilitySql(ctx, projectId, { room: col('e.room_id') })} and (e.document_id is null or ${policy.visibilitySql(ctx, projectId, { classification: col('d.classification'), room: col('d.room_id') })}))`;
+}
+
+/**
+ * Evidence COUNTERS FOR DISPLAY (register rows, detail views): counted with the same visibility as the evidence list, so a
+ * counter never reveals that restricted / clean-team evidence exists on a record (SEC-P1R-05). Rule evaluation (gates,
+ * sign-off, verification) keeps using the unfiltered `activeEvidenceCount` — every piece of evidence counts for a rule.
+ */
+export async function visibleEvidenceCounts(
+  db: DbService,
+  policy: PolicyService,
+  ctx: RequestContext,
+  projectId: string,
+  targetType: string,
+  ids: string[],
+): Promise<Map<string, { active: number; conflicting: number }>> {
+  if (!ids.length) return new Map();
+  const r = await db.tx().execute<{ target_id: string; active: number; conflicting: number }>(sql`
+    select e.target_id, count(*) filter (where e.status = 'active')::int as active, count(*) filter (where e.status = 'conflicting')::int as conflicting
+      from evidence_link e left join document d on d.id = e.document_id and d.project_id = e.project_id
+     where e.project_id = ${projectId} and e.target_type = ${targetType}
+       and e.target_id in (${sql.join(ids.map((i) => sql`${i}::uuid`), sql`, `)})
+       and ${evidenceLinkVisibleSql(policy, ctx, projectId)}
+     group by e.target_id`);
+  return new Map(r.rows.map((x) => [x.target_id, { active: Number(x.active), conflicting: Number(x.conflicting) }]));
+}
+
+/** Count active evidence links for a target — FOR RULES (shared read used by gates, CPs, readiness, transfers…). */
 export async function activeEvidenceCount(db: DbService, projectId: string, targetType: string, targetId: string): Promise<{ active: number; conflicting: number }> {
   const r = await db.tx().execute<{ active: number; conflicting: number }>(sql`
     select count(*) filter (where status = 'active')::int as active, count(*) filter (where status = 'conflicting')::int as conflicting

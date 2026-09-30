@@ -199,8 +199,17 @@ app.kubernetes.io/component: {{ .component }}
   value: {{ $v.storage.s3.bucket | quote }}
 - name: HUB_S3_REGION
   value: {{ $v.storage.s3.region | quote }}
-- name: HUB_S3_FORCE_PATH_STYLE
-  value: {{ $v.storage.s3.forcePathStyle | toString | quote }}
+{{- /* I-R4: per-object server-side encryption (production refuses `none` unless the bucket default encryption is assured). */}}
+- name: HUB_S3_SSE
+  value: {{ required "storage.s3.sse is required (AES256 or aws:kms)" $v.storage.s3.sse | quote }}
+{{- if $v.storage.s3.kmsKeyId }}
+- name: HUB_S3_KMS_KEY_ID
+  value: {{ $v.storage.s3.kmsKeyId | quote }}
+{{- end }}
+{{- if $v.storage.s3.bucketDefaultEncryptionAssured }}
+- name: HUB_S3_BUCKET_DEFAULT_ENCRYPTION
+  value: "assured"
+{{- end }}
 - name: HUB_S3_ACCESS_KEY_ID
   valueFrom:
     secretKeyRef:
@@ -221,6 +230,10 @@ app.kubernetes.io/component: {{ .component }}
   value: {{ default (printf "%s/api/v1/auth/oidc/callback" (trimSuffix "/" $v.app.publicUrl)) $v.oidc.redirectUri | quote }}
 - name: HUB_OIDC_LINK_BY_EMAIL
   value: {{ $v.oidc.linkByEmail | toString | quote }}
+{{- if $v.oidc.linkByEmailAck }}
+- name: HUB_OIDC_LINK_BY_EMAIL_ACK
+  value: {{ $v.oidc.linkByEmailAck | quote }}
+{{- end }}
 - name: HUB_OIDC_CLIENT_SECRET
   valueFrom:
     secretKeyRef:

@@ -74,7 +74,8 @@ export class PostCloseService {
   private async load(ctx: RequestContext, projectId: string, id: string, permission: string) {
     if (this.s.policy.isRoomOnly(ctx.principal, projectId)) throw notFound();
     const o = await loadInProject(this.s.db, schema.postCloseObligation, projectId, id);
-    this.s.policy.assert(ctx, permission, { projectId });
+    // Role-level pre-check (I-R3): verification asserts not_self with the completion reporter.
+    this.s.policy.assertGranted(ctx, permission, { projectId });
     return o;
   }
 
@@ -92,7 +93,7 @@ export class PostCloseService {
     const [{ total }] = (await tx.select({ total: count() }).from(t).where(where)) as [{ total: number }];
     const order = orderBySort(q.sort, { code: t.code, dueDate: t.dueDate, status: t.status, updatedAt: t.updatedAt }, t.id, [asc(t.dueDate), asc(t.code), asc(t.id)]);
     const rows = await tx.select().from(t).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
-    const ev = await this.s.evidenceMap(projectId, 'post_close_obligation', rows.map((r) => r.id));
+    const ev = await this.s.visibleEvidenceMap(ctx, projectId, 'post_close_obligation', rows.map((r) => r.id));
     const today = this.s.today(p);
     return {
       ...pageOf(rows.map((o) => this.dto(o, today, ev.get(o.id) ?? { active: 0, conflicting: 0 })), Number(total), q),
@@ -146,13 +147,14 @@ export class PostCloseService {
   async verify(ctx: RequestContext, projectId: string, id: string, body: Q<'verifyObligation'>['body']) {
     this.s.assertHuman(ctx, 'Verifying an obligation');
     const o = await this.load(ctx, projectId, id, 'jv.cp.verify');
-    this.s.policy.assert(ctx, 'jv.cp.verify', { projectId, requesterUserId: o.completionReportedBy });
-    if (body.outcome === 'verify') {
-      const ev = await this.s.evidence(projectId, 'post_close_obligation', o.id);
-      assertObligationVerifiable({ activeEvidence: ev.active, verifierUserId: ctx.principal.userId!, ownerUserId: o.ownerUserId, reportedBy: o.completionReportedBy });
-    }
     const cmd: ObligationCommand = body.outcome === 'verify' ? 'verify' : 'reject_completion';
-    const to = transition('post_close_obligation', POST_CLOSE_MACHINE, o.status, cmd);
+    const ev = body.outcome === 'verify' ? await this.s.evidence(projectId, 'post_close_obligation', o.id) : null;
+    // Role → state (evidence, completion reported: 422) → separation from the completion reporter (I-R3).
+    let to = o.status;
+    this.s.policy.assertApproval(ctx, 'jv.cp.verify', { projectId, requesterUserId: o.completionReportedBy }, () => {
+      if (ev) assertObligationVerifiable({ activeEvidence: ev.active, verifierUserId: ctx.principal.userId!, ownerUserId: o.ownerUserId, reportedBy: o.completionReportedBy });
+      to = transition('post_close_obligation', POST_CLOSE_MACHINE, o.status, cmd);
+    });
     const values: Record<string, unknown> = { status: to, statusNote: body.note ?? null };
     if (cmd === 'verify') Object.assign(values, { verifiedBy: ctx.principal.userId, verifiedAt: this.s.clock.now() });
     const row = (await updateVersioned(this.s.db, schema.postCloseObligation, { id, projectId, expectedVersion: body.expectedVersion }, values)) as ObligationRow;

@@ -1098,14 +1098,26 @@ export const jvRoutes = registerRoutes({
   }),
 
   // ---------------------------------------------------------------- external (counterparty) projection
-  listExternalRooms: defineRoute({ id: 'jv.listExternalRooms', method: 'GET', path: `${P}/partner-access/rooms`, summary: 'Counterparty view: the rooms the external account is granted', tags, access: 'jv.disclosure.view', params: ProjectParams, response: z.object({ items: z.array(ExternalRoomDto) }) }),
+  // The three counterparty LISTS are session-level at the route (the guard still enforces the project scope → 404) so that
+  // query validation answers every caller alike; the service asserts the external permission (`jv.disclosure.view` /
+  // `jv.dd_request.read_external`, held by external_partner_limited only) with the room conditions — 403 / 404 otherwise.
+  listExternalRooms: defineRoute({
+    id: 'jv.listExternalRooms',
+    method: 'GET',
+    path: `${P}/partner-access/rooms`,
+    summary: 'Counterparty view: the rooms the external account is granted (service-enforced permission jv.disclosure.view)',
+    tags,
+    access: 'authenticated',
+    params: ProjectParams,
+    response: z.object({ items: z.array(ExternalRoomDto) }),
+  }),
   listExternalDisclosures: defineRoute({
     id: 'jv.listExternalDisclosures',
     method: 'GET',
     path: `${P}/partner-access/rooms/:roomId/disclosures`,
-    summary: 'Counterparty view: items released into its room (disclosed version only — audited)',
+    summary: 'Counterparty view: items released into its room (disclosed version only — audited; service-enforced permission jv.disclosure.view)',
     tags,
-    access: 'jv.disclosure.view',
+    access: 'authenticated',
     params: RoomParams,
     response: z.object({ items: z.array(ExternalDisclosureDto) }),
   }),
@@ -1124,9 +1136,9 @@ export const jvRoutes = registerRoutes({
     id: 'jv.listExternalDdRequests',
     method: 'GET',
     path: `${P}/partner-access/rooms/:roomId/dd-requests`,
-    summary: 'Counterparty view of its DD requests (question, status, due date, RELEASED answer only)',
+    summary: 'Counterparty view of its DD requests (question, status, due date, RELEASED answer only; service-enforced permission jv.dd_request.read_external)',
     tags,
-    access: 'jv.dd_request.read_external',
+    access: 'authenticated',
     params: RoomParams,
     response: z.object({ items: z.array(ExternalDdRequestDto) }),
   }),

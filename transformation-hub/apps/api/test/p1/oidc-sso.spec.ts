@@ -33,11 +33,11 @@ async function buildApp(linkByEmail: boolean) {
   return (await createApp({ logger: false })).app;
 }
 
-async function provisionUser(email: string, opts: { subject?: string; active?: boolean } = {}) {
+async function provisionUser(email: string, opts: { subject?: string; active?: boolean; serviceAccount?: boolean } = {}) {
   const r = await owner().query<{ id: string }>(
-    `insert into app_user (id, org_id, email, display_name, is_demo, is_active, oidc_issuer, oidc_subject)
-     values (gen_random_uuid(), $1, $2, 'SSO test user (synthetic)', false, $3, $4, $5) returning id`,
-    [orgId, email, opts.active ?? true, opts.subject ? idp.issuer : null, opts.subject ?? null],
+    `insert into app_user (id, org_id, email, display_name, is_demo, is_active, oidc_issuer, oidc_subject, is_service_account)
+     values (gen_random_uuid(), $1, $2, 'SSO test user (synthetic)', false, $3, $4, $5, $6) returning id`,
+    [orgId, email, opts.active ?? true, opts.subject ? idp.issuer : null, opts.subject ?? null, opts.serviceAccount ?? false],
   );
   return r.rows[0]!.id;
 }
@@ -133,6 +133,37 @@ describe('REQ-ARC-006 — OIDC SSO (Authorization Code + PKCE)', () => {
     // after binding, the subject alone is enough — even on the strict app
     const again = await ssoLogin(strictApp, { sub, email: 'changed@example.invalid' });
     expect(again.cb.headers.location).toBe('/');
+  });
+
+  it('I-R5: a service / non-person account never signs in interactively, even when an IdP subject maps to it', async () => {
+    const sub = `svc-${Date.now()}`;
+    const email = `sso.svc.${Date.now()}@example.invalid`;
+    const userId = await provisionUser(email, { subject: sub, serviceAccount: true });
+    const { cb } = await ssoLogin(strictApp, { sub, email });
+    expect(cb.headers.location).toBe('/login?sso_error=oidc.service_account');
+    expect(sessionCookieSet(cb)).toBe(false);
+    const audit = await owner().query(`select count(*)::int n from audit_event where action = 'identity.login' and outcome = 'denied' and reason like 'OIDC login failed: oidc.service_account%'`);
+    expect(audit.rows[0].n).toBeGreaterThanOrEqual(1);
+    expect((await owner().query(`select count(*)::int n from session where user_id = $1`, [userId])).rows[0].n).toBe(0);
+  });
+
+  it('I-R5: link-by-email never binds a service account, and a service account session is never valid', async () => {
+    const email = `sso.svc.link.${Date.now()}@example.invalid`;
+    const userId = await provisionUser(email, { serviceAccount: true });
+    const att = await ssoLogin(linkApp, { sub: `svc-link-${Date.now()}`, email });
+    expect(att.cb.headers.location).toBe('/login?sso_error=oidc.not_provisioned');
+    expect((await owner().query(`select oidc_subject from app_user where id = $1`, [userId])).rows[0].oidc_subject).toBeNull();
+    // defence in depth: even a session row for a service account resolves as inactive (hub_auth_session)
+    const hash = `svc-probe-${Date.now()}`.padEnd(64, '0');
+    await owner().query(
+      `insert into session (id, token_hash, csrf_hash, user_id, org_id, auth_method, idle_expires_at, absolute_expires_at) values (gen_random_uuid(), $1, $1, $2, $3, 'oidc', now() + interval '1 hour', now() + interval '2 hours')`,
+      [hash, userId, orgId],
+    );
+    try {
+      expect((await owner().query(`select user_active from hub_auth_session($1)`, [hash])).rows[0].user_active).toBe(false);
+    } finally {
+      await owner().query(`delete from session where token_hash = $1`, [hash]);
+    }
   });
 
   it('SEC-P1-01: an account already bound to a subject cannot be taken over by another subject with the same email', async () => {
@@ -247,6 +278,7 @@ describe('REQ-ARC-006 — OIDC SSO (Authorization Code + PKCE)', () => {
       HUB_S3_BUCKET: 'hub-objects',
       HUB_S3_ACCESS_KEY_ID: 'hub-app',
       HUB_S3_SECRET_ACCESS_KEY: 'from-a-kubernetes-secret',
+      HUB_S3_SSE: 'AES256', // required in production since I-R4
       HUB_EGRESS_ALLOWLIST: 'objects.example.invalid',
       HUB_OIDC_ISSUER: 'https://idp.example.invalid',
       HUB_OIDC_CLIENT_ID: 'hub',

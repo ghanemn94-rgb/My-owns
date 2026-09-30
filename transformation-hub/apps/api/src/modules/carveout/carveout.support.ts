@@ -6,6 +6,7 @@ import { DbService } from '../../platform/db.service';
 import { PolicyService, ResourceAttrs } from '../../platform/policy.service';
 import { Clock } from '../../platform/clock';
 import type { RequestContext } from '../../platform/context';
+import { visibleEvidenceCounts } from '../../platform/helpers';
 
 export interface CarveoutProject {
   id: string;
@@ -118,6 +119,11 @@ export class CarveoutSupport {
       .groupBy(E.targetId);
     return new Map(rows.map((r) => [r.id, { active: Number(r.active), conflicting: Number(r.conflicting) }]));
   }
+  /** Counters FOR DISPLAY: the evidence list's visibility (SEC-P1R-05). `evidenceCounts` above stays for rules. */
+  visibleEvidenceCounts(ctx: RequestContext, projectId: string, targetType: string, ids: string[]): Promise<Map<string, { active: number; conflicting: number }>> {
+    return visibleEvidenceCounts(this.db, this.policy, ctx, projectId, targetType, ids);
+  }
+
 
   /** Legal entities are organization-level: only entities linked to THIS project may be referenced (else 422). */
   async assertEntityInProject(projectId: string, legalEntityId: string, field = 'legal entity') {

@@ -10,6 +10,7 @@ import {
   assertFindingRemediation,
   clearanceAllows,
   conflict,
+  DomainError,
   externalDdStatus,
   forbidden,
   isMaterialFinding,
@@ -52,7 +53,8 @@ export class DiligenceService {
 
   private async loadRequest(ctx: RequestContext, projectId: string, id: string, permission: string, extra: Record<string, unknown> = {}): Promise<RequestRow> {
     const r = await loadInProject(this.s.db, schema.diligenceRequest, projectId, id);
-    this.s.policy.assert(ctx, permission, { ...(await this.attrsOf(r)), ...extra });
+    // Role-level pre-check (I-R3): subject conditions (not_self) are asserted by the command once the drafter is known.
+    this.s.policy.assertGranted(ctx, permission, { ...(await this.attrsOf(r)), ...extra });
     return r;
   }
 
@@ -225,11 +227,14 @@ export class DiligenceService {
   async review(ctx: RequestContext, projectId: string, id: string, body: Q<'reviewDdAnswer'>['body']) {
     this.s.assertHuman(ctx, 'Reviewing a DD answer');
     const r = await this.loadRequest(ctx, projectId, id, 'jv.dd_answer.review');
-    this.s.policy.assert(ctx, 'jv.dd_answer.review', { ...(await this.attrsOf(r)), requesterUserId: r.draftedBy });
+    const cmd = body.outcome === 'approve' ? 'approve_release' : body.outcome === 'return' ? 'return_to_draft' : 'withhold';
+    // Role → state (an answer not submitted for review has nothing to review: 422) → separation from the drafter (I-R3).
+    let to = r.releaseStatus;
+    this.s.policy.assertApproval(ctx, 'jv.dd_answer.review', { ...(await this.attrsOf(r)), requesterUserId: r.draftedBy }, () => {
+      to = transition('diligence_request', DD_RELEASE_MACHINE, r.releaseStatus, cmd);
+    });
     assertDdReviewAllowed({ reviewerUserId: ctx.principal.userId!, drafterUserId: r.draftedBy });
     if (r.reviewerUserId && r.reviewerUserId !== ctx.principal.userId) throw forbidden('jv.dd.not_designated_reviewer', 'Only the designated reviewer may review this answer');
-    const cmd = body.outcome === 'approve' ? 'approve_release' : body.outcome === 'return' ? 'return_to_draft' : 'withhold';
-    const to = transition('diligence_request', DD_RELEASE_MACHINE, r.releaseStatus, cmd);
     const values: Record<string, unknown> = { releaseStatus: to, reviewNote: body.note ?? null };
     if (cmd === 'approve_release') Object.assign(values, { releaseApprovedBy: ctx.principal.userId, releaseApprovedAt: this.s.clock.now() });
     else Object.assign(values, { releaseApprovedBy: null, releaseApprovedAt: null });
@@ -245,14 +250,18 @@ export class DiligenceService {
   async release(ctx: RequestContext, projectId: string, id: string, body: Q<'releaseDdAnswer'>['body']) {
     this.s.assertHuman(ctx, 'Releasing a DD answer');
     const r = await this.loadRequest(ctx, projectId, id, 'jv.disclosure.release');
-    this.s.policy.assert(ctx, 'jv.disclosure.release', { ...(await this.attrsOf(r)), requesterUserId: r.draftedBy });
+    const attrs = await this.attrsOf(r);
     const room = await this.s.room(projectId, r.roomId!);
     try {
-      assertDdReleaseAllowed({ status: r.releaseStatus, releaserUserId: ctx.principal.userId!, drafterUserId: r.draftedBy, reviewerUserId: r.releaseApprovedBy, answer: r.answerDraft });
-      if (this.s.roomType(room) !== 'partner') throw ruleViolation('jv.dd.release_partner_room_only', 'Answers are released into a partner room');
-      if (room.lockedAt) throw ruleViolation('jv.room.locked', 'The room is locked');
+      // Role → state (no approved review: 422 jv.dd.release_requires_approval) → separation from the drafter (I-R3).
+      this.s.policy.assertApproval(ctx, 'jv.disclosure.release', { ...attrs, requesterUserId: r.draftedBy }, () => {
+        assertDdReleaseAllowed({ status: r.releaseStatus, releaserUserId: ctx.principal.userId!, drafterUserId: r.draftedBy, reviewerUserId: r.releaseApprovedBy, answer: r.answerDraft });
+        if (this.s.roomType(room) !== 'partner') throw ruleViolation('jv.dd.release_partner_room_only', 'Answers are released into a partner room');
+        if (room.lockedAt) throw ruleViolation('jv.room.locked', 'The room is locked');
+      });
     } catch (e) {
-      await this.s.audit.recordDetached(ctx, { action: 'jv.dd_answer.release', entityType: 'diligence_request', entityId: r.id, projectId, outcome: 'rejected', reason: (e as Error).message, before: { releaseStatus: r.releaseStatus } });
+      const outcome = e instanceof DomainError && e.kind === 'forbidden' ? 'denied' : 'rejected';
+      await this.s.audit.recordDetached(ctx, { action: 'jv.dd_answer.release', entityType: 'diligence_request', entityId: r.id, projectId, outcome, reason: (e as Error).message, before: { releaseStatus: r.releaseStatus } });
       throw e;
     }
     assertVersion(r, body.expectedVersion, 'DD request');

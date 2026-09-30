@@ -16,6 +16,7 @@ import {
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import type { RequestContext } from '../../platform/context';
+import { evidenceLinkVisibleSql } from '../../platform/helpers';
 import { AiConfig } from './ai-config';
 
 /**
@@ -280,6 +281,7 @@ export class AiKnowledgeService {
   async closingConditions(ctx: RequestContext, projectId: string) {
     if (!this.can(ctx, 'jv.deal.read', projectId)) return null;
     const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const evVis = evidenceLinkVisibleSql(this.policy, ctx, projectId); // counters = what the evidence list shows (SEC-P1R-05)
     const r = await this.db.tx().execute<{
       id: string;
       reference: string;
@@ -299,10 +301,12 @@ export class AiKnowledgeService {
       select closing_condition.id, closing_condition.reference, closing_condition.title, closing_condition.status, closing_condition.blocking,
              closing_condition.waivable, closing_condition.gate_key, closing_condition.owner_user_id, closing_condition.long_stop_date::text,
              closing_condition.version, closing_condition.updated_at, closing_condition.is_demo,
-             (select count(*) from evidence_link where evidence_link.project_id = closing_condition.project_id and evidence_link.target_type = 'closing_condition'
-                 and evidence_link.target_id = closing_condition.id and evidence_link.status = 'active')::int as active_evidence,
-             (select count(*) from evidence_link where evidence_link.project_id = closing_condition.project_id and evidence_link.target_type = 'closing_condition'
-                 and evidence_link.target_id = closing_condition.id and evidence_link.status = 'conflicting')::int as conflicting_evidence
+             (select count(*) from evidence_link e left join document d on d.id = e.document_id and d.project_id = e.project_id
+               where e.project_id = closing_condition.project_id and e.target_type = 'closing_condition'
+                 and e.target_id = closing_condition.id and e.status = 'active' and ${evVis})::int as active_evidence,
+             (select count(*) from evidence_link e left join document d on d.id = e.document_id and d.project_id = e.project_id
+               where e.project_id = closing_condition.project_id and e.target_type = 'closing_condition'
+                 and e.target_id = closing_condition.id and e.status = 'conflicting' and ${evVis})::int as conflicting_evidence
         from closing_condition
        where closing_condition.project_id = ${projectId} and ${vis} and closing_condition.status not in ('verified', 'waived')
        order by closing_condition.reference
