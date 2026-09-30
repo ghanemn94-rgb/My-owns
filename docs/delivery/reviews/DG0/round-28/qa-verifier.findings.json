@@ -1,0 +1,31 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-251",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A review round's frozen source_commit (closure anchor 1) may still be an annotated-TAG object id; D-044 states every commit-id field the gate depends on is now a commit object, but the round source_commit was not covered",
+      "reproduction": "QA_REPO_ROOT=<complete --no-local clone of 57d7a53 (candidate 1af91e8f)> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r28.test.mjs, case QA28-T7: on the round-9/21 fixture, commit a fix, freeze round 3 at commit frz3, create `git tag -a qa28-round3-freeze frz3`, and write the round-3 manifest (entries recomputed from frz3) and the stages.json review_rounds[round 3].source_commit as the TAG OBJECT id (git cat-file -t prints 'tag'), each written once (no write-once artefacts); round 3's qa-verifier then CLOSED_VERIFIES F-DG0-201 with that fix. validateGate on the candidate returns 0 errors (13-qa28-negative-suite.log: 'QA28-T7 result: old=ACCEPTED new=ACCEPTED new-names-the-tag=false'). Cause: checkClosure anchor 1 (tools/gates/lib/rules.mjs:750-753) resolves round.source_commit with commitPresent() (`cat-file -e <sha>^{commit}`) and isAncestor() (`merge-base --is-ancestor`), both of which PEEL a tag; findManifest (:917-918) recomputes the round manifest via manifestFromRef(m.source_commit), which also peels. D-044 added objectType(...) === 'commit' only to fix_revision (:744) and head_commit_at_start (:399); the gate source_commit already had it (:966, D-037). My round-27 F-DG0-250 listed this field explicitly as 'Not tested'.",
+      "expected": "Per D-044's own consequence ('Every commit-id field the gate depends on ... is now required to be a commit object present and reachable, never a tag or other ref-dependent object') and its fix note ('closing the whole \"tag object id where a commit is required\" class in one pass'), a review round's source_commit (stages.json review_rounds[].source_commit and the round manifest's source_commit), which is anchor 1 of every closure, is also required to be a commit object (git cat-file -t == commit). Alternatively, D-044's scope statement names only the fields it actually covers.",
+      "actual": "A present annotated-tag object id that peels to the frozen round commit is accepted as a round's frozen source_commit and as closure anchor 1. Impact is traceability and consistency only (the same class as F-DG0-250, Low). The peeled commit must still contain the fix and match the round manifest content, so no unreviewed fix can close a finding. If the tag is later deleted and gc'd, the round source becomes absent and anchor 1 fails closed (F-DG0-169). No real record is affected: the round-28 census (fix-revision-anchors-r28.mjs) finds all 27 present review_rounds source_commits, all 118 fix_revisions, all 100 present run heads and the gate candidate to be commit objects. The only non-commit ids are the known D-034/D-035 round-18 orphans (ABSENT, no closure verified in round 18). Secondary: validator.test.mjs has a unit test only for the fix_revision branch of D-044 ('D-044 / F-DG0-250'); the new checkInvocation head_commit_at_start branch has no unit test in tools/gates/tests (it is exercised here by QA28-T2/T3). Low under threat-model.md: no gate-integrity effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r28.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-28/13-qa28-negative-suite.log",
+        "docs/delivery/test-evidence/DG0/qa/round-28/21-fix-revision-anchors-nl.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-28/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T15:03:00Z",
+          "status": "OPEN",
+          "note": "Raised in round 28 (qa-verifier)."
+        }
+      ]
+    }
+  ]
+}

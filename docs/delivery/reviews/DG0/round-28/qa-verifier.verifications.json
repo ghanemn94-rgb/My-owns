@@ -1,0 +1,19 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-250",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified against the round-28 candidate sha256:1af91e8f... (source 331407e9), in a complete git clone --no-local. F-DG0-250 (Low, non-mandatory): checkClosure accepted an annotated-TAG object id as a CLOSED_VERIFIED fix_revision because commitPresent/isAncestor peel a tag. REPRODUCED, THEN SHOWN FIXED: QA28-T1 builds a genuine three-anchor round-3 closure, sets fix_revision to a tag object peeling to the fix, and runs BOTH validators. The pre-D-044 rules.mjs (49b5ad79, git archive) ACCEPTS it with 0 errors (reproduction); the candidate REJECTS it with exactly one error: 'fix <sha> is a tag object, not a commit; a fix_revision must name the fix commit itself'. QA28-T4 (a tag of a tag) is also rejected. My round-27 case QA27-N3 now prints REJECTED with the D-044 error. The unit test 'D-044 / F-DG0-250' passes (gate suite 64/64). NO REGRESSION: QA28-T6 shows old and new rules.mjs give identical error lists on 8 commit-object fixtures; the full-history dry-run has no 'is a tag object' error and 0 PRUNED/RECORD-LESS/DROPPED errors; the census finds all 118 real fix_revisions and all 100 present run heads to be commit objects. The head_commit_at_start extension also works: QA28-T2 (verifying run) and QA28-T3 (gate auditor run) are rejected with 'started from <sha>, a tag object, not a commit', and this is the only error the new validator adds over the old one. ANCHORS: fix 8fec92f8 is a commit object, is an ancestor of the round-28 frozen source_commit and gate candidate 331407e9 (anchors 1 and 3) and of this verifying run's starting HEAD 57d7a53 (anchor 2), and rules.mjs is identical at 8fec92f8 and 331407e9. Residual: a round's source_commit can still be a tag object. That field was outside F-DG0-250's defect (listed there as 'Not tested') and is raised separately as F-DG0-251 (Low). I am the reporter (qa-verifier); the owner is delivery-orchestrator, so this is not an author self-close.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-28/13-qa28-negative-suite.log",
+        "docs/delivery/test-evidence/DG0/qa/round-28/22-f250-closure-anchors.log",
+        "docs/delivery/test-evidence/DG0/qa/round-28/11-r27-suite-rerun.log",
+        "docs/delivery/test-evidence/DG0/qa/round-28/02-gates-selftests.log",
+        "docs/delivery/test-evidence/DG0/qa/round-28/08b-dry-run-classification.log",
+        "docs/delivery/test-evidence/DG0/qa/round-28/21-fix-revision-anchors-nl.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r28.test.mjs"
+      ]
+    }
+  ]
+}
