@@ -15,7 +15,7 @@ Automated accessibility checks for the web app, run in CI as part of `pnpm test:
   and best-practice findings are listed below but do not fail the build.
 - **Excluded rules:** none. The spec keeps an `EXCLUDED_RULES` list (each entry needs a written reason repeated in
   this report); it is empty.
-- **Screens (57 states × 2 languages = 114 scans):** login; portfolio home (+ 390 px mobile); My Work / Inbox;
+- **Screens (83 states × 2 languages = 166 scans):** login; portfolio home (+ 390 px mobile); My Work / Inbox;
   project wizard — every step (template, details, people, people with the user combobox open, review; nothing is
   submitted); project cockpit, status-dimension page, charter, members; Committee Hub — overview, committee detail,
   meetings, meeting detail, decisions, decision detail, actions, escalations; plan — WBS, timeline (Gantt),
@@ -24,7 +24,11 @@ Automated accessibility checks for the web app, run in CI as part of `pnpm test:
   assumptions, dependencies, change requests, risk detail, change-request detail; gates list, gate detail
   (+ criterion expanded, + 390 px mobile); Documents & Evidence Center — documents, evidence (+ record chosen and
   "link evidence" dialog open), sources, document detail, source detail with claims; administration; an open modal
-  dialog (new risk).
+  dialog (new risk). P3 screens: perimeter & transfers — every tab (register, reconciliation, transfers, Day-1
+  contract positions, versions, sites, agreements, consents), register at 390 px, perimeter-item and agreement detail,
+  the "add perimeter item" dialog open; NewCo — entities and regulatory requirements tabs, legal-entity and
+  requirement detail; Day-1 & TSA — overview, readiness checks, cutover plans, TSA services, waivers, check / cutover
+  plan / TSA detail (+ TSA detail at 390 px), the "new readiness check" dialog open.
 - **Languages:** every state in English (`lang=en dir=ltr`) and Arabic (`lang=ar dir=rtl`); the spec asserts
   `lang`/`dir` before scanning. The language is set with the `hub_locale` cookie, so the personas' saved preference is
   never changed.
@@ -34,7 +38,7 @@ Automated accessibility checks for the web app, run in CI as part of `pnpm test:
   "review required" in `scripts/ops/licence-policy.json` *if shipped*). They are unmodified dev-only dependencies of
   the private `e2e` test package and are not part of any shipped image: `node scripts/ops/licence-check.mjs` (which
   lists `--prod` dependencies) does not include them — 0 FAIL, 2 pre-existing WARN, 258 OK.
-- **Run time:** 7–9 minutes for the 118 a11y tests (whole e2e suite 10.5 minutes) on the shared build machine.
+- **Run time:** see `docs/test-evidence/e2e-full-run.txt` for the latest whole-suite run (shared build machine).
 - **Evidence:** the full axe JSON of every scan is attached to its Playwright test (`axe-<locale>-<screen>.json`) and
   written to `e2e/test-results/a11y/axe/`; the per-scan summary is `e2e/test-results/a11y/axe-summary.json`
   (both uploaded with the CI `e2e-report` artifact). The block at the end of this file is regenerated after every
@@ -64,6 +68,14 @@ rules. After the fixes: **0 violations of any impact** (see the generated block)
 caught by the spec itself: naming the scroll containers as `region` landmarks duplicated their section's name
 (`landmark-unique`, 5 nodes) — they are `group`s now.
 
+### P3 screens (added after merging 6be311a: perimeter, NewCo, Day-1 & TSA)
+
+52 new scans (26 states × en/ar). **No serious or critical violation.** One advisory best-practice rule:
+
+| Rule (axe id) | Impact | Kind | Found (nodes / scans) | Where | Fix |
+|---|---|---|---|---|---|
+| `empty-table-header` | minor | best practice | 22 / 16 | Perimeter register, reconciliation, sites, agreements, consents; NewCo entities and requirements (Demo-badge, action and "items" link columns) | Hidden header text: "Demo record", new key `common.table.actionsColumn` ("Actions" / "الإجراءات"), and the sites' "items" link column labelled with its link text. |
+
 ### Found outside axe (manual checks) and fixed
 
 - **Non-text contrast of form-control borders (WCAG 1.4.11).** Token `--hub-border-strong` (#9aa7b8, used for
@@ -86,14 +98,47 @@ caught by the spec itself: naming the scroll containers as `region` landmarks du
 | Evidence record picker: option focusable with visible focus, Enter chooses it | Pass (en, ar) |
 | "Link evidence" dialog opened with Enter: document chosen with Space (`aria-pressed=true`), Escape closes and returns focus | Pass (en, ar) |
 
+## Language of parts (WCAG 3.1.2) — implemented
+
+Rule (helper `langAttrs` / `useLocalizedText` / `localizedLang` in `apps/web/src/lib/i18n-data.ts`, components
+`LocalizedText` and `ServerMessageText` in `apps/web/src/components/LocalizedText.tsx`, `workstreamNameLang` in
+`lib/workstreams.ts`):
+
+- Arabic UI, bilingual field (`<field>` + `<field>Ar`) with `<field>Ar` null → the English `<field>` is shown and
+  marked `lang="en" dir="ltr"`. Exception: text written in Arabic script (a user can type Arabic into the primary field
+  of user-entered bilingual data) is left in the page language.
+- Arabic UI, server explanation (`<field>I18n`) without codes → the English sentence is shown, marked `lang="en"`.
+- English UI, text written only in Arabic script (e.g. the Arabic title shown as a secondary line) → `lang="ar" dir="rtl"`.
+- `<option>` labels get `lang` only (a `dir` would change their alignment inside the select).
+
+Applied to: gate names/purposes and criterion descriptions (gates list, gate detail, cockpit, portfolio next gate,
+dimension page), cockpit dimension explanations and phase names, task / milestone / deliverable titles (WBS table,
+detail pages, registers, dependencies, critical path, what-if, look-ahead, evidence picker, Gantt rows), workstream
+names (lists, detail, WBS group headers, health, delay tile, every workstream filter), template names in the wizard,
+readiness check titles (list + detail; the list now shows the Arabic title when there is one, per QA-P1-14), cutover
+plan check/blocker titles, and the meeting quorum explanation (which also no longer forces `dir="ltr"` on the translated
+"no quorum" text). Gate blockers, decision-tally and health explanations already marked their English fallbacks.
+
+Automated check (`REQ-ARC-008 language of parts` in the spec): in the Arabic UI a readiness check's Arabic title is
+shown without a language mark and the cutover plan's English-only check titles carry `lang="en" dir="ltr"`; in the
+English UI the check's Arabic title carries `lang="ar" dir="rtl"`. **Pass.**
+
+Not marked (limitations):
+- Text inside attribute values (tooltips `title=`, the document `<title>`, labels built into a translated sentence,
+  e.g. "Activate all in WS01 — …") cannot carry a separate language.
+- Free text that is not bilingual data (decision / risk / perimeter-item / agreement titles, notes): its language is
+  unknown to the API, so it only gets `dir="auto"`.
+- **Backend gap (reported, not worked around):** `CutoverCheckDto` and `GoBlockerDto` (readiness contracts) return
+  only `title`, not `titleAr`, although readiness checks have an Arabic title. On the cutover plan page the Arabic UI
+  therefore shows the English check titles (correctly marked `lang="en"`) instead of the Arabic ones.
+
 Not covered by automation (manual review still needed): full tab order of every screen, keyboard use of every
 command dialog, the user combobox with a screen reader, 400 % zoom / reflow, and Windows High Contrast mode.
 
 ## Open items (not fixed here)
 
-- **Language of parts (WCAG 3.1.2):** some server-provided strings are English only (e.g. template RACI functions,
-  dimension explanations — see `apps/web/README.md`). In the Arabic UI they are not marked `lang="en"`, because the
-  API does not say which language a string is in. Needs a language tag from the API or bilingual data.
+- **Language of parts:** see the limitations listed above (attribute text, non-bilingual free text, the readiness
+  DTO gap).
 - **axe "incomplete" items** (listed in the generated block) are cases axe cannot decide automatically. Reviewed:
   SVG axis labels and the "Today" marker of the Gantt use `--hub-text-muted` (7.56:1) and `--hub-warning` (7.29:1)
   on white; list items in scrolling containers and dialog text use the same token pairs as above. The WBS table uses

@@ -19,7 +19,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { btn, card, cx } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { canInOrg, useMe, useProjects } from '@/lib/queries';
-import { useLocalized } from '@/lib/i18n-data';
+import { LocalizedText } from '@/components/LocalizedText';
 
 const PAGE_SIZE = 12;
 
@@ -39,7 +39,6 @@ function Count({ value }: { value: number | null }) {
 
 function NextGate({ gate }: { gate: ProjectSummary['nextGate'] }) {
   const { t } = useI18n();
-  const loc = useLocalized();
   if (!gate) {
     return (
       <span title={t('portfolio.notVisible')}>
@@ -51,7 +50,7 @@ function NextGate({ gate }: { gate: ProjectSummary['nextGate'] }) {
   return (
     <span className="inline-flex flex-wrap items-center gap-1.5">
       <span className="font-medium" dir="auto">
-        <span dir="ltr">{gate.key}</span> — {loc(gate.name, gate.nameAr)}
+        <span dir="ltr">{gate.key}</span> — <LocalizedText text={gate.name} textAr={gate.nameAr} />
       </span>
       <StatusBadge enumName="gateAssessmentStatuses" value={gate.status} />
     </span>

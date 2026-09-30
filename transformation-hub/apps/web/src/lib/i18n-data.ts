@@ -29,6 +29,53 @@ export function useLocalized() {
   );
 }
 
+const ARABIC_SCRIPT = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
+const LATIN_LETTER = /[A-Za-z]/;
+
+/** Attributes that mark the language and direction of a piece of server text (WCAG 3.1.2 Language of Parts). */
+export interface LangAttrs {
+  lang?: 'en' | 'ar';
+  dir: 'ltr' | 'rtl' | 'auto';
+}
+
+/**
+ * Language of server text shown by {@link localized} or {@link useServerMessages}.
+ *  - Arabic UI showing a fallback — a bilingual field whose `<field>Ar` is null, or a `<field>I18n` without codes — shows
+ *    the English/primary text: `lang="en" dir="ltr"`. Exception: the primary text is itself in Arabic script (a user can
+ *    type Arabic into the primary field of user-entered bilingual data); it is then in the page language.
+ *  - English UI showing text written only in Arabic script (user-entered primary text): `lang="ar" dir="rtl"`.
+ *  - Otherwise the text is in the page language: `dir="auto"` only.
+ */
+export function langAttrs(locale: Locale, shown: string | null | undefined, isFallback: boolean): LangAttrs {
+  if (!shown) return { dir: 'auto' };
+  if (locale === 'ar' && isFallback && !ARABIC_SCRIPT.test(shown)) return { lang: 'en', dir: 'ltr' };
+  if (locale === 'en' && ARABIC_SCRIPT.test(shown) && !LATIN_LETTER.test(shown)) return { lang: 'ar', dir: 'rtl' };
+  return { dir: 'auto' };
+}
+
+/**
+ * `lang` of the text {@link localized} picks, for `<option>` labels and other places where only `lang` may be set (a
+ * `dir` on an option would change its alignment inside the select). `undefined` = page language.
+ */
+export function localizedLang(locale: Locale, text: string | null | undefined, textAr: string | null | undefined): 'en' | 'ar' | undefined {
+  return langAttrs(locale, localized(locale, text, textAr), !(locale === 'ar' && textAr)).lang;
+}
+
+/**
+ * Hook: `(text, textAr) => { text, lang }` — the text {@link localized} picks plus the attributes that mark its language
+ * (spread `lang` onto the element that renders only that text).
+ */
+export function useLocalizedText() {
+  const { locale } = useI18n();
+  return useCallback(
+    (text: string | null | undefined, textAr: string | null | undefined): { text: string | null; lang: LangAttrs } => {
+      const shown = localized(locale, text, textAr);
+      return { text: shown, lang: langAttrs(locale, shown, !(locale === 'ar' && textAr)) };
+    },
+    [locale],
+  );
+}
+
 /** Message parameters that carry an enum value: translated with the enum's status labels before interpolation. */
 const ENUM_PARAMS: Readonly<Record<string, Readonly<Record<string, StatusEnum>>>> = {
   'dimension.incorporation.status': { status: 'incorporationStatuses' },

@@ -23,6 +23,7 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { useRefreshPlanning, useTask, workstreamHref } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
+import { LocalizedText } from '@/components/LocalizedText';
 
 export default function TaskPage() {
   const { t, tStatus, formatNumber, formatDateTime, locale } = useI18n();
@@ -60,8 +61,8 @@ export default function TaskPage() {
             ) : null}
           </span>
         }
-        title={<span dir="auto">{title}</span>}
-        documentTitle={`${x.wbsCode} — ${x.title}`}
+        title={<LocalizedText text={x.title} textAr={x.titleAr} />}
+        documentTitle={`${x.wbsCode} — ${title}`}
         badges={
           <>
             <StatusBadge enumName="taskStatuses" value={x.status} size="md" />

@@ -22,7 +22,7 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { useProjectContext } from '@/lib/project-context';
 import { qk, useWorkstreams } from '@/lib/queries';
-import { workstreamName, type Workstream } from '@/lib/workstreams';
+import { workstreamName, workstreamNameLang, type Workstream } from '@/lib/workstreams';
 import { Tabs, useTabParam } from '@/components/planning/Tabs';
 import { WorkstreamProgress, WorkstreamTasks } from '@/components/planning/workstream';
 import { DeliverablesTab, MilestonesTab } from '@/components/planning/plan/RegisterTabs';
@@ -108,7 +108,7 @@ function WorkstreamScreen() {
       </Link>
       <PageHeader
         eyebrow={<span dir="ltr">{w.code}</span>}
-        title={<span dir="auto">{workstreamName(w, locale)}</span>}
+        title={<span {...workstreamNameLang(w, locale)}>{workstreamName(w, locale)}</span>}
         documentTitle={`${w.code} — ${workstreamName(w, locale)}`}
         description={
           locale === 'ar' ? (

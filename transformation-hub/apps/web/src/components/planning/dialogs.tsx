@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { useRefreshPlanning, type Task } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
 import { useWorkstreams } from '@/lib/queries';
-import { workstreamName } from '@/lib/workstreams';
+import { workstreamName, workstreamNameLang } from '@/lib/workstreams';
 import { ApiErrorNotice } from '../ApiErrorNotice';
 import { Dialog } from '../Dialog';
 import { SelectField, TextAreaField, TextField } from '../Field';
@@ -174,7 +174,7 @@ export function TaskFormDialog({ open, onClose, task, defaultWorkstreamId }: { o
         <SelectField label={t('planning.common.workstream')} required value={f.workstreamId} onChange={set('workstreamId')}>
           <option value="">{t('planning.common.choose')}</option>
           {ws.data?.items.map((w) => (
-            <option key={w.id} value={w.id}>
+            <option key={w.id} value={w.id} lang={workstreamNameLang(w, locale).lang}>
               {w.code} — {workstreamName(w, locale)}
             </option>
           ))}

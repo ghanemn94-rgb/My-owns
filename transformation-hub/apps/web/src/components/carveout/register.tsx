@@ -12,7 +12,7 @@ import { api } from '@/lib/api';
 import { changeRequestHref, ck, itemHref, useRefreshCarveout, type PerimeterItem } from '@/lib/carveout';
 import { useProjectContext } from '@/lib/project-context';
 import { useWorkstreams } from '@/lib/queries';
-import { workstreamName } from '@/lib/workstreams';
+import { workstreamName, workstreamNameLang } from '@/lib/workstreams';
 import { DataTable, type Column } from '../DataTable';
 import { DemoBadge } from '../DemoBadge';
 import { SelectField, TextAreaField, TextField } from '../Field';
@@ -76,7 +76,7 @@ export function PerimeterRegister({ initial = {} }: { initial?: { type?: string;
           <span className="text-xs text-muted">{EM_DASH}</span>
         ),
     },
-    { key: 'demo', header: '', cell: (r) => (r.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (r) => (r.isDemo ? <DemoBadge /> : null) },
   ];
 
   return (
@@ -110,7 +110,7 @@ export function PerimeterRegister({ initial = {} }: { initial?: { type?: string;
         <FilterSelect label={t('carveout.common.workstream')} value={wsId} onChange={setWsId} className="w-full sm:w-52">
           <option value="">{t('carveout.common.all')}</option>
           {ws.data?.items.map((w) => (
-            <option key={w.id} value={w.id}>
+            <option key={w.id} value={w.id} lang={workstreamNameLang(w, locale).lang}>
               {w.code} — {workstreamName(w, locale)}
             </option>
           ))}
@@ -234,7 +234,7 @@ function CreateItemDialog({ open, onClose }: { open: boolean; onClose: () => voi
         <SelectField label={t('carveout.common.workstream')} value={f.workstreamId} onChange={set('workstreamId')}>
           <option value="">{EM_DASH}</option>
           {ws.data?.items.map((w) => (
-            <option key={w.id} value={w.id}>
+            <option key={w.id} value={w.id} lang={workstreamNameLang(w, locale).lang}>
               {w.code} — {workstreamName(w, locale)}
             </option>
           ))}

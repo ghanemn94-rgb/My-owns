@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { EM_DASH, useI18n } from '@/i18n/provider';
+import { useLocalizedText, type LangAttrs } from '@/lib/i18n-data';
 import { ragTone } from '@/lib/planning';
 import { StatusBadge } from '../StatusBadge';
 import { card, cx, input } from '../ui';
@@ -108,15 +109,22 @@ export function DateText({ value, overdue = false }: { value: string | null | un
   );
 }
 
-export function CodeLink({ href, code, title, testId }: { href: string; code: string; title?: string; testId?: string }) {
+/**
+ * Record code + title link. Pass `titleAr` for bilingual data (`title` + `titleAr`): the title is then shown in the active
+ * locale and an English fallback in the Arabic UI is marked `lang="en"` (WCAG 3.1.2). Without `titleAr` the title is
+ * shown as entered, with `dir="auto"`.
+ */
+export function CodeLink({ href, code, title, titleAr, testId }: { href: string; code: string; title?: string | null; titleAr?: string | null; testId?: string }) {
+  const pick = useLocalizedText();
+  const shown = titleAr === undefined ? { text: title ?? null, lang: { dir: 'auto' } as LangAttrs } : pick(title, titleAr);
   return (
     <Link href={href} className="group inline-flex min-w-0 flex-col" data-testid={testId}>
       <span className="font-medium text-primary group-hover:underline" dir="ltr">
         {code}
       </span>
-      {title ? (
-        <span className="text-sm text-ink group-hover:text-primary" dir="auto">
-          {title}
+      {shown.text ? (
+        <span className="text-sm text-ink group-hover:text-primary" {...shown.lang}>
+          {shown.text}
         </span>
       ) : null}
     </Link>

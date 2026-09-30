@@ -20,6 +20,7 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { canInOrg, qk, useMe } from '@/lib/queries';
 import { useLocalized } from '@/lib/i18n-data';
+import { LocalizedText } from '@/components/LocalizedText';
 
 type Template = RouteResponse<typeof portfolioRoutes.listTemplates>['items'][number];
 type NewcoStatus = 'incorporated' | 'incorporation_in_progress' | 'unconfirmed';
@@ -234,9 +235,7 @@ export default function NewProjectPage() {
                       onChange={() => set('templateVersionId', tpl.id)}
                     />
                     <span className="min-w-0">
-                      <span className="block font-medium" dir="auto">
-                        {loc(tpl.name, tpl.nameAr)}
-                      </span>
+                      <LocalizedText className="block font-medium" text={tpl.name} textAr={tpl.nameAr} />
                       <span className="block text-xs text-muted">
                         {tStatus('templateKinds', tpl.kind)} · {t('portfolio.templateVersion', { version: tpl.versionNo })}
                       </span>
@@ -402,7 +401,13 @@ export default function NewProjectPage() {
           <div className="space-y-5">
             <dl className="space-y-2">
               <Summary label={t('portfolio.wizard.steps.template')}>
-                {template ? `${loc(template.name, template.nameAr)} · ${t('portfolio.templateVersion', { version: template.versionNo })}` : EM_DASH}
+                {template ? (
+                  <>
+                    <LocalizedText text={template.name} textAr={template.nameAr} /> · {t('portfolio.templateVersion', { version: template.versionNo })}
+                  </>
+                ) : (
+                  EM_DASH
+                )}
               </Summary>
               <Summary label={t('project.fields.code')}>
                 <span dir="ltr">{form.code || EM_DASH}</span>

@@ -81,7 +81,8 @@ export function ReconciliationPanel() {
             { key: 'conclusion', header: t('carveout.recon.conclusion'), cell: (c) => <span dir="auto">{c.conclusion ?? EM_DASH}</span> },
             {
               key: 'act',
-              header: '',
+              header: t('common.table.actionsColumn'),
+              headerHidden: true,
               cell: (c) =>
                 can('carveout.perimeter.manage') && c.items === 0 ? (
                   <button type="button" className={btn.ghost} onClick={() => setReview(c)} data-testid={`review-${c.category}`}>
@@ -280,7 +281,8 @@ export function PerimeterVersionsPanel() {
     { key: 'warn', header: t('carveout.versions.warnings'), cell: (v) => (v.warnings.length ? <span className="text-xs text-warning">{t('carveout.versions.warningCount', { count: v.warnings.length })}</span> : EM_DASH) },
     {
       key: 'act',
-      header: '',
+      header: t('common.table.actionsColumn'),
+      headerHidden: true,
       cell: (v) =>
         v.status === 'proposed' && can('carveout.perimeter.approve') && v.proposedBy !== me.user.id ? (
           <span className="flex flex-wrap gap-2">
@@ -417,11 +419,12 @@ export function SitesPanel() {
     { key: 'name', header: t('carveout.sites.name'), sortValue: (s) => s.name, cell: (s) => <span dir="auto">{s.name}</span> },
     { key: 'city', header: t('carveout.sites.city'), cell: (s) => <span dir="auto">{s.city ?? EM_DASH}</span> },
     { key: 'kind', header: t('carveout.sites.kind'), cell: (s) => (SITE_KINDS.includes(s.kind as SiteKind) ? siteKindLabel(t, s.kind as SiteKind) : s.kind) },
-    { key: 'items', header: '', cell: (s) => <Link className={btn.link} href={perimeterHref(projectId, `tab=register&siteId=${s.id}`)}>{t('carveout.sites.items')}</Link> },
-    { key: 'demo', header: '', cell: (s) => (s.isDemo ? <DemoBadge /> : null) },
+    { key: 'items', header: t('carveout.sites.items'), headerHidden: true, cell: (s) => <Link className={btn.link} href={perimeterHref(projectId, `tab=register&siteId=${s.id}`)}>{t('carveout.sites.items')}</Link> },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (s) => (s.isDemo ? <DemoBadge /> : null) },
     {
       key: 'edit',
-      header: '',
+      header: t('common.table.actionsColumn'),
+      headerHidden: true,
       cell: (s) =>
         can('carveout.perimeter.manage') ? (
           <button type="button" className={btn.ghost} onClick={() => setEdit(s)} aria-label={t('carveout.sites.editTitle', { code: s.code })}>

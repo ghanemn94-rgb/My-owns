@@ -27,6 +27,7 @@ import { api } from '@/lib/api';
 import { pk, taskHref, useRefreshPlanning, type Deliverable } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
 import { useLocalized } from '@/lib/i18n-data';
+import { LocalizedText } from '@/components/LocalizedText';
 
 function EditDeliverableDialog({ open, onClose, d }: { open: boolean; onClose: () => void; d: Deliverable }) {
   const { t } = useI18n();
@@ -85,7 +86,7 @@ export default function DeliverablePage() {
       <BackLink href={`/projects/${projectId}/plan?tab=deliverables`} label={t('planning.deliverable.back')} />
       <PageHeader
         eyebrow={<span dir="ltr">{d.code}</span>}
-        title={<span dir="auto">{loc(d.title, d.titleAr)}</span>}
+        title={<LocalizedText text={d.title} textAr={d.titleAr} />}
         documentTitle={`${d.code} — ${loc(d.title, d.titleAr)}`}
         badges={
           <>

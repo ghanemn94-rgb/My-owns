@@ -11,7 +11,7 @@ import { btn } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { useProjectContext } from '@/lib/project-context';
 import { useWorkstreams } from '@/lib/queries';
-import { accountableFunction, workstreamName, type Workstream } from '@/lib/workstreams';
+import { accountableFunction, workstreamName, workstreamNameLang, type Workstream } from '@/lib/workstreams';
 
 export default function WorkstreamsPage() {
   const { t, locale, formatNumber } = useI18n();
@@ -43,7 +43,7 @@ export default function WorkstreamsPage() {
       header: t('project.workstreams.name'),
       sortValue: (w) => workstreamName(w, locale),
       cell: (w) => (
-        <Link href={`/projects/${projectId}/workstreams/${w.id}`} className="text-ink hover:text-primary hover:underline" dir="auto">
+        <Link href={`/projects/${projectId}/workstreams/${w.id}`} className="text-ink hover:text-primary hover:underline" {...workstreamNameLang(w, locale)}>
           {workstreamName(w, locale)}
         </Link>
       ),

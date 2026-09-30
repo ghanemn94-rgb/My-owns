@@ -10,7 +10,7 @@ import { api } from '@/lib/api';
 import { changeRequestHref, pk, raidHref, useRefreshPlanning, type ChangeRequest, type RaidItem, type RaidKindPath } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
 import { useWorkstreams } from '@/lib/queries';
-import { workstreamName } from '@/lib/workstreams';
+import { workstreamName, workstreamNameLang } from '@/lib/workstreams';
 import { DataTable, type Column } from '../DataTable';
 import { DemoBadge } from '../DemoBadge';
 import { SelectField, TextAreaField, TextField } from '../Field';
@@ -140,7 +140,7 @@ export function RaidRegister({ kind, workstreamId: fixedWs }: { kind: RaidKindPa
           <FilterSelect label={t('planning.common.workstream')} value={wsId} onChange={setWsId} className="w-full sm:w-52">
             <option value="">{t('planning.common.allWorkstreams')}</option>
             {ws.data?.items.map((w) => (
-              <option key={w.id} value={w.id}>
+              <option key={w.id} value={w.id} lang={workstreamNameLang(w, locale).lang}>
                 {w.code} — {workstreamName(w, locale)}
               </option>
             ))}
@@ -256,7 +256,7 @@ export function RaidFormDialog({ open, onClose, kind, item, defaultWs }: { open:
         <SelectField label={t('planning.common.workstream')} value={f.workstreamId} onChange={set('workstreamId')}>
           <option value="">{t('planning.common.none')}</option>
           {ws.data?.items.map((w) => (
-            <option key={w.id} value={w.id}>
+            <option key={w.id} value={w.id} lang={workstreamNameLang(w, locale).lang}>
               {w.code} — {workstreamName(w, locale)}
             </option>
           ))}

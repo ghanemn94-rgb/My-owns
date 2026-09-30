@@ -21,8 +21,9 @@ import { useI18n, type StatusEnum } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { DIMENSION_GATES, gatesQk, useGates, useStatusDimensions } from '@/lib/gates';
 import { useProjectContext } from '@/lib/project-context';
-import { useLocalized, useServerMessages } from '@/lib/i18n-data';
+import { useServerMessages } from '@/lib/i18n-data';
 import { sectionAppliesTo, sectionByKey, sectionHref, type SectionKey } from '@/lib/sections';
+import { LocalizedText } from '@/components/LocalizedText';
 
 /** Register that drives each dimension (spec §3) — P3/P4 registers render their honest placeholder until delivered. */
 const REGISTER: Record<StatusDimensionKey, SectionKey> = {
@@ -37,7 +38,6 @@ const COUNT_ENUM: Partial<Record<StatusDimensionKey, StatusEnum>> = { perimeter_
 export default function DimensionPage() {
   const { dimensionKey } = useParams<{ dimensionKey: string }>();
   const { t, tStatus, formatDateTime, formatNumber } = useI18n();
-  const loc = useLocalized();
   const serverText = useServerMessages();
   const { projectId, project, can } = useProjectContext();
   const qc = useQueryClient();
@@ -135,7 +135,7 @@ export default function DimensionPage() {
                     {relatedGates.map((g) => (
                       <li key={g.id} className="flex flex-wrap items-center gap-2 text-sm">
                         <Link href={`/projects/${projectId}/gates/${g.id}`} className="font-medium text-primary hover:underline">
-                          <span dir="ltr">{g.key}</span> — <span dir="auto">{loc(g.name, g.nameAr)}</span>
+                          <span dir="ltr">{g.key}</span> — <LocalizedText text={g.name} textAr={g.nameAr} />
                         </Link>
                         <StatusBadge enumName="gateAssessmentStatuses" value={g.assessment.status} />
                       </li>

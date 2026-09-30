@@ -6,12 +6,15 @@ import { INTL_LOCALE } from '@/i18n/config';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { btn, card, cx } from '../ui';
 import { ScrollRegion } from '../ScrollRegion';
+import type { LangAttrs } from '@/lib/i18n-data';
 
 export interface GanttRow {
   id: string;
   type: 'task' | 'milestone';
   code: string;
   title: string;
+  /** Language of `title` (bilingual data: English fallback in the Arabic UI is marked `lang="en"`). */
+  titleLang?: LangAttrs;
   start: string | null;
   finish: string | null;
   baselineFinish: string | null;
@@ -96,7 +99,7 @@ export function Gantt({ rows, today, caption, testId }: { rows: GanttRow[]; toda
                 <span className="shrink-0 font-medium text-primary" dir="ltr">
                   {r.code}
                 </span>
-                <span className="truncate text-ink" dir="auto">
+                <span className="truncate text-ink" {...(r.titleLang ?? { dir: 'auto' })}>
                   {r.title}
                 </span>
               </Link>

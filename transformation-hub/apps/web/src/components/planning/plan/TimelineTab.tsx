@@ -6,14 +6,14 @@ import { useI18n } from '@/i18n/provider';
 import { localToday, nodeHref, useSchedule, type Schedule } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
 import { useWorkstreams } from '@/lib/queries';
-import { workstreamName } from '@/lib/workstreams';
+import { workstreamName, workstreamNameLang } from '@/lib/workstreams';
 import { ErrorState } from '../../ErrorState';
 import { LoadingState } from '../../LoadingState';
 import { StatusBadge } from '../../StatusBadge';
 import { card, cx } from '../../ui';
 import { FilterSelect, FilterToggle, ForecastLabel } from '../bits';
 import { Gantt, type GanttRow } from '../Gantt';
-import { localized, useLocalized } from '@/lib/i18n-data';
+import { langAttrs, localized, localizedLang, useLocalized } from '@/lib/i18n-data';
 
 const ISSUES = ['missing_duration', 'unsupported_dependency_type', 'cycle', 'unknown_node', 'negative_duration', 'invalid_date', 'missing_project_start'] as const;
 type IssueCode = (typeof ISSUES)[number];
@@ -110,6 +110,7 @@ export function TimelineTab() {
         type: n.type,
         code: n.code,
         title: localized(locale, n.title, n.titleAr),
+        titleLang: langAttrs(locale, localized(locale, n.title, n.titleAr), !(locale === 'ar' && n.titleAr)),
         // Complete schedule → early dates (schedule-based forecast); otherwise the planned dates only.
         start: complete ? n.earlyStart : n.type === 'milestone' ? n.plannedFinish : n.plannedStart,
         finish: complete ? n.earlyFinish : n.plannedFinish,
@@ -130,7 +131,7 @@ export function TimelineTab() {
         <FilterSelect label={t('planning.schedule.target')} value={target} onChange={setTarget} className="w-full sm:w-80" testId="timeline-target">
           <option value="">{t('planning.schedule.wholeProject')}</option>
           {targets.map((n) => (
-            <option key={n.id} value={n.id}>
+            <option key={n.id} value={n.id} lang={localizedLang(locale, n.title, n.titleAr)}>
               {n.code} — {localized(locale, n.title, n.titleAr)}
             </option>
           ))}
@@ -138,7 +139,7 @@ export function TimelineTab() {
         <FilterSelect label={t('planning.common.workstream')} value={wsFilter} onChange={setWsFilter} className="w-full sm:w-56">
           <option value="">{t('planning.common.allWorkstreams')}</option>
           {ws.data?.items.map((w) => (
-            <option key={w.id} value={w.code}>
+            <option key={w.id} value={w.code} lang={workstreamNameLang(w, locale).lang}>
               {w.code} — {workstreamName(w, locale)}
             </option>
           ))}

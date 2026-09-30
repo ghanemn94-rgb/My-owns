@@ -10,7 +10,7 @@ import { api } from '@/lib/api';
 import { taskHref, useAllTasks, useRefreshPlanning, type Task } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
 import { useWorkstreams } from '@/lib/queries';
-import { workstreamName, type Workstream as Ws } from '@/lib/workstreams';
+import { workstreamName, workstreamNameLang, type Workstream as Ws } from '@/lib/workstreams';
 import { ConfirmCommandDialog } from '../../ConfirmCommandDialog';
 import { EmptyState } from '../../EmptyState';
 import { ErrorState } from '../../ErrorState';
@@ -24,6 +24,7 @@ import { VerificationBadge } from '../../VerificationBadge';
 import { DateText, FilterSelect, FilterToggle } from '../bits';
 import { TaskFormDialog } from '../dialogs';
 import { ScrollRegion } from '../../ScrollRegion';
+import { LocalizedText } from '../../LocalizedText';
 
 function ActivateAllDialog({ open, onClose, ws, drafts }: { open: boolean; onClose: () => void; ws: Ws; drafts: number }) {
   const { t, locale } = useI18n();
@@ -99,7 +100,7 @@ export function WbsTab() {
         <FilterSelect label={t('planning.common.workstream')} value={workstreamId} onChange={setWorkstreamId} className="w-full sm:w-56" testId="wbs-filter-ws">
           <option value="">{t('planning.common.allWorkstreams')}</option>
           {ws.data?.items.map((w) => (
-            <option key={w.id} value={w.id}>
+            <option key={w.id} value={w.id} lang={workstreamNameLang(w, locale).lang}>
               {w.code} — {workstreamName(w, locale)}
             </option>
           ))}
@@ -156,7 +157,7 @@ export function WbsTab() {
                         <button type="button" aria-expanded={open} className="inline-flex items-center gap-1 font-semibold text-ink" onClick={() => setCollapsed((c) => ({ ...c, [wsId]: open }))}>
                           <ChevronDown aria-hidden="true" className={cx('size-4 transition-transform', !open && '-rotate-90 rtl:rotate-90')} />
                           <span dir="ltr">{w?.code ?? EM_DASH}</span>
-                          <span dir="auto">{w ? workstreamName(w, locale) : t('planning.wbs.noWorkstream')}</span>
+                          <span {...(w ? workstreamNameLang(w, locale) : { dir: 'auto' as const })}>{w ? workstreamName(w, locale) : t('planning.wbs.noWorkstream')}</span>
                         </button>
                         <span className="text-xs font-normal text-muted">{t('planning.wbs.groupCount', { count: items.length, drafts })}</span>
                         {w && canManage && drafts > 0 ? (
@@ -176,8 +177,8 @@ export function WbsTab() {
                             </Link>
                           </td>
                           <td className="min-w-56 px-3 py-2 align-top">
-                            <Link href={taskHref(projectId, x.id)} className="text-ink hover:text-primary hover:underline" dir="auto">
-                              {locale === 'ar' && x.titleAr ? x.titleAr : x.title}
+                            <Link href={taskHref(projectId, x.id)} className="text-ink hover:text-primary hover:underline">
+                              <LocalizedText text={x.title} textAr={x.titleAr} />
                             </Link>
                             <div className="mt-1 flex flex-wrap gap-1">
                               {x.status === 'draft' ? <VerificationBadge value={x.verificationStatus} /> : null}

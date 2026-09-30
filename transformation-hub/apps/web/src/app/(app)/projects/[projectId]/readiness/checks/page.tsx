@@ -19,6 +19,7 @@ import { api } from '@/lib/api';
 import { useProjectContext } from '@/lib/project-context';
 import { rdHref, useChecks, usePlans, useReadinessRefresh, type ReadinessCheck } from '@/lib/readiness';
 import { CriticalityBadges, FilterBar, FilterSelect, RdCommandDialog, useScopeLabels, useUrlState } from '../_components/rd';
+import { LocalizedText } from '@/components/LocalizedText';
 
 const PAGE_SIZE = 25;
 const FILTERS = ['q', 'area', 'status', 'blocker', 'siteId', 'workstreamId'] as const;
@@ -210,7 +211,7 @@ export default function ReadinessChecksPage() {
       sortValue: (c) => c.title,
       cell: (c) => (
         <span className="flex flex-col gap-0.5">
-          <span dir="auto">{c.title}</span>
+          <LocalizedText text={c.title} textAr={c.titleAr} />
           <span className="text-xs text-muted">{tStatus('readinessAreas', c.area)}</span>
         </span>
       ),

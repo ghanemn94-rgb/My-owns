@@ -9,6 +9,8 @@ import { PICKABLE_TARGET_TYPES, type PickableTargetType } from '@/lib/documents'
 import { useProjectContext } from '@/lib/project-context';
 import { SearchInput } from './SearchInput';
 import { cx, input, label as labelCls } from './ui';
+import { LocalizedText } from './LocalizedText';
+import { localizedLang } from '@/lib/i18n-data';
 
 export interface PickedTarget {
   type: PickableTargetType;
@@ -55,14 +57,14 @@ export function EvidenceTargetPicker({
       const query = { q: q || undefined, page: 1, pageSize: 20 };
       if (type === 'task') {
         const r = await api(planningRoutes.listTasks, { params: { projectId }, query, signal });
-        return r.items.map((x) => ({ id: x.id, code: x.wbsCode, title: loc(x.title, x.titleAr) }));
+        return r.items.map((x) => ({ id: x.id, code: x.wbsCode, title: x.title, titleAr: x.titleAr }));
       }
       if (type === 'milestone') {
         const r = await api(planningRoutes.listMilestones, { params: { projectId }, query, signal });
-        return r.items.map((x) => ({ id: x.id, code: x.code, title: loc(x.title, x.titleAr) }));
+        return r.items.map((x) => ({ id: x.id, code: x.code, title: x.title, titleAr: x.titleAr }));
       }
       const r = await api(planningRoutes.listDeliverables, { params: { projectId }, query, signal });
-      return r.items.map((x) => ({ id: x.id, code: x.code, title: loc(x.title, x.titleAr) }));
+      return r.items.map((x) => ({ id: x.id, code: x.code, title: x.title, titleAr: x.titleAr }));
     },
   });
   const gates = useQuery({
@@ -80,7 +82,7 @@ export function EvidenceTargetPicker({
 
   const options =
     type === 'gate_criterion'
-      ? (criteria.data?.criteria ?? []).map((c) => ({ id: c.id, code: c.key, title: loc(c.description, c.descriptionAr) }))
+      ? (criteria.data?.criteria ?? []).map((c) => ({ id: c.id, code: c.key, title: c.description, titleAr: c.descriptionAr }))
       : (records.data ?? []);
   const loading = type === 'gate_criterion' ? criteria.isLoading && !!gate : records.isLoading;
 
@@ -117,7 +119,7 @@ export function EvidenceTargetPicker({
           <select id={gateId} className={input} value={gate} onChange={(e) => setGate(e.target.value)}>
             <option value="">{t('documents.picker.chooseGate')}</option>
             {(gates.data?.items ?? []).map((g) => (
-              <option key={g.id} value={g.id}>
+              <option key={g.id} value={g.id} lang={localizedLang(locale, g.name, g.nameAr)}>
                 {g.key} — {loc(g.name, g.nameAr)}
               </option>
             ))}
@@ -138,13 +140,13 @@ export function EvidenceTargetPicker({
                 type="button"
                 aria-pressed={selected}
                 className={cx('flex w-full items-start gap-2 px-3 py-2 text-start text-sm hover:bg-surface-muted', selected && 'bg-primary-soft font-semibold text-primary')}
-                onClick={() => onChange({ type: type as PickableTargetType, id: o.id, label: `${o.code} — ${o.title}` })}
+                onClick={() => onChange({ type: type as PickableTargetType, id: o.id, label: `${o.code} — ${loc(o.title, o.titleAr)}` })}
                 data-testid="evidence-target-option"
               >
                 <span dir="ltr" className="shrink-0 text-muted">
                   {o.code}
                 </span>
-                <span dir="auto">{o.title}</span>
+                <LocalizedText text={o.title} textAr={o.titleAr} />
               </button>
             </li>
           );

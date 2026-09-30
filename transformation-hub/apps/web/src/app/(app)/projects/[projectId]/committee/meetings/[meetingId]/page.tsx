@@ -13,6 +13,7 @@ import { Dialog } from '@/components/Dialog';
 import { ErrorState } from '@/components/ErrorState';
 import { SelectField, TextAreaField } from '@/components/Field';
 import { LoadingState } from '@/components/LoadingState';
+import { LocalizedText } from '@/components/LocalizedText';
 import { PageHeader } from '@/components/PageHeader';
 import { RestrictedState } from '@/components/RestrictedState';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -104,8 +105,9 @@ function PackDialog({ meetingId, packId, onClose }: { meetingId: string; packId:
           </div>
           <div>
             <h3 className="font-semibold text-ink">{t('governance.meeting.packs.quorum')}</h3>
-            <p className="mt-1" dir="ltr">
-              {p.quorum?.explanation ?? t('governance.meeting.packs.noQuorum')}
+            <p className="mt-1">
+              {/* The server's quorum explanation is an English sentence (no message codes); the fallback is translated. */}
+              {p.quorum?.explanation ? <LocalizedText text={p.quorum.explanation} textAr={null} /> : t('governance.meeting.packs.noQuorum')}
             </p>
           </div>
         </div>

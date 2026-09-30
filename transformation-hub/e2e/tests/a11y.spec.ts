@@ -49,6 +49,13 @@ interface Ids {
   gate: string;
   document: string;
   source: string;
+  perimeterItem: string;
+  agreement: string;
+  entity: string;
+  requirement: string;
+  check: string;
+  cutoverPlan: string;
+  tsa: string;
 }
 
 interface Screen {
@@ -162,6 +169,47 @@ const SCREENS: readonly Screen[] = [
   { id: 'documents-sources', persona: 'pm', path: (i) => `/projects/${i.dc}/documents?tab=sources` },
   { id: 'document-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/documents/${i.document}`, ready: visible('[data-testid="versions-table"]') },
   { id: 'source-detail-claims', persona: 'pm', path: (i) => `/projects/${i.dc}/documents/sources/${i.source}` },
+  // Screen 7 — perimeter & transfers (P3): every tab, one detail page of each kind, an open dialog, 390 px register.
+  ...(['register', 'reconciliation', 'transfers', 'day1', 'versions', 'sites', 'agreements', 'consents'] as const).map(
+    (tab): Screen => ({ id: `perimeter-${tab}`, persona: 'pm', path: (i) => `/projects/${i.dc}/perimeter?tab=${tab}`, ready: visible(`[role="tab"][data-tab="${tab}"][aria-selected="true"]`) }),
+  ),
+  { id: 'perimeter-register-390', persona: 'pm', path: (i) => `/projects/${i.dc}/perimeter?tab=register`, ready: visible('[data-testid="perimeter-item-link"]'), viewport: MOBILE },
+  { id: 'perimeter-item-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/perimeter/items/${i.perimeterItem}` },
+  { id: 'perimeter-agreement-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/perimeter/agreements/${i.agreement}` },
+  {
+    id: 'perimeter-dialog-open',
+    persona: 'pm',
+    path: (i) => `/projects/${i.dc}/perimeter?tab=register`,
+    ready: visible('[data-testid="perimeter-item-link"]'),
+    prepare: async (page) => {
+      await page.getByTestId('perimeter-create').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+    },
+  },
+  // Screen 8 — NewCo & regulatory (P3).
+  ...(['entities', 'requirements'] as const).map(
+    (tab): Screen => ({ id: `newco-${tab}`, persona: 'pm', path: (i) => `/projects/${i.dc}/newco?tab=${tab}`, ready: visible(`[role="tab"][data-tab="${tab}"][aria-selected="true"]`) }),
+  ),
+  { id: 'newco-entity-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/newco/entities/${i.entity}` },
+  { id: 'newco-requirement-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/newco/requirements/${i.requirement}` },
+  // Screen 9 — Day-1 readiness, cutover and TSA (P3).
+  ...(['', '/checks', '/cutover', '/tsa', '/waivers'] as const).map(
+    (segment): Screen => ({ id: `readiness${segment ? `-${segment.slice(1)}` : ''}`, persona: 'pm', path: (i) => `/projects/${i.dc}/readiness${segment}` }),
+  ),
+  { id: 'readiness-check-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness/checks/${i.check}` },
+  { id: 'cutover-plan-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness/cutover/${i.cutoverPlan}` },
+  { id: 'tsa-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness/tsa/${i.tsa}` },
+  { id: 'tsa-detail-390', persona: 'pm', path: (i) => `/projects/${i.dc}/readiness/tsa/${i.tsa}`, viewport: MOBILE },
+  {
+    id: 'readiness-dialog-open',
+    persona: 'pm',
+    path: (i) => `/projects/${i.dc}/readiness/checks`,
+    ready: visible('[data-testid="create-check"]'),
+    prepare: async (page) => {
+      await page.getByTestId('create-check').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+    },
+  },
   // Administration.
   { id: 'admin', persona: 'portfolioAdmin', path: () => '/admin' },
   // An open modal dialog (native <dialog>): the RAID "new risk" form.
@@ -200,6 +248,8 @@ interface ScanRecord {
   incomplete: Record<string, number>;
 }
 const expectedScans = SCREENS.length * LOCALES.length;
+/** Local iteration only: A11Y_ONLY=perimeter,newco scans just the screen ids with those prefixes (no report rewrite). */
+const ONLY = process.env.A11Y_ONLY?.split(',').map((x) => x.trim()).filter(Boolean);
 const REPO = join(__dirname, '..', '..');
 const REPORT = join(REPO, 'docs', 'test-evidence', 'a11y-report.md');
 // Inside Playwright's outputDir, which it empties at the start of every run. One file per scan: Playwright starts a
@@ -259,6 +309,13 @@ async function lookupIds(baseURL: string): Promise<Ids> {
       gate: await findId(api, `${p}/gates`, 'key', 'G1'),
       document: await findId(api, `${p}/documents?pageSize=100`, 'title', 'Demo — charter excerpt'),
       source: await findId(api, `${p}/sources?pageSize=100`, 'code', 'SRC-001'),
+      perimeterItem: await findId(api, `${p}/perimeter-items?pageSize=100`, 'code', 'PI-001'),
+      agreement: await findId(api, `${p}/agreements?pageSize=100`, 'code', 'AGR-002'),
+      entity: await findId(api, `${p}/legal-entities`, 'name', 'Demo NewCo (fictional entity)'),
+      requirement: await findId(api, `${p}/regulatory-requirements?pageSize=100`, 'code', 'REG-001'),
+      check: await findId(api, `${p}/readiness-checks?pageSize=100`, 'code', 'backup_recovery-dr_plan_approved'),
+      cutoverPlan: await findId(api, `${p}/cutover-plans?pageSize=100`, 'code', 'CO-001'),
+      tsa: await findId(api, `${p}/tsa-services?pageSize=100`, 'code', 'TSA-001'),
     };
   } finally {
     await api.dispose();
@@ -344,7 +401,7 @@ test.describe('REQ-ARC-008 accessibility (axe-core, WCAG 2.1 A/AA)', () => {
   });
 
   for (const locale of LOCALES) {
-    for (const screen of SCREENS) {
+    for (const screen of SCREENS.filter((x) => !ONLY || ONLY.some((prefix) => x.id.startsWith(prefix)))) {
       test(`[${locale}] ${screen.id}`, async ({ browser, baseURL }, testInfo) => {
         const ctx = await openContext(browser, baseURL!, screen.persona, locale, screen.viewport);
         try {
@@ -509,6 +566,57 @@ test.describe('REQ-ARC-008 keyboard operability', () => {
       }
     });
   }
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+// WCAG 3.1.2 Language of Parts: server text in the other language is marked (not covered by axe).
+
+test.describe('REQ-ARC-008 language of parts (WCAG 3.1.2)', () => {
+  test.beforeAll(async ({ browser, baseURL }) => {
+    if (!ids) ids = await lookupIds(baseURL!);
+    if (!sessions.pm) {
+      const ctx = await browser.newContext();
+      const page = await ctx.newPage();
+      await loginAs(page, PERSONAS.pm);
+      sessions.pm = await ctx.storageState();
+      await ctx.close();
+    }
+  });
+
+  test('Arabic UI: English fallbacks carry lang="en"; Arabic data is shown unmarked. English UI: Arabic text carries lang="ar"', async ({ browser, baseURL }) => {
+    const ar = await openContext(browser, baseURL!, 'pm', 'ar');
+    try {
+      const page = await ar.newPage();
+      // Readiness checks have `titleAr` (template data): the Arabic title is shown, in the page language (no lang mark).
+      await page.goto(`/projects/${ids.dc}/readiness/checks`);
+      await settle(page, 'ar');
+      const arabicTitle = page.getByTestId('checks-table').getByText('اعتماد خطة التعافي من الكوارث', { exact: true });
+      await expect(arabicTitle).toBeVisible();
+      expect(await arabicTitle.getAttribute('lang')).toBeNull();
+      // The cutover plan's check list carries only the primary (English) title: marked lang="en" dir="ltr".
+      await page.goto(`/projects/${ids.dc}/readiness/cutover/${ids.cutoverPlan}`);
+      await settle(page, 'ar');
+      const english = page.getByTestId('plan-checks').locator('[lang="en"]').first();
+      await expect(english).toBeVisible();
+      await expect(english).toHaveAttribute('dir', 'ltr');
+      expect(await english.innerText()).toMatch(/[A-Za-z]/);
+    } finally {
+      await ar.close();
+    }
+
+    const en = await openContext(browser, baseURL!, 'pm', 'en');
+    try {
+      const page = await en.newPage();
+      // A check's Arabic title shown as the secondary line in the English UI is marked lang="ar" dir="rtl".
+      await page.goto(`/projects/${ids.dc}/readiness/checks/${ids.check}`);
+      await settle(page, 'en');
+      const arabic = page.locator('main header [lang="ar"]');
+      await expect(arabic).toHaveText('اعتماد خطة التعافي من الكوارث');
+      await expect(arabic).toHaveAttribute('dir', 'rtl');
+    } finally {
+      await en.close();
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------------------------------------------------

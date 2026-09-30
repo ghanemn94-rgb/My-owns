@@ -14,19 +14,18 @@ import { card, cx } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { useProjectContext } from '@/lib/project-context';
 import { useGates, useGateWaivers, type GateSummary, type GateWaiver } from '@/lib/gates';
-import { useLocalized } from '@/lib/i18n-data';
 import { BlockerList, CriteriaCounts, GateStatusBadges, PrerequisiteList } from './_components/GateBits';
+import { LocalizedText } from '@/components/LocalizedText';
 
 function GateCard({ gate, projectId }: { gate: GateSummary; projectId: string }) {
   const { t } = useI18n();
-  const loc = useLocalized();
   const href = `/projects/${projectId}/gates/${gate.id}`;
   return (
     <li className={cx(card, 'flex flex-col gap-3 p-4')} data-testid="gate-card" data-gate-key={gate.key}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h2 className="min-w-0 text-base font-semibold">
           <Link href={href} className="hover:underline">
-            <span dir="ltr">{gate.key}</span> — <span dir="auto">{loc(gate.name, gate.nameAr)}</span>
+            <span dir="ltr">{gate.key}</span> — <LocalizedText text={gate.name} textAr={gate.nameAr} />
           </Link>
         </h2>
         <GateStatusBadges gate={gate} />

@@ -14,14 +14,13 @@ import { card, cx } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { useProjectContext } from '@/lib/project-context';
 import { nextGate, useGates } from '@/lib/gates';
-import { useLocalized } from '@/lib/i18n-data';
 import { BlockerList, GateStatusBadges } from './gates/_components/GateBits';
 import { sectionAppliesTo, sectionByKey, sectionHref, type SectionKey } from '@/lib/sections';
+import { LocalizedText } from '@/components/LocalizedText';
 
 /** The "next gate" tile from the live gate evaluation (status, RAG, blockers) when the caller can read gates. */
 function NextGateTile() {
   const { t } = useI18n();
-  const loc = useLocalized();
   const { project, projectId, can } = useProjectContext();
   const canGates = can('gates.gate.read');
   const gates = useGates(projectId, canGates);
@@ -31,7 +30,7 @@ function NextGateTile() {
       <div className="mt-3 space-y-2" data-testid="next-gate" data-gate-key={live.key}>
         <p className="text-base font-semibold" dir="auto">
           <Link href={`/projects/${projectId}/gates/${live.id}`} className="hover:underline">
-            <span dir="ltr">{live.key}</span> — {loc(live.name, live.nameAr)}
+            <span dir="ltr">{live.key}</span> — <LocalizedText text={live.name} textAr={live.nameAr} />
           </Link>
         </p>
         <GateStatusBadges gate={live} />
@@ -48,7 +47,7 @@ function NextGateTile() {
     return (
       <div className="mt-3 space-y-2" data-testid="next-gate">
         <p className="text-base font-semibold" dir="auto">
-          <span dir="ltr">{project.nextGate.key}</span> — {loc(project.nextGate.name, project.nextGate.nameAr)}
+          <span dir="ltr">{project.nextGate.key}</span> — <LocalizedText text={project.nextGate.name} textAr={project.nextGate.nameAr} />
         </p>
         <StatusBadge enumName="gateAssessmentStatuses" value={project.nextGate.status} size="md" />
         <p className="text-xs text-muted">{t('project.cockpit.gateHint')}</p>
@@ -64,7 +63,6 @@ function NextGateTile() {
 
 export default function ProjectOverviewPage() {
   const { t, tStatus } = useI18n();
-  const loc = useLocalized();
   const { project, projectId, can } = useProjectContext();
   const isCockpit = project.templateKind === 'dc_carveout';
 
@@ -143,7 +141,7 @@ export default function ProjectOverviewPage() {
                       </span>
                       <span className="min-w-0">
                         <span className="block text-sm font-medium" dir="auto">
-                          {loc(ph.name, ph.nameAr)}
+                          <LocalizedText text={ph.name} textAr={ph.nameAr} />
                         </span>
                         <span className="block text-xs text-muted">
                           {t('project.phases.gates')}: <span dir="ltr">{ph.gateKeys.join(', ') || EM_DASH}</span>

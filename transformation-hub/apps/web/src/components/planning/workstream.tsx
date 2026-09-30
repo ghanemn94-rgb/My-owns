@@ -46,7 +46,7 @@ export function WorkstreamTasks({ ws }: { ws: Workstream }) {
   const canManage = can('planning.task.manage');
 
   const columns: Column<Task>[] = [
-    { key: 'code', header: t('planning.common.code'), isRowHeader: true, cell: (x) => <CodeLink href={taskHref(projectId, x.id)} code={x.wbsCode} title={locale === 'ar' && x.titleAr ? x.titleAr : x.title} testId={`task-link-${x.wbsCode}`} /> },
+    { key: 'code', header: t('planning.common.code'), isRowHeader: true, cell: (x) => <CodeLink href={taskHref(projectId, x.id)} code={x.wbsCode} title={x.title} titleAr={x.titleAr} testId={`task-link-${x.wbsCode}`} /> },
     { key: 'status', header: t('planning.common.status'), cell: (x) => <StatusBadge enumName="taskStatuses" value={x.status} /> },
     { key: 'owner', header: t('planning.common.accountable'), cell: (x) => (x.accountableName ? <span dir="auto">{x.accountableName}</span> : <span className="text-muted">{t('planning.common.unassigned')}</span>) },
     { key: 'finish', header: t('planning.task.plannedFinish'), cell: (x) => <DateText value={x.plannedFinish} overdue={x.overdue} /> },

@@ -25,6 +25,7 @@ import { useProjectContext } from '@/lib/project-context';
 import { rdHref, rk, useReadinessRefresh, type CutoverPlanDetail } from '@/lib/readiness';
 import { ButtonRow, Callout, CmdButton, DecisionIssue, DecisionSelect, Facts, Panel, Person, RdCommandDialog, Tick, UText, useScopeLabels } from '../../_components/rd';
 import { PlanFields, planBody, planFormOf, type PlanForm } from '../../_components/plan-form';
+import { LocalizedText } from '@/components/LocalizedText';
 
 type Cmd = 'edit' | 'rehearsal' | 'comms' | 'link' | 'submit' | 'back' | 'decide' | 'execute' | 'rollback' | 'accept' | null;
 const EDITABLE = ['planning', 'rehearsal'];
@@ -230,8 +231,8 @@ function GoEvaluation({ p }: { p: CutoverPlanDetail }) {
                   <StatusBadge enumName="readinessStatuses" value={b.status} />
                 </span>
                 <span className="min-w-0">
-                  <Link className={cx(btn.link, 'break-words')} href={`${rdHref(projectId)}/checks/${b.id}`} dir="auto">
-                    {b.title}
+                  <Link className={cx(btn.link, 'break-words')} href={`${rdHref(projectId)}/checks/${b.id}`}>
+                    <LocalizedText text={b.title} textAr={null} />
                   </Link>
                   <span className="block text-xs text-muted">{b.blocker ? t('readiness.plan.go.blockerLabel') : t('readiness.plan.go.mandatoryLabel')}</span>
                 </span>
@@ -286,7 +287,7 @@ function DecisionHistory({ p }: { p: CutoverPlanDetail }) {
                       <ul className="list-disc ps-4">
                         {h.evaluation.blockers.map((b, i) => (
                           <li key={i}>
-                            <span dir="auto">{b.title}</span> ({tStatus('readinessStatuses', b.status)})
+                            <LocalizedText text={b.title} textAr={null} /> ({tStatus('readinessStatuses', b.status)})
                           </li>
                         ))}
                       </ul>
@@ -419,7 +420,7 @@ export default function CutoverPlanPage() {
                 header: t('readiness.checks.columns.title'),
                 cell: (c) => (
                   <span className="flex flex-col">
-                    <span dir="auto">{c.title}</span>
+                    <LocalizedText text={c.title} textAr={null} />
                     <span className="text-xs text-muted">{tStatus('readinessAreas', c.area)}</span>
                   </span>
                 ),

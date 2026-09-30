@@ -27,6 +27,7 @@ import { api } from '@/lib/api';
 import { pk, useRefreshPlanning, type Milestone } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
 import { useLocalized } from '@/lib/i18n-data';
+import { LocalizedText } from '@/components/LocalizedText';
 
 function EditMilestoneDialog({ open, onClose, m }: { open: boolean; onClose: () => void; m: Milestone }) {
   const { t } = useI18n();
@@ -87,7 +88,7 @@ export default function MilestonePage() {
       <BackLink href={`/projects/${projectId}/plan?tab=milestones`} label={t('planning.milestone.back')} />
       <PageHeader
         eyebrow={<span dir="ltr">{m.code}</span>}
-        title={<span dir="auto">{loc(m.title, m.titleAr)}</span>}
+        title={<LocalizedText text={m.title} textAr={m.titleAr} />}
         documentTitle={`${m.code} — ${loc(m.title, m.titleAr)}`}
         badges={
           <>

@@ -19,7 +19,8 @@ import { useToast } from '../../Toast';
 import { btn, cx } from '../../ui';
 import { DateText, ProgressBar, RagBadge, Section } from '../bits';
 import { FormDialog } from '../dialogs';
-import { useLocalized } from '@/lib/i18n-data';
+import { useLocalizedText } from '@/lib/i18n-data';
+import { LocalizedText } from '../../LocalizedText';
 
 type Weighted = Progress['project']['progress'];
 
@@ -67,7 +68,6 @@ export function RagTriple({ rag }: { rag: WorkstreamHealth['rag'] }) {
 
 export function HealthTab() {
   const { t, formatNumber } = useI18n();
-  const loc = useLocalized();
   const { projectId, project } = useProjectContext();
   const prog = useProgress(projectId);
   if (prog.isLoading) return <LoadingState />;
@@ -75,7 +75,7 @@ export function HealthTab() {
   const d = prog.data!;
 
   const columns: Column<WorkstreamHealth>[] = [
-    { key: 'ws', header: t('planning.common.workstream'), isRowHeader: true, sortValue: (w) => w.code, cell: (w) => <Link href={workstreamHref(projectId, w.id, 'progress')} className={btn.link}><span dir="ltr">{w.code}</span> <span dir="auto" className="text-ink">{loc(w.name, w.nameAr)}</span></Link> },
+    { key: 'ws', header: t('planning.common.workstream'), isRowHeader: true, sortValue: (w) => w.code, cell: (w) => <Link href={workstreamHref(projectId, w.id, 'progress')} className={btn.link}><span dir="ltr">{w.code}</span> <LocalizedText className="text-ink" text={w.name} textAr={w.nameAr} /></Link> },
     { key: 'progress', header: t('planning.health.progress'), sortValue: (w) => w.progress.percent ?? -1, cell: (w) => <div className="w-36"><ProgressBar percent={w.progress.percent} label={`${w.code} ${t('planning.health.progress')}`} /><span className="text-xs text-muted">{t('planning.health.basisShort', { num: formatNumber(w.progress.numeratorWeight), den: formatNumber(w.progress.denominatorWeight) })}</span></div> },
     { key: 'rag', header: t('planning.health.calculated'), sortValue: (w) => w.rag.calculated.status, cell: (w) => <RagTriple rag={w.rag} /> },
     { key: 'reported', header: t('planning.health.reported'), cell: (w) => (w.rag.reported ? <RagBadge value={w.rag.reported} /> : <span className="text-muted">—</span>) },
@@ -224,7 +224,7 @@ function OverridesSection({ progress }: { progress: Progress }) {
 
 function RequestOverrideDialog({ open, onClose, progress }: { open: boolean; onClose: () => void; progress: Progress }) {
   const { t } = useI18n();
-  const loc = useLocalized();
+  const pick = useLocalizedText();
   const { projectId, project } = useProjectContext();
   const refresh = useRefreshPlanning(projectId);
   const toast = useToast();
@@ -254,8 +254,8 @@ function RequestOverrideDialog({ open, onClose, progress }: { open: boolean; onC
         <option value="">{t('planning.common.choose')}</option>
         <option value={projectId}>{t('planning.override.projectItem', { code: project.code })}</option>
         {progress.workstreams.map((w) => (
-          <option key={w.id} value={w.id}>
-            {w.code} — {loc(w.name, w.nameAr)}
+          <option key={w.id} value={w.id} {...pick(w.name, w.nameAr).lang}>
+            {w.code} — {pick(w.name, w.nameAr).text}
           </option>
         ))}
       </SelectField>

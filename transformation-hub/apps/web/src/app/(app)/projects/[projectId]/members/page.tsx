@@ -19,7 +19,7 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { useProjectContext } from '@/lib/project-context';
 import { qk, useWorkstreams } from '@/lib/queries';
-import { workstreamName } from '@/lib/workstreams';
+import { workstreamName, workstreamNameLang } from '@/lib/workstreams';
 
 type Membership = RouteResponse<typeof portfolioRoutes.listMembers>['items'][number];
 
@@ -102,7 +102,7 @@ function GrantDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
           >
             <option value="">{t('members.grant.wholeProject')}</option>
             {(workstreams.data?.items ?? []).map((w) => (
-              <option key={w.id} value={w.id}>
+              <option key={w.id} value={w.id} lang={workstreamNameLang(w, locale).lang}>
                 {w.code} — {workstreamName(w, locale)}
               </option>
             ))}

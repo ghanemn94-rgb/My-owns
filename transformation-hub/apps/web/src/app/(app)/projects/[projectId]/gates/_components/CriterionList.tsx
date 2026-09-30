@@ -17,8 +17,8 @@ import { api } from '@/lib/api';
 import { useCriterionEvidence, useDocumentOptions, useInvalidateGates, gatesQk, isDesignatedReviewer, type GateCriterion, type GateDetail, type GateWaiver } from '@/lib/gates';
 import { useProjectContext } from '@/lib/project-context';
 import { projectAccess } from '@/lib/queries';
-import { useLocalized } from '@/lib/i18n-data';
 import { useQueryClient } from '@tanstack/react-query';
+import { LocalizedText } from '@/components/LocalizedText';
 
 type Dlg =
   | { kind: 'evidence' }
@@ -85,7 +85,6 @@ function EvidenceList({ projectId, criterionId }: { projectId: string; criterion
 
 function CriterionRow({ gate, c, onAction, expanded, onToggle }: { gate: GateDetail; c: GateCriterion; onAction: (d: Dlg) => void; expanded: boolean; onToggle: () => void }) {
   const { t, tStatus, formatNumber, formatDateTime } = useI18n();
-  const loc = useLocalized();
   const { projectId, can, me } = useProjectContext();
   const s = c.assessment.status;
   const na = c.assessment.notApplicable;
@@ -139,7 +138,7 @@ function CriterionRow({ gate, c, onAction, expanded, onToggle }: { gate: GateDet
             )}
           </div>
           <p className={cx('mt-1 text-sm text-ink', !expanded && 'line-clamp-2')} dir="auto">
-            {loc(c.description, c.descriptionAr)}
+            <LocalizedText text={c.description} textAr={c.descriptionAr} />
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">

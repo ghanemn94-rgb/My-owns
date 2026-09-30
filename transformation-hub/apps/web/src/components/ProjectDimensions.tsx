@@ -7,6 +7,7 @@ import { useI18n } from '@/i18n/provider';
 import { useServerMessages } from '@/lib/i18n-data';
 import { StatusBadge } from './StatusBadge';
 import { card, cx } from './ui';
+import { ServerMessageText } from './LocalizedText';
 
 type Dimension = ProjectSummary['dimensions'][number];
 
@@ -58,7 +59,7 @@ export function DimensionCards({
             {explanation ? (
               <p className="text-xs text-muted" dir="auto">
                 <span className="sr-only">{t('project.cockpit.explanation')}: </span>
-                {explanation}
+                <ServerMessageText messages={d.explanationI18n} fallback={d.explanation} />
               </p>
             ) : null}
             {href ? (
