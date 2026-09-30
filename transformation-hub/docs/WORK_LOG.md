@@ -5,7 +5,7 @@
 ## Current state — 2026-09-30
 
 - **Branch:** `claude/mobily-transformation-hub` (repository `My-owns`, project directory `transformation-hub/`).
-- **Checkpoint revision:** `1b30f48`.
+- **Checkpoint revision:** `e75f7fd`.
 
 ### Phases
 
@@ -18,10 +18,17 @@
   - All domain-review findings are fixed and merged, including DOM-P2-16 (gate owner and reviewer roles, gate-level review step).
   - The web follow-ups are merged.
   - DOM-P2-14 (Low) is open. DOM-P2-08 and DOM-P2-11 are re-phased to P6.
-  - The gate reviews are running: domain re-review, QA review and security review.
+  - Security review (`docs/reviews/P2-security-review.md`): PASS WITH CONDITIONS.
+    - SEC-P2-01/02 (Medium) and SEC-P2-03/06/09 are fixed at `e75f7fd`.
+    - §2.2 option B and SEC-P2-04/05/07/08 are being fixed.
+  - Domain re-review (`docs/reviews/P2-domain-rereview.md`, on the reviewer's branch): FAIL.
+    - New High findings DOM-P2R-03/04, plus DOM-P2R-05 (P3). Medium DOM-P2R-01.
+    - GOV-015 and UX-005 block the gate.
+    - Fixes are being built.
+  - QA review running.
 - **P3:** backends and web screens merged; reviews not run.
 - **P4:** finance and JV/DD backends and web screens merged; reviews not run.
-- **P5:** AI backend merged (mock provider only); the web screens are being built.
+- **P5:** AI backend and AI PM web screens merged (`e75f7fd`; mock provider labelled Simulated, endpoints Not configured); reviews not run. Possible defect reported by the UI agent: `ai-proposals.service.ts approve()` audits the invalidation before throwing, so the rollback may lose it — for the P5 review.
 - **P6–P8:** not started.
 
 ### Verified
@@ -56,11 +63,11 @@
 
 ## In progress (parallel agents, worktree branches)
 
-- P2 domain re-review → `docs/reviews/P2-domain-rereview.md`.
+- Fixes for DOM-P2R-01/02/03/04/05/07, GOV-015 (conflict declarations before voting) and DOM-P2-14 (full stack).
+- UX-005: executive cockpit tiles (top decisions, committee asks).
+- Access-matrix §2.2 option B and SEC-P2-04/05/07/08.
+
 - P2 QA review, which also re-verifies the P1 QA closures → `docs/reviews/P2-qa-review.md`.
-- P2 security review, which also re-verifies the P1 security closures and decides on access-matrix §2.2 →
-  `docs/reviews/P2-security-review.md`.
-- P5 AI Project Manager web screens.
 
 ## Known failures, risks and open questions
 
