@@ -1129,6 +1129,16 @@ test("D-039/D-040 / F-DG0-164/166/246/249: checkClosure binds the fix to the ver
   expectError(validateGate(repo, "DG0"), /CLOSED_VERIFIED needs a full fix_revision commit id/);
 });
 
+test("D-042 / F-DG0-169: a closure verified in a round whose source_commit is absent is rejected (anchor 1 is unconditional)", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  assert.deepEqual(validateGate(repo, "DG0"), [], "the baseline gate must pass");
+  // Forge the verifying round's frozen candidate absent. findManifest content-preservingly tolerates the manifest, but a
+  // closure cannot anchor to a frozen candidate that is not present, so anchor 1 rejects it rather than being skipped.
+  edit(repo, "docs/delivery/stages.json", (d) => { d.stages[0].review_rounds[1].source_commit = "a".repeat(40); });
+  expectError(validateGate(repo, "DG0"), /whose frozen candidate source_commit .* is not present/);
+});
+
 test("D-039 / F-DG0-164: checkInvocation requires a present head_commit_at_start that contains the manifest -- no absent-round escape", () => {
   const { repo, records } = buildValidRepo();
   approveAndCommit(repo);

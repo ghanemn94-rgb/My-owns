@@ -7329,7 +7329,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-24/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T13:32:51Z",
@@ -7340,10 +7340,63 @@
           "at": "2026-09-30T13:43:43Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 523f0db00f0c08252b495161e79dc467b855d151"
+        },
+        {
+          "at": "2026-09-30T13:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 25: PASS"
         }
       ],
       "fix_revision": "523f0db00f0c08252b495161e79dc467b855d151",
-      "fix_summary": "D-041: checkClosure requires the fix to be an ancestor of all three anchors (frozen round source_commit, verifying run head, gate candidate); the D-040 replacement of the round anchor is restored as an addition."
+      "fix_summary": "D-041: checkClosure requires the fix to be an ancestor of all three anchors (frozen round source_commit, verifying run head, gate candidate); the D-040 replacement of the round anchor is restored as an addition.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R25-code-security-reviewer-20260930T134851Z-0325bb77",
+          "session_id": "0325bb77-f26b-4752-9766-47feab7425df"
+        },
+        "at": "2026-09-30T13:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-25/sec25-repro.tests.mjs.txt",
+          "docs/delivery/test-evidence/DG0/code-security/round-25/run-sec25-repro.sh",
+          "docs/delivery/test-evidence/DG0/code-security/round-25/sec25-repro.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-25/closure-census.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-25/real-repo-gate-dryrun.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-25/node-tests.log"
+        ],
+        "note": "Verified against the round-25 candidate b77a1c63… (source 2386a0f). Fix 523f0db is an ancestor of 2386a0f. checkClosure (rules.mjs:739-748) now enforces three anchors, each independently and none replacing another: (1) :742-743, the fix must be an ancestor of the verifying round's source_commit when that commit resolves; (2) :744-746, the fix must be an ancestor of the verifying run's head_commit_at_start (checkInvocation still hard-errors on a malformed, absent or manifest-less head, :388-405); (3) :747-748, the fix must be an ancestor of the gate candidate. I reran my round-24 case (SEC24-6 and SEC25-1, on --no-local clones of both commits): a GENUINE round-2 with a candidate-scope fix committed after the freeze and before the verifier ran. At the round-24 baseline 6db3b83 it gave 0 errors (the original bug). At 2386a0f it is rejected by anchor 1 with 'fix … is not in the verified round-2 candidate'. My round-23 forge (SEC24-1 and SEC25-2: superseded round with an absent source_commit, a genuine verifier run, and the fix committed after the run started) is still rejected by anchor 2, 'not in the verifying run's starting history'. Nothing regressed: the control cases SEC24-2 and SEC25-4 give 0 errors; absent or typo'd fixes are still rejected (SEC24-3, F-DG0-164/246); malformed verifier heads are still rejected (SEC24-4, F-DG0-164/166/249); the immutable-field lock holds (SEC24-5, F-DG0-165). On the complete history (--no-local clone), all 114 real CLOSED_VERIFIED closures pass all three anchors, none skips anchor 1, and the synthetic-gate dry run reports 0 closure or anchor errors. Unit tests 'F-DG0-110 / F-DG0-204' (asserts that all three anchors fire) and 'D-039/D-040 / F-DG0-164/166/246/249' pass (101/101). The commitPresent() header (:597-605) now describes the three-anchor model. The genuine-round scenario of F-DG0-168 is closed. A residual remains when a round's self-declared source_commit is absent, where anchor 1 is skipped. It needs forged write-once metadata, and the new comment overstates the guarantee. I raise it separately as F-DG0-169 (Low); it does not reopen this finding."
+      }
+    },
+    {
+      "id": "F-DG0-169",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-041's anchor 1 is conditional on the round's self-declared source_commit resolving. A superseded round whose manifest names an ABSENT source_commit therefore still lets a candidate-scope fix committed after that round's freeze, but before its verifier's run started, close a finding (0 errors). The new rules.mjs comment ('always rejected, whatever the round metadata says'; 'no single forgeable metadata value decides a closure') and D-041 overstate the guarantee",
+      "reproduction": "tools/gates/lib/rules.mjs:742 (at 2386a0f) runs anchor 1 only `if (commitPresent(repo, round.source_commit) && ...)`. When the verifying round's source_commit does not resolve, findManifest tolerates it (:910-926, D-035), so anchor 1 is skipped entirely. Anchor 2 (:744-746) only requires the fix to be an ancestor of the verifying run's head_commit_at_start, and checkInvocation (:388-405) only requires that head to CONTAIN the round manifest, not to have the round candidate's content. SEC25-3 in docs/delivery/test-evidence/DG0/code-security/round-25/sec25-repro.tests.mjs.txt (run by run-sec25-repro.sh on --no-local clones; log sec25-repro.log) combines my round-23 forge with my round-24 case. It uses the stock fixture: (1) round 2 is re-frozen as a superseded round whose write-once manifest names source_commit deadbeef×5 (absent; entries self-consistent); (2) a content change to src/app.txt is committed AFTER that freeze commit; (3) the round-2 runs start from that commit, and the code-security run verifies F-DG0-101 (High, mandatory) CLOSED_VERIFIED with fix_revision = that commit; (4) round 3 is the gate round on a candidate containing it. Probe output at 2386a0f: 'fix committed after the round-2 freeze commit: true; verifier head content == round-2 candidate: false; anchors fired: {a1:false,a2:false,a3:false}; SEC25-3 errors: 0'. The same happens at 6db3b83.",
+      "expected": "The code and D-041 should either make the guarantee they claim, or state the limit accurately. Any one of these fixes the scenario: (a) in checkClosure, when the verifying round's source_commit does NOT resolve, reject a CLOSED_VERIFIED closure verified in that round. The real-repo census (closure-census.log) shows that 0 of the 114 real closures skip anchor 1, and round 18, the only round with an absent source_commit, has no verifying run, so this breaks no genuine record. Or (b) in checkInvocation, when binding.manifestPath is given, require candidateId(manifestFromRef(head, manifest.spec)) to equal the round candidate_id, i.e. only metadata-only commits between the freeze and the run start. The census shows all 64 computable real review-run heads comply, and the 2 non-computable ones are round 18's, neither of them a verifying or gate run. Or (c) at minimum, correct the comments at rules.mjs:603-605 and :737-738 and the D-041 text so they say that a round whose source_commit is absent falls back to the run-head anchor only.",
+      "actual": "In that combination the validator reports 0 errors, while the comment at rules.mjs:737-738 says a committed-after-the-freeze fix is 'always rejected, whatever the round metadata says'. The impact is limited to mis-attribution. The verifier's own checkout did contain the fix (anchor 2), and the fix must be in the gate candidate (anchor 3), which all three reviewers and the auditor review. Exploiting it needs a hand-forged write-once round manifest naming a non-existent commit. That can only be done by the orchestrator, a party the threat model's disclosed residual 1 already covers. It also needs a verifier who did not stop at the candidate-ID mismatch at the start of its run. No real closure depends on it (census: anchor 1 is skipped for 0 of 114 closures). Recorded at Low under threat-model.md: this restates residual 1 plus inaccurate documentation, not a larger residual.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-25/sec25-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-25/run-sec25-repro.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-25/sec25-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-25/closure-census.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-25/closure-census.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-25/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T13:57:00Z",
+          "status": "OPEN",
+          "note": "Raised in round 25 (code-security-reviewer)."
+        }
+      ]
     }
   ]
 }

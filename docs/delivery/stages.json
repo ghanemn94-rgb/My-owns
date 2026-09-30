@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -577,6 +577,11 @@
           "state": "REVIEWING",
           "at": "2026-09-30T14:15:00Z",
           "note": "Round-24 findings repaired (D-041): checkClosure now requires a CLOSED_VERIFIED fix to be an ancestor of all three anchors -- the frozen round source_commit (when present), the verifying run head, and the gate candidate -- restoring the frozen-round anchor D-040 had replaced (F-DG0-168). Comments corrected to the three-anchor model. Real-repo dry-run: 0 in every history bucket, no anchor failure. Prefreeze all PASS; candidate re-frozen for review round 25."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-09-30T14:35:00Z",
+          "note": "Round 25: domain PASS (0), qa PASS (0), code-security PASS (1 Low: F-DG0-169). Verified F-DG0-168 CLOSED_VERIFIED. F-DG0-169: D-041 anchor 1 was conditional on the round source_commit resolving, so a closure verified in an absent-source round skipped it. Repair (D-042): anchor 1 is unconditional -- a closure verified in a round whose source_commit is not present is rejected. Census: 0/114 real closures affected. Gate suite 63 pass."
         }
       ]
     },
