@@ -401,3 +401,19 @@ are checked by `apply_status.py --check`.
 - `docs/DELIVERY_STATUS.md`: the "Web client … Tested" row should note that the cockpit's P2 tiles (top decisions, committee
   asks), the Kanban view and several screen-level ATs are not built (F-05, F-06, F-07, §4).
 - Tag hygiene in test titles (F-12) when the owning agents next touch those files.
+
+## Updates after this disposition (lead)
+
+- **REQ-LCY-010 → Tested.**
+  - DOM-P2-16 is fixed: the gate's owner role (or the PM) starts and submits, and the designated reviewer endorses or
+    returns the assessment before submission. The endorsement is bound to the criterion state; the reviewer can neither
+    submit nor decide.
+  - Evidence: `apps/api/test/gates/dom-p2-16-gate-roles.spec.ts` (11 tests) and e2e `p2-gates.spec.ts` (d).
+  - The register was re-rendered from `status-evidence.yaml`.
+- **F-13 is fixed** by the P2 web follow-ups (`costImpact` field in change-request assessment). `p3-carveout.spec.ts`
+  (a) AT-07 passes. Full Playwright suite on the merged tree: 261/261 (local stack configured as in CI).
+- **P4 web screens are merged**:
+  - finance: `e2e/tests/p4-finance.spec.ts`;
+  - JV & Diligence: `e2e/tests/p4-jv.spec.ts`.
+  REQ-UX-013 / REQ-UX-014 still need their status-evidence entries; they will be added at the P4 disposition update.
+

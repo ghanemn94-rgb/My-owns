@@ -124,6 +124,7 @@
 | `finding_status` | open, remediation_planned, remediated, accepted_risk, closed |
 | `funds_flow_status` | planned, confirmed_by_finance, reported_settled, cancelled |
 | `gate_assessment_status` | not_started, in_assessment, ready_for_decision, approved, approved_with_exceptions, rejected, reopened, superseded |
+| `gate_review_outcome` | endorse, return |
 | `go_no_go` | pending, go, no_go |
 | `import_row_action` | create, update, skip, conflict, error |
 | `import_status` | uploaded, mapped, validated, approved, applied, rolled_back, rejected, failed |
@@ -1788,6 +1789,13 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
 | `decision_id` | uuid | yes |  |
 | `submitted_by` | uuid | yes |  |
 | `submitted_at` | timestamp with time zone | yes |  |
+| `started_by` | uuid | yes |  |
+| `started_at` | timestamp with time zone | yes |  |
+| `reviewed_by` | uuid | yes |  |
+| `reviewed_at` | timestamp with time zone | yes |  |
+| `review_outcome` | enum gate_review_outcome | yes |  |
+| `review_note` | text | yes |  |
+| `review_basis` | character varying | yes |  |
 | `reopened_reason` | text | yes |  |
 | `supersedes_assessment_id` | uuid | yes |  |
 | `is_current` | boolean | no | `true` |
@@ -1805,6 +1813,8 @@ Foreign keys:
 - `hub_opfk_gate_assessment`: (org_id,project_id) → `project`(org_id,id)
 - `hub_ufk_gate_assessment_created_by`: (org_id,created_by) → `app_user`(org_id,id)
 - `hub_ufk_gate_assessment_decided_by`: (org_id,decided_by) → `app_user`(org_id,id)
+- `hub_ufk_gate_assessment_reviewed_by`: (org_id,reviewed_by) → `app_user`(org_id,id)
+- `hub_ufk_gate_assessment_started_by`: (org_id,started_by) → `app_user`(org_id,id)
 - `hub_ufk_gate_assessment_submitted_by`: (org_id,submitted_by) → `app_user`(org_id,id)
 
 ### `criterion_assessment`
