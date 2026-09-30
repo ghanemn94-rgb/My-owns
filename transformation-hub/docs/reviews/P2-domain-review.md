@@ -458,3 +458,149 @@ baselines and change requests. The committee-outcome integrity rules (abstention
 **Next action for the implementer:** fix DOM-P2-01, -02 (after the governance owner confirms the abstention rule),
 -03, -05 and -06. Re-run `apps/api/test/reviews/p2-domain.spec.ts`: the corresponding probes must pass without being
 weakened. Then request a re-review.
+
+## Fix status (implementation, 2026-09-30) — governance / authority findings
+
+Appended by the implementing `backend-data-engineer` (not the reviewer); the reviewer's text above is unchanged. Scope of
+this section: **DOM-P2-02, -03, -06, -12, -13, -20** only. DOM-P2-01, -04, -05, -07, -09, -10, -15, -16, -19 and -21 are
+fixed by a separate implementation branch; DOM-P2-08, -11, -14, -17 and -18 are not addressed here.
+Branch `worktree-agent-a479a6526cb335355` (from `claude/mobily-transformation-hub` @ `4f05318` + the review branch @
+`640dc99`, merged with `claude/mobily-transformation-hub` @ `7751b98` — the P1 security fixes, whose policy conditions
+now fail closed, I-R3). Commits: `d1e362b` (WIP), `c625c27` (merge of `7751b98`, migration regenerated), `9d4bb32` (WIP), `8f0142a`, and the commit that adds this section.
+
+The probes of these findings keep their assertions and were renamed from `DEFECT DOM-P2-nn …` to `DOM-P2-nn …`
+(`apps/api/test/reviews/p2-domain.spec.ts`: DOM-P2-02 (domain), DOM-P2-02 (API), DOM-P2-03a, DOM-P2-03b, DOM-P2-06).
+New regression tests: `apps/api/test/governance/p2-governance-authority.spec.ts` (18 tests) and
+`packages/domain/src/governance.authority.test.ts` (20 tests).
+
+Verification (own databases `hub_test_govfix` / `hub_test_govfix_boot`, at commit `8f0142a`, i.e. the code of this
+branch; this section is documentation only):
+
+```
+$ pnpm build:packages                                   # OK
+$ (cd packages/domain && npx vitest run)      → Test Files 15 passed (15), Tests 268 passed (268)
+$ (cd packages/contracts && npx vitest run)   → Test Files 2 passed (2),   Tests 69 passed (69)
+$ TEST_DATABASE_URL=…/hub_test_govfix TEST_DATABASE_MIGRATION_URL=…/hub_test_govfix pnpm --filter @hub/api test
+   Test Files  1 failed | 60 passed (61)
+        Tests  7 failed | 550 passed (557)      Duration 337.80s
+   → the 7 failures are the probes owned by the other implementation branch, each failing at its defect assertion:
+     DEFECT DOM-P2-01a, -01b, -04, -05, -07, -09, -10 (the five probes of this section pass).
+$ pnpm lint                                              # exit 0 (packages, api, web incl. i18n + hard-coded string checks, e2e)
+$ python3 scripts/requirements/apply_status.py --check   # status-evidence.yaml OK (102 entries)
+```
+Count check: 527 tests at `7751b98` (P1 security fixes) + 12 review probes + 18 new API tests = 557.
+
+### DOM-P2-02 (High) — Fixed (documented rule implemented; confirmation pending)
+- `tallyVotes` (`packages/domain/src/governance.ts`) implements `authority-matrix.md` §3 steps 5–6 as written: eligible
+  votes = approve + reject + abstain votes of eligible members; simple majority = approve × 2 > eligible votes;
+  two-thirds = approve × 3 ≥ eligible votes × 2; tie = approve equal to reject + abstain; abstentions only → no outcome
+  (`insufficient_votes`, unchanged). The explanation states the counts and "abstentions count as not approving"; the tally
+  snapshot carries `eligibleVotes`.
+- Recorded in `docs/assumptions-and-open-questions.md` as A-40 / Q-40 (awaits confirmation by Mobily's governance owner;
+  alternatives: abstentions not counted, or denominator = eligible members present, possibly as a matrix parameter).
+- Tests: probes DOM-P2-02 (domain, API); `DOM-P2-02 — …` unit tests (simple majority, two-thirds, tie, abstentions only);
+  API: 3 approve + 2 abstain → approved, 2 approve + 1 reject + 2 abstain → rejected, tie with an abstention → escalated.
+
+### DOM-P2-03 (High) — Fixed
+- Baseline approval and change-request approval evaluate the project's **approved, in-force authority matrix** (the most
+  recently approved matrix of an active `program_steering` committee; the labelled DEMO policy only in a demo project that
+  has no approved matrix) — `ChangeControlService.governingMatrix`, pure rule `evaluateDelegatedApproval`:
+  decision type `baseline_approval` (amount = approved budget total of the snapshot) / `change_request_budget` (amount = the
+  new structured `costImpact` money of the change request: `cost_impact_amount/currency/unit_scale`, check constraint).
+- The result is passed **explicitly** as `withinAuthority` to `policy.assert` (the hard-coded `true` of the security merge
+  is replaced for both approvals). Order: role → state/`expectedVersion` → separation of duties (403, before any amount) →
+  delegated authority (422, audited by the problem filter) → policy assertion with the evaluated value.
+- Refusal codes: `change_control.no_usable_matrix` (non-demo project without an approved, verified matrix),
+  `change_control.outside_delegated_authority` (reserved / unknown type, above the limit, other currency — `details`
+  carry `decisionTypeKey`, `escalateTo`, matrix source/version), `change_control.amount_unquantified` (cost stated in
+  text only; recorded as `costImpact` through create / edit / assess).
+- Out-of-authority changes are routed to the committee through the existing decision flow and approved on it: the approve
+  commands accept `decisionId`; the decision must be final (approved within the mandate, or externally approved and
+  recorded), of the matching type, cover the amount in the same currency, belong to the project (404 otherwise) and back
+  one approval only (`change_control.decision_not_final | decision_type_mismatch | decision_amount_missing |
+  decision_amount_currency | decision_amount_insufficient | decision_already_used`). `baseline_version.decision_id` (new)
+  and `change_request.decision_id` store it; the audit event carries `after.authority` (basis, type, matrix source and
+  version, decision) and the outbox events carry `decisionId`.
+- Rejections stay role-level (`withinAuthority: true`, commented): the matrix limits approvals, not the decision to keep
+  the approved plan (A-45).
+- Docs: `authority-matrix.md` §1.3 and new §3.1, §4.4 scenarios; `decision-workflow.md` invariant A; assumptions A-43,
+  A-44, A-45, Q-43.
+- Tests: probes DOM-P2-03a (422 `no_usable_matrix`) and DOM-P2-03b (422 `amount_unquantified`); API: within limit →
+  approved with audited basis; 1,500,000 SAR → 422 with the escalation body; USD → 422; requester → 403 first;
+  recommendation → `decision_not_final`; after the external approval (verified evidence) → approved on the decision; reuse,
+  type mismatch, insufficient amount, foreign decision (404); non-demo project: refused without matrix and while the matrix
+  approval awaits verification, approved (basis `delegated_authority`, matrix version audited) once verified.
+- Existing tests updated because they encoded the old behaviour shown wrong by this finding: `planning/at-16-baseline-concurrency.spec.ts`
+  and `planning/measurement.spec.ts` approved baselines in NON-demo projects without any matrix → they now set up an
+  approved, verified non-demo matrix (`gov-fixtures.ts` `approvedNonDemoMatrix`); at-16's change request now records its
+  cost impact as money (`costImpact` 0 next to the text "None (test)"). `carveout/carveout-kit.ts`
+  `approveChangeRequest` records a synthetic `costImpact` 0 before approving (perimeter change requests state their budget
+  effect in text). Demo seed: `carveout.seed.ts` records a synthetic zero `costImpact` (labelled "synthetic assessment, not
+  a Finance assessment") before the demo approvals.
+
+### DOM-P2-06 (High) — Fixed
+- `GovernanceSupport.insertRecusal` (both entry points: `POST …/decisions/:id/recusals` and a `recused` meeting
+  declaration) refuses a recusal for a member who already voted in the current round — own or on behalf —
+  (`422 governance.recusal.after_vote`, audited); the conflict is handled by a new round (defer → resume). On behalf of a
+  member it requires a reason (`governance.recusal.reason_required`); the member must hold a seat on the committee; the
+  decision must be open. The recorder is stored, audited (`after.recordedBy`, `onBehalf`, `round`), returned in the
+  decision detail (`recusals[].recordedBy/onBehalf`) and in the tally snapshot (`recusals`).
+- Tally integrity (`assertTallyIntegrity`): cast votes are never dropped any more — a current-round vote of a recused
+  member or of the requester refuses the outcome (`422 governance.outcome.vote_integrity`); `disregardedVotes` is always 0.
+- Docs: `authority-matrix.md` §3 step 10, `committee-charter-draft.md` §14.5–14.6, `decision-workflow.md` (R, round
+  integrity); A-48.
+- Tests: probe DOM-P2-06 (recusals → 422, outcome rejected as cast); API: secretary on behalf / member own / meeting
+  declaration after the vote → 422, audited, no row; defer → resume → recusal before voting → counted correctly with the
+  recorder in the snapshot; on-behalf declaration without reason → 422; owner-inserted recusal of a voter → outcome 422.
+
+### DOM-P2-12 (Low) — Fixed
+- Matrix approval: a non-demo matrix needs `approvalDocumentId` (document of the documents module, visible to the approver,
+  not disposed, with a version — bound as `approval_document_version_id`); without it `422
+  governance.authority_matrix.evidence_required`. The approval is **pending verification** (version stays `draft`, previous
+  version stays in force). New command `POST …/authority-matrix-versions/:id/verify-approval` (`documents.evidence.verify`):
+  the verifier is not the drafter, the approver or the uploader of the bound version (403), must be able to read the
+  document; accept → `approved` (supersedes the previous version), reject → reason required, approval cleared. The DEMO
+  policy (demo projects only) takes effect on approval as before (synthetic, nothing to evidence).
+- External authority decisions: `record-external-approval` requires `evidenceLinkId` — an active evidence link on the
+  decision itself (documents module), verified by a second person (`reviewedBy`), and the recorder is not that verifier
+  (403). Codes: `governance.external.evidence_required | evidence_other_target | evidence_not_active | evidence_unverified`.
+  `decision.external_evidence_link_id` stores it.
+- Docs: `authority-matrix.md` §1.2, `decision-workflow.md` row 9; A-47, Q-44.
+- Tests: API (non-demo matrix: no document → 422; pending → not in force; approver / drafter → 403; reject without and with
+  reason; accept → in force) and external approval (no / unverified / other-target evidence → 422, verifier as recorder →
+  403, verified → recorded with the link). Existing tests updated because they recorded external approvals or approved a
+  non-demo matrix on a free-text reference only: `governance/at-04-decision-outside-delegation.spec.ts` (last test),
+  `gates/at-04-gate-blocked-by-recommendation.spec.ts`, `gates/gate-test-kit.ts` (`gateDecision` with `externalApproval`),
+  `governance/governance-integrity.spec.ts` (non-demo matrix test). Demo seed: the G0 external approval rests on a note
+  evidence link (PM) verified by Legal.
+
+### DOM-P2-13 (Low) — Fixed (code aligned; docs clarified)
+- Quorum: the `minFractionPresent` fraction is now taken over the **appointed** voting members (voting seats held by a
+  named person on the date), as `authority-matrix.md` §3 step 4 says, instead of over the members left after recusals;
+  `QuorumResult.appointedVoting`; the explanation names the basis. The docs were internally inconsistent on this point:
+  assumption A-06 ("excluded from the quorum denominator") contradicted §3 step 4 — A-06 was corrected and cited.
+- Casting vote: the documents did not define the mechanism; they now state one rule (`authority-matrix.md` §3 step 6,
+  `committee-charter-draft.md` §12): the side the chair voted for prevails, no second vote, only if the chair cast an
+  eligible approve/reject vote (A-41 / Q-41). Vacant seats are not counted (A-42 / Q-42).
+- Tests: unit (8 appointed / 3 recused → 4 required; vacant seats; casting vote cases); API: 8-seat committee with 3
+  recusals — 3 eligible present refused with the appointed-members explanation, a 4th eligible member present → vote accepted.
+
+### DOM-P2-20 (Low) — Fixed
+- `recordAttendance` refuses any change while a decision tabled at the meeting has votes in its current round and no
+  outcome (`422 governance.attendance.frozen_voting_open`, lists the decisions); correct by recording the outcome or
+  restarting the round. Defense in depth: in a meeting, an outcome whose round contains a vote of a member no longer
+  recorded present is refused (`governance.outcome.vote_integrity`).
+- Docs: `authority-matrix.md` §3 step 10, `committee-charter-draft.md` §16, `decision-workflow.md`; A-46.
+- Tests: API (after the first vote → 422 audited and attendance unchanged; after the outcome → allowed; owner-pool absent
+  voter → outcome 422).
+
+### Needed outside this branch (reported, not changed here)
+- **Web** (`apps/web`, not in this branch's scope): the decision page's external-approval dialog must send `evidenceLinkId`
+  (pick a verified evidence link of the decision) — without it the command now returns 422; the authority-matrix approval
+  needs an approval-document picker and a "verify approval" action; the change-request assess dialog needs a money field
+  for `costImpact`; the approve dialogs of baselines / change requests an optional decision picker; show `pendingVerification`,
+  recusal `recordedBy/onBehalf`, `costImpact`, `decisionId`.
+- **Policy matrix / access-matrix.md** (lead-owned, unchanged): the matrix-approval verification uses
+  `documents.evidence.verify`; a dedicated permission (e.g. `governance.authority_matrix.verify_approval` for Legal /
+  Corporate Secretary) is suggested (Q-44).
+- `apps/web` / e2e not run here: **NOT EXECUTED** (Playwright).
