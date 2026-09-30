@@ -1,0 +1,41 @@
+# code-security-reviewer DG0 round 27 -- candidate and scope (2026-09-30T14:28:38Z)
+$ git rev-parse HEAD
+a4c6f82a1724df12c3ea8d1fa12099d070fd242c
+$ git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:9420948b55a5131e5c0e61385071b6615b1d001bac9f7023c2e512e1e5ac8128","files":91}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG0 --ref 49b5ad790443409ec2248097727cd61fd34f42f4
+{"stage":"DG0","source":"49b5ad790443409ec2248097727cd61fd34f42f4","candidate_id":"sha256:9420948b55a5131e5c0e61385071b6615b1d001bac9f7023c2e512e1e5ac8128","files":91}
+exit=0
+$ python3 manifest check
+sha256:9420948b55a5131e5c0e61385071b6615b1d001bac9f7023c2e512e1e5ac8128 49b5ad790443409ec2248097727cd61fd34f42f4 2026-09-30T14:25:06Z 91
+stage REVIEWING {'candidate_id': 'sha256:9420948b55a5131e5c0e61385071b6615b1d001bac9f7023c2e512e1e5ac8128', 'source_commit': '49b5ad790443409ec2248097727cd61fd34f42f4', 'frozen_at': '2026-09-30T14:25:06Z', 'manifest_path': 'docs/delivery/candidates/DG0/9420948b55a5131e.manifest.json'}
+last round 27 sha256:9420948b55a5131e5c0e61385071b6615b1d001bac9f7023c2e512e1e5ac8128 49b5ad790443409ec2248097727cd61fd34f42f4 2026-09-30T14:25:06Z
+$ git diff --stat 49b5ad7..HEAD   (post-freeze commit: must be metadata only)
+ docs/delivery/assignments/DG0/round-27/audit.md    |  33 ++
+ .../DG0/round-27/review-code-security-reviewer.md  |  21 +
+ .../assignments/DG0/round-27/review-common.md      |  42 ++
+ .../DG0/round-27/review-domain-reviewer.md         |  24 ++
+ .../assignments/DG0/round-27/review-qa-verifier.md |  21 +
+ .../candidates/DG0/9420948b55a5131e.manifest.json  | 473 +++++++++++++++++++++
+ docs/delivery/stages.json                          |  27 +-
+ 7 files changed, 636 insertions(+), 5 deletions(-)
+$ git diff --name-only 49b5ad7..HEAD | candidate-relevant?
+candidate paths changed after freeze: []
+$ git diff --name-only 7edacdc..49b5ad7 filtered to candidate paths
+candidate paths changed in the D-043 delta: ["docs/delivery/decisions.md","tools/gates/lib/rules.mjs"]
+$ git diff 7edacdc..49b5ad7 -- docs/delivery/decisions.md
+diff --git a/docs/delivery/decisions.md b/docs/delivery/decisions.md
+index 567a8a7..12a91c6 100644
+--- a/docs/delivery/decisions.md
++++ b/docs/delivery/decisions.md
+@@ -36,6 +36,7 @@ Engineering and business assumptions for the delivery. Each entry records who de
+ | D-030 | 2026-09-29 | delivery-orchestrator (option chosen by the user) | **The whole agent process runs in a kernel-enforced process sandbox, so file-tool writes are confined to the role's scope whatever the write guard decided** (F-DG0-145, High). The guard checks a path and the CLI writes it afterwards; the agent's shell could swap a symlink in between. The user chose option 1 (2026-09-29): `run-agent.sh` now starts `claude` inside bubblewrap, built per run by the new `tools/agents/agent_sandbox.py`. The guard hook and the Claude Code Bash sandbox (D-025) remain as defence in depth.<br>�
+ • **Inner Bash sandbox:** for confined roles, `agent_settings.py` omits missing deny paths below the top level. Their parent is read-only in the process sandbox, and bubblewrap could not create their placeholders there.<br>• **Evidence and validation:** `runs/<DGx>/<run-id>/sandbox.json` is hashed into `meta.process_sandbox_sha256`. The validator requires that the gate's review and audit records come from runs that were confined (read-only root, the host procfs bound (`procfs: host-bind`), no PID/IPC namespace of the sandbox's own, private sessions, only `CAP_SETFCAP`, no_new_privs), whos
+ | D-031 | 2026-09-29 | delivery-orchestrator | **Round-16 repairs to the process sandbox: the copy-back is bound to the staging seed (concurrency), and the IPC namespace is unshared** (F-DG0-148 and the round-16 copy-back exit-73 false positive).<br>• **Copy-back concurrency (must-fix).** `agent_sandbox.py` `finish()` used to compare the staging copy against the **live** real directory. When reviewers run concurrently (a supported mode, §0.2 / D-028), a record another review commits to the real tree between this run's `prepare` and `finish` appeared as "removed" and the run exited 73 witho
++| D-043 | 2026-09-30 | delivery-orchestrator | **Round-26 repairs (domain + qa PASS with no findings; code-security PASS): remove the duplicated closure-model comment so it cannot drift (F-DG0-170, Low).** Round 26 verified F-DG0-169 CLOSED_VERIFIED; the only finding was one Low observation.<br>• **F-DG0-170 (code-security): two comments described the closure guarantee, and one was stale.** D-042 updated the `checkClosure` block comment to "anchor 1 unconditional" but left the `commitPresent()` header comment saying anchor 1 held only "when it resolves", so the two contradicted each other. 
+ | D-042 | 2026-09-30 | delivery-orchestrator | **Round-25 repairs (domain + qa PASS with no findings; code-security PASS): make the frozen-round closure anchor unconditional (F-DG0-169, Low).** Round 25 verified F-DG0-168 CLOSED_VERIFIED; the only finding was one Low observation.<br>• **F-DG0-169 (code-security): anchor 1 was conditional, so the comment overstated the guarantee.** D-041's anchor 1 ran only `if (commitPresent(round.source_commit))`; when a superseded round's `source_commit` did not resolve (the `findManifest`/D-035 tolerance), anchor 1 was **skipped**, leaving only anchor 2 
+ | D-041 | 2026-09-30 | delivery-orchestrator | **Round-24 repairs (domain + qa PASS with no findings; code-security PASS): restore the frozen-round-candidate closure anchor D-040 dropped (F-DG0-168, Low).** Round 24 verified F-DG0-014/166/167/249 CLOSED_VERIFIED; the only finding was one Low observation.<br>• **F-DG0-168 (code-security): a closure must be bound to the FROZEN round candidate as well as the run head.** D-040 *replaced* the `isAncestor(fix, round.source_commit)` check with `isAncestor(fix, verifying-run head)` instead of adding to it. `head_commit_at_start` only has to *contai
+ | D-040 | 2026-09-30 | delivery-orchestrator | **Round-23 repairs (all three reviewers PASS): a closure is bound to the verifying run's real head, not forgeable round metadata; the stale tolerance comment is corrected (F-DG0-166/249/014/167, all Low).** Round 23 verified F-DG0-013/164/165/246/247/248 CLOSED_VERIFIED; the only findings were two Low observations.<br>• **F-DG0-166 (code-security) + F-DG0-249 (qa): bind the closure to the verifying run's head.** After D-039, `checkClosure` still skipped its round-side ancestry check (`isAncestor(fix, round.source_commit)`) whenever `round.sourc

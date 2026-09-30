@@ -1,0 +1,44 @@
+# requirements code spot-check (2026-09-30T14:38:10Z)
+== REQ-DLV-007 ==
+  acceptance: A23;A24: the guard tests 'reviewers may write only review records and evidence', 'implementers cannot edit gate rules, a
+  automation: PreToolUse hook on Write/Edit/MultiEdit/NotebookEdit; per-run Bash sandbox settings (agent_settings.py); validator sandb
+  evidence: tools/agents/guard-write.mjs;tools/agents/write-scopes.json;tools/agents/tests/guard.test.mjs;tools/agents/settings/transformation-analyst.settings.json;tools/agents/settings/qa-verifier.settings.json;tools/agents/agent_settings.py;tools/ag
+== REQ-DLV-013 ==
+  acceptance: A23;A24: the validator tests 'A24 / F-DG0-102: fabricated or incomplete provenance is rejected', 'A23: reviewers sharing
+  automation: Gate validation checks review schema and provenance
+  evidence: tools/gates/schemas/review.schema.json;tools/gates/lib/rules.mjs;tools/gates/tests/validator.test.mjs;tools/agents/run_meta.py;tools/agents/tests/test_run_meta.py;tools/agents/run-agent.sh;tools/agents/agent_settings.py;docs/delivery/threat
+== REQ-DLV-016 ==
+  acceptance: A24: the validator tests 'A24: a missing specialist reviewer fails the gate', 'A24: failed or BLOCKED checks and non-PAS
+  automation: Gate validation
+  evidence: tools/gates/validate.mjs;tools/gates/lib/rules.mjs;tools/gates/schemas/gate.schema.json;tools/gates/tests/validator.test.mjs
+== REQ-DLV-022 ==
+  acceptance: A25: the validator tests 'A25: a source change invalidates the approval; review metadata does not' and 'A25: a tampered 
+  automation: none
+  evidence: tools/gates/candidate.mjs;tools/gates/lib/candidate.mjs;tools/gates/tests/validator.test.mjs;docs/delivery/decisions.md
+== REQ-DLV-023 ==
+  acceptance: A24: node --test tools/gates/tests/*.test.mjs passes, including 'A24: the pipeline cannot advance past a gate that is no
+  automation: CI job on push/pull_request
+  evidence: tools/gates/validate.mjs;.github/workflows/delivery-gates.yml;tools/gates/tests/validator.test.mjs;tools/agents/tests/guard.test.mjs;tools/gates/prefreeze.sh;tools/gates/sandbox-run.sh;tools/gates/tests/sandbox.test.mjs;tools/agents/tests/t
+== REQ-DLV-026 ==
+  acceptance: A23;A24: every run under docs/delivery/runs/DG0/ has meta.json with session ID, role and exit code; the validator test '
+  automation: Runner writes run records
+  evidence: tools/agents/run-agent.sh;docs/delivery/agents.md;tools/gates/lib/rules.mjs;tools/gates/tests/validator.test.mjs;tools/agents/run_meta.py;tools/agents/tests/test_run_meta.py;tools/agents/agent_settings.py
+== REQ-S20-024 ==
+  acceptance: A24: Gate validator rejects missing reviewers, failed checks, unresolved blocking findings and incomplete requirements; 
+  automation: CI test job
+  evidence: tools/gates/tests/validator.test.mjs;.github/workflows/delivery-gates.yml;tools/gates/validate.mjs
+== REQ-S20-025 ==
+  acceptance: A25: A source/test/configuration change invalidates mismatched approval; review metadata does not recursively invalidate
+  automation: CI test job
+  evidence: tools/gates/tests/validator.test.mjs;tools/gates/lib/candidate.mjs;tools/gates/candidate.mjs
+## A24/A25 map to which committed self-tests?
+tools/gates/tests/validator.test.mjs
+## the acceptance-map row for A24/A25
+25:- REQ-DLV-042 (added in AN-13; P1, DG1) cites A18, A23 and A24. It is now listed under all three scenarios. Its final gate DG1 is later than A24's gate DG0, so it is also in the A24 line of "Gate ordering of scenario suites".
+58:| A24 | Enforced advancement | REQ-S20-024 | unit (validator);CI | P0 | DG0 | REQ-DLV-007, REQ-DLV-013, REQ-DLV-015..017, REQ-DLV-019..020, REQ-DLV-023..026, REQ-DLV-032, REQ-DLV-040, REQ-DLV-042; REQ-S02-005 |
+59:| A25 | Candidate integrity | REQ-S20-025 | unit (validator) | P0 | DG0 | REQ-DLV-022; REQ-S21-002 |
+83:| A24 | DG0 | REQ-DLV-024 (DG7), REQ-DLV-025 (DG1), REQ-DLV-040 (DG7), REQ-DLV-042 (DG1), REQ-S02-005 (DG7) |
+84:| A25 | DG0 | REQ-S21-002 (DG7) |
+111:- **A24 Enforced advancement:** Gate validator rejects missing reviewers, failed checks, unresolved blocking findings and incomplete requirements; the pipeline cannot advance a failed gate
+112:- **A25 Candidate integrity:** A source/test/configuration change invalidates mismatched approval; review metadata does not recursively invalidate its own candidate
+127:- **A24 and A25 at DG0.** The validator rejection rules and candidate hashing are P0 outputs (M0403). Executable tests already exist in `tools/gates/tests/validator.test.mjs` and are re-run at every later gate.

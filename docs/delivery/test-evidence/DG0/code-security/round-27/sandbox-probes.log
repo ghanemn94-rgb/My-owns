@@ -1,0 +1,60 @@
+# live sandbox probes from the code-security agent's own Bash shell (process sandbox D-030 + Claude Code Bash sandbox D-025 + Landlock D-033), 2026-09-30T14:35:49Z
+# id: uid=0(root) gid=0(root) groups=0(root)
+# MTH_PROCESS_SANDBOX=1 TMPDIR=/var/tmp/mth-run.GQkBrb/claude-0
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+NoNewPrivs:	1
+Seccomp:	2
+Seccomp_filters:	1
+## A. protected / other-role writes (all must fail)
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   tools/gates/sec27-probe.txt :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   tools/agents/sec27-probe.txt :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   .claude/sec27-probe.txt :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   .github/sec27-probe.txt :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   docs/source/sec27-probe.txt :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   CLAUDE.md :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   docs/delivery/findings.json :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   docs/delivery/stages.json :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   docs/delivery/reviews/DG0/round-27/domain-reviewer.json :: No such file or directory
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   docs/delivery/reviews/DG0/round-27/code-security-reviewer.sh-probe :: No such file or directory
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   docs/delivery/test-evidence/DG0/domain/sec27-probe.txt :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   docs/delivery/test-evidence/DG0/qa/sec27-probe.txt :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   docs/delivery/test-evidence/DG0/audit/sec27-probe.txt :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   docs/delivery/gates/DG0.json :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   docs/delivery/runs/DG0/sec27-probe.txt :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   docs/delivery/requirements.csv :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   .git/sec27-probe :: Read-only file system
+/bin/bash: line 34: /tmp/null: Read-only file system
+refused   tools/gates/lib/rules.mjs :: Read-only file system
+## B. own evidence area is writable (expected)
+writable  docs/delivery/test-evidence/DG0/code-security/round-27 (own area)
+## C. residual 7: /proc/sys entries openable for WRITE by uid 0 (opened O_WRONLY then closed; NOTHING written)
+open-for-write OK   /proc/sys/vm/swappiness
+open-for-write OK   /proc/sys/kernel/shmmax
+open-for-write OK   /proc/sys/net/ipv4/ip_forward
+open-for-write OK   /proc/sys/vm/drop_caches
+open-for-write OK   /proc/sys/kernel/panic
+open-for-write OK   /proc/sys/kernel/hostname
+open-for-write FAIL /proc/sys/kernel/modprobe: No such file or directory
+open-for-write OK   /proc/sys/kernel/core_pattern
+open-for-write OK   /proc/sys/fs/file-max
+## D. residual 8: host PID namespace visibility and cross-run isolation (Landlock scope)
+visible pids: 5; pid ns: pid:[4026532326]; host pid1 ns: 
+ipc ns self: ipc:[4026532265] vs pid1: 

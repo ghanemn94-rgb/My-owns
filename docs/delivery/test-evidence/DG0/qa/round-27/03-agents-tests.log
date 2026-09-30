@@ -1,0 +1,255 @@
+# qa-verifier round 27 | 2026-09-30T14:27:57Z | $TMPDIR/nl HEAD a4c6f82a1724df12c3ea8d1fa12099d070fd242c
+$ node --test tools/agents/tests/*.test.mjs
+TAP version 13
+# Subtest: reviewers may write only review records and evidence
+ok 1 - reviewers may write only review records and evidence
+  ---
+  duration_ms: 67.246304
+  type: 'test'
+  ...
+# Subtest: qa-verifier may add tests under tests/qa and e2e but not product code
+ok 2 - qa-verifier may add tests under tests/qa and e2e but not product code
+  ---
+  duration_ms: 10.630677
+  type: 'test'
+  ...
+# Subtest: implementers cannot edit gate rules, agent definitions, sources or gate records
+ok 3 - implementers cannot edit gate rules, agent definitions, sources or gate records
+  ---
+  duration_ms: 258.357739
+  type: 'test'
+  ...
+# Subtest: release-auditor writes gate decisions but not implementation
+ok 4 - release-auditor writes gate decisions but not implementation
+  ---
+  duration_ms: 10.60674
+  type: 'test'
+  ...
+# Subtest: transformation-analyst is limited to analysis outputs and the register
+ok 5 - transformation-analyst is limited to analysis outputs and the register
+  ---
+  duration_ms: 13.473601
+  type: 'test'
+  ...
+# Subtest: unknown roles are denied and scratch space outside a repo is allowed
+ok 6 - unknown roles are denied and scratch space outside a repo is allowed
+  ---
+  duration_ms: 6.131634
+  type: 'test'
+  ...
+# Subtest: the hook entry point blocks with exit code 2 and allows with 0
+ok 7 - the hook entry point blocks with exit code 2 and allows with 0
+  ---
+  duration_ms: 270.440317
+  type: 'test'
+  ...
+# Subtest: implementers cannot write reviewer test evidence
+ok 8 - implementers cannot write reviewer test evidence
+  ---
+  duration_ms: 12.456164
+  type: 'test'
+  ...
+# Subtest: F-DG0-105: Claude configuration surfaces and the unrelated project are protected from implementers
+ok 9 - F-DG0-105: Claude configuration surfaces and the unrelated project are protected from implementers
+  ---
+  duration_ms: 88.72367
+  type: 'test'
+  ...
+# Subtest: F-DG0-105: writes through a symlink into a protected path are blocked
+ok 10 - F-DG0-105: writes through a symlink into a protected path are blocked
+  ---
+  duration_ms: 11.665387
+  type: 'test'
+  ...
+# Subtest: F-DG0-105: protected-path matching is case-insensitive
+ok 11 - F-DG0-105: protected-path matching is case-insensitive
+  ---
+  duration_ms: 6.275611
+  type: 'test'
+  ...
+# Subtest: F-DG0-111: a planted nested .git cannot move the guarded root; .git paths are never writable
+ok 12 - F-DG0-111: a planted nested .git cannot move the guarded root; .git paths are never writable
+  ---
+  duration_ms: 32.648086
+  type: 'test'
+  ...
+# Subtest: the production guard root is this repository
+ok 13 - the production guard root is this repository
+  ---
+  duration_ms: 7.783212
+  type: 'test'
+  ...
+# Subtest: F-DG0-134: the repository's worktrees are guarded too, from any working directory
+ok 14 - F-DG0-134: the repository's worktrees are guarded too, from any working directory
+  ---
+  duration_ms: 284.502091
+  type: 'test'
+  ...
+# Subtest: F-DG0-134: every role's hook command takes the guard from MTH_GUARD_ROOT and fails closed without it
+ok 15 - F-DG0-134: every role's hook command takes the guard from MTH_GUARD_ROOT and fails closed without it
+  ---
+  duration_ms: 39.235481
+  type: 'test'
+  ...
+# Subtest: F-DG0-135: the guard fails closed when the guarded roots cannot be determined
+ok 16 - F-DG0-135: the guard fails closed when the guarded roots cannot be determined
+  ---
+  duration_ms: 48.367295
+  type: 'test'
+  ...
+# Subtest: F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable
+ok 17 - F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable
+  ---
+  duration_ms: 201.437369
+  type: 'test'
+  ...
+# Subtest: F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory
+ok 18 - F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory
+  ---
+  duration_ms: 253.089916
+  type: 'test'
+  ...
+# Subtest: F-DG0-144: a reviewer may not write another reviewer's record, sidecars or evidence
+ok 19 - F-DG0-144: a reviewer may not write another reviewer's record, sidecars or evidence
+  ---
+  duration_ms: 224.007942
+  type: 'test'
+  ...
+# Subtest: F-DG0-144: only the run's own private temporary directory is scratch, never the shared /tmp
+ok 20 - F-DG0-144: only the run's own private temporary directory is scratch, never the shared /tmp
+  ---
+  duration_ms: 18.551385
+  type: 'test'
+  ...
+# Subtest: F-DG0-143: writes that resolve through /proc, /sys or /dev, or whose real path cannot be determined, are blocked
+ok 21 - F-DG0-143: writes that resolve through /proc, /sys or /dev, or whose real path cannot be determined, are blocked
+  ---
+  duration_ms: 24.259302
+  type: 'test'
+  ...
+# Subtest: F-DG0-145: a confined reviewer's whole process writes only its own evidence and its own new review files
+ok 22 - F-DG0-145: a confined reviewer's whole process writes only its own evidence and its own new review files
+  ---
+  duration_ms: 321.073386
+  type: 'test'
+  ...
+# Subtest: F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope
+ok 23 - F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope
+  ---
+  duration_ms: 59531.977287
+  type: 'test'
+  ...
+# without the process sandbox: 59 of 77 allowed writes landed in /var/tmp/mth-run.XyMFUU/claude-0/psbx-O2c8OS/repo/tools/gates/tests
+# code-security-reviewer -> /var/tmp/mth-run.XyMFUU/claude-0/psbx-O2c8OS/var-tmp/mth-run.iCDg5g/clone/tests: 62 allowed by the hook, 48 of them refused by the kernel, 0 landed
+# code-security-reviewer -> /var/tmp/mth-run.XyMFUU/claude-0/psbx-O2c8OS/repo/docs/delivery/test-evidence/DG0/qa: 68 allowed by the hook, 48 of them refused by the kernel, 0 landed
+# qa-verifier -> /var/tmp/mth-run.XyMFUU/claude-0/psbx-O2c8OS/repo/tools/gates/tests: 70 allowed by the hook, 50 of them refused by the kernel, 0 landed
+# backend-workflow-engineer -> /var/tmp/mth-run.XyMFUU/claude-0/psbx-O2c8OS/repo/tools/gates/tests: 66 allowed by the hook, 50 of them refused by the kernel, 0 landed
+# backend-workflow-engineer -> /var/tmp/mth-run.XyMFUU/claude-0/psbx-O2c8OS/repo/.git/hooks: 73 allowed by the hook, 50 of them refused by the kernel, 0 landed
+# Subtest: D-030: only CAP_SETFCAP remains, and neither the process nor a nested user namespace can unlock the read-only binds
+ok 24 - D-030: only CAP_SETFCAP remains, and neither the process nor a nested user namespace can unlock the read-only binds
+  ---
+  duration_ms: 208.240856
+  type: 'test'
+  ...
+# Subtest: D-030: implementers write product paths; existing protected paths stay read-only
+ok 25 - D-030: implementers write product paths; existing protected paths stay read-only
+  ---
+  duration_ms: 258.34843
+  type: 'test'
+  ...
+# Subtest: D-030: the analyst's register is replaced atomically in staging and copied back, unless it changed concurrently
+ok 26 - D-030: the analyst's register is replaced atomically in staging and copied back, unless it changed concurrently
+  ---
+  duration_ms: 455.619376
+  type: 'test'
+  ...
+# Subtest: D-030: the auditor's gate record for its own stage is copied back; another stage's is not
+ok 27 - D-030: the auditor's gate record for its own stage is copied back; another stage's is not
+  ---
+  duration_ms: 231.479939
+  type: 'test'
+  ...
+# Subtest: D-030: the process sandbox binds the host procfs and creates no PID namespace (so nested bwrap works)
+ok 28 - D-030: the process sandbox binds the host procfs and creates no PID namespace (so nested bwrap works)
+  ---
+  duration_ms: 225.413133
+  type: 'test'
+  ...
+# Subtest: F-DG0-145 (round 16): a file another run commits to the real dir between prepare and finish is not a false discard
+ok 29 - F-DG0-145 (round 16): a file another run commits to the real dir between prepare and finish is not a false discard
+  ---
+  duration_ms: 213.972295
+  type: 'test'
+  ...
+# Subtest: F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash
+ok 30 - F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash
+  ---
+  duration_ms: 202.072694
+  type: 'test'
+  ...
+# Subtest: F-DG0-152: a per-run Landlock domain stops a run reaching or signalling another run via /proc/<peer>/root|cwd (D-033)
+ok 31 - F-DG0-152: a per-run Landlock domain stops a run reaching or signalling another run via /proc/<peer>/root|cwd (D-033)
+  ---
+  duration_ms: 458.386895
+  type: 'test'
+  ...
+# without Landlock: {"viaProcRoot":"WROTE","viaProcCwd":"WROTE","viaProcRootTmp":"WROTE","ownEvidence":"WROTE","ownTmp":"WROTE","signal":"allowed","nested":"works"}
+# with Landlock: {"viaProcRoot":"refused","viaProcCwd":"refused","viaProcRootTmp":"refused","ownEvidence":"WROTE","ownTmp":"WROTE","signal":"refused","nested":"works"}
+# Subtest: F-DG0-140: modules planted in the repository root are never imported by the runner's helpers
+ok 32 - F-DG0-140: modules planted in the repository root are never imported by the runner's helpers
+  ---
+  duration_ms: 1238.533921
+  type: 'test'
+  ...
+# Subtest: D-026: zero-length untracked sandbox stubs are not reported as configuration changes
+ok 33 - D-026: zero-length untracked sandbox stubs are not reported as configuration changes
+  ---
+  duration_ms: 1209.780241
+  type: 'test'
+  ...
+# Subtest: D-026: configuration with content, a symlink, or a truncated tracked file is still reported (exit 71, no auto-commit)
+ok 34 - D-026: configuration with content, a symlink, or a truncated tracked file is still reported (exit 71, no auto-commit)
+  ---
+  duration_ms: 1016.011257
+  type: 'test'
+  ...
+# Subtest: F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed
+ok 35 - F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed
+  ---
+  duration_ms: 1167.538179
+  type: 'test'
+  ...
+# Subtest: F-DG0-144: every run gets its own private TMPDIR, exported to the agent and removed when the run ends
+ok 36 - F-DG0-144: every run gets its own private TMPDIR, exported to the agent and removed when the run ends
+  ---
+  duration_ms: 1782.952739
+  type: 'test'
+  ...
+# Subtest: F-DG0-236: the runner pre-creates the stage's evidence directories and the gate-record directory
+ok 37 - F-DG0-236: the runner pre-creates the stage's evidence directories and the gate-record directory
+  ---
+  duration_ms: 864.96565
+  type: 'test'
+  ...
+# Subtest: F-DG0-145: the runner runs the whole agent inside the process sandbox and records it
+ok 38 - F-DG0-145: the runner runs the whole agent inside the process sandbox and records it
+  ---
+  duration_ms: 919.13743
+  type: 'test'
+  ...
+# Subtest: D-030: a review run whose staging copy holds another role's file exits 73 and commits nothing
+ok 39 - D-030: a review run whose staging copy holds another role's file exits 73 and commits nothing
+  ---
+  duration_ms: 788.017115
+  type: 'test'
+  ...
+1..39
+# tests 39
+# suites 0
+# pass 39
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 62218.678366
+exit=0

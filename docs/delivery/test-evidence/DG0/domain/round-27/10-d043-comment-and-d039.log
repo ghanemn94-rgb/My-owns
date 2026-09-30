@@ -1,0 +1,26 @@
+rules.mjs comment audit (candidate 49b5ad7)
+202:      } else errors.push(`${where}: source_ref entry '${r}' is not a block anchor`);
+559:      checkClosure(repo, stage, gate, f, verifications.get(f.id), where, errors);
+598:// a shallow one, F-DG0-160), so every commit a genuine record references is present. The single absence tolerance is
+599:// findManifest's (D-035), documented at that function; checkClosure and checkInvocation are strict and describe their
+600:// own anchoring. This helper only answers presence -- it states no policy, so there is nothing here to drift.
+621:// fetched (not pruned), so ancestry, write-once and back-dating checks -- and the commit-absence tolerances -- silently
+664:        // import-findings never imported their verifications; tolerate it. A sidecar whose record FILE exists but is
+696:function checkClosure(repo, stage, gate, f, v, where, errors) {
+724:    // that is PRESENT and an ancestor of THREE independent anchors, ALL of which are enforced unconditionally (D-041 +
+727:    //      candidate the reviewer was assigned, so a fix committed after the freeze is caught. This anchor is NOT
+728:    //      conditional: a closure verified in a round whose `source_commit` does not resolve (the findManifest/D-035
+729:    //      tolerance is content-preserving for the manifest, but cannot supply the frozen candidate for this check) is
+730:    //      REJECTED outright -- no real closure is (round 18's, the only absent-source round, were re-verified in a
+731:    //      retained round). Otherwise a fix committed after that round's freeze could slip through where anchor 1 was skipped.
+736:    // round metadata says. Anchor 1 was wrongly REPLACED by anchor 2 in D-040 (D-041 restored it) and made
+742:        errors.push(`${where}: verified in ${v.roundDir}, whose frozen candidate source_commit ${String(round.source_commit).slice(0, 10)} is not present; a closure must be verified against a retained candidate (F-DG0-169)`);
+916:    // tolerance in the validator, and it is content-preserving, not a skipped check: the manifest file itself remains and
+919:    // branch-reachable gate.source_commit (checkCandidate). So a genuinely MISSING source_commit is tolerated here; every
+950:  // does not exist would pass current-mode validation -- and the D-035 tolerance in findManifest (meant for superseded
+1033:  if (isShallow(repo)) errors.push(`gate ${stageId}: the repository is a shallow clone, so ancestry, write-once and history-tolerance checks are unreliable; validate the gate against the complete history (git fetch --unshallow, or clone with fetch-depth: 0 as CI does) (D-038, F-DG0-160)`);
+
+round source_commit presence in --no-local clone:
+26 present, 1 ABSENT 450c756f (round-18 orphan, manifest 21efe44b6a4613a0), absent also in main repo
+
+gate suite: validator.test 57/57, sandbox.test 6/6 (63/63); agents 39/39

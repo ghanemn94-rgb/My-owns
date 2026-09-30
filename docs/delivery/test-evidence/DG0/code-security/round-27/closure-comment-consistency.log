@@ -1,0 +1,56 @@
+# Every comment in rules.mjs that mentions the closure/anchor model (grep -n -i 'anchor|closure|conditional|when it resolves|absence toleran|THREE')
+202:      } else errors.push(`${where}: source_ref entry '${r}' is not a block anchor`);
+300:  // Every transcript check is unconditional: an empty or unparsable transcript fails them all (F-DG0-132).
+559:      checkClosure(repo, stage, gate, f, verifications.get(f.id), where, errors);
+598:// a shallow one, F-DG0-160), so every commit a genuine record references is present. The single absence tolerance is
+599:// findManifest's (D-035), documented at that function; checkClosure and checkInvocation are strict and describe their
+600:// own anchoring. This helper only answers presence -- it states no policy, so there is nothing here to drift.
+621:// fetched (not pruned), so ancestry, write-once and back-dating checks -- and the commit-absence tolerances -- silently
+696:function checkClosure(repo, stage, gate, f, v, where, errors) {
+724:    // that is PRESENT and an ancestor of THREE independent anchors, ALL of which are enforced unconditionally (D-041 +
+727:    //      candidate the reviewer was assigned, so a fix committed after the freeze is caught. This anchor is NOT
+728:    //      conditional: a closure verified in a round whose `source_commit` does not resolve (the findManifest/D-035
+730:    //      REJECTED outright -- no real closure is (round 18's, the only absent-source round, were re-verified in a
+731:    //      retained round). Otherwise a fix committed after that round's freeze could slip through where anchor 1 was skipped.
+736:    // round metadata says. Anchor 1 was wrongly REPLACED by anchor 2 in D-040 (D-041 restored it) and made
+737:    // unconditional in D-042.
+742:        errors.push(`${where}: verified in ${v.roundDir}, whose frozen candidate source_commit ${String(round.source_commit).slice(0, 10)} is not present; a closure must be verified against a retained candidate (F-DG0-169)`);
+
+# checkClosure code (lines 721-751) for comparison
+  if (f.status === "CLOSED_VERIFIED") {
+    // Strict, with no absent-commit escape (D-039). Gate validation runs on a COMPLETE clone (validateGate refuses a
+    // shallow one, F-DG0-160), so every real fix commit is present. A CLOSED_VERIFIED fix must be a full 40-hex commit
+    // that is PRESENT and an ancestor of THREE independent anchors, ALL of which are enforced unconditionally (D-041 +
+    // D-042, F-DG0-168/169):
+    //   1. the verifying round's frozen candidate (`round.source_commit`): it pins the fix to exactly the FROZEN
+    //      candidate the reviewer was assigned, so a fix committed after the freeze is caught. This anchor is NOT
+    //      conditional: a closure verified in a round whose `source_commit` does not resolve (the findManifest/D-035
+    //      tolerance is content-preserving for the manifest, but cannot supply the frozen candidate for this check) is
+    //      REJECTED outright -- no real closure is (round 18's, the only absent-source round, were re-verified in a
+    //      retained round). Otherwise a fix committed after that round's freeze could slip through where anchor 1 was skipped.
+    //   2. the verifying RUN's `head_commit_at_start` (present, 40-hex, containing the round manifest -- checkInvocation
+    //      enforced this): REAL, run-bound evidence of what the reviewer's checkout held (D-040, F-DG0-166/249).
+    //   3. the gate candidate (`gate.source_commit`, which checkCandidate requires present and branch-reachable).
+    // An all-zero, typo'd, absent, or committed-after-the-freeze/run fix is therefore always rejected, whatever the
+    // round metadata says. Anchor 1 was wrongly REPLACED by anchor 2 in D-040 (D-041 restored it) and made
+    // unconditional in D-042.
+    if (!f.fix_revision || !/^[0-9a-f]{40}$/.test(f.fix_revision)) errors.push(`${where}: CLOSED_VERIFIED needs a full fix_revision commit id`);
+    else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
+    else {
+      if (!commitPresent(repo, round.source_commit))
+        errors.push(`${where}: verified in ${v.roundDir}, whose frozen candidate source_commit ${String(round.source_commit).slice(0, 10)} is not present; a closure must be verified against a retained candidate (F-DG0-169)`);
+      else if (!isAncestor(repo, f.fix_revision, round.source_commit))
+        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verified ${v.roundDir} candidate (${round.source_commit.slice(0, 10)})`);
+      const vhead = (readJson(repo, runFiles(stage.id, v.record.invocation_reference.run_id)[0], errors, `${where} verifying run`) || {}).head_commit_at_start;
+      if (typeof vhead === "string" && /^[0-9a-f]{40}$/.test(vhead) && commitPresent(repo, vhead) && !isAncestor(repo, f.fix_revision, vhead))
+        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verifying run's starting history (${vhead.slice(0, 10)}); it was not in the candidate the reviewer saw`);
+      if (gate && !isAncestor(repo, f.fix_revision, gate.source_commit))
+        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the gate candidate`);
+    }
+  }
+
+# checkFindings/checkClosure callers ('gate' is never null at the only call site)
+tools/gates/lib/rules.mjs:513:export function checkFindings(repo, stage, reviewRecords, gate, errors) {
+tools/gates/lib/rules.mjs:559:      checkClosure(repo, stage, gate, f, verifications.get(f.id), where, errors);
+tools/gates/lib/rules.mjs:696:function checkClosure(repo, stage, gate, f, v, where, errors) {
+tools/gates/lib/rules.mjs:1085:  checkFindings(repo, stage, records, gate, errors);

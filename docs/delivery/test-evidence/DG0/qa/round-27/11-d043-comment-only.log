@@ -1,0 +1,69 @@
+# qa-verifier round 27 | 2026-09-30T14:31:14Z | D-043 comment-only verification of tools/gates/lib/rules.mjs
+$ git diff -U0 7edacdc2..49b5ad79 -- rules.mjs | changed lines that are NOT comments (expect none)
+non-comment changed lines: 0
+$ strip // comments from both versions and compare (expect identical)
+7edacdc2: b9b6ec2be37acf030c56080d06b92e574ec0bd6a1f49893d96cb7f1ed1d35b98  -
+49b5ad79: b9b6ec2be37acf030c56080d06b92e574ec0bd6a1f49893d96cb7f1ed1d35b98  -
+$ commitPresent() header comment at the candidate
+595-}
+596-
+597-// Whether a commit object is present in this repository. Gate validation runs on a COMPLETE clone (validateGate refuses
+598-// a shallow one, F-DG0-160), so every commit a genuine record references is present. The single absence tolerance is
+599-// findManifest's (D-035), documented at that function; checkClosure and checkInvocation are strict and describe their
+600-// own anchoring. This helper only answers presence -- it states no policy, so there is nothing here to drift.
+601:function commitPresent(repo, sha) {
+$ grep for closure/anchor wording across all comments in rules.mjs
+300:  // Every transcript check is unconditional: an empty or unparsable transcript fails them all (F-DG0-132).
+600:// own anchoring. This helper only answers presence -- it states no policy, so there is nothing here to drift.
+724:    // that is PRESENT and an ancestor of THREE independent anchors, ALL of which are enforced unconditionally (D-041 +
+727:    //      candidate the reviewer was assigned, so a fix committed after the freeze is caught. This anchor is NOT
+731:    //      retained round). Otherwise a fix committed after that round's freeze could slip through where anchor 1 was skipped.
+736:    // round metadata says. Anchor 1 was wrongly REPLACED by anchor 2 in D-040 (D-041 restored it) and made
+737:    // unconditional in D-042.
+$ checkClosure block (comment + anchor code)
+2:        errors.push(`${rel}: ${role}'s record for ${round} is not listed in stages.json review_rounds`);
+10:        errors.push(`${rel}: its record ${recRel} is not a valid review record (${schemaErrors[0]})`);
+14:        errors.push(`${rel}: sidecar role/round does not match its record`);
+23:        all.get(v.finding_id).push(entry);
+32:  if (!v) return void errors.push(`${where}: ${f.status} but no reviewer verifications sidecar verifies it`);
+33:  if (v.result !== "PASS") errors.push(`${where}: latest reviewer verification (${v.sidecar}) is ${v.result}`);
+34:  if (v.status_after !== f.status) errors.push(`${where}: findings.json status ${f.status} differs from the reviewer's status_after ${v.status_after}`);
+35:  if (v.role === f.owner) errors.push(`${where}: verified by its own owner (${f.owner})`);
+37:  if (!recorded) errors.push(`${where}: findings.json has no verification record`);
+39:    if (recorded.by_role !== v.role) errors.push(`${where}: findings.json verification by ${recorded.by_role}, sidecar by ${v.role}`);
+40:    if (recorded.result !== v.result) errors.push(`${where}: findings.json verification result differs from the reviewer's sidecar`);
+42:      errors.push(`${where}: verification invocation is not the verifying reviewer's own run for ${v.roundDir}`);
+44:    if (JSON.stringify(recorded.evidence || []) !== JSON.stringify(v.evidence || [])) errors.push(`${where}: findings.json verification evidence differs from the sidecar`);
+46:  for (const ev of v.evidence || []) if (!repoFile(repo, ev)) errors.push(`${where}: verification evidence is not an existing repository file: ${ev}`);
+48:  if (!round) return void errors.push(`${where}: verification round ${v.roundDir} is not recorded in stages.json review_rounds`);
+49:  if (v.record.candidate_id !== round.candidate_id) errors.push(`${where}: verifying record reviewed ${v.record.candidate_id}, not the ${v.roundDir} candidate`);
+57:    // Strict, with no absent-commit escape (D-039). Gate validation runs on a COMPLETE clone (validateGate refuses a
+58:    // shallow one, F-DG0-160), so every real fix commit is present. A CLOSED_VERIFIED fix must be a full 40-hex commit
+59:    // that is PRESENT and an ancestor of THREE independent anchors, ALL of which are enforced unconditionally (D-041 +
+60:    // D-042, F-DG0-168/169):
+61:    //   1. the verifying round's frozen candidate (`round.source_commit`): it pins the fix to exactly the FROZEN
+62:    //      candidate the reviewer was assigned, so a fix committed after the freeze is caught. This anchor is NOT
+63:    //      conditional: a closure verified in a round whose `source_commit` does not resolve (the findManifest/D-035
+64:    //      tolerance is content-preserving for the manifest, but cannot supply the frozen candidate for this check) is
+65:    //      REJECTED outright -- no real closure is (round 18's, the only absent-source round, were re-verified in a
+66:    //      retained round). Otherwise a fix committed after that round's freeze could slip through where anchor 1 was skipped.
+67:    //   2. the verifying RUN's `head_commit_at_start` (present, 40-hex, containing the round manifest -- checkInvocation
+68:    //      enforced this): REAL, run-bound evidence of what the reviewer's checkout held (D-040, F-DG0-166/249).
+69:    //   3. the gate candidate (`gate.source_commit`, which checkCandidate requires present and branch-reachable).
+70:    // An all-zero, typo'd, absent, or committed-after-the-freeze/run fix is therefore always rejected, whatever the
+71:    // round metadata says. Anchor 1 was wrongly REPLACED by anchor 2 in D-040 (D-041 restored it) and made
+72:    // unconditional in D-042.
+73:    if (!f.fix_revision || !/^[0-9a-f]{40}$/.test(f.fix_revision)) errors.push(`${where}: CLOSED_VERIFIED needs a full fix_revision commit id`);
+74:    else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
+76:      if (!commitPresent(repo, round.source_commit))
+77:        errors.push(`${where}: verified in ${v.roundDir}, whose frozen candidate source_commit ${String(round.source_commit).slice(0, 10)} is not present; a closure must be verified against a retained candidate (F-DG0-169)`);
+78:      else if (!isAncestor(repo, f.fix_revision, round.source_commit))
+79:        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verified ${v.roundDir} candidate (${round.source_commit.slice(0, 10)})`);
+80:      const vhead = (readJson(repo, runFiles(stage.id, v.record.invocation_reference.run_id)[0], errors, `${where} verifying run`) || {}).head_commit_at_start;
+81:      if (typeof vhead === "string" && /^[0-9a-f]{40}$/.test(vhead) && commitPresent(repo, vhead) && !isAncestor(repo, f.fix_revision, vhead))
+82:        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verifying run's starting history (${vhead.slice(0, 10)}); it was not in the candidate the reviewer saw`);
+83:      if (gate && !isAncestor(repo, f.fix_revision, gate.source_commit))
+84:        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the gate candidate`);
+97:  for (const d of onDisk) if (!recorded.has(d)) errors.push(`review rounds: ${stage.id}/${d} exists but is not recorded in stages.json`);
+100:    if (manifest && (manifest.frozen_at !== r.frozen_at || manifest.source_commit !== r.source_commit)) {
+101:      errors.push(`review rounds: ${stage.id} round ${r.round} frozen_at/source_commit differ from its committed manifest`);

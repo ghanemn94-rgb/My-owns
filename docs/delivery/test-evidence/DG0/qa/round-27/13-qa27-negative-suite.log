@@ -1,0 +1,78 @@
+# qa-verifier round 27 | 2026-09-30T14:33:54Z | QA_REPO_ROOT=$TMPDIR/nl (clone --no-local, HEAD a4c6f82a1724df12c3ea8d1fa12099d070fd242c) | node v22.22.2
+$ QA_REPO_ROOT=$TMPDIR/nl node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r27.test.mjs
+TAP version 13
+#   QA27-E1 genuine-control: old=0 new=0 identical=true new=[]
+#   QA27-E1 genuine-post-freeze-fix: old=1 new=1 identical=true new=["finding F-DG0-201 (High): fix 84055cf132 is not in the verified round-3 candidate (ce08e9d4eb)"]
+#   QA27-E1 forged-absent-round: old=1 new=1 identical=true new=["finding F-DG0-201 (High): verified in round-3, whose frozen candidate source_commit cdcdcdcdcd is not present; a closure must be verified against a retained candidate (F-DG0-169)"]
+#   QA27-E1 fix-all-zero: old=1 new=1 identical=true new=["finding F-DG0-201 (High): fix 0000000000 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA27-E1 head-unknown: old=3 new=3 identical=true new=["write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000034/meta.json has a M event in bf0b4534a2 (review evidence is append-only)","write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000034/meta.json was committed with 2 different contents (review evidence is append-only)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000034: head_commit_at_start \\"unknown\\" is not a 40-hex commit id"]
+#   QA27-E1 severity-downgrade: old=2 new=2 identical=true new=["finding F-DG0-201: severity in findings.json (\\"Low\\") differs from the reviewer's (\\"Critical\\")","finding F-DG0-201: mandatory_violation in findings.json (false) differs from the reviewer's (true)"]
+#   QA27-E1 side-branch-fix: old=1 new=1 identical=true new=["finding F-DG0-201 (High): fix 70d53a4bc9 is not in the verified round-3 candidate (43365d4157)"]
+#   QA27-E1 fix-equals-round-source: old=0 new=0 identical=true new=[]
+#   QA27-E1 result: {"genuine-control":true,"genuine-post-freeze-fix":true,"forged-absent-round":true,"fix-all-zero":true,"head-unknown":true,"severity-downgrade":true,"side-branch-fix":true,"fix-equals-round-source":true}
+#   QA27-N1 errors (1): ["finding F-DG0-201 (High): CLOSED_VERIFIED needs a full fix_revision commit id"]
+#   QA27-N1 result: REJECTED-format
+#   QA27-N2 tree errors (1): ["finding F-DG0-201 (High): fix fdbb4f6f58 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA27-N2 blob errors (1): ["finding F-DG0-201 (High): fix 626799f0f8 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA27-N2 result: {"tree":"REJECTED","blob":"REJECTED"}
+#   QA27-N3 errors (0): []
+#   QA27-N3 result: ACCEPTED (tag peels to the same fix commit, which passes all three anchors)
+#   QA27-N4 errors (1): ["finding F-DG0-201 (High): fix 4b4fbf3175 is not in the verified round-3 candidate (f04ffce20a)"]
+#   QA27-N4 result: REJECTED anchors=A1 total=1
+#   QA27-N5 errors (0): []
+#   QA27-N5 result: ACCEPTED anchors=- total=0
+#   QA27-N6 tree-id errors (3): ["write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000102/meta.json has a M event in d7d727cdf2 (review evidence is append-only)","write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000102/meta.json was committed with 2 different contents (review evidence is append-only)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000102: started from b1e53c3277, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)"]
+#   QA27-N6 upper-case errors (3): ["write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000109/meta.json has a M event in 4edce5c5ab (review evidence is append-only)","write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000109/meta.json was committed with 2 different contents (review evidence is append-only)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000109: head_commit_at_start \\"DC6142267B252648E4D5FB78D7E906ECD68728BB\\" is not a 40-hex commit id"]
+#   QA27-N6 result: {"tree-id":"REJECTED","upper-case":"REJECTED"}
+# Subtest: QA27-E1 D-043 is behaviour-preserving: pre-D-043 and candidate rules.mjs give identical errors on 8 fixtures
+ok 1 - QA27-E1 D-043 is behaviour-preserving: pre-D-043 and candidate rules.mjs give identical errors on 8 fixtures
+  ---
+  duration_ms: 6384.610817
+  type: 'test'
+  ...
+# Subtest: QA27-N1 fix_revision spelled in UPPER CASE (a genuine valid fix otherwise) -> REJECTED
+ok 2 - QA27-N1 fix_revision spelled in UPPER CASE (a genuine valid fix otherwise) -> REJECTED
+  ---
+  duration_ms: 924.326881
+  type: 'test'
+  ...
+# Subtest: QA27-N2 fix_revision is a PRESENT 40-hex tree / blob object -> REJECTED
+ok 3 - QA27-N2 fix_revision is a PRESENT 40-hex tree / blob object -> REJECTED
+  ---
+  duration_ms: 1363.993016
+  type: 'test'
+  ...
+# Subtest: QA27-N3 fix_revision is an ANNOTATED TAG object id peeling to a valid fix commit -> behaviour recorded
+ok 4 - QA27-N3 fix_revision is an ANNOTATED TAG object id peeling to a valid fix commit -> behaviour recorded
+  ---
+  duration_ms: 648.010981
+  type: 'test'
+  ...
+# Subtest: QA27-N4 side-branch fix forked before the freeze, merged after it -> REJECTED by anchor 1 only
+ok 5 - QA27-N4 side-branch fix forked before the freeze, merged after it -> REJECTED by anchor 1 only
+  ---
+  duration_ms: 722.112951
+  type: 'test'
+  ...
+# Subtest: QA27-N5 boundary control: fix_revision == the round's frozen source_commit -> ACCEPTED (no false positive)
+ok 6 - QA27-N5 boundary control: fix_revision == the round's frozen source_commit -> ACCEPTED (no false positive)
+  ---
+  duration_ms: 629.759127
+  type: 'test'
+  ...
+# Subtest: QA27-N6 the verifying run's head_commit_at_start is a PRESENT tree id / the UPPER-CASE genuine head -> REJECTED
+ok 7 - QA27-N6 the verifying run's head_commit_at_start is a PRESENT tree id / the UPPER-CASE genuine head -> REJECTED
+  ---
+  duration_ms: 1304.165724
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12131.541665
+exit=0
