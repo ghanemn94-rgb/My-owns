@@ -80,6 +80,14 @@
 
 - **Web regression until the P2 web follow-ups merge:** recording an external authority approval from the UI returns 422
   (the API now requires a verified evidence link).
+- **AT-07 in the UI (F-13 in `docs/phases/P2-P4-requirement-disposition.md`, proposed High):** at `124f3d8`
+  `e2e/tests/p3-carveout.spec.ts` (a) fails. Since DOM-P2-03, a change request whose cost is only text is refused
+  (`change_control.amount_unquantified`), and the UI has no `costImpact` field yet. This is assigned to the P2 web
+  follow-ups.
+- **Open P2 items besides DOM-P2-16:**
+  - DOM-P2-14 (decision-paper completeness: evidence and attachments);
+  - the P2 must-gaps listed in `docs/phases/P2-P4-requirement-disposition.md` §4: GOV-012/013/015/008/009, WS-003, and
+    UX-005/006/018/024, SET-013/014, PLN-002.
 - **Secret-scan allow-list:** the entries extended in `d508929` need a security reviewer's confirmation (allow-list
   policy in `scripts/ops/gitleaks.toml`).
 - **DOM-P2-16** (gate owner and reviewer roles enforced, gate-level review step) is not implemented. The policy
