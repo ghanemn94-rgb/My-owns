@@ -1,0 +1,118 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-241",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-036 checks only that gate.source_commit resolves (git cat-file -e <sha>^{commit}), not that it is on the branch. An APPROVED gate whose source_commit is an off-branch (unreachable) commit with identical content, or an annotated tag object that peels to the commit, passes current and historical validation in the local repository. The off-branch case then fails in every fresh clone.",
+      "reproduction": "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs, cases QA20-S7 and QA20-S8 (QA_REPO_ROOT=<clone at a23c4d4>). QA20-S7 builds the independent accepted-observation gate fixture and points every source_commit pointer at `git commit-tree <freeze-tree> -m ...`. That is a real commit with the same tree, but it is not an ancestor of HEAD, as happens when a frozen commit is later amended, rebased or filter-branched (compare D-034). Result: current mode 0 errors, historical mode 0 errors (apart from the fixture's VERIFYING-state artefact). Then `git clone --no-local` of the same fixture (only reachable objects, as CI or a remote reviewer gets) gives: current mode `candidate: gate source_commit a11f2bdee4 is not a commit in this repository`, historical mode the same plus `cannot recompute`. QA20-S8: an annotated tag object id that peels to the real commit is accepted in both modes and in the fresh clone (object type `tag`, not `commit`).",
+      "expected": "D-036 says the gate's source_commit must be a real commit, so that the traceability pointer survives into CI and later clones. Current-mode validation should also require the commit to be reachable, for example `git merge-base --is-ancestor <gate.source_commit> HEAD`, and optionally `git cat-file -t` == commit. An approved gate that is valid locally but invalid in every fresh clone would then be caught before approval, not afterwards by `--pipeline`.",
+      "actual": "Content integrity holds: the frozen manifest must still describe the commit (QA20-S6: an off-branch commit with different content is rejected), and the reviews bind to the candidate_id. The gap is reachability only. It needs an honest post-freeze history rewrite, and CI `--pipeline` in a fresh clone detects it after the fact. Low. As the reporting specialist, I would accept this as an observation if the owner chooses not to add the ancestry check. The tag-object case is harmless (identical content, reachable) and is included for completeness.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs#QA20-S7",
+        "docs/delivery/test-evidence/DG0/qa/round-20/10-qa20-negative-tests.log#QA20-S7",
+        "docs/delivery/test-evidence/DG0/qa/round-20/10-qa20-negative-tests.log#QA20-S8",
+        "tools/gates/lib/rules.mjs#checkCandidate",
+        "docs/delivery/decisions.md#D-036"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-20/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T10:12:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-20 QA review of candidate ef3ec3f2 (a23c4d4). Low, not mandatory; acceptable as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-242",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "High",
+      "mandatory_violation": false,
+      "title": "The DG0 gate cannot be approved on this repository's real history with the frozen validator. 66 CLOSED_VERIFIED findings have a fix_revision that no longer exists (history truncated before round 12, round 18 rewritten by D-034), which gives 132 isAncestor errors. The verifier runs of 63 closures have a head_commit_at_start that no longer exists, which gives 63 more errors. D-035 tolerated pruned commits only in findManifest; checkClosure and checkInvocation still hard-fail on them.",
+      "reproduction": "docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs <clone of HEAD ce6d9b6> (log: docs/delivery/test-evidence/DG0/qa/round-20/13-real-repo-gate-blockers.log). The script clones the real repository with --no-local, drafts a schema-valid APPROVED docs/delivery/gates/DG0.json on the real frozen candidate (ef3ec3f2, source_commit a23c4d4), runs validateGate(repo,'DG0') in current mode and classifies all 263 errors. 8 (+ the per-requirement 'did not check it' lines, F-DG0-147/149 and the four FIXED_PENDING findings) only mean that round 20 is not finished. The following can never be cleared by finishing round 20: 66 x 'finding F-DG0-xxx: fix <sha> is not in the verified round-N candidate', 66 x '... is not in the gate candidate', and 63 x 'verification: invocation ... started from <sha>, which does not contain docs/delivery/candidates/DG0/<id>.manifest.json'. Every commit these name (73c485466a, 6c676980ac, bf7f5e251d, 29b52557ad, 1474a96244, ... 23 in total) is absent from the local repository as well as from the clone (`git cat-file -t` fails in /home/user/My-owns). The earliest retained commit is e8361b8, 'DG0 round 12 ...'. Affected findings are F-DG0-001..011, 101..121, 130..139, 150, 151 and 201..228 (listed in the log).",
+      "expected": "D-035 says it found this latent pruned-history condition 'which would have blocked the DG0 gate at the first completed audit' and resolved it. A stage candidate that is REVIEWING for its gate should be able to pass that gate on the repository it will be audited in. A pre-freeze dry-run gate (like real-repo-gate-blockers.mjs) should show no errors except those of the unfinished round. The resolution should be a recorded decision, for example one of these: (a) extend the D-035 reasoning to closures in pruned rounds, with a clear rule. A closure whose fix_revision / verifier head commit is genuinely absent is accepted only if its verification record and sidecar are intact, and a retained commit is shown to contain the fix. (b) Re-verify the affected findings in a round whose commits are retained, and re-point fix_revision at a retained commit that contains the fix. Either way, add a test that runs the gate dry-run against the real history.",
+      "actual": "Fail-closed: nothing is wrongly approved, so this is not a mandatory violation. But the required workflow is broken. With this candidate, the auditor's `validate.mjs --stage DG0` can never exit 0 on this branch, however round 20 ends, so DG0 cannot pass. This is the same class of latent blocker as D-034 and D-035, and it is still present. High.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-20/13-real-repo-gate-blockers.log",
+        "docs/delivery/test-evidence/DG0/qa/round-20/12-d036-real-repo.log",
+        "tools/gates/lib/rules.mjs#checkClosure",
+        "tools/gates/lib/rules.mjs#isAncestor",
+        "docs/delivery/decisions.md#D-035"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-20/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T10:12:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-20 QA review of candidate ef3ec3f2 (a23c4d4). High, not mandatory (fail-closed), blocks DG0 approval."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-243",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "High",
+      "mandatory_violation": false,
+      "title": "The D-034 policy of keeping record-less (interrupted-run) sidecars in place conflicts with the frozen validator, and the gate cannot pass. The round-17 and round-18 qa-verifier sidecars each give 'record ... is not listed in stages.json review_rounds', and F-DG0-238 (raised in the round-17 qa findings sidecar) is reported as dropped from findings.json.",
+      "reproduction": "Same dry-run as F-DG0-242 (real-repo-gate-blockers.mjs, log 13, buckets RECORD-LESS and DROPPED). validateGate on the real history reports: 'docs/delivery/reviews/DG0/round-17/qa-verifier.verifications.json: qa-verifier's record for round-17 is not listed in stages.json review_rounds', the same for round-18, and 'finding F-DG0-238 raised in docs/delivery/reviews/DG0/round-17/qa-verifier.findings.json is missing from findings.json (dropped)'. Source: tools/gates/lib/rules.mjs line ~588 (collectVerifications). D-034 says import-findings now 'skips an interrupted run's record-less verifications ... the sidecars are left in place as honest evidence'. They cannot be deleted (write-once) and cannot be listed (no record exists), so the validator error is permanent.",
+      "expected": "The validator should treat a record-less sidecar the same way import-findings does. It should be ignored as non-binding evidence of an interrupted run, and never close anything, rather than being a hard gate error. Add a test for this, and decide how a finding raised only in a record-less findings sidecar is handled: either import F-DG0-238 into findings.json (it duplicates F-DG0-150, which is CLOSED_VERIFIED) or exempt record-less findings sidecars explicitly.",
+      "actual": "Fail-closed and not a mandatory violation, but a permanent DG0 gate blocker that the candidate's own tooling policy (D-034) created. High.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-20/13-real-repo-gate-blockers.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs",
+        "tools/gates/lib/rules.mjs#collectVerifications",
+        "docs/delivery/decisions.md#D-034",
+        "docs/delivery/reviews/DG0/round-17/qa-verifier.findings.json"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-20/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T10:12:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-20 QA review of candidate ef3ec3f2 (a23c4d4). High, not mandatory (fail-closed), blocks DG0 approval."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-244",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-019",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Delivery-metadata gaps that also fail gate validation (fixable without a candidate change). The round-19 test evidence of every reviewer was never committed, so the verification evidence of F-DG0-152/236/237/239 does not exist in any clone. CLOSED_VERIFIED findings have no fix_revision, or an abbreviated one: F-DG0-232 null, F-DG0-152/153 '1a99d13', F-DG0-239 '38ffd1d'. The pending F-DG0-154/155/156/240 carry '4008588'.",
+      "reproduction": "(1) `git ls-files docs/delivery/test-evidence/DG0/qa/round-19 | wc -l` gives 0, while 13 files are on disk. `git status` shows docs/delivery/test-evidence/DG0/{qa,code-security,domain}/round-19/ as untracked (round-18 evidence is tracked, committed in 38ffd1d). The dry-run gate (log 13, bucket OTHER) reports 'verification evidence is not an existing repository file' for F-DG0-236, 237, 239 (x2) and 152 (x2). (2) The same log reports 'CLOSED_VERIFIED needs a full fix_revision commit id' for F-DG0-232, 152, 153 and 239. findings.json has fix_revision null / '1a99d13' / '1a99d13' / '38ffd1d', and '4008588' for 154/155/156/240, which will fail the same way when they close.",
+      "expected": "Commit each round's reviewer test evidence together with the round's records (as was done for round 18). Record fix_revision as the full 40-hex commit id (rules.mjs checkClosure requires ^[0-9a-f]{40}$). Run the gate dry-run before the audit.",
+      "actual": "Six verification-evidence errors and four fix_revision errors in current-mode gate validation. All of them can be repaired in delivery metadata (findings.json, committing the evidence), which is outside the candidate. Medium.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-20/13-real-repo-gate-blockers.log",
+        "tools/gates/lib/rules.mjs#checkClosure"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-20/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T10:12:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-20 QA review of candidate ef3ec3f2 (a23c4d4). Medium, delivery metadata, not mandatory."
+        }
+      ]
+    }
+  ]
+}

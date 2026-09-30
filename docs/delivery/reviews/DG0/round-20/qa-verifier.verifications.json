@@ -1,0 +1,18 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-240",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced the original case and confirmed it is now rejected. (1) My independent QA20-S1 (= round-19 QA19-P1/P4: accepted-observation gate fixture, every source_commit pointer set to a non-existent 40-hex SHA) now fails in current mode with 'candidate: gate source_commit 5a1e5a1e5a is not a commit in this repository'. In round 19 it returned 0 errors. Historical mode rejects it too. (2) The same check on a --no-local copy of the real repository (HEAD ce6d9b6) with a drafted APPROVED gate: the D-036 error is absent with the real frozen commit a23c4d4. It is present when only the gate, or the gate plus the manifest and stages.json copies, point at a non-existent SHA (`validate.mjs --stage DG0`, log 12). (3) Tree ids, blob ids, abbreviated or upper-case ids and an off-branch commit with different content are all rejected in current mode (QA20-S2..S6). (4) The D-035 tolerance still holds for pruned non-gate rounds: QA20-N1 'pruned' gives 0 errors, and a present-but-different round commit is still rejected. In the real history, rounds 1-12 and 18 are absent from a fresh clone and checkReviewRounds reports no manifest error for them. QA5-N57 behaves as designed. (5) The new unit test 'D-036: a gate whose source_commit does not exist is rejected in current mode too' fails against the pre-D-036 rules.mjs (0a65201) and passes on the candidate, so it is a real regression test. The residual reachability gap (an off-branch commit with the same content) is a separate Low, F-DG0-241. It is not part of F-DG0-240's scope (a non-existent commit).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-20/10-qa20-negative-tests.log#QA20-S1",
+        "docs/delivery/test-evidence/DG0/qa/round-20/12-d036-real-repo.log",
+        "docs/delivery/test-evidence/DG0/qa/round-20/11-d036-unit-test-mutation.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs#QA20-S1",
+        "tools/gates/lib/rules.mjs#checkCandidate",
+        "tools/gates/tests/validator.test.mjs#D-036"
+      ]
+    }
+  ]
+}
