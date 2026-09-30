@@ -1,0 +1,31 @@
+// code-security-reviewer, DG0 round 28, probe SEC28-8: is a REVIEW-ROUND source_commit (stages.json review_rounds[].source_commit
+// and the round manifest's source_commit) required to be a commit object, like the gate source_commit (D-037),
+// fix_revision and head_commit_at_start (D-044)? Appended after sec28-repro.tests.mjs.txt (see run-sec28-repro.sh; run with
+// --test-name-pattern='^SEC28-8'). Uses the exported findManifest directly, because in the fixture every round shares the
+// gate's manifest (whose source_commit IS commit-typed via the gate).
+
+test("SEC28-8 round manifest source_commit = annotated TAG of the frozen commit: findManifest recompute accepts it; ancestry peels it", () => {
+  const { repo, cid, head } = buildValidRepo();
+  const tagObj = sec28Tag(repo, "sec28round", head);
+  const mrel = `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`;
+  edit(repo, mrel, (m) => (m.source_commit = tagObj));
+  const errs = [];
+  const m = findManifest(repo, "DG0", cid, errs, "SEC28-8 probe");
+  sec28Report("SEC28-8 findManifest(tag source_commit)", errs);
+  assert.equal(m.source_commit, tagObj);
+  assert.deepEqual(errs, [], "a tag-object round source_commit is accepted by findManifest (no object-type rule)");
+  // anchor 1 uses merge-base --is-ancestor, which peels the tag: the fix (head) counts as "in" the tag-named round.
+  let peels = true;
+  try { sh(repo, "merge-base", "--is-ancestor", head, tagObj); } catch { peels = false; }
+  console.log(`SEC28-8 merge-base --is-ancestor <fix> <tagObj> => ${peels ? "true (peeled)" : "false"}`);
+  assert.ok(peels);
+  // Fail-closed when the tag object is gone (a fresh clone of a repo whose tag was deleted): the object is absent,
+  // so checkClosure's anchor 1 rejects any closure verified in that round (F-DG0-169), shown by SEC27-3.
+  sh(repo, "tag", "-d", "sec28round");
+  sh(repo, "reflog", "expire", "--expire=now", "--all");
+  sh(repo, "gc", "-q", "--prune=now");
+  let present = true;
+  try { sh(repo, "cat-file", "-e", tagObj); } catch { present = false; }
+  console.log(`SEC28-8 after tag -d + gc --prune=now: tag object present=${present}`);
+  assert.equal(present, false);
+});

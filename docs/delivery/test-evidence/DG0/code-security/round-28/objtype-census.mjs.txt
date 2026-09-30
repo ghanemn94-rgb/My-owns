@@ -1,0 +1,45 @@
+// code-security-reviewer, DG0 round 28: real-repo census for D-044 (F-DG0-250). Run from the root of a disposable
+// --no-local clone: `node --input-type=module < objtype-census.mjs.txt`. For every finding with a fix_revision, every
+// DG0 run meta.json head_commit_at_start, every review round source_commit and the frozen round-28 source_commit, report
+// the git object type. Genuine records must all be `commit` (or absent only for round 18's D-034-orphaned source).
+// Also re-runs the three-anchor closure census on the round-28 candidate (anchors 1/2/3, as in round 27).
+import { execFileSync } from "node:child_process";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
+const R = process.cwd();
+const type = (s) => { try { return execFileSync("git", ["-C", R, "cat-file", "-t", String(s)], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim(); } catch { return "absent"; } };
+const anc = (a, b) => { try { execFileSync("git", ["-C", R, "merge-base", "--is-ancestor", a, b], { stdio: "ignore" }); return true; } catch { return false; } };
+const J = (p) => JSON.parse(readFileSync(p, "utf8"));
+const tally = (label, ids) => {
+  const t = {};
+  for (const [k, v] of ids) { const ty = type(v); (t[ty] ||= []).push(k); }
+  console.log(`${label}: ${ids.length} ids; ${Object.entries(t).map(([ty, ks]) => `${ty}=${ks.length}`).join(", ")}`);
+  for (const [ty, ks] of Object.entries(t)) if (ty !== "commit") console.log(`   NON-COMMIT ${ty}: ${ks.join(" ")}`);
+};
+const findings = J("docs/delivery/findings.json").findings;
+tally("findings.fix_revision", findings.filter((f) => f.fix_revision).map((f) => [f.id, f.fix_revision]));
+const runsDir = "docs/delivery/runs/DG0";
+const heads = [];
+for (const d of readdirSync(runsDir)) {
+  const p = `${runsDir}/${d}/meta.json`;
+  if (!existsSync(p)) continue;
+  const m = J(p);
+  if (typeof m.head_commit_at_start === "string" && /^[0-9a-f]{40}$/.test(m.head_commit_at_start)) heads.push([d, m.head_commit_at_start]);
+  else console.log(`   (run ${d}: head_commit_at_start=${JSON.stringify(m.head_commit_at_start)} not 40-hex)`);
+}
+tally("runs meta.head_commit_at_start (40-hex)", heads);
+const stage = J("docs/delivery/stages.json").stages.find((s) => s.id === "DG0");
+tally("stages review_rounds source_commit", stage.review_rounds.map((r) => [`round-${r.round}`, r.source_commit]));
+tally("stages candidate source_commit", [["candidate", stage.candidate.source_commit]]);
+const GATE = process.env.GATE || stage.candidate.source_commit;
+let n = 0, a1 = 0, a2 = 0, a3 = 0;
+for (const f of findings.filter((x) => x.status === "CLOSED_VERIFIED")) {
+  n++;
+  const run = f.verification.invocation_reference.run_id;
+  const rec = (() => { for (const r of stage.review_rounds) for (const rel of Object.values(r.records)) { if (!existsSync(rel)) continue; const x = J(rel); if (x.invocation_reference.run_id === run) return [r, x]; } return [null, null]; })();
+  const round = rec[0];
+  if (!round || type(round.source_commit) !== "commit" || !anc(f.fix_revision, round.source_commit)) a1++;
+  const head = J(`${runsDir}/${run}/meta.json`).head_commit_at_start;
+  if (!anc(f.fix_revision, head)) a2++;
+  if (!anc(f.fix_revision, GATE)) a3++;
+}
+console.log(`closure census vs gate candidate ${GATE.slice(0, 10)}: CLOSED_VERIFIED=${n}; anchor1 fail=${a1}; anchor2 fail=${a2}; anchor3 fail=${a3}`);

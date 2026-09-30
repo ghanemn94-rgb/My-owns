@@ -1,0 +1,107 @@
+// code-security-reviewer, DG0 round 28 (T-DG0-REV-SEC-R28): D-044 / F-DG0-250 commit-object requirement, forged with
+// real annotated-tag objects. Appended AFTER the round-24..27 fragments to a DISPOSABLE copy of
+// tools/gates/tests/validator.test.mjs (reuses its fixture helpers). See run-sec28-repro.sh.
+// SEC28_BASELINE=1 runs the same forgeries against the round-27 candidate (49b5ad7, pre-D-044) and asserts they were
+// ACCEPTED there (0 errors), proving that the D-044 checks, not some other rule, reject them at 331407e.
+
+const SEC28_BASELINE = process.env.SEC28_BASELINE === "1";
+const sec28Report = (label, errs) => console.log(`${label} errors: ${errs.length}${errs.length ? "\n  " + errs.join("\n  ") : ""}`);
+// On the candidate: at least one error, and EVERY error matches `re` (the forgery is rejected for exactly that reason).
+// On the baseline: the forgery passed (0 errors).
+const sec28Judge = (label, errs, re) => {
+  sec28Report(label, errs);
+  if (SEC28_BASELINE) return assert.deepEqual(errs, [], `${label}: expected the pre-D-044 baseline to accept the forgery`);
+  assert.ok(errs.length > 0, `${label}: expected a rejection`);
+  for (const e of errs) assert.ok(re.test(e), `${label}: unexpected error ${e}`);
+};
+const sec28Tag = (repo, name, target) => {
+  sh(repo, "tag", "-a", name, "-m", `annotated ${name}`, target);
+  const obj = sh(repo, "rev-parse", name);
+  assert.equal(sh(repo, "cat-file", "-t", obj), "tag");
+  assert.equal(sh(repo, "rev-parse", `${obj}^{commit}`), sh(repo, "rev-parse", `${target}^{commit}`));
+  return obj;
+};
+
+test("SEC28-0 baseline: the stock fixture passes with 0 errors", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  sec28Report("SEC28-0", errs);
+  assert.deepEqual(errs, []);
+});
+
+test("SEC28-1 fix_revision = annotated TAG object peeling to the genuine fix commit -> rejected (D-044 checkClosure)", () => {
+  const { repo, head } = buildValidRepo();
+  const tagObj = sec28Tag(repo, "sec28fix", head);
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = tagObj));
+  approveAndCommit(repo);
+  sec28Judge("SEC28-1", validateGate(repo, "DG0"), /F-DG0-101.*fix [0-9a-f]{10} is a tag object, not a commit; a fix_revision must name the fix commit itself/);
+});
+
+test("SEC28-2 the VERIFYING run's head_commit_at_start = annotated TAG object peeling to the real start commit -> rejected (D-044 checkInvocation)", () => {
+  const { repo, records } = buildValidRepo();
+  const run = get(repo, records["code-security-reviewer"]).invocation_reference.run_id;
+  const start = get(repo, `docs/delivery/runs/DG0/${run}/meta.json`).head_commit_at_start;
+  const tagObj = sec28Tag(repo, "sec28head", start);
+  edit(repo, `docs/delivery/runs/DG0/${run}/meta.json`, (m) => (m.head_commit_at_start = tagObj));
+  approveAndCommit(repo);
+  // Both the gate review binding and the closure's verification binding call checkInvocation on this run.
+  sec28Judge("SEC28-2", validateGate(repo, "DG0"), /invocation .*code-security-reviewer.*started from [0-9a-f]{10}, a tag object, not a commit$/);
+});
+
+test("SEC28-3 a NON-verifying reviewer run (domain-reviewer) with a TAG head_commit_at_start -> rejected", () => {
+  const { repo, records } = buildValidRepo();
+  const run = get(repo, records["domain-reviewer"]).invocation_reference.run_id;
+  const start = get(repo, `docs/delivery/runs/DG0/${run}/meta.json`).head_commit_at_start;
+  const tagObj = sec28Tag(repo, "sec28dom", start);
+  edit(repo, `docs/delivery/runs/DG0/${run}/meta.json`, (m) => (m.head_commit_at_start = tagObj));
+  approveAndCommit(repo);
+  sec28Judge("SEC28-3", validateGate(repo, "DG0"), /invocation .*domain-reviewer.*started from [0-9a-f]{10}, a tag object, not a commit$/);
+});
+
+test("SEC28-4 fix_revision = NESTED tag (tag of a tag) -> rejected", () => {
+  const { repo, head } = buildValidRepo();
+  sec28Tag(repo, "sec28inner", head);
+  const outer = sec28Tag(repo, "sec28outer", "sec28inner");
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = outer));
+  approveAndCommit(repo);
+  sec28Judge("SEC28-4", validateGate(repo, "DG0"), /F-DG0-101.*is a tag object, not a commit/);
+});
+
+test("SEC28-5 standing D-037/F-DG0-241: gate source_commit = annotated TAG of the frozen commit -> rejected (candidate, both baseline and candidate)", () => {
+  const { repo, head } = buildValidRepo();
+  const tagObj = sec28Tag(repo, "sec28gate", head);
+  editGate(repo, (g) => (g.source_commit = tagObj));
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  sec28Report("SEC28-5", errs);
+  assert.ok(errs.some((e) => /candidate: gate source_commit [0-9a-f]{10} is not a commit object in this repository \(tag\)/.test(e)));
+});
+
+test("SEC28-6 non-commit ids / malformed ids as fix_revision: TREE, BLOB, UPPERCASE hex -> each rejected (both baseline and candidate)", () => {
+  for (const [label, pick, re] of [
+    ["SEC28-6a tree", (repo, head) => sh(repo, "rev-parse", `${head}^{tree}`), /F-DG0-101.*is not a commit present in this repository/],
+    ["SEC28-6b blob", (repo, head) => sh(repo, "rev-parse", `${head}:src/app.txt`), /F-DG0-101.*is not a commit present in this repository/],
+    ["SEC28-6c uppercase", (repo, head) => head.toUpperCase(), /F-DG0-101.*CLOSED_VERIFIED needs a full fix_revision commit id/],
+  ]) {
+    const { repo, head } = buildValidRepo();
+    const id = pick(repo, head);
+    edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = id));
+    approveAndCommit(repo);
+    const errs = validateGate(repo, "DG0");
+    sec28Report(label, errs);
+    assert.ok(errs.some((e) => re.test(e)), `${label}: expected ${re}`);
+  }
+});
+
+test("SEC28-7 no false positive: a LIGHTWEIGHT tag resolves to the commit id itself and the gate still passes", () => {
+  const { repo, head } = buildValidRepo();
+  sh(repo, "tag", "sec28light", head);
+  const id = sh(repo, "rev-parse", "sec28light");
+  assert.equal(id, head);
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = id));
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  sec28Report("SEC28-7", errs);
+  assert.deepEqual(errs, []);
+});

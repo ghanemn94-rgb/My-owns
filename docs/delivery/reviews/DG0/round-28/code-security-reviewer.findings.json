@@ -1,0 +1,32 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-171",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-044 claims every commit-id field the gate depends on must be a commit object, but a review round's source_commit (stages.json review_rounds[].source_commit and the round manifest) still accepts an annotated-tag object id",
+      "reproduction": "Candidate 331407e (sha256:1af91e8f...). D-044 (docs/delivery/decisions.md:39) says the change closes 'the whole \"tag object id where a commit is required\" class in one pass' and lists 'every commit-id field the gate depends on'. The gate source_commit (rules.mjs:966, D-037), fix_revision (rules.mjs:744) and head_commit_at_start (rules.mjs:399) are type-checked. A review round's source_commit is not: findManifest recomputes the round manifest with manifestFromRef(repo, m.source_commit, ...) (rules.mjs:918), which peels a tag to its tree; checkReviewRounds (rules.mjs:774-775) only compares the manifest's source_commit with stages.json; and checkClosure's anchor 1 uses commitPresent(round.source_commit) (cat-file -e <sha>^{commit}, which peels) and isAncestor (merge-base --is-ancestor, which peels) at rules.mjs:750-752. Probe SEC28-8 (test-evidence/DG0/code-security/round-28/sec28b-roundsource.tests.mjs.txt, run in a disposable --no-local clone at 331407e): in the stock fixture, `git tag -a sec28round <frozen commit>` gives a tag object; a round manifest with source_commit set to that tag id makes findManifest return 0 errors, and `merge-base --is-ancestor <fix> <tag>` is true (peeled). Not reachable through the tooling: candidate.mjs --freeze writes `git rev-parse HEAD` (candidate.mjs:49/68/71), so only a hand-forged freeze could store a tag id. The gate ROUND can't hold one either, because its manifest source_commit must equal the commit-typed gate source_commit. The real repository is clean: all 27 resolvable round source_commits are commit objects; round 18 is the known D-034/D-035 absent one (objtype-census.log).",
+      "expected": "Consistent with D-044's stated scope: every commit-id field that a gate decision depends on, including review_rounds[].source_commit and the round manifest's source_commit, must be a commit object (objectType === 'commit'), with a tag rejected as for the gate source_commit. Otherwise D-044 should say that round source_commits are excluded, and why.",
+      "actual": "A tag-object round source_commit is accepted by findManifest, checkReviewRounds and checkClosure anchor 1: each peels it to the commit it names. This fails closed rather than open. The tag only aliases the same commit, so the content recompute and the ancestry anchors judge the correct commit. If the tag is deleted, a fresh clone lacks the tag object (SEC28-8: after tag -d + gc it's absent), and anchor 1 then rejects any closure verified in that round (F-DG0-169, SEC27-3). The residual is the same ref-dependent traceability-pointer inconsistency that F-DG0-250 fixed for fix_revision, plus the overstated completeness claim in D-044. It is not a gate bypass.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-28/sec28b-roundsource.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-28/sec28b-roundsource.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-28/objtype-census.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-28/sec28-repro.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-28/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T15:05:00Z",
+          "status": "OPEN",
+          "note": "Raised in round 28 (code-security-reviewer). Proposed remediation (a later stage is fine): in checkReviewRounds, require objectType(repo, r.source_commit) to be 'commit' whenever the object is present (the D-035 absent case stays tolerated), and correct D-044's scope sentence. The reporter concurs with accepting it as an observation (see code-security-reviewer.verifications.json); the release-auditor must concur too."
+        }
+      ]
+    }
+  ]
+}

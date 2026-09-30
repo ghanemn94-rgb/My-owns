@@ -1,0 +1,15 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-171",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Reporter's concurrence that this can be accepted as an observation. The release-auditor must concur in its own sidecar before it takes effect. F-DG0-171 is Low, and mandatory_violation is false. A review round's source_commit is not required to be a commit object, so a hand-forged annotated-tag id there is peeled and accepted. Why an observation and not a blocker, against docs/delivery/threat-model.md: (1) It is not reachable through the tooling. candidate.mjs --freeze always writes `git rev-parse HEAD`, a commit, and only a hand-edited write-once freeze could store a tag. (2) The gate round can't hold a tag: its manifest source_commit must equal the gate source_commit, which is commit-typed (D-037). (3) It fails closed. The tag aliases the same commit, so the content recompute and ancestry anchors judge the right commit. A deleted tag makes the round absent in a fresh clone, and anchor 1 then rejects any closure verified there (F-DG0-169). (4) The real repository is clean: every resolvable round source_commit, all 118 fix_revisions and all 100 resolvable head_commit_at_start ids are commit objects (objtype-census.log). What remains is a consistency gap in a traceability pointer, plus D-044's overstated scope sentence. If the orchestrator fixes it instead (objectType check in checkReviewRounds when the object is present; D-044 wording), I will re-verify it as CLOSED_VERIFIED in a later round.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-28/sec28b-roundsource.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-28/objtype-census.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-28/sec28-repro.log"
+      ]
+    }
+  ]
+}
