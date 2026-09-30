@@ -1,0 +1,20 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-249",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced, then shown fixed. Reproduced: my round-24 suite run against the pre-D-040 round-23 candidate (6438e20) ACCEPTS the exploit. QA24-N1 (the QA23-P1 shape: a self-declared absent round-3, a genuine run whose head holds the manifest but not the fix, and the fix in the gate candidate) and QA24-N2 (the fix committed AFTER the verifier's run started, still in the gate candidate, with the round-3 source_commit forged absent and, separately, genuine) are both ACCEPTED there. Fixed: on candidate f0f3a93a (6db3b83), in a complete --no-local clone, QA24-N1 and QA24-N2 (both variants) are REJECTED with \"is not in the verifying run's starting history\" as the only non-harness error; the gate-ancestry check does not fire because the fix IS in the gate candidate. The round-23 probe QA23-P1, re-run unchanged, now reports REJECTED. Boundaries are correct: fix == run head and fix a strict ancestor of it are ACCEPTED (QA24-N3); a fix only on the run's side branch is rejected by the gate check alone (QA24-N4); the head can never be a tree id, upper-case, prefix or pre-manifest commit (QA24-N6), so the vhead guard in checkClosure cannot be bypassed. The unit tests 'D-039/D-040 / F-DG0-164/166/246/249' and 'F-DG0-110 / F-DG0-204' pass (62/62). On the complete real history, all 110 CLOSED_VERIFIED fix_revisions are present and ancestors of their verifying run's head_commit_at_start, HEAD and the gate candidate; the dry-run shows no starting-history error. The fix commit 81f036d is an ancestor of this run's head (79fb0f8) and of the candidate (6db3b83).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-24/13-qa24-negative-suite.log",
+        "docs/delivery/test-evidence/DG0/qa/round-24/14-qa24-suite-on-pre-D040-baseline.log",
+        "docs/delivery/test-evidence/DG0/qa/round-24/10-r23-suite-rerun.log",
+        "docs/delivery/test-evidence/DG0/qa/round-24/02-gates-selftests.log",
+        "docs/delivery/test-evidence/DG0/qa/round-24/21-fix-revision-integrity-nl.log",
+        "docs/delivery/test-evidence/DG0/qa/round-24/08-real-repo-gate-blockers-nl.log",
+        "docs/delivery/test-evidence/DG0/qa/round-24/11-tolerance-census.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r24.test.mjs"
+      ]
+    }
+  ]
+}
