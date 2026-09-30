@@ -1,7 +1,19 @@
+import { createHash } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { evaluateGate, waiverIsEffective, CriterionState, CriterionEvidenceLink, GateEvaluation, GateAssessmentStatus, ReassessmentReason, notFound } from '@hub/domain';
+import {
+  evaluateGate,
+  gateReviewBasis,
+  waiverIsEffective,
+  CriterionState,
+  CriterionEvidenceLink,
+  GateEvaluation,
+  GateAssessmentStatus,
+  GateReviewRecord,
+  ReassessmentReason,
+  notFound,
+} from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { Clock } from '../../platform/clock';
 
@@ -24,6 +36,8 @@ export interface EvidenceCounts {
   activeLinkIds: string[];
   /** Every link of the criterion with its status and timestamps (evidence-change reassessment). */
   links: CriterionEvidenceLink[];
+  /** Every link with its row version (the gate-level review basis — DOM-P2-16). */
+  linkVersions: { id: string; status: string; version: number }[];
 }
 
 /** Stored reassessment flags on a decided cycle's `evaluation` JSON (AT-14, DOM-P2-05). */
@@ -36,7 +50,12 @@ export interface ReassessmentFlags {
   upstreamGateKeys: string[];
 }
 
-export const NO_EVIDENCE: EvidenceCounts = { active: 0, conflicting: 0, conflictingLinkIds: [], submitters: [], verified: 0, activeLinkIds: [], links: [] };
+export const NO_EVIDENCE: EvidenceCounts = { active: 0, conflicting: 0, conflictingLinkIds: [], submitters: [], verified: 0, activeLinkIds: [], links: [], linkVersions: [] };
+
+/** The gate-level review recorded on a cycle (DOM-P2-16). */
+export function reviewOf(a: AssessmentRow): GateReviewRecord {
+  return { outcome: a.reviewOutcome ?? null, reviewedBy: a.reviewedBy ?? null, basis: a.reviewBasis ?? null };
+}
 
 /**
  * Everything needed to evaluate a project's gates in a handful of queries (runs inside the caller's transaction and
@@ -134,6 +153,23 @@ export class GateBundle {
     return evaluateGate({ criteria: this.criterionStates(gate, current.id), prerequisites: this.prerequisites(gate) });
   }
 
+  /**
+   * SHA-256 of the current cycle's criterion state (domain gateReviewBasis — DOM-P2-16): criterion definition versions, the
+   * cycle's criterion assessment row versions, every evidence link and every waiver of the gate's criteria. A gate
+   * endorsement is current only while this value is unchanged.
+   */
+  reviewBasis(gate: GateRow): string {
+    const cur = this.current(gate.id);
+    const crits = this.criteriaOf(gate.id);
+    const ids = new Set(crits.map((c) => c.id));
+    const canonical = gateReviewBasis({
+      criteria: crits.map((c) => ({ id: c.id, version: c.version, assessmentVersion: this.ca(cur.id, c.id)?.version ?? null })),
+      evidence: crits.flatMap((c) => this.evidenceOf(c.id).linkVersions.map((l) => ({ id: l.id, criterionId: c.id, status: l.status, version: l.version }))),
+      waivers: this.waivers.filter((w) => ids.has(w.targetId)).map((w) => ({ id: w.id, criterionId: w.targetId, status: w.status, version: w.version })),
+    });
+    return createHash('sha256').update(canonical).digest('hex');
+  }
+
   /** Transitive downstream gates (those listing this gate as a prerequisite, directly or indirectly). */
   downstreamOf(gateKey: string): GateRow[] {
     const out = new Map<string, GateRow>();
@@ -193,16 +229,17 @@ export class GateLoader {
           .from(schema.criterionAssessment)
           .where(and(eq(schema.criterionAssessment.projectId, projectId), inArray(schema.criterionAssessment.assessmentId, ids)))
       : [];
-    const ev = await tx.execute<{ id: string; target_id: string; status: CriterionEvidenceLink['status']; added_by: string; reviewed_by: string | null; created_at: Date | string; reviewed_at: Date | string | null }>(sql`
-      select id::text as id, target_id::text as target_id, status, added_by::text as added_by, reviewed_by::text as reviewed_by, created_at, reviewed_at
+    const ev = await tx.execute<{ id: string; target_id: string; status: CriterionEvidenceLink['status']; added_by: string; reviewed_by: string | null; created_at: Date | string; reviewed_at: Date | string | null; version: number }>(sql`
+      select id::text as id, target_id::text as target_id, status, added_by::text as added_by, reviewed_by::text as reviewed_by, created_at, reviewed_at, version
         from evidence_link
        where project_id = ${projectId} and target_type = 'gate_criterion'
        order by created_at, id`);
     const evidence = new Map<string, EvidenceCounts>();
     const ms = (v: Date | string | null) => (v === null ? null : new Date(v).getTime());
     for (const r of ev.rows) {
-      const e = evidence.get(r.target_id) ?? { ...NO_EVIDENCE, conflictingLinkIds: [], submitters: [], activeLinkIds: [], links: [] };
+      const e = evidence.get(r.target_id) ?? { ...NO_EVIDENCE, conflictingLinkIds: [], submitters: [], activeLinkIds: [], links: [], linkVersions: [] };
       e.links.push({ id: r.id, status: r.status, createdAtMs: ms(r.created_at)!, reviewedAtMs: ms(r.reviewed_at) });
+      e.linkVersions.push({ id: r.id, status: r.status, version: Number(r.version) });
       if (r.status === 'active') {
         e.active++;
         e.activeLinkIds.push(r.id);

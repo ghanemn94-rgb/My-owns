@@ -1,5 +1,5 @@
 {
-  "id": "347b8a8e-5598-40a9-9355-d6ff1cd3ca8e",
+  "id": "7a218147-004a-4c14-8625-7ed992df08cc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -8800,6 +8800,49 @@
           "primaryKey": false,
           "notNull": false
         },
+        "started_by": {
+          "name": "started_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed_by": {
+          "name": "reviewed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_outcome": {
+          "name": "review_outcome",
+          "type": "gate_review_outcome",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_note": {
+          "name": "review_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_basis": {
+          "name": "review_basis",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "reopened_reason": {
           "name": "reopened_reason",
           "type": "text",
@@ -8936,7 +8979,16 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "gate_assessment_review_ck": {
+          "name": "gate_assessment_review_ck",
+          "value": "(\"gate_assessment\".\"review_outcome\" is null and \"gate_assessment\".\"reviewed_by\" is null and \"gate_assessment\".\"reviewed_at\" is null and \"gate_assessment\".\"review_basis\" is null and \"gate_assessment\".\"review_note\" is null)\n       or (\"gate_assessment\".\"review_outcome\" is not null and \"gate_assessment\".\"reviewed_by\" is not null and \"gate_assessment\".\"reviewed_at\" is not null and \"gate_assessment\".\"review_basis\" is not null and length(trim(\"gate_assessment\".\"review_note\")) > 0)"
+        },
+        "gate_assessment_started_ck": {
+          "name": "gate_assessment_started_ck",
+          "value": "(\"gate_assessment\".\"started_by\" is null) = (\"gate_assessment\".\"started_at\" is null)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.gate_criterion": {
@@ -25390,6 +25442,14 @@
         "rejected",
         "reopened",
         "superseded"
+      ]
+    },
+    "public.gate_review_outcome": {
+      "name": "gate_review_outcome",
+      "schema": "public",
+      "values": [
+        "endorse",
+        "return"
       ]
     },
     "public.go_no_go": {

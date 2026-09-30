@@ -22,6 +22,17 @@ const DEMO_REVIEWER: Record<string, string> = {
 };
 
 /**
+ * Demo persona holding each gate OWNER role in the DC demo project (DOM-P2-16): the owner starts and submits the cycle; the
+ * workstream lead owns through the workstream it leads (Technology, WS06).
+ */
+const DEMO_OWNER: Record<string, string> = {
+  secretary_cpmo: 'secretary',
+  workstream_lead: 'tech.lead',
+  legal_restricted: 'legal',
+  project_manager: 'pm',
+};
+
+/**
  * Demo sandbox scenario for gates (idempotent; everything goes through the gates services so policy, audit and outbox
  * apply). Tolerant of absent governance/documents seeds:
  *  - evidence is linked through the documents module (note evidence, clearly labelled demo) where a criterion has none —
@@ -30,6 +41,8 @@ const DEMO_REVIEWER: Record<string, string> = {
  *    ready_for_decision (a gate approval without a final decision is refused by the server, AT-04).
  * Scenario: G0 approved (or ready), G1 in assessment with some criteria met, G2 in assessment, G5 in assessment in
  * parallel with separation (AT-11), one REJECTED waiver request on a non-waivable criterion (AT-13), dimensions recomputed.
+ * Gate roles (DOM-P2-16): each cycle is started by the persona holding the gate's OWNER role; G0 is endorsed by its gate
+ * reviewer (the PM) and submitted by its owner (the secretary), never by the reviewer; the sponsor decides.
  */
 export const gatesSeed: ModuleSeed = {
   name: 'gates',
@@ -52,10 +65,15 @@ export const gatesSeed: ModuleSeed = {
       if (!c) throw new Error(`criterion ${critKey} missing`);
       return { g, c };
     };
+    const ownerOf = (role: string) => {
+      const persona = DEMO_OWNER[role];
+      if (!persona) throw new Error(`no demo persona holds gate owner role ${role}`);
+      return persona;
+    };
     const start = async (key: string) => {
       const g = await detail(key);
       if (g.assessment.status === 'not_started') {
-        await asUser('pm', (ctx) => gates.startAssessment(ctx, pid, g.id, { expectedVersion: g.assessment.version, note: 'Demo sandbox scenario' }));
+        await asUser(ownerOf(g.ownerRole), (ctx) => gates.startAssessment(ctx, pid, g.id, { expectedVersion: g.assessment.version, note: 'Demo sandbox scenario' }));
       }
     };
     /**
@@ -80,7 +98,16 @@ export const gatesSeed: ModuleSeed = {
     for (const k of ['G0-C01', 'G0-C02', 'G0-C03', 'G0-C04', 'G0-C05', 'G0-C06', 'G0-C07']) await meet('G0', k);
     let g0 = await detail('G0');
     if (g0.assessment.status === 'in_assessment' && g0.evaluation.ready) {
-      await asUser('pm', (ctx) => gates.markReady(ctx, pid, g0.id, { expectedVersion: g0.assessment.version, note: 'Demo: all mandatory G0 criteria met' }));
+      // Gate-level review by the gate's reviewer role (not the owner who started the cycle), then the owner submits.
+      if (g0.review.state !== 'endorsed') {
+        const reviewer = DEMO_REVIEWER[g0.reviewerRole];
+        if (!reviewer) throw new Error(`no demo persona holds gate reviewer role ${g0.reviewerRole}`);
+        await asUser(reviewer, (ctx) =>
+          gates.reviewAssessment(ctx, pid, g0.id, { expectedVersion: g0.assessment.version, outcome: 'endorse', note: 'Demo: G0 assessment reviewed against the (synthetic) evidence — endorsed' }),
+        );
+        g0 = await detail('G0');
+      }
+      await asUser(ownerOf(g0.ownerRole), (ctx) => gates.markReady(ctx, pid, g0.id, { expectedVersion: g0.assessment.version, note: 'Demo: all mandatory G0 criteria met' }));
       g0 = await detail('G0');
     }
     if (g0.assessment.status === 'ready_for_decision') {

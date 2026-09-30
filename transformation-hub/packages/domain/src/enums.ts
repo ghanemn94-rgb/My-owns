@@ -182,6 +182,13 @@ export type GateAssessmentStatus = (typeof GATE_ASSESSMENT_STATUSES)[number];
 export const CRITERION_STATUSES = ['unmet', 'evidence_submitted', 'met', 'waived', 'not_applicable', 'conflicting'] as const;
 export type CriterionStatus = (typeof CRITERION_STATUSES)[number];
 
+/** Gate-level review of an assessment cycle by the gate's reviewer role (DOM-P2-16, REQ-LCY-010). */
+export const GATE_REVIEW_OUTCOMES = ['endorse', 'return'] as const;
+export type GateReviewOutcome = (typeof GATE_REVIEW_OUTCOMES)[number];
+/** Derived review state of a cycle: `stale` = endorsed, but a criterion changed after the endorsement. */
+export const GATE_REVIEW_STATES = ['not_reviewed', 'endorsed', 'returned', 'stale'] as const;
+export type GateReviewState = (typeof GATE_REVIEW_STATES)[number];
+
 export const WAIVER_STATUSES = ['requested', 'approved', 'rejected', 'withdrawn'] as const;
 
 export const STATUS_DIMENSION_KEYS = ['incorporation', 'perimeter_transfer', 'operational_readiness', 'jv_transaction'] as const;
