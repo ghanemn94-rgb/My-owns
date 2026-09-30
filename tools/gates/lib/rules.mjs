@@ -595,14 +595,9 @@ function roundEntry(stage, roundDir) {
 }
 
 // Whether a commit object is present in this repository. Gate validation runs on a COMPLETE clone (validateGate refuses
-// a shallow one, F-DG0-160), so every commit a genuine record references is present. The ONLY absence tolerance is
-// findManifest's (D-035): a superseded review round's write-once manifest may name a `source_commit` that no longer
-// resolves (round 18 was rewritten by the D-034 write-once repair), and that is accepted because the manifest's entries
-// must still hash to its `candidate_id` -- a content-preserving check, not a skipped one. checkClosure and
-// checkInvocation are STRICT (D-039..D-041): a CLOSED_VERIFIED `fix_revision` and a run's `head_commit_at_start` must be
-// present, and the fix must be an ancestor of THREE anchors -- the verifying round's frozen source_commit (when it
-// resolves; this findManifest tolerance covers the one case it may not), the verifying run's real head, and the gate
-// candidate -- so no single forgeable metadata value decides a closure (D-041, F-DG0-166/168/249).
+// a shallow one, F-DG0-160), so every commit a genuine record references is present. The single absence tolerance is
+// findManifest's (D-035), documented at that function; checkClosure and checkInvocation are strict and describe their
+// own anchoring. This helper only answers presence -- it states no policy, so there is nothing here to drift.
 function commitPresent(repo, sha) {
   try {
     execFileSync("git", ["-C", repo, "cat-file", "-e", `${sha}^{commit}`], { stdio: "ignore" });
