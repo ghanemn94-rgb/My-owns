@@ -571,6 +571,13 @@ export const BaselineDto = z.object({
   proposedBy: Uuid.nullable(),
   proposedByName: z.string().nullable(),
   approvedBy: Uuid.nullable(),
+  approvedByName: z.string().nullable(),
+  /**
+   * Project-level roles the approver held in this project AT the approval time (memberships valid then and not revoked
+   * by then) — the "approver role" of Program Overview & Charter (REQ-UX-006). Empty when not approved, or when none is
+   * readable by the caller.
+   */
+  approverRoles: z.array(z.enum(ROLE_KEYS)),
   approvedAt: z.string().nullable(),
   rejectedBy: Uuid.nullable(),
   rejectedAt: z.string().nullable(),

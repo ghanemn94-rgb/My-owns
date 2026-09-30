@@ -1321,6 +1321,8 @@ export const governanceRoutes = registerRoutes({
     // Default order: newest first.
     query: PageQuery.extend({
       status: z.enum(ESCALATION_STATUSES).optional(),
+      /** `true` = still awaiting a resolution (open or decision requested) — the Committee Hub tile's filter (REQ-UX-024). */
+      unresolved: z.enum(['true', 'false']).optional(),
       sourceType: z.enum(ESCALATION_SOURCE_TYPES).optional(),
       sourceId: Uuid.optional(),
       sort: SortParam(['code', 'title', 'decisionDeadline', 'status', 'createdAt']),

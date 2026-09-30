@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, count, desc, eq, ilike, inArray, lt, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, inArray, lt, not, or, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
   ACTION_ITEM_MACHINE,
@@ -28,6 +28,8 @@ type ActionStatus = (typeof ACTION_ITEM_STATUSES)[number];
 type EscalationStatus = (typeof ESCALATION_STATUSES)[number];
 type EscalationRow = typeof schema.escalation.$inferSelect;
 type EscalationSource = 'decision' | 'issue' | 'risk' | 'action_item' | 'meeting' | 'gate_definition' | 'other';
+/** Escalations still awaiting a resolution (not resolved or withdrawn). */
+const UNRESOLVED_ESCALATION_STATUSES: EscalationStatus[] = ['open', 'decision_requested'];
 
 /** Committee actions (owner + due date → report done with evidence → verified closure) and escalations (spec §4.2). */
 @Injectable()
@@ -209,10 +211,21 @@ export class ActionsService {
   async listEscalations(
     ctx: RequestContext,
     projectId: string,
-    q: { page: number; pageSize: number; q?: string; status?: EscalationStatus; sourceType?: EscalationSource; sourceId?: string; sort?: RouteInput<typeof governanceRoutes.listEscalations>['query']['sort'] },
+    q: {
+      page: number;
+      pageSize: number;
+      q?: string;
+      status?: EscalationStatus;
+      unresolved?: 'true' | 'false';
+      sourceType?: EscalationSource;
+      sourceId?: string;
+      sort?: RouteInput<typeof governanceRoutes.listEscalations>['query']['sort'];
+    },
   ) {
     const e = schema.escalation;
     const d = schema.decision;
+    // Awaiting a resolution: the Committee Hub counts these and opens this filtered list (REQ-UX-024).
+    const unresolved = inArray(e.status, UNRESOLVED_ESCALATION_STATUSES);
     const where = and(
       eq(e.projectId, projectId),
       this.policy.visibilitySql(ctx, projectId, {}),
@@ -222,6 +235,7 @@ export class ActionsService {
       // Escalations about a decision are visible only to readers cleared for that decision.
       or(sql`${e.sourceType} <> 'decision'`, this.policy.visibilitySql(ctx, projectId, { classification: d.classification })),
       q.status ? eq(e.status, q.status) : undefined,
+      q.unresolved === 'true' ? unresolved : q.unresolved === 'false' ? not(unresolved) : undefined,
       q.sourceType ? eq(e.sourceType, q.sourceType) : undefined,
       q.sourceId ? eq(e.sourceId, q.sourceId) : undefined,
       q.q ? or(ilike(e.title, likeContains(q.q)), ilike(e.code, likeContains(q.q))) : undefined,
