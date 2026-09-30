@@ -1,0 +1,71 @@
+{
+ "findings": [
+  {
+   "id": "F-DG0-154",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-007",
+   "severity": "Medium",
+   "mandatory_violation": false,
+   "title": "Threat-model residual 7 misstates its own scope: the /proc/sys tunables a file tool can reach are HOST-GLOBAL, not 'of its own run', and the claim that /proc/sys is read-only for the agent's shell is not supported by the shell layer's mount flags. The residual the user accepted (D-030 option A) is therefore larger than disclosed.",
+   "reproduction": "Read-only assessment; no /proc/sys write was performed, as the assignment requires. (1) tools/agents/agent_sandbox.py:154-155 creates only an IPC namespace (--unshare-ipc) and binds the host procfs read-write (--bind /proc /proc). There is no user, net, UTS or PID namespace, so apart from the IPC-namespaced entries every /proc/sys entry the process-sandbox layer sees is the host kernel's single global tunable. docs/delivery/threat-model.md:60 (residual 7) instead says a file tool could write 'a /proc/sys entry of its own run'. It also says D-033 closed a 'cross-run amplification (reaching another run's /proc/<peer>/sys through /proc/<peer>/root)', but every run binds the same host /proc, so there is no per-run /proc/sys whose reach D-033 could have narrowed. The own-run framing, and the conclusion drawn from it ('availability / host-tunable risk, not repository or gate integrity'), rest on a per-run scope that does not exist. (2) threat-model.md:60 and agent_sandbox.py:149-150 say /proc/sys is 'read-only ... for the agent's shell (the Claude Code Bash sandbox's user namespace)'. In this run's own shell layer, /proc/self/mountinfo shows the topmost /proc mount as 'rw,nosuid,nodev,noexec' and the UTS namespace as the initial one (uts:[4026531838]), and access(2) reports /proc/sys/kernel/hostname writable. Any refusal there would have to come from user-namespace ownership checks, not from a read-only mount. The document does not establish that, and it cannot be confirmed without a write. Evidence: docs/delivery/test-evidence/DG0/code-security/round-19/05-residual7-readonly.log.",
+   "expected": "Residual 7 accurately states that the reachable /proc/sys tunables are host-global (shared with the host and every concurrent run, except the IPC-namespaced entries), states what protects the shell layer (and shows it, for example by the operator running a controlled test), and bases its integrity conclusion on that real scope. The user re-confirms option A on the corrected text, or a narrower control is adopted.",
+   "actual": "Residual 7 describes an 'own-run' scope and a closed 'cross-run /proc/<peer>/sys amplification' that do not match the mount and namespace configuration, and asserts a read-only shell /proc/sys that the shell layer's mount flags do not show. The acceptance of F-DG0-149 as an observation is premised on this text.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-19/05-residual7-readonly.log",
+    "tools/agents/agent_sandbox.py#L154-L155",
+    "docs/delivery/threat-model.md#residual-7"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-19/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {"at": "2026-09-30T09:28:18Z", "status": "OPEN", "note": "Raised in round 19 by code-security-reviewer. Proposal: correct residual 7 (host-global scope; remove the '/proc/<peer>/sys amplification' claim; state and demonstrate the actual shell-layer protection), have the user re-decide D-030 option A on the corrected text, and spike a narrower control for the process-sandbox layer (for example a user namespace that does not map to host uid 0 for the claude process, or restricting file-tool writes to the role's areas at the kernel level) that keeps the reviewers' nested bwrap working."}
+   ]
+  },
+  {
+   "id": "F-DG0-155",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-022",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "D-035's tolerance of a missing manifest source_commit is not limited to superseded rounds: it also applies to the gate's own round, and checkCandidate in current mode never checks gate.source_commit, so a non-existent gate source_commit passes current-mode validation",
+   "reproduction": "tools/gates/lib/rules.mjs:808-822 (findManifest) suppresses the recompute error whenever `git cat-file -e <source_commit>^{commit}` fails, for every round, including the round whose candidate is the gate candidate. The code comment and D-035 describe it as a 'superseded (non-gate) review round' tolerance. checkCandidate (rules.mjs:828-857) recomputes from the working tree in current mode and only compares manifest.source_commit with gate.source_commit (line 842), never checking that the commit exists. Reproduction in a disposable clone at 3ffb28c (docs/delivery/test-evidence/DG0/code-security/round-19/r19-d035-gate-round-repro.mjs, log 01-d035-gate-round-repro.log): with the round-19 (gate) manifest's source_commit set to ffff…ffff, findManifest returns 0 errors (A1) and checkCandidate(mode=current) returns 0 errors (B). Only checkCandidate(mode=historical) rejects it (C). A reachable but wrong commit is still rejected (A2). In a stage whose findings carry no fix_revision, nothing in current mode catches it; the rules.mjs:646 ancestry check does so only indirectly.",
+   "expected": "The missing-commit tolerance applies only to rounds whose candidate is not the gate candidate (r.candidate_id !== gate/stage.candidate.candidate_id). Current-mode gate validation requires gate.source_commit to exist and be an ancestor of HEAD.",
+   "actual": "A gate record whose traceability commit does not exist passes current-mode validation. Content identity is unaffected: the working-tree recompute still binds the candidate, and historical mode, which CLAUDE.md requires before the next stage, rejects it.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-19/r19-d035-gate-round-repro.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-19/01-d035-gate-round-repro.log",
+    "tools/gates/lib/rules.mjs#L808-L822"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-19/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {"at": "2026-09-30T09:28:18Z", "status": "OPEN", "note": "Raised in round 19 by code-security-reviewer. D-035 itself, for superseded rounds, is judged an acceptable loosening of a redundant check; only its extension to the gate round is flagged. Low: content identity is preserved, and historical mode catches it."}
+   ]
+  },
+  {
+   "id": "F-DG0-156",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-007",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "The candidate's project .claude/settings.json auto-allows `git push`, `git filter-branch`, `git update-ref` and `git branch`, and every agent run loads project settings, so these history-rewriting commands bypass the permission classifier for all project agents (contained by the sandbox; observation)",
+   "reproduction": ".claude/settings.json (commit 5a49719, 'Expand permissions in settings.json for Git commands') adds Bash(git filter-branch:*), Bash(git branch:*), Bash(git push:*) and Bash(git update-ref:*) to permissions.allow. tools/agents/run-agent.sh:184 starts every agent with --setting-sources project, so the rules apply to reviewers and implementers too. They remain contained: .git is on COMMON_DENY (agent_settings.py:34, read-only for every role), allowUnsandboxedCommands is false, and the agent shell has no network. Evidence: docs/delivery/test-evidence/DG0/code-security/round-19/06-settings-allow-rules.log.",
+   "expected": "Allow rules needed only by the orchestrator (the D-034 history repair) live in the user's local settings (.claude/settings.local.json), which agent runs do not load, or are removed once the repair is done.",
+   "actual": "The rules are in project settings and part of the candidate. Defence in depth is weaker (the classifier no longer screens these commands for agents), but no write becomes possible.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-19/06-settings-allow-rules.log"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-19/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {"at": "2026-09-30T09:28:18Z", "status": "OPEN", "note": "Raised in round 19. Low and non-mandatory; the reporter would accept it as an observation (kernel-level containment holds), but recommends moving the rules to local settings."}
+   ]
+  }
+ ]
+}

@@ -1,0 +1,42 @@
+{
+ "verifications": [
+  {
+   "finding_id": "F-DG0-152",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Verified independently in a fresh clone of 0a652018. The F-DG0-152 case in tools/agents/tests/process-sandbox.test.mjs ran fully and was not skipped. Its positive control (the real agent_sandbox.py args with landlock_exec stripped, i.e. the pre-fix D-030 design) reproduced the original failure: viaProcRoot/viaProcCwd/viaProcRootTmp WROTE and the signal was allowed. With the per-run Landlock domain all three were refused and the signal was refused, while ownEvidence and ownTmp were WROTE and nested bwrap with a fresh --proc still worked. Live check on this run: ls /proc/1/root is refused. Code review of landlock_exec.py: fail-closed (prctl or ruleset errors raise before execv; a 24-byte attr with scoped set gives E2BIG/EINVAL on ABI<6), single-threaded before execv, inherited by descendants. The validator requires the landlock block (rules.mjs:371-377, tamper tests). The sandbox.json landlock block is written statically by finish(), but claude cannot exec unless restrict_self succeeded, so the block cannot misstate a run that produced a transcript.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-19/02-test-suites.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-19/05-residual7-readonly.log",
+    "tools/agents/landlock_exec.py"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-153",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "threat-model.md:27 ('Mechanically prevented' row 1) now says the sandbox 'shares the host PID namespace (creating none of its own) while creating its own IPC namespace (--unshare-ipc)', consistent with agent_sandbox.py:154, sandbox.json unshare:[ipc] and residual 8.",
+   "evidence": [
+    "docs/delivery/threat-model.md#mechanically-prevented"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-147",
+   "result": "PASS",
+   "status_after": "ACCEPTED_OBSERVATION",
+   "note": "Re-accepted as an observation. The copy-back accept pattern is still round-unpinned (agent_sandbox.py:68, rules.mjs:365), but it remains fail-closed for gate integrity: only new own-role files are copied, existing files are write-once discards (F-DG0-150 fix, agent_sandbox.py:283), and checkReviewRounds flags round directories not recorded in stages.json. F-DG0-150/151 remain fixed and the --unshare-ipc of D-031/F-DG0-148 still holds.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-19/02-test-suites.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-149",
+   "result": "FAIL",
+   "status_after": "OPEN",
+   "note": "Not accepted as an observation this round. The read-only assessment (no /proc/sys write) shows that the residual it restates is described with the wrong scope: the process sandbox creates only an IPC namespace and binds the host procfs, so the reachable tunables are host-global, not 'of its own run', and the 'cross-run /proc/<peer>/sys amplification' that D-033 is said to close does not exist as a separate path. The shell-layer 'read-only /proc/sys' claim is also not supported by that layer's mount flags. D-033 does correctly close the cross-run /proc/<peer>/root|cwd path (F-DG0-152). See F-DG0-154. I would re-assess acceptance once residual 7 states its real scope and the user re-confirms, or a narrower control is adopted.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-19/05-residual7-readonly.log"
+   ]
+  }
+ ]
+}
