@@ -218,7 +218,7 @@ export async function gateDecision(
   p: Personas,
   gov: Gov,
   gateKey: string,
-  opts: { decisionTypeKey?: string; vote?: boolean; externalApproval?: boolean } = {},
+  opts: { decisionTypeKey?: string; vote?: boolean; externalApproval?: boolean; subject?: { type: 'perimeter_version' | 'change_request' | 'baseline_version'; id: string } } = {},
 ): Promise<{ id: string; code: string; status: string }> {
   const a = p as unknown as Actors;
   const d = await tabledDecision(projectId, a, p.pm, gov.committeeId, gov.meetingId, {
@@ -226,6 +226,8 @@ export async function gateDecision(
     gateKey,
     amount: null,
     requiredAuthority: 'Per the DEMO authority matrix (synthetic)',
+    // The record the paper is raised FOR (e.g. the perimeter version a G1 paper approves — DOM-P2F-08).
+    ...(opts.subject ? { subjectType: opts.subject.type, subjectId: opts.subject.id } : {}),
   });
   if (opts.vote === false) return { id: d.id, code: d.code, status: 'under_review' };
   const v = await decisionVersion(p.chair, projectId, d.id);

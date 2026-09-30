@@ -7,7 +7,8 @@ import { LINKED_DECISION_ISSUE_CODES } from './readiness';
 /**
  * P4 domain review, part 2 (docs/reviews/P4-domain-review.md): DOM-P4-01 (one closing-confirmation decision per closing),
  * DOM-P4-06 (one valuation decision per model version), DOM-P4-07 (one budget decision per budget line, within its STATED
- * amount), DOM-P4-08 (external-approval evidence re-checked wherever JV and finance rely on a decision). Synthetic values.
+ * amount), DOM-P4-08 (external-approval evidence re-checked wherever JV and finance rely on a decision); and the readiness
+ * kinds of the P2 domain final review DOM-P2F-09 (TSA terms approval, TSA extension, cutover GO). Synthetic values.
  */
 
 const VERIFIED = { linkId: 'l1', status: 'active', verified: true };
@@ -40,6 +41,26 @@ describe('DOM-P4-01 / -06 / -07 — the decision-use registry covers closings, v
     expect(DECISION_USE_SUBJECT_TYPE.financial_model_version).toBe('financial_model_version');
     expect(DECISION_USE_SUBJECT_TYPE.budget_line).toBe('budget_line');
     expect(DECISION_USE_KINDS as readonly string[]).not.toContain('signing');
+  });
+
+  it('DOM-P2F-09: the readiness kinds — TSA terms approval, TSA extension (record type tsa_service), cutover GO', () => {
+    expect(DECISION_USE_SUBJECT_TYPE.tsa_service).toBe('tsa_service');
+    expect(DECISION_USE_SUBJECT_TYPE.tsa_extension).toBe('tsa_service');
+    expect(DECISION_USE_SUBJECT_TYPE.cutover_plan).toBe('cutover_plan');
+    const tsa = (kind: 'tsa_service' | 'tsa_extension', subjectId: string, uses: DecisionRelianceInput['uses']) =>
+      code({
+        decision: { ...closingDecision, decisionTypeKey: 'tsa_approval_or_extension' },
+        use: { kind, subjectType: 'tsa_service', subjectId },
+        uses,
+        subjectRule: 'if_set',
+        decisionTypeKeys: ['tsa_approval_or_extension'],
+        codePrefix: kind === 'tsa_service' ? 'tsa.approve' : 'tsa.extension',
+      });
+    const approvedA = [{ kind: 'tsa_service', subjectType: 'tsa_service', subjectId: 'tsaA' }];
+    expect(tsa('tsa_service', 'tsaB', approvedA)).toBe('tsa.approve.decision_already_used');
+    // The terms approval and an extension are different kinds of use.
+    expect(tsa('tsa_extension', 'tsaA', approvedA)).toBeNull();
+    expect(tsa('tsa_extension', 'tsaB', [...approvedA, { kind: 'tsa_extension', subjectType: 'tsa_service', subjectId: 'tsaA' }])).toBe('tsa.extension.decision_already_used');
   });
 
   it('DOM-P4-01: a closing-confirmation decision that confirmed closing #1 is refused for closing #2; the gate-cycle use of a G6 paper does not block', () => {

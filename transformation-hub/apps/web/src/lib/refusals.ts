@@ -104,6 +104,18 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   // Perimeter versions (DOM-P2R-05) and gates (DOM-P2R-04, QA-P2-03, O-1)
   'perimeter.version.decision_already_used': 'carveout.versions.refusal.decisionAlreadyUsed',
   'perimeter.version.decision_other_subject': 'carveout.versions.refusal.decisionOtherSubject',
+  // DOM-P2F-08: a G1 paper must be raised for the perimeter version it approves
+  'perimeter.version.decision_no_subject': 'carveout.versions.refusal.decisionNoSubject',
+  // Readiness decisions on the decision-use registry and the external-evidence re-check (DOM-P2F-09)
+  'tsa.approve.decision_already_used': 'readiness.refusal.codes.tsa_approve_decision_already_used',
+  'tsa.approve.decision_evidence_invalid': 'readiness.refusal.codes.tsa_approve_decision_evidence_invalid',
+  'tsa.approve.decision_other_subject': 'readiness.refusal.codes.tsa_approve_decision_other_subject',
+  'tsa.extension.decision_already_used': 'readiness.refusal.codes.tsa_extension_decision_already_used',
+  'tsa.extension.decision_evidence_invalid': 'readiness.refusal.codes.tsa_extension_decision_evidence_invalid',
+  'tsa.extension.decision_other_subject': 'readiness.refusal.codes.tsa_extension_decision_other_subject',
+  'readiness.go_no_go.decision_already_used': 'readiness.refusal.codes.go_decision_already_used',
+  'readiness.go_no_go.decision_evidence_invalid': 'readiness.refusal.codes.go_decision_evidence_invalid',
+  'readiness.go_no_go.decision_other_subject': 'readiness.refusal.codes.go_decision_other_subject',
   'gates.decide.decision_evidence_invalid': 'gates.refusal.decisionEvidenceInvalid',
   'gates.assessment.review_stale': 'gates.refusal.reviewStale',
   'gates.decide.decision_reused': 'gates.refusal.decisionReused',

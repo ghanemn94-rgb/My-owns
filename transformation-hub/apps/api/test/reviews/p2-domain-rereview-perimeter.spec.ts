@@ -21,7 +21,8 @@ describe('P2 domain re-review — perimeter version approval backed by a G1 deci
     const v1 = await ok<{ id: string; versionNo: number }>(q.pm.post(`${base(pv)}/setup/steps/perimeter`, { note: 'Initial perimeter (re-review, synthetic)' }));
     expect(v1.versionNo).toBe(1);
     const gov = await setupGovernance(pv, q);
-    const d = await gateDecision(pv, q, gov, 'G1');
+    // Since DOM-P2F-08 a G1 paper must name the version it approves: this one is raised FOR version 1.
+    const d = await gateDecision(pv, q, gov, 'G1', { subject: { type: 'perimeter_version', id: v1.id } });
     expect(d.status).toBe('approved');
     await ok(q.sponsor.post(`${base(pv)}/perimeter/versions/${v1.id}/approve`, { expectedVersion: 1, decisionId: d.id, note: 'v1 approved (re-review, synthetic)' }));
 

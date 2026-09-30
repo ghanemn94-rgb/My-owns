@@ -50,7 +50,8 @@ describe('Perimeter version — setup wizard step 4 [REQ-SET-012]', () => {
     // type the committee's matrix does not assign to G1) backs nothing.
     const noGate = await insertDecisionRow(orgId, pv, { code: 'DEC-PV-NOGATE', status: 'approved', authorityOutcome: 'within_mandate' });
     expect((await q.sponsor.post(`${base(pv)}/perimeter/versions/${v.id}/approve`, { expectedVersion: 1, decisionId: noGate })).status).toBe(403);
-    const d = await gateDecision(pv, q, gov, 'G1');
+    // DOM-P2F-08: the G1 paper is raised FOR the proposed version (a paper raised for no record approves no version).
+    const d = await gateDecision(pv, q, gov, 'G1', { subject: { type: 'perimeter_version', id: v.id } });
     expect(d.status).toBe('approved');
     const a = await ok<{ status: string }>(q.sponsor.post(`${base(pv)}/perimeter/versions/${v.id}/approve`, { expectedVersion: 1, decisionId: d.id, note: 'Approved (test)' }));
     expect(a.status).toBe('approved');
@@ -77,7 +78,7 @@ describe('Perimeter version — setup wizard step 4 [REQ-SET-012]', () => {
     // The register changes after the proposal (excluded → pending needs no change request) → approval refused (409).
     const ex = await item(q.pm, pv, excludedId);
     await ok(q.pm.post(`${base(pv)}/perimeter-items/${excludedId}/classify`, { expectedVersion: ex.version, disposition: 'pending', justification: 'Re-open the decision (test)' }));
-    const d2 = await gateDecision(pv, q, gov, 'G1');
+    const d2 = await gateDecision(pv, q, gov, 'G1', { subject: { type: 'perimeter_version', id: v2.id } });
     const stale = await q.sponsor.post(`${base(pv)}/perimeter/versions/${v2.id}/approve`, { expectedVersion: 1, decisionId: d2.id });
     expect(stale.status).toBe(409);
     expect(stale.body.code).toBe('perimeter.version.stale');

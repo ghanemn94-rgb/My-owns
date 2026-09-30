@@ -157,8 +157,25 @@ export function decisionEvidenceReassessment(d: {
  * A JV SIGNING is not a kind of its own: it is recorded on the decision that approved the current G5 cycle (DOM-P4-02) —
  * the signing is part of that gate approval, whose use is the `gate_cycle` row — so the signing relies on the decision
  * without consuming it again (final + evidence re-checked, no registry row).
+ *
+ * P3 readiness (DOM-P2F-09): the terms approval of a TSA (`tsa_service`), each recorded TSA extension (`tsa_extension`,
+ * record type `tsa_service`: one decision authorizes one extension of one TSA — a TSA extended again needs a new decision)
+ * and the GO of a cutover plan (`cutover_plan`: one Day-1 go/no-go decision authorizes the GO of one plan). The terms
+ * approval and an extension of the same TSA are different kinds: one `tsa_approval_or_extension` decision may approve the
+ * terms of a TSA and one extension (of that TSA or another).
  */
-export const DECISION_USE_KINDS = ['change_request', 'baseline_version', 'perimeter_version', 'gate_cycle', 'closing', 'financial_model_version', 'budget_line'] as const;
+export const DECISION_USE_KINDS = [
+  'change_request',
+  'baseline_version',
+  'perimeter_version',
+  'gate_cycle',
+  'closing',
+  'financial_model_version',
+  'budget_line',
+  'tsa_service',
+  'tsa_extension',
+  'cutover_plan',
+] as const;
 export type DecisionUseKind = (typeof DECISION_USE_KINDS)[number];
 
 /** Record type backed by each kind of use (the `subject_type` of its `decision_use` rows). */
@@ -170,6 +187,9 @@ export const DECISION_USE_SUBJECT_TYPE: Readonly<Record<DecisionUseKind, string>
   closing: 'closing',
   financial_model_version: 'financial_model_version',
   budget_line: 'budget_line',
+  tsa_service: 'tsa_service',
+  tsa_extension: 'tsa_service',
+  cutover_plan: 'cutover_plan',
 };
 
 /** A registered use of a decision (a `decision_use` row). */
@@ -216,11 +236,11 @@ export interface RelianceDecision {
 
 /**
  * How a caller binds decisions to its records (DOM-P2R-03):
- *  - `required`: the decision must have been raised for this very record (change requests, baselines — the default for a
- *    new consumer whose record type a decision paper can name, `DECISION_SUBJECT_TYPES`);
- *  - `if_set`: a decision raised for a specific record backs only that record; one raised for none is accepted (perimeter
- *    versions, whose G1 papers are bound by gate key; JV closings and valuation model versions — a paper cannot name them
- *    yet, see docs/architecture/module-guide.md "Relying on a governance decision");
+ *  - `required`: the decision must have been raised for this very record (change requests, baselines, perimeter versions
+ *    since DOM-P2F-08 — the default for a consumer whose record type a decision paper can name, `DECISION_SUBJECT_TYPES`);
+ *  - `if_set`: a decision raised for a specific record backs only that record; one raised for none is accepted (JV
+ *    closings, valuation model versions, TSAs and cutover plans — a paper cannot name them yet, see
+ *    docs/architecture/module-guide.md "Relying on a governance decision");
  *  - `none`: the binding is checked by the caller (gate papers and JV signings: by gate key; budget lines: the decision is
  *    raised for the change request / baseline it approves and the line records the amount of that approval).
  */

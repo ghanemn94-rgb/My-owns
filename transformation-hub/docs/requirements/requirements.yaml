@@ -1595,7 +1595,7 @@
   acceptance_tests: ["UT: TSA without exit milestones cannot be Approved"]
   phase: P3
   status: Tested
-  evidence: ['readiness at-10-tsa-expiry.spec.ts "REQ-TSA-001: a TSA without exit milestones (and other §7.3 essentials) cannot be approved"; "charge basis and amount are shown to finance readers only"', 'D readiness.test.ts "REQ-TSA-001: a TSA without exit milestones (or owner / end date / replacement) cannot be approved"']
+  evidence: ['readiness at-10-tsa-expiry.spec.ts "REQ-TSA-001: a TSA without exit milestones (and other §7.3 essentials) cannot be approved"; "charge basis and amount are shown to finance readers only"', 'D readiness.test.ts "REQ-TSA-001: a TSA without exit milestones (or owner / end date / replacement) cannot be approved"', 'DOM-P2F-09 fixed (one decision approves the terms of one TSA — decision-use registry kind tsa_service, row lock, external evidence re-checked): reviews p2-domain-final-readiness.spec.ts "DOM-P2F-09: one TSA-approval decision does not approve the terms of two different TSAs (fixed, regression)"; readiness p2f-decision-reliance.spec.ts "one decision approves the terms of one TSA (registry kind tsa_service); another TSA needs its own"; "an external approval whose evidence was rejected approves no TSA (tsa.approve.decision_evidence_invalid)"']
 - id: REQ-TSA-002
   section: "7.3"
   title: "TSA state machine"
@@ -1659,7 +1659,7 @@
   acceptance_tests: ["AT-10", "UT: Extended transition without approved decision rejected"]
   phase: P3
   status: Tested
-  evidence: ['readiness at-10-tsa-expiry.spec.ts "REQ-TSA-005: the extension awaits a FINAL approved decision — never automatic"', 'D readiness.test.ts "REQ-TSA-005: an extension needs an approved decision, a later end date and a continuity plan"']
+  evidence: ['readiness at-10-tsa-expiry.spec.ts "REQ-TSA-005: the extension awaits a FINAL approved decision — never automatic"', 'D readiness.test.ts "REQ-TSA-005: an extension needs an approved decision, a later end date and a continuity plan"', 'DOM-P2F-09 fixed (the extension is recorded on a decision that authorized no other extension — registry kind tsa_extension replaces the former per-TSA check): readiness p2f-decision-reliance.spec.ts "one decision authorizes one extension (kind tsa_extension): not a second TSA, not a further extension; the terms decision may authorize one extension"']
 - id: REQ-TSA-006
   section: "14"
   title: "approveTSAExit requires replacement acceptance evidence"
@@ -1742,7 +1742,7 @@
   acceptance_tests: ["AT-09", "IT: go decision rejected while a mandatory blocker is failed"]
   phase: P3
   status: Tested
-  evidence: [readiness at-09-readiness-go-no-go.spec.ts "GO is refused while the connectivity blocker is failed — even with an approved decision; refusal kept in the history"; "NO-GO is recorded with its rationale; the plan returns to planning with the history preserved", 'D readiness.test.ts "AT-09 / REQ-RDY-004: a failed mandatory blocker blocks GO even with every prerequisite and an approved decision"', 'e2e p3-readiness.spec.ts "AT-09: a failed connectivity test blocks GO; contingency and decision history are shown" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)']
+  evidence: [readiness at-09-readiness-go-no-go.spec.ts "GO is refused while the connectivity blocker is failed — even with an approved decision; refusal kept in the history"; "NO-GO is recorded with its rationale; the plan returns to planning with the history preserved", 'D readiness.test.ts "AT-09 / REQ-RDY-004: a failed mandatory blocker blocks GO even with every prerequisite and an approved decision"', 'e2e p3-readiness.spec.ts "AT-09: a failed connectivity test blocks GO; contingency and decision history are shown" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'DOM-P2F-09 fixed (the GO consumes its go/no-go decision — registry kind cutover_plan): readiness p2f-decision-reliance.spec.ts "one decision authorizes the GO of one plan: refused when linked to another plan, and at the GO of a plan linked before (recorded in its history)"; "after a rollback, a new GO of the same plan needs a new decision"']
 - id: REQ-RDY-005
   section: "7.4"
   title: "Post-transition acceptance"
@@ -6344,7 +6344,7 @@
   acceptance_tests: ["E2E: wizard perimeter approval creates baseline perimeter version"]
   phase: P3
   status: Tested
-  evidence: [carveout setup-wizard.spec.ts "pending dispositions or in-scope items without workstream/owner block the proposal"; "the PM proposes; approval needs the sponsor with a FINAL governance decision"; "after approval a new item needs a change request; a stale snapshot cannot be approved", D perimeter.test.ts "pending dispositions and in-scope items without workstream/owner block; missing lead warns", 'AT variance: verified through the API (POST .../setup/steps/perimeter and the perimeter-version commands); no Playwright test drives the wizard step', 'DOM-P2R-05 fixed (one decision backs one perimeter version; decision-use registry): reviews p2-domain-rereview-perimeter.spec.ts "DOM-P2R-05 (fixed, regression)"; carveout setup-wizard.spec.ts "the PM proposes; approval needs the sponsor with a FINAL governance decision" (registry row asserted)']
+  evidence: [carveout setup-wizard.spec.ts "pending dispositions or in-scope items without workstream/owner block the proposal"; "the PM proposes; approval needs the sponsor with a FINAL governance decision"; "after approval a new item needs a change request; a stale snapshot cannot be approved", D perimeter.test.ts "pending dispositions and in-scope items without workstream/owner block; missing lead warns", 'AT variance: verified through the API (POST .../setup/steps/perimeter and the perimeter-version commands); no Playwright test drives the wizard step', 'DOM-P2R-05 fixed (one decision backs one perimeter version; decision-use registry): reviews p2-domain-rereview-perimeter.spec.ts "DOM-P2R-05 (fixed, regression)"; carveout setup-wizard.spec.ts "the PM proposes; approval needs the sponsor with a FINAL governance decision" (registry row asserted)', 'DOM-P2F-08 fixed (a G1 paper must be raised for the perimeter version it approves — subject rule required): reviews p2-domain-final-perimeter.spec.ts "RE DOM-P2R-03/-05: a G1 paper raised FOR version 1 never approves version 2; DOM-P2F-08: a G1 paper raised for no record ... does not approve version 2 (fixed, regression)"']
 - id: REQ-SET-013
   section: "21"
   title: "Wizard step 5: committee, delegation and quorum"

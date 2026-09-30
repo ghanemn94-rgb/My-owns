@@ -156,7 +156,8 @@ For every approval command the server evaluates, in one transaction, and logs th
     drafted and fixed from its first submission (`governance.decision.subject_locked`). A change-request or baseline
     approval rests only on a decision raised for that record (`change_control.decision_no_subject` /
     `…decision_other_subject`); a perimeter-version approval rests on a G1 decision that backed no other version
-    (`perimeter.version.decision_already_used`) and, when the decision names a subject, on one raised for that version.
+    (`perimeter.version.decision_already_used`) and that was raised for that version (`perimeter.version.decision_no_subject`
+    since DOM-P2F-08: a G1 paper raised for no record approves no version).
     Every use is recorded in the **decision-use registry** (`decision_use`: decision, kind of use, record — unique per
     decision and kind; kinds `change_request`, `baseline_version`, `perimeter_version`, `gate_cycle`), checked under a row
     lock on the decision (`…decision_already_used`, 422) with the registry's unique index — and the partial unique indexes
@@ -168,7 +169,12 @@ For every approval command the server evaluates, in one transaction, and logs th
     approved values of a valuation model version (kind `financial_model_version`, DOM-P4-06) and the approved budget of a
     line (kind `budget_line`, within the amount the paper STATES — a paper without an amount backs no budget approval,
     DOM-P4-07). A JV signing rests on the decision that approved the current G5 cycle (rule 11) and adds no registry row
-    of its own. Every JV and finance reliance re-checks the evidence of an external approval (DOM-P4-08).
+    of its own. Every JV and finance reliance re-checks the evidence of an external approval (DOM-P4-08). The readiness
+    module uses it too (DOM-P2F-09): one `tsa_approval_or_extension` decision approves the terms of one TSA (kind
+    `tsa_service`) and authorizes one extension (kind `tsa_extension`), one `day1_go_no_go` decision authorizes the GO of
+    one cutover plan (kind `cutover_plan`; a new GO after a rollback needs a new decision), with the external evidence
+    re-checked. A batch approval (one decision for several TSAs or plans) is not modeled — it would have to be explicit
+    (A-52, governance owner).
 
 ### 3.1 Individual approvals under delegated authority — baselines and change requests (P2 fix DOM-P2-03)
 
