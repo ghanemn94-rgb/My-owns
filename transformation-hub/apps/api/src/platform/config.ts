@@ -19,6 +19,15 @@ const Env = z.object({
   HUB_TRUST_PROXY: z.string().regex(/^(true|false|\d{1,2}|[0-9a-fA-F.:/,\s]+)$/).default('false'),
   HUB_STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
   HUB_STORAGE_LOCAL_DIR: z.string().default('.data/objects'),
+  /** S3-compatible object storage (HUB_STORAGE_DRIVER=s3). Not configured unless endpoint, bucket and credentials are set. */
+  HUB_S3_ENDPOINT: z.string().url().optional(),
+  HUB_S3_REGION: z.string().min(1).default('us-east-1'),
+  HUB_S3_BUCKET: z.string().regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/).optional(),
+  HUB_S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+  HUB_S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  HUB_S3_SSE: z.enum(['none', 'AES256', 'aws:kms']).default('none'),
+  HUB_S3_KMS_KEY_ID: z.string().min(1).optional(),
+  HUB_S3_TIMEOUT_MS: z.coerce.number().int().min(1000).max(300000).default(30000),
   HUB_MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(512).default(25),
   /** Files marked `not_scanned` (no enterprise malware scanner configured) may be downloaded/indexed. Default: true outside
    *  production, false in production (ADR-0010). Setting it true in production is an explicit, documented risk acceptance. */
@@ -80,6 +89,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     if (/hub_dev_only/.test(e.DATABASE_URL)) problems.push('DATABASE_URL uses the development password');
     if (/:\/\/hub_owner[:@]/.test(e.DATABASE_URL)) problems.push('DATABASE_URL must use the runtime role, not the owner role');
     if (e.HUB_STORAGE_DRIVER === 'local') problems.push('Local filesystem storage is for development only; configure s3-compatible storage');
+    if (e.HUB_STORAGE_DRIVER === 's3') {
+      if (!e.HUB_S3_ENDPOINT || !e.HUB_S3_BUCKET || !e.HUB_S3_ACCESS_KEY_ID || !e.HUB_S3_SECRET_ACCESS_KEY) problems.push('HUB_STORAGE_DRIVER=s3 needs HUB_S3_ENDPOINT, HUB_S3_BUCKET, HUB_S3_ACCESS_KEY_ID and HUB_S3_SECRET_ACCESS_KEY');
+      if (e.HUB_S3_ENDPOINT && !e.HUB_S3_ENDPOINT.startsWith('https://')) problems.push('HUB_S3_ENDPOINT must use https in production');
+      if (e.HUB_S3_SSE === 'aws:kms' && !e.HUB_S3_KMS_KEY_ID) problems.push('HUB_S3_SSE=aws:kms needs HUB_S3_KMS_KEY_ID');
+    }
     if (!e.HUB_OIDC_ISSUER) problems.push('OIDC issuer must be configured in production (no password login exists)');
     if (e.HUB_OIDC_ISSUER && !e.HUB_COOKIE_SECRET) problems.push('HUB_COOKIE_SECRET (>= 32 chars) is required when OIDC is enabled');
     if (e.HUB_OIDC_ISSUER && !e.HUB_OIDC_ISSUER.startsWith('https://')) problems.push('OIDC issuer must use https in production');
@@ -88,7 +102,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     if (e.HUB_COOKIE_SECRET && weakSecret(e.HUB_COOKIE_SECRET)) problems.push('HUB_COOKIE_SECRET is too weak (use >= 32 random characters, e.g. openssl rand -base64 48)');
     // Model endpoints: https only, and the host must be on the egress allowlist (private mode / ADR on AI egress).
     const allow = e.HUB_EGRESS_ALLOWLIST.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-    for (const [name, url] of [['HUB_AI_OPENAI_BASE_URL', e.HUB_AI_OPENAI_BASE_URL], ['HUB_AI_ANTHROPIC_GATEWAY_URL', e.HUB_AI_ANTHROPIC_GATEWAY_URL]] as const) {
+    for (const [name, url] of [['HUB_AI_OPENAI_BASE_URL', e.HUB_AI_OPENAI_BASE_URL], ['HUB_AI_ANTHROPIC_GATEWAY_URL', e.HUB_AI_ANTHROPIC_GATEWAY_URL], ['HUB_S3_ENDPOINT', e.HUB_STORAGE_DRIVER === 's3' ? e.HUB_S3_ENDPOINT : undefined]] as const) {
       if (!url) continue;
       const u = new URL(url);
       if (u.protocol !== 'https:') problems.push(`${name} must use https in production`);
@@ -113,6 +127,19 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
       localDir: e.HUB_STORAGE_LOCAL_DIR,
       maxUploadBytes: e.HUB_MAX_UPLOAD_MB * 1024 * 1024,
       allowUnscanned: e.HUB_ALLOW_UNSCANNED_FILES ? e.HUB_ALLOW_UNSCANNED_FILES === 'true' : e.NODE_ENV !== 'production',
+      s3:
+        e.HUB_S3_ENDPOINT && e.HUB_S3_BUCKET && e.HUB_S3_ACCESS_KEY_ID && e.HUB_S3_SECRET_ACCESS_KEY
+          ? {
+              endpoint: e.HUB_S3_ENDPOINT,
+              region: e.HUB_S3_REGION,
+              bucket: e.HUB_S3_BUCKET,
+              accessKeyId: e.HUB_S3_ACCESS_KEY_ID,
+              secretAccessKey: e.HUB_S3_SECRET_ACCESS_KEY,
+              sse: e.HUB_S3_SSE,
+              kmsKeyId: e.HUB_S3_KMS_KEY_ID ?? null,
+              timeoutMs: e.HUB_S3_TIMEOUT_MS,
+            }
+          : null,
     },
     oidc: {
       issuer: e.HUB_OIDC_ISSUER ?? null,

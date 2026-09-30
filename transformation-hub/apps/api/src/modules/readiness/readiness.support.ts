@@ -1,16 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { forbidden, invalid, linkedDecisionIssue, notFound, Classification, LinkedDecision, RoleKey } from '@hub/domain';
+import { forbidden, invalid, linkedDecisionIssue, linkedDecisionIssueCode, notFound, Classification, LinkedDecision, RoleKey } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { Clock } from '../../platform/clock';
-import { JobQueue } from '../../platform/jobs/job-queue.service';
 import { RecordVersionService, activeEvidenceCount, loadInProject } from '../../platform/helpers';
 import type { RequestContext } from '../../platform/context';
-import { RECOMPUTE_DIMENSIONS_JOB } from '../gates/gates.service';
 
 export type ProjectRow = typeof schema.project.$inferSelect;
 export type DecisionRow = typeof schema.decision.$inferSelect;
@@ -32,7 +30,6 @@ export class ReadinessSupport {
     readonly audit: AuditService,
     readonly outbox: OutboxService,
     readonly clock: Clock,
-    readonly queue: JobQueue,
     readonly versions: RecordVersionService,
   ) {}
 
@@ -101,19 +98,32 @@ export class ReadinessSupport {
     }
   }
 
+  /** Display names of referenced users (same organization; resolved server-side so the UI never shows bare ids). */
+  async people(ids: (string | null | undefined)[]): Promise<Record<string, string>> {
+    const uniq = [...new Set(ids.filter((x): x is string => !!x))];
+    if (!uniq.length) return {};
+    const rows = await this.db.tx().select({ id: schema.appUser.id, name: schema.appUser.displayName }).from(schema.appUser).where(inArray(schema.appUser.id, uniq));
+    return Object.fromEntries(rows.map((r) => [r.id, r.name]));
+  }
+
   evidence(projectId: string, targetType: 'readiness_check' | 'tsa_service' | 'cutover_plan', targetId: string) {
     return activeEvidenceCount(this.db, projectId, targetType, targetId);
   }
 
-  /** Status dimensions are owned by the gates module: enqueue its recompute job (idempotent per change). */
+  /**
+   * Status dimensions are owned by the gates module: emit `readiness.changed` (gates subscribes it to its recompute job).
+   * Deduplicated per change key (entity + version), so a retried command never emits twice.
+   */
   async enqueueDimensions(ctx: RequestContext, projectId: string, key: string) {
-    await this.queue.enqueue({
-      kind: RECOMPUTE_DIMENSIONS_JOB,
-      orgId: ctx.principal.orgId,
+    void ctx;
+    const [kind, id] = key.split(':');
+    await this.outbox.emit({
+      type: 'readiness.changed',
       projectId,
-      payload: { reason: `readiness:${key.split(':')[0]}` },
-      idempotencyKey: `${RECOMPUTE_DIMENSIONS_JOB}:readiness:${key}`,
-      requestedBy: ctx.principal.userId,
+      aggregateType: kind === 'tsa' ? 'tsa_service' : kind === 'check' ? 'readiness_check' : 'project',
+      aggregateId: (kind === 'tsa' || kind === 'check') && id ? id : projectId,
+      payload: { reason: `readiness:${kind}` },
+      dedupeKey: `readiness.changed:${projectId}:${key}`.slice(0, 200),
     });
   }
 
@@ -153,6 +163,7 @@ export class ReadinessSupport {
       authorityOutcome: d.authorityOutcome,
       decisionTypeKey: d.decisionTypeKey,
       issue: linkedDecisionIssue(this.linked(d), allowedTypeKeys, purpose),
+      issueCode: linkedDecisionIssueCode(this.linked(d), allowedTypeKeys),
     };
   }
 }

@@ -208,9 +208,9 @@ describe('Knowledge ingestion: extraction and chunk index (spec §12.1, §17) [R
 });
 
 describe('Object storage adapters (ADR-0010) [REQ-DAT-012]', () => {
-  it('local storage is selected by configuration; the S3-compatible adapter is honestly "Not configured" and fails closed', async () => {
+  it('local storage is selected by configuration; without S3 settings the S3-compatible adapter is honestly "Not configured" and fails closed', async () => {
     expect(storage).toBeInstanceOf(LocalFsStorage);
-    const s3 = new S3CompatibleStorage();
+    const s3 = new S3CompatibleStorage(null);
     expect(s3.status).toBe('not_configured');
     const key = `documents/${dcId}/00000000-0000-7000-8000-000000000000`;
     await expect(s3.put(key, Buffer.from('x'))).rejects.toMatchObject({ code: 'storage.not_configured' });

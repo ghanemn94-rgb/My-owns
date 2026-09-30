@@ -18,6 +18,7 @@ import enPlanning from './en/planning.json';
 import enGovernance from './en/governance.json';
 import enCarveout from './en/carveout.json';
 import enNewco from './en/newco.json';
+import enReadiness from './en/readiness.json';
 import arCommon from './ar/common.json';
 import arNav from './ar/nav.json';
 import arAuth from './ar/auth.json';
@@ -33,6 +34,7 @@ import arPlanning from './ar/planning.json';
 import arGovernance from './ar/governance.json';
 import arCarveout from './ar/carveout.json';
 import arNewco from './ar/newco.json';
+import arReadiness from './ar/readiness.json';
 
 const en = {
   common: enCommon,
@@ -50,6 +52,7 @@ const en = {
   governance: enGovernance,
   carveout: enCarveout,
   newco: enNewco,
+  readiness: enReadiness,
 };
 
 export type Messages = typeof en;
@@ -71,6 +74,7 @@ const ar = {
   governance: arGovernance,
   carveout: arCarveout,
   newco: arNewco,
+  readiness: arReadiness,
 } satisfies DeepShape<Messages>;
 
 type DeepShape<T> = { [K in keyof T]: T[K] extends string ? string : DeepShape<T[K]> };

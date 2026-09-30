@@ -23,6 +23,7 @@ import {
   ruleViolation,
   transition,
   tsaExpiryAction,
+  TSA_ESCALATION_OPTIONS,
   Classification,
   DomainError,
   TsaCommand,
@@ -168,11 +169,7 @@ export class TsaService {
     const [{ total }] = (await tx.select({ total: count() }).from(t).where(where)) as [{ total: number }];
     const rows = await tx.select().from(t).where(where).orderBy(asc(t.code)).limit(q.pageSize).offset(offsetOf(q));
     const today = this.s.today(p);
-    return pageOf(
-      rows.map((r) => this.dto(r, today)),
-      Number(total),
-      q,
-    );
+    return { ...pageOf(rows.map((r) => this.dto(r, today)), Number(total), q), people: await this.s.people(rows.map((r) => r.ownerUserId)) };
   }
 
   async get(ctx: RequestContext, projectId: string, id: string) {
@@ -222,6 +219,7 @@ export class TsaService {
         : null,
       extensionDecision: this.s.decisionSummary(ctx, projectId, d, TSA_DECISION_TYPE_KEYS, 'a TSA extension'),
       allowedCommands: allowedCommands(TSA_MACHINE, t.status),
+      people: await this.s.people([t.ownerUserId, t.createdBy, t.replacementAcceptedBy, t.extensionRequestedBy, req?.requestedBy, t.exitApprovedBy]),
     };
   }
 
@@ -583,11 +581,7 @@ export class TsaService {
         sourceId: t.id,
         requestedAction: e.requestedAction,
         decisionDeadline: e.decisionDeadline,
-        options: [
-          { title: 'Extend the TSA', impact: 'Requires an approved decision recorded against the TSA (request-extension → record-extension); cost and obligations continue' },
-          { title: 'Alternative interim / continuity arrangement', impact: 'Continuity plan executed; the TSA stays unresolved until an exit is accepted with evidence' },
-          { title: 'Accelerate / re-plan the replacement service', impact: 'Exit only after the replacement is accepted with evidence and the exit approved' },
-        ],
+        options: TSA_ESCALATION_OPTIONS.map((o) => ({ title: o.title, impact: o.impact })),
         raisedToCommitteeId: committeeId,
         target,
         status: 'decision_requested',

@@ -25,6 +25,7 @@ import {
   cutoverPrerequisitesOf,
   evaluateGo,
   linkedDecisionIssue,
+  linkedDecisionIssueCode,
   readinessCheckAppliesToPlan,
   statusAfterTestRun,
   tsaExpiryAction,
@@ -224,6 +225,15 @@ describe('Linked governance decisions', () => {
     expect(linkedDecisionIssue({ ...d, status: 'under_review' }, GO_DECISION_TYPE_KEYS, 'go-live')).toMatch(/under_review/);
     expect(linkedDecisionIssue({ ...d, decisionTypeKey: 'change_request_budget' }, GO_DECISION_TYPE_KEYS, 'go-live')).toMatch(/not of type/);
     expect(linkedDecisionIssue(null, TSA_DECISION_TYPE_KEYS, 'extension')).toMatch(/No governance decision/);
+  });
+  it('issue codes mirror the issue messages (the web translates the code)', () => {
+    expect(linkedDecisionIssueCode(d, GO_DECISION_TYPE_KEYS)).toBeNull();
+    expect(linkedDecisionIssueCode(null, GO_DECISION_TYPE_KEYS)).toBe('missing');
+    expect(linkedDecisionIssueCode({ ...d, decisionTypeKey: 'change_request_budget' }, GO_DECISION_TYPE_KEYS)).toBe('wrong_type');
+    expect(linkedDecisionIssueCode({ ...d, status: 'recommended' }, GO_DECISION_TYPE_KEYS)).toBe('recommended');
+    expect(linkedDecisionIssueCode({ ...d, status: 'draft' }, GO_DECISION_TYPE_KEYS)).toBe('not_approved');
+    expect(linkedDecisionIssueCode({ ...d, authorityOutcome: 'pending_external_authority' }, GO_DECISION_TYPE_KEYS)).toBe('external_approval_missing');
+    expect(linkedDecisionIssueCode({ ...d, authorityOutcome: 'pending_external_authority', externalAuthorityReference: 'REF' }, GO_DECISION_TYPE_KEYS)).toBeNull();
   });
   it('linking checks the type and refuses dead decisions', () => {
     expect(() => assertDecisionLinkable({ ...d, status: 'draft' }, GO_DECISION_TYPE_KEYS, 'go-live')).not.toThrow();

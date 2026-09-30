@@ -50,8 +50,8 @@
   security_rule: "Only Platform Admin may change branding; change audited"
   acceptance_tests: ["UT: branding name persisted and rendered in ar and en"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [HUB_APP_NAME deployment setting read at runtime by apps/web/src/app/layout.tsx and apps/api/src/platform/config.ts (no code change needed); bilingual default in i18n common.appName, 'gap: Platform-Admin branding setting (GET/POST /api/v1/settings/branding, persisted, audited) not built and the AT has no test — re-phased to P6 (configuration module)', 'variance: the web default name is "Transformation & Transactions Hub"; the API default and the spec working name include "Mobily"']
 - id: REQ-PLT-002
   section: "1"
   title: "Working application, not mockups or browser-local data"
@@ -66,8 +66,8 @@
   security_rule: "All business state persisted server-side in PostgreSQL; no business data held only in browser storage"
   acceptance_tests: ["AT-30", "IT: records survive API, worker and database restart"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [business state is persisted in PostgreSQL behind the authorized API; browser storage holds only a locale-switch flag, 'persistence after API and PostgreSQL restarts verified manually by QA (docs/reviews/P1-qa-review.md §1.8), not by an automated test', CI restore drill job green on run 36645986422, 'gap: no automated restart IT (API, worker, database); AT-30 needs reporting (P6) and is verified with REQ-PLT-003 (P8)']
 - id: REQ-PLT-003
   section: "1"
   title: "End-to-end program management outcome"
@@ -114,8 +114,8 @@
   security_rule: "Every route declared in the contract registry with a permission; API refuses to boot with an undeclared route"
   acceptance_tests: ["AT-30", "UT: contract registry check fails when a controller route has no contract/permission"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['apps/api/src/platform/contract-check.ts and bootstrap.ts: outside production the API refuses to boot when a handler has no contract or a registered route is unimplemented; every integration test boots through it (CI integration job green, run 36645986422)', every contract route declares its access permission (packages/contracts defineRoute), 'gap: no negative UT proving the check fails for an unbound handler; AT-30 verified with REQ-PLT-003 (P8)']
 - id: REQ-PLT-006
   section: "1-R7"
   title: "Honest implementation and integration status"
@@ -130,8 +130,8 @@
   security_rule: "Status derived server-side from last verified connectivity test; not user-editable"
   acceptance_tests: ["UT: mock adapter always reports Simulated, never Connected"]
   phase: P1
-  status: Implemented
-  evidence: [auth config returns honest OIDC status; docs/DELIVERY_STATUS.md vocabulary]
+  status: Tested
+  evidence: ['ai ai-settings-ops.spec.ts "status shows mode, Simulated label" (mock provider reports simulated)', ai at-22-ai-egress.spec.ts "AT-22 — no unapproved external traffic" (unconfigured providers report Not configured), documents at-25-file-safety.spec.ts "the S3-compatible adapter is honestly" (S3 adapter Not configured), P1 oidc-sso.spec.ts "SSO is 404 when OIDC is not configured", integration and notification adapters are P6 module shells; re-verify there]
 - id: REQ-PLT-007
   section: "1-R9"
   title: "No external publication or real messages without authorization"
@@ -213,8 +213,8 @@
   security_rule: "Claims never write status columns; promotion only via verify command by an authorized owner"
   acceptance_tests: ["AT-01", "UT: importing a Completed claim leaves the task Draft/Unverified"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [documents at-01-historical-claims.spec.ts "applying the historical claim is refused and audited; confirming it as current is refused; nothing changes" and "is compared side-by-side but never applied to the task", D documents.test.ts "historical-unverified claims are never applicable and cannot be confirmed", e2e p2-documents.spec.ts "historical claims are shown as historical-unverified and cannot be confirmed" (e2e 24/24 in CI run 36645986422 at 7959b44), 'AT variance: the reference image was not available, so no import ran; historical claims were recorded from the master prompt text (extraction NOT performed, docs/source-register.md)']
 - id: REQ-SRC-004
   section: "2"
   title: "Unclear names, dates and figures remain unverified"
@@ -229,8 +229,8 @@
   security_rule: "Verification status mandatory on every claim; default Unknown"
   acceptance_tests: ["AT-01", "UT: low-confidence claim defaults to Unknown"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['documents at-01-historical-claims.spec.ts "the source register records the unavailable image with extraction NOT performed and dates kept separate" (seeded CLM-010 unknown, no claim confirmed)', createClaim contract defaults verificationStatus to unknown (packages/contracts/src/documents.ts), 'gap: no test creates a claim without a status or with low confidence and asserts unknown']
 - id: REQ-SRC-005
   section: "2"
   title: "Source Register identification fields"
@@ -245,8 +245,8 @@
   security_rule: "Upload requires Contributor or higher on the project; checksum computed server-side"
   acceptance_tests: ["UT: SHA-256 checksum computed server-side; duplicate upload detected"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['source_record has code, source type, filename, source version, checksum, owner label and upload date (packages/db/src/schema/documents.ts); the source checksum is taken from the linked document version (sources.service.ts)', 'documents at-27-legal-hold.spec.ts "every successful download is audited with the actor, version and checksum" (server-side SHA-256)', documents at-25-file-safety.spec.ts "a stored object that no longer matches its SHA-256 is blocked and reported", 'gap: duplicate-upload detection not implemented — re-phased to P2 (documents module)']
 - id: REQ-SRC-006
   section: "2"
   title: "Separate dates and supporting location per claim"
@@ -261,8 +261,8 @@
   security_rule: "Location link opens the source only if the caller can read that document version"
   acceptance_tests: ["UT: claim without location cannot be marked Confirmed", "UT: missing as-of date flagged in data-quality view"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [documents at-01-historical-claims.spec.ts "the source register records the unavailable image with extraction NOT performed and dates kept separate", 'report date, as-of date and extraction date are separate source fields; location is mandatory on every claim (createClaim contract)', 'gap: no test that a claim without location cannot be confirmed (re-phased to P2); missing as-of date is not flagged in a data-quality view (re-phased to P6, REQ-RPT-006)']
 - id: REQ-SRC-007
   section: "2"
   title: "Claim value, confidence, review and conflict tracking"
@@ -277,8 +277,8 @@
   security_rule: "Reviewer role required; reviewer must differ from extractor where policy requires; audited"
   acceptance_tests: ["AT-14", "UT: newer conflicting claim marks both Conflicting and preserves originals"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['source_claim stores extracted value, source-reported value, confidence, reviewer, verification status, confirmed value and conflict_with_claim_id; review is an explicit command', 'documents at-01-historical-claims.spec.ts "only a different reviewer can confirm a non-historical claim" and "claim corrections never rewrite what the source said, and confirmed claims are locked"', 'AT-14 at evidence-link level: documents at-14-conflicting-evidence.spec.ts "a contradicting link flags BOTH links as conflicting, preserves them and the earlier review"', 'gap: reviewing a claim as conflicting marks only that claim, not both; no UT — re-phased to P2 (documents module)']
 - id: REQ-SRC-008
   section: "2"
   title: "Verification status vocabulary enforced"
@@ -293,8 +293,8 @@
   security_rule: "DB enum constraint and contract validation"
   acceptance_tests: ["UT: invalid verification status rejected by contract and database"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [database enum verification_status (packages/db/src/schema/_common.ts) and contract enum VerificationStatusSchema, documents at-01-historical-claims.spec.ts "claims can never be created as confirmed" (contract refuses a status outside the creation set with 400), 'gap: no test sends an out-of-vocabulary status to the API and to the database']
 - id: REQ-SRC-009
   section: "2"
   title: "Compare-before-merge for workbook or minutes uploads"
@@ -1038,8 +1038,8 @@
   security_rule: "Creation scoped by org/portfolio admin roles"
   acceptance_tests: ["UT: project cannot reference program from another organization"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['organization, portfolio, program, project, workstream, task/milestone/deliverable tables with foreign keys (packages/db/src/schema)', 'org-level RLS hides programs of other organizations, so project creation refuses a foreign program (portfolio.program_not_found)', 'gap: no test that a project cannot reference a program of another organization; portfolio/program creation APIs not built (seeded, list only) — creation re-phased to P6']
 - id: REQ-ENT-003
   section: "5"
   title: "Legal entities separate from projects"
@@ -1055,7 +1055,7 @@
   acceptance_tests: ["UT: one entity linked to two projects without duplication"]
   phase: P1
   status: Tested
-  evidence: [P1 projects-templates-audit.spec.ts (NewCo legal entity linked via project_entity)]
+  evidence: [P1 traceability-p1.spec.ts "one entity is linked to two projects without being duplicated", P1 projects-templates-audit.spec.ts (NewCo legal entity linked via project_entity)]
 - id: REQ-ENT-004
   section: "5"
   title: "Portfolio, program, project and workstream views"
@@ -1103,7 +1103,7 @@
   acceptance_tests: ["AT-02", "AT-30", "E2E: create project from template via UI"]
   phase: P1
   status: Tested
-  evidence: [P1 projects-templates-audit.spec.ts "creates ... through the API"; "only authorized roles can create projects"]
+  evidence: [P1 projects-templates-audit.spec.ts "creates ... through the API"; "only authorized roles can create projects", 'e2e qa-p1-review.spec.ts "AT-02 (en) wizard: General Transformation project" and "AT-02 (ar, RTL) wizard" (e2e 24/24 in CI run 36645986422 at 7959b44; local run 4c70d05 in docs/test-evidence/e2e-p1-p2-run.txt)']
 - id: REQ-ENT-007
   section: "5"
   title: "Template-configurable phases, gates, fields, forms, workflows and KPIs"
@@ -1118,8 +1118,8 @@
   security_rule: "Template authoring restricted to Portfolio Admin; draft versions not usable until published"
   acceptance_tests: ["UT: invalid template (dangling gate reference) rejected"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['template versions carry phases, gates and criteria, status dimensions, workstreams, WBS, readiness areas, KPIs, RAG policy and workflow states (packages/domain/src/templates.ts)', 'packages/db/scripts/validate-templates.mjs rejects dangling gate/phase/prerequisite references (CI unit job green, run 36645986422; executed on valid templates only)', 'gap: custom fields and forms not modelled; no template authoring API; no negative test with an invalid template — re-phased to P6 (configuration module, with REQ-ENT-009)']
 - id: REQ-ENT-008
   section: "5"
   title: "Template versioning with stable project binding"
@@ -1150,8 +1150,8 @@
   security_rule: "Upgrade approval by Project Manager + Portfolio Admin; audited"
   acceptance_tests: ["AT-26", "IT: upgrade preview lists added/removed gates; nothing changes before approval"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Deferred
+  evidence: ['target P6 (configuration module, AT-26); owner backend-data-engineer (project-config); reason: the preview/approve upgrade workflow (API, UI, approval) is not built', 'built so far: D rules.test.ts "AT-26 — template diff for explicit migration preview"; table project_template_migration (schema only)', 'meanwhile projects stay pinned to their template version (REQ-ENT-008), so no silent reshape is possible']
 - id: REQ-ENT-010
   section: "5"
   title: "Cross-project dependencies with minimum disclosure"
@@ -1183,7 +1183,7 @@
   acceptance_tests: ["UT: workstream-scoped lead cannot edit another workstream"]
   phase: P1
   status: Tested
-  evidence: [P1 isolation-and-auth.spec.ts, P1 architecture-hardening.spec.ts "ARCH-02"]
+  evidence: [planning acceptance-and-access.spec.ts "a workstream lead cannot edit another workstream...but can edit their own", 'P1 arch-rereview-hardening.spec.ts "permission reach: a workstream-only grant reaches only its workstreams"', 'evidence corrected 2026-09-29: the previously cited isolation-and-auth and ARCH-02 tests cover project and room scope, not workstream scope']
 - id: REQ-ENT-012
   section: "5"
   title: "Partner, advisor and Clean Team data separation"
@@ -1249,8 +1249,8 @@
   security_rule: "Template content changes only via versioned template"
   acceptance_tests: ["UT: each of 12 workstreams has deliverables for every minimum-scope element"]
   phase: P1
-  status: Tested
-  evidence: [validate-templates.mjs]
+  status: Implemented
+  evidence: [packages/db/scripts/validate-templates.mjs (>=1 proposed activity per workstream; per-element minimum-scope coverage is NOT yet checked — QA-P1-10)]
 - id: REQ-WS-003
   section: "6"
   title: "Workstream required elements"
@@ -1330,7 +1330,7 @@
   acceptance_tests: ["AT-01", "UT: instantiated tasks all Draft/Unverified"]
   phase: P1
   status: Tested
-  evidence: [P1 projects-templates-audit.spec.ts (status draft, verification proposed)]
+  evidence: ['P1 projects-templates-audit.spec.ts "creates a DC carve-out project and a general transformation project through the API" (every instantiated task draft, verification proposed, no dates)']
 
 # ---------------------------------------------------------------- PER
 
@@ -2649,8 +2649,8 @@
   security_rule: "n/a"
   acceptance_tests: ["E2E: toggle locale switches dir and all visible strings"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['e2e p1-smoke.spec.ts "(b) switching to Arabic sets html[dir=rtl] and translates navigation"', 'e2e qa-p1-review.spec.ts "AT-02 (ar, RTL) wizard"', e2e p2-documents.spec.ts "(d) bilingual and mobile screenshots of the center" (e2e 24/24 in CI run 36645986422 at 7959b44), 'gap: server-provided names (gates, dimension explanations, template RACI functions) stay English in the Arabic UI (QA-P1-14, apps/web/README.md Known limitations), so all visible strings is not met — re-phased to P2']
 - id: REQ-UX-002
   section: "10"
   title: "i18n for UI text, English technical names"
@@ -2665,8 +2665,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: lint fails on hard-coded UI strings; ar/en key sets identical"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['apps/web/scripts/check-i18n.mjs in pnpm lint: identical en/ar key sets, no empty messages, same placeholders, every domain enum translated (CI static job green, run 36645986422)', 'gap: nothing fails the build on a hard-coded UI string']
 - id: REQ-UX-003
   section: "10"
   title: "Corporate blue/white theme, no fabricated logo"
@@ -2681,8 +2681,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: no Mobily logo asset in repository; theme tokens documented"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [theme tokens in apps/web/src/app/globals.css (documented; official branding can replace the variables), 'apps/web/README.md: no logo, no official branding fabricated', 'orchestrator scan 2026-09-29: git ls-files lists no image asset outside e2e/screenshots and no file named *logo*', 'REVIEW AT: closes when the P1 gate reviewer confirms']
 - id: REQ-UX-004
   section: "10"
   title: "Screen 1: Portfolio Home"
@@ -2697,8 +2697,8 @@
   security_rule: "Only authorized programs and in-scope counts"
   acceptance_tests: ["AT-02", "E2E: portfolio home lists only member projects"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: [e2e p1-smoke.spec.ts "(a) Demo Project Manager sees DEMO-DC with a Demo badge and not DEMO-TRANSFORM" and "Project B opening the DC project URL sees the restricted state", 'e2e qa-p1-review.spec.ts "portfolio (PM): Demo badge only on demo records" (e2e 24/24 in CI run 36645986422 at 7959b44)', P1 isolation-and-auth.spec.ts "lists only authorized projects", 'AT-02: P1 projects-templates-audit.spec.ts "creates a DC carve-out project and a general transformation project through the API"', value/budget shown as not available until finance (P4)]
 - id: REQ-UX-005
   section: "10"
   title: "Screen 2: DC Executive Cockpit"
@@ -2937,8 +2937,8 @@
   security_rule: "Platform/Portfolio Admin only; admin does not imply content access"
   acceptance_tests: ["E2E: admin creates user and assigns project role"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['Administration screen: users list and search (apps/web/src/app/(app)/admin/page.tsx); project member grant/revoke (projects/[projectId]/members)', P1 arch-rereview-hardening.spec.ts "deactivating a user revokes sessions and emits permission.changed" (creates the user through POST /api/v1/admin/users), P1 isolation-and-auth.spec.ts "revoking a role removes access on the next request" (role granted through the members API), 'gap: no user-creation UI; templates, permissions and identity tabs show NotImplementedYet; the AT E2E does not exist — re-phased: templates tab to P6, users/permissions/identity and the E2E to P7']
 - id: REQ-UX-020
   section: "10"
   title: "Screen 16b: Reports, integrations and deployment settings"
@@ -3081,8 +3081,8 @@
   security_rule: "is_demo flag propagated through APIs"
   acceptance_tests: ["E2E: demo project shows Demo badge on list and detail"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['Demo badge on cards, project header/navigation and demo records (apps/web/src/components/ProjectBadges.tsx, ProjectNav.tsx)', e2e p1-smoke.spec.ts "(a) Demo Project Manager sees DEMO-DC with a Demo badge", e2e qa-p1-review.spec.ts "Demo badge only on demo records" (list; none on user-created projects; e2e 24/24 in CI run 36645986422 at 7959b44), 'gap: no E2E asserts the badge on the demo project detail view (the p2-planning assertion can match the Demo badge of the signed-in demo user in the user menu)']
 
 # ---------------------------------------------------------------- RPT
 
@@ -4003,7 +4003,7 @@
   acceptance_tests: ["REVIEW: ADR records stack choice and versions"]
   phase: P1
   status: Implemented
-  evidence: [transformation-hub/ monorepo (apps/api NestJS, apps/web Next.js)]
+  evidence: ['transformation-hub/ monorepo (apps/api NestJS 11, apps/web Next.js 16)', 'docs/architecture/adr/0001-modular-monolith-plus-worker.md, docs/architecture/adr/0002-technology-versions.md', 'REVIEW AT: ADRs were in scope of docs/reviews/P0-architecture-review.md; to be confirmed by the P1 gate reviewer']
 - id: REQ-ARC-002
   section: "13"
   title: "PostgreSQL source of truth with constraints; optional pgvector"
@@ -4019,7 +4019,7 @@
   acceptance_tests: ["IT: migrations apply cleanly to empty database and are repeatable"]
   phase: P1
   status: Tested
-  evidence: [packages/db/migrations, P1 tests (constraints, FKs)]
+  evidence: ['packages/db/migrations applied to an emptied schema by apps/api/test/global-setup.ts on every integration run (CI integration job green, run 36645986422)', P1 isolation-and-auth.spec.ts "composite FKs prevent linking a record to another project", P1 architecture-hardening.spec.ts "ARCH-01 / REQ-DAT-002", 'borderline: repeatable is read as reproducible on an empty database; a second migrate run on a migrated database is not asserted (only post-migrate SQL is re-applied, by restore.sh in the green restore drill)']
 - id: REQ-ARC-003
   section: "13"
   title: "One documented ORM; isolation not assumed from ORM"
@@ -4067,7 +4067,7 @@
   acceptance_tests: ["UT: local filesystem and S3 adapters pass the same contract tests"]
   phase: P1
   status: Tested
-  evidence: [{P1 oidc-sso.spec.ts (in-process test IdP: PKCE}, state, nonce, signed ID token, no auto-provisioning, production config rejects demo login); Mobily IdP Not configured (Q-04)]
+  evidence: ['documents storage-contract.spec.ts "object storage contract [REQ-ARC-005]" — the same contract suite runs against the local filesystem adapter and the S3-compatible adapter', documents storage-contract.spec.ts "SigV4 signer matches independently generated vectors" (botocore S3SigV4Auth), S3 exercised against an in-process S3-compatible test server (test/support/fake-s3.ts); Mobily object store Not configured; file scanning / PDF / OCR adapters Not configured]
 - id: REQ-ARC-006
   section: "13"
   title: "OIDC/SAML identity with isolated dev identities"
@@ -4082,8 +4082,8 @@
   security_rule: "Dev identity provider disabled in production config"
   acceptance_tests: ["IT: OIDC login against test IdP; dev login rejected when NODE_ENV=production"]
   phase: P7
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['P1 oidc-sso.spec.ts "OIDC SSO (Authorization Code + PKCE)" — in-process test IdP; PKCE, state, nonce, signed ID token, no auto-provisioning', P1 oidc-sso.spec.ts "demo (development) login and unsafe settings are rejected in production configuration", Mobily IdP Not configured (Q-04); SAML via IdP gateway not implemented]
 - id: REQ-ARC-007
   section: "13"
   title: "OpenAPI, schemas and safe generated client"
@@ -4098,8 +4098,8 @@
   security_rule: "OpenAPI published without secrets; auth required outside dev"
   acceptance_tests: ["UT: OpenAPI generated from contracts matches registered routes"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [apps/api/src/cli/openapi.ts emits OpenAPI 3.1 from the contract registry; CI OpenAPI generation job green on run 36645986422, typed web client apps/web/src/lib/api.ts derived from @hub/contracts, 'gap: no UT asserts that the document covers every registered route with converted schemas (conversion failures fall back silently to an untyped object); GET /api/v1/openapi.json is not served']
 - id: REQ-ARC-008
   section: "13"
   title: "Unit, integration, E2E and accessibility testing"
@@ -4114,8 +4114,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: CI runs unit, integration, E2E and axe checks"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['GitHub Actions transformation-hub-ci run 36645986422 (7959b44), all jobs green: unit tests, API integration tests against PostgreSQL 16 and Playwright E2E (24 tests against a production web build)', 'gap: no accessibility (axe) checks in CI yet — axe checks in progress']
 - id: REQ-ARC-009
   section: "13"
   title: "OpenTelemetry to internal collector"
@@ -4146,8 +4146,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: lockfile committed; licence report generated"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['GitHub Actions transformation-hub-ci run 36645986422 (7959b44), all jobs green: licence policy job (scripts/ops/licence-check.mjs checks shipped dependencies against scripts/ops/licence-policy.json and writes licence-report.md)', pnpm-lock.yaml committed; every CI job installs with --frozen-lockfile (green on the same run), exact versions pinned; docs/architecture/adr/0002-technology-versions.md]
 - id: REQ-ARC-011
   section: "13"
   title: "Modular monolith plus worker"
@@ -4178,8 +4178,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-22", "IT: full stack runs with outbound network blocked"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['core services run internally: PostgreSQL, local filesystem storage adapter, PostgreSQL job queue and outbox, bundled fonts; OIDC and AI providers optional and Not configured by default', ai at-22-ai-egress.spec.ts "AT-22 — no unapproved external traffic" (AI egress only), static private-mode egress scan of built web and API assets green in CI run 36645986422 (7959b44), 'gap: no IT runs the full stack with outbound network blocked — re-phased to P7 (private mode, REQ-DEP-003, REQ-DEP-014)']
 - id: REQ-ARC-013
   section: "13"
   title: "Core module set"
@@ -4195,7 +4195,7 @@
   acceptance_tests: ["REVIEW: module folders and ownership documented"]
   phase: P1
   status: Implemented
-  evidence: [apps/api/src/modules/* (15 module shells + identity, portfolio)]
+  evidence: ['apps/api/src/modules/* (one folder per core module, incl. identity and portfolio)', docs/architecture/module-guide.md (module folders and file ownership)]
 - id: REQ-ARC-014
   section: "13"
   title: "Mandatory mutation flow"
@@ -4210,8 +4210,8 @@
   security_rule: "Command handler base enforces order; audit and outbox in same transaction"
   acceptance_tests: ["IT: failed business rule leaves no audit/outbox rows", "IT: mutation without session returns 401"]
   phase: P1
-  status: Tested
-  evidence: [P1 isolation-and-auth.spec.ts "mutations ... audited as denied", P1 projects-templates-audit.spec.ts audit tests]
+  status: Implemented
+  evidence: [P1 isolation-and-auth.spec.ts "mutations against another project are rejected and audited as denied", documents at-03-documents-isolation.spec.ts "writes into project A by a project-B user are rejected (404) and audited as denied; nothing is created", documents at-01-historical-claims.spec.ts "applying the historical claim is refused and audited", 'downgraded from Tested 2026-09-29: no test sends a mutation without a session (AT expects 401) and no test asserts that a failed business rule writes no outbox_event row', 'AT variance: rejected and denied attempts are deliberately audited (outcome rejected/denied); the AT should read no business change and no outbox rows']
 - id: REQ-ARC-015
   section: "13"
   title: "Frontend never touches DB or LLM secrets; MCP optional"
@@ -4278,7 +4278,7 @@
   acceptance_tests: ["AT-29", "UT: money type rejects float input; numeric(20,4) columns"]
   phase: P1
   status: Tested
-  evidence: [D rules.test.ts "AT-29", numeric(20, 4)+currency+unit_scale columns]
+  evidence: [D rules.test.ts "AT-29" and "rejects float-like garbage", 'numeric(20,4) + currency + unit_scale columns (packages/db/src/schema)']
 - id: REQ-DAT-004
   section: "14"
   title: "No invalid cross-currency/unit aggregation"
@@ -4310,7 +4310,7 @@
   acceptance_tests: ["AT-16", "IT: concurrent baseline approvals — second receives 409"]
   phase: P1
   status: Tested
-  evidence: [P1 projects-templates-audit.spec.ts "AT-16"]
+  evidence: [P1 projects-templates-audit.spec.ts "AT-16", 'planning at-16-baseline-concurrency.spec.ts "two approvers with the same expectedVersion: exactly one succeeds, the other gets 409 and nothing is lost"']
 - id: REQ-DAT-006
   section: "14"
   title: "Append-only audit with full context"
@@ -4357,8 +4357,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: hash-chain verifier detects modified row", "REVIEW: ADR states tamper-evident, not tamper-proof"]
   phase: P1
-  status: Tested
-  evidence: [ADR-0014, P1 architecture-hardening.spec.ts (TRUNCATE, checkpoints, actor binding)]
+  status: Implemented
+  evidence: ['docs/architecture/adr/0014-audit-tamper-evidence.md (tamper-evident, not tamper-proof)', P1 architecture-hardening.spec.ts "checkpoints make tail truncation detectable" and "TRUNCATE of the audit log is rejected", P1 projects-templates-audit.spec.ts "the hash chain verifies intact", 'downgraded from Tested 2026-09-29: the AT (verifier detects a modified row) is not exercised; the tamper test deletes the tail row']
 - id: REQ-DAT-009
   section: "14"
   title: "Soft deletion"
@@ -4374,7 +4374,7 @@
   acceptance_tests: ["UT: soft-deleted task excluded from lists and totals"]
   phase: P1
   status: Tested
-  evidence: [P1 projects-templates-audit.spec.ts "AT-27 (DB level)"]
+  evidence: ['P1 traceability-p1.spec.ts "a soft-deleted document disappears from the list, the total and the detail view"', 'documents at-27-legal-hold.spec.ts "it is soft, audited and invalidates the index"', 'AT variance: tasks are never deleted (cancelled status, kept visible); soft deletion applies to documents — recorded in the P1 gate report']
 - id: REQ-DAT-010
   section: "14"
   title: "Retention and legal hold enforcement"
@@ -4421,8 +4421,8 @@
   security_rule: "Download via short-lived signed URL issued after authorization"
   acceptance_tests: ["IT: expired download URL rejected"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['documents at-27-legal-hold.spec.ts "every successful download is audited with the actor, version and checksum; there is no public URL" (anonymous download 401)', documents at-03-documents-isolation.spec.ts "direct reads and downloads of hidden documents are 404", 'AT variance: downloads are streamed by the API after per-request authorization; no signed URL is issued, so no URL can expire', 'gap: download with a revoked session not asserted; exports are P6']
 - id: REQ-DAT-013
   section: "14"
   title: "Domain commands; CRUD cannot change state"
@@ -4470,7 +4470,7 @@
   acceptance_tests: ["UT: pageSize > 100 rejected"]
   phase: P1
   status: Tested
-  evidence: [/api/v1 base path, P1 list tests (pagination)]
+  evidence: ['P1 qa-p1-sec016-injection.spec.ts "REQ-DAT-015: pageSize > 100, page < 1 and non-numeric paging are rejected"', /api/v1 base path]
 - id: REQ-DAT-016
   section: "14"
   title: "Rate limits"
@@ -4501,8 +4501,8 @@
   security_rule: "Log redaction for tokens, cookies, passwords"
   acceptance_tests: ["UT: error response contains no stack trace", "UT: log redaction removes session cookie"]
   phase: P1
-  status: Tested
-  evidence: [P1 isolation-and-auth.spec.ts "validation errors are 400"; errors.ts redacts SQL]
+  status: Implemented
+  evidence: [P1 isolation-and-auth.spec.ts "validation errors are 400 problem+json", apps/api/src/platform/errors.ts (problem+json without stack; SQL text redacted from logs); apps/api/src/platform/audit.service.ts redacts token/secret/password/csrf/cookie keys, 'downgraded from Tested 2026-09-29: no test asserts that an error response carries no stack trace or that logs redact the session cookie']
 
 # ---------------------------------------------------------------- SEC
 
@@ -4649,7 +4649,7 @@
   acceptance_tests: ["AT-19", "IT: revoked session receives 401 on next request"]
   phase: P1
   status: Tested
-  evidence: [P1 isolation-and-auth.spec.ts "logout revokes", deactivating a user revokes]
+  evidence: [P1 isolation-and-auth.spec.ts "logout revokes"; "deactivating a user revokes"; "revoking a role removes access on the next request"]
 - id: REQ-SEC-010
   section: "15"
   title: "Separate service accounts with least privilege"
@@ -4696,8 +4696,8 @@
   security_rule: "Secret scanning in CI; secrets injected at runtime"
   acceptance_tests: ["UT: CI secret scan passes on repo, web bundle and test reports"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['docs/deployment/secrets.md (inventory, rotation procedures); secrets injected at runtime; scripts/ops/validate-deploy.sh refuses the owner DB secret in long-running pods (CI deploy validation green, run 36645986422); backup.sh refuses configuration files with credentials', 'gap: no CI secret scan over repository, web bundle and test reports (the AT); rotation not exercised (P7)']
 - id: REQ-SEC-013
   section: "15"
   title: "File validation and malware quarantine"
@@ -4760,8 +4760,8 @@
   security_rule: "Double-submit CSRF token; CSP; parameterized SQL; scoped lookups"
   acceptance_tests: ["IT: non-GET without CSRF token rejected", "IT: IDOR attempt returns 404"]
   phase: P1
-  status: Implemented
-  evidence: [CSRF tested (P1 isolation-and-auth.spec.ts); parameterized SQL (Drizzle); helmet CSP; XSS/injection tests pending]
+  status: Tested
+  evidence: [P1 isolation-and-auth.spec.ts "rejects state-changing requests without the CSRF header"; "returns 404 (not 403) for another project and leaks no title", P1 qa-p1-sec016-injection.spec.ts "SQL-looking search input matches nothing"; "path-parameter injection is a plain 404"; "HTML/script in project fields round-trips as an inert JSON string", e2e qa-p1-review.spec.ts "stored XSS payloads rendered inert" (e2e 24/24 in CI run 36645986422 at 7959b44), closes P0 carry-over QA-08 (QA appendices A and B committed)]
 - id: REQ-SEC-017
   section: "15"
   title: "CSV/Excel formula injection neutralized"
@@ -4923,8 +4923,8 @@
   security_rule: "Mock AI provider labelled Simulated"
   acceptance_tests: ["IT: clean checkout starts with documented commands and no external services"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['documented commands (CLAUDE.md, package.json scripts, scripts/dev/*) and deploy/compose/compose.dev.yml for local containers; synthetic demo data', 'AI Off by default and the mock provider labelled Simulated: ai ai-settings-ops.spec.ts "status shows mode, Simulated label"', 'CI run 36645986422 (7959b44), e2e job: from a clean checkout the API, worker and web start with PostgreSQL as the only runtime service', 'gap: that job uses CI-specific steps (db-init-roles.sh, entrypoint migrate, node dist/*.js), not the documented local commands (pnpm db:start / db:migrate / db:seed:demo / dev), and no local containers are started (compose up not executed)']
 - id: REQ-DEP-003
   section: "16"
   title: "Mode: Mobily Private — AI Off"
@@ -5003,8 +5003,8 @@
   security_rule: "Compose uses dev-only secrets clearly marked"
   acceptance_tests: ["IT: compose up yields healthy api, worker, web, db"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['deploy/compose/compose.dev.yml with .env.example and initdb roles; header states development/evaluation only, no high availability, local passwords', 'docker compose config checked by scripts/ops/validate-deploy.sh in the CI deploy validation job (green in run 36645986422, 7959b44)', 'gap: compose up with healthy api, worker, web and db NOT EXECUTED anywhere (no Docker daemon here; CI validates the file only)']
 - id: REQ-DEP-008
   section: "16"
   title: "Customizable Helm/Kubernetes manifests; OpenShift constraints"
@@ -5051,8 +5051,8 @@
   security_rule: "Config schema validated at startup"
   acceptance_tests: ["UT: production boot fails with default session secret or dev login enabled"]
   phase: P1
-  status: Implemented
-  evidence: [apps/api/src/platform/config.ts production validation]
+  status: Tested
+  evidence: ['P1 oidc-sso.spec.ts "demo (development) login and unsafe settings are rejected in production configuration" (HUB_MODE=demo, missing/weak/default cookie secret, owner DB role and non-https OIDC refused by loadConfig)', apps/api/src/platform/config.ts production validation]
 - id: REQ-DEP-011
   section: "16"
   title: "Adapters for infrastructure services"
@@ -5243,8 +5243,8 @@
   security_rule: "CI has no production credentials"
   acceptance_tests: ["IT: CI workflow passes on main"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['GitHub Actions transformation-hub-ci run 36645986422 (7959b44), all jobs green', '.github/workflows/transformation-hub-ci.yml (repository root): static (fresh-checkout typecheck and lint, apply_status.py --check), unit, API integration against PostgreSQL 16, web build and private-mode egress scan, container images with image SBOM and grype report, OpenAPI, licence policy, pnpm audit, source SBOM, Helm/kubeconform/compose/shellcheck, backup/restore drill, Playwright e2e', 'security scans present: egress scan, grype, pnpm audit, licence policy; no secret scan yet (REQ-SEC-012); CI holds no production credentials']
 
 # ---------------------------------------------------------------- INT
 
@@ -5700,8 +5700,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-30", "E2E: thin journey (create project → decision → report) runs by end of P2"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [phases run in sequence (docs/phases/P0-gate-report.json; P1 reviews in docs/reviews/), 'early journey pieces: e2e qa-p1-review.spec.ts "AT-02 (en) wizard" (create project) and e2e p2-governance.spec.ts "a decision goes from draft to a server-computed outcome through the UI" (e2e 24/24 in CI run 36645986422 at 7959b44)', 'gap: no single thin-journey E2E (create project, decision, report); the AT is due by end of P2 — re-phased to P2; AT-30 with REQ-PLT-003 (P8)']
 - id: REQ-PHS-002
   section: "19"
   title: "P0 exit: traceability and blueprint reviewed"
@@ -5732,8 +5732,8 @@
   security_rule: "n/a"
   acceptance_tests: ["AT-02", "AT-03", "REVIEW: docs/phases/P1-gate-report.json"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['docs/reviews/P1-qa-review.md, docs/reviews/P1-security-review.md', 'AT-02: P1 projects-templates-audit.spec.ts "creates a DC carve-out project and a general transformation project through the API"', 'AT-03: P1 isolation-and-auth.spec.ts "returns 404 (not 403) for another project and leaks no title"', 'phase process: CLAUDE.md Phase gates; docs/phases/', closes with the P1 gate report (docs/phases/P1-gate-report.json)]
 - id: REQ-PHS-004
   section: "19"
   title: "P2 exit: authorized decision journey"
@@ -5860,8 +5860,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: phase scope doc precedes implementation commits"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['docs/requirements/requirements.yaml (phase per requirement), docs/requirements/backlog.md (P1 epics), CLAUDE.md Phase gates, docs/phases/', 'variance: the P1 scope (register and backlog) was committed together with the first P1 code in e2daae7, after the groundwork commit d9f6364 (domain rules, schema); it did not precede implementation', closes with the P1 gate report]
 - id: REQ-PHS-012
   section: "19"
   title: "No pass with open Critical/High or unexecuted verification"
@@ -5876,8 +5876,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: gate report open_findings contains no Critical/High when PASS"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: ['independent reviews in separate contexts: docs/reviews/P1-qa-review.md, docs/reviews/P1-security-review.md', CLAUDE.md Phase gates (no PASS with open Critical/High findings or unexecuted verification), closes with the P1 gate report]
 - id: REQ-PHS-013
   section: "19"
   title: "Lower-severity issues recorded; mandatory scope retained"
@@ -5892,8 +5892,8 @@
   security_rule: "n/a"
   acceptance_tests: ["REVIEW: requirement count never decreases between gate reports"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Implemented
+  evidence: [register holds 394 requirements at the P0 gate and now; P1 musts Deferred or re-phased with owner and reason in docs/phases/P1-must-disposition.md, lower-severity findings recorded with owners in docs/reviews/P1-qa-review.md and docs/reviews/P1-security-review.md, closes with the P1 gate report]
 - id: REQ-PHS-014
   section: "19"
   title: "Gate report format, storage and advance/block handling"
@@ -6068,8 +6068,8 @@
   security_rule: "n/a"
   acceptance_tests: ["IT: clean clone builds, migrates, seeds and passes tests"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Tested
+  evidence: ['GitHub Actions transformation-hub-ci run 36645986422 (7959b44), all jobs green: a clean checkout builds, migrates, seeds the demo sandbox and passes unit, integration and e2e tests', 'repository contains migrations (packages/db/migrations), tests (apps/api/test, packages/*/src, e2e/tests), demo fixtures (apps/api/src/cli/seed-demo.ts), production bootstrap (apps/api/src/cli/bootstrap.ts), deployment configuration (deploy/) and CI (.github/workflows/transformation-hub-ci.yml)']
 - id: REQ-PHS-025
   section: "22"
   title: "Delivery status document"
@@ -6167,8 +6167,8 @@
   security_rule: "Demo seed runs only in non-production modes"
   acceptance_tests: ["UT: demo seed idempotent; all records is_demo = true"]
   phase: P1
-  status: Tested
-  evidence: [apps/api/src/cli/seed-demo.ts (run by every integration test setup)]
+  status: Implemented
+  evidence: ['apps/api/src/cli/seed-demo.ts runs through the real services in every integration setup (CI integration job green, run 36645986422)', 'governance governance-integrity.spec.ts "seeds the steering committee, distinct boards, an approved DEMO matrix" (seeded committees and decisions all is_demo)', 'downgraded from Tested 2026-09-29: the AT (seed idempotent; all records is_demo) is not asserted; the seed runs once per setup']
 - id: REQ-SET-002
   section: "21"
   title: "Two fictional demo partners"
@@ -6295,8 +6295,8 @@
   security_rule: "Project Manager/Portfolio Admin"
   acceptance_tests: ["E2E: wizard step 1 persists and resumes"]
   phase: P1
-  status: Planned
-  evidence: []
+  status: Deferred
+  evidence: ['target P3; owner carve-out UI (ux-frontend-engineer); reason: parties and sites come from the P3 registers (legal entities, sites) and the wizard has no persisted step 1 that can be resumed', 'built so far: the creation wizard (apps/web/src/app/(app)/projects/new) captures program and objective and submits them with the create command']
 - id: REQ-SET-010
   section: "21"
   title: "Wizard step 2: NewCo status with evidence"
