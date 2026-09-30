@@ -109,6 +109,22 @@ export function isDesignatedReviewer(access: { roles: readonly RoleKey[]; workst
   return access.roles.includes(reviewerRole) || (reviewerRole === 'workstream_lead' && access.workstreamRoles.some((w) => w.role === 'workstream_lead'));
 }
 
+type Access = { roles: readonly RoleKey[]; workstreamRoles: readonly { role: RoleKey }[] } | undefined;
+
+/** The caller holds `role` in the project: project-wide, or through a workstream-scoped assignment of that role. */
+export function holdsDesignatedRole(access: Access, role: RoleKey): boolean {
+  if (!access) return false;
+  return access.roles.includes(role) || access.workstreamRoles.some((w) => w.role === role);
+}
+
+/**
+ * Gate owner commands (start, submit, back to assessment, link decision): the gate's owner role or the project manager —
+ * mirrors the server rule (DOM-P2-16, access-matrix §2.4), which stays authoritative.
+ */
+export function isGateOwner(access: Access, ownerRole: RoleKey): boolean {
+  return holdsDesignatedRole(access, ownerRole) || Boolean(access?.roles.includes('project_manager'));
+}
+
 /** First gate (template order) whose current cycle is not approved — the cockpit's "next gate". */
 export function nextGate(gates: GateSummary[]): GateSummary | null {
   return [...gates].sort((a, b) => a.sortOrder - b.sortOrder).find((g) => g.assessment.status !== 'approved' && g.assessment.status !== 'approved_with_exceptions') ?? null;

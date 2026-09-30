@@ -18,7 +18,21 @@ import {
   CriterionState,
   GateDecisionAuthority,
   GateEvaluation,
+  assertGateReviewable,
+  assertGateEndorsedForSubmission,
+  assertGateReviewOutcomeAllowed,
+  assertGateRolesComplete,
+  gateCriteriaComplete,
+  gateReviewBasis,
+  gateReviewPending,
+  gateReviewState,
+  separationSubject,
+  GateReviewBasisInput,
 } from './gates';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { POLICY_MATRIX } from './policy';
+import type { RoleKey } from './enums';
 
 const crit = (over: Partial<CriterionState>): CriterionState => ({
   key: 'G1-C01',
@@ -246,5 +260,156 @@ describe('gate RAG and waivers [REQ-LCY-012, REQ-LCY-013]', () => {
     expect(() => assertWaivabilityDetermination({ waivable: true, waiverAuthorityRole: 'contributor', basis: 'x', authorityRoleCanApprove: false })).toThrow(/cannot approve/);
     expect(() => assertWaivabilityDetermination({ waivable: false, waiverAuthorityRole: null, basis: ' ', authorityRoleCanApprove: false })).toThrow(/basis/);
     expect(() => assertWaivabilityDetermination({ waivable: true, waiverAuthorityRole: 'committee_chair', basis: 'Ops specialist (demo)', authorityRoleCanApprove: true })).not.toThrow();
+  });
+});
+
+describe('DOM-P2-16 — gate owner, gate reviewer and approver roles [REQ-LCY-010]', () => {
+  const templates = ['dc-carveout.v1.json', 'general-transformation.v1.json'].map(
+    (f) => JSON.parse(readFileSync(join(__dirname, '../../db/seed/templates', f), 'utf8')) as { gates: { key: string; ownerRole: RoleKey; reviewerRole: RoleKey; approverRole: RoleKey }[] },
+  );
+  const holds = (role: RoleKey, permission: string) => POLICY_MATRIX.roles[role].permissions.includes(permission);
+
+  it('every template gate has distinct owner / reviewer / approver roles, each holding its gate permission', () => {
+    for (const t of templates) {
+      for (const g of t.gates) {
+        expect(new Set([g.ownerRole, g.reviewerRole, g.approverRole]).size, g.key).toBe(3);
+        expect(holds(g.ownerRole, 'gates.assessment.submit'), `${g.key} owner ${g.ownerRole}`).toBe(true);
+        expect(holds(g.reviewerRole, 'gates.assessment.review'), `${g.key} reviewer ${g.reviewerRole}`).toBe(true);
+        expect(holds(g.approverRole, 'gates.assessment.decide'), `${g.key} approver ${g.approverRole}`).toBe(true);
+      }
+    }
+    // The DC template's owners (the lead's policy grant a471265): secretary G0, workstream lead G1/G4/G5/G6, legal G2, PM G3/G7.
+    const dc = new Map(templates[0]!.gates.map((g) => [g.key, g]));
+    expect(['G0', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'].map((k) => dc.get(k)!.ownerRole)).toEqual([
+      'secretary_cpmo',
+      'workstream_lead',
+      'legal_restricted',
+      'project_manager',
+      'workstream_lead',
+      'workstream_lead',
+      'workstream_lead',
+      'project_manager',
+    ]);
+    expect(dc.get('G0')!.reviewerRole).toBe('project_manager');
+    expect(dc.get('G1')!.reviewerRole).toBe('project_manager');
+  });
+
+  it('UT (REQ-LCY-010 AT): a gate without an approver — or with roles that are not distinct or lack their permission — cannot be assessed', () => {
+    const perms = (r: string) => POLICY_MATRIX.roles[r as RoleKey]?.permissions ?? [];
+    const g0 = { key: 'G0', ownerRole: 'secretary_cpmo', reviewerRole: 'project_manager', approverRole: 'sponsor' };
+    expect(() => assertGateRolesComplete(g0, perms)).not.toThrow();
+    for (const t of templates) for (const g of t.gates) expect(() => assertGateRolesComplete(g, perms), g.key).not.toThrow();
+    const refused = (over: Partial<typeof g0>, problem: RegExp) =>
+      expect(() => assertGateRolesComplete({ ...g0, ...over } as typeof g0, perms)).toThrow(
+        expect.objectContaining({ kind: 'rule_violation', code: 'gates.definition.roles_incomplete', message: expect.stringMatching(problem) }),
+      );
+    refused({ approverRole: null as never }, /no approver role/);
+    refused({ approverRole: 'contributor' }, /approver role contributor does not hold gates\.assessment\.decide/);
+    refused({ reviewerRole: 'sponsor' }, /must be distinct/); // reviewer = approver
+    refused({ ownerRole: 'project_manager' }, /must be distinct/); // owner = reviewer
+    refused({ ownerRole: 'auditor' }, /owner role auditor does not hold gates\.assessment\.submit/);
+  });
+
+  it('owner commands carry own_workstream (gate owner role or the project manager); the gate review carries not_self', () => {
+    expect(POLICY_MATRIX.permissions['gates.assessment.submit']!.conditions).toEqual(['classification', 'own_workstream']);
+    expect(POLICY_MATRIX.permissions['gates.assessment.review']!.conditions).toContain('not_self');
+    expect(POLICY_MATRIX.permissions['gates.assessment.decide']!.conditions).toEqual(expect.arrayContaining(['not_self', 'authority']));
+  });
+
+  it('an endorsement needs the criteria assessment complete (prerequisites aside); a return is always possible', () => {
+    const complete = evaluateGate({ criteria: [crit({ status: 'met', activeEvidenceCount: 1 })], prerequisites: [{ gateKey: 'G0', status: 'in_assessment' }] });
+    expect(complete.ready).toBe(false); // blocked by the prerequisite only
+    expect(gateCriteriaComplete(complete)).toBe(true);
+    expect(() => assertGateReviewOutcomeAllowed({ gateKey: 'G1', outcome: 'endorse', evaluation: complete })).not.toThrow();
+    const open = evaluateGate({ criteria: [crit({})], prerequisites: [] });
+    const conflict = evaluateGate({ criteria: [crit({ status: 'met', activeEvidenceCount: 1, conflictingEvidenceCount: 1 })], prerequisites: [] });
+    for (const e of [open, conflict]) {
+      expect(gateCriteriaComplete(e)).toBe(false);
+      expect(() => assertGateReviewOutcomeAllowed({ gateKey: 'G1', outcome: 'endorse', evaluation: e })).toThrow(expect.objectContaining({ kind: 'rule_violation', code: 'gates.review.criteria_incomplete' }));
+      expect(() => assertGateReviewOutcomeAllowed({ gateKey: 'G1', outcome: 'return', evaluation: e })).not.toThrow();
+    }
+  });
+
+  it('only a cycle in assessment can be reviewed (422 otherwise)', () => {
+    expect(() => assertGateReviewable('G1', 'in_assessment')).not.toThrow();
+    for (const s of ['not_started', 'reopened', 'ready_for_decision', 'approved', 'approved_with_exceptions', 'rejected'] as const) {
+      expect(() => assertGateReviewable('G1', s)).toThrow(expect.objectContaining({ kind: 'rule_violation', code: 'gates.review.invalid_state' }));
+    }
+  });
+
+  const basisInput = (): GateReviewBasisInput => ({
+    criteria: [
+      { id: 'c2', version: 1, assessmentVersion: 3 },
+      { id: 'c1', version: 2, assessmentVersion: null },
+    ],
+    evidence: [
+      { id: 'e2', criterionId: 'c2', status: 'active', version: 1 },
+      { id: 'e1', criterionId: 'c2', status: 'superseded', version: 2 },
+    ],
+    waivers: [{ id: 'w1', criterionId: 'c1', status: 'requested', version: 1 }],
+  });
+
+  it('the review basis ignores list order and changes with any evidence, status, waiver or applicability change', () => {
+    const b0 = gateReviewBasis(basisInput());
+    const reordered = basisInput();
+    reordered.criteria = [...reordered.criteria].reverse();
+    reordered.evidence = [...reordered.evidence].reverse();
+    expect(gateReviewBasis(reordered)).toBe(b0);
+    const changed: ((i: GateReviewBasisInput) => GateReviewBasisInput)[] = [
+      // criterion status / review / N/A / waiver applied / note → the cycle's assessment row version
+      (i) => ({ ...i, criteria: i.criteria.map((c) => (c.id === 'c2' ? { ...c, assessmentVersion: 4 } : c)) }),
+      // first command on a criterion without a row
+      (i) => ({ ...i, criteria: i.criteria.map((c) => (c.id === 'c1' ? { ...c, assessmentVersion: 1 } : c)) }),
+      // waivability or applicability determination → criterion definition version
+      (i) => ({ ...i, criteria: i.criteria.map((c) => (c.id === 'c1' ? { ...c, version: 3 } : c)) }),
+      // evidence added
+      (i) => ({ ...i, evidence: [...i.evidence, { id: 'e3', criterionId: 'c1', status: 'active', version: 1 }] }),
+      // evidence verified / rejected / conflicting
+      (i) => ({ ...i, evidence: i.evidence.map((e) => (e.id === 'e2' ? { ...e, status: 'rejected', version: 2 } : e)) }),
+      // waiver decided
+      (i) => ({ ...i, waivers: i.waivers.map((w) => ({ ...w, status: 'approved', version: 2 })) }),
+      // waiver requested
+      (i) => ({ ...i, waivers: [...i.waivers, { id: 'w2', criterionId: 'c2', status: 'requested', version: 1 }] }),
+    ];
+    for (const f of changed) expect(gateReviewBasis(f(basisInput()))).not.toBe(b0);
+  });
+
+  it('review state: not reviewed, returned, endorsed while unchanged, stale after a later criterion change', () => {
+    const now = gateReviewBasis(basisInput());
+    expect(gateReviewState({ outcome: null, reviewedBy: null, basis: null }, now)).toBe('not_reviewed');
+    expect(gateReviewState({ outcome: 'return', reviewedBy: 'r', basis: now }, now)).toBe('returned');
+    expect(gateReviewState({ outcome: 'endorse', reviewedBy: 'r', basis: now }, now)).toBe('endorsed');
+    expect(gateReviewState({ outcome: 'endorse', reviewedBy: 'r', basis: 'older' }, now)).toBe('stale');
+    expect(gateReviewState({ outcome: 'endorse', reviewedBy: 'r', basis: null }, now)).toBe('stale'); // fails closed
+    // the reviewer has work until the current state is reviewed (a return is pending again once the owner changes something)
+    expect(gateReviewPending({ outcome: null, reviewedBy: null, basis: null }, now)).toBe(true);
+    expect(gateReviewPending({ outcome: 'endorse', reviewedBy: 'r', basis: now }, now)).toBe(false);
+    expect(gateReviewPending({ outcome: 'return', reviewedBy: 'r', basis: now }, now)).toBe(false);
+    expect(gateReviewPending({ outcome: 'return', reviewedBy: 'r', basis: 'older' }, now)).toBe(true);
+  });
+
+  it('submission needs a current endorsement (422) by someone other than the submitter (403; unknown reviewer fails closed)', () => {
+    const now = 'basis-now';
+    const ok = { gateKey: 'G1', reviewerRole: 'project_manager', review: { outcome: 'endorse' as const, reviewedBy: 'pm', basis: now }, currentBasis: now, submitterUserId: 'wsl' };
+    expect(() => assertGateEndorsedForSubmission(ok)).not.toThrow();
+    const cases: [Partial<typeof ok>, string, string][] = [
+      [{ review: { outcome: null as never, reviewedBy: null as never, basis: null as never } }, 'rule_violation', 'gates.assessment.review_required'],
+      [{ review: { outcome: 'return' as never, reviewedBy: 'pm', basis: now } }, 'rule_violation', 'gates.assessment.review_returned'],
+      [{ currentBasis: 'basis-after-a-criterion-change' }, 'rule_violation', 'gates.assessment.review_stale'],
+      [{ submitterUserId: 'pm' }, 'forbidden', 'gates.assessment.reviewer_cannot_submit'],
+      [{ review: { outcome: 'endorse', reviewedBy: null as never, basis: now } }, 'forbidden', 'policy.sod_subject_unknown'],
+      [{ submitterUserId: null as never }, 'forbidden', 'policy.sod_subject_unknown'],
+    ];
+    for (const [over, kind, code] of cases) expect(() => assertGateEndorsedForSubmission({ ...ok, ...over })).toThrow(expect.objectContaining({ kind, code }));
+  });
+
+  it('separation subject: unknown when any subject is unknown; the actor when the actor is one of them', () => {
+    expect(separationSubject('a', ['s', 'r'])).toBe('s');
+    expect(separationSubject('r', ['s', 'r'])).toBe('r');
+    expect(separationSubject('s', ['s', 'r'])).toBe('s');
+    expect(separationSubject('a', ['s', null])).toBeNull();
+    expect(separationSubject('a', [undefined])).toBeNull();
+    expect(separationSubject('a', [])).toBeNull();
+    expect(separationSubject(null, ['s'])).toBe('s');
   });
 });

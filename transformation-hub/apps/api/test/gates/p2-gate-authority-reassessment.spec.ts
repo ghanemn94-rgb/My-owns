@@ -200,7 +200,8 @@ describe('DOM-P2-09 — gate reviews and gate decisions appear in My Work with t
     const g1 = await gateByKey(p.pm, projectId, 'G1');
     expect(g1.assessment.status).toBe('ready_for_decision');
     expect((await myWork(p.chair)).some((i) => i.type === 'gate_decision' && i.entityId === g1.assessment.id && i.code === 'G1')).toBe(true);
-    expect((await myWork(p.pm)).some((i) => i.type === 'gate_decision')).toBe(false); // submitter (and no approver role)
+    expect((await myWork(p.pm)).some((i) => i.type === 'gate_decision')).toBe(false); // gate reviewer (and no approver role)
+    expect((await myWork(p.techLead)).some((i) => i.type === 'gate_decision')).toBe(false); // submitter (G1 owner)
     expect((await myWork(p.sponsor)).some((i) => i.type === 'gate_decision' && i.entityId === g1.assessment.id)).toBe(false); // G1 approver is the chair
   });
 });

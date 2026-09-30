@@ -105,6 +105,7 @@ export const approvalRequestStatus = pgEnum('approval_request_status', E.APPROVA
 
 export const gateAssessmentStatus = pgEnum('gate_assessment_status', E.GATE_ASSESSMENT_STATUSES);
 export const criterionStatus = pgEnum('criterion_status', E.CRITERION_STATUSES);
+export const gateReviewOutcome = pgEnum('gate_review_outcome', E.GATE_REVIEW_OUTCOMES);
 export const waiverStatus = pgEnum('waiver_status', E.WAIVER_STATUSES);
 export const statusDimensionKey = pgEnum('status_dimension_key', E.STATUS_DIMENSION_KEYS);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Gavel, Link2, Play, RotateCcw, Send, Undo2 } from 'lucide-react';
+import { ClipboardCheck, Gavel, Link2, Play, RotateCcw, Send, Undo2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { gatesRoutes } from '@hub/contracts';
 import { ConfirmCommandDialog } from '@/components/ConfirmCommandDialog';
@@ -9,14 +9,15 @@ import { useToast } from '@/components/Toast';
 import { btn } from '@/components/ui';
 import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
-import { holdsRole, useDecisionOptions, useInvalidateGates, type GateDetail } from '@/lib/gates';
+import { holdsDesignatedRole, holdsRole, isGateOwner, useDecisionOptions, useInvalidateGates, type GateDetail } from '@/lib/gates';
 import { projectAccess } from '@/lib/queries';
 import { useLocalized, useServerMessages } from '@/lib/i18n-data';
 import type { ServerMessageDto } from '@hub/contracts';
 import { useProjectContext } from '@/lib/project-context';
 
-type Cmd = 'start' | 'markReady' | 'back' | 'link' | 'decide' | 'reopen';
+type Cmd = 'start' | 'markReady' | 'back' | 'link' | 'review' | 'decide' | 'reopen';
 type Outcome = 'approve' | 'approve_with_exceptions' | 'reject';
+type ReviewOutcome = 'endorse' | 'return';
 
 const DECIDED = ['approved', 'approved_with_exceptions', 'rejected'];
 
@@ -56,11 +57,21 @@ export function GateActions({ gate }: { gate: GateDetail }) {
   const [decisionId, setDecisionId] = useState('');
   const [outcome, setOutcome] = useState<Outcome>('approve');
   const [reset, setReset] = useState<string[]>([]);
+  const [reviewOutcome, setReviewOutcome] = useState<ReviewOutcome>('endorse');
 
   const a = gate.assessment;
   const status = a.status;
-  const roles = projectAccess(me, projectId)?.roles;
-  const canSubmit = can('gates.assessment.submit');
+  const access = projectAccess(me, projectId);
+  const roles = access?.roles;
+  // DOM-P2-16 (mirrors the server, which stays authoritative): owner commands need the gate's owner role or the project
+  // manager; the gate-level review needs the gate's reviewer role and is never done by the person who started the cycle.
+  const isOwner = isGateOwner(access, gate.ownerRole);
+  const canSubmit = can('gates.assessment.submit') && isOwner;
+  const isGateReviewer = can('gates.assessment.review') && holdsDesignatedRole(access, gate.reviewerRole);
+  const startedByMe = !!gate.review.startedBy && gate.review.startedBy === me.user.id;
+  const canReview = isGateReviewer && status === 'in_assessment' && !startedByMe;
+  const criteriaComplete = !gate.evaluation.blockers.some((b) => b.kind === 'criterion' || b.kind === 'evidence_conflict');
+  const endorsed = gate.review.state === 'endorsed';
   const canDecide = can('gates.assessment.decide') && holdsRole(roles, gate.approverRole);
   const canReopen = can('gates.assessment.reopen');
   const decided = DECIDED.includes(status);
@@ -73,6 +84,7 @@ export function GateActions({ gate }: { gate: GateDetail }) {
     setDecisionId('');
     setOutcome('approve');
     setReset([]);
+    setReviewOutcome('endorse');
   };
   const done = async (message: string) => {
     await invalidate();
@@ -83,7 +95,8 @@ export function GateActions({ gate }: { gate: GateDetail }) {
 
   const buttons: { cmd: Cmd; show: boolean; label: string; icon: typeof Play; primary?: boolean }[] = [
     { cmd: 'start', show: canSubmit && (status === 'not_started' || status === 'reopened'), label: t('gates.actions.start'), icon: Play, primary: true },
-    { cmd: 'markReady', show: canSubmit && status === 'in_assessment', label: t('gates.actions.markReady'), icon: Send, primary: gate.evaluation.ready },
+    { cmd: 'review', show: canReview, label: t('gates.actions.review'), icon: ClipboardCheck, primary: criteriaComplete && !endorsed },
+    { cmd: 'markReady', show: canSubmit && status === 'in_assessment', label: t('gates.actions.markReady'), icon: Send, primary: gate.evaluation.ready && endorsed },
     { cmd: 'back', show: canSubmit && status === 'ready_for_decision', label: t('gates.actions.back'), icon: Undo2 },
     { cmd: 'link', show: canSubmit && !decided, label: t('gates.actions.link'), icon: Link2 },
     { cmd: 'decide', show: canDecide && (status === 'ready_for_decision' || status === 'in_assessment'), label: t('gates.actions.decide'), icon: Gavel, primary: status === 'ready_for_decision' },
@@ -140,6 +153,16 @@ export function GateActions({ gate }: { gate: GateDetail }) {
         {!canDecide && can('gates.assessment.decide') && !decided ? (
           <p className="self-center text-xs text-muted">{t('gates.actions.approverOnly', { role: tStatus('roleKeys', gate.approverRole) })}</p>
         ) : null}
+        {!isOwner && can('gates.assessment.submit') && !decided ? (
+          <p className="self-center text-xs text-muted" data-testid="gate-owner-only">
+            {t('gates.actions.ownerOnly', { role: tStatus('roleKeys', gate.ownerRole) })}
+          </p>
+        ) : null}
+        {isGateReviewer && status === 'in_assessment' && startedByMe ? (
+          <p className="self-center text-xs text-muted" data-testid="gate-review-not-starter">
+            {t('gates.actions.reviewerIsStarter')}
+          </p>
+        ) : null}
       </div>
 
       <ConfirmCommandDialog
@@ -163,6 +186,8 @@ export function GateActions({ gate }: { gate: GateDetail }) {
         expectedVersion={a.version}
         consequences={[
           gate.evaluation.ready ? t('gates.commands.markReady.effect') : t('gates.commands.markReady.notReady', { count: gate.evaluation.blockers.length }),
+          endorsed ? t('gates.commands.markReady.endorsed') : t('gates.commands.markReady.needsEndorsement', { role: tStatus('roleKeys', gate.reviewerRole) }),
+          t('gates.commands.markReady.notReviewer'),
           t('gates.commands.markReady.frozen'),
           t('common.command.audited'),
         ]}
@@ -204,6 +229,32 @@ export function GateActions({ gate }: { gate: GateDetail }) {
           {decisionSelect}
           {chosenInfo}
         </div>
+      </ConfirmCommandDialog>
+      <ConfirmCommandDialog
+        open={open === 'review'}
+        onClose={close}
+        title={t('gates.commands.review.title', { gate: gateLabel })}
+        confirmLabel={t('gates.actions.recordReview')}
+        noteMode="required"
+        noteLabel={t('gates.review.note')}
+        expectedVersion={a.version}
+        danger={reviewOutcome === 'return'}
+        consequences={[
+          t(`gates.commands.review.effect.${reviewOutcome}`),
+          reviewOutcome === 'endorse' && !criteriaComplete ? t('gates.commands.review.incomplete') : t('gates.commands.review.stale'),
+          t('gates.commands.review.sod'),
+          t('common.command.audited'),
+        ]}
+        onReload={invalidate}
+        onConfirm={async ({ note }) => {
+          await api(gatesRoutes.reviewAssessment, { params, body: { expectedVersion: a.version, outcome: reviewOutcome, note } });
+          await done(t(`gates.commands.review.done.${reviewOutcome}`, { gate: gate.key }));
+        }}
+      >
+        <SelectField label={t('gates.review.outcome')} required value={reviewOutcome} onChange={(e) => setReviewOutcome(e.target.value as ReviewOutcome)} data-testid="review-outcome">
+          <option value="endorse">{tStatus('gateReviewOutcomes', 'endorse')}</option>
+          <option value="return">{tStatus('gateReviewOutcomes', 'return')}</option>
+        </SelectField>
       </ConfirmCommandDialog>
       <ConfirmCommandDialog
         open={open === 'decide'}

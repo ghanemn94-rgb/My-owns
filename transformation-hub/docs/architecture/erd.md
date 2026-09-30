@@ -958,7 +958,7 @@ erDiagram
     uuid decision_id
     uuid submitted_by
     timestamptz submitted_at
-    text reopened_reason
+    uuid started_by
     more more_columns
   }
   criterion_assessment {
@@ -1013,6 +1013,8 @@ erDiagram
   gate_assessment ||--o{ gate_assessment : "supersedes_assessment_id"
   app_user ||--o{ gate_assessment : "org_id,created_by"
   app_user ||--o{ gate_assessment : "org_id,decided_by"
+  app_user ||--o{ gate_assessment : "org_id,reviewed_by"
+  app_user ||--o{ gate_assessment : "org_id,started_by"
   app_user ||--o{ gate_assessment : "org_id,submitted_by"
   gate_assessment ||--o{ criterion_assessment : "assessment_id"
   gate_criterion ||--o{ criterion_assessment : "criterion_id"

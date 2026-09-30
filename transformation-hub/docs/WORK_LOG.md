@@ -5,115 +5,97 @@
 ## Current state — 2026-09-30
 
 - **Branch:** `claude/mobily-transformation-hub` (repository `My-owns`, project directory `transformation-hub/`).
-- **Checkpoint revision:** `2ac548b`.
-- **Phases:**
-  - P0 PASS.
-  - P1: security re-review PASS with conditions (all SEC-P1R / I-R items fixed). QA re-review
-    (`docs/reviews/P1-qa-rereview.md`, at `c1338f7`): PASS WITH CONDITIONS, no Critical/High.
-    - Conditions closed in `2ac548b`: REQ-SRC-002, REQ-ARC-011, disposition counts, evidence corrections.
-    - Open: a security reviewer confirms the gitleaks allow-list entries (review running); a CI run on the gate revision,
-      where AT-07 is listed as an open P3 finding if still red.
-    - Then write `docs/phases/P1-gate-report.json`.
-  - P2: the domain review FAILed with 5 High findings. All High and Medium findings are fixed and merged (`3e2a29d`,
-    `c1338f7`). DOM-P2-16 (Low) is open; DOM-P2-08/11 are re-phased to P6. Web follow-ups are in progress; the QA review
-    is still to run.
-  - P3: backends and web screens merged; reviews not run.
-  - P4: finance and JV/DD backends and web screens merged (`4511cc3`); reviews not run. Finance evidence/history
-    visibility fixed (`45cf17f`).
-  - P5: AI backend merged (mock provider only); web UI planned.
-  - P6–P8: not started.
-- **Verified at `c1338f7`** (PostgreSQL 16, own test database):
-  - API integration suite: 691/691 tests in 78 files.
-  - Unit tests: domain 348/348, contracts 100/100.
-  - Root `pnpm lint`: pass (i18n parity at 3835 keys per language, 42 server message codes; hard-coded string check).
-  - `apply_status.py --check`: OK (102 entries).
-  - Secret scan (gitleaks 8.30.1, local, `d508929`): tree PASS, history PASS.
-- **CI:**
-  - Run 16 (`4f05318`) was fully green.
-  - Runs 20–24 were red only on the secret-scan job (synthetic config-test values). Fixed in `d508929`; a green run is
-    still to be confirmed.
-  - In run 23 (`a471265`), every other job passed, including Playwright e2e and the Compose stack.
+- **Checkpoint revision:** `1b30f48`.
 
-## Done since the last checkpoint
+### Phases
 
-- P1 security re-review fixes merged (`7751b98`):
-  - policy conditions fail closed (I-R3);
-  - role → state → separation-of-duties order;
-  - JIT off;
-  - CASE-based record visibility;
-  - production configuration hardening;
-  - S3-compatible storage adapter (SigV4, contract tests against a fake S3 server and botocore vectors).
-- QA-P1-02/03/08/10/11/13/14:
-  - fresh-checkout build;
-  - sort allow-list with ICU collation;
-  - bilingual server data (`<field>Ar` / `<field>I18n`);
-  - hard-coded string check;
-  - axe a11y spec in CI;
-  - must-disposition of all 82 P1 musts.
-- P1 closure tests (23 tests, 7 defects fixed). The worker waits for the organization instead of crash-looping.
-- P2 domain-review fixes:
-  - DOM-P2-01: gate approvals backed only by typed, final decisions of the authorized body.
-  - DOM-P2-02/13: vote tally and quorum rules.
-  - DOM-P2-03: baseline and change-request approvals checked against the in-force matrix, with structured `costImpact`.
-  - DOM-P2-04/05/07/09/10/15/19/21.
-  - DOM-P2-06/20: round integrity.
-  - DOM-P2-12: evidence for external approvals and matrix approvals.
-  - DOM-P2-17/18: cross-project dependencies and prerequisites (API).
-- Lead follow-ups to the P2 fixes:
-  - policy grants: `planning.deliverable.accept` for sponsor and chair; `gates.assessment.submit` for the gate-owner roles;
-  - organization-bound FK and same-project triggers for the new dependency tables;
-  - `record_dependency` in the activity feed;
-  - the perimeter-version approval follows the G1 gate-approval rule.
-- P4 backends:
-  - finance: snapshots, budget, models, benefits, KPIs, reconciliations;
-  - JV/DD: partners, rooms, scenarios, DD requests and findings, closings, CPs, post-close obligations.
-  - Both are adapted to the fail-closed policy, with JV record visibility.
-- Data dictionary and ERD regenerated (120 tables, 115 with RLS).
+- **P0:** PASS.
+- **P1:** gate PASS WITH CONDITIONS at `65b53e9` (`docs/phases/P1-gate-report.json`).
+  - CI run 32 was fully green on that revision.
+  - Both independent reviews passed with conditions.
+  - The P2 gate reviews must re-verify the lead's closures.
+- **P2:**
+  - All domain-review findings are fixed and merged, including DOM-P2-16 (gate owner and reviewer roles, gate-level review step).
+  - The web follow-ups are merged.
+  - DOM-P2-14 (Low) is open. DOM-P2-08 and DOM-P2-11 are re-phased to P6.
+  - The gate reviews are running: domain re-review, QA review and security review.
+- **P3:** backends and web screens merged; reviews not run.
+- **P4:** finance and JV/DD backends and web screens merged; reviews not run.
+- **P5:** AI backend merged (mock provider only); the web screens are being built.
+- **P6–P8:** not started.
+
+### Verified
+
+- **API integration suite:** 709/709 in 80 files at the DOM-P2-16 merge (own test database, PostgreSQL 16).
+- **Playwright, full suite:** 261/261 at `ef8ea27` plus the JV fixture fix. The stack was set up like the CI e2e job, and the a11y report was regenerated from that run. DOM-P2-16 changed the gate flow afterwards: only its gate-related specs were run after the merge, and CI will run the full suite.
+- **Lint:** root `pnpm lint` passes. This includes i18n parity, the hard-coded string check and the module-boundary check.
+- **Secret scan:** gitleaks tree and history pass.
+- **Evidence file:** `apply_status.py --check` passes.
+
+## Done in this session (highlights)
+
+- **P1 closures:**
+  - REQ-SRC-002: template source map check.
+  - REQ-ARC-011: module-boundary check in the API lint.
+  - Evidence corrections.
+  - Must-disposition update (register counts 58/22/2).
+  - Secret-scan allow-list hardening: SEC-P1S-01/02/03/07. Every path-scoped entry now names its `targetRules`, and a `.gitleaksignore` file is refused.
+- **Finance visibility:**
+  - Evidence and history follow the finance-domain clearance and reach.
+  - Finance detail counters count only readable evidence (SEC-P1S-04).
+- **Policy grants:**
+  - `planning.deliverable.accept` for the sponsor and the committee chair.
+  - `gates.assessment.submit` for the gate-owner roles, with the own-workstream condition (DOM-P2-16).
+- **DOM-P2-17/18:**
+  - Guards: an organization-bound FK and same-project triggers.
+  - `record_dependency` added to the activity feed.
+  - The perimeter-version approval now follows the G1 gate-approval rule.
+- **Requirements:**
+  - P2/P3/P4 disposition in `docs/phases/P2-P4-requirement-disposition.md`.
+  - Data dictionary and ERD regenerated (120 tables).
 
 ## In progress (parallel agents, worktree branches)
 
-- DOM-P2-16: gate owner and reviewer enforcement, with a gate-level review step (API, kits, seeds, gates web, e2e).
+- P2 domain re-review → `docs/reviews/P2-domain-rereview.md`.
+- P2 QA review, which also re-verifies the P1 QA closures → `docs/reviews/P2-qa-review.md`.
+- P2 security review, which also re-verifies the P1 security closures and decides on access-matrix §2.2 →
+  `docs/reviews/P2-security-review.md`.
 - P5 AI Project Manager web screens.
-- Focused security review: gitleaks allow-list entries and the finance visibility change.
-- P2 web follow-ups:
-  - the external-approval dialog must send `evidenceLinkId` (this dialog currently fails with 422);
-  - matrix approval document and verification;
-  - `costImpact` and a decision picker;
-  - cross-project dependencies and prerequisites screens.
 
-## Known failures and risks
+## Known failures, risks and open questions
 
+- **Access-matrix §2.2 vs the implementation.**
+  - The document says workstream-scoped read permissions also cover project-level records. The code implements the
+    stricter rule, and the finance tests depend on it.
+  - As a result, a workstream-only lead gets 403 on the gates list. The demo leads also hold a project-level role, so
+    the demo is not affected.
+  - The P2 security review will recommend a direction.
 - **For the P3 security review:**
-  - A Contributor may run the readiness "checklist from template" command. The test at
-    `at-09-readiness-go-no-go.spec.ts` encodes "creator = owner" (access-matrix §2.4). QA re-review observation: decide
-    whether bulk instantiation should need a workstream or project-wide reach.
+  - A Contributor can run the readiness "checklist from template" command (creator = owner, access-matrix §2.4).
   - The same self-owner claim appears in the readiness, cutover, TSA, RAID, status-update and perimeter create commands.
-
-- **Web regression until the P2 web follow-ups merge:** recording an external authority approval from the UI returns 422
-  (the API now requires a verified evidence link).
-- **AT-07 in the UI (F-13 in `docs/phases/P2-P4-requirement-disposition.md`, proposed High):** at `124f3d8`
-  `e2e/tests/p3-carveout.spec.ts` (a) fails. Since DOM-P2-03, a change request whose cost is only text is refused
-  (`change_control.amount_unquantified`), and the UI has no `costImpact` field yet. This is assigned to the P2 web
-  follow-ups.
-- **Open P2 items besides DOM-P2-16:**
-  - DOM-P2-14 (decision-paper completeness: evidence and attachments);
-  - the P2 must-gaps listed in `docs/phases/P2-P4-requirement-disposition.md` §4: GOV-012/013/015/008/009, WS-003, and
-    UX-005/006/018/024, SET-013/014, PLN-002.
-- **Secret-scan allow-list:** the entries extended in `d508929` need a security reviewer's confirmation (allow-list
-  policy in `scripts/ops/gitleaks.toml`).
-- **DOM-P2-16** (gate owner and reviewer roles enforced, gate-level review step) is not implemented. The policy
-  prerequisite is granted; the design is in `docs/reviews/P2-domain-review.md`.
+- **Open P2 gaps** listed in `docs/phases/P2-P4-requirement-disposition.md` §4:
+  - DOM-P2-14;
+  - GOV-012, GOV-013, GOV-015, GOV-008, GOV-009;
+  - WS-003;
+  - UX-005, UX-006, UX-018, UX-024;
+  - SET-013, SET-014;
+  - PLN-002.
+  The domain re-review will say which of them block the P2 gate.
+- **Low findings carried** in `docs/phases/P1-gate-report.json`: QA-P1-09, QA-P1R-04/05, SEC-P1S-05/06/08.
 - **Environment limits:**
-  - The reference image and Excel workbook are not available here (image extraction NOT performed).
-  - There is no Docker daemon here: images are built only in CI, and Helm install is NOT EXECUTED.
+  - The reference image and Excel workbook are not available (image extraction NOT performed).
+  - There is no Docker daemon here: images, Compose and Helm are validated only in CI, and Helm install is NOT EXECUTED.
   - pgvector is not installed: retrieval uses PostgreSQL full-text search (ADR-0008).
 
 ## Next action
 
-1. Confirm a green CI run on `d508929` or later.
-2. Merge the P4 UI branches and the P2 web follow-ups. Before each push: regenerate the migration if schemas changed,
-   run the full API suite and `pnpm lint`, and run the local secret scan (history + tree).
-3. Act on the P1 QA re-review → write `docs/phases/P1-gate-report.json`.
-4. P2: DOM-P2-16, then the QA review and the P2 gate.
-5. P3 reviews and gate. P4 reviews (domain, security, QA) and gate.
-6. AI UI (P5 reviews) → P6 → P7 → P8.
+1. Act on the three P2 reviews: fix, then re-review if needed.
+2. Write `docs/phases/P2-gate-report.json`.
+3. P3 reviews (domain, security, QA) → P3 gate. P4 reviews → P4 gate.
+4. Merge the AI UI → P5 reviews → P6 → P7 → P8.
+
+Before every push:
+- run the full API suite and `pnpm lint`;
+- run the local secret scan (tree and history);
+- regenerate the single migration if the schema changed;
+- after gate-flow or UI changes, also run the full Playwright suite.

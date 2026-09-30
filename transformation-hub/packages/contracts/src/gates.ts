@@ -1,5 +1,16 @@
 import { z } from 'zod';
-import { CRITERION_STATUSES, GATE_ASSESSMENT_STATUSES, ROLE_KEYS, STATUS_DIMENSION_KEYS, WAIVER_STATUSES, DECISION_STATUSES, DECISION_AUTHORITY_OUTCOMES, REASSESSMENT_REASONS } from '@hub/domain';
+import {
+  CRITERION_STATUSES,
+  GATE_ASSESSMENT_STATUSES,
+  GATE_REVIEW_OUTCOMES,
+  GATE_REVIEW_STATES,
+  ROLE_KEYS,
+  STATUS_DIMENSION_KEYS,
+  WAIVER_STATUSES,
+  DECISION_STATUSES,
+  DECISION_AUTHORITY_OUTCOMES,
+  REASSESSMENT_REASONS,
+} from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
 import { Uuid, IsoDate, ProjectParams, ExpectedVersion, Text, RequiredText, idParams, NoSort, ServerMessageSchema } from './common';
 
@@ -58,10 +69,37 @@ export const GateAssessmentDto = z.object({
   decidedAt: z.string().nullable(),
   decisionId: Uuid.nullable(),
   decisionNote: z.string().nullable(),
+  /** Who started the cycle (gate owner role or project manager) — never the gate reviewer (DOM-P2-16). */
+  startedBy: Uuid.nullable(),
+  startedAt: z.string().nullable(),
+  /** Latest gate-level review of the cycle (earlier reviews are in the audit trail). */
+  reviewedBy: Uuid.nullable(),
+  reviewedAt: z.string().nullable(),
+  reviewOutcome: z.enum(GATE_REVIEW_OUTCOMES).nullable(),
+  reviewNote: z.string().nullable(),
   reopenedReason: z.string().nullable(),
   supersedesAssessmentId: Uuid.nullable(),
   createdAt: z.string(),
   reassessment: ReassessmentFlagDto,
+});
+
+/**
+ * Gate-level review of the current cycle (DOM-P2-16, REQ-LCY-010): the gate's reviewer role endorses or returns the owner's
+ * assessment while it is in assessment; submitting it for decision needs an endorsement recorded after the cycle's last
+ * criterion change (`state = endorsed`).
+ */
+export const GateReviewDto = z.object({
+  /** `stale` = endorsed, but a criterion changed afterwards (evidence, status, waiver or applicability). */
+  state: z.enum(GATE_REVIEW_STATES),
+  reviewerRole: Role,
+  outcome: z.enum(GATE_REVIEW_OUTCOMES).nullable(),
+  reviewedBy: Uuid.nullable(),
+  reviewedByName: z.string().nullable(),
+  reviewedAt: z.string().nullable(),
+  note: z.string().nullable(),
+  /** Who started the cycle — the gate reviewer must be someone else. */
+  startedBy: Uuid.nullable(),
+  startedByName: z.string().nullable(),
 });
 
 export const LinkedDecisionDto = z.object({
@@ -98,6 +136,8 @@ export const GateSummaryDto = z.object({
   prerequisites: z.array(z.object({ gateKey: z.string(), status: z.union([GateStatus, z.literal('none')]) })),
   /** Decision backing for the current cycle (null when none is linked or it is not visible to the caller). */
   decision: LinkedDecisionDto.nullable(),
+  /** Gate-level review of the current cycle (DOM-P2-16). */
+  review: GateReviewDto,
   /** Blockers = evaluation blockers + decision blocker when the cycle is ready for decision. */
   blockers: z.array(GateBlockerDto),
   rag: z.enum(['green', 'amber', 'red']),
@@ -186,6 +226,8 @@ export const AssessmentCommandResult = z.object({
   status: GateStatus,
   version: z.number().int(),
   evaluation: GateEvaluationDto,
+  /** Gate-level review state of the cycle after the command (DOM-P2-16). */
+  reviewState: z.enum(GATE_REVIEW_STATES),
 });
 
 export const CriterionCommandResult = z.object({
@@ -244,7 +286,7 @@ export const gatesRoutes = registerRoutes({
     id: 'gates.startAssessment',
     method: 'POST',
     path: '/api/v1/projects/:projectId/gates/:gateId/assessment/start',
-    summary: 'Start (or restart after reopen) the current assessment cycle',
+    summary: 'Start (or restart after reopen) the current assessment cycle (gate owner role or project manager)',
     tags: ['gates'],
     access: 'gates.assessment.submit',
     command: true,
@@ -256,7 +298,7 @@ export const gatesRoutes = registerRoutes({
     id: 'gates.markReady',
     method: 'POST',
     path: '/api/v1/projects/:projectId/gates/:gateId/assessment/mark-ready',
-    summary: 'Submit the cycle for decision — only when the server evaluation is ready',
+    summary: 'Submit the cycle for decision (gate owner role or project manager) — only when the server evaluation is ready and the gate reviewer endorsed the current assessment; the submitter is not that reviewer',
     tags: ['gates'],
     access: 'gates.assessment.submit',
     command: true,
@@ -268,7 +310,7 @@ export const gatesRoutes = registerRoutes({
     id: 'gates.backToAssessment',
     method: 'POST',
     path: '/api/v1/projects/:projectId/gates/:gateId/assessment/back-to-assessment',
-    summary: 'Return a ready cycle to assessment (criteria changed)',
+    summary: 'Return a ready cycle to assessment (criteria changed; gate owner role or project manager)',
     tags: ['gates'],
     access: 'gates.assessment.submit',
     command: true,
@@ -280,7 +322,7 @@ export const gatesRoutes = registerRoutes({
     id: 'gates.linkDecision',
     method: 'POST',
     path: '/api/v1/projects/:projectId/gates/:gateId/assessment/link-decision',
-    summary: 'Link the governance decision that will back the gate decision (shown as a blocker until final — AT-04)',
+    summary: 'Link the governance decision that will back the gate decision (gate owner role or project manager; shown as a blocker until final — AT-04)',
     tags: ['gates'],
     access: 'gates.assessment.submit',
     command: true,
@@ -288,11 +330,24 @@ export const gatesRoutes = registerRoutes({
     body: z.object({ expectedVersion: ExpectedVersion, decisionId: Uuid }),
     response: AssessmentCommandResult,
   }),
+  reviewAssessment: defineRoute({
+    id: 'gates.reviewAssessment',
+    method: 'POST',
+    path: '/api/v1/projects/:projectId/gates/:gateId/assessment/review',
+    summary:
+      "Gate-level review (DOM-P2-16): the gate's designated reviewer role endorses or returns the owner's assessment while the cycle is in assessment; never the person who started the cycle. An endorsement needs every criterion satisfied; a later criterion change makes it stale",
+    tags: ['gates'],
+    access: 'gates.assessment.review',
+    command: true,
+    params: GateParams,
+    body: z.object({ expectedVersion: ExpectedVersion, outcome: z.enum(GATE_REVIEW_OUTCOMES), note: RequiredText(4000) }),
+    response: AssessmentCommandResult,
+  }),
   decide: defineRoute({
     id: 'gates.decide',
     method: 'POST',
     path: '/api/v1/projects/:projectId/gates/:gateId/assessment/decide',
-    summary: 'Record the gate decision (approve / approve with exceptions / reject); re-evaluated at decision time',
+    summary: 'Record the gate decision (approve / approve with exceptions / reject); re-evaluated at decision time; never by the submitter or the gate reviewer',
     tags: ['gates'],
     access: 'gates.assessment.decide',
     command: true,
@@ -461,5 +516,6 @@ export const gatesRoutes = registerRoutes({
 
 export type GateSummary = z.infer<typeof GateSummaryDto>;
 export type GateDetail = z.infer<typeof GateDetailDto>;
+export type GateReview = z.infer<typeof GateReviewDto>;
 export type Waiver = z.infer<typeof WaiverDto>;
 export type StatusDimensions = z.infer<typeof StatusDimensionsDto>;

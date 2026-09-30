@@ -1,6 +1,7 @@
 import { forbidden, ruleViolation } from './errors';
 import { formatMessage, serverMessage, type ServerMessage } from './messages';
-import type { CriterionStatus, GateAssessmentStatus, DecisionStatus, DecisionAuthorityOutcome } from './enums';
+import { canonicalJson } from './canonical';
+import type { CriterionStatus, GateAssessmentStatus, DecisionStatus, DecisionAuthorityOutcome, GateReviewOutcome, GateReviewState } from './enums';
 
 /**
  * Gate evaluation (spec §3). A gate is ready for decision only when every mandatory criterion is met with
@@ -549,4 +550,174 @@ export function planReopen(prev: { id: string; cycle: number; status: string }, 
   }
   if (!reason.trim()) throw ruleViolation('gates.reopen.missing_reason', 'Reopening requires a reason (e.g. evidence found defective)');
   return { cycle: prev.cycle + 1, supersedesAssessmentId: prev.id, status: 'reopened' as const, reason };
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Gate roles and the gate-level review (spec §3 "Each gate must have … owner, reviewer, approver"; REQ-LCY-010;
+// DOM-P2-16 — docs/governance/business-gates.md §2.4)
+//
+//  - OWNER: the gate's `ownerRole` (or the project manager — access-matrix §2.4 `own_workstream`) starts the cycle,
+//    links the backing decision, submits the cycle for decision (mark-ready) and sends it back to assessment.
+//  - REVIEWER: the gate's `reviewerRole` endorses or returns the owner's assessment while the cycle is in assessment.
+//    Separation of duties: never the person who started the cycle, and the person who submits the cycle is never the
+//    reviewer whose endorsement it relies on.
+//  - APPROVER: the gate's `approverRole` decides; never the submitter nor the gate reviewer.
+
+/**
+ * REQ-LCY-010 "Each gate has … owner, reviewer, approver" (AT: a gate without an approver cannot be assessed; security rule:
+ * owner, reviewer and approver distinct): the three roles are present, distinct, and hold their gate permissions under the
+ * policy matrix. Checked when a cycle is started (422 `gates.definition.roles_incomplete`), so a misconfigured gate
+ * definition fails closed instead of producing a cycle nobody can review or decide.
+ */
+export function assertGateRolesComplete(
+  gate: { key: string; ownerRole: string | null | undefined; reviewerRole: string | null | undefined; approverRole: string | null | undefined },
+  permissionsOfRole: (role: string) => readonly string[],
+): void {
+  const needs = [
+    ['owner', gate.ownerRole, 'gates.assessment.submit'],
+    ['reviewer', gate.reviewerRole, 'gates.assessment.review'],
+    ['approver', gate.approverRole, 'gates.assessment.decide'],
+  ] as const;
+  const problems: string[] = [];
+  for (const [what, role, permission] of needs) {
+    if (!role) problems.push(`no ${what} role`);
+    else if (!permissionsOfRole(role).includes(permission)) problems.push(`${what} role ${role} does not hold ${permission}`);
+  }
+  const present = needs.map(([, role]) => role).filter((r): r is string => !!r);
+  if (new Set(present).size < present.length) problems.push('owner, reviewer and approver roles must be distinct');
+  if (problems.length) throw ruleViolation('gates.definition.roles_incomplete', `Gate ${gate.key} cannot be assessed: ${problems.join('; ')}`, { problems });
+}
+
+/** The gate reviewer may review a cycle only while it is under assessment. */
+export const GATE_REVIEWABLE_STATUSES: readonly GateAssessmentStatus[] = ['in_assessment'];
+
+export function assertGateReviewable(gateKey: string, status: GateAssessmentStatus): void {
+  if (!GATE_REVIEWABLE_STATUSES.includes(status)) {
+    throw ruleViolation(
+      'gates.review.invalid_state',
+      status === 'ready_for_decision'
+        ? `Gate ${gateKey} is already submitted for decision — the owner must send it back to assessment before it can be reviewed again`
+        : `Gate ${gateKey} assessment is ${status}; only a cycle in assessment can be reviewed`,
+      { status },
+    );
+  }
+}
+
+/**
+ * The owner's assessment of the criteria is complete: no criterion or evidence-conflict blocker is left. Prerequisite
+ * gates are not part of it (they are sequencing, checked again at mark-ready and at decision time).
+ */
+export function gateCriteriaComplete(evaluation: GateEvaluation): boolean {
+  return !evaluation.blockers.some((b) => b.kind === 'criterion' || b.kind === 'evidence_conflict');
+}
+
+/**
+ * The gate reviewer's outcome is valid for the cycle: an ENDORSEMENT needs the criteria assessment to be complete (422
+ * `gates.review.criteria_incomplete` with the blockers); a RETURN for rework is always possible while in assessment.
+ */
+export function assertGateReviewOutcomeAllowed(input: { gateKey: string; outcome: GateReviewOutcome; evaluation: GateEvaluation }): void {
+  if (input.outcome === 'endorse' && !gateCriteriaComplete(input.evaluation)) {
+    const blockers = input.evaluation.blockers.filter((b) => b.kind === 'criterion' || b.kind === 'evidence_conflict');
+    throw ruleViolation('gates.review.criteria_incomplete', `Gate ${input.gateKey} cannot be endorsed: ${blockers.length} criterion blocker(s) remain — return it for rework instead`, { blockers });
+  }
+}
+
+/**
+ * Everything whose change after an endorsement makes it out of date: the gate's criteria and their assessment rows,
+ * evidence links and waivers (versions increase on every change; ids appear when a record is added).
+ */
+export interface GateReviewBasisInput {
+  /**
+   * Criteria of the gate: definition version (waivability, applicability) and the cycle's assessment row version
+   * (status, evidence submission, review, not-applicable, waiver, working note) — `null` while the row does not exist.
+   */
+  criteria: readonly { id: string; version: number; assessmentVersion: number | null }[];
+  /** Every evidence link of those criteria, whatever its status (added, verified, rejected, conflicting, superseded). */
+  evidence: readonly { id: string; criterionId: string; status: string; version: number }[];
+  /** Every waiver of those criteria (requested, approved, rejected, withdrawn). */
+  waivers: readonly { id: string; criterionId: string; status: string; version: number }[];
+}
+
+/**
+ * Canonical fingerprint of a cycle's criterion state (what the gate reviewer endorses). It changes with any change of
+ * evidence, criterion status, waiver or applicability of the gate's criteria — independent of clocks and of the order of
+ * the input lists. The API stores its SHA-256 with the review; an endorsement is current only while it is unchanged.
+ */
+export function gateReviewBasis(input: GateReviewBasisInput): string {
+  const byId = <T extends { id: string }>(xs: readonly T[]) => [...xs].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  return canonicalJson({
+    criteria: byId(input.criteria).map((c) => [c.id, c.version, c.assessmentVersion ?? 0]),
+    evidence: byId(input.evidence).map((e) => [e.id, e.criterionId, e.status, e.version]),
+    waivers: byId(input.waivers).map((w) => [w.id, w.criterionId, w.status, w.version]),
+  });
+}
+
+export interface GateReviewRecord {
+  outcome: GateReviewOutcome | null;
+  reviewedBy: string | null;
+  /** Fingerprint (hash) of the criterion state recorded with the review. */
+  basis: string | null;
+}
+
+/**
+ * Review state of a cycle: not reviewed; returned for rework; endorsed (and nothing changed since); or stale (endorsed,
+ * but a criterion changed after the endorsement — a fresh endorsement is needed).
+ */
+export function gateReviewState(review: GateReviewRecord, currentBasis: string): GateReviewState {
+  if (!review.outcome) return 'not_reviewed';
+  if (review.outcome === 'return') return 'returned';
+  return review.basis !== null && review.basis === currentBasis ? 'endorsed' : 'stale';
+}
+
+/** Whether the gate reviewer has work on the cycle: nothing reviewed yet, or the criteria changed after the last review. */
+export function gateReviewPending(review: GateReviewRecord, currentBasis: string): boolean {
+  return !review.outcome || review.basis === null || review.basis !== currentBasis;
+}
+
+/**
+ * Submission guard (mark-ready): the cycle needs an ENDORSEMENT by the gate reviewer recorded after the cycle's last
+ * criterion change (422 otherwise), and the submitter must not be that reviewer (403 — separation of duties; an
+ * endorsement whose reviewer is unknown fails closed, I-R3).
+ */
+export function assertGateEndorsedForSubmission(input: {
+  gateKey: string;
+  reviewerRole: string;
+  review: GateReviewRecord;
+  currentBasis: string;
+  submitterUserId: string | null;
+}): void {
+  const state = gateReviewState(input.review, input.currentBasis);
+  if (state === 'not_reviewed') {
+    throw ruleViolation('gates.assessment.review_required', `Gate ${input.gateKey} cannot be submitted: the gate reviewer (${input.reviewerRole}) has not endorsed the assessment`, {
+      reviewState: state,
+    });
+  }
+  if (state === 'returned') {
+    throw ruleViolation('gates.assessment.review_returned', `Gate ${input.gateKey} was returned for rework by the gate reviewer; a fresh endorsement is needed before it is submitted`, {
+      reviewState: state,
+    });
+  }
+  if (state === 'stale') {
+    throw ruleViolation(
+      'gates.assessment.review_stale',
+      `The endorsement of gate ${input.gateKey} predates a later change of its criteria (evidence, status, waiver or applicability); the gate reviewer must endorse the current assessment`,
+      { reviewState: state },
+    );
+  }
+  if (!input.review.reviewedBy || !input.submitterUserId) {
+    throw forbidden('policy.sod_subject_unknown', 'Separation of duties cannot be established: the gate reviewer or the submitter is unknown');
+  }
+  if (input.review.reviewedBy === input.submitterUserId) {
+    throw forbidden('gates.assessment.reviewer_cannot_submit', 'Separation of duties: the gate reviewer who endorsed the assessment cannot also submit it for decision');
+  }
+}
+
+/**
+ * The `not_self` subject when several people must differ from the actor (I-R3): unknown (null — fails closed) when any of
+ * them is unknown; the actor when the actor is one of them (so the check fails); otherwise the first of them.
+ */
+export function separationSubject(actorUserId: string | null | undefined, subjects: readonly (string | null | undefined)[]): string | null {
+  if (subjects.length === 0 || subjects.some((s) => !s)) return null;
+  if (actorUserId && subjects.includes(actorUserId)) return actorUserId;
+  return subjects[0]!;
 }

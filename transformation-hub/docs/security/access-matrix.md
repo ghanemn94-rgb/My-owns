@@ -187,7 +187,7 @@ Nobody can assign a role they could not be assigned by the table. A role assignm
 | `config.template_migration.approve`, `planning.baseline.approve`, `planning.change_request.approve` | proposer / requester |
 | `planning.deliverable.accept` | deliverable owner, submitter |
 | `planning.rag_override.review`, `planning.status_update.review` | override setter / update submitter |
-| `gates.assessment.review`, `gates.assessment.decide` | assessment submitter |
+| `gates.assessment.review`, `gates.assessment.decide` | assessment submitter. As implemented (DOM-P2-16): a criterion review — the criterion's evidence submitter(s) or not-applicable proposer; the **gate-level review** — the person who started the cycle (and the submitter of the cycle must not be the endorsing gate reviewer, checked at mark-ready); `decide` — the submitter **and** the gate reviewer |
 | `gates.waiver.approve`, `jv.cp.waive` | waiver requester |
 | `carveout.transfer.verify`, `newco.incorporation.verify`, `newco.regulatory.verify`, `readiness.check.signoff`, `finance.benefit.verify`, `jv.cp.verify` | record owner and the person who recorded the status/evidence |
 | `readiness.go_no_go.decide`, `readiness.tsa.approve_exit`, `jv.signing.record`, `jv.closing.declare`, `jv.partner.approve_contact`, `jv.nda.record` | requester of the decision/confirmation (a pending request by another person must exist) |
@@ -228,9 +228,9 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
   - `classification`: 141
   - `room`: 33
   - `clean_team`: 21
-  - `not_self`: 53
+  - `not_self`: 54
   - `authority`: 25
-  - `own_workstream`: 13
+  - `own_workstream`: 14
 - AI usage: `retrieve` 18, `propose` 19, `none` 153.
 - Audited reads (`auditRead`): `jv.room.read`, `jv.disclosure.view`, `jv.disclosure.download`, `documents.document.download`, `reports.snapshot.export`, `audit.event.export`.
 - Permissions per role: PLA 25, PFA 25, SPO 75, CHR 37, SEC 63, PM 97, WSL 54, CON 27, FAP 40, FIN 58, LEG 74, CLT 10, AUD 35, EXT 7.
@@ -336,7 +336,7 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
 | `gates.definition.approve` | C,S,A | – |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |
 | `gates.criterion.set_waivability` | C | – |  |  |  |  |  |  |  |  | ● | ● | ● |  |  |  |
 | `gates.evidence.attach` | C,W | P |  |  |  |  |  | ● | ● | ● |  | ● | ● |  |  |  |
-| `gates.assessment.submit` | C | – |  |  |  |  | ● | ● | ● |  |  |  | ● |  |  |  |
+| `gates.assessment.submit` | C,W | – |  |  |  |  | ● | ● | ● |  |  |  | ● |  |  |  |
 | `gates.assessment.review` | C,S | – |  |  | ● |  | ● | ● | ● |  | ● | ● | ● |  |  |  |
 | `gates.assessment.decide` | C,S,A | – |  |  | ● | ● |  |  |  |  |  |  |  |  |  |  |
 | `gates.assessment.reopen` | C | – |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |  |
@@ -344,6 +344,8 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
 | `gates.waiver.approve` | C,S,A | – |  |  | ● | ● |  |  |  |  |  |  |  |  |  |  |
 
 `gates.assessment.review` is narrowed per criterion by the gates service: the reviewer must also hold the criterion's designated `reviewerRole` in the project. That means a project-wide role; for `workstream_lead`, a `workstream_lead` role on any workstream of the project, since criteria carry no workstream. Otherwise the service refuses with 403 `gates.not_designated_reviewer`. This applies to accepting or returning a criterion, and to approving or rejecting an N/A proposal. `not_self` still applies: the evidence submitter never accepts their own evidence.
+
+Gate roles (DOM-P2-16, REQ-LCY-010; business-gates.md §2.4). `gates.assessment.submit` (start, mark ready, back to assessment, link decision) is narrowed to the **gate's owner role** through `W`: `ownerRoles: [gate.ownerRole]`, so the owner-role holder — or the project manager (§2.4) — passes; a `workstream_lead` owner acts through the workstream it leads. Any other holder is refused with 403 `gates.not_gate_owner` (a workstream lead can submit G1 but not the legal-owned G2). The **gate-level review** (`POST …/assessment/review`, endorse or return) needs `gates.assessment.review` **and** the gate's `reviewerRole` (403 `gates.not_designated_gate_reviewer`), and `not_self` against the person who started the cycle. Mark ready needs an endorsement recorded after the cycle's last criterion change (422) and a submitter other than the endorsing reviewer (403 `gates.assessment.reviewer_cannot_submit`); `decide` is refused to the submitter and to the gate reviewer.
 
 #### Carve-out (perimeter, transfers, agreements, consents) (`carveout.*`, 8 permissions)
 
@@ -661,7 +663,7 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
     "gates.definition.approve": {"description": "Approve changes to a project's gate definitions.", "conditions": ["classification", "not_self", "authority"], "ai": "none"},
     "gates.criterion.set_waivability": {"description": "Specialist determination of a criterion's waivability and waiver authority.", "conditions": ["classification"], "ai": "none"},
     "gates.evidence.attach": {"description": "Attach evidence to gate criteria (evidence stays unverified until reviewed).", "conditions": ["classification", "own_workstream"], "ai": "propose"},
-    "gates.assessment.submit": {"description": "Submit a gate for assessment.", "conditions": ["classification"], "ai": "none"},
+    "gates.assessment.submit": {"description": "Submit a gate for assessment.", "conditions": ["classification", "own_workstream"], "ai": "none"},
     "gates.assessment.review": {"description": "Record a reviewer's criterion-level assessment.", "conditions": ["classification", "not_self"], "ai": "none"},
     "gates.assessment.decide": {"description": "Record a gate decision. The server re-evaluates mandatory criteria, evidence and approvals; task completion alone never unlocks a gate.", "conditions": ["classification", "not_self", "authority"], "ai": "none"},
     "gates.assessment.reopen": {"description": "Reopen an assessment through the controlled process when relied-upon evidence is defective (AT-14); prior decisions are preserved.", "conditions": ["classification"], "ai": "none"},

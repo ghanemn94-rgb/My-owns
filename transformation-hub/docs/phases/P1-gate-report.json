@@ -1,0 +1,123 @@
+{
+  "phase": "P1",
+  "title": "Secure Foundation",
+  "revision": "65b53e99154df0d8c8a5719478efe5ee01b2d594 (gate revision; CI run 32 green on it). Later commits (e.g. the DOM-P2-16 merge) are P2 work and are not part of this gate.",
+  "requirements": {
+    "source": "docs/requirements/requirements.yaml at the gate revision (generated from docs/requirements/status-evidence.yaml; apply_status.py --check OK)",
+    "p1_musts": 82,
+    "tested": 58,
+    "implemented": 22,
+    "deferred": 2,
+    "planned": 0,
+    "deferred_ids": ["REQ-ENT-009 (to P6, template upgrade preview/approval)", "REQ-SET-009 (to P3, wizard step 1)"],
+    "disposition": "docs/phases/P1-must-disposition.md, section 'Update at the P1 gate': each of the 24 non-Tested musts is either closed at this gate by review (UX-003, ARC-001, ARC-013, AGT-011, PHS-003, PHS-011, PHS-012, PHS-013) or re-phased with an owner"
+  },
+  "exit_criteria": [
+    {
+      "criterion": "Persistence after restart",
+      "evidence": "API + worker restart automated in p1-closure-worker.spec.ts; API, worker and PostgreSQL restart re-verified manually by the QA re-review (docs/reviews/P1-qa-rereview.md: 7,500 project-scoped rows and the audit chain identical, session still valid); CI restore drill green",
+      "status": "Met (database-restart part manual, QA-P1R-04)"
+    },
+    {
+      "criterion": "Two isolated projects",
+      "evidence": "QA re-review sweep of every project-scoped route in the contract registry (487 routes) as the other project's manager: 404 in both directions, no leaked titles; isolation-and-auth, arch-rereview-hardening, sec-p1r-fixes specs; RLS tests",
+      "status": "Met"
+    },
+    {
+      "criterion": "Denied unauthorized access",
+      "evidence": "QA re-review: anonymous 499/499 non-public routes 401; platform admin 487/487 project routes 404; auditor 0 successful mutations out of 347; policy fail-closed (I-R3) tests",
+      "status": "Met"
+    },
+    {
+      "criterion": "Security plus QA review",
+      "evidence": "docs/reviews/P1-security-review.md → P1-security-rereview.md (PASS WITH CONDITIONS) → P1-security-allowlist-and-finance-visibility.md (PASS WITH CONDITIONS; findings fixed in 65b53e9); docs/reviews/P1-qa-review.md (FAIL) → P1-qa-rereview.md (PASS WITH CONDITIONS; conditions closed in 2ac548b and 65b53e9)",
+      "status": "Met with conditions (see gate)"
+    }
+  ],
+  "implemented": [
+    "Platform: request transaction with RLS context, sessions + CSRF, RBAC+ABAC policy (fail-closed conditions), append-only hash-chained audit, outbox, job queue and worker, problem+json errors, contract check at startup, OpenAPI",
+    "Identity: demo login (demo mode only), OIDC Authorization Code + PKCE against an in-process test IdP (Mobily IdP Not configured)",
+    "Portfolio and template-based project creation (DC Carve-out and General Transformation templates), members, workstreams, activity feed with record-level visibility in SQL",
+    "Object storage: local filesystem and S3-compatible adapter (SigV4) behind one contract test; S3 endpoint Not configured",
+    "Web foundation: Arabic RTL / English LTR, i18n parity and hard-coded string checks in lint, axe accessibility checks in CI",
+    "CI (.github/workflows/transformation-hub-ci.yml): static, unit, API integration, web build + egress scan, images + SBOM + vulnerability report, OpenAPI, licence policy, audit, SBOM, Helm/kubeconform/compose/shellcheck, restore drill, Compose dev/eval stack, Playwright e2e, gitleaks secret scan",
+    "Architecture checks: module boundaries (apps/api/scripts/check-module-boundaries.mjs, REQ-ARC-011); template source mapping (validate-templates.mjs, REQ-SRC-002)"
+  ],
+  "tests_executed": [
+    {
+      "command": "GitHub Actions transformation-hub-ci run 32 (id 36719104841)",
+      "result": "conclusion success — every job green, including API integration (PostgreSQL 16), Playwright e2e and the gitleaks secret scan",
+      "revision": "65b53e9",
+      "environment": "GitHub-hosted runners"
+    },
+    {
+      "command": "cd e2e && HUB_WEB_URL=http://127.0.0.1:3610 npx playwright test (full suite)",
+      "result": "261 passed (17.9m), incl. a11y (axe) scans in en and ar with 0 serious/critical",
+      "revision": "ef8ea27 + JV fixture fix (committed in 65b53e9)",
+      "environment": "build container; stack configured as in the CI e2e job (production web build, API rate limit 1000, fresh demo seed)"
+    },
+    {
+      "command": "cd apps/api && TEST_DATABASE_URL=.../hub_test_lead pnpm test",
+      "result": "78 files, 692 passed (692)",
+      "revision": "2ac548b",
+      "environment": "build container, PostgreSQL 16 local cluster"
+    },
+    {
+      "command": "npx vitest run test/finance test/reviews test/documents",
+      "result": "16 files, 151 passed (151)",
+      "revision": "65b53e9 (working tree before commit)",
+      "environment": "build container, PostgreSQL 16 local cluster"
+    },
+    {
+      "command": "bash scripts/ops/secret-scan.sh tree && ... history (gitleaks 8.30.1)",
+      "result": "PASS / PASS; probe: random secrets placed in allow-listed files are detected, the synthetic values are not",
+      "revision": "65b53e9",
+      "environment": "build container"
+    },
+    {
+      "command": "QA re-review (docs/reviews/P1-qa-rereview.md §1)",
+      "result": "fresh checkout install/typecheck/lint pass; API 691/691; domain 348 + contracts 100; P1 e2e 12/12; a11y 118/118; Arabic RTL spec 6/6",
+      "revision": "c1338f7",
+      "environment": "reviewer worktree, own databases"
+    }
+  ],
+  "reviewers": [
+    {
+      "agent": "security-privacy-reviewer",
+      "verdict": "PASS WITH CONDITIONS",
+      "evidence": [
+        "docs/reviews/P1-security-rereview.md: all SEC-P1R and I-R items fixed (merged 7751b98)",
+        "docs/reviews/P1-security-allowlist-and-finance-visibility.md at 2ac548b: allow-list CONFIRMED WITH CONDITIONS, finance visibility CONFIRMED, module-boundary checker CONFIRMED; SEC-P1S-01 (Medium), -02, -03, -04, -07 fixed in 65b53e9 by the lead — not yet re-verified by the reviewer"
+      ]
+    },
+    {
+      "agent": "qa-test-engineer",
+      "verdict": "PASS WITH CONDITIONS",
+      "evidence": [
+        "docs/reviews/P1-qa-rereview.md at c1338f7: no Critical/High; conditions (1) green CI on the gate revision — met by run 32 at 65b53e9, AT-07 fixed; security confirmation of the allow-list — given with conditions, fixed; (2) REQ-SRC-002 / REQ-ARC-011 closed in 2ac548b; (3) statuses from the register — this report; (4) Low items recorded with owners — below"
+      ]
+    }
+  ],
+  "open_findings": [
+    { "id": "Gate condition", "severity": "Condition", "status": "Open", "owner": "security-privacy-reviewer and qa-test-engineer (P2 gate reviews)", "gate": "P2", "detail": "Independent re-verification of the closures the lead made after the reviews (SEC-P1S-01/-02/-03/-04/-07 in 65b53e9; QA-P1R-02/-03 in 2ac548b)" },
+    { "id": "QA-P1-09 (partial)", "severity": "Low", "status": "Open", "owner": "devops-platform-engineer", "gate": "P7", "detail": "A production web build without HUB_API_URL silently falls back to 127.0.0.1:4000" },
+    { "id": "QA-P1R-04", "severity": "Low", "status": "Accepted variance", "owner": "qa-test-engineer / devops-platform-engineer", "gate": "P8 (AT-30)", "detail": "Database-restart part of REQ-PLT-002 is verified manually, not automated" },
+    { "id": "QA-P1R-05", "severity": "Low", "status": "Open (re-phased)", "owner": "ux-frontend-engineer", "gate": "P6", "detail": "Remaining English in the Arabic UI: refusal detail text, audit action codes, demo seed text (REQ-UX-001)" },
+    { "id": "SEC-P1S-05", "severity": "Low", "status": "Open", "owner": "backend-data-engineer", "gate": "P7", "detail": "Production loadConfig() accepts the synthetic secrets committed in tests; tests should generate values at run time and production should refuse the known ones" },
+    { "id": "SEC-P1S-06", "severity": "Info", "status": "Open", "owner": "devops-platform-engineer", "gate": "P7", "detail": "docs/deployment/secrets.md out of date" },
+    { "id": "SEC-P1S-08", "severity": "Info", "status": "Open", "owner": "qa-test-engineer", "gate": "P4", "detail": "The finance 'room-only' isolation test uses outsiders, not room-only principals" },
+    { "id": "Access-matrix §2.2 vs implementation", "severity": "Design question", "status": "Open", "owner": "security-privacy-reviewer (P2 security review) + lead", "gate": "P2", "detail": "§2.2 says workstream-scoped read permissions also cover project-level records; the platform (and the finance tests) implement the stricter rule, so a workstream-only lead gets 403 on the gates list. Decide and align code or document" },
+    { "id": "Readiness checklist instantiation by a Contributor", "severity": "Observation", "status": "Open", "owner": "security-privacy-reviewer (P3 security review)", "gate": "P3", "detail": "Creator-as-owner (access-matrix §2.4) lets any holder of readiness.check.manage run the bulk template instantiation" }
+  ],
+  "assumptions": [
+    "docs/assumptions-and-open-questions.md (A-01..A-48, Q-01..Q-44)"
+  ],
+  "external_dependencies": [
+    "Reference image and Excel workbook not provided — image extraction NOT performed",
+    "Mobily IdP, S3/object store, malware scanner, SMTP/Teams, SIEM, approved model endpoint, infrastructure: Not configured",
+    "No Docker daemon in the build environment: images, Compose and Helm validated only in CI; Helm install NOT EXECUTED"
+  ],
+  "gate": "PASS WITH CONDITIONS",
+  "gate_note": "Both independent reviews returned PASS WITH CONDITIONS with no open Critical or High finding; every required verification was executed (CI run 32 green at the gate revision, full e2e 261/261). The conditions the lead could close are closed; their independent re-verification is itself a condition carried to the P2 gate reviews. This is an engineering gate, not Mobily production approval, and nothing here means Production Ready.",
+  "next_action": "P2 gate: independent QA review and security review of P2 at the revision after the DOM-P2-16 merge (both re-verify the P1 closures listed above); then the P3 and P4 reviews and gates."
+}

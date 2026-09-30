@@ -10,7 +10,7 @@ import { LoadingState } from '@/components/LoadingState';
 import { PageHeader } from '@/components/PageHeader';
 import { RestrictedState } from '@/components/RestrictedState';
 import { SectionGuard } from '@/components/SectionGuard';
-import { StatusBadge } from '@/components/StatusBadge';
+import { StatusBadge, type Tone } from '@/components/StatusBadge';
 import { card, cx } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { isApiError } from '@/lib/api';
@@ -77,6 +77,37 @@ function DecisionPanel({ gate }: { gate: GateDetail }) {
         </div>
       ) : null}
       <p className="mt-3 text-xs text-muted">{t('gates.decision.rule', { role: tStatus('roleKeys', gate.approverRole) })}</p>
+    </Panel>
+  );
+}
+
+const REVIEW_TONE: Record<GateDetail['review']['state'], Tone> = { endorsed: 'success', returned: 'warning', stale: 'warning', not_reviewed: 'neutral' };
+
+/** Gate-level review of the current cycle (DOM-P2-16): state, outcome, reviewer, note and who started the cycle. */
+function ReviewPanel({ gate }: { gate: GateDetail }) {
+  const { t, tStatus, formatDateTime } = useI18n();
+  const r = gate.review;
+  const role = tStatus('roleKeys', r.reviewerRole);
+  return (
+    <Panel title={t('gates.review.title')} id="review-title">
+      <div className="space-y-1.5 text-sm" data-testid="gate-review" data-review-state={r.state}>
+        <p>
+          <StatusBadge enumName="gateReviewStates" value={r.state} tone={REVIEW_TONE[r.state]} />
+        </p>
+        <p className="text-muted">{t(`gates.review.stateHint.${r.state}`, { role })}</p>
+        {r.outcome && r.reviewedAt ? (
+          <p data-testid="gate-review-outcome">
+            {t('gates.review.recorded', { outcome: tStatus('gateReviewOutcomes', r.outcome), name: r.reviewedByName ?? EM_DASH, at: formatDateTime(r.reviewedAt) })}
+          </p>
+        ) : null}
+        {r.note ? (
+          <p className="text-ink" dir="auto" data-testid="gate-review-note">
+            {t('gates.review.noteShown', { note: r.note })}
+          </p>
+        ) : null}
+        {r.startedBy ? <p className="text-xs text-muted">{t('gates.review.startedBy', { name: r.startedByName ?? EM_DASH })}</p> : null}
+      </div>
+      <p className="mt-3 text-xs text-muted">{t('gates.review.rule', { role })}</p>
     </Panel>
   );
 }
@@ -217,6 +248,7 @@ export default function GateDetailPage() {
                   <CriterionList gate={gate} />
                 </section>
                 <div className="space-y-4">
+                  <ReviewPanel gate={gate} />
                   <DecisionPanel gate={gate} />
                   <CyclesPanel gate={gate} />
                 </div>

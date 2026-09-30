@@ -14,6 +14,8 @@ import {
   supersedeAll,
   runWorker,
   startGate,
+  reviewGate,
+  markReady,
   Personas,
   Gov,
 } from './gate-test-kit';
@@ -147,7 +149,12 @@ describe('AT-14 — conflicting evidence triggers a controlled reassessment [REQ
     await addEvidence(p.pm, projectId, c.id, 'Corrected charter evidence (synthetic)');
     await p.secretary.post(url, { expectedVersion: c.assessment.version, outcome: 'met', note: 'Re-reviewed against the corrected charter' }).expect(201);
     g0 = await gateByKey(p.pm, projectId, 'G0');
-    await p.pm.post(`/api/v1/projects/${projectId}/gates/${g0.id}/assessment/mark-ready`, { expectedVersion: g0.assessment.version }).expect(201);
+    // DOM-P2-16: the new cycle also needs a fresh gate-level endorsement (the cycle-1 review does not carry over).
+    const unreviewed = await p.secretary.post(`/api/v1/projects/${projectId}/gates/${g0.id}/assessment/mark-ready`, { expectedVersion: g0.assessment.version });
+    expect(unreviewed.status).toBe(422);
+    expect(unreviewed.body.code).toBe('gates.assessment.review_required');
+    await reviewGate(p, projectId, 'G0');
+    await markReady(p, projectId, 'G0');
     g0 = await gateByKey(p.pm, projectId, 'G0');
     const reuse = await p.sponsor.post(`/api/v1/projects/${projectId}/gates/${g0.id}/assessment/decide`, { expectedVersion: g0.assessment.version, outcome: 'approve', decisionId: g0Decision, note: 'x' });
     expect(reuse.status).toBe(422);

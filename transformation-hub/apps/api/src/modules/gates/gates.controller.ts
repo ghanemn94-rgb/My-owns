@@ -42,6 +42,11 @@ export class GatesController {
     return this.svc.linkDecision(ctx, i.params.projectId, i.params.gateId, i.body);
   }
 
+  @ApiRoute(R.reviewAssessment)
+  reviewAssessment(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.reviewAssessment>) {
+    return this.svc.reviewAssessment(ctx, i.params.projectId, i.params.gateId, i.body);
+  }
+
   @ApiRoute(R.decide)
   decide(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.decide>) {
     return this.svc.decide(ctx, i.params.projectId, i.params.gateId, i.body);
