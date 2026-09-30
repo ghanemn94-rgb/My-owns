@@ -4227,7 +4227,7 @@
   acceptance_tests: ["UT: build output secret scan finds no provider keys or DB URLs"]
   phase: P1
   status: Implemented
-  evidence: [apps/web uses same-origin API proxy; no DB/LLM secrets in client]
+  evidence: [apps/web uses same-origin API proxy; no DB/LLM secrets in client, 'CI job secret-scan step (b): the web job uploads apps/web/.next/static (artifact web-bundle); scripts/ops/secret-scan.sh bundle runs gitleaks (default rules include model-provider and cloud keys, plus the URL-embedded-password rule) and fails if any database/queue connection URL is present, with or without a password', 'executed locally 2026-09-30 on a production web build of 049cf54: 136 files, 0 findings, no connection URL; a planted AWS-shaped key and a password-less postgres URL in a chunk both fail the check', 'pending: first green CI run of job secret-scan (then Tested)', 'observation: next build writes generated Draft Mode and Server Actions keys into the server output of the web image (.next/prerender-manifest.json, .next/server/server-reference-manifest.json), not into the client bundle; the app uses neither feature; decision pending (docs/deployment/secrets.md, Known item)']
 
 # ---------------------------------------------------------------- DAT
 
@@ -4697,7 +4697,7 @@
   acceptance_tests: ["UT: CI secret scan passes on repo, web bundle and test reports"]
   phase: P1
   status: Implemented
-  evidence: ['docs/deployment/secrets.md (inventory, rotation procedures); secrets injected at runtime; scripts/ops/validate-deploy.sh refuses the owner DB secret in long-running pods (CI deploy validation green, run 36645986422); backup.sh refuses configuration files with credentials', 'gap: no CI secret scan over repository, web bundle and test reports (the AT); rotation not exercised (P7)']
+  evidence: ['CI job secret-scan (.github/workflows/transformation-hub-ci.yml; scripts/ops/secret-scan.sh with scripts/ops/gitleaks.toml): gitleaks 8.30.1 pinned by SHA-256 scans (a) the git history reachable from the revision (full clone) and its committed tree, (b) the built web client bundle apps/web/.next/static, (c) the CI test reports and logs (e2e-report with Playwright report data, traces and api/worker/web logs; restore-drill; compose-smoke; egress-report) and docs/test-evidence; any finding outside the synthetic-value allow-list fails the job; output redacted', 'executed in the build environment 2026-09-30 at 049cf54: history (111 commits), tree (679 files), web bundle, and the Playwright report, traces and logs of a local 24/24 e2e run have 0 findings; randomly generated secret-shaped values planted in a log, in Playwright-embedded report data and in a bundle chunk are detected and not printed', 'docs/deployment/secrets.md: where secrets live (Kubernetes Secrets fed from the external secret store; none in images, web bundle, CI or reports), inventory, rotation procedures, scan scope and allow-list policy', 'pending: first green CI run of job secret-scan (then Tested for the scan AT)', rotation drill not exercised; re-phased to P7]
 - id: REQ-SEC-013
   section: "15"
   title: "File validation and malware quarantine"
@@ -4924,7 +4924,7 @@
   acceptance_tests: ["IT: clean checkout starts with documented commands and no external services"]
   phase: P1
   status: Implemented
-  evidence: ['documented commands (CLAUDE.md, package.json scripts, scripts/dev/*) and deploy/compose/compose.dev.yml for local containers; synthetic demo data', 'AI Off by default and the mock provider labelled Simulated: ai ai-settings-ops.spec.ts "status shows mode, Simulated label"', 'CI run 36645986422 (7959b44), e2e job: from a clean checkout the API, worker and web start with PostgreSQL as the only runtime service', 'gap: that job uses CI-specific steps (db-init-roles.sh, entrypoint migrate, node dist/*.js), not the documented local commands (pnpm db:start / db:migrate / db:seed:demo / dev), and no local containers are started (compose up not executed)']
+  evidence: ['documented commands (CLAUDE.md, package.json scripts, scripts/dev/*) and deploy/compose/compose.dev.yml for local containers; synthetic demo data', 'AI Off by default and the mock provider labelled Simulated: ai ai-settings-ops.spec.ts "status shows mode, Simulated label"', 'CI job compose: from a clean checkout runs the documented Compose commands of docs/deployment/installation.md section 7 verbatim (scripts/ops/compose-env-init.sh; docker compose up --build --wait; Demo seed; scripts/ops/compose-smoke.sh; down -v); images are built locally in the job and never pushed; the running stack calls no external service (backend network internal, checked by compose-smoke.sh)', 'pending: first green CI run of job compose (then Tested)']
 - id: REQ-DEP-003
   section: "16"
   title: "Mode: Mobily Private — AI Off"
@@ -5004,7 +5004,7 @@
   acceptance_tests: ["IT: compose up yields healthy api, worker, web, db"]
   phase: P1
   status: Implemented
-  evidence: ['deploy/compose/compose.dev.yml with .env.example and initdb roles; header states development/evaluation only, no high availability, local passwords', 'docker compose config checked by scripts/ops/validate-deploy.sh in the CI deploy validation job (green in run 36645986422, 7959b44)', 'gap: compose up with healthy api, worker, web and db NOT EXECUTED anywhere (no Docker daemon here; CI validates the file only)']
+  evidence: [deploy/compose/compose.dev.yml with .env.example and initdb roles; its header and docs/deployment/installation.md section 7 state development/evaluation only and no high availability; local throwaway passwords generated by scripts/ops/compose-env-init.sh, 'CI job compose: docker compose up --build --wait with health checks on db (pg_isready over TCP), api (/readyz), worker (heartbeat file) and web (/login); then scripts/ops/compose-smoke.sh (containers healthy, migrate exit 0, API readyz, web login, demo login with authenticated API calls and CSRF through the web origin, logout, worker heartbeat, outbox drained, no route out of the backend network); then down -v', 'validated in the build environment: docker compose config, shellcheck, actionlint; the smoke HTTP, worker and outbox checks ran against a local non-container stack started through the container entrypoint; compose up NOT EXECUTED there (no Docker daemon)', 'fixed 2026-09-30: empty optional HUB_* values passed by Compose (HUB_OIDC_ISSUER) would have stopped api, worker and seed-demo at startup; the entrypoint and loadConfig now treat them as unset', 'pending: first green CI run of job compose (then Tested)']
 - id: REQ-DEP-008
   section: "16"
   title: "Customizable Helm/Kubernetes manifests; OpenShift constraints"
@@ -6280,7 +6280,7 @@
   acceptance_tests: ["UT: bootstrap requires one-time token; no static credentials in repo"]
   phase: P1
   status: Implemented
-  evidence: [no password storage (ADR-0005); bootstrap creates IdP-bound admin only]
+  evidence: [no password storage (ADR-0005); bootstrap creates IdP-bound admin only, 'CI job secret-scan: repository history and tree scanned for static credentials (gitleaks default rules plus the URL-embedded-password rule); allow-list limited to synthetic dev/CI values, each exact-value and commented (scripts/ops/gitleaks.toml); executed locally at 049cf54 with 0 findings', 'pending: first green CI run of job secret-scan and the bootstrap-on-empty-database IT (backend-data-engineer); both are needed before Tested', 'AT variance: the first administrator is bound to an IdP identity instead of a one-time token']
 - id: REQ-SET-009
   section: "21"
   title: "Wizard step 1: program, objective, parties and sites"

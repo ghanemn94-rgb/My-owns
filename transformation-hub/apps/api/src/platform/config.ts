@@ -75,7 +75,8 @@ export function weakSecret(s: string): boolean {
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
-  const parsed = Env.safeParse(env);
+  // An empty HUB_* value (e.g. `HUB_OIDC_ISSUER=` from Compose/.env files) means "not set", not an invalid value.
+  const parsed = Env.safeParse(Object.fromEntries(Object.entries(env).filter(([k, v]) => !(k.startsWith('HUB_') && v === ''))));
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new Error(`Invalid configuration: ${issues}`);

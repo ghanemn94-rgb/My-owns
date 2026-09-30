@@ -229,6 +229,13 @@ describe('REQ-ARC-006 — OIDC SSO (Authorization Code + PKCE)', () => {
     expect(sessionCookieSet(cb)).toBe(false);
   });
 
+  it('empty HUB_* variables (as Compose passes them) mean "not set" instead of failing the startup', () => {
+    const c = loadConfig({ NODE_ENV: 'development', HUB_OIDC_ISSUER: '', HUB_OIDC_REDIRECT_URI: '', HUB_S3_ENDPOINT: '', HUB_EGRESS_ALLOWLIST: '' });
+    expect(c.oidc.issuer).toBeNull();
+    expect(c.oidc.redirectUri).toBeNull();
+    expect(c.storage.s3).toBeNull();
+  });
+
   it('REQ-ARC-006: demo (development) login and unsafe settings are rejected in production configuration', () => {
     const prod = {
       NODE_ENV: 'production',
