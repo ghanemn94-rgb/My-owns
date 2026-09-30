@@ -282,8 +282,12 @@ export class LegalEntitiesService {
     const { entity } = await this.loadLinked(ctx, p, entityId);
     this.assertOwningProject(p, entity);
     const recordedBy = entity.incorporationRecordedBy ?? entity.createdBy;
-    // Separation of duties (not_self): the recorder of the status cannot verify it.
+    // Separation of duties (not_self): the recorder of the status cannot verify it — nor anyone who linked the evidence it is
+    // verified on (DOM-P3-10 / SEC-P34-01, access-matrix §5.1 "the person who recorded the status/evidence").
     this.s.policy.assert(ctx, 'newco.incorporation.verify', { projectId, classification: p.classification, requesterUserId: recordedBy });
+    for (const linker of await this.s.evidenceLinkers(projectId, 'legal_entity', entityId)) {
+      this.s.policy.assert(ctx, 'newco.incorporation.verify', { projectId, classification: p.classification, requesterUserId: linker });
+    }
     const ev = await activeEvidenceCount(this.s.db, projectId, 'legal_entity', entityId);
     const verification = assertIncorporationVerification({
       outcome: body.outcome,
@@ -313,6 +317,36 @@ export class LegalEntitiesService {
     });
     await this.fanOut(entityId, 'incorporation.verify', row.version);
     return { id: entityId, version: row.version, status: entity.incorporationStatus as IncorporationStatus, verification, statusDimensions: await this.dimensions(ctx, projectId) };
+  }
+
+  /**
+   * DOM-P3-08 — evidence reaction (worker, `evidence.changed` on a legal entity; business-gates.md §1 rule 3, spec §3 controlled
+   * reopen): when the evidence a CONFIRMED incorporation verification relied on is no longer valid (no active link left, or a
+   * conflicting one) in the owning project, the verification returns to `proposed` — the incorporation reads "evidence pending
+   * verification" and Legal is asked to verify again on valid evidence. The earlier verification stays in the record history
+   * and the audit trail. Idempotent; the status dimensions are recomputed and linked projects are told (SEC-P1R-03).
+   */
+  async processEvidenceChange(ctx: RequestContext, projectId: string, entityId: string): Promise<{ invalidated: boolean }> {
+    const [entity] = await this.tx.select().from(LE).where(eq(LE.id, entityId));
+    if (!entity || entity.ownerProjectId !== projectId || entity.incorporationVerification !== 'confirmed') return { invalidated: false };
+    const ev = await activeEvidenceCount(this.s.db, projectId, 'legal_entity', entityId);
+    if (ev.active > 0 && ev.conflicting === 0) return { invalidated: false };
+    this.s.policy.assert(ctx, 'newco.incorporation.manage', { projectId, classification: (await this.s.project(ctx, projectId)).classification });
+    // The confirmed verification stays in the history (the verification's own snapshot at the current version) and the audit.
+    const row = await this.updateEntity(entity, entity.version, { incorporationVerification: 'proposed', incorporationVerifiedBy: null, incorporationVerifiedAt: null, incorporationVerificationNote: null });
+    await this.versions.snapshot({ projectId, entityType: 'legal_entity', entityId, versionNo: row.version, snapshot: { incorporationStatus: row.incorporationStatus, incorporationVerification: 'proposed', evidence: ev.active }, reason: 'Incorporation evidence invalidated — re-verification required' });
+    await this.audit.record({
+      action: 'newco.incorporation.evidence_invalidated',
+      entityType: 'legal_entity',
+      entityId,
+      projectId,
+      before: { verification: 'confirmed', verifiedBy: entity.incorporationVerifiedBy },
+      after: { verification: 'proposed', activeEvidence: ev.active, conflictingEvidence: ev.conflicting },
+      reason: 'The evidence the verified incorporation relied on is no longer active (rejected, superseded or conflicting) — Legal verifies again on valid evidence',
+    });
+    await this.fanOut(entityId, 'incorporation.evidence_invalidated', row.version);
+    await this.dims.recomputeDimensions(projectId);
+    return { invalidated: true };
   }
 
   /** Setup wizard step 2 (REQ-SET-010): NewCo status with evidence; "incorporated" without evidence is rejected. */

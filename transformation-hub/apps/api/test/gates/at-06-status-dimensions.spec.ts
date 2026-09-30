@@ -23,6 +23,13 @@ beforeAll(async () => {
       where id = (select legal_entity_id from project_entity where project_id = $1 and role = 'newco')`,
     [projectId],
   );
+  // … with the active evidence that verification requires (DOM-P3-08: a verification without valid evidence reads
+  // "evidence pending").
+  await owner().query(
+    `insert into evidence_link (org_id, project_id, target_type, target_id, note, added_by)
+     select $1, $2, 'legal_entity', legal_entity_id, 'Synthetic registration extract (test)', $3 from project_entity where project_id = $2 and role = 'newco'`,
+    [orgId, projectId, p.pm.userId],
+  );
   // Perimeter: one item transfer in progress, one not started; one excluded item.
   await owner().query(
     `insert into perimeter_item (id, org_id, project_id, code, type, name, disposition, transfer_status, economic_transfer_status)

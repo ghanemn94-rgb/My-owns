@@ -95,8 +95,13 @@ export class StatusDimensionsService {
     if (!project) throw notFound();
     const today = this.clock.today(project.timezone);
 
-    const newco = await tx.execute<{ status: IncorporationStatus; verification: string }>(sql`
-      select le.incorporation_status as status, le.incorporation_verification as verification
+    // DOM-P3-08: a confirmed verification counts only while the evidence it relied on is still active and uncontested (in the
+    // owning project — linked projects cannot see that evidence and rely on the owner's recorded verification, which the
+    // NewCo evidence reaction returns to "proposed" when the evidence is invalidated).
+    const newco = await tx.execute<{ status: IncorporationStatus; verification: string; owned: boolean; active: number; conflicting: number }>(sql`
+      select le.incorporation_status as status, le.incorporation_verification as verification, le.owner_project_id = ${projectId} as owned,
+             (select count(*) from evidence_link e where e.project_id = ${projectId} and e.target_type = 'legal_entity' and e.target_id = le.id and e.status = 'active')::int as active,
+             (select count(*) from evidence_link e where e.project_id = ${projectId} and e.target_type = 'legal_entity' and e.target_id = le.id and e.status = 'conflicting')::int as conflicting
         from project_entity pe join legal_entity le on le.id = pe.legal_entity_id
        where pe.project_id = ${projectId} and pe.role = 'newco'
        order by pe.created_at limit 1`);
@@ -134,7 +139,7 @@ export class StatusDimensionsService {
 
     const n = newco.rows[0];
     return {
-      newcoIncorporation: n ? { status: n.status, evidenceVerified: n.verification === 'confirmed' } : null,
+      newcoIncorporation: n ? { status: n.status, evidenceVerified: n.verification === 'confirmed' && (!n.owned || (Number(n.active) > 0 && Number(n.conflicting) === 0)) } : null,
       perimeter,
       readiness: readiness.map(({ r, w }) => ({
         mandatory: r.mandatory,

@@ -168,7 +168,7 @@ describe('SEC-P34-05 — regulatory register: a non-legal functional approver ma
     expect(roles.rows.map((x) => x.role)).toEqual(['functional_approver']); // no legal / regulatory role
   });
 
-  it.fails('DEFECT SEC-P34-05: only Legal / Regulatory roles record an applicability determination (the approver is refused, 403)', async () => {
+  it('SEC-P34-05 (fixed, regression): only Legal / Regulatory roles record an applicability determination (the approver is refused, 403)', async () => {
     const r = await p.approver.post(`${G(projectId)}/regulatory-requirements/${reqId}/assess-applicability`, { expectedVersion: version, applicability: 'not_applicable', basis: 'Determined by a non-legal functional approver (probe)' });
     console.log(`SEC-P34-05 observed: applicability by the functional approver → ${r.status} applicability=${r.body?.applicability ?? r.body?.code}`);
     expect(r.status).toBe(403);
