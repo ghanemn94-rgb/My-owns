@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 22,
+  "candidate_id": "sha256:09072ce5f5cb64417bb0c417a10252b4101679dd0332d6b4016296404c6b5600",
+  "source_commit": "480cd3ff2b1048439bafebf0bf40151a11d84ea7",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-QA-R22-qa-verifier-20260930T122401Z-b8340421",
+    "session_id": "b8340421-92c8-43c0-bc88-369003c408e5"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am qa-verifier. I did not author any analysis, register, agent definition, runner, guard, gate tooling, CI or delivery record in the reviewed scope. I wrote only QA tests and logs under docs/delivery/test-evidence/DG0/qa/ and my own round-22 review files. I read no other round-22 review record. Every disposable clone I validated was taken at 7cf94db, before the domain-reviewer's round-22 evidence was auto-committed (06ed72e). My staging view of docs/delivery/reviews contains no other round-22 record, and I did not open the domain files that git status listed."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-22/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-001",
+    "REQ-DLV-002",
+    "REQ-DLV-003",
+    "REQ-DLV-004",
+    "REQ-DLV-006",
+    "REQ-DLV-007",
+    "REQ-DLV-013",
+    "REQ-DLV-015",
+    "REQ-DLV-016",
+    "REQ-DLV-017",
+    "REQ-DLV-019",
+    "REQ-DLV-020",
+    "REQ-DLV-022",
+    "REQ-DLV-023",
+    "REQ-DLV-026",
+    "REQ-DLV-029",
+    "REQ-DLV-032",
+    "REQ-S20-024",
+    "REQ-S20-025"
+  ],
+  "checks_run": [
+    {
+      "id": "QA22-K00",
+      "procedure": "Confirm the assignment, the frozen candidate, a complete (non-shallow) repository and that only metadata follows the freeze",
+      "command": "sha256sum docs/delivery/assignments/DG0/round-22/review-qa-verifier.md; git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG0; git diff --stat 480cd3f..HEAD",
+      "environment": "/home/user/My-owns in the agent sandbox, node v22.22.2, Linux 6.18.44",
+      "expected": "Assignment sha256 b19b8553...; HEAD = 480cd3f or metadata-only commits after it; not shallow; candidate sha256:09072ce5...",
+      "actual": "The assignment sha256 matches. HEAD was 7cf94db (freeze metadata: round-22 assignments, the manifest 09072ce5f5cb6441.manifest.json and stages.json only). is-shallow = false. candidate.mjs prints sha256:09072ce5f5cb64417bb0c417a10252b4101679dd0332d6b4016296404c6b5600 (91 files). It printed the same at the end, when HEAD had become 06ed72e, a domain-reviewer run evidence commit (metadata).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-022", "REQ-S20-025"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/07-candidate.log",
+        "docs/delivery/candidates/DG0/09072ce5f5cb6441.manifest.json"
+      ]
+    },
+    {
+      "id": "QA22-K01",
+      "procedure": "Source extraction reproducibility",
+      "command": "bash tools/source/check_extraction.sh",
+      "environment": "disposable local clone $TMPDIR/dg0 of 7cf94db (complete), node v22.22.2, Python 3",
+      "expected": "PASS; docx sha256 2584a352...548ad2; 165 playbook blocks; 423 master-prompt blocks",
+      "actual": "PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-22/01-check-extraction.log"]
+    },
+    {
+      "id": "QA22-K02",
+      "procedure": "Gate validator self-tests (including the D-038 unit tests F-DG0-245/159/158/163)",
+      "command": "node --test tools/gates/tests/sandbox.test.mjs tools/gates/tests/validator.test.mjs",
+      "environment": "disposable clone $TMPDIR/dg0 of 7cf94db, node v22.22.2",
+      "expected": "all pass",
+      "actual": "tests 60, pass 60, fail 0. (My first attempt passed the directories instead of the files; node treats that as a module path and reports 1 failure. It was rerun with the assigned file list. The log is the rerun.)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-016", "REQ-DLV-023", "REQ-S20-024"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-22/02-gates-selftests.log"]
+    },
+    {
+      "id": "QA22-K03",
+      "procedure": "Agent runner, guard and process-sandbox tests (node) and runner metadata/settings tests (python)",
+      "command": "node --test tools/agents/tests/guard.test.mjs tools/agents/tests/process-sandbox.test.mjs tools/agents/tests/runner.test.mjs; python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'",
+      "environment": "disposable clone $TMPDIR/dg0 of 7cf94db, node v22.22.2, Python 3 (pytest is not installed; the files are unittest-based and document the unittest command)",
+      "expected": "all pass",
+      "actual": "node: tests 39, pass 39, fail 0. python unittest: Ran 22 tests, OK.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-026"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/03-agents-tests.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/03b-agents-pyunittests.log"
+      ]
+    },
+    {
+      "id": "QA22-K04",
+      "procedure": "Validator CLI modes: register rules at DG0, pipeline state, reconcile",
+      "command": "node tools/gates/validate.mjs --register DG0; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --reconcile",
+      "environment": "disposable clone $TMPDIR/dg0 of 7cf94db, node v22.22.2",
+      "expected": "PASS for each. Reconcile lists the round-22 records as missing (the round is in progress).",
+      "actual": "PASS register rules at DG0; PASS pipeline (active stage: DG0 REVIEWING); PASS reconcile (structure). Reconcile lists the round-22 records as missing, as expected mid-round.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-015", "REQ-DLV-020", "REQ-DLV-029"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/04-register-DG0.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/05-pipeline.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/06-reconcile.log"
+      ]
+    },
+    {
+      "id": "QA22-K05",
+      "procedure": "Pre-freeze in a fresh complete clone",
+      "command": "git clone /home/user/My-owns $TMPDIR/pf; cd $TMPDIR/pf; bash tools/gates/prefreeze.sh DG0",
+      "environment": "fresh complete clone of 7cf94db (shallow=false), nested bubblewrap, node v22.22.2",
+      "expected": "every step PASS; the working-tree candidate equals HEAD",
+      "actual": "11 PASS lines: extraction, gate + guard tests, runner metadata/settings tests, register rules, register = merge of parts, pipeline, the 4 analysis checks (acceptance map, counts, PB provenance, test refs), and 'working-tree candidate equals HEAD (sha256:09072ce5...)'",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-022", "REQ-DLV-023"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-22/09-prefreeze.log"]
+    },
+    {
+      "id": "QA22-K06",
+      "procedure": "Real-repository dry-run gate on the FULL history (D-038 key check), in both a local-path clone and a --no-local (CI-like) clone",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs $TMPDIR/dg0; git clone --no-local <repo> $TMPDIR/dg0nl; node docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs $TMPDIR/dg0nl",
+      "environment": "complete clones of 7cf94db (is-shallow=false, 199 commits). $TMPDIR/dg0 is a local-path clone (450c756 present as an unreachable object); $TMPDIR/dg0nl is a --no-local clone (450c756 absent).",
+      "expected": "0 errors in PRUNED, RECORD-LESS and DROPPED; every remaining error is a 'round not finished' artifact",
+      "actual": "Both clones give identical output (diff empty): 61 errors. UNFINISHED-ROUND 8 (state REVIEWING, round-22 records not yet written). PRUNED (3 buckets) 0. RECORD-LESS 0. DROPPED 0. OTHER 53: F-DG0-158..163/245 FIXED_PENDING_VERIFICATION and F-DG0-238 OPEN (verified this round), F-DG0-147/149 awaiting the auditor's acceptance, the 19 DG0 requirements x 2 'not checked' (no round-22 records yet), and the gate record not yet written. All are round-not-finished artifacts. The clone-method dependence of 450c756 is recorded as Low F-DG0-247.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-023"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/08-real-repo-gate-blockers.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/08b-real-repo-gate-blockers-nolocal.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs"
+      ]
+    },
+    {
+      "id": "QA22-K07",
+      "procedure": "F-DG0-160: validateGate refuses a shallow repository and does not refuse a complete one (real repository, CLI)",
+      "command": "git clone --depth=1 file://<repo> $TMPDIR/dg0sh; for each of dg0sh, dg0nl, dg0: node tools/gates/validate.mjs --stage DG0",
+      "environment": "the three clones of 7cf94db (shallow=true / false / false), node v22.22.2",
+      "expected": "the shallow clone reports the D-038 shallow error; the complete clones do not",
+      "actual": "dg0sh: 2 problems, including 'the repository is a shallow clone ... (D-038, F-DG0-160)' and the not-yet-written gate record. dg0nl and dg0: 1 problem (the gate record not yet written) and no shallow error. The CI workflow uses fetch-depth: 0.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-023"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-22/12-shallow-refusal.log"]
+    },
+    {
+      "id": "QA22-K08",
+      "procedure": "Re-run my round-21 negative suite unchanged: the round-21 fail-open cases must now be REJECTED",
+      "command": "QA_REPO_ROOT=$TMPDIR/dg0 node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r21.test.mjs",
+      "environment": "complete clone of 7cf94db, node v22.22.2; disposable fixtures under $TMPDIR",
+      "expected": "QA21-C3/C4/C5/C5b/C5c/C5d REJECTED (they were ACCEPTED in round 21); the controls and C1/C2/C6-C9 unchanged",
+      "actual": "16/16 pass. C3: typo and all-zero fix REJECTED. C4, C5, C5b, C5c and C5d are REJECTED for all four gate-round roles. G0 control 0 errors.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-013", "REQ-DLV-016", "REQ-DLV-023", "REQ-S20-024"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/10-r21-suite-rerun.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r21.test.mjs"
+      ]
+    },
+    {
+      "id": "QA22-K09",
+      "procedure": "New independent D-038 cases (none in tools/gates/tests): QA22-N1 shallow refusal on a fixture; N2 record-less sidecar finding imported then deleted is 'dropped'; N3 near-40-hex heads; N4 malformed head in an absent round; N5 near-valid fix_revision; N6 genuine superseded-round tolerance still accepted; N8 F-DG0-238 exact shape; N9 prototype keys against the real review schema",
+      "command": "QA_REPO_ROOT=$TMPDIR/dg0nl node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs",
+      "environment": "--no-local complete clone of 7cf94db, node v22.22.2, Python 3; disposable fixtures under $TMPDIR",
+      "expected": "N1-N6, N8 and N9 pass",
+      "actual": "N1: the shallow fixture clone is refused; the complete clone gives 0 errors; after unshallow it is no longer refused. N2: both variants are reported 'missing from findings.json (dropped)'. N3: 16/16 REJECTED. N4: 'unknown' and '' are REJECTED in an absent round. N5: 3/3 REJECTED. N6: 0 errors (the tolerance is intact). N8: exit 3, sandbox.json written, discard listed, no traceback. N9: 18/18 REJECTED. Result: 8 of these 8 pass. N7 is reported separately in QA22-K10.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-023", "REQ-S20-024"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/13-qa22-new-cases.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs"
+      ]
+    },
+    {
+      "id": "QA22-K10",
+      "procedure": "Probe QA22-N7: can the D-038 'round absent' predicate be self-declared? A genuine run (present head that contains the manifest) in a round whose committed manifest and stages entry name an absent source_commit closes a High finding with an all-zero fix_revision.",
+      "command": "QA_REPO_ROOT=$TMPDIR/dg0nl node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs (case QA22-N7)",
+      "environment": "--no-local complete clone of 7cf94db, node v22.22.2; disposable fixture under $TMPDIR",
+      "expected": "REJECTED. A present head containing the manifest proves the round was not pruned, so an absent fix cannot be tolerated.",
+      "actual": "ACCEPTED: validateGate returns 0 errors. The same all-zero fix in a retained round is REJECTED (N5). Raised as F-DG0-246 (Medium).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-016", "REQ-DLV-023"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/13-qa22-new-cases.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs"
+      ]
+    },
+    {
+      "id": "QA22-K11",
+      "procedure": "fix_revision integrity on the full history: every fix_revision in findings.json is full 40-hex, present, and an ancestor of HEAD. Also check which real rounds or run heads are absent.",
+      "command": "node -e <script in the log> run in $TMPDIR/dg0; round/head presence scan in $TMPDIR/dg0nl",
+      "environment": "complete clones of 7cf94db",
+      "expected": "0 violations; any absent round is a genuine superseded round",
+      "actual": "103 fix_revision entries; 0 that are not (well-formed and present and an ancestor of HEAD). Findings: 106 in total (96 CLOSED_VERIFIED, 2 ACCEPTED_OBSERVATION, 7 FIXED_PENDING_VERIFICATION, 1 OPEN). In the --no-local clone the only absent round is round 18 (source_commit 450c756); both of its run heads (ccb989f7) are also absent, and its closures F-DG0-150/151 point at the present fix 421c922. No real closure relies on the fix-absent tolerance.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-017", "REQ-DLV-023"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-22/11-fix-revision-integrity.log"]
+    },
+    {
+      "id": "QA22-K12",
+      "procedure": "Register integrity (independent parser): every row's columns, no VERIFIED status, IMPLEMENTED DLV evidence exists and implements the requirement, A01-A28 coverage, final_gate/increments consistency, counts, coverage matrices",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/register-integrity.mjs $TMPDIR/dg0nl",
+      "environment": "--no-local clone of 7cf94db, node v22.22.2",
+      "expected": "0 errors; 412 rows; exactly the 19 DG0 final-gate rows IMPLEMENTED; no VERIFIED; reverse coverage gaps 0",
+      "actual": "RESULT: PASS, errors 0. 412 rows (SOURCE 93 / ENGINEERING 131 / USER 188). Status: SPECIFIED 393, IMPLEMENTED 19 (= the 19 final_gate DG0 rows); no VERIFIED. A01-A28 all referenced. Source coverage 165 blocks and master-prompt coverage 423 blocks, with reverse gaps 0 for both. The 13 informational notes are the same as round 21 (the report is identical apart from the exit-line format).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-032", "REQ-DLV-001"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-22/20-register-integrity.log"]
+    },
+    {
+      "id": "QA22-K13",
+      "procedure": "Agent setup from recorded evidence: ten definitions loaded as separate invocations with distinct sessions on the orchestrator's model, and out-of-scope writes blocked",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/agent-load-evidence.mjs $TMPDIR/dg0nl",
+      "environment": "--no-local clone of 7cf94db",
+      "expected": "10 runs, 10 distinct sessions, model claude-opus-5-5, blocked docs/source writes, overall PASS",
+      "actual": "runs: 10, distinct sessions: 10, overall PASS. Every run: init_model claude-opus-5-5, permission mode auto, and 2 blocked writes to docs/source/LOAD-PROBE-<role>.txt.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-026"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-22/30-agent-load-evidence.log"]
+    },
+    {
+      "id": "QA22-K14",
+      "procedure": "Live guard probe from this run: Write tool and shell writes to protected paths and to another reviewer's evidence directory",
+      "command": "Write tool -> docs/source/QA-PROBE.txt; shell: echo probe > docs/source/QA-PROBE.txt, tools/gates/QA-PROBE.txt, docs/delivery/test-evidence/DG0/domain/QA-PROBE.txt",
+      "environment": "this qa-verifier run (DG0-T-DG0-REV-QA-R22-...-b8340421) in its process sandbox",
+      "expected": "all refused; no file created",
+      "actual": "Write tool: 'BLOCKED by write guard: qa-verifier may not write docs/source/QA-PROBE.txt (protected path)'. The three shell writes give 'Read-only file system' (exit 1). None of the files exists afterwards, and git status of docs/source and tools/gates is clean.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-007"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-22/31-live-guard-probe.log"]
+    },
+    {
+      "id": "QA22-K15",
+      "procedure": "agents.md and agent definitions against the evidence; the scope of the tools/agents change since round 21",
+      "command": "git diff --stat 9e3c27f 480cd3f -- docs/delivery/agents.md .claude/agents tools/agents ...; grep model/name frontmatter; non-comment diff line count of agent_sandbox.py",
+      "environment": "--no-local clone of 7cf94db",
+      "expected": "agents.md, definitions, runner, guard and scopes unchanged; 10 definitions with model: inherit plus the runner's explicit --model; the agent_sandbox.py change is comment-only (F-DG0-162 wording)",
+      "actual": "No diff for agents.md, .claude/agents, run-agent.sh, guard-write.mjs, write-scopes.json or settings. tools/agents diff: agent_sandbox.py only, with 0 non-comment changed lines. 10 definitions, all model: inherit. agents.md documents --model <orchestrator model> and 10/10 load results, matching K13. The three round-22 reviewer runs have distinct run IDs and sessions.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-004", "REQ-DLV-006"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-22/32-agents-md-vs-evidence.log"]
+    },
+    {
+      "id": "QA22-K16",
+      "procedure": "Feasibility: the stage plan and acceptance map assign every A01-A28 to a concrete test level, first stage and proving gate",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/acceptance-feasibility.mjs $TMPDIR/dg0nl",
+      "environment": "--no-local clone of 7cf94db",
+      "expected": "28 scenarios, each with a level, a first stage and a gate; register rows proving each; 0 errors",
+      "actual": "RESULT: PASS, errors 0. A01-A28 each have a level, a first stage and a gate. A24 and A25 are proved at DG0; the others at DG4-DG7 as planned.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032", "REQ-S20-024", "REQ-S20-025"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-22/40-acceptance-feasibility.log"]
+    },
+    {
+      "id": "QA22-K17",
+      "procedure": "Regression: re-run my earlier fixture suites (r9 raw, r18, r20 including the adapted r9) and analyse every failure",
+      "command": "QA_REPO_ROOT=$TMPDIR/dg0nl node --test dg0-gate-negative-r9.test.mjs dg0-gate-negative-r18.test.mjs dg0-gate-negative-r20.test.mjs",
+      "environment": "--no-local clone of 7cf94db, node v22.22.2",
+      "expected": "No product regression. Failures only where test wording predates D-037/D-038, in the known fixture set, or in the unadapted r9 run.",
+      "actual": "113 tests, 32 pass, 81 fail. The 81 failures: the raw r9 run is expected to fail (pre-D-030 fixture); r18 passes 7/7; the adapted r9 inside QA20-G1 gives 87 pass / 7 fail. Those 7 are the known N77/N83/F223/C01, the by-design N57, and N52/N53, whose regexes expect pre-D-038 wording (the same shapes are REJECTED in K08/K09). QA20-S1..S3 are still rejected but carry stale D-036 wording. No product regression. The stale expectations are in my own tests.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S20-024", "REQ-S20-025", "REQ-DLV-023"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/14-regression-r9-r18-r20.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/15-regression-analysis.md"
+      ]
+    },
+    {
+      "id": "QA22-K18",
+      "procedure": "Requirement completeness for the 19 DG0-final requirements (read each IMPLEMENTED row's evidence and match it to the behaviour exercised in K01-K17)",
+      "command": "register-integrity.mjs final_gate DG0 section, cross-checked with K01-K17",
+      "environment": "--no-local clone of 7cf94db",
+      "expected": "each of the 19 rows is IMPLEMENTED with existing evidence that implements it, and exercised behaviour where executable",
+      "actual": "All 19 rows are IMPLEMENTED with existing evidence and exercised as follows. DLV-001/032: extraction and analysis outputs (K01, K05, K12). DLV-002/003/019: records and environment present. DLV-004/006/007/026: agents, runner, guard and provenance (K03, K13-K15). DLV-013/015/016/017/020/022/023/029 and S20-024/025: validator, state machine, findings, register, candidate and reconcile (K02, K04-K11). DLV-016/023 carry the Medium defect F-DG0-246 (one fail-open path in checkClosure). The other controls work.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-003", "REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-013", "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-019", "REQ-DLV-020", "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026", "REQ-DLV-029", "REQ-DLV-032", "REQ-S20-024", "REQ-S20-025"],
+      "evidence": ["docs/delivery/test-evidence/DG0/qa/round-22/20-register-integrity.log"]
+    }
+  ],
+  "findings": [
+    "F-DG0-246",
+    "F-DG0-247",
+    "F-DG0-248"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/qa/round-22/01-check-extraction.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/02-gates-selftests.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/03-agents-tests.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/03b-agents-pyunittests.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/04-register-DG0.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/05-pipeline.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/06-reconcile.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/07-candidate.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/08-real-repo-gate-blockers.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/08b-real-repo-gate-blockers-nolocal.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/09-prefreeze.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/10-r21-suite-rerun.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/11-fix-revision-integrity.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/12-shallow-refusal.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/13-qa22-new-cases.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/14-regression-r9-r18-r20.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/15-regression-analysis.md",
+    "docs/delivery/test-evidence/DG0/qa/round-22/20-register-integrity.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/30-agent-load-evidence.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/31-live-guard-probe.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/32-agents-md-vs-evidence.log",
+    "docs/delivery/test-evidence/DG0/qa/round-22/40-acceptance-feasibility.log",
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs",
+    "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r21.test.mjs",
+    "docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs",
+    "docs/delivery/reviews/DG0/round-22/qa-verifier.findings.json",
+    "docs/delivery/reviews/DG0/round-22/qa-verifier.verifications.json"
+  ],
+  "reviewed_at": "2026-09-30T12:45:00Z",
+  "summary": "FAIL on one new Medium finding. The D-038 repairs work for every case they target. The round-21 fail-open shapes (QA21-C3/C4/C5/C5b/C5c/C5d) are now rejected for all roles. A shallow clone is refused and a complete one is not. A finding imported from a record-less sidecar and then deleted is caught as dropped. Prototype-named keys are rejected by the real schema. The genuine superseded-round shape (real round 18 in a --no-local clone, and QA22-N6) is still tolerated. The full-history dry-run shows 0 PRUNED, RECORD-LESS and DROPPED errors; every remaining error is a round-not-finished artifact. All required commands and prefreeze pass. Register integrity, agent setup, the live guard and feasibility all pass. I close F-DG0-245 and F-DG0-238 as CLOSED_VERIFIED. New: F-DG0-246 (Medium). The checkClosure fix-absent tolerance keys on a round's source_commit being absent, and orchestrator-written metadata alone can declare that. A genuine run then closes a High finding with an all-zero fix_revision, and validateGate reports 0 errors. No real closure depends on the tolerance, so it can be dropped or tied to an absent run head. Also two Lows: F-DG0-247 (D-038's 'uniformly absent' does not hold for local-path clones; outcome identical) and F-DG0-248 (no unit test for the shallow refusal)."
+}

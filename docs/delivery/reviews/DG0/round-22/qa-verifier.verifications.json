@@ -1,0 +1,29 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-245",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "I re-ran my round-21 suite (dg0-gate-negative-r21.test.mjs) unchanged against the round-22 candidate 09072ce5, in a complete clone of 7cf94db. Every shape that was ACCEPTED in round 21 is now REJECTED for all four gate-round roles: QA21-C3 (typo'd fix_revision and all-zero fix_revision on a gate-round closure), QA21-C4 (non-existent 40-hex head), QA21-C5/C5b (missing and null head), QA21-C5c ('HEAD') and QA21-C5d ('unknown'). Result: 16/16 pass. New independent cases pass too: QA22-N3 (uppercase, trailing-newline, 41-hex and 12-hex-abbreviated real heads rejected, all roles), QA22-N4 (malformed head rejected even in an absent round) and QA22-N5 (uppercase, abbreviated and all-zero fix_revision on a gate-round closure rejected). The scoped tolerance still accepts the genuine superseded shape: QA22-N6 on a fixture, and the real round 18 in a --no-local clone, where the dry-run shows 0 PRUNED errors. The unit tests 'D-038 / F-DG0-245' and 'D-038 / F-DG0-159' exist and pass (60/60). The fix implements exactly the scoping F-DG0-245 asked for. A different vector, the self-declared absent round, is raised separately as F-DG0-246.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/10-r21-suite-rerun.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/13-qa22-new-cases.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/02-gates-selftests.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/08b-real-repo-gate-blockers-nolocal.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-238",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Duplicate of F-DG0-150, with the same finish() fix (421c922). Verified fixed on the current candidate 09072ce5. QA22-N8 reproduces my exact round-17 shape against the current tools/agents/agent_sandbox.py: prepare qa-verifier; the staging copy writes round-2/qa-verifier.json and qa-verifier.findings.json; another same-role run creates the real round-2/qa-verifier.json after prepare. finish() now exits 3 with no traceback and no FileExistsError. It writes sandbox.json, lists 'round-2/qa-verifier.json: already present in the real tree; write-once (not copied)' under discarded, and leaves the other run's record untouched. QA18-S1..S5 still pass. agent_sandbox.py changed since round 21 only in comments (0 non-comment lines). Residual, as accepted for F-DG0-150: the non-colliding sidecar is still copied back, so a mixed pair can exist in the real tree. The exit is 3 and the discard is listed, so the runner does not commit such a run.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/13-qa22-new-cases.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/14-regression-r9-r18-r20.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/32-agents-md-vs-evidence.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs"
+      ]
+    }
+  ]
+}

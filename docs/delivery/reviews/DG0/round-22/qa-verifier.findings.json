@@ -1,0 +1,88 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-246",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The D-038 fix-absent tolerance in checkClosure is gated on a 'round absent' predicate that orchestrator-written metadata alone can satisfy. A GENUINE verifier run (present head_commit_at_start that contains the round manifest) in a round whose committed manifest and stages.json entry name a non-existent source_commit closes a High finding with an all-zero fix_revision, and validateGate reports 0 errors. No fix is checked against the gate candidate, and no run evidence has to be forged (so this is not disclosed residual 1).",
+      "reproduction": "QA_REPO_ROOT=<complete clone of 7cf94db> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs, case QA22-N7 (log docs/delivery/test-evidence/DG0/qa/round-22/13-qa22-new-cases.log). Start from the independent fixture, which validates with 0 errors (QA21-G0). (1) Commit a manifest docs/delivery/candidates/DG0/<cid>.manifest.json for a superseded-looking candidate: correct candidate_id over its entries, source_commit = 'ab' x 20, a commit that never existed. (2) Add stages.json review round 3 with that candidate_id and source_commit. (3) Run a normal qa-verifier round-3 run. Its head_commit_at_start is the real, present commit that contains the manifest, so checkInvocation's manifest check passes honestly. Its sidecar closes F-DG0-201 (High). (4) The orchestrator mirrors the closure with fix_revision = '0' x 40. validateGate(current) = [] (ACCEPTED). With the same all-zero fix in a retained round (QA22-N5) the gate is REJECTED. The only difference is the self-declared absent source_commit. Root cause: tools/gates/lib/rules.mjs checkClosure computes roundAbsent = !commitPresent(repo, round.source_commit) and then skips both ancestry checks (round candidate and gate candidate) for an absent fix. round.source_commit comes from stages.json and the manifest, and the orchestrator writes both. The manifest cross-check ('frozen_at/source_commit differ from its committed manifest') only compares the two; it does not check that the commit ever existed. Real-repo context (docs/delivery/test-evidence/DG0/qa/round-22/11-fix-revision-integrity.log, 08b-real-repo-gate-blockers-nolocal.log): all 103 fix_revision values in findings.json are present and ancestors of HEAD. The only genuinely absent round (round 18, source_commit 450c756, absent in a --no-local clone) has its two runs' heads absent too (ccb989f7), and its closures (F-DG0-150/151, fix 421c922) have PRESENT fixes. So no real closure needs the fix-absent tolerance at all.",
+      "expected": "A present verifier head that contains the round manifest proves that the round's source_commit was reachable when the run started. The manifest commit descends from the freeze commit. So a round with a present head and an absent source_commit is inconsistent, not pruned. Fail closed. Either (a) drop the checkClosure fix-absent tolerance entirely, since no real closure depends on it on the complete history, or (b) apply it only when the verifying run's head_commit_at_start is ALSO absent (the real round-18 shape: QA22-N6 stays accepted, QA22-N7 becomes rejected). Also consider requiring a present head's commit to have the round's source_commit as an ancestor. Add a unit test for the N7 shape.",
+      "actual": "validateGate returns 0 errors for QA22-N7. The round-22 candidate accepts a High finding closed with fix_revision 0000000000000000000000000000000000000000 by a genuine run, because the verifying round's source_commit is declared absent in orchestrator-written metadata.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs#QA22-N7",
+        "docs/delivery/test-evidence/DG0/qa/round-22/13-qa22-new-cases.log#QA22-N7",
+        "docs/delivery/test-evidence/DG0/qa/round-22/11-fix-revision-integrity.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/08b-real-repo-gate-blockers-nolocal.log",
+        "tools/gates/lib/rules.mjs#checkClosure",
+        "docs/delivery/decisions.md#D-038"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-22/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T12:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-22 QA review of candidate 09072ce5 (480cd3f). Medium, not mandatory. The same class as F-DG0-245, through a vector F-DG0-245 did not cover: the round-absence predicate is self-declared."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-247",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-038 states that deleting the backup branch makes 450c756 (round-18 source_commit) 'uniformly absent in every clone of the branch'. It is not: the main repository still holds it as an unreachable object, and a plain local-path `git clone <repo>` (the method review-common.md prescribes) copies it, so round 18 resolves as present there. The validator outcome is identical either way, so this is an accuracy and determinism note only.",
+      "reproduction": "git clone /home/user/My-owns $TMPDIR/dg0 then `git -C $TMPDIR/dg0 cat-file -t 450c756` gives 'commit'. It is NOT an ancestor of HEAD, and `git branch -a --contains` is empty. git clone --no-local /home/user/My-owns $TMPDIR/dg0nl then the same command gives 'could not get object info'. real-repo-gate-blockers.mjs output is identical on both clones (61 errors, PRUNED/RECORD-LESS/DROPPED = 0; diff of the two logs is empty). Logs: docs/delivery/test-evidence/DG0/qa/round-22/08-real-repo-gate-blockers.log (env line notes 'local-path clone: 450c756 present-unreachable') and 08b-real-repo-gate-blockers-nolocal.log.",
+      "expected": "Either reword D-038 to say that 450c756 is absent from every transport clone (--no-local, CI fetch-depth 0), while local-path clones and the origin repository may still carry it as an unreachable object, or expire the reflog and prune unreachable objects in the origin repository. Optionally, review instructions could prescribe `git clone --no-local` so reviewers see the same object set as CI.",
+      "actual": "Round 18 is 'retained' (source_commit present) in the origin repo and in local-path clones, and 'absent' in transport clones. Both variants pass, so no gate outcome differs today.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/08-real-repo-gate-blockers.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/08b-real-repo-gate-blockers-nolocal.log",
+        "docs/delivery/decisions.md#D-038"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-22/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T12:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-22 QA review of candidate 09072ce5 (480cd3f). Low, documentation/determinism; I would accept it as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-248",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The F-DG0-160 shallow-clone refusal in validateGate has no unit test in tools/gates/tests. The behaviour is correct, but its only regression guard is QA evidence outside the candidate.",
+      "reproduction": "grep -rin shallow tools/gates/tests/ tools/agents/tests/ returns nothing on candidate 09072ce5. The D-038 unit tests cover F-DG0-245/159/158/163 only. The behaviour itself is verified: docs/delivery/test-evidence/DG0/qa/round-22/12-shallow-refusal.log (the real repo at --depth=1 reports the shallow error; complete clones do not) and QA22-N1 (a valid fixture: shallow clone refused, complete --no-local clone 0 errors, unshallowed clone no longer refused).",
+      "expected": "A validator.test.mjs case: a valid fixture cloned with --depth=1 fails with the shallow error, and the same fixture complete (or after fetch --unshallow) does not. For example, promote QA22-N1.",
+      "actual": "No unit test. A regression that dropped or inverted isShallow() would pass the candidate's own test suite and prefreeze.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/12-shallow-refusal.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs#QA22-N1",
+        "tools/gates/lib/rules.mjs#isShallow"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-22/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T12:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-22 QA review of candidate 09072ce5 (480cd3f). Low, test-coverage polish; I would accept it as an observation."
+        }
+      ]
+    }
+  ]
+}
