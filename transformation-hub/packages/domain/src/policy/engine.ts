@@ -3,9 +3,20 @@ import { CLASSIFICATIONS } from '../enums';
 
 export type AbacCondition = 'classification' | 'room' | 'clean_team' | 'not_self' | 'authority' | 'own_workstream';
 
+export interface PolicyPermission {
+  description: string;
+  conditions: AbacCondition[];
+  /**
+   * access-matrix §2.2.1 (present only when true): a WORKSTREAM-scoped grant of this read permission also covers the
+   * project's records of that type that belong to no workstream and no room. Every other workstream-scoped grant covers
+   * only records of its own workstreams (§2.2). Pending confirmation by Mobily data governance.
+   */
+  projectLevelRead?: true;
+}
+
 export interface PolicyMatrix {
   version: string;
-  permissions: Record<string, { description: string; conditions: AbacCondition[] }>;
+  permissions: Record<string, PolicyPermission>;
   roles: Record<RoleKey, { scopeTypes: ScopeType[]; permissions: string[]; defaultClearance: Classification }>;
 }
 

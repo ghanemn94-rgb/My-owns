@@ -39,7 +39,8 @@ function englishCatalogue(): { whole: Set<string>; fragments: string[] } {
     const ar = flatten(JSON.parse(readFileSync(join(MESSAGES, 'ar', file), 'utf8')), file);
     for (const [k, v] of Object.entries(en)) {
       if (ar[k] === v || !/[A-Za-z]{3}/.test(v)) continue;
-      if (!/[{}]/.test(v)) whole.add(v.trim());
+      // The locale switch (components/LocaleSwitch.tsx) names the other language in that language: "English" is intended.
+      if (!/[{}]/.test(v) && v.trim() !== 'English') whole.add(v.trim());
       for (const frag of v.split(/\{[^}]*\}/)) {
         const f = frag.trim().replace(/^[\s:·,.;—–-]+|[\s:·,.;—–-]+$/g, '');
         if (f.length >= 10 && /[A-Za-z]+\s+[A-Za-z]+/.test(f)) fragments.add(f);
@@ -98,7 +99,8 @@ async function visibleTexts(page: Page): Promise<Visible[]> {
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
       const t = (n.textContent ?? '').replace(/\s+/g, ' ').trim();
       const el = n.parentElement;
-      if (!t || !el || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName) || !shown(el)) continue;
+      // Text a user typed (marked data-user-text, e.g. a decision title) is shown as entered and is not translatable.
+      if (!t || !el || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName) || !shown(el) || el.closest('[data-user-text]')) continue;
       out.push({ text: t, where: `${el.tagName.toLowerCase()}${el.getAttribute('data-testid') ? `[data-testid=${el.getAttribute('data-testid')}]` : ''}` });
     }
     for (const el of Array.from(document.querySelectorAll('[placeholder],[aria-label],[title],img[alt]'))) {

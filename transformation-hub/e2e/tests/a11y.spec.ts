@@ -24,7 +24,7 @@ import { PERSONAS, apiSessionAs, loginAs } from './helpers';
  */
 
 type Locale = 'en' | 'ar';
-type PersonaKey = 'pm' | 'portfolioAdmin' | 'partnerAlpha' | 'finance' | 'contributor' | 'sponsor' | 'cleanTeam';
+type PersonaKey = 'pm' | 'pmB' | 'portfolioAdmin' | 'partnerAlpha' | 'finance' | 'contributor' | 'sponsor' | 'cleanTeam';
 const LOCALES: readonly Locale[] = ['en', 'ar'];
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] as const;
 const FAILING_IMPACTS = new Set(['serious', 'critical']);
@@ -35,6 +35,8 @@ const EXCLUDED_RULES: readonly { id: string; reason: string }[] = [];
 
 interface Ids {
   dc: string;
+  /** DEMO-TRANSFORM (Demo PM — Project B): no decisions or agenda requests in the demo seed → cockpit empty states. */
+  transform: string;
   committee: string;
   meeting: string;
   decision: string;
@@ -81,6 +83,12 @@ interface Screen {
 const visible = (selector: string) => async (page: Page) => {
   await expect(page.locator(selector).first()).toBeVisible();
 };
+/** Cockpit: the given tile state is shown and the other tiles have settled (their lists are fetched separately). */
+const cockpitReady = (selector: string) => async (page: Page) => {
+  await expect(page.locator('[data-testid="overall-health-tile"]')).toBeVisible();
+  await expect(page.locator('[data-testid="top-decisions-tile"]')).toBeVisible();
+  await expect(page.locator(selector).first()).toBeVisible();
+};
 
 async function wizardTo(page: Page, step: 'details' | 'people' | 'review' | 'people-open') {
   // By template key, not display name: the Arabic UI shows the template's Arabic name (QA-P1-14).
@@ -113,7 +121,26 @@ const SCREENS: readonly Screen[] = [
   { id: 'wizard-3-people-combobox-open', persona: 'portfolioAdmin', path: () => '/projects/new', ready: visible('input[type="radio"]'), prepare: (p) => wizardTo(p, 'people-open') },
   { id: 'wizard-4-review', persona: 'portfolioAdmin', path: () => '/projects/new', ready: visible('input[type="radio"]'), prepare: (p) => wizardTo(p, 'review') },
   // Project workspace.
-  { id: 'project-cockpit', persona: 'pm', path: (i) => `/projects/${i.dc}`, ready: visible('[data-testid="dimension-cards"]') },
+  { id: 'project-cockpit', persona: 'pm', path: (i) => `/projects/${i.dc}`, ready: cockpitReady('[data-testid="top-decisions"]') },
+  // Cockpit states (REQ-UX-005): 390 px; no governance read (decisions restricted, committee asks hidden); partial
+  // governance read (agenda requests restricted); empty registers; a failing decision register (injected 500).
+  { id: 'project-cockpit-390', persona: 'pm', path: (i) => `/projects/${i.dc}`, ready: cockpitReady('[data-testid="top-decisions"]'), viewport: MOBILE },
+  { id: 'project-cockpit-restricted', persona: 'portfolioAdmin', path: (i) => `/projects/${i.dc}`, ready: cockpitReady('[data-testid="top-decisions-tile"] [data-testid="tile-restricted"]') },
+  { id: 'project-cockpit-partial', persona: 'contributor', path: (i) => `/projects/${i.dc}`, ready: cockpitReady('[data-testid="committee-asks-tile"] [data-testid="tile-restricted"]') },
+  { id: 'project-cockpit-empty', persona: 'pmB', path: (i) => `/projects/${i.transform}`, ready: cockpitReady('[data-testid="top-decisions-empty"]') },
+  {
+    id: 'project-cockpit-error',
+    persona: 'pm',
+    path: (i) => `/projects/${i.dc}`,
+    ready: cockpitReady('[data-testid="top-decisions"]'),
+    prepare: async (page) => {
+      await page.route(/\/api\/v1\/projects\/[^/]+\/decisions\?/, (route) =>
+        route.fulfill({ status: 500, contentType: 'application/problem+json', body: JSON.stringify({ type: 'about:blank', title: 'Internal Server Error', status: 500, code: 'internal' }) }),
+      );
+      await page.reload();
+      await expect(page.locator('[data-testid="top-decisions-tile"] [data-testid="tile-error"]')).toBeVisible({ timeout: 20_000 });
+    },
+  },
   { id: 'project-dimension', persona: 'pm', path: (i) => `/projects/${i.dc}/dimensions/perimeter_transfer` },
   { id: 'project-charter', persona: 'pm', path: (i) => `/projects/${i.dc}/charter` },
   { id: 'project-members', persona: 'pm', path: (i) => `/projects/${i.dc}/members` },
@@ -381,11 +408,13 @@ async function findId(api: APIRequestContext, path: string, field: string, value
 async function lookupIds(baseURL: string): Promise<Ids> {
   const api = await apiSessionAs(baseURL, PERSONAS.pm);
   const fin = await apiSessionAs(baseURL, PERSONAS.finance);
+  const pmB = await apiSessionAs(baseURL, PERSONAS.pmB);
   try {
     const dc = await findId(api, '/api/v1/projects', 'code', 'DEMO-DC');
     const p = `/api/v1/projects/${dc}`;
     return {
       dc,
+      transform: await findId(pmB, '/api/v1/projects', 'code', 'DEMO-TRANSFORM'),
       committee: await findId(api, `${p}/committees`, 'name', 'DC Carve-out & JV Steering Committee (Demo)'),
       meeting: await findId(api, `${p}/meetings?pageSize=100`, 'title', 'Demo — Steering Committee meeting #1'),
       decision: await findId(api, `${p}/decisions?pageSize=100`, 'code', 'DEC-004'),
@@ -421,6 +450,7 @@ async function lookupIds(baseURL: string): Promise<Ids> {
   } finally {
     await api.dispose();
     await fin.dispose();
+    await pmB.dispose();
   }
 }
 
@@ -484,7 +514,7 @@ function summarise(results: Awaited<ReturnType<AxeBuilder['analyze']>>): Finding
 test.describe('REQ-ARC-008 accessibility (axe-core, WCAG 2.1 A/AA)', () => {
   test.beforeAll(async ({ browser, baseURL }) => {
     ids = await lookupIds(baseURL!);
-    for (const persona of ['pm', 'portfolioAdmin', 'partnerAlpha', 'finance', 'contributor', 'sponsor', 'cleanTeam'] as const) {
+    for (const persona of ['pm', 'pmB', 'portfolioAdmin', 'partnerAlpha', 'finance', 'contributor', 'sponsor', 'cleanTeam'] as const) {
       const ctx = await browser.newContext();
       const page = await ctx.newPage();
       await loginAs(page, PERSONAS[persona]);

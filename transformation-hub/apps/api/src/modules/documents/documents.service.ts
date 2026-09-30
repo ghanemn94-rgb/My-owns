@@ -98,12 +98,19 @@ export class DocumentsService {
     return l;
   }
 
-  /** In-SQL visibility predicate over the `document` table (AT-03): scope, clearance, room grants, not disposed. */
+  /**
+   * In-SQL predicate over the `document` table for lists and search (AT-03): scope, clearance, room grants, not disposed —
+   * AND the coverage of the caller's `documents.document.read` grant, exactly as `GET /documents/:id` evaluates it
+   * (SEC-P2-08, access-matrix §2.2 / §2.2.1): project-wide → every visible document; workstream-scoped → only documents
+   * with no room (documents carry no workstream); clean-team room role → its room. A caller never lists or finds a title
+   * it would be refused when opening the document.
+   */
   visibleDocsWhere(ctx: RequestContext, projectId: string): SQL {
     return and(
       eq(schema.document.projectId, projectId),
       isNull(schema.document.deletedAt),
       this.policy.visibilitySql(ctx, projectId, { classification: schema.document.classification, room: schema.document.roomId }),
+      this.policy.grantSql(ctx, 'documents.document.read', projectId, { room: schema.document.roomId }),
     )!;
   }
 

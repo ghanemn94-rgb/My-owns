@@ -1,12 +1,49 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { POLICY_MATRIX, permissionsOf, evaluateConditions, clearanceAllows, NO_HUMAN_REQUESTER } from './index';
+import { POLICY_MATRIX, permissionsOf, evaluateConditions, clearanceAllows, NO_HUMAN_REQUESTER, isProjectLevelRead, PROJECT_LEVEL_READ_PERMISSIONS } from './index';
 import { ROLE_KEYS } from '../enums';
+
+const accessMatrixDoc = () => readFileSync(join(__dirname, '../../../../docs/security/access-matrix.md'), 'utf8');
+
+describe('access-matrix §2.2.1 — project-level read exception for workstream-scoped grants (P2 security review §3, option B)', () => {
+  it('only the four reviewed read permissions carry the flag (any change is a policy decision)', () => {
+    expect(PROJECT_LEVEL_READ_PERMISSIONS).toEqual(['documents.document.download', 'documents.document.read', 'gates.gate.read', 'portfolio.project.read']);
+  });
+
+  it('only read / download permissions carry it, and none of finance, governance, JV or AI', () => {
+    for (const [key, p] of Object.entries(POLICY_MATRIX.permissions)) {
+      if (!('projectLevelRead' in p)) continue;
+      expect(p.projectLevelRead, `${key}: the flag is present only when true`).toBe(true);
+      expect(key, `${key} is not a read`).toMatch(/\.(read|download)$/);
+      expect(key, `${key} is in an excluded module`).not.toMatch(/^(finance|governance|jv|ai)\./);
+      // A read never carries a subject / ownership condition: nothing but the visibility conditions may apply.
+      expect(p.conditions.filter((c) => !['classification', 'room', 'clean_team'].includes(c)), key).toEqual([]);
+    }
+  });
+
+  it('isProjectLevelRead fails closed for unknown and unflagged permissions', () => {
+    expect(isProjectLevelRead('gates.gate.read')).toBe(true);
+    expect(isProjectLevelRead('finance.record.read')).toBe(false);
+    expect(isProjectLevelRead('governance.decision.read')).toBe(false);
+    expect(isProjectLevelRead('planning.plan.read')).toBe(false);
+    expect(isProjectLevelRead('documents.document.upload')).toBe(false);
+    expect(isProjectLevelRead('no.such.permission')).toBe(false);
+  });
+
+  it('the machine-readable list in access-matrix §2.2.1 equals the flagged permissions', () => {
+    const doc = accessMatrixDoc();
+    const blocks = [...doc.matchAll(/```json\n([\s\S]*?)\n```/g)].map((m) => JSON.parse(m[1]!) as Record<string, unknown>);
+    const list = blocks.find((b) => Array.isArray(b['projectLevelRead']));
+    expect(list, 'access-matrix §2.2.1 JSON block').toBeDefined();
+    expect([...(list!['projectLevelRead'] as string[])].sort()).toEqual([...PROJECT_LEVEL_READ_PERMISSIONS]);
+    expect(list!['status']).toBe('pending confirmation by Mobily data governance');
+  });
+});
 
 describe('policy matrix', () => {
   it('matches the JSON block in docs/security/access-matrix.md (no drift)', () => {
-    const doc = readFileSync(join(__dirname, '../../../../docs/security/access-matrix.md'), 'utf8');
+    const doc = accessMatrixDoc();
     const blocks = [...doc.matchAll(/```json\n([\s\S]*?)\n```/g)].map((m) => JSON.parse(m[1]!));
     const fromDoc = blocks.find((b) => b.permissions && b.roles);
     expect(fromDoc).toEqual(POLICY_MATRIX);

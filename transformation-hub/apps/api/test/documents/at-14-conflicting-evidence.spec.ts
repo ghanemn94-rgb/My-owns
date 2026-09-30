@@ -44,7 +44,8 @@ describe('AT-14 — new evidence conflicting with evidence previously relied upo
   });
 
   it('the finance reviewer cannot verify evidence they linked themselves (not_self)', async () => {
-    const criterion = (await owner().query('select id from gate_criterion where project_id = $1 order by sort_order desc limit 1', [dcId])).rows[0].id;
+    // A criterion owned by finance_restricted: only the criterion's owner role or a PM may link evidence to it (SEC-P2-05).
+    const criterion = (await owner().query(`select id from gate_criterion where project_id = $1 and owner_role = 'finance_restricted' order by sort_order desc, id limit 1`, [dcId])).rows[0].id;
     const own = await finance.post(evidencePath(dcId), { targetType: 'gate_criterion', targetId: criterion, note: 'Finance note-only evidence (demo)' }).expect(201);
     const r = await finance.post(`${evidencePath(dcId)}/${own.body.id}/verify`, { expectedVersion: 1, decision: 'accept' });
     expect(r.status).toBe(403);

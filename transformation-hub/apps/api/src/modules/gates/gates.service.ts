@@ -1319,8 +1319,13 @@ export class GatesService implements OnModuleInit {
     return new Map((await this.withEvidence(projectId, rows)).map((r) => [r.id, r]));
   }
 
+  /**
+   * Exactly the governance module's read rule for a decision (`GET /decisions/:id`): decisions are committee records with no
+   * workstream, so only a project-wide `governance.decision.read` grant reaches them (access-matrix §2.2). A workstream-only
+   * reader of the gate register (§2.2.1 exception for `gates.gate.read`) therefore never sees a linked decision's title.
+   */
   private canSeeDecision(ctx: RequestContext, projectId: string, d: DecisionRow): boolean {
-    return this.policy.canInProject(ctx, 'governance.decision.read', projectId) && this.policy.canSee(ctx, { projectId, classification: d.classification });
+    return this.policy.can(ctx, 'governance.decision.read', { projectId, classification: d.classification });
   }
 
   /** Bilingual gate purposes of the project's pinned template version, by gate key (QA-P1-14). */

@@ -128,7 +128,7 @@ describe('DOM-P2-05 — superseded or defective evidence triggers a controlled r
 
   it('on an undecided cycle a criterion accepted as met returns to unmet when its accepted evidence is rejected as defective', async () => {
     await startGate(p, projectId, 'G1');
-    await meetCriterion(p, projectId, 'G1', 'G1-C05'); // reviewer: PM; evidence linked by the contributor
+    await meetCriterion(p, projectId, 'G1', 'G1-C05'); // reviewer: PM; evidence linked by a second project manager (SEC-P2-05)
     let g1 = await gateByKey(p.pm, projectId, 'G1');
     expect(crit(g1, 'G1-C05').assessment.status).toBe('met');
     const link = (await evidenceLinks(p.pm, projectId, crit(g1, 'G1-C05').id)).find((l) => l.status === 'active')!;

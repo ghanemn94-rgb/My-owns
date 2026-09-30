@@ -16,6 +16,16 @@ const P = {
   secretary: 'Demo Secretary / CPMO',
   techLead: 'Demo Technology Lead',
 } as const;
+/**
+ * Demo persona holding a criterion OWNER role in DEMO-DC: only the owner role or a project manager may link evidence to a
+ * criterion (SEC-P2-05), so a PM-reviewed criterion gets its evidence from its owner (tech.lead also holds a project-wide
+ * contributor role in the demo).
+ */
+const CRITERION_OWNER: Record<string, string> = {
+  workstream_lead: 'Demo Technology Lead',
+  finance_restricted: 'Demo Finance Member',
+  legal_restricted: 'Demo Legal Member',
+};
 /** Demo persona holding each designated reviewer role in DEMO-DC (only that role may accept a criterion). */
 const REVIEWER: Record<string, string> = {
   project_manager: 'Demo Project Manager',
@@ -30,6 +40,7 @@ const REVIEWER: Record<string, string> = {
 interface Criterion {
   id: string;
   key: string;
+  ownerRole: string;
   reviewerRole: string;
   mandatory: boolean;
   assessment: { status: string; version: number };
@@ -166,7 +177,7 @@ test.describe('P2 business gates', () => {
 
   test('(d) a gate cannot be approved on a decision that is not final (AT-04, DOM-P2-01); the gate review precedes submission (DOM-P2-16)', async ({ page, baseURL }) => {
     const problems = watchConsole(page);
-    // Fixture: make G1 ready for decision. Evidence is linked by the PM (by the contributor on PM-designated criteria) and
+    // Fixture: make G1 ready for decision. Evidence is linked by the PM (by the criterion's owner on PM-designated criteria) and
     // each criterion is accepted by its designated reviewer through the API. DOM-P2-16: the G1 gate reviewer (the PM, who
     // did not start the cycle — the demo seed's workstream lead did) endorses the assessment IN THE UI, and the G1 owner
     // (the workstream lead) submits it — never the reviewer.
@@ -181,8 +192,9 @@ test.describe('P2 business gates', () => {
       for (const c of g1.criteria.filter((x) => x.mandatory && x.assessment.status !== 'met')) {
         const reviewer = REVIEWER[c.reviewerRole];
         expect(reviewer, `a demo persona holds reviewer role ${c.reviewerRole}`).toBeTruthy();
-        const adder = c.reviewerRole === 'project_manager' ? P.contributor : P.pm;
-        if (c.evidence.active === 0) await post(await as(adder), `/api/v1/projects/${pid}/evidence`, { targetType: 'gate_criterion', targetId: c.id, note: `E2E synthetic evidence for ${c.key}` });
+        const adder = c.reviewerRole === 'project_manager' ? CRITERION_OWNER[c.ownerRole] : P.pm;
+        expect(adder, `a demo persona other than the PM owns ${c.key} (${c.ownerRole})`).toBeTruthy();
+        if (c.evidence.active === 0) await post(await as(adder!), `/api/v1/projects/${pid}/evidence`, { targetType: 'gate_criterion', targetId: c.id, note: `E2E synthetic evidence for ${c.key}` });
         await post(await as(reviewer!), `/api/v1/projects/${pid}/gates/${g1.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'met' });
       }
       g1 = await gateByKey(pm, pid, 'G1');

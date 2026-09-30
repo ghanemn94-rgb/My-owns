@@ -95,6 +95,26 @@ export class EvidenceService {
     if (!r.rows[0]?.ok) throw notFound();
   }
 
+  /**
+   * SEC-P2-05: linking evidence is work ON the target, so the target permission's ABAC conditions apply exactly as the
+   * target's own commands evaluate them — not only its RBAC grant. A gate criterion: `gates.evidence.attach` with its `W`
+   * (own_workstream) condition on the criterion's owner role, the same resource attributes as the criterion commands (submit
+   * evidence, propose N/A, note — gates.service): the owner role or the project manager (access-matrix §2.4); anyone else is
+   * refused (403) exactly like the submit. Other target types keep the RBAC grant check above (their `W` conditions apply
+   * to the target's own commands — access-matrix §6, documents).
+   */
+  private async assertTargetCommand(ctx: RequestContext, projectId: string, targetType: EvidenceTargetType, targetId: string, targetPerm: string): Promise<void> {
+    if (targetType !== 'gate_criterion') return;
+    const [row] = await this.db
+      .tx()
+      .select({ ownerRole: schema.gateCriterion.ownerRole, classification: schema.project.classification })
+      .from(schema.gateCriterion)
+      .innerJoin(schema.project, eq(schema.project.id, schema.gateCriterion.projectId))
+      .where(and(eq(schema.gateCriterion.id, targetId), eq(schema.gateCriterion.projectId, projectId)));
+    if (!row) throw notFound();
+    this.policy.assert(ctx, targetPerm, { projectId, classification: row.classification as Classification, ownerRoles: [row.ownerRole] });
+  }
+
   private emitChanged(projectId: string, link: Pick<LinkRow, 'id' | 'targetType' | 'targetId'>, change: string, isConflict: boolean) {
     return this.outbox.emit({
       type: 'evidence.changed',
@@ -176,6 +196,7 @@ export class EvidenceService {
     if (!this.policy.canInProject(ctx, targetPerm, projectId)) {
       throw forbidden('evidence.target_permission', `Linking evidence to a ${body.targetType} also requires ${targetPerm}`);
     }
+    await this.assertTargetCommand(ctx, projectId, body.targetType, body.targetId, targetPerm);
     let documentId: string | null = null;
     let versionId: string | null = null;
     let loaded: LoadedDoc | null = null;
