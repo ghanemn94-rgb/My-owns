@@ -139,7 +139,12 @@ export function VersionCheckPanel({ model, versionId }: { model: FinancialModelD
                   {result.comparison.rows.map((r) => (
                     <tr key={r.key} className="border-t border-line align-top" data-status={r.status}>
                       <th scope="row" className="px-2 py-1 text-start font-medium">
-                        <span dir="auto">{r.label}</span> <code className="text-xs text-muted" dir="ltr">{r.key}</code>
+                        <span className="flex flex-col gap-0.5">
+                          <span dir="auto">{r.label}</span>
+                          <code className="text-xs font-normal text-muted" dir="ltr">
+                            {r.key}
+                          </code>
+                        </span>
                       </th>
                       <td className="px-2 py-1">
                         <OutputValue o={r.a} />

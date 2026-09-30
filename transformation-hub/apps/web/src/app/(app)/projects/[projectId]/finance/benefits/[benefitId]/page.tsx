@@ -6,7 +6,6 @@ import { Pencil, UserX } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { DemoBadge } from '@/components/DemoBadge';
 import { ErrorState } from '@/components/ErrorState';
-import { EvidencePanel } from '@/components/EvidencePanel';
 import { LoadingState } from '@/components/LoadingState';
 import { PageHeader } from '@/components/PageHeader';
 import { RestrictedState } from '@/components/RestrictedState';
@@ -17,7 +16,7 @@ import { isApiError } from '@/lib/api';
 import { finHref, useBenefit } from '@/lib/finance';
 import { useProjectContext } from '@/lib/project-context';
 import { BenefitCommandDialog, BenefitFormDialog, type BenefitCommand } from '../../_components/benefit-forms';
-import { Amount, BackToList, ButtonRow, CmdButton, Facts, FinanceHistory, Panel, Person, UText, useWorkstreamLabel } from '../../_components/fin';
+import { Amount, BackToList, ButtonRow, CmdButton, Facts, FinanceEvidence, FinanceHistory, Panel, Person, UText, useWorkstreamLabel } from '../../_components/fin';
 
 const MANAGE_COMMANDS: BenefitCommand[] = ['start_tracking', 'record_realization', 'cancel'];
 const VERIFY_COMMANDS: BenefitCommand[] = ['approve', 'verify', 'reject_realization'];
@@ -183,7 +182,7 @@ export default function BenefitPage() {
             </ul>
           )}
         </Panel>
-        <EvidencePanel targetType="benefit" targetId={b.id} title={t('finance.common.evidenceTitle')} />
+        <FinanceEvidence targetType="benefit" targetId={b.id} classification={b.classification} />
         <FinanceHistory entityType="benefit" entityId={b.id} />
       </div>
       <BenefitCommandDialog key={cmd ?? 'none'} b={b} cmd={cmd} onClose={() => setCmd(null)} />

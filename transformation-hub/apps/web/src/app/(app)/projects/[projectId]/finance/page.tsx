@@ -122,15 +122,17 @@ export default function FinanceSummaryPage() {
                   ))}
                 </ul>
               )}
-              <div className="mt-3">
-                <StatusCounts
-                  enumName="approvalStates"
-                  counts={s.intercompany.byFlag}
-                  href={() => `${base}/reconciliations`}
-                  testId="recon-by-flag"
-                  label={(f) => t(`finance.recon.flags.${f as 'reconciled'}`)}
-                />
-              </div>
+              {s.intercompany.total > 0 ? (
+                <div className="mt-3">
+                  <StatusCounts
+                    enumName="approvalStates"
+                    counts={s.intercompany.byFlag}
+                    href={() => `${base}/reconciliations`}
+                    testId="recon-by-flag"
+                    label={(f) => t(`finance.recon.flags.${f as 'reconciled'}`)}
+                  />
+                </div>
+              ) : null}
             </Panel>
             <Panel title={t('finance.summary.findings')} testId="summary-findings">
               <MessageList messages={s.findingsI18n} fallback={s.findings} tone="warning" empty={t('finance.summary.noFindings')} />

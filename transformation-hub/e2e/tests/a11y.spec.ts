@@ -24,7 +24,7 @@ import { PERSONAS, apiSessionAs, loginAs } from './helpers';
  */
 
 type Locale = 'en' | 'ar';
-type PersonaKey = 'pm' | 'portfolioAdmin';
+type PersonaKey = 'pm' | 'portfolioAdmin' | 'finance' | 'contributor';
 const LOCALES: readonly Locale[] = ['en', 'ar'];
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] as const;
 const FAILING_IMPACTS = new Set(['serious', 'critical']);
@@ -49,6 +49,10 @@ interface Ids {
   gate: string;
   document: string;
   source: string;
+  budgetLine: string;
+  financeModel: string;
+  benefit: string;
+  kpi: string;
 }
 
 interface Screen {
@@ -163,6 +167,29 @@ const SCREENS: readonly Screen[] = [
   { id: 'documents-sources', persona: 'pm', path: (i) => `/projects/${i.dc}/documents?tab=sources` },
   { id: 'document-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/documents/${i.document}`, ready: visible('[data-testid="versions-table"]') },
   { id: 'source-detail-claims', persona: 'pm', path: (i) => `/projects/${i.dc}/documents/sources/${i.source}` },
+  // Finance & Value (screen 10): Finance persona (finance-domain clearance), plus the restricted state for a non-finance user.
+  { id: 'finance-summary', persona: 'finance', path: (i) => `/projects/${i.dc}/finance`, ready: visible('[data-testid="finance-summary"]') },
+  { id: 'finance-summary-390', persona: 'finance', path: (i) => `/projects/${i.dc}/finance`, ready: visible('[data-testid="finance-summary"]'), viewport: MOBILE },
+  { id: 'finance-figures', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/snapshots`, ready: visible('[data-testid="snapshots-table"]') },
+  {
+    id: 'finance-figure-form-open',
+    persona: 'finance',
+    path: (i) => `/projects/${i.dc}/finance/snapshots`,
+    ready: visible('[data-testid="create-snapshot"]'),
+    prepare: async (page) => {
+      await page.getByTestId('create-snapshot').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+    },
+  },
+  { id: 'finance-budget', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/budget`, ready: visible('[data-testid="separation-costs"]') },
+  { id: 'finance-budget-line', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/budget/${i.budgetLine}`, ready: visible('[data-testid="budget-detail"]') },
+  { id: 'finance-reconciliations', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/reconciliations`, ready: visible('[data-testid="recons-table"]') },
+  { id: 'finance-models', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/models`, ready: visible('[data-testid="models-table"]') },
+  { id: 'finance-model-detail', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/models/${i.financeModel}`, ready: visible('[data-testid="model-detail"]') },
+  { id: 'finance-benefits-kpis', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/benefits`, ready: visible('[data-testid="kpis-table"]') },
+  { id: 'finance-benefit-detail', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/benefits/${i.benefit}`, ready: visible('[data-testid="benefit-detail"]') },
+  { id: 'finance-kpi-detail', persona: 'finance', path: (i) => `/projects/${i.dc}/finance/kpis/${i.kpi}`, ready: visible('[data-testid="kpi-detail"]') },
+  { id: 'finance-restricted', persona: 'contributor', path: (i) => `/projects/${i.dc}/finance`, ready: visible('[data-testid="restricted-state"]') },
   // Administration.
   { id: 'admin', persona: 'portfolioAdmin', path: () => '/admin' },
   // An open modal dialog (native <dialog>): the RAID "new risk" form.
@@ -241,6 +268,7 @@ async function findId(api: APIRequestContext, path: string, field: string, value
 
 async function lookupIds(baseURL: string): Promise<Ids> {
   const api = await apiSessionAs(baseURL, PERSONAS.pm);
+  const fin = await apiSessionAs(baseURL, PERSONAS.finance);
   try {
     const dc = await findId(api, '/api/v1/projects', 'code', 'DEMO-DC');
     const p = `/api/v1/projects/${dc}`;
@@ -260,9 +288,15 @@ async function lookupIds(baseURL: string): Promise<Ids> {
       gate: await findId(api, `${p}/gates`, 'key', 'G1'),
       document: await findId(api, `${p}/documents?pageSize=100`, 'title', 'Demo — charter excerpt'),
       source: await findId(api, `${p}/sources?pageSize=100`, 'code', 'SRC-001'),
+      budgetLine: await findId(api, `${p}/budget-lines?pageSize=100`, 'code', 'BL-001'),
+      // The seeded valuation model is strictly confidential: only a Finance Restricted member can read it.
+      financeModel: await findId(fin, `${p}/financial-models?pageSize=100`, 'code', 'FM-001'),
+      benefit: await findId(api, `${p}/benefits?pageSize=100`, 'code', 'BEN-001'),
+      kpi: await findId(api, `${p}/kpis?pageSize=100`, 'key', 'action_closure_time'),
     };
   } finally {
     await api.dispose();
+    await fin.dispose();
   }
 }
 
@@ -296,11 +330,11 @@ async function waitForStableDom(page: Page) {
     .toBe(true);
 }
 
-/** Generic readiness: right language and direction, a visible <h1>, then a settled DOM. */
+/** Generic readiness: right language and direction, a visible <h1> (or the restricted-access state), then a settled DOM. */
 async function settle(page: Page, locale: Locale) {
   await expect(page.locator('html')).toHaveAttribute('lang', locale);
   await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
-  await expect(page.locator('h1').first()).toBeVisible();
+  await expect(page.locator('h1, [data-testid="restricted-state"]').first()).toBeVisible();
   await waitForStableDom(page);
 }
 
@@ -326,7 +360,7 @@ function summarise(results: Awaited<ReturnType<AxeBuilder['analyze']>>): Finding
 test.describe('REQ-ARC-008 accessibility (axe-core, WCAG 2.1 A/AA)', () => {
   test.beforeAll(async ({ browser, baseURL }) => {
     ids = await lookupIds(baseURL!);
-    for (const persona of ['pm', 'portfolioAdmin'] as const) {
+    for (const persona of ['pm', 'portfolioAdmin', 'finance', 'contributor'] as const) {
       const ctx = await browser.newContext();
       const page = await ctx.newPage();
       await loginAs(page, PERSONAS[persona]);

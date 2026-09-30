@@ -149,7 +149,7 @@ export default function SnapshotsPage() {
       />
       <CreateSnapshotDialog open={createOpen} onClose={() => setCreateOpen(false)} onCreated={(id) => router.push(`${base}/snapshots/${id}`)} />
       <ImportSnapshotsDialog open={importOpen} onClose={() => setImportOpen(false)} />
-      <Dialog open={totalOpen} onClose={() => setTotalOpen(false)} title={t('finance.aggregate.dialogTitle')} size="lg">
+      <Dialog open={totalOpen} onClose={() => setTotalOpen(false)} title={t('finance.aggregate.selectedTitle', { count: selected.length })} size="lg">
         {totalOpen ? <AggregatePanel snapshotIds={selected} framed={false} testId="aggregate-selected" /> : null}
       </Dialog>
     </>

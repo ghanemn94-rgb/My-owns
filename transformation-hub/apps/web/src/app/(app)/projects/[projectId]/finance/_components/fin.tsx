@@ -6,8 +6,9 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, CircleCheck, CircleDashed, History, ShieldAlert, UserX } from 'lucide-react';
 import { useEffect, useId, useState, type ComponentProps, type ReactNode } from 'react';
 import { portfolioRoutes, type ServerMessageDto } from '@hub/contracts';
-import type { Classification } from '@hub/domain';
+import { clearanceAllows, type Classification, type EvidenceTargetType } from '@hub/domain';
 import { ConfirmCommandDialog } from '@/components/ConfirmCommandDialog';
+import { EvidencePanel } from '@/components/EvidencePanel';
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorState } from '@/components/ErrorState';
 import { SelectField, TextField } from '@/components/Field';
@@ -101,6 +102,20 @@ export function ClearanceNote() {
 
 // ---------------------------------------------------------------------------------------------------------------
 // Values
+
+/** Accepted period formats — technical tokens, always rendered left-to-right (also in the Arabic UI). */
+const PERIOD_FORMATS = '2026 · 2026-H1 · 2026-Q3 · 2026-09 · FY2026';
+export function PeriodHint() {
+  const { t } = useI18n();
+  return (
+    <>
+      {t('finance.snapshots.periodHint')}{' '}
+      <span dir="ltr" className="whitespace-nowrap">
+        {PERIOD_FORMATS}
+      </span>
+    </>
+  );
+}
 
 /** Unit scale in words (units / thousands / millions). */
 export function useUnitLabel() {
@@ -443,7 +458,7 @@ export function DocumentSelect({
   return (
     <div className="space-y-2" data-testid="document-select">
       <TextField label={t('finance.common.searchDocuments')} value={q} onChange={(e) => setQ(e.target.value)} />
-      <SelectField label={t('finance.common.sourceDocument')} required={required} value={value.documentId} onChange={(e) => onChange({ documentId: e.target.value, versionId: '' })}>
+      <SelectField label={t('finance.common.sourceDocument')} required={required} value={value.documentId} onChange={(e) => onChange({ documentId: e.target.value, versionId: '' })} data-testid="document-select-doc">
         <option value="">{t('finance.common.select')}</option>
         {(docs.data?.items ?? []).map((d) => (
           <option key={d.id} value={d.id}>
@@ -452,7 +467,7 @@ export function DocumentSelect({
         ))}
       </SelectField>
       {value.documentId ? (
-        <SelectField label={t('finance.common.sourceVersion')} value={value.versionId} onChange={(e) => onChange({ ...value, versionId: e.target.value })}>
+        <SelectField label={t('finance.common.sourceVersion')} value={value.versionId} onChange={(e) => onChange({ ...value, versionId: e.target.value })} data-testid="document-select-version">
           <option value="">{t('finance.common.currentVersion')}</option>
           {versions.map((v) => (
             <option key={v.id} value={v.id}>
@@ -657,7 +672,7 @@ const HISTORY_PAGE = 10;
 
 export function FinanceHistory({ entityType, entityId, className }: { entityType: string; entityId: string; className?: string }) {
   const { t, formatDateTime, tStatus } = useI18n();
-  const { projectId } = useProjectContext();
+  const { projectId, me } = useProjectContext();
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const query = { page, pageSize: HISTORY_PAGE, entityType, entityId };
@@ -683,6 +698,12 @@ export function FinanceHistory({ entityType, entityId, className }: { entityType
       <div className="border-t border-line">
         {q.isLoading ? (
           <LoadingState compact />
+        ) : isApiError(q.error) && (q.error.status === 404 || q.error.status === 403) ? (
+          // The record itself is readable (this page loaded it); the project activity feed applies the general clearance and
+          // its own record-type allow-list, so its answer is explained rather than shown as "not found".
+          <p className="px-4 py-3 text-sm text-ink" data-testid="history-unavailable">
+            {t('finance.common.historyUnavailable', { clearance: tStatus('classifications', me.user.clearance) })}
+          </p>
         ) : q.error ? (
           <ErrorState error={q.error} onRetry={() => q.refetch()} />
         ) : !q.data || q.data.items.length === 0 ? (
@@ -719,6 +740,26 @@ export function FinanceHistory({ entityType, entityId, className }: { entityType
         )}
       </div>
     </details>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Evidence
+
+/**
+ * Evidence of a finance record. The Document & Evidence Center applies the user's GENERAL clearance to the record (not the
+ * finance-domain clearance of access-matrix §2.3), so a Finance Restricted user may read a record whose evidence list the
+ * server refuses (404). Say so plainly instead of showing a "not found" block inside a page the user can read.
+ */
+export function FinanceEvidence({ targetType, targetId, classification, className }: { targetType: EvidenceTargetType; targetId: string; classification: Classification; className?: string }) {
+  const { t, tStatus } = useI18n();
+  const { me } = useProjectContext();
+  if (clearanceAllows(me.user.clearance, classification)) return <EvidencePanel className={className} targetType={targetType} targetId={targetId} title={t('finance.common.evidenceTitle')} />;
+  return (
+    <section className={cx(card, 'p-4', className)} data-testid="evidence-clearance-note">
+      <h2 className="mb-2 text-lg font-semibold text-ink">{t('finance.common.evidenceTitle')}</h2>
+      <p className="text-sm text-ink">{t('finance.common.evidenceAboveClearance', { clearance: tStatus('classifications', me.user.clearance), classification: tStatus('classifications', classification) })}</p>
+    </section>
   );
 }
 

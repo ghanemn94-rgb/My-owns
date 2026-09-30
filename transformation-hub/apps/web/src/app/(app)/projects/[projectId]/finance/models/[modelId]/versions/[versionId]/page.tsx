@@ -40,10 +40,12 @@ function OutputsTable({ outputs, caption, testId }: { outputs: ModelOutput[]; ca
           {outputs.map((o) => (
             <tr key={o.key} className="border-t border-line align-top" data-key={o.key} data-basis={o.basis}>
               <th scope="row" className="px-3 py-2 text-start font-medium">
-                <span dir="auto">{o.label}</span>
-                <code className="ms-2 text-xs text-muted" dir="ltr">
-                  {o.key}
-                </code>
+                <span className="flex flex-col gap-0.5">
+                  <span dir="auto">{o.label}</span>
+                  <code className="text-xs font-normal text-muted" dir="ltr">
+                    {o.key}
+                  </code>
+                </span>
               </th>
               <td className="px-3 py-2">
                 <OutputValue o={o} />

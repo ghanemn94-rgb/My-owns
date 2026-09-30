@@ -11,7 +11,7 @@ import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { DATA_QUALITY_VALUES, defaultClassification, useBenefits, useFinanceRefresh, useWritableClassifications, type BenefitDetail, type KpiDetail } from '@/lib/finance';
 import { useProjectContext } from '@/lib/project-context';
-import { ClassificationSelect, FinCommandDialog, FinFormDialog, MoneyFields, WorkstreamSelect, decimalValid, emptyMoney, moneyFormOf, moneyOf, moneyValid } from './fin';
+import { ClassificationSelect, FinCommandDialog, FinFormDialog, MoneyFields, WorkstreamSelect, decimalValid, emptyMoney, moneyFormOf, moneyOf, moneyValid, PeriodHint } from './fin';
 import { periodValid } from './snapshot-forms';
 
 const todayIso = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Riyadh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -382,7 +382,7 @@ export function RecordObservationDialog({ kpi, open, onClose }: { kpi: KpiDetail
         maxLength={16}
         value={f.period}
         onChange={(e) => setF({ ...f, period: e.target.value })}
-        hint={t('finance.snapshots.periodHint')}
+        hint={<PeriodHint />}
         error={f.period.trim() && !periodValid(f.period) ? t('finance.snapshots.periodInvalid') : null}
       />
       <fieldset className="flex flex-wrap gap-4 text-sm">

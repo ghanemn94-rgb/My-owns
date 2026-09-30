@@ -17,7 +17,7 @@ import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { RECONCILIATION_STATUS_VALUES, defaultClassification, finHref, useFinanceRefresh, useReconciliations, useWritableClassifications, type Reconciliation } from '@/lib/finance';
 import { useProjectContext } from '@/lib/project-context';
-import { Amount, ClassificationSelect, FilterBar, FilterSelect, FinFormDialog, MessageList, MoneyFields, emptyMoney, moneyOf, moneyValid, useUrlState } from '../_components/fin';
+import { Amount, ClassificationSelect, FilterBar, FilterSelect, FinFormDialog, MessageList, MoneyFields, emptyMoney, moneyOf, moneyValid, useUrlState, PeriodHint } from '../_components/fin';
 import { ReconFlagBadge } from '../_components/recon';
 import { periodValid } from '../_components/snapshot-forms';
 
@@ -77,7 +77,7 @@ function CreateReconciliationDialog({ open, onClose, onCreated }: { open: boolea
           maxLength={16}
           value={f.period}
           onChange={(e) => setF({ ...f, period: e.target.value })}
-          hint={t('finance.snapshots.periodHint')}
+          hint={<PeriodHint />}
           error={f.period.trim() && !periodValid(f.period) ? t('finance.snapshots.periodInvalid') : null}
         />
       </div>

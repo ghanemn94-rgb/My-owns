@@ -13,7 +13,7 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
 import { finHref, type AggregateBody, type AggregateResult, type ConversionBasis, type UnitScaleOption } from '@/lib/finance';
 import { useProjectContext } from '@/lib/project-context';
-import { Amount, MessageList, currencyValid, decimalValid, useUnitLabel } from './fin';
+import { Amount, MessageList, PeriodHint, currencyValid, decimalValid, useUnitLabel } from './fin';
 
 const blankConversion = (from = '', to = ''): ConversionBasis => ({ from, to, rate: '', source: '', asOf: '' });
 const conversionComplete = (c: ConversionBasis) => currencyValid(c.from) && currencyValid(c.to) && c.from !== c.to && decimalValid(c.rate) && !c.rate.trim().startsWith('-') && c.source.trim().length >= 3 && /^\d{4}-\d{2}-\d{2}$/.test(c.asOf);
@@ -78,7 +78,7 @@ export function AggregatePanel({ snapshotIds, testId = 'aggregate-panel', framed
   return (
     <section aria-labelledby={headingId} className={cx(framed && card, framed && 'p-4', 'space-y-4')} data-testid={testId}>
       <div>
-        <h2 id={headingId} className="flex items-center gap-2 text-lg font-semibold text-ink">
+        <h2 id={headingId} className={framed ? 'flex items-center gap-2 text-lg font-semibold text-ink' : 'sr-only'}>
           <Calculator aria-hidden="true" className="size-5 text-muted" />
           {byIds ? t('finance.aggregate.selectedTitle', { count: snapshotIds?.length ?? 0 }) : t('finance.aggregate.title')}
         </h2>
@@ -108,7 +108,7 @@ export function AggregatePanel({ snapshotIds, testId = 'aggregate-panel', framed
                 </option>
               ))}
             </SelectField>
-            <TextField label={t('finance.snapshots.period')} dir="ltr" value={period} maxLength={16} onChange={(ev) => setPeriod(ev.target.value)} hint={t('finance.snapshots.periodHint')} data-testid="aggregate-period" />
+            <TextField label={t('finance.snapshots.period')} dir="ltr" value={period} maxLength={16} onChange={(ev) => setPeriod(ev.target.value)} hint={<PeriodHint />} data-testid="aggregate-period" />
             <SelectField label={t('finance.snapshots.approvalState')} value={approvalState} onChange={(ev) => setApprovalState(ev.target.value)}>
               <option value="">{t('finance.common.all')}</option>
               {APPROVAL_STATES.map((s) => (
@@ -150,7 +150,7 @@ export function AggregatePanel({ snapshotIds, testId = 'aggregate-panel', framed
           <legend className="text-sm font-semibold text-ink">{t('finance.aggregate.conversions')}</legend>
           <p className="text-xs text-muted">{t('finance.aggregate.conversionsHint')}</p>
           {conversions.map((c, i) => (
-            <div key={i} className="grid gap-2 rounded-md border border-line p-3 sm:grid-cols-6" data-testid="conversion-row">
+            <div key={i} className="grid gap-2 rounded-md border border-line p-3 sm:grid-cols-3" data-testid="conversion-row">
               <TextField label={t('finance.aggregate.from')} required dir="ltr" maxLength={3} value={c.from} onChange={(ev) => setConv(i, { from: ev.target.value.toUpperCase() })} data-testid="conversion-from" />
               <TextField label={t('finance.aggregate.to')} required dir="ltr" maxLength={3} value={c.to} onChange={(ev) => setConv(i, { to: ev.target.value.toUpperCase() })} data-testid="conversion-to" />
               <TextField
@@ -165,7 +165,7 @@ export function AggregatePanel({ snapshotIds, testId = 'aggregate-panel', framed
               />
               <TextField className="sm:col-span-2" label={t('finance.aggregate.source')} required value={c.source} maxLength={300} onChange={(ev) => setConv(i, { source: ev.target.value })} data-testid="conversion-source" />
               <TextField label={t('finance.aggregate.asOf')} required type="date" dir="ltr" value={c.asOf} onChange={(ev) => setConv(i, { asOf: ev.target.value })} data-testid="conversion-asof" />
-              <div className="sm:col-span-6">
+              <div className="sm:col-span-3">
                 <button type="button" className={btn.ghost} onClick={() => setConversions((cs) => cs.filter((_, j) => j !== i))}>
                   <Trash2 aria-hidden="true" className="size-4" />
                   {t('finance.aggregate.removeConversion')}

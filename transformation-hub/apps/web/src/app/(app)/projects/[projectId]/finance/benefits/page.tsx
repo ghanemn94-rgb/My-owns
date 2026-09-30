@@ -47,7 +47,7 @@ function KpiSection() {
         </span>
       ),
     },
-    { key: 'name', header: t('finance.kpis.name'), sortValue: (x) => loc(x.name, x.nameAr), cell: (x) => <span dir="auto">{loc(x.name, x.nameAr)}</span> },
+    { key: 'name', header: t('finance.kpis.name'), sortValue: (x) => loc(x.name, x.nameAr), cell: (x) => <span dir="auto" className="block min-w-40">{loc(x.name, x.nameAr)}</span> },
     { key: 'unit', header: t('finance.kpis.unit'), cell: (x) => <span dir="auto">{x.unit}</span> },
     { key: 'direction', header: t('finance.kpis.direction'), cell: (x) => tStatus('kpiDirections', x.direction) },
     { key: 'target', header: t('finance.kpis.target'), cell: (x) => <span dir="auto">{x.target ?? EM_DASH}</span> },
@@ -134,14 +134,14 @@ export default function BenefitsPage() {
         </span>
       ),
     },
-    { key: 'title', header: t('finance.benefits.titleField'), sortValue: (x) => x.title, cell: (x) => <span dir="auto">{x.title}</span> },
+    { key: 'title', header: t('finance.benefits.titleField'), sortValue: (x) => x.title, cell: (x) => <span dir="auto" className="block min-w-56">{x.title}</span> },
     { key: 'baseline', header: t('finance.benefits.baseline'), cell: (x) => <span dir="auto">{x.baselineValue ?? EM_DASH}</span> },
     { key: 'target', header: t('finance.benefits.target'), cell: (x) => <span dir="auto">{x.targetValue ?? EM_DASH}</span> },
     { key: 'actual', header: t('finance.benefits.actual'), cell: (x) => <span dir="auto">{x.actualValue ?? EM_DASH}</span> },
     { key: 'value', header: t('finance.benefits.value'), cell: (x) => <Amount value={x.value} /> },
     { key: 'date', header: t('finance.benefits.realizationDate'), sortValue: (x) => x.realizationDate ?? '', cell: (x) => <span className="tabular">{formatDate(x.realizationDate)}</span> },
     { key: 'status', header: t('finance.benefits.status'), sortValue: (x) => x.status, cell: (x) => <StatusBadge enumName="benefitStatuses" value={x.status} /> },
-    { key: 'source', header: t('finance.benefits.verificationSource'), cell: (x) => <span dir="auto" className="line-clamp-2 text-xs">{x.verificationSource ?? EM_DASH}</span> },
+    { key: 'source', header: t('finance.benefits.verificationSource'), cell: (x) => <span dir="auto" className="line-clamp-2 block min-w-40 text-xs">{x.verificationSource ?? EM_DASH}</span> },
   ];
   return (
     <>

@@ -11,7 +11,7 @@ import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { defaultClassification, useFinanceRefresh, useWritableClassifications, type SnapshotDetail } from '@/lib/finance';
 import { useProjectContext } from '@/lib/project-context';
-import { ClassificationSelect, DocumentSelect, FinFormDialog, MoneyFields, TsaSelect, WorkstreamSelect, emptyMoney, moneyFormOf, moneyOf, moneyValid, type MoneyForm } from './fin';
+import { ClassificationSelect, DocumentSelect, FinFormDialog, MoneyFields, TsaSelect, WorkstreamSelect, emptyMoney, moneyFormOf, moneyOf, moneyValid, type MoneyForm, PeriodHint } from './fin';
 
 type Kind = (typeof FINANCIAL_KINDS)[number];
 const LINE_REF = /^[A-Za-z0-9._:/-]{1,64}$/;
@@ -32,7 +32,7 @@ function PeriodField({ value, onChange, testId }: { value: string; onChange: (v:
       maxLength={16}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      hint={t('finance.snapshots.periodHint')}
+      hint={<PeriodHint />}
       error={value.trim() && !periodValid(value) ? t('finance.snapshots.periodInvalid') : null}
       data-testid={testId}
     />
@@ -135,7 +135,7 @@ export function CreateSnapshotDialog({ open, onClose, onCreated }: { open: boole
       </div>
       <TextField label={t('finance.snapshots.label')} required maxLength={300} value={f.label} onChange={(e) => setF({ ...f, label: e.target.value })} data-testid="snapshot-label" />
       <MoneyFields legend={t('finance.snapshots.amount')} required value={f.money} onChange={(money) => setF({ ...f, money })} testId="snapshot-money" hint={t('finance.money.hint')} />
-      <TextAreaField label={t('finance.snapshots.sourceRef')} rows={2} maxLength={2000} value={f.sourceRef} onChange={(e) => setF({ ...f, sourceRef: e.target.value })} hint={t('finance.snapshots.sourceHint')} data-testid="snapshot-source" />
+      <TextAreaField label={t('finance.snapshots.sourceRef')} required={!f.doc.documentId} rows={2} maxLength={2000} value={f.sourceRef} onChange={(e) => setF({ ...f, sourceRef: e.target.value })} hint={t('finance.snapshots.sourceHint')} data-testid="snapshot-source" />
       <details>
         <summary className="cursor-pointer text-sm font-medium text-primary">{t('finance.snapshots.sourceDocumentOptional')}</summary>
         <div className="mt-2">
@@ -246,7 +246,7 @@ export function ImportSnapshotsDialog({ open, onClose }: { open: boolean; onClos
           <fieldset key={i} className="space-y-2 rounded-md border border-line p-3" data-testid="import-row">
             <legend className="px-1 text-sm font-semibold text-ink">{t('finance.snapshots.import.row', { n: i + 1 })}</legend>
             <div className="grid gap-2 sm:grid-cols-3">
-              <SelectField label={t('finance.snapshots.kind')} required value={r.kind} onChange={(e) => setRow(i, { kind: e.target.value as Kind })}>
+              <SelectField label={t('finance.snapshots.kind')} required value={r.kind} onChange={(e) => setRow(i, { kind: e.target.value as Kind })} data-testid="import-kind">
                 {FINANCIAL_KINDS.map((k) => (
                   <option key={k} value={k}>
                     {tStatus('financialKinds', k)}
@@ -260,13 +260,13 @@ export function ImportSnapshotsDialog({ open, onClose }: { open: boolean; onClos
                   </option>
                 ))}
               </SelectField>
-              <PeriodField value={r.period} onChange={(period) => setRow(i, { period })} />
-              <TextField label={t('finance.snapshots.lineRef')} required dir="ltr" maxLength={64} value={r.lineRef} onChange={(e) => setRow(i, { lineRef: e.target.value })} />
-              <TextField className="sm:col-span-2" label={t('finance.snapshots.label')} required maxLength={300} value={r.label} onChange={(e) => setRow(i, { label: e.target.value })} />
+              <PeriodField value={r.period} onChange={(period) => setRow(i, { period })} testId="import-period" />
+              <TextField label={t('finance.snapshots.lineRef')} required dir="ltr" maxLength={64} value={r.lineRef} onChange={(e) => setRow(i, { lineRef: e.target.value })} data-testid="import-lineref" />
+              <TextField className="sm:col-span-2" label={t('finance.snapshots.label')} required maxLength={300} value={r.label} onChange={(e) => setRow(i, { label: e.target.value })} data-testid="import-label" />
             </div>
-            <MoneyFields legend={t('finance.snapshots.amount')} required value={r.money} onChange={(money) => setRow(i, { money })} />
+            <MoneyFields legend={t('finance.snapshots.amount')} required value={r.money} onChange={(money) => setRow(i, { money })} testId="import-money" />
             <div className="grid gap-2 sm:grid-cols-2">
-              <TextField label={t('finance.common.sheet')} required={sourceType === 'excel'} dir="ltr" maxLength={128} value={r.sheet} onChange={(e) => setRow(i, { sheet: e.target.value })} />
+              <TextField label={t('finance.common.sheet')} required={sourceType === 'excel'} dir="ltr" maxLength={128} value={r.sheet} onChange={(e) => setRow(i, { sheet: e.target.value })} data-testid="import-sheet" />
               <TextField
                 label={t('finance.common.cell')}
                 required
@@ -274,6 +274,7 @@ export function ImportSnapshotsDialog({ open, onClose }: { open: boolean; onClos
                 maxLength={64}
                 value={r.cell}
                 onChange={(e) => setRow(i, { cell: e.target.value })}
+                data-testid="import-cell"
                 hint={t('finance.common.cellHint')}
                 error={r.cell.trim() && !cellValid(r.cell) ? t('finance.common.cellInvalid') : null}
               />
@@ -345,7 +346,7 @@ export function EditSnapshotDialog({ snapshot, open, onClose }: { snapshot: Snap
       <p className={hint}>{imported ? t('finance.snapshots.edit.importedHint') : t('finance.snapshots.edit.hint')}</p>
       <TextField label={t('finance.snapshots.label')} required disabled={imported} maxLength={300} value={f.label} onChange={(e) => setF({ ...f, label: e.target.value })} />
       <MoneyFields legend={t('finance.snapshots.amount')} required lockUnit={imported} value={f.money} onChange={(money) => setF({ ...f, money: imported ? f.money : money })} />
-      <TextAreaField label={t('finance.snapshots.sourceRef')} rows={2} disabled={imported} maxLength={2000} value={f.sourceRef} onChange={(e) => setF({ ...f, sourceRef: e.target.value })} />
+      <TextAreaField label={t('finance.snapshots.sourceRef')} required={!imported && !snapshot.sourceDocumentId} rows={2} disabled={imported} maxLength={2000} value={f.sourceRef} onChange={(e) => setF({ ...f, sourceRef: e.target.value })} />
       <WorkstreamSelect value={f.workstreamId} onChange={(workstreamId) => setF({ ...f, workstreamId })} />
       <SelectField label={t('finance.common.classification')} required value={f.classification} onChange={(e) => setF({ ...f, classification: e.target.value as Classification })} hint={t('finance.common.raiseOnly')}>
         {raiseOnly.map((c) => (

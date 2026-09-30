@@ -53,6 +53,7 @@ export function CreateModelDialog({ open, onClose, onCreated }: { open: boolean;
       <SelectField
         label={t('finance.models.kind')}
         required
+        data-testid="model-kind"
         value={f.kind}
         onChange={(e) => {
           const kind = e.target.value as ModelKind;
@@ -65,7 +66,7 @@ export function CreateModelDialog({ open, onClose, onCreated }: { open: boolean;
           </option>
         ))}
       </SelectField>
-      <TextField label={t('finance.models.name')} required maxLength={300} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+      <TextField label={t('finance.models.name')} required maxLength={300} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} data-testid="model-name" />
       <TextAreaField label={t('finance.models.description')} rows={3} maxLength={4000} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
       <ClassificationSelect value={f.classification} proposed={proposedFor(f.kind)} onChange={(classification) => setF({ ...f, classification })} />
     </FinFormDialog>
@@ -299,8 +300,8 @@ export function NewVersionDialog({ model, imported, open, onClose, onCreated }: 
         )}
         {sets.map((a, i) => (
           <div key={i} className="grid gap-2 rounded-md border border-line p-2 sm:grid-cols-4">
-            <TextField label={t('finance.versions.assumptionKey')} required dir="ltr" maxLength={64} value={a.key} onChange={(e) => setAs(i, { key: e.target.value })} hint={priorKeys.has(a.key.trim()) ? t('finance.versions.changesExisting') : undefined} />
-            <TextField label={t('finance.versions.assumptionValue')} required maxLength={500} value={a.value} onChange={(e) => setAs(i, { value: e.target.value })} />
+            <TextField label={t('finance.versions.assumptionKey')} required dir="ltr" maxLength={64} value={a.key} onChange={(e) => setAs(i, { key: e.target.value })} hint={priorKeys.has(a.key.trim()) ? t('finance.versions.changesExisting') : undefined} data-testid="assumption-key" />
+            <TextField label={t('finance.versions.assumptionValue')} required maxLength={500} value={a.value} onChange={(e) => setAs(i, { value: e.target.value })} data-testid="assumption-value" />
             <TextField label={t('finance.versions.assumptionUnit')} maxLength={32} value={a.unit} onChange={(e) => setAs(i, { unit: e.target.value })} />
             <TextField label={t('finance.versions.assumptionSource')} maxLength={500} value={a.source} onChange={(e) => setAs(i, { source: e.target.value })} />
             <div className="sm:col-span-4">
@@ -311,7 +312,7 @@ export function NewVersionDialog({ model, imported, open, onClose, onCreated }: 
             </div>
           </div>
         ))}
-        <button type="button" className={btn.secondary} onClick={() => setSets((as) => [...as, { key: '', value: '', unit: '', source: '' }])}>
+        <button type="button" className={btn.secondary} onClick={() => setSets((as) => [...as, { key: '', value: '', unit: '', source: '' }])} data-testid="assumption-add">
           <Plus aria-hidden="true" className="size-4" />
           {t('finance.versions.addAssumption')}
         </button>
@@ -322,8 +323,8 @@ export function NewVersionDialog({ model, imported, open, onClose, onCreated }: 
         <p className={hint}>{t('finance.versions.outputsHint')}</p>
         {outputs.map((o, i) => (
           <div key={i} className="grid gap-2 rounded-md border border-line p-3 sm:grid-cols-3" data-testid="output-row">
-            <TextField label={t('finance.versions.outputKey')} required dir="ltr" maxLength={64} value={o.key} onChange={(e) => setOut(i, { key: e.target.value })} />
-            <TextField className="sm:col-span-2" label={t('finance.versions.outputLabel')} required maxLength={300} value={o.label} onChange={(e) => setOut(i, { label: e.target.value })} />
+            <TextField label={t('finance.versions.outputKey')} required dir="ltr" maxLength={64} value={o.key} onChange={(e) => setOut(i, { key: e.target.value })} data-testid="output-key" />
+            <TextField className="sm:col-span-2" label={t('finance.versions.outputLabel')} required maxLength={300} value={o.label} onChange={(e) => setOut(i, { label: e.target.value })} data-testid="output-label" />
             <SelectField label={t('finance.versions.measure')} required value={o.measure} onChange={(e) => setOut(i, { measure: e.target.value as Measure, ...(e.target.value === 'percent' ? { basis: 'other' as Basis } : {}) })}>
               {OUTPUT_MEASURE_VALUES.map((m) => (
                 <option key={m} value={m}>
@@ -331,7 +332,7 @@ export function NewVersionDialog({ model, imported, open, onClose, onCreated }: 
                 </option>
               ))}
             </SelectField>
-            <TextField label={t('finance.money.amount')} required dir="ltr" inputMode="decimal" value={o.amount} onChange={(e) => setOut(i, { amount: e.target.value })} hint={o.measure === 'percent' ? t('finance.versions.percentHint') : undefined} />
+            <TextField label={t('finance.money.amount')} required dir="ltr" inputMode="decimal" value={o.amount} onChange={(e) => setOut(i, { amount: e.target.value })} hint={o.measure === 'percent' ? t('finance.versions.percentHint') : undefined} data-testid="output-amount" />
             <SelectField label={t('finance.versions.basis')} required value={o.basis} disabled={o.measure === 'percent'} onChange={(e) => setOut(i, { basis: e.target.value as Basis })} data-testid="output-basis">
               {VALUE_BASES.map((b) => (
                 <option key={b} value={b}>
@@ -341,8 +342,8 @@ export function NewVersionDialog({ model, imported, open, onClose, onCreated }: 
             </SelectField>
             {o.measure === 'money' ? (
               <>
-                <TextField label={t('finance.money.currency')} required dir="ltr" maxLength={3} value={o.currency} onChange={(e) => setOut(i, { currency: e.target.value.toUpperCase() })} />
-                <SelectField label={t('finance.money.unitScale')} required value={o.unitScale} onChange={(e) => setOut(i, { unitScale: e.target.value })}>
+                <TextField label={t('finance.money.currency')} required dir="ltr" maxLength={3} value={o.currency} onChange={(e) => setOut(i, { currency: e.target.value.toUpperCase() })} data-testid="output-currency" />
+                <SelectField label={t('finance.money.unitScale')} required value={o.unitScale} onChange={(e) => setOut(i, { unitScale: e.target.value })} data-testid="output-unit">
                   {([1, 1000, 1_000_000] as const).map((n) => (
                     <option key={n} value={String(n)}>
                       {unit(n)}
@@ -353,7 +354,7 @@ export function NewVersionDialog({ model, imported, open, onClose, onCreated }: 
             ) : (
               <p className="self-end pb-2 text-sm text-muted sm:col-span-2">{t('finance.versions.percentNoCurrency')}</p>
             )}
-            <TextField label={t('finance.common.sheet')} required={imported} dir="ltr" maxLength={128} value={o.sheet} onChange={(e) => setOut(i, { sheet: e.target.value })} />
+            <TextField label={t('finance.common.sheet')} required={imported} dir="ltr" maxLength={128} value={o.sheet} onChange={(e) => setOut(i, { sheet: e.target.value })} data-testid="output-sheet" />
             <TextField
               label={t('finance.common.cell')}
               required={imported}
@@ -362,6 +363,7 @@ export function NewVersionDialog({ model, imported, open, onClose, onCreated }: 
               value={o.cell}
               onChange={(e) => setOut(i, { cell: e.target.value })}
               error={o.cell.trim() && !cellValid(o.cell) ? t('finance.common.cellInvalid') : null}
+              data-testid="output-cell"
             />
             {outputs.length > 1 ? (
               <div className="self-end">
@@ -373,14 +375,14 @@ export function NewVersionDialog({ model, imported, open, onClose, onCreated }: 
             ) : null}
           </div>
         ))}
-        <button type="button" className={btn.secondary} onClick={() => setOutputs((os) => [...os, blankOutput()])} disabled={outputs.length >= 200}>
+        <button type="button" className={btn.secondary} onClick={() => setOutputs((os) => [...os, blankOutput()])} disabled={outputs.length >= 200} data-testid="output-add">
           <Plus aria-hidden="true" className="size-4" />
           {t('finance.versions.addOutput')}
         </button>
       </fieldset>
 
       {imported ? <DocumentSelect required value={doc} onChange={setDoc} /> : null}
-      <TextAreaField label={t('finance.versions.sourceRef')} rows={2} maxLength={2000} value={sourceRef} onChange={(e) => setSourceRef(e.target.value)} hint={imported ? undefined : t('finance.versions.sourceHint')} />
+      <TextAreaField label={t('finance.versions.sourceRef')} required={!imported && !doc.documentId} rows={2} maxLength={2000} value={sourceRef} onChange={(e) => setSourceRef(e.target.value)} hint={imported ? undefined : t('finance.versions.sourceHint')} data-testid="version-source" />
       {!imported ? (
         <details>
           <summary className="cursor-pointer text-sm font-medium text-primary">{t('finance.snapshots.sourceDocumentOptional')}</summary>

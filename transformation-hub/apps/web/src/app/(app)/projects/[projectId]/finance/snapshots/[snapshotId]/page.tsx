@@ -8,7 +8,6 @@ import { financeRoutes } from '@hub/contracts';
 import { BUDGET_DECISION_TYPE_KEYS, OPENING_BALANCE_DECISION_TYPE_KEYS } from '@hub/domain';
 import { DemoBadge } from '@/components/DemoBadge';
 import { ErrorState } from '@/components/ErrorState';
-import { EvidencePanel } from '@/components/EvidencePanel';
 import { LoadingState } from '@/components/LoadingState';
 import { PageHeader } from '@/components/PageHeader';
 import { RestrictedState } from '@/components/RestrictedState';
@@ -19,7 +18,7 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
 import { RECONCILABLE_CATEGORIES, figureRights, finHref, useFinanceRefresh, useSnapshot, type FigureCommand, type SnapshotDetail } from '@/lib/finance';
 import { useProjectContext } from '@/lib/project-context';
-import { Amount, ApprovalPanel, BackToList, DecisionSelect, Facts, FinCommandDialog, FinanceHistory, MessageList, Panel, Person, SourceText, useWorkstreamLabel } from '../../_components/fin';
+import { Amount, ApprovalPanel, BackToList, DecisionSelect, Facts, FinCommandDialog, FinanceEvidence, FinanceHistory, MessageList, Panel, Person, SourceText, useWorkstreamLabel } from '../../_components/fin';
 import { EditSnapshotDialog, SnapshotReconciliationDialog } from '../../_components/snapshot-forms';
 
 function FigureCommandDialog({ x, cmd, onClose }: { x: SnapshotDetail; cmd: FigureCommand | null; onClose: () => void }) {
@@ -225,7 +224,7 @@ export default function SnapshotPage() {
             )}
           </Panel>
         ) : null}
-        <EvidencePanel targetType="financial_snapshot" targetId={x.id} title={t('finance.common.evidenceTitle')} />
+        <FinanceEvidence targetType="financial_snapshot" targetId={x.id} classification={x.classification} />
         <FinanceHistory entityType="financial_snapshot" entityId={x.id} />
       </div>
       <FigureCommandDialog key={cmd ?? 'none'} x={x} cmd={cmd} onClose={() => setCmd(null)} />

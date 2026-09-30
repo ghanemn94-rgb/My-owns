@@ -139,7 +139,6 @@ export default function BudgetPage() {
     approvalState: (values.approvalState || undefined) as ApprovalState | undefined,
   };
   const list = useBudgetLines(query);
-  const unit = useUnitLabel();
   const columns: Column<BudgetLine>[] = [
     {
       key: 'code',
@@ -155,52 +154,60 @@ export default function BudgetPage() {
         </span>
       ),
     },
-    { key: 'name', header: t('finance.budget.name'), sortValue: (x) => x.name, cell: (x) => <span dir="auto">{x.name}</span> },
+    { key: 'name', header: t('finance.budget.name'), sortValue: (x) => x.name, cell: (x) => <span dir="auto" className="block min-w-56">{x.name}</span> },
     {
       key: 'category',
       header: t('finance.snapshots.category'),
       sortValue: (x) => x.category,
       cell: (x) => (
-        <span className="flex flex-col gap-0.5">
+        <span className="flex min-w-32 flex-col gap-0.5">
           <span>{tStatus('financialCategories', x.category)}</span>
           {x.tsaServiceId ? <span className="text-xs text-muted">{t('finance.budget.tsaLinked')}</span> : null}
         </span>
       ),
     },
     {
-      key: 'unit',
-      header: t('finance.summary.currencyUnit'),
+      key: 'approved',
+      header: t('finance.budget.approved'),
       cell: (x) => (
-        <span>
-          <span dir="ltr">{x.currency}</span> · {unit(x.unitScale)}
+        <span className="flex flex-col gap-0.5">
+          {x.approved ? (
+            <Amount value={x.approved} showUnits />
+          ) : (
+            <span className="text-sm whitespace-nowrap text-muted" data-testid="no-approved-budget">
+              {t('finance.budget.notApproved')}
+            </span>
+          )}
+          {x.proposed ? (
+            <span className="text-xs text-muted">
+              {t('finance.budget.proposed')}: <Amount value={x.proposed} />
+            </span>
+          ) : null}
         </span>
       ),
     },
-    { key: 'proposed', header: t('finance.budget.proposed'), cell: (x) => <Amount value={x.proposed} /> },
-    {
-      key: 'approved',
-      header: t('finance.budget.approved'),
-      cell: (x) =>
-        x.approved ? (
-          <Amount value={x.approved} />
-        ) : (
-          <span className="text-sm text-muted" data-testid="no-approved-budget">
-            {t('finance.budget.notApproved')}
-          </span>
-        ),
-    },
-    { key: 'committed', header: t('finance.budget.committed'), cell: (x) => <Amount value={x.committed} /> },
-    { key: 'spent', header: t('finance.budget.spent'), cell: (x) => <Amount value={x.spent} /> },
-    { key: 'open', header: t('finance.budget.openCommitment'), cell: (x) => <Amount value={x.openCommitment} /> },
+    { key: 'committed', header: t('finance.budget.committed'), cell: (x) => <Amount value={x.committed} showUnits /> },
+    { key: 'spent', header: t('finance.budget.spent'), cell: (x) => <Amount value={x.spent} showUnits /> },
+    { key: 'open', header: t('finance.budget.openCommitment'), cell: (x) => <Amount value={x.openCommitment} showUnits /> },
     {
       key: 'asof',
       header: t('finance.budget.actualsAsOf'),
-      cell: (x) => (x.actualsAsOf ? <span className="tabular">{formatDate(x.actualsAsOf)}</span> : <span className="text-muted">{EM_DASH}</span>),
+      cell: (x) => (x.actualsAsOf ? <span className="tabular whitespace-nowrap">{formatDate(x.actualsAsOf)}</span> : <span className="text-muted">{EM_DASH}</span>),
     },
     {
       key: 'flags',
       header: t('finance.budget.flags'),
-      cell: (x) => <MessageList messages={x.flagsI18n} fallback={x.flags} tone={x.flagsI18n.some((m) => m.code !== 'finance.budget.no_approved_budget') ? 'danger' : 'neutral'} />,
+      cell: (x) => {
+        // "No approved budget" is already shown in the Approved column; the other flags are problems.
+        const idx = x.flagsI18n.map((m, i) => (m.code === 'finance.budget.no_approved_budget' ? -1 : i)).filter((i) => i >= 0);
+        return idx.length ? (
+          <span className="block min-w-56">
+            <MessageList messages={idx.map((i) => x.flagsI18n[i]!)} fallback={idx.map((i) => x.flags[i] ?? '')} tone="danger" testId="budget-row-flags" />
+          </span>
+        ) : (
+          <span className="text-muted">{EM_DASH}</span>
+        );
+      },
     },
   ];
   return (
