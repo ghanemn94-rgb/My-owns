@@ -1,0 +1,20 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-251",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified against the round-29 candidate sha256:84130c62... (source 1e4c0226) in a complete git clone --no-local (shallow=false). F-DG0-251 (Low, non-mandatory): a review_rounds[].source_commit (closure anchor 1, and the ref findManifest recomputes from) that was an annotated-TAG object id was accepted because commitPresent/isAncestor/manifestFromRef peel a tag. REPRODUCED, THEN SHOWN FIXED: QA29-R1 repeats my round-28 QA28-T7 construction exactly (the round-3 manifest and stages.json both name a tag peeling to the freeze, with a closure verified in that round) and runs both validators. The pre-D-045 rules.mjs (331407e9, git archive) ACCEPTS it with 0 errors, reproducing the bug. The candidate REJECTS it with exactly one error: 'review rounds: DG0 round 3 source_commit <sha> is a tag object, not a commit; a round's frozen source_commit must name the freeze commit itself'. The original round-28 file also flips: QA28-T7 now prints new=REJECTED(1) new-names-the-tag=true. A nested tag (QA29-N1) is accepted by the old validator and rejected by D-045 alone. Beyond the unit test, D-045 also closes non-commit objects in CLOSURE-FREE rounds, where no closure anchor applies. A tree-tag (N2), a bare tree (N3) and a blob (N4; the old validator's ^{commit} probe treated it as absent and tolerated it) were all accepted by the old validator and are rejected by the candidate with exactly the D-045 error. ABSENCE TOLERANCE KEPT: a genuinely absent 40-hex round source_commit with a content-preserving manifest produces no D-045 error and 0 errors (N5, the round-18 shape). The same absent round carrying a closure is still rejected by D-042 anchor 1. REAL REPOSITORY: a forged tag on round 27's source_commit in a disposable --no-local clone is rejected by D-045, and absent round 18 does not trip it. The census finds all 28 present round source_commits, 120/120 fix_revisions and 103 present run heads to be commit objects (round 18 and its 3 run heads are the known absent D-034/D-035 orphans). The full-history dry-run shows no 'object, not a commit' error. Unit tests 'D-045 / F-DG0-171 / F-DG0-251' and 'D-044 / F-DG0-251' pass (gate suite 66/66); the latter covers the previously untested checkInvocation head_commit_at_start tag branch. ANCHORS: fix 83721ced is a commit object, an ancestor of the round-29 frozen source_commit and gate candidate 1e4c0226 (anchors 1 and 3) and of this run's starting HEAD ffa3fae (anchor 2), and rules.mjs and validator.test.mjs are identical at 83721ced and 1e4c0226. I am the reporter (qa-verifier) and the owner is delivery-orchestrator, so this is not an author self-close.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-29/13-qa29-negative-suite.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r29.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-29/12-r28-suite-rerun.log",
+        "docs/delivery/test-evidence/DG0/qa/round-29/14-real-repo-round-tag-forge.log",
+        "docs/delivery/test-evidence/DG0/qa/round-29/21-fix-revision-anchors-nl.log",
+        "docs/delivery/test-evidence/DG0/qa/round-29/22-f251-closure-anchors.log",
+        "docs/delivery/test-evidence/DG0/qa/round-29/02-gates-selftests.log",
+        "docs/delivery/test-evidence/DG0/qa/round-29/08b-dry-run-classification.log"
+      ]
+    }
+  ]
+}
