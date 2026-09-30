@@ -184,6 +184,9 @@ export default function CommitteeDetailPage() {
         });
         await refresh();
         toast.show('success', t('governance.committee.meetings.propose.done', { created: r.created.length, skipped: r.skipped.length }));
+        // Dates on a weekend or holiday are kept (never moved) and pointed out for review before confirmation.
+        const offDays = r.created.filter((m) => m.nonWorkingDay).length;
+        if (offDays > 0) toast.show('info', t('governance.committee.meetings.propose.nonWorking', { count: offDays }));
         setCmd(null);
       },
       children: (
