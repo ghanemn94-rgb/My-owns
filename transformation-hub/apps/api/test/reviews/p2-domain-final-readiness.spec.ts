@@ -9,8 +9,9 @@ import { P, decisionOfType, drainWorker, plusDays, setupGovernance, setupProject
  * governance decision": one decision backs ONE record of each kind; a new consumer binds the decision to its record) and
  * fails at the reviewed revision. It is declared with `it.fails` (suite stays green while the defect is open; drop `.fails`
  * once fixed); `P2F_PROBE_PLAIN=1` runs it as a plain test to show the failure message. All data is synthetic.
+ * DOM-P2F-09 is fixed (decision-use registry kinds `tsa_service`, `tsa_extension`, `cutover_plan`, with the row lock and
+ * the external-evidence re-check): the probe is a plain regression test, its assertion unchanged.
  */
-const defect = process.env['P2F_PROBE_PLAIN'] ? it : it.fails;
 
 let projectId: string;
 let p: Personas;
@@ -52,7 +53,7 @@ async function negotiatedTsa(name: string): Promise<{ id: string; version: numbe
 }
 
 describe('P2 domain final review — shared decision-reliance mechanism in the readiness module (P3 scope)', () => {
-  defect('DEFECT DOM-P2F-09: one TSA-approval decision approves the terms of two different TSAs', async () => {
+  it('DOM-P2F-09: one TSA-approval decision does not approve the terms of two different TSAs (fixed, regression)', async () => {
     const d = (await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension')).id;
     const a = await negotiatedTsa('TSA A — NOC monitoring (synthetic)');
     const b = await negotiatedTsa('TSA B — facility management (synthetic)');

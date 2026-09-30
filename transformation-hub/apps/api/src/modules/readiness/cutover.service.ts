@@ -19,6 +19,7 @@ import {
   transition,
   CutoverCommand,
   CutoverStatus,
+  DecisionUseRecord,
   DomainError,
   GoEvaluation,
 } from '@hub/domain';
@@ -27,8 +28,24 @@ import { assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf,
 import { orderBySort } from '../../platform/sort';
 import type { RouteInput, readinessRoutes } from '@hub/contracts';
 import { newId } from '../../platform/ids';
-import { ReadinessSupport, iso } from './readiness.support';
+import { currentDecisionReliance, lockDecisionAndRecheck, registerDecisionUse, type RelianceRule } from '../governance/decision-reliance';
+import { ReadinessSupport, DecisionRow, iso } from './readiness.support';
 import { runDto, waiverEffectiveFor } from './checks.service';
+
+/**
+ * DOM-P2F-09 (docs/architecture/module-guide.md, "Relying on a governance decision"): the GO of a cutover plan CONSUMES its
+ * `day1_go_no_go` decision (kind `cutover_plan`): one decision authorizes the GO of ONE plan, and a plan that goes to GO
+ * again (after a rollback) needs a new decision. The evidence of an external approval is re-checked. Subject rule `if_set`
+ * (a paper cannot yet be raised for a cutover plan). A NO-GO relies on no decision.
+ */
+const goRule = (planId: string): RelianceRule => ({
+  use: { kind: 'cutover_plan', subjectType: 'cutover_plan', subjectId: planId },
+  subjectRule: 'if_set',
+  decisionTypeKeys: GO_DECISION_TYPE_KEYS,
+  codePrefix: 'readiness.go_no_go',
+});
+/** States before a GO: a use of the decision registered for this plan means an EARLIER GO of it. */
+const PRE_GO_STATUSES: readonly CutoverStatus[] = ['planning', 'rehearsal', 'ready_for_decision'];
 
 type PlanRow = typeof schema.cutoverPlan.$inferSelect;
 type CheckRow = typeof schema.readinessCheck.$inferSelect;
@@ -98,6 +115,21 @@ export class CutoverService {
     return { ...pageOf(rows.map(planDto), Number(total), q), people: await this.s.people(rows.flatMap((r) => [r.accountableUserId, r.submittedForDecisionBy])) };
   }
 
+  /**
+   * DOM-P2F-09: the reliance of this plan's GO on decision `d` as it is now — evidence of an external approval, a use for
+   * another plan (registry), a paper raised for another record, or a use for an EARLIER GO of this plan (before a new GO).
+   * `requireFinal: false` when the decision is only linked.
+   */
+  private async goReliance(projectId: string, plan: PlanRow, d: DecisionRow, requireFinal: boolean) {
+    const rule = goRule(plan.id);
+    const r = await currentDecisionReliance(this.s.db, projectId, d, { ...rule, requireFinal });
+    const earlierGo = PRE_GO_STATUSES.includes(plan.status) && r.uses.some((u) => u.kind === 'cutover_plan' && u.subjectId === plan.id);
+    const issue = earlierGo
+      ? { code: 'readiness.go_no_go.decision_already_used', reason: `Decision ${d.code} already authorized an earlier GO of this plan; a new GO needs a new decision`, params: { decisionId: d.id } as Record<string, unknown> }
+      : r.issue;
+    return { rule, uses: r.uses, issue };
+  }
+
   /** Checks gating the plan + the GO rule evaluated exactly as the go/no-go command evaluates it. */
   private async evaluation(projectId: string, plan: PlanRow): Promise<{ checks: CheckRow[]; effective: Map<string, boolean>; evaluation: GoEvaluation; prerequisites: ReturnType<typeof cutoverPrerequisitesOf> }> {
     const c = schema.readinessCheck;
@@ -109,7 +141,9 @@ export class CutoverService {
     const today = this.s.today(await this.s.project(projectId));
     const effective = new Map(checks.map((x) => [x.id, waiverEffectiveFor(x, x.waiverId ? wBy.get(x.waiverId) : null, today)]));
     const d = await this.s.decisionRow(projectId, plan.goDecisionId);
-    const approved = !!d && linkedDecisionIssue(this.s.linked(d), GO_DECISION_TYPE_KEYS, 'a go-live') === null;
+    // DOM-P2F-09: a final decision counts only while it backs no other plan (nor an earlier GO of this one) and its external
+    // approval is still evidenced.
+    const approved = !!d && linkedDecisionIssue(this.s.linked(d), GO_DECISION_TYPE_KEYS, 'a go-live') === null && (await this.goReliance(projectId, plan, d, true)).issue === null;
     const prerequisites = cutoverPrerequisitesOf(plan, approved);
     const evaluation = evaluateGo(
       checks.map((x) => ({ id: x.id, title: `${x.code} — ${x.title}`, mandatory: x.mandatory, blocker: x.blocker, status: x.status, waivable: x.waivable, hasApprovedWaiver: effective.get(x.id) === true })),
@@ -332,6 +366,10 @@ export class CutoverService {
     if (!['planning', 'rehearsal', 'ready_for_decision'].includes(plan.status)) throw ruleViolation('readiness.cutover.locked', `The go/no-go of this plan is already ${plan.status}`);
     const d = await this.s.decision(ctx, projectId, body.decisionId);
     assertDecisionLinkable(this.s.linked(d), GO_DECISION_TYPE_KEYS, 'A go-live');
+    // DOM-P2F-09: the decision may still be pending, but it must not back another plan (or an earlier GO of this one), nor
+    // rest on an external approval whose evidence is no longer active and verified.
+    const reliance = await this.goReliance(projectId, plan, d, false);
+    if (reliance.issue) throw ruleViolation(reliance.issue.code, reliance.issue.reason, reliance.issue.params);
     const row = (await updateVersioned(this.s.db, schema.cutoverPlan, { id: plan.id, projectId, expectedVersion: body.expectedVersion }, { goDecisionId: d.id })) as PlanRow;
     await this.s.audit.record({ action: 'readiness.cutover.link_decision', entityType: 'cutover_plan', entityId: plan.id, projectId, before: { goDecisionId: plan.goDecisionId }, after: { goDecisionId: d.id, decisionStatus: d.status } });
     return { id: plan.id, status: row.status, goNoGo: row.goNoGo, version: row.version };
@@ -386,8 +424,18 @@ export class CutoverService {
       plan = (await updateVersioned(this.s.db, schema.cutoverPlan, { id: plan.id, projectId, expectedVersion: plan.version }, { goDecisionId: d.id })) as PlanRow;
     }
     const ev = await this.evaluation(projectId, plan);
+    let goDecision: { d: DecisionRow; rule: RelianceRule; uses: DecisionUseRecord[] } | null = null;
     if (body.outcome === 'go') {
       try {
+        // DOM-P2F-09: a FINAL linked decision that no longer backs this GO (used for another plan or an earlier GO of this
+        // one, raised for another record, external approval no longer evidenced) is refused with its own code — before the
+        // generic prerequisite check, which would only report the decision as missing.
+        const d = await this.s.decisionRow(projectId, plan.goDecisionId);
+        if (d && linkedDecisionIssue(this.s.linked(d), GO_DECISION_TYPE_KEYS, 'a go-live') === null) {
+          const r = await this.goReliance(projectId, plan, d, true);
+          if (r.issue) throw ruleViolation(r.issue.code, r.issue.reason, r.issue.params);
+          goDecision = { d, rule: r.rule, uses: r.uses };
+        }
         assertGoAllowed(
           ev.checks.map((x) => ({ id: x.id, title: `${x.code} — ${x.title}`, mandatory: x.mandatory, blocker: x.blocker, status: x.status, waivable: x.waivable, hasApprovedWaiver: ev.effective.get(x.id) === true })),
           ev.prerequisites,
@@ -396,8 +444,10 @@ export class CutoverService {
         if (e instanceof DomainError) await this.recordRefusedGo(ctx, plan, body.rationale, ev.evaluation);
         throw e;
       }
+      // The GO consumes the decision: row lock and re-check (a concurrent GO of another plan on it first → 409).
+      if (goDecision) await lockDecisionAndRecheck(this.s.db, projectId, goDecision.d.id, goDecision.rule, goDecision.uses);
     }
-    return this.apply(
+    const res = await this.apply(
       ctx,
       plan,
       cmd,
@@ -405,6 +455,10 @@ export class CutoverService {
       { goNoGo: body.outcome, goNoGoDecidedBy: ctx.principal.userId, goNoGoDecidedAt: this.s.clock.now(), goNoGoRationale: body.rationale },
       { kind: body.outcome, rationale: body.rationale, evaluation: ev.evaluation, goDecisionId: plan.goDecisionId },
     );
+    if (goDecision) {
+      await registerDecisionUse(this.s.db, { orgId: ctx.principal.orgId, projectId, decisionId: goDecision.d.id, decisionCode: goDecision.d.code, kind: 'cutover_plan', subjectId: plan.id, usedBy: ctx.principal.userId, codePrefix: 'readiness.go_no_go' });
+    }
+    return res;
   }
 
   /** Autonomous transaction: the refused GO stays visible in the decision history and the audit log (AT-09). */

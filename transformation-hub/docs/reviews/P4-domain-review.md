@@ -502,3 +502,84 @@ Other checks:
 - To pass: fix the five High findings (turning DOM-P4-01/02/03/06/07 into plain regression tests), re-run the full API
   suite and the P4 Playwright specs, and request a domain re-review. The Medium findings should be fixed or explicitly
   re-phased by the lead with owner and impact before the P4 gate report.
+
+---
+
+## Fix status (implementation, 2026-09-30) — DOM-P4-01, -06, -07, -08 (part 2) and the part-1 findings
+
+Appended by the implementing `backend-data-engineer` (implementation mode, separate context; not the author of this review).
+The reviewer's text above is unchanged. No probe was weakened: the four remaining `DEFECT` probes (DOM-P4-01 and -08 in
+`p4-domain-jv.spec.ts`, DOM-P4-06 and -07 in `p4-domain-finance.spec.ts`) now pass as plain tests, renamed
+`… (fixed, regression)`, with their assertions and setup unchanged. No `it.fails` probe of this review remains.
+
+Part 1 of the fixes (DOM-P4-02/03/04/05/09/10/11/12/16, and the documentation of DOM-P4-13/14/15/17) was done earlier on
+the same line of work (`22978fc` and follow-ups, merged at `8f8d72b`). Part 2 builds on the shared "Relying on a governance
+decision" facility of the P2 fixes (`docs/architecture/module-guide.md`), commit `2e42c26` and its follow-ups.
+
+| Finding | Status | What changed (rule → where) |
+|---|---|---|
+| DOM-P4-01 (High) | Fixed | A closing CONSUMES its `jv_closing_confirmation` decision: decision-use registry kind `closing` (record type `closing`, already in `hub_target_table`). The request pre-checks the registry and refuses a decision already used for another closing (422 `jv.closing.decision_already_used`); the confirmation checks it again inside its audited try block (refusal logged `rejected`), then locks the decision row (`SELECT … FOR UPDATE`), re-checks, writes the closing and registers the use in the same transaction. A use registered meanwhile by a concurrent confirmation is **409** `jv.closing.decision_already_used`; the registry's unique index `decision_use_kind_uq` is the backstop (409). Subject rule `if_set` (conservative option available: a decision raised for another record never confirms a closing; `required` needs a paper that can name a closing — `DECISION_SUBJECT_TYPES`, the governance subject loader and paper form — open question for the governance owner). **Signing:** it relies on the decision that approved the current G5 cycle (DOM-P4-02) — part of that gate approval, whose use is the `gate_cycle` row — so it adds no registry row (non-consuming reliance: type + evidence re-checked). Web: the event detail shows why a linked decision no longer backs the event (`already_used`, `evidence_invalid`, `other_subject`), en + ar; translated refusals. `apps/api/src/modules/jv/transactions.service.ts`, `jv.support.ts`, `packages/domain/src/decision-reliance.ts`, `packages/contracts/src/jv.ts`. |
+| DOM-P4-06 (High) | Fixed | Approved valuation / ownership values consume their decision: kind `financial_model_version` (record type `financial_model_version`); one decision approves the values of ONE model version (422 `finance.model.decision_already_used`, 409 on a concurrent approval), subject rule `if_set` (same reason as closings). `apps/api/src/modules/finance/models.service.ts`. |
+| DOM-P4-07 (High) | Fixed | One budget decision backs ONE budget line: kind `budget_line` (422 `finance.budget.decision_already_used`, 409 on a concurrent approval), so the amounts recorded from one decision never exceed it in total. A decision that states no amount sets no limit and now backs no non-zero approval — fail closed (422 `finance.budget.decision_amount_missing`, the finance twin of `change_control.decision_amount_missing`; a zero amount needs none, as "no monetary impact" in change control). Currency AND unit scale must match (`finance.budget.decision_unit_mismatch` — stricter than change control, which normalizes unit scales: the AT-29 rule for booked amounts), the approved amount within it (`finance.budget.exceeds_decision`). Subject rule `none`: a budget decision is raised for the change request / baseline it approves; the line records that approval's amount. `packages/domain/src/finance.ts` (`assertBudgetApprovalWithinDecision`), `apps/api/src/modules/finance/budget.service.ts`. |
+| DOM-P4-08 (Medium) | Fixed | Every JV and finance place that relies on a decision re-checks the external approval's evidence (active, verified by a second person) through the shared helper: closing request and confirmation (`jv.closing.decision_evidence_invalid`), signing request and recording (`jv.signing.decision_evidence_invalid`), CP long-stop extension (`jv.cp.decision_evidence_invalid`), negotiation issue agree / close (`jv.negotiation.decision_evidence_invalid`), approved valuation values (`finance.model.…`), budget approval (`finance.budget.…`), figure / opening-balance approval (`finance.approval.decision_evidence_invalid`). Other `decisionId` consumers: the closing checklist item's `decisionId` is a reference only (no rule relies on it); CP waivers go through the waiver register, which takes no decision (authority = the designated role). **Reassessment (DOM-P2-05):** the gates job flags an approved gate cycle whose decision's evidence is rejected (DOM-P2R-04) — a flagged G5 then refuses a signing (`jv.signing.g5_under_reassessment`, tested). JV signings / closings (and negotiation issues) already recorded on such a decision are shown with `evidence_invalid` in their detail, computed on read — never modified. Finance records are NOT flagged: no status dimension or job covers them; the `decision_use` rows (and `approval_decision_id`) identify them for a generic reassessment job in governance (open, owner: governance with the JV and finance consumers). |
+| DOM-P4-02, -03, -04, -05, -09, -10, -11, -12, -16 | Fixed (part 1) | See `docs/requirements/status-evidence.yaml` and `apps/api/test/{jv,finance}/p4-domain-fixes*.spec.ts`; the probes DOM-P4-02/03/04/05 are regression tests. Re-run green in the verification below. |
+| DOM-P4-13, -14 | Documented, not changed | `docs/governance/business-gates.md` §8.1 (proposed rules, to be confirmed). A negotiation issue now re-checks the decision's external evidence (DOM-P4-08). |
+| DOM-P4-15 | Open (documented) | `business-gates.md` §8 rule 4. |
+| DOM-P4-17 | Fixed (documentation) | `business-gates.md` §8 rules 4–5 and the G7-C02 note; stale evidence wording refreshed. |
+
+Older single-use checks: the TSA extension's own check (`tsa.extension.decision_already_used`) is replaced by the registry
+(kind `tsa_extension`, same code), together with the TSA terms approval and the cutover GO — done with the P2 domain final
+review's DOM-P2F-09 on the same branch (see the "Fix status" of `docs/reviews/P2-domain-final-review.md`). The JV
+`jv.cp.extension_decision_already_used` check stays: a long-stop extension does not consume its decision (one resolution
+may extend several conditions), and the check keeps one decision from authorizing the current extension of the same
+condition again.
+
+Requirement statuses (`docs/requirements/status-evidence.yaml`, applied with `apply_status.py`): REQ-JV-017, REQ-JV-018,
+REQ-LCY-009, REQ-FIN-006 and REQ-FIN-003 move back to **Tested** with the regression and new tests as evidence. REQ-PHS-006
+stays Implemented (closes with the P4 gate report). P4: 38 Tested, 1 Implemented.
+
+### Verification (commands and real results)
+
+All commands from `transformation-hub/` in the implementation worktree, on this agent's own databases (`hub_test_p4r`,
+`hub_e2e_p4r`). Docker was not started; no process or database of another agent was touched; logs in the agent's scratch
+directory.
+
+```
+$ git merge origin/claude/mobily-transformation-hub          # 8f8d72b: already up to date
+$ git merge b2dc164                                           # local integration branch with the P2 domain final review
+                                                              # (origin was still at 88f1a88); clean merge, migration unchanged by this work
+$ HUB_DATABASES="hub_test_p4r hub_test_p4r_boot hub_e2e_p4r" bash scripts/dev/pg-init-roles.sh    # databases ready
+$ pnpm --filter @hub/domain test                              # Test Files 21 passed (21); Tests 424 passed (424)
+$ pnpm --filter @hub/contracts test                           # Test Files 2 passed (2);   Tests 100 passed (100)
+$ TEST_DATABASE_URL=…/hub_test_p4r TEST_DATABASE_MIGRATION_URL=…/hub_test_p4r pnpm --filter @hub/api test
+  run 1 — P4 part 2 only (before the P2 final review merge):  Test Files 94 passed (94); Tests 821 passed (821); exit 0
+  run 2 — final (after the merge and DOM-P2F-08/09):           Test Files 99 passed (99); Tests 843 passed | 4 expected fail (847); exit 0
+          # the 4 expected fails are the DOM-P2F-01/02/03/04 probes of p2-domain-final.spec.ts (P2 governance, not this
+          # assignment); no `it.fails` probe of this review remains
+$ pnpm lint                                                   # exit 0 (web: i18n + hard-coded strings; api: tsc + module
+                                                              # boundaries — 43 imports, 19 edges, acyclic)
+$ python3 scripts/requirements/apply_status.py --check        # status-evidence.yaml OK (263 entries)
+$ python3 scripts/requirements/apply_status.py                # applied 263; 394 requirements rendered; AT coverage 30/30
+```
+
+End-to-end, on a local stack started like the CI e2e job (migrate + `seed-demo` on `hub_e2e_p4r`; API `:4420` with
+`HUB_RATE_LIMIT_PUBLIC_PER_MINUTE=1000`; worker; `env -u NODE_ENV HUB_API_URL=http://127.0.0.1:4420 pnpm --filter @hub/web
+run build`; `next start -p 3420`; `HUB_WEB_URL=http://127.0.0.1:3420 PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`):
+
+```
+$ npx playwright test tests/a11y.spec.ts tests/p2-gates.spec.ts tests/p3-carveout.spec.ts tests/p3-readiness.spec.ts \
+    tests/p4-finance.spec.ts tests/p4-jv.spec.ts --reporter=list
+  266 passed, 1 failed (17.0m) — a11y 244, p2-gates 5, p3-carveout 4, p3-readiness 3, p4-finance 7 passed; p4-jv 3 passed,
+  AT-12 failed in its G5 fixture: POST …/gates/…/assessment/review → 409 db.serialization_failure. PostgreSQL log:
+  "deadlock detected" between two `update "gate_assessment" set "evaluation" …` (the gate review command and the worker
+  refreshing gate evaluations). The same deadlock is in the server log for another agent's e2e database at 19:51 UTC:
+  pre-existing gates behaviour, outside the code changed here (reported, not fixed).
+$ (database reset, migrated and re-seeded) npx playwright test tests/p4-jv.spec.ts --reporter=list
+  4 passed (1.0m) — AT-11, AT-12, AT-13, AT-03
+```
+
+The API, worker and web processes started for this run were stopped by PID (command line and working directory checked
+first); the tracked screenshots the run regenerated were restored (`git checkout -- e2e/screenshots`).
+
+NOT EXECUTED: the other Playwright specs (full suite), CI, and a domain re-review of these fixes (to be requested by the
+lead).

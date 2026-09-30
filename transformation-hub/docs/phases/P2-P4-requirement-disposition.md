@@ -245,14 +245,14 @@ are checked by `apply_status.py --check`.
 |---|---|---|---|---|---|---|
 | REQ-LCY-004 | G5–G7 transaction gate templates | Tested | validate:templates; jv jv-demo-seed | G5–G7 content vs spec §3 checked by the P4 domain review (§5: matches; G7-C02 "100-day" wording noted, DOM-P4-17) | Done | — |
 | REQ-LCY-008 | Partner preparation in parallel with separation | Tested | jv at-11-partner-parallel; D jv; gates gate-evaluation-rules | — | Done | — |
-| REQ-LCY-009 | Signing separate from Closing; multiple closings | Tested | jv at-11-partner-parallel; D jv | — | Done | — |
+| REQ-LCY-009 | Signing separate from Closing; multiple closings | Tested | jv at-11-partner-parallel; jv p4-domain-fixes (DOM-P4-02); jv p4-decision-reliance (DOM-P4-01); D jv | — | Done | — |
 | REQ-ENT-012 | Partner, advisor and Clean Team data separation | Tested | jv at-03-partner-room-isolation; documents clean-team-room; documents at-03-documents-isolation | — | Done | — |
 | REQ-FIN-001 | Baseline, forecast and actual financials | Tested | finance at-29-currency-unit-aggregation; D finance; finance finance-figures | Backend only; screen in progress | Done | — |
 | REQ-FIN-002 | Separation cost categories without double counting | Tested | finance finance-registers; D finance | — | Done | — |
-| REQ-FIN-003 | Committed versus spent | Tested | finance finance-registers; D finance | — | Done | — |
+| REQ-FIN-003 | Committed versus spent | Tested | finance finance-registers; finance p4-decision-reliance-finance (DOM-P4-07); D finance; D p4-decision-reliance | — | Done | — |
 | REQ-FIN-004 | Working capital, opening balances and intercompany reconciliation | Tested | finance finance-figures; D finance | — | Done | — |
 | REQ-FIN-005 | Versioned business plans and valuation cases | Tested | finance finance-registers; D finance | — | Done | — |
-| REQ-FIN-006 | Proposed versus approved valuation and ownership | Tested | finance finance-registers | — | Done | — |
+| REQ-FIN-006 | Proposed versus approved valuation and ownership | Tested | finance finance-registers; finance p4-decision-reliance-finance (DOM-P4-06/08) | — | Done | — |
 | REQ-FIN-007 | EV/equity and unit/currency confusion checks | Tested | finance at-29-currency-unit-aggregation; D finance; D rules | — | Done | — |
 | REQ-FIN-008 | Import financial model outputs linked to sources | Tested | finance finance-figures | — | Done | — |
 | REQ-FIN-009 | Benefits Register | Tested | finance finance-registers; D finance | — | Done | — |
@@ -273,8 +273,8 @@ are checked by `apply_status.py --check`.
 | REQ-JV-014 | Closing deliverables, decisions and executed documents | Tested | jv jv-closing-rules | — | Done | — |
 | REQ-JV-015 | Track financial flows without executing payments | Tested | jv jv-closing-rules; D jv | — | Done | — |
 | REQ-JV-016 | Conditions subsequent and post-close obligations | Tested | jv jv-closing-rules; D jv | — | Done | — |
-| REQ-JV-017 | Task completion does not close the transaction | Tested | jv at-12-closing-blocked-cp | — | Done | — |
-| REQ-JV-018 | Missing mandatory CP blocks closing | Tested | jv at-12-closing-blocked-cp; jv at-13-cp-non-waivable; D jv | — | Done | — |
+| REQ-JV-017 | Task completion does not close the transaction | Tested | jv at-12-closing-blocked-cp; jv p4-decision-reliance (DOM-P4-01/08) | — | Done | — |
+| REQ-JV-018 | Missing mandatory CP blocks closing | Tested | jv at-12-closing-blocked-cp; jv at-13-cp-non-waivable; jv p4-domain-fixes (DOM-P4-03/04); jv p4-decision-reliance (DOM-P4-01/08); D jv | — | Done | — |
 | REQ-JV-019 | Program closure follows its own handover criteria | Tested | jv jv-closing-rules; D jv | — | Done | — |
 | REQ-UX-013 | Screen 10: Finance & Value | Planned | backend: finance (5 files); screen placeholder | Finance & Value screen is a placeholder (in progress); backend Tested | P4 web in progress | ux-frontend-engineer |
 | REQ-UX-014 | Screen 11: JV & Diligence | Planned | backend: jv (8 files); screen placeholder | JV & Diligence screen is a placeholder (in progress); backend Tested | P4 web in progress | ux-frontend-engineer |
@@ -382,7 +382,7 @@ are checked by `apply_status.py --check`.
 | AT-09 failed readiness blocks go-live | RDY-001, RDY-004, UX-012, PHS-005 | Tested | `readiness at-09-readiness-go-no-go.spec.ts`, `readiness readiness-demo-seed.spec.ts`, D `readiness.test.ts`; e2e `p3-readiness.spec.ts` AT-09 |
 | AT-10 TSA end date is not an exit | TSA-003, TSA-004, TSA-005, TSA-006, UX-012, SET-004 | Tested; demo TSA issue scenario added (DOM-P4-09) | `readiness at-10-tsa-expiry.spec.ts`, `readiness readiness-demo-seed.spec.ts` (demo TSA issue), D `readiness.test.ts`; e2e `p3-readiness.spec.ts` AT-10 and demo TSA issue |
 | AT-11 partner work in parallel; signing ≠ closing | LCY-008, LCY-009, JV-003, JV-012, UX-014 | Tested (API + screen); signing after G5 fixed (DOM-P4-02) | `jv at-11-partner-parallel.spec.ts`, `jv p4-domain-fixes.spec.ts` (DOM-P4-02), `gates gate-evaluation-rules.spec.ts` (G5 needs only G1), D `jv.test.ts`; e2e `p4-jv.spec.ts` AT-11 |
-| AT-12 missing CP blocks closing | LCY-011, PLN-018, JV-013, JV-017, JV-018, JV-019, UX-014, SET-004 | Tested (API + screen); DOM-P4-01/08 open | `jv at-12-closing-blocked-cp.spec.ts`, `jv p4-domain-fixes.spec.ts` (DOM-P4-03/04), `gates at-12-gate-side.spec.ts`, `planning measurement.spec.ts`, D `jv.test.ts`, D `rules.test.ts`; e2e `p4-jv.spec.ts` AT-12 |
+| AT-12 missing CP blocks closing | LCY-011, PLN-018, JV-013, JV-017, JV-018, JV-019, UX-014, SET-004 | Tested (API + screen); decision reuse and external evidence fixed (DOM-P4-01/08) | `jv at-12-closing-blocked-cp.spec.ts`, `jv p4-domain-fixes.spec.ts` (DOM-P4-03/04), `jv p4-decision-reliance.spec.ts` (DOM-P4-01/08), `gates at-12-gate-side.spec.ts`, `planning measurement.spec.ts`, D `jv.test.ts`, D `rules.test.ts`; e2e `p4-jv.spec.ts` AT-12 |
 | AT-13 non-waivable condition | LCY-012, LCY-013, JV-013, JV-018 | Tested | `gates at-13-non-waivable.spec.ts`, `jv at-13-cp-non-waivable.spec.ts`, `readiness readiness-waiver-n02.spec.ts`, D `rules.test.ts` |
 | AT-14 conflicting / defective evidence | LCY-015, DAT-014 | Tested | `gates at-14-reassessment.spec.ts`, `gates p2-gate-authority-reassessment.spec.ts` (DOM-P2-05), `documents at-14-conflicting-evidence.spec.ts`, `documents at-01-claim-verification.spec.ts` (DOM-P2-19) |
 | AT-15 predecessor delay impact | PLN-008, PLN-009, PLN-023, PLN-024, UX-008 | Tested (AI-schema part of PLN-023 → P5) | `planning at-15-delay-impact.spec.ts`, `planning schedule-rules.spec.ts`, D `schedule.test.ts` |

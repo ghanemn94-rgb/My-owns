@@ -150,10 +150,32 @@ export function decisionEvidenceReassessment(d: {
  * (docs/architecture/module-guide.md, "Relying on a governance decision"). One decision therefore backs ONE record of each
  * kind (a G1 decision may back the G1 gate cycle AND one perimeter version, never two perimeter versions).
  *
- * A module that relies on decisions adds its kind here with the record type it backs (e.g. a JV closing confirmation, a
- * valuation approval, a budget-line approval); `hub_target_table()` in post-migrate.sql must list that record type.
+ * A module that relies on decisions adds its kind here with the record type it backs; `hub_target_table()` in
+ * post-migrate.sql must list that record type. P4 (DOM-P4-01/06/07): a JV closing confirmation (`closing`), the approved
+ * values of a valuation model version (`financial_model_version`) and a budget-line approval (`budget_line`).
+ *
+ * A JV SIGNING is not a kind of its own: it is recorded on the decision that approved the current G5 cycle (DOM-P4-02) —
+ * the signing is part of that gate approval, whose use is the `gate_cycle` row — so the signing relies on the decision
+ * without consuming it again (final + evidence re-checked, no registry row).
+ *
+ * P3 readiness (DOM-P2F-09): the terms approval of a TSA (`tsa_service`), each recorded TSA extension (`tsa_extension`,
+ * record type `tsa_service`: one decision authorizes one extension of one TSA — a TSA extended again needs a new decision)
+ * and the GO of a cutover plan (`cutover_plan`: one Day-1 go/no-go decision authorizes the GO of one plan). The terms
+ * approval and an extension of the same TSA are different kinds: one `tsa_approval_or_extension` decision may approve the
+ * terms of a TSA and one extension (of that TSA or another).
  */
-export const DECISION_USE_KINDS = ['change_request', 'baseline_version', 'perimeter_version', 'gate_cycle'] as const;
+export const DECISION_USE_KINDS = [
+  'change_request',
+  'baseline_version',
+  'perimeter_version',
+  'gate_cycle',
+  'closing',
+  'financial_model_version',
+  'budget_line',
+  'tsa_service',
+  'tsa_extension',
+  'cutover_plan',
+] as const;
 export type DecisionUseKind = (typeof DECISION_USE_KINDS)[number];
 
 /** Record type backed by each kind of use (the `subject_type` of its `decision_use` rows). */
@@ -162,6 +184,12 @@ export const DECISION_USE_SUBJECT_TYPE: Readonly<Record<DecisionUseKind, string>
   baseline_version: 'baseline_version',
   perimeter_version: 'perimeter_version',
   gate_cycle: 'gate_assessment',
+  closing: 'closing',
+  financial_model_version: 'financial_model_version',
+  budget_line: 'budget_line',
+  tsa_service: 'tsa_service',
+  tsa_extension: 'tsa_service',
+  cutover_plan: 'cutover_plan',
 };
 
 /** A registered use of a decision (a `decision_use` row). */
@@ -208,11 +236,13 @@ export interface RelianceDecision {
 
 /**
  * How a caller binds decisions to its records (DOM-P2R-03):
- *  - `required`: the decision must have been raised for this very record (change requests, baselines; the default for new
- *    consumers such as JV closings, valuations or budget lines);
- *  - `if_set`: a decision raised for a specific record backs only that record; one raised for none is accepted (perimeter
- *    versions, whose G1 papers are bound by gate key);
- *  - `none`: the binding is checked by the caller (gate papers: by gate key).
+ *  - `required`: the decision must have been raised for this very record (change requests, baselines, perimeter versions
+ *    since DOM-P2F-08 — the default for a consumer whose record type a decision paper can name, `DECISION_SUBJECT_TYPES`);
+ *  - `if_set`: a decision raised for a specific record backs only that record; one raised for none is accepted (JV
+ *    closings, valuation model versions, TSAs and cutover plans — a paper cannot name them yet, see
+ *    docs/architecture/module-guide.md "Relying on a governance decision");
+ *  - `none`: the binding is checked by the caller (gate papers and JV signings: by gate key; budget lines: the decision is
+ *    raised for the change request / baseline it approves and the line records the amount of that approval).
  */
 export type DecisionSubjectRule = 'required' | 'if_set' | 'none';
 
@@ -227,6 +257,12 @@ export interface DecisionRelianceInput {
   decisionTypeKeys?: readonly string[];
   /** Code family of the calling module: `${codePrefix}.decision_not_final` etc. (e.g. `change_control`, `perimeter.version`, `jv.closing`). */
   codePrefix: string;
+  /**
+   * `false` when a decision is LINKED before it is final (e.g. a JV confirmation request names the decision that the
+   * confirmer will rely on): the finality checks are skipped — the evidence of an external approval, once recorded, the
+   * type, the registered uses and the subject are still checked. Default `true` (the decision is relied upon now).
+   */
+  requireFinal?: boolean;
 }
 
 export type DecisionRelianceIssueKind = 'not_final' | 'evidence_invalid' | 'type_mismatch' | 'no_subject' | 'other_subject' | 'already_used';
@@ -254,14 +290,16 @@ export function decisionRelianceIssue(input: DecisionRelianceInput): DecisionRel
     reason,
     params: { decisionId: d.id, ...params },
   });
-  if (!FINAL_STATES.includes(d.status)) {
-    return issue('not_final', `Decision ${d.code} is ${d.status}: only a final approval (within the committee mandate, or recorded from the external authority) can back this record`, { decisionStatus: d.status });
-  }
-  if (d.authorityOutcome === 'pending_external_authority' && !d.externalAuthorityReference?.trim()) {
-    return issue('not_final', `Decision ${d.code} is a recommendation without a recorded external approval`, { decisionStatus: d.status });
-  }
-  if (d.authorityOutcome !== 'within_mandate' && d.authorityOutcome !== 'pending_external_authority') {
-    return issue('not_final', `Decision ${d.code} carries no approving authority (${d.authorityOutcome})`, { decisionStatus: d.status });
+  if (input.requireFinal !== false) {
+    if (!FINAL_STATES.includes(d.status)) {
+      return issue('not_final', `Decision ${d.code} is ${d.status}: only a final approval (within the committee mandate, or recorded from the external authority) can back this record`, { decisionStatus: d.status });
+    }
+    if (d.authorityOutcome === 'pending_external_authority' && !d.externalAuthorityReference?.trim()) {
+      return issue('not_final', `Decision ${d.code} is a recommendation without a recorded external approval`, { decisionStatus: d.status });
+    }
+    if (d.authorityOutcome !== 'within_mandate' && d.authorityOutcome !== 'pending_external_authority') {
+      return issue('not_final', `Decision ${d.code} carries no approving authority (${d.authorityOutcome})`, { decisionStatus: d.status });
+    }
   }
   const ev = externalApprovalEvidenceIssue(d);
   if (ev) {

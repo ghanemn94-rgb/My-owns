@@ -33,6 +33,7 @@ import type { RequestContext } from '../../platform/context';
 import { assertVersion, likeContains, loadInProject, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
 import { orderBySort } from '../../platform/sort';
 import { newId, payloadHash } from '../../platform/ids';
+import { assertCurrentDecisionReliance } from '../governance/decision-reliance';
 import { FinanceSupport, ProjectRow, iso, money } from './finance.support';
 import { ReconciliationsService } from './reconciliations.service';
 
@@ -467,6 +468,10 @@ export class SnapshotsService {
     if (d) {
       const issue = this.s.decisionIssue(d, allowed, `the approval of ${describe(r)}`);
       if (issue.issue) throw ruleViolation('finance.approval.decision_not_final', issue.issue, { decisionId: d.id, issueCode: issue.code });
+      // DOM-P4-08: an external approval counts only while its evidence is an active link verified by a second person
+      // (422 finance.approval.decision_evidence_invalid). The approval relies on the decision without consuming it (no
+      // registry kind for figures yet — docs/architecture/module-guide.md, "Relying on a governance decision").
+      await assertCurrentDecisionReliance(this.s.db, projectId, d, { use: { kind: null, subjectType: 'financial_snapshot', subjectId: r.id }, subjectRule: 'none', decisionTypeKeys: allowed, codePrefix: 'finance.approval' });
     }
     const withinAuthority = d ? true : this.s.policy.permissionReach(ctx, 'finance.snapshot.approve', projectId).all;
     this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: r.classification, workstreamId: r.workstreamId, requesterUserId: r.preparedBy, withinAuthority });

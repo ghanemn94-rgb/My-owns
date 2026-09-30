@@ -53,7 +53,8 @@ decision type (from the authority matrix) and required approving authorities; ev
   (`authority-matrix.md` §3 rules 12–13) **[server]**.
 - *Reliance on a decision:* every approval that rests on a decision re-checks it at that moment — final, external-approval
   evidence still active and verified, raised for the record — and records the use in the decision-use registry: one
-  decision backs one record of each kind (change request, baseline version, perimeter version, gate cycle)
+  decision backs one record of each kind (change request, baseline version, perimeter version, gate cycle; since P4 also a
+  JV closing, a valuation model version's approved values and a budget line's approved budget)
   (`docs/architecture/module-guide.md` "Relying on a governance decision") **[server]**.
 
 ## 3. Decision states (حالات القرار)

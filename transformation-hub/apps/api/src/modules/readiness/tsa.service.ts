@@ -37,7 +37,28 @@ import { orderBySort } from '../../platform/sort';
 import type { RouteInput, readinessRoutes } from '@hub/contracts';
 import { newId, payloadHash } from '../../platform/ids';
 import { nextCronRun } from '../../platform/jobs/worker.service';
-import { ReadinessSupport, ProjectRow, iso } from './readiness.support';
+import { currentDecisionReliance, lockDecisionAndRecheck, registerDecisionUse, type RelianceRule } from '../governance/decision-reliance';
+import { ReadinessSupport, DecisionRow, ProjectRow, iso } from './readiness.support';
+
+/**
+ * DOM-P2F-09 (docs/architecture/module-guide.md, "Relying on a governance decision"): the TSA terms approval and each
+ * recorded TSA extension CONSUME their `tsa_approval_or_extension` decision (kinds `tsa_service` / `tsa_extension`): one
+ * decision approves the terms of ONE TSA and authorizes ONE extension; the evidence of an external approval is re-checked.
+ * Subject rule `if_set`: a paper cannot yet be raised for a TSA (governance `DECISION_SUBJECT_TYPES`), so one raised for no
+ * record is accepted and bound by the registry; one raised for another record never backs a TSA.
+ */
+const tsaApprovalRule = (tsaId: string): RelianceRule => ({
+  use: { kind: 'tsa_service', subjectType: 'tsa_service', subjectId: tsaId },
+  subjectRule: 'if_set',
+  decisionTypeKeys: TSA_DECISION_TYPE_KEYS,
+  codePrefix: 'tsa.approve',
+});
+const tsaExtensionRule = (tsaId: string): RelianceRule => ({
+  use: { kind: 'tsa_extension', subjectType: 'tsa_service', subjectId: tsaId },
+  subjectRule: 'if_set',
+  decisionTypeKeys: TSA_DECISION_TYPE_KEYS,
+  codePrefix: 'tsa.extension',
+});
 
 type TsaRow = typeof schema.tsaService.$inferSelect;
 type Money = { amount: string; currency: string; unitScale: 1 | 1000 | 1000000 };
@@ -326,7 +347,12 @@ export class TsaService {
     return { id: t.id, status: row.status, version: row.version };
   }
 
-  /** Terms approval: a FINAL governance decision of type tsa_approval_or_extension + a complete record (REQ-TSA-001). */
+  /**
+   * Terms approval: a FINAL governance decision of type tsa_approval_or_extension + a complete record (REQ-TSA-001).
+   * DOM-P2F-09: the decision approves the terms of this TSA only (422 `tsa.approve.decision_already_used` when it approved
+   * another TSA; the decision row is locked and re-checked before the write — a concurrent approval on the same decision is
+   * 409), and an external approval counts only while its evidence is active and verified (`tsa.approve.decision_evidence_invalid`).
+   */
   async approveTerms(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; decisionId: string; note?: string }) {
     const t = await loadInProject(this.s.db, schema.tsaService, projectId, id);
     this.assertManage(ctx, projectId, t);
@@ -335,8 +361,28 @@ export class TsaService {
     const issue = linkedDecisionIssue(this.s.linked(d), TSA_DECISION_TYPE_KEYS, 'a TSA approval');
     if (issue) throw ruleViolation('tsa.approve.decision_not_final', issue, { decisionId: d.id, decisionStatus: d.status, authorityOutcome: d.authorityOutcome });
     assertTsaApprovable(t);
+    const rule = tsaApprovalRule(t.id);
+    const reliance = await currentDecisionReliance(this.s.db, projectId, d, rule);
+    if (reliance.issue) throw ruleViolation(reliance.issue.code, reliance.issue.reason, reliance.issue.params);
+    await lockDecisionAndRecheck(this.s.db, projectId, d.id, rule, reliance.uses);
     const row = await this.applyStatus(ctx, t, 'approve', body.expectedVersion, { approvalDecisionId: d.id }, body.note ?? null, { decisionId: d.id, decisionCode: d.code });
+    await registerDecisionUse(this.s.db, { orgId: ctx.principal.orgId, projectId, decisionId: d.id, decisionCode: d.code, kind: 'tsa_service', subjectId: t.id, usedBy: ctx.principal.userId, codePrefix: 'tsa.approve' });
     return { id: t.id, status: row.status, version: row.version };
+  }
+
+  /**
+   * DOM-P2F-09: the reliance of a TSA extension on its decision (linked at the request — possibly not final yet — and relied
+   * upon when the extension is recorded). Replaces the former single-use check: a decision that already authorized an
+   * extension of THIS TSA (or of another one) never authorizes a further extension (422 `tsa.extension.decision_already_used`).
+   */
+  private async extensionReliance(projectId: string, tsaId: string, d: DecisionRow, requireFinal: boolean) {
+    const rule = tsaExtensionRule(tsaId);
+    const r = await currentDecisionReliance(this.s.db, projectId, d, { ...rule, requireFinal });
+    if (r.uses.some((u) => u.kind === 'tsa_extension' && u.subjectId === tsaId)) {
+      throw ruleViolation('tsa.extension.decision_already_used', `Decision ${d.code} already authorized an extension of this TSA; a further extension needs a new decision`, { decisionId: d.id });
+    }
+    if (r.issue) throw ruleViolation(r.issue.code, r.issue.reason, r.issue.params);
+    return { rule, uses: r.uses };
   }
 
   /** Replacement acceptance on the basis of acceptance evidence linked (documents module) to the TSA service. */
@@ -403,9 +449,8 @@ export class TsaService {
     const d = await this.s.decision(ctx, projectId, body.decisionId);
     assertDecisionLinkable(this.s.linked(d), TSA_DECISION_TYPE_KEYS, 'A TSA extension');
     assertExtensionRequestValid({ status: t.status, currentEndDate: t.endDate, proposedEndDate: body.proposedEndDate, continuityPlan: body.continuityPlan });
-    if (t.extensionDecisionId === d.id && t.status === 'extended' && !t.proposedEndDate) {
-      throw ruleViolation('tsa.extension.decision_already_used', 'This decision already authorized the current extension; a further extension needs a new decision');
-    }
+    // DOM-P2F-09: the decision-use registry (and the external evidence) decide — the decision may still be pending here.
+    await this.extensionReliance(projectId, t.id, d, false);
     const row = (await updateVersioned(this.s.db, schema.tsaService, { id: t.id, projectId, expectedVersion: body.expectedVersion }, {
       extensionDecisionId: d.id,
       proposedEndDate: body.proposedEndDate,
@@ -433,6 +478,10 @@ export class TsaService {
       }
       throw e;
     }
+    // DOM-P2F-09: the FINAL decision (checked above) authorizes this one extension — evidence re-checked, registry pre-check,
+    // then the row lock and the re-check (a concurrent extension on the same decision is 409), the write and the use.
+    const { rule, uses } = await this.extensionReliance(projectId, t.id, d!, true);
+    await lockDecisionAndRecheck(this.s.db, projectId, d!.id, rule, uses);
     const row = await this.applyStatus(
       ctx,
       t,
@@ -442,6 +491,7 @@ export class TsaService {
       body.note ?? null,
       { previousEndDate: t.endDate, endDate: t.proposedEndDate, decisionId: t.extensionDecisionId },
     );
+    await registerDecisionUse(this.s.db, { orgId: ctx.principal.orgId, projectId, decisionId: d!.id, decisionCode: d!.code, kind: 'tsa_extension', subjectId: t.id, usedBy: ctx.principal.userId, codePrefix: 'tsa.extension' });
     return { id: t.id, status: row.status, version: row.version };
   }
 

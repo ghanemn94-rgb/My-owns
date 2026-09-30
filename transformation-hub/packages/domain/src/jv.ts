@@ -73,6 +73,18 @@ export const SIGNING_DECISION_TYPE_KEYS: readonly string[] = ['jv_signing_author
 export const CLOSING_DECISION_TYPE_KEYS: readonly string[] = ['jv_closing_confirmation'];
 export const OUTREACH_DECISION_TYPE_KEYS: readonly string[] = ['partner_outreach_and_access'];
 
+/**
+ * Why a decision linked to a JV record does not (or no longer) back it, as shown next to the record (the web translates the
+ * code): the linked-decision codes (missing, wrong type, recommended, not approved, …) plus the reliance checks of the
+ * decision-use registry (DOM-P4-01) and of the external-approval evidence (DOM-P4-08):
+ *  - `evidence_invalid`: the evidence of the external approval is no longer an active, verified link (rejected as
+ *    defective, superseded, conflicting) — shown on a confirmed signing / closing too (controlled reassessment needed);
+ *  - `already_used`: the decision already backs another closing (one decision confirms one closing);
+ *  - `other_subject`: the decision was raised for another record.
+ */
+export const JV_DECISION_ISSUE_CODES = ['missing', 'wrong_type', 'recommended', 'not_approved', 'external_approval_missing', 'authority_unassessed', 'evidence_invalid', 'already_used', 'other_subject'] as const;
+export type JvDecisionIssueCode = (typeof JV_DECISION_ISSUE_CODES)[number];
+
 type FindingStatus = (typeof FINDING_STATUSES)[number];
 type NegotiationIssueStatus = (typeof NEGOTIATION_ISSUE_STATUSES)[number];
 type PostCloseStatus = (typeof POST_CLOSE_STATUSES)[number];

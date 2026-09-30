@@ -19,6 +19,7 @@ import type { RequestContext } from '../../platform/context';
 import { assertVersion, likeContains, loadInProject, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
 import { orderBySort } from '../../platform/sort';
 import { newId } from '../../platform/ids';
+import { assertCurrentDecisionReliance, type RelianceRule } from '../governance/decision-reliance';
 import { JvSupport, money } from './jv.support';
 
 type ScenarioRow = typeof schema.dealScenario.$inferSelect;
@@ -215,6 +216,16 @@ export class DealsService {
     return r;
   }
 
+  /**
+   * An issue that requires approval relies on its linked decision when it is agreed / closed (REQ-JV-008): FINAL (domain
+   * rule) and — DOM-P4-08 — the evidence of an external approval still an active link verified by a second person. The
+   * decision is not consumed: the specification and the authority matrix do not say that one decision may not approve the
+   * positions of several issues (business-gates.md §8.1, DOM-P4-13 — to be confirmed).
+   */
+  private issueReliance(r: IssueRow): RelianceRule {
+    return { use: { kind: null, subjectType: 'negotiation_issue', subjectId: r.id }, subjectRule: 'none', codePrefix: 'jv.negotiation' };
+  }
+
   private async issueDto(ctx: RequestContext, r: IssueRow) {
     const d = await this.s.decisionRow(r.projectId, r.decisionId);
     return {
@@ -228,7 +239,7 @@ export class DealsService {
       requiredApproval: r.requiredApproval,
       requiresApproval: r.requiresApproval,
       decisionId: r.decisionId,
-      decision: this.s.decisionSummary(ctx, r.projectId, d, null, `the approval of negotiation issue ${r.code}`),
+      decision: await this.s.relianceSummary(ctx, r.projectId, d, null, `the approval of negotiation issue ${r.code}`, r.requiresApproval ? this.issueReliance(r) : null),
       documentId: r.documentId,
       documentRef: r.documentRef,
       resolution: r.resolution,
@@ -329,7 +340,10 @@ export class DealsService {
     const r = await this.loadIssue(ctx, projectId, id, 'jv.negotiation.manage');
     const cmd = body.command as NegotiationCommand;
     if (cmd === 'agree' || cmd === 'close') {
-      assertNegotiationAgreementAllowed({ requiresApproval: r.requiresApproval, decision: this.s.decisionState(await this.s.decisionRow(projectId, r.decisionId)) });
+      const d = await this.s.decisionRow(projectId, r.decisionId);
+      assertNegotiationAgreementAllowed({ requiresApproval: r.requiresApproval, decision: this.s.decisionState(d) });
+      // DOM-P4-08: the external approval behind the decision is still evidenced (422 jv.negotiation.decision_evidence_invalid).
+      if (r.requiresApproval && d) await assertCurrentDecisionReliance(this.s.db, projectId, d, this.issueReliance(r));
     }
     const to = transition('negotiation_issue', NEGOTIATION_ISSUE_MACHINE, r.status, cmd);
     const row = (await updateVersioned(this.s.db, schema.negotiationIssue, { id, projectId, expectedVersion: body.expectedVersion }, { status: to })) as IssueRow;

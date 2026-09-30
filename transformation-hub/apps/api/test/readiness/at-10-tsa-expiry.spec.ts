@@ -222,7 +222,9 @@ describe('AT-10 — TSA end date is never an exit; escalation, approved extensio
     const created = await p.pm.post(`${P(projectId)}/tsa-services`, { name: 'Billing platform service (synthetic)', startDate: plusDays(-10), endDate: plusDays(100), ownerUserId: p.approver.userId, scope: 'Billing runs (synthetic)', replacementService: 'NewCo billing (synthetic)', exitMilestones: [{ title: 'Billing parallel run (synthetic)' }] });
     let v = created.body.version;
     for (const c of ['start_negotiation']) v = (await cmd(p.pm, created.body.id, 'transition', { expectedVersion: v, command: c })).body.version;
-    v = (await cmd(p.pm, created.body.id, 'approve', { expectedVersion: v, decisionId: tsaDecisionId })).body.version;
+    // DOM-P2F-09: one decision approves the terms of one TSA — this TSA has its own (the first one's is already used).
+    const ownDecision = (await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension')).id;
+    v = (await cmd(p.pm, created.body.id, 'approve', { expectedVersion: v, decisionId: ownDecision })).body.version;
     v = (await cmd(p.pm, created.body.id, 'transition', { expectedVersion: v, command: 'activate' })).body.version;
     const f = await cmd(p.pm, created.body.id, 'report-replacement-failure', { expectedVersion: v, failureSummary: 'Billing replacement not ready (synthetic)', continuityPlan: 'Continue under the TSA; decision requested (synthetic)', decisionDeadline: plusDays(14) });
     expect(f.status, JSON.stringify(f.body)).toBe(201);

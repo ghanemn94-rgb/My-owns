@@ -108,12 +108,53 @@ human principal at execution time and returns `null` when access was revoked (AT
      decision is already consumed (a gate REJECTION citing a decision).
   Use kinds registered today (`DECISION_USE_KINDS` → record type): `change_request` → change_request (change-request
   approval), `baseline_version` → baseline_version (baseline approval), `perimeter_version` → perimeter_version (perimeter
-  version approval, G1 decision), `gate_cycle` → gate_assessment (gate cycle decision — approve or reject; O-1). A new
+  version approval, G1 decision), `gate_cycle` → gate_assessment (gate cycle decision — approve or reject; O-1),
+  `closing` → closing (JV closing confirmation, DOM-P4-01), `financial_model_version` → financial_model_version (approved
+  valuation / ownership values, DOM-P4-06), `budget_line` → budget_line (approved budget of a line, DOM-P4-07),
+  `tsa_service` → tsa_service (TSA terms approval), `tsa_extension` → tsa_service (each recorded TSA extension),
+  `cutover_plan` → cutover_plan (the GO of a cutover plan) — the readiness consumers of DOM-P2F-09. A new
   consumer adds its kind and record type to `DECISION_USE_KINDS` / `DECISION_USE_SUBJECT_TYPE` (the record type must be in
   `hub_target_table()`); a paper raised FOR such a record also needs the type in `DECISION_SUBJECT_TYPES` and its open
   states in `DECISION_SUBJECT_OPEN_STATES`. A reliance that does NOT consume the decision (prerequisite satisfaction) calls
   the domain check with `use.kind = null` (final + evidence only). The per-table partial unique indexes
   (`change_request_decision_uq`, `baseline_version_decision_uq`, `perimeter_version_decision_uq`) remain as backstops.
+
+  **P3 / P4 consumers (readiness, JV, finance) use three helpers of the same file**, so every reliance runs the same check:
+  `currentDecisionReliance` / `assertCurrentDecisionReliance(db, projectId, decisionRow, rule)` — the check on the
+  decision as it is NOW (current external evidence, registered uses), without a lock: the pre-check of a consuming command
+  (422 `<prefix>.decision_already_used` for a sequential reuse), a reliance that does not consume the decision, and the
+  state shown next to a record; `lockDecisionAndRecheck(db, projectId, decisionId, rule, usesBefore)` — for a consuming
+  command, just before its write: the row lock, then the same check again; a use of the same kind for another record that
+  was not among the uses read by the pre-check was registered meanwhile by a CONCURRENT command → **409**
+  `<prefix>.decision_already_used` (any other issue → 422); then the write and `registerDecisionUse`. `requireFinal: false`
+  in the rule links a decision before it is final (a JV confirmation request): evidence, type, uses and subject are checked,
+  finality at the confirmation.
+
+  | Reliance | Kind | Subject rule | Code prefix |
+  |---|---|---|---|
+  | JV closing confirmation (request, confirm) | `closing` | `if_set` | `jv.closing` |
+  | JV signing (request, record) — on the decision that approved the current G5 cycle (DOM-P4-02) | none: the signing is part of that G5 approval, whose use is the `gate_cycle` row — no second row | `none` (bound by gate) | `jv.signing` |
+  | CP long-stop extension | none (one decision may extend several conditions; never the current extension of the same one again) | `none` | `jv.cp` |
+  | Negotiation issue agree / close | none (business-gates.md §8.1, DOM-P4-13) | `none` | `jv.negotiation` |
+  | Approved valuation / ownership values of a model version | `financial_model_version` | `if_set` | `finance.model` |
+  | Approved budget of a line (+ its stated amount, fail closed: `finance.budget.decision_amount_missing`) | `budget_line` | `none` (a budget decision is raised for the change request / baseline it approves; the line records that approval's amount) | `finance.budget` |
+  | Figure / opening-balance approval | none (no kind for figures yet) | `none` | `finance.approval` |
+  | TSA terms approval (DOM-P2F-09) | `tsa_service` | `if_set` | `tsa.approve` |
+  | TSA extension: linked at the request (`requireFinal: false`), consumed when recorded; replaces the former per-TSA check — a decision that authorized an extension of this TSA or another is refused (`tsa.extension.decision_already_used`) | `tsa_extension` (record type `tsa_service`) | `if_set` | `tsa.extension` |
+  | GO of a cutover plan: linked (`requireFinal: false`), consumed at the GO; a plan that goes to GO again after a rollback needs a new decision; a NO-GO relies on none | `cutover_plan` | `if_set` | `readiness.go_no_go` |
+  | Perimeter version approval (G1 paper) | `perimeter_version` | `required` since DOM-P2F-08 (a G1 paper must name the version it approves) | `perimeter.version` |
+
+  Subject rule `if_set` for closings, model versions, TSAs and cutover plans is the conservative option available today: a
+  decision paper cannot yet be raised FOR such a record (`DECISION_SUBJECT_TYPES` has no such type, and the paper form and
+  its subject loader belong to governance), so `required` would refuse every existing decision. With `if_set` a decision
+  raised for another record never backs them, and the registry binds a decision raised for no record to the first one.
+  Moving to `required` = adding the types to `DECISION_SUBJECT_TYPES` / `DECISION_SUBJECT_OPEN_STATES`, the governance
+  subject loader and the paper form (open question for the governance owner).
+
+  Records that relied on a decision whose external-approval evidence is later rejected: gate cycles are flagged for
+  controlled reassessment by the gates job (DOM-P2R-04); a JV signing / closing (and a negotiation issue) shows the decision
+  with `issueCode: evidence_invalid` in its detail (computed on read; the record is never modified). Finance records are not
+  flagged yet — the `decision_use` rows (and `approval_decision_id`) identify them for a later generic reassessment job.
 
 ### Mandatory patterns added after the P0 architecture review (read carefully)
 - **Every submitted id** (path, body, query) is loaded with `loadInProject(db, table, projectId, id)` before use — the DB

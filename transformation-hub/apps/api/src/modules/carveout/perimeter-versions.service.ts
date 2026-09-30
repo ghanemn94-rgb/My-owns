@@ -178,8 +178,9 @@ export class PerimeterVersionsService {
    * Approval per authority matrix: sponsor, not the proposer, backed by a final governance decision.
    * DOM-P2R-05: one decision backs ONE perimeter version (a decision that approved version 1 never approves version 2): the
    * decision row is locked and its earlier use refused (422 `perimeter.version.decision_already_used`), a partial unique
-   * index is the backstop (409); a decision raised for a specific record must have been raised for THIS version
-   * (DOM-P2R-03). DOM-P2R-04: an external approval counts only while its evidence is active and verified.
+   * index is the backstop (409); the decision must have been raised for THIS version (DOM-P2R-03, and DOM-P2F-08: a G1
+   * paper raised for no record backs no version). DOM-P2R-04: an external approval counts only while its evidence is active
+   * and verified.
    */
   async approve(ctx: RequestContext, projectId: string, versionId: string, body: { expectedVersion: number; decisionId: string; note?: string }) {
     const p = await this.s.project(ctx, projectId);
@@ -210,13 +211,15 @@ export class PerimeterVersionsService {
     this.s.policy.assert(ctx, 'carveout.perimeter.approve', { projectId, classification: p.classification, requesterUserId: v.proposedBy, withinAuthority: issue === null });
     assertVersion(v, body.expectedVersion, 'perimeter version');
     if (v.status !== 'proposed') throw ruleViolation('perimeter.version.not_proposed', `The version is ${v.status}`);
-    // DOM-P2R-03: a decision raised for a specific record backs only that record (G1 papers raised for no record are bound
-    // by gate key above). DOM-P2R-05: one decision backs one perimeter version (registered uses, read under the lock).
+    // DOM-P2R-03 / DOM-P2F-08: the G1 paper must have been raised FOR this version (subject rule `required`, as change
+    // requests and baselines): a paper raised for no record — voted, possibly, while another version was the proposal —
+    // approves no version (422 `perimeter.version.decision_no_subject`); one raised for another record, none of this one.
+    // DOM-P2R-05: one decision backs one perimeter version (registered uses, read under the lock).
     assertDecisionReliance({
       decision: locked.decision,
       use: { kind: 'perimeter_version', subjectType: 'perimeter_version', subjectId: v.id },
       uses: locked.uses,
-      subjectRule: 'if_set',
+      subjectRule: 'required',
       codePrefix: 'perimeter.version',
     });
     // The register must still be what was proposed (a later change requires a new proposal).

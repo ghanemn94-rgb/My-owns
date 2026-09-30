@@ -8,6 +8,8 @@ import { Personas, approveChangeRequest, base, carveoutProject, createItem, item
  * P2 DOMAIN FINAL REVIEW — perimeter-version approval on a G1 decision (docs/reviews/P2-domain-final-review.md; DOM-P2R-03
  * and DOM-P2R-05 fixes, P3 scope REQ-SET-012). Own file: one gate-kit project per file (public demo-login rate limit).
  * `RE …` re-verifies a fix; `OBSERVATION …` pins current behaviour for the governance owner. All data is synthetic.
+ * DOM-P2F-08 was fixed after this review (a G1 paper must be raised for the version it approves): its observation now
+ * asserts the implemented rule and is named `… (fixed, regression)`.
  */
 afterAll(async () => {
   await closeApp();
@@ -15,7 +17,7 @@ afterAll(async () => {
 });
 
 describe('P2 domain final review — perimeter version and the G1 decision it rests on [REQ-SET-012, AT-07]', () => {
-  it('RE DOM-P2R-03/-05: a G1 paper raised FOR version 1 never approves version 2; OBSERVATION DOM-P2F-08: a G1 paper raised for no record, voted while version 1 was the proposal, approves version 2', async () => {
+  it('RE DOM-P2R-03/-05: a G1 paper raised FOR version 1 never approves version 2; DOM-P2F-08: a G1 paper raised for no record, voted while version 1 was the proposal, does not approve version 2 (fixed, regression)', async () => {
     const { projectId: pv, p } = (await carveoutProject('DFR-PV')) as { projectId: string; p: Personas };
     const ws = await workstreamId(p.pm, pv, 'WS05');
     await createItem(p.pm, pv, { type: 'site', name: 'Final-review site (synthetic)', disposition: 'included', workstreamId: ws, ownerUserId: p.pm.userId });
@@ -57,9 +59,13 @@ describe('P2 domain final review — perimeter version and the G1 decision it re
     expect(onV1Paper.status, JSON.stringify(onV1Paper.body)).toBe(422);
     expect(onV1Paper.body.code).toBe('perimeter.version.decision_other_subject');
 
-    // Current behaviour (subject rule `if_set`): the unbound G1 decision backs whichever single version is approved first.
+    // OBSERVATION DOM-P2F-08 pinned the former behaviour (subject rule `if_set`: the unbound G1 decision backed whichever single
+    // version was approved first — 201). Fixed with the conservative option (subject rule `required`, as change requests and
+    // baselines): a G1 paper must be raised FOR the version it approves; the unbound one approves no version.
     const onUnbound = await p.sponsor.post(`${base(pv)}/perimeter/versions/${v2.id}/approve`, { expectedVersion: 1, decisionId: unbound, note: 'probe' });
-    expect(onUnbound.status, JSON.stringify(onUnbound.body)).toBe(201);
+    expect(onUnbound.status, JSON.stringify(onUnbound.body)).toBe(422);
+    expect(onUnbound.body.code).toBe('perimeter.version.decision_no_subject');
+    expect((await owner().query(`select status from perimeter_version where id = $1`, [v2.id])).rows[0].status).toBe('proposed');
     const voted = (await owner().query(`select max(v.created_at) as last_vote from vote v where v.decision_id = $1`, [unbound])).rows[0].last_vote as Date;
     const proposedV2 = (await owner().query(`select created_at from perimeter_version where id = $1`, [v2.id])).rows[0].created_at as Date;
     expect(voted.getTime()).toBeLessThan(proposedV2.getTime());

@@ -370,14 +370,11 @@ function DecideVersionDialog({ version, kind, onClose }: { version: PerimeterVer
     queryFn: ({ signal }) => api(G.listDecisions, { params: { projectId }, query: { page: 1, pageSize: 100, gateKey: 'G1' }, signal }),
   });
   const versions = useQuery({ queryKey: ck.versions(projectId), enabled: kind === 'approve', queryFn: ({ signal }) => api(C.listPerimeterVersions, { params: { projectId }, signal }) });
-  // DOM-P2R-05: a decision that already backs another version is not offered; DOM-P2R-03: a decision raised for a specific
-  // record is offered only for that version. The server re-checks both.
+  // DOM-P2R-05: a decision that already backs another version is not offered; DOM-P2R-03 / DOM-P2F-08: only a G1 paper
+  // raised FOR this version is offered (a paper raised for no record approves no version). The server re-checks both.
   const used = new Set((versions.data?.items ?? []).filter((x) => x.id !== version.id && x.decisionId && (x.status === 'approved' || x.status === 'superseded')).map((x) => x.decisionId!));
   const final = (decisions.data?.items ?? []).filter(
-    (d) =>
-      ['approved', 'implementation_pending', 'implemented_verified'].includes(d.status) &&
-      !used.has(d.id) &&
-      (d.subjectType === null || (d.subjectType === 'perimeter_version' && d.subjectId === version.id)),
+    (d) => ['approved', 'implementation_pending', 'implemented_verified'].includes(d.status) && !used.has(d.id) && d.subjectType === 'perimeter_version' && d.subjectId === version.id,
   );
   return (
     <ConfirmCommandDialog

@@ -420,7 +420,16 @@ Stages: `identified` → `approved_for_contact` → `nda` → `materials_access`
    flagged for reassessment**, on **the decision that approved that cycle** (`jv_signing_authorization` is the decision
    type the authority matrix assigns to G5, so the decision that passes G5 is the signing authorization) — checked at the
    request and again inside the recording transaction (422 `jv.signing.g5_not_passed`, `jv.signing.g5_under_reassessment`,
-   `jv.signing.decision_not_g5`). Each closing is confirmed separately by the authorized body (G6-C06).
+   `jv.signing.decision_not_g5`). Each closing is confirmed separately by the authorized body (G6-C06). **As implemented
+   (DOM-P4-01, DOM-P4-08) [server]:** one `jv_closing_confirmation` decision confirms ONE closing (decision-use registry,
+   kind `closing`): a decision that already confirmed another closing is refused at the request and inside the
+   confirmation (422 `jv.closing.decision_already_used`; a concurrent confirmation on the same decision is 409), and a
+   decision raised for another record never confirms a closing (`jv.closing.decision_other_subject` — a paper cannot yet be
+   raised for a closing; *open:* whether it must be, governance owner). The signing relies on the decision that approved
+   the current G5 cycle — part of that gate approval — and adds no registry row of its own. Signing, closing, long-stop
+   extension and negotiation agreement re-check the evidence of an external approval: a rejected, superseded or
+   conflicting link refuses them (`…decision_evidence_invalid`), and a confirmed event on such a decision shows it
+   (`evidence_invalid`), the event itself unchanged.
 6. **Withdrawal** revokes all active access grants for that partner immediately and keeps the history.
 7. Partner longlists contain no default real names; comparisons separate facts from team judgment.
 
@@ -429,7 +438,9 @@ Stages: `identified` → `approved_for_contact` → `nda` → `materials_access`
 - **Negotiation issues (DOM-P4-13).** Spec §8 requires "required approval" per issue; neither the specification nor the
   authority matrix names a decision type for negotiation positions, and nothing says one decision may not approve the
   positions of several issues. As implemented, an issue that requires approval is agreed only on a FINAL approved decision
-  of any type, and one decision may back several issues. *Proposed — to be confirmed:* a dedicated decision type (or the
+  of any type, and one decision may back several issues (the issue does not consume the decision in the decision-use
+  registry); since DOM-P4-08 the evidence of an external approval is re-checked when the issue is agreed or closed
+  (`jv.negotiation.decision_evidence_invalid`). *Proposed — to be confirmed:* a dedicated decision type (or the
   `valuation_and_ownership_terms` / `jv_signing_authorization` types) for negotiated terms.
 - **Single-person steps (DOM-P4-14).** A closing checklist item set `not_required` (documented reason, visible to the
   confirmer and in the confirmation snapshot) and the funds-flow steps (create / confirm / report settled, record-only) are
