@@ -1,0 +1,42 @@
+{
+  "name": "mobily-transformation-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mobily Transformation Hub: modular monolith (API, worker, web) - see docs/architecture/",
+  "license": "UNLICENSED",
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.18.0 <25",
+    "pnpm": "10.33.0"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --project unit-node --project unit-web",
+    "test:integration": "vitest run --project integration",
+    "e2e": "playwright test",
+    "openapi:lint": "node scripts/openapi-lint.mjs docs/api/openapi.yaml",
+    "check:no-cdn": "node scripts/check-no-cdn.mjs",
+    "deps:verify": "node scripts/verify-dependency-pins.mjs"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "10.1.1",
+    "@axe-core/playwright": "4.10.2",
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.18.0",
+    "eslint": "10.1.0",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "prettier": "3.8.1",
+    "typescript": "6.0.2",
+    "typescript-eslint": "8.46.0",
+    "vitest": "3.2.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [],
+    "ignoredBuiltDependencies": ["esbuild"]
+  }
+}

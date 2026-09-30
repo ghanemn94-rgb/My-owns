@@ -1,0 +1,38 @@
+{
+  "name": "@mth/db",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PostgreSQL schema: forward-only SQL migrations, migration runner CLI, typed Kysely access (ADR-0003)",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@mth/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "migrate": "node dist/cli.js migrate",
+    "migrate:dev": "node --conditions=@mth/source src/cli.ts migrate"
+  },
+  "dependencies": {
+    "@mth/config": "workspace:*",
+    "@mth/shared": "workspace:*",
+    "kysely": "0.28.7",
+    "pg": "8.16.3",
+    "uuid": "13.0.0"
+  },
+  "devDependencies": {
+    "@types/pg": "8.15.5"
+  },
+  "bin": {
+    "mth-db": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "migrations"
+  ]
+}

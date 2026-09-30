@@ -1,0 +1,1553 @@
+openapi: 3.1.1
+info:
+  title: Mobily Transformation Hub API
+  version: 1.0.0-p1
+  summary: P1 contract (identity, scoped access, organizations, transformations, audit).
+  description: |
+    Versioned REST contract for the Mobily Transformation Hub (T-DG1-ARCH-01, ADR-0007).
+
+    **Source of truth.** This file is the contract. It is owned by solution-architect and changed only
+    through the orchestrator. The zod schemas in `@mth/shared/schemas` mirror it, and API contract tests
+    validate every response of the route under test against this document (ADR-0007).
+
+    **Versioning.** All business endpoints live under `/api/v1`. Additive changes (new optional fields,
+    new endpoints, new enum values in response-only fields) are allowed within v1. Breaking changes need
+    `/api/v2` or a reopened gate (agent-protocol: contracts stay stable once a gate approves them).
+
+    **Authentication (ADR-0005).** Browser clients authenticate with OpenID Connect authorization code +
+    PKCE against the corporate identity provider (Keycloak is the portable test IdP). The API is the
+    confidential OIDC client; tokens never reach the browser. After the callback the API creates a
+    server-side session in PostgreSQL and sets an HttpOnly, Secure, SameSite=Lax cookie. In production
+    (HTTPS) the cookie is `__Host-mth_session`; with an `http://localhost` base URL in development it is
+    `mth_session`. A local **dev login** exists only when `AUTH_MODE=dev`. The server refuses to start
+    with `AUTH_MODE=dev` and `NODE_ENV=production`, and the dev-login route answers 404 in every other mode.
+
+    **CSRF.** Every unsafe method (POST, PUT, PATCH, DELETE) needs the session's CSRF token in the
+    `X-CSRF-Token` header, plus an `Origin` header equal to the configured `APP_BASE_URL` origin. `GET /api/v1/me`
+    returns the token.
+
+    **Authorization (ADR-0006).** Every operation is checked server-side by one policy function against
+    the caller's scoped role assignments. A caller who may not read a record gets 404 (existence is not
+    disclosed). A caller who may read but not change it gets 403.
+
+    **Concurrency (ADR-0003).** Mutable resources carry an integer `version` and a strong `ETag` of the
+    form `"<version>"`. Updates need `If-Match`. A missing `If-Match` gives 428. A stale one gives 409
+    `urn:mth:problem:version-conflict` with `currentVersion`, and no write happens.
+
+    **Errors.** Every error body is RFC 9457 `application/problem+json` with a stable `code` (the i18n key
+    the web client translates into Arabic/English) and the `requestId`.
+
+    **Values.** Timestamps are RFC 3339 UTC (`timestamptz`). IDs are UUIDv7. Money and rates, when they
+    appear in later versions, are decimal strings, never JSON numbers.
+  license:
+    name: Proprietary (Mobily); third-party components under their own licences
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: /
+    description: Same origin as the web app (the API also serves the SPA bundle).
+tags:
+  - name: health
+  - name: auth
+  - name: me
+  - name: organizations
+  - name: users
+  - name: access
+  - name: transformations
+  - name: audit
+security:
+  - sessionCookie: []
+paths:
+  /healthz:
+    get:
+      tags: [health]
+      operationId: getHealth
+      summary: Liveness. The process is up and the event loop responds; no dependency checks.
+      security: []
+      responses:
+        "200":
+          description: Alive.
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/X-Request-Id" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+  /readyz:
+    get:
+      tags: [health]
+      operationId: getReadiness
+      summary: Readiness. The database is reachable and all migrations shipped with this build are applied.
+      security: []
+      responses:
+        "200":
+          description: Ready to serve traffic.
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/X-Request-Id" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Readiness" }
+        "503":
+          description: Not ready; the body says which check failed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Readiness" }
+
+  /api/v1/auth/login:
+    get:
+      tags: [auth]
+      operationId: startOidcLogin
+      summary: Start OIDC authorization code + PKCE login.
+      description: |
+        Creates a short-lived server-side login state (state, nonce, PKCE code_verifier, returnTo) and
+        redirects to the identity provider's authorization endpoint. Answers 404 when OIDC is not configured.
+      security: []
+      parameters:
+        - name: returnTo
+          in: query
+          required: false
+          description: Same-origin relative path to return to after login. Absolute or protocol-relative URLs are rejected (open-redirect protection).
+          schema: { type: string, pattern: "^/(?!/)[^\\s]*$", maxLength: 2048 }
+      responses:
+        "302":
+          description: Redirect to the identity provider.
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/auth/callback:
+    get:
+      tags: [auth]
+      operationId: completeOidcLogin
+      summary: OIDC redirect URI. Exchanges the code, binds the identity, creates the session.
+      description: |
+        Validates `state` against the stored login state (single use, expires after 10 minutes), exchanges
+        the code with the PKCE verifier, validates the ID token (issuer, audience, nonce, expiry), and
+        resolves the user by the (issuer, subject) pair (ADR-0005). It then creates the session, sets the session
+        cookie and redirects to `returnTo`. Failures redirect to `/login?error=<code>` and never render IdP
+        error text verbatim.
+      security: []
+      parameters:
+        - { name: code, in: query, required: false, schema: { type: string, maxLength: 4096 } }
+        - { name: state, in: query, required: true, schema: { type: string, maxLength: 512 } }
+        - { name: error, in: query, required: false, schema: { type: string, maxLength: 256 } }
+      responses:
+        "302":
+          description: Redirect to the application (success) or to `/login?error=<code>` (failure).
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            Set-Cookie: { $ref: "#/components/headers/Set-Cookie" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/auth/dev-login:
+    post:
+      tags: [auth]
+      operationId: devLogin
+      summary: Development-only local login (AUTH_MODE=dev).
+      description: |
+        Available only when `AUTH_MODE=dev`, and never with `NODE_ENV=production` (startup refuses that
+        combination). In every other mode it answers 404 as if the route did not exist. It signs in an
+        existing **synthetic** development user bound to issuer `urn:mth:dev-local`. It never creates users
+        and never grants roles. Needs a same-origin `Origin` header (login-CSRF protection).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DevLoginRequest" }
+      responses:
+        "204":
+          description: Signed in; session cookie set.
+          headers:
+            Set-Cookie: { $ref: "#/components/headers/Set-Cookie" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      summary: End the server-side session.
+      description: Revokes the session row, clears the cookie and returns the IdP end-session URL when OIDC is in use.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      responses:
+        "200":
+          description: Signed out.
+          headers:
+            Set-Cookie: { $ref: "#/components/headers/Set-Cookie" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogoutResult" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/me:
+    get:
+      tags: [me]
+      operationId: getMe
+      summary: Current user, CSRF token, assignments and effective permissions per scope.
+      responses:
+        "200":
+          description: The signed-in principal.
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/X-Request-Id" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Me" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+  /api/v1/me/preferences:
+    put:
+      tags: [me]
+      operationId: updateMyPreferences
+      summary: Persist the language and timezone preference (persistent language switch, REQ-S15-007).
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PreferencesUpdate" }
+      responses:
+        "200":
+          description: Updated user.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+
+  /api/v1/organizations:
+    get:
+      tags: [organizations]
+      operationId: listOrganizations
+      summary: Organizations on which the caller holds organization.read (at any scope inside them).
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Page of organizations.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrganizationPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      tags: [organizations]
+      operationId: createOrganization
+      summary: Create an organization (needs organization.manage on an existing organization; the first organization comes from the bootstrap CLI).
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrganizationCreate" }
+      responses:
+        "201":
+          description: Created.
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Organization" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+  /api/v1/organizations/{organizationId}:
+    parameters:
+      - $ref: "#/components/parameters/OrganizationId"
+    get:
+      tags: [organizations]
+      operationId: getOrganization
+      responses:
+        "200":
+          description: The organization.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Organization" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [organizations]
+      operationId: updateOrganization
+      summary: Update names and defaults (organization.manage).
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrganizationUpdate" }
+      responses:
+        "200":
+          description: Updated.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Organization" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+  /api/v1/organizations/{organizationId}/business-units:
+    parameters:
+      - $ref: "#/components/parameters/OrganizationId"
+    get:
+      tags: [organizations]
+      operationId: listBusinessUnits
+      summary: Business units of an organization visible to the caller (business_unit.read).
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - { name: status, in: query, required: false, schema: { $ref: "#/components/schemas/ActiveStatus" } }
+      responses:
+        "200":
+          description: Page of business units.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessUnitPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      tags: [organizations]
+      operationId: createBusinessUnit
+      summary: Create a business unit (business_unit.manage on the organization).
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessUnitCreate" }
+      responses:
+        "201":
+          description: Created.
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessUnit" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+  /api/v1/business-units/{businessUnitId}:
+    parameters:
+      - $ref: "#/components/parameters/BusinessUnitId"
+    get:
+      tags: [organizations]
+      operationId: getBusinessUnit
+      responses:
+        "200":
+          description: The business unit.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessUnit" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [organizations]
+      operationId: updateBusinessUnit
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessUnitUpdate" }
+      responses:
+        "200":
+          description: Updated.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessUnit" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+
+  /api/v1/users:
+    get:
+      tags: [users]
+      operationId: listUsers
+      summary: Users (user.read on the organization).
+      parameters:
+        - { name: organizationId, in: query, required: true, schema: { $ref: "#/components/schemas/Uuid" } }
+        - { name: q, in: query, required: false, description: Case-insensitive match on display name or email., schema: { type: string, minLength: 1, maxLength: 200 } }
+        - { name: status, in: query, required: false, schema: { $ref: "#/components/schemas/UserStatus" } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Page of users.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [users]
+      operationId: createUser
+      summary: Pre-provision a user, optionally with an identity binding (user.manage).
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserCreate" }
+      responses:
+        "201":
+          description: Created.
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+  /api/v1/users/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    get:
+      tags: [users]
+      operationId: getUser
+      responses:
+        "200":
+          description: The user.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [users]
+      operationId: updateUser
+      summary: Update display data or disable a user (user.manage). Disabling revokes the user's sessions.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserUpdate" }
+      responses:
+        "200":
+          description: Updated.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+
+  /api/v1/roles:
+    get:
+      tags: [access]
+      operationId: listRoles
+      summary: Role catalogue with each role's permissions (role.read).
+      responses:
+        "200":
+          description: All roles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                additionalProperties: false
+                properties:
+                  items: { type: array, items: { $ref: "#/components/schemas/Role" } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/v1/permissions:
+    get:
+      tags: [access]
+      operationId: listPermissions
+      summary: Permission catalogue (role.read).
+      responses:
+        "200":
+          description: All permissions.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                additionalProperties: false
+                properties:
+                  items: { type: array, items: { $ref: "#/components/schemas/PermissionEntry" } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/v1/role-assignments:
+    get:
+      tags: [access]
+      operationId: listRoleAssignments
+      summary: Scoped role assignments (access.read at or above the scope).
+      parameters:
+        - { name: organizationId, in: query, required: true, schema: { $ref: "#/components/schemas/Uuid" } }
+        - { name: userId, in: query, required: false, schema: { $ref: "#/components/schemas/Uuid" } }
+        - { name: scopeType, in: query, required: false, schema: { $ref: "#/components/schemas/ScopeType" } }
+        - { name: scopeId, in: query, required: false, schema: { $ref: "#/components/schemas/Uuid" } }
+        - { name: includeRevoked, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Page of assignments.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoleAssignmentPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [access]
+      operationId: createRoleAssignment
+      summary: Grant a role at a scope (access.assign at or above the scope). A reason is mandatory and audited.
+      description: |
+        Rejected with 422 when the grant would make a technical administrator a business approver, or when
+        the scope does not belong to the organization. The server never infers grants from job titles or IdP
+        attributes (ADR-0006).
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RoleAssignmentCreate" }
+      responses:
+        "201":
+          description: Created.
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoleAssignment" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+  /api/v1/role-assignments/{assignmentId}:
+    parameters:
+      - $ref: "#/components/parameters/AssignmentId"
+    get:
+      tags: [access]
+      operationId: getRoleAssignment
+      responses:
+        "200":
+          description: The assignment.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoleAssignment" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/v1/role-assignments/{assignmentId}/revoke:
+    parameters:
+      - $ref: "#/components/parameters/AssignmentId"
+    post:
+      tags: [access]
+      operationId: revokeRoleAssignment
+      summary: Revoke an assignment (never deleted; access.assign). Takes effect for the next request.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: Revoked.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoleAssignment" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+
+  /api/v1/transformations:
+    get:
+      tags: [transformations]
+      operationId: listTransformations
+      summary: Transformations visible to the caller (transformation.read, scope-filtered in SQL).
+      parameters:
+        - { name: organizationId, in: query, required: false, schema: { $ref: "#/components/schemas/Uuid" } }
+        - { name: businessUnitId, in: query, required: false, schema: { $ref: "#/components/schemas/Uuid" } }
+        - name: status
+          in: query
+          required: false
+          description: Repeatable; any of the given statuses.
+          style: form
+          explode: true
+          schema: { type: array, maxItems: 4, items: { $ref: "#/components/schemas/TransformationStatus" } }
+        - { name: mode, in: query, required: false, schema: { $ref: "#/components/schemas/TransformationMode" } }
+        - { name: phase, in: query, required: false, schema: { $ref: "#/components/schemas/Phase" } }
+        - { name: q, in: query, required: false, description: Case-insensitive match on code or name., schema: { type: string, minLength: 1, maxLength: 200 } }
+        - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["updatedAt:desc", "updatedAt:asc", "name:asc", "name:desc", "code:asc", "code:desc"]
+            default: "updatedAt:desc"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Page of transformations.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TransformationPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+    post:
+      tags: [transformations]
+      operationId: createTransformation
+      summary: Create a transformation (transformation.create on the target business unit).
+      description: |
+        Persists the record, writes the `transformation.create` audit event and an outbox event
+        `transformation.created` in the same database transaction. The worker picks up the outbox event
+        for the starter automation (REQ-S12-004). Timezone and currency default to the organization's
+        defaults (Asia/Riyadh, SAR). `code` is generated (`TR-0001`, …) when omitted.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TransformationCreate" }
+      responses:
+        "201":
+          description: Created. A replay with the same Idempotency-Key and body returns the same 201 body.
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Transformation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Duplicate" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+  /api/v1/transformations/{transformationId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [transformations]
+      operationId: getTransformation
+      responses:
+        "200":
+          description: The transformation.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Transformation" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [transformations]
+      operationId: updateTransformation
+      summary: Update a transformation (transformation.update). Needs If-Match.
+      description: |
+        `mode`, `entryPhase` and `currentPhase` are not editable here: phase progression is gate-controlled
+        from P2. Status changes must follow the explicit transitions (draft→active, active→on_hold|closed,
+        on_hold→active|closed); anything else is 422 `invalid-transition`. Archived records are read-only (422).
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TransformationUpdate" }
+      responses:
+        "200":
+          description: Updated; `version` incremented by one.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Transformation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+  /api/v1/transformations/{transformationId}/archive:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    post:
+      tags: [transformations]
+      operationId: archiveTransformation
+      summary: Archive (not delete) a transformation (transformation.archive). A reason is mandatory.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReasonRequest" }
+      responses:
+        "200":
+          description: Archived; the record stays readable (includeArchived=true) and in the audit trail.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Transformation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+  /api/v1/transformations/{transformationId}/audit:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [audit]
+      operationId: listTransformationAudit
+      summary: Audit trail of the transformation and its child records (audit.read on the transformation), newest first.
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Page of audit events.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuditEventPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-mth_session
+      description: |
+        Opaque server-side session ID (256-bit random; only its SHA-256 is stored). HttpOnly, Secure,
+        SameSite=Lax, Path=/. Named `mth_session` (without the `__Host-` prefix) only for an http://localhost base URL in development.
+        Idle timeout SESSION_IDLE_MINUTES (default 30), absolute SESSION_ABSOLUTE_HOURS (default 10).
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Per-session synchronizer token from `GET /api/v1/me` (`csrfToken`). Required on every unsafe method, together with a same-origin `Origin` header.
+
+  parameters:
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: The ETag (`"<version>"`) of the representation being changed. A missing header gives 428; a stale one gives 409.
+      schema: { type: string, pattern: '^"[1-9][0-9]{0,9}"$' }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Client-generated key (UUID recommended). A retried create with the same key and body returns the original result for 24 hours; the same key with a different body gives 422.
+      schema: { type: string, minLength: 8, maxLength: 128, pattern: "^[A-Za-z0-9_-]+$" }
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque cursor from a previous page's `nextCursor`. It is bound to the sort order and filters; reuse with other filters gives 400.
+      schema: { type: string, maxLength: 512 }
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+    OrganizationId:
+      name: organizationId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    BusinessUnitId:
+      name: businessUnitId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AssignmentId:
+      name: assignmentId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    TransformationId:
+      name: transformationId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+
+  headers:
+    X-Request-Id:
+      description: Request correlation ID (echoed from a valid inbound header or generated), also in every log line and audit event.
+      schema: { type: string, maxLength: 128 }
+    ETag:
+      description: Strong entity tag `"<version>"`.
+      schema: { type: string, pattern: '^"[1-9][0-9]{0,9}"$' }
+    Location:
+      schema: { type: string }
+    Set-Cookie:
+      schema: { type: string }
+    Retry-After:
+      schema: { type: integer, minimum: 0 }
+
+  responses:
+    ValidationError:
+      description: Request failed schema validation (`urn:mth:problem:validation`), with field errors.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    Unauthenticated:
+      description: No valid session (`urn:mth:problem:unauthenticated`).
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    Forbidden:
+      description: The caller can see the resource but lacks the permission, or the CSRF/Origin check failed (`forbidden` or `csrf`).
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    NotFound:
+      description: The resource does not exist or the caller may not read it (`urn:mth:problem:not-found`).
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    VersionConflict:
+      description: If-Match is stale (`urn:mth:problem:version-conflict`). `currentVersion` holds the server's version; nothing was written.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    Duplicate:
+      description: A uniqueness rule was violated, e.g. a code already used in the organization (`urn:mth:problem:duplicate`).
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    BusinessRule:
+      description: A business rule rejected the change, e.g. an invalid status transition, an archived record, or a technical admin made an approver (`invalid-transition` or `validation`).
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    PreconditionRequired:
+      description: If-Match header missing (`urn:mth:problem:precondition-required`).
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    RateLimited:
+      description: Too many requests (`urn:mth:problem:rate-limited`).
+      headers:
+        Retry-After: { $ref: "#/components/headers/Retry-After" }
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+      description: UUIDv7 (time-ordered), generated by the application.
+    Timestamp:
+      type: string
+      format: date-time
+      description: RFC 3339 instant in UTC.
+    Locale:
+      type: string
+      enum: [ar, en]
+    TimeZone:
+      type: string
+      description: IANA time zone name, validated against the runtime's zone database.
+      minLength: 1
+      maxLength: 64
+      examples: [Asia/Riyadh]
+    Currency:
+      type: string
+      pattern: "^[A-Z]{3}$"
+      description: ISO 4217 code.
+      examples: [SAR]
+    Code:
+      type: string
+      pattern: "^[A-Z0-9][A-Z0-9_-]{0,31}$"
+      description: Human-readable stable key, unique within its parent.
+    Name:
+      type: string
+      minLength: 1
+      maxLength: 200
+    Reason:
+      type: string
+      minLength: 3
+      maxLength: 1000
+    ActiveStatus:
+      type: string
+      enum: [active, inactive]
+    UserStatus:
+      type: string
+      enum: [active, disabled]
+    Phase:
+      type: string
+      enum: [diagnose, define, design, mobilize, transform, realize]
+    TransformationMode:
+      type: string
+      enum: [end_to_end, modular]
+    TransformationStatus:
+      type: string
+      enum: [draft, active, on_hold, closed]
+    StandaloneDeliverableType:
+      type: string
+      enum: [target_operating_model, initiative_business_case, benefits_register]
+    ScopeType:
+      type: string
+      description: P1 implements organization, business_unit and transformation; the rest are reserved and rejected with 422 until their stage.
+      enum: [organization, business_unit, transformation, portfolio, workstream, initiative, performance_area, forum, record]
+    ScopeRef:
+      type: object
+      required: [type, id]
+      additionalProperties: false
+      properties:
+        type: { $ref: "#/components/schemas/ScopeType" }
+        id: { $ref: "#/components/schemas/Uuid" }
+    PermissionCode:
+      type: string
+      enum:
+        - organization.read
+        - organization.manage
+        - business_unit.read
+        - business_unit.manage
+        - user.read
+        - user.manage
+        - role.read
+        - access.read
+        - access.assign
+        - transformation.read
+        - transformation.create
+        - transformation.update
+        - transformation.archive
+        - audit.read
+        - gate.decide
+        - finance.validate
+    RoleCode:
+      type: string
+      enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
+    Version:
+      type: integer
+      minimum: 1
+      description: Optimistic-concurrency version; starts at 1 and increases by exactly 1 per change.
+
+    Problem:
+      type: object
+      description: RFC 9457 problem details.
+      required: [type, title, status, code, requestId]
+      properties:
+        type:
+          type: string
+          enum:
+            - urn:mth:problem:validation
+            - urn:mth:problem:unauthenticated
+            - urn:mth:problem:forbidden
+            - urn:mth:problem:not-found
+            - urn:mth:problem:version-conflict
+            - urn:mth:problem:precondition-required
+            - urn:mth:problem:invalid-transition
+            - urn:mth:problem:duplicate
+            - urn:mth:problem:csrf
+            - urn:mth:problem:rate-limited
+            - urn:mth:problem:unavailable
+            - urn:mth:problem:internal
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string }
+        code:
+          type: string
+          description: Stable i18n key suffix (`problem.<code>`), e.g. `version_conflict`.
+          pattern: "^[a-z][a-z0-9_.]*$"
+        requestId: { type: string }
+        errors:
+          type: array
+          items: { $ref: "#/components/schemas/FieldError" }
+        currentVersion: { $ref: "#/components/schemas/Version" }
+    FieldError:
+      type: object
+      required: [pointer, code, message]
+      additionalProperties: false
+      properties:
+        pointer: { type: string, description: "RFC 6901 pointer into the body, or /query/<name>." }
+        code: { type: string, description: "i18n key, e.g. validation.required" }
+        message: { type: string }
+
+    Health:
+      type: object
+      required: [status]
+      additionalProperties: false
+      properties:
+        status: { type: string, const: ok }
+    Readiness:
+      type: object
+      required: [status, checks]
+      additionalProperties: false
+      properties:
+        status: { type: string, enum: [ready, not_ready] }
+        checks:
+          type: object
+          required: [database, migrations]
+          additionalProperties: false
+          properties:
+            database: { type: string, enum: [ok, fail] }
+            migrations: { type: string, enum: [ok, pending, fail] }
+
+    DevLoginRequest:
+      type: object
+      required: [username]
+      additionalProperties: false
+      properties:
+        username: { type: string, pattern: "^[a-z0-9._-]{2,64}$", description: "Subject of a seeded synthetic dev user." }
+    LogoutResult:
+      type: object
+      required: [endSessionUrl]
+      additionalProperties: false
+      properties:
+        endSessionUrl:
+          type: [string, "null"]
+          description: IdP RP-initiated logout URL to navigate to, or null (dev mode / no end_session_endpoint).
+
+    Me:
+      type: object
+      required: [user, authMode, csrfToken, productName, organization, assignments, effectivePermissions]
+      additionalProperties: false
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        authMode: { type: string, enum: [oidc, dev] }
+        csrfToken: { type: string, minLength: 32 }
+        productName: { type: string, description: "Configurable product name (REQ-S01-002)." }
+        organization:
+          description: The user's home organization and its defaults.
+          $ref: "#/components/schemas/Organization"
+        assignments:
+          type: array
+          description: Active (non-revoked, currently effective) assignments of the user.
+          items: { $ref: "#/components/schemas/RoleAssignment" }
+        effectivePermissions:
+          type: array
+          description: |
+            Permissions per granted scope, computed by the same policy function the server uses. A UI hint only;
+            the server re-checks every request. When a role inherits downward, `inheritsDownward` is true and the
+            permissions also apply to every scope inside `scope`.
+          items:
+            type: object
+            required: [scope, inheritsDownward, permissions]
+            additionalProperties: false
+            properties:
+              scope: { $ref: "#/components/schemas/ScopeRef" }
+              inheritsDownward: { type: boolean }
+              permissions: { type: array, uniqueItems: true, items: { $ref: "#/components/schemas/PermissionCode" } }
+    PreferencesUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        preferredLocale: { $ref: "#/components/schemas/Locale" }
+        timezone:
+          oneOf:
+            - { $ref: "#/components/schemas/TimeZone" }
+            - { type: "null" }
+
+    Organization:
+      type: object
+      required: [id, code, nameEn, nameAr, defaultTimezone, defaultCurrency, defaultLocale, status, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        code: { $ref: "#/components/schemas/Code" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        defaultTimezone: { $ref: "#/components/schemas/TimeZone" }
+        defaultCurrency: { $ref: "#/components/schemas/Currency" }
+        defaultLocale: { $ref: "#/components/schemas/Locale" }
+        status: { $ref: "#/components/schemas/ActiveStatus" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    OrganizationCreate:
+      type: object
+      required: [code, nameEn, nameAr]
+      additionalProperties: false
+      properties:
+        code: { $ref: "#/components/schemas/Code" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        defaultTimezone: { $ref: "#/components/schemas/TimeZone" }
+        defaultCurrency: { $ref: "#/components/schemas/Currency" }
+        defaultLocale: { $ref: "#/components/schemas/Locale" }
+    OrganizationUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        defaultTimezone: { $ref: "#/components/schemas/TimeZone" }
+        defaultCurrency: { $ref: "#/components/schemas/Currency" }
+        defaultLocale: { $ref: "#/components/schemas/Locale" }
+        status: { $ref: "#/components/schemas/ActiveStatus" }
+    OrganizationPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Organization" } }
+        nextCursor: { type: [string, "null"] }
+
+    BusinessUnit:
+      type: object
+      required: [id, organizationId, parentBusinessUnitId, code, nameEn, nameAr, status, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        parentBusinessUnitId:
+          oneOf:
+            - { $ref: "#/components/schemas/Uuid" }
+            - { type: "null" }
+        code: { $ref: "#/components/schemas/Code" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        status: { $ref: "#/components/schemas/ActiveStatus" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    BusinessUnitCreate:
+      type: object
+      required: [code, nameEn, nameAr]
+      additionalProperties: false
+      properties:
+        code: { $ref: "#/components/schemas/Code" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        parentBusinessUnitId: { $ref: "#/components/schemas/Uuid" }
+    BusinessUnitUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        parentBusinessUnitId:
+          description: Must be in the same organization and must not create a cycle (422).
+          oneOf:
+            - { $ref: "#/components/schemas/Uuid" }
+            - { type: "null" }
+        status: { $ref: "#/components/schemas/ActiveStatus" }
+    BusinessUnitPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BusinessUnit" } }
+        nextCursor: { type: [string, "null"] }
+
+    UserIdentity:
+      type: object
+      required: [issuer, subject, createdAt, lastLoginAt]
+      additionalProperties: false
+      properties:
+        issuer: { type: string, maxLength: 512 }
+        subject: { type: string, maxLength: 255 }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        lastLoginAt:
+          oneOf:
+            - { $ref: "#/components/schemas/Timestamp" }
+            - { type: "null" }
+    User:
+      type: object
+      required: [id, organizationId, displayName, email, preferredLocale, timezone, status, identities, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        displayName: { $ref: "#/components/schemas/Name" }
+        email: { type: [string, "null"], format: email, maxLength: 320 }
+        preferredLocale: { $ref: "#/components/schemas/Locale" }
+        timezone:
+          description: Personal override; null means the organization default.
+          oneOf:
+            - { $ref: "#/components/schemas/TimeZone" }
+            - { type: "null" }
+        status: { $ref: "#/components/schemas/UserStatus" }
+        identities:
+          type: array
+          description: Bound IdP identities (issuer + subject). Shown to user.read holders and to the user themself.
+          items: { $ref: "#/components/schemas/UserIdentity" }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    UserCreate:
+      type: object
+      required: [organizationId, displayName]
+      additionalProperties: false
+      properties:
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        displayName: { $ref: "#/components/schemas/Name" }
+        email: { type: string, format: email, maxLength: 320 }
+        preferredLocale: { $ref: "#/components/schemas/Locale" }
+        identity:
+          type: object
+          description: Optional pre-binding to an IdP subject (issuer + sub).
+          required: [issuer, subject]
+          additionalProperties: false
+          properties:
+            issuer: { type: string, maxLength: 512 }
+            subject: { type: string, minLength: 1, maxLength: 255 }
+    UserUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        displayName: { $ref: "#/components/schemas/Name" }
+        email: { type: [string, "null"], format: email, maxLength: 320 }
+        preferredLocale: { $ref: "#/components/schemas/Locale" }
+        status: { $ref: "#/components/schemas/UserStatus" }
+    UserPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/User" } }
+        nextCursor: { type: [string, "null"] }
+
+    Role:
+      type: object
+      required: [id, code, nameEn, nameAr, kind, inheritsDownward, permissions]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        code: { $ref: "#/components/schemas/RoleCode" }
+        nameEn: { $ref: "#/components/schemas/Name" }
+        nameAr: { $ref: "#/components/schemas/Name" }
+        kind: { type: string, enum: [source, implementation, technical_admin] }
+        inheritsDownward: { type: boolean }
+        permissions: { type: array, uniqueItems: true, items: { $ref: "#/components/schemas/PermissionCode" } }
+    PermissionEntry:
+      type: object
+      required: [code, category]
+      additionalProperties: false
+      properties:
+        code: { $ref: "#/components/schemas/PermissionCode" }
+        category: { type: string, enum: [read, write, configure, business_approval, finance_validation] }
+
+    RoleAssignment:
+      type: object
+      required:
+        [id, organizationId, userId, roleCode, scope, effectiveFrom, effectiveTo, reason, grantedBy, revokedAt, revokedBy, revokeReason, version, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        userId: { $ref: "#/components/schemas/Uuid" }
+        roleCode: { $ref: "#/components/schemas/RoleCode" }
+        scope: { $ref: "#/components/schemas/ScopeRef" }
+        effectiveFrom: { $ref: "#/components/schemas/Timestamp" }
+        effectiveTo:
+          oneOf:
+            - { $ref: "#/components/schemas/Timestamp" }
+            - { type: "null" }
+        reason: { $ref: "#/components/schemas/Reason" }
+        grantedBy: { $ref: "#/components/schemas/Uuid" }
+        revokedAt:
+          oneOf:
+            - { $ref: "#/components/schemas/Timestamp" }
+            - { type: "null" }
+        revokedBy:
+          oneOf:
+            - { $ref: "#/components/schemas/Uuid" }
+            - { type: "null" }
+        revokeReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+    RoleAssignmentCreate:
+      type: object
+      required: [userId, roleCode, scope, reason]
+      additionalProperties: false
+      properties:
+        userId: { $ref: "#/components/schemas/Uuid" }
+        roleCode: { $ref: "#/components/schemas/RoleCode" }
+        scope: { $ref: "#/components/schemas/ScopeRef" }
+        effectiveFrom: { $ref: "#/components/schemas/Timestamp" }
+        effectiveTo: { $ref: "#/components/schemas/Timestamp" }
+        reason: { $ref: "#/components/schemas/Reason" }
+    RoleAssignmentPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RoleAssignment" } }
+        nextCursor: { type: [string, "null"] }
+    ReasonRequest:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { $ref: "#/components/schemas/Reason" }
+
+    Transformation:
+      type: object
+      required:
+        - id
+        - organizationId
+        - businessUnitId
+        - code
+        - name
+        - description
+        - mode
+        - entryPhase
+        - standaloneDeliverableType
+        - status
+        - currentPhase
+        - sponsorUserId
+        - leadUserId
+        - timezone
+        - currency
+        - archivedAt
+        - archiveReason
+        - version
+        - createdAt
+        - createdBy
+        - updatedAt
+        - updatedBy
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        businessUnitId: { $ref: "#/components/schemas/Uuid" }
+        code: { $ref: "#/components/schemas/Code" }
+        name: { $ref: "#/components/schemas/Name" }
+        description: { type: [string, "null"], maxLength: 4000 }
+        mode: { $ref: "#/components/schemas/TransformationMode" }
+        entryPhase:
+          description: Required for modular mode; null for end_to_end.
+          oneOf:
+            - { $ref: "#/components/schemas/Phase" }
+            - { type: "null" }
+        standaloneDeliverableType:
+          oneOf:
+            - { $ref: "#/components/schemas/StandaloneDeliverableType" }
+            - { type: "null" }
+        status: { $ref: "#/components/schemas/TransformationStatus" }
+        currentPhase: { $ref: "#/components/schemas/Phase" }
+        sponsorUserId:
+          description: Named Executive Sponsor (ownership). Access still comes only from scoped assignments.
+          oneOf:
+            - { $ref: "#/components/schemas/Uuid" }
+            - { type: "null" }
+        leadUserId:
+          description: Named Transformation Lead (ownership).
+          oneOf:
+            - { $ref: "#/components/schemas/Uuid" }
+            - { type: "null" }
+        timezone: { $ref: "#/components/schemas/TimeZone" }
+        currency: { $ref: "#/components/schemas/Currency" }
+        archivedAt:
+          oneOf:
+            - { $ref: "#/components/schemas/Timestamp" }
+            - { type: "null" }
+        archiveReason: { type: [string, "null"] }
+        version: { $ref: "#/components/schemas/Version" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/Uuid" }
+    TransformationCreate:
+      type: object
+      required: [businessUnitId, name, mode]
+      additionalProperties: false
+      properties:
+        businessUnitId: { $ref: "#/components/schemas/Uuid" }
+        code: { $ref: "#/components/schemas/Code" }
+        name: { $ref: "#/components/schemas/Name" }
+        description: { type: string, maxLength: 4000 }
+        mode: { $ref: "#/components/schemas/TransformationMode" }
+        entryPhase: { $ref: "#/components/schemas/Phase" }
+        standaloneDeliverableType: { $ref: "#/components/schemas/StandaloneDeliverableType" }
+        sponsorUserId: { $ref: "#/components/schemas/Uuid" }
+        leadUserId: { $ref: "#/components/schemas/Uuid" }
+        timezone: { $ref: "#/components/schemas/TimeZone" }
+        currency: { $ref: "#/components/schemas/Currency" }
+      allOf:
+        - if:
+            properties: { mode: { const: modular } }
+            required: [mode]
+          then:
+            required: [entryPhase]
+          else:
+            not:
+              anyOf:
+                - required: [entryPhase]
+                - required: [standaloneDeliverableType]
+    TransformationUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        name: { $ref: "#/components/schemas/Name" }
+        description: { type: [string, "null"], maxLength: 4000 }
+        status: { $ref: "#/components/schemas/TransformationStatus" }
+        sponsorUserId:
+          oneOf:
+            - { $ref: "#/components/schemas/Uuid" }
+            - { type: "null" }
+        leadUserId:
+          oneOf:
+            - { $ref: "#/components/schemas/Uuid" }
+            - { type: "null" }
+        timezone: { $ref: "#/components/schemas/TimeZone" }
+        currency: { $ref: "#/components/schemas/Currency" }
+    TransformationPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Transformation" } }
+        nextCursor: { type: [string, "null"] }
+
+    AuditEvent:
+      type: object
+      required:
+        [id, seq, occurredAt, action, recordType, recordId, transformationId, actor, onBehalfOfUserId, priorVersion, newVersion, reason, requestId, changes]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        seq: { type: string, pattern: "^[0-9]+$", description: "Monotonic sequence (bigint as string)." }
+        occurredAt: { $ref: "#/components/schemas/Timestamp" }
+        action: { type: string, pattern: "^[a-z_]+\\.[a-z_.]+$", examples: [transformation.update] }
+        recordType: { type: string, examples: [transformation] }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        transformationId:
+          oneOf:
+            - { $ref: "#/components/schemas/Uuid" }
+            - { type: "null" }
+        actor:
+          type: object
+          required: [type, userId, displayName]
+          additionalProperties: false
+          properties:
+            type: { type: string, enum: [user, service, system] }
+            userId:
+              oneOf:
+                - { $ref: "#/components/schemas/Uuid" }
+                - { type: "null" }
+            displayName: { type: [string, "null"] }
+        onBehalfOfUserId:
+          oneOf:
+            - { $ref: "#/components/schemas/Uuid" }
+            - { type: "null" }
+        priorVersion: { type: [integer, "null"], minimum: 1 }
+        newVersion: { type: [integer, "null"], minimum: 1 }
+        reason: { type: [string, "null"] }
+        requestId: { type: [string, "null"] }
+        changes:
+          description: "Field-level changes as an object keyed by field name, each value holding `from` and `to`; null for create/archive summaries without a diff."
+          oneOf:
+            - type: object
+              additionalProperties:
+                type: object
+                required: [from, to]
+                additionalProperties: false
+                properties:
+                  from: {}
+                  to: {}
+            - { type: "null" }
+    AuditEventPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AuditEvent" } }
+        nextCursor: { type: [string, "null"] }

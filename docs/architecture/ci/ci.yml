@@ -1,0 +1,111 @@
+# Product CI (ADR-0013, REQ-DLV-025). Install verbatim as .github/workflows/ci.yml (devops-engineer owns it).
+# The first job re-runs the delivery-gate pipeline check; every product job depends on it, so a failed or
+# unapproved gate stops the pipeline. delivery-gates.yml itself is protected and is not modified.
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  delivery-gates:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (same pin as delivery-gates.yml)
+        with:
+          fetch-depth: 0 # historical gate verification recomputes candidates from recorded commits
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0 (same pin as delivery-gates.yml)
+        with:
+          node-version: "22"
+      - name: Delivery gate pipeline state (no stage advanced past an unapproved gate)
+        run: node tools/gates/validate.mjs --pipeline
+
+  verify:
+    needs: delivery-gates
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["24", "22"] # ADR-0001: target 24 LTS, supported floor 22.18+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Activate pinned pnpm (packageManager field) via Corepack
+        run: corepack enable && pnpm --version
+      - name: Install (frozen lockfile; lifecycle scripts disabled by pnpm 10 default)
+        run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm test
+      - run: pnpm openapi:lint
+      - run: pnpm check:no-cdn
+
+  integration:
+    needs: verify
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:18 # devops-engineer: pin by digest (ADR-0003/ADR-0011)
+        env:
+          POSTGRES_USER: mth_ci_admin
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U mth_ci_admin" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      TEST_DATABASE_ADMIN_URL: postgres://mth_ci_admin:ci-only-not-a-secret@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r build
+      - run: pnpm test:integration
+
+  e2e:
+    needs: verify
+    runs-on: ubuntu-24.04
+    # CF-2 (ADR-0012): browsers come baked into the version-matched Playwright image; `playwright install` is never run.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble # devops-engineer: pin by digest
+    services:
+      postgres:
+        image: postgres:18 # devops-engineer: pin by digest
+        env:
+          POSTGRES_USER: mth_ci_admin
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd "pg_isready -U mth_ci_admin" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      TEST_DATABASE_ADMIN_URL: postgres://mth_ci_admin:ci-only-not-a-secret@postgres:5432/postgres
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r build
+      # devops-engineer (T-DG1-DEVOPS) adds: start migrate + api (AUTH_MODE=dev, NODE_ENV=test) against the service DB,
+      # wait for /readyz, then run the suite.
+      - run: pnpm e2e
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 - devops-engineer: re-verify pin
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
