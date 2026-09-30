@@ -7389,7 +7389,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-25/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T13:57:00Z",
@@ -7400,10 +7400,68 @@
           "at": "2026-09-30T14:06:18Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 7be8e55afe13d3b1827f663ae81a1bfcdc77a096"
+        },
+        {
+          "at": "2026-09-30T14:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 26: PASS"
         }
       ],
       "fix_revision": "7be8e55afe13d3b1827f663ae81a1bfcdc77a096",
-      "fix_summary": "D-042: checkClosure anchor 1 is unconditional -- a closure verified in a round whose source_commit is not present is rejected, so no metadata-tolerance skips the frozen-candidate check. 0/114 real closures affected."
+      "fix_summary": "D-042: checkClosure anchor 1 is unconditional -- a closure verified in a round whose source_commit is not present is rejected, so no metadata-tolerance skips the frozen-candidate check. 0/114 real closures affected.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R26-code-security-reviewer-20260930T140959Z-a5ac23d9",
+          "session_id": "a5ac23d9-47d1-401c-ae98-d9e294542c9c"
+        },
+        "at": "2026-09-30T14:20:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-26/sec26-repro.tests.mjs.txt",
+          "docs/delivery/test-evidence/DG0/code-security/round-26/run-sec26-repro.sh",
+          "docs/delivery/test-evidence/DG0/code-security/round-26/sec26-repro.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-26/d042-mutation.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-26/closure-census.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-26/real-repo-gate-dryrun.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-26/node-tests.log"
+        ],
+        "note": "Verified against the round-26 candidate 7ac71190… (source 7edacdc). Fix 7be8e55 is an ancestor of 7edacdc. checkClosure (rules.mjs:746-749) now enforces anchor 1 unconditionally. If the verifying round's source_commit does not resolve, the closure is rejected with '... is not present; a closure must be verified against a retained candidate (F-DG0-169)'. Otherwise the fix must be an ancestor of it. Anchor 2 (the verifying run's head; checkInvocation still hard-errors on a malformed, absent or manifest-less head) and anchor 3 (the gate candidate) are unchanged. REPRODUCED, THEN SHOWN FIXED on --no-local clones of both commits (sec26-repro.log). My round-25 case, SEC25-3/SEC26-1: a superseded round with a self-consistent write-once manifest naming an absent source_commit, and a candidate-scope fix committed after that round's freeze and before its verifier ran. At the round-25 baseline 2386a0f it closes the High, mandatory F-DG0-101 with 0 errors. At 7edacdc it is rejected by the new anchor-1 error. The former control SEC24-2 (the same forged round with a real fix, closure verified in it) is now rejected too. That is by design: no closure may be verified in an absent-source round. NO NEW GAP: the surviving findManifest/D-035 tolerance still works when the absent-source round is not the verifying round (SEC26-3: the finding is re-verified in a retained gate round, 0 errors). It can no longer carry a verification. The anchor-2 rejection of my round-23 forge still holds (SEC24-1/SEC25-2). Absent or typo'd fixes are rejected (SEC24-3, F-DG0-164/246), malformed heads are rejected (SEC24-4, F-DG0-164/166/249), and the immutable-field lock holds (SEC24-5, F-DG0-165). The genuine post-freeze case is still rejected by anchor 1 (SEC24-6/SEC25-1, F-DG0-168). MUTATION: the new unit test 'D-042 / F-DG0-169' fails with the pre-D-042 rules.mjs and passes on the candidate (d042-mutation.log). The full node suites pass 102/102 and the Python suite 22/22. The pre-freeze passes in a fresh --no-local clone. REAL HISTORY: all 115 real CLOSED_VERIFIED closures have a present round source_commit (0 skip anchor 1, 0 fail any anchor). Only round 18's source_commit is absent, and it has no verifying run. The synthetic-gate dry run shows 0 'is not present' closure errors and 0 anchor errors. The checkClosure comment now states the guarantee accurately. The commitPresent() header (:603-605) still calls anchor 1 conditional; I raise that separately as F-DG0-170 (Low, documentation only). It does not reopen this finding."
+      }
+    },
+    {
+      "id": "F-DG0-170",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-042 made anchor 1 unconditional and updated the checkClosure comment, but the commitPresent() header comment still describes anchor 1 as conditional ('when it resolves; this findManifest tolerance covers the one case it may not'). Two comments in rules.mjs now contradict each other about the closure guarantee",
+      "reproduction": "At 7edacdc, tools/gates/lib/rules.mjs:602-605 (the header comment above commitPresent) says: 'the fix must be an ancestor of THREE anchors -- the verifying round's frozen source_commit (when it resolves; this findManifest tolerance covers the one case it may not), the verifying run's real head, and the gate candidate'. The code it describes, rules.mjs:746-749, now rejects outright a closure verified in a round whose source_commit does not resolve ('... is not present; a closure must be verified against a retained candidate (F-DG0-169)'). The new checkClosure comment (:726-741) says the same. My round-25 finding F-DG0-169 named this exact comment in its 'expected' (c): 'correct the comments at rules.mjs:603-605 and :737-738'. D-042 corrected the checkClosure comment but left :603-605. Command: git show 7edacdc:tools/gates/lib/rules.mjs | sed -n 597,605p (output with line numbers in docs/delivery/test-evidence/DG0/code-security/round-26/stale-comment.log). Behaviour is unaffected: SEC26-1 and SEC26-2 in sec26-repro.log show that the absent-source case is rejected.",
+      "expected": "Every comment in rules.mjs describes anchor 1 the way the code enforces it: unconditionally, with a closure verified in an absent-source round rejected. Suggested wording at :603-605: 'the verifying round's frozen source_commit (which must be present: a closure verified in a round whose source_commit does not resolve is rejected, D-042), the verifying run's real head, and the gate candidate'. D-042's text is already accurate.",
+      "actual": "The header comment still reads as though anchor 1 is skipped for an absent-source round. That was the pre-D-042 behaviour. A reader auditing the validator from that comment would underestimate the guarantee and could misjudge a future change to this code. Impact is documentation accuracy only: no gate outcome depends on it, and the code and its test (validator.test.mjs 'D-042 / F-DG0-169') are correct. This is the same class as F-DG0-167/F-DG0-014, a stale comment after a validator change, recorded at Low under threat-model.md.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-26/stale-comment.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-26/sec26-repro.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-26/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "FIXED_PENDING_VERIFICATION",
+      "history": [
+        {
+          "at": "2026-09-30T14:17:00Z",
+          "status": "OPEN",
+          "note": "Raised in round 26 (code-security-reviewer)."
+        },
+        {
+          "at": "2026-09-30T14:23:58Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at db5afe88222cce71f15ef4935e6636f124d48dac"
+        }
+      ],
+      "fix_revision": "db5afe88222cce71f15ef4935e6636f124d48dac",
+      "fix_summary": "D-043: the commitPresent() header comment is reduced to answering presence only (no policy); the closure model is documented once, in checkClosure. Comment audit confirms no other drift. No behaviour change."
     }
   ]
 }
