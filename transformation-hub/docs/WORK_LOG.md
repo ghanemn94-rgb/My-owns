@@ -5,7 +5,7 @@
 ## Current state — 2026-09-30
 
 - **Branch:** `claude/mobily-transformation-hub` (repository `My-owns`, project directory `transformation-hub/`).
-- **Checkpoint revision:** `b41fe6e` plus the QA follow-up commit on top of it (see `git log`).
+- **Checkpoint revision:** `3735be4`.
 
 ### Phases
 
@@ -17,6 +17,7 @@
   - QA final re-review (`docs/reviews/P2-qa-final-review.md`): PASS WITH CONDITIONS. QA-P2F-02, QA-P2F-03 and the QA-P2-05 residual are fixed; C1 (disposition of the 23 P2 musts still Implemented) and C4 addressed; C2 goes into the P3/P4 reviews.
   - Next: the P2 gate report on a revision with a green CI run.
   - Open questions for the governance owner: Q-40, Q-43, O-1, A-50/52/53, DOM-P2R-06/08; from P4: the 30-day long-stop warning, an extension decision type, and whether a decision paper can name a closing / model version / TSA / cutover plan (subject rule `required`).
+- **P3 and P4 security review** (`docs/reviews/P3-P4-security-review.md`, at `5bf274b`): P3 PASS WITH CONDITIONS (Medium SEC-P34-01 P3 part, -02, -05, -07 to fix before the P3 gate), P4 PASS WITH CONDITIONS (Medium SEC-P34-01 P4 part, -03, -04 before the P4 gate); the P2 closure re-check (C2) confirmed SEC-P2-02/03/05/06 and SEC-P2-01 with Low residuals SEC-P34-12/13. Fixes assigned.
 - **P3:** backends and web screens merged. DOM-P2R-05, DOM-P2F-08 and DOM-P2F-09 fixed (readiness now uses the shared decision-use registry: kinds `tsa_service`, `tsa_extension`, `cutover_plan`). Reviews not run.
 - **P4:**
   - Backends and web screens merged.
@@ -28,7 +29,7 @@
 ### Verified
 
 - **Gates deadlock fixed:** a gate command and the worker's evaluation refresh could lock the same `gate_assessment` rows in opposite orders ("deadlock detected" → 409, seen once in the full Playwright run). Every gate writer now takes the per-project advisory lock `hub_gates:<projectId>` first (module guide, "One writer of a project's gate state at a time"). Regression `apps/api/test/gates/gate-lock-order.spec.ts` reproduces the 409 without the lock and passes with it.
-- **API integration suite:** 100 files, 847 passed + 2 expected fail (DOM-P2F-02/04 probes) at `b41fe6e`. Domain 424/424, contracts 100/100, `pnpm typecheck` clean.
+- **API integration suite:** 101 files, 856 passed + 2 expected fail (DOM-P2F-02/04 probes) at `3735be4`. Domain 424/424, contracts 100/100, `pnpm typecheck` clean.
 - **CI:** run 48 at `5bf274b`: every job green except one API test — the P2 QA race probe was written before the DOM-P2F-08 fix (a G1 paper must name the perimeter version) and met it at the merge; the fixture now raises the paper for the version, and the second concurrent G1 decide is asserted as 422 `gate_assessment.invalid_transition` (the gate lock makes it behave as a sequential second attempt). Playwright passed in run 48. Earlier: run 34 fully green at `4fadf91`. Run 38 at `40fac20` was red (shellcheck and an RTL-detector false positive), fixed in `a58218b`.
 - **Lint:** root `pnpm lint` passes. Secret scan: tree and history pass.
 
