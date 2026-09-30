@@ -30,7 +30,26 @@ export interface Personas {
 export interface GateView {
   id: string;
   key: string;
-  assessment: { id: string; cycle: number; status: string; version: number; decisionId: string | null; decidedBy: string | null; decidedAt: string | null; reassessment: { needsReassessment: boolean; criteria: { key: string }[]; escalationId: string | null; upstreamGateKeys: string[] } };
+  ownerRole: string;
+  reviewerRole: string;
+  approverRole: string;
+  assessment: {
+    id: string;
+    cycle: number;
+    status: string;
+    version: number;
+    decisionId: string | null;
+    decidedBy: string | null;
+    decidedAt: string | null;
+    submittedBy: string | null;
+    startedBy: string | null;
+    reviewedBy: string | null;
+    reviewOutcome: string | null;
+    reviewNote: string | null;
+    reassessment: { needsReassessment: boolean; criteria: { key: string }[]; escalationId: string | null; upstreamGateKeys: string[] };
+  };
+  /** Gate-level review of the current cycle (DOM-P2-16). */
+  review: { state: string; reviewerRole: string; outcome: string | null; reviewedBy: string | null; reviewedByName: string | null; reviewedAt: string | null; note: string | null; startedBy: string | null; startedByName: string | null };
   evaluation: { ready: boolean; hasWaivers: boolean; blockers: { kind: string; ref: string; message: string }[]; counts: Record<string, number> };
   blockers: { kind: string; ref: string; message: string }[];
   rag: string;
@@ -225,10 +244,31 @@ export async function gateDecision(
   return { id: d.id, code: d.code, status };
 }
 
+/**
+ * The persona holding each gate OWNER role in the test project (DOM-P2-16): the owner starts and submits the cycle. The
+ * workstream lead owns through the workstream it leads (tech.lead, first workstream). The project manager may also act as
+ * owner (access-matrix §2.4), but for G0/G1 the PM is the gate REVIEWER, who must not start or submit the cycle.
+ */
+const OWNER_PERSONA: Record<string, keyof Personas> = {
+  secretary_cpmo: 'secretary',
+  workstream_lead: 'techLead',
+  legal_restricted: 'legal',
+  project_manager: 'pm',
+};
+
+/** The persona holding the gate's owner role. */
+export function ownerFor(p: Personas, ownerRole: string): Client {
+  const k = OWNER_PERSONA[ownerRole];
+  if (!k) throw new Error(`no test persona holds gate owner role ${ownerRole}`);
+  return p[k];
+}
+
+/** The gate's owner starts the cycle (a new cycle or one reopened through the controlled reopen). */
 export async function startGate(p: Personas, projectId: string, key: string) {
   const g = await gateByKey(p.pm, projectId, key);
   if (g.assessment.status === 'not_started' || g.assessment.status === 'reopened') {
-    await p.pm.post(`/api/v1/projects/${projectId}/gates/${g.id}/assessment/start`, { expectedVersion: g.assessment.version }).expect(201);
+    const r = await ownerFor(p, g.ownerRole).post(`/api/v1/projects/${projectId}/gates/${g.id}/assessment/start`, { expectedVersion: g.assessment.version });
+    expect(r.status, JSON.stringify(r.body)).toBe(201);
   }
 }
 
@@ -270,17 +310,27 @@ export async function meetAllMandatory(p: Personas, projectId: string, gateKey: 
   for (const c of g.criteria) if (c.mandatory && !except.includes(c.key) && c.assessment.status !== 'met') await meetCriterion(p, projectId, gateKey, c.key);
 }
 
-export async function markReady(p: Personas, projectId: string, key: string) {
+/** The gate's designated REVIEWER role records the gate-level review (DOM-P2-16) — never the person who started the cycle. */
+export async function reviewGate(p: Personas, projectId: string, key: string, outcome: 'endorse' | 'return' = 'endorse', note = 'Gate assessment reviewed (test)') {
   const g = await gateByKey(p.pm, projectId, key);
-  const r = await p.pm.post(`/api/v1/projects/${projectId}/gates/${g.id}/assessment/mark-ready`, { expectedVersion: g.assessment.version });
+  const r = await reviewerFor(p, g.reviewerRole).post(`/api/v1/projects/${projectId}/gates/${g.id}/assessment/review`, { expectedVersion: g.assessment.version, outcome, note });
   expect(r.status, JSON.stringify(r.body)).toBe(201);
   return r.body;
 }
 
-/** Start, meet all mandatory criteria and mark ready. */
+/** The gate's owner submits the cycle for decision (needs a current endorsement by the gate reviewer). */
+export async function markReady(p: Personas, projectId: string, key: string) {
+  const g = await gateByKey(p.pm, projectId, key);
+  const r = await ownerFor(p, g.ownerRole).post(`/api/v1/projects/${projectId}/gates/${g.id}/assessment/mark-ready`, { expectedVersion: g.assessment.version });
+  expect(r.status, JSON.stringify(r.body)).toBe(201);
+  return r.body;
+}
+
+/** Owner starts, criteria met by their designated reviewers, gate reviewer endorses (unless current), owner marks ready. */
 export async function makeReady(p: Personas, projectId: string, key: string) {
   await startGate(p, projectId, key);
   await meetAllMandatory(p, projectId, key);
+  if ((await gateByKey(p.pm, projectId, key)).review.state !== 'endorsed') await reviewGate(p, projectId, key);
   return markReady(p, projectId, key);
 }
 

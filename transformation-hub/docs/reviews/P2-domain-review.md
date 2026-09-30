@@ -646,7 +646,7 @@ still fail at this revision, as expected.
 | **DOM-P2-09** (Medium) | **Fixed** | My Work adds `gate_decision` (the gate's approver role, not the submitter), `gate_criterion_review` (designated reviewer; evidence submitted or a pending not-applicable proposal; never the evidence owner / proposer), `waiver_approval` (current waiver authority role of the target, not the requester, target visible), `evidence_verification` (active unverified or conflicting links; not the linker nor the version uploader; document and target visible via `RecordVisibility`), `action_closure_verification` (not the reporter) and `minutes_approval` (not the drafter). Every item uses the same policy inputs as its command (fail-closed requester / authority). Web inbox: status enums and en + ar labels for the six types. | probe DOM-P2-09; gates spec "DOM-P2-09 …" (2); planning spec "DOM-P2-09 …" (3) |
 | **DOM-P2-10** (Low) | **Fixed** | A project-level override is **capped at red** while a red critical item (open blocker, missed / overdue critical milestone) exists (`capOverrideAtOpenBlockers`): the approved override stays on record and applies again once the blockers are cleared (until it expires); the explanation says why it is not applied. Creating and approving the override are unchanged (the probe requires them to succeed). Workstream-level overrides are unchanged: the project aggregate already lists a blocked workstream as red critical ("does not hide the blocker"). | probe DOM-P2-10; domain `rules.test.ts` "DOM-P2-10 …" |
 | **DOM-P2-15** (Low) | **Fixed** | Waivability is determined only by the criterion's **designated specialist** — its reviewer role when that role holds `gates.criterion.set_waivability`, otherwise `functional_approver` (403 `gates.waivability.not_designated_specialist`) — and only while the cycle is `not_started` / `in_assessment` / `reopened` (422 `gates.assessment.not_editable`); the record version names the determining role. `gate_criterion.applicability` is now set from the recorded determination: `not_applicable` when a not-applicable proposal is approved, `applicable` when it is rejected (versioned, audit `gates.criterion.set_applicability`). business-gates.md §2.1. | gates spec "DOM-P2-15 …" (2); domain "DOM-P2-15 …" (2) |
-| **DOM-P2-16** (Low) | **Not fixed — blocked** | Enforcing the gate owner and reviewer roles needs changes outside this assignment: (1) policy — `gates.assessment.submit` is held only by `project_manager`, while the DC template's gate owners are `secretary_cpmo` (G0), `workstream_lead` (G1, G4, G5, G6), `legal_restricted` (G2) and `project_manager` (G3, G7), so "the owner submits" is impossible without granting `gates.assessment.submit` to those roles; and G0/G1 have `project_manager` as gate reviewer, the same role that submits today; (2) UI — a gate-level review is a new user action (the web scope of this assignment is limited to i18n and My Work), and requiring it without a button would break the gate journey. Design for re-phasing: grant the submit permission to the owner roles; `start` / `mark-ready` / `back` / `link-decision` require the gate's `ownerRole` (designated, like criterion reviewers); new command `POST …/gates/:gateId/assessment/review {expectedVersion, outcome: endorse \| return, note}` by the gate's `reviewerRole` (`gates.assessment.review`, not_self vs the owner-submitter), recorded on the cycle (`reviewed_by/at`, outcome, note); `mark-ready` requires an endorsement recorded after the cycle's last criterion change; `decide` stays not_self vs the submitter and additionally vs the gate reviewer; My Work item `gate_review`; the gate test kit and E2E fixture add the review step. | — |
+| **DOM-P2-16** (Low) | **Not fixed — blocked** | Enforcing the gate owner and reviewer roles needs changes outside this assignment: (1) policy — `gates.assessment.submit` is held only by `project_manager`, while the DC template's gate owners are `secretary_cpmo` (G0), `workstream_lead` (G1, G4, G5, G6), `legal_restricted` (G2) and `project_manager` (G3, G7), so "the owner submits" is impossible without granting `gates.assessment.submit` to those roles; and G0/G1 have `project_manager` as gate reviewer, the same role that submits today; (2) UI — a gate-level review is a new user action (the web scope of this assignment is limited to i18n and My Work), and requiring it without a button would break the gate journey. Design for re-phasing: grant the submit permission to the owner roles; `start` / `mark-ready` / `back` / `link-decision` require the gate's `ownerRole` (designated, like criterion reviewers); new command `POST …/gates/:gateId/assessment/review {expectedVersion, outcome: endorse \| return, note}` by the gate's `reviewerRole` (`gates.assessment.review`, not_self vs the owner-submitter), recorded on the cycle (`reviewed_by/at`, outcome, note); `mark-ready` requires an endorsement recorded after the cycle's last criterion change; `decide` stays not_self vs the submitter and additionally vs the gate reviewer; My Work item `gate_review`; the gate test kit and E2E fixture add the review step. | — **Update 2026-09-30: Fixed** in the follow-up implementation after the lead's policy grant (`a471265`) — see "DOM-P2-16 follow-up" at the end of this document. |
 | **DOM-P2-19** (Low) | **Fixed** | Reviewing a claim as conflicting with another claim flags **both**: the counterpart becomes `conflicting` with the back-reference, keeps its extracted, source-reported and confirmed values, and its pending "apply" proposal is invalidated (`approval_request.status = invalidated`); separation of duties also applies to the counterpart (its own extractor cannot flag it — 403, nothing changes); audit `documents.claim.conflict`, `source.updated`. A claim that stops being confirmed has its pending proposal invalidated too. | documents spec "AT-14 …" (2) |
 | **DOM-P2-21** (Low) | **Documented; made consequential** | business-gates.md §4 rule 9 states precisely where documents-module verification is decisive and where it is advisory: for gate criteria (and task / deliverable acceptance) the designated reviewer / approver — never the evidence owner — is the checker, so a positive verification is advisory for acceptance; a **rejection** (defective evidence) is decisive: the link stops counting at once, an accepted criterion of an undecided cycle returns to `unmet`, and an approved gate is flagged for controlled reassessment (DOM-P2-05). Unverified evidence now appears in the verifiers' My Work (DOM-P2-09), and an evidence prerequisite (DOM-P2-18) is satisfied only by **verified** evidence. A per-criterion "verification required before acceptance" parameter for `approved_document` / `board_resolution` / `regulatory_record` remains a possible template extension. | business-gates.md §4 rule 9; tests of DOM-P2-05 and DOM-P2-18 |
 | **DOM-P2-17** (Medium, feature gap) | **Implemented (API)** | `cross_project_dependency` extended (dependent item, depended-upon task / milestone of another project, close reason/by/at, version) and routes `GET/POST /projects/:projectId/cross-project-dependencies`, `POST …/:dependencyId/close`. Minimum disclosure: a dependency — and anything about the other project's item — is listed, counted and addressable **only for users who can read both ends** (project membership, classification, workstream reach of `planning.plan.read`); everyone else gets nothing (not counted; 404). The other end is validated inside its own project (never a submitted id trusted); audited in the dependent project only; `atRisk` is schedule-based (item finish after `neededBy`). The Integrated-Plan UI for it is not part of this change. | `apps/api/test/planning/cross-project-and-prerequisites.spec.ts` "DOM-P2-17 …" (5) |
@@ -714,3 +714,126 @@ $ node apps/api/dist/cli/openapi.js …      # 353 operations (incl. the 6 new D
 
 NOT EXECUTED: Playwright E2E (`pnpm test:e2e`, needs the running stack and a production web build) — including the
 updated `p2-gates.spec.ts` (d).
+
+---
+
+## DOM-P2-16 follow-up (implementation, 2026-09-30) — gate-level owner and reviewer roles
+
+| Item | Value |
+|---|---|
+| Implementer | backend-data-engineer (implementation mode, separate context; not the author of this review) |
+| Branch | `worktree-agent-a14e782c498c02394`, from `claude/mobily-transformation-hub` `f136c42` (includes the lead's policy grant `a471265`) |
+| Status | **Fixed** (API, domain, web gate screens, My Work, seeds, test kit, E2E fixture) |
+
+The reviewer's text above is unchanged. The design recorded in the fix-status row was followed, with the choices below.
+
+### What changed
+
+- **Owner (start, mark ready, back to assessment, link decision).** `gates.assessment.submit` now carries `own_workstream`
+  (policy matrix and access-matrix.md: JSON block, §6 `Cond.` column `C,W`, counts); the service evaluates it with
+  `ownerRoles: [gate.ownerRole]`, so the owner-role holder or the **project manager** (access-matrix §2.4 convention)
+  passes. A workstream-lead owner acts through the workstream it leads (the policy check runs against that workstream,
+  as for workstream-designated criterion reviewers). Any other holder of the permission gets 403 `gates.not_gate_owner`
+  (audited as denied). `start` records `started_by` / `started_at`. A cycle cannot start when the gate's owner, reviewer
+  and approver roles are not all present, distinct and holding their gate permissions (422 `gates.definition.roles_incomplete`
+  — the REQ-LCY-010 AT "a gate without an approver cannot be assessed").
+- **Gate-level review** — `POST /api/v1/projects/:projectId/gates/:gateId/assessment/review`
+  `{ expectedVersion, outcome: endorse | return, note }` (contract `gates.reviewAssessment`, permission
+  `gates.assessment.review`). Order (I-R3): designated gate reviewer role (403 `gates.not_designated_gate_reviewer`) →
+  state (cycle `in_assessment`, else 422 `gates.review.invalid_state`; an **endorsement** needs every criterion satisfied —
+  prerequisites aside — else 422 `gates.review.criteria_incomplete`; a **return** is always possible) → separation of
+  duties (`not_self` against the person who **started** the cycle; unknown starter → 403 `policy.sod_subject_unknown`).
+  Recorded on the cycle: `reviewed_by`, `reviewed_at`, `review_outcome`, `review_note` and `review_basis` = SHA-256 of the
+  canonical criterion state reviewed (domain `gateReviewBasis`: criterion definition versions, the cycle's criterion
+  assessment row versions, every evidence link of the gate's criteria with status and version, every waiver with status
+  and version). Audited `gates.assessment.review_endorse` / `gates.assessment.review_return`; earlier reviews of the cycle
+  stay in the audit trail. A return keeps the cycle in assessment and blocks submission until a new endorsement.
+- **Mark ready** additionally needs an endorsement **recorded after the cycle's last criterion change**: the recorded basis
+  must equal the current one (422 `gates.assessment.review_required` / `review_returned` / `review_stale`), and the submitter
+  must not be the endorsing reviewer (403 `gates.assessment.reviewer_cannot_submit`). The fingerprint is clock-independent;
+  any change of evidence (added, verified, rejected, conflicting, superseded), criterion status (including not-applicable
+  steps), waiver (requested or decided) or applicability / waivability makes an endorsement stale — and, conservatively, an
+  edit of a criterion's working note too (it bumps the criterion assessment version).
+- **Decide** — `not_self` now covers the submitter **and** the gate reviewer (domain `separationSubject`; either unknown →
+  403 `policy.sod_subject_unknown`). The decision snapshot (`evaluation.atDecision.review`) records the starter, submitter
+  and the review relied upon.
+- **My Work** — new item `gate_review` for the gate's designated reviewer role: a cycle in assessment whose criteria are all
+  satisfied and whose current state has not been reviewed (never reviewed, or changed after the last review); never offered
+  to the person who started the cycle (same inputs as the command, via `GatesService.pendingGateReviews`).
+- **Schema** — `gate_assessment`: `started_by`, `started_at`, `reviewed_by`, `reviewed_at`, `review_outcome`
+  (enum `gate_review_outcome`), `review_note`, `review_basis`; checks `gate_assessment_review_ck` (all review fields together,
+  non-empty note) and `gate_assessment_started_ck`. The single migration `0000_initial_schema.sql` was regenerated (no 0001).
+- **Web (gate screens only)** — gate detail: "Review assessment" action (endorse / return with a required note) shown only
+  to the designated reviewer while the cycle is in assessment, and not to the person who started it (a hint explains why);
+  "Gate review" panel (state, outcome, reviewer, date, note, starter); owner-only hint; submit dialog states the review
+  requirement. My Work label `gate_review`. en + ar keys; statuses `gateReviewOutcomes`, `gateReviewStates`.
+- **Seeds / kits / E2E** — demo seed: every cycle is started by the persona holding the gate's owner role (G0 secretary,
+  G1/G5 technology workstream lead, G2 legal); G0 is endorsed by the PM, submitted by the secretary and decided by the
+  sponsor. Gate test kit: `startGate` / `markReady` use the owner persona, new `reviewGate` (gate reviewer persona),
+  `makeReady` adds the review. No other kit or seed drives gate assessments (carve-out, finance, JV and readiness kits only
+  reuse `setupProject` / `setupGovernance`). `e2e/tests/p2-gates.spec.ts` (d): the owner cannot submit before the review;
+  the PM endorses G1 **in the UI**; the workstream lead submits.
+
+### Separation-of-duties subjects (design decision)
+
+"The reviewer is not the person who started the cycle or who last changed the assessment for submission" is implemented
+as two checks, because the submission (mark ready) happens **after** the review: at review time the reviewer must not be
+the recorded starter; at submission time the submitter must not be the reviewer whose endorsement is relied upon. Together
+they make starter ≠ reviewer and submitter ≠ reviewer for every submission, and decide adds approver ∉ {submitter,
+reviewer}. The project manager may act as owner of any gate, so for G0/G1 (PM reviews) a PM who starts or submits a cycle
+cannot be its reviewer — another PM must review, or the owner role holder starts and submits.
+
+### Existing tests changed, and why
+
+- `apps/api/test/gates/gate-test-kit.ts`: owner persona for start / mark ready; review step in `makeReady` (the PM can no
+  longer start and submit G0/G1 that it reviews).
+- `gate-evaluation-rules.spec.ts` ("once ready for decision, criteria are frozen …") and `at-14-reassessment.spec.ts`
+  ("the new cycle needs … a fresh review …"): the PM's direct mark ready is replaced by the gate review + owner submission;
+  every assertion kept; AT-14 additionally asserts that the reopened cycle needs a fresh gate endorsement (422).
+- `p2-gate-authority-reassessment.spec.ts` (DOM-P2-09 My Work): comment corrected (the PM is now the G1 reviewer, not the
+  submitter) and one assertion added (the submitter is not offered the decision).
+
+### New tests
+
+- Domain `packages/domain/src/gates.test.ts` "DOM-P2-16 — gate owner, gate reviewer and approver roles" (9): template roles
+  distinct and holding their permissions, the REQ-LCY-010 AT (no approver / roles not distinct → cannot be assessed), policy
+  conditions, endorsement needs complete criteria, reviewable states, review basis (order-independent; changes with each kind
+  of criterion change), review states, the submission guard (422 / 403 codes), separation subject.
+- API `apps/api/test/gates/dom-p2-16-gate-roles.spec.ts` (11): workstream lead owns G1/G4 but not G2 (403, audited); PM
+  override; roles-incomplete gate cannot start (422); AI identity cannot start or review; designated gate reviewer (403) and
+  state (422); endorsement needs complete criteria; return recorded and audited; returned cycle cannot be submitted; My Work
+  `gate_review` for the designated reviewers, not the starter; mark ready refused without / with a stale endorsement (422) and
+  to the endorsing reviewer (403, audited); decide refused to the reviewer and to the submitter (403), approved otherwise with
+  the review in the decision snapshot; reviewer = starter refused (403); unknown starter fails closed (403).
+- Mutation check (executed, then reverted): disabling the submission guard, the decide reviewer subject and the review
+  not_self makes 5 of the new API tests fail; disabling the owner rule makes 2 fail.
+
+### Commands and real results (own databases `hub_test_p2g16`, `hub_test_p2g16_boot`, `hub_test_p2g16_e2e`)
+
+```
+$ pnpm --filter @hub/domain --filter @hub/contracts run test          (vitest in each package)
+packages/domain:     Test Files 17 passed (17)   Tests 357 passed (357)   (baseline at f136c42: 348)
+packages/contracts:  Test Files 2 passed (2)     Tests 100 passed (100)
+$ TEST_DATABASE_URL=…/hub_test_p2g16 TEST_DATABASE_MIGRATION_URL=…/hub_test_p2g16 pnpm --filter @hub/api test
+ Test Files  79 passed (79)      Tests  702 passed (702)      (baseline at f136c42 on hub_test_p2g16base: 78 / 691 passed)
+$ pnpm lint     # every package; web: i18n check 3868 keys per language, 569 enum values, 42 server codes; hard-coded strings: passed
+$ python3 scripts/requirements/apply_status.py --check      # status-evidence.yaml OK (263 entries); REQ-LCY-010 → Tested
+$ node apps/api/dist/cli/openapi.js …                        # 505 operations (incl. gates.reviewAssessment)
+$ pnpm --filter @hub/e2e exec playwright test   (API :4716 with HUB_RATE_LIMIT_PUBLIC_PER_MINUTE=1000 + worker, production
+                                                 web build with HUB_API_URL at build time on :3716, fresh migrate + demo seed)
+  145 passed, 1 failed, 3 did not run (11.2 min) — p2-gates (a)–(e) all passed, incl. (d) with the gate review in the UI;
+  a11y 114 scans PASS (0 serious/critical); the one failure is p3-carveout (a) AT-07, the known F-13 regression at HEAD
+  (`change_control.amount_unquantified`, no costImpact field in the UI — unrelated); (b)–(d) skipped after it.
+$ playwright test tests/p3-carveout.spec.ts --grep "\((b|c|d)\)"   →  3 passed
+
+After merging claude/mobily-transformation-hub c2fa6dd (P4 web UIs, P1 gate close-out; no schema change, only the generated
+requirement matrix conflicted — re-rendered with apply_status.py):
+$ pnpm lint                                        → passed (i18n 18 namespaces, 5537 keys, 611 enum values, 78 server codes)
+$ domain / contracts tests                         → 357 / 100 passed
+$ pnpm --filter @hub/api test                      → Test Files 79 passed (79), Tests 703 passed (703)
+$ playwright (fresh migrate + seed, production build): p2-gates 5 passed; p3-readiness 2 passed; p3-carveout (a) AT-07
+  failed (the known F-13 issue), (b)–(d) 3 passed in a separate run; a11y --grep "gate|inbox|my-work|keyboard" 14 passed
+```
+
+Not executed: Docker / compose, Helm. The data dictionary and ERD (`docs/architecture/data-dictionary.md`, generated from the
+live schema) were not regenerated for the seven new `gate_assessment` columns — to be refreshed by the lead on integration.

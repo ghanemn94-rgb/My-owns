@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, loginAs, owner } from '../helpers';
-import { setupProject, gateByKey, crit, startGate, meetCriterion, meetAllMandatory, addEvidence, supersedeAll, Personas } from './gate-test-kit';
+import { setupProject, gateByKey, crit, startGate, meetCriterion, meetAllMandatory, addEvidence, supersedeAll, reviewGate, markReady, Personas } from './gate-test-kit';
 
 /**
  * Server-side gate evaluation rules (spec §3): 100% task completion never unlocks a gate; "not applicable" needs an
@@ -194,9 +194,11 @@ describe('Prerequisite gates and frozen cycles [REQ-LCY-010]', () => {
   });
 
   it('once ready for decision, criteria are frozen until the owner sends the gate back to assessment', async () => {
+    // DOM-P2-16: the G0 reviewer (PM) endorses, the G0 owner (secretary) submits.
+    await reviewGate(p, projectId, 'G0');
+    await markReady(p, projectId, 'G0');
     let g0 = await gateByKey(p.pm, projectId, 'G0');
-    await p.pm.post(`/api/v1/projects/${projectId}/gates/${g0.id}/assessment/mark-ready`, { expectedVersion: g0.assessment.version }).expect(201);
-    g0 = await gateByKey(p.pm, projectId, 'G0');
+    expect(g0.assessment.status).toBe('ready_for_decision');
     const c = crit(g0, 'G0-C01');
     const frozen = await p.secretary.post(`/api/v1/projects/${projectId}/gates/${g0.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'unmet' });
     expect(frozen.status).toBe(422);

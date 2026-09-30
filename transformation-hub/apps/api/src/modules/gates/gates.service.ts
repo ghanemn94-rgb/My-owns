@@ -12,6 +12,17 @@ import {
   carryForwardCriteria,
   assertCriterionEditable,
   assertGateDecisionAllowed,
+  assertGateEndorsedForSubmission,
+  assertGateReviewable,
+  assertGateRolesComplete,
+  assertGateReviewOutcomeAllowed,
+  gateCriteriaComplete,
+  gateReviewPending,
+  gateReviewState,
+  separationSubject,
+  GATE_REVIEWABLE_STATUSES,
+  GateReviewOutcome,
+  GateReviewState,
   assertNotApplicableAllowed,
   assertWaivabilityDetermination,
   assertWaivabilityDeterminer,
@@ -52,6 +63,7 @@ import {
   ProjectRow,
   ReassessmentFlags,
   reassessmentOf,
+  reviewOf,
   WaiverRow,
 } from './gates.evaluation';
 import { WaiverService, WaiverRecord, assertHumanActor } from './waiver.service';
@@ -129,7 +141,8 @@ export class GatesService implements OnModuleInit {
     const decisions = await this.decisionsFor(projectId, b.assessments.filter((a) => a.isCurrent).map((a) => a.decisionId), []);
     const authorities = await this.authoritiesFor(projectId, [...decisions.values()]);
     const purposes = await this.templatePurposes(b.project);
-    return { items: b.gates.map((g) => this.summary(ctx, b, g, decisions, authorities, purposes)) };
+    const names = await this.userNames(b.assessments.filter((a) => a.isCurrent).flatMap((a) => [a.startedBy, a.reviewedBy]));
+    return { items: b.gates.map((g) => this.summary(ctx, b, g, decisions, authorities, purposes, names)) };
   }
 
   async getGate(ctx: RequestContext, projectId: string, gateId: string) {
@@ -139,8 +152,8 @@ export class GatesService implements OnModuleInit {
     const cycles = b.cycles(gate.id);
     const decisions = await this.decisionsFor(projectId, cycles.map((a) => a.decisionId), [gate.key]);
     const authorities = await this.authoritiesFor(projectId, [...decisions.values()]);
-    const summary = this.summary(ctx, b, gate, decisions, authorities, await this.templatePurposes(b.project));
     const cur = b.current(gate.id);
+    const summary = this.summary(ctx, b, gate, decisions, authorities, await this.templatePurposes(b.project), await this.userNames([cur.startedBy, cur.reviewedBy]));
     const crits = b.criteriaOf(gate.id);
     const critIds = new Set(crits.map((c) => c.id));
     // Displayed counters use the evidence list's visibility (SEC-P1R-05); the evaluation above counts every link.
@@ -171,37 +184,95 @@ export class GatesService implements OnModuleInit {
   // ---------------------------------------------------------------------------------------------------------
   // Assessment lifecycle commands
 
+  /** The gate owner (owner role or project manager) starts the cycle; who started it is recorded (DOM-P2-16). */
   async startAssessment(ctx: RequestContext, projectId: string, gateId: string, body: { expectedVersion: number; note?: string }) {
     const { b, gate, cur } = await this.loadGate(projectId, gateId);
-    this.commandAssert(ctx, 'gates.assessment.submit', { projectId, classification: b.project.classification });
+    this.assertGateOwner(ctx, projectId, b.project.classification, gate);
     const to = transition('gate_assessment', GATE_ASSESSMENT_MACHINE, cur.status, 'start_assessment');
-    await updateVersioned(this.db, schema.gateAssessment, { id: cur.id, projectId, expectedVersion: body.expectedVersion }, { status: to });
-    await this.audit.record({ action: 'gates.assessment.start', entityType: 'gate_assessment', entityId: cur.id, projectId, before: { status: cur.status }, after: { status: to, gateKey: gate.key, cycle: cur.cycle }, reason: body.note ?? null });
+    // REQ-LCY-010: no cycle for a gate whose owner, reviewer and approver roles are not all present, distinct and able to act.
+    assertGateRolesComplete(gate, (role) => POLICY_MATRIX.roles[role as RoleKey]?.permissions ?? []);
+    await updateVersioned(this.db, schema.gateAssessment, { id: cur.id, projectId, expectedVersion: body.expectedVersion }, { status: to, startedBy: ctx.principal.userId, startedAt: new Date() });
+    await this.audit.record({
+      action: 'gates.assessment.start',
+      entityType: 'gate_assessment',
+      entityId: cur.id,
+      projectId,
+      before: { status: cur.status },
+      after: { status: to, gateKey: gate.key, cycle: cur.cycle, startedBy: ctx.principal.userId, ownerRole: gate.ownerRole },
+      reason: body.note ?? null,
+    });
+    return this.assessmentResult(projectId, gate.id);
+  }
+
+  /**
+   * Gate-level review (DOM-P2-16, REQ-LCY-010): the gate's DESIGNATED reviewer role endorses the owner's assessment of the
+   * cycle, or returns it for rework, with a note. Order (I-R3): role (designated reviewer, 403) -> state (cycle in
+   * assessment; an endorsement needs every criterion satisfied - 422) -> separation of duties (never the person who started
+   * the cycle; an unknown starter fails closed - 403). The review records the fingerprint of the criterion state it
+   * reviewed: any later change of evidence, criterion status, waiver or applicability makes an endorsement stale, and
+   * mark-ready then needs a fresh one. A return keeps the cycle in assessment and blocks mark-ready until a new endorsement.
+   */
+  async reviewAssessment(ctx: RequestContext, projectId: string, gateId: string, body: { expectedVersion: number; outcome: GateReviewOutcome; note: string }) {
+    const { b, gate, cur } = await this.loadGate(projectId, gateId);
+    const res = this.assertDesignatedGateReviewer(ctx, projectId, b.project.classification, gate);
+    assertGateReviewable(gate.key, cur.status);
+    const ev = b.evaluate(gate);
+    assertGateReviewOutcomeAllowed({ gateKey: gate.key, outcome: body.outcome, evaluation: ev });
+    this.policy.assert(ctx, 'gates.assessment.review', { ...res, requesterUserId: separationSubject(ctx.principal.userId, [cur.startedBy]) });
+    const basis = b.reviewBasis(gate);
+    await updateVersioned(this.db, schema.gateAssessment, { id: cur.id, projectId, expectedVersion: body.expectedVersion }, {
+      reviewedBy: ctx.principal.userId,
+      reviewedAt: new Date(),
+      reviewOutcome: body.outcome,
+      reviewNote: body.note,
+      reviewBasis: basis,
+    });
+    await this.audit.record({
+      action: body.outcome === 'endorse' ? 'gates.assessment.review_endorse' : 'gates.assessment.review_return',
+      entityType: 'gate_assessment',
+      entityId: cur.id,
+      projectId,
+      before: { reviewOutcome: cur.reviewOutcome, reviewedBy: cur.reviewedBy, reviewedAt: iso(cur.reviewedAt), reviewState: gateReviewState(reviewOf(cur), basis) },
+      after: { reviewOutcome: body.outcome, reviewedBy: ctx.principal.userId, reviewerRole: gate.reviewerRole, reviewBasis: basis, gateKey: gate.key, cycle: cur.cycle, startedBy: cur.startedBy, counts: ev.counts },
+      reason: body.note,
+    });
     return this.assessmentResult(projectId, gate.id);
   }
 
   /** Submit for decision — only when the server-side evaluation is ready (task progress is not an input). */
   async markReady(ctx: RequestContext, projectId: string, gateId: string, body: { expectedVersion: number; note?: string }) {
     const { b, gate, cur } = await this.loadGate(projectId, gateId);
-    this.commandAssert(ctx, 'gates.assessment.submit', { projectId, classification: b.project.classification });
+    this.assertGateOwner(ctx, projectId, b.project.classification, gate);
     const to = transition('gate_assessment', GATE_ASSESSMENT_MACHINE, cur.status, 'mark_ready');
     const ev = b.evaluate(gate);
     if (!ev.ready) {
       throw ruleViolation('gates.assessment.not_ready', `Gate ${gate.key} is not ready for decision: ${ev.blockers.length} blocker(s)`, { blockers: ev.blockers });
     }
+    // DOM-P2-16: the gate reviewer's endorsement recorded after the cycle's last criterion change (422), by someone other
+    // than the submitter (403).
+    const basis = b.reviewBasis(gate);
+    assertGateEndorsedForSubmission({ gateKey: gate.key, reviewerRole: gate.reviewerRole, review: reviewOf(cur), currentBasis: basis, submitterUserId: ctx.principal.userId });
     await updateVersioned(this.db, schema.gateAssessment, { id: cur.id, projectId, expectedVersion: body.expectedVersion }, {
       status: to,
       submittedBy: ctx.principal.userId,
       submittedAt: new Date(),
       evaluation: { ...((cur.evaluation as Record<string, unknown>) ?? {}), ...evalFields(ev), evaluatedAt: new Date().toISOString() },
     });
-    await this.audit.record({ action: 'gates.assessment.mark_ready', entityType: 'gate_assessment', entityId: cur.id, projectId, before: { status: cur.status }, after: { status: to, gateKey: gate.key, counts: ev.counts }, reason: body.note ?? null });
+    await this.audit.record({
+      action: 'gates.assessment.mark_ready',
+      entityType: 'gate_assessment',
+      entityId: cur.id,
+      projectId,
+      before: { status: cur.status },
+      after: { status: to, gateKey: gate.key, counts: ev.counts, submittedBy: ctx.principal.userId, reviewedBy: cur.reviewedBy, reviewedAt: iso(cur.reviewedAt), reviewBasis: basis },
+      reason: body.note ?? null,
+    });
     return this.assessmentResult(projectId, gate.id);
   }
 
   async backToAssessment(ctx: RequestContext, projectId: string, gateId: string, body: { expectedVersion: number; note?: string }) {
     const { b, gate, cur } = await this.loadGate(projectId, gateId);
-    this.commandAssert(ctx, 'gates.assessment.submit', { projectId, classification: b.project.classification });
+    this.assertGateOwner(ctx, projectId, b.project.classification, gate);
     const to = transition('gate_assessment', GATE_ASSESSMENT_MACHINE, cur.status, 'back_to_assessment');
     await updateVersioned(this.db, schema.gateAssessment, { id: cur.id, projectId, expectedVersion: body.expectedVersion }, { status: to, submittedBy: null, submittedAt: null });
     await this.audit.record({ action: 'gates.assessment.back_to_assessment', entityType: 'gate_assessment', entityId: cur.id, projectId, before: { status: cur.status }, after: { status: to, gateKey: gate.key }, reason: body.note ?? null });
@@ -211,7 +282,7 @@ export class GatesService implements OnModuleInit {
   /** Link the governance decision that will back the gate decision; until it is final the gate shows a decision blocker. */
   async linkDecision(ctx: RequestContext, projectId: string, gateId: string, body: { expectedVersion: number; decisionId: string }) {
     const { b, gate, cur } = await this.loadGate(projectId, gateId);
-    this.commandAssert(ctx, 'gates.assessment.submit', { projectId, classification: b.project.classification });
+    this.assertGateOwner(ctx, projectId, b.project.classification, gate);
     if (DECIDED_GATE_STATUSES.includes(cur.status)) throw ruleViolation('gates.assessment.decided', `Gate ${gate.key} cycle ${cur.cycle} is already decided`);
     const d = await this.loadDecision(ctx, projectId, body.decisionId);
     // DOM-P2-01: a decision that can never back this gate (no / other gate key, no approved matrix of the deciding
@@ -236,9 +307,11 @@ export class GatesService implements OnModuleInit {
   ) {
     const { b, gate, cur } = await this.loadGate(projectId, gateId);
     const withinAuthority = this.rolesOf(ctx, projectId).includes(gate.approverRole);
-    // Role → state → not the submitter + within authority (I-R3): deciding an assessment nobody submitted is 422, not 403.
+    // Role → state → not the submitter NOR the gate reviewer (DOM-P2-16) + within authority (I-R3): deciding an assessment
+    // nobody submitted is 422, not 403; an unknown submitter or reviewer fails closed (403 policy.sod_subject_unknown).
     assertHumanActor(ctx, 'gates.assessment.decide');
-    this.policy.assertApproval(ctx, 'gates.assessment.decide', { projectId, classification: b.project.classification, requesterUserId: cur.submittedBy, withinAuthority }, () =>
+    const requesterUserId = separationSubject(ctx.principal.userId, [cur.submittedBy, cur.reviewedBy]);
+    this.policy.assertApproval(ctx, 'gates.assessment.decide', { projectId, classification: b.project.classification, requesterUserId, withinAuthority }, () =>
       transition('gate_assessment', GATE_ASSESSMENT_MACHINE, cur.status, body.outcome),
     );
     const to = transition('gate_assessment', GATE_ASSESSMENT_MACHINE, cur.status, body.outcome);
@@ -264,6 +337,8 @@ export class GatesService implements OnModuleInit {
         return { criterionId: c.id, key: c.key, status: ca?.status ?? 'unmet', activeEvidence: e.active, activeEvidenceLinkIds: e.activeLinkIds, verifiedEvidence: e.verified, conflictingEvidence: e.conflicting, waiverId: ca?.waiverId ?? null };
       }),
       prerequisites: b.prerequisites(gate),
+      // The gate-level review the submission relied upon (DOM-P2-16).
+      review: { startedBy: cur.startedBy, submittedBy: cur.submittedBy, reviewedBy: cur.reviewedBy, reviewedAt: iso(cur.reviewedAt), outcome: cur.reviewOutcome, basis: cur.reviewBasis },
       decision: d
         ? { id: d.id, code: d.code, status: d.status, authorityOutcome: d.authorityOutcome, externalAuthorityReference: d.externalAuthorityReference, decisionTypeKey: d.decisionTypeKey, gateKey: d.gateKey, committeeId: d.committeeId, matrixVersionId: authority?.matrixVersionId ?? null }
         : null,
@@ -282,7 +357,18 @@ export class GatesService implements OnModuleInit {
       entityId: cur.id,
       projectId,
       before: { status: cur.status },
-      after: { status: to, gateKey: gate.key, cycle: cur.cycle, decisionId: d?.id ?? null, decisionStatus: d?.status ?? null, authorityOutcome: d?.authorityOutcome ?? null, decisionTypeKey: d?.decisionTypeKey ?? null, matrixVersionId: authority?.matrixVersionId ?? null },
+      after: {
+        status: to,
+        gateKey: gate.key,
+        cycle: cur.cycle,
+        decisionId: d?.id ?? null,
+        decisionStatus: d?.status ?? null,
+        authorityOutcome: d?.authorityOutcome ?? null,
+        decisionTypeKey: d?.decisionTypeKey ?? null,
+        matrixVersionId: authority?.matrixVersionId ?? null,
+        submittedBy: cur.submittedBy,
+        reviewedBy: cur.reviewedBy,
+      },
       reason: body.note,
     });
     await this.enqueueRecompute(ctx, projectId, `decide:${cur.id}:${to}`);
@@ -831,6 +917,56 @@ export class GatesService implements OnModuleInit {
     this.policy.assert(ctx, permission, attrs);
   }
 
+  /**
+   * How the actor holds a DESIGNATED role in the project: project-wide, or through a workstream-scoped assignment (gates
+   * carry no workstream, so the policy check then runs against the workstream the actor holds the role in).
+   */
+  private roleGrant(ctx: RequestContext, projectId: string, role: RoleKey): { held: boolean; workstreamId: string | null } {
+    const s = ctx.principal.projects.get(projectId);
+    if (!s) return { held: false, workstreamId: null };
+    if (s.roles.has(role)) return { held: true, workstreamId: null };
+    const w = s.workstreamRoles.find((x) => x.role === role);
+    return w ? { held: true, workstreamId: w.workstreamId } : { held: false, workstreamId: null };
+  }
+
+  /**
+   * Gate OWNER commands — start, mark ready, back to assessment, link decision (DOM-P2-16, REQ-LCY-010): the gate's owner
+   * role or the project manager (access-matrix §2.4 `own_workstream`, evaluated with `ownerRoles: [gate.ownerRole]`).
+   * Order: human actor; 403 `gates.not_gate_owner` for a caller who can see the project and holds
+   * `gates.assessment.submit` but neither the owner role nor project manager; then RBAC + ABAC (404 visibility, 403
+   * missing permission / own_workstream). A workstream-lead owner acts through the workstream it leads.
+   */
+  private assertGateOwner(ctx: RequestContext, projectId: string, classification: Parameters<PolicyService['assert']>[2]['classification'], gate: GateRow) {
+    const permission = 'gates.assessment.submit';
+    assertHumanActor(ctx, permission);
+    const role = gate.ownerRole as RoleKey;
+    const grant = this.roleGrant(ctx, projectId, role);
+    const pm = !!ctx.principal.projects.get(projectId)?.roles.has('project_manager');
+    if (!grant.held && !pm && this.policy.canSee(ctx, { projectId, classification }) && this.policy.canInProject(ctx, permission, projectId)) {
+      throw forbidden('gates.not_gate_owner', `Gate ${gate.key} is owned by the ${gate.ownerRole} role: only that role or the project manager may start, prepare or submit its assessment`);
+    }
+    this.policy.assert(ctx, permission, { projectId, classification, ownerRoles: [role], workstreamId: pm ? null : grant.workstreamId });
+  }
+
+  /**
+   * The gate-level review belongs to the gate's DESIGNATED reviewer role (DOM-P2-16). Human actor; 403
+   * `gates.not_designated_gate_reviewer` for a visible caller who holds `gates.assessment.review` without that role; then
+   * RBAC + visibility at role level (separation of duties is checked by the caller after the state check, I-R3).
+   * Returns the policy resource to use for the not_self check.
+   */
+  private assertDesignatedGateReviewer(ctx: RequestContext, projectId: string, classification: Parameters<PolicyService['assert']>[2]['classification'], gate: GateRow) {
+    const permission = 'gates.assessment.review';
+    assertHumanActor(ctx, permission);
+    const grant = this.roleGrant(ctx, projectId, gate.reviewerRole as RoleKey);
+    if (!grant.held && this.policy.canSee(ctx, { projectId, classification }) && this.policy.canInProject(ctx, permission, projectId)) {
+      throw forbidden('gates.not_designated_gate_reviewer', `Gate ${gate.key} can only be reviewed by its designated gate reviewer role (${gate.reviewerRole})`);
+    }
+    const res = { projectId, classification, workstreamId: grant.workstreamId };
+    this.policy.assertGranted(ctx, permission, res);
+    if (!grant.held) throw forbidden('gates.not_designated_gate_reviewer', `Gate ${gate.key} can only be reviewed by its designated gate reviewer role (${gate.reviewerRole})`);
+    return res;
+  }
+
   private rolesOf(ctx: RequestContext, projectId: string): RoleKey[] {
     const s = ctx.principal.projects.get(projectId);
     return s ? [...s.roles] : [];
@@ -935,7 +1071,40 @@ export class GatesService implements OnModuleInit {
   private async assessmentResult(projectId: string, gateId: string) {
     const { b, evaluations } = await this.refreshEvaluations(projectId);
     const cur = b.current(gateId);
-    return { assessmentId: cur.id, cycle: cur.cycle, status: cur.status, version: cur.version, evaluation: evaluations.get(gateId)! };
+    const reviewState: GateReviewState = gateReviewState(reviewOf(cur), b.reviewBasis(b.gate(gateId)));
+    return { assessmentId: cur.id, cycle: cur.cycle, status: cur.status, version: cur.version, evaluation: evaluations.get(gateId)!, reviewState };
+  }
+
+  /** Display names of users (starter / reviewer of the current cycles) for the gate views. */
+  private async userNames(ids: (string | null | undefined)[]): Promise<Map<string, string>> {
+    const list = [...new Set(ids.filter((x): x is string => !!x))];
+    if (!list.length) return new Map();
+    const rows = await this.db.tx().select({ id: schema.appUser.id, displayName: schema.appUser.displayName }).from(schema.appUser).where(inArray(schema.appUser.id, list));
+    return new Map(rows.map((r) => [r.id, r.displayName]));
+  }
+
+  /**
+   * Gate reviews awaiting the caller (My Work `gate_review`, DOM-P2-16) — the same inputs as the review command: a cycle in
+   * assessment whose criteria are all satisfied and whose current state has not been reviewed yet (never reviewed, or
+   * changed after the last review), the gate's designated reviewer role, and not the person who started the cycle.
+   */
+  async pendingGateReviews(ctx: RequestContext, projectId: string): Promise<{ assessmentId: string; gateId: string; key: string; name: string; state: GateReviewState }[]> {
+    const permission = 'gates.assessment.review';
+    if (ctx.principal.kind !== 'user' || !this.policy.canInProject(ctx, permission, projectId)) return [];
+    const b = await this.loader.bundle(projectId);
+    const out: { assessmentId: string; gateId: string; key: string; name: string; state: GateReviewState }[] = [];
+    for (const g of b.gates) {
+      const cur = b.current(g.id);
+      if (!GATE_REVIEWABLE_STATUSES.includes(cur.status)) continue;
+      const grant = this.roleGrant(ctx, projectId, g.reviewerRole as RoleKey);
+      if (!grant.held || !gateCriteriaComplete(b.evaluate(g))) continue;
+      const basis = b.reviewBasis(g);
+      if (!gateReviewPending(reviewOf(cur), basis)) continue;
+      const res = { projectId, classification: b.project.classification, workstreamId: grant.workstreamId, requesterUserId: separationSubject(ctx.principal.userId, [cur.startedBy]) };
+      if (!this.policy.can(ctx, permission, res)) continue;
+      out.push({ assessmentId: cur.id, gateId: g.id, key: g.key, name: g.name, state: gateReviewState(reviewOf(cur), basis) });
+    }
+    return out;
   }
 
   private async enqueueRecompute(ctx: RequestContext, projectId: string, key: string) {
@@ -1078,7 +1247,15 @@ export class GatesService implements OnModuleInit {
     return new Map((def?.gates ?? []).map((g) => [g.key, g.purpose]));
   }
 
-  private summary(ctx: RequestContext, b: GateBundle, g: GateRow, decisions: Map<string, DecisionRow>, authorities: Map<string, GateDecisionAuthority>, purposes: Map<string, I18nText>) {
+  private summary(
+    ctx: RequestContext,
+    b: GateBundle,
+    g: GateRow,
+    decisions: Map<string, DecisionRow>,
+    authorities: Map<string, GateDecisionAuthority>,
+    purposes: Map<string, I18nText>,
+    names: Map<string, string>,
+  ) {
     const cur = b.current(g.id);
     const evaluation = b.evaluate(g);
     const flags = reassessmentOf(cur);
@@ -1107,6 +1284,17 @@ export class GatesService implements OnModuleInit {
       evaluation,
       prerequisites: b.prerequisites(g),
       decision: d && this.canSeeDecision(ctx, b.project.id, d) ? this.decisionDto(d, g.key, authorities.get(d.id) ?? null) : null,
+      review: {
+        state: gateReviewState(reviewOf(cur), b.reviewBasis(g)),
+        reviewerRole: g.reviewerRole,
+        outcome: cur.reviewOutcome ?? null,
+        reviewedBy: cur.reviewedBy,
+        reviewedByName: cur.reviewedBy ? (names.get(cur.reviewedBy) ?? null) : null,
+        reviewedAt: iso(cur.reviewedAt),
+        note: cur.reviewNote,
+        startedBy: cur.startedBy,
+        startedByName: cur.startedBy ? (names.get(cur.startedBy) ?? null) : null,
+      },
       blockers,
       // Ready on criteria but not backed by a final decision → not green (the gate is still blocked, AT-04).
       rag: ((r) => (r === 'green' && blockers.some((b) => b.kind === 'decision') ? 'amber' : r))(gateRag(cur.status, evaluation, flags.needsReassessment)),
@@ -1127,6 +1315,12 @@ export class GatesService implements OnModuleInit {
       decidedAt: iso(a.decidedAt),
       decisionId: a.decisionId,
       decisionNote: a.decisionNote,
+      startedBy: a.startedBy,
+      startedAt: iso(a.startedAt),
+      reviewedBy: a.reviewedBy,
+      reviewedAt: iso(a.reviewedAt),
+      reviewOutcome: a.reviewOutcome ?? null,
+      reviewNote: a.reviewNote,
       reopenedReason: a.reopenedReason,
       supersedesAssessmentId: a.supersedesAssessmentId,
       createdAt: a.createdAt.toISOString(),

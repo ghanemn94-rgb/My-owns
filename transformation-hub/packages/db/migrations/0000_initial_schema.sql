@@ -46,6 +46,7 @@ CREATE TYPE "public"."financial_kind" AS ENUM('baseline', 'forecast', 'actual');
 CREATE TYPE "public"."finding_status" AS ENUM('open', 'remediation_planned', 'remediated', 'accepted_risk', 'closed');--> statement-breakpoint
 CREATE TYPE "public"."funds_flow_status" AS ENUM('planned', 'confirmed_by_finance', 'reported_settled', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."gate_assessment_status" AS ENUM('not_started', 'in_assessment', 'ready_for_decision', 'approved', 'approved_with_exceptions', 'rejected', 'reopened', 'superseded');--> statement-breakpoint
+CREATE TYPE "public"."gate_review_outcome" AS ENUM('endorse', 'return');--> statement-breakpoint
 CREATE TYPE "public"."go_no_go" AS ENUM('pending', 'go', 'no_go');--> statement-breakpoint
 CREATE TYPE "public"."import_row_action" AS ENUM('create', 'update', 'skip', 'conflict', 'error');--> statement-breakpoint
 CREATE TYPE "public"."import_status" AS ENUM('uploaded', 'mapped', 'validated', 'approved', 'applied', 'rolled_back', 'rejected', 'failed');--> statement-breakpoint
@@ -1091,6 +1092,13 @@ CREATE TABLE "gate_assessment" (
 	"decision_id" uuid,
 	"submitted_by" uuid,
 	"submitted_at" timestamp with time zone,
+	"started_by" uuid,
+	"started_at" timestamp with time zone,
+	"reviewed_by" uuid,
+	"reviewed_at" timestamp with time zone,
+	"review_outcome" "gate_review_outcome",
+	"review_note" text,
+	"review_basis" varchar(64),
 	"reopened_reason" text,
 	"supersedes_assessment_id" uuid,
 	"is_current" boolean DEFAULT true NOT NULL,
@@ -1098,7 +1106,10 @@ CREATE TABLE "gate_assessment" (
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
-	CONSTRAINT "gate_assessment_pid_uq" UNIQUE("project_id","id")
+	CONSTRAINT "gate_assessment_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "gate_assessment_review_ck" CHECK (("gate_assessment"."review_outcome" is null and "gate_assessment"."reviewed_by" is null and "gate_assessment"."reviewed_at" is null and "gate_assessment"."review_basis" is null and "gate_assessment"."review_note" is null)
+       or ("gate_assessment"."review_outcome" is not null and "gate_assessment"."reviewed_by" is not null and "gate_assessment"."reviewed_at" is not null and "gate_assessment"."review_basis" is not null and length(trim("gate_assessment"."review_note")) > 0)),
+	CONSTRAINT "gate_assessment_started_ck" CHECK (("gate_assessment"."started_by" is null) = ("gate_assessment"."started_at" is null))
 );
 --> statement-breakpoint
 CREATE TABLE "gate_criterion" (

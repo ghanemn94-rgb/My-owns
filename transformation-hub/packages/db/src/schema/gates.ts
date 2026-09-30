@@ -1,4 +1,5 @@
-import { pgTable, uuid, text, integer, jsonb, varchar, boolean, date, unique, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { pgTable, uuid, text, integer, jsonb, varchar, boolean, date, unique, uniqueIndex, index, check } from 'drizzle-orm/pg-core';
 import {
   pk,
   orgIdCol,
@@ -13,6 +14,7 @@ import {
   roleKey,
   gateAssessmentStatus,
   criterionStatus,
+  gateReviewOutcome,
   waiverStatus,
   statusDimensionKey,
   isDemo,
@@ -96,6 +98,19 @@ export const gateAssessment = pgTable(
     /** Who submitted the cycle for decision (mark_ready) — the decider must be someone else (not_self). */
     submittedBy: uuid('submitted_by'),
     submittedAt: ts('submitted_at'),
+    /** Who started the cycle (gate owner role or project manager) — the gate reviewer must be someone else (DOM-P2-16). */
+    startedBy: uuid('started_by'),
+    startedAt: ts('started_at'),
+    /**
+     * Gate-level review of the cycle by the gate's reviewer role (DOM-P2-16, REQ-LCY-010): endorse or return, with a note.
+     * `review_basis` = SHA-256 of the criterion state reviewed (domain gateReviewBasis); mark-ready needs an endorsement
+     * whose basis equals the current one (no criterion change since). Earlier reviews of the cycle are in the audit trail.
+     */
+    reviewedBy: uuid('reviewed_by'),
+    reviewedAt: ts('reviewed_at'),
+    reviewOutcome: gateReviewOutcome('review_outcome'),
+    reviewNote: text('review_note'),
+    reviewBasis: varchar('review_basis', { length: 64 }),
     reopenedReason: text('reopened_reason'),
     supersedesAssessmentId: uuid('supersedes_assessment_id'),
     isCurrent: boolean('is_current').notNull().default(true),
@@ -105,6 +120,12 @@ export const gateAssessment = pgTable(
     version: versionCol(),
   },
   (t) => [
+    check(
+      'gate_assessment_review_ck',
+      sql`(${t.reviewOutcome} is null and ${t.reviewedBy} is null and ${t.reviewedAt} is null and ${t.reviewBasis} is null and ${t.reviewNote} is null)
+       or (${t.reviewOutcome} is not null and ${t.reviewedBy} is not null and ${t.reviewedAt} is not null and ${t.reviewBasis} is not null and length(trim(${t.reviewNote})) > 0)`,
+    ),
+    check('gate_assessment_started_ck', sql`(${t.startedBy} is null) = (${t.startedAt} is null)`),
     projectFk('gate_assessment_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
     projectFk('gate_assessment_supersedes_fk', t.projectId, t.supersedesAssessmentId, { projectId: t.projectId, id: t.id }),
     unique('gate_assessment_pid_uq').on(t.projectId, t.id),

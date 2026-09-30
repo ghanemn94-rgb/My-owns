@@ -937,6 +937,8 @@ export const MY_WORK_TYPES = [
   'evidence_verification',
   'action_closure_verification',
   'minutes_approval',
+  // DOM-P2-16: gate-level review for the gate's designated reviewer role (not the person who started the cycle)
+  'gate_review',
 ] as const;
 
 export const MyWorkItemDto = z.object({

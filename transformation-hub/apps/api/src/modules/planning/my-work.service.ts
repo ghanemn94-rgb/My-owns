@@ -7,6 +7,7 @@ import type { RequestContext } from '../../platform/context';
 import { isFullScope } from '../../platform/context';
 import { PlanningSupport, ProjectInfo } from './planning-support';
 import { RecordVisibility } from '../../platform/record-visibility';
+import { GatesService } from '../gates/gates.service';
 
 type WorkType = (typeof MY_WORK_TYPES)[number];
 interface Item {
@@ -30,7 +31,10 @@ interface Item {
  */
 @Injectable()
 export class MyWorkService {
-  constructor(private readonly s: PlanningSupport) {}
+  constructor(
+    private readonly s: PlanningSupport,
+    private readonly gates: GatesService,
+  ) {}
 
   async myWork(ctx: RequestContext) {
     const me = ctx.principal.userId;
@@ -162,6 +166,22 @@ export class MyWorkService {
       if (!withinAuthority) continue;
       if (!this.s.policy.can(ctx, 'gates.assessment.decide', { projectId: p.id, classification: p.classification, requesterUserId: a.submittedBy, withinAuthority })) continue;
       push(p, { type: 'gate_decision', entityId: a.id, code: g.key, title: g.name, status: a.status, dueDate: null, overdue: false, linkPath: `/projects/${p.id}/gates/${g.id}` }, p.isDemo);
+    }
+
+    // Gate assessments awaiting my gate-level review (DOM-P2-16) as the gate's DESIGNATED reviewer role: a cycle in
+    // assessment whose criteria are all satisfied and whose current state is not reviewed yet, never started by me. The
+    // gates module applies the same rules as the review command; it is asked only for projects with such a candidate.
+    const toEndorse = await tx
+      .select({ projectId: GA.projectId, reviewerRole: GD.reviewerRole })
+      .from(GA)
+      .innerJoin(GD, and(eq(GD.id, GA.gateId), eq(GD.projectId, GA.projectId)))
+      .where(and(inArray(GA.projectId, pids), eq(GA.isCurrent, true), eq(GA.status, 'in_assessment')));
+    const reviewProjects = new Set(toEndorse.filter((r) => holds(r.projectId, r.reviewerRole) || inWorkstreamRole(r.projectId, r.reviewerRole)).map((r) => r.projectId));
+    for (const pid of reviewProjects) {
+      const p = byId.get(pid)!;
+      for (const r of await this.gates.pendingGateReviews(ctx, pid)) {
+        push(p, { type: 'gate_review', entityId: r.assessmentId, code: r.key, title: r.name, status: r.state, dueDate: null, overdue: false, linkPath: `/projects/${pid}/gates/${r.gateId}` }, p.isDemo);
+      }
     }
 
     // Gate criteria awaiting my review as their DESIGNATED reviewer: evidence submitted, or a pending not-applicable proposal.
