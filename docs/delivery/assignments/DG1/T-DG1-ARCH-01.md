@@ -1,6 +1,6 @@
 # Assignment T-DG1-ARCH-01: architecture decisions, data and API contracts, monorepo skeleton (solution-architect)
 
-- **Stage:** P1 "Architecture and working foundation" / gate DG1 (BUILDING). **Base revision:** `__BASE__`. HEAD may be ahead by metadata-only commits under `docs/delivery/**`.
+- **Stage:** P1 "Architecture and working foundation" / gate DG1 (BUILDING). **Base revision:** `9315878cac19f01d5c69557cd5eba87958c80fef`. HEAD may be ahead by metadata-only commits under `docs/delivery/**`.
 - **Preceding gate:** DG0 is APPROVED (`docs/delivery/gates/DG0.json`). `node tools/gates/validate.mjs --stage DG0 --historical` must pass. Run it and report the result.
 - **You run first and alone.** Three implementers start after you in parallel git worktrees: backend-workflow-engineer (API, DB, worker), frontend-ux-engineer (web) and devops-engineer (containers, CI, Keycloak). Your skeleton and contracts are their shared foundation. They must not need to edit the same shared files concurrently, so **you own and create all shared configuration now**.
 
@@ -11,7 +11,7 @@
 - Other inputs:
   - `docs/analysis/stage-plan.md` (the P1 section), `docs/analysis/permissions-matrix.md`, `docs/analysis/field-inventory.md` and `docs/analysis/user-journeys.md`;
   - master prompt §16 (architecture and data model), §15 (tokens and UX), §10 (roles and scoping), §12 (durable jobs and outbox), §19 (handover obligations that shape the design);
-  - the read-only stack discovery done before DG1: `docs/architecture/discovery/p1-stack-discovery.md`. Treat it as evidence to re-verify, not as decisions.
+  - **stack discovery:** the prior session's scratchpad discovery note did not survive (ephemeral container), so **you perform the stack discovery yourself** as part of this task and author it at `docs/architecture/discovery/p1-stack-discovery.md` (deliverable 4). Environment already verified by the orchestrator: Node v22.22.2, npm 10.9.7, pnpm 10.33.0, corepack present, npm registry reachable (e.g. `npm view typescript version`). Identify and resolve the stack conflicts the ADRs mention yourself — at minimum: the Node.js LTS line to pin (CF-1), ESM-only vs CJS (T-1), the Playwright/Chromium browser-path setup so `playwright install` is never run (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`, CF-2), the rate-limiting library (T-3), and the storage-adapter licence flags (L-flags) — recording each with the version, licence, support window and date checked.
 
 ## Deliverables (you create them; paths are fixed so the parallel implementers can rely on them)
 
@@ -122,7 +122,7 @@ Include error schemas and security schemes.
 - **Empty but reserved directories** documented in the READMEs, for later stages: `packages/calc`, `packages/reporting`.
 - **Install and build:** run `pnpm install` so `pnpm-lock.yaml` is committed, with exact versions pinned. Then show `pnpm -r build` and `pnpm -r typecheck` passing on the skeleton.
 - **CI job (REQ-DLV-025):** add `.github/workflows/ci.yml` with `needs: delivery-gates` semantics. It can't reference a job in another workflow file, so either add the product jobs to a new workflow that re-runs `node tools/gates/validate.mjs --pipeline` as its first job and makes the other jobs depend on it, or use `workflow_run`. Explain your choice. `delivery-gates.yml` itself is protected; don't edit it.
-- **Discovery document:** move it from the session scratchpad into the repository. The orchestrator copies it to `docs/architecture/discovery/p1-stack-discovery.md` before your run.
+- **Discovery document:** author `docs/architecture/discovery/p1-stack-discovery.md` recording the stack discovery you performed for this task — every version, licence and support window you verified (with the date and the command/source), and how you resolved each conflict (CF-1 Node LTS, T-1 ESM/CJS, CF-2 Playwright browser path, T-3 rate limiting, L-flags storage licence). It is the evidence behind the ADR version pins.
 
 ### 5. Implementation guides for the three parallel tasks: `docs/architecture/p1-work-split.md`
 List each implementer's exact file ownership (directories and files), the contracts they consume, what they must not touch, and the integration order.
