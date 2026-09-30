@@ -6410,6 +6410,36 @@
           "note": "Raised in the DG0 round-21 QA review of candidate 7d00f857 (9e3c27f). Medium, not mandatory. The D-037 repair introduced it; it regresses round-9 QA5-N52/N53."
         }
       ]
+    },
+    {
+      "id": "F-DG0-238",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "agent_sandbox.py finish(): when one of the role's own new review files already exists in the real directory (another run of the same role and round committed it after this run's prepare), copy-back crashes with an uncaught FileExistsError. It leaves a partial copy-back (files sorted before the collision are already in the real tree) and writes no sandbox.json, contrary to the threat model's statement that discarded writes are listed in sandbox.json",
+      "reproduction": "Disposable fixture under $TMPDIR (docs/delivery/test-evidence/DG0/qa/round-17/12-copyback-collision-probe.log, script included). `agent_sandbox.py prepare qa-verifier ...`, then in the staging copy write round-2/qa-verifier.findings.json and round-2/qa-verifier.json. Then create round-2/qa-verifier.json in the REAL reviews dir (a concurrent run of the same role committing first). `agent_sandbox.py finish <state> <out>` exits 1 with 'FileExistsError: [Errno 17] File exists: .../round-2/qa-verifier.json' (the O_EXCL open). The real round-2 now holds THIS run's qa-verifier.findings.json next to the OTHER run's qa-verifier.json, and <out>/sandbox.json is not written. The real record is not overwritten (QA17-S4 passes on that point).",
+      "expected": "A collision on the role's own new file is handled like the other refusals: nothing is copied for that file, the collision is listed in sandbox.json 'discarded' (for example 'exists in the real tree (written concurrently); not copied'), finish() exits 3, and ideally no file of the run is copied back at all when any of them collides (check first, then copy), so the real tree never holds a mixed record/sidecar pair.",
+      "actual": "Fail-closed only. run-agent.sh treats any non-zero finish as SANDBOX_RC and a review run then exits 73 without auto-committing, the real record is preserved (O_EXCL), and a mixed pair would not bind to one run's transcript under D-021. It needs two concurrent runs of the same role for the same round, which the orchestrator does not schedule. But the evidence the threat model promises (sandbox.json with the discard list, meta.process_sandbox_*) is missing for that run, and an uncommitted foreign sidecar is left in the real reviews directory for the orchestrator to notice. Low and non-mandatory. I would accept it as an observation for DG0.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-17/12-copyback-collision-probe.log",
+        "docs/delivery/test-evidence/DG0/qa/round-17/11-qa17-new-tests.log#QA17-S4",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r17.test.mjs#QA17-S4",
+        "tools/agents/agent_sandbox.py#finish",
+        "tools/agents/run-agent.sh#SANDBOX_RC",
+        "docs/delivery/threat-model.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-17/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-29T11:45:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-17 QA review of candidate 34b06b8a (f84eed4). Low and non-mandatory; I would accept it as an observation."
+        }
+      ]
     }
   ]
 }

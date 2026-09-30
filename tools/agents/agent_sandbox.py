@@ -146,12 +146,13 @@ def bwrap_args(p):
     # PID namespace. It DOES create its own IPC namespace (--unshare-ipc, F-DG0-148): the IPC namespace has no bearing
     # on procfs "full visibility", so unsharing it closes the SysV-IPC / POSIX-message-queue cross-run vector of
     # threat-model residual 8 at no cost to the nested bwrap. Still disclosed: the agent shares the host PID namespace
-    # and sees a read-write host /proc. A file-tool write to a uid-0-writable /proc/sys entry is a disclosed residual
-    # (residual 7): /proc/sys is HOST-GLOBAL kernel state, so such a write changes a tunable for the whole host, not just
-    # this run -- an availability / host-tunable risk, not repository or gate-record integrity (D-036; the earlier claim
-    # that /proc/sys is read-only for the agent's SHELL is withdrawn as unverified). Candidate code that runs inside the
-    # reviewer's own fresh-procfs sandboxes does see /proc/sys read-only there (userns default). code-security assesses
-    # (option A, chosen by the user 2026-09-29).
+    # and sees a read-write host /proc. A write to a uid-0-writable /proc/sys entry -- by a file tool OR by a plain Bash
+    # shell redirect, both confirmed to work directly, no race needed -- is a disclosed residual (residual 7): /proc/sys
+    # is HOST-GLOBAL kernel state, so such a write changes a tunable for the whole host, not just this run -- an
+    # availability / host-tunable risk, not repository or gate-record integrity (D-036/F-DG0-162; the earlier claim that
+    # /proc/sys is read-only for the agent's SHELL is WRONG and withdrawn). Candidate code that runs inside a nested
+    # tools/gates/sandbox-run.sh does see /proc/sys read-only there, but because sandbox-run.sh EXPLICITLY --ro-binds
+    # /proc/sys inside its userns, not by any default. code-security assesses (option A, chosen by the user 2026-09-29).
     a = ["--die-with-parent", "--new-session", "--unshare-ipc", "--setenv", "MTH_PROCESS_SANDBOX", "1",
          "--ro-bind", "/", "/", "--dev", "/dev", "--bind", "/proc", "/proc",
          "--tmpfs", "/tmp", "--tmpfs", "/var/tmp"]

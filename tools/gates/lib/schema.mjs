@@ -52,11 +52,15 @@ export function validate(schema, value, root = schema, path = "$") {
   }
   if (value && typeof value === "object" && !Array.isArray(value)) {
     for (const key of schema.required || []) {
-      if (!(key in value)) errors.push(`${path}: missing required property '${key}'`);
+      // Object.hasOwn, not `in`: a key named after an Object.prototype member (constructor, toString, hasOwnProperty,
+      // __proto__) is inherited by every object, so `in` would report it present even when absent (D-038, F-DG0-163).
+      if (!Object.hasOwn(value, key)) errors.push(`${path}: missing required property '${key}'`);
     }
     const props = schema.properties || {};
     for (const [key, v] of Object.entries(value)) {
-      if (props[key]) errors.push(...validate(props[key], v, root, `${path}.${key}`));
+      // Object.hasOwn, not props[key]: props['constructor'] etc. resolve to a truthy Object.prototype member, which would
+      // be "validated" against a keyword-less function and silently accepted, bypassing additionalProperties:false (F-DG0-163).
+      if (Object.hasOwn(props, key)) errors.push(...validate(props[key], v, root, `${path}.${key}`));
       else if (schema.additionalProperties === false) errors.push(`${path}: unexpected property '${key}'`);
       else if (schema.additionalProperties && typeof schema.additionalProperties === "object") {
         errors.push(...validate(schema.additionalProperties, v, root, `${path}.${key}`));

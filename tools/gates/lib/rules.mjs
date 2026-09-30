@@ -387,15 +387,26 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
     if (binding.notBefore && !(meta.started_at >= binding.notBefore)) bad(`started ${meta.started_at}, before the candidate froze at ${binding.notBefore}`);
     if (binding.manifestPath) {
       // The run must have started from a commit that already contained the frozen manifest it reviewed (F-DG0-212).
-      // A superseded round's head_commit_at_start can be pruned by a later legitimate history correction (the
-      // pre-round-12 truncation, the D-034 rewrite); tolerate a genuinely MISSING commit -- as findManifest/checkClosure
-      // do -- but still fail when the commit IS present and lacks the manifest (D-037, F-DG0-242).
-      if (commitPresent(repo, meta.head_commit_at_start)) {
+      // The absent-commit tolerance is tightly scoped (D-038, F-DG0-159/245/160): it applies ONLY when
+      //   (a) head_commit_at_start is a well-formed 40-hex id -- never a missing, null, 'unknown' (run-agent.sh's
+      //       git-rev-parse fallback), 'HEAD' or otherwise malformed value, all of which are hard errors; AND
+      //   (b) the run's own review ROUND is itself absent from this repository (its source_commit does not resolve),
+      //       i.e. a genuinely superseded round beyond the shallow boundary or orphaned by the D-034 rewrite -- never a
+      //       retained round, and never the gate round (whose source_commit checkCandidate requires present, F-DG0-241).
+      // Any other absent head is a real error, exactly as before D-037.
+      const head = meta.head_commit_at_start;
+      const wellFormed = typeof head === "string" && /^[0-9a-f]{40}$/.test(head);
+      const roundAbsent = binding.roundSourceCommit && !commitPresent(repo, binding.roundSourceCommit);
+      if (!wellFormed) {
+        bad(`head_commit_at_start ${JSON.stringify(head)} is not a 40-hex commit id`);
+      } else if (commitPresent(repo, head)) {
         try {
-          execFileSync("git", ["-C", repo, "cat-file", "-e", `${meta.head_commit_at_start}:${binding.manifestPath}`], { stdio: "ignore" });
+          execFileSync("git", ["-C", repo, "cat-file", "-e", `${head}:${binding.manifestPath}`], { stdio: "ignore" });
         } catch {
-          bad(`started from ${String(meta.head_commit_at_start).slice(0, 10)}, which does not contain ${binding.manifestPath}`);
+          bad(`started from ${head.slice(0, 10)}, which does not contain ${binding.manifestPath}`);
         }
+      } else if (!roundAbsent) {
+        bad(`started from ${head.slice(0, 10)}, a commit absent from this repository, but its review round is retained (source_commit ${String(binding.roundSourceCommit).slice(0, 10)} is present); a complete clone is required (F-DG0-160)`);
       }
     }
     for (const rel of binding.outputs || []) {
@@ -448,6 +459,7 @@ export function checkReview(repo, rel, { stage, role, candidate, extraOutputs = 
     assignment: rec.assignment,
     notBefore: stage.candidate.frozen_at,
     manifestPath: manifestPathFor(stage.id, candidate),
+    roundSourceCommit: stage.candidate.source_commit, // the gate round: always present (F-DG0-241), so never tolerated
     outputs: [rel, ...(repoFile(repo, sidecar) ? [sidecar] : []), ...(extraOutputs || [])],
   });
   return rec;
@@ -469,17 +481,18 @@ export function collectRaisedFindings(repo, stageId, errors) {
         // import-findings imports a findings sidecar's findings whether or not the run wrote a verdict record, so the
         // validator counts them as raised the same way -- otherwise a finding legitimately imported and later closed (its
         // raising run interrupted before it wrote its record, e.g. the round-18 qa session limit) would look un-raised.
-        // A sidecar whose own <role>.json record does not exist is an interrupted run: its findings were never imported
-        // unless they already appear in findings.json, so `recordless` lets checkFindings NOT treat such an un-imported
-        // finding as a "dropped" one, while still requiring every finding that IS in findings.json to have a raising
-        // sidecar (D-037, F-DG0-243; the verifications side is skipped in collectVerifications).
-        const recordless = !existsSync(join(dir, round, `${sidecar[1]}.json`));
+        // Every finding a sidecar raises must therefore be in findings.json: there is NO exemption for a record-less
+        // sidecar (an earlier D-037 "recordless" exemption is withdrawn -- it could not tell "never imported" from
+        // "imported, then silently deleted", so it let a finding of any status be removed with no trace, D-038/F-DG0-158).
+        // A genuinely never-imported interrupted-run finding (F-DG0-238) is instead imported into findings.json and
+        // closed by its reporter, not exempted. The verifications side is still skipped without a record in
+        // collectVerifications, matching import-findings, which never attributes a record-less verification.
         const data = readJson(repo, rel, errors, "findings sidecar");
         for (const f of (data && data.findings) || []) {
           if (f.stage_id !== stageId) errors.push(`${rel}: finding ${f.id} is labelled ${f.stage_id} but was raised in ${stageId}`);
           if (!String(f.id).startsWith(`F-${stageId}-`)) errors.push(`${rel}: finding id ${f.id} does not belong to ${stageId}`);
           if (f.reported_by !== sidecar[1]) errors.push(`${rel}: finding ${f.id} reported_by ${f.reported_by} but the sidecar belongs to ${sidecar[1]}`);
-          raised.set(f.id, { finding: f, round, file: rel, recordless }); // later rounds supersede earlier versions
+          raised.set(f.id, { finding: f, round, file: rel }); // later rounds supersede earlier versions
         }
       } else if (/^[a-z-]+\.json$/.test(file) && REVIEW_ROLES.includes(file.slice(0, -5))) {
         const rec = readJson(repo, rel, errors, "review record");
@@ -511,13 +524,14 @@ export function checkFindings(repo, stage, reviewRecords, gate, errors) {
   for (const rec of reviewRecords) {
     for (const fid of rec.findings) if (!byId.has(fid)) errors.push(`review ${rec.reviewer_role}: finding ${fid} not in findings.json`);
   }
-  for (const [id, { finding, file, recordless }] of raised) {
+  for (const [id, { finding, file }] of raised) {
     const f = byId.get(id);
     if (!f) {
-      // A finding raised only by a record-less (interrupted-run) sidecar and never imported into findings.json is not a
-      // "dropped" finding: import-findings never imported it either (D-037, F-DG0-243). A finding raised by a sidecar
-      // whose record exists but that is not in findings.json is a genuine drop.
-      if (!recordless) errors.push(`finding ${id} raised in ${file} is missing from findings.json (dropped)`);
+      // Any finding a reviewer sidecar raised must be in findings.json. There is no record-less exemption: it could not
+      // distinguish "never imported" from "imported, then silently deleted", so it let a finding be removed without a
+      // trace (D-038/F-DG0-158). A genuinely never-imported interrupted-run finding is imported and closed by its
+      // reporter, not exempted.
+      errors.push(`finding ${id} raised in ${file} is missing from findings.json (dropped)`);
       continue;
     }
     for (const k of IMMUTABLE_FINDING_FIELDS) {
@@ -550,7 +564,7 @@ export function checkFindings(repo, stage, reviewRecords, gate, errors) {
         const round = roundEntry(stage, e.roundDir);
         checkInvocation(repo, stage.id, e.record.invocation_reference, e.role, errors, `${where} acceptance by ${e.role}`, {
           assignment: e.record.assignment, notBefore: round && round.frozen_at, outputs: [e.recordPath, e.sidecar],
-          manifestPath: round && manifestPathFor(stage.id, round.candidate_id),
+          manifestPath: round && manifestPathFor(stage.id, round.candidate_id), roundSourceCommit: round && round.source_commit,
         });
       }
       const roles = accepting.map((e) => e.role).sort();
@@ -594,6 +608,18 @@ function objectType(repo, sha) {
     return execFileSync("git", ["-C", repo, "cat-file", "-t", String(sha)], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
   } catch {
     return null;
+  }
+}
+
+// Whether this repository is a shallow clone. On a shallow clone, commits beyond the shallow boundary are simply not
+// fetched (not pruned), so ancestry, write-once and back-dating checks -- and the commit-absence tolerances -- silently
+// depend on clone depth and can pass a gate that a complete clone would reject, or vice versa. Gate validation refuses a
+// shallow repository so it is always judged against the complete history CI uses (fetch-depth: 0) (D-038, F-DG0-160).
+function isShallow(repo) {
+  try {
+    return execFileSync("git", ["-C", repo, "rev-parse", "--is-shallow-repository"], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim() === "true";
+  } catch {
+    return false;
   }
 }
 
@@ -684,19 +710,27 @@ function checkClosure(repo, stage, gate, f, v, where, errors) {
     assignment: v.record.assignment,
     notBefore: round.frozen_at,
     manifestPath: manifestPathFor(stage.id, round.candidate_id),
+    roundSourceCommit: round.source_commit,
     outputs: [v.recordPath, v.sidecar],
   });
   if (f.status === "CLOSED_VERIFIED") {
     if (!f.fix_revision || !/^[0-9a-f]{40}$/.test(f.fix_revision)) errors.push(`${where}: CLOSED_VERIFIED needs a full fix_revision commit id`);
     else {
-      // isAncestor needs both commits present. A superseded round's fix_revision or source_commit can be pruned by a
-      // later legitimate history correction (the pre-round-12 truncation, the D-034 rewrite); tolerate a genuinely
-      // MISSING commit -- exactly as findManifest does -- but still verify ancestry whenever both are present, so a
-      // reachable fix that is not in the candidate is still caught (D-037, F-DG0-242).
-      if (commitPresent(repo, f.fix_revision) && commitPresent(repo, round.source_commit) && !isAncestor(repo, f.fix_revision, round.source_commit))
-        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verified ${v.roundDir} candidate (${round.source_commit.slice(0, 10)})`);
-      if (gate && commitPresent(repo, f.fix_revision) && commitPresent(repo, gate.source_commit) && !isAncestor(repo, f.fix_revision, gate.source_commit))
-        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the gate candidate`);
+      // The fix_revision is well-formed 40-hex here. The absent-commit tolerance is scoped exactly like checkInvocation
+      // (D-038, F-DG0-245/160): an absent fix_revision is tolerated ONLY when the verifying ROUND is itself absent from
+      // this repository (its source_commit does not resolve) -- a genuinely superseded round beyond the shallow boundary
+      // or orphaned by the D-034 rewrite. In a retained round, and always in the gate round (source_commit present per
+      // F-DG0-241), the fix must be present and an ancestor of the candidate; re-point it at a retained commit that
+      // contains the fix if the recorded one was orphaned, as F-DG0-150/151 were.
+      const roundAbsent = !commitPresent(repo, round.source_commit);
+      if (!commitPresent(repo, f.fix_revision)) {
+        if (!roundAbsent) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit in this repository, but ${v.roundDir} is retained (source_commit ${round.source_commit.slice(0, 10)} is present) -- re-point it at a retained commit that contains the fix`);
+      } else {
+        if (commitPresent(repo, round.source_commit) && !isAncestor(repo, f.fix_revision, round.source_commit))
+          errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verified ${v.roundDir} candidate (${round.source_commit.slice(0, 10)})`);
+        if (gate && commitPresent(repo, gate.source_commit) && !isAncestor(repo, f.fix_revision, gate.source_commit))
+          errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the gate candidate`);
+      }
     }
   }
 }
@@ -978,6 +1012,7 @@ export function checkApprovalImmutable(repo, gateRel, evidenceRels, stageId, err
 // ---------- whole gate ----------
 export function validateGate(repo, stageId, { mode = "current", stagesDoc = null } = {}) {
   const errors = [];
+  if (isShallow(repo)) errors.push(`gate ${stageId}: the repository is a shallow clone, so ancestry, write-once and history-tolerance checks are unreliable; validate the gate against the complete history (git fetch --unshallow, or clone with fetch-depth: 0 as CI does) (D-038, F-DG0-160)`);
   const doc = stagesDoc || loadStages(repo, errors);
   if (!doc) return errors;
   const stage = doc.stages.find((s) => s.id === stageId);

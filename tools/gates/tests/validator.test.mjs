@@ -11,6 +11,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { candidateId, manifestFromRef, manifestFromWorkingTree } from "../lib/candidate.mjs";
 import { validateGate, validatePipeline, reconcile, findManifest, REGISTER_COLUMNS, STAGE_ORDER } from "../lib/rules.mjs";
+import { validate as validateSchema } from "../lib/schema.mjs";
 import { parseCsv } from "../lib/csv.mjs";
 // Hermetic git: fixtures must not depend on the host's global or system git config (e.g. mandatory commit signing).
 process.env.GIT_CONFIG_GLOBAL = "/dev/null";
@@ -1101,48 +1102,75 @@ test("D-037 / F-DG0-241: a gate source_commit that exists but is OFF this branch
     `an annotated tag that peels to the frozen commit must be rejected as a non-commit object; got: ${errs2.join(" | ")}`);
 });
 
-test("D-037 / F-DG0-242: checkClosure tolerates a pruned fix_revision but still catches a reachable fix that is not in the candidate", () => {
-  const { repo, head } = buildValidRepo();
+test("D-038 / F-DG0-245: checkClosure's absent-fix tolerance is scoped -- a retained round still requires the fix present", () => {
+  const { repo } = buildValidRepo();
   approveAndCommit(repo);
   assert.deepEqual(validateGate(repo, "DG0"), [], "the baseline gate must pass");
   // A fix_revision that IS present but is NOT an ancestor of the verified round's candidate is still caught.
   sh(repo, "commit", "--allow-empty", "-q", "-m", "a later empty commit");
-  const newer = sh(repo, "rev-parse", "HEAD"); // a real commit, descendant of `head`, so not an ancestor of it
+  const newer = sh(repo, "rev-parse", "HEAD"); // a real commit, descendant of head, so not an ancestor of it
   edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = newer));
-  let errs = validateGate(repo, "DG0");
-  expectError(errs, /fix .* is not in the verified round-2 candidate/);
-  // A genuinely MISSING (pruned) fix_revision is tolerated -- as findManifest tolerates a pruned source_commit (D-035).
+  expectError(validateGate(repo, "DG0"), /fix .* is not in the verified round-2 candidate/);
+  // An ABSENT fix_revision in a RETAINED round (round-2's source_commit is present) is now REJECTED. Before D-038 the
+  // blanket commitPresent() skip wrongly accepted it, including in the gate round (F-DG0-245).
   edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = "0".repeat(40)));
-  errs = validateGate(repo, "DG0");
-  assert.ok(!errs.some((e) => /is not in the verified round-2 candidate|is not in the gate candidate/.test(e)),
-    `a pruned fix_revision must be tolerated; got: ${errs.join(" | ")}`);
-  // Still fail-closed against a non-hex / short id.
+  expectError(validateGate(repo, "DG0"), /is not a commit in this repository, but round-2 is retained/);
+  // A non-hex / short id is still rejected outright.
   edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = "1a99d13"));
-  errs = validateGate(repo, "DG0");
-  expectError(errs, /CLOSED_VERIFIED needs a full fix_revision commit id/);
+  expectError(validateGate(repo, "DG0"), /CLOSED_VERIFIED needs a full fix_revision commit id/);
+  // (The tolerance direction -- an absent fix in a genuinely pruned round whose own source_commit is also absent -- is
+  //  exercised by the real repository's round-18 orphan in docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs.)
 });
 
-test("D-037 / F-DG0-243: a review sidecar whose verdict record was never written (interrupted run) is tolerated, but only while no record file exists", () => {
+test("D-038 / F-DG0-159: checkInvocation rejects a missing/malformed head_commit_at_start and an absent head in a retained round", () => {
+  const { repo, records } = buildValidRepo();
+  approveAndCommit(repo);
+  assert.deepEqual(validateGate(repo, "DG0"), [], "the baseline gate must pass");
+  const rec = get(repo, records["domain-reviewer"]); // a gate-round (retained) review record
+  const metaRel = `docs/delivery/runs/DG0/${rec.invocation_reference.run_id}/meta.json`;
+  // A non-hex head (the runner's 'unknown' fallback, a symbolic 'HEAD', any junk) is a hard error, not "pruned".
+  edit(repo, metaRel, (m) => (m.head_commit_at_start = "unknown"));
+  expectError(validateGate(repo, "DG0"), /head_commit_at_start .* is not a 40-hex commit id/);
+  // A missing field is a hard error.
+  edit(repo, metaRel, (m) => { delete m.head_commit_at_start; });
+  expectError(validateGate(repo, "DG0"), /head_commit_at_start .* is not a 40-hex commit id/);
+  // A well-formed but ABSENT head in a RETAINED round (the gate round) is rejected: only a genuinely pruned round tolerates it.
+  edit(repo, metaRel, (m) => (m.head_commit_at_start = "0".repeat(40)));
+  expectError(validateGate(repo, "DG0"), /absent from this repository, but its review round is retained/);
+});
+
+test("D-038 / F-DG0-158: every finding a sidecar raises must be in findings.json; the record-less drop exemption is withdrawn", () => {
   const { repo } = buildValidRepo();
   approveAndCommit(repo);
   const r1 = "docs/delivery/reviews/DG0/round-1";
-  // Round 1 records only code-security-reviewer. An interrupted domain-reviewer run left a verifications and a findings
-  // sidecar but no domain-reviewer.json record, and stages.json never listed it -- exactly the rounds-17/18 situation.
-  put(repo, `${r1}/domain-reviewer.verifications.json`, {
-    verifications: [{ finding_id: "F-DG0-101", result: "PASS", status_after: "CLOSED_VERIFIED", note: "n", evidence: [] }],
-  });
+  // A record-less findings sidecar (no domain-reviewer.json record) raising a finding that is NOT in findings.json is a
+  // genuine DROP again -- the D-037 "recordless" exemption could not tell "never imported" from "imported then deleted".
   put(repo, `${r1}/domain-reviewer.findings.json`, {
     findings: [{ id: "F-DG0-999", stage_id: "DG0", reported_by: "domain-reviewer", severity: "Low", mandatory_violation: false,
-      title: "an interrupted run's unimported finding", reproduction: "x", expected: "x", actual: "x", evidence: [],
+      title: "an interrupted run's finding", reproduction: "x", expected: "x", actual: "x", evidence: [],
       reported_in: `${r1}/domain-reviewer.findings.json`, owner: "delivery-orchestrator", status: "OPEN", history: [] }],
   });
-  let errs = validateGate(repo, "DG0");
-  assert.ok(!errs.some((e) => /record for round-1 is not listed in stages.json review_rounds/.test(e)),
-    `a record-less verifications sidecar must be tolerated; got: ${errs.join(" | ")}`);
-  assert.ok(!errs.some((e) => /F-DG0-999/.test(e)),
-    `a record-less findings sidecar must not be reported as dropped; got: ${errs.join(" | ")}`);
-  // Once a record FILE exists for that role in the round (still unlisted in review_rounds), the inconsistency is real again.
-  put(repo, `${r1}/domain-reviewer.json`, {});
-  errs = validateGate(repo, "DG0");
-  expectError(errs, /domain-reviewer's record for round-1 is not listed in stages.json review_rounds/);
+  expectError(validateGate(repo, "DG0"), /F-DG0-999 raised in .* is missing from findings.json \(dropped\)/);
+  // A record-less VERIFICATIONS sidecar is still tolerated (import-findings never attributes a record-less verification).
+  const { repo: repo2 } = buildValidRepo();
+  approveAndCommit(repo2);
+  put(repo2, "docs/delivery/reviews/DG0/round-1/domain-reviewer.verifications.json", {
+    verifications: [{ finding_id: "F-DG0-101", result: "PASS", status_after: "CLOSED_VERIFIED", note: "n", evidence: [] }],
+  });
+  assert.ok(!validateGate(repo2, "DG0").some((e) => /record for round-1 is not listed in stages.json review_rounds/.test(e)),
+    "a record-less verifications sidecar must still be tolerated");
+});
+
+test("D-038 / F-DG0-163: the schema subset validator rejects extra keys named after Object.prototype members", () => {
+  const schema = { type: "object", properties: { a: { type: "string" } }, additionalProperties: false };
+  // A plain extra key is rejected (control).
+  assert.ok(validateSchema(schema, { a: "x", zzz: 1 }).some((e) => /unexpected property 'zzz'/.test(e)), "a plain extra key must be rejected");
+  // Keys that resolve to Object.prototype members must ALSO be rejected, not silently accepted (F-DG0-163).
+  for (const key of ["constructor", "toString", "hasOwnProperty", "__proto__", "valueOf"]) {
+    const errs = validateSchema(schema, { a: "x", [key]: 1 });
+    assert.ok(errs.some((e) => e.includes(`unexpected property '${key}'`)), `extra key '${key}' must be reported; got: ${JSON.stringify(errs)}`);
+  }
+  // A required key named after a prototype member is reported missing when absent (own-property check).
+  const req = { type: "object", properties: { toString: { type: "string" } }, required: ["toString"] };
+  assert.ok(validateSchema(req, { a: "x" }).some((e) => /missing required property 'toString'/.test(e)), "an inherited-but-absent required key must be reported missing");
 });
