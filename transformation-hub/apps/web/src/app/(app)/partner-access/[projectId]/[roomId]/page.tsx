@@ -169,7 +169,7 @@ export default function ExternalRoomPage() {
                 { key: 'question', header: t('jv.dd.fields.question'), cell: (q) => <span dir="auto" className="whitespace-pre-wrap">{q.question}</span> },
                 { key: 'domain', header: t('jv.dd.fields.domain'), cell: (q) => <span className="text-xs">{tStatus('ddDomains', q.domain)}</span> },
                 { key: 'due', header: t('jv.dd.fields.dueDate'), cell: (q) => <span className="tabular text-xs">{formatDate(q.dueDate)}</span> },
-                { key: 'status', header: t('jv.common.status'), cell: (q) => <StatusBadge enumName="ddExternalStatuses" value={q.status} /> },
+                { key: 'status', header: t('jv.common.status'), cell: (q) => <StatusBadge enumName="ddExternalStatuses" value={q.status} tone={q.status === 'answered' ? 'success' : q.status === 'withheld' ? 'warning' : 'info'} /> },
                 {
                   key: 'answer',
                   header: t('jv.external.answer'),

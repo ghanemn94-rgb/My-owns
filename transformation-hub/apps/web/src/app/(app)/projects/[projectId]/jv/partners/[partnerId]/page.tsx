@@ -382,7 +382,7 @@ export default function PartnerPage() {
           {openConflictMine ? <p className="text-sm text-danger">{t('jv.partner.conflictedYou')}</p> : null}
         </Panel>
 
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 lg:grid-flow-row-dense lg:grid-cols-2">
           <Panel title={t('jv.partner.outreach.title')} description={t('jv.partner.outreach.hint')} testId="outreach-panel">
             <Facts
               items={[
@@ -392,7 +392,7 @@ export default function PartnerPage() {
               ]}
             />
           </Panel>
-          <Panel title={t('jv.partner.nda.title')} testId="nda-panel">
+          <Panel title={t('jv.partner.nda.title')} testId="nda-panel" className="lg:col-span-2">
             <Facts
               items={[
                 { label: t('jv.partner.nda.status'), value: <StatusBadge enumName="ndaStatuses" value={p.nda.status} />, testId: 'nda-status' },

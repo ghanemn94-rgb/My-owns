@@ -65,13 +65,12 @@ export default function JvOverviewPage() {
             ) : (
               <ol className="grid gap-1.5 sm:grid-cols-2">
                 {PARTNER_STAGES.map((s) => (
-                  <li key={s} className="flex items-center justify-between gap-2 text-sm">
-                    <Link href={`${base}/partners?stage=${s}`} className="inline-flex items-center gap-1 hover:underline">
+                  <li key={s} className="text-sm">
+                    {/* The whole row is the link: "<stage> <count>" opens the partners at that stage. */}
+                    <Link href={`${base}/partners?stage=${s}`} className="flex items-center justify-between gap-2 rounded hover:underline" data-stage={s}>
                       <StatusBadge enumName="partnerStages" value={s} tone="neutral" />
+                      <span className="tabular font-medium text-ink">{partners.data ? formatNumber(byStage.get(s) ?? 0) : '—'}</span>
                     </Link>
-                    <span className="tabular font-medium text-ink" aria-label={t('jv.overview.stageCount', { stage: tStatus('partnerStages', s), count: byStage.get(s) ?? 0 })}>
-                      {partners.data ? formatNumber(byStage.get(s) ?? 0) : '—'}
-                    </span>
                   </li>
                 ))}
               </ol>
