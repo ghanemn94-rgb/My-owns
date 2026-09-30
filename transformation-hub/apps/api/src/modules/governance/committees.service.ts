@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { and, asc, count, desc, eq, ilike, inArray, sql } from 'drizzle-orm';
+import { Inject, Injectable } from '@nestjs/common';
+import { and, asc, count, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
   AuthorityPolicy,
@@ -10,6 +10,7 @@ import {
   assertMembershipSeat,
   conflict,
   isMemberActiveOn,
+  matrixApprovalPlan,
   matrixUsable,
   notFound,
   ruleViolation,
@@ -23,6 +24,8 @@ import type { RouteInput, governanceRoutes } from '@hub/contracts';
 import { newId, payloadHash } from '../../platform/ids';
 import type { RequestContext } from '../../platform/context';
 import { CommitteeRow, GovernanceSupport, MatrixRow, MembershipRow, ProjectInfo, iso } from './governance.support';
+import { APP_CONFIG, AppConfig } from '../../platform/config';
+import { scanUsable } from '../documents/documents.service';
 import { likeContains } from '../../platform/helpers';
 
 type CommitteeKind = (typeof COMMITTEE_KINDS)[number];
@@ -40,6 +43,7 @@ export class CommitteesService {
     private readonly audit: AuditService,
     private readonly versions: RecordVersionService,
     private readonly sup: GovernanceSupport,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
   // ---------------------------------------------------------------------------------------------------------
@@ -325,42 +329,174 @@ export class CommitteesService {
     return { id, versionNo, policyHash };
   }
 
-  async approveMatrix(ctx: RequestContext, projectId: string, committeeId: string, versionId: string, body: { approvalReference: string; effectiveFrom?: string; note?: string }) {
+  /**
+   * Approval of a draft matrix (authority-matrix.md §1). Separation of duties: not its drafter. The approval authority is the
+   * role that holds `governance.authority_matrix.approve` on behalf of the delegating authority (stated explicitly, I-R3).
+   *
+   * DOM-P2-12: a non-demo matrix needs its approval record as a document of the documents module; the approval is then
+   * PENDING VERIFICATION (the version stays `draft`, the previous version stays in force) until a second person verifies the
+   * evidence (`verifyMatrixApproval`). The DEMO policy (demo projects only) takes effect on approval.
+   */
+  async approveMatrix(
+    ctx: RequestContext,
+    projectId: string,
+    committeeId: string,
+    versionId: string,
+    body: { approvalReference: string; approvalDocumentId?: string; effectiveFrom?: string; note?: string },
+  ) {
     const c = await loadInProject(this.db, schema.committee, projectId, committeeId);
     const m = await loadInProject(this.db, schema.authorityMatrixVersion, projectId, versionId);
     if (m.committeeId !== c.id) throw notFound();
-    // authority: a role authority (approving roles only; the external approval reference is required by the contract).
+    // authority: a role authority (approving roles only; the approval record is required below for real matrices).
     this.policy.assert(ctx, 'governance.authority_matrix.approve', { projectId, classification: c.classification, requesterUserId: m.createdBy, withinAuthority: true });
     if (m.status !== 'draft') throw ruleViolation('governance.authority_matrix.not_draft', `Only a draft matrix can be approved (current: ${m.status})`);
+    if (m.approvedBy) {
+      throw ruleViolation('governance.authority_matrix.approval_pending_verification', 'An approval is already recorded on this version and awaits verification of its evidence by a second person');
+    }
     const p = await this.sup.project(projectId);
     if (m.isDemoPolicy && !p.isDemo) {
       throw ruleViolation('governance.authority_matrix.demo_policy_non_demo_project', 'A Demo authority policy can only be approved in a demo project — load the approved delegation matrix instead');
     }
+    const plan = matrixApprovalPlan({ isDemoPolicy: m.isDemoPolicy, approvalDocumentId: body.approvalDocumentId });
+    const doc = body.approvalDocumentId ? await this.approvalDocument(ctx, projectId, body.approvalDocumentId) : null;
     const effectiveFrom = body.effectiveFrom ?? m.effectiveFrom ?? this.sup.today(p);
     if (m.effectiveTo && m.effectiveTo < effectiveFrom) throw ruleViolation('governance.authority_matrix.invalid_window', 'effectiveTo is before effectiveFrom');
     const tx = this.db.tx();
-    // Only one approved version per committee: the previous one is superseded (its historical votes keep their reference).
-    const superseded = await tx
-      .update(schema.authorityMatrixVersion)
-      .set({ status: 'superseded' })
-      .where(and(eq(schema.authorityMatrixVersion.committeeId, c.id), eq(schema.authorityMatrixVersion.status, 'approved')))
-      .returning({ id: schema.authorityMatrixVersion.id });
-    const res = await tx
-      .update(schema.authorityMatrixVersion)
-      .set({ status: 'approved', approvedBy: ctx.principal.userId, approvedAt: new Date(), approvalReference: body.approvalReference, effectiveFrom })
-      .where(and(eq(schema.authorityMatrixVersion.id, m.id), eq(schema.authorityMatrixVersion.projectId, projectId), eq(schema.authorityMatrixVersion.status, 'draft')))
-      .returning({ id: schema.authorityMatrixVersion.id });
-    if (!res[0]) throw conflict('concurrency.version_mismatch', 'The matrix was changed by someone else — reload and review');
+    const approval = { approvedBy: ctx.principal.userId, approvedAt: new Date(), approvalReference: body.approvalReference, approvalDocumentId: doc?.id ?? null, approvalDocumentVersionId: doc?.currentVersionId ?? null, effectiveFrom };
+    let superseded: { id: string }[] = [];
+    if (plan.requiresVerification) {
+      const res = await tx
+        .update(schema.authorityMatrixVersion)
+        .set(approval)
+        .where(and(eq(schema.authorityMatrixVersion.id, m.id), eq(schema.authorityMatrixVersion.projectId, projectId), eq(schema.authorityMatrixVersion.status, 'draft'), isNull(schema.authorityMatrixVersion.approvedBy)))
+        .returning({ id: schema.authorityMatrixVersion.id });
+      if (!res[0]) throw conflict('concurrency.version_mismatch', 'The matrix was changed by someone else — reload and review');
+    } else {
+      superseded = await this.supersedeApproved(c.id);
+      const res = await tx
+        .update(schema.authorityMatrixVersion)
+        .set({ ...approval, status: 'approved' })
+        .where(and(eq(schema.authorityMatrixVersion.id, m.id), eq(schema.authorityMatrixVersion.projectId, projectId), eq(schema.authorityMatrixVersion.status, 'draft')))
+        .returning({ id: schema.authorityMatrixVersion.id });
+      if (!res[0]) throw conflict('concurrency.version_mismatch', 'The matrix was changed by someone else — reload and review');
+    }
+    const status = plan.requiresVerification ? ('draft' as const) : ('approved' as const);
     await this.audit.record({
       action: 'governance.authority_matrix.approve',
       entityType: 'authority_matrix_version',
       entityId: m.id,
       projectId,
       before: { status: 'draft' },
-      after: { status: 'approved', effectiveFrom, approvalReference: body.approvalReference, isDemoPolicy: m.isDemoPolicy, superseded: superseded.map((s) => s.id), method: 'internal_electronic_approval' },
+      after: {
+        status,
+        pendingVerification: plan.requiresVerification,
+        effectiveFrom,
+        approvalReference: body.approvalReference,
+        approvalDocumentId: doc?.id ?? null,
+        approvalDocumentVersionId: doc?.currentVersionId ?? null,
+        isDemoPolicy: m.isDemoPolicy,
+        superseded: superseded.map((x) => x.id),
+        method: 'internal_electronic_approval',
+      },
       reason: body.note ?? null,
     });
-    return { id: m.id, status: 'approved' as const, effectiveFrom, supersededIds: superseded.map((s) => s.id) };
+    return { id: m.id, status, effectiveFrom, supersededIds: superseded.map((x) => x.id), pendingVerification: plan.requiresVerification };
+  }
+
+  /**
+   * DOM-P2-12: second-person verification of a non-demo matrix approval. The verifier holds `documents.evidence.verify` and
+   * is neither the drafter, nor the approver, nor the uploader of the approval document (403, separation of duties), and
+   * must be able to read the document. Accept brings the matrix into force and supersedes the previous version; reject
+   * (reason required) clears the approval so that it can be approved again with correct evidence (history in the audit).
+   */
+  async verifyMatrixApproval(ctx: RequestContext, projectId: string, committeeId: string, versionId: string, body: { decision: 'accept' | 'reject'; note?: string }) {
+    const c = await loadInProject(this.db, schema.committee, projectId, committeeId);
+    const m = await loadInProject(this.db, schema.authorityMatrixVersion, projectId, versionId);
+    if (m.committeeId !== c.id) throw notFound();
+    const perm = 'documents.evidence.verify';
+    const res = { projectId, classification: c.classification };
+    // Role → state → separation of duties against every person whose work is verified (I-R3: none may be unknown).
+    this.policy.assertGranted(ctx, perm, res);
+    if (m.status !== 'draft' || !m.approvedBy || m.isDemoPolicy || !m.approvalDocumentId) {
+      throw ruleViolation('governance.authority_matrix.no_pending_approval', 'This matrix version has no approval awaiting verification');
+    }
+    const doc = await loadInProject(this.db, schema.document, projectId, m.approvalDocumentId);
+    // The version the approver relied on (bound at approval), never a later upload.
+    const boundVersionId = m.approvalDocumentVersionId ?? doc.currentVersionId;
+    const version = boundVersionId ? await loadInProject(this.db, schema.documentVersion, projectId, boundVersionId) : null;
+    for (const subject of [m.approvedBy, m.createdBy, version?.uploadedBy ?? null]) {
+      this.policy.assert(ctx, perm, { ...res, requesterUserId: subject });
+    }
+    if (!this.policy.canSee(ctx, { projectId, classification: doc.classification, roomId: doc.roomId })) {
+      throw ruleViolation('governance.authority_matrix.evidence_not_visible', 'You cannot read the approval document, so you cannot verify it');
+    }
+    const tx = this.db.tx();
+    // Concurrency: the approval verified is exactly the one read (same approver, same approval instant).
+    const cur = and(
+      eq(schema.authorityMatrixVersion.id, m.id),
+      eq(schema.authorityMatrixVersion.projectId, projectId),
+      eq(schema.authorityMatrixVersion.status, 'draft'),
+      eq(schema.authorityMatrixVersion.approvedBy, m.approvedBy),
+      m.approvedAt ? eq(schema.authorityMatrixVersion.approvedAt, m.approvedAt) : undefined,
+    );
+    if (body.decision === 'reject') {
+      if (!body.note?.trim()) throw ruleViolation('governance.authority_matrix.rejection_reason_required', 'A reason is required to reject the approval evidence');
+      const r = await tx
+        .update(schema.authorityMatrixVersion)
+        .set({ approvedBy: null, approvedAt: null, approvalReference: null, approvalDocumentId: null, approvalDocumentVersionId: null, approvalVerificationNote: body.note.trim() })
+        .where(cur)
+        .returning({ id: schema.authorityMatrixVersion.id });
+      if (!r[0]) throw conflict('concurrency.version_mismatch', 'The matrix was changed by someone else — reload and review');
+      await this.audit.record({
+        action: 'governance.authority_matrix.reject_approval_evidence',
+        entityType: 'authority_matrix_version',
+        entityId: m.id,
+        projectId,
+        before: { status: 'draft', approvedBy: m.approvedBy, approvalReference: m.approvalReference, approvalDocumentId: m.approvalDocumentId },
+        after: { status: 'draft', pendingVerification: false },
+        reason: body.note.trim(),
+      });
+      return { id: m.id, status: 'draft' as const, supersededIds: [], approvalVerifiedBy: null };
+    }
+    if (version && !scanUsable(version.scanStatus, this.config.storage.allowUnscanned)) {
+      throw ruleViolation('governance.authority_matrix.evidence_not_usable', `The approval document's current version is ${version.scanStatus} and cannot be relied upon`);
+    }
+    const superseded = await this.supersedeApproved(c.id);
+    const r = await tx
+      .update(schema.authorityMatrixVersion)
+      .set({ status: 'approved', approvalVerifiedBy: ctx.principal.userId, approvalVerifiedAt: new Date(), approvalVerificationNote: body.note?.trim() || null })
+      .where(cur)
+      .returning({ id: schema.authorityMatrixVersion.id });
+    if (!r[0]) throw conflict('concurrency.version_mismatch', 'The matrix was changed by someone else — reload and review');
+    await this.audit.record({
+      action: 'governance.authority_matrix.verify_approval',
+      entityType: 'authority_matrix_version',
+      entityId: m.id,
+      projectId,
+      before: { status: 'draft', pendingVerification: true },
+      after: { status: 'approved', approvalDocumentId: doc.id, approvalDocumentVersionId: version?.id ?? null, approvedBy: m.approvedBy, superseded: superseded.map((x) => x.id) },
+      reason: body.note ?? null,
+    });
+    return { id: m.id, status: 'approved' as const, supersededIds: superseded.map((x) => x.id), approvalVerifiedBy: ctx.principal.userId };
+  }
+
+  /** Only one approved version per committee: the previous one is superseded (its historical votes keep their reference). */
+  private async supersedeApproved(committeeId: string): Promise<{ id: string }[]> {
+    return this.db
+      .tx()
+      .update(schema.authorityMatrixVersion)
+      .set({ status: 'superseded' })
+      .where(and(eq(schema.authorityMatrixVersion.committeeId, committeeId), eq(schema.authorityMatrixVersion.status, 'approved')))
+      .returning({ id: schema.authorityMatrixVersion.id });
+  }
+
+  /** The approval record: a document of this project that the approver can read, not deleted, with a current version. */
+  private async approvalDocument(ctx: RequestContext, projectId: string, documentId: string) {
+    const doc = await loadInProject(this.db, schema.document, projectId, documentId);
+    if (!this.policy.canSee(ctx, { projectId, classification: doc.classification, roomId: doc.roomId })) throw notFound();
+    if (doc.deletedAt) throw ruleViolation('governance.authority_matrix.evidence_deleted', 'The approval document has been disposed of');
+    if (!doc.currentVersionId) throw ruleViolation('governance.authority_matrix.evidence_no_version', 'The approval document has no uploaded version');
+    return doc;
   }
 
   // ---------------------------------------------------------------------------------------------------------
@@ -446,6 +582,12 @@ export class CommitteesService {
       approvedBy: m.approvedBy,
       approvedAt: iso(m.approvedAt),
       approvalReference: m.approvalReference,
+      approvalDocumentId: m.approvalDocumentId,
+      approvalDocumentVersionId: m.approvalDocumentVersionId,
+      approvalVerifiedBy: m.approvalVerifiedBy,
+      approvalVerifiedAt: iso(m.approvalVerifiedAt),
+      approvalVerificationNote: m.approvalVerificationNote,
+      pendingVerification: m.status === 'draft' && !!m.approvedBy,
       createdBy: m.createdBy,
       createdAt: m.createdAt.toISOString(),
     };

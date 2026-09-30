@@ -19,6 +19,7 @@ import {
   uniq,
   vote,
 } from './gov-fixtures';
+import { createWithVersion, login as docLogin } from '../documents/doc-helpers';
 
 let pid: string;
 let genId: string;
@@ -169,6 +170,7 @@ describe('REQ-GOV-010 / REQ-GOV-011 — a non-demo project cannot activate autho
     sponsor = a.sponsor;
     await admin.post(`${P(np)}/members`, { userId: sec.userId, role: 'secretary_cpmo', reason: 'governance non-demo test' }).expect(201);
     await admin.post(`${P(np)}/members`, { userId: sponsor.userId, role: 'sponsor', reason: 'governance non-demo test' }).expect(201);
+    await admin.post(`${P(np)}/members`, { userId: a.legal.userId, role: 'legal_restricted', reason: 'governance non-demo test (verifier of the approval evidence)' }).expect(201);
     expect((await owner().query(`select is_demo from project where id = $1`, [np])).rows[0].is_demo).toBe(false);
   });
 
@@ -212,11 +214,20 @@ describe('REQ-GOV-010 / REQ-GOV-011 — a non-demo project cannot activate autho
     expect((await decisionRow(d.id)).status).toBe('under_review');
   });
 
-  it('a non-demo policy (e.g. loaded from an approved delegation) can be approved; then authority is in force', async () => {
+  it('a non-demo policy (e.g. loaded from an approved delegation) can be approved with its approval record; once a second person verifies it, authority is in force', async () => {
     const realShape = { ...DEMO_AUTHORITY_POLICY, isDemoPolicy: false, quorum: { minVotingMembersPresent: 1, minFractionPresent: 0.5 } };
     const m = (await sec.post(`${P(np)}/committees/${committeeId}/authority-matrix-versions`, { policy: realShape }).expect(201)).body;
-    const r = await sponsor.post(`${P(np)}/committees/${committeeId}/authority-matrix-versions/${m.id}/approve`, { approvalReference: 'TEST-DELEGATION-REF (synthetic test value)' });
+    // DOM-P2-12 (authority-matrix.md §1.2): a free-text reference alone is not an approval record.
+    const refOnly = await sponsor.post(`${P(np)}/committees/${committeeId}/authority-matrix-versions/${m.id}/approve`, { approvalReference: 'TEST-DELEGATION-REF (synthetic test value)' });
+    expect(refOnly.status).toBe(422);
+    expect(refOnly.body.code).toBe('governance.authority_matrix.evidence_required');
+    const pmDoc = await docLogin('pm');
+    const doc = await createWithVersion(pmDoc, np, { title: 'Delegation record (synthetic test value)', classification: 'internal' }, { bytes: Buffer.from('Synthetic delegation record (test).'), name: 'delegation.txt' });
+    const r = await sponsor.post(`${P(np)}/committees/${committeeId}/authority-matrix-versions/${m.id}/approve`, { approvalReference: 'TEST-DELEGATION-REF (synthetic test value)', approvalDocumentId: doc.id });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
+    expect(r.body).toMatchObject({ status: 'draft', pendingVerification: true });
+    expect((await sec.get(`${P(np)}/committees/${committeeId}`).expect(200)).body.activeMatrix).toBeNull();
+    await a.legal.post(`${P(np)}/committees/${committeeId}/authority-matrix-versions/${m.id}/verify-approval`, { decision: 'accept', note: 'Checked (test)' }).expect(201);
     const c = (await sec.get(`${P(np)}/committees/${committeeId}`).expect(200)).body;
     expect(c.activeMatrix).toMatchObject({ id: m.id, isDemoPolicy: false, usable: true });
   });

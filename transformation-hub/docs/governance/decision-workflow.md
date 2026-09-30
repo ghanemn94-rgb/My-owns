@@ -28,7 +28,7 @@ flowchart LR
 | 2. Secretariat screening | `secretary_cpmo` | Accept, return with reasons, or merge | Returned items go back to Draft with the reasons kept |
 | 3. Decision paper | Requester | Required paper fields (§2) | Cannot be submitted incomplete **[server]** |
 | 4. Agenda and meeting pack | `secretary_cpmo` | Numbered agenda; pack frozen as a snapshot | Changes after freeze create a new pack version **[server]** |
-| 5. Quorum and conflict checks | Chair, with `secretary_cpmo` | Attendance, declared conflicts, recusals per item | Quorum computed per item after recusals **[server]** |
+| 5. Quorum and conflict checks | Chair, with `secretary_cpmo` | Attendance, declared conflicts, recusals per item | Quorum computed per item after recusals **[server]**; recusals before the member votes; attendance frozen while an item has votes and no outcome **[server]** |
 | 6. Discussion and vote, or circulation | Voting members | Votes (approve / reject / abstain) against the frozen paper version | Recused, self-interested and non-voting users cannot vote **[server]** |
 | 7. Minutes approval | Committee (next meeting or circulation) | Numbered minutes, versioned; approval record | Approved minutes are immutable; corrections are new versions |
 | 8. Actions | `secretary_cpmo` | Action number, owner (one accountable), due date, linked decision | Action owner must be an active project member |
@@ -101,7 +101,7 @@ Guard codes: **Q** quorum · **R** recusal · **A** authority · **S** self-appr
 | 6 | under_review → rejected | `.../close-vote` | As above | Q, R, S, F |
 | 7 | under_review → deferred | `.../defer` | Chair, per committee resolution | Reason and revisit date required; V |
 | 8 | deferred → under_review | `.../retable` | `secretary_cpmo` | New or re-frozen paper version (F); V |
-| 9 | recommended → approved / rejected / deferred | `.../record-external-decision` | Recorded by `secretary_cpmo`, confirmed by the chair (two different users) | E: evidence of the competent body's decision (e.g. `board_resolution`), body matches `escalateTo`; S (recorder ≠ confirmer); V |
+| 9 | recommended → approved / rejected / deferred | `.../record-external-decision` | Recorded by `secretary_cpmo`, confirmed by the chair (two different users) | E: evidence of the competent body's decision (e.g. `board_resolution`), body matches `escalateTo`; S (recorder ≠ confirmer); V. **As implemented:** `POST …/record-external-approval` with `externalReference` and `evidenceLinkId` — an active evidence link on the decision (documents module) verified by a second person; the recorder is neither the recorder of the recommendation nor the verifier of the evidence (DOM-P2-12) |
 | 10 | approved → implementation_pending | `.../start-implementation` | `secretary_cpmo` or decision owner | At least one action with one accountable owner and a due date; V |
 | 11 | implementation_pending → implemented_verified | `.../verify-implementation` | Verifier (`secretary_cpmo` or designated reviewer) | T: all linked actions verified-closed with evidence; verifier is not an owner of those actions (S); V |
 | 12 | implemented_verified → implementation_pending | `.../reopen` | Chair or `secretary_cpmo` | Reason and evidence of defect; prior verification preserved in history; V |
@@ -112,11 +112,19 @@ Additional invariants **[server]**:
 - **No automatic implementation.** Nothing moves a decision to `implemented_verified` except transition 11.
 - **Quorum (Q).** Per agenda item: eligible voting members present, minus recused members, minus the requester/owner,
   must satisfy the active matrix quorum rule. Otherwise `close-vote` is rejected (AT-05).
-- **Recusal (R).** A vote from a member recused on the item is rejected and logged (AT-05).
+- **Recusal (R).** A vote from a member recused on the item is rejected and logged (AT-05). A recusal for a member who
+  already voted in the current round is refused (`governance.recusal.after_vote`); restart the round (defer → resume)
+  instead. On behalf of a member it needs a reason and is audited with the recorder (DOM-P2-06).
+- **Round integrity.** Every vote cast in the round counts: if a current-round vote belongs to a recused member, the
+  requester, or (in a meeting) a member no longer recorded present, the outcome is refused
+  (`governance.outcome.vote_integrity`) instead of dropping the vote; attendance is frozen while an item has votes and no
+  outcome (`governance.attendance.frozen_voting_open`, DOM-P2-20).
 - **Self-approval (S).** A requester/owner cannot vote on or approve their own item; the same user cannot record and
   confirm an external decision; an action owner cannot verify their own action (AT-05).
 - **Authority (A).** Evaluated against the matrix version active at vote time (`authority-matrix.md` §3). An outside-authority
-  item never becomes `approved` by committee vote (AT-04); dependent gates remain blocked.
+  item never becomes `approved` by committee vote (AT-04); dependent gates remain blocked. Baseline and change-request
+  approvals follow the same matrix (`authority-matrix.md` §3.1): outside the delegation they need the final decision of
+  this workflow (DOM-P2-03).
 - **Frozen paper (F).** Votes attach to a specific paper version. If the paper, amount or attachments change after voting
   opens, existing votes are invalidated and a re-vote is required (AT-18 analogue for human approvals).
 - **Concurrency (V).** Every command carries `expectedVersion`; a mismatch returns 409 and requires reload (AT-16).

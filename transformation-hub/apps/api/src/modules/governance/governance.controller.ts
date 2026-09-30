@@ -81,6 +81,11 @@ export class GovernanceController {
     return this.committees.approveMatrix(ctx, i.params.projectId, i.params.committeeId, i.params.versionId, i.body);
   }
 
+  @ApiRoute(R.verifyAuthorityMatrixApproval)
+  verifyAuthorityMatrixApproval(@Ctx() ctx: RequestContext, @Input() i: I<typeof R.verifyAuthorityMatrixApproval>) {
+    return this.committees.verifyMatrixApproval(ctx, i.params.projectId, i.params.committeeId, i.params.versionId, i.body);
+  }
+
   // ---- Meetings --------------------------------------------------------------------------------------------
   @ApiRoute(R.listMeetings)
   listMeetings(@Ctx() ctx: RequestContext, @Input() i: I<typeof R.listMeetings>) {

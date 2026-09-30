@@ -1,5 +1,5 @@
 {
-  "id": "8e77fb56-8436-4bbd-a94f-f4bd0052c8d8",
+  "id": "36f33340-3edd-4ea2-a4ad-35ae9b624cba",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2603,6 +2603,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "decision_id": {
+          "name": "decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "proposed_by": {
           "name": "proposed_by",
           "type": "uuid",
@@ -2749,6 +2755,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "baseline_decision_fk": {
+          "name": "baseline_decision_fk",
+          "tableFrom": "baseline_version",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2828,6 +2849,24 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'draft'"
+        },
+        "cost_impact_amount": {
+          "name": "cost_impact_amount",
+          "type": "numeric(20, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cost_impact_currency": {
+          "name": "cost_impact_currency",
+          "type": "varchar(3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cost_impact_unit_scale": {
+          "name": "cost_impact_unit_scale",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "subject_type": {
           "name": "subject_type",
@@ -2984,7 +3023,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "change_request_cost_impact_ck": {
+          "name": "change_request_cost_impact_ck",
+          "value": "((\"change_request\".\"cost_impact_amount\" is null) = (\"change_request\".\"cost_impact_currency\" is null) and (\"change_request\".\"cost_impact_amount\" is null) = (\"change_request\".\"cost_impact_unit_scale\" is null) and (\"change_request\".\"cost_impact_unit_scale\" is null or \"change_request\".\"cost_impact_unit_scale\" in (1, 1000, 1000000)))"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.cross_project_dependency": {
@@ -6300,6 +6344,36 @@
           "primaryKey": false,
           "notNull": false
         },
+        "approval_document_id": {
+          "name": "approval_document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_document_version_id": {
+          "name": "approval_document_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_verified_by": {
+          "name": "approval_verified_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_verified_at": {
+          "name": "approval_verified_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_verification_note": {
+          "name": "approval_verification_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -6358,6 +6432,36 @@
           "columnsFrom": [
             "project_id",
             "committee_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "authority_matrix_approval_document_fk": {
+          "name": "authority_matrix_approval_document_fk",
+          "tableFrom": "authority_matrix_version",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "approval_document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "authority_matrix_approval_version_fk": {
+          "name": "authority_matrix_approval_version_fk",
+          "tableFrom": "authority_matrix_version",
+          "tableTo": "document_version",
+          "columnsFrom": [
+            "project_id",
+            "approval_document_version_id"
           ],
           "columnsTo": [
             "project_id",
@@ -7070,6 +7174,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "external_evidence_link_id": {
+          "name": "external_evidence_link_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "meeting_id": {
           "name": "meeting_id",
           "type": "uuid",
@@ -7294,6 +7404,21 @@
           "columnsFrom": [
             "project_id",
             "superseded_by_decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "decision_external_evidence_fk": {
+          "name": "decision_external_evidence_fk",
+          "tableFrom": "decision",
+          "tableTo": "evidence_link",
+          "columnsFrom": [
+            "project_id",
+            "external_evidence_link_id"
           ],
           "columnsTo": [
             "project_id",

@@ -62,10 +62,17 @@ export async function approveBaseline(p: Personas, pid: string) {
   return b.id;
 }
 
-/** Change request through planning: review by the PM, approval by the sponsor (not the requester). */
+/**
+ * Change request through planning: review by the PM, approval by the sponsor (not the requester). DOM-P2-03: the budget
+ * impact is quantified first ("0" — synthetic test assessment) so the delegated limit can be checked at approval.
+ */
 export async function approveChangeRequest(p: Personas, pid: string, crId: string) {
   let cr = (await p.pm.get(`${base(pid)}/change-requests/${crId}`).expect(200)).body;
   if (cr.status === 'submitted') cr = await ok(p.pm.post(`${base(pid)}/change-requests/${crId}/start-review`, { expectedVersion: cr.version }));
+  cr = (await p.pm.get(`${base(pid)}/change-requests/${crId}`).expect(200)).body;
+  if (!cr.costImpact) {
+    await ok(p.pm.post(`${base(pid)}/change-requests/${crId}/assess`, { expectedVersion: cr.version, impacts: {}, costImpact: { amount: '0.0000', currency: 'SAR', unitScale: 1 }, note: 'Synthetic test assessment: no budget amount' }));
+  }
   const v = (await p.pm.get(`${base(pid)}/change-requests/${crId}`).expect(200)).body.version;
   return ok(p.sponsor.post(`${base(pid)}/change-requests/${crId}/approve`, { expectedVersion: v, note: 'approved (test)' }));
 }

@@ -399,6 +399,7 @@ CREATE TABLE "baseline_version" (
 	"snapshot" jsonb NOT NULL,
 	"snapshot_hash" text NOT NULL,
 	"change_request_id" uuid,
+	"decision_id" uuid,
 	"proposed_by" uuid,
 	"approved_by" uuid,
 	"approved_at" timestamp with time zone,
@@ -422,6 +423,9 @@ CREATE TABLE "change_request" (
 	"alternatives" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"impacts" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"status" "change_request_status" DEFAULT 'draft' NOT NULL,
+	"cost_impact_amount" numeric(20, 4),
+	"cost_impact_currency" varchar(3),
+	"cost_impact_unit_scale" integer,
 	"subject_type" varchar(32),
 	"subject_id" uuid,
 	"proposed_change" jsonb,
@@ -436,7 +440,8 @@ CREATE TABLE "change_request" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
-	CONSTRAINT "change_request_pid_uq" UNIQUE("project_id","id")
+	CONSTRAINT "change_request_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "change_request_cost_impact_ck" CHECK ((("change_request"."cost_impact_amount" is null) = ("change_request"."cost_impact_currency" is null) and ("change_request"."cost_impact_amount" is null) = ("change_request"."cost_impact_unit_scale" is null) and ("change_request"."cost_impact_unit_scale" is null or "change_request"."cost_impact_unit_scale" in (1, 1000, 1000000))))
 );
 --> statement-breakpoint
 CREATE TABLE "cross_project_dependency" (
@@ -826,6 +831,11 @@ CREATE TABLE "authority_matrix_version" (
 	"approved_by" uuid,
 	"approved_at" timestamp with time zone,
 	"approval_reference" text,
+	"approval_document_id" uuid,
+	"approval_document_version_id" uuid,
+	"approval_verified_by" uuid,
+	"approval_verified_at" timestamp with time zone,
+	"approval_verification_note" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
 	CONSTRAINT "authority_matrix_pid_uq" UNIQUE("project_id","id")
@@ -914,6 +924,7 @@ CREATE TABLE "decision" (
 	"authority_reason" text,
 	"escalated_to" text,
 	"external_authority_reference" text,
+	"external_evidence_link_id" uuid,
 	"meeting_id" uuid,
 	"decided_via_circulation" boolean DEFAULT false NOT NULL,
 	"outcome_recorded_at" timestamp with time zone,
@@ -2870,6 +2881,7 @@ ALTER TABLE "assumption" ADD CONSTRAINT "assumption_owner_user_id_app_user_id_fk
 ALTER TABLE "assumption" ADD CONSTRAINT "assumption_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "baseline_version" ADD CONSTRAINT "baseline_version_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "baseline_version" ADD CONSTRAINT "baseline_change_request_fk" FOREIGN KEY ("project_id","change_request_id") REFERENCES "public"."change_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "baseline_version" ADD CONSTRAINT "baseline_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "change_request" ADD CONSTRAINT "change_request_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "change_request" ADD CONSTRAINT "change_request_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cross_project_dependency" ADD CONSTRAINT "cross_project_dependency_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2918,6 +2930,8 @@ ALTER TABLE "attendance" ADD CONSTRAINT "attendance_meeting_fk" FOREIGN KEY ("pr
 ALTER TABLE "attendance" ADD CONSTRAINT "attendance_membership_fk" FOREIGN KEY ("project_id","membership_id") REFERENCES "public"."committee_membership"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "authority_matrix_version" ADD CONSTRAINT "authority_matrix_version_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "authority_matrix_version" ADD CONSTRAINT "authority_matrix_committee_fk" FOREIGN KEY ("project_id","committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "authority_matrix_version" ADD CONSTRAINT "authority_matrix_approval_document_fk" FOREIGN KEY ("project_id","approval_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "authority_matrix_version" ADD CONSTRAINT "authority_matrix_approval_version_fk" FOREIGN KEY ("project_id","approval_document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee" ADD CONSTRAINT "committee_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee" ADD CONSTRAINT "committee_program_id_program_id_fk" FOREIGN KEY ("program_id") REFERENCES "public"."program"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee" ADD CONSTRAINT "committee_charter_doc_fk" FOREIGN KEY ("project_id","charter_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2934,6 +2948,7 @@ ALTER TABLE "decision" ADD CONSTRAINT "decision_requester_user_id_app_user_id_fk
 ALTER TABLE "decision" ADD CONSTRAINT "decision_committee_fk" FOREIGN KEY ("project_id","committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "decision" ADD CONSTRAINT "decision_meeting_fk" FOREIGN KEY ("project_id","meeting_id") REFERENCES "public"."meeting"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "decision" ADD CONSTRAINT "decision_superseded_fk" FOREIGN KEY ("project_id","superseded_by_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "decision" ADD CONSTRAINT "decision_external_evidence_fk" FOREIGN KEY ("project_id","external_evidence_link_id") REFERENCES "public"."evidence_link"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "escalation" ADD CONSTRAINT "escalation_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "escalation" ADD CONSTRAINT "escalation_committee_fk" FOREIGN KEY ("project_id","raised_to_committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "escalation" ADD CONSTRAINT "escalation_resolution_fk" FOREIGN KEY ("project_id","resolution_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

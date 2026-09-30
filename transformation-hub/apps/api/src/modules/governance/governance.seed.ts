@@ -6,6 +6,7 @@ import { DecisionsService } from './decisions.service';
 import { ActionsService } from './actions.service';
 import { GovernanceSupport } from './governance.support';
 import { DEMO_AUTHORITY_POLICY } from './demo-policy';
+import { EvidenceService } from '../documents/evidence.service';
 
 export const DEMO_STEERING_COMMITTEE = 'DC Carve-out & JV Steering Committee (Demo)';
 
@@ -28,6 +29,7 @@ export const governanceSeed: ModuleSeed = {
     const decisions = app.get(DecisionsService);
     const actions = app.get(ActionsService);
     const sup = app.get(GovernanceSupport);
+    const evidence = app.get(EvidenceService);
 
     const existing = await asUser('secretary', (ctx) => committees.list(ctx, pid, { page: 1, pageSize: 100, q: DEMO_STEERING_COMMITTEE }));
     if (existing.items.some((c) => c.name === DEMO_STEERING_COMMITTEE)) {
@@ -230,13 +232,24 @@ export const governanceSeed: ModuleSeed = {
     await asUser('chair', (ctx) => meetings.approveMinutes(ctx, pid, m.id, { expectedVersion: mv }));
 
     // 7b. The delegating authority's approval of the G0 recommendation is recorded by the secretariat (a different
-    //     person than the chair who recorded the recommendation) with a clearly synthetic reference.
+    //     person than the chair who recorded the recommendation) with a clearly synthetic reference. DOM-P2-12: it rests
+    //     on an evidence link on the decision (linked by the PM) verified by a second person (Legal) — synthetic note.
+    const ev = await asUser('pm', (ctx) =>
+      evidence.link(ctx, pid, {
+        targetType: 'decision',
+        targetId: g0.id,
+        note: 'DEMO — synthetic record of the delegating authority\'s approval of G0 passage (not a real resolution).',
+        purpose: 'Evidence of the external authority decision (demo)',
+      }),
+    );
+    await asUser('legal', (ctx) => evidence.verify(ctx, pid, ev.id, { expectedVersion: 1, decision: 'accept', note: `${DEMO_NOTE}: evidence checked against the synthetic reference` }));
     const g0v = await version(g0.id);
     await asUser('secretary', (ctx) =>
       decisions.recordExternalApproval(ctx, pid, g0.id, {
         expectedVersion: g0v,
         outcome: 'approved',
         externalReference: 'DEMO-DELEGATING-AUTHORITY-G0 (synthetic reference — not a real resolution)',
+        evidenceLinkId: ev.id,
         note: DEMO_NOTE,
       }),
     );

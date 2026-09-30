@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, loginAs, owner, Client } from '../helpers';
 import { addDays, addEvidence, auditCount, createProject, grant, riyadhToday, task, workstreams } from './fixtures';
+import { approvedNonDemoMatrix } from '../governance/gov-fixtures';
 
 /** Measurement rules 1–8 (spec §9): weighted progress, RAG, overrides, periodic updates. */
 let admin: Client;
@@ -29,6 +30,10 @@ beforeAll(async () => {
   await grant(pm, pid, contributor, 'contributor');
   await grant(pm, pid, approver, 'functional_approver');
   await grant(pm, pid, secretary, 'secretary_cpmo');
+  // DOM-P2-03: baseline approval acts on the project's approved authority matrix (non-demo project; DOM-P2-12 evidence).
+  const legal = await loginAs('legal');
+  await grant(admin, pid, legal, 'legal_restricted');
+  await approvedNonDemoMatrix(pid, { secretary, sponsor, legal });
   ws = await workstreams(pm, pid);
 });
 afterAll(async () => {

@@ -37,6 +37,12 @@ const BoolQuery = z.enum(['true', 'false']);
 const UserRef = z.union([Uuid, z.literal('me')]);
 const Reason = RequiredText(2000);
 const Command = z.object({ expectedVersion: ExpectedVersion, note: Text(4000).optional() });
+/**
+ * Approval of a baseline / change request (DOM-P2-03): within delegated authority the approver acts on the approved
+ * authority matrix; outside it (or without an approved matrix) the approval must name the FINAL governance decision of
+ * the matching type (`baseline_approval` / `change_request_budget`) that backs it.
+ */
+const ApprovalCommand = Command.extend({ decisionId: Uuid.optional() });
 const ReasonCommand = z.object({ expectedVersion: ExpectedVersion, reason: Reason });
 const CommandResult = z.object({ id: Uuid, status: z.string(), version: z.number().int() });
 const VersionResult = z.object({ id: Uuid, version: z.number().int() });
@@ -468,6 +474,8 @@ export const BaselineDto = z.object({
   status: z.enum(BASELINE_STATUSES),
   snapshotHash: z.string(),
   changeRequestId: Uuid.nullable(),
+  /** Final governance decision that backed the approval (outside delegated authority), if any. */
+  decisionId: Uuid.nullable(),
   proposedBy: Uuid.nullable(),
   proposedByName: z.string().nullable(),
   approvedBy: Uuid.nullable(),
@@ -529,6 +537,8 @@ export const ChangeRequestDto = z.object({
   rationale: z.string(),
   alternatives: z.array(z.string()),
   impacts: ImpactsSchema,
+  /** Budget impact as money (decimal + currency + unit): compared with the `change_request_budget` delegated limit. */
+  costImpact: MoneySchema.nullable(),
   status: z.enum(CHANGE_REQUEST_STATUSES),
   subjectType: z.string().nullable(),
   subjectId: Uuid.nullable(),
@@ -561,6 +571,8 @@ export const CreateChangeRequestBody = z.object({
   rationale: RequiredText(4000),
   alternatives: z.array(RequiredText(1000)).max(10).default([]),
   impacts: ImpactsSchema.default({}),
+  /** Budget impact as money ("0" = no budget impact). Required before approval when `impacts.cost` states one in text. */
+  costImpact: MoneySchema.nullable().optional(),
   subjectType: z.string().trim().regex(/^[a-z_]{2,32}$/).optional(),
   subjectId: Uuid.optional(),
   proposedChange: z.record(z.string(), z.unknown()).optional(),
@@ -574,12 +586,19 @@ export const UpdateChangeRequestBody = z
     rationale: RequiredText(4000).optional(),
     alternatives: z.array(RequiredText(1000)).max(10).optional(),
     impacts: ImpactsSchema.optional(),
+    costImpact: MoneySchema.nullable().optional(),
     proposedChange: z.record(z.string(), z.unknown()).nullable().optional(),
     rebaseline: z.boolean().optional(),
   })
   .strict();
 
-export const AssessChangeRequestBody = z.object({ expectedVersion: ExpectedVersion, impacts: ImpactsSchema, note: Text(4000).optional() });
+export const AssessChangeRequestBody = z.object({
+  expectedVersion: ExpectedVersion,
+  impacts: ImpactsSchema,
+  /** The assessed budget impact as money ("0" = none); `null` clears it. Omitted = unchanged. */
+  costImpact: MoneySchema.nullable().optional(),
+  note: Text(4000).optional(),
+});
 
 // ---------------------------------------------------------------------------------------------------------
 // RAID
@@ -1017,7 +1036,14 @@ export const planningRoutes = registerRoutes({
     body: ProposeBaselineBody,
     response: z.object({ id: Uuid, versionNo: z.number().int(), status: z.string(), snapshotHash: z.string(), version: z.number().int() }),
   }),
-  approveBaseline: cmd('planning.approveBaseline', p('/baselines/:baselineId/approve'), 'Approve (not the proposer; previous approved baseline is superseded)', 'planning.baseline.approve', blP, Command),
+  approveBaseline: cmd(
+    'planning.approveBaseline',
+    p('/baselines/:baselineId/approve'),
+    'Approve (not the proposer; within the delegated authority of the approved matrix, or on a final governance decision; previous approved baseline is superseded)',
+    'planning.baseline.approve',
+    blP,
+    ApprovalCommand,
+  ),
   rejectBaseline: cmd('planning.rejectBaseline', p('/baselines/:baselineId/reject'), 'Reject (reason required)', 'planning.baseline.approve', blP, ReasonCommand),
 
   // Change requests --------------------------------------------------------------------------------------
@@ -1028,7 +1054,14 @@ export const planningRoutes = registerRoutes({
   submitChangeRequest: cmd('planning.submitChangeRequest', p('/change-requests/:changeRequestId/submit'), 'Submit', 'planning.change_request.create', crP, Command),
   startChangeRequestReview: cmd('planning.startChangeRequestReview', p('/change-requests/:changeRequestId/start-review'), 'Start the impact review', 'planning.change_request.assess', crP, Command),
   assessChangeRequest: cmd('planning.assessChangeRequest', p('/change-requests/:changeRequestId/assess'), 'Record the impact assessment (time/cost/scope/readiness/transaction/financial/TSA)', 'planning.change_request.assess', crP, AssessChangeRequestBody),
-  approveChangeRequest: cmd('planning.approveChangeRequest', p('/change-requests/:changeRequestId/approve'), 'Approve (not the requester)', 'planning.change_request.approve', crP, Command),
+  approveChangeRequest: cmd(
+    'planning.approveChangeRequest',
+    p('/change-requests/:changeRequestId/approve'),
+    'Approve (not the requester; budget impact within the delegated limit of the approved matrix, or on a final governance decision of type change_request_budget)',
+    'planning.change_request.approve',
+    crP,
+    ApprovalCommand,
+  ),
   rejectChangeRequest: cmd('planning.rejectChangeRequest', p('/change-requests/:changeRequestId/reject'), 'Reject (reason required; not the requester)', 'planning.change_request.approve', crP, ReasonCommand),
   withdrawChangeRequest: cmd('planning.withdrawChangeRequest', p('/change-requests/:changeRequestId/withdraw'), 'Withdraw (reason required)', 'planning.change_request.create', crP, ReasonCommand),
   implementChangeRequest: cmd('planning.implementChangeRequest', p('/change-requests/:changeRequestId/mark-implemented'), 'Mark implemented (a re-baseline CR needs its approved baseline)', 'planning.change_request.assess', crP, Command),

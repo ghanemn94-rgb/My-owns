@@ -78,7 +78,16 @@ export const carveoutSeed: ModuleSeed = {
       if (!r.changeRequest || !s.approve) continue;
       const crId = r.changeRequest.id;
       await asUser('pm', (ctx) => cc.crCommand(ctx, pid, crId, 'start_review', { expectedVersion: 2, note: 'Demo review' }));
-      await asUser('sponsor', (ctx) => cc.crCommand(ctx, pid, crId, 'approve', { expectedVersion: 3, note: 'Demo approval (synthetic persona)' }));
+      // DOM-P2-03: the budget impact must be quantified before approval so the delegated limit can be checked.
+      await asUser('pm', (ctx) =>
+        cc.assessChangeRequest(ctx, pid, crId, {
+          expectedVersion: 3,
+          impacts: {},
+          costImpact: { amount: '0.0000', currency: 'SAR', unitScale: 1 },
+          note: `${DEMO} — synthetic assessment (not a Finance assessment): no budget amount is attached to this demo change`,
+        }),
+      );
+      await asUser('sponsor', (ctx) => cc.crCommand(ctx, pid, crId, 'approve', { expectedVersion: 4, note: 'Demo approval (synthetic persona)' }));
       await asUser('pm', async (ctx) => {
         const it = await perimeter.getItem(ctx, pid, r.id);
         await perimeter.applyChange(ctx, pid, r.id, { expectedVersion: it.version, changeRequestId: crId, note: 'Demo: approved change applied' });

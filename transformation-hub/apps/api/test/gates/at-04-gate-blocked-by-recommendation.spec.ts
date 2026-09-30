@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, owner, projectIdByCode, GEN } from '../helpers';
 import { setupProject, setupGovernance, gateDecision, gateByKey, makeReady, insertDecisionRow, Personas, Gov } from './gate-test-kit';
+import { verifiedDecisionEvidence } from '../governance/gov-fixtures';
 
 /**
  * AT-04 (gate side): a committee recommendation outside its delegation is not a final approval — the gate stays blocked
@@ -83,11 +84,14 @@ describe('AT-04 — a recommended / pending-external decision keeps the gate blo
   });
 
   it('once the authorized body approves the recommendation (recorded by a second secretary), the sponsor passes the gate', async () => {
+    // DOM-P2-12: the authorized body's decision is evidenced on the decision and verified by a second person.
+    const evidenceLinkId = await verifiedDecisionEvidence(projectId, p.pm, p.legal, recommended.id);
     const v = (await p.chair.get(`/api/v1/projects/${projectId}/decisions/${recommended.id}`).expect(200)).body.version;
     const ext = await gov.secretary2.post(`/api/v1/projects/${projectId}/decisions/${recommended.id}/record-external-approval`, {
       expectedVersion: v,
       outcome: 'approved',
       externalReference: 'DEMO-BOARD-RESOLUTION-G0 (synthetic)',
+      evidenceLinkId,
     });
     expect(ext.status, JSON.stringify(ext.body)).toBe(201);
     expect(ext.body.status).toBe('approved');

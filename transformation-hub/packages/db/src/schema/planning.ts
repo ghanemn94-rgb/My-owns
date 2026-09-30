@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, integer, jsonb, varchar, date, boolean, index, unique, uniqueIndex, smallint, check } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, integer, jsonb, varchar, date, boolean, index, unique, uniqueIndex, smallint, check, numeric } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import {
   pk,
@@ -233,6 +233,8 @@ export const baselineVersion = pgTable(
     snapshot: jsonb('snapshot').$type<Record<string, unknown>>().notNull(),
     snapshotHash: text('snapshot_hash').notNull(),
     changeRequestId: uuid('change_request_id'),
+    /** Final governance decision that backs the approval when it is outside delegated authority (DOM-P2-03). */
+    decisionId: uuid('decision_id'),
     proposedBy: uuid('proposed_by'),
     approvedBy: uuid('approved_by'),
     approvedAt: ts('approved_at'),
@@ -246,6 +248,7 @@ export const baselineVersion = pgTable(
   },
   (t) => [
     projectFk('baseline_change_request_fk', t.projectId, t.changeRequestId, (): FkTarget => changeRequest),
+    projectFk('baseline_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
     unique('baseline_pid_uq').on(t.projectId, t.id),
     uniqueIndex('baseline_version_uq').on(t.projectId, t.versionNo),
     // At most one pending proposal and one approved (current) baseline per project — concurrent attempts → 409.
@@ -269,6 +272,14 @@ export const changeRequest = pgTable(
       .notNull()
       .default({}),
     status: changeRequestStatus('status').notNull().default('draft'),
+    /**
+     * Monetary (budget) impact as decimal + ISO 4217 currency + unit scale (DOM-P2-03): compared with the delegated limit
+     * of the `change_request_budget` decision type. Null = not quantified (a textual `impacts.cost` then blocks approval
+     * until it is quantified; "0" records "no budget impact").
+     */
+    costImpactAmount: numeric('cost_impact_amount', { precision: 20, scale: 4 }),
+    costImpactCurrency: varchar('cost_impact_currency', { length: 3 }),
+    costImpactUnitScale: integer('cost_impact_unit_scale'),
     subjectType: varchar('subject_type', { length: 32 }),
     subjectId: uuid('subject_id'),
     proposedChange: jsonb('proposed_change').$type<Record<string, unknown>>(),
@@ -285,7 +296,15 @@ export const changeRequest = pgTable(
     version: versionCol(),
   },
   (t) => [
-    projectFk('change_request_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),unique('change_request_pid_uq').on(t.projectId, t.id), uniqueIndex('change_request_code_uq').on(t.projectId, t.code)],
+    projectFk('change_request_decision_fk', t.projectId, t.decisionId, (): FkTarget => decision),
+    unique('change_request_pid_uq').on(t.projectId, t.id),
+    uniqueIndex('change_request_code_uq').on(t.projectId, t.code),
+    // Money triple is all-or-nothing, with an allowed unit scale (1 / 1000 / 1000000).
+    check(
+      'change_request_cost_impact_ck',
+      sql`((${t.costImpactAmount} is null) = (${t.costImpactCurrency} is null) and (${t.costImpactAmount} is null) = (${t.costImpactUnitScale} is null) and (${t.costImpactUnitScale} is null or ${t.costImpactUnitScale} in (1, 1000, 1000000)))`,
+    ),
+  ],
 );
 
 const raidCommon = () => ({

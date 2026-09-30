@@ -1,7 +1,7 @@
 import { expect } from 'vitest';
 import { Client, getApp, owner } from '../helpers';
 import { setupGovernance, setupProject, Gov, Personas } from '../gates/gate-test-kit';
-import { decisionVersion, plusDays, tabledDecision, today, vote, Actors } from '../governance/gov-fixtures';
+import { decisionVersion, plusDays, tabledDecision, today, verifiedDecisionEvidence, vote, Actors } from '../governance/gov-fixtures';
 import { login, docsPath } from '../documents/doc-helpers';
 import { JobContextFactory } from '../../src/platform/jobs/job-context';
 import { DbService } from '../../src/platform/db.service';
@@ -106,11 +106,14 @@ export async function decisionOfType(
   expect(out.status, JSON.stringify(out.body)).toBe(201);
   let status = out.body.status as string;
   if (opts.externalApproval && status === 'recommended') {
+    // DOM-P2-12: the external decision rests on a verified evidence link on the decision (PM links, Legal verifies).
+    const evidenceLinkId = await verifiedDecisionEvidence(projectId, p.pm, p.legal, d.id);
     const ev = await decisionVersion(p.chair, projectId, d.id);
     const ext = await gov.secretary2.post(`${P(projectId)}/decisions/${d.id}/record-external-approval`, {
       expectedVersion: ev,
       outcome: 'approved',
       externalReference: 'DEMO-BOARD-RESOLUTION (synthetic)',
+      evidenceLinkId,
       note: 'Synthetic external decision (test)',
     });
     expect(ext.status, JSON.stringify(ext.body)).toBe(201);

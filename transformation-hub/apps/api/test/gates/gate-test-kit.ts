@@ -3,7 +3,7 @@ import { getApp, loginAs, owner, demoUserId, Client } from '../helpers';
 import { WorkerService } from '../../src/platform/jobs/worker.service';
 import { JobRegistry } from '../../src/platform/jobs/job-registry';
 import { registerJobHandlers } from '../../src/jobs';
-import { Actors, setupCommittee, openMeeting, tabledDecision, vote, decisionVersion } from '../governance/gov-fixtures';
+import { Actors, setupCommittee, openMeeting, tabledDecision, vote, decisionVersion, verifiedDecisionEvidence } from '../governance/gov-fixtures';
 
 /**
  * Test kit for the gates acceptance tests. Each spec creates its OWN DC project through the portfolio API (isolated from
@@ -209,11 +209,14 @@ export async function gateDecision(
   expect(out.status, JSON.stringify(out.body)).toBe(201);
   let status = out.body.status as string;
   if (opts.externalApproval && status === 'recommended') {
+    // DOM-P2-12: the external decision rests on a verified evidence link on the decision (PM links, Legal verifies).
+    const evidenceLinkId = await verifiedDecisionEvidence(projectId, p.pm, p.legal, d.id);
     const ev = await decisionVersion(p.chair, projectId, d.id);
     const ext = await gov.secretary2.post(`/api/v1/projects/${projectId}/decisions/${d.id}/record-external-approval`, {
       expectedVersion: ev,
       outcome: 'approved',
       externalReference: 'DEMO-BOARD-RESOLUTION (synthetic)',
+      evidenceLinkId,
       note: 'Synthetic external decision (test)',
     });
     expect(ext.status, JSON.stringify(ext.body)).toBe(201);

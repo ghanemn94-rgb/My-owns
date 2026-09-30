@@ -135,13 +135,18 @@ Subject to the actual organizational structure. Voting or advisory status is a p
 1. Quorum rules are taken from the approved authority matrix. A clearly labelled **Demo** policy exists for the sandbox
    only (see `authority-matrix.md`).
 2. Quorum is evaluated per agenda item: members recused from an item are excluded from the quorum count for that item.
+   The fraction of the quorum rule is taken over the **appointed** voting members — voting seats held by a named person on
+   the meeting date; a vacant seat ("Role — To be confirmed") is not counted. Recused members and the requester stay in
+   this denominator, so recusals never lower the bar (proposed platform rule, `authority-matrix.md` §3 step 4 — A-42 / Q-42).
 3. Advisory members and guests are not counted.
 4. The platform rejects (server-side) and logs any attempt to record a decision without quorum.
 
 ## 11. Voting (التصويت)
 
 1. Each voting member present and not recused has one vote: approve, reject or abstain.
-2. The approval threshold (e.g. simple majority or two-thirds) is taken from the approved authority matrix.
+2. The approval threshold (e.g. simple majority or two-thirds) is taken from the approved authority matrix. It is
+   measured over the eligible votes cast (approve, reject and abstain); **abstentions count as not approving**; a round
+   with abstentions only records no outcome (`authority-matrix.md` §3 step 5 — rule to be confirmed, A-40 / Q-40).
 3. The requester of a decision or waiver, and the owner of evidence under decision, may not approve their own item
    (self-approval prohibited); they may present and answer questions.
 4. Votes are recorded against a frozen version of the decision paper. If the paper changes after voting opens, prior
@@ -150,7 +155,10 @@ Subject to the actual organizational structure. Voting or advisory status is a p
 ## 12. Ties (التعادل)
 
 The tie rule is set in the approved authority matrix: either a casting vote by the chair, or escalation to the
-delegating authority. No tie rule is assumed in this draft. The Demo policy uses escalation.
+delegating authority. No tie rule is assumed in this draft. The Demo policy uses escalation. Where a casting vote applies,
+the platform reads it as "the side the chair voted for prevails" — the chair has no second vote, and a chair who abstained,
+did not vote or is not eligible for the item (recused, requester) cannot break the tie, which is then escalated
+(`authority-matrix.md` §3 step 6 — A-41 / Q-41).
 
 ## 13. Delegation and alternates (الإنابة)
 
@@ -166,6 +174,11 @@ delegating authority. No tie rule is assumed in this draft. The Demo policy uses
    rules) no participation in deliberation. The recusal is recorded in the minutes.
 3. Partner-related conflicts are also recorded in the partner workspace conflict disclosures.
 4. A vote cast by a recused member is rejected by the server and logged.
+5. A recusal is recorded **before** the member votes. Once a member has voted in the current round, a recusal for that
+   member is refused (it would discard a cast vote and could change the outcome); a conflict discovered after voting is
+   handled by deferring and resuming the item, which opens a new round in which the member is recused before voting.
+6. A recusal recorded by the secretariat on behalf of a member requires a reason; the recorder is kept with the recusal,
+   written to the audit trail and shown in the tally snapshot.
 
 ## 15. Resolutions by circulation (القرارات بالتمرير)
 
@@ -181,6 +194,10 @@ delegating authority. No tie rule is assumed in this draft. The Demo policy uses
 Workflow: agenda request → secretariat screening → decision paper → agenda → quorum/conflict checks →
 discussion/voting or circulation → minutes approval → actions/owners/dates → implementation tracking → verified
 closure (details in `decision-workflow.md`).
+
+Attendance is the basis of the quorum of every item voted at the meeting: it is frozen while an item has votes in its
+current round and no recorded outcome; a correction after voting requires recording the outcome first or restarting the
+round.
 
 - Agendas, minutes and actions are numbered and linked to the related issue and decision.
 - Meeting packs are frozen as snapshots when issued; later changes create new versions.
