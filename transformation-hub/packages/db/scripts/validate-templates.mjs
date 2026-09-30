@@ -251,6 +251,9 @@ ok(leak.length === 0, `dc: JV signing (WS12-A06) transitively depends on G3/G4 a
   ok(map.verificationStatus === "proposed", "source map: a mapping stays proposed (design trace, not a determination)");
   const wsKeys = new Set(dc.tpl.workstreams.map((w) => w.key ?? w.code));
   const wbsWs = new Map(dc.tpl.wbs.map((a) => [a.id, a.workstreamKey]));
+  // Each claim is mapped once (QA-P2-05: a duplicate entry before the valid one must not pass).
+  const ids = map.claims.map((c) => c.claimId);
+  ok(new Set(ids).size === ids.length, `source map: duplicate claim ids ${ids.filter((x, i) => ids.indexOf(x) !== i).join(', ')}`);
   const mapped = new Map(map.claims.map((c) => [c.claimId, c]));
   for (const id of headingClaims) {
     const c = mapped.get(id);
