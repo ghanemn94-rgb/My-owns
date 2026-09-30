@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -511,6 +511,11 @@
           "state": "REVIEWING",
           "at": "2026-09-30T12:20:00Z",
           "note": "Round-21 findings repaired (D-038): the history damage was a SHALLOW clone (unshallow restored the pre-round-12 commits as real ancestors); validateGate refuses a shallow repo (F-DG0-160); the commitPresent tolerance is scoped to well-formed 40-hex values in genuinely-absent rounds, never gate/retained rounds (F-DG0-159/245); the record-less drop exemption is withdrawn and F-DG0-238 imported (F-DG0-158); F-DG0-150/151 re-verified in round 22 and the backup branch deleted (F-DG0-161); residual-7 shell /proc/sys wording (F-DG0-162); schema Object.hasOwn (F-DG0-163). Real-repo dry-run on the full history is clean of all history-damage buckets. Prefreeze all PASS; candidate re-frozen for review round 22."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-09-30T12:45:00Z",
+          "note": "Round 22: domain PASS (F-DG0-013 Low obs); code-security FAIL (F-DG0-164 Med, F-DG0-165 Low); qa FAIL (F-DG0-246 Med, F-DG0-247/248 Low). Verified CLOSED_VERIFIED: F-DG0-150/151 (re-verified vs current candidate), 158/159/160/161/162/163 (D-038 fixes), 238 (dup of 150), 245. New findings converge on removing the tolerance: F-DG0-164+246 (the absent-commit tolerance is forgeable and, with complete history + 150/151 re-verified, unnecessary -> drop it); F-DG0-013+247 (dangling 450c756 in local-path clones -> gc); F-DG0-165 (immutable-field drift across sidecar versions); F-DG0-248 (add shallow-refusal unit test). Repairs (D-039) drop the checkClosure/checkInvocation absent-commit tolerance for a strict complete-history validator, keeping only the content-preserving findManifest tolerance."
         }
       ]
     },

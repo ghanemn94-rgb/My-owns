@@ -5438,6 +5438,16 @@
           "at": "2026-09-30T11:22:51Z",
           "status": "CLOSED_VERIFIED",
           "note": "fix_revision re-pointed to retained 421c922233 (D-037)"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
         }
       ],
       "fix_revision": "421c922233dc49adb4e8684628faa32b98506758",
@@ -5446,18 +5456,17 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R18-code-security-reviewer-20260929T162345Z-2b492b0f",
-          "session_id": "2b492b0f-6e27-4726-8623-9ceef8f0057e"
+          "run_id": "DG0-T-DG0-REV-SEC-R22-code-security-reviewer-20260930T122356Z-c974d7c1",
+          "session_id": "c974d7c1-8305-411d-bd84-b0dde39ce859"
         },
-        "at": "2026-09-29T16:36:00Z",
+        "at": "2026-09-30T12:38:40Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-18/05-r17-repro-old-vs-new.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-18/06-finish-edge.log",
-          "docs/delivery/test-evidence/DG0/code-security/round-18/r18-finish-edge.py",
-          "tools/agents/agent_sandbox.py#L266-L279"
+          "docs/delivery/test-evidence/DG0/code-security/round-22/node-tests.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-22/prefreeze.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-22/f161-reverify-sim.log"
         ],
-        "note": "Reproduced the original failure against the round-17 code (f84eed4): the same-path collision makes finish() exit 1 with FileExistsError and write no sandbox.json, and later-sorted files are not processed. The fixed code (450c756, agent_sandbox.py:269-276) exits 3 with a write-once discard, writes sandbox.json, leaves the real file untouched, and still copies back a later-sorted own-role file. A planted dangling symlink at the destination is not followed: O_NOFOLLOW|O_EXCL gives EEXIST, which is discarded. The D-031 concurrent-commit case (another role's record committed mid-run: exit 0, no false discard) still holds, and so does --unshare-ipc (private ipc namespace, F-DG0-148)."
+        "note": "Re-verified against round-22 candidate 09072ce5… (source 480cd3f). Fix 421c922 is an ancestor of 480cd3f. Its finish() write-once-collision handling is unchanged in HEAD: the only diff in finish() since 421c922 is the D-033 'landlock' field added to the recorded sandbox dict, so the fix is intact but the assignment's 'byte-identical' wording is slightly overstated. Regression test 'F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash' passes (node-tests.log, ok 30; also inside prefreeze). The closure no longer depends on the orphaned round-18 commit 450c756: this round-22 verification supersedes the round-18 one, and f161-reverify-sim.log shows 0 fix-ancestry errors for F-DG0-150/151 in both a --no-local clone and a local clone that still holds 450c756."
       }
     },
     {
@@ -5499,6 +5508,16 @@
           "at": "2026-09-30T11:22:51Z",
           "status": "CLOSED_VERIFIED",
           "note": "fix_revision re-pointed to retained 421c922233 (D-037)"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
         }
       ],
       "fix_revision": "421c922233dc49adb4e8684628faa32b98506758",
@@ -5507,16 +5526,16 @@
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R18-code-security-reviewer-20260929T162345Z-2b492b0f",
-          "session_id": "2b492b0f-6e27-4726-8623-9ceef8f0057e"
+          "run_id": "DG0-T-DG0-REV-SEC-R22-code-security-reviewer-20260930T122356Z-c974d7c1",
+          "session_id": "c974d7c1-8305-411d-bd84-b0dde39ce859"
         },
-        "at": "2026-09-29T16:36:00Z",
+        "at": "2026-09-30T12:38:40Z",
         "result": "PASS",
         "evidence": [
-          "tools/agents/agent_sandbox.py#L23-L27",
-          "tools/agents/agent_sandbox.py#L147-L149"
+          "docs/delivery/test-evidence/DG0/code-security/round-22/f161-reverify-sim.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-22/node-tests.log"
         ],
-        "note": "The module docstring (agent_sandbox.py:23-27) now states a host-bind read-write procfs, NO PID namespace (residual 8), and its own IPC namespace (--unshare-ipc). This matches bwrap_args (line 147-148: --unshare-ipc, --bind /proc /proc, no --unshare-pid) and sandbox.json (procfs: host-bind, unshare: [ipc]). Separately, threat-model.md:27 still has the old wording; that is recorded as new finding F-DG0-153."
+        "note": "Re-verified against the round-22 candidate. The agent_sandbox.py module docstring (lines 24-31) now says the sandbox does NOT create a PID namespace and DOES create its own IPC namespace (--unshare-ipc), which matches bwrap_args (line 156: --unshare-ipc, no --unshare-pid). Fix 421c922 is an ancestor of 480cd3f. Same round-18 independence as F-DG0-150 (f161-reverify-sim.log)."
       }
     },
     {
@@ -6226,7 +6245,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T12:04:06Z",
@@ -6237,10 +6256,35 @@
           "at": "2026-09-30T12:18:22Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 34cd99896813dbc41c2dc5b1f88c0308f7f8288f"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
         }
       ],
       "fix_revision": "34cd99896813dbc41c2dc5b1f88c0308f7f8288f",
-      "fix_summary": "D-038: withdrew the record-less drop exemption (it could not distinguish never-imported from imported-then-deleted); every sidecar-raised finding must be in findings.json. F-DG0-238 (dup of CLOSED_VERIFIED F-DG0-150) imported for its reporter to close in round 22. collectVerifications still skips record-less verifications. Test in validator.test.mjs."
+      "fix_summary": "D-038: withdrew the record-less drop exemption (it could not distinguish never-imported from imported-then-deleted); every sidecar-raised finding must be in findings.json. F-DG0-238 (dup of CLOSED_VERIFIED F-DG0-150) imported for its reporter to close in round 22. collectVerifications still skips record-less verifications. Test in validator.test.mjs.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R22-code-security-reviewer-20260930T122356Z-c974d7c1",
+          "session_id": "c974d7c1-8305-411d-bd84-b0dde39ce859"
+        },
+        "at": "2026-09-30T12:38:40Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-22/real-repo-dryrun.log"
+        ],
+        "note": "The recordless exemption is removed (rules.mjs:490-496, :527-535). SEC22-6: a finding raised only by a record-less findings sidecar and missing from findings.json is reported '(dropped)'. A record-less verifications sidecar still cannot close anything ('CLOSED_VERIFIED but no reviewer verifications sidecar verifies it'). F-DG0-238 is imported into findings.json (OPEN, qa-verifier), not exempted. The real-repo dry-run reports 0 DROPPED and 0 RECORD-LESS errors. The supersede aggravation noted in the original finding no longer applies to drops. The related immutable-field supersession is raised separately as F-DG0-165 (Low)."
+      }
     },
     {
       "id": "F-DG0-159",
@@ -6260,7 +6304,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T12:04:06Z",
@@ -6271,10 +6315,35 @@
           "at": "2026-09-30T12:18:22Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 34cd99896813dbc41c2dc5b1f88c0308f7f8288f"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
         }
       ],
       "fix_revision": "34cd99896813dbc41c2dc5b1f88c0308f7f8288f",
-      "fix_summary": "D-038: checkInvocation tolerance scoped -- head_commit_at_start must be well-formed 40-hex (missing/null/unknown/HEAD rejected) AND its round genuinely absent (roundSourceCommit unresolved); never gate/retained rounds. Test D-038/F-DG0-159."
+      "fix_summary": "D-038: checkInvocation tolerance scoped -- head_commit_at_start must be well-formed 40-hex (missing/null/unknown/HEAD rejected) AND its round genuinely absent (roundSourceCommit unresolved); never gate/retained rounds. Test D-038/F-DG0-159.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R22-code-security-reviewer-20260930T122356Z-c974d7c1",
+          "session_id": "c974d7c1-8305-411d-bd84-b0dde39ce859"
+        },
+        "at": "2026-09-30T12:38:40Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-22/node-tests.log"
+        ],
+        "note": "checkInvocation (rules.mjs:397-410) now rejects a missing, null, 'unknown', 'HEAD', uppercase or short head_commit_at_start, and an absent well-formed head in a retained or gate round (SEC22-5: all rejected; unit test 'D-038 / F-DG0-159' passes). Remaining residue: the 'round absent' predicate itself can be spoofed through a superseded round's manifest source_commit. That residue is tracked in F-DG0-164, not here; the scope stated in this finding (gate round, malformed values) is fixed."
+      }
     },
     {
       "id": "F-DG0-160",
@@ -6298,7 +6367,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T12:04:06Z",
@@ -6309,10 +6378,36 @@
           "at": "2026-09-30T12:18:22Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 34cd99896813dbc41c2dc5b1f88c0308f7f8288f"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
         }
       ],
       "fix_revision": "34cd99896813dbc41c2dc5b1f88c0308f7f8288f",
-      "fix_summary": "D-038: the repo was SHALLOW not pruned (unshallow restored pre-round-12 commits as real ancestors). validateGate now refuses a shallow repository; gate judged against complete history (CI fetch-depth 0). Backup branch deleted so the round-18 orphan 450c756 is uniformly absent."
+      "fix_summary": "D-038: the repo was SHALLOW not pruned (unshallow restored pre-round-12 commits as real ancestors). validateGate now refuses a shallow repository; gate judged against complete history (CI fetch-depth 0). Backup branch deleted so the round-18 orphan 450c756 is uniformly absent.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R22-code-security-reviewer-20260930T122356Z-c974d7c1",
+          "session_id": "c974d7c1-8305-411d-bd84-b0dde39ce859"
+        },
+        "at": "2026-09-30T12:38:40Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-22/shallow-refusal.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-22/disguised-shallow.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-22/tolerance-census.log"
+        ],
+        "note": "git rev-parse --is-shallow-repository prints false in the working repository and in a --no-local clone. The pruned-era commits are real ancestors of HEAD: all 22 round source_commits except the D-034-orphaned 450c756 are present and ancestors, and 421c922 is an ancestor. On a --depth=1 --no-local clone, validate.mjs --stage DG0 reports the D-038 shallow error (exit 1); on a complete clone it does not. A clone disguised by deleting .git/shallow still fails closed ('write-once: cannot inspect git history'). CI checks out with fetch-depth: 0, so the refusal does not break CI."
+      }
     },
     {
       "id": "F-DG0-161",
@@ -6333,7 +6428,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T12:04:06Z",
@@ -6344,10 +6439,36 @@
           "at": "2026-09-30T12:18:22Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 34cd99896813dbc41c2dc5b1f88c0308f7f8288f"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
         }
       ],
       "fix_revision": "34cd99896813dbc41c2dc5b1f88c0308f7f8288f",
-      "fix_summary": "D-038: F-DG0-150/151 re-verified in round 22 against the current candidate (fix 421c922, ancestor of HEAD) so their closure is clone-independent; backup branch deleted removes 450c756's conditional presence."
+      "fix_summary": "D-038: F-DG0-150/151 re-verified in round 22 against the current candidate (fix 421c922, ancestor of HEAD) so their closure is clone-independent; backup branch deleted removes 450c756's conditional presence.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R22-code-security-reviewer-20260930T122356Z-c974d7c1",
+          "session_id": "c974d7c1-8305-411d-bd84-b0dde39ce859"
+        },
+        "at": "2026-09-30T12:38:40Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-22/real-repo-dryrun.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-22/dryrun-clone-modes.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-22/f161-reverify-sim.log"
+        ],
+        "note": "No ref contains 450c756 any more (the backup/ branch is gone). It survives only as a reflog-held unreachable object in the working repository. The real-repo dry-run on a --no-local clone reports 0 in the PRUNED, RECORD-LESS and DROPPED buckets. Before this round's re-verification, a local clone that still holds 450c756 reports 2 extra errors for F-DG0-150/151 (dryrun-clone-modes.log). With the round-22 re-verification in place, both clone modes give 0 (f161-reverify-sim.log), so the verdict no longer depends on refs. This closure depends on the F-DG0-150/151 entries in this same sidecar being imported. The general object-store-vs-reachability issue is part of F-DG0-164."
+      }
     },
     {
       "id": "F-DG0-162",
@@ -6368,7 +6489,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T12:04:06Z",
@@ -6379,10 +6500,34 @@
           "at": "2026-09-30T12:18:22Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 34cd99896813dbc41c2dc5b1f88c0308f7f8288f"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
         }
       ],
       "fix_revision": "34cd99896813dbc41c2dc5b1f88c0308f7f8288f",
-      "fix_summary": "D-038: residual 7 now states the agent Bash shell (not only file tools) writes host-global /proc/sys directly (verified, no race); comment attributes read-only /proc/sys to sandbox-run.sh's explicit --ro-bind, not a userns default."
+      "fix_summary": "D-038: residual 7 now states the agent Bash shell (not only file tools) writes host-global /proc/sys directly (verified, no race); comment attributes read-only /proc/sys to sandbox-run.sh's explicit --ro-bind, not a userns default.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R22-code-security-reviewer-20260930T122356Z-c974d7c1",
+          "session_id": "c974d7c1-8305-411d-bd84-b0dde39ce859"
+        },
+        "at": "2026-09-30T12:38:40Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-22/procsys-probe.log"
+        ],
+        "note": "Wording verified against behaviour. The agent shell opens /proc/sys/vm/swappiness, kernel/shmmax, net/ipv4/ip_forward, kernel/panic and vm/drop_caches for write (open(O_WRONLY)+close only; nothing written). Inside tools/gates/sandbox-run.sh the same entries are 'Read-only file system', because of its explicit '--ro-bind /proc/sys /proc/sys' (sandbox-run.sh:36). Residual 7's body and the agent_sandbox.py comment (lines 149-155) now state exactly this. Cosmetic nit: residual 7's bold heading still reads 'file-tool writes to uid-0-writable /proc/sys entries', while the body correctly covers the shell."
+      }
     },
     {
       "id": "F-DG0-163",
@@ -6402,7 +6547,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T12:04:06Z",
@@ -6413,10 +6558,35 @@
           "at": "2026-09-30T12:18:22Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 34cd99896813dbc41c2dc5b1f88c0308f7f8288f"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
+        },
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 22: PASS"
         }
       ],
       "fix_revision": "34cd99896813dbc41c2dc5b1f88c0308f7f8288f",
-      "fix_summary": "D-038: schema.mjs uses Object.hasOwn(props,key) and Object.hasOwn(value,key), so extra keys named after Object.prototype members (constructor/toString/__proto__/hasOwnProperty) are rejected by additionalProperties:false. Test D-038/F-DG0-163."
+      "fix_summary": "D-038: schema.mjs uses Object.hasOwn(props,key) and Object.hasOwn(value,key), so extra keys named after Object.prototype members (constructor/toString/__proto__/hasOwnProperty) are rejected by additionalProperties:false. Test D-038/F-DG0-163.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R22-code-security-reviewer-20260930T122356Z-c974d7c1",
+          "session_id": "c974d7c1-8305-411d-bd84-b0dde39ce859"
+        },
+        "at": "2026-09-30T12:38:40Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-22/node-tests.log"
+        ],
+        "note": "schema.mjs uses Object.hasOwn for both required and properties. SEC22-7: additionalProperties:false now rejects constructor, toString, hasOwnProperty, valueOf, __proto__ (own key via JSON.parse), __defineGetter__ and isPrototypeOf, and a required 'constructor' is reported missing when absent. Unit test 'D-038 / F-DG0-163' passes."
+      }
     },
     {
       "id": "F-DG0-245",
@@ -6444,7 +6614,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-21/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T11:49:00Z",
@@ -6455,10 +6625,38 @@
           "at": "2026-09-30T12:18:22Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 34cd99896813dbc41c2dc5b1f88c0308f7f8288f"
+        },
+        {
+          "at": "2026-09-30T12:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 22: PASS"
+        },
+        {
+          "at": "2026-09-30T12:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 22: PASS"
         }
       ],
       "fix_revision": "34cd99896813dbc41c2dc5b1f88c0308f7f8288f",
-      "fix_summary": "D-038: checkClosure absent-fix tolerance scoped to a round whose own source_commit is also absent; a retained/gate round requires the fix present and in the candidate. Same scoping as checkInvocation. Test D-038/F-DG0-245."
+      "fix_summary": "D-038: checkClosure absent-fix tolerance scoped to a round whose own source_commit is also absent; a retained/gate round requires the fix present and in the candidate. Same scoping as checkInvocation. Test D-038/F-DG0-245.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R22-qa-verifier-20260930T122401Z-b8340421",
+          "session_id": "b8340421-92c8-43c0-bc88-369003c408e5"
+        },
+        "at": "2026-09-30T12:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-22/10-r21-suite-rerun.log",
+          "docs/delivery/test-evidence/DG0/qa/round-22/13-qa22-new-cases.log",
+          "docs/delivery/test-evidence/DG0/qa/round-22/02-gates-selftests.log",
+          "docs/delivery/test-evidence/DG0/qa/round-22/08b-real-repo-gate-blockers-nolocal.log",
+          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs"
+        ],
+        "note": "I re-ran my round-21 suite (dg0-gate-negative-r21.test.mjs) unchanged against the round-22 candidate 09072ce5, in a complete clone of 7cf94db. Every shape that was ACCEPTED in round 21 is now REJECTED for all four gate-round roles: QA21-C3 (typo'd fix_revision and all-zero fix_revision on a gate-round closure), QA21-C4 (non-existent 40-hex head), QA21-C5/C5b (missing and null head), QA21-C5c ('HEAD') and QA21-C5d ('unknown'). Result: 16/16 pass. New independent cases pass too: QA22-N3 (uppercase, trailing-newline, 41-hex and 12-hex-abbreviated real heads rejected, all roles), QA22-N4 (malformed head rejected even in an absent round) and QA22-N5 (uppercase, abbreviated and all-zero fix_revision on a gate-round closure rejected). The scoped tolerance still accepts the genuine superseded shape: QA22-N6 on a fixture, and the real round 18 in a --no-local clone, where the dry-run shows 0 PRUNED errors. The unit tests 'D-038 / F-DG0-245' and 'D-038 / F-DG0-159' exist and pass (60/60). The fix implements exactly the scoping F-DG0-245 asked for. A different vector, the self-declared absent round, is raised separately as F-DG0-246."
+      }
     },
     {
       "id": "F-DG0-238",
@@ -6481,12 +6679,217 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-17/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-29T11:45:00Z",
           "status": "OPEN",
           "note": "Raised in the DG0 round-17 QA review of candidate 34b06b8a (f84eed4). Low and non-mandatory; I would accept it as an observation."
+        },
+        {
+          "at": "2026-09-30T12:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 22: PASS"
+        },
+        {
+          "at": "2026-09-30T12:45:13Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 421c922233dc49adb4e8684628faa32b98506758"
+        },
+        {
+          "at": "2026-09-30T12:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 22: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R22-qa-verifier-20260930T122401Z-b8340421",
+          "session_id": "b8340421-92c8-43c0-bc88-369003c408e5"
+        },
+        "at": "2026-09-30T12:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-22/13-qa22-new-cases.log",
+          "docs/delivery/test-evidence/DG0/qa/round-22/14-regression-r9-r18-r20.log",
+          "docs/delivery/test-evidence/DG0/qa/round-22/32-agents-md-vs-evidence.log",
+          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs"
+        ],
+        "note": "Duplicate of F-DG0-150, with the same finish() fix (421c922). Verified fixed on the current candidate 09072ce5. QA22-N8 reproduces my exact round-17 shape against the current tools/agents/agent_sandbox.py: prepare qa-verifier; the staging copy writes round-2/qa-verifier.json and qa-verifier.findings.json; another same-role run creates the real round-2/qa-verifier.json after prepare. finish() now exits 3 with no traceback and no FileExistsError. It writes sandbox.json, lists 'round-2/qa-verifier.json: already present in the real tree; write-once (not copied)' under discarded, and leaves the other run's record untouched. QA18-S1..S5 still pass. agent_sandbox.py changed since round 21 only in comments (0 non-comment lines). Residual, as accepted for F-DG0-150: the non-colliding sidecar is still copied back, so a mixed pair can exist in the real tree. The exit is 3 and the discard is listed, so the runner does not commit such a run."
+      },
+      "fix_revision": "421c922233dc49adb4e8684628faa32b98506758",
+      "fix_summary": "Duplicate of CLOSED_VERIFIED F-DG0-150 -- same finish() write-once-collision fix (421c922, byte-identical agent_sandbox.py). Verified fixed by qa round 22."
+    },
+    {
+      "id": "F-DG0-013",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-038 says the round-18 orphan 450c756 is 'uniformly absent in every clone of the branch', but it is still an unreachable object in the main repository, so a default local `git clone <path>` (the clone method the assignments prescribe) contains it, and the gate validation then reports two extra F-DG0-150/151 closure errors that a --no-local clone does not",
+      "reproduction": "In the main repository, `git fsck --unreachable --no-reflogs` lists `unreachable commit 450c756f679a911b4c736e856fc9dd5e9b2c89a8` and `git for-each-ref --contains 450c756f` lists no ref. `git clone -q /home/user/My-owns c450 && git -C c450 cat-file -e 450c756f…^{commit}` reports the commit present (a local clone hardlinks or copies the whole object store). The same clone with `--no-local` reports it absent (15c-orphan-450c756-clone-modes.log). qa's real-repo dry-run (docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs, which clones --no-local) reports 0 in every PRUNED, RECORD-LESS and DROPPED bucket. My copy of it that differs only in using a plain local clone (r22-dry-run-local-clone.mjs) reports 2 more errors in the 'PRUNED fix_revision not ancestor of its verified round candidate' bucket: 'finding F-DG0-150 (Low): fix 421c922233 is not in the verified round-18 candidate (450c756f67)' and the same for F-DG0-151 (15b-real-repo-dry-run-local-clone.log).",
+      "expected": "D-038 (and the round-22 common assignment) states that deleting the backup branch leaves 450c756 'uniformly absent in every clone of the branch', which removes the clone dependence of F-DG0-161, so the gate verdict should not depend on how the repository is cloned. Either the unreachable object should actually be gone from the source object store (for example `git reflog expire --expire-unreachable=now --all && git gc --prune=now` in the orchestrator's repository), or D-038 should say that the claim holds only for fetch/--no-local clones, which is how CI and qa's dry-run clone.",
+      "actual": "The outcome depends on the clone mode until F-DG0-150/151 carry a retained verified round. Impact is limited and fails closed. The local-clone variant only adds errors and never hides one, so it cannot wrongly approve the gate. CI (actions/checkout, fetch-depth: 0) fetches only reachable objects. The two errors should also clear once code-security's round-22 re-verification of F-DG0-150/151 (F-DG0-161) is imported, because their verified round then becomes round 22, whose source_commit 480cd3f contains 421c922. The inaccuracy is in an engineering decision record only. It makes no business, operating-logic or source-provenance claim. I would accept this as a Low observation if the auditor confirms that the gate validation after the round-22 import passes in both clone modes, or if D-038's wording is corrected or the unreachable object is pruned.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-22/15c-orphan-450c756-clone-modes.log",
+        "docs/delivery/test-evidence/DG0/domain/round-22/15b-real-repo-dry-run-local-clone.log",
+        "docs/delivery/test-evidence/DG0/domain/round-22/15-real-repo-dry-run.log",
+        "docs/delivery/test-evidence/DG0/domain/round-22/r22-dry-run-local-clone.mjs",
+        "docs/delivery/decisions.md#D-038"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-22/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T12:30:18Z",
+          "status": "OPEN",
+          "note": "raised by domain-reviewer in DG0 round 22 (Low, non-mandatory; fails closed; acceptable as an observation)"
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-164",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "D-038 scoping is keyed on a forgeable, object-store-based 'round absent' test: a superseded round whose frozen manifest records a non-existent source_commit re-opens the absent-fix tolerance, so a CLOSED_VERIFIED finding passes with an all-zero or typo'd fix_revision and the gate-candidate ancestry check is skipped",
+      "reproduction": "tools/gates/lib/rules.mjs:725-733 (checkClosure) sets roundAbsent = !commitPresent(round.source_commit), and when the fix_revision is also absent it pushes no error. The gate check at :731 sits only in the fix-PRESENT branch. round.source_commit is metadata: checkReviewRounds (:749) only requires it to equal the round's committed manifest.source_commit, and findManifest (:903-909) tolerates a manifest whose source_commit does not exist. Nothing requires a non-gate round's source_commit to exist or to be an ancestor of the commit that froze its manifest. Reproduction on the validator's own fixture (docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.tests.mjs.txt, run by run-sec22-repro.sh on a --no-local clone of 7cf94db; log sec22-repro.log): round 2 verifies F-DG0-101 (High, mandatory); round 3 is the gate round. The round-2 manifest is committed with source_commit 'deadbeef'x5, and real round-2 runs start from the commit that contains it. SEC22-1 (real fix): 0 errors. SEC22-2 (fix_revision = 0x40): 0 errors. SEC22-3 (fix_revision = one-character typo of the real fix): 0 errors. SEC22-4 control: a PRESENT off-branch fix is still caught ('is not in the gate candidate'). Retained and gate rounds hold (SEC22-5: unknown/HEAD/missing/null/zeros/uppercase/short heads and zero/f fix_revisions are all rejected). The same predicate gates checkInvocation's head tolerance (:399/:408), so in such a round a fabricated 40-hex head_commit_at_start is also accepted. Second symptom of the same root cause: commitPresent (:595-602) tests object-store membership, not reachability. The working repository still holds round 18's 450c756 through its reflog, while a --no-local clone does not, so validateGate(current) on the same commit differs by 2 errors (F-DG0-150/151 'fix 421c922 is not in the verified round-18 candidate') between the two clone modes (dryrun-clone-modes.mjs/.log). Why the tolerance has no remaining legitimate use: the validator now refuses shallow clones (F-DG0-160), and in a complete clone every ancestor of the gate source_commit is present. An absent fix_revision is therefore provably NOT in the gate candidate. Census on a --no-local clone (tolerance-census.log): 0 findings have an absent fix_revision; the only absent round is 18; and the only closures whose verifying run has an absent head are F-DG0-150/151, which this round re-verifies in round 22 (f161-reverify-sim.log: afterwards 0 dependent errors in both clone modes).",
+      "expected": "D-038 states the tolerance is 'never a retained round'. Retained-ness must not be something a single metadata value can declare. After this round nothing needs the absent-fix tolerance, so: (1) in checkClosure, reject any CLOSED_VERIFIED fix_revision that is not present AND an ancestor of the gate source_commit (and of the verifying round's source_commit when present), with no round-absent escape; (2) in checkInvocation, either drop the absent-head tolerance or restrict it to an explicit, reviewed allowlist of orphaned rounds (round 18, D-034); (3) decide 'absent' deterministically, e.g. by 'not an ancestor of HEAD' rather than by object-store membership, so unreachable reflog objects cannot change a verdict; (4) optionally, for a non-gate round whose manifest source_commit is present, require it to be an ancestor of the commit that introduced the manifest. Add fixture tests for SEC22-2/3.",
+      "actual": "A superseded round whose manifest names a non-existent source_commit passes checkReviewRounds/findManifest. Every closure verified in that round then skips both the fix-presence and the fix-in-gate-candidate checks: an all-zero or typo'd fix_revision on a High/mandatory CLOSED_VERIFIED finding produces 0 validator errors. Separately, the validator's answer depends on unreachable objects in the local object store (2-error difference today between the working repository and a fresh clone, until the round-22 re-verification of F-DG0-150/151 lands).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/run-sec22-repro.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/dryrun-clone-modes.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/dryrun-clone-modes.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/tolerance-census.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/f161-reverify-sim.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-22/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "OPEN",
+          "note": "Raised in round 22 (code-security-reviewer)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-165",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-017",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Findings sidecars in non-gate rounds are not bound to any run, and the latest raising sidecar supersedes the reviewer's immutable fields, so an added later-round sidecar can silently downgrade a finding's severity and mandatory_violation",
+      "reproduction": "tools/gates/lib/rules.mjs:495 keeps only the LATEST sidecar version of each finding ('later rounds supersede earlier versions'), and :537-539 compares findings.json's IMMUTABLE_FINDING_FIELDS (stage_id, requirement, severity, mandatory_violation, title, reported_by) against that version only. A <role>.findings.json is bound to a run's tool-authored outputs only for the gate-round records (checkReview :463). checkClosure binds only the verifications sidecar (:714), and checkReviewRounds (:752-763) only checks that a listed record's sidecar exists. write-once (:781) forbids modifying committed files, not adding new ones. Reproduction (sec22-repro.tests.mjs.txt SEC22-8, log sec22-repro.log): genuine 3-round fixture, with F-DG0-101 raised High/mandatory in round 1, verified in round 2, gate round 3; control 0 errors. With no reviewer run, add docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json re-listing F-DG0-101 as Low / mandatory_violation false, and set the same values in findings.json: 0 errors. Negative control: the same findings.json downgrade WITHOUT the added sidecar is caught ('severity in findings.json (\"Low\") differs from the reviewer's (\"High\")').",
+      "expected": "A reviewer's classification of a finding can change only through a sidecar that the reviewer's own run demonstrably wrote. Either bind every findings sidecar (any round) to its role's run for that round, i.e. require it to be among that run's tool-authored outputs, as checkReview does for the gate round; or compare the immutable fields against EVERY raising sidecar version (or the earliest), so a later version cannot differ.",
+      "actual": "An added, unbound findings sidecar in any non-gate round later than the raising round re-classifies a High/mandatory finding as Low/non-mandatory without a validator error. Closing it still needs bound reviewer and auditor runs (for example ACCEPTED_OBSERVATION, which is only allowed for Low non-mandatory findings), so the effect is a misrepresented finding presented to those reviewers, not a direct gate pass. Hence Low.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/run-sec22-repro.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-22/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "OPEN",
+          "note": "Raised in round 22 (code-security-reviewer)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-246",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The D-038 fix-absent tolerance in checkClosure is gated on a 'round absent' predicate that orchestrator-written metadata alone can satisfy. A GENUINE verifier run (present head_commit_at_start that contains the round manifest) in a round whose committed manifest and stages.json entry name a non-existent source_commit closes a High finding with an all-zero fix_revision, and validateGate reports 0 errors. No fix is checked against the gate candidate, and no run evidence has to be forged (so this is not disclosed residual 1).",
+      "reproduction": "QA_REPO_ROOT=<complete clone of 7cf94db> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs, case QA22-N7 (log docs/delivery/test-evidence/DG0/qa/round-22/13-qa22-new-cases.log). Start from the independent fixture, which validates with 0 errors (QA21-G0). (1) Commit a manifest docs/delivery/candidates/DG0/<cid>.manifest.json for a superseded-looking candidate: correct candidate_id over its entries, source_commit = 'ab' x 20, a commit that never existed. (2) Add stages.json review round 3 with that candidate_id and source_commit. (3) Run a normal qa-verifier round-3 run. Its head_commit_at_start is the real, present commit that contains the manifest, so checkInvocation's manifest check passes honestly. Its sidecar closes F-DG0-201 (High). (4) The orchestrator mirrors the closure with fix_revision = '0' x 40. validateGate(current) = [] (ACCEPTED). With the same all-zero fix in a retained round (QA22-N5) the gate is REJECTED. The only difference is the self-declared absent source_commit. Root cause: tools/gates/lib/rules.mjs checkClosure computes roundAbsent = !commitPresent(repo, round.source_commit) and then skips both ancestry checks (round candidate and gate candidate) for an absent fix. round.source_commit comes from stages.json and the manifest, and the orchestrator writes both. The manifest cross-check ('frozen_at/source_commit differ from its committed manifest') only compares the two; it does not check that the commit ever existed. Real-repo context (docs/delivery/test-evidence/DG0/qa/round-22/11-fix-revision-integrity.log, 08b-real-repo-gate-blockers-nolocal.log): all 103 fix_revision values in findings.json are present and ancestors of HEAD. The only genuinely absent round (round 18, source_commit 450c756, absent in a --no-local clone) has its two runs' heads absent too (ccb989f7), and its closures (F-DG0-150/151, fix 421c922) have PRESENT fixes. So no real closure needs the fix-absent tolerance at all.",
+      "expected": "A present verifier head that contains the round manifest proves that the round's source_commit was reachable when the run started. The manifest commit descends from the freeze commit. So a round with a present head and an absent source_commit is inconsistent, not pruned. Fail closed. Either (a) drop the checkClosure fix-absent tolerance entirely, since no real closure depends on it on the complete history, or (b) apply it only when the verifying run's head_commit_at_start is ALSO absent (the real round-18 shape: QA22-N6 stays accepted, QA22-N7 becomes rejected). Also consider requiring a present head's commit to have the round's source_commit as an ancestor. Add a unit test for the N7 shape.",
+      "actual": "validateGate returns 0 errors for QA22-N7. The round-22 candidate accepts a High finding closed with fix_revision 0000000000000000000000000000000000000000 by a genuine run, because the verifying round's source_commit is declared absent in orchestrator-written metadata.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs#QA22-N7",
+        "docs/delivery/test-evidence/DG0/qa/round-22/13-qa22-new-cases.log#QA22-N7",
+        "docs/delivery/test-evidence/DG0/qa/round-22/11-fix-revision-integrity.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/08b-real-repo-gate-blockers-nolocal.log",
+        "tools/gates/lib/rules.mjs#checkClosure",
+        "docs/delivery/decisions.md#D-038"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-22/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T12:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-22 QA review of candidate 09072ce5 (480cd3f). Medium, not mandatory. The same class as F-DG0-245, through a vector F-DG0-245 did not cover: the round-absence predicate is self-declared."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-247",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-038 states that deleting the backup branch makes 450c756 (round-18 source_commit) 'uniformly absent in every clone of the branch'. It is not: the main repository still holds it as an unreachable object, and a plain local-path `git clone <repo>` (the method review-common.md prescribes) copies it, so round 18 resolves as present there. The validator outcome is identical either way, so this is an accuracy and determinism note only.",
+      "reproduction": "git clone /home/user/My-owns $TMPDIR/dg0 then `git -C $TMPDIR/dg0 cat-file -t 450c756` gives 'commit'. It is NOT an ancestor of HEAD, and `git branch -a --contains` is empty. git clone --no-local /home/user/My-owns $TMPDIR/dg0nl then the same command gives 'could not get object info'. real-repo-gate-blockers.mjs output is identical on both clones (61 errors, PRUNED/RECORD-LESS/DROPPED = 0; diff of the two logs is empty). Logs: docs/delivery/test-evidence/DG0/qa/round-22/08-real-repo-gate-blockers.log (env line notes 'local-path clone: 450c756 present-unreachable') and 08b-real-repo-gate-blockers-nolocal.log.",
+      "expected": "Either reword D-038 to say that 450c756 is absent from every transport clone (--no-local, CI fetch-depth 0), while local-path clones and the origin repository may still carry it as an unreachable object, or expire the reflog and prune unreachable objects in the origin repository. Optionally, review instructions could prescribe `git clone --no-local` so reviewers see the same object set as CI.",
+      "actual": "Round 18 is 'retained' (source_commit present) in the origin repo and in local-path clones, and 'absent' in transport clones. Both variants pass, so no gate outcome differs today.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/08-real-repo-gate-blockers.log",
+        "docs/delivery/test-evidence/DG0/qa/round-22/08b-real-repo-gate-blockers-nolocal.log",
+        "docs/delivery/decisions.md#D-038"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-22/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T12:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-22 QA review of candidate 09072ce5 (480cd3f). Low, documentation/determinism; I would accept it as an observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-248",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The F-DG0-160 shallow-clone refusal in validateGate has no unit test in tools/gates/tests. The behaviour is correct, but its only regression guard is QA evidence outside the candidate.",
+      "reproduction": "grep -rin shallow tools/gates/tests/ tools/agents/tests/ returns nothing on candidate 09072ce5. The D-038 unit tests cover F-DG0-245/159/158/163 only. The behaviour itself is verified: docs/delivery/test-evidence/DG0/qa/round-22/12-shallow-refusal.log (the real repo at --depth=1 reports the shallow error; complete clones do not) and QA22-N1 (a valid fixture: shallow clone refused, complete --no-local clone 0 errors, unshallowed clone no longer refused).",
+      "expected": "A validator.test.mjs case: a valid fixture cloned with --depth=1 fails with the shallow error, and the same fixture complete (or after fetch --unshallow) does not. For example, promote QA22-N1.",
+      "actual": "No unit test. A regression that dropped or inverted isShallow() would pass the candidate's own test suite and prefreeze.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-22/12-shallow-refusal.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs#QA22-N1",
+        "tools/gates/lib/rules.mjs#isShallow"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-22/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T12:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-22 QA review of candidate 09072ce5 (480cd3f). Low, test-coverage polish; I would accept it as an observation."
         }
       ]
     }
