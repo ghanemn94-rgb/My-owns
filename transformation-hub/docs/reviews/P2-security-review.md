@@ -375,4 +375,15 @@ Files added by this review: `docs/reviews/P2-security-review.md`, `apps/api/test
 
 ## 7. Review commit
 
-The scans of the review commit are recorded in the follow-up commit that fills in this section.
+Review commit `7da6de5` (this document and the probe spec, parent `1b30f48`). Before committing, the two new files were
+scanned with the reviewed configuration (`gitleaks dir` on a copy at their repository paths: "no leaks found", exit 0).
+After committing:
+```
+$ GITLEAKS=… bash scripts/ops/secret-scan.sh tree
+  tree: 943 committed files at HEAD 7da6de5 … INF no leaks found … PASS  tree: no findings … SECRET SCAN (tree): PASS
+$ GITLEAKS=… bash scripts/ops/secret-scan.sh history
+  history: 219 commits reachable from HEAD 7da6de5 (whole repository) … INF 153 commits scanned. … no leaks found
+  PASS  history: no findings … SECRET SCAN (history): PASS
+```
+This section was filled in by a follow-up commit (documentation only). The review worktree was clean apart from these two
+files; the scratch clone used for the injection probes was reset to `1b30f48` and never pushed.
