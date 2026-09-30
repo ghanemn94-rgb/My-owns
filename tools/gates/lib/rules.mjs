@@ -774,6 +774,17 @@ export function checkReviewRounds(repo, stage, errors) {
     if (manifest && (manifest.frozen_at !== r.frozen_at || manifest.source_commit !== r.source_commit)) {
       errors.push(`review rounds: ${stage.id} round ${r.round} frozen_at/source_commit differ from its committed manifest`);
     }
+    // A review round's frozen source_commit is closure anchor 1 (checkClosure) and the source findManifest recomputes
+    // the round manifest from. commitPresent (cat-file -e <sha>^{commit}), isAncestor (merge-base --is-ancestor) and
+    // manifestFromRef all PEEL an annotated tag, so without this a tag object id would be accepted here exactly as it
+    // was for the gate source_commit (D-037), fix_revision and head_commit_at_start (D-044) before those were type-
+    // checked. Require the object, WHEN PRESENT, to be a commit itself; a genuinely absent source_commit stays
+    // tolerated (round 18's D-034/D-035 orphan -- objectType returns null for an absent object, so this never fires on
+    // it, and the D-035 content-preserving path in findManifest still governs it). This is the fourth and last commit-
+    // id field the gate depends on, completing D-044's "tag where a commit is required" class (D-045, F-DG0-171/251).
+    const rscType = objectType(repo, r.source_commit);
+    if (rscType && rscType !== "commit")
+      errors.push(`review rounds: ${stage.id} round ${r.round} source_commit ${String(r.source_commit).slice(0, 10)} is a ${rscType} object, not a commit; a round's frozen source_commit must name the freeze commit itself`);
     for (const [role, rel] of Object.entries(r.records)) {
       const label = `review rounds: ${stage.id} round ${r.round} ${role}`;
       if (rel !== `docs/delivery/reviews/${stage.id}/round-${r.round}/${role}.json`) errors.push(`${label}: record path must be docs/delivery/reviews/${stage.id}/round-${r.round}/${role}.json`);

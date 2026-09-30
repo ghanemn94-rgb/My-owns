@@ -1141,6 +1141,42 @@ test("D-044 / F-DG0-250: a fix_revision that is an annotated tag object (not a c
   expectError(validateGate(repo, "DG0"), /is a tag object, not a commit; a fix_revision must name the fix commit/);
 });
 
+test("D-044 / F-DG0-251: a head_commit_at_start that is an annotated tag object (not a commit) is rejected", () => {
+  const { repo, records } = buildValidRepo();
+  approveAndCommit(repo);
+  assert.deepEqual(validateGate(repo, "DG0"), [], "the baseline gate must pass");
+  const rec = get(repo, records["domain-reviewer"]); // a gate-round review record
+  const metaRel = `docs/delivery/runs/DG0/${rec.invocation_reference.run_id}/meta.json`;
+  const head = get(repo, metaRel).head_commit_at_start;
+  sh(repo, "tag", "-a", "headtag", "-m", "annotated", head);
+  const tagObj = sh(repo, "rev-parse", "headtag");
+  assert.equal(sh(repo, "cat-file", "-t", tagObj), "tag", "must be a tag object");
+  assert.equal(sh(repo, "rev-parse", `${tagObj}^{commit}`), head, "the tag must peel to the run's starting commit");
+  edit(repo, metaRel, (m) => (m.head_commit_at_start = tagObj));
+  // checkInvocation requires head_commit_at_start to be the commit object itself, not a tag that peels to it (D-044).
+  expectError(validateGate(repo, "DG0"), /a tag object, not a commit/);
+});
+
+test("D-045 / F-DG0-171 / F-DG0-251: a review round's source_commit that is an annotated tag object (not a commit) is rejected", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  assert.deepEqual(validateGate(repo, "DG0"), [], "the baseline gate must pass");
+  const src = get(repo, "docs/delivery/stages.json").stages[0].review_rounds[1].source_commit;
+  sh(repo, "tag", "-a", "roundtag", "-m", "annotated", src);
+  const tagObj = sh(repo, "rev-parse", "roundtag");
+  assert.equal(sh(repo, "cat-file", "-t", tagObj), "tag", "must be a tag object");
+  assert.equal(sh(repo, "rev-parse", `${tagObj}^{commit}`), src, "the tag must peel to the round's frozen commit");
+  // Closure anchor 1 (commitPresent/isAncestor) and findManifest (manifestFromRef) all PEEL the tag, so the tag alone
+  // aliases the correct commit; checkReviewRounds must still reject it as a non-commit object, completing D-044's class.
+  edit(repo, "docs/delivery/stages.json", (d) => { d.stages[0].review_rounds[1].source_commit = tagObj; });
+  expectError(validateGate(repo, "DG0"), /source_commit .* is a tag object, not a commit; a round's frozen source_commit must name the freeze commit/);
+  // Sanity: a genuinely ABSENT round source_commit is still tolerated here (D-035); objectType returns null for it, so
+  // this new check does not fire -- the closure's anchor 1 (F-DG0-169) is what governs an absent round source.
+  edit(repo, "docs/delivery/stages.json", (d) => { d.stages[0].review_rounds[1].source_commit = "b".repeat(40); });
+  assert.ok(!validateGate(repo, "DG0").some((e) => /is a .* object, not a commit; a round's frozen source_commit/.test(e)),
+    "an absent round source_commit must not trip the object-type check (D-035 tolerance)");
+});
+
 test("D-042 / F-DG0-169: a closure verified in a round whose source_commit is absent is rejected (anchor 1 is unconditional)", () => {
   const { repo } = buildValidRepo();
   approveAndCommit(repo);
