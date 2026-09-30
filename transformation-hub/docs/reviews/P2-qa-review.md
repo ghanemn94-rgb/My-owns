@@ -671,7 +671,7 @@ $ HUB_WEB_URL=… npx playwright test qa-p2-arabic-rtl qa-p1r-arabic-rtl p2-plan
                                     qa-p2-arabic-rtl 6, qa-p1r-arabic-rtl 3, p2-planning 3, p2-gates 5, p2-governance 1,
                                     p2-cockpit 4, a11y 244, qa-p2-gate-review-journey 1, qa-p2-exit-journey 1 — all passed
 ```
-The full Playwright suite was not run. The data dictionary and ERD were not regenerated: regenerating them
-also picks up earlier, unregenerated schema changes (for example `decision_use`), which is left to integration. The API,
+The full Playwright suite was not run. The data dictionary and ERD were regenerated after the merge (the three task
+columns; the generator also reorders two policy lists). The API,
 worker and web server were stopped by PID after checking their command lines; the tracked screenshots and
 `docs/test-evidence` rewritten by the runs were restored with `git checkout`.
