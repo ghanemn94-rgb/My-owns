@@ -53,9 +53,18 @@ for (const file of files(ROOT)) {
   const rel = relative(ROOT, file).split(sep);
   const from = rel[0];
   const src = readFileSync(file, 'utf8');
-  // static and dynamic imports, re-exports and require(), with single or double quotes (SEC-P1S-07)
-  for (const m of src.matchAll(/(?:from|import|require)\s*\(?\s*['"](\.[^'"]+)['"]/g)) {
-    const target = relative(ROOT, join(dirname(file), m[1])).split(sep);
+  // A dynamic import() / require() whose path is COMPUTED — a template literal with ${…} or any non-literal argument — cannot
+  // be resolved statically, so it is refused (fail closed, P2 security review I-1). Comment lines are skipped.
+  src.split('\n').forEach((line, i) => {
+    const t = line.trim();
+    if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) return;
+    if (/(?<![\w$.])(?:import|require)\s*\(\s*(?:`[^`]*\$\{|(?=[^\s'"`)]))/.test(line)) {
+      errors.push(`${relative(join(ROOT, '..', '..'), file)}:${i + 1} has a dynamic import with a computed path, which the module boundary check cannot verify`);
+    }
+  });
+  // static and dynamic imports, re-exports and require(), with single, double or backtick quotes (SEC-P1S-07, I-1)
+  for (const m of src.matchAll(/(?:from|import|require)\s*\(?\s*(['"`])(\.[^'"`]+)\1/g)) {
+    const target = relative(ROOT, join(dirname(file), m[2])).split(sep);
     if (target[0] === '..' || target[0] === from) continue; // platform / same module
     imports++;
     const to = target[0];

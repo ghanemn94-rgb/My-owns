@@ -61,6 +61,7 @@ export interface GateView {
     blocking: boolean;
     waivable: boolean;
     version: number;
+    ownerRole: string;
     reviewerRole: string;
     evidence: { active: number; conflicting: number };
     assessment: { id: string; status: string; version: number; waiverId: string | null; notApplicable: { approved: boolean } };
@@ -291,16 +292,46 @@ export function reviewerFor(p: Personas, reviewerRole: string): Client {
   return p[k];
 }
 
-/** Someone other than the reviewer links the evidence (not_self): the PM, or the contributor when the PM reviews. */
-export function evidenceAdderFor(p: Personas, reviewerRole: string): Client {
-  return reviewerRole === 'project_manager' ? p.contributor : p.pm;
+/** Project-wide holders of a criterion OWNER role among the kit personas (they also hold `gates.evidence.attach`). */
+const CRITERION_OWNER_PERSONA: Record<string, keyof Personas> = {
+  finance_restricted: 'finance',
+  legal_restricted: 'legal',
+};
+
+/** A second project manager per project (the demo `pm.b` persona), granted on first use. */
+const secondPms = new Map<string, Promise<Client>>();
+function secondPm(projectId: string): Promise<Client> {
+  let c = secondPms.get(projectId);
+  if (!c) {
+    c = (async () => {
+      const admin = await loginAs('portfolio.admin');
+      const pm2 = await loginAs('pm.b');
+      await admin.post(`/api/v1/projects/${projectId}/members`, { userId: pm2.userId, role: 'project_manager', reason: 'gates test: second project manager (evidence linker)' }).expect(201);
+      return pm2;
+    })();
+    secondPms.set(projectId, c);
+  }
+  return c;
+}
+
+/**
+ * Someone other than the reviewer links the evidence (not_self), and — SEC-P2-05 — only the criterion's OWNER role or a
+ * project manager may link evidence to a criterion (the `W` condition of gates.evidence.attach, as for submitting it).
+ * The PM links, unless the PM is the designated reviewer: then a project-wide holder of the owner role (finance / legal),
+ * or else a second project manager (`pm.b`, granted on demand) — the workstream lead is workstream-scoped in the kit, and
+ * a workstream-scoped grant does not reach gate criteria (access-matrix §2.2).
+ */
+export async function evidenceAdderFor(p: Personas, projectId: string, c: { reviewerRole: string; ownerRole: string }): Promise<Client> {
+  if (c.reviewerRole !== 'project_manager') return p.pm;
+  const owner = CRITERION_OWNER_PERSONA[c.ownerRole];
+  return owner ? p[owner] : secondPm(projectId);
 }
 
 /** A different person links evidence; the criterion's designated reviewer accepts it as met. */
 export async function meetCriterion(p: Personas, projectId: string, gateKey: string, critKey: string) {
   const g = await gateByKey(p.pm, projectId, gateKey);
   const c = crit(g, critKey);
-  if (c.evidence.active === 0) await addEvidence(evidenceAdderFor(p, c.reviewerRole), projectId, c.id);
+  if (c.evidence.active === 0) await addEvidence(await evidenceAdderFor(p, projectId, c), projectId, c.id);
   const res = await reviewerFor(p, c.reviewerRole).post(`/api/v1/projects/${projectId}/gates/${g.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'met', note: 'test review' });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
 }
