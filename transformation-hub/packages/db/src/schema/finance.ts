@@ -362,9 +362,9 @@ export const kpi = pgTable(
     computation: varchar('computation', { length: 64 }), // key of a deterministic calculator, null = manual
     verificationStatus: verificationStatus('verification_status').notNull().default('proposed'),
     lastVerifiedAt: ts('last_verified_at'),
-    /** KPIs: confidential by default (access-matrix §2.3). */
+    /** KPIs: confidential by default (access-matrix §2.3). No own is_demo flag: template KPIs are instantiated by the
+     * project factory, so a KPI is demo exactly when its project is (the API derives it). */
     classification: classification('classification').notNull().default('confidential'),
-    isDemo: isDemo(),
     createdAt: createdAt(),
     createdBy: createdBy(),
     updatedAt: updatedAt(),

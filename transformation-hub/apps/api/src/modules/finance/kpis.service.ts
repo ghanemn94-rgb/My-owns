@@ -42,7 +42,7 @@ export class KpisService {
     };
   }
 
-  private dto(k: KpiRow, latest: ObsRow | null) {
+  private dto(k: KpiRow, latest: ObsRow | null, isDemo: boolean) {
     return {
       id: k.id,
       key: k.key,
@@ -63,7 +63,7 @@ export class KpisService {
       computation: k.computation,
       verificationStatus: k.verificationStatus,
       classification: k.classification,
-      isDemo: k.isDemo,
+      isDemo,
       createdAt: k.createdAt.toISOString(),
       version: k.version,
       latestObservation: latest ? this.obsDto(latest) : null,
@@ -83,6 +83,7 @@ export class KpisService {
   }
 
   async list(ctx: RequestContext, projectId: string, q: RouteInput<R['listKpis']>['query']) {
+    const p = await this.s.project(projectId);
     this.s.assertListable(ctx, projectId);
     const where = and(this.scopeSql(ctx, projectId), q.benefitId ? eq(K.benefitId, q.benefitId) : undefined, q.q ? or(ilike(K.name, likeContains(q.q)), ilike(K.key, likeContains(q.q))) : undefined);
     const tx = this.s.db.tx();
@@ -94,7 +95,7 @@ export class KpisService {
       rows.map((r) => r.id),
     );
     return pageOf(
-      rows.map((k) => this.dto(k, latest.get(k.id) ?? null)),
+      rows.map((k) => this.dto(k, latest.get(k.id) ?? null, p.isDemo)),
       Number(total),
       q,
     );
@@ -103,12 +104,12 @@ export class KpisService {
   async get(ctx: RequestContext, projectId: string, id: string) {
     const k = await loadInProject(this.s.db, K, projectId, id);
     this.s.assertReadable(ctx, projectId, k);
+    const p = await this.s.project(projectId);
     const obs = await this.s.db.tx().select().from(O).where(and(eq(O.projectId, projectId), eq(O.kpiId, k.id))).orderBy(desc(O.computedAt), desc(O.id)).limit(100);
-    return { ...this.dto(k, obs[0] ?? null), observations: obs.map((o) => this.obsDto(o)), people: await this.s.people([k.ownerUserId, k.createdBy, ...obs.map((o) => o.recordedBy)]) };
+    return { ...this.dto(k, obs[0] ?? null, p.isDemo), observations: obs.map((o) => this.obsDto(o)), people: await this.s.people([k.ownerUserId, k.createdBy, ...obs.map((o) => o.recordedBy)]) };
   }
 
   async create(ctx: RequestContext, projectId: string, body: RouteInput<R['createKpi']>['body']) {
-    const p = await this.s.project(projectId);
     const classification = body.classification ?? FINANCE_DEFAULT_CLASSIFICATION.kpi;
     this.s.assertClassificationWritable(ctx, projectId, classification);
     this.s.assert(ctx, 'finance.kpi.manage', { projectId, classification });
@@ -140,7 +141,6 @@ export class KpisService {
         direction: body.direction,
         frequency: body.frequency,
         classification,
-        isDemo: p.isDemo,
         createdBy: ctx.principal.userId,
       })
       .returning();

@@ -1816,7 +1816,6 @@ CREATE TABLE "kpi" (
 	"verification_status" "verification_status" DEFAULT 'proposed' NOT NULL,
 	"last_verified_at" timestamp with time zone,
 	"classification" "classification" DEFAULT 'confidential' NOT NULL,
-	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
