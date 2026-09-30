@@ -66,8 +66,8 @@
   security_rule: "All business state persisted server-side in PostgreSQL; no business data held only in browser storage"
   acceptance_tests: ["AT-30", "IT: records survive API, worker and database restart"]
   phase: P1
-  status: Implemented
-  evidence: [business state is persisted in PostgreSQL behind the authorized API; browser storage holds only a locale-switch flag, 'persistence after API and PostgreSQL restarts verified manually by QA (docs/reviews/P1-qa-review.md §1.8), not by an automated test', CI restore drill job green on run 36645986422, 'gap: no automated restart IT (API, worker, database); AT-30 needs reporting (P6) and is verified with REQ-PLT-003 (P8)']
+  status: Tested
+  evidence: ['P1 p1-closure-worker.spec.ts "a record written before the restarts reads back identically afterwards (same session), and the restarted worker resumes without re-processing" (API instance closed and re-created on the same database; worker = real dist/worker.js child process, stopped with SIGTERM and restarted)', 'database restart NOT automated (shared PostgreSQL cluster): manual QA docs/reviews/P1-qa-review.md §1.8 + CI restore drill; AT-30 verified with REQ-PLT-003 (P8)']
 - id: REQ-PLT-003
   section: "1"
   title: "End-to-end program management outcome"
@@ -98,8 +98,8 @@
   security_rule: "Production bootstrap loader rejects person names, amounts and dates; demo records must carry is_demo = true"
   acceptance_tests: ["AT-28", "UT: production bootstrap contains no person names, amounts, partner names or actual dates"]
   phase: P1
-  status: Implemented
-  evidence: [demo personas are role labels with @demo.invalid addresses; templates validated for no names/dates/amounts]
+  status: Tested
+  evidence: ['P1 p1-closure-empty-db.spec.ts "bootstrap on an empty database: one organization, templates, platform schedules and ONE IdP-bound first administrator — no password, no demo or fictional data; a second run changes nothing" (template definitions scanned: no years/dates, amounts, percentages, e-mail addresses or titled names)', ai at-28-ai-evidence.spec.ts (AT-28)]
 - id: REQ-PLT-005
   section: "1-R6"
   title: "Every primary action backed end to end"
@@ -114,8 +114,8 @@
   security_rule: "Every route declared in the contract registry with a permission; API refuses to boot with an undeclared route"
   acceptance_tests: ["AT-30", "UT: contract registry check fails when a controller route has no contract/permission"]
   phase: P1
-  status: Implemented
-  evidence: ['apps/api/src/platform/contract-check.ts and bootstrap.ts: outside production the API refuses to boot when a handler has no contract or a registered route is unimplemented; every integration test boots through it (CI integration job green, run 36645986422)', every contract route declares its access permission (packages/contracts defineRoute), 'gap: no negative UT proving the check fails for an unbound handler; AT-30 verified with REQ-PLT-003 (P8)']
+  status: Tested
+  evidence: ['P1 p1-closure-contracts.spec.ts "unit: checkContracts reports an unbound handler and a handler bound to an unregistered contract; a registered binding passes"; "the real API refuses to boot with a rogue handler (no contract) and with a registered but unimplemented contract"', 'fix 2026-09-30: contract-check.ts now also rejects a handler bound to a contract that is not the registered route', AT-30 verified with REQ-PLT-003 (P8)]
 - id: REQ-PLT-006
   section: "1-R7"
   title: "Honest implementation and integration status"
@@ -229,8 +229,8 @@
   security_rule: "Verification status mandatory on every claim; default Unknown"
   acceptance_tests: ["AT-01", "UT: low-confidence claim defaults to Unknown"]
   phase: P1
-  status: Implemented
-  evidence: ['documents at-01-historical-claims.spec.ts "the source register records the unavailable image with extraction NOT performed and dates kept separate" (seeded CLM-010 unknown, no claim confirmed)', createClaim contract defaults verificationStatus to unknown (packages/contracts/src/documents.ts), 'gap: no test creates a claim without a status or with low confidence and asserts unknown']
+  status: Tested
+  evidence: ['P1 p1-closure.spec.ts "a claim created without a verification status (also at low confidence) is stored as unknown, never a guessed value"; "the database default for a claim written without a status is unknown"', documents at-01-historical-claims.spec.ts "the source register records the unavailable image with extraction NOT performed and dates kept separate" (AT-01)]
 - id: REQ-SRC-005
   section: "2"
   title: "Source Register identification fields"
@@ -293,8 +293,8 @@
   security_rule: "DB enum constraint and contract validation"
   acceptance_tests: ["UT: invalid verification status rejected by contract and database"]
   phase: P1
-  status: Implemented
-  evidence: [database enum verification_status (packages/db/src/schema/_common.ts) and contract enum VerificationStatusSchema, documents at-01-historical-claims.spec.ts "claims can never be created as confirmed" (contract refuses a status outside the creation set with 400), 'gap: no test sends an out-of-vocabulary status to the API and to the database']
+  status: Tested
+  evidence: ['P1 p1-closure.spec.ts "API: an out-of-vocabulary status is refused with 400 on create and on review, and nothing is stored"; "DB: the column is the verification_status enum with exactly the six values; other values are rejected even for the owner role"']
 - id: REQ-SRC-009
   section: "2"
   title: "Compare-before-merge for workbook or minutes uploads"
@@ -1038,8 +1038,8 @@
   security_rule: "Creation scoped by org/portfolio admin roles"
   acceptance_tests: ["UT: project cannot reference program from another organization"]
   phase: P1
-  status: Implemented
-  evidence: ['organization, portfolio, program, project, workstream, task/milestone/deliverable tables with foreign keys (packages/db/src/schema)', 'org-level RLS hides programs of other organizations, so project creation refuses a foreign program (portfolio.program_not_found)', 'gap: no test that a project cannot reference a program of another organization; portfolio/program creation APIs not built (seeded, list only) — creation re-phased to P6']
+  status: Tested
+  evidence: ['P1 p1-closure.spec.ts "API: creating a project under a program of another organization is refused and nothing is created"; "DB: the runtime role cannot link a project to a foreign program or a program to a foreign portfolio (referential integrity is org-scoped)"', 'fix 2026-09-30: composite FKs (org_id, program_id/portfolio_id) in packages/db/sql/post-migrate.sql (the plain FKs accepted another organization)', portfolio/program creation APIs re-phased to P6]
 - id: REQ-ENT-003
   section: "5"
   title: "Legal entities separate from projects"
@@ -2665,8 +2665,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: lint fails on hard-coded UI strings; ar/en key sets identical"]
   phase: P1
-  status: Implemented
-  evidence: ['apps/web/scripts/check-i18n.mjs in pnpm lint: identical en/ar key sets, no empty messages, same placeholders, every domain enum translated (CI static job green, run 36645986422)', 'gap: nothing fails the build on a hard-coded UI string']
+  status: Tested
+  evidence: ['apps/web/scripts/check-hardcoded-strings.mjs in pnpm lint (web): fails on JSX text / child literals / visible attributes outside i18n in src/app and src/components; built-in self-test on scripts/fixtures/hardcoded-strings/Violations.tsx (6 violations must be detected); 3 findings fixed (version prefix v{n} now documents.versions.label)', 'apps/web/scripts/check-i18n.mjs in pnpm lint: identical en/ar key sets, placeholders, enum coverage']
 - id: REQ-UX-003
   section: "10"
   title: "Corporate blue/white theme, no fabricated logo"
@@ -3081,8 +3081,8 @@
   security_rule: "is_demo flag propagated through APIs"
   acceptance_tests: ["E2E: demo project shows Demo badge on list and detail"]
   phase: P1
-  status: Implemented
-  evidence: ['Demo badge on cards, project header/navigation and demo records (apps/web/src/components/ProjectBadges.tsx, ProjectNav.tsx)', e2e p1-smoke.spec.ts "(a) Demo Project Manager sees DEMO-DC with a Demo badge", e2e qa-p1-review.spec.ts "Demo badge only on demo records" (list; none on user-created projects; e2e 24/24 in CI run 36645986422 at 7959b44), 'gap: no E2E asserts the badge on the demo project detail view (the p2-planning assertion can match the Demo badge of the signed-in demo user in the user menu)']
+  status: Tested
+  evidence: ['e2e p1-closure.spec.ts "UX-028: the demo project shows the Demo badge on the portfolio list, its detail view and a demo record detail; a non-demo project shows none" (local run 25/25 against a production web build)', e2e qa-p1-review.spec.ts "Demo badge only on demo records"]
 
 # ---------------------------------------------------------------- RPT
 
@@ -4050,8 +4050,8 @@
   security_rule: "Worker uses least-privilege DB role"
   acceptance_tests: ["IT: worker processes outbox independently of API process"]
   phase: P1
-  status: Implemented
-  evidence: [apps/api/src/worker.ts, platform/jobs/*]
+  status: Tested
+  evidence: ['P1 p1-closure-worker.spec.ts "an outbox event written by an API mutation stays pending until dist/worker.js (a separate process, runtime DB role) dispatches it and runs the subscribed job" (API app closed before the worker starts; worker connects as hub_app, no superuser/BYPASSRLS)']
 - id: REQ-ARC-005
   section: "13"
   title: "Object storage and file services via adapters"
@@ -4098,8 +4098,8 @@
   security_rule: "OpenAPI published without secrets; auth required outside dev"
   acceptance_tests: ["UT: OpenAPI generated from contracts matches registered routes"]
   phase: P1
-  status: Implemented
-  evidence: [apps/api/src/cli/openapi.ts emits OpenAPI 3.1 from the contract registry; CI OpenAPI generation job green on run 36645986422, typed web client apps/web/src/lib/api.ts derived from @hub/contracts, 'gap: no UT asserts that the document covers every registered route with converted schemas (conversion failures fall back silently to an untyped object); GET /api/v1/openapi.json is not served']
+  status: Tested
+  evidence: ['P1 p1-closure-contracts.spec.ts "OpenAPI (dist/cli/openapi.js) ⇔ contract registry ⇔ routes served by the API; permissions, security and converted schemas on every operation; no secrets" (every registered route = one operation = one served Express route; every operation declares its permission and session security; public surface allow-listed; no toSchema fallback)', 'OpenAPI is generated as a CI artifact, not served over HTTP']
 - id: REQ-ARC-008
   section: "13"
   title: "Unit, integration, E2E and accessibility testing"
@@ -4210,8 +4210,8 @@
   security_rule: "Command handler base enforces order; audit and outbox in same transaction"
   acceptance_tests: ["IT: failed business rule leaves no audit/outbox rows", "IT: mutation without session returns 401"]
   phase: P1
-  status: Implemented
-  evidence: [P1 isolation-and-auth.spec.ts "mutations against another project are rejected and audited as denied", documents at-03-documents-isolation.spec.ts "writes into project A by a project-B user are rejected (404) and audited as denied; nothing is created", documents at-01-historical-claims.spec.ts "applying the historical claim is refused and audited", 'downgraded from Tested 2026-09-29: no test sends a mutation without a session (AT expects 401) and no test asserts that a failed business rule writes no outbox_event row', 'AT variance: rejected and denied attempts are deliberately audited (outcome rejected/denied); the AT should read no business change and no outbox rows']
+  status: Tested
+  evidence: ['P1 p1-closure.spec.ts "a mutation without a session (or with a forged/expired cookie) returns 401 problem+json and changes nothing"; "a rejected business rule (422) writes no outbox row and no business change, and is audited with outcome rejected"; "a command that fails after its first writes leaves nothing behind (change, audit and outbox share one transaction)"', P1 isolation-and-auth.spec.ts "rejects state-changing requests without the CSRF header" (403), 'AT variance: rejected and denied attempts are deliberately audited (outcome rejected/denied); the AT reads no business change and no outbox rows']
 - id: REQ-ARC-015
   section: "13"
   title: "Frontend never touches DB or LLM secrets; MCP optional"
@@ -4226,8 +4226,8 @@
   security_rule: "Web bundle scanned for secrets; DB credentials only in API/worker"
   acceptance_tests: ["UT: build output secret scan finds no provider keys or DB URLs"]
   phase: P1
-  status: Implemented
-  evidence: [apps/web uses same-origin API proxy; no DB/LLM secrets in client, 'CI job secret-scan step (b): the web job uploads apps/web/.next/static (artifact web-bundle); scripts/ops/secret-scan.sh bundle runs gitleaks (default rules include model-provider and cloud keys, plus the URL-embedded-password rule) and fails if any database/queue connection URL is present, with or without a password', 'executed locally 2026-09-30 on a production web build of 049cf54: 136 files, 0 findings, no connection URL; a planted AWS-shaped key and a password-less postgres URL in a chunk both fail the check', 'pending: first green CI run of job secret-scan (then Tested)', 'observation: next build writes generated Draft Mode and Server Actions keys into the server output of the web image (.next/prerender-manifest.json, .next/server/server-reference-manifest.json), not into the client bundle; the app uses neither feature; decision pending (docs/deployment/secrets.md, Known item)']
+  status: Tested
+  evidence: [apps/web uses same-origin API proxy; no DB/LLM secrets in client, 'CI job secret-scan step (b): the web job uploads apps/web/.next/static (artifact web-bundle); scripts/ops/secret-scan.sh bundle runs gitleaks (default rules include model-provider and cloud keys, plus the URL-embedded-password rule) and fails if any database/queue connection URL is present, with or without a password', 'executed locally 2026-09-30 on a production web build of 049cf54: 136 files, 0 findings, no connection URL; a planted AWS-shaped key and a password-less postgres URL in a chunk both fail the check', 'GitHub Actions transformation-hub-ci run 14 (id 36686259255, revision 223e967): job secret-scan step (b) web bundle GREEN', 'observation: next build writes generated Draft Mode and Server Actions keys into the server output of the web image (.next/prerender-manifest.json, .next/server/server-reference-manifest.json), not into the client bundle; the app uses neither feature; decision pending (docs/deployment/secrets.md, Known item)']
 
 # ---------------------------------------------------------------- DAT
 
@@ -4357,8 +4357,8 @@
   security_rule: "n/a"
   acceptance_tests: ["UT: hash-chain verifier detects modified row", "REVIEW: ADR states tamper-evident, not tamper-proof"]
   phase: P1
-  status: Implemented
-  evidence: ['docs/architecture/adr/0014-audit-tamper-evidence.md (tamper-evident, not tamper-proof)', P1 architecture-hardening.spec.ts "checkpoints make tail truncation detectable" and "TRUNCATE of the audit log is rejected", P1 projects-templates-audit.spec.ts "the hash chain verifies intact", 'downgraded from Tested 2026-09-29: the AT (verifier detects a modified row) is not exercised; the tamper test deletes the tail row']
+  status: Tested
+  evidence: ['P1 p1-closure.spec.ts "a modified audit row is reported at its chain position; a re-hashed forgery breaks the next link; a re-hashed tail is caught by the checkpoint" (owner role, append-only trigger disabled inside a rolled-back transaction, throwaway organization)', 'docs/architecture/adr/0014-audit-tamper-evidence.md (tamper-evident, not tamper-proof; REVIEW part)']
 - id: REQ-DAT-009
   section: "14"
   title: "Soft deletion"
@@ -4421,8 +4421,8 @@
   security_rule: "Download via short-lived signed URL issued after authorization"
   acceptance_tests: ["IT: expired download URL rejected"]
   phase: P1
-  status: Implemented
-  evidence: ['documents at-27-legal-hold.spec.ts "every successful download is audited with the actor, version and checksum; there is no public URL" (anonymous download 401)', documents at-03-documents-isolation.spec.ts "direct reads and downloads of hidden documents are 404", 'AT variance: downloads are streamed by the API after per-request authorization; no signed URL is issued, so no URL can expire', 'gap: download with a revoked session not asserted; exports are P6']
+  status: Tested
+  evidence: ['P1 p1-closure.spec.ts "a download is refused (401) without a session, with a forged cookie, after logout (revoked) and after idle expiry; the owner session still works"; "document list, detail and upload responses contain no URL, storage key or presigned parameter"', 'AT variance: no signed download URL exists (streamed after per-request authorization), so the check is a download without a valid session is refused', exports re-phased to P6]
 - id: REQ-DAT-013
   section: "14"
   title: "Domain commands; CRUD cannot change state"
@@ -4501,8 +4501,8 @@
   security_rule: "Log redaction for tokens, cookies, passwords"
   acceptance_tests: ["UT: error response contains no stack trace", "UT: log redaction removes session cookie"]
   phase: P1
-  status: Implemented
-  evidence: [P1 isolation-and-auth.spec.ts "validation errors are 400 problem+json", apps/api/src/platform/errors.ts (problem+json without stack; SQL text redacted from logs); apps/api/src/platform/audit.service.ts redacts token/secret/password/csrf/cookie keys, 'downgraded from Tested 2026-09-29: no test asserts that an error response carries no stack trace or that logs redact the session cookie']
+  status: Tested
+  evidence: ['P1 p1-closure.spec.ts "unit: the problem filter turns an unexpected error (stack, SQL, parameters, paths) and a driver constraint error into generic problem bodies"; "4xx and 5xx problem bodies hold no internals, and the cookie / CSRF values never reach logs or audit rows"', 'fix 2026-09-30: problems raised before the guard (body parse error, unknown route) now carry a correlation id', no HTTP request logger exists (nothing logs headers); the test captures every log line and stdout/stderr write]
 
 # ---------------------------------------------------------------- SEC
 
@@ -4696,8 +4696,8 @@
   security_rule: "Secret scanning in CI; secrets injected at runtime"
   acceptance_tests: ["UT: CI secret scan passes on repo, web bundle and test reports"]
   phase: P1
-  status: Implemented
-  evidence: ['CI job secret-scan (.github/workflows/transformation-hub-ci.yml; scripts/ops/secret-scan.sh with scripts/ops/gitleaks.toml): gitleaks 8.30.1 pinned by SHA-256 scans (a) the git history reachable from the revision (full clone) and its committed tree, (b) the built web client bundle apps/web/.next/static, (c) the CI test reports and logs (e2e-report with Playwright report data, traces and api/worker/web logs; restore-drill; compose-smoke; egress-report) and docs/test-evidence; any finding outside the synthetic-value allow-list fails the job; output redacted', 'executed in the build environment 2026-09-30 at 049cf54: history (111 commits), tree (679 files), web bundle, and the Playwright report, traces and logs of a local 24/24 e2e run have 0 findings; randomly generated secret-shaped values planted in a log, in Playwright-embedded report data and in a bundle chunk are detected and not printed', 'docs/deployment/secrets.md: where secrets live (Kubernetes Secrets fed from the external secret store; none in images, web bundle, CI or reports), inventory, rotation procedures, scan scope and allow-list policy', 'pending: first green CI run of job secret-scan (then Tested for the scan AT)', rotation drill not exercised; re-phased to P7]
+  status: Tested
+  evidence: ['CI job secret-scan (.github/workflows/transformation-hub-ci.yml; scripts/ops/secret-scan.sh with scripts/ops/gitleaks.toml): gitleaks 8.30.1 pinned by SHA-256 scans (a) the git history reachable from the revision (full clone) and its committed tree, (b) the built web client bundle apps/web/.next/static, (c) the CI test reports and logs (e2e-report with Playwright report data, traces and api/worker/web logs; restore-drill; compose-smoke; egress-report) and docs/test-evidence; any finding outside the synthetic-value allow-list fails the job; output redacted', 'executed in the build environment 2026-09-30 at 049cf54: history (111 commits), tree (679 files), web bundle, and the Playwright report, traces and logs of a local 24/24 e2e run have 0 findings; randomly generated secret-shaped values planted in a log, in Playwright-embedded report data and in a bundle chunk are detected and not printed', 'docs/deployment/secrets.md: where secrets live (Kubernetes Secrets fed from the external secret store; none in images, web bundle, CI or reports), inventory, rotation procedures, scan scope and allow-list policy', 'GitHub Actions transformation-hub-ci run 14 (id 36686259255, revision 223e967): job secret-scan (history + tree, web bundle, CI test reports) GREEN', rotation drill not exercised; re-phased to P7]
 - id: REQ-SEC-013
   section: "15"
   title: "File validation and malware quarantine"
@@ -4888,8 +4888,8 @@
   security_rule: "Dev login route not registered when production config is active"
   acceptance_tests: ["IT: dev-login returns 404 in production mode", "UT: seed users have random generated credentials"]
   phase: P1
-  status: Implemented
-  evidence: [config.ts rejects HUB_MODE=demo in production; demo login 404 outside demo mode]
+  status: Tested
+  evidence: [P1 p1-closure.spec.ts "POST /api/v1/auth/demo-login returns 404 in standard mode and creates no session; production refuses demo mode", 'P1 security-p1-fixes.spec.ts "SEC-P1-02: a demo session stops working when the deployment is no longer in demo mode"', 'AT variance: no credentials exist at all (no password column; sessions store token hashes only), so seed users have random generated credentials does not apply']
 
 # ---------------------------------------------------------------- DEP
 
@@ -4923,8 +4923,8 @@
   security_rule: "Mock AI provider labelled Simulated"
   acceptance_tests: ["IT: clean checkout starts with documented commands and no external services"]
   phase: P1
-  status: Implemented
-  evidence: ['documented commands (CLAUDE.md, package.json scripts, scripts/dev/*) and deploy/compose/compose.dev.yml for local containers; synthetic demo data', 'AI Off by default and the mock provider labelled Simulated: ai ai-settings-ops.spec.ts "status shows mode, Simulated label"', 'CI job compose: from a clean checkout runs the documented Compose commands of docs/deployment/installation.md section 7 verbatim (scripts/ops/compose-env-init.sh; docker compose up --build --wait; Demo seed; scripts/ops/compose-smoke.sh; down -v); images are built locally in the job and never pushed; the running stack calls no external service (backend network internal, checked by compose-smoke.sh)', 'pending: first green CI run of job compose (then Tested)']
+  status: Tested
+  evidence: ['documented commands (CLAUDE.md, package.json scripts, scripts/dev/*) and deploy/compose/compose.dev.yml for local containers; synthetic demo data', 'AI Off by default and the mock provider labelled Simulated: ai ai-settings-ops.spec.ts "status shows mode, Simulated label"', 'CI job compose: from a clean checkout runs the documented Compose commands of docs/deployment/installation.md section 7 verbatim (scripts/ops/compose-env-init.sh; docker compose up --build --wait; Demo seed; scripts/ops/compose-smoke.sh; down -v); images are built locally in the job and never pushed; the running stack calls no external service (backend network internal, checked by compose-smoke.sh)', 'GitHub Actions transformation-hub-ci run 14 (id 36686259255, revision 223e967): job compose (documented commands from a clean checkout; demo seed; smoke; down -v) GREEN']
 - id: REQ-DEP-003
   section: "16"
   title: "Mode: Mobily Private — AI Off"
@@ -5003,8 +5003,8 @@
   security_rule: "Compose uses dev-only secrets clearly marked"
   acceptance_tests: ["IT: compose up yields healthy api, worker, web, db"]
   phase: P1
-  status: Implemented
-  evidence: [deploy/compose/compose.dev.yml with .env.example and initdb roles; its header and docs/deployment/installation.md section 7 state development/evaluation only and no high availability; local throwaway passwords generated by scripts/ops/compose-env-init.sh, 'CI job compose: docker compose up --build --wait with health checks on db (pg_isready over TCP), api (/readyz), worker (heartbeat file) and web (/login); then scripts/ops/compose-smoke.sh (containers healthy, migrate exit 0, API readyz, web login, demo login with authenticated API calls and CSRF through the web origin, logout, worker heartbeat, outbox drained, no route out of the backend network); then down -v', 'validated in the build environment: docker compose config, shellcheck, actionlint; the smoke HTTP, worker and outbox checks ran against a local non-container stack started through the container entrypoint; compose up NOT EXECUTED there (no Docker daemon)', 'fixed 2026-09-30: empty optional HUB_* values passed by Compose (HUB_OIDC_ISSUER) would have stopped api, worker and seed-demo at startup; the entrypoint and loadConfig now treat them as unset', 'pending: first green CI run of job compose (then Tested)']
+  status: Tested
+  evidence: [deploy/compose/compose.dev.yml with .env.example and initdb roles; its header and docs/deployment/installation.md section 7 state development/evaluation only and no high availability; local throwaway passwords generated by scripts/ops/compose-env-init.sh, 'CI job compose: docker compose up --build --wait with health checks on db (pg_isready over TCP), api (/readyz), worker (heartbeat file) and web (/login); then scripts/ops/compose-smoke.sh (containers healthy, migrate exit 0, API readyz, web login, demo login with authenticated API calls and CSRF through the web origin, logout, worker heartbeat, outbox drained, no route out of the backend network); then down -v', 'validated in the build environment: docker compose config, shellcheck, actionlint; the smoke HTTP, worker and outbox checks ran against a local non-container stack started through the container entrypoint; compose up NOT EXECUTED there (no Docker daemon)', 'fixed 2026-09-30: empty optional HUB_* values passed by Compose (HUB_OIDC_ISSUER) would have stopped api, worker and seed-demo at startup; the entrypoint and loadConfig now treat them as unset', 'GitHub Actions transformation-hub-ci run 14 (id 36686259255, revision 223e967): job compose (up --build --wait: db, migrate exit 0, api, worker, web healthy; smoke) GREEN']
 - id: REQ-DEP-008
   section: "16"
   title: "Customizable Helm/Kubernetes manifests; OpenShift constraints"
@@ -6167,8 +6167,8 @@
   security_rule: "Demo seed runs only in non-production modes"
   acceptance_tests: ["UT: demo seed idempotent; all records is_demo = true"]
   phase: P1
-  status: Implemented
-  evidence: ['apps/api/src/cli/seed-demo.ts runs through the real services in every integration setup (CI integration job green, run 36645986422)', 'governance governance-integrity.spec.ts "seeds the steering committee, distinct boards, an approved DEMO matrix" (seeded committees and decisions all is_demo)', 'downgraded from Tested 2026-09-29: the AT (seed idempotent; all records is_demo) is not asserted; the seed runs once per setup']
+  status: Tested
+  evidence: [P1 p1-closure-empty-db.spec.ts "seeding an empty database twice gives identical row counts (no duplicates); every row with an is_demo flag is true and every project-scoped row belongs to a demo project", 'fix 2026-09-30: status-dimension recompute compared counts key-order-sensitively (spurious version, history and audit rows on every recompute); planning and AI seeds no longer re-run audited no-op commands']
 - id: REQ-SET-002
   section: "21"
   title: "Two fictional demo partners"
@@ -6247,8 +6247,8 @@
   security_rule: "Bootstrap validator rejects non-template content"
   acceptance_tests: ["UT: bootstrap produces only templates and role policies"]
   phase: P1
-  status: Implemented
-  evidence: [apps/api/src/cli/bootstrap.ts]
+  status: Tested
+  evidence: ['P1 p1-closure-empty-db.spec.ts "bootstrap on an empty database: one organization, templates, platform schedules and ONE IdP-bound first administrator — no password, no demo or fictional data; a second run changes nothing" (only organization, app_user, org_role_assignment, project_template(_version), scheduled_job hold rows)', P1 p1-closure-empty-db.spec.ts "refuses to run in demo mode (nothing is created)"]
 - id: REQ-SET-007
   section: "21"
   title: "Onboarding approvals for real projects"
@@ -6279,8 +6279,8 @@
   security_rule: "First admin created via one-time bootstrap token or IdP mapping"
   acceptance_tests: ["UT: bootstrap requires one-time token; no static credentials in repo"]
   phase: P1
-  status: Implemented
-  evidence: [no password storage (ADR-0005); bootstrap creates IdP-bound admin only, 'CI job secret-scan: repository history and tree scanned for static credentials (gitleaks default rules plus the URL-embedded-password rule); allow-list limited to synthetic dev/CI values, each exact-value and commented (scripts/ops/gitleaks.toml); executed locally at 049cf54 with 0 findings', 'pending: first green CI run of job secret-scan and the bootstrap-on-empty-database IT (backend-data-engineer); both are needed before Tested', 'AT variance: the first administrator is bound to an IdP identity instead of a one-time token']
+  status: Tested
+  evidence: ['P1 p1-closure-empty-db.spec.ts "bootstrap on an empty database: one organization, templates, platform schedules and ONE IdP-bound first administrator — no password, no demo or fictional data; a second run changes nothing"', P1 p1-closure.spec.ts "POST /api/v1/auth/demo-login returns 404 in standard mode and creates no session; production refuses demo mode" (no password column anywhere; app_user holds no credential), 'CI job secret-scan: repository history and tree scanned for static credentials (gitleaks default rules plus the URL-embedded-password rule); allow-list limited to synthetic dev/CI values (scripts/ops/gitleaks.toml); executed locally at 049cf54 with 0 findings', 'GitHub Actions transformation-hub-ci run 14 (id 36686259255, revision 223e967): job secret-scan; the bootstrap-on-empty-database spec p1-closure-empty-db also passed in that run GREEN', 'AT variance: IdP-bound first administrator instead of a one-time token']
 - id: REQ-SET-009
   section: "21"
   title: "Wizard step 1: program, objective, parties and sites"

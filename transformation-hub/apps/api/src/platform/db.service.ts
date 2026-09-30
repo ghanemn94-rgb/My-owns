@@ -46,21 +46,24 @@ export class DbService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     let problem: string | null = null;
     try {
-      const { rows } = await this.pool.query<{ rolsuper: boolean; rolbypassrls: boolean; owned: number }>(
+      const { rows } = await this.pool.query<{ rolsuper: boolean; rolbypassrls: boolean; owned: number; icu: number }>(
         `select r.rolsuper, r.rolbypassrls,
-                (select count(*)::int from pg_tables t where t.schemaname = 'public' and t.tableowner = current_user) as owned
+                (select count(*)::int from pg_tables t where t.schemaname = 'public' and t.tableowner = current_user) as owned,
+                (select count(*)::int from pg_collation c where c.collname = 'und-x-icu') as icu
            from pg_roles r where r.rolname = current_user`,
       );
       const r = rows[0];
       if (r && (r.rolsuper || r.rolbypassrls || r.owned > 0)) {
         problem = `runtime database role ${r.rolsuper ? 'is superuser' : r.rolbypassrls ? 'has BYPASSRLS' : `owns ${r.owned} table(s)`} — row-level security would not isolate projects`;
+      } else if (r && r.icu === 0) {
+        problem = 'PostgreSQL has no ICU collation "und-x-icu" (server built without ICU) — list sorting (?sort=) needs it';
       }
     } catch (e) {
       this.log.warn(`database self-check skipped: ${(e as Error).message}`);
       return;
     }
     if (!problem) return;
-    if (this.config.nodeEnv === 'production') throw new Error(`Refusing to start: ${problem}. Use the non-owner runtime role (hub_app).`);
+    if (this.config.nodeEnv === 'production') throw new Error(`Refusing to start: ${problem}. See docs/deployment/installation.md (database prerequisites).`);
     this.log.warn(`SECURITY WARNING: ${problem} (allowed outside production only)`);
   }
 

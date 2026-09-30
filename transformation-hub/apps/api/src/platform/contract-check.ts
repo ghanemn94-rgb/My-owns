@@ -22,7 +22,11 @@ export function checkContracts(app: INestApplication): { implemented: number; mi
       const handler = proto[name];
       const def = reflector.get(ROUTE_META, handler);
       const isRoute = Reflect.getMetadata(PATH_METADATA, handler) !== undefined;
-      if (def) implemented.add(def.id);
+      // A contract object that is not the registered one (never registered, or a different method/path/permission)
+      // would be served but missing from OpenAPI and the typed client: treat the handler as unbound (REQ-PLT-005).
+      const registered = def ? ROUTES[def.id] : undefined;
+      if (def && registered && registered.method === def.method && registered.path === def.path && JSON.stringify(registered.access) === JSON.stringify(def.access)) implemented.add(def.id);
+      else if (def) unbound.push(`${wrapper.name}.${name} (contract ${def.id} is not the registered route)`);
       else if (isRoute && wrapper.name !== 'HealthController') unbound.push(`${wrapper.name}.${name}`);
     }
   }

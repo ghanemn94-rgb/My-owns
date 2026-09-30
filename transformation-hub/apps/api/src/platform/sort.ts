@@ -1,8 +1,20 @@
-import { sql, type AnyColumn, type SQL } from 'drizzle-orm';
+import { Column, is, sql, type AnyColumn, type SQL } from 'drizzle-orm';
 import { parseSort, type SortKeyOf } from '@hub/contracts';
 import { invalid } from '@hub/domain';
 
 type SortExpr = AnyColumn | SQL;
+
+/**
+ * Text sort keys use the ICU root collation, so a list sorts identically on every PostgreSQL server whatever its default
+ * locale (C in development, en_US in CI, something else at Mobily) and Arabic/Latin titles interleave sensibly. The
+ * database self-check (DbService) refuses to start in production when this collation is missing.
+ */
+export const SORT_COLLATION = 'und-x-icu';
+
+function collated(c: SortExpr): SortExpr {
+  if (is(c, Column) && /^(text|varchar|character varying)/.test(c.getSQLType())) return sql`${c} collate "und-x-icu"`;
+  return c;
+}
 
 /**
  * Column(s) behind each declared sort key of a list — must cover every key of the route's contract. A key may map to
@@ -26,5 +38,5 @@ export function orderBySort<S extends string>(sort: S | undefined, columns: Sort
   if (!mapped) throw invalid('sort.unknown_key', `Unknown sort key ${s.key}`, { sort });
   const cols: readonly SortExpr[] = Array.isArray(mapped) ? mapped : [mapped as SortExpr];
   const dir = s.desc ? sql.raw('desc') : sql.raw('asc');
-  return [...cols.map((c) => sql`${c} ${dir} nulls last`), sql`${id} ${dir}`];
+  return [...cols.map((c) => sql`${collated(c)} ${dir} nulls last`), sql`${id} ${dir}`];
 }

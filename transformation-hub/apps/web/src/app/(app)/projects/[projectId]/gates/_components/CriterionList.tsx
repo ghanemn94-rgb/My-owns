@@ -65,7 +65,7 @@ function EvidenceList({ projectId, criterionId }: { projectId: string; criterion
             {l.documentTitle ? (
               <>
                 {l.documentTitle}
-                {l.versionNo ? <span className="text-muted"> · v{l.versionNo}</span> : null}
+                {l.versionNo ? <span className="text-muted"> · {t('documents.versions.label', { version: l.versionNo })}</span> : null}
               </>
             ) : (
               l.note

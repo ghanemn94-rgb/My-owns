@@ -335,7 +335,7 @@ export default function CommitteeDetailPage() {
               onRetry={() => versions.refetch()}
               emptyTitle={t('governance.committee.charter.versionsEmpty')}
               columns={[
-                { key: 'v', header: t('governance.committee.charter.columns.version'), isRowHeader: true, cell: (v) => <span className="tabular">v{v.versionNo}</span> },
+                { key: 'v', header: t('governance.committee.charter.columns.version'), isRowHeader: true, cell: (v) => <span className="tabular">{t('documents.versions.label', { version: v.versionNo })}</span> },
                 { key: 'at', header: t('governance.committee.charter.columns.changedAt'), cell: (v) => <span className="tabular">{formatDateTime(v.changedAt)}</span> },
                 { key: 'reason', header: t('governance.committee.charter.columns.reason'), cell: (v) => <UText value={v.reason} /> },
                 { key: 'approved', header: t('governance.committee.charter.columns.approved'), cell: (v) => (v.approved ? t('governance.common.yes') : t('governance.common.no')) },
@@ -484,7 +484,7 @@ export default function CommitteeDetailPage() {
             onRetry={() => matrices.refetch()}
             emptyTitle={t('governance.committee.matrix.versionsEmpty')}
             columns={[
-              { key: 'v', header: t('governance.committee.matrix.columns.version'), isRowHeader: true, cell: (m) => <span className="tabular">v{m.versionNo}</span> },
+              { key: 'v', header: t('governance.committee.matrix.columns.version'), isRowHeader: true, cell: (m) => <span className="tabular">{t('documents.versions.label', { version: m.versionNo })}</span> },
               { key: 'status', header: t('governance.committee.matrix.columns.status'), cell: (m) => <StatusBadge enumName="authorityMatrixStatuses" value={m.status} /> },
               { key: 'demo', header: t('governance.committee.matrix.columns.demo'), cell: (m) => (m.isDemoPolicy ? <DemoBadge /> : t('governance.committee.matrix.real')) },
               {
