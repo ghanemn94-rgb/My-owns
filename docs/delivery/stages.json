@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -20,10 +20,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:ef3ec3f205ffdac3609c6f100cfb9900afb72f0e5bb381fbc5409eb1a8a8ddaf",
-        "source_commit": "a23c4d411cd4185e56a3f12cf7c1973f7964440b",
-        "frozen_at": "2026-09-30T09:48:51Z",
-        "manifest_path": "docs/delivery/candidates/DG0/ef3ec3f205ffdac3.manifest.json"
+        "candidate_id": "sha256:7d00f8574a41648a4e9e9c7af97dc0e251db398a6251f6738a783c6fdcb5f270",
+        "source_commit": "9e3c27ffe65787f2d510ae5dabf26d271aaae46f",
+        "frozen_at": "2026-09-30T11:28:51Z",
+        "manifest_path": "docs/delivery/candidates/DG0/7d00f8574a41648a.manifest.json"
       },
       "review_rounds": [
         {
@@ -234,7 +234,7 @@
             "domain-reviewer": "docs/delivery/reviews/DG0/round-18/domain-reviewer.json",
             "code-security-reviewer": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json"
           },
-          "note": "Round 18: re-review after D-032. domain PASS; code-security FAIL \u2014 new F-DG0-152 (High, mandatory: cross-run isolation break via /proc/<peer>/root|cwd), F-DG0-153 (Low doc); verified F-DG0-150/151 CLOSED, re-accepted F-DG0-147, assessed F-DG0-149 read-only (stays OPEN). qa hit the account session limit before writing its verdict record: it wrote its sidecars (verified F-DG0-236/237 PASS, raised F-DG0-239 Low) but produced no qa-verifier.json, so its round-18 review is unbindable and re-runs in round 19; the committed sidecars are kept (write-once) but not imported. Repairs: D-033 (per-run Landlock domain, F-DG0-152), D-034 (write-once history repair), D-035 (validator tolerates pruned historical source_commits)."
+          "note": "Round 18: re-review after D-032. domain PASS; code-security FAIL — new F-DG0-152 (High, mandatory: cross-run isolation break via /proc/<peer>/root|cwd), F-DG0-153 (Low doc); verified F-DG0-150/151 CLOSED, re-accepted F-DG0-147, assessed F-DG0-149 read-only (stays OPEN). qa hit the account session limit before writing its verdict record: it wrote its sidecars (verified F-DG0-236/237 PASS, raised F-DG0-239 Low) but produced no qa-verifier.json, so its round-18 review is unbindable and re-runs in round 19; the committed sidecars are kept (write-once) but not imported. Repairs: D-033 (per-run Landlock domain, F-DG0-152), D-034 (write-once history repair), D-035 (validator tolerates pruned historical source_commits)."
         },
         {
           "round": 19,
@@ -259,6 +259,18 @@
             "qa-verifier": "docs/delivery/reviews/DG0/round-20/qa-verifier.json"
           },
           "note": "Round 20: re-review after the D-036 repairs (gate source_commit must exist F-DG0-240/155; residual-7 scope correction F-DG0-154 + F-DG0-149 re-assessment; settings.json git rules removed F-DG0-156). F-DG0-152 (High) already CLOSED_VERIFIED."
+        },
+        {
+          "round": 21,
+          "candidate_id": "sha256:7d00f8574a41648a4e9e9c7af97dc0e251db398a6251f6738a783c6fdcb5f270",
+          "frozen_at": "2026-09-30T11:28:51Z",
+          "source_commit": "9e3c27ffe65787f2d510ae5dabf26d271aaae46f",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG0/round-21/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG0/round-21/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG0/round-21/qa-verifier.json"
+          },
+          "note": "Round 21: re-review after the D-037 repairs (pruned-commit tolerance in checkClosure/checkInvocation F-DG0-242; record-less interrupted-run sidecars matched to import-findings F-DG0-243; gate source_commit branch-reachability + object type F-DG0-241; delivery metadata / evidence committed + full fix_revisions F-DG0-244; residual-7 wording F-DG0-157). This is the gate round: domain+code-security together check all 19 DG0-final requirements. F-DG0-152 (High) stays CLOSED_VERIFIED."
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
@@ -461,7 +473,7 @@
         {
           "state": "FIXING",
           "at": "2026-09-30T10:05:00Z",
-          "note": "Round 19: domain PASS; code-security FAIL; qa FAIL. F-DG0-152 (High) CLOSED_VERIFIED (D-033 Landlock domain independently verified), plus F-DG0-150/151/153/236/237/239 CLOSED and F-DG0-147 accepted; D-034 history repair confirmed sound. Blocked on repairs to the round-18/19 infra changes: F-DG0-240 (Medium, qa) + F-DG0-155 (Low, sec) \u2014 D-035's findManifest tolerance also covers the gate round and checkCandidate never checks gate.source_commit in current mode, so a missing gate source_commit passes current-mode validation; F-DG0-154 (Medium, sec) + F-DG0-149 reopened \u2014 threat-model residual 7 wrongly narrowed /proc/sys to 'own-run' (it is host-global) and the shell-layer read-only claim is unsupported; F-DG0-156 (Low, sec) \u2014 the git allow-rules in .claude/settings.json reach sandboxed agents (contained)."
+          "note": "Round 19: domain PASS; code-security FAIL; qa FAIL. F-DG0-152 (High) CLOSED_VERIFIED (D-033 Landlock domain independently verified), plus F-DG0-150/151/153/236/237/239 CLOSED and F-DG0-147 accepted; D-034 history repair confirmed sound. Blocked on repairs to the round-18/19 infra changes: F-DG0-240 (Medium, qa) + F-DG0-155 (Low, sec) — D-035's findManifest tolerance also covers the gate round and checkCandidate never checks gate.source_commit in current mode, so a missing gate source_commit passes current-mode validation; F-DG0-154 (Medium, sec) + F-DG0-149 reopened — threat-model residual 7 wrongly narrowed /proc/sys to 'own-run' (it is host-global) and the shell-layer read-only claim is unsupported; F-DG0-156 (Low, sec) — the git allow-rules in .claude/settings.json reach sandboxed agents (contained)."
         },
         {
           "state": "REVIEWING",
@@ -472,6 +484,11 @@
           "state": "FIXING",
           "at": "2026-09-30T10:40:00Z",
           "note": "Round 20: domain PASS; code-security PASS (D-036 fixes F-DG0-154/155/156 CLOSED_VERIFIED; F-DG0-149 residual-7 ACCEPTED_OBSERVATION at its corrected host-global scope; new F-DG0-157 Low leftover-wording accepted); qa PASS-verified F-DG0-240 but FAIL overall after a full dry-run gate on the real repository, finding pre-existing history-damage blockers: F-DG0-242 (High) checkClosure/checkInvocation hard-fail on pruned fix_revision/head_commit (history truncated before round 12; D-035 only covered findManifest) -> 195 errors; F-DG0-243 (High) the D-034-kept record-less round-17/18 qa sidecars trip 'record not listed' and F-DG0-238 is dropped; F-DG0-244 (Medium) round-19 test evidence uncommitted + abbreviated/null fix_revisions; F-DG0-241 (Low) D-036 checks resolution not branch-ancestry. F-DG0-152 (High) stays CLOSED_VERIFIED. Repairs (D-037) in progress."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-09-30T11:30:00Z",
+          "note": "Round-20 findings repaired (D-037): checkClosure/checkInvocation tolerate genuinely-absent commits as findManifest does (F-DG0-242, clears the pruned-history gate blockers); collectVerifications/collectRaisedFindings match import-findings for interrupted-run record-less sidecars (F-DG0-243; F-DG0-238/239 clear); gate source_commit must be a commit object reachable from HEAD (F-DG0-241); round-19/20 reviewer evidence committed and all fix_revisions full 40-hex, F-DG0-150/151 re-pointed to retained 421c922 (F-DG0-244); /proc/sys host-global wording (F-DG0-157). Real-repo dry-run gate clean of all permanent history-damage blockers. Sandboxed prefreeze all PASS; candidate re-frozen for review round 21."
         }
       ]
     },
