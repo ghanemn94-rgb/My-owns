@@ -843,7 +843,8 @@ export class PerimeterService {
       reviewedCategories: reviews.map((x) => x.category as PerimeterItemType),
     });
     const conclusion = new Map(reviews.map((x) => [x.category, x.conclusion]));
-    return { findings: r.findings, categories: r.categories.map((c) => ({ ...c, conclusion: conclusion.get(c.category) ?? null })), summary: r.summary };
+    const reviewVersion = new Map(reviews.map((x) => [x.category, x.version]));
+    return { findings: r.findings, categories: r.categories.map((c) => ({ ...c, conclusion: conclusion.get(c.category) ?? null, reviewVersion: reviewVersion.get(c.category) ?? null })), summary: r.summary };
   }
 
   async reviewCategory(ctx: RequestContext, projectId: string, category: PerimeterItemType, body: { conclusion: string; expectedVersion?: number }) {

@@ -347,6 +347,8 @@ export const ReconciliationDto = z.object({
       reviewed: z.boolean(),
       status: z.enum(['items_registered', 'reviewed_none_in_perimeter', 'unassessed']),
       conclusion: z.string().nullable(),
+      /** Version of the category review (pass it as expectedVersion to update the review); null when not reviewed. */
+      reviewVersion: z.number().int().nullable(),
     }),
   ),
   summary: z.object({
