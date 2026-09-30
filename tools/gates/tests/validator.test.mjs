@@ -1129,6 +1129,18 @@ test("D-039/D-040 / F-DG0-164/166/246/249: checkClosure binds the fix to the ver
   expectError(validateGate(repo, "DG0"), /CLOSED_VERIFIED needs a full fix_revision commit id/);
 });
 
+test("D-044 / F-DG0-250: a fix_revision that is an annotated tag object (not a commit) is rejected", () => {
+  const { repo, head } = buildValidRepo();
+  approveAndCommit(repo);
+  assert.deepEqual(validateGate(repo, "DG0"), [], "the baseline gate must pass");
+  sh(repo, "tag", "-a", "fixtag", "-m", "annotated", head);
+  const tagObj = sh(repo, "rev-parse", "fixtag");
+  assert.equal(sh(repo, "cat-file", "-t", tagObj), "tag", "must be a tag object");
+  assert.equal(sh(repo, "rev-parse", `${tagObj}^{commit}`), head, "the tag must peel to the fix commit");
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = tagObj));
+  expectError(validateGate(repo, "DG0"), /is a tag object, not a commit; a fix_revision must name the fix commit/);
+});
+
 test("D-042 / F-DG0-169: a closure verified in a round whose source_commit is absent is rejected (anchor 1 is unconditional)", () => {
   const { repo } = buildValidRepo();
   approveAndCommit(repo);

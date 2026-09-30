@@ -396,6 +396,10 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
         bad(`head_commit_at_start ${JSON.stringify(head)} is not a 40-hex commit id`);
       } else if (!commitPresent(repo, head)) {
         bad(`started from ${head.slice(0, 10)}, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)`);
+      } else if (objectType(repo, head) !== "commit") {
+        // Must be the commit object itself, not an annotated tag that peels to it (same rule as the gate source_commit
+        // and fix_revision; D-044/F-DG0-250 applied to head_commit_at_start proactively).
+        bad(`started from ${head.slice(0, 10)}, a ${objectType(repo, head)} object, not a commit`);
       } else {
         try {
           execFileSync("git", ["-C", repo, "cat-file", "-e", `${head}:${binding.manifestPath}`], { stdio: "ignore" });
@@ -737,6 +741,11 @@ function checkClosure(repo, stage, gate, f, v, where, errors) {
     // unconditional in D-042.
     if (!f.fix_revision || !/^[0-9a-f]{40}$/.test(f.fix_revision)) errors.push(`${where}: CLOSED_VERIFIED needs a full fix_revision commit id`);
     else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
+    else if (objectType(repo, f.fix_revision) !== "commit")
+      // The fix_revision must name the fix COMMIT itself, not an annotated tag object that peels to it: `commitPresent`
+      // and `isAncestor` both peel a tag, so without this a ref-dependent tag id (gone from a fresh clone if the tag is
+      // deleted) would pass. Same rule as the gate source_commit (D-037/F-DG0-241); here D-044/F-DG0-250.
+      errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is a ${objectType(repo, f.fix_revision)} object, not a commit; a fix_revision must name the fix commit itself`);
     else {
       if (!commitPresent(repo, round.source_commit))
         errors.push(`${where}: verified in ${v.roundDir}, whose frozen candidate source_commit ${String(round.source_commit).slice(0, 10)} is not present; a closure must be verified against a retained candidate (F-DG0-169)`);
