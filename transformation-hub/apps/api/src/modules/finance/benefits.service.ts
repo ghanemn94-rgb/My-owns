@@ -108,7 +108,7 @@ export class BenefitsService {
       .orderBy(asc(K.key));
     return {
       ...this.dto(b),
-      evidence: await this.s.evidence(projectId, 'benefit', b.id),
+      evidence: await this.s.evidenceShown(ctx, projectId, 'benefit', b.id),
       allowedCommands: allowedCommands(BENEFIT_MACHINE, b.status),
       kpis,
       people: await this.s.people([b.ownerUserId, b.createdBy, b.approvedBy, b.realizationRecordedBy, b.verifiedBy]),

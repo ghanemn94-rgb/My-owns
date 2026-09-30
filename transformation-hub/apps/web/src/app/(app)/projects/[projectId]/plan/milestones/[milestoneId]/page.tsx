@@ -22,6 +22,7 @@ import { BackLink } from '@/components/planning/DetailShell';
 import { DateText, Fact, Section } from '@/components/planning/bits';
 import { FormDialog, OwnerDialog } from '@/components/planning/dialogs';
 import { NodeDependencies, RaciPanel } from '@/components/planning/RaciPanel';
+import { PrerequisitesPanel } from '@/components/planning/PrerequisitesPanel';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { pk, useRefreshPlanning, type Milestone } from '@/lib/planning';
@@ -140,6 +141,7 @@ export default function MilestonePage() {
         </Section>
         <RaciPanel entityType="milestone" entityId={m.id} />
         <NodeDependencies nodeId={m.id} />
+        <PrerequisitesPanel successorType="milestone" successorId={m.id} successorCode={m.code} />
       </div>
       <ActivityHistory className="mt-6" projectId={projectId} entityType="milestone" entityId={m.id} />
       <EditMilestoneDialog open={edit} onClose={() => setEdit(false)} m={m} />

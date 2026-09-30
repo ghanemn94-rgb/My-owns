@@ -19,6 +19,7 @@ import { useTaskCommands } from '@/components/planning/commands';
 import { DateText, Fact, ProgressBar, Section } from '@/components/planning/bits';
 import { OwnerDialog, ProgressDialog, TaskFormDialog } from '@/components/planning/dialogs';
 import { NodeDependencies, RaciPanel } from '@/components/planning/RaciPanel';
+import { PrerequisitesPanel } from '@/components/planning/PrerequisitesPanel';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { useRefreshPlanning, useTask, workstreamHref } from '@/lib/planning';
@@ -178,6 +179,7 @@ export default function TaskPage() {
         </Section>
         <RaciPanel entityType="task" entityId={x.id} />
         <NodeDependencies nodeId={x.id} />
+        <PrerequisitesPanel successorType="task" successorId={x.id} successorCode={x.wbsCode} />
       </div>
       <ActivityHistory className="mt-6" projectId={projectId} entityType="task" entityId={x.id} />
 

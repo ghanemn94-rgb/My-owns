@@ -97,7 +97,9 @@
     "action_report_done": "Reported an action done",
     "action_verify_closure": "Verified an action's closure",
     "action_reject_closure": "Returned an action",
-    "action_cancel": "Cancelled an action"
+    "action_cancel": "Cancelled an action",
+    "authority_matrix_verify_approval": "Verified an authority matrix version's approval (in force)",
+    "authority_matrix_reject_approval_evidence": "Rejected the approval evidence of an authority matrix version"
   },
   "committees": {
     "title": "Committees and boards",
@@ -272,7 +274,19 @@
         "reference": "Approval reference (resolution / record number)",
         "effectiveFrom": "Effective from",
         "effect": "Activates this version and supersedes the version in force. A Demo policy can only be approved in a demo project, and you cannot approve a version you drafted.",
-        "done": "Authority matrix approved."
+        "done": "Authority matrix approved.",
+        "confirmPending": "Record approval",
+        "effectPending": "Records your approval of this loaded (non-demo) version with its approval document. It does NOT come into force yet: the version in force stays until the approval is verified.",
+        "effectVerifier": "A second person — not the drafter, not you, not the uploader of the approval document — must verify the approval document to bring this version into force.",
+        "donePending": "Approval recorded — awaiting verification by a second person.",
+        "demoNoDocument": "Demo policy (synthetic): it takes effect on approval in a demo project; there is no approval record to attach.",
+        "document": "Approval document",
+        "documentHint": "The approved delegation or resolution, uploaded in the Documents center. Its current version is bound to this approval.",
+        "documentSearch": "Search documents",
+        "documentNone": "No documents match. Upload the approval record in the Documents center first.",
+        "documentNoVersion": "No uploaded version — cannot be used",
+        "documentSelected": "Selected:",
+        "documentNoAccess": "You cannot read project documents, so you cannot select the approval document. Ask someone who can read it to record the approval."
       },
       "draft": {
         "label": "Draft new version",
@@ -285,6 +299,29 @@
         "effectiveTo": "Effective to",
         "effect": "The draft has no effect until someone other than you approves it.",
         "done": "Matrix version drafted."
+      },
+      "pendingCallout": "Version {version} has a recorded approval awaiting verification of its approval document by a second person. Version {current} stays in force until then.",
+      "pendingCalloutNone": "Version {version} has a recorded approval awaiting verification of its approval document by a second person. It is not in force until then.",
+      "pendingVerification": "Approved — awaiting verification",
+      "verifiedAt": "Approval verified {date}",
+      "approvalDocument": "Approval document",
+      "verify": {
+        "label": "Verify approval",
+        "labelFor": "Verify the approval of matrix version {version}",
+        "title": "Verify the approval of authority matrix version {version}",
+        "decision": "Your verification",
+        "accept": "Accept — the approval document supports the approval",
+        "reject": "Reject — the approval evidence is not sufficient",
+        "confirmAccept": "Accept and bring into force",
+        "confirmReject": "Reject the approval evidence",
+        "effectAccept": "Version {version} comes into force and supersedes the version in force.",
+        "effectReject": "The recorded approval is cleared (the reason is kept in the history); the draft can be approved again with correct evidence.",
+        "sod": "Separation of duties: the drafter, the approver and the uploader of the approval document cannot verify it (the server refuses them).",
+        "openDocument": "Open the approval document",
+        "doneAccept": "Approval verified — the version is in force.",
+        "doneReject": "Approval evidence rejected.",
+        "youDrafted": "You drafted this version: another person verifies its approval.",
+        "youApproved": "You approved this version: another person verifies its approval."
       }
     },
     "meetings": {
@@ -445,7 +482,8 @@
         "capacity": "Capacity",
         "voting": "Voting",
         "status": "Attendance"
-      }
+      },
+      "frozen": "Attendance is frozen while votes are open on a decision tabled at this meeting (record the outcome, or defer and resume the decision, first)."
     },
     "conflicts": {
       "title": "Conflict declarations and recusals",
@@ -472,7 +510,8 @@
         "decision": "Decision",
         "details": "Details",
         "at": "Recorded"
-      }
+      },
+      "onBehalfReason": "A recusal recorded on behalf of another member needs a reason. It is refused once the member has voted in the current round."
     },
     "quorum": {
       "title": "Quorum",
@@ -600,7 +639,8 @@
     "recommended": {
       "title": "Recommended — pending external authority",
       "body": "The committee supports this decision, but it is outside the committee's delegated authority. This is not an approval: {body} must decide, and dependent gates stay blocked until that decision is recorded with its reference.",
-      "escalation": "Escalation {code}"
+      "escalation": "Escalation {code}",
+      "evidence": "Recording the authority's decision requires its resolution or record as evidence on this decision, verified by a second person."
     },
     "facts": {
       "escalatedTo": "Decided by",
@@ -611,7 +651,8 @@
       "supersededBy": "Superseded by",
       "implementationStartedAt": "Implementation tracking started",
       "implementationVerifiedAt": "Implementation verified",
-      "implementationEvidence": "Implementation evidence"
+      "implementationEvidence": "Implementation evidence",
+      "externalEvidence": "Evidence of the external decision"
     },
     "lifecycle": {
       "title": "Lifecycle",
@@ -642,7 +683,14 @@
     },
     "recusals": {
       "title": "Recusals",
-      "empty": "No recusals recorded."
+      "empty": "No recusals recorded.",
+      "rule": "A recusal is refused once the member has voted in the current round; the round is then restarted (defer, then resume).",
+      "onBehalf": "Recorded on behalf",
+      "ownDeclaration": "Own declaration",
+      "recordedBy": "Recorded by {name}",
+      "recordedByYou": "you",
+      "recordedByOther": "another person (not a seat holder of this committee)",
+      "recordedByUnknown": "another person"
     },
     "actions": {
       "title": "Implementation actions",
@@ -680,14 +728,16 @@
         "requesterHint": "You requested this decision: the server refuses your vote (self-approval is prohibited).",
         "recusedHint": "You are recused from this decision: the server refuses your vote.",
         "alreadyVoted": "You already voted in this round ({choice}).",
-        "done": "Vote recorded."
+        "done": "Vote recorded.",
+        "conflictFirst": "If you have a conflict of interest, declare your recusal before voting: once you have voted in this round, a recusal is refused until the round is restarted."
       },
       "recordOutcome": {
         "label": "Record outcome",
         "title": "Record the outcome of {code}",
         "effect1": "The server computes quorum, the tally and the authority check from the recorded attendance, the votes and the approved authority matrix.",
         "effect2": "Within the committee's mandate a passing vote becomes Approved; outside it, the decision becomes Recommended — pending external authority, and an escalation is raised.",
-        "done": "Outcome recorded: {status}."
+        "done": "Outcome recorded: {status}.",
+        "integrity": "Refused if the round contains votes of recused members, of the requester or of members no longer recorded present: defer and resume the decision to open a new round."
       },
       "external": {
         "label": "Record external decision",
@@ -696,14 +746,16 @@
         "reference": "Reference (resolution / record number)",
         "referenceHint": "Required. The person who recorded the recommendation cannot record the external decision.",
         "effect": "Records the decision of {body} with its reference and closes the escalation.",
-        "done": "External decision recorded."
+        "done": "External decision recorded.",
+        "evidenceEffect": "The verified evidence you select is recorded with the decision."
       },
       "defer": {
         "label": "Defer",
         "title": "Defer {code}",
         "revisitDate": "Revisit date",
         "effect": "Consideration is postponed; resuming it opens a new voting round.",
-        "done": "Decision deferred."
+        "done": "Decision deferred.",
+        "newRound": "Defer, then resume, is also how a voting round is restarted when a recusal or an attendance correction is needed after votes were cast."
       },
       "resume": {
         "label": "Resume",
@@ -722,7 +774,8 @@
         "label": "Declare recusal",
         "title": "Declare that you are recused from {code}",
         "effect": "You will not vote and will not count toward quorum for this decision. A recusal cannot be withdrawn.",
-        "done": "Recusal recorded."
+        "done": "Recusal recorded.",
+        "afterVote": "Refused if you already voted in the current round: then the decision has to be deferred and resumed (a new voting round) before the recusal is recorded."
       },
       "supersede": {
         "label": "Supersede",
@@ -745,7 +798,19 @@
         "effect": "Marks the decision Implemented — verified. All linked actions must be verified closed; you cannot be the person who started tracking or an action owner.",
         "done": "Implementation verified."
       },
-      "addAction": "Add action"
+      "addAction": "Add action",
+      "recuseOnBehalf": {
+        "label": "Record recusal on behalf",
+        "title": "Record a recusal on behalf of a member — {code}",
+        "effect": "The member will not vote and will not count toward quorum for this decision. You are recorded as the person who recorded it, with the reason.",
+        "member": "Member",
+        "memberHint": "Seat holders of the committee who are not yet recused.",
+        "done": "Recusal recorded on behalf of the member."
+      }
+    },
+    "evidence": {
+      "title": "Evidence of this decision",
+      "hint": "For a recommendation, link the external authority's resolution or record here; another person verifies it before the external decision is recorded."
     }
   },
   "actions": {
@@ -870,6 +935,50 @@
       "decision": "Resolving decision",
       "effect": "Closes the escalation. You cannot resolve an escalation you raised.",
       "done": "Escalation resolved."
+    }
+  },
+  "refusal": {
+    "serverDetail": "Server message:",
+    "codes": {
+      "external_evidence_required": "The external authority's decision needs verified evidence on this decision: link the resolution or record as evidence, have a second person verify it, then select it here.",
+      "external_evidence_other_target": "The selected evidence belongs to another record. Select evidence linked to this decision.",
+      "external_evidence_not_active": "The selected evidence is no longer active (superseded, conflicting or rejected). Link current evidence and have it verified.",
+      "external_evidence_unverified": "The selected evidence has not been verified yet. A second person must verify it in the evidence section before the external decision is recorded.",
+      "matrix_evidence_required": "Approving a loaded (non-demo) authority matrix requires the approval record as a document. Upload it in the Documents center, then select it.",
+      "matrix_approval_pending_verification": "An approval is already recorded on this version and awaits verification by a second person.",
+      "matrix_no_pending_approval": "This version has no approval awaiting verification.",
+      "matrix_rejection_reason_required": "Give a reason to reject the approval evidence.",
+      "matrix_evidence_not_visible": "You cannot read the approval document, so you cannot verify it. Ask someone who can read it.",
+      "matrix_evidence_not_usable": "The approval document's version cannot be relied upon (its file check did not pass). Upload a usable version first.",
+      "matrix_evidence_deleted": "The selected approval document has been disposed of. Select another document.",
+      "matrix_evidence_no_version": "The selected document has no uploaded version. Upload the file first.",
+      "matrix_demo_policy_non_demo_project": "A Demo authority policy can only be approved in a demo project. Load the approved delegation matrix instead.",
+      "matrix_not_draft": "Only a draft matrix version can be approved.",
+      "recusal_after_vote": "The member already voted in round {round}, so a recusal now would discard a cast vote. Defer the decision, resume it to open a new voting round, then record the recusal before the member votes.",
+      "recusal_after_vote_noRound": "The member already voted in the current round, so a recusal now would discard a cast vote. Defer the decision, resume it to open a new voting round, then record the recusal before the member votes.",
+      "recusal_reason_required": "A recusal recorded on behalf of another member needs a reason.",
+      "recusal_not_member": "Recusals are recorded only for members of the decision's committee.",
+      "recusal_decision_closed": "Recusals can no longer be recorded: the decision is closed.",
+      "recusal_duplicate": "This member is already recused from the decision.",
+      "attendance_frozen_voting_open": "Attendance is frozen while voting is open on {decisions}. Record the outcome first, or defer the decision and resume it to open a new voting round, then correct attendance.",
+      "attendance_frozen_voting_open_noList": "Attendance is frozen while voting is open on a decision tabled at this meeting. Record the outcome first, or defer the decision and resume it to open a new voting round, then correct attendance.",
+      "outcome_vote_integrity": "The outcome cannot be recorded: round {round} contains votes cast by members who are recused, requested the decision or are no longer recorded present (votes concerned: {count}). Cast votes are never discarded — defer the decision and resume it to open a new voting round.",
+      "outcome_vote_integrity_noCounts": "The outcome cannot be recorded: the current round contains votes cast by members who are recused, requested the decision or are no longer recorded present. Cast votes are never discarded — defer the decision and resume it to open a new voting round."
+    }
+  },
+  "external": {
+    "evidence": {
+      "legend": "Evidence of the external authority's decision",
+      "hint": "Only active evidence on this decision that a second person verified can be used. Whoever verified it cannot also record the decision.",
+      "noAccess": "You cannot read the evidence of this decision, so you cannot select it. Ask someone who can read the documents to record the external decision.",
+      "noneTitle": "No verified evidence on this decision yet.",
+      "step1": "Link the resolution or record of the external authority as evidence in the Evidence section of this decision.",
+      "step2": "Ask another person (secretariat, legal or finance) to verify it.",
+      "step3": "Come back here and select the verified evidence.",
+      "awaiting": "Evidence awaiting verification by a second person: {count}.",
+      "goToEvidence": "Go to the evidence of this decision",
+      "verifiedAt": "Verified {date}",
+      "verifiedByYou": "You verified this evidence: another person must record the external decision."
     }
   }
 }

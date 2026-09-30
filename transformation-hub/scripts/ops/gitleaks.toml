@@ -14,6 +14,9 @@
 # exception is reviewed here. Adding an entry needs a security reviewer's approval in the pull request; never add a
 # value that is, or ever was, used outside a local/CI throwaway database or test.
 # This file itself is skipped by gitleaks' default path allow-list (`gitleaks\.toml`).
+# Every path-scoped entry names its `targetRules`: without them, gitleaks `dir` scans (tree / bundle / reports modes of
+# secret-scan.sh) skip the whole file instead of the one exact value (SEC-P1S-01, docs/reviews/
+# P1-security-allowlist-and-finance-visibility.md). Keep `condition = "AND"`, exact-value regexes and targetRules together.
 # =====================================================================================================================
 title = "transformation-hub secret scan"
 minVersion = "v8.25.0"
@@ -54,6 +57,7 @@ regexes = [
 description = "Synthetic production-shaped configuration in the config-validation tests (apps/api/test/p1/oidc-sso.spec.ts and the I-R2/I-R4 production-configuration cases of apps/api/test/p1/sec-p1r-fixes.spec.ts, which reuse the same values): a made-up HUB_COOKIE_SECRET that passes the strength check and a made-up database password, passed only to loadConfig() in memory. Never used by a running system."
 condition = "AND"
 paths = ['''(?:^|/)apps/api/test/p1/oidc-sso\.spec\.ts$''', '''(?:^|/)apps/api/test/p1/sec-p1r-fixes\.spec\.ts$''']
+targetRules = ["generic-api-key", "hub-url-embedded-password"]
 regexes = [
   '''^q7Vd2LxP9rTb4NwZ8kHs3JmC6yFa1GeU5oRi0XpQ$''',
   '''^strong-secret$''',
@@ -63,6 +67,7 @@ regexes = [
 description = "Synthetic production-shaped HUB_COOKIE_SECRET in the S3 configuration test (apps/api/test/documents/storage-contract.spec.ts), passed only to loadConfig() in memory. Never used by a running system."
 condition = "AND"
 paths = ['''(?:^|/)apps/api/test/documents/storage-contract\.spec\.ts$''']
+targetRules = ["generic-api-key"]
 regexes = [
   '''^Zq8#pL2!vN5@rT9\$wX3%yB6\^cF1&hJ4\*$''',
 ]
@@ -71,6 +76,7 @@ regexes = [
 description = "Documentation example in a code comment of the container entrypoint (`postgres://user:secret@host/db → postgres://user:***@host/db`, describing the log redaction)."
 condition = "AND"
 paths = ['''(?:^|/)deploy/docker/api-entrypoint\.cjs$''']
+targetRules = ["hub-url-embedded-password"]
 regexes = [
   '''^secret$''',
 ]
@@ -79,6 +85,7 @@ regexes = [
 description = "Synthetic S3 credential in the storage configuration-validation test (apps/api/test/documents/storage-contract.spec.ts): a made-up HUB_S3_SECRET_ACCESS_KEY that passes the production length/default-value checks, passed only to loadConfig() in memory. Never used by a running system or an object store."
 condition = "AND"
 paths = ['''(?:^|/)apps/api/test/documents/storage-contract\.spec\.ts$''']
+targetRules = ["generic-api-key"]
 regexes = [
   '''^k8s-secret-ref-7fQ2mZx9LwP4$''',
 ]
@@ -86,7 +93,8 @@ regexes = [
 [[allowlists]]
 description = "gitleaks' own redaction placeholder quoted in review documents: the P1 QA re-review (docs/reviews/P1-qa-rereview.md) reproduces the scanner's redacted output (e.g. postgres://hub_app:REDACTED@db:5432). The literal word REDACTED is the scanner's placeholder, not a credential."
 condition = "AND"
-paths = ['''(?:^|/)docs/reviews/[^/]+\.md$''']
+paths = ['''(?:^|/)transformation-hub/docs/reviews/[^/]+\.md$''']
+targetRules = ["hub-url-embedded-password"]
 regexes = [
   '''^REDACTED$''',
 ]

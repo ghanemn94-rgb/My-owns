@@ -621,7 +621,7 @@ export default function MeetingDetailPage() {
           title={t('governance.meeting.attendance.recordTitle')}
           confirmLabel={t('governance.meeting.attendance.confirm')}
           noteMode="none"
-          consequences={[t('governance.meeting.attendance.effect'), t('common.command.audited')]}
+          consequences={[t('governance.meeting.attendance.effect'), t('governance.meeting.attendance.frozen'), t('common.command.audited')]}
           confirmDisabled={!Object.values(att).some(Boolean)}
           onConfirm={async () => {
             const entries = Object.entries(att)
@@ -666,8 +666,12 @@ export default function MeetingDetailPage() {
           title={t('governance.meeting.conflicts.declareTitle')}
           confirmLabel={t('governance.meeting.conflicts.confirm')}
           noteMode="none"
-          consequences={[t('governance.meeting.conflicts.effect'), t('common.command.audited')]}
-          confirmDisabled={decl.declaration === 'recused' && !decl.decisionId}
+          consequences={[
+            t('governance.meeting.conflicts.effect'),
+            ...(decl.declaration === 'recused' ? [t('governance.decision.cmd.recuse.afterVote')] : []),
+            t('common.command.audited'),
+          ]}
+          confirmDisabled={decl.declaration === 'recused' && (!decl.decisionId || (!!decl.userId && !decl.description.trim()))}
           onConfirm={async () => {
             await api(governanceRoutes.declareConflict, {
               params,
@@ -713,7 +717,15 @@ export default function MeetingDetailPage() {
                   </option>
                 ))}
             </SelectField>
-            <TextAreaField label={t('governance.meeting.conflicts.description')} rows={2} value={decl.description} maxLength={2000} onChange={(e) => setDecl({ ...decl, description: e.target.value })} />
+            <TextAreaField
+              label={t('governance.meeting.conflicts.description')}
+              rows={2}
+              value={decl.description}
+              maxLength={2000}
+              required={decl.declaration === 'recused' && !!decl.userId}
+              hint={decl.declaration === 'recused' && decl.userId ? t('governance.meeting.conflicts.onBehalfReason') : undefined}
+              onChange={(e) => setDecl({ ...decl, description: e.target.value })}
+            />
           </div>
         </GovCommandDialog>
       ) : null}

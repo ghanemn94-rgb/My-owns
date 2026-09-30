@@ -23,6 +23,7 @@ import { BackLink, Notice } from '@/components/planning/DetailShell';
 import { Fact, Section } from '@/components/planning/bits';
 import { FormDialog } from '@/components/planning/dialogs';
 import { ChangeRequestFormDialog, IMPACT_KEYS, type ImpactKey } from '@/components/planning/raid';
+import { MoneyFields, MoneyText, moneyInputOf, parseMoney, type MoneyInput } from '@/components/planning/money';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { baselineHref, pk, useRefreshPlanning, type ChangeRequest } from '@/lib/planning';
@@ -35,13 +36,17 @@ function AssessDialog({ open, onClose, cr }: { open: boolean; onClose: () => voi
   const toast = useToast();
   const [impacts, setImpacts] = useState<Partial<Record<ImpactKey, string>>>({});
   const [note, setNote] = useState('');
+  const [cost, setCost] = useState<MoneyInput>(() => moneyInputOf(cr.costImpact));
   useEffect(() => {
     if (open) {
       setImpacts({ ...cr.impacts });
       setNote('');
+      setCost(moneyInputOf(cr.costImpact));
     }
   }, [open, cr]);
   const clean = Object.fromEntries(Object.entries(impacts).filter(([, v]) => v && v.trim()).map(([k, v]) => [k, v!.trim()]));
+  const money = parseMoney(cost);
+  const costTextOnly = !!clean['cost'] && money === null;
   return (
     <FormDialog
       open={open}
@@ -50,10 +55,15 @@ function AssessDialog({ open, onClose, cr }: { open: boolean; onClose: () => voi
       testId="cr-assess"
       title={t('planning.cr.assessTitle', { code: cr.code })}
       submitLabel={t('planning.cr.assess')}
-      disabled={Object.keys(clean).length === 0}
+      disabled={Object.keys(clean).length === 0 || money === 'invalid'}
       onReload={() => void refresh()}
       onSubmit={async () => {
-        await api(P.assessChangeRequest, { params: { projectId, changeRequestId: cr.id }, body: { expectedVersion: cr.version, impacts: clean, note: note.trim() || undefined } });
+        // Omitted = unchanged; an emptied amount clears a previously recorded cost impact (null).
+        const costImpact = money === 'invalid' ? undefined : money === null ? (cr.costImpact ? null : undefined) : money;
+        await api(P.assessChangeRequest, {
+          params: { projectId, changeRequestId: cr.id },
+          body: { expectedVersion: cr.version, impacts: clean, ...(costImpact !== undefined ? { costImpact } : {}), note: note.trim() || undefined },
+        });
         toast.show('success', t('planning.cr.assessed'));
         await refresh();
         onClose();
@@ -65,6 +75,12 @@ function AssessDialog({ open, onClose, cr }: { open: boolean; onClose: () => voi
           <TextAreaField key={k} label={t(`planning.cr.impact_${k}`)} value={impacts[k] ?? ''} onChange={(e) => setImpacts({ ...impacts, [k]: e.target.value })} rows={2} maxLength={2000} />
         ))}
       </div>
+      <MoneyFields legend={t('planning.cr.costImpact')} hint={t('planning.cr.costImpactHint')} value={cost} onChange={setCost} testId="cr-cost-impact" />
+      {costTextOnly ? (
+        <p role="note" className="rounded-md border border-warning/40 bg-warning-soft p-2 text-sm text-ink" data-testid="cr-cost-text-only">
+          {t('planning.cr.costTextOnly')}
+        </p>
+      ) : null}
       <TextAreaField label={t('common.command.note')} value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={4000} />
     </FormDialog>
   );
@@ -174,6 +190,17 @@ export default function ChangeRequestPage() {
           </dl>
         </Section>
         <Section id="cr-impacts" title={t('planning.cr.impacts')} hint={t('planning.cr.impactsHint')}>
+          <dl className="mb-3 grid gap-3" data-testid="cr-cost-impact-fact">
+            <Fact label={t('planning.cr.costImpact')}>
+              {c.costImpact ? (
+                <MoneyText value={c.costImpact} testId="cr-cost-impact-value" />
+              ) : c.impacts.cost ? (
+                <span className="text-warning">{t('planning.cr.costNotQuantified')}</span>
+              ) : (
+                <span className="text-muted">{t('planning.cr.costNotRecorded')}</span>
+              )}
+            </Fact>
+          </dl>
           {recorded.length === 0 ? (
             <p className="text-sm text-warning">{t('planning.cr.noImpacts')}</p>
           ) : (
@@ -195,6 +222,17 @@ export default function ChangeRequestPage() {
             <Fact label={t('planning.cr.decidedAt')}>{formatDateTime(c.decidedAt)}</Fact>
             <Fact label={t('planning.baseline.decisionNote')}>
               <span dir="auto">{c.decisionNote ?? EM_DASH}</span>
+            </Fact>
+            <Fact label={t('planning.approvalDecision.backedBy')}>
+              {c.decisionId ? (
+                <Link className={btn.link} href={`/projects/${projectId}/committee/decisions/${c.decisionId}`} data-testid="cr-decision-link">
+                  {t('planning.approvalDecision.open')}
+                </Link>
+              ) : c.decidedAt && c.status !== 'rejected' && c.status !== 'withdrawn' ? (
+                <span className="text-muted">{t('planning.approvalDecision.delegated')}</span>
+              ) : (
+                EM_DASH
+              )}
             </Fact>
           </dl>
         </Section>

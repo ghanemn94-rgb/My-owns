@@ -113,9 +113,26 @@ test.describe.serial('P3 carve-out & NewCo', () => {
     await expect(headerStatus(page)).toHaveAttribute('data-status', 'under_review');
     await expect(page.locator('[data-command="approve"]')).toHaveCount(0);
 
-    // --- Sponsor approves the change.
+    // --- DOM-P2-03: the budget effect was carried over as text only, so an approval would be refused (amount not
+    //     quantified). The assessor records the cost impact as money in the impact assessment through the UI — a
+    //     synthetic 0 for this demo change (not a Finance assessment).
+    await expect(page.getByTestId('cr-cost-impact-fact')).toContainText('Described in text only');
+    await page.getByTestId('cr-assess-open').click();
+    const assess = page.getByTestId('cr-assess');
+    await expect(assess.getByTestId('cr-cost-text-only')).toBeVisible();
+    await assess.getByTestId('cr-cost-impact-amount').fill('0');
+    await expect(assess.getByTestId('cr-cost-impact-currency')).toHaveValue('SAR');
+    await assess.getByLabel(/^Note/).fill('Synthetic E2E assessment: no budget effect recorded for this demo change (not a Finance assessment).');
+    await page.getByTestId('cr-assess-submit').click();
+    await expect(assess).toBeHidden();
+    await expect(page.getByTestId('cr-cost-impact-value')).toContainText('0 SAR');
+
+    // --- Sponsor approves the change (within the DEMO delegated limit for change_request_budget).
     const sponsor = await newSession(browser, SPONSOR);
     await sponsor.page.goto(crUrl);
+    await sponsor.page.locator('[data-command="approve"]').click();
+    await expect(sponsor.page.getByRole('dialog', { name: 'Approve change' })).toContainText('Budget impact compared with the delegated limit: 0 SAR.');
+    await sponsor.page.getByRole('dialog', { name: 'Approve change' }).getByRole('button', { name: 'Cancel' }).click();
     await confirmCommand(sponsor.page, 'approve', 'Approve change');
     await expect(headerStatus(sponsor.page)).toHaveAttribute('data-status', 'approved');
     await sponsor.ctx.close();

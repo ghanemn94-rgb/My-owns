@@ -22,20 +22,21 @@ import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { useProjectContext } from '@/lib/project-context';
 import { ScheduleMeetingDialog } from '../../_components/dialogs';
+import { ApprovalDocumentPicker } from '../../_components/evidence';
 import { Facts, GovCommandDialog, GovHistory, Section, UText, gk, hubHref, useCommittee, useGovRefresh, useMatrices, useMeetingList, type CommitteeDetail, type MatrixVersion, type PolicyShape } from '../../_components/gov';
 
 type Seat = CommitteeDetail['memberships'][number];
 type MemberRole = (typeof COMMITTEE_MEMBER_ROLES)[number];
 const CHARTER_KEYS = ['purpose', 'scope', 'delegatedAuthority', 'exclusions', 'reservedMatters', 'cadence', 'classification', 'minutesRetention', 'escalation', 'conflictsOfInterest', 'circulation'] as const;
 type CharterKey = (typeof CHARTER_KEYS)[number];
-type Cmd = 'amend' | 'approveCharter' | 'activate' | 'addSeat' | 'endSeat' | 'approveMatrix' | 'draftMatrix';
+type Cmd = 'amend' | 'approveCharter' | 'activate' | 'addSeat' | 'endSeat' | 'approveMatrix' | 'verifyMatrix' | 'draftMatrix';
 
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Riyadh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
 export default function CommitteeDetailPage() {
   const { committeeId } = useParams<{ committeeId: string }>();
   const { t, tStatus, formatDate, formatDateTime, locale } = useI18n();
-  const { projectId, can } = useProjectContext();
+  const { projectId, can, me } = useProjectContext();
   const refresh = useGovRefresh();
   const toast = useToast();
   const c = useCommittee(committeeId);
@@ -60,6 +61,8 @@ export default function CommitteeDetailPage() {
   const [policyText, setPolicyText] = useState('');
   const [endSeat, setEndSeat] = useState<Seat | null>(null);
   const [matrix, setMatrix] = useState<MatrixVersion | null>(null);
+  const [approvalDoc, setApprovalDoc] = useState<{ id: string; title: string } | null>(null);
+  const [verifyDecision, setVerifyDecision] = useState<'accept' | 'reject'>('accept');
 
   if (c.isLoading) return <LoadingState />;
   if (c.error || !c.data) return c.error ? <ErrorState error={c.error} onRetry={() => c.refetch()} /> : <RestrictedState />;
@@ -67,6 +70,11 @@ export default function CommitteeDetailPage() {
   const base = hubHref(projectId);
   const manage = can('governance.committee.manage');
   const inForce = matrices.data?.items.find((m) => m.status === 'approved') ?? null;
+  const pendingMatrices = (matrices.data?.items ?? []).filter((m) => m.pendingVerification);
+  const canVerifyMatrix = can('documents.evidence.verify');
+  /** Separation of duties known on the client (the API also refuses the uploader of the approval document). */
+  const verifyBlockedFor = (m: MatrixVersion): MessageKey | null =>
+    m.createdBy === me.user.id ? 'governance.committee.matrix.verify.youDrafted' : m.approvedBy === me.user.id ? 'governance.committee.matrix.verify.youApproved' : null;
   const policy = (inForce?.policy ?? null) as PolicyShape | null;
   const pendingAmendment = d.charterApprovedVersionNo !== null && d.charterApprovedVersionNo < d.charterVersionNo;
   const todayStr = today();
@@ -86,6 +94,8 @@ export default function CommitteeDetailPage() {
       setSeatVoting(true);
     }
     if (k === 'draftMatrix') setPolicyText('');
+    setApprovalDoc(null);
+    setVerifyDecision('accept');
     setCmd(k);
   };
   const done = async (key: MessageKey) => {
@@ -210,25 +220,95 @@ export default function CommitteeDetailPage() {
     },
     approveMatrix: {
       title: t('governance.committee.matrix.approve.title', { version: matrix?.versionNo ?? 0 }),
-      confirm: t('governance.committee.matrix.approve.confirm'),
-      consequences: [t('governance.committee.matrix.approve.effect'), t('governance.hub.internalApprovals')],
+      confirm: matrix?.isDemoPolicy ? t('governance.committee.matrix.approve.confirm') : t('governance.committee.matrix.approve.confirmPending'),
+      consequences: matrix?.isDemoPolicy
+        ? [t('governance.committee.matrix.approve.effect'), t('governance.hub.internalApprovals')]
+        : [t('governance.committee.matrix.approve.effectPending'), t('governance.committee.matrix.approve.effectVerifier'), t('governance.hub.internalApprovals')],
       noteMode: 'optional',
-      disabled: !reference.trim(),
+      disabled: !reference.trim() || (!matrix?.isDemoPolicy && !approvalDoc),
       run: async (note) => {
         if (!matrix) return;
-        await api(governanceRoutes.approveAuthorityMatrixVersion, {
+        const r = await api(governanceRoutes.approveAuthorityMatrixVersion, {
           params: { projectId, committeeId, versionId: matrix.id },
-          body: { approvalReference: reference.trim(), ...(dateA ? { effectiveFrom: dateA } : {}), ...(note ? { note } : {}) },
+          body: { approvalReference: reference.trim(), ...(approvalDoc && !matrix.isDemoPolicy ? { approvalDocumentId: approvalDoc.id } : {}), ...(dateA ? { effectiveFrom: dateA } : {}), ...(note ? { note } : {}) },
         });
-        await done('governance.committee.matrix.approve.done');
+        await done(r.pendingVerification ? 'governance.committee.matrix.approve.donePending' : 'governance.committee.matrix.approve.done');
       },
       children: (
         <div className="space-y-4">
-          {matrix?.isDemoPolicy ? <DemoBadge /> : null}
+          {matrix?.isDemoPolicy ? (
+            <p className="flex flex-wrap items-center gap-2 text-sm text-ink">
+              <DemoBadge />
+              {t('governance.committee.matrix.approve.demoNoDocument')}
+            </p>
+          ) : null}
           <TextField label={t('governance.committee.matrix.approve.reference')} required value={reference} maxLength={300} onChange={(e) => setReference(e.target.value)} />
+          {matrix && !matrix.isDemoPolicy ? (
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium text-ink">
+                {t('governance.committee.matrix.approve.document')}
+                <span className="text-danger" aria-hidden="true">
+                  {' '}
+                  *
+                </span>
+              </legend>
+              <p className="text-xs text-muted">{t('governance.committee.matrix.approve.documentHint')}</p>
+              <ApprovalDocumentPicker value={approvalDoc} onChange={setApprovalDoc} />
+            </fieldset>
+          ) : null}
           <TextField label={t('governance.committee.matrix.approve.effectiveFrom')} type="date" dir="ltr" value={dateA} onChange={(e) => setDateA(e.target.value)} />
         </div>
       ),
+    },
+    verifyMatrix: {
+      title: t('governance.committee.matrix.verify.title', { version: matrix?.versionNo ?? 0 }),
+      confirm: verifyDecision === 'accept' ? t('governance.committee.matrix.verify.confirmAccept') : t('governance.committee.matrix.verify.confirmReject'),
+      consequences:
+        verifyDecision === 'accept'
+          ? [t('governance.committee.matrix.verify.effectAccept', { version: matrix?.versionNo ?? 0 }), t('governance.committee.matrix.verify.sod')]
+          : [t('governance.committee.matrix.verify.effectReject'), t('governance.committee.matrix.verify.sod')],
+      noteMode: verifyDecision === 'reject' ? 'required' : 'optional',
+      noteLabel: verifyDecision === 'reject' ? t('governance.common.reason') : undefined,
+      run: async (note) => {
+        if (!matrix) return;
+        await api(governanceRoutes.verifyAuthorityMatrixApproval, {
+          params: { projectId, committeeId, versionId: matrix.id },
+          body: { decision: verifyDecision, ...(note ? { note } : {}) },
+        });
+        await done(verifyDecision === 'accept' ? 'governance.committee.matrix.verify.doneAccept' : 'governance.committee.matrix.verify.doneReject');
+      },
+      children: matrix ? (
+        <div className="space-y-4" data-testid="matrix-verify-form">
+          <Facts
+            items={[
+              { label: t('governance.committee.matrix.approve.reference'), value: <UText value={matrix.approvalReference} /> },
+              { label: t('governance.committee.matrix.columns.approvedAt'), value: <span className="tabular">{formatDateTime(matrix.approvedAt)}</span> },
+              {
+                label: t('governance.committee.matrix.approve.document'),
+                wide: true,
+                value: matrix.approvalDocumentId ? (
+                  <Link href={`/projects/${projectId}/documents/${matrix.approvalDocumentId}`} className={btn.link} data-testid="matrix-approval-document">
+                    {t('governance.committee.matrix.verify.openDocument')}
+                  </Link>
+                ) : (
+                  <span className="text-muted">{EM_DASH}</span>
+                ),
+              },
+            ]}
+          />
+          <fieldset>
+            <legend className="text-sm font-medium text-ink">{t('governance.committee.matrix.verify.decision')}</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(['accept', 'reject'] as const).map((v) => (
+                <label key={v} className={cx('inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm', verifyDecision === v ? 'border-primary bg-primary-soft' : 'border-line-strong')}>
+                  <input type="radio" name="matrix-verify-decision" value={v} checked={verifyDecision === v} onChange={() => setVerifyDecision(v)} />
+                  {t(`governance.committee.matrix.verify.${v}`)}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </div>
+      ) : null,
     },
     draftMatrix: {
       title: t('governance.committee.matrix.draft.title'),
@@ -435,6 +515,13 @@ export default function CommitteeDetailPage() {
             ) : (
               <p className="rounded-md border border-warning/40 bg-warning-soft p-2 text-ink">{t('governance.committee.matrix.none')}</p>
             )}
+            {pendingMatrices.map((m) => (
+              <p key={m.id} role="note" className="rounded-md border border-info/40 bg-info-soft p-2 text-ink" data-testid="matrix-pending-verification">
+                {inForce
+                  ? t('governance.committee.matrix.pendingCallout', { version: m.versionNo, current: inForce.versionNo })
+                  : t('governance.committee.matrix.pendingCalloutNone', { version: m.versionNo })}
+              </p>
+            ))}
             {policy ? (
               <ul className="list-disc space-y-1 ps-5 text-ink">
                 <li>{t('governance.committee.matrix.quorumRule', { min: policy.quorum.minVotingMembersPresent, percent: Math.round(policy.quorum.minFractionPresent * 100) })}</li>
@@ -485,7 +572,20 @@ export default function CommitteeDetailPage() {
             emptyTitle={t('governance.committee.matrix.versionsEmpty')}
             columns={[
               { key: 'v', header: t('governance.committee.matrix.columns.version'), isRowHeader: true, cell: (m) => <span className="tabular">{t('documents.versions.label', { version: m.versionNo })}</span> },
-              { key: 'status', header: t('governance.committee.matrix.columns.status'), cell: (m) => <StatusBadge enumName="authorityMatrixStatuses" value={m.status} /> },
+              {
+                key: 'status',
+                header: t('governance.committee.matrix.columns.status'),
+                cell: (m) => (
+                  <span className="flex flex-col items-start gap-1" data-testid="matrix-status" data-version={m.versionNo}>
+                    {m.pendingVerification ? (
+                      <StatusBadge enumName="authorityMatrixStatuses" value="pending" tone="warning" label={t('governance.committee.matrix.pendingVerification')} />
+                    ) : (
+                      <StatusBadge enumName="authorityMatrixStatuses" value={m.status} />
+                    )}
+                    {m.approvalVerifiedAt ? <span className="text-xs text-muted">{t('governance.committee.matrix.verifiedAt', { date: formatDateTime(m.approvalVerifiedAt) })}</span> : null}
+                  </span>
+                ),
+              },
               { key: 'demo', header: t('governance.committee.matrix.columns.demo'), cell: (m) => (m.isDemoPolicy ? <DemoBadge /> : t('governance.committee.matrix.real')) },
               {
                 key: 'effective',
@@ -502,7 +602,7 @@ export default function CommitteeDetailPage() {
                 key: 'reference',
                 header: t('governance.committee.matrix.columns.reference'),
                 cell: (m) =>
-                  m.status === 'draft' && can('governance.authority_matrix.approve') ? (
+                  m.status === 'draft' && !m.pendingVerification && can('governance.authority_matrix.approve') ? (
                     <button
                       type="button"
                       className={btn.secondary}
@@ -511,11 +611,39 @@ export default function CommitteeDetailPage() {
                         open('approveMatrix');
                       }}
                       aria-label={t('governance.committee.matrix.approve.labelFor', { version: m.versionNo })}
+                      data-testid="matrix-approve"
                     >
                       {t('governance.committee.matrix.approve.label')}
                     </button>
                   ) : (
-                    <UText value={m.approvalReference} />
+                    <span className="flex flex-col items-start gap-1">
+                      <UText value={m.approvalReference} />
+                      {m.approvalDocumentId ? (
+                        <Link href={`/projects/${projectId}/documents/${m.approvalDocumentId}`} className={cx(btn.link, 'text-xs')}>
+                          {t('governance.committee.matrix.approvalDocument')}
+                        </Link>
+                      ) : null}
+                      {m.pendingVerification && canVerifyMatrix ? (
+                        verifyBlockedFor(m) ? (
+                          <span className="text-xs text-muted" data-testid="matrix-verify-blocked">
+                            {t(verifyBlockedFor(m)!)}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className={btn.secondary}
+                            onClick={() => {
+                              setMatrix(m);
+                              open('verifyMatrix');
+                            }}
+                            aria-label={t('governance.committee.matrix.verify.labelFor', { version: m.versionNo })}
+                            data-testid="matrix-verify"
+                          >
+                            {t('governance.committee.matrix.verify.label')}
+                          </button>
+                        )
+                      ) : null}
+                    </span>
                   ),
               },
             ]}

@@ -5,16 +5,21 @@
 ## Current state — 2026-09-30
 
 - **Branch:** `claude/mobily-transformation-hub` (repository `My-owns`, project directory `transformation-hub/`).
-- **Checkpoint revision:** `d508929` (plus the documentation refresh committed right after it).
+- **Checkpoint revision:** `2ac548b`.
 - **Phases:**
   - P0 PASS.
-  - P1: security re-review PASS with conditions (all SEC-P1R / I-R items fixed). The QA re-review is running; the gate
-    report is still to be written.
+  - P1: security re-review PASS with conditions (all SEC-P1R / I-R items fixed). QA re-review
+    (`docs/reviews/P1-qa-rereview.md`, at `c1338f7`): PASS WITH CONDITIONS, no Critical/High.
+    - Conditions closed in `2ac548b`: REQ-SRC-002, REQ-ARC-011, disposition counts, evidence corrections.
+    - Open: a security reviewer confirms the gitleaks allow-list entries (review running); a CI run on the gate revision,
+      where AT-07 is listed as an open P3 finding if still red.
+    - Then write `docs/phases/P1-gate-report.json`.
   - P2: the domain review FAILed with 5 High findings. All High and Medium findings are fixed and merged (`3e2a29d`,
     `c1338f7`). DOM-P2-16 (Low) is open; DOM-P2-08/11 are re-phased to P6. Web follow-ups are in progress; the QA review
     is still to run.
   - P3: backends and web screens merged; reviews not run.
-  - P4: finance and JV/DD backends merged; web screens in progress; reviews not run.
+  - P4: finance and JV/DD backends and web screens merged (`4511cc3`); reviews not run. Finance evidence/history
+    visibility fixed (`45cf17f`).
   - P5: AI backend merged (mock provider only); web UI planned.
   - P6–P8: not started.
 - **Verified at `c1338f7`** (PostgreSQL 16, own test database):
@@ -67,16 +72,22 @@
 
 ## In progress (parallel agents, worktree branches)
 
-- P4 Finance & Value web screens.
-- P4 JV & Diligence web screens (the NewCo UI hides edit actions when `ownedByThisProject = false`).
+- DOM-P2-16: gate owner and reviewer enforcement, with a gate-level review step (API, kits, seeds, gates web, e2e).
+- P5 AI Project Manager web screens.
+- Focused security review: gitleaks allow-list entries and the finance visibility change.
 - P2 web follow-ups:
   - the external-approval dialog must send `evidenceLinkId` (this dialog currently fails with 422);
   - matrix approval document and verification;
   - `costImpact` and a decision picker;
   - cross-project dependencies and prerequisites screens.
-- P1 QA re-review → `docs/reviews/P1-qa-rereview.md`.
 
 ## Known failures and risks
+
+- **For the P3 security review:**
+  - A Contributor may run the readiness "checklist from template" command. The test at
+    `at-09-readiness-go-no-go.spec.ts` encodes "creator = owner" (access-matrix §2.4). QA re-review observation: decide
+    whether bulk instantiation should need a workstream or project-wide reach.
+  - The same self-owner claim appears in the readiness, cutover, TSA, RAID, status-update and perimeter create commands.
 
 - **Web regression until the P2 web follow-ups merge:** recording an external authority approval from the UI returns 422
   (the API now requires a verified evidence link).

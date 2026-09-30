@@ -10,6 +10,7 @@ import { VOTE_CHOICES } from '@hub/domain';
 import { DataTable } from '@/components/DataTable';
 import { DemoBadge } from '@/components/DemoBadge';
 import { ErrorState } from '@/components/ErrorState';
+import { EvidencePanel } from '@/components/EvidencePanel';
 import { SelectField, TextField } from '@/components/Field';
 import { LoadingState } from '@/components/LoadingState';
 import { PageHeader } from '@/components/PageHeader';
@@ -21,6 +22,7 @@ import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { useProjectContext } from '@/lib/project-context';
 import { AgendaRequestDialog, CreateActionDialog, DecisionPaperDialog } from '../../_components/dialogs';
+import { ExternalEvidenceFact, ExternalEvidencePicker } from '../../_components/evidence';
 import {
   Facts,
   GovCommandDialog,
@@ -31,6 +33,7 @@ import {
   gk,
   hubHref,
   typeName,
+  useCommittee,
   useDecisionList,
   useDecisionTypes,
   useGovRefresh,
@@ -48,12 +51,15 @@ type CmdKey =
   | 'recordOutcome'
   | 'circulate'
   | 'recuse'
+  | 'recuseOnBehalf'
   | 'external'
   | 'defer'
   | 'resume'
   | 'supersede'
   | 'startImplementation'
   | 'verifyImplementation';
+
+const EVIDENCE_ANCHOR = 'decision-evidence';
 
 const MAIN_PATH = ['draft', 'submitted', 'under_review', 'recommended', 'approved', 'implementation_pending', 'implemented_verified'] as const;
 
@@ -132,6 +138,8 @@ export default function DecisionDetailPage() {
   const [extOutcome, setExtOutcome] = useState<'approved' | 'rejected'>('approved');
   const [dateInput, setDateInput] = useState('');
   const [successor, setSuccessor] = useState('');
+  const [evidenceLinkId, setEvidenceLinkId] = useState('');
+  const [recuseUserId, setRecuseUserId] = useState('');
 
   const q = useQuery({
     queryKey: gk.decision(projectId, decisionId),
@@ -155,6 +163,8 @@ export default function DecisionDetailPage() {
   const currentMeeting = tabledMeeting.data?.items.find((m) => m.id === d?.meetingId);
   const allDecisions = useDecisionList({ pageSize: 100 }, cmd === 'supersede');
   const successors = (allDecisions.data?.items ?? []).filter((x) => x.id !== decisionId && ['approved', 'implementation_pending', 'implemented_verified'].includes(x.status));
+  // Seats of the decision's committee: names of recusal recorders and the members a secretariat may recuse on behalf of.
+  const committee = useCommittee(d?.committeeId);
 
   if (q.isLoading) return <LoadingState />;
   if (q.error || !d) return q.error ? <ErrorState error={q.error} onRetry={() => q.refetch()} /> : <RestrictedState />;
@@ -163,6 +173,17 @@ export default function DecisionDetailPage() {
   const me_ = me.user.id;
   const isRequester = d.requesterUserId === me_;
   const recused = d.recusals.some((r) => r.userId === me_);
+  const seats = committee.data?.memberships ?? [];
+  const seatHolders = new Map(seats.filter((s) => s.userId).map((s) => [s.userId!, s.displayName ?? s.roleLabel]));
+  const recusedIds = new Set(d.recusals.map((r) => r.userId));
+  // Members who hold a seat today and are not recused yet (the API re-checks the seat and the current round's votes).
+  const onBehalfCandidates = [...new Map(seats.filter((s) => s.userId && s.activeToday && s.userId !== me_ && !recusedIds.has(s.userId)).map((s) => [s.userId!, s.displayName ?? s.roleLabel])).entries()];
+  const recorderName = (uid: string | null) =>
+    uid === null
+      ? null
+      : uid === me_
+        ? t('governance.decision.recusals.recordedByYou')
+        : (seatHolders.get(uid) ?? (committee.data ? t('governance.decision.recusals.recordedByOther') : t('governance.decision.recusals.recordedByUnknown')));
   const myVote = votes.data?.items.find((v) => v.userId === me_ && v.round === d.voteRound);
   const base = hubHref(projectId);
 
@@ -173,6 +194,8 @@ export default function DecisionDetailPage() {
     setExtOutcome('approved');
     setDateInput('');
     setSuccessor('');
+    setEvidenceLinkId('');
+    setRecuseUserId('');
     setCmd(k);
   };
 
@@ -187,6 +210,7 @@ export default function DecisionDetailPage() {
     { key: 'resume', label: t('governance.decision.cmd.resume.label'), show: allowed.has('resume') && can('governance.decision.review') },
     { key: 'circulate', label: t('governance.decision.cmd.circulate.label'), show: d.status === 'under_review' && can('governance.circulation.initiate') },
     { key: 'recuse', label: t('governance.decision.cmd.recuse.label'), show: ['draft', 'submitted', 'under_review', 'deferred'].includes(d.status) && can('governance.conflict.declare') && !recused },
+    { key: 'recuseOnBehalf', label: t('governance.decision.cmd.recuseOnBehalf.label'), show: ['draft', 'submitted', 'under_review', 'deferred'].includes(d.status) && can('governance.meeting.manage') },
     { key: 'return', label: t('governance.decision.cmd.return.label'), show: allowed.has('return_to_draft') && can('governance.decision.review') },
     { key: 'defer', label: t('governance.decision.cmd.defer.label'), show: allowed.has('defer') && can('governance.decision.record_outcome') },
     { key: 'supersede', label: t('governance.decision.cmd.supersede.label'), show: allowed.has('supersede') && can('governance.decision.record_outcome') },
@@ -246,12 +270,13 @@ export default function DecisionDetailPage() {
           {isRequester ? <Hint tone="warning">{t('governance.decision.cmd.vote.requesterHint')}</Hint> : null}
           {recused ? <Hint tone="warning">{t('governance.decision.cmd.vote.recusedHint')}</Hint> : null}
           {myVote ? <Hint tone="info">{t('governance.decision.cmd.vote.alreadyVoted', { choice: tStatus('voteChoices', myVote.choice) })}</Hint> : null}
+          <Hint tone="info">{t('governance.decision.cmd.vote.conflictFirst')}</Hint>
           <ChoiceGroup legend={t('governance.decision.cmd.vote.choice')} value={choice} onChange={(v) => setChoice(v as VoteChoice)} options={VOTE_CHOICES.map((c) => ({ value: c, label: tStatus('voteChoices', c) }))} />
         </div>
       ),
     },
     recordOutcome: {
-      consequences: [t('governance.decision.cmd.recordOutcome.effect1'), t('governance.decision.cmd.recordOutcome.effect2'), t('governance.hub.internalApprovals')],
+      consequences: [t('governance.decision.cmd.recordOutcome.effect1'), t('governance.decision.cmd.recordOutcome.effect2'), t('governance.decision.cmd.recordOutcome.integrity'), t('governance.hub.internalApprovals')],
       confirm: async () => undefined,
       noteRun: async (note) => {
         const r = await api(governanceRoutes.recordOutcome, { params: { projectId, decisionId }, body: { expectedVersion: d.version, ...(note ? { note } : {}) } });
@@ -272,22 +297,48 @@ export default function DecisionDetailPage() {
       children: <TextField label={t('governance.decision.cmd.circulate.deadline')} required type="date" dir="ltr" value={dateInput} onChange={(e) => setDateInput(e.target.value)} />,
     },
     recuse: {
-      consequences: [t('governance.decision.cmd.recuse.effect')],
+      consequences: [t('governance.decision.cmd.recuse.effect'), t('governance.decision.cmd.recuse.afterVote')],
       noteMode: 'required',
       noteLabel: t('governance.common.reason'),
       confirm: async () => undefined,
       noteRun: (note) => run(() => api(governanceRoutes.declareRecusal, { params: { projectId, decisionId }, body: { reason: note } }), 'governance.decision.cmd.recuse.done'),
     },
+    recuseOnBehalf: {
+      consequences: [t('governance.decision.cmd.recuseOnBehalf.effect'), t('governance.decision.cmd.recuse.afterVote')],
+      noteMode: 'required',
+      noteLabel: t('governance.common.reason'),
+      disabled: !recuseUserId,
+      confirm: async () => undefined,
+      noteRun: (note) =>
+        run(() => api(governanceRoutes.declareRecusal, { params: { projectId, decisionId }, body: { userId: recuseUserId, reason: note } }), 'governance.decision.cmd.recuseOnBehalf.done'),
+      children: (
+        <SelectField
+          label={t('governance.decision.cmd.recuseOnBehalf.member')}
+          required
+          value={recuseUserId}
+          onChange={(e) => setRecuseUserId(e.target.value)}
+          hint={t('governance.decision.cmd.recuseOnBehalf.memberHint')}
+          data-testid="recuse-member"
+        >
+          <option value="">{committee.isLoading ? t('governance.common.loadingList') : t('governance.common.select')}</option>
+          {onBehalfCandidates.map(([uid, name]) => (
+            <option key={uid} value={uid}>
+              {name}
+            </option>
+          ))}
+        </SelectField>
+      ),
+    },
     external: {
-      consequences: [t('governance.decision.cmd.external.effect', { body: escalatedBody }), t('governance.hub.internalApprovals')],
-      disabled: !reference.trim(),
+      consequences: [t('governance.decision.cmd.external.effect', { body: escalatedBody }), t('governance.decision.cmd.external.evidenceEffect'), t('governance.hub.internalApprovals')],
+      disabled: !reference.trim() || !evidenceLinkId,
       confirm: async () => undefined,
       noteRun: (note) =>
         run(
           () =>
             api(governanceRoutes.recordExternalApproval, {
               params: { projectId, decisionId },
-              body: { expectedVersion: d.version, externalReference: reference.trim(), outcome: extOutcome, ...(note ? { note } : {}) },
+              body: { expectedVersion: d.version, externalReference: reference.trim(), evidenceLinkId, outcome: extOutcome, ...(note ? { note } : {}) },
             }),
           'governance.decision.cmd.external.done',
         ),
@@ -303,11 +354,12 @@ export default function DecisionDetailPage() {
             ]}
           />
           <TextField label={t('governance.decision.cmd.external.reference')} required value={reference} maxLength={500} onChange={(e) => setReference(e.target.value)} hint={t('governance.decision.cmd.external.referenceHint')} />
+          <ExternalEvidencePicker decisionId={d.id} value={evidenceLinkId} onChange={setEvidenceLinkId} evidenceAnchor={EVIDENCE_ANCHOR} />
         </div>
       ),
     },
     defer: {
-      consequences: [t('governance.decision.cmd.defer.effect')],
+      consequences: [t('governance.decision.cmd.defer.effect'), t('governance.decision.cmd.defer.newRound')],
       noteMode: 'required',
       noteLabel: t('governance.common.reason'),
       confirm: async () => undefined,
@@ -430,6 +482,7 @@ export default function DecisionDetailPage() {
               {t('governance.decision.recommended.title')}
             </p>
             <p className="mt-1 text-sm text-ink">{t('governance.decision.recommended.body', { body: escalatedBody })}</p>
+            <p className="mt-1 text-sm text-ink">{t('governance.decision.recommended.evidence')}</p>
             <Link href={`${base}/escalations?sourceType=decision&sourceId=${d.id}`} className={cx(btn.link, 'mt-2 inline-block text-sm')}>
               {t('governance.hub.tabs.escalations')}
             </Link>
@@ -569,6 +622,9 @@ export default function DecisionDetailPage() {
                   ...(d.outcomeRecordedAt ? [{ label: t('governance.decision.facts.outcomeRecordedAt'), value: formatDateTime(d.outcomeRecordedAt) }] : []),
                   ...(d.decidedViaCirculation ? [{ label: t('governance.decision.facts.viaCirculation'), value: t('governance.common.yes') }] : []),
                   ...(d.externalAuthorityReference ? [{ label: t('governance.decision.facts.externalReference'), value: <UText value={d.externalAuthorityReference} />, testId: 'external-reference' }] : []),
+                  ...(d.externalEvidenceLinkId
+                    ? [{ label: t('governance.decision.facts.externalEvidence'), value: <ExternalEvidenceFact decisionId={d.id} linkId={d.externalEvidenceLinkId} evidenceAnchor={EVIDENCE_ANCHOR} /> }]
+                    : []),
                   ...(d.supersededByDecisionId
                     ? [
                         {
@@ -613,16 +669,29 @@ export default function DecisionDetailPage() {
           />
         </Section>
 
-        <Section id="recusals" title={t('governance.decision.recusals.title')}>
+        <Section id="recusals" title={t('governance.decision.recusals.title')} description={t('governance.decision.recusals.rule')}>
           {d.recusals.length ? (
             <ul className={cx(card, 'divide-y divide-line')} data-testid="recusals">
               {d.recusals.map((r) => (
-                <li key={r.userId} className="flex flex-col gap-1 px-4 py-3 text-sm sm:flex-row sm:gap-4">
-                  <span className="font-medium sm:w-56">
+                <li key={r.userId} className="flex flex-col gap-1 px-4 py-3 text-sm sm:flex-row sm:gap-4" data-testid="recusal" data-on-behalf={r.onBehalf ? 'true' : 'false'}>
+                  <span className="flex flex-col gap-1 font-medium sm:w-56">
                     <UText value={r.displayName} />
+                    {r.onBehalf ? (
+                      <StatusBadge enumName="attendanceStatuses" value="recused" tone="info" label={t('governance.decision.recusals.onBehalf')} />
+                    ) : (
+                      <span className="text-xs font-normal text-muted">{t('governance.decision.recusals.ownDeclaration')}</span>
+                    )}
                   </span>
-                  <span className="flex-1">
-                    <UText value={r.reason} />
+                  <span className="flex-1 space-y-1">
+                    <span className="block">
+                      <span className="text-muted">{t('governance.common.reason')}: </span>
+                      <UText value={r.reason} />
+                    </span>
+                    {r.onBehalf ? (
+                      <span className="block text-xs text-muted" data-testid="recusal-recorder">
+                        {t('governance.decision.recusals.recordedBy', { name: recorderName(r.recordedBy) ?? EM_DASH })}
+                      </span>
+                    ) : null}
                   </span>
                   <time className="tabular text-muted" dateTime={r.declaredAt}>
                     {formatDateTime(r.declaredAt)}
@@ -634,6 +703,13 @@ export default function DecisionDetailPage() {
             <p className="text-sm text-muted">{t('governance.decision.recusals.empty')}</p>
           )}
         </Section>
+
+        {can('documents.document.read') ? (
+          <div id={EVIDENCE_ANCHOR} className="scroll-mt-20">
+            <EvidencePanel targetType="decision" targetId={d.id} title={t('governance.decision.evidence.title')} />
+            <p className="mt-2 text-xs text-muted">{t('governance.decision.evidence.hint')}</p>
+          </div>
+        ) : null}
 
         <Section
           id="actions"
