@@ -504,3 +504,21 @@ confirm (Assessment pending — governance owner)?
 **Next action for the implementers:** fix DOM-P2F-01 and DOM-P2F-03 (governance; small). In P3, fix DOM-P2F-09 and move readiness
 onto the shared mechanism. Turn this review's `it.fails` probes into plain tests (drop `.fails` and `DEFECT`) as each defect is
 fixed, without weakening them.
+
+---
+
+## Fix status (implementation, 2026-09-30) — DOM-P2F-08 and DOM-P2F-09
+
+Appended by the implementing `backend-data-engineer` (implementation mode, separate context; not the author of this review).
+The reviewer's text above is unchanged. Done on the branch of the P4 domain fixes, part 2 (the same shared mechanism;
+`docs/reviews/P4-domain-review.md`, "Fix status"). The other findings of this review are outside that assignment.
+
+| Finding | Status | What changed (rule → where) |
+|---|---|---|
+| DOM-P2F-09 (High, P3) | Fixed | The readiness module relies on decisions through the shared mechanism (`apps/api/src/modules/governance/decision-reliance.ts`: unlocked pre-check → 422; row lock and re-check → a concurrent use is 409; registered use; external-approval evidence re-checked). New kinds in `DECISION_USE_KINDS`: `tsa_service` (TSA terms approval — one `tsa_approval_or_extension` decision approves the terms of ONE TSA: `tsa.approve.decision_already_used`), `tsa_extension` (record type `tsa_service`; linked at the request, consumed when the extension is recorded — one decision authorizes ONE extension; it replaces the former per-TSA check and keeps its code `tsa.extension.decision_already_used`) and `cutover_plan` (the GO of a plan consumes its `day1_go_no_go` decision; linking it to another plan, or a GO of a plan linked before, is refused — `readiness.go_no_go.decision_already_used`, the refused GO kept in the plan's decision history; a plan that goes to GO again after a rollback needs a new decision; a NO-GO relies on none). Evidence: `tsa.approve` / `tsa.extension` / `readiness.go_no_go` `…decision_evidence_invalid`. The TSA terms approval and an extension are different kinds, so one decision may approve a TSA's terms and one extension (the e2e AT-10 flow). Subject rule `if_set`: a paper cannot yet be raised FOR a TSA or a cutover plan (governance `DECISION_SUBJECT_TYPES` and paper form), so `required` would refuse every decision; a batch approval (one decision for several TSAs or plans) is not modeled (A-52). `apps/api/src/modules/readiness/tsa.service.ts`, `cutover.service.ts`; `packages/domain/src/decision-reliance.ts`. The probe `DEFECT DOM-P2F-09` passes and is a plain test `… (fixed, regression)` (assertion unchanged); the AT-10 fixture that approved two TSAs on one decision now gives the second TSA its own. Web: refusal texts en + ar (`readiness.refusal.codes.*`). |
+| DOM-P2F-08 (Low, P3) | Fixed — conservative option | Subject rule `required` for the perimeter-version approval (as change requests and baselines; P2 already lets a paper be raised FOR a perimeter version): a G1 paper raised for no record approves no version (422 `perimeter.version.decision_no_subject`). `apps/api/src/modules/carveout/perimeter-versions.service.ts`; the carve-out approval dialog offers only G1 papers raised for that version (hint and refusal text en + ar). The OBSERVATION of `p2-domain-final-perimeter.spec.ts` pinned the former behaviour (201); it now asserts the implemented rule and is named `… (fixed, regression)`. Fixtures that approved a version on an unbound G1 paper (setup wizard, the DOM-P2R-05 re-review regression) raise the paper for the version (`gateDecision(…, { subject })` in the gate kit); their assertions are unchanged. |
+
+Requirement evidence (`docs/requirements/status-evidence.yaml`): REQ-TSA-001, REQ-TSA-005, REQ-RDY-004 and REQ-SET-012 keep
+**Tested** with the new regression evidence (the note in "Informational" about REQ-TSA-005 is addressed).
+
+Verification: see the "Fix status" section of `docs/reviews/P4-domain-review.md` (same runs).
