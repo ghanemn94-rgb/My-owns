@@ -5261,21 +5261,36 @@
           "at": "2026-09-30T09:28:18Z",
           "status": "ACCEPTED_OBSERVATION",
           "note": "verified by code-security-reviewer round 19: PASS"
+        },
+        {
+          "at": "2026-09-30T15:52:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by release-auditor round 29: PASS"
         }
       ],
       "verification": {
-        "by_role": "code-security-reviewer",
+        "by_role": "release-auditor",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R19-code-security-reviewer-20260930T092002Z-d6ea66b3",
-          "session_id": "d6ea66b3-26b4-46bf-873c-e06eb6bef5d1"
+          "run_id": "DG0-T-DG0-AUDIT-R29-release-auditor-20260930T154133Z-f810a559",
+          "session_id": "f810a559-a260-43f6-bc82-59e7941bbdc0"
         },
-        "at": "2026-09-30T09:28:18Z",
+        "at": "2026-09-30T15:52:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-19/02-test-suites.log"
+          "docs/delivery/test-evidence/DG0/audit/round-29/03-real-repo-probes.log",
+          "docs/delivery/test-evidence/DG0/audit/round-29/04-dry-run-probe-gate.log",
+          "docs/delivery/test-evidence/DG0/audit/round-29/05-specialists-runs-findings.log"
         ],
-        "note": "Re-accepted as an observation. The copy-back accept pattern is still round-unpinned (agent_sandbox.py:68, rules.mjs:365), but it remains fail-closed for gate integrity: only new own-role files are copied, existing files are write-once discards (F-DG0-150 fix, agent_sandbox.py:283), and checkReviewRounds flags round directories not recorded in stages.json. F-DG0-150/151 remain fixed and the --unshare-ipc of D-031/F-DG0-148 still holds."
+        "note": "Release-auditor concurs with accepting this as an observation. It is Low and mandatory_violation is false. The reporter (code-security-reviewer) accepts it in its latest sidecar entry. It fails closed for gate integrity. A stray own-role file copied back into an earlier round directory can't be honoured as a record or a verification, because the validator binds each one to that round's own run transcript (Write/Edit replay). A later run's transcript can't satisfy that binding, so the validator reports an error instead of accepting the file. Every round-29 run's sandbox.json shows the per-role staged accept pattern and an empty discarded list. Checks on the complete history, round-29 audit: checkWriteOnce 0 errors; the real-repo gate dry-run shows no write-once or record-binding error. Rationale for acceptance: gate integrity is not reduced, and the fix is a hardening improvement. Owner: delivery-orchestrator, who should pin the copy-back accept pattern to round-<current> in a later stage."
+      },
+      "acceptance": {
+        "rationale": "Low, non-mandatory, fail-closed: the process-sandbox copy-back accept pattern is not pinned to the run's current round, but the validator rejects any cross-round own-role file because it cannot reconstruct that file from the round's own transcript, so no unreviewed evidence can enter. A disclosed residual (threat-model), accepted by the reporter (code-security-reviewer) and the release-auditor.",
+        "owner": "delivery-orchestrator",
+        "accepted_by": [
+          "code-security-reviewer",
+          "release-auditor"
+        ]
       }
     },
     {
@@ -5379,23 +5394,35 @@
           "at": "2026-09-30T09:56:02Z",
           "status": "ACCEPTED_OBSERVATION",
           "note": "verified by code-security-reviewer round 20: PASS"
+        },
+        {
+          "at": "2026-09-30T15:52:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by release-auditor round 29: PASS"
         }
       ],
       "verification": {
-        "by_role": "code-security-reviewer",
+        "by_role": "release-auditor",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R20-code-security-reviewer-20260930T095031Z-fc5d7da5",
-          "session_id": "fc5d7da5-74cb-4661-841c-8bd12730b22c"
+          "run_id": "DG0-T-DG0-AUDIT-R29-release-auditor-20260930T154133Z-f810a559",
+          "session_id": "f810a559-a260-43f6-bc82-59e7941bbdc0"
         },
-        "at": "2026-09-30T09:56:02Z",
+        "at": "2026-09-30T15:52:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/threat-model.md#residual-7",
-          "tools/agents/guard-write.mjs#L141-L144",
-          "tools/agents/agent_sandbox.py#L154-L155"
+          "docs/delivery/threat-model.md",
+          "docs/delivery/test-evidence/DG0/audit/round-29/05-specialists-runs-findings.log"
         ],
-        "note": "Re-assessed at the corrected host-global scope, read-only (no /proc/sys access). I accept it as an observation for four reasons. (1) It is host availability and kernel tunables only. Repository, reviewer-artefact, gate-record and other-run integrity are held by read-only binds, the private /tmp and /var/tmp tmpfs, the capability drop and the per-run Landlock domain, none of which depend on /proc/sys. (2) The reachable set is small: only root-owned entries with a DAC-writable mode, because CAP_SYS_ADMIN and the other capabilities are dropped. (3) A file tool reaches it only by racing a symlink past the write guard, which refuses any path whose hop-by-hop resolution visits /proc, /sys or /dev (guard-write.mjs:110,141-144). (4) It is inherent to option A, which the user chose (D-030). The residual is now disclosed at its real scope. I still recommend a narrower control as a follow-up spike, not a DG0 blocker: run the claude process at a non-zero uid inside the process sandbox (a user namespace that does not map to host uid 0), provided the nested Bash and reviewer bwrap still obtain their required mapping. The release-auditor must concur for this to take effect."
+        "note": "Release-auditor concurs with accepting this as an observation, at its host-global scope and including the agent's shell. It is Low and mandatory_violation is false. The reporter (code-security-reviewer) accepts it in its latest sidecar entry. docs/delivery/threat-model.md, disclosed residual 7 (corrected by D-036 after F-DG0-154, and F-DG0-162), states the residual at that scope. A uid-0 process holding only CAP_SETFCAP can write root-owned, writable /proc/sys entries, from a file tool or from a plain shell redirect. /proc/sys is host-global kernel state, so a write changes the tunable for the whole host and every run on it. The residual is inherent to process-sandbox option A (D-030), because a read-only /proc/sys would break the reviewers' nested bubblewrap. It is a host-availability and kernel-tunable risk. It is not a repository, reviewer-artefact or gate-record integrity risk: those paths are read-only binds or private tmpfs, independent of /proc/sys. The finding shows nothing beyond the disclosed residual. Every round-29 specialist sandbox.json shows procfs host-bind, unshare [ipc], CAP_SETFCAP only, no_new_privs and a per-run Landlock domain, as disclosed. Rationale for acceptance: a disclosed residual that doesn't threaten gate integrity. Owner: delivery-orchestrator, who should run the non-zero-uid spike proposed by the reporter in a later stage."
+      },
+      "acceptance": {
+        "rationale": "Low, non-mandatory: threat-model residual 7 (host-global /proc/sys writable by uid 0 inside the agent shell) is disclosed exactly as designed and lies outside the gate-integrity boundary; the nested bubblewrap sandbox confines the reviewers and the validator judges only committed evidence. Accepted by the reporter (code-security-reviewer) and the release-auditor as a disclosed residual.",
+        "owner": "delivery-orchestrator",
+        "accepted_by": [
+          "code-security-reviewer",
+          "release-auditor"
+        ]
       }
     },
     {
@@ -7585,6 +7612,11 @@
           "at": "2026-09-30T15:31:30Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 29: PASS"
+        },
+        {
+          "at": "2026-09-30T15:31:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 29: PASS"
         }
       ],
       "verification": {
@@ -7638,6 +7670,11 @@
           "at": "2026-09-30T15:16:25Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 83721ced8f6453712d3af949e98f43bd08aeff7f"
+        },
+        {
+          "at": "2026-09-30T15:38:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 29: PASS"
         },
         {
           "at": "2026-09-30T15:38:00Z",
@@ -7698,21 +7735,41 @@
           "at": "2026-09-30T15:40:00Z",
           "status": "ACCEPTED_OBSERVATION",
           "note": "verified by domain-reviewer round 29: PASS"
+        },
+        {
+          "at": "2026-09-30T15:40:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by domain-reviewer round 29: PASS"
+        },
+        {
+          "at": "2026-09-30T15:52:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by release-auditor round 29: PASS"
         }
       ],
       "verification": {
-        "by_role": "domain-reviewer",
+        "by_role": "release-auditor",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-DOM-R29-domain-reviewer-20260930T152352Z-59934241",
-          "session_id": "59934241-9f23-4831-a04f-fa358009d926"
+          "run_id": "DG0-T-DG0-AUDIT-R29-release-auditor-20260930T154133Z-f810a559",
+          "session_id": "f810a559-a260-43f6-bc82-59e7941bbdc0"
         },
-        "at": "2026-09-30T15:40:00Z",
+        "at": "2026-09-30T15:52:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/domain/round-29/11-d045-wording.log"
+          "docs/delivery/reviews/DG0/round-28/domain-reviewer.json",
+          "docs/delivery/test-evidence/DG0/domain/round-29/11-d045-wording.log",
+          "docs/delivery/test-evidence/DG0/audit/round-29/05-specialists-runs-findings.log"
         ],
-        "note": "Reporter's concurrence that this can be accepted as an observation. It takes effect only if the release-auditor also concurs in its own sidecar. F-DG0-015 is Low, and mandatory_violation is false. The D-045 heading's phrase 'each raised one Low' overstates the round-28 findings: the domain reviewer raised none. The error is confined to a parenthetical in an engineering decision record. The same row's context column states the facts correctly ('domain PASS with no findings'), and the authoritative round-28 review records and findings.json are unaffected. It carries no business, operating-logic, Finance, PMI or Mobily-brand claim and cannot change any gate check. If the orchestrator corrects the wording instead, I will re-verify it as CLOSED_VERIFIED in a later round."
+        "note": "Release-auditor concurs with accepting this as an observation. It is Low and mandatory_violation is false. The reporter (domain-reviewer) accepts it in its round-29 sidecar. I reproduced it independently. The D-045 row heading in docs/delivery/decisions.md says 'all three reviewers PASS; each raised one Low'. The round-28 records show domain-reviewer PASS with findings [], code-security-reviewer PASS with [F-DG0-171] and qa-verifier PASS with [F-DG0-251]. The same row's context column correctly says 'domain PASS with no findings'. The error is confined to wording in an engineering decision record. The authoritative review records and findings.json are correct, and it makes no business, methodology or provenance claim, and changes no validator behaviour. Rationale for acceptance: cosmetic wording with no effect on gate logic or on any requirement. Owner: delivery-orchestrator, who should correct the heading in a later decision-log update."
+      },
+      "acceptance": {
+        "rationale": "Low, non-mandatory, cosmetic: the D-045 changelog headline overstates round 28 ('each raised one Low') where the domain reviewer raised no finding; the same row's rationale column already states the correct fact ('domain PASS with no findings'), so the decision log is not misleading in substance. The finding itself permanently records the exact discrepancy. Accepted by the reporter (domain-reviewer) and the release-auditor; the headline will be corrected in a later stage's decision-log maintenance without affecting any gate.",
+        "owner": "delivery-orchestrator",
+        "accepted_by": [
+          "domain-reviewer",
+          "release-auditor"
+        ]
       }
     }
   ]
