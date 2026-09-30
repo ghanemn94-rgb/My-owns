@@ -472,8 +472,8 @@
   security_rule: "Partner-room and Legal Restricted ABAC apply"
   acceptance_tests: ["AT-11", "UT: signing completion does not change closing status", "UT: two closings with independent CP sets and states"]
   phase: P4
-  status: Tested
-  evidence: ['jv at-11-partner-parallel.spec.ts "UT: signing completion does not change closing status (signing is never mistaken for completion)"; "UT: two closings with independent CP sets and states; closing waits for its own signing"', D jv.test.ts "closing depends on its own confirmed signing; signing is a separate event"]
+  status: Implemented
+  evidence: ['status lowered to Implemented at the P4 domain review (docs/reviews/P4-domain-review.md, DOM-P4-02 open; probes in apps/api/test/reviews/p4-domain-*.spec.ts)', 'jv at-11-partner-parallel.spec.ts "UT: signing completion does not change closing status (signing is never mistaken for completion)"; "UT: two closings with independent CP sets and states; closing waits for its own signing"', D jv.test.ts "closing depends on its own confirmed signing; signing is a separate event"]
 - id: REQ-LCY-010
   section: "3"
   title: "Complete gate structure"
@@ -1824,8 +1824,8 @@
   security_rule: "Finance Restricted ABAC"
   acceptance_tests: ["UT: committed and spent tracked separately"]
   phase: P4
-  status: Tested
-  evidence: ['finance finance-registers.spec.ts "UT: committed and spent tracked separately"; "spend above commitments and commitments above the approved budget are flagged; dates are checked"', 'D finance.test.ts "UT: committed and spent tracked separately"']
+  status: Implemented
+  evidence: ['status lowered to Implemented at the P4 domain review (docs/reviews/P4-domain-review.md, DOM-P4-07 open; probes in apps/api/test/reviews/p4-domain-*.spec.ts)', 'finance finance-registers.spec.ts "UT: committed and spent tracked separately"; "spend above commitments and commitments above the approved budget are flagged; dates are checked"', 'D finance.test.ts "UT: committed and spent tracked separately"']
 - id: REQ-FIN-004
   section: "7.5"
   title: "Working capital, opening balances and intercompany reconciliation"
@@ -1872,8 +1872,8 @@
   security_rule: "Approval per authority matrix; human validation required"
   acceptance_tests: ["UT: approved value field empty until approval recorded"]
   phase: P4
-  status: Tested
-  evidence: ['finance finance-registers.spec.ts "UT: approved value field empty until approval recorded"; "approved values are immutable and can never exist without an approval decision (database)"']
+  status: Implemented
+  evidence: ['status lowered to Implemented at the P4 domain review (docs/reviews/P4-domain-review.md, DOM-P4-06 open; probes in apps/api/test/reviews/p4-domain-*.spec.ts)', 'finance finance-registers.spec.ts "UT: approved value field empty until approval recorded"; "approved values are immutable and can never exist without an approval decision (database)"']
 - id: REQ-FIN-007
   section: "7.5"
   title: "EV/equity and unit/currency confusion checks"
@@ -2099,8 +2099,8 @@
   security_rule: "Release requires approval by a role other than the drafter"
   acceptance_tests: ["UT: release without approval rejected"]
   phase: P4
-  status: Tested
-  evidence: ['jv jv-diligence.spec.ts "UT: release without approval is rejected (and logged); the drafter never reviews or releases"; "the counterparty raises a question in its room; the deal team sees the internal projection"', 'D jv.test.ts "release requires the approved review, a separate reviewer and releaser"']
+  status: Implemented
+  evidence: ['status lowered to Implemented at the P4 domain review (docs/reviews/P4-domain-review.md, DOM-P4-05 open; probes in apps/api/test/reviews/p4-domain-*.spec.ts)', 'jv jv-diligence.spec.ts "UT: release without approval is rejected (and logged); the drafter never reviews or releases"; "the counterparty raises a question in its room; the deal team sees the internal projection"', 'D jv.test.ts "release requires the approved review, a separate reviewer and releaser"']
 - id: REQ-JV-011
   section: "8"
   title: "Diligence findings with implications"
@@ -2147,8 +2147,8 @@
   security_rule: "verifyCP restricted to authorized verifier; AI identities excluded"
   acceptance_tests: ["AT-12", "UT: verifyCP without evidence rejected"]
   phase: P4
-  status: Tested
-  evidence: ['jv at-12-closing-blocked-cp.spec.ts "UT: verifyCP without evidence is rejected (and logged); submitting without evidence is rejected"', 'jv at-13-cp-non-waivable.spec.ts "only a specialist determines waivability (documented basis); the PM cannot"; "a waiver needs the specialist-set authority: approval outside it is refused; the CP stays unmet"', D jv.test.ts "verifyCP without evidence is rejected; the owner / evidence submitter cannot verify"]
+  status: Implemented
+  evidence: ['status lowered to Implemented at the P4 domain review (docs/reviews/P4-domain-review.md, DOM-P4-01/03/04/08 open; probes in apps/api/test/reviews/p4-domain-*.spec.ts)', 'jv at-12-closing-blocked-cp.spec.ts "UT: verifyCP without evidence is rejected (and logged); submitting without evidence is rejected"', 'jv at-13-cp-non-waivable.spec.ts "only a specialist determines waivability (documented basis); the PM cannot"; "a waiver needs the specialist-set authority: approval outside it is refused; the CP stays unmet"', D jv.test.ts "verifyCP without evidence is rejected; the owner / evidence submitter cannot verify"]
 - id: REQ-JV-014
   section: "8"
   title: "Closing deliverables, decisions and executed documents"
@@ -2211,8 +2211,8 @@
   security_rule: "confirmClosing restricted to authorized role per authority matrix"
   acceptance_tests: ["AT-12", "UT: all tasks done but no confirmation keeps closing open"]
   phase: P4
-  status: Tested
-  evidence: ['jv at-12-closing-blocked-cp.spec.ts "UT: all tasks done but no confirmation keeps the closing open (task completion is not an input)"; "mark_ready is refused while the CP is unmet"']
+  status: Implemented
+  evidence: ['status lowered to Implemented at the P4 domain review (docs/reviews/P4-domain-review.md, DOM-P4-01/08 open; probes in apps/api/test/reviews/p4-domain-*.spec.ts)', 'jv at-12-closing-blocked-cp.spec.ts "UT: all tasks done but no confirmation keeps the closing open (task completion is not an input)"; "mark_ready is refused while the CP is unmet"']
 - id: REQ-JV-018
   section: "20"
   title: "Missing mandatory CP blocks closing"
@@ -2227,8 +2227,8 @@
   security_rule: "Server evaluates CP set inside the confirm transaction"
   acceptance_tests: ["AT-12", "AT-13", "IT: confirm with one unverified blocking CP rejected and logged"]
   phase: P4
-  status: Tested
-  evidence: ['jv at-12-closing-blocked-cp.spec.ts "IT: confirm with one unverified blocking CP is rejected and logged — the CP set is re-evaluated inside the confirm transaction"; "the AI / any service identity cannot confirm a closing, verify a CP or create a waiver — even with the permission allow-listed"', 'jv at-13-cp-non-waivable.spec.ts "an authorized waiver of a waivable CP (sponsor, not the requester) clears the blocker; a non-waivable one never does"', D jv.test.ts "one unverified blocking CP blocks closing even when everything else is complete (no task input exists)"]
+  status: Implemented
+  evidence: ['status lowered to Implemented at the P4 domain review (docs/reviews/P4-domain-review.md, DOM-P4-01 open; probes in apps/api/test/reviews/p4-domain-*.spec.ts)', 'jv at-12-closing-blocked-cp.spec.ts "IT: confirm with one unverified blocking CP is rejected and logged — the CP set is re-evaluated inside the confirm transaction"; "the AI / any service identity cannot confirm a closing, verify a CP or create a waiver — even with the permission allow-listed"', 'jv at-13-cp-non-waivable.spec.ts "an authorized waiver of a waivable CP (sponsor, not the requester) clears the blocker; a non-waivable one never does"', D jv.test.ts "one unverified blocking CP blocks closing even when everything else is complete (no task input exists)"]
 - id: REQ-JV-019
   section: "8"
   title: "Program closure follows its own handover criteria"
