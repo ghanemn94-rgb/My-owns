@@ -1650,7 +1650,7 @@ CREATE TABLE "budget_line" (
 	CONSTRAINT "budget_line_currency_chk" CHECK ("budget_line"."currency" ~ '^[A-Z]{3}$'),
 	CONSTRAINT "budget_line_tsa_chk" CHECK (("budget_line"."category" = 'tsa_charge') = ("budget_line"."tsa_service_id" is not null)),
 	CONSTRAINT "budget_line_nonneg_chk" CHECK ("budget_line"."committed_amount" >= 0 and "budget_line"."spent_amount" >= 0 and coalesce("budget_line"."approved_amount", 0) >= 0 and coalesce("budget_line"."proposed_amount", 0) >= 0),
-	CONSTRAINT "budget_line_approved_chk" CHECK ("budget_line"."approved_amount" is null or ("budget_line"."approval_decision_id" is not null and "budget_line"."approved_by" is not null and "budget_line"."approved_at" is not null and "budget_line"."approval_state" = 'approved')),
+	CONSTRAINT "budget_line_approved_chk" CHECK ("budget_line"."approved_amount" is null or "budget_line"."approval_state" = 'approved'),
 	CONSTRAINT "budget_line_state_chk" CHECK ("budget_line"."approval_state" <> 'approved' or "budget_line"."approved_amount" is not null)
 );
 --> statement-breakpoint

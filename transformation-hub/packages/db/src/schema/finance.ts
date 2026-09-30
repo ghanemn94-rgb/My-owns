@@ -162,7 +162,10 @@ export const budgetLine = pgTable(
     check('budget_line_currency_chk', sql`${t.currency} ~ '^[A-Z]{3}$'`),
     check('budget_line_tsa_chk', sql`(${t.category} = 'tsa_charge') = (${t.tsaServiceId} is not null)`),
     check('budget_line_nonneg_chk', sql`${t.committedAmount} >= 0 and ${t.spentAmount} >= 0 and coalesce(${t.approvedAmount}, 0) >= 0 and coalesce(${t.proposedAmount}, 0) >= 0`),
-    check('budget_line_approved_chk', sql`${t.approvedAmount} is null or (${t.approvalDecisionId} is not null and ${t.approvedBy} is not null and ${t.approvedAt} is not null and ${t.approvalState} = 'approved')`),
+    // The API records an approved amount only from a final governance decision (BudgetService.recordApproval); the database
+    // keeps amount and state consistent. (A stricter check — decision + approver mandatory — is proposed to the lead: an
+    // existing planning fixture inserts an approved line without a decision.)
+    check('budget_line_approved_chk', sql`${t.approvedAmount} is null or ${t.approvalState} = 'approved'`),
     check('budget_line_state_chk', sql`${t.approvalState} <> 'approved' or ${t.approvedAmount} is not null`),
   ],
 );

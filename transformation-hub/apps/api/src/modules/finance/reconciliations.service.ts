@@ -12,6 +12,7 @@ import {
   ruleViolation,
   FINANCE_DEFAULT_CLASSIFICATION,
   Classification,
+  Money as DomainMoney,
   ReconciliationStatus,
 } from '@hub/domain';
 import type { RouteInput, financeRoutes } from '@hub/contracts';
@@ -116,7 +117,7 @@ export class ReconciliationsService {
   private async insert(
     ctx: RequestContext,
     projectId: string,
-    v: { financialSnapshotId: string | null; counterpartyLabel: string; period: string; our: Money; their: Money | null; explanation: string | null; sourceRef: string; classification: Classification },
+    v: { financialSnapshotId: string | null; counterpartyLabel: string; period: string; our: DomainMoney; their: DomainMoney | null; explanation: string | null; sourceRef: string; classification: Classification },
   ) {
     const p = await this.s.project(projectId);
     this.s.assertClassificationWritable(ctx, projectId, v.classification);
