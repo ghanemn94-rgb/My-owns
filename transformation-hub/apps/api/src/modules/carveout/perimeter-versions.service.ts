@@ -188,7 +188,9 @@ export class PerimeterVersionsService {
   async reject(ctx: RequestContext, projectId: string, versionId: string, body: { expectedVersion: number; reason: string }) {
     const p = await this.s.project(ctx, projectId);
     const v = await this.lockVersion(p, versionId);
-    this.s.policy.assert(ctx, 'carveout.perimeter.approve', { projectId, classification: p.classification, requesterUserId: v.proposedBy });
+    // Rejecting leaves the approved perimeter unchanged: no decision backing is needed, so authority is the approving role
+    // (explicit, I-R3); separation of duties still applies against the proposer.
+    this.s.policy.assert(ctx, 'carveout.perimeter.approve', { projectId, classification: p.classification, requesterUserId: v.proposedBy, withinAuthority: true });
     assertVersion(v, body.expectedVersion, 'perimeter version');
     if (v.status !== 'proposed') throw ruleViolation('perimeter.version.not_proposed', `The version is ${v.status}`);
     const row = await updateVersioned(this.s.db, V, { id: v.id, projectId, expectedVersion: body.expectedVersion }, { status: 'rejected', decidedBy: ctx.principal.userId, decidedAt: new Date(), decisionNote: body.reason });

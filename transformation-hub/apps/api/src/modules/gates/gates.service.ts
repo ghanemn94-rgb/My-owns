@@ -32,7 +32,7 @@ import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { JobQueue } from '../../platform/jobs/job-queue.service';
 import type { RequestContext } from '../../platform/context';
-import { assertVersion, loadInProject, nextCode, RecordVersionService, updateVersioned } from '../../platform/helpers';
+import { assertVersion, loadInProject, nextCode, RecordVersionService, updateVersioned, visibleEvidenceCounts } from '../../platform/helpers';
 import { newId } from '../../platform/ids';
 import {
   AssessmentRow,
@@ -128,9 +128,11 @@ export class GatesService implements OnModuleInit {
     const cur = b.current(gate.id);
     const crits = b.criteriaOf(gate.id);
     const critIds = new Set(crits.map((c) => c.id));
+    // Displayed counters use the evidence list's visibility (SEC-P1R-05); the evaluation above counts every link.
+    const shown = await visibleEvidenceCounts(this.db, this.policy, ctx, projectId, 'gate_criterion', crits.map((c) => c.id));
     return {
       ...summary,
-      criteria: crits.map((c) => this.criterionDto(b, c, cur)),
+      criteria: crits.map((c) => this.criterionDto(b, c, cur, shown.get(c.id) ?? { active: 0, conflicting: 0 })),
       waivers: b.waivers.filter((w) => critIds.has(w.targetId)).map((w) => this.waiverDto(w, b)),
       decisions: [...decisions.values()].filter((d) => this.canSeeDecision(ctx, projectId, d)).map((d) => this.decisionDto(d, gate.key)),
       cycles: cycles.map((a) => ({
@@ -379,8 +381,14 @@ export class GatesService implements OnModuleInit {
     const { b, gate, crit, cur } = await this.loadCriterion(projectId, gateId, criterionId);
     const ev = b.evidenceOf(crit.id);
     const actor = ctx.principal.userId;
-    const evidenceOwner = body.outcome === 'met' ? (actor && ev.submitters.includes(actor) ? actor : (ev.submitters[0] ?? null)) : null;
-    this.assertDesignatedReviewer(ctx, projectId, b.project.classification, crit, evidenceOwner);
+    // `met` approves someone's submission: separation of duties against the evidence submitter(s) — or, with no evidence
+    // linked, whoever submitted the criterion for review; unknown → fail closed (I-R3). Returning it (`unmet`) approves
+    // nothing, so only the role-level check applies.
+    const sod =
+      body.outcome === 'met'
+        ? { requesterUserId: actor && ev.submitters.includes(actor) ? actor : (ev.submitters[0] ?? b.ca(cur.id, crit.id)?.assessedBy ?? null) }
+        : ('none' as const);
+    this.assertDesignatedReviewer(ctx, projectId, b.project.classification, crit, sod);
     assertCriterionEditable(gate.key, cur.status);
     const ca = await this.ensureCa(ctx, b, cur, crit);
     if (body.outcome === 'met') {
@@ -428,7 +436,10 @@ export class GatesService implements OnModuleInit {
   async determineNotApplicable(ctx: RequestContext, projectId: string, gateId: string, criterionId: string, body: { expectedVersion: number; approve: boolean; note?: string }) {
     const { b, gate, crit, cur } = await this.loadCriterion(projectId, gateId, criterionId);
     const ca0 = b.ca(cur.id, crit.id);
-    this.assertDesignatedReviewer(ctx, projectId, b.project.classification, crit, ca0?.naProposedBy ?? null);
+    // A pending N/A proposal is approved against its proposer (unknown → fail closed, I-R3); without one the command is
+    // refused below (422) after the role-level check.
+    const pending = !!ca0 && ca0.status === 'not_applicable' && !ca0.naApproved;
+    this.assertDesignatedReviewer(ctx, projectId, b.project.classification, crit, pending ? { requesterUserId: ca0!.naProposedBy } : 'none');
     assertCriterionEditable(gate.key, cur.status);
     if (!ca0 || ca0.status !== 'not_applicable' || ca0.naApproved) throw ruleViolation('gates.na.no_proposal', `Criterion ${crit.key} has no pending not-applicable proposal`);
     if (body.approve) {
@@ -706,7 +717,13 @@ export class GatesService implements OnModuleInit {
    * 403 missing permission, 403 not_self: the evidence submitter / N/A proposer never reviews their own submission).
    * A workstream lead's grant is workstream-scoped, so the policy check runs against the workstream they lead.
    */
-  private assertDesignatedReviewer(ctx: RequestContext, projectId: string, classification: Parameters<PolicyService['assert']>[2]['classification'], crit: CriterionRow, requesterUserId: string | null) {
+  private assertDesignatedReviewer(
+    ctx: RequestContext,
+    projectId: string,
+    classification: Parameters<PolicyService['assert']>[2]['classification'],
+    crit: CriterionRow,
+    sod: { requesterUserId: string | null } | 'none',
+  ) {
     const permission = 'gates.assessment.review';
     assertHumanActor(ctx, permission);
     const scope = ctx.principal.projects.get(projectId);
@@ -716,7 +733,9 @@ export class GatesService implements OnModuleInit {
     const refuse = () =>
       forbidden('gates.not_designated_reviewer', `Criterion ${crit.key} can only be reviewed by its designated reviewer role (${crit.reviewerRole})`);
     if (!designated && this.policy.canSee(ctx, { projectId, classification }) && this.policy.canInProject(ctx, permission, projectId)) throw refuse();
-    this.policy.assert(ctx, permission, { projectId, classification, requesterUserId, workstreamId: viaWorkstream?.workstreamId ?? null });
+    const res = { projectId, classification, workstreamId: viaWorkstream?.workstreamId ?? null };
+    if (sod === 'none') this.policy.assertGranted(ctx, permission, res);
+    else this.policy.assert(ctx, permission, { ...res, requesterUserId: sod.requesterUserId });
     if (!designated) throw refuse();
   }
 
@@ -976,9 +995,8 @@ export class GatesService implements OnModuleInit {
     };
   }
 
-  private criterionDto(b: GateBundle, c: CriterionRow, cur: AssessmentRow) {
+  private criterionDto(b: GateBundle, c: CriterionRow, cur: AssessmentRow, ev: { active: number; conflicting: number }) {
     const ca = b.ca(cur.id, c.id);
-    const ev = b.evidenceOf(c.id);
     return {
       id: c.id,
       key: c.key,

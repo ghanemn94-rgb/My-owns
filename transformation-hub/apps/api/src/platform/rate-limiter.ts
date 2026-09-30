@@ -24,6 +24,21 @@ export class RateLimiter {
     return w.count <= limit;
   }
 
+  /**
+   * Count an event in the key's current 60-second window and return the count (no limit). Used to coalesce repeated
+   * security events (CSRF denials, SEC-P1R-01) so that a client cannot write one audit row per request.
+   */
+  tally(key: string, now = Date.now()): number {
+    const k = `tally:${key}`;
+    const w = this.windows.get(k);
+    if (!w || now - w.start >= 60_000) {
+      this.windows.set(k, { start: now, count: 1 });
+      if (this.windows.size > 50_000) this.gc(now);
+      return 1;
+    }
+    return ++w.count;
+  }
+
   private gc(now: number) {
     for (const [k, w] of this.windows) if (now - w.start >= 60_000) this.windows.delete(k);
   }

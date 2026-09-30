@@ -393,7 +393,9 @@ export class DecisionsService {
 
   async recordOutcome(ctx: RequestContext, projectId: string, decisionId: string, body: { expectedVersion: number; note?: string }) {
     const d = await loadInProject(this.db, schema.decision, projectId, decisionId);
-    this.policy.assert(ctx, 'governance.decision.record_outcome', { projectId, classification: d.classification, requesterUserId: d.requesterUserId });
+    // authority: the recorder's authority is the role; the DECISION's authority is computed below from the authority matrix
+    // in force (checkAuthority → outside the mandate becomes a recommendation + escalation), so it is stated explicitly.
+    this.policy.assert(ctx, 'governance.decision.record_outcome', { projectId, classification: d.classification, requesterUserId: d.requesterUserId, withinAuthority: true });
     assertVersion(d, body.expectedVersion, 'decision');
     if (d.status !== 'under_review') throw ruleViolation('governance.outcome.not_under_review', `An outcome can only be recorded for a decision under review (current: ${d.status})`);
     if (!d.meetingId) throw ruleViolation('governance.vote.not_tabled', 'The decision is not tabled at a meeting or circulated');
@@ -544,7 +546,8 @@ export class DecisionsService {
 
   async defer(ctx: RequestContext, projectId: string, decisionId: string, body: { expectedVersion: number; note: string; revisitDate?: string }) {
     const d = await loadInProject(this.db, schema.decision, projectId, decisionId);
-    this.policy.assert(ctx, 'governance.decision.record_outcome', { projectId, classification: d.classification, requesterUserId: d.requesterUserId });
+    // Deferral is a procedural outcome: no delegated amount applies (authority = the recording role, stated explicitly).
+    this.policy.assert(ctx, 'governance.decision.record_outcome', { projectId, classification: d.classification, requesterUserId: d.requesterUserId, withinAuthority: true });
     assertVersion(d, body.expectedVersion, 'decision');
     const to = transition('decision', DECISION_MACHINE, d.status as DecisionStatus, 'defer');
     return this.applyTransition(ctx, d, 'defer', to, body.expectedVersion, {}, body.note, { revisitDate: body.revisitDate ?? null });
@@ -563,7 +566,9 @@ export class DecisionsService {
   }
 
   async supersede(ctx: RequestContext, projectId: string, decisionId: string, body: { expectedVersion: number; supersededByDecisionId: string; note: string }) {
-    const d = await this.sup.decision(ctx, projectId, decisionId, 'governance.decision.record_outcome');
+    // Superseding records an outcome on the decision: separation of duties against its requester (fail closed when unknown);
+    // procedural, so authority is the recording role (explicit).
+    const d = await this.sup.decision(ctx, projectId, decisionId, 'governance.decision.record_outcome', (x) => ({ requesterUserId: x.requesterUserId, withinAuthority: true }));
     assertVersion(d, body.expectedVersion, 'decision');
     const to = transition('decision', DECISION_MACHINE, d.status as DecisionStatus, 'supersede');
     const other = await this.sup.decision(ctx, projectId, body.supersededByDecisionId);

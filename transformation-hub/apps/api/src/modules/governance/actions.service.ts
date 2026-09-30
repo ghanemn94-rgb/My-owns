@@ -11,6 +11,7 @@ import {
   isActionOverdue,
   ruleViolation,
   transition,
+  SYSTEM_SUBJECT,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
@@ -284,7 +285,12 @@ export class ActionsService {
   }
 
   async resolve(ctx: RequestContext, projectId: string, escalationId: string, body: { expectedVersion: number; resolutionDecisionId?: string; note: string }) {
-    const e = await this.loadEscalation(ctx, projectId, escalationId, 'governance.decision.record_outcome', (x) => ({ requesterUserId: x.raisedBy }));
+    // not_self against whoever raised it; an escalation the SYSTEM raised (is_system_generated, no human raiser) has no human
+    // requester. Resolving is procedural: authority is the recording role (explicit, I-R3).
+    const e = await this.loadEscalation(ctx, projectId, escalationId, 'governance.decision.record_outcome', (x) => ({
+      requesterUserId: x.raisedBy ?? (x.isSystemGenerated ? SYSTEM_SUBJECT : null),
+      withinAuthority: true,
+    }));
     assertVersion(e, body.expectedVersion, 'escalation');
     if (e.status !== 'open' && e.status !== 'decision_requested') throw ruleViolation('governance.escalation.closed', `The escalation is already ${e.status}`);
     if (body.resolutionDecisionId) await this.sup.decision(ctx, projectId, body.resolutionDecisionId);
@@ -313,7 +319,7 @@ export class ActionsService {
     return a;
   }
 
-  private async loadEscalation(ctx: RequestContext, projectId: string, id: string, permission: string, extra: (e: EscalationRow) => { requesterUserId?: string | null } = () => ({})) {
+  private async loadEscalation(ctx: RequestContext, projectId: string, id: string, permission: string, extra: (e: EscalationRow) => { requesterUserId?: string | null; withinAuthority?: boolean } = () => ({})) {
     const e = await loadInProject(this.db, schema.escalation, projectId, id);
     let classification: Classification | null = null;
     if (e.sourceType === 'decision' && e.sourceId) {

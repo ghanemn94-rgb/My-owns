@@ -356,8 +356,9 @@ RETURNS TABLE (
   user_active boolean, user_clearance text, user_locale text, user_display_name text, user_email text,
   user_is_demo boolean
 ) LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+  -- user_active is false for service / non-person accounts: they never hold an interactive session (I-R5).
   SELECT s.id, s.user_id, s.org_id, s.csrf_hash, s.auth_method, s.idle_expires_at, s.absolute_expires_at,
-         s.revoked_at, u.is_active, u.clearance::text, u.locale, u.display_name, u.email, u.is_demo
+         s.revoked_at, (u.is_active AND NOT u.is_service_account), u.clearance::text, u.locale, u.display_name, u.email, u.is_demo
   FROM session s JOIN app_user u ON u.id = s.user_id
   WHERE s.token_hash = p_token_hash
 $$;
@@ -828,3 +829,71 @@ BEGIN
 END
 $acct$;
 
+-- An INTERNAL account holding roles cannot be switched to EXTERNAL (I-R1): the guard above fires on role and grant rows;
+-- this one fires on the account itself, so the order "grant first, then flip the type" is refused too. Revoke / end the
+-- internal grants first. (Future-dated grants count: they would become active on an external account.)
+CREATE OR REPLACE FUNCTION hub_account_type_flip_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+BEGIN
+  IF NEW.account_type IS DISTINCT FROM 'external' OR OLD.account_type IS NOT DISTINCT FROM 'external' THEN RETURN NEW; END IF;
+  IF EXISTS (SELECT 1 FROM project_membership m WHERE m.user_id = NEW.id AND m.revoked_at IS NULL AND (m.valid_to IS NULL OR m.valid_to > now()))
+     OR EXISTS (SELECT 1 FROM org_role_assignment a WHERE a.user_id = NEW.id AND a.revoked_at IS NULL AND (a.valid_to IS NULL OR a.valid_to > now()))
+     OR EXISTS (SELECT 1 FROM committee_membership c WHERE c.user_id = NEW.id AND (c.valid_to IS NULL OR c.valid_to >= current_date))
+     OR EXISTS (SELECT 1 FROM room_grant g WHERE g.user_id = NEW.id AND g.revoked_at IS NULL AND g.role <> 'external_partner_limited') THEN
+    RAISE EXCEPTION 'external_account_role: the account still holds internal roles or grants — revoke them before making it external'
+      USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+REVOKE ALL ON FUNCTION hub_account_type_flip_guard() FROM PUBLIC;
+DROP TRIGGER IF EXISTS hub_account_type_flip_guard ON app_user;
+CREATE TRIGGER hub_account_type_flip_guard BEFORE UPDATE OF account_type ON app_user FOR EACH ROW EXECUTE FUNCTION hub_account_type_flip_guard();
+
+-- 21. Shared legal entities have ONE owning project (SEC-P1R-03) --------------------------------------------------------
+-- legal_entity is organization-level and may be linked to several projects (project_entity). Only the OWNING project (the
+-- one that created it, legal_entity.owner_project_id) may change it; linked projects read it. The API refuses with 403
+-- `newco.legal_entity.not_owner`; here: the owner reference is org-bound and immutable, rows are inserted only for an
+-- in-scope project, and UPDATE is restricted (RESTRICTIVE policy, ANDed with the org policy) to full members of the owner.
+DO $leowner$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'legal_entity_owner_project_org_fk') THEN
+    ALTER TABLE legal_entity ADD CONSTRAINT legal_entity_owner_project_org_fk FOREIGN KEY (org_id, owner_project_id) REFERENCES project (org_id, id);
+  END IF;
+END
+$leowner$;
+DROP POLICY IF EXISTS hub_legal_entity_owner_insert ON legal_entity;
+CREATE POLICY hub_legal_entity_owner_insert ON legal_entity AS RESTRICTIVE FOR INSERT
+  WITH CHECK (owner_project_id = ANY (app_project_ids()));
+DROP POLICY IF EXISTS hub_legal_entity_owner_update ON legal_entity;
+CREATE POLICY hub_legal_entity_owner_update ON legal_entity AS RESTRICTIVE FOR UPDATE
+  USING (owner_project_id = ANY (app_full_project_ids()))
+  WITH CHECK (owner_project_id = ANY (app_full_project_ids()));
+CREATE OR REPLACE FUNCTION hub_legal_entity_owner_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.owner_project_id IS DISTINCT FROM OLD.owner_project_id THEN
+    RAISE EXCEPTION 'immutable_owner: the owning project of a legal entity cannot change' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_legal_entity_owner_immutable ON legal_entity;
+CREATE TRIGGER hub_legal_entity_owner_immutable BEFORE UPDATE OF owner_project_id ON legal_entity FOR EACH ROW EXECUTE FUNCTION hub_legal_entity_owner_immutable();
+
+-- Projects linked to a legal entity other than its owner (ids only), for the owning project's change fan-out
+-- (`legal_entity.changed` outbox events): under RLS the owner cannot see other projects' project_entity rows. Callable
+-- only by full members of the OWNING project; returns nothing otherwise.
+CREATE OR REPLACE FUNCTION hub_legal_entity_linked_projects(p_entity uuid) RETURNS SETOF uuid
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+  SELECT DISTINCT pe.project_id
+    FROM project_entity pe JOIN legal_entity le ON le.id = pe.legal_entity_id
+   WHERE pe.legal_entity_id = p_entity AND le.org_id = app_org_id() AND pe.org_id = le.org_id
+     AND le.owner_project_id = ANY (app_full_project_ids()) AND pe.project_id <> le.owner_project_id
+$$;
+REVOKE ALL ON FUNCTION hub_legal_entity_linked_projects(uuid) FROM PUBLIC;
+DO $legrant$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
+    EXECUTE 'GRANT EXECUTE ON FUNCTION hub_legal_entity_linked_projects(uuid) TO hub_app';
+  END IF;
+END
+$legrant$;

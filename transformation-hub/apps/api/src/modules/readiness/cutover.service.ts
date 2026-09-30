@@ -174,7 +174,7 @@ export class CutoverService {
       }),
       goDecision: this.s.decisionSummary(ctx, projectId, d, GO_DECISION_TYPE_KEYS, 'a go-live'),
       decisionHistory: history.map(recordDto),
-      acceptanceEvidence: await this.s.evidence(projectId, 'cutover_plan', plan.id),
+      acceptanceEvidence: await this.s.visibleEvidence(ctx, projectId, 'cutover_plan', plan.id), // display: SEC-P1R-05
       people: await this.s.people([plan.accountableUserId, plan.submittedForDecisionBy, plan.goNoGoDecidedBy, plan.executedBy, plan.postTransitionAcceptedBy, plan.createdBy, ...history.map((h) => h.actorUserId)]),
     };
   }

@@ -33,7 +33,11 @@ export interface AbacAttributes {
   roomIsCleanTeam?: boolean;
   userCleanTeamRoomIds?: Set<string>;
   actorUserId?: string | null;
-  /** The user who requested/created the subject when separation of duties applies. */
+  /**
+   * The user who requested / created / recorded / submitted the subject when separation of duties applies (`not_self`).
+   * REQUIRED for a `not_self` permission: missing (undefined or null) fails CLOSED (I-R3) — a record whose requester is
+   * unknown cannot be approved by anyone, because nobody can be shown to be someone else.
+   */
   subjectRequesterId?: string | null;
   /** Workstream of the resource when permission is scoped to own workstream. */
   workstreamId?: string | null;
@@ -44,22 +48,38 @@ export interface AbacAttributes {
    * grant of any other role does NOT satisfy it. When supplied it is authoritative.
    */
   ownWorkstreamSatisfied?: boolean;
-  /** Result of an authority check computed by the caller (e.g. amount within delegation). */
+  /**
+   * Result of an authority check computed by the caller (e.g. amount within delegation, designated approver role).
+   * REQUIRED for an `authority` permission: `undefined` fails CLOSED (I-R3); a caller whose authority is the role grant
+   * itself must say so explicitly (`withinAuthority: true`, with the reason at the call site).
+   */
   withinAuthority?: boolean;
 }
+
+/**
+ * Explicit "no human requester" marker for `not_self` (I-R3): the subject was raised by the system itself (e.g. an
+ * escalation flagged `is_system_generated`), so no human approver can be approving their own request. Callers pass it ONLY
+ * when the record itself says so — a missing requester id is never treated as system-originated.
+ */
+export const SYSTEM_SUBJECT = 'system:no-human-requester';
 
 export interface AbacResult {
   allowed: boolean;
   failed: AbacCondition[];
+  /** Conditions that failed because the caller did not supply the attribute they need (fail-closed, I-R3). */
+  missing: AbacCondition[];
 }
 
 /**
  * Evaluate ABAC conditions for a permission. Conditions that cannot be evaluated because the attribute was not
- * supplied FAIL CLOSED (deny by default) — except `own_workstream`, which only applies when the grant came from a
- * workstream-scoped role (callers pass `userWorkstreamIds` in that case).
+ * supplied FAIL CLOSED (deny by default) and are reported in `missing`: `not_self` without the actor or the subject's
+ * requester, `authority` without an explicit authority result (I-R3), `own_workstream` when ownership cannot be established.
+ * `classification`, `room` and `clean_team` restrict only when the resource HAS a classification / room (an unclassified,
+ * room-less resource is not restricted by them).
  */
 export function evaluateConditions(conditions: AbacCondition[], a: AbacAttributes): AbacResult {
   const failed: AbacCondition[] = [];
+  const missing: AbacCondition[] = [];
   for (const c of conditions) {
     switch (c) {
       case 'classification':
@@ -72,10 +92,16 @@ export function evaluateConditions(conditions: AbacCondition[], a: AbacAttribute
         if (a.roomIsCleanTeam && a.roomId && !(a.userCleanTeamRoomIds?.has(a.roomId) ?? false)) failed.push(c);
         break;
       case 'not_self':
-        if (a.subjectRequesterId && a.actorUserId && a.subjectRequesterId === a.actorUserId) failed.push(c);
+        if (!a.subjectRequesterId || !a.actorUserId) {
+          failed.push(c);
+          missing.push(c); // fail closed: separation of duties cannot be established
+        } else if (a.subjectRequesterId === a.actorUserId) failed.push(c);
         break;
       case 'authority':
-        if (a.withinAuthority === false) failed.push(c);
+        if (a.withinAuthority === undefined) {
+          failed.push(c);
+          missing.push(c); // fail closed: the caller did not evaluate authority
+        } else if (a.withinAuthority !== true) failed.push(c);
         break;
       case 'own_workstream':
         if (a.ownWorkstreamSatisfied !== undefined) {
@@ -86,5 +112,5 @@ export function evaluateConditions(conditions: AbacCondition[], a: AbacAttribute
         break;
     }
   }
-  return { allowed: failed.length === 0, failed };
+  return { allowed: failed.length === 0, failed, missing };
 }

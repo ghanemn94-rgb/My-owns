@@ -95,9 +95,15 @@ export class GovernanceSupport {
   }
 
   /** Load a decision and assert `permission` (defaults to read) with its classification (hidden → 404). */
-  async decision(ctx: RequestContext, projectId: string, decisionId: string, permission = 'governance.decision.read', extra: Partial<ResourceAttrs> = {}): Promise<DecisionRow> {
+  async decision(
+    ctx: RequestContext,
+    projectId: string,
+    decisionId: string,
+    permission = 'governance.decision.read',
+    extra: Partial<ResourceAttrs> | ((d: DecisionRow) => Partial<ResourceAttrs>) = {},
+  ): Promise<DecisionRow> {
     const d = await loadInProject(this.db, schema.decision, projectId, decisionId);
-    this.policy.assert(ctx, permission, { projectId, classification: d.classification, ...extra });
+    this.policy.assert(ctx, permission, { projectId, classification: d.classification, ...(typeof extra === 'function' ? extra(d) : extra) });
     return d;
   }
 

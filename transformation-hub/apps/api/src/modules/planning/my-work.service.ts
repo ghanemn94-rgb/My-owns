@@ -46,8 +46,10 @@ export class MyWorkService {
     const tx = this.s.db.tx();
     const today = (pid: string) => this.s.today(byId.get(pid)!);
     const push = (p: ProjectInfo, i: Omit<Item, 'projectId' | 'projectCode' | 'isDemo'>, isDemo: boolean) => items.push({ ...i, projectId: p.id, projectCode: p.code, isDemo });
+    // Same inputs as the approving command (I-R3): the subject's requester, and the explicit role authority the planning
+    // approvals use — so the inbox never offers an item the command would refuse.
     const can = (perm: string, pid: string, attrs: { workstreamId?: string | null; requesterUserId?: string | null; classification?: Classification } = {}) =>
-      this.s.policy.can(ctx, perm, { projectId: pid, classification: attrs.classification ?? byId.get(pid)!.classification, workstreamId: attrs.workstreamId ?? null, requesterUserId: attrs.requesterUserId ?? null });
+      this.s.policy.can(ctx, perm, { projectId: pid, classification: attrs.classification ?? byId.get(pid)!.classification, workstreamId: attrs.workstreamId ?? null, requesterUserId: attrs.requesterUserId ?? null, withinAuthority: true });
 
     // Tasks I am accountable for (open)
     const T = schema.task;

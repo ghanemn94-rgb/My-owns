@@ -482,5 +482,7 @@ export const OUTBOX_EVENT_TYPES = [
   'baseline.approved',
   'change_request.decided',
   'readiness.changed',
+  /** A shared legal entity was changed in its owning project; emitted once per OTHER linked project (SEC-P1R-03). */
+  'legal_entity.changed',
 ] as const;
 export type OutboxEventType = (typeof OUTBOX_EVENT_TYPES)[number];
