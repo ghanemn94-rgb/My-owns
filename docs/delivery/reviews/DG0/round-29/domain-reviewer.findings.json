@@ -1,0 +1,31 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-015",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The D-045 decision-log row says the round-28 reviewers were 'all three reviewers PASS; each raised one Low', but the round-28 domain-reviewer raised no finding; the same row's context column correctly says 'domain PASS with no findings'",
+      "reproduction": "At candidate commit 1e4c022, `grep -E '^\\| D-045 ' docs/delivery/decisions.md` shows the heading '**Round-28 repairs (all three reviewers PASS; each raised one Low): …**'. Reading the round-28 records gives: domain-reviewer PASS findings=[]; code-security-reviewer PASS findings=['F-DG0-171']; qa-verifier PASS findings=['F-DG0-251']. So two reviewers raised one Low each and the domain reviewer raised none. The row's own context column says 'domain PASS with no findings', which contradicts its heading. See docs/delivery/test-evidence/DG0/domain/round-29/11-d045-wording.log.",
+      "expected": "The decision log states accurately who raised the round-28 findings, for example '(all three reviewers PASS; code-security and qa each raised one Low, domain none)', consistent with the row's context column and the round-28 review records.",
+      "actual": "The heading says each of the three reviewers raised one Low. This is an internal contradiction in an engineering decision record only. It makes no business, operating-logic or source-provenance claim. The rest of D-045 is accurate: it presents itself as delivery tooling completing D-044's commit-object class with review_rounds[].source_commit as the fourth and last field; the census (27 present round source_commits are commit objects, round 18 the absent orphan) and '105 pass' reproduce; the fix, its tests and the tag forge all behave as described. It has no effect on gate logic or on any product requirement, so it is Low and non-mandatory.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-29/11-d045-wording.log",
+        "docs/delivery/decisions.md#D-045",
+        "docs/delivery/reviews/DG0/round-28/domain-reviewer.json"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-29/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T15:33:23Z",
+          "status": "OPEN",
+          "note": "raised by domain-reviewer in DG0 round 29 (Low, non-mandatory; wording in the decision log only; reporter concurs with acceptance as an observation in its verifications sidecar, pending the release-auditor's concurrence)"
+        }
+      ]
+    }
+  ]
+}

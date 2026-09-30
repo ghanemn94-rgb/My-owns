@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 29,
+  "candidate_id": "sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd",
+  "source_commit": "1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-DOM-R29-domain-reviewer-20260930T152352Z-59934241",
+    "session_id": "59934241-9f23-4831-a04f-fa358009d926"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (domain-reviewer, session 59934241) authored none of the reviewed implementation (analysis, register, source tooling, gate tooling, decisions). I formed this verdict from my own checks on the frozen candidate. No other round-29 review record existed or was read. I read my own role's earlier evidence to reuse the check scripts, and the round-28 review records only as the facts that the D-045 row summarises."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-29/review-domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-003", "REQ-PB-004", "REQ-PB-005", "REQ-PB-006", "REQ-PB-007", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010",
+    "REQ-PB-011", "REQ-PB-012", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-019", "REQ-PB-020",
+    "REQ-PB-021", "REQ-PB-022", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025", "REQ-PB-026", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029", "REQ-PB-030",
+    "REQ-PB-031", "REQ-PB-032", "REQ-PB-033", "REQ-PB-034", "REQ-PB-035", "REQ-PB-036", "REQ-PB-037", "REQ-PB-038", "REQ-PB-039", "REQ-PB-040",
+    "REQ-PB-041", "REQ-PB-042", "REQ-PB-043", "REQ-PB-044", "REQ-PB-045", "REQ-PB-046", "REQ-PB-047", "REQ-PB-048", "REQ-PB-049", "REQ-PB-050",
+    "REQ-PB-051", "REQ-PB-052", "REQ-PB-053", "REQ-PB-054", "REQ-PB-055", "REQ-PB-056", "REQ-PB-057", "REQ-PB-058", "REQ-PB-059", "REQ-PB-060",
+    "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068", "REQ-PB-069", "REQ-PB-070",
+    "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-077", "REQ-PB-078", "REQ-PB-079", "REQ-PB-080",
+    "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090",
+    "REQ-PB-091", "REQ-PB-092", "REQ-PB-093",
+    "REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-020", "REQ-DLV-032"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM29-01-candidate",
+      "procedure": "Confirm the frozen candidate. Compare HEAD with the commit, recompute the candidate ID live and at the ref, confirm the repo and a --no-local clone are complete, and confirm that the only candidate-relevant change since round 28 is rules.mjs, validator.test.mjs and decisions.md, with the P0 specification unchanged.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG0; (clone) node tools/gates/candidate.mjs --stage DG0 --ref 1e4c0226…; git diff --stat 1e4c022..HEAD; git diff 331407e9..1e4c0226 -- docs/source docs/analysis docs/delivery/requirements.csv docs/delivery/requirements-spec.md CLAUDE.md .claude/agents | wc -l",
+      "environment": "Main repo (read-only) at ffa3fae; fresh `git clone --no-local` in $TMPDIR/review-dom29 at 1e4c022; node v22.22.2",
+      "expected": "HEAD = 1e4c022 or post-freeze metadata-only commits; candidate ID = sha256:84130c62…; not shallow; P0 specification unchanged",
+      "actual": "HEAD is ffa3fae, a metadata-only commit after the freeze (round-29 assignments, the candidate manifest and stages.json). The live and at-ref candidate IDs are both sha256:84130c624e877424…751bd (91 files). shallow=false in both. Since 331407e the candidate diff is rules.mjs +11, validator.test.mjs +36 and decisions.md +1 (D-045); the spec diff is 0 lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/01-scope.log"]
+    },
+    {
+      "id": "DOM29-02-extraction-fidelity",
+      "procedure": "Independent extraction check. Strip the <w:t> text per <w:p> from word/document.xml and the footer, normalise it, and search for every non-empty paragraph and table cell in playbook.md. Do a reverse token check (md tokens not in the docx) and run the reproducibility script.",
+      "command": "python3 02-extract.py.txt; python3 02-reverse.py.txt; bash tools/source/check_extraction.sh",
+      "environment": "Fresh --no-local clone at 1e4c022; python3 standard library",
+      "expected": "docx SHA 2584a352…548ad2; all paragraphs/cells found; no invented md text; extraction reproducible",
+      "actual": "SHA 2584a35282804e…548ad2. 49 tables, 1001 non-empty paragraphs/cells, 0 not found. The footer text is found. The only reverse excess is 34 'br' tokens (the markdown <br> for in-cell breaks). check_extraction.sh reports PASS (165 playbook blocks, 423 master-prompt blocks).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/02-extraction.log", "docs/delivery/test-evidence/DG0/domain/round-29/02-extract.py.txt", "docs/delivery/test-evidence/DG0/domain/round-29/02-reverse.py.txt"]
+    },
+    {
+      "id": "DOM29-03-source-coverage",
+      "procedure": "Check that source-coverage.csv holds exactly B0001–B0165 and that every REQUIREMENT block maps to existing rows citing it. Every CONTEXT/NON-REQUIREMENT block must have a rationale (judged manually). Check register classes, that SOURCE rows are only REQ-PB rows citing B blocks, and that each REQ-PB row has acceptance and a final_gate. Diff against round 28.",
+      "command": "python3 03-coverage.py.txt; diff round-28/03-source-coverage.out round-29/03-source-coverage.out",
+      "environment": "Fresh --no-local clone at 1e4c022",
+      "expected": "165/165 blocks; 0 mapping problems; SOURCE only in REQ-PB with B citations",
+      "actual": "165 unique rows = B0001..B0165 (129 REQUIREMENT, 29 CONTEXT, 7 NON-REQUIREMENT). 0 mapping problems, 0 uncited REQUIREMENT blocks. 412 register rows (93 SOURCE, 188 USER, 131 ENGINEERING). All 93 REQ-PB rows are SOURCE/SPECIFIED with acceptance and final gates DG2–DG5. No SOURCE row lacks a B citation, and no non-SOURCE row cites only B blocks. The rationales are sensible. The output is identical to round 28.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/03-source-coverage.out", "docs/delivery/test-evidence/DG0/domain/round-29/03-coverage.py.txt"]
+    },
+    {
+      "id": "DOM29-04-templates",
+      "procedure": "For each Template 1–16 table in playbook.md, compare the header columns verbatim with the field-inventory section TNN and the input_fields of the mapped register rows. List the literal cell values not found verbatim and judge them (value lists H/M/L, Support/Neutral/Resist, Decision/Tech/Data/Vendor, R/A/I/D, A/R, 25/25/20/15/15, wave horizons/entry/exit, T11 SLAs, T10 RAG per area).",
+      "command": "python3 04-templates.py.txt; diff round-28/04-template-columns-values.out round-29/04-template-columns-values.out",
+      "environment": "Fresh --no-local clone at 1e4c022",
+      "expected": "All columns present, with any residue explained",
+      "actual": "15 of 16 templates have every column verbatim in the FI and the register. T05 'Field/Fill-in' is the two-column form layout of the Initiative Card; its field names are all present as rows, so this is not a loss. The non-verbatim cell values are only example IDs (D-03, B03, DEC-01/02, Initiative B/D/E) and the '1-5' score scale, which is expressed as a range. The value lists, weights 25/25/20/15/15, wave seeds (field-inventory L140-144), T11 SLAs and T10 RAG rules are present. The output is identical to round 28.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/04-template-columns-values.out", "docs/delivery/test-evidence/DG0/domain/round-29/04-templates.py.txt"]
+    },
+    {
+      "id": "DOM29-05-deliverables",
+      "procedure": "For each first-class deliverable, check every source cell and paragraph for verbatim presence in field-inventory.md. Manually inspect the non-verbatim residue: Charter 14, thesis, 5 checks, outcome hierarchy, TOM 10 + canvas + 90–120 workshop, business case 10, OS layers, lifecycle, 7 adoption indicators, 90-day plan, Day-90, roaming example, 25 questions + 4 bands, modes, phases/gates, roles.",
+      "command": "python3 05-deliverables.py.txt; grep -n in docs/analysis/field-inventory.md and requirements.csv for B0084/B0116/B0144, questions 1/2/25 and bands",
+      "environment": "Fresh --no-local clone at 1e4c022",
+      "expected": "Substance of every deliverable present",
+      "actual": "The residue is identical to round 28 and consists only of numbering prefixes, split canvas labels, curly quotes and CONTEXT titles. Spot checks: the 25 questions (FI L504-528) and 4 bands (L534-537); TOM dims + canvas prompts (L345-354) and 90-120 workshop duration (L363); B0084 two-level case (REQ-PB-054, L383) and early Finance validation before G4 (REQ-PB-055, L373); B0116 (REQ-PB-073); B0144 illustrative-only (REQ-PB-089, L461).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/05-deliverables-substance.out", "docs/delivery/test-evidence/DG0/domain/round-29/05-deliverables.py.txt"]
+    },
+    {
+      "id": "DOM29-06-provenance-branding",
+      "procedure": "Search for official/certified/PMI-standard/official-Mobily wording and inspect every hit for negation. Check that every #0078FF mention is provisional or contrast-related. Check that SOURCE rows are grounded in B blocks and master-prompt additions are USER/ENGINEERING (see DOM29-03).",
+      "command": "grep -rniE 'official PMI|certified|PMI standard|official Mobily' CLAUDE.md docs/analysis docs/delivery/requirements.csv docs/delivery/requirements-spec.md .claude/agents; grep -rn 0078FF …",
+      "environment": "Fresh --no-local clone at 1e4c022",
+      "expected": "No positive official-PMI/certified/Mobily-official claim; #0078FF provisional",
+      "actual": "0 hits without a negation or qualifier. Every hit says 'inspired by', 'never', 'not' or 'neither/nor'. The #0078FF mentions are all labelled provisional, except REQ-S15-003, which concerns contrast validation of that token and makes no official claim. REQ-S15-006 requires a provisional text wordmark.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-PB-002", "REQ-PB-077"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/06-provenance-branding.log"]
+    },
+    {
+      "id": "DOM29-07-operating-logic",
+      "procedure": "Read the register rows that specify each causal rule and check that each acceptance is testable: RAG from trajectory; delivery/adoption/validated value/closure separate; forecast never validated; Finance validates; Business Owner accountable; shared benefit counted once with allocation ≤100% and unallocated shown; gates as evidence-snapshot approvals; DG vs G separation; technical admin not an approver; missing data Unknown, not zero.",
+      "command": "python3 07-operating-logic.py.txt",
+      "environment": "Fresh --no-local clone at 1e4c022",
+      "expected": "Each rule specified with a concrete, testable acceptance",
+      "actual": "Every rule is specified with a concrete acceptance. Examples: REQ-S07-007/PB-063 (tasks 100% complete but KPI below trajectory → Red/Amber); REQ-S03-003/PB-009 (delivery Complete leaves adoption/value/closure unchanged, and closure is rejected while value is pending); REQ-S08-001/PB-075 (forecast never in the validated total); REQ-PB-013/055/S08-015 (a non-Finance user gets 403; G4 is rejected when benefit logic is unvalidated); REQ-S08-003 (accountable business owner); REQ-PB-058/S08-013 (a shared 10M SAR benefit appears once; 60%+50% rejected; 60%+30% shows 10% unallocated); REQ-S04-002/PB-015 (the snapshot is immutable and completing tasks leaves the gate Draft); REQ-DLV-002/S04-008; REQ-S10-003; REQ-PB-027/S07-006.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/07-operating-logic.out", "docs/delivery/test-evidence/DG0/domain/round-29/07-operating-logic.py.txt"]
+    },
+    {
+      "id": "DOM29-08-master-prompt-sample",
+      "procedure": "Parse the 423 anchored M blocks and check that the coverage holds exactly M0001–M0423, with every REQUIREMENT block mapped to existing rows that cite it. Sample 3 blocks per section plus 1 table row where one exists (seed 29) and judge each disposition and mapping manually.",
+      "command": "python3 08-master-prompt-sample.py.txt",
+      "environment": "Fresh --no-local clone at 1e4c022",
+      "expected": "423/423; 0 mapping problems; ≥60 sampled blocks judged sensible",
+      "actual": "423 blocks = M0001..M0423 (367 REQUIREMENT, 49 CONTEXT, 7 NON-REQUIREMENT); 0 mapping problems. I judged 78 blocks across 23 sections (listed in the .out file), including table rows (M0022, M0120-123, M0132/133/140, M0181-183, M0201/202/210, M0232/234/239, M0247/251, M0294-299, M0386/392/393, M0404/409). All dispositions and mappings are sensible; for example, M0089 → REQ-PB-001/002/077, M0173 → PB-058/S08-013/014 and M0218 → PB-009/S11-006/007.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/08-master-prompt-sample.out", "docs/delivery/test-evidence/DG0/domain/round-29/08-master-prompt-sample.py.txt"]
+    },
+    {
+      "id": "DOM29-09-staging",
+      "procedure": "For every register row, check that final_gate is DG0–DG7, that the increments are P0–P7 with the highest increment equal to the final gate, and that acceptance is non-empty and not vague. Spot-check template → stage alignment with §21 (T01–T04 DG2, T05–T09 DG3, T10–T16 DG4) and key rows.",
+      "command": "python3 09-staging.py.txt",
+      "environment": "Fresh --no-local clone at 1e4c022",
+      "expected": "0 staging problems; §21 alignment",
+      "actual": "0 staging problems and 0 short/vague acceptances. Every template row matches §21, and the spot checks are all OK. There are 19 DG0-final rows: 17 REQ-DLV plus REQ-S20-024/025 (A24/A25 gate tooling).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/09-staging.log", "docs/delivery/test-evidence/DG0/domain/round-29/09-staging.py.txt"]
+    },
+    {
+      "id": "DOM29-10-objtype-census",
+      "procedure": "Census on the complete history: the git object type of every stages.json review_rounds[].source_commit, every findings.json fix_revision, every runs/**/meta.json head_commit_at_start and any gate source_commit, plus the tags in the repo.",
+      "command": "python3 10-objtype-census.py.txt",
+      "environment": "Fresh --no-local clone of the main repo at live HEAD ffa3fae (shallow=false)",
+      "expected": "All present ids are commit objects; round 18 is the only absent round",
+      "actual": "29 rounds: 28 have commit objects and round 18 (450c756f67) is ABSENT, the known D-034/D-035 orphan. That gives 27 present before round 29, as D-045 states. fix_revision: 120/120 are commits. head_commit_at_start: 103 are commits and 3 are ABSENT (the three round-18 runs). There are no tags.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/10-objtype-census.log", "docs/delivery/test-evidence/DG0/domain/round-29/10-objtype-census.py.txt"]
+    },
+    {
+      "id": "DOM29-11-d045-tests-and-mutation",
+      "procedure": "Run the gate test suite. Then apply a mutation: reverse-apply the D-045 rules.mjs hunk and run the D-045 test (it must fail), then restore the hunk and rerun.",
+      "command": "node --test tools/gates/tests/*.test.mjs; git diff 331407e9..1e4c0226 -- tools/gates/lib/rules.mjs | git apply -R; node --test --test-name-pattern='D-045' tools/gates/tests/validator.test.mjs; git checkout -- tools/gates/lib/rules.mjs; rerun",
+      "environment": "Fresh --no-local clone at 1e4c022; node v22.22.2",
+      "expected": "66/66 pass including the D-044/F-DG0-251 and D-045 tests; the mutant fails the D-045 test",
+      "actual": "66 pass, 0 fail. 'D-044 / F-DG0-250', 'D-044 / F-DG0-251' (tag head_commit_at_start rejected) and 'D-045 / F-DG0-171 / F-DG0-251' (tag round source_commit rejected; an absent one is still tolerated) are all ok. Without the check, the D-045 test fails with no validator errors at all, which confirms that the gap was real. With the check restored, it passes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/11-d045-tests.log", "docs/delivery/test-evidence/DG0/domain/round-29/11b-d045-mutation.log"]
+    },
+    {
+      "id": "DOM29-12-d045-wording",
+      "procedure": "Read the D-045 row, the only decisions.md change. Scan it for business, operating-logic or provenance claims. Check that it presents itself as completing D-044's commit-object class, with review_rounds[].source_commit as the fourth and last field, and not as a business requirement. Verify its factual claims against the round-28 records, the census, the test count and the validator's commit-id reads.",
+      "command": "git diff 331407e9..1e4c0226 -- docs/delivery/decisions.md; grep terms; python3 (round-28 verdicts); node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs; grep commit-id reads in rules.mjs",
+      "environment": "Fresh --no-local clone at 1e4c022",
+      "expected": "Delivery-tooling-only wording; accurate census, consequence and attribution",
+      "actual": "The term scan finds no PMI/Mobily/official/G1-G6/Finance/benefit/playbook claim. The row presents itself correctly as the fourth and last commit-id field completing D-044's class, not as a business requirement. The census (27 present, round 18 absent) is accurate. '105 pass' is reproduced (105/105). 'Fourth and last' holds: the manifest source_commit is covered transitively, and the review record's own source_commit is not used by the gate. ONE INACCURACY: the heading says 'all three reviewers PASS; each raised one Low', but the round-28 domain record has findings=[], and the row's context column itself says 'domain PASS with no findings'. I raised this as Low F-DG0-015: an engineering-record wording issue with no business or provenance misstatement.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/11-d045-wording.log"]
+    },
+    {
+      "id": "DOM29-13-prefreeze",
+      "procedure": "Run tools/gates/prefreeze.sh DG0 in a fresh --no-local clone checked out at the candidate commit",
+      "command": "bash tools/gates/prefreeze.sh DG0",
+      "environment": "Fresh --no-local clone $TMPDIR/pf29 at 1e4c022, shallow=false",
+      "expected": "All pre-freeze checks PASS; the working-tree candidate equals 84130c62…",
+      "actual": "11/11 PASS: extraction, gate validator + guard tests, runner metadata + settings tests, register rules, register = merge of parts, pipeline state, the four analysis checks, and working-tree candidate = sha256:84130c624e877424…",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/13-prefreeze.log"]
+    },
+    {
+      "id": "DOM29-14-real-repo-forge",
+      "procedure": "Synthetic-gate dry-run on the real history. In a disposable clone only, add a scratch gates/DG0.json naming the round-29 candidate, so validateGate walks every real review round. Record the baseline errors. Then forge round 28's source_commit in stages.json as an annotated tag object that peels to the real freeze commit, re-run and diff.",
+      "command": "node tools/gates/validate.mjs --stage DG0 (baseline); git tag -a r28tag <331407e>; edit stages.json round 28 source_commit=<tag object>; node tools/gates/validate.mjs --stage DG0; diff",
+      "environment": "Disposable --no-local clone at ffa3fae (live HEAD); scratch changes and tag removed afterwards. The scratch commit failed on an absent signing helper; the validator read the working-tree gate file.",
+      "expected": "Baseline shows no 'object, not a commit' error; the forge adds the D-045 rejection",
+      "actual": "The baseline has 23 problems, all expected metadata-state items (REVIEWING state, round-29 records not yet written, pending F-DG0-171/251 verifications, F-DG0-147/149 auditor acceptances, the scratch gate's round-28 review paths and empty requirement list). It has 0 'object, not a commit' errors, so no genuine record regresses. The forge adds exactly 2 errors: 'round 28 source_commit c4b95a0417 is a tag object, not a commit…' (D-045) and the manifest source_commit mismatch.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/14-real-repo-forge-and-dryrun.log"]
+    },
+    {
+      "id": "DOM29-15-dlv-rows",
+      "procedure": "Verify the four assigned REQ-DLV rows against their acceptance. DLV-001: D-001 (docx SHA) and D-002 (English edition executed). DLV-002: the gate schema's stage_id pattern, the CLAUDE.md/agent-protocol statements and all 10 agent definitions. DLV-020: validate.mjs --register DG0, and that A01–A28 are all referenced. DLV-032: P0 outputs (DOM29-02/03/08/13).",
+      "command": "grep D-001/D-002; schema stage_id; grep G6/no-approval in CLAUDE.md, agent-protocol.md and .claude/agents/*.md; node tools/gates/validate.mjs --register DG0; python3 A01-A28 scan",
+      "environment": "Fresh --no-local clone at 1e4c022",
+      "expected": "Acceptance of each row met",
+      "actual": "D-001 and D-002 are present. The stage_id pattern is ^DG[0-7]$. CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no business, Finance or IT approval is granted. All 10 agent definitions carry the G6 and no-approval statements. The register validates at DG0 (exit 0). A01–A28 are all referenced (missing []). DLV-032 is covered by DOM29-02/03/08/13.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/12-dlv-rows.log"]
+    },
+    {
+      "id": "DOM29-16-glossary-journeys-permissions",
+      "procedure": "Sample the glossary's Arabic terms. Check that the journeys cover all 6 phase/gate journeys, modular entry, KPI update, Finance validation, committee workflow, BAU handover and admin publishing. Check that the permissions matrix follows the source roles, T11 and RACI, and that ADM is not a business approver.",
+      "command": "grep headings in user-journeys.md; grep glossary terms; grep approve/validate/ADM/T11/RACI in permissions-matrix.md",
+      "environment": "Fresh --no-local clone at 1e4c022",
+      "expected": "Complete journey set; sensible Arabic; permissions consistent with B0018/B0099/B0101",
+      "actual": "J2.1–J2.6 cover G1–G6 (each once), plus J3 modular entry, J4 KPI update, J5 Finance validation, J6 committee, J7 BAU handover and J8 admin publishing. The Arabic terms are sensible and are flagged as proposed, pending review by a Mobily Arabic-language owner. The matrix cites B0018/T11/T12 RACI. For example, T11 Go-live/scale has Business owner approve and Initiative owner recommend, and the business case has FIN validating as RACI R. ADM has no Ap or Va right, and neither ADM nor the requester can approve waivers. Automation never approves.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/domain/round-29/12-glossary-journeys-permissions.log"]
+    }
+  ],
+  "findings": ["F-DG0-015"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/domain/round-29/01-scope.log",
+    "docs/delivery/test-evidence/DG0/domain/round-29/02-extraction.log",
+    "docs/delivery/test-evidence/DG0/domain/round-29/03-source-coverage.out",
+    "docs/delivery/test-evidence/DG0/domain/round-29/04-template-columns-values.out",
+    "docs/delivery/test-evidence/DG0/domain/round-29/05-deliverables-substance.out",
+    "docs/delivery/test-evidence/DG0/domain/round-29/06-provenance-branding.log",
+    "docs/delivery/test-evidence/DG0/domain/round-29/07-operating-logic.out",
+    "docs/delivery/test-evidence/DG0/domain/round-29/08-master-prompt-sample.out",
+    "docs/delivery/test-evidence/DG0/domain/round-29/09-staging.log",
+    "docs/delivery/test-evidence/DG0/domain/round-29/10-objtype-census.log",
+    "docs/delivery/test-evidence/DG0/domain/round-29/11-d045-tests.log",
+    "docs/delivery/test-evidence/DG0/domain/round-29/11b-d045-mutation.log",
+    "docs/delivery/test-evidence/DG0/domain/round-29/11-d045-wording.log",
+    "docs/delivery/test-evidence/DG0/domain/round-29/12-dlv-rows.log",
+    "docs/delivery/test-evidence/DG0/domain/round-29/12-glossary-journeys-permissions.log",
+    "docs/delivery/test-evidence/DG0/domain/round-29/13-prefreeze.log",
+    "docs/delivery/test-evidence/DG0/domain/round-29/14-real-repo-forge-and-dryrun.log",
+    "docs/delivery/reviews/DG0/round-29/domain-reviewer.md"
+  ],
+  "reviewed_at": "2026-09-30T15:40:00Z",
+  "summary": "PASS with one new Low finding (F-DG0-015). The P0 specification is unchanged since round 28, and I re-checked it independently on candidate 84130c62 / 1e4c022. Extraction is verbatim-complete (1001/1001 paragraphs and cells, 49 tables). All 165 B blocks and 423 M blocks are dispositioned with 0 mapping problems (78 M blocks judged). T01–T16 columns and value lists, and all first-class deliverables, are preserved. SOURCE rows are grounded in the playbook. Provenance and #0078FF are honest. The operating-logic rules are specified with testable acceptance, and staging follows §21. D-045 correctly rejects an annotated-tag round source_commit: a mutation shows the test catches its removal, the real-history forge is rejected, and no genuine record regresses (27 present round source_commits, 120 fix_revisions and 103 heads are all commit objects). Pre-freeze passes 11/11. The D-045 row makes no business or provenance claim and correctly presents itself as completing D-044's class. Its heading misattributes a Low to the round-28 domain reviewer, which is F-DG0-015 (Low, non-mandatory). I concur with accepting it as an observation, pending the auditor. My own earlier findings F-DG0-013/014 were already CLOSED_VERIFIED."
+}
