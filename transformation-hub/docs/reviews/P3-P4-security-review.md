@@ -302,4 +302,14 @@ fails, 1 `OBSERVED`, 5 `CONTROL`). The `DEFECT` tests must not be weakened; they
 
 ## 7. Review commit
 
-Filled in by a follow-up documentation commit after the secret scans of this commit.
+Review commit `0b39873` (this document and the two probe specs, parent `5bf274b`). Secret scans of that commit with the
+repository's script:
+```
+$ GITLEAKS=…/gitleaks-8.30.1 bash scripts/ops/secret-scan.sh tree
+  tree: 1075 committed files at HEAD 0b39873 … INF no leaks found  PASS  tree: no findings  SECRET SCAN (tree): PASS
+$ GITLEAKS=… bash scripts/ops/secret-scan.sh history
+  history: 280 commits reachable from HEAD 0b39873 (whole repository) … INF 195 commits scanned. … INF no leaks found
+  PASS  history: no findings  SECRET SCAN (history): PASS
+```
+This section was filled in by a follow-up documentation commit. Nothing was pushed; no process started by the reviewer is left
+running.
