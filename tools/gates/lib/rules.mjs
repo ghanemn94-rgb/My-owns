@@ -599,9 +599,10 @@ function roundEntry(stage, roundDir) {
 // findManifest's (D-035): a superseded review round's write-once manifest may name a `source_commit` that no longer
 // resolves (round 18 was rewritten by the D-034 write-once repair), and that is accepted because the manifest's entries
 // must still hash to its `candidate_id` -- a content-preserving check, not a skipped one. checkClosure and
-// checkInvocation are STRICT (D-039/D-040): a CLOSED_VERIFIED `fix_revision` and a run's `head_commit_at_start` must be
-// present, and the fix must be an ancestor of the verifying run's head and of the gate candidate. checkClosure skips the
-// round-side check only via the run's real head, never a round's self-declared source_commit (D-040, F-DG0-166/249).
+// checkInvocation are STRICT (D-039..D-041): a CLOSED_VERIFIED `fix_revision` and a run's `head_commit_at_start` must be
+// present, and the fix must be an ancestor of THREE anchors -- the verifying round's frozen source_commit (when it
+// resolves; this findManifest tolerance covers the one case it may not), the verifying run's real head, and the gate
+// candidate -- so no single forgeable metadata value decides a closure (D-041, F-DG0-166/168/249).
 function commitPresent(repo, sha) {
   try {
     execFileSync("git", ["-C", repo, "cat-file", "-e", `${sha}^{commit}`], { stdio: "ignore" });
