@@ -3,6 +3,7 @@ import type { Machine } from './workflows';
 import type { WeightedItem } from './measurement';
 import { addCalendarDays } from './calendar';
 import { canonicalJson } from './canonical';
+import { forbidden } from './errors';
 
 /**
  * Planning rules that are not schedule/measurement maths (spec §9): RAID lifecycle and exposure, open blockers,
@@ -53,6 +54,20 @@ export const OPEN_TASK_STATUSES: readonly TaskStatus[] = ['not_started', 'in_pro
 export const CLOSED_TASK_STATUSES: readonly TaskStatus[] = ['accepted', 'done', 'cancelled'];
 export const OPEN_MILESTONE_STATUSES: readonly MilestoneStatus[] = ['planned', 'at_risk', 'achieved_pending_evidence', 'missed'];
 export const OPEN_DELIVERABLE_STATUSES: readonly DeliverableStatus[] = ['planned', 'in_progress', 'submitted', 'rejected'];
+
+// ---------------------------------------------------------------------------------------------------------
+// Acceptance authority (spec §6 "approver role" per activity, §9 "completion requires acceptance"; DOM-P2-07)
+
+/**
+ * A task (or a deliverable linked to a task) that designates an approver role is accepted — or returned — only by a holder
+ * of that role, on top of the acceptance permission and separation of duties (the submitter never accepts). No designated
+ * role (`null`) = the acceptance permission decides.
+ */
+export function assertDesignatedApprover(input: { subject: string; approverRole: string | null; actorRoles: readonly string[] }): void {
+  if (input.approverRole && !input.actorRoles.includes(input.approverRole)) {
+    throw forbidden('planning.acceptance.not_approver_role', `Only the designated approver role (${input.approverRole}) may accept or return ${input.subject}`);
+  }
+}
 
 // ---------------------------------------------------------------------------------------------------------
 // Look-ahead

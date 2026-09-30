@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { formatMessage, renderMessagesEn, serverMessage } from './messages';
 import { computeStatusDimensions, DIMENSION_MESSAGES_EN, DIMENSION_NOT_YET_ASSESSED, type DimensionInput } from './carveout';
-import { evaluateGate, gateDecisionIssue, GATE_MESSAGES_EN } from './gates';
+import { evaluateGate, gateApprovalDecisionIssue, gateDecisionIssue, GATE_MESSAGES_EN } from './gates';
 
 /**
  * QA-P1-14 [REQ-UX-001, REQ-UX-002] — server-computed explanations are returned as codes + parameters (translated by the
@@ -42,6 +42,15 @@ describe('QA-P1-14 — server messages', () => {
       standaloneAccepted: false,
       closings: [{ kind: 'signing', status: 'confirmed' }],
     },
+    // DOM-P2-05: a G4 approval flagged for controlled reassessment does not count as standalone acceptance.
+    {
+      newcoIncorporation: null,
+      perimeter: [],
+      readiness: [{ mandatory: true, blocker: false, status: 'passed' }],
+      standaloneAccepted: true,
+      standaloneUnderReassessment: true,
+      closings: [],
+    },
   ];
 
   it('every dimension carries codes + params, and the English explanation is rendered from them', () => {
@@ -75,6 +84,10 @@ describe('QA-P1-14 — server messages', () => {
     );
     expect(by['jv_transaction']!.explanationI18n).toEqual([{ code: 'dimension.jv.partially_closed', params: { confirmed: 1, closings: 2 } }]);
     expect(DIMENSION_NOT_YET_ASSESSED).toEqual([{ code: 'dimension.not_yet_assessed', params: {} }]);
+    const flagged = Object.fromEntries(computeStatusDimensions(inputs[3]!).map((d) => [d.key, d]));
+    expect(flagged['operational_readiness']!.state).toBe('day1_ready');
+    expect(flagged['operational_readiness']!.explanationI18n[0]).toEqual({ code: 'dimension.readiness.standalone_reassessment', params: {} });
+    expect(computeStatusDimensions({ ...inputs[3]!, standaloneUnderReassessment: false }).find((d) => d.key === 'operational_readiness')!.state).toBe('standalone_accepted');
   });
 
   it('gate blockers carry a code + params; the message is the rendered English template', () => {
@@ -95,6 +108,13 @@ describe('QA-P1-14 — server messages', () => {
       gateDecisionIssue({ id: 'd', status: 'recommended', authorityOutcome: 'pending_external_authority' }, 'G1')!,
       gateDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'pending_external_authority' }, 'G1')!,
       gateDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'not_assessed' }, 'G1')!,
+      // DOM-P2-01
+      gateApprovalDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'within_mandate', gateKey: null }, 'G1', null)!,
+      gateApprovalDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'within_mandate', gateKey: 'G1', decisionTypeKey: 'x' }, 'G1', null)!,
+      gateApprovalDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'within_mandate', gateKey: 'G1', decisionTypeKey: null }, 'G1', { matrixVersionId: 'm', decisionType: null })!,
+      gateApprovalDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'within_mandate', gateKey: 'G1', decisionTypeKey: 'x' }, 'G1', { matrixVersionId: 'm', decisionType: null })!,
+      gateApprovalDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'within_mandate', gateKey: 'G1', decisionTypeKey: 'x' }, 'G1', { matrixVersionId: 'm', decisionType: { key: 'x', gateKeys: ['G2'], withinCommitteeAuthority: true } })!,
+      gateApprovalDecisionIssue({ id: 'd', status: 'approved', authorityOutcome: 'within_mandate', gateKey: 'G1', decisionTypeKey: 'x' }, 'G1', { matrixVersionId: 'm', decisionType: { key: 'x', gateKeys: ['G1'], withinCommitteeAuthority: false } })!,
     ];
     const codes = new Set<string>();
     for (const b of issues) {

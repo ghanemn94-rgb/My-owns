@@ -121,11 +121,7 @@ export const CriterionDto = z.object({
   reviewerRole: Role,
   applicability: z.string(),
   version: z.number().int(),
-  /**
-   * `verified` = active links also accepted in the documents module's evidence verification. Advisory for gate criteria:
-   * the criterion's designated reviewer (never the evidence owner) is the checker (business-gates.md §4, DOM-P2-21).
-   */
-  evidence: z.object({ active: z.number().int(), conflicting: z.number().int(), verified: z.number().int() }),
+  evidence: z.object({ active: z.number().int(), conflicting: z.number().int() }),
   assessment: z.object({
     /** Null for a criterion added after the cycle started (its row is created by the first command). */
     id: Uuid.nullable(),

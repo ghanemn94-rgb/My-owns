@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { evaluateGate, assertWaiverAllowed, assertNotApplicableAllowed, planReopen, CriterionState } from './gates';
-import { weightedProgress, calculateRag, aggregateRag, effectiveRag } from './measurement';
+import { weightedProgress, calculateRag, aggregateRag, effectiveRag, capOverrideAtOpenBlockers } from './measurement';
 import { sumMoney, parseMoney, detectValueBasisConfusion } from './money';
 import {
   computeStatusDimensions,
@@ -121,6 +121,18 @@ describe('measurement rules', () => {
     expect(effectiveRag(calc, ov, '2026-09-29')).toMatchObject({ calculated: 'red', effective: 'amber', overridden: true });
     expect(effectiveRag(calc, { ...ov, reviewerUserId: null }, '2026-09-29').effective).toBe('red');
     expect(effectiveRag(calc, ov, '2026-10-16')).toMatchObject({ effective: 'red', overrideExpired: true });
+  });
+  it('DOM-P2-10: a project override never displays better than red while a red critical item (open blocker) exists [REQ-PLN-018]', () => {
+    const calc = { status: 'red' as const, explanation: 'Worst-of: red', slipDays: null };
+    const ov = { overrideStatus: 'green' as const, reason: 'Sponsor judgement', expiresOn: '2026-10-15', reviewerUserId: 'rev', approved: true };
+    const eff = effectiveRag(calc, ov, '2026-09-29');
+    expect(eff.effective).toBe('green');
+    const capped = capOverrideAtOpenBlockers(eff, 1);
+    expect(capped).toMatchObject({ calculated: 'red', effective: 'red', overridden: false });
+    expect(capped.explanation).toMatch(/not applied while 1 red critical item/);
+    // No open blocker: the approved override applies; an override to red is never capped.
+    expect(capOverrideAtOpenBlockers(eff, 0).effective).toBe('green');
+    expect(capOverrideAtOpenBlockers(effectiveRag(calc, { ...ov, overrideStatus: 'red' }, '2026-09-29'), 2)).toMatchObject({ effective: 'red', overridden: true });
   });
 });
 

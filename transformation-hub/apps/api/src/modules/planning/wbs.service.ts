@@ -15,6 +15,7 @@ import {
   invalid,
   notFound,
   isOverdue,
+  assertDesignatedApprover,
 } from '@hub/domain';
 import type { z } from 'zod';
 import type {
@@ -209,6 +210,10 @@ export class WbsService {
     this.s.assert(ctx, 'planning.task.manage', p, { workstreamId: t.workstreamId });
     this.s.assertVersion(t, body.expectedVersion, 'task');
     if (['accepted', 'done', 'cancelled'].includes(t.status)) throw ruleViolation('task.not_editable', `A ${t.status} task cannot be edited — reopen it first`);
+    // DOM-P2-07: the approver role cannot be swapped while the task awaits acceptance (return it to the owner first).
+    if (body.approverRole !== undefined && body.approverRole !== t.approverRole && t.status === 'submitted_for_acceptance') {
+      throw ruleViolation('task.approver_role_locked', 'The approver role cannot change while the task awaits acceptance — return it first');
+    }
     // Explicit field mapping — never spread the request body (status/owner/actuals are commands).
     const c: Partial<typeof schema.task.$inferInsert> = {};
     if (body.title !== undefined) c.title = body.title;
@@ -314,6 +319,8 @@ export class WbsService {
     const { p, t } = await this.loadTask(ctx, projectId, taskId);
     // Separation of duties: the acceptor must not be the submitter (policy condition not_self) — after the state check.
     this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: t.workstreamId, requesterUserId: t.submittedBy }, () => transition('task', TASK_MACHINE, t.status as TaskStatus, 'accept'));
+    // DOM-P2-07: the task's designated approver role (spec §6) — not any holder of the acceptance permission.
+    assertDesignatedApprover({ subject: `task ${t.wbsCode}`, approverRole: t.approverRole, actorRoles: this.s.rolesFor(ctx, projectId, t.workstreamId) });
     this.s.assertVersion(t, body.expectedVersion, 'task');
     if (t.status === 'submitted_for_acceptance') await this.s.assertEvidence(projectId, 'task', t.id);
     const today = this.s.today(p);
@@ -323,6 +330,7 @@ export class WbsService {
   async rejectTaskAcceptance(ctx: RequestContext, projectId: string, taskId: string, body: { expectedVersion: number; reason: string }) {
     const { p, t } = await this.loadTask(ctx, projectId, taskId);
     this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: t.workstreamId, requesterUserId: t.submittedBy }, () => transition('task', TASK_MACHINE, t.status as TaskStatus, 'reject_acceptance'));
+    assertDesignatedApprover({ subject: `task ${t.wbsCode}`, approverRole: t.approverRole, actorRoles: this.s.rolesFor(ctx, projectId, t.workstreamId) });
     return this.applyTask(ctx, p, t, 'reject_acceptance', body.expectedVersion, { submittedBy: null, submittedAt: null }, { reason: body.reason });
   }
 
@@ -843,12 +851,14 @@ export class WbsService {
         break;
       case 'accept':
         this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: d.workstreamId, requesterUserId: d.submittedBy }, () => transition('deliverable', DELIVERABLE_MACHINE, d.status as DeliverableStatus, command));
+        await this.assertDeliverableApprover(ctx, projectId, d);
         this.s.assertVersion(d, body.expectedVersion, 'deliverable');
         if (d.status === 'submitted') await this.s.assertEvidence(projectId, 'deliverable', d.id);
         extra = { acceptedBy: ctx.principal.userId, acceptedAt: new Date() };
         break;
       case 'reject':
         this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: d.workstreamId, requesterUserId: d.submittedBy }, () => transition('deliverable', DELIVERABLE_MACHINE, d.status as DeliverableStatus, command));
+        await this.assertDeliverableApprover(ctx, projectId, d);
         break;
       case 'cancel':
         this.s.assert(ctx, 'planning.wbs.manage', p, { workstreamId: d.workstreamId });
@@ -864,6 +874,13 @@ export class WbsService {
     await this.audit.record({ action: `planning.deliverable.${command}`, entityType: 'deliverable', entityId: id, projectId, before: { status: d.status }, after: { status: to }, reason });
     if (command === 'submit') await this.outbox.emit({ type: 'approval.pending', projectId, aggregateType: 'deliverable', aggregateId: id, payload: { kind: 'deliverable_acceptance', workstreamId: d.workstreamId } });
     return { id, status: to as string, version: row['version'] as number };
+  }
+
+  /** DOM-P2-07: a deliverable produced by a task carries that task's designated approver role. */
+  private async assertDeliverableApprover(ctx: RequestContext, projectId: string, d: Deliverable) {
+    if (!d.taskId) return;
+    const t = await loadInProject(this.s.db, schema.task, projectId, d.taskId);
+    assertDesignatedApprover({ subject: `deliverable ${d.code}`, approverRole: t.approverRole, actorRoles: this.s.rolesFor(ctx, projectId, d.workstreamId) });
   }
 
   // Used by the seed and other planning services.

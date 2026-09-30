@@ -2120,8 +2120,10 @@ CREATE TABLE "source_claim" (
 	"confirmed_value" text,
 	"confidence" numeric(4, 3),
 	"verification_status" "verification_status" DEFAULT 'unknown' NOT NULL,
+	"origin_status" "verification_status" DEFAULT 'unknown' NOT NULL,
 	"reviewer_user_id" uuid,
 	"reviewed_at" timestamp with time zone,
+	"verification_source_id" uuid,
 	"conflict_with_claim_id" uuid,
 	"applied_to_record" boolean DEFAULT false NOT NULL,
 	"applied_by" uuid,
@@ -2762,6 +2764,7 @@ ALTER TABLE "evidence_link" ADD CONSTRAINT "evidence_link_room_fk" FOREIGN KEY (
 ALTER TABLE "source_claim" ADD CONSTRAINT "source_claim_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_claim" ADD CONSTRAINT "source_claim_conflict_fk" FOREIGN KEY ("project_id","conflict_with_claim_id") REFERENCES "public"."source_claim"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_claim" ADD CONSTRAINT "source_claim_source_fk" FOREIGN KEY ("project_id","source_id") REFERENCES "public"."source_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "source_claim" ADD CONSTRAINT "source_claim_verification_source_fk" FOREIGN KEY ("project_id","verification_source_id") REFERENCES "public"."source_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_record" ADD CONSTRAINT "source_record_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_record" ADD CONSTRAINT "source_record_supersedes_fk" FOREIGN KEY ("project_id","supersedes_source_id") REFERENCES "public"."source_record"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "source_record" ADD CONSTRAINT "source_record_docver_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

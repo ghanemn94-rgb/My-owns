@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { Classification, isOverdue } from '@hub/domain';
+import { Classification, CRITERION_EDITABLE_GATE_STATUSES, EVIDENCE_TARGET_READ_PERMISSION, NO_HUMAN_REQUESTER, RoleKey, isOverdue } from '@hub/domain';
 import type { MY_WORK_TYPES } from '@hub/contracts';
 import type { RequestContext } from '../../platform/context';
 import { isFullScope } from '../../platform/context';
 import { PlanningSupport, ProjectInfo } from './planning-support';
+import { RecordVisibility } from '../../platform/record-visibility';
 
 type WorkType = (typeof MY_WORK_TYPES)[number];
 interface Item {
@@ -62,13 +63,16 @@ export class MyWorkService {
     const subT = await tx.select().from(T).where(and(inArray(T.projectId, pids), eq(T.status, 'submitted_for_acceptance')));
     for (const t of subT) {
       if (!can('planning.deliverable.accept', t.projectId, { workstreamId: t.workstreamId, requesterUserId: t.submittedBy })) continue;
+      // DOM-P2-07: only the task's designated approver role is asked to accept it.
+      if (t.approverRole && !this.s.rolesFor(ctx, t.projectId, t.workstreamId).includes(t.approverRole)) continue;
       push(byId.get(t.projectId)!, { type: 'task_acceptance', entityId: t.id, code: t.wbsCode, title: t.title, status: t.status, dueDate: t.plannedFinish, overdue: false, linkPath: `/projects/${t.projectId}/plan/tasks/${t.id}` }, t.isDemo);
     }
     // Deliverables awaiting my acceptance
     const D = schema.deliverable;
-    const subD = await tx.select().from(D).where(and(inArray(D.projectId, pids), eq(D.status, 'submitted')));
-    for (const d of subD) {
+    const subD = await tx.select({ d: D, approverRole: T.approverRole }).from(D).leftJoin(T, and(eq(T.id, D.taskId), eq(T.projectId, D.projectId))).where(and(inArray(D.projectId, pids), eq(D.status, 'submitted')));
+    for (const { d, approverRole } of subD) {
       if (!can('planning.deliverable.accept', d.projectId, { workstreamId: d.workstreamId, requesterUserId: d.submittedBy })) continue;
+      if (approverRole && !this.s.rolesFor(ctx, d.projectId, d.workstreamId).includes(approverRole)) continue;
       push(byId.get(d.projectId)!, { type: 'deliverable_acceptance', entityId: d.id, code: d.code, title: d.title, status: d.status, dueDate: d.dueDate, overdue: isOverdue(d.dueDate, today(d.projectId), true), linkPath: `/projects/${d.projectId}/plan/deliverables/${d.id}` }, d.isDemo);
     }
     // Milestones awaiting evidence verification
@@ -138,9 +142,171 @@ export class MyWorkService {
       push(byId.get(d.project_id)!, { type: 'decision_vote', entityId: d.id, code: d.code, title: d.title, status: d.status, dueDate: d.latest_safe_date, overdue: isOverdue(d.latest_safe_date, today(d.project_id), true), linkPath: `/projects/${d.project_id}/committee/decisions/${d.id}` }, d.is_demo);
     }
 
+    // ---- Governance, gate and documents approvals (DOM-P2-09, REQ-UX-018): the same policy inputs as the commands — the
+    // designated role / authority, and separation of duties against the subject's requester (fail closed when unknown).
+    const people = (pid: string) => ctx.principal.projects.get(pid);
+    const holds = (pid: string, role: string) => !!people(pid)?.roles.has(role as RoleKey);
+    const inWorkstreamRole = (pid: string, role: string) => people(pid)?.workstreamRoles.find((w) => w.role === role) ?? null;
+
+    // Gate decisions awaiting me: a cycle ready for decision whose approver role I hold, not submitted by me.
+    const GD = schema.gateDefinition;
+    const GA = schema.gateAssessment;
+    const ready = await tx
+      .select({ a: GA, g: { id: GD.id, key: GD.key, name: GD.name, approverRole: GD.approverRole } })
+      .from(GA)
+      .innerJoin(GD, and(eq(GD.id, GA.gateId), eq(GD.projectId, GA.projectId)))
+      .where(and(inArray(GA.projectId, pids), eq(GA.isCurrent, true), eq(GA.status, 'ready_for_decision')));
+    for (const { a, g } of ready) {
+      const p = byId.get(a.projectId)!;
+      const withinAuthority = holds(a.projectId, g.approverRole);
+      if (!withinAuthority) continue;
+      if (!this.s.policy.can(ctx, 'gates.assessment.decide', { projectId: p.id, classification: p.classification, requesterUserId: a.submittedBy, withinAuthority })) continue;
+      push(p, { type: 'gate_decision', entityId: a.id, code: g.key, title: g.name, status: a.status, dueDate: null, overdue: false, linkPath: `/projects/${p.id}/gates/${g.id}` }, p.isDemo);
+    }
+
+    // Gate criteria awaiting my review as their DESIGNATED reviewer: evidence submitted, or a pending not-applicable proposal.
+    const GC = schema.gateCriterion;
+    const CA = schema.criterionAssessment;
+    const toReview = await tx
+      .select({ ca: CA, c: { id: GC.id, key: GC.key, description: GC.description, reviewerRole: GC.reviewerRole }, g: { id: GD.id }, a: { status: GA.status } })
+      .from(CA)
+      .innerJoin(GA, and(eq(GA.id, CA.assessmentId), eq(GA.projectId, CA.projectId)))
+      .innerJoin(GC, and(eq(GC.id, CA.criterionId), eq(GC.projectId, CA.projectId)))
+      .innerJoin(GD, and(eq(GD.id, GC.gateId), eq(GD.projectId, GC.projectId)))
+      .where(
+        and(
+          inArray(CA.projectId, pids),
+          eq(GA.isCurrent, true),
+          inArray(GA.status, [...CRITERION_EDITABLE_GATE_STATUSES]),
+          or(eq(CA.status, 'evidence_submitted'), and(eq(CA.status, 'not_applicable'), eq(CA.naApproved, false))),
+        ),
+      );
+    const submitters = await this.gateEvidenceSubmitters(pids, toReview.map((r) => r.c.id));
+    for (const { ca, c, g } of toReview) {
+      const p = byId.get(ca.projectId)!;
+      const viaWs = holds(p.id, c.reviewerRole) ? null : inWorkstreamRole(p.id, c.reviewerRole);
+      if (!holds(p.id, c.reviewerRole) && !viaWs) continue;
+      let requester: string | null;
+      if (ca.status === 'not_applicable') requester = ca.naProposedBy;
+      else {
+        const subs = submitters.get(c.id) ?? [];
+        requester = subs.length ? (me && subs.includes(me) ? me : subs[0]!) : NO_HUMAN_REQUESTER;
+      }
+      if (!this.s.policy.can(ctx, 'gates.assessment.review', { projectId: p.id, classification: p.classification, requesterUserId: requester, workstreamId: viaWs?.workstreamId ?? null })) continue;
+      push(p, { type: 'gate_criterion_review', entityId: c.id, code: c.key, title: c.description, status: ca.status, dueDate: null, overdue: false, linkPath: `/projects/${p.id}/gates/${g.id}` }, p.isDemo);
+    }
+
+    // Waivers awaiting me as the waiver authority (gate criteria and readiness checks): current authority role of the target.
+    const W = schema.waiver;
+    const RC = schema.readinessCheck;
+    const reqW = await tx
+      .select({ w: W, gc: { key: GC.key, gateId: GC.gateId, waivable: GC.waivable, role: GC.waiverAuthorityRole }, rc: { code: RC.code, waivable: RC.waivable, role: RC.waiverAuthorityRole } })
+      .from(W)
+      .leftJoin(GC, and(eq(W.targetType, 'gate_criterion'), eq(GC.id, W.targetId), eq(GC.projectId, W.projectId)))
+      .leftJoin(RC, and(eq(W.targetType, 'readiness_check'), eq(RC.id, W.targetId), eq(RC.projectId, W.projectId)))
+      .where(and(inArray(W.projectId, pids), eq(W.status, 'requested')));
+    for (const { w, gc, rc } of reqW) {
+      const p = byId.get(w.projectId)!;
+      const t = gc?.key ? { key: gc.key, waivable: gc.waivable, role: gc.role, link: `/projects/${p.id}/gates/${gc.gateId}` } : rc?.code ? { key: rc.code, waivable: rc.waivable, role: rc.role, link: `/projects/${p.id}/readiness/checks/${w.targetId}` } : null;
+      if (!t || !t.waivable || !t.role || !holds(p.id, t.role)) continue;
+      if (!this.s.policy.can(ctx, 'gates.waiver.approve', { projectId: p.id, classification: p.classification, requesterUserId: w.requestedBy, withinAuthority: true })) continue;
+      if (!(await this.visible(ctx, p.id, 'waiver', w.id))) continue;
+      push(p, { type: 'waiver_approval', entityId: w.id, code: t.key, title: w.basis, status: w.status, dueDate: w.expiresOn, overdue: isOverdue(w.expiresOn, today(p.id), true), linkPath: t.link }, w.isDemo);
+    }
+
+    // Evidence awaiting verification: active (not yet verified) or conflicting links I may verify — never evidence I linked
+    // or whose document version I uploaded (not_self), and only links whose document AND target I can see.
+    for (const p of projects) {
+      if (!this.s.policy.canInProject(ctx, 'documents.evidence.verify', p.id)) continue;
+      const vis = new RecordVisibility(this.s.policy, ctx, p.id, { reach: true, readPermission: (t) => (EVIDENCE_TARGET_READ_PERMISSION as Record<string, string>)[t] });
+      const E = schema.evidenceLink;
+      const rows = await tx
+        .select({ e: E, title: schema.document.title, classification: schema.document.classification, uploadedBy: schema.documentVersion.uploadedBy, gateId: GC.gateId })
+        .from(E)
+        .leftJoin(schema.document, and(eq(schema.document.id, E.documentId), eq(schema.document.projectId, E.projectId)))
+        .leftJoin(schema.documentVersion, and(eq(schema.documentVersion.id, E.documentVersionId), eq(schema.documentVersion.projectId, E.projectId)))
+        .leftJoin(GC, and(eq(E.targetType, 'gate_criterion'), eq(GC.id, E.targetId), eq(GC.projectId, E.projectId)))
+        .where(and(eq(E.projectId, p.id), or(and(eq(E.status, 'active'), isNull(E.reviewedBy)), eq(E.status, 'conflicting')), vis.exists('evidence_link', E.id)));
+      for (const { e, title, classification, uploadedBy, gateId } of rows) {
+        const attrs = { projectId: p.id, classification: (classification as Classification | null) ?? p.classification };
+        if (!this.s.policy.can(ctx, 'documents.evidence.verify', { ...attrs, requesterUserId: e.addedBy })) continue;
+        if (uploadedBy && !this.s.policy.can(ctx, 'documents.evidence.verify', { ...attrs, requesterUserId: uploadedBy })) continue;
+        push(p, { type: 'evidence_verification', entityId: e.id, code: null, title: (title ?? e.note ?? e.purpose ?? e.targetType).slice(0, 300), status: e.status, dueDate: null, overdue: false, linkPath: evidenceLink(p.id, e, gateId) }, p.isDemo);
+      }
+    }
+
+    // Committee actions reported done, awaiting my closure verification (not the person who reported them done).
+    const acts2 = await tx
+      .select({ a: A, classification: schema.decision.classification })
+      .from(A)
+      .leftJoin(schema.decision, and(eq(schema.decision.id, A.decisionId), eq(schema.decision.projectId, A.projectId)))
+      .where(and(inArray(A.projectId, pids), eq(A.status, 'done_pending_verification')));
+    for (const { a, classification } of acts2) {
+      const p = byId.get(a.projectId)!;
+      if (!this.s.policy.can(ctx, 'governance.action.verify_closure', { projectId: p.id, classification: (classification as Classification | null) ?? null, requesterUserId: a.reportedDoneBy, ownerUserIds: [a.ownerUserId, a.createdBy] })) continue;
+      push(p, { type: 'action_closure_verification', entityId: a.id, code: a.code, title: a.title, status: a.status, dueDate: a.dueDate, overdue: false, linkPath: `/projects/${p.id}/committee/actions/${a.id}` }, a.isDemo);
+    }
+
+    // Minutes awaiting my approval (not the drafter of the current minutes version).
+    const MT = schema.meeting;
+    const drafts = await tx
+      .select({ m: MT, classification: schema.committee.classification })
+      .from(MT)
+      .innerJoin(schema.committee, and(eq(schema.committee.id, MT.committeeId), eq(schema.committee.projectId, MT.projectId)))
+      .where(and(inArray(MT.projectId, pids), eq(MT.status, 'minutes_draft')));
+    for (const { m, classification } of drafts) {
+      const p = byId.get(m.projectId)!;
+      if (!this.s.policy.can(ctx, 'governance.minutes.approve', { projectId: p.id, classification: classification as Classification, requesterUserId: m.minutesDraftedBy })) continue;
+      push(p, { type: 'minutes_approval', entityId: m.id, code: `#${m.number}`, title: m.title, status: m.status, dueDate: null, overdue: false, linkPath: `/projects/${p.id}/committee/meetings/${m.id}` }, m.isDemo);
+    }
+
     items.sort((a, b) => Number(b.overdue) - Number(a.overdue) || (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999') || a.type.localeCompare(b.type) || a.title.localeCompare(b.title));
     const counts: Record<string, number> = {};
     for (const i of items) counts[i.type] = (counts[i.type] ?? 0) + 1;
     return { items, counts, generatedAt: new Date().toISOString() };
+  }
+
+  /** Users who added the active evidence of each gate criterion (the not_self subjects of a criterion review). */
+  private async gateEvidenceSubmitters(pids: string[], criterionIds: string[]): Promise<Map<string, string[]>> {
+    if (!criterionIds.length) return new Map();
+    const E = schema.evidenceLink;
+    const rows = await this.s.db
+      .tx()
+      .selectDistinct({ targetId: E.targetId, addedBy: E.addedBy })
+      .from(E)
+      .where(and(inArray(E.projectId, pids), eq(E.targetType, 'gate_criterion'), inArray(E.targetId, criterionIds), eq(E.status, 'active')));
+    const out = new Map<string, string[]>();
+    for (const r of rows) out.set(r.targetId, [...(out.get(r.targetId) ?? []), r.addedBy]);
+    return out;
+  }
+
+  /** Record-level visibility of one record (RecordVisibility: target / parent visibility and workstream reach). */
+  private async visible(ctx: RequestContext, projectId: string, type: string, id: string): Promise<boolean> {
+    const vis = new RecordVisibility(this.s.policy, ctx, projectId, { reach: true, readPermission: (t) => (EVIDENCE_TARGET_READ_PERMISSION as Record<string, string>)[t] });
+    const r = await this.s.db.tx().execute<{ ok: boolean }>(sql`select ${vis.exists(type, sql`${id}::uuid`)} as ok`);
+    return r.rows[0]?.ok === true;
+  }
+}
+
+/** Where a verifier reviews a piece of evidence: its document, else the record it supports. */
+function evidenceLink(pid: string, e: { documentId: string | null; targetType: string; targetId: string }, gateId: string | null): string {
+  if (e.documentId) return `/projects/${pid}/documents/${e.documentId}`;
+  switch (e.targetType) {
+    case 'gate_criterion':
+      return gateId ? `/projects/${pid}/gates/${gateId}` : `/projects/${pid}/gates`;
+    case 'task':
+      return `/projects/${pid}/plan/tasks/${e.targetId}`;
+    case 'deliverable':
+      return `/projects/${pid}/plan/deliverables/${e.targetId}`;
+    case 'milestone':
+      return `/projects/${pid}/plan/milestones/${e.targetId}`;
+    case 'decision':
+      return `/projects/${pid}/committee/decisions/${e.targetId}`;
+    case 'action_item':
+      return `/projects/${pid}/committee/actions/${e.targetId}`;
+    case 'readiness_check':
+      return `/projects/${pid}/readiness/checks/${e.targetId}`;
+    default:
+      return `/projects/${pid}/documents`;
   }
 }

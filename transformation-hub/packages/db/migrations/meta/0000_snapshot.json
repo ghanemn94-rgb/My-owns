@@ -1,5 +1,5 @@
 {
-  "id": "118d265f-3c29-4a32-852c-76ac9bc5c4a0",
+  "id": "6386f714-cc64-4e0a-9921-efd403d9bde0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -18051,6 +18051,14 @@
           "notNull": true,
           "default": "'unknown'"
         },
+        "origin_status": {
+          "name": "origin_status",
+          "type": "verification_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unknown'"
+        },
         "reviewer_user_id": {
           "name": "reviewer_user_id",
           "type": "uuid",
@@ -18060,6 +18068,12 @@
         "reviewed_at": {
           "name": "reviewed_at",
           "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "verification_source_id": {
+          "name": "verification_source_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -18181,6 +18195,21 @@
           "columnsFrom": [
             "project_id",
             "source_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "source_claim_verification_source_fk": {
+          "name": "source_claim_verification_source_fk",
+          "tableFrom": "source_claim",
+          "tableTo": "source_record",
+          "columnsFrom": [
+            "project_id",
+            "verification_source_id"
           ],
           "columnsTo": [
             "project_id",

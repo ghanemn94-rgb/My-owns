@@ -841,6 +841,13 @@ export const MY_WORK_TYPES = [
   'baseline_approval',
   'action_item',
   'decision_vote',
+  // DOM-P2-09: governance, gate and documents approvals (same policy checks as the commands)
+  'gate_decision',
+  'gate_criterion_review',
+  'waiver_approval',
+  'evidence_verification',
+  'action_closure_verification',
+  'minutes_approval',
 ] as const;
 
 export const MyWorkItemDto = z.object({

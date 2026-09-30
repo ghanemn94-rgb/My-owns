@@ -1169,7 +1169,10 @@ export class GatesService implements OnModuleInit {
       authorityOutcome: d.authorityOutcome,
       gateKey: d.gateKey,
       isDemo: d.isDemo,
-      ...((issue) => ({ blocker: issue?.message ?? null, blockerI18n: issue?.messageI18n ?? [] }))(gateApprovalDecisionIssue(this.backing(d), gateKey, authority)),
+      // A decision that can never back this gate says so first (DOM-P2-01); otherwise its current blocker, if any.
+      ...((issue) => ({ blocker: issue?.message ?? null, blockerI18n: issue?.messageI18n ?? [] }))(
+        gateDecisionTypeIssue(this.backing(d), gateKey, authority) ?? gateApprovalDecisionIssue(this.backing(d), gateKey, authority),
+      ),
     };
   }
 
@@ -1191,7 +1194,7 @@ export class GatesService implements OnModuleInit {
       reviewerRole: c.reviewerRole,
       applicability: c.applicability,
       version: c.version,
-      evidence: { active: ev.active, conflicting: ev.conflicting, verified: ev.verified },
+      evidence: { active: ev.active, conflicting: ev.conflicting },
       assessment: {
         // A criterion added after the cycle started has no row yet; it is created on its first command.
         id: ca?.id ?? null,

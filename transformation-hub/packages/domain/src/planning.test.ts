@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  assertDesignatedApprover,
   RAID_MACHINE,
   riskScore,
   riskRating,
@@ -133,5 +134,15 @@ describe('delay impact on top of an existing forecast slip [REQ-PLN-024]', () =>
     ];
     const r = delayImpact(nodes, [{ predecessorId: 'A', successorId: 'M', type: 'FS' as const, lagDays: 0 }], '2026-10-04', 'A', 3);
     expect(r.projectSlipWorkingDays).toBe(0);
+  });
+});
+
+describe('DOM-P2-07 — the designated approver role accepts a task or its deliverable [REQ-PLN-011]', () => {
+  it('only a holder of the designated approver role; no designated role = the acceptance permission decides', () => {
+    expect(() => assertDesignatedApprover({ subject: 'task WS01-A01', approverRole: 'sponsor', actorRoles: ['functional_approver', 'workstream_lead'] })).toThrow(
+      expect.objectContaining({ kind: 'forbidden', code: 'planning.acceptance.not_approver_role' }),
+    );
+    expect(() => assertDesignatedApprover({ subject: 'task WS01-A01', approverRole: 'functional_approver', actorRoles: ['functional_approver'] })).not.toThrow();
+    expect(() => assertDesignatedApprover({ subject: 'task WS01-A01', approverRole: null, actorRoles: [] })).not.toThrow();
   });
 });

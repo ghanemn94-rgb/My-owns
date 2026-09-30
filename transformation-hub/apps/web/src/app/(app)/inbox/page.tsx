@@ -30,6 +30,12 @@ const STATUS_ENUM: Record<WorkType, StatusEnum> = {
   baseline_approval: 'baselineStatuses',
   action_item: 'actionItemStatuses',
   decision_vote: 'decisionStatuses',
+  gate_decision: 'gateAssessmentStatuses',
+  gate_criterion_review: 'criterionStatuses',
+  waiver_approval: 'waiverStatuses',
+  evidence_verification: 'evidenceLinkStatuses',
+  action_closure_verification: 'actionItemStatuses',
+  minutes_approval: 'meetingStatuses',
 };
 
 /** Screen 15 — My Work / Inbox: what needs the caller's action across their projects (server-filtered by permission). */
