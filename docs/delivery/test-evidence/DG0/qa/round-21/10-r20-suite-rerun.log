@@ -1,0 +1,322 @@
+$ QA_REPO_ROOT=/var/tmp/mth-run.zMvETl/claude-0/dg0 node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs   # 2026-09-30T11:38:53Z node v22.22.2; candidate 7d00f857 @ a0e077d0f79dd43363c14d7337b6d20eda2ff986
+  QA20-G0 close current errors (0): []
+  QA20-G0 close historical errors (0): []
+  QA20-G0 accept current errors (0): []
+  QA20-G0 accept historical errors (0): []
+  [r9] ok 1 - control: the independent round-5 fixture is accepted (API and CLI exit 0)
+  [r9] ok 2 - control: a genuine later-round closure (post-manifest run) is accepted
+  [r9] ok 3 - QA5-R211a (F-DG0-211 = QA4-N39): a gate record edited and committed after the auditor's run is rejected
+  [r9] ok 4 - QA5-R211b (F-DG0-211 = QA4-N40): a gate record the auditor run never wrote (absent from its outputs) is rejected
+  [r9] ok 5 - QA5-R211c (F-DG0-211 variant): a gate record present in the auditor run's window but not tool-authored (shell/other writer) is rejected
+  [r9] ok 6 - QA5-R212a (F-DG0-212 = QA4-N30b): a round backed by a fabricated, backdated manifest is rejected
+  [r9] ok 7 - QA5-R212b (F-DG0-212 variant, new): an honest-content but backdated manifest (narrowed spec, so a new id/path) cannot legitimise a run that started before it was committed
+  [r9] ok 8 - QA5-P01 probe (informational): a later round whose manifest uses a narrower spec than the stage candidate_spec
+  [r9] ok 9 - QA5-R201 (F-DG0-201): a gate review record re-pointed at the reviewer's pre-freeze LOAD run is rejected
+  [r9] ok 10 - QA5-R202 (F-DG0-202): a bare, non-existent evidence file name on an IMPLEMENTED DG0 row is rejected
+  [r9] ok 11 - QA5-R204 (F-DG0-204): findings.json verification citing the verifier's pre-freeze LOAD run is rejected
+  [r9] ok 12 - QA5-R205 (F-DG0-205): evidence that is an in-repo symlink to a file outside the repository is rejected; in-repo link accepted
+  [r9] ok 13 - QA5-R206 (F-DG0-206): a committed exec-bit change after freeze invalidates the approval
+  [r9] ok 14 - QA5-R208a (F-DG0-208 = QA3-N20): rewrite round-1 frozen_at + record to cite a LOAD run, committed, is rejected
+  [r9] ok 15 - QA5-R208b (F-DG0-208): the same attack left uncommitted is rejected too
+  [r9] ok 16 - QA5-N50 binding: a run whose meta has written_by_tools but no tool_authored (round-4 runner shape) cannot bind a record
+  [r9] ok 17 - QA5-N51 binding: a closing sidecar that the run touched with file tools but whose final bytes are not the replay (e.g. shell edit after Write) cannot close a finding
+  [r9] not ok 18 - QA5-N52 binding: head_commit_at_start that is not a commit in this repository is rejected
+  [r9] not ok 19 - QA5-N53 binding: a run with no head_commit_at_start at all is rejected
+  [r9] ok 20 - QA5-N54 write-once: delete a committed record, then re-add it with different bytes in a later commit, is rejected
+  [r9] ok 21 - QA5-N55/QA7 write-once: deleting a committed record and re-adding the identical bytes is rejected (no D events allowed, D-021 rev.)
+  [r9] ok 22 - QA5-N56 write-once: an edited round assignment committed on a side branch and merged is rejected (history + sha binding)
+  [r9] not ok 23 - QA5-N57 manifests: a round whose manifest names a source_commit that does not exist is rejected
+  [r9] ok 24 - QA5-N58 manifests: a committed frozen manifest edited in the working tree (hidden with assume-unchanged) is rejected
+  [r9] ok 25 - QA5-N59 gate: the gate record authored by a domain-reviewer run (not the auditor) is rejected even if the auditor's outputs list is edited in history to match
+  [r9] ok 26 - QA5-RP1 runner replay: Write then Edit (chained) is tool_authored; outputs record the change
+  [r9] ok 27 - QA5-RP2 runner replay: Write followed by a shell rewrite (final bytes differ) is NOT tool_authored
+  [r9] ok 28 - QA5-RP3 runner replay: a failed (guard-denied) Write whose content appears via the shell is NOT tool_authored
+  [r9] ok 29 - QA5-RP4 runner replay: an Edit on a pre-existing file (not written by this run) is NOT tool_authored
+  [r9] ok 30 - QA5-RP5 runner replay: an Edit whose old_string does not occur poisons the replay; writes outside the repo are ignored
+  [r9] ok 31 - QA5-RP6 runner replay: a later successful Write supersedes an earlier failed one and binds the final bytes
+  [r9] ok 32 - QA5-M01 metadata: a new round (manifest, runs, reviews, sidecars, assignments, stages, findings, progress) leaves the candidate and the gate valid
+  [r9] ok 33 - QA5-A24 rejects: missing reviewer
+  [r9] ok 34 - QA5-A24 rejects: reviewer who authored the scope
+  [r9] ok 35 - QA5-A24 rejects: reviewer listed as implementation author
+  [r9] ok 36 - QA5-A24 rejects: shared invocation
+  [r9] ok 37 - QA5-A24 rejects: failed check
+  [r9] ok 38 - QA5-A24 rejects: blocked check
+  [r9] ok 39 - QA5-A24 rejects: failed gate test
+  [r9] ok 40 - QA5-A24 rejects: unresolved High finding
+  [r9] ok 41 - QA5-A24 rejects: incomplete requirement
+  [r9] ok 42 - QA5-A24 rejects: register row with a non-existent block anchor
+  [r9] ok 43 - QA5-A24 rejects: SOURCE row without a playbook block
+  [r9] ok 44 - QA5-A24 rejects: coverage matrix missing a block
+  [r9] ok 45 - QA5-A24 rejects: coverage maps a block to a requirement that doesn't cite it
+  [r9] ok 46 - QA5-A24 rejects: candidate change after freeze
+  [r9] ok 47 - QA5-A24 rejects: tampered manifest
+  [r9] ok 48 - QA6-N60 A25: on a fresh clone, running the shipped runner-metadata unit tests (CI + prefreeze step) leaves the candidate ID and the tree unchanged
+  [r9] ok 49 - QA6-N61 binding: a review whose run directory has a transcript and result but no meta.json (the orphaned round-5 shape) is rejected
+  [r9] ok 50 - QA6-N62 binding: a run whose meta records no result line (is_error, subtype no-result-line) cannot bind a PASS review
+  [r9] ok 51 - QA6-N63 binding: a run whose meta.json hashes do not match its committed transcript (transcript replaced after the run) is rejected
+  [r9] ok 52 - QA6-RP7 run_meta: a session resumed after a classifier outage (two transcript segments, two result lines) binds a Write from segment 1 edited in segment 2, and meta reflects the last result
+  [r9] ok 53 - QA6-RP8 run_meta: MultiEdit is replayed (all edits apply -> bound); one missing old_string poisons the file
+  [r9] ok 54 - QA6-RP9 run_meta: bilingual content (Arabic RTL text, emoji, CRLF) is bound byte-exactly as UTF-8
+  [r9] ok 55 - QA6-RP10 run_meta: a sibling path that merely shares the repo-root prefix (<repo>-evil/...) is not mapped into the repository
+  [r9] ok 56 - QA6-RP11 run_meta: an unrelated failed tool_result does not unbind a successful Write; a failed Edit after a Write leaves the Write's bytes bound
+  [r9] ok 57 - QA6-RP12 run_meta: a transcript with no result line yields is_error/no-result-line, and a corrupt snapshot fails loudly without meta.json while keeping the snapshots
+  [r9] ok 58 - QA7-N70 D-022: a transcript carrying the runner prompt only as a plain (non-replayed) user message, i.e. the pre-D-022 shape, cannot close a finding
+  [r9] ok 59 - QA7-N71 D-022: the prompt text inside a tool_result of a replayed user event (e.g. the agent reading run-agent.sh output) does not count
+  [r9] ok 60 - QA7-N72 D-022: a replayed prompt copied from another role's run (right run_id text, wrong role) is rejected
+  [r9] ok 61 - QA7-N73 D-022: a replayed prompt whose session_id differs from the run's session is rejected
+  [r9] ok 62 - QA7-N74 D-022: a replayed prompt for another stage (DG1) is rejected; the same prompt as an array of text blocks is accepted (control)
+  [r9] ok 63 - QA7-N75 replay: meta.tool_authored/outputs are hash-consistent with the file, but the transcript's own Write produced different bytes (forged meta) -> rejected
+  [r9] ok 64 - QA7-N76 replay: the only Write of the sidecar failed (tool_result is_error, e.g. guard-denied) although meta claims it tool-authored -> rejected
+  [r9] not ok 65 - QA7-N77 replay (control): Write of a draft, then a successful Edit producing the final bytes, plus an unrelated failed Edit, binds; an absolute path under meta.cwd binds too
+  [r9] ok 66 - QA7-N78 history: a commit back-dated before its parent (GIT_COMMITTER_DATE) anywhere in history is rejected
+  [r9] ok 67 - QA7-N79 write-once: the same review path added on two branches with different bytes, merged keeping ours, is rejected (two blobs)
+  [r9] ok 68 - QA7-N80 write-once: a committed review record turned into a symlink to an identical copy (type change) is rejected
+  [r9] ok 69 - QA7-N81 write-once: modify a record on a side branch then revert it there (HEAD bytes unchanged) and merge -> the M events are still rejected
+  [r9] ok 70 - QA7-N82 A25 prefreeze: on a fresh clone an ignored __pycache__ file does not fail prefreeze, but an untracked non-ignored candidate file does
+  [r9] not ok 71 - QA7-N83 runner: both the first run and every resume pipe a stream-json user message with --input-format stream-json --replay-user-messages, and the prompt prefix equals what the validator requires
+  [r9] ok 72 - QA7-P02 probe (informational): replay of a Write that has no tool_result line
+  [r9] ok 73 - QA8-C00 control: the round-8 fixture (runner-shaped prompt with assignment + sha256) closes the finding cleanly
+  [r9] ok 74 - QA8-N84 F-DG0-132: a 0-byte transcript that is not even gzip fails the gzip check AND every transcript check
+  [r9] ok 75 - QA8-N85 F-DG0-132: a gzip transcript of non-JSON garbage lines (non-empty, all unparsable) fails every transcript check
+  [r9] ok 76 - QA8-N86 F-DG0-132: a missing transcript file (meta hash removed as well) fails every transcript check
+  [r9] ok 77 - QA8-N87 F-DG0-133: the right assignment path but the sha256 of other content (e.g. a pre-edit version) is rejected
+  [r9] ok 78 - QA8-N88 F-DG0-133: another real assignment of the same role with ITS correct sha256 (round-2) is rejected
+  [r9] ok 79 - QA8-N89 F-DG0-133: a suffix-sibling path (/work/repo/xdocs/...) whose tail equals meta.assignment minus its first char is rejected
+  [r9] ok 80 - QA8-N90 F-DG0-133: a replayed prompt with no 'assignment ... (sha256 ...)' clause at all is rejected
+  [r9] ok 81 - QA8-N91 F-DG0-133: an upper-case hex sha256 in the prompt (not what the runner emits) is rejected, never silently accepted
+  [r9] ok 82 - QA8-N92 transcript: an init line whose model differs from meta.model_requested is rejected
+  [r9] ok 83 - QA8-P03 probe (informational): the prompt names the right relative assignment under a different absolute root
+  [r9] ok 84 - QA8-S01 F-DG0-011 static: all ten agent definitions state the no-real-approval rule and that G6 never implies DG7
+  [r9] ok 85 - QA8-S02 F-DG0-222 static: agents.md documents the runner's actual stream-json/replay invocation and the D-022/F-DG0-132/133 binding conditions
+  [r9] not ok 86 - QA8-F223 portability: a genuine runner-shaped prompt from a checkout whose absolute path contains a space binds
+  [r9] not ok 87 - QA9-C01 control (F-DG0-223): a path with spaces, parentheses and Arabic characters binds
+  [r9] ok 88 - QA9-N93 F-DG0-223: the widened regex keeps the sha binding (spaced path with another content's sha256 is rejected)
+  [r9] ok 89 - QA9-N94 F-DG0-223: a spaced path naming another real assignment of the role, with its correct sha256, is rejected
+  [r9] ok 90 - QA9-N95 F-DG0-223: a space before the relative path ("…/repo/ docs/…") is not a path boundary and is rejected
+  [r9] ok 91 - QA9-N96 F-DG0-223: a spaced path with a trailing suffix ("….md.bak") is rejected
+  [r9] ok 92 - QA9-N97 F-DG0-223: a second, appended assignment clause cannot override the first (first clause names another assignment)
+  [r9] ok 93 - QA9-N98 F-DG0-223: a newline inside the path (the lazy capture must not span lines) is rejected
+  [r9] ok 94 - QA9-F224 portability: the gate tooling itself, installed under a path with a space, validates a valid fixture
+  QA20-S1 missing current errors (1): ["candidate: gate source_commit 5a1e5a1e5a is not a commit object in this repository (absent)"]
+  QA20-S1 missing historical errors (2): ["candidate: gate source_commit 5a1e5a1e5a is not a commit object in this repository (absent)","candidate: cannot recompute from 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e (Command failed: git -C /var/tmp/mth-run.zMvETl/claude-0/qa5-dg0-juyi7T ls-tree -r -z --full-tree 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e)"]
+  QA20-S2 tree current errors (1): ["candidate: gate source_commit 6858ecf53c is not a commit object in this repository (tree)"]
+  QA20-S2 tree historical errors (1): ["candidate: gate source_commit 6858ecf53c is not a commit object in this repository (tree)"]
+  QA20-S3 blob current errors (1): ["candidate: gate source_commit 626799f0f8 is not a commit object in this repository (blob)"]
+  QA20-S3 blob historical errors (2): ["candidate: gate source_commit 626799f0f8 is not a commit object in this repository (blob)","candidate: cannot recompute from 626799f0f85326a8c1fc522db584e86cdfccd51f (Command failed: git -C /var/tmp/mth-run.zMvETl/claude-0/qa5-dg0-tj6C4t ls-tree -r -z --full-tree 626799f0f85326a8c1fc522db584e86cdfccd51f)"]
+  QA20-S4 abbrev current errors (2): ["stages.json: $.stages[0].review_rounds[0].source_commit: '593aa764d1f8' does not match /^[0-9a-f]{40}$/","stages.json: $.stages[0].review_rounds[1].source_commit: '593aa764d1f8' does not match /^[0-9a-f]{40}$/"]
+  QA20-S4 abbrev historical errors (2): ["stages.json: $.stages[0].review_rounds[0].source_commit: '593aa764d1f8' does not match /^[0-9a-f]{40}$/","stages.json: $.stages[0].review_rounds[1].source_commit: '593aa764d1f8' does not match /^[0-9a-f]{40}$/"]
+  QA20-S5 upper current errors (2): ["stages.json: $.stages[0].review_rounds[0].source_commit: '593AA764D1F84A15719FC06E4BDB1B29E1E16C26' does not match /^[0-9a-f]{40}$/","stages.json: $.stages[0].review_rounds[1].source_commit: '593AA764D1F84A15719FC06E4BDB1B29E1E16C26' does not match /^[0-9a-f]{40}$/"]
+  QA20-S5 upper historical errors (2): ["stages.json: $.stages[0].review_rounds[0].source_commit: 'D28B1BEA52B9183B5BB7BE350B1D2C80670BFE22' does not match /^[0-9a-f]{40}$/","stages.json: $.stages[0].review_rounds[1].source_commit: 'D28B1BEA52B9183B5BB7BE350B1D2C80670BFE22' does not match /^[0-9a-f]{40}$/"]
+  QA20-S6 divergent current errors (3): ["candidate: gate source_commit 614436ef65 is not a commit reachable on this branch","review rounds: DG0 round 1 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json does not describe its source_commit 614436ef65 (recomputes to sha256:3abb3da7e4f8f7c8825c4d341ab107c80748f34cf3f43ad0bcfbe2feddb5100e)","review rounds: DG0 round 2 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json does not describe its source_commit 614436ef65 (recomputes to sha256:3abb3da7e4f8f7c8825c4d341ab107c80748f34cf3f43ad0bcfbe2feddb5100e)"]
+  QA20-S6 divergent historical errors (4): ["candidate: gate source_commit 614436ef65 is not a commit reachable on this branch","candidate: historical content hashes to sha256:3abb3da7e4f8f7c8825c4d341ab107c80748f34cf3f43ad0bcfbe2feddb5100e, approval covers sha256:96c1e05362e98cd2c0964789ac72d48d165bc2cc7aa062ef382f098970efadb7; changed: ~app/main.txt","review rounds: DG0 round 1 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json does not describe its source_commit 614436ef65 (recomputes to sha256:3abb3da7e4f8f7c8825c4d341ab107c80748f34cf3f43ad0bcfbe2feddb5100e)","review rounds: DG0 round 2 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json does not describe its source_commit 614436ef65 (recomputes to sha256:3abb3da7e4f8f7c8825c4d341ab107c80748f34cf3f43ad0bcfbe2feddb5100e)"]
+  QA20-S7 dangling-same current errors (1): ["candidate: gate source_commit 0ad0402b61 is not a commit reachable on this branch"]
+  QA20-S7 dangling-same historical errors (1): ["candidate: gate source_commit 5843236858 is not a commit reachable on this branch"]
+  QA20-S7 result: current=REJECTED historical=REJECTED
+  QA20-S7 gate.source_commit=584323685868950cbacadaac80248dc13f1dbfec object type: fixture=commit fresh-clone=absent; ancestor of HEAD: fixture=false fresh-clone=false
+  QA20-S7 dangling-same FRESH-CLONE current errors (1): ["candidate: gate source_commit 5843236858 is not a commit object in this repository (absent)"]
+  QA20-S7 dangling-same FRESH-CLONE historical errors (2): ["candidate: gate source_commit 5843236858 is not a commit object in this repository (absent)","candidate: cannot recompute from 584323685868950cbacadaac80248dc13f1dbfec (Command failed: git -C /var/tmp/mth-run.zMvETl/claude-0/qa20-fresh-9x7lJc/c ls-tree -r -z --full-tree 584323685868950cbacadaac80248dc13f1dbfec)"]
+  QA20-S7 fresh-clone result: current=REJECTED historical=REJECTED
+  QA20-S8 tag current errors (1): ["candidate: gate source_commit 8236c27daa is not a commit object in this repository (tag)"]
+  QA20-S8 tag historical errors (1): ["candidate: gate source_commit 8236c27daa is not a commit object in this repository (tag)"]
+  QA20-S8 result: current=REJECTED historical=REJECTED
+  QA20-S8 gate.source_commit=8236c27daa96da23c62655f3c6a58d0f3f344ff2 object type: fixture=tag fresh-clone=tag; ancestor of HEAD: fixture=true fresh-clone=true
+  QA20-S8 tag FRESH-CLONE current errors (1): ["candidate: gate source_commit 8236c27daa is not a commit object in this repository (tag)"]
+  QA20-S8 tag FRESH-CLONE historical errors (1): ["candidate: gate source_commit 8236c27daa is not a commit object in this repository (tag)"]
+  QA20-S8 fresh-clone result: current=REJECTED historical=REJECTED
+  QA20-N1 pruned errors (0): []
+  QA20-N1 present-different errors (1): ["review rounds: DG0 round 3 manifest docs/delivery/candidates/DG0/4b720a45fcee0f37.manifest.json does not describe its source_commit 318dc6daaf (recomputes to sha256:3abb3da7e4f8f7c8825c4d341ab107c80748f34cf3f43ad0bcfbe2feddb5100e)"]
+  QA20-M1 base=sha256:7d00f8574a41648a4e9e9c7af97dc0e251db398a6251f6738a783c6fdcb5f270 after-metadata=sha256:7d00f8574a41648a4e9e9c7af97dc0e251db398a6251f6738a783c6fdcb5f270 after-validator-edit=sha256:87d65723e03837644853692f543997d85a12b38d02a3ea053621091bebb30f5c
+✔ QA20-G0 control: the independent fixture validates cleanly (current + historical, both fixture shapes) (1264.028141ms)
+✖ QA20-G1 A24/A25 regression: the 94-case round-9 suite; QA5-N57 (pruned NON-gate round) still tolerated (140681.900102ms)
+✖ QA20-S1 D-036: an APPROVED gate whose source_commit is a commit id that does not exist (F-DG0-240 re-run) is rejected in current mode (662.452675ms)
+✖ QA20-S2 D-036: an APPROVED gate whose source_commit is an existing tree object id is rejected in current mode (719.190035ms)
+✖ QA20-S3 D-036: an APPROVED gate whose source_commit is an existing blob object id is rejected in current mode (746.293559ms)
+✔ QA20-S4 D-036: an APPROVED gate whose source_commit is an abbreviated (12-hex) real commit id is rejected in current mode (261.831858ms)
+✔ QA20-S5 D-036: an APPROVED gate whose source_commit is the real commit id in upper-case hex is rejected in current mode (238.03019ms)
+✔ QA20-S6 D-036: an APPROVED gate whose source_commit is an existing off-branch commit whose content differs is rejected in current mode (755.689263ms)
+✔ QA20-S7 probe: gate source_commit is an off-branch (unreachable) commit with IDENTICAL content (1322.138162ms)
+✔ QA20-S8 probe: gate source_commit is an annotated tag object id that peels to the real commit (1267.709722ms)
+✔ QA20-N1 D-035 still holds for NON-gate rounds: a pruned round is tolerated, a present-but-different one is not (622.57252ms)
+✔ QA20-M1 metadata invariance: review/gate/run/assignment/test-evidence metadata doesn't change the candidate ID (1661.61301ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 8
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 150326.716345
+
+✖ failing tests:
+
+test at docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs:144:1
+✖ QA20-G1 A24/A25 regression: the 94-case round-9 suite; QA5-N57 (pruned NON-gate round) still tolerated (140681.900102ms)
+  AssertionError [ERR_ASSERTION]: 
+      Test.run (node:internal/test_runner/test:1101:12)
+      async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+    ...
+  # Subtest: QA9-C01 control (F-DG0-223): a path with spaces, parentheses and Arabic characters binds
+  not ok 87 - QA9-C01 control (F-DG0-223): a path with spaces, parentheses and Arabic characters binds
+    ---
+    duration_ms: 324.013893
+    type: 'test'
+    location: '/var/tmp/mth-run.zMvETl/claude-0/qa20-adapt-rnLXsw/r9-d036.test.mjs:1170:1'
+    failureType: 'testCodeFailure'
+    error: |-
+      Expected values to be strictly deep-equal:
+      + actual - expected
+      
+      + [
+      +   'finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000381: the replayed prompt names working directory /home/مستخدم (عمل)/My Projects (2026)/repo, not meta.cwd /work/repo'
+      + ]
+      - []
+      
+    code: 'ERR_ASSERTION'
+    name: 'AssertionError'
+    expected:
+    actual:
+      0: 'finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000381: the replayed prompt names working directory /home/مستخدم (عمل)/My Projects (2026)/repo, not meta.cwd /work/repo'
+    operator: 'deepStrictEqual'
+    stack: |-
+      file:///var/tmp/mth-run.zMvETl/claude-0/qa20-adapt-rnLXsw/r9-d036.test.mjs:1173:10
+      withFixture (file:///var/tmp/mth-run.zMvETl/claude-0/qa20-adapt-rnLXsw/r9-d036.test.mjs:272:12)
+      TestContext.<anonymous> (file:///var/tmp/mth-run.zMvETl/claude-0/qa20-adapt-rnLXsw/r9-d036.test.mjs:1170:104)
+      Test.runInAsyncScope (node:async_hooks:214:14)
+      Test.run (node:internal/test_runner/test:1047:25)
+      Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      Test.postRun (node:internal/test_runner/test:1173:19)
+      Test.run (node:internal/test_runner/test:1101:12)
+      async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+    ...
+  # Subtest: QA9-N93 F-DG0-223: the widened regex keeps the sha binding (spaced path with another content's sha256 is rejected)
+  ok 88 - QA9-N93 F-DG0-223: the widened regex keeps the sha binding (spaced path with another content's sha256 is rejected)
+    ---
+    duration_ms: 334.804574
+    type: 'test'
+    ...
+  # Subtest: QA9-N94 F-DG0-223: a spaced path naming another real assignment of the role, with its correct sha256, is rejected
+  ok 89 - QA9-N94 F-DG0-223: a spaced path naming another real assignment of the role, with its correct sha256, is rejected
+    ---
+    duration_ms: 309.341352
+    type: 'test'
+    ...
+  # Subtest: QA9-N95 F-DG0-223: a space before the relative path ("…/repo/ docs/…") is not a path boundary and is rejected
+  ok 90 - QA9-N95 F-DG0-223: a space before the relative path ("…/repo/ docs/…") is not a path boundary and is rejected
+    ---
+    duration_ms: 324.488283
+    type: 'test'
+    ...
+  # Subtest: QA9-N96 F-DG0-223: a spaced path with a trailing suffix ("….md.bak") is rejected
+  ok 91 - QA9-N96 F-DG0-223: a spaced path with a trailing suffix ("….md.bak") is rejected
+    ---
+    duration_ms: 332.56331
+    type: 'test'
+    ...
+  # Subtest: QA9-N97 F-DG0-223: a second, appended assignment clause cannot override the first (first clause names another assignment)
+  ok 92 - QA9-N97 F-DG0-223: a second, appended assignment clause cannot override the first (first clause names another assignment)
+    ---
+    duration_ms: 312.05948
+    type: 'test'
+    ...
+  # Subtest: QA9-N98 F-DG0-223: a newline inside the path (the lazy capture must not span lines) is rejected
+  ok 93 - QA9-N98 F-DG0-223: a newline inside the path (the lazy capture must not span lines) is rejected
+    ---
+    duration_ms: 323.448201
+    type: 'test'
+    ...
+  # Subtest: QA9-F224 portability: the gate tooling itself, installed under a path with a space, validates a valid fixture
+  ok 94 - QA9-F224 portability: the gate tooling itself, installed under a path with a space, validates a valid fixture
+    ---
+    duration_ms: 429.21605
+    type: 'test'
+    ...
+  1..94
+  # tests 94
+  # suites 0
+  # pass 87
+  # fail 7
+  # cancelled 0
+  # skipped 0
+  # todo 0
+  # duration_ms 140625.803497
+  
+  + actual - expected
+  
+    [
+  +   'QA5-N52',
+  +   'QA5-N53',
+      'QA5-N57',
+      'QA7-N77',
+      'QA7-N83',
+      'QA8-F223',
+      'QA9-C01'
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs:152:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'QA5-N52', 'QA5-N53', 'QA5-N57', 'QA7-N77', 'QA7-N83', 'QA8-F223', 'QA9-C01' ],
+    expected: [ 'QA5-N57', 'QA7-N77', 'QA7-N83', 'QA8-F223', 'QA9-C01' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs:164:3
+✖ QA20-S1 D-036: an APPROVED gate whose source_commit is a commit id that does not exist (F-DG0-240 re-run) is rejected in current mode (662.452675ms)
+  AssertionError [ERR_ASSERTION]: expected the D-036 error: ["candidate: gate source_commit 5a1e5a1e5a is not a commit object in this repository (absent)"]
+      at TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs:171:63)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs:164:3
+✖ QA20-S2 D-036: an APPROVED gate whose source_commit is an existing tree object id is rejected in current mode (719.190035ms)
+  AssertionError [ERR_ASSERTION]: expected the D-036 error: ["candidate: gate source_commit 6858ecf53c is not a commit object in this repository (tree)"]
+      at TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs:171:63)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs:164:3
+✖ QA20-S3 D-036: an APPROVED gate whose source_commit is an existing blob object id is rejected in current mode (746.293559ms)
+  AssertionError [ERR_ASSERTION]: expected the D-036 error: ["candidate: gate source_commit 626799f0f8 is not a commit object in this repository (blob)"]
+      at TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r20.test.mjs:171:63)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit=1

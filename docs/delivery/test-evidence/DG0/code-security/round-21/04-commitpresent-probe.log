@@ -1,0 +1,22 @@
+clone HEAD=a0e077d0f79dd43363c14d7337b6d20eda2ff986 commits=111 shallow=true
+
+P1 CLOSED_VERIFIED=91; fix_revision absent=64; absent fix whose verifying round's source_commit is PRESENT=3 F-DG0-226(round 13) F-DG0-227(round 13) F-DG0-228(round 13); present fix not an ancestor of HEAD=0 
+   gate-candidate source_commit 9e3c27ffe6 present=true; every ancestor of a present commit is present in a complete (non-shallow) clone, so an ABSENT fix_revision is provably NOT in the gate candidate
+
+P2 record runs with absent head_commit_at_start, by round: round 1:3/3 round 2:3/3 round 3:3/3 round 4:3/3 round 5:1/1 round 6:3/3 round 7:3/3 round 8:3/3 round 9:3/3 round 10:3/3 round 11:3/3 round 12:2/2
+   rounds >= 19 with an absent head: 0
+
+P3 checkInvocation, rules D-037, round-20 qa run, binding.manifestPath=docs/delivery/candidates/DG0/ef3ec3f205ffdac3.manifest.json
+   a-real                     errors=1 head-check=accepted
+   b-present-lacks-manifest   errors=2 head-check=REJECTED: probe: invocation DG0-T-DG0-REV-QA-R20-qa-verifier-20260930T095036Z-21c1a794: started from e8361b88eb, which does not contain docs/delivery/candidates/DG0/ef3ec3f205ffdac3.manifest.json
+   c-nonexistent-40hex        errors=1 head-check=accepted
+   d-field-removed            errors=1 head-check=accepted
+   e-non-hex                  errors=1 head-check=accepted
+
+P3 checkInvocation, rules pre-D-037(a23c4d4), round-20 qa run, binding.manifestPath=docs/delivery/candidates/DG0/ef3ec3f205ffdac3.manifest.json
+   a-real                     errors=1 head-check=accepted
+   b-present-lacks-manifest   errors=2 head-check=REJECTED: probe: invocation DG0-T-DG0-REV-QA-R20-qa-verifier-20260930T095036Z-21c1a794: started from e8361b88eb, which does not contain docs/delivery/candidates/DG0/ef3ec3f205ffdac3.manifest.json
+   c-nonexistent-40hex        errors=2 head-check=REJECTED: probe: invocation DG0-T-DG0-REV-QA-R20-qa-verifier-20260930T095036Z-21c1a794: started from 0123456789, which does not contain docs/delivery/candidates/DG0/ef3ec3f205ffdac3.manifest.json
+   d-field-removed            errors=2 head-check=REJECTED: probe: invocation DG0-T-DG0-REV-QA-R20-qa-verifier-20260930T095036Z-21c1a794: started from undefined, which does not contain docs/delivery/candidates/DG0/ef3ec3f205ffdac3.manifest.json
+   e-non-hex                  errors=2 head-check=REJECTED: probe: invocation DG0-T-DG0-REV-QA-R20-qa-verifier-20260930T095036Z-21c1a794: started from not-a-sha, which does not contain docs/delivery/candidates/DG0/ef3ec3f205ffdac3.manifest.json
+exit=0

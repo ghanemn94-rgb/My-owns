@@ -1,0 +1,33 @@
+# agents.md claims vs raw evidence, 2026-09-30T11:47:42Z, repo HEAD 8d6fe6c
+$ git diff --stat a23c4d4 9e3c27f -- docs/delivery/agents.md .claude/agents tools/agents/run-agent.sh
+(empty = unchanged since round 20)
+$ ls .claude/agents/*.md | wc -l
+10
+$ ls docs/source | grep -ci probe
+0
+$ ls docs/delivery/handbacks/DG0/agent-load docs/delivery/test-evidence/DG0/agent-load | wc -l
+10
+$ grep -n 'model' .claude/agents/*.md (model lines)
+     10 5:model: inherit
+$ grep -n -- '--model\|--session-id\|--settings' tools/agents/run-agent.sh
+4:#   tools/agents/run-agent.sh --role <agent-name> --stage <DGx> --task <task-id> --assignment <file> [--cwd <dir>] [--model <id>]
+7:# - Gives each run a unique --session-id (its invocation reference).
+8:# - Applies the role write guard via --settings tools/agents/settings/<role>.settings.json. Frontmatter hooks
+38:    --model) MODEL="$2"; shift 2 ;;
+42:[[ -n "$ROLE" && -n "$STAGE" && -n "$TASK" && -n "$ASSIGNMENT" ]] || { echo "usage: $0 --role R --stage DGx --task T --assignment FILE [--cwd DIR] [--model ID]" >&2; exit 64; }
+46:[[ "$MODEL" =~ ^[A-Za-z0-9._:-]+$ ]] || { echo "invalid --model '$MODEL'" >&2; exit 64; }
+183:( cd "$CWD" && user_message "$PROMPT" | bwrap "${SANDBOX[@]}" "$CLAUDE_BIN" -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
+184:    --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
+192:  ( cd "$CWD" && user_message "$RESUME_PROMPT" | bwrap "${SANDBOX[@]}" "$CLAUDE_BIN" -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
+193:      --resume "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
+$ models recorded by the 10 LOAD runs (meta.model_requested)
+backend-workflow-engineer claude-opus-5-5
+code-security-reviewer claude-opus-5-5
+devops-engineer claude-opus-5-5
+domain-reviewer claude-opus-5-5
+frontend-ux-engineer claude-opus-5-5
+kpi-benefits-engineer claude-opus-5-5
+qa-verifier claude-opus-5-5
+release-auditor claude-opus-5-5
+solution-architect claude-opus-5-5
+transformation-analyst claude-opus-5-5

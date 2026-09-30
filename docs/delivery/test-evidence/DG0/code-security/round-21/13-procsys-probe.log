@@ -1,0 +1,30 @@
+## /proc/sys open(O_WRONLY) probes, no value written
+uid=0(root) gid=0(root) groups=0(root)
+CapEff:	000001ffffffffff
+NoNewPrivs:	1
+Seccomp:	2
+  agent shell (Bash sandbox)         /proc/sys/vm/swappiness          OPEN-FOR-WRITE ALLOWED (no write performed)
+  agent shell (Bash sandbox)         /proc/sys/kernel/shmmax          OPEN-FOR-WRITE ALLOWED (no write performed)
+  agent shell (Bash sandbox)         /proc/sys/net/ipv4/ip_forward    OPEN-FOR-WRITE ALLOWED (no write performed)
+  agent shell (Bash sandbox)         /proc/sys/kernel/domainname      OPEN-FOR-WRITE ALLOWED (no write performed)
+  nested bwrap --unshare-user --proc /proc/sys/vm/swappiness          OPEN-FOR-WRITE ALLOWED (no write performed)
+  nested bwrap --unshare-user --proc /proc/sys/kernel/shmmax          OPEN-FOR-WRITE ALLOWED (no write performed)
+  nested bwrap --unshare-user --proc /proc/sys/net/ipv4/ip_forward    OPEN-FOR-WRITE ALLOWED (no write performed)
+  nested bwrap --unshare-user --proc /proc/sys/kernel/domainname      OPEN-FOR-WRITE ALLOWED (no write performed)
+## mount flags of /proc and /proc/sys as seen by the shell
+478 470 0:22 / /proc ro,nosuid,nodev,relatime - proc proc rw
+479 478 0:22 / /proc ro,nosuid,nodev,relatime - proc proc rw
+480 479 0:22 / /proc rw,nosuid,nodev,relatime - proc proc rw
+1116 480 0:62 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
+## sandbox-run.sh layout (--proc /proc --ro-bind /proc/sys /proc/sys --unshare-net --unshare-pid), open(O_WRONLY) only, nothing written
+  sandbox-run.sh layout              /proc/sys/vm/swappiness          refused: Read-only file system
+  sandbox-run.sh layout              /proc/sys/kernel/shmmax          refused: Read-only file system
+  sandbox-run.sh layout              /proc/sys/net/ipv4/ip_forward    refused: Read-only file system
+  sandbox-run.sh layout              /proc/sys/kernel/domainname      refused: Read-only file system
+1228 1225 0:46 /sys /proc/sys ro,nosuid,nodev,noexec,relatime - proc proc rw
+## plain nested --proc (no explicit ro-bind), mountinfo for /proc/sys
+1079 1071 0:22 / /proc ro,nosuid,nodev,relatime - proc proc rw
+1080 1079 0:22 / /proc ro,nosuid,nodev,relatime - proc proc rw
+1081 1080 0:22 / /proc rw,nosuid,nodev,relatime - proc proc rw
+1082 1081 0:46 / /proc ro,nosuid,nodev,noexec,relatime - proc proc rw
+1225 1082 0:68 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw

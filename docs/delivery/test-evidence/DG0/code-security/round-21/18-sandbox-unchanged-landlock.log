@@ -1,0 +1,16 @@
+## tooling changed round-20 baseline -> frozen commit (excluding tests/rules)
+ tools/agents/agent_sandbox.py        |  9 ++--
+ tools/gates/lib/rules.mjs            | 95 ++++++++++++++++++++++++++++--------
+ tools/gates/tests/validator.test.mjs | 87 +++++++++++++++++++++++++++++++++
+ 3 files changed, 168 insertions(+), 23 deletions(-)
+## agent_sandbox.py diff: only comment lines?
+comment-only change
+## own process
+Pid:	9
+PPid:	3
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+NoNewPrivs:	1
+MTH_PROCESS_SANDBOX=1
+## other runs' processes (read-only ls of /proc/<pid>/root; Landlock scope should refuse cross-domain)
+/bin/bash: line 7: /proc/12/cmdline: No such file or directory

@@ -1,0 +1,11 @@
+A: HEAD=a0e077d0f79dd43363c14d7337b6d20eda2ff986 shallow=true root=e8361b88eb77a6107aeb0193b7eac28efcead640
+B: HEAD=665c17aa1fb5d87612d61f7f115e113d491368ce shallow=true root=7b3a00b1907955faef07a2fe8637fb9d4cf6065d
+
+== S1 A (tamper commit inside history): checkWriteOnce errors=2; about the tampered sidecar=2; mention 'shallow'=false
+   write-once: docs/delivery/reviews/DG0/round-20/qa-verifier.findings.json has a M event in 7b3a00b190 (review evidence is append-only)
+   write-once: docs/delivery/reviews/DG0/round-20/qa-verifier.findings.json was committed with 2 different contents (review evidence is append-only)
+
+== S2 B (--depth 2, tamper commit is the shallow root): checkWriteOnce errors=0; about the tampered sidecar=0; mention 'shallow'=false
+
+RESULT: the write-once violation is detected only when the tamper commit lies inside the fetched history; nothing reports that the repository is shallow.
+exit=0
