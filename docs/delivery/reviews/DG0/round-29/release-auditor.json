@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 29,
+  "candidate_id": "sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd",
+  "source_commit": "1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac",
+  "reviewer_role": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-AUDIT-R29-release-auditor-20260930T154133Z-f810a559",
+    "session_id": "f810a559-a260-43f6-bc82-59e7941bbdc0"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (release-auditor, session f810a559) authored no implementation in the reviewed DG0 scope. Its implementers are transformation-analyst and delivery-orchestrator. I read the three round-29 specialist records only after they were complete, as the audit requires, and I reproduced the key checks myself in disposable `git clone --no-local` copies under my run's TMPDIR. This is an engineering delivery-gate audit (DG0) only. It grants no business, Finance or IT approval and implies nothing about product gates G1-G6."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-29/audit.md",
+  "requirements_checked": [
+    "REQ-DLV-001",
+    "REQ-DLV-002",
+    "REQ-DLV-003",
+    "REQ-DLV-004",
+    "REQ-DLV-006",
+    "REQ-DLV-007",
+    "REQ-DLV-013",
+    "REQ-DLV-015",
+    "REQ-DLV-016",
+    "REQ-DLV-017",
+    "REQ-DLV-019",
+    "REQ-DLV-020",
+    "REQ-DLV-022",
+    "REQ-DLV-023",
+    "REQ-DLV-026",
+    "REQ-DLV-029",
+    "REQ-DLV-032",
+    "REQ-S20-024",
+    "REQ-S20-025"
+  ],
+  "checks_run": [
+    {
+      "id": "AUD29-1-complete-clone-and-candidate",
+      "procedure": "Confirm the repository is a complete clone, then recompute the candidate in the live tree (with --diff) and in a disposable --no-local clone checked out at the frozen source commit.",
+      "command": "git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG0; node tools/gates/candidate.mjs --stage DG0 --diff; (clone) git checkout 1e4c0226 && node tools/gates/candidate.mjs --stage DG0",
+      "environment": "live repo HEAD 19481191 (metadata-only commits after the freeze); disposable git clone --no-local in the run TMPDIR; node v22.22.2",
+      "expected": "shallow=false; candidate sha256:84130c62…751bd in both trees; --diff matches with no added/removed/changed files; 1e4c0226 is a commit object and an ancestor of HEAD",
+      "actual": "shallow=false. The live tree and the clone at 1e4c0226 both print sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd (91 files). --diff reports matches=true with empty added/removed/changed. 1e4c0226 is a commit and an ancestor of HEAD. Everything after the freeze is delivery metadata only: runs, reviews, test-evidence, findings.json, stages.json, assignments and the manifest.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-003", "REQ-DLV-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/01-candidate-and-validator-tests.log",
+        "docs/delivery/candidates/DG0/84130c624e877424.manifest.json"
+      ]
+    },
+    {
+      "id": "AUD29-2-specialist-records",
+      "procedure": "Read the three round-29 specialist records. Check the verdict, candidate and source commit, round, implementation authors, independence declarations, non-PASS checks and distinct sessions.",
+      "command": "python3 (see 05-specialists-runs-findings.log section 1)",
+      "environment": "live repo",
+      "expected": "All three verdicts PASS on the same candidate and commit; no self-authored scope; every check PASS; three distinct sessions",
+      "actual": "domain-reviewer PASS (16/16 checks PASS, 1 new Low finding F-DG0-015), code-security-reviewer PASS (15/15 checks PASS, no findings), qa-verifier PASS (18/18 checks PASS, no findings). All three are on sha256:84130c62… at commit 1e4c0226, round 29. implementation_author is [transformation-analyst, delivery-orchestrator] and reviewer_authored_reviewed_scope is false in each. The three session IDs are distinct.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/05-specialists-runs-findings.log",
+        "docs/delivery/reviews/DG0/round-29/domain-reviewer.json",
+        "docs/delivery/reviews/DG0/round-29/code-security-reviewer.json",
+        "docs/delivery/reviews/DG0/round-29/qa-verifier.json"
+      ]
+    },
+    {
+      "id": "AUD29-3-runs-sandbox-transcripts",
+      "procedure": "For each specialist invocation_reference, open docs/delivery/runs/DG0/<run_id>/: check that meta.json names the role, invocation, exit code and success, that sandbox.json matches meta.process_sandbox_sha256 and shows the confined process (D-030..D-033), and that the transcript matches its hash. Spot-check each transcript for real inspection of the candidate and confirm it never references another round-29 reviewer's record.",
+      "command": "python3 (see 05-specialists-runs-findings.log section 2)",
+      "environment": "live repo; gzip transcripts",
+      "expected": "Each run is real, distinct and successful for its named role; sandbox confined (procfs host-bind, unshare [ipc], CAP_SETFCAP only, no_new_privs, landlock per_run_domain true), only its own areas, discarded []; transcripts show candidate inspection and no cross-reading",
+      "actual": "All three runs: meta.role matches, the invocation matches, exit 0, is_error false, subtype success, result_session_id equals the session. sandbox.json sha256 equals meta.process_sandbox_sha256. Each sandbox is confined=true with procfs host-bind, unshare [ipc], capabilities [CAP_SETFCAP], no_new_privs true and landlock per_run_domain true. Writable areas are only the role's own test-evidence area (plus tests/qa and e2e for qa). The staged accept pattern is limited to the role's own files and discarded is []. Transcript hashes match. The transcripts show 50/50/60 Bash calls, and each begins with git rev-parse HEAD, --is-shallow-repository and candidate.mjs --stage DG0. None references another round-29 reviewer record.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-006", "REQ-DLV-007", "REQ-DLV-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/05-specialists-runs-findings.log",
+        "docs/delivery/runs/DG0/DG0-T-DG0-REV-DOM-R29-domain-reviewer-20260930T152352Z-59934241/meta.json",
+        "docs/delivery/runs/DG0/DG0-T-DG0-REV-SEC-R29-code-security-reviewer-20260930T152357Z-44f7f3d7/meta.json",
+        "docs/delivery/runs/DG0/DG0-T-DG0-REV-QA-R29-qa-verifier-20260930T152401Z-51ad2679/meta.json"
+      ]
+    },
+    {
+      "id": "AUD29-4-requirement-coverage",
+      "procedure": "Derive every register row with final_gate DG0. Check its status, and check that it appears in qa-verifier's requirements_checked and in domain-reviewer's or code-security-reviewer's.",
+      "command": "python3 (see 05-specialists-runs-findings.log section 3)",
+      "environment": "live repo docs/delivery/requirements.csv (412 rows)",
+      "expected": "19 rows, all IMPLEMENTED, each covered by qa and by domain or code-security",
+      "actual": "19 rows (REQ-DLV-001,002,003,004,006,007,013,015,016,017,019,020,022,023,026,029,032, REQ-S20-024, REQ-S20-025), all IMPLEMENTED. Each is in qa-verifier's list, and code-security-reviewer checked all 19. The other 393 rows are SPECIFIED, which is sufficient at DG0 under §0.2. The pre-freeze register rules and the merge-equality check also pass (AUD29-6).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/05-specialists-runs-findings.log",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "id": "AUD29-5-validator-selftests",
+      "procedure": "Run the gate validator self-tests on the frozen candidate in a disposable --no-local clone. Confirm the D-045, D-044, shallow-refusal, off-branch source_commit, absent-anchor and closure-binding tests pass.",
+      "command": "node --test tools/gates/tests/validator.test.mjs",
+      "environment": "disposable git clone --no-local at 1e4c0226; node v22.22.2",
+      "expected": "All tests pass, including 'D-045 / F-DG0-171 / F-DG0-251', 'D-044 / F-DG0-251', 'D-039 / F-DG0-248' (shallow), 'D-037 / F-DG0-241' (off-branch), 'D-036' (non-existent), 'D-042 / F-DG0-169', 'D-039 / F-DG0-164' and 'D-039/D-040' (closure anchors)",
+      "actual": "tests 60, pass 60, fail 0. Among them: ok 54 D-045 tag-object round source_commit rejected; ok 53 D-044 tag-object head_commit_at_start rejected; ok 52 D-044 tag-object fix_revision rejected; ok 58 shallow clone refused; ok 50 off-branch gate source_commit rejected; ok 49 non-existent source_commit rejected; ok 55 absent round source_commit with a closure rejected (anchor 1 unconditional); ok 56 head_commit_at_start required; ok 51 closure bound to the verifying run head. The full suite also passes in the pre-freeze run (AUD29-6).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-003", "REQ-DLV-004", "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-019"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/01-candidate-and-validator-tests.log"
+      ]
+    },
+    {
+      "id": "AUD29-6-prefreeze",
+      "procedure": "Run the sandboxed pre-freeze suite on the frozen candidate in a disposable --no-local clone.",
+      "command": "bash tools/gates/prefreeze.sh DG0",
+      "environment": "disposable git clone --no-local at 1e4c0226",
+      "expected": "Every step PASS; working-tree candidate equals HEAD",
+      "actual": "11/11 PASS. Source extraction reproduces (docx sha256 2584a352…548ad2, 165 playbook blocks, 423 master-prompt blocks). The gate validator and guard tests, the runner metadata and settings tests, the DG0 register rules and the register merge equality pass. The pipeline state passes. The acceptance map, counts, PB provenance and test-refs checks pass. The working-tree candidate equals HEAD (sha256:84130c62…).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-020", "REQ-DLV-022", "REQ-DLV-023"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/02-prefreeze.log"
+      ]
+    },
+    {
+      "id": "AUD29-7-real-repo-history-integrity",
+      "procedure": "On a disposable --no-local clone of the live repository, take an object-type census of all four commit-id fields. Run checkWriteOnce and checkReviewRounds on the complete history. Forge an annotated tag of round 28's source_commit into stages.json in memory and re-run checkReviewRounds. Confirm the absent round-18 source_commit is still tolerated.",
+      "command": "node docs/delivery/test-evidence/DG0/audit/round-29/03-real-repo-probes.mjs <clone>",
+      "environment": "disposable git clone --no-local at live HEAD 19481191, shallow=false",
+      "expected": "Every present round source_commit, fix_revision and head_commit_at_start is a commit object; no all-zero fix_revision; checkWriteOnce 0; checkReviewRounds 0 on the genuine history; the tag forge is rejected with the D-045 error; round 18 is absent and tolerated",
+      "actual": "Round source_commits: 28 commit objects (rounds 1-17, 19-29) and round 18 absent. fix_revision: 120 commit objects, 0 all-zero. Run head_commit_at_start: 106 commit objects, 3 absent (the round-18 orphans). checkWriteOnce: 0 errors. checkReviewRounds (genuine): 0 errors. The round-28 tag forge (tag 5c9170b9 peeling to 331407e9) produced 'review rounds: DG0 round 28 source_commit 5c9170b9d2 is a tag object, not a commit…' plus a manifest mismatch. Absent round 18 does not trip D-045.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/03-real-repo-probes.log",
+        "docs/delivery/test-evidence/DG0/audit/round-29/03-real-repo-probes.mjs"
+      ]
+    },
+    {
+      "id": "AUD29-8-real-repo-gate-dry-run",
+      "procedure": "Before writing my records, draft a probe gate (19 final_gate_ids, 3 accepted observations, my invocation) in a disposable --no-local clone of live HEAD and run the full validator. Classify every error.",
+      "command": "node tools/gates/validate.mjs --stage DG0",
+      "environment": "disposable git clone --no-local at live HEAD 19481191, shallow=false",
+      "expected": "0 PRUNED / RECORD-LESS / DROPPED, no 'not in the verifying run's starting history', no closure-anchor or 'object, not a commit' error; only errors that depend on this in-flight audit",
+      "actual": "7 errors, all dependent on this in-flight audit. (a) The release-auditor record doesn't exist yet. (b) 'no release-auditor sidecar accepts it' for F-DG0-147, F-DG0-149 and F-DG0-015. (c) 'findings.json accepted_by does not mirror the accepting sidecars' for the same three findings: the acceptance mirror can only be written by the orchestrator after importing this run's sidecar. There are no pruned, record-less or dropped errors, no anchor or object-type errors, no requirement-coverage errors and no unresolved findings.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-003", "REQ-DLV-004", "REQ-DLV-019"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/04-dry-run-probe-gate.log"
+      ]
+    },
+    {
+      "id": "AUD29-9-findings",
+      "procedure": "Review the DG0 findings in findings.json and the round-29 sidecars. Confirm F-DG0-171 and F-DG0-251 were closed by their own reporters with reproduction and fix evidence, that the previously closed findings stay CLOSED_VERIFIED, and that nothing is left OPEN or FIXED_PENDING_VERIFICATION. Assess the three Low observations against the threat model and the evidence.",
+      "command": "python3 (see 05-specialists-runs-findings.log section 4); review of the *.verifications.json and *.findings.json sidecars",
+      "environment": "live repo",
+      "expected": "0 unresolved; 0 Critical/High or mandatory not CLOSED_VERIFIED; F-DG0-171 and F-DG0-251 CLOSED_VERIFIED by code-security and qa respectively (non-author; owner delivery-orchestrator); 41 previously closed findings still closed; observations Low, non-mandatory and within their disclosed scope",
+      "actual": "123 DG0 findings: 120 CLOSED_VERIFIED, 3 ACCEPTED_OBSERVATION (F-DG0-147, F-DG0-149, F-DG0-015; all Low, mandatory_violation false, owner delivery-orchestrator). Unresolved: none. Critical/High or mandatory not closed: none. F-DG0-171 was CLOSED_VERIFIED by code-security-reviewer and F-DG0-251 by qa-verifier. Both reproduced the bug on 331407e and showed it fixed at 1e4c0226, and fix_revision 83721ced is a commit object that passes all three anchors. All 41 previously closed findings are CLOSED_VERIFIED. I concur with the three observations in release-auditor.verifications.json, each with a rationale and an owner.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-016", "REQ-DLV-019"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/05-specialists-runs-findings.log",
+        "docs/delivery/reviews/DG0/round-29/release-auditor.verifications.json",
+        "docs/delivery/reviews/DG0/round-29/code-security-reviewer.verifications.json",
+        "docs/delivery/reviews/DG0/round-29/qa-verifier.verifications.json",
+        "docs/delivery/reviews/DG0/round-29/domain-reviewer.verifications.json",
+        "docs/delivery/threat-model.md"
+      ]
+    },
+    {
+      "id": "AUD29-10-evidence-spot-check",
+      "procedure": "Open specialist evidence cited for the key claims and compare it with my own reproduction.",
+      "command": "cat code-security/round-29/objtype-census.log, qa/round-29/14-real-repo-round-tag-forge.log, qa/round-29/08b-dry-run-classification.log, code-security/round-29/real-repo-gate-dryrun.log, domain/round-29/11-d045-tests.log, code-security/round-29/node-tests.log",
+      "environment": "live repo",
+      "expected": "Evidence content supports the cited claims and agrees with the auditor's own results",
+      "actual": "The code-security census (28 round commits plus round 18 absent; 120 fix_revisions; 103 run heads plus 3 absent at ffa3fae; 118 closures, 0 anchor failures) agrees with mine; my 106 run heads include the three round-29 runs. qa's real-repo round-27 tag forge was rejected by D-045 without tripping round 18. qa's and code-security's dry-runs show 0 pruned, record-less or dropped errors and only round-not-finished artefacts. domain and code-security node tests pass (66/66 gates; 105/105 all).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/objtype-census.log",
+        "docs/delivery/test-evidence/DG0/qa/round-29/14-real-repo-round-tag-forge.log",
+        "docs/delivery/test-evidence/DG0/qa/round-29/08b-dry-run-classification.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/real-repo-gate-dryrun.log",
+        "docs/delivery/test-evidence/DG0/domain/round-29/11-d045-tests.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/node-tests.log"
+      ]
+    },
+    {
+      "id": "AUD29-11-previous-gate",
+      "procedure": "Check the previous-gate condition.",
+      "environment": "stages.json",
+      "expected": "DG0 has depends_on [] and previous_gate null",
+      "actual": "DG0 depends_on is [] and it is the first gate, so previous_gate is null. There is no earlier gate to validate with --historical.",
+      "exit_status": null,
+      "result": "PASS"
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/audit/round-29/01-candidate-and-validator-tests.log",
+    "docs/delivery/test-evidence/DG0/audit/round-29/02-prefreeze.log",
+    "docs/delivery/test-evidence/DG0/audit/round-29/03-real-repo-probes.log",
+    "docs/delivery/test-evidence/DG0/audit/round-29/03-real-repo-probes.mjs",
+    "docs/delivery/test-evidence/DG0/audit/round-29/04-dry-run-probe-gate.log",
+    "docs/delivery/test-evidence/DG0/audit/round-29/05-specialists-runs-findings.log",
+    "docs/delivery/reviews/DG0/round-29/release-auditor.verifications.json"
+  ],
+  "reviewed_at": "2026-09-30T15:52:00Z",
+  "summary": "Audit PASS for DG0 on candidate sha256:84130c62…751bd (source 1e4c0226). The candidate recomputes to that value and the clone is complete. The three specialist records are PASS on the same candidate, from distinct, successful, sandbox-confined runs whose transcripts show real inspection. All 19 final_gate=DG0 requirements are IMPLEMENTED and covered by qa plus domain or code-security. The validator tests (60/60) and the pre-freeze (11/11) pass in a --no-local clone. On the real history, write-once reports 0 errors, the genuine review rounds report 0 errors, the D-045 tag forge is rejected and the absent round 18 is tolerated. There are no unresolved findings and no unresolved Critical/High or mandatory findings. F-DG0-171 and F-DG0-251 were CLOSED_VERIFIED by their reporters. I concur on three Low observations: F-DG0-147, F-DG0-149 and F-DG0-015. The gate takes effect only if validate.mjs passes once this run's evidence and acceptance mirror are imported."
+}

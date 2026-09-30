@@ -1,0 +1,51 @@
+# release-auditor round 29 | 2026-09-30T15:48:32Z | live repo HEAD 19481191d88adc993258be5841b077152255c3a4
+== 1. specialist records
+domain-reviewer: verdict=PASS cand_ok=True commit_ok=True round=29 authors=['transformation-analyst', 'delivery-orchestrator'] self_authored=False checks=16 non_PASS_checks=[] findings=['F-DG0-015'] run=DG0-T-DG0-REV-DOM-R29-domain-reviewer-20260930T152352Z-59934241
+code-security-reviewer: verdict=PASS cand_ok=True commit_ok=True round=29 authors=['transformation-analyst', 'delivery-orchestrator'] self_authored=False checks=15 non_PASS_checks=[] findings=[] run=DG0-T-DG0-REV-SEC-R29-code-security-reviewer-20260930T152357Z-44f7f3d7
+qa-verifier: verdict=PASS cand_ok=True commit_ok=True round=29 authors=['transformation-analyst', 'delivery-orchestrator'] self_authored=False checks=18 non_PASS_checks=[] findings=[] run=DG0-T-DG0-REV-QA-R29-qa-verifier-20260930T152401Z-51ad2679
+distinct sessions: True
+== 2. runs (meta / sandbox / transcript)
+domain-reviewer: meta.role=domain-reviewer inv_match=True exit=0 is_error=False subtype=success result_session_ok=True head=ffa3fae5a5
+   sandbox sha ok=True confined=True procfs=host-bind unshare=['ipc'] caps=['CAP_SETFCAP'] nnp=True landlock.per_run_domain=True writable=['docs/delivery/test-evidence/DG0/domain'] staged_accept=['round-[0-9]+/domain\\-reviewer\\.[^/]+'] discarded=[] copied_back=4
+   transcript sha ok=True tool_uses={'Bash': 50, 'Write': 4} reads_other_r29_records=none
+   first candidate recompute: ['git rev-parse HEAD && git rev-parse --is-shallow-repository && node tools/gates/candidate.mjs --stage DG0; echo exit=$?; git status --short ']
+code-security-reviewer: meta.role=code-security-reviewer inv_match=True exit=0 is_error=False subtype=success result_session_ok=True head=ffa3fae5a5
+   sandbox sha ok=True confined=True procfs=host-bind unshare=['ipc'] caps=['CAP_SETFCAP'] nnp=True landlock.per_run_domain=True writable=['docs/delivery/test-evidence/DG0/code-security'] staged_accept=['round-[0-9]+/code\\-security\\-reviewer\\.[^/]+'] discarded=[] copied_back=3
+   transcript sha ok=True tool_uses={'Bash': 50, 'Write': 5} reads_other_r29_records=none
+   first candidate recompute: ['cat docs/delivery/agent-protocol.md; git rev-parse HEAD; git rev-parse --is-shallow-repository; git status --short | head; node tools/gates/']
+qa-verifier: meta.role=qa-verifier inv_match=True exit=0 is_error=False subtype=success result_session_ok=True head=ffa3fae5a5
+   sandbox sha ok=True confined=True procfs=host-bind unshare=['ipc'] caps=['CAP_SETFCAP'] nnp=True landlock.per_run_domain=True writable=['docs/delivery/test-evidence/DG0/qa', 'tests/qa', 'e2e'] staged_accept=['round-[0-9]+/qa\\-verifier\\.[^/]+'] discarded=[] copied_back=2
+   transcript sha ok=True tool_uses={'Bash': 60, 'Write': 6, 'Edit': 5} reads_other_r29_records=none
+   first candidate recompute: ['git rev-parse HEAD && git rev-parse --is-shallow-repository && git status --short | head -20 && node tools/gates/candidate.mjs --stage DG0; ']
+== 3. DG0 requirement coverage
+19 final_gate=DG0 rows; statuses ['IMPLEMENTED']
+  REQ-DLV-001: qa=True domain|code-security=True
+  REQ-DLV-002: qa=True domain|code-security=True
+  REQ-DLV-003: qa=True domain|code-security=True
+  REQ-DLV-004: qa=True domain|code-security=True
+  REQ-DLV-006: qa=True domain|code-security=True
+  REQ-DLV-007: qa=True domain|code-security=True
+  REQ-DLV-013: qa=True domain|code-security=True
+  REQ-DLV-015: qa=True domain|code-security=True
+  REQ-DLV-016: qa=True domain|code-security=True
+  REQ-DLV-017: qa=True domain|code-security=True
+  REQ-DLV-019: qa=True domain|code-security=True
+  REQ-DLV-020: qa=True domain|code-security=True
+  REQ-DLV-022: qa=True domain|code-security=True
+  REQ-DLV-023: qa=True domain|code-security=True
+  REQ-DLV-026: qa=True domain|code-security=True
+  REQ-DLV-029: qa=True domain|code-security=True
+  REQ-DLV-032: qa=True domain|code-security=True
+  REQ-S20-024: qa=True domain|code-security=True
+  REQ-S20-025: qa=True domain|code-security=True
+== 4. findings (DG0)
+123 {'CLOSED_VERIFIED': 120, 'ACCEPTED_OBSERVATION': 3}
+unresolved (not terminal): []
+Critical/High not CLOSED_VERIFIED: []
+mandatory not CLOSED_VERIFIED: []
+  F-DG0-171: CLOSED_VERIFIED reported_by=code-security-reviewer verified_by=code-security-reviewer owner=delivery-orchestrator fix_revision=83721ced8f6453712d3af949e98f43bd08aeff7f
+  F-DG0-251: CLOSED_VERIFIED reported_by=qa-verifier verified_by=qa-verifier owner=delivery-orchestrator fix_revision=83721ced8f6453712d3af949e98f43bd08aeff7f
+previously CLOSED still CLOSED_VERIFIED: True 41
+  F-DG0-147: Low mandatory=False req=REQ-DLV-013 owner=delivery-orchestrator reported_by=code-security-reviewer
+  F-DG0-149: Low mandatory=False req=REQ-DLV-007 owner=delivery-orchestrator reported_by=code-security-reviewer
+  F-DG0-015: Low mandatory=False req=REQ-DLV-016 owner=delivery-orchestrator reported_by=domain-reviewer

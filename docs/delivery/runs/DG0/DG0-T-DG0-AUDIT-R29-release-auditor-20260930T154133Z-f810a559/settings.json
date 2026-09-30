@@ -1,0 +1,67 @@
+{
+ "hooks": {
+  "PreToolUse": [
+   {
+    "matcher": "Write|Edit|NotebookEdit|MultiEdit",
+    "hooks": [
+     {
+      "type": "command",
+      "command": "if [ -z \"$MTH_GUARD_ROOT\" ]; then echo \"write guard: MTH_GUARD_ROOT is not set (run agents through tools/agents/run-agent.sh)\" >&2; exit 2; fi; g=\"$MTH_GUARD_ROOT/tools/agents/guard-write.mjs\"; if [ -f \"$g\" ]; then node \"$g\" release-auditor; rc=$?; else echo \"write guard missing\" >&2; rc=2; fi; [ \"$rc\" -eq 0 ] || exit 2"
+     }
+    ]
+   }
+  ]
+ },
+ "sandbox": {
+  "enabled": true,
+  "failIfUnavailable": true,
+  "allowUnsandboxedCommands": false,
+  "autoAllowBashIfSandboxed": true,
+  "enableWeakerNestedSandbox": true,
+  "filesystem": {
+   "denyWrite": [
+    "/home/user/My-owns/.claude",
+    "/home/user/My-owns/.git",
+    "/home/user/My-owns/.gitattributes",
+    "/home/user/My-owns/.github",
+    "/home/user/My-owns/.gitignore",
+    "/home/user/My-owns/.mcp.json",
+    "/home/user/My-owns/CLAUDE.local.md",
+    "/home/user/My-owns/CLAUDE.md",
+    "/home/user/My-owns/docs/analysis",
+    "/home/user/My-owns/docs/delivery/agent-protocol.md",
+    "/home/user/My-owns/docs/delivery/agents.md",
+    "/home/user/My-owns/docs/delivery/assignments",
+    "/home/user/My-owns/docs/delivery/candidates",
+    "/home/user/My-owns/docs/delivery/decisions.md",
+    "/home/user/My-owns/docs/delivery/environment.md",
+    "/home/user/My-owns/docs/delivery/findings.json",
+    "/home/user/My-owns/docs/delivery/gates",
+    "/home/user/My-owns/docs/delivery/handbacks",
+    "/home/user/My-owns/docs/delivery/progress.md",
+    "/home/user/My-owns/docs/delivery/requirements-spec.md",
+    "/home/user/My-owns/docs/delivery/requirements.csv",
+    "/home/user/My-owns/docs/delivery/reviews",
+    "/home/user/My-owns/docs/delivery/runs",
+    "/home/user/My-owns/docs/delivery/stages.json",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG0/agent-load",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG0/agent-smoke",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG0/code-security",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG0/domain",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG0/orchestrator-probes",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG0/qa",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG0/round-12-orphaned",
+    "/home/user/My-owns/docs/delivery/test-evidence/DG0/round-5-orphaned",
+    "/home/user/My-owns/docs/delivery/threat-model.md",
+    "/home/user/My-owns/docs/source",
+    "/home/user/My-owns/e2e",
+    "/home/user/My-owns/tests",
+    "/home/user/My-owns/tools",
+    "/home/user/My-owns/tools/agents",
+    "/home/user/My-owns/tools/gates",
+    "/home/user/My-owns/tools/source",
+    "/home/user/My-owns/trading_agent"
+   ]
+  }
+ }
+}

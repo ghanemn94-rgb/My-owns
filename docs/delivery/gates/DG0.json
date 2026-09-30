@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "decision": "APPROVED",
+  "candidate_id": "sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd",
+  "source_commit": "1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac",
+  "manifest_path": "docs/delivery/candidates/DG0/84130c624e877424.manifest.json",
+  "previous_gate": null,
+  "reviews": {
+    "domain-reviewer": "docs/delivery/reviews/DG0/round-29/domain-reviewer.json",
+    "code-security-reviewer": "docs/delivery/reviews/DG0/round-29/code-security-reviewer.json",
+    "qa-verifier": "docs/delivery/reviews/DG0/round-29/qa-verifier.json"
+  },
+  "release_audit": "docs/delivery/reviews/DG0/round-29/release-auditor.json",
+  "requirements": {
+    "final_gate_ids": [
+      "REQ-DLV-001",
+      "REQ-DLV-002",
+      "REQ-DLV-003",
+      "REQ-DLV-004",
+      "REQ-DLV-006",
+      "REQ-DLV-007",
+      "REQ-DLV-013",
+      "REQ-DLV-015",
+      "REQ-DLV-016",
+      "REQ-DLV-017",
+      "REQ-DLV-019",
+      "REQ-DLV-020",
+      "REQ-DLV-022",
+      "REQ-DLV-023",
+      "REQ-DLV-026",
+      "REQ-DLV-029",
+      "REQ-DLV-032",
+      "REQ-S20-024",
+      "REQ-S20-025"
+    ],
+    "notes": "All 19 register rows with final_gate DG0 are IMPLEMENTED. Each was checked by qa-verifier and by code-security-reviewer, and domain-reviewer also checked REQ-DLV-001, 002, 020 and 032. The other 393 product rows are SPECIFIED, as §0.2 requires at DG0."
+  },
+  "tests": [
+    {
+      "name": "Candidate recomputation and complete-clone check",
+      "command": "git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG0 [--diff]",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/01-candidate-and-validator-tests.log"
+      ]
+    },
+    {
+      "name": "Gate validator self-tests (60/60, incl. D-045, D-044, shallow refusal, off-branch source_commit, closure anchors)",
+      "command": "node --test tools/gates/tests/validator.test.mjs",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/01-candidate-and-validator-tests.log",
+        "docs/delivery/test-evidence/DG0/qa/round-29/02-gates-selftests.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/node-tests.log"
+      ]
+    },
+    {
+      "name": "Sandboxed pre-freeze suite (11/11)",
+      "command": "bash tools/gates/prefreeze.sh DG0",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/02-prefreeze.log",
+        "docs/delivery/test-evidence/DG0/qa/round-29/09-prefreeze.log"
+      ]
+    },
+    {
+      "name": "Agent tooling tests (node + python)",
+      "command": "node --test tools/agents/tests/*.test.mjs; python3 -m unittest tools/agents/tests",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-29/03-agents-tests.log",
+        "docs/delivery/test-evidence/DG0/qa/round-29/03b-agents-pyunittests.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/python-unittest.log"
+      ]
+    },
+    {
+      "name": "Real-repo history integrity: write-once, commit-object census, D-045 tag forge",
+      "command": "node docs/delivery/test-evidence/DG0/audit/round-29/03-real-repo-probes.mjs <no-local clone>",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/03-real-repo-probes.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/objtype-census.log",
+        "docs/delivery/test-evidence/DG0/qa/round-29/14-real-repo-round-tag-forge.log"
+      ]
+    },
+    {
+      "name": "F-DG0-171 / F-DG0-251 reproduction and fix verification",
+      "command": "reporter repro suites on baseline 331407e and candidate 1e4c0226",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro-baseline.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/qa/round-29/13-qa29-negative-suite.log"
+      ]
+    },
+    {
+      "name": "Source extraction and coverage (domain)",
+      "command": "domain-reviewer extraction / coverage scripts",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-29/02-extraction.log",
+        "docs/delivery/test-evidence/DG0/domain/round-29/03-source-coverage.out"
+      ]
+    }
+  ],
+  "blocking_conditions": [],
+  "accepted_observations": [
+    "F-DG0-015",
+    "F-DG0-147",
+    "F-DG0-149"
+  ],
+  "decided_at": "2026-09-30T15:53:00Z",
+  "decided_by": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-AUDIT-R29-release-auditor-20260930T154133Z-f810a559",
+    "session_id": "f810a559-a260-43f6-bc82-59e7941bbdc0"
+  },
+  "notes": "Engineering delivery gate DG0 only. It grants no business, Finance or IT approval and implies nothing about product gates G1-G6. Three Low, non-mandatory observations are accepted, each with a rationale and owner delivery-orchestrator in release-auditor.verifications.json: F-DG0-147 (pin the copy-back pattern to the current round), F-DG0-149 (threat-model residual 7, host-global /proc/sys, including the shell) and F-DG0-015 (D-045 heading wording). This decision stands only if node tools/gates/validate.mjs --stage DG0 passes with 0 errors once this run's evidence is committed and the acceptance mirror is imported."
+}

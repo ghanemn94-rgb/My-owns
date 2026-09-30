@@ -1,0 +1,21 @@
+# release-auditor round 29 | 2026-09-30T15:44:02Z | clone: git clone --no-local; HEAD 1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac; shallow=false
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd","files":91}
+exit=0
+$ node --test tools/gates/tests/validator.test.mjs
+# Subtest: D-036: a gate whose source_commit does not exist is rejected in current mode too (F-DG0-240/155)
+ok 49 - D-036: a gate whose source_commit does not exist is rejected in current mode too (F-DG0-240/155)
+# Subtest: D-037 / F-DG0-241: a gate source_commit that exists but is OFF this branch is rejected (D-036 only checked resolvability)
+ok 50 - D-037 / F-DG0-241: a gate source_commit that exists but is OFF this branch is rejected (D-036 only checked resolvability)
+# Subtest: D-044 / F-DG0-251: a head_commit_at_start that is an annotated tag object (not a commit) is rejected
+ok 53 - D-044 / F-DG0-251: a head_commit_at_start that is an annotated tag object (not a commit) is rejected
+# Subtest: D-045 / F-DG0-171 / F-DG0-251: a review round's source_commit that is an annotated tag object (not a commit) is rejected
+ok 54 - D-045 / F-DG0-171 / F-DG0-251: a review round's source_commit that is an annotated tag object (not a commit) is rejected
+# Subtest: D-039 / F-DG0-248: validateGate refuses a shallow clone
+ok 58 - D-039 / F-DG0-248: validateGate refuses a shallow clone
+# tests 60
+# pass 60
+# fail 0
+# cancelled 0
+# skipped 0
+exit=0

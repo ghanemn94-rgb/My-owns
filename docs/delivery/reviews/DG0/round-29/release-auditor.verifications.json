@@ -1,0 +1,36 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-147",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Release-auditor concurs with accepting this as an observation. It is Low and mandatory_violation is false. The reporter (code-security-reviewer) accepts it in its latest sidecar entry. It fails closed for gate integrity. A stray own-role file copied back into an earlier round directory can't be honoured as a record or a verification, because the validator binds each one to that round's own run transcript (Write/Edit replay). A later run's transcript can't satisfy that binding, so the validator reports an error instead of accepting the file. Every round-29 run's sandbox.json shows the per-role staged accept pattern and an empty discarded list. Checks on the complete history, round-29 audit: checkWriteOnce 0 errors; the real-repo gate dry-run shows no write-once or record-binding error. Rationale for acceptance: gate integrity is not reduced, and the fix is a hardening improvement. Owner: delivery-orchestrator, who should pin the copy-back accept pattern to round-<current> in a later stage.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/audit/round-29/03-real-repo-probes.log",
+        "docs/delivery/test-evidence/DG0/audit/round-29/04-dry-run-probe-gate.log",
+        "docs/delivery/test-evidence/DG0/audit/round-29/05-specialists-runs-findings.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-149",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Release-auditor concurs with accepting this as an observation, at its host-global scope and including the agent's shell. It is Low and mandatory_violation is false. The reporter (code-security-reviewer) accepts it in its latest sidecar entry. docs/delivery/threat-model.md, disclosed residual 7 (corrected by D-036 after F-DG0-154, and F-DG0-162), states the residual at that scope. A uid-0 process holding only CAP_SETFCAP can write root-owned, writable /proc/sys entries, from a file tool or from a plain shell redirect. /proc/sys is host-global kernel state, so a write changes the tunable for the whole host and every run on it. The residual is inherent to process-sandbox option A (D-030), because a read-only /proc/sys would break the reviewers' nested bubblewrap. It is a host-availability and kernel-tunable risk. It is not a repository, reviewer-artefact or gate-record integrity risk: those paths are read-only binds or private tmpfs, independent of /proc/sys. The finding shows nothing beyond the disclosed residual. Every round-29 specialist sandbox.json shows procfs host-bind, unshare [ipc], CAP_SETFCAP only, no_new_privs and a per-run Landlock domain, as disclosed. Rationale for acceptance: a disclosed residual that doesn't threaten gate integrity. Owner: delivery-orchestrator, who should run the non-zero-uid spike proposed by the reporter in a later stage.",
+      "evidence": [
+        "docs/delivery/threat-model.md",
+        "docs/delivery/test-evidence/DG0/audit/round-29/05-specialists-runs-findings.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-015",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Release-auditor concurs with accepting this as an observation. It is Low and mandatory_violation is false. The reporter (domain-reviewer) accepts it in its round-29 sidecar. I reproduced it independently. The D-045 row heading in docs/delivery/decisions.md says 'all three reviewers PASS; each raised one Low'. The round-28 records show domain-reviewer PASS with findings [], code-security-reviewer PASS with [F-DG0-171] and qa-verifier PASS with [F-DG0-251]. The same row's context column correctly says 'domain PASS with no findings'. The error is confined to wording in an engineering decision record. The authoritative review records and findings.json are correct, and it makes no business, methodology or provenance claim, and changes no validator behaviour. Rationale for acceptance: cosmetic wording with no effect on gate logic or on any requirement. Owner: delivery-orchestrator, who should correct the heading in a later decision-log update.",
+      "evidence": [
+        "docs/delivery/reviews/DG0/round-28/domain-reviewer.json",
+        "docs/delivery/test-evidence/DG0/domain/round-29/11-d045-wording.log",
+        "docs/delivery/test-evidence/DG0/audit/round-29/05-specialists-runs-findings.log"
+      ]
+    }
+  ]
+}
