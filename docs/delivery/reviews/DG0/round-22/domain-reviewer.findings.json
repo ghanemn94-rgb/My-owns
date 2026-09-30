@@ -1,0 +1,33 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-013",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-038 says the round-18 orphan 450c756 is 'uniformly absent in every clone of the branch', but it is still an unreachable object in the main repository, so a default local `git clone <path>` (the clone method the assignments prescribe) contains it, and the gate validation then reports two extra F-DG0-150/151 closure errors that a --no-local clone does not",
+      "reproduction": "In the main repository, `git fsck --unreachable --no-reflogs` lists `unreachable commit 450c756f679a911b4c736e856fc9dd5e9b2c89a8` and `git for-each-ref --contains 450c756f` lists no ref. `git clone -q /home/user/My-owns c450 && git -C c450 cat-file -e 450c756f…^{commit}` reports the commit present (a local clone hardlinks or copies the whole object store). The same clone with `--no-local` reports it absent (15c-orphan-450c756-clone-modes.log). qa's real-repo dry-run (docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs, which clones --no-local) reports 0 in every PRUNED, RECORD-LESS and DROPPED bucket. My copy of it that differs only in using a plain local clone (r22-dry-run-local-clone.mjs) reports 2 more errors in the 'PRUNED fix_revision not ancestor of its verified round candidate' bucket: 'finding F-DG0-150 (Low): fix 421c922233 is not in the verified round-18 candidate (450c756f67)' and the same for F-DG0-151 (15b-real-repo-dry-run-local-clone.log).",
+      "expected": "D-038 (and the round-22 common assignment) states that deleting the backup branch leaves 450c756 'uniformly absent in every clone of the branch', which removes the clone dependence of F-DG0-161, so the gate verdict should not depend on how the repository is cloned. Either the unreachable object should actually be gone from the source object store (for example `git reflog expire --expire-unreachable=now --all && git gc --prune=now` in the orchestrator's repository), or D-038 should say that the claim holds only for fetch/--no-local clones, which is how CI and qa's dry-run clone.",
+      "actual": "The outcome depends on the clone mode until F-DG0-150/151 carry a retained verified round. Impact is limited and fails closed. The local-clone variant only adds errors and never hides one, so it cannot wrongly approve the gate. CI (actions/checkout, fetch-depth: 0) fetches only reachable objects. The two errors should also clear once code-security's round-22 re-verification of F-DG0-150/151 (F-DG0-161) is imported, because their verified round then becomes round 22, whose source_commit 480cd3f contains 421c922. The inaccuracy is in an engineering decision record only. It makes no business, operating-logic or source-provenance claim. I would accept this as a Low observation if the auditor confirms that the gate validation after the round-22 import passes in both clone modes, or if D-038's wording is corrected or the unreachable object is pruned.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-22/15c-orphan-450c756-clone-modes.log",
+        "docs/delivery/test-evidence/DG0/domain/round-22/15b-real-repo-dry-run-local-clone.log",
+        "docs/delivery/test-evidence/DG0/domain/round-22/15-real-repo-dry-run.log",
+        "docs/delivery/test-evidence/DG0/domain/round-22/r22-dry-run-local-clone.mjs",
+        "docs/delivery/decisions.md#D-038"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-22/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T12:30:18Z",
+          "status": "OPEN",
+          "note": "raised by domain-reviewer in DG0 round 22 (Low, non-mandatory; fails closed; acceptable as an observation)"
+        }
+      ]
+    }
+  ]
+}
