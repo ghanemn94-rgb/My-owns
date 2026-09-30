@@ -1,0 +1,35 @@
+import zipfile,re,html,sys,hashlib
+d='docs/source/Business_Transformation_Playbook.docx'
+print('docx sha256',hashlib.sha256(open(d,'rb').read()).hexdigest())
+z=zipfile.ZipFile(d)
+x=z.read('word/document.xml').decode()
+md=open('docs/source/playbook.md',encoding='utf-8').read()
+def norm(s):
+    s=html.unescape(s); s=re.sub(r'<br\s*/?>',' ',s); s=re.sub(r'[*_`|#>\\]',' ',s)
+    s=s.replace('’',"'").replace('‘',"'").replace('“','"').replace('”','"')
+    return re.sub(r'\s+',' ',s).strip()
+M=norm(md)
+paras=re.findall(r'<w:p[ >].*?</w:p>',x,flags=re.S)
+tables=len(re.findall(r'<w:tbl>',x))
+miss=[];n=0
+for p in paras:
+    p2=re.sub(r'<w:(br|tab)[^>]*/>',' ',p)
+    t=''.join(re.findall(r'<w:t(?:\s[^>]*)?>([^<]*)</w:t>',p2))
+    # include breaks
+    t=' '.join(re.findall(r'<w:t(?:\s[^>]*)?>([^<]*)</w:t>|<w:br/>',p)) if False else t
+    t=norm(t)
+    if not t: continue
+    n+=1
+    if t not in M:
+        # try with break separators
+        parts=[norm(s) for s in re.split(r'<w:br[^>]*/>',p)]
+        ts=[norm(''.join(re.findall(r'<w:t(?:\s[^>]*)?>([^<]*)</w:t>',s))) for s in re.split(r'<w:br[^>]*/>',p)]
+        if all((s in M) for s in ts if s): continue
+        miss.append(t[:120])
+print('tables',tables,'non-empty paragraphs',n,'not found',len(miss))
+for m in miss: print('  MISSING:',m)
+# other parts (headers/footers)
+for name in z.namelist():
+    if re.match(r'word/(header|footer|footnotes|endnotes)\d*\.xml',name):
+        tt=norm(''.join(re.findall(r'<w:t(?:\s[^>]*)?>([^<]*)</w:t>',z.read(name).decode())))
+        print(name, repr(tt[:80]), 'found' if (not tt or tt in M) else 'NOT FOUND')

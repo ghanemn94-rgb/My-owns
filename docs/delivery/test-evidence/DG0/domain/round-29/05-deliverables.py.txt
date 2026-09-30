@@ -1,0 +1,28 @@
+import json,re,html
+B={b['id']:b for b in json.load(open('docs/source/playbook.blocks.json'))['blocks']} if isinstance(json.load(open('docs/source/playbook.blocks.json')),dict) else {b['id']:b for b in json.load(open('docs/source/playbook.blocks.json'))}
+fi=open('docs/analysis/field-inventory.md',encoding='utf-8').read()
+def n(s): return re.sub(r'\s+',' ',html.unescape(s).replace('<br>',' ').replace('’',"'")).strip()
+FI=n(fi)
+def cells(bid):
+    b=B[bid]
+    if b['type']=='table': return [n(c) for r in b['rows'] for c in r if n(c)]
+    return [n(b['text'])]
+groups={
+ 'Charter 14 fields (B0035)':['B0035'],'Transformation thesis (B0036,B0037)':['B0036','B0037'],
+ 'Five scope sanity checks (B0038-B0043)':['B0038','B0039','B0040','B0041','B0042','B0043'],
+ 'Outcome hierarchy (B0048)':['B0048'],'TOM 10 dimensions (B0056)':['B0056'],'TOM canvas/workshop (B0061-B0063)':['B0061','B0062','B0063'],
+ 'Business case (B0083-B0085)':['B0083','B0084','B0085'],'Operating system layers (B0093)':['B0093'],
+ 'Benefits lifecycle (B0121)':['B0121'],'Adoption indicators (B0108-B0116)':['B%04d'%i for i in range(108,117)],
+ '90-day plan (B0133-B0135)':['B0133','B0134','B0135'],'Day-90 test (B0136-B0141)':['B%04d'%i for i in range(136,142)],
+ 'Roaming example (B0143-B0147)':['B%04d'%i for i in range(143,148)],'Health check (B0149-B0152)':['B0149','B0150','B0151','B0152'],
+ 'Modes (B0007-B0009)':['B0007','B0008','B0009'],'Phases/gates (B0020-B0024)':['B0020','B0021','B0022','B0023','B0024'],
+ 'Governance roles (B0017,B0018)':['B0017','B0018'],
+}
+for g,ids in groups.items():
+    tot=0;miss=[]
+    for i in ids:
+        for c in cells(i):
+            tot+=1
+            if c not in FI: miss.append((i,c[:90]))
+    print(f'{g}: {tot} source cells/paras, {len(miss)} not verbatim in field-inventory')
+    for m in miss: print('    ',m)

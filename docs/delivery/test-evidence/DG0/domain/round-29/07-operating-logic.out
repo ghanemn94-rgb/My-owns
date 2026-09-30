@@ -1,0 +1,53 @@
+## RAG from trajectory, not task completion
+  REQ-PB-063 [SOURCE,DG4,SPECIFIED] Apply the area-specific T10 RAG logic
+     ACC: A04;A05: an outcome whose tasks are 100% complete but KPI is below trajectory is Red/Amber, not Green; a KPI with no actual shows Unknown
+  REQ-S07-007 [USER,DG4,SPECIFIED] Compute RAG from the approved expected trajectory with configurable thresholds and never from project task completion
+     ACC: A04;A05: with all tasks complete and actual below the red threshold the KPI is Red; changing the threshold version recomputes RAG
+  REQ-PB-015 [SOURCE,DG4,SPECIFIED] Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required
+     ACC: A08: submission with missing mandatory evidence is rejected; approval by a non-approver returns 403; approval of a stale submission version is rejected
+## delivery/adoption/validated value/closure separate
+  REQ-S03-003 [USER,DG4,SPECIFIED] Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses
+     ACC: A11: setting delivery to Complete leaves adoption, validated value and closure unchanged; the API rejects a closure request while validated value is pending unless a transition decision exists
+  REQ-PB-009 [SOURCE,DG4,SPECIFIED] Apply 'Benefits before closure': an initiative is complete only when value is realized and sustained, not when delivered
+     ACC: A11: an initiative with delivery=Complete and no validated benefit cannot be closed (API 409); UI shows 'Delivered — value validation pending'
+## forecast never validated value
+  REQ-S08-001 [USER,DG4,SPECIFIED] Track planned, forecast, measured, submitted-for-validation, validated, rejected and sustained benefit values separately
+     ACC: A10: a forecast amount never appears in the validated total; a rejected measurement is retained and shown as rejected
+  REQ-PB-075 [SOURCE,DG4,SPECIFIED] Implement Template 14 Benefits Register as a native register
+     ACC: A10: T14 persists all 10 columns; realized value awaiting Finance validation is labelled pending and excluded from validated totals
+## Finance validates baseline/benefits
+  REQ-PB-013 [SOURCE,DG4,SPECIFIED] Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role
+     ACC: A10;A12: a Business Owner calling the validate endpoint receives 403; a Finance user succeeds and the audit event records validator identity
+  REQ-PB-055 [SOURCE,DG3,SPECIFIED] Require Finance validation of baseline and benefit logic early, before G4, not after delivery
+     ACC: A08;A10: G4 submission with a business case whose benefit formula is unvalidated is rejected listing 'Finance validation'
+  REQ-S08-015 [USER,DG4,SPECIFIED] Include baseline, attribution/counterfactual, calculation, evidence, measurement period and assumptions in Finance validation
+     ACC: A10;A12: a validation lacking a measurement period is rejected; a non-Finance user gets 403
+## Business Owner accountable
+  REQ-S08-003 [USER,DG4,SPECIFIED] Record for each benefit a unique ID, type, accountable business owner, Finance validator where applicable, baseline/counterfactual, formula, driver units, target, timing, one-off/recurring classification, currency, measurement source, evidence, confidence, assumptions, contribution links and financial-statement mapping or agreed non-financial KPI
+     ACC: A10: a financial benefit without a financial-statement mapping, or a non-financial one without an agreed KPI, is rejected
+  REQ-PB-053 [SOURCE,DG3,SPECIFIED] Implement the Transformation Business Case with all ten source sections
+     ACC: A01: all ten sections persist; an investment line must carry one classification (Capex|opex|internal FTE|vendor cost|opportunity cost); SAR amounts stored as decimals
+## shared benefit once; allocation<=100%; unallocated shown
+  REQ-PB-058 [SOURCE,DG4,SPECIFIED] Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link
+     ACC: A10: a benefit with two owners is rejected; a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the portfolio total
+  REQ-S08-013 [USER,DG4,SPECIFIED] Reject allocations over 100% and show any share below 100% as unallocated
+     ACC: A10: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated
+## gates explicit approvals on evidence snapshot
+  REQ-S04-002 [USER,DG4,SPECIFIED] Make gates explicit approval records tied to a versioned, immutable evidence snapshot, never inferred from task completion
+     ACC: A07;A08: completing every phase task leaves the gate Draft; editing a record after submission does not change the snapshot content shown to approvers
+  REQ-PB-015 [SOURCE,DG4,SPECIFIED] Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required
+     ACC: A08: submission with missing mandatory evidence is rejected; approval by a non-approver returns 403; approval of a stale submission version is rejected
+## DG0-DG7 separate from G1-G6
+  REQ-DLV-002 [ENGINEERING,DG0,IMPLEMENTED] Keep engineering delivery gates DG0-DG7 separate from product business approvals G1-G6 in records, authority and meaning
+     ACC: A23;A28: gate records validate only with stage_id DG0-DG7; CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval
+  REQ-S04-008 [USER,DG4,SPECIFIED] Run the Realize phase procedure and G6 Sustain decision
+     ACC: A02;A11: G6 submission without an accepted BAU handover is rejected; product G6 approval changes no engineering DG record
+## tech admin not business approver
+  REQ-S10-003 [USER,DG4,SPECIFIED] Never make technical administrators business approvers automatically
+     ACC: A12: an ADM-only user calling a gate or Finance approval endpoint gets 403
+## missing -> Unknown/Stale never zero/green
+  REQ-PB-027 [SOURCE,DG2,SPECIFIED] Record measurable baselines with metric, source and baseline date
+     ACC: A01;A05: a baseline without a value or source is flagged 'not measurable'; a missing baseline shows Unknown, never zero
+  REQ-S07-006 [ENGINEERING,DG4,SPECIFIED] Show Unknown or Stale for missing or stale data, never green or zero
+     ACC: A05: a KPI with no actual for the current period renders Unknown (grey, labelled) and contributes no zero to aggregates
+exit=0

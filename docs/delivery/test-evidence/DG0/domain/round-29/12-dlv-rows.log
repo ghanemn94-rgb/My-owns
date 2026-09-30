@@ -1,0 +1,29 @@
+$ grep D-001/D-002 decisions.md
+| D-001 | 2026-09-28 | delivery-orchestrator | The uploaded `Business_Transformation_Playbook(2).docx` (SHA-256 `2584a352…548ad2`) is the authoritative methodology source. It's committed at `docs/source/` together with a reproducible, standard-library-only extraction (`tools/source/check_extractio
+| D-002 | 2026-09-28 | delivery-orchestrator | The Arabic edition of the master prompt isn't present. The English edition v2.0 is executed. | Master prompt header: "The Arabic edition is an equivalent translation, not an additional scope." | The Arabic edition is supplied and differs materially. |
+
+$ gate schema stage_id
+{"type": "string", "pattern": "^DG[0-7]$"}
+$ grep G6/DG7 + approval statements
+CLAUDE.md:13:- **G1–G6**: business approvals inside the product. An engineering agent never grants a real business, Finance or IT approval. Product gate G6 never implies DG7.
+docs/delivery/agent-protocol.md:9:- An engineering agent can never grant a real business, Finance or IT production approval. A demo Sponsor approval in seed data approves nothing real.
+
+$ agents (G6/DG7 + no-approval statement per definition)
+10
+.claude/agents/backend-workflow-engineer.md: G6-lines=2 no-approval-lines=1
+.claude/agents/code-security-reviewer.md: G6-lines=1 no-approval-lines=1
+.claude/agents/devops-engineer.md: G6-lines=1 no-approval-lines=1
+.claude/agents/domain-reviewer.md: G6-lines=1 no-approval-lines=1
+.claude/agents/frontend-ux-engineer.md: G6-lines=1 no-approval-lines=1
+.claude/agents/kpi-benefits-engineer.md: G6-lines=1 no-approval-lines=1
+.claude/agents/qa-verifier.md: G6-lines=1 no-approval-lines=1
+.claude/agents/release-auditor.md: G6-lines=1 no-approval-lines=1
+.claude/agents/solution-architect.md: G6-lines=1 no-approval-lines=1
+.claude/agents/transformation-analyst.md: G6-lines=1 no-approval-lines=1
+
+$ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+exit=0
+
+$ A01-A28 referenced in register
+missing []

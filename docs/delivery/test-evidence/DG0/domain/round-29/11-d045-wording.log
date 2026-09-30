@@ -1,0 +1,50 @@
+$ git diff 331407e9..1e4c0226 -- docs/delivery/decisions.md  (only change: the D-045 row added)
+ docs/delivery/decisions.md | 1 +
+ 1 file changed, 1 insertion(+)
+
+$ scan added D-045 row for business / operating-logic / provenance terms
+(end of term scan)
+
+$ D-045 self-presentation phrases
+all three reviewers PASS; each raised one Low
+fourth and last** commit-id field the gate depends on
+domain PASS with no findings
+all 27 present round source_commits are commit objects
+gate+agent suites 105 pass
+the "tag where a commit is required" class is closed with no remaining field
+
+$ round-28 verdicts/findings (the facts D-045 summarises)
+  domain-reviewer PASS findings= []
+  code-security-reviewer PASS findings= ['F-DG0-171']
+  qa-verifier PASS findings= ['F-DG0-251']
+
+$ census claim: see 10-objtype-census.log (at live HEAD ffa3fae, 29 rounds: 28 commit + round 18 ABSENT => 27 present before round 29, as D-045 states; 120/120 fix_revision commit; 103 head_commit_at_start commit + 3 ABSENT round-18 runs; no tags)
+
+$ node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs (clone @1e4c022)
+# tests 105
+# pass 105
+# fail 0
+exit=0
+
+$ is review_rounds[].source_commit the fourth/last commit-id field the GATE depends on? commit-id reads in rules.mjs:
+397:      } else if (!commitPresent(repo, head)) {
+399:      } else if (objectType(repo, head) !== "commit") {
+402:        bad(`started from ${head.slice(0, 10)}, a ${objectType(repo, head)} object, not a commit`);
+605:function commitPresent(repo, sha) {
+616:function objectType(repo, sha) {
+636:function isAncestor(repo, maybeAncestor, commit) {
+743:    else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repos
+744:    else if (objectType(repo, f.fix_revision) !== "commit")
+748:      errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is a ${objectType(repo, f.fix_revision)} object, not a commit; a fix_revision must
+750:      if (!commitPresent(repo, round.source_commit))
+752:      else if (!isAncestor(repo, f.fix_revision, round.source_commit))
+755:      if (typeof vhead === "string" && /^[0-9a-f]{40}$/.test(vhead) && commitPresent(repo, vhead) && !isAncestor(repo, f.fix_revision, vhead))
+757:      if (gate && !isAncestor(repo, f.fix_revision, gate.source_commit))
+785:    const rscType = objectType(repo, r.source_commit);
+929:    const fromCommit = candidateId(manifestFromRef(repo, m.source_commit, m.spec), m.hash_algorithm || "mth-candidate-v1");
+977:  const gscType = objectType(repo, gate.source_commit);
+980:  else if (!isAncestor(repo, gate.source_commit, "HEAD"))
+988:      ? manifestFromRef(repo, gate.source_commit, manifest.spec)
+Reading: gate source_commit (L977), fix_revision (L743-757), head_commit_at_start (L397-402; vhead L754 is the verifying run head_commit_at_start), review_rounds[].source_commit (L750-753, L774, L785). Candidate-manifest source_commit (L929) must equal the round (L774) or gate (L967) source_commit, so it is covered transitively. The review record's own source_commit field is only schema-validated and not used by any gate check, so it is not a field "the gate depends on". The "fourth and last" claim holds.
+
+CONCLUSION: D-045 presents itself as delivery tooling completing D-044's commit-object class (the fourth and last field), not as a business requirement. It makes no PMI/Mobily/G1-G6/Finance/benefit claim. The census, 105-test and "fourth and last" claims are accurate. ONE INACCURACY: the heading says "(all three reviewers PASS; each raised one Low ...)", but the round-28 domain-reviewer record raised no finding (findings=[]). The same row's context column says correctly "domain PASS with no findings". Reported as Low F-DG0-015.

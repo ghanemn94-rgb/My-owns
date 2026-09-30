@@ -1,0 +1,45 @@
+=== synthetic-gate dry-run (disposable clone $TMPDIR/review-dom29 @ ffa3fae only). Scratch docs/delivery/gates/DG0.json names the round-29 candidate 84130c62 / source_commit 1e4c022 and the round-28 review paths, so validateGate walks every real review round, closure and invocation.
+fatal: cannot exec '/tmp/code-sign': No such file or directory
+error: 
+fatal: failed to write commit object
+$ node tools/gates/validate.mjs --stage DG0 (baseline synthetic)
+exit=1
+FAIL gate DG0 (current) (23 problems)
+  - stages.json: DG0 state REVIEWING not in VERIFYING/APPROVED
+  - review domain-reviewer (docs/delivery/reviews/DG0/round-28/domain-reviewer.json): reviewed candidate sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b != gate candidate sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd
+  - review domain-reviewer (docs/delivery/reviews/DG0/round-28/domain-reviewer.json): invocation DG0-T-DG0-REV-DOM-R28-domain-reviewer-20260930T145109Z-23784448: started 2026-09-30T14:51:09Z, before the candidate froze at 2026-09-30T15:19:05Z
+  - review domain-reviewer (docs/delivery/reviews/DG0/round-28/domain-reviewer.json): invocation DG0-T-DG0-REV-DOM-R28-domain-reviewer-20260930T145109Z-23784448: started from 57d7a53f2a, which does not contain docs/delivery/candidates/DG0/84130c624e877424.manifest.json
+  - review code-security-reviewer (docs/delivery/reviews/DG0/round-28/code-security-reviewer.json): reviewed candidate sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b != gate candidate sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd
+  - review code-security-reviewer (docs/delivery/reviews/DG0/round-28/code-security-reviewer.json): invocation DG0-T-DG0-REV-SEC-R28-code-security-reviewer-20260930T145114Z-6aacc7c7: started 2026-09-30T14:51:14Z, before the candidate froze at 2026-09-30T15:19:05Z
+  - review code-security-reviewer (docs/delivery/reviews/DG0/round-28/code-security-reviewer.json): invocation DG0-T-DG0-REV-SEC-R28-code-security-reviewer-20260930T145114Z-6aacc7c7: started from 57d7a53f2a, which does not contain docs/delivery/candidates/DG0/84130c624e877424.manifest.json
+  - review qa-verifier (docs/delivery/reviews/DG0/round-28/qa-verifier.json): reviewed candidate sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b != gate candidate sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd
+  - review qa-verifier (docs/delivery/reviews/DG0/round-28/qa-verifier.json): invocation DG0-T-DG0-REV-QA-R28-qa-verifier-20260930T145119Z-9c4b5a52: started 2026-09-30T14:51:19Z, before the candidate froze at 2026-09-30T15:19:05Z
+  - review qa-verifier (docs/delivery/reviews/DG0/round-28/qa-verifier.json): invocation DG0-T-DG0-REV-QA-R28-qa-verifier-20260930T145119Z-9c4b5a52: started from 57d7a53f2a, which does not contain docs/delivery/candidates/DG0/84130c624e877424.manifest.json
+  - review release-auditor (docs/delivery/reviews/DG0/round-28/release-auditor.json): file not found (docs/delivery/reviews/DG0/round-28/release-auditor.json)
+  - review rounds: DG0 round 29 domain-reviewer: file not found (docs/delivery/reviews/DG0/round-29/domain-reviewer.json)
+  - review rounds: DG0 round 29 code-security-reviewer: file not found (docs/delivery/reviews/DG0/round-29/code-security-reviewer.json)
+  - review rounds: DG0 round 29 qa-verifier: file not found (docs/delivery/reviews/DG0/round-29/qa-verifier.json)
+  - finding F-DG0-147 (Low): no release-auditor sidecar accepts it
+  - finding F-DG0-147 (Low): findings.json accepted_by does not mirror the accepting sidecars (code-security-reviewer)
+  - finding F-DG0-147 (Low): not listed in the gate's accepted_observations
+  - finding F-DG0-149 (Low): no release-auditor sidecar accepts it
+  - finding F-DG0-149 (Low): findings.json accepted_by does not mirror the accepting sidecars (code-security-reviewer)
+  - finding F-DG0-149 (Low): not listed in the gate's accepted_observations
+  - finding F-DG0-171 (Low): unresolved (FIXED_PENDING_VERIFICATION)
+  - finding F-DG0-251 (Low): unresolved (FIXED_PENDING_VERIFICATION)
+  - gate DG0: requirements.final_gate_ids does not match the register (expected 19, recorded 0)
+--- lines with 'object, not a commit': 0
+
+forge: round 28 source_commit 331407e9b6711abbc01f7ee0456e4fa92ff65cda -> annotated tag object c4b95a0417b9499f84b7a0f0e575bfddaced9adf (tag), peels to 331407e9b6711abbc01f7ee0456e4fa92ff65cda
+$ node tools/gates/validate.mjs --stage DG0 (forged)
+exit=1
+$ diff baseline forged
+1c1
+< FAIL gate DG0 (current) (23 problems)
+---
+> FAIL gate DG0 (current) (25 problems)
+12a13,14
+>   - review rounds: DG0 round 28 frozen_at/source_commit differ from its committed manifest
+>   - review rounds: DG0 round 28 source_commit c4b95a0417 is a tag object, not a commit; a round's frozen source_commit must name the freeze commit itself
+restored clone to ffa3fae
+note: the 'git commit' of the scratch gate failed (commit-signing helper /tmp/code-sign absent in the sandbox); validate.mjs read the working-tree scratch gate file, as the 23-problem baseline shows. Scratch changes and tag removed with checkout/tag -d/reset --hard; the clone is disposable.

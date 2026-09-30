@@ -1,0 +1,28 @@
+# mode=baseline clone: --no-local, shallow=false, HEAD=331407e9b6711abbc01f7ee0456e4fa92ff65cda, rules.mjs sha256=5ac5128940898834a3413c7de260adf6d22240c6234ab497c9397f46a733e903, 2026-09-30T15:26:43Z
+SEC29-1 [baseline] filtered-out fixture write-once artefacts: 1 error(s)
+    write-once: working-tree docs/delivery/candidates/DG0/7b801799923d2fce.manifest.json differs from its committed content (edited locally, or hidden by skip-worktree/assume-unchanged)
+SEC29-1 [baseline] checkReviewRounds (rule-relevant errors): 0 error(s)
+SEC29-2 [baseline] validateGate: 1 error(s)
+    review rounds: DG0 round 2 frozen_at/source_commit differ from its committed manifest
+SEC29-5 validateGate: 2 error(s)
+    review rounds: DG0 round 2 frozen_at/source_commit differ from its committed manifest
+    finding F-DG0-101 (High, mandatory): verified in round-2, whose frozen candidate source_commit dddddddddd is not present; a closure must be verified against a retained candidate (F-DG0-169)
+SEC29-6 source_commit="HEAD" => 1 error(s); schema: stages.json: $.stages[0].review_rounds[1].source_commit: 'HEAD' does not match /^[0-9a-f]{40}$/
+SEC29-6 source_commit="--batch-check" => 1 error(s); schema: stages.json: $.stages[0].review_rounds[1].source_commit: '--batch-check' does not match /^[0-9a-f]{40}$/
+SEC29-6 source_commit="main" => 1 error(s); schema: stages.json: $.stages[0].review_rounds[1].source_commit: 'main' does not match /^[0-9a-f]{40}$/
+SEC29-6 source_commit="1e4c022" => 1 error(s); schema: stages.json: $.stages[0].review_rounds[1].source_commit: '1e4c022' does not match /^[0-9a-f]{40}$/
+✔ SEC29-1 CONSISTENT forge: round manifest AND every round entry name an annotated TAG of the freeze commit (checkReviewRounds) (253.247585ms)
+✔ SEC29-2 stages-only tag (manifest left as the commit): full validateGate (998.325527ms)
+﹣ SEC29-3 tree and blob object ids as a round source_commit are rejected (present, not a commit) (0.23242ms) # SKIP
+﹣ SEC29-4 nested tag (tag of a tag) is rejected; an ABSENT 40-hex source_commit does not trip the type rule (0.092659ms) # SKIP
+✔ SEC29-5 absent round source_commit: a closure verified in that round is still REJECTED by anchor 1 (F-DG0-169 standing) (364.421469ms)
+✔ SEC29-6 schema pins the round source_commit to 40-hex, so objectType is never handed a ref name / option string (629.423117ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 2527.53265
+exit=0

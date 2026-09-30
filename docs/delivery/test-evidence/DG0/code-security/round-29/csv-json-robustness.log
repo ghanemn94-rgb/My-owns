@@ -1,0 +1,21 @@
+# CSV/JSON robustness (--no-local clone at ffa3fae5a5fcf8e7195f616158244f3fe16db25f, 2026-09-30T15:28:23Z)
+$ git diff --stat 331407e..1e4c022 -- tools/gates/lib/csv.mjs tools/gates/lib/schema.mjs tools/gates/schemas tools/gates/lib/candidate.mjs tools/gates/import-findings.mjs tools/gates/validate.mjs
+(empty = unchanged)
+bom => {"header":["a","b"],"rows":[{"a":"1","b":"2"}]}
+quotedNewline => {"header":["a","b"],"rows":[{"a":"x\ny","b":"2"}]}
+crlf => {"header":["a","b"],"rows":[{"a":"1","b":"2"}]}
+unterminated => THROWS CSV: unterminated quoted field
+strayQuote => THROWS CSV: stray quote inside unquoted field near record 2
+extraCol => THROWS CSV: record 2 has 3 fields, header has 2
+$ node tools/gates/validate.mjs --register DG0 on a register with an unterminated quote (disposable clone)
+FAIL register rules at DG0 (1 problem)
+  - docs/delivery/requirements.csv: CSV: unterminated quoted field
+exit=1
+$ validatePipeline with truncated findings.json (disposable clone)
+PASS pipeline (active stage: DG0 REVIEWING)
+exit=0
+(clone restored)
+## the pipeline does not read findings.json while no stage is APPROVED (active DG0 REVIEWING), so the PASS above is expected; direct probe of the gate path reader:
+checkFindings on truncated findings.json => ["findings.json: invalid JSON (Expected double-quoted property name in JSON at position 200 (line 10 column 5))"]
+exit=0
+(clone restored)

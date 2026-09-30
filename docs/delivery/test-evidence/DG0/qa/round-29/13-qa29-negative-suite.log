@@ -1,0 +1,124 @@
+$ QA_REPO_ROOT=$TMPDIR/nl node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r29.test.mjs   (2026-09-30T15:31:56Z; $TMPDIR/nl = complete --no-local clone @ffa3fae, candidate 84130c62; baseline pre-D-045 = 331407e9)
+TAP version 13
+#   QA29-C0 old errors (0): []
+#   QA29-C0 new errors (0): []
+#   QA29-C0 result: old=ACCEPTED new=ACCEPTED
+#   QA29-R1 old errors (0): []
+#   QA29-R1 new errors (1): ["review rounds: DG0 round 3 source_commit 5b89268f61 is a tag object, not a commit; a round's frozen source_commit must name the freeze commit itself"]
+#   QA29-R1 result: old=ACCEPTED new=REJECTED(1) new-is-exactly-D-045=true
+#   QA29-N1 old errors (0): []
+#   QA29-N1 new errors (1): ["review rounds: DG0 round 3 source_commit 825cfea3a1 is a tag object, not a commit; a round's frozen source_commit must name the freeze commit itself"]
+#   QA29-N1 result: old=ACCEPTED new=REJECTED-by-D-045-only
+#   QA29-N2 old errors (0): []
+#   QA29-N2 new errors (1): ["review rounds: DG0 round 3 source_commit 5dd6dca1f4 is a tag object, not a commit; a round's frozen source_commit must name the freeze commit itself"]
+#   QA29-N2 result: old=ACCEPTED new=REJECTED-D-045(1)
+#   QA29-N3 old errors (0): []
+#   QA29-N3 new errors (1): ["review rounds: DG0 round 3 source_commit 49e38da23e is a tree object, not a commit; a round's frozen source_commit must name the freeze commit itself"]
+#   QA29-N3 result: old=ACCEPTED new=REJECTED-D-045(1)
+#   QA29-N4 old errors (0): []
+#   QA29-N4 new errors (1): ["review rounds: DG0 round 3 source_commit 626799f0f8 is a blob object, not a commit; a round's frozen source_commit must name the freeze commit itself"]
+#   QA29-N4 result: old=ACCEPTED new=REJECTED-D-045(1)
+#   QA29-N5 closure-free old errors (0): []
+#   QA29-N5 closure-free new errors (0): []
+#   QA29-N5 with-closure old errors (1): ["finding F-DG0-201 (High): verified in round-3, whose frozen candidate source_commit efefefefef is not present; a closure must be verified against a retained candidate (F-DG0-169)"]
+#   QA29-N5 with-closure new errors (1): ["finding F-DG0-201 (High): verified in round-3, whose frozen candidate source_commit efefefefef is not present; a closure must be verified against a retained candidate (F-DG0-169)"]
+#   QA29-N5 result: {"closureFree":{"old":0,"new":0,"d045":false},"withClosure":{"a1Absent":true,"d045":false,"oldA1Absent":true}}
+#   QA29-N6 HEAD errors (1): ["stages.json: $.stages[0].review_rounds[2].source_commit: 'HEAD' does not match /^[0-9a-f]{40}$/"]
+#   QA29-N6 abbrev12 errors (1): ["stages.json: $.stages[0].review_rounds[2].source_commit: 'a9f095cc738a' does not match /^[0-9a-f]{40}$/"]
+#   QA29-N6 uppercase errors (1): ["stages.json: $.stages[0].review_rounds[2].source_commit: '74DA5ED4A917189CE529305AADCB473BA7A7F2DB' does not match /^[0-9a-f]{40}$/"]
+#   QA29-N6 result: {"HEAD":"REJECTED","abbrev12":"REJECTED","uppercase":"REJECTED"}
+#   QA29-S1 fix_revision tag (F-DG0-250) errors (1): ["finding F-DG0-201 (High): fix a4c2b82225 is a tag object, not a commit; a fix_revision must name the fix commit itself"]
+#   QA29-S2 head_commit_at_start tag (D-044) errors (3): ["write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000090/meta.json has a M event in 9a9625fb71 (review evidence is append-only)","write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000090/meta.json was committed with 2 different contents (review evidence is append-only)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000090: started from 8b5c1fc668, a tag object, not a commit"]
+#   QA29-S3 closure in absent-source round (D-042) errors (1): ["finding F-DG0-201 (High): verified in round-3, whose frozen candidate source_commit efefefefef is not present; a closure must be verified against a retained candidate (F-DG0-169)"]
+#   QA29-S4 genuine-round post-freeze fix (anchor 1) errors (1): ["finding F-DG0-201 (High): fix 805bd7d556 is not in the verified round-3 candidate (d197793cb0)"]
+#   QA29-S5 forged-absent-round fix after the run started (anchor 2) errors (2): ["finding F-DG0-201 (High): verified in round-3, whose frozen candidate source_commit efefefefef is not present; a closure must be verified against a retained candidate (F-DG0-169)","finding F-DG0-201 (High): fix a77a2a150e is not in the verifying run's starting history (db05357535); it was not in the candidate the reviewer saw"]
+#   QA29-S6a all-zero fix_revision errors (1): ["finding F-DG0-201 (High): fix 0000000000 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA29-S6b absent 40-hex fix_revision errors (1): ["finding F-DG0-201 (High): fix a1a1a1a1a1 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA29-S6c missing fix_revision errors (1): ["finding F-DG0-201 (High): CLOSED_VERIFIED needs a full fix_revision commit id"]
+#   QA29-S7a head missing errors (3): ["write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000139/meta.json has a M event in e08b2201cb (review evidence is append-only)","write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000139/meta.json was committed with 2 different contents (review evidence is append-only)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000139: head_commit_at_start undefined is not a 40-hex commit id"]
+#   QA29-S7b head 'unknown' errors (3): ["write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000146/meta.json has a M event in be985ec028 (review evidence is append-only)","write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000146/meta.json was committed with 2 different contents (review evidence is append-only)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000146: head_commit_at_start \\"unknown\\" is not a 40-hex commit id"]
+#   QA29-S7c head absent 40-hex errors (3): ["write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000153/meta.json has a M event in 2519a1dd5d (review evidence is append-only)","write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000153/meta.json was committed with 2 different contents (review evidence is append-only)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000153: started from c3c3c3c3c3, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)"]
+#   QA29-S8a later-round severity downgrade (F-DG0-165) errors (2): ["review rounds: DG0/round-10 exists but is not recorded in stages.json","docs/delivery/reviews/DG0/round-10/qa-verifier.findings.json: finding F-DG0-201 severity (\\"Low\\") differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/qa-verifier.findings.json (\\"Critical\\"); a later round cannot reclassify a finding"]
+#   QA29-S8b later-round mandatory_violation downgrade (F-DG0-165) errors (2): ["review rounds: DG0/round-10 exists but is not recorded in stages.json","docs/delivery/reviews/DG0/round-10/qa-verifier.findings.json: finding F-DG0-201 mandatory_violation (false) differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/qa-verifier.findings.json (true); a later round cannot reclassify a finding"]
+#   QA29-S9 shallow errors (8): ["gate DG0: the repository is a shallow clone, so ancestry, write-once and history-tolerance checks are unreliable; validate the gate against the complete history (git fetch --unshallow, or clone with fetch-depth: 0 as CI does) (D-038, F-DG0-160)","candidate: gate source_commit a2859884f8 is not a commit object in this repository (absent)","review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): invocation DG0-T-DG0-REV-R2-domain-reviewer-20260928T133000Z-00000166: started from 23c0ca3eb2, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","review code-security-reviewer (docs/delivery/reviews/DG0/round-2/code-security-reviewer.json): invocation DG0-T-DG0-REV-R2-code-security-reviewer-20260928T133000Z-00000167: started from 23c0ca3eb2, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000168: started from 23c0ca3eb2, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","review release-auditor (docs/delivery/reviews/DG0/round-2/release-auditor.json): invocation DG0-T-DG0-REV-R2-release-auditor-20260928T133000Z-00000169: started from 23c0ca3eb2, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000168: started from 23c0ca3eb2, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","finding F-DG0-201 (High): fix a2859884f8 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA29-S9 full errors (0): []
+#   QA29-S result: {
+#  "S1 fix_revision tag (F-DG0-250)": "REJECTED-as-expected",
+#  "S2 head_commit_at_start tag (D-044)": "REJECTED-as-expected",
+#  "S3 closure in absent-source round (D-042)": "REJECTED-as-expected",
+#  "S4 genuine-round post-freeze fix (anchor 1)": "REJECTED-as-expected",
+#  "S5 forged-absent-round fix after the run started (anchor 2)": "REJECTED-as-expected",
+#  "S6a all-zero fix_revision": "REJECTED-as-expected",
+#  "S6b absent 40-hex fix_revision": "REJECTED-as-expected",
+#  "S6c missing fix_revision": "REJECTED-as-expected",
+#  "S7a head missing": "REJECTED-as-expected",
+#  "S7b head 'unknown'": "REJECTED-as-expected",
+#  "S7c head absent 40-hex": "REJECTED-as-expected",
+#  "S8a later-round severity downgrade (F-DG0-165)": "REJECTED-as-expected",
+#  "S8b later-round mandatory_violation downgrade (F-DG0-165)": "REJECTED-as-expected",
+#  "S9 shallow refused / complete accepted": "REJECTED-as-expected"
+# }
+# Subtest: QA29-C0 control: genuine three-anchor closure, all ids commit objects -> ACCEPTED by old and new
+ok 1 - QA29-C0 control: genuine three-anchor closure, all ids commit objects -> ACCEPTED by old and new
+  ---
+  duration_ms: 774.951367
+  type: 'test'
+  ...
+# Subtest: QA29-R1 reproduction of QA28-T7: round source_commit = annotated TAG of the freeze (closure in that round) -> old ACCEPTED, new REJECTED by exactly D-045
+ok 2 - QA29-R1 reproduction of QA28-T7: round source_commit = annotated TAG of the freeze (closure in that round) -> old ACCEPTED, new REJECTED by exactly D-045
+  ---
+  duration_ms: 741.566854
+  type: 'test'
+  ...
+# Subtest: QA29-N1 NESTED annotated tag (tag of a tag) of the freeze as round source_commit -> old ACCEPTED, new REJECTED by exactly D-045
+ok 3 - QA29-N1 NESTED annotated tag (tag of a tag) of the freeze as round source_commit -> old ACCEPTED, new REJECTED by exactly D-045
+  ---
+  duration_ms: 729.235052
+  type: 'test'
+  ...
+# Subtest: QA29-N2 closure-free round, source_commit = annotated tag of a TREE (manifest recomputes via ls-tree) -> new REJECTED by D-045
+ok 4 - QA29-N2 closure-free round, source_commit = annotated tag of a TREE (manifest recomputes via ls-tree) -> new REJECTED by D-045
+  ---
+  duration_ms: 714.261342
+  type: 'test'
+  ...
+# Subtest: QA29-N3 closure-free round, source_commit = bare TREE object id -> new REJECTED 'is a tree object'
+ok 5 - QA29-N3 closure-free round, source_commit = bare TREE object id -> new REJECTED 'is a tree object'
+  ---
+  duration_ms: 746.056283
+  type: 'test'
+  ...
+# Subtest: QA29-N4 closure-free round, source_commit = BLOB object id -> new REJECTED 'is a blob object' (old treated it as absent)
+ok 6 - QA29-N4 closure-free round, source_commit = BLOB object id -> new REJECTED 'is a blob object' (old treated it as absent)
+  ---
+  duration_ms: 624.660627
+  type: 'test'
+  ...
+# Subtest: QA29-N5 absence boundary: ABSENT round source_commit -> no D-045 error (tolerated, round-18 shape); with a closure -> D-042 anchor 1 rejects
+ok 7 - QA29-N5 absence boundary: ABSENT round source_commit -> no D-045 error (tolerated, round-18 shape); with a closure -> D-042 anchor 1 rejects
+  ---
+  duration_ms: 1363.771822
+  type: 'test'
+  ...
+# Subtest: QA29-N6 format boundary: round source_commit 'HEAD' / 12-hex abbreviation / UPPERCASE 40-hex (all resolve to a commit) -> REJECTED
+ok 8 - QA29-N6 format boundary: round source_commit 'HEAD' / 12-hex abbreviation / UPPERCASE 40-hex (all resolve to a commit) -> REJECTED
+  ---
+  duration_ms: 1006.145685
+  type: 'test'
+  ...
+# Subtest: QA29-S1..S9 standing strict-validator controls on the candidate validator
+ok 9 - QA29-S1..S9 standing strict-validator controls on the candidate validator
+  ---
+  duration_ms: 8017.528855
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14885.705903
+exit=0

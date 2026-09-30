@@ -1,0 +1,21 @@
+# F-DG0-251 closure anchors | qa-verifier round 29 | 2026-09-30T15:36:38Z | complete --no-local clone $TMPDIR/nl (shallow=false)
+$ git cat-file -t 83721ced8f6453712d3af949e98f43bd08aeff7f
+commit
+$ git log -1 --format='%H %s' 83721ced8f6453712d3af949e98f43bd08aeff7f
+83721ced8f6453712d3af949e98f43bd08aeff7f fix(gate): require a review round's source_commit to be a commit object (D-045, F-DG0-171/251)
+$ git merge-base --is-ancestor 83721ced8f6453712d3af949e98f43bd08aeff7f 1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac   # anchor1+3 round-29 frozen source_commit = gate candidate
+rc=0
+$ git merge-base --is-ancestor 83721ced8f6453712d3af949e98f43bd08aeff7f ffa3fae5a5fcf8e7195f616158244f3fe16db25f   # anchor2 this verifying run's head_commit_at_start (repo HEAD at run start)
+rc=0
+$ git diff --stat 83721ced8f6453712d3af949e98f43bd08aeff7f 1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac -- tools/gates/lib/rules.mjs tools/gates/tests/validator.test.mjs   (empty = the fix is exactly what was frozen)
+$ git show --stat --format=%s 83721ced8f6453712d3af949e98f43bd08aeff7f | tail -5
+
+ docs/delivery/decisions.md           |  1 +
+ tools/gates/lib/rules.mjs            | 11 +++++++++++
+ tools/gates/tests/validator.test.mjs | 36 ++++++++++++++++++++++++++++++++++++
+ 3 files changed, 48 insertions(+)
+$ grep -n 'rscType' tools/gates/lib/rules.mjs
+785:    const rscType = objectType(repo, r.source_commit);
+786:    if (rscType && rscType !== "commit")
+787:      errors.push(`review rounds: ${stage.id} round ${r.round} source_commit ${String(r.source_commit).slice(0, 10)} is a ${rscType} object, not a commit; a round's frozen source_commit must name the freeze commit itself`);
+$ run meta head of this run (recorded by the runner at start)

@@ -1,0 +1,24 @@
+import json,glob,subprocess,collections
+def t(s):
+    r=subprocess.run(['git','cat-file','-t',s],capture_output=True,text=True); return r.stdout.strip() or 'ABSENT'
+st=json.load(open('docs/delivery/stages.json'))
+stages=st['stages'] if isinstance(st,dict) and 'stages' in st else st
+for s in stages:
+    rr=s.get('review_rounds',[])
+    if not rr: continue
+    c=collections.Counter(); odd=[]
+    for r in rr:
+        ty=t(r['source_commit']); c[ty]+=1
+        if ty!='commit': odd.append((r['round'],r['source_commit'][:10],ty))
+    print(s['id'],'review_rounds',len(rr),'source_commit types',dict(c),'non-commit:',odd)
+    if s.get('candidate'): print(s['id'],'current candidate source_commit',s['candidate']['source_commit'][:10],t(s['candidate']['source_commit']))
+f=json.load(open('docs/delivery/findings.json')); F=f['findings'] if isinstance(f,dict) else f
+c=collections.Counter(t(x['fix_revision']) for x in F if x.get('fix_revision')); print('findings.json fix_revision types',dict(c),'of',sum(1 for x in F if x.get('fix_revision')))
+c=collections.Counter(); odd=[]
+for m in glob.glob('docs/delivery/runs/**/meta.json',recursive=True):
+    h=json.load(open(m)).get('head_commit_at_start')
+    if h: ty=t(h); c[ty]+=1; odd+= [m] if ty!='commit' else []
+print('runs meta head_commit_at_start types',dict(c),'non-commit',odd[:5])
+for g in glob.glob('docs/delivery/gates/*.json'):
+    print(g,'source_commit type',t(json.load(open(g))['source_commit']))
+print('annotated tags in repo:',subprocess.run(['git','for-each-ref','refs/tags','--format=%(objecttype) %(refname)'],capture_output=True,text=True).stdout.strip() or 'none')

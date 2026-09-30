@@ -1,0 +1,114 @@
+// code-security-reviewer, DG0 round 29: D-045 / F-DG0-171 probes. Appended to a COPY of tools/gates/tests/validator.test.mjs
+// inside a disposable --no-local clone (see run-sec29-repro.sh), so it reuses that file's fixture helpers
+// (buildValidRepo, approveAndCommit, edit, sh, get, expectError). Never run in the candidate tree.
+// Run against the round-28 baseline (331407e) to REPRODUCE F-DG0-171 and against the candidate (1e4c022) to show it FIXED.
+// SEC29_EXPECT=baseline|candidate selects which outcome the assertions demand.
+import { checkReviewRounds as sec29CheckReviewRounds } from "../lib/rules.mjs";
+
+const SEC29_FIXED = process.env.SEC29_EXPECT !== "baseline";
+const SEC29_TYPE_RE = /source_commit .* is a (tag|tree|blob) object, not a commit; a round's frozen source_commit/;
+const SEC29_MISMATCH_RE = /frozen_at\/source_commit differ from its committed manifest/;
+const sec29Log = (label, errs) => console.log(`${label}: ${errs.length} error(s)${errs.length ? "\n    " + errs.join("\n    ") : ""}`);
+// Errors that are only artefacts of editing a committed (write-once) file in the fixture, not the rule under test.
+const sec29NotWriteOnce = (errs) => errs.filter((e) => !/write-once|differs from its first committed|was modified|changed after/i.test(e));
+
+function sec29Stage(repo) { return get(repo, "docs/delivery/stages.json").stages[0]; }
+
+test("SEC29-1 CONSISTENT forge: round manifest AND every round entry name an annotated TAG of the freeze commit (checkReviewRounds)", () => {
+  const { repo, cid, head } = buildValidRepo();
+  sh(repo, "tag", "-a", "sec29round", "-m", "annotated", head);
+  const tagObj = sh(repo, "rev-parse", "sec29round");
+  assert.equal(sh(repo, "cat-file", "-t", tagObj), "tag");
+  assert.equal(sh(repo, "rev-parse", `${tagObj}^{commit}`), head);
+  // What a freeze that recorded the tag id (instead of the commit) would have written: manifest and round entries agree.
+  const mrel = `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`;
+  edit(repo, mrel, (m) => (m.source_commit = tagObj));
+  edit(repo, "docs/delivery/stages.json", (d) => d.stages[0].review_rounds.forEach((r) => (r.source_commit = tagObj)));
+  const all = [];
+  sec29CheckReviewRounds(repo, sec29Stage(repo), all);
+  const errs = sec29NotWriteOnce(all);
+  sec29Log(`SEC29-1 [${SEC29_FIXED ? "candidate" : "baseline"}] filtered-out fixture write-once artefacts`, all.filter((e) => !errs.includes(e)));
+  sec29Log(`SEC29-1 [${SEC29_FIXED ? "candidate" : "baseline"}] checkReviewRounds (rule-relevant errors)`, errs);
+  assert.ok(!errs.some((e) => SEC29_MISMATCH_RE.test(e)), "manifest and round entries agree, so the mismatch rule cannot catch it");
+  assert.ok(!errs.some((e) => /does not describe its source_commit|cannot recompute/.test(e)), "manifestFromRef PEELS the tag, so the recompute matches");
+  if (SEC29_FIXED) {
+    assert.equal(errs.filter((e) => SEC29_TYPE_RE.test(e)).length, 2, "both rounds (1 and 2) must be rejected as tag objects");
+  } else {
+    assert.deepEqual(errs, [], "baseline: F-DG0-171 reproduced -- a tag-object round source_commit is ACCEPTED by checkReviewRounds");
+  }
+});
+
+test("SEC29-2 stages-only tag (manifest left as the commit): full validateGate", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  assert.deepEqual(validateGate(repo, "DG0"), []);
+  const src = sec29Stage(repo).review_rounds[1].source_commit;
+  sh(repo, "tag", "-a", "sec29r2", "-m", "annotated", src);
+  const tagObj = sh(repo, "rev-parse", "sec29r2");
+  edit(repo, "docs/delivery/stages.json", (d) => (d.stages[0].review_rounds[1].source_commit = tagObj));
+  const errs = validateGate(repo, "DG0");
+  sec29Log(`SEC29-2 [${SEC29_FIXED ? "candidate" : "baseline"}] validateGate`, errs);
+  expectError(errs, SEC29_MISMATCH_RE); // pre-existing control: already caught at baseline via the manifest mismatch
+  assert.equal(errs.some((e) => SEC29_TYPE_RE.test(e)), SEC29_FIXED);
+  const hist = validateGate(repo, "DG0", { mode: "historical" });
+  assert.equal(hist.some((e) => SEC29_TYPE_RE.test(e)), SEC29_FIXED, "the rule must also apply in historical mode");
+});
+
+test("SEC29-3 tree and blob object ids as a round source_commit are rejected (present, not a commit)", { skip: !SEC29_FIXED }, () => {
+  const { repo, head } = buildValidRepo();
+  const tree = sh(repo, "rev-parse", `${head}^{tree}`);
+  const blob = sh(repo, "rev-parse", `${head}:src/app.txt`);
+  for (const [kind, id] of [["tree", tree], ["blob", blob]]) {
+    assert.equal(sh(repo, "cat-file", "-t", id), kind);
+    const st = sec29Stage(repo);
+    st.review_rounds[0].source_commit = id;
+    const errs = [];
+    sec29CheckReviewRounds(repo, st, errs);
+    const hit = errs.filter((e) => SEC29_TYPE_RE.test(e));
+    console.log(`SEC29-3 ${kind} ${id.slice(0, 10)} => ${hit.join(" | ")}`);
+    assert.equal(hit.length, 1);
+    assert.match(hit[0], new RegExp(`is a ${kind} object`));
+  }
+});
+
+test("SEC29-4 nested tag (tag of a tag) is rejected; an ABSENT 40-hex source_commit does not trip the type rule", { skip: !SEC29_FIXED }, () => {
+  const { repo, head } = buildValidRepo();
+  sh(repo, "tag", "-a", "t1", "-m", "a", head);
+  sh(repo, "tag", "-a", "t2", "-m", "b", "t1");
+  const t2 = sh(repo, "rev-parse", "t2");
+  assert.equal(sh(repo, "cat-file", "-t", t2), "tag");
+  let st = sec29Stage(repo);
+  st.review_rounds[0].source_commit = t2;
+  let errs = [];
+  sec29CheckReviewRounds(repo, st, errs);
+  assert.ok(errs.some((e) => SEC29_TYPE_RE.test(e)), "a nested tag must be rejected");
+  st = sec29Stage(repo);
+  st.review_rounds[0].source_commit = "c".repeat(40);
+  errs = [];
+  sec29CheckReviewRounds(repo, st, errs);
+  console.log(`SEC29-4 absent: type-rule hits=${errs.filter((e) => SEC29_TYPE_RE.test(e)).length}; other: ${errs.join(" | ")}`);
+  assert.ok(!errs.some((e) => SEC29_TYPE_RE.test(e)), "absent stays tolerated by the type rule (D-035)");
+});
+
+test("SEC29-5 absent round source_commit: a closure verified in that round is still REJECTED by anchor 1 (F-DG0-169 standing)", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  edit(repo, "docs/delivery/stages.json", (d) => (d.stages[0].review_rounds[1].source_commit = "d".repeat(40)));
+  const errs = validateGate(repo, "DG0");
+  sec29Log("SEC29-5 validateGate", errs);
+  expectError(errs, /whose frozen candidate source_commit dddddddddd is not present; a closure must be verified against a retained candidate/);
+  assert.ok(!errs.some((e) => SEC29_TYPE_RE.test(e)));
+});
+
+test("SEC29-6 schema pins the round source_commit to 40-hex, so objectType is never handed a ref name / option string", () => {
+  for (const bad of ["HEAD", "--batch-check", "main", "1e4c022"]) {
+    const { repo } = buildValidRepo();
+    approveAndCommit(repo);
+    edit(repo, "docs/delivery/stages.json", (d) => (d.stages[0].review_rounds[1].source_commit = bad));
+    const errs = validateGate(repo, "DG0");
+    const schemaHit = errs.find((e) => /stages\.json.*(pattern|source_commit)/i.test(e));
+    console.log(`SEC29-6 source_commit=${JSON.stringify(bad)} => ${errs.length} error(s); schema: ${schemaHit || "(none)"}`);
+    assert.ok(errs.length > 0, `${bad} must fail the gate`);
+    assert.ok(schemaHit, "the stages schema must reject a non-40-hex round source_commit");
+  }
+});

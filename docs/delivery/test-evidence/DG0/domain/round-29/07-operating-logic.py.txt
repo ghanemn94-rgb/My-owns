@@ -1,0 +1,18 @@
+import csv
+R={r['req_id']:r for r in csv.DictReader(open('docs/delivery/requirements.csv',encoding='utf-8'))}
+rules={
+ 'RAG from trajectory, not task completion':['REQ-PB-063','REQ-S07-007','REQ-PB-015'],
+ 'delivery/adoption/validated value/closure separate':['REQ-S03-003','REQ-PB-009'],
+ 'forecast never validated value':['REQ-S08-001','REQ-PB-075'],
+ 'Finance validates baseline/benefits':['REQ-PB-013','REQ-PB-055','REQ-S08-015'],
+ 'Business Owner accountable':['REQ-S08-003','REQ-PB-053'],
+ 'shared benefit once; allocation<=100%; unallocated shown':['REQ-PB-058','REQ-S08-013'],
+ 'gates explicit approvals on evidence snapshot':['REQ-S04-002','REQ-PB-015'],
+ 'DG0-DG7 separate from G1-G6':['REQ-DLV-002','REQ-S04-008'],
+ 'tech admin not business approver':['REQ-S10-003'],
+ 'missing -> Unknown/Stale never zero/green':['REQ-PB-027','REQ-S07-006'],
+}
+for k,ids in rules.items():
+    print('##',k)
+    for i in ids:
+        r=R[i]; print(f"  {i} [{r['class']},{r['final_gate']},{r['status']}] {r['title']}\n     ACC: {r['acceptance'][:330]}")

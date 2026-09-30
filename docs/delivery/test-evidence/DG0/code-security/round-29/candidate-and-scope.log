@@ -1,0 +1,18 @@
+# candidate & scope (2026-09-30T15:25:29Z), repo /home/user/My-owns
+$ git rev-parse HEAD
+ffa3fae5a5fcf8e7195f616158244f3fe16db25f
+$ git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd","files":91}
+$ node tools/gates/candidate.mjs --stage DG0 --ref 1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac
+{"stage":"DG0","source":"1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac","candidate_id":"sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd","files":91}
+manifest: sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd 1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac 2026-09-30T15:19:05Z entries 91
+post-freeze changed paths: 7 of which candidate paths: []
+round delta candidate paths: ['docs/delivery/decisions.md', 'tools/gates/lib/rules.mjs', 'tools/gates/tests/validator.test.mjs']
+stages DG0 state: REVIEWING candidate: {'candidate_id': 'sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd', 'source_commit': '1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac', 'frozen_at': '2026-09-30T15:19:05Z', 'manifest_path': 'docs/delivery/candidates/DG0/84130c624e877424.manifest.json'}
+last round: 29 sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd 1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac 2026-09-30T15:19:05Z
+$ git cat-file -t 1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac
+commit
+$ sha256sum docs/delivery/assignments/DG0/round-29/review-code-security-reviewer.md
+741035ca65d1c7d29d27e4a9d5c687bb13a841342fa4887532ed4d9f3275242f  docs/delivery/assignments/DG0/round-29/review-code-security-reviewer.md

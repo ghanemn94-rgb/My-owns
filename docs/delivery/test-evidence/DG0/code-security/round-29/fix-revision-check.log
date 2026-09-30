@@ -1,0 +1,20 @@
+# F-DG0-171 fix_revision checks (2026-09-30T15:29:27Z)
+$ git cat-file -t 83721ced8f6453712d3af949e98f43bd08aeff7f
+commit
+$ git log -1 --format='%H %cI %s' 83721ced8f6453712d3af949e98f43bd08aeff7f
+83721ced8f6453712d3af949e98f43bd08aeff7f 2026-09-30T15:16:15+00:00 fix(gate): require a review round's source_commit to be a commit object (D-045, F-DG0-171/251)
+$ git merge-base --is-ancestor 83721ced8f6453712d3af949e98f43bd08aeff7f 1e4c0226 (round-29 frozen candidate)
+yes
+$ git merge-base --is-ancestor 331407e 83721ced8f6453712d3af949e98f43bd08aeff7f (after round-28 freeze)
+yes
+$ git show --stat 83721ced8f6453712d3af949e98f43bd08aeff7f
+ docs/delivery/decisions.md           |  1 +
+ tools/gates/lib/rules.mjs            | 11 +++++++++++
+ tools/gates/tests/validator.test.mjs | 36 ++++++++++++++++++++++++++++++++++++
+ 3 files changed, 48 insertions(+)
+$ git grep -n 'rscType' 83721ced8f6453712d3af949e98f43bd08aeff7f -- tools/gates/lib/rules.mjs
+83721ced8f6453712d3af949e98f43bd08aeff7f:tools/gates/lib/rules.mjs:785:    const rscType = objectType(repo, r.source_commit);
+83721ced8f6453712d3af949e98f43bd08aeff7f:tools/gates/lib/rules.mjs:786:    if (rscType && rscType !== "commit")
+83721ced8f6453712d3af949e98f43bd08aeff7f:tools/gates/lib/rules.mjs:787:      errors.push(`review rounds: ${stage.id} round ${r.round} source_commit ${String(r.source_commit).slice(0, 10)} is a ${rscType} object, not a commit; a round's frozen source_commit must name the freeze commit itself`);
+$ git diff 83721ced8f6453712d3af949e98f43bd08aeff7f 1e4c0226 -- tools/gates (empty = fix commit's tooling equals the frozen candidate)
+(end)

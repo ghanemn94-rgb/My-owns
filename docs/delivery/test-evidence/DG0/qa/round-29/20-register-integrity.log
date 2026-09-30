@@ -1,0 +1,56 @@
+$ python3 -I -B docs/delivery/test-evidence/DG0/qa/round-29/register-integrity-r29.py "$TMPDIR/nl"   # 2026-09-30T15:34:14Z
+rows=412 class={'SOURCE': 93, 'ENGINEERING': 131, 'USER': 188} status={'SPECIFIED': 393, 'IMPLEMENTED': 19} final_gate={'DG0': 19, 'DG1': 12, 'DG2': 32, 'DG3': 32, 'DG4': 137, 'DG5': 78, 'DG6': 48, 'DG7': 54}
+DG0-final (19) == assigned (19): True ; IMPLEMENTED == DG0-final: True
+source-coverage rows=165 {'NON-REQUIREMENT': 7, 'REQUIREMENT': 129, 'CONTEXT': 29} ; master-prompt-coverage rows=423 {'NON-REQUIREMENT': 7, 'REQUIREMENT': 367, 'CONTEXT': 49}
+implementation anchors:
+  REQ-DLV-001  docs/delivery/decisions.md                    /D-0\d\d/  in-evidence=True  match=True
+  REQ-DLV-001  docs/delivery/environment.md                  /(?i)node/  in-evidence=True  match=True
+  REQ-DLV-002  tools/gates/schemas/gate.schema.json          /candidate_id/  in-evidence=True  match=True
+  REQ-DLV-002  docs/delivery/agent-protocol.md               /G1.G6/  in-evidence=True  match=True
+  REQ-DLV-003  docs/delivery/environment.md                  /(?i)sandbox|bubblewrap/  in-evidence=True  match=True
+  REQ-DLV-004  .claude/agents/qa-verifier.md                 /name:\s*qa-verifier/  in-evidence=True  match=True
+  REQ-DLV-004  .claude/agents/release-auditor.md             /name:\s*release-auditor/  in-evidence=True  match=True
+  REQ-DLV-006  tools/agents/run-agent.sh                     /--agent/  in-evidence=True  match=True
+  REQ-DLV-006  tools/agents/run-agent.sh                     /session/  in-evidence=True  match=True
+  REQ-DLV-007  tools/agents/guard-write.mjs                  /write-scopes/  in-evidence=True  match=True
+  REQ-DLV-007  tools/agents/write-scopes.json                /qa-verifier/  in-evidence=True  match=True
+  REQ-DLV-013  tools/gates/schemas/review.schema.json        /independence_declaration/  in-evidence=True  match=True
+  REQ-DLV-013  tools/gates/lib/rules.mjs                     /export function checkInvocation/  in-evidence=True  match=True
+  REQ-DLV-015  tools/gates/schemas/stages.schema.json        /VERIFYING/  in-evidence=True  match=True
+  REQ-DLV-015  tools/gates/lib/rules.mjs                     /APPROVED/  in-evidence=True  match=True
+  REQ-DLV-016  tools/gates/lib/rules.mjs                     /export function validateGate/  in-evidence=True  match=True
+  REQ-DLV-016  tools/gates/validate.mjs                      /process\.exit/  in-evidence=True  match=True
+  REQ-DLV-016  tools/gates/lib/rules.mjs                     /is not in the verified \$\{v\.roundDir\} candidate/  in-evidence=True  match=True
+  REQ-DLV-016  tools/gates/lib/rules.mjs                     /a closure must be verified against a retained candidate \(F-DG0-169\)/  in-evidence=True  match=True
+  REQ-DLV-016  tools/gates/lib/rules.mjs                     /a fix_revision must name the fix commit itself/  in-evidence=True  match=True
+  REQ-DLV-016  tools/gates/lib/rules.mjs                     /objectType\(repo, head\) !== \"commit\"/  in-evidence=True  match=True
+  REQ-DLV-016  tools/gates/lib/rules.mjs                     /if \(rscType && rscType !== \"commit\"\)/  in-evidence=True  match=True
+  REQ-DLV-017  tools/gates/schemas/findings.schema.json      /mandatory_violation/  in-evidence=True  match=True
+  REQ-DLV-017  tools/gates/import-findings.mjs               /verifications/  in-evidence=True  match=True
+  REQ-DLV-019  CLAUDE.md                                     /progress\.md/  in-evidence=True  match=True
+  REQ-DLV-019  docs/delivery/decisions.md                    /D-042/  in-evidence=True  match=True
+  REQ-DLV-019  docs/delivery/decisions.md                    /\| D-043 \|/  in-evidence=True  match=True
+  REQ-DLV-019  docs/delivery/decisions.md                    /\| D-044 \|/  in-evidence=True  match=True
+  REQ-DLV-019  docs/delivery/decisions.md                    /\| D-045 \|/  in-evidence=True  match=True
+  REQ-DLV-020  tools/source/merge_register.py                /requirements\.csv/  in-evidence=True  match=True
+  REQ-DLV-020  tools/gates/lib/rules.mjs                     /(?i)register/  in-evidence=True  match=True
+  REQ-DLV-022  tools/gates/lib/candidate.mjs                 /sha256/  in-evidence=True  match=True
+  REQ-DLV-022  tools/gates/lib/candidate.mjs                 /META_EXCLUDES/  in-evidence=True  match=True
+  REQ-DLV-023  .github/workflows/delivery-gates.yml          /validate\.mjs/  in-evidence=True  match=True
+  REQ-DLV-023  .github/workflows/delivery-gates.yml          /fetch-depth:\s*0/  in-evidence=True  match=True
+  REQ-DLV-026  tools/agents/run_meta.py                      /transcript/  in-evidence=True  match=True
+  REQ-DLV-026  tools/agents/run-agent.sh                     /meta\.json/  in-evidence=True  match=True
+  REQ-DLV-029  tools/gates/validate.mjs                      /--reconcile/  in-evidence=True  match=True
+  REQ-DLV-029  docs/delivery/progress.md                     /(?i)next/  in-evidence=True  match=True
+  REQ-DLV-032  docs/source/playbook.md                       /B0165/  in-evidence=True  match=True
+  REQ-DLV-032  docs/source/master-prompt.anchored.md         /M0423/  in-evidence=True  match=True
+  REQ-DLV-032  docs/analysis/stage-plan.md                   /DG7/  in-evidence=True  match=True
+  REQ-S20-024  tools/gates/tests/validator.test.mjs          /(?i)A24|advance/  in-evidence=True  match=True
+  REQ-S20-024  tools/gates/lib/rules.mjs                     /(?i)depends_on|preceding|previous/  in-evidence=False  match=True
+  REQ-S20-025  tools/gates/tests/validator.test.mjs          /(?i)A25|candidate/  in-evidence=True  match=True
+  REQ-S20-025  tools/gates/lib/candidate.mjs                 /export function candidateId/  in-evidence=True  match=True
+notes (1):
+  - REQ-DLV-021: SPECIFIED with evidence listed (tools/gates/schemas/gate.schema.json;tools/gates/lib/rules.mjs;tools/gates/tests)
+errors (0):
+RESULT: PASS
+exit=0

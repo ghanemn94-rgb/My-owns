@@ -1,0 +1,78 @@
+$ grep -n "^#" docs/analysis/user-journeys.md
+1:# User journeys per role
+20:## J1. My Work (all roles)
+35:## J2. Phase journeys with their gates (End-to-End mode)
+49:### J2.1 Diagnose → G1 Case for Change (REQ-S04-003, REQ-PB-016/022/023/026/027/028/029)
+63:### J2.2 Define → G2 Direction (REQ-S04-004, REQ-PB-017/032–037, REQ-S07-001)
+73:### J2.3 Design → G3 Target State (REQ-S04-005, REQ-S05-003, REQ-PB-038–043; REQ-PB-042 absorbs former REQ-S05-004)
+84:### J2.4 Mobilize → G4 Mobilization (REQ-S04-006, REQ-S05-005, REQ-S08-*, REQ-S09-*)
+97:### J2.5 Transform → G5 Scale (REQ-S04-007, REQ-S07-*, REQ-S10-011–013, REQ-S11-*)
+109:### J2.6 Realize → G6 Sustain (REQ-S04-008, REQ-S08-*, REQ-S11-*)
+121:## J3. Modular entry (TL, TO; REQ-PB-005, REQ-S03-005, A03)
+135:## J4. KPI update: open KPI → select period → enter/import actual and evidence → submit (KDS, BO; REQ-S07-003…017, A04)
+151:## J5. Finance validation (FIN; REQ-PB-013, REQ-S08-015…017, A10)
+164:## J6. Committee workflow (SEC, CM, chair; REQ-S10-011…013, REQ-PB-060/061/068, A09)
+180:## J7. BAU handover (WL, TL → BO; REQ-PB-083 (absorbs former REQ-S12-017), REQ-S11-005, A11)
+193:## J8. Administrator publishing: Draft → Preview/Test → Review → Publish (ADM; REQ-S06-004…009, A06/A07)
+208:## Role summary: which journeys each role runs
+
+$ journeys gate coverage
+G1 Case for Change 1
+G2 Direction 1
+G3 Target State 1
+G4 Mobilization 1
+G5 Scale 1
+G6 Sustain 1
+
+$ glossary sample (10 terms)
+| Business Owner | مالك الأعمال | المالك التشغيلي للأعمال | "مالك الأعمال" reads as the proprietor of a business; the role owns target-state capabilities and
+| Champion | سفير التغيير | مناصر التغيير | "سفير" (ambassador) stresses broadcasting messages, which B0116 explicitly says a champion does more than. |
+| Recovery plan | خطة المعالجة | خطة الاستدراك والمعالجة | "المعالجة" alone can read as "processing" or "treatment"; the plan recovers an off-track benefit. |
+| Transformation | التحوّل | An enterprise or business-unit change effort managed through the six phases, with outcomes, TOM, portfolio and benefits. | B0008, B0009 |
+| End-to-End mode | النمط الشامل (من البداية إلى النهاية) | Run Phases 1-6 sequentially for a new transformation; do not launch initiatives before the North Star, outcome
+| Modular mode | النمط الجزئي المرن (الدخول عند المرحلة المناسبة) | Enter an underway transformation at the relevant phase, complete the minimum mandatory templ
+| Design principles | مبادئ التصميم | Five principles: outcome before activity; current state before solution; operating model before execution; benefits before closure; one source of trut
+| Diagnose | التشخيص | Phase 1: establish fact base (current state, root causes, value pools). | B0021, B0027 |
+| Define | التحديد (تحديد التوجّه) | Phase 2: set direction (North Star, outcomes, KPIs, guardrails). | B0021, B0046 |
+| Mobilize | التعبئة (حشد الموارد والتهيئة للتنفيذ) | Phase 4: build execution portfolio (initiatives, business cases, roadmap, resourcing). | B0021, B0068 |
+| Transform | التحويل والتنفيذ | Phase 5: execute and govern (operating system, workstreams, decisions, adoption). | B0021, B0091 |
+| Realize | تحقيق القيمة | Phase 6: prove and sustain value (benefits, BAU handover, continuous improvement). | B0021, B0119 |
+| Stage gate | بوابة المرحلة | A business decision point with a decision question and required evidence (G1–G6). It is not an engineering delivery gate (DG0–DG7). | B0023 |
+| Business Owner | المالك التشغيلي للأعمال | Owns target-state capabilities and BAU adoption. | B0018 |
+
+$ permissions matrix: roles header + approval rows
+10:The playbook is a practical synthesis *inspired by* PMI, Brightline and BRM, with custom extensions. Nothing here is an official PMI standard, a certified role model or a Mobily-approved access policy. Default assignments are a
+56:| Ap | Approve or decide (business approval; the record keeps assignee, request version, due date, rationale, comments and timestamp, per REQ-S10-014) |
+82:| Gate decision (approve, reject, request changes, defer) | Ap (default) | — (the submitter cannot approve; SoD) | Ap where configured (G3 per T11 Target-state design; G5 per T11 Go-live / scale) | — | Rv (Finance criteria)
+101:| T11 decision "Go-live / scale" for an initiative (B0099: Recommend Initiative owner; Approve Business owner; Consult Risk / Tech / CX; Inform SteerCo) | V | Rv | Ap (Business owner) | S Rv (as initiative owner: Recommend) | 
+119:| Access administration (scoped assignments) | — | assign within own transformation (non-approver roles) | — | — | — | assign within portfolio | — | — | — | V | Cf (access admin) |
+125:1. **Requester ≠ approver** (REQ-S10-016). Under the default policy the server rejects an approval by the requester, or by the requester's delegate acting for the requester. A configured exception must be named in the policy
+126:2. **Technical administrators are not business approvers** (REQ-S10-003, REQ-S06-010).
+129:   - Studio refuses configurations that make ADM an automatic approver (REQ-S06-006).
+132:5. **Automation never approves.** Timers escalate, route and remind. They never set approve or validate outcomes (REQ-S10-019, REQ-S12-026).
+134:7. **Gate approvals** default to SP. The playbook's gate table (B0023) names no approver, and B0018 gives the Sponsor "approves major trade-offs". Where a T11 decision (B0099) matches what a gate decides, the gate's approver c
+138:   The default is configurable per gate. G5 is the **transformation-level** gate ("Are pilots/results sufficient to scale?"). T11 "Go-live / scale" decisions taken on **individual initiatives** (Recommend: initiative owner; Ap
+139:8. **Waivers** cannot be approved by the requester or by ADM (REQ-S04-013).
+150:- The action codes per cell, the default gate approver (SP) and the sub-profiles of ADM (technical, access, methodology) are **implementation assumptions** derived from B0018, T11 and T12 and from §10. The domain reviewer and
+
+$ permissions: ADM / T11 / RACI statements
+6:  - playbook minimum governance roles (B0018), T11 (B0099) and T12 RACI (B0101), through REQ-PB-012/013/065/067;
+26:| ADM | System administrator (technical, access, or methodology admin sub-profiles) | Implementation (M0187) | Organization (technical configuration only) |
+55:| Rv | Review, recommend, comment or consult (per T11/RACI "Consult"/"Recommend") |
+67:| Record / action area | SP | TL | BO | WL | FIN | TO | KDS | TD | CM/SEC | AUD | ADM |
+79:| TOM canvas, T03 gaps, capabilities, journeys/processes, workshops | Rv (RACI C for Target Operating Model) | C U S | C U Ap (per T11 Target-state design) | C U (own) | Rv | V | V | C U Rv | V | V | — |
+82:| Gate decision (approve, reject, request changes, defer) | Ap (default) | — (the submitter cannot approve; SoD) | Ap where configured (G3 per T11 Target-state design; G5 per T11 Go-live / scale) | — | Rv (Finance criteria)
+86:| T05 initiative card | V | C U S | Ap (RACI A: Initiative Delivery) | C U S | Rv | V | V | Rv | V | V | — |
+87:| Business case (transformation, initiative) | Ap (RACI A) | C U S | Rv | C U (initiative case) | U Va (RACI R) | V | V | Rv | V | V | — |
+90:| Proposed ranking / portfolio selection / funding approval | V / Ap / Ap (SteerCo per T11) | C / S / S | Rv | V | Rv / Rv / Rv (co-recommender per T11) | V | V | V | V (SteerCo members vote as CM) | V | — |
+91:| T07 waves and roadmap, milestones, rebaseline | Ap (rebaseline per T11) | C U S | Rv | U (own) | Rv (budget) | U | V | V | V | V | — |
+100:| T11 decision rights matrix | Ap | U | Rv | V | Rv | U | V | V | V | V | — |
+101:| T11 decision "Go-live / scale" for an initiative (B0099: Recommend Initiative owner; Approve Business owner; Consult Risk / Tech / CX; Inform SteerCo) | V | Rv | Ap (Business owner) | S Rv (as initiative owner: Recommend) | 
+102:| T12 RACI (per transformation, versioned) | Ap | U | Rv | V | Rv | U | V | V | V | V | — |
+110:| BAU handover | V | C U S | Ac (receiving owner only; A/R per RACI) | C U S | Rv | V | Ac (as KPI owner, where named) | Rv | V | V | — |
+112:| Evidence item (upload, review, download) | as parent | as parent | as parent | as parent | as parent | as parent | as parent | as parent | as parent | V as parent | — (storage administration only; no content access by defa
+115:| Methodology config (Playbook Studio, procedures, forms, formulas library) | — | Rv (reviewer, where configured) | — | — | Rv (formula changes) | Rv | — | — | — | V | Cf (draft, preview, publish; methodology admin
+119:| Access administration (scoped assignments) | — | assign within own transformation (non-approver roles) | — | — | — | assign within portfolio | — | — | — | V | Cf (access admin) |
+126:2. **Technical administrators are not business approvers** (REQ-S10-003, REQ-S06-010).
+127:   - ADM has no Ap or Va right on any business record.
+129:   - Studio refuses configurations that make ADM an automatic approver (REQ-S06-006).

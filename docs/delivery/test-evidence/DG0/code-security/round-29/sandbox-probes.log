@@ -1,0 +1,60 @@
+# live sandbox probes from the code-security agent's own Bash shell (2026-09-30T15:29:01Z)
+# id: uid=0(root) gid=0(root) groups=0(root)
+# MTH_PROCESS_SANDBOX=1 TMPDIR=/var/tmp/mth-run.HlZvOC/claude-0
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+NoNewPrivs:	1
+Seccomp:	2
+Seccomp_filters:	1
+## A. protected / other-role writes (all must fail)
+refused   tools/gates/sec29-probe.txt :: Read-only file system
+refused   tools/agents/sec29-probe.txt :: Read-only file system
+refused   tools/source/sec29-probe.txt :: Read-only file system
+refused   .claude/sec29-probe.txt :: Read-only file system
+refused   .claude/agents/sec29-probe.md :: Read-only file system
+refused   .github/sec29-probe.txt :: Read-only file system
+refused   docs/source/sec29-probe.txt :: Read-only file system
+WRITABLE  CLAUDE.md.sec29-probe  <-- UNEXPECTED
+refused   docs/delivery/findings.json.sec29-probe :: Read-only file system
+refused   docs/delivery/stages.json.sec29-probe :: Read-only file system
+refused   docs/delivery/reviews/DG0/round-29/domain-reviewer.json :: No such file or directory
+refused   docs/delivery/reviews/DG0/round-29/qa-verifier.json :: No such file or directory
+refused   docs/delivery/reviews/DG0/round-29/code-security-reviewer.sh-probe :: No such file or directory
+refused   docs/delivery/test-evidence/DG0/domain/sec29-probe.txt :: Read-only file system
+refused   docs/delivery/test-evidence/DG0/qa/sec29-probe.txt :: Read-only file system
+refused   docs/delivery/test-evidence/DG0/audit/sec29-probe.txt :: Read-only file system
+refused   docs/delivery/gates/DG0.json :: Read-only file system
+refused   docs/delivery/runs/DG0/sec29-probe.txt :: Read-only file system
+refused   docs/delivery/candidates/DG0/sec29-probe.txt :: Read-only file system
+refused   docs/delivery/requirements.csv.sec29-probe :: Read-only file system
+refused   .git/sec29-probe :: Read-only file system
+WRITABLE  src-sec29-probe.txt  <-- UNEXPECTED
+refused   /tmp/sec29-probe :: Read-only file system
+refused   /var/tmp/sec29-probe :: Read-only file system
+refused   append-open tools/gates/lib/rules.mjs :: Read-only file system
+refused   append-open docs/delivery/findings.json :: Read-only file system
+refused   append-open .git/HEAD :: Read-only file system
+## B. own evidence area and TMPDIR writable (expected)
+writable  own evidence area
+writable  $TMPDIR
+## C. residual 7: /proc/sys entries openable for WRITE by uid 0 (O_WRONLY open+close; NOTHING written)
+open-for-write OK   /proc/sys/vm/swappiness
+open-for-write OK   /proc/sys/kernel/shmmax
+open-for-write OK   /proc/sys/net/ipv4/ip_forward
+open-for-write OK   /proc/sys/vm/drop_caches
+open-for-write OK   /proc/sys/kernel/panic
+open-for-write OK   /proc/sys/kernel/hostname
+open-for-write OK   /proc/sys/kernel/core_pattern
+open-for-write OK   /proc/sys/fs/file-max
+## D. residual 8: host PID namespace visibility; IPC ns; cross-run scratch
+visible pids: 6; pid ns: pid:[4026532324]; ipc ns: ipc:[4026532265]; pid1 ipc ns: 
+other runs' private scratch visible under /var/tmp: 0
+pid 1 /proc/<pid>/root: ls: cannot access '/proc/1/root/': Permission denied
+pid 2 /proc/<pid>/root: bin
+pid 52 /proc/<pid>/root: bin
+pid 53 /proc/<pid>/root: bin
+pid 54 /proc/<pid>/root: ls: cannot access '/proc/54/root/': No such file or directory
+pid 55 /proc/<pid>/root: ls: cannot access '/proc/55/root/': No such file or directory
+pid 56 /proc/<pid>/root: ls: cannot access '/proc/56/root/': No such file or directory
+## E. secrets surface
+settings allow: ['Bash(bwrap:*)']

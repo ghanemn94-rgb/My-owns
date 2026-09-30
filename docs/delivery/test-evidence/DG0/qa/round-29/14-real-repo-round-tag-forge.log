@@ -1,0 +1,9 @@
+$ node docs/delivery/test-evidence/DG0/qa/round-29/real-repo-round-tag-forge.mjs "$TMPDIR/nl"  # 2026-09-30T15:33:19Z  (2nd run; 1st run lacked a drafted gate record, validateGate returned early with 'gate DG0: file not found')
+clone HEAD=ffa3fae5a5fcf8e7195f616158244f3fe16db25f shallow=false; baseline errors=55; baseline D-045 errors=0
+round 18 source_commit 450c756f67 type=ABSENT (must stay tolerated)
+round 27 source_commit 49b5ad7904 -> annotated tag f3d8cc27ed (type tag, peels to 49b5ad7904)
+after forge: errors=57; NEW errors (2):
+  + review rounds: DG0 round 27 frozen_at/source_commit differ from its committed manifest
+  + review rounds: DG0 round 27 source_commit f3d8cc27ed is a tag object, not a commit; a round's frozen source_commit must name the freeze commit itself
+RESULT: forged tag REJECTED by D-045; round-18 absent source_commit tripped D-045: false
+exit=0

@@ -1,0 +1,13 @@
+$ git diff 331407e9..1e4c0226 -- tools/gates/lib/rules.mjs | git apply -R   (mutation: remove the D-045 check)
+apply exit=0
+0
+not ok 1 - D-045 / F-DG0-171 / F-DG0-251: a review round's source_commit that is an annotated tag object (not a commit) is rejected
+    expected an error matching /source_commit .* is a tag object, not a commit; a round's frozen source_commit must name the freeze commit/, got:
+# pass 0
+# fail 1
+mutant exit=1 (expected non-zero)
+$ restore; rerun D-045 test
+ok 1 - D-045 / F-DG0-171 / F-DG0-251: a review round's source_commit that is an annotated tag object (not a commit) is rejected
+# pass 1
+# fail 0
+exit=0

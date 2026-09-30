@@ -1,0 +1,25 @@
+# agents.md claims vs raw evidence | qa-verifier round 29 | 2026-09-30T15:34:50Z | clone HEAD ffa3fae
+$ git diff --stat 331407e9 1e4c0226 -- docs/delivery/agents.md .claude/agents tools/agents
+(empty = unchanged since the round-28 candidate)
+$ ls .claude/agents | wc -l; ls .claude/agents
+10
+backend-workflow-engineer.md code-security-reviewer.md devops-engineer.md domain-reviewer.md frontend-ux-engineer.md kpi-benefits-engineer.md qa-verifier.md release-auditor.md solution-architect.md transformation-analyst.md 
+$ grep -o "model: [a-z0-9-]*" .claude/agents/*.md | sort | uniq -c
+     10 model: inherit
+$ grep -n -- "--agent\|--model\|--session-id" tools/agents/run-agent.sh | sed -n 1,12p
+6:# - Loads .claude/agents/<role>.md via `claude -p --agent <role>`.
+183:( cd "$CWD" && user_message "$PROMPT" | bwrap "${SANDBOX[@]}" "$CLAUDE_BIN" -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
+184:    --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
+192:  ( cd "$CWD" && user_message "$RESUME_PROMPT" | bwrap "${SANDBOX[@]}" "$CLAUDE_BIN" -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
+$ grep -nE "ten definitions|10/10" docs/delivery/agents.md
+5:The ten definitions live in `.claude/agents/`. The main Claude Code session is the eleventh role, **delivery-orchestrator**: it plans, delegates, integrates and reports, and never records a review verdict.
+90:Result: 10/10 definitions load and run as separate invocations, with 10 distinct session IDs, all on the orchestrator's model. Out-of-scope writes were blocked 10/10, in-scope writes succeeded 10/10, and no probe file exists under `docs/source/`. The in-scope probe files are under `docs/delivery/
+$ census over all committed DG0 run metas (node) -- CORRECTED (2nd run): the 1st run read a non-existent top-level
+#   meta.session_id (the id lives at meta.invocation_reference.session_id), so every value was undefined; its output was:
+#   metas 106 distinct session_ids 1 distinct run_ids 106 model_requested {"claude-opus-5-5":106} roles 10 backend-workflow-engineer code-security-reviewer devops-engineer domain-reviewer frontend-ux-engineer kpi-benefits-engineer qa-verifier release-auditor solution-architect transformation-analyst
+metas 106 distinct invocation_reference.session_id 106 missing 0 result_session_id!=session_id 0 distinct run_ids 106 run_id!=dir 0 model_requested {"claude-opus-5-5":106} roles 10 backend-workflow-engineer code-security-reviewer devops-engineer domain-reviewer frontend-ux-engineer kpi-benefits-engineer qa-verifier release-auditor solution-architect transformation-analyst
+$ own run (this invocation, uncommitted until the runner finishes): ls docs/delivery/runs/DG0/DG0-T-DG0-REV-QA-R29-qa-verifier-20260930T152401Z-51ad2679/
+settings.json
+stderr.log
+transcript.jsonl
+Conclusion: see record check C-AGENTS-MD.

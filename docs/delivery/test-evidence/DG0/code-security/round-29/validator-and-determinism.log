@@ -1,0 +1,34 @@
+# --no-local clone at HEAD=ffa3fae5a5fcf8e7195f616158244f3fe16db25f (incl. round-29 freeze) (2026-09-30T15:28:09Z)
+$ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+exit=0
+$ node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+exit=0
+$ node tools/gates/validate.mjs --reconcile
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd
+working tree:     sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd (matches)
+round 1 domain-reviewer: FAIL (STALE for current content)
+round 1 code-security-reviewer: BLOCKED (STALE for current content)
+round 1 qa-verifier: FAIL (STALE for current content)
+exit=0
+$ node tools/gates/validate.mjs --stage DG0
+FAIL gate DG0 (current) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+exit=1
+$ node tools/gates/validate.mjs --stage DG0 --historical
+FAIL gate DG0 (historical) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+exit=1
+$ node tools/gates/validate.mjs --stage DG9
+FAIL gate DG9 (current) (1 problem)
+  - stages.json: unknown stage DG9
+exit=1
+## candidate determinism (5 computations: 2 working-tree, 2 --ref freeze, 1 after touching mtimes)
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd","files":91}
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd","files":91}
+{"stage":"DG0","source":"1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac","candidate_id":"sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd","files":91}
+{"stage":"DG0","source":"1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac","candidate_id":"sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd","files":91}
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd","files":91}
+manifest file candidate_id: sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd

@@ -1,0 +1,34 @@
+# mode=candidate clone: --no-local, shallow=false, HEAD=1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac, rules.mjs sha256=da6136d66801529d976a471d2adc62eb3cd090ce3a4fbf971900c2e819ac0a42, 2026-09-30T15:26:48Z
+SEC29-1 [candidate] filtered-out fixture write-once artefacts: 1 error(s)
+    write-once: working-tree docs/delivery/candidates/DG0/7b801799923d2fce.manifest.json differs from its committed content (edited locally, or hidden by skip-worktree/assume-unchanged)
+SEC29-1 [candidate] checkReviewRounds (rule-relevant errors): 2 error(s)
+    review rounds: DG0 round 1 source_commit caf3cfc736 is a tag object, not a commit; a round's frozen source_commit must name the freeze commit itself
+    review rounds: DG0 round 2 source_commit caf3cfc736 is a tag object, not a commit; a round's frozen source_commit must name the freeze commit itself
+SEC29-2 [candidate] validateGate: 2 error(s)
+    review rounds: DG0 round 2 frozen_at/source_commit differ from its committed manifest
+    review rounds: DG0 round 2 source_commit 0c4ec910ab is a tag object, not a commit; a round's frozen source_commit must name the freeze commit itself
+SEC29-3 tree eb16d1af65 => review rounds: DG0 round 1 source_commit eb16d1af65 is a tree object, not a commit; a round's frozen source_commit must name the freeze commit itself
+SEC29-3 blob d70d686067 => review rounds: DG0 round 1 source_commit d70d686067 is a blob object, not a commit; a round's frozen source_commit must name the freeze commit itself
+SEC29-4 absent: type-rule hits=0; other: review rounds: DG0 round 1 frozen_at/source_commit differ from its committed manifest
+SEC29-5 validateGate: 2 error(s)
+    review rounds: DG0 round 2 frozen_at/source_commit differ from its committed manifest
+    finding F-DG0-101 (High, mandatory): verified in round-2, whose frozen candidate source_commit dddddddddd is not present; a closure must be verified against a retained candidate (F-DG0-169)
+SEC29-6 source_commit="HEAD" => 1 error(s); schema: stages.json: $.stages[0].review_rounds[1].source_commit: 'HEAD' does not match /^[0-9a-f]{40}$/
+SEC29-6 source_commit="--batch-check" => 1 error(s); schema: stages.json: $.stages[0].review_rounds[1].source_commit: '--batch-check' does not match /^[0-9a-f]{40}$/
+SEC29-6 source_commit="main" => 1 error(s); schema: stages.json: $.stages[0].review_rounds[1].source_commit: 'main' does not match /^[0-9a-f]{40}$/
+SEC29-6 source_commit="1e4c022" => 1 error(s); schema: stages.json: $.stages[0].review_rounds[1].source_commit: '1e4c022' does not match /^[0-9a-f]{40}$/
+✔ SEC29-1 CONSISTENT forge: round manifest AND every round entry name an annotated TAG of the freeze commit (checkReviewRounds) (219.754493ms)
+✔ SEC29-2 stages-only tag (manifest left as the commit): full validateGate (902.33107ms)
+✔ SEC29-3 tree and blob object ids as a round source_commit are rejected (present, not a commit) (307.88355ms)
+✔ SEC29-4 nested tag (tag of a tag) is rejected; an ABSENT 40-hex source_commit does not trip the type rule (300.816485ms)
+✔ SEC29-5 absent round source_commit: a closure verified in that round is still REJECTED by anchor 1 (F-DG0-169 standing) (334.765833ms)
+✔ SEC29-6 schema pins the round source_commit to 40-hex, so objectType is never handed a ref name / option string (607.415048ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2985.709412
+exit=0
