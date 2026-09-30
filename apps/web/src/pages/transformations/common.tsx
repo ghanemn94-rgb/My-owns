@@ -1,0 +1,68 @@
+// Shared bits of the transformation screens.
+import { useTranslation } from "react-i18next";
+import { PHASES, type Phase } from "@mth/shared";
+import { useBusinessUnits, useUser } from "../../api/queries.ts";
+import type { BusinessUnit } from "../../api/types.ts";
+import { localName, useLocale } from "../../app/locale.ts";
+import { Unknown } from "../../components/Badges.tsx";
+import { useMe } from "../../auth/session.tsx";
+
+/** Business units of the caller's organization, by id (for names and permission ancestry). */
+export function useBusinessUnitIndex(): {
+  units: readonly BusinessUnit[];
+  byId: ReadonlyMap<string, BusinessUnit>;
+  loaded: boolean;
+} {
+  const me = useMe();
+  const q = useBusinessUnits(me.organization.id);
+  const units = q.data ?? [];
+  return { units, byId: new Map(units.map((u) => [u.id, u])), loaded: q.isSuccess };
+}
+
+export function BusinessUnitName({ id, index }: { id: string; index: ReadonlyMap<string, BusinessUnit> }) {
+  const locale = useLocale();
+  const unit = index.get(id);
+  if (!unit) return <Unknown />;
+  return (
+    <span>
+      {localName(unit, locale)}{" "}
+      <bdi dir="ltr" className="code">
+        {unit.code}
+      </bdi>
+    </span>
+  );
+}
+
+/** A user's display name; "Not assigned" for null, Unknown when the caller may not read the user. */
+export function UserName({ id }: { id: string | null }) {
+  const { t } = useTranslation();
+  const q = useUser(id);
+  if (!id) return <span className="muted">{t("common.value.notAssigned")}</span>;
+  if (q.isPending) return <span className="muted">{t("common.state.loading")}</span>;
+  if (q.data) return <span>{q.data.displayName}</span>;
+  return <Unknown hint={t("common.value.notVisible")} />;
+}
+
+/** The six playbook phases as a stepper; the current phase is marked with aria-current="step" and a text label. */
+export function PhaseStepper({ current, entry }: { current: Phase; entry: Phase | null }) {
+  const { t } = useTranslation();
+  const currentIndex = PHASES.indexOf(current);
+  return (
+    <ol className="phase-stepper" aria-label={t("transformations.field.currentPhase")}>
+      {PHASES.map((p, i) => (
+        <li
+          key={p}
+          className={`phase-stepper__step${i === currentIndex ? " phase-stepper__step--current" : ""}${
+            i < currentIndex ? " phase-stepper__step--done" : ""
+          }`}
+          aria-current={i === currentIndex ? "step" : undefined}
+        >
+          <span className="phase-stepper__num">{i + 1}</span>
+          <span className="phase-stepper__label">{t(`transformations.phase.${p}`)}</span>
+          {i === currentIndex ? <span className="visually-hidden"> ({t("transformations.currentMarker")})</span> : null}
+          {entry === p ? <span className="phase-stepper__entry">{t("transformations.entryMarker")}</span> : null}
+        </li>
+      ))}
+    </ol>
+  );
+}

@@ -1,0 +1,55 @@
+// Maps API errors to translated messages (ADR-0007: the problem `code` is the i18n key; `title`/`detail` are English
+// diagnostics and are never shown as the user-facing message).
+import type { TFunction } from "i18next";
+import { ApiError, NetworkError } from "../api/client.ts";
+
+/**
+ * i18n key for a problem or field-error code. Dots inside codes become "__" so that "validation" and
+ * "validation.too_small" are sibling keys: "sod.admin_approver" -> "problems.sod__admin_approver".
+ */
+export function problemKey(code: string): string {
+  return `problems.${code.replace(/\./g, "__")}`;
+}
+
+export function errorMessage(t: TFunction, error: unknown): string {
+  if (error instanceof NetworkError) return t("problems.network");
+  if (error instanceof ApiError) {
+    const code = error.code;
+    if (code) {
+      // Validation problems carry the specific rule in the first field error when there is no field to attach it to.
+      if (code === "validation" && error.fieldErrors.length > 0) {
+        const first = error.fieldErrors[0]!;
+        const fieldKey = problemKey(first.code);
+        if (first.pointer === "" && t(fieldKey, { defaultValue: "" })) return t(fieldKey);
+      }
+      const translated = t(problemKey(code), { defaultValue: "" });
+      if (translated) return translated;
+    }
+    return t(`problems.status.${statusBucket(error.status)}`);
+  }
+  return t("problems.unexpected");
+}
+
+function statusBucket(status: number): string {
+  if ([400, 401, 403, 404, 409, 422, 428, 429].includes(status)) return String(status);
+  return status >= 500 ? "5xx" : "other";
+}
+
+/** Translated message for one field error code (e.g. "validation.too_small"); falls back to a generic message. */
+export function fieldErrorMessage(t: TFunction, code: string): string {
+  const translated = t(problemKey(code), { defaultValue: "" });
+  return translated || t("problems.validation__invalid");
+}
+
+/** "/name" -> "name", "/identity/subject" -> "identity.subject", "/query/q" -> "q". */
+export function pointerToField(pointer: string): string {
+  return pointer
+    .replace(/^\/query\//, "/")
+    .replace(/^\//, "")
+    .split("/")
+    .join(".");
+}
+
+export function isNoPermission(error: unknown): boolean {
+  return error instanceof ApiError && (error.status === 403 || error.status === 404) && error.code !== "csrf";
+}

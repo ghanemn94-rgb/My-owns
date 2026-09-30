@@ -1,0 +1,105 @@
+// Application shell (ADR-0009, REQ-S15-001): skip link, blue-gradient header with the provisional wordmark, language
+// switch and user menu; blue primary navigation with the fourteen areas; main landmark. Layout uses logical CSS
+// properties only, so RTL mirrors automatically.
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useId, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
+import { api, setCsrfToken } from "../api/client.ts";
+import { canAny } from "../auth/permissions.ts";
+import { useMe } from "../auth/session.tsx";
+import { Icon } from "../components/Icon.tsx";
+import { LanguageSwitch } from "../components/LanguageSwitch.tsx";
+import { Wordmark } from "../components/Wordmark.tsx";
+import { localName, useLocale } from "./locale.ts";
+import { NAV_AREAS } from "./nav.ts";
+
+export function Shell() {
+  const { t } = useTranslation();
+  const me = useMe();
+  const locale = useLocale();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [navOpen, setNavOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const navId = useId();
+
+  // Close the (small-screen) navigation after navigating.
+  useEffect(() => setNavOpen(false), [location.pathname]);
+
+  const areas = NAV_AREAS.filter((a) => !a.requiresAny || canAny(me, a.requiresAny));
+
+  const signOut = async () => {
+    setSigningOut(true);
+    try {
+      const result = await api.send<{ endSessionUrl: string | null }>("/api/v1/auth/logout", { method: "POST" });
+      setCsrfToken(null);
+      queryClient.clear();
+      if (result.endSessionUrl) window.location.assign(result.endSessionUrl);
+      else void navigate("/login?signedOut=1", { replace: true });
+    } catch {
+      setSigningOut(false);
+      setCsrfToken(null);
+      queryClient.clear();
+      void navigate("/login", { replace: true });
+    }
+  };
+
+  return (
+    <div className="app">
+      <a className="skip-link" href="#main">
+        {t("common.a11y.skipToContent")}
+      </a>
+      <header className="app-header">
+        <button
+          type="button"
+          className="button button--ghost-inverse nav-toggle"
+          aria-expanded={navOpen}
+          aria-controls={navId}
+          onClick={() => setNavOpen((o) => !o)}
+        >
+          <Icon name="menu" />
+          <span className="visually-hidden">{t("nav.toggle")}</span>
+        </button>
+        <Wordmark productName={me.productName} />
+        <div className="app-header__spacer" />
+        <LanguageSwitch signedIn />
+        <div className="user-box">
+          <span className="user-box__name">{me.user.displayName}</span>
+          <span className="user-box__org">{localName(me.organization, locale)}</span>
+        </div>
+        <button
+          type="button"
+          className="button button--ghost-inverse button--small"
+          onClick={() => void signOut()}
+          disabled={signingOut}
+        >
+          <Icon name="signOut" /> {t("auth.signOut")}
+        </button>
+      </header>
+      <div className="app-body">
+        <nav id={navId} className={`app-nav${navOpen ? " app-nav--open" : ""}`} aria-label={t("nav.primary")}>
+          <ul className="app-nav__list">
+            {areas.map((area) => (
+              <li key={area.id}>
+                <NavLink to={area.path} className="app-nav__link" data-area={area.id}>
+                  <span>{t(`nav.areas.${area.id}.label`)}</span>
+                  {area.availability === "planned" ? <span className="app-nav__tag">{t("nav.planned")}</span> : null}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+          <p className="app-nav__footer">
+            <NavLink to="/about" className="app-nav__link app-nav__link--small">
+              {t("nav.about")}
+            </NavLink>
+          </p>
+        </nav>
+        <main id="main" className="app-main" tabIndex={-1}>
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}

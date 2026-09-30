@@ -1,17 +1,23 @@
-// Skeleton entry point (T-DG1-ARCH-01). frontend-ux-engineer replaces this with the bilingual shell
-// (router, i18n, query client, tokens, fonts, provisional wordmark) per ADR-0009.
+// Entry point (ADR-0009). Styles: generated design tokens (one token source), locally bundled OFL fonts (no CDN;
+// only the needed weights and subsets), then the application CSS written with logical properties.
+import "virtual:mth-tokens.css";
+import "@fontsource/ibm-plex-sans-arabic/arabic-400.css";
+import "@fontsource/ibm-plex-sans-arabic/arabic-500.css";
+import "@fontsource/ibm-plex-sans-arabic/arabic-600.css";
+import "@fontsource/ibm-plex-sans/latin-400.css";
+import "@fontsource/ibm-plex-sans/latin-500.css";
+import "@fontsource/ibm-plex-sans/latin-600.css";
+import "./styles/app.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { DEFAULTS } from "@mth/shared";
+import { App } from "./app/App.tsx";
+import { createI18n } from "./i18n/index.ts";
 
-function SkeletonApp() {
-  return <main>{DEFAULTS.productName}</main>;
-}
-
+const i18n = createI18n();
 const root = document.getElementById("root");
 if (root === null) throw new Error("#root element missing from index.html");
 createRoot(root).render(
   <StrictMode>
-    <SkeletonApp />
+    <App i18n={i18n} />
   </StrictMode>,
 );
