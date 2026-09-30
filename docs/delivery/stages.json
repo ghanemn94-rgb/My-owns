@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -489,6 +489,11 @@
           "state": "REVIEWING",
           "at": "2026-09-30T11:30:00Z",
           "note": "Round-20 findings repaired (D-037): checkClosure/checkInvocation tolerate genuinely-absent commits as findManifest does (F-DG0-242, clears the pruned-history gate blockers); collectVerifications/collectRaisedFindings match import-findings for interrupted-run record-less sidecars (F-DG0-243; F-DG0-238/239 clear); gate source_commit must be a commit object reachable from HEAD (F-DG0-241); round-19/20 reviewer evidence committed and all fix_revisions full 40-hex, F-DG0-150/151 re-pointed to retained 421c922 (F-DG0-244); /proc/sys host-global wording (F-DG0-157). Real-repo dry-run gate clean of all permanent history-damage blockers. Sandboxed prefreeze all PASS; candidate re-frozen for review round 21."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-09-30T12:00:00Z",
+          "note": "Round 21: domain PASS (0 findings, 97 reqs); code-security FAIL (6 findings F-DG0-158..163); qa FAIL (F-DG0-245). QA verified F-DG0-241/242/243/244 CLOSED_VERIFIED and code-security verified F-DG0-157 CLOSED_VERIFIED, so the D-037 pruned-tolerance/record-less/metadata/gate-source fixes WORK for their intended cases. New findings are about SCOPING: F-DG0-158 (Med, mandatory) record-less exemption could hide a silent finding deletion; F-DG0-159/245 (Low/Med) the commitPresent tolerance is a blanket skip (accepts missing/malformed/gate-round head_commit and fix_revision); F-DG0-160 (Med) the repo is SHALLOW not pruned and the validator never detects it; F-DG0-161 (Med) F-DG0-150/151 re-point is clone-dependent (backup branch); F-DG0-162 (Low) residual-7 shell /proc/sys wording; F-DG0-163 (Low) schema subset validator accepts Object.prototype key names. Unshallowing this container (git fetch --unshallow) confirmed the pre-round-12 commits are real ancestors present in a full clone -- the history damage was a shallow-clone artifact; only the round-18 D-034 orphan 450c756 is a genuine anomaly. Repairs (D-038) in progress."
         }
       ]
     },
