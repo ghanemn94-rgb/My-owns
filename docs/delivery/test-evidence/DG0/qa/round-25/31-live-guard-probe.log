@@ -1,0 +1,21 @@
+# qa-verifier round 25 (T-DG0-REV-QA-R25), run DG0-T-DG0-REV-QA-R25-qa-verifier-20260930T134856Z-1ec46e02
+# Live write-guard probes, performed with the Claude Code Write tool (the file tool the guard hooks), 2026-09-30.
+
+## Probe 1: protected source path
+tool: Write  file_path: /home/user/My-owns/docs/source/QA-PROBE.txt
+expected: refused (docs/source/** is protected)
+actual (verbatim hook error):
+PreToolUse:Write hook error: [...guard-write.mjs qa-verifier...]: BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+result: PASS (blocked; no file created)
+
+## Probe 2: another reviewer's evidence area (F-DG0-144 control)
+tool: Write  file_path: /home/user/My-owns/docs/delivery/test-evidence/DG0/domain/QA-PROBE.txt
+expected: refused (outside qa-verifier's scope)
+actual (verbatim hook error):
+PreToolUse:Write hook error: [...guard-write.mjs qa-verifier...]: BLOCKED by write guard: qa-verifier may not write 'docs/delivery/test-evidence/DG0/domain/QA-PROBE.txt' (outside role write scope)
+result: PASS (blocked)
+
+## Control: in-scope write
+tool: Write  file_path: docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r25.test.mjs and docs/delivery/test-evidence/DG0/qa/round-25/fix-revision-anchors-r25.mjs
+actual: "File created successfully"
+result: PASS (the role's own area is writable)
