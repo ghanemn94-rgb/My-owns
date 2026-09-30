@@ -1,0 +1,50 @@
+// code-security-reviewer, DG0 round 25: real-repo census of the D-041 three-anchor closure rule.
+// Run from the root of a disposable --no-local clone: `node --input-type=module < closure-census.mjs.txt` (cwd = clone).
+// For every CLOSED_VERIFIED finding: is fix_revision an ancestor of
+//   (1) the verifying round's source_commit (when it resolves), (2) the verifying run's head_commit_at_start, and
+//   (3) the gate-candidate commit 2386a0f?
+// It also counts rounds whose source_commit does not resolve (only those can skip anchor 1), and whether any verifying run
+// started from a head whose candidate content differs from its round candidate (the residual that anchor 1 does not cover
+// once it is skipped).
+import { execFileSync } from "node:child_process";
+import { readFileSync, existsSync } from "node:fs";
+import { candidateId, manifestFromRef } from "./tools/gates/lib/candidate.mjs";
+const R = process.cwd();
+const git = (...a) => { try { execFileSync("git", ["-C", R, ...a], { stdio: "ignore" }); return true; } catch { return false; } };
+const J = (p) => JSON.parse(readFileSync(p, "utf8"));
+const stage = J("docs/delivery/stages.json").stages.find((s) => s.id === "DG0");
+const GATE = "2386a0fbd0795f3f09ec2802112e84fae2d616f9";
+const F = J("docs/delivery/findings.json").findings.filter((f) => f.status === "CLOSED_VERIFIED");
+let n = 0, a1fail = 0, a1skip = 0, a2fail = 0, a3fail = 0;
+const verifyingRuns = new Set();
+for (const f of F) {
+  n++;
+  const run = f.verification.invocation_reference.run_id;
+  verifyingRuns.add(run);
+  const vh = J(`docs/delivery/runs/DG0/${run}/meta.json`).head_commit_at_start;
+  const rn = Number((run.match(/-R(\d+)-/) || [])[1]);
+  const round = stage.review_rounds.find((r) => r.round === rn);
+  const src = round && round.source_commit;
+  if (!src || !git("cat-file", "-e", `${src}^{commit}`)) { a1skip++; console.log(`A1-SKIPPED ${f.id} (round ${rn} source_commit absent)`); }
+  else if (!git("merge-base", "--is-ancestor", f.fix_revision, src)) { a1fail++; console.log(`A1-FAIL ${f.id} round ${rn}`); }
+  if (!git("merge-base", "--is-ancestor", f.fix_revision, vh)) { a2fail++; console.log(`A2-FAIL ${f.id} run ${run}`); }
+  if (!git("merge-base", "--is-ancestor", f.fix_revision, GATE)) { a3fail++; console.log(`A3-FAIL ${f.id}`); }
+}
+console.log(`CLOSED_VERIFIED closures: ${n}; anchor1 fail: ${a1fail}; anchor1 skipped (round source absent): ${a1skip}; anchor2 fail: ${a2fail}; anchor3 fail: ${a3fail}`);
+const absentRounds = stage.review_rounds.filter((r) => !git("cat-file", "-e", `${r.source_commit}^{commit}`)).map((r) => r.round);
+console.log(`review rounds whose source_commit does not resolve: ${JSON.stringify(absentRounds)}`);
+let drift = 0, runs = 0, skipped = 0, vdrift = 0;
+for (const r of stage.review_rounds) {
+  const mp = `docs/delivery/candidates/DG0/${r.candidate_id.slice(7, 23)}.manifest.json`;
+  const m = existsSync(mp) ? J(mp) : null;
+  for (const rel of Object.values(r.records)) {
+    if (!existsSync(rel)) continue;
+    const run = J(rel).invocation_reference.run_id; runs++;
+    const h = J(`docs/delivery/runs/DG0/${run}/meta.json`).head_commit_at_start;
+    try {
+      const cid = candidateId(manifestFromRef(R, h, m.spec), m.hash_algorithm || "mth-candidate-v1");
+      if (cid !== r.candidate_id) { drift++; if (verifyingRuns.has(run)) vdrift++; console.log(`DRIFT round ${r.round} ${run}`); }
+    } catch (e) { skipped++; console.log(`SKIP round ${r.round} ${run} verifying=${verifyingRuns.has(run)}: ${String(e.message).split("\n")[0].slice(0, 120)}`); }
+  }
+}
+console.log(`review runs: ${runs}; head content != round candidate: ${drift} (of which verifying runs: ${vdrift}); not computable: ${skipped}`);

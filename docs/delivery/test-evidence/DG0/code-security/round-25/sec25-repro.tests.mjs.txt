@@ -1,0 +1,77 @@
+// code-security-reviewer, DG0 round 25 (T-DG0-REV-SEC-R25): reproduction tests for the D-041 change (three-anchor checkClosure).
+// Appended AFTER ../round-24/sec24-repro.tests.mjs.txt to a disposable copy of tools/gates/tests/validator.test.mjs, so it
+// reuses that file's fixture helpers and the SEC24 helpers (sec24ForgeRound2, sec24GateRound3, sec24FixAndFreeze3, ...).
+// See run-sec25-repro.sh. It never runs in the candidate tree. It runs against BOTH the round-24 baseline (6db3b83) and
+// the round-25 candidate (2386a0f), so every behaviour change is shown before and after.
+
+const sec25Report = (label, errs) => console.log(`${label} errors: ${errs.length}${errs.length ? "\n  " + errs.join("\n  ") : ""}`);
+const SEC25_A1 = /F-DG0-101.*is not in the verified round-2 candidate/;
+const SEC25_A2 = /F-DG0-101.*is not in the verifying run's starting history/;
+const SEC25_A3 = /F-DG0-101.*is not in the gate candidate/;
+const sec25Anchors = (errs) => ({ a1: errs.some((e) => SEC25_A1.test(e)), a2: errs.some((e) => SEC25_A2.test(e)), a3: errs.some((e) => SEC25_A3.test(e)) });
+
+/** Sets every round-2 run's head_commit_at_start to `h` (the runs "started" from h). */
+function sec25SetRound2Heads(repo, h) {
+  for (const role of ROLES) {
+    const ref = get(repo, `docs/delivery/reviews/DG0/round-2/${role}.json`).invocation_reference;
+    edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (mm) => (mm.head_commit_at_start = h));
+  }
+}
+
+test("SEC25-1 F-DG0-168 (my round-24 SEC24-6): GENUINE round 2, candidate-scope fix committed AFTER the freeze and BEFORE the verifier's run started", () => {
+  const { repo } = buildValidRepo();
+  const { fix, cid3, mp3, r3head } = sec24FixAndFreeze3(repo);
+  sec25SetRound2Heads(repo, fix);
+  sec24GateRound3(repo, cid3, fix, mp3, r3head);
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = fix));
+  approveAndCommit(repo);
+  const r2 = get(repo, "docs/delivery/stages.json").stages[0].review_rounds.find((r) => r.round === 2);
+  let inRound = true;
+  try { sh(repo, "merge-base", "--is-ancestor", fix, r2.source_commit); } catch { inRound = false; }
+  const errs = validateGate(repo, "DG0");
+  console.log(`SEC25-1 fix in round-2 frozen candidate: ${inRound}; anchors fired: ${JSON.stringify(sec25Anchors(errs))}`);
+  sec25Report("SEC25-1", errs);
+  assert.equal(inRound, false);
+  assert.ok(sec25Anchors(errs).a1, "anchor 1 must reject a post-freeze fix in a genuine round");
+});
+
+test("SEC25-2 F-DG0-166/249 (round-23 forge): superseded round, ABSENT source_commit, fix committed AFTER the verifier's run started", () => {
+  const { repo, cid } = buildValidRepo();
+  sec24ForgeRound2(repo, cid);
+  const { fix, cid3, mp3, r3head } = sec24FixAndFreeze3(repo);
+  sec24GateRound3(repo, cid3, fix, mp3, r3head);
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = fix));
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  console.log(`SEC25-2 anchors fired: ${JSON.stringify(sec25Anchors(errs))}`);
+  sec25Report("SEC25-2", errs);
+  assert.ok(sec25Anchors(errs).a2, "anchor 2 must reject the forged-absent round");
+});
+
+test("SEC25-3 NEW PROBE (the two combined): superseded round with a self-declared ABSENT source_commit, fix committed AFTER that round's freeze but BEFORE the verifier's run started", () => {
+  // Anchor 1 is skipped (commitPresent(round.source_commit) is false). Anchor 2 holds (the run head contains the fix).
+  // Anchor 3 holds (the gate candidate contains the fix). So nothing ties the fix to the frozen round candidate.
+  const { repo, cid } = buildValidRepo();
+  const { cid2, round2Head } = sec24ForgeRound2(repo, cid);
+  const { fix, cid3, mp3, r3head } = sec24FixAndFreeze3(repo); // fix is a child of round2Head (the forged freeze commit)
+  sec25SetRound2Heads(repo, fix); // the round-2 runs start after the fix (their head still contains the round-2 manifest)
+  sec24GateRound3(repo, cid3, fix, mp3, r3head);
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = fix));
+  approveAndCommit(repo);
+  let fixAfterFreeze = true;
+  try { sh(repo, "merge-base", "--is-ancestor", fix, round2Head); fixAfterFreeze = false; } catch { /* fix is not in the freeze commit */ }
+  const headCid = candidateId(manifestFromRef(repo, fix, get(repo, "docs/delivery/stages.json").stages[0].candidate_spec));
+  const errs = validateGate(repo, "DG0");
+  console.log(`SEC25-3 fix committed after the round-2 freeze commit: ${fixAfterFreeze}; verifier head content == round-2 candidate: ${headCid === cid2}; anchors fired: ${JSON.stringify(sec25Anchors(errs))}`);
+  sec25Report("SEC25-3", errs);
+  // OBSERVED, not asserted: recorded in the log for comparison between the baseline and the candidate.
+});
+
+test("SEC25-4 control: genuine round, fix committed BEFORE the freeze (the stock fixture) -- 0 errors, no regression", () => {
+  const { repo, cid, head } = buildValidRepo();
+  sec24GateRound3(repo, cid, head, `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`, freezeCommit);
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  sec25Report("SEC25-4", errs);
+  assert.deepEqual(errs, []);
+});

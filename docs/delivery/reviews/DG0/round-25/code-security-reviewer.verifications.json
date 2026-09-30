@@ -1,0 +1,18 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-168",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified against the round-25 candidate b77a1c63… (source 2386a0f). Fix 523f0db is an ancestor of 2386a0f. checkClosure (rules.mjs:739-748) now enforces three anchors, each independently and none replacing another: (1) :742-743, the fix must be an ancestor of the verifying round's source_commit when that commit resolves; (2) :744-746, the fix must be an ancestor of the verifying run's head_commit_at_start (checkInvocation still hard-errors on a malformed, absent or manifest-less head, :388-405); (3) :747-748, the fix must be an ancestor of the gate candidate. I reran my round-24 case (SEC24-6 and SEC25-1, on --no-local clones of both commits): a GENUINE round-2 with a candidate-scope fix committed after the freeze and before the verifier ran. At the round-24 baseline 6db3b83 it gave 0 errors (the original bug). At 2386a0f it is rejected by anchor 1 with 'fix … is not in the verified round-2 candidate'. My round-23 forge (SEC24-1 and SEC25-2: superseded round with an absent source_commit, a genuine verifier run, and the fix committed after the run started) is still rejected by anchor 2, 'not in the verifying run's starting history'. Nothing regressed: the control cases SEC24-2 and SEC25-4 give 0 errors; absent or typo'd fixes are still rejected (SEC24-3, F-DG0-164/246); malformed verifier heads are still rejected (SEC24-4, F-DG0-164/166/249); the immutable-field lock holds (SEC24-5, F-DG0-165). On the complete history (--no-local clone), all 114 real CLOSED_VERIFIED closures pass all three anchors, none skips anchor 1, and the synthetic-gate dry run reports 0 closure or anchor errors. Unit tests 'F-DG0-110 / F-DG0-204' (asserts that all three anchors fire) and 'D-039/D-040 / F-DG0-164/166/246/249' pass (101/101). The commitPresent() header (:597-605) now describes the three-anchor model. The genuine-round scenario of F-DG0-168 is closed. A residual remains when a round's self-declared source_commit is absent, where anchor 1 is skipped. It needs forged write-once metadata, and the new comment overstates the guarantee. I raise it separately as F-DG0-169 (Low); it does not reopen this finding.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-25/sec25-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-25/run-sec25-repro.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-25/sec25-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-25/closure-census.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-25/real-repo-gate-dryrun.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-25/node-tests.log"
+      ]
+    }
+  ]
+}
