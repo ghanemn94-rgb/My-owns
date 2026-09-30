@@ -940,7 +940,7 @@
   acceptance_tests: ["AT-04", "UT: out-of-mandate approval yields Recommended and gate stays Blocked"]
   phase: P2
   status: Tested
-  evidence: ['governance at-04-decision-outside-delegation.spec.ts "a passing vote on a reserved decision type is recorded as Recommended — pending external authority, with an escalation (never Approved)"', gates at-04-gate-blocked-by-recommendation.spec.ts "a committee recommendation on a reserved matter is linked as the blocker; approving the gate is refused (422) and logged", 'governance p2-governance-authority.spec.ts "no evidence, unverified evidence, evidence of another decision → 422; the verifier cannot record (403); verified evidence → recorded" (external outcome rests on verified evidence, DOM-P2-12)', 'web: the external-approval dialog must send evidenceLinkId and fails with 422 until the P2 web follow-up merges']
+  evidence: ['governance at-04-decision-outside-delegation.spec.ts "a passing vote on a reserved decision type is recorded as Recommended — pending external authority, with an escalation (never Approved)"', gates at-04-gate-blocked-by-recommendation.spec.ts "a committee recommendation on a reserved matter is linked as the blocker; approving the gate is refused (422) and logged", 'governance p2-governance-authority.spec.ts "no evidence, unverified evidence, evidence of another decision → 422; the verifier cannot record (403); verified evidence → recorded" (external outcome rests on verified evidence, DOM-P2-12)', 'web: e2e p2-web-followups.spec.ts "(a) recusals on behalf; external approval rests on evidence verified by a second person; a change above the delegated limit is approved on that final decision" (full Playwright suite 261/261 at ef8ea27 + JV fixture fix, local stack as in CI; CI run 34 green at 4fadf91)']
 - id: REQ-GOV-024
   section: "4.2"
   title: "Historical votes immutable despite membership changes"
@@ -1167,7 +1167,7 @@
   acceptance_tests: ["AT-03", "IT: cross-project dependency shows redacted remote item for non-member"]
   phase: P2
   status: Implemented
-  evidence: ['API: planning cross-project-and-prerequisites.spec.ts "a PM of both projects records that a task of A waits for a milestone of B"; "a reader of only one of the two projects sees nothing — not listed, not counted, and its id answers 404"; "a manager who cannot read the other project cannot point at its items (404); the same project is refused" (DOM-P2-17)', 'AT variance: a user who can read only one end sees nothing at all rather than a redacted remote item (date and status); the Integrated Plan screen for cross-project dependencies is in progress (P2 web follow-up)']
+  evidence: ['API: planning cross-project-and-prerequisites.spec.ts "a PM of both projects records that a task of A waits for a milestone of B"; "a reader of only one of the two projects sees nothing — not listed, not counted, and its id answers 404"; "a manager who cannot read the other project cannot point at its items (404); the same project is refused" (DOM-P2-17)', 'AT variance: a user who can read only one end sees nothing at all rather than a redacted remote item (date and status); the Integrated Plan cross-project tab: e2e p2-web-followups.spec.ts "(c) cross-project dependency: both ends visible to readers of both projects, nothing to others, closed with a reason"']
 - id: REQ-ENT-011
   section: "5"
   title: "Multi-level role scopes"
@@ -2343,7 +2343,7 @@
   acceptance_tests: ["UT: task blocked by pending agreement dependency"]
   phase: P2
   status: Tested
-  evidence: ['planning cross-project-and-prerequisites.spec.ts "a task is blocked by a pending agreement dependency (422, audited) and the prerequisite is listed as unsatisfied"; "evidence as a prerequisite: blocked until verified by someone else, then the task starts"; "a gate prerequisite is unsatisfied until the gate is approved; removal needs the manage permission and is audited" (DOM-P2-18)', D planning.test.ts "a task is blocked by a pending agreement dependency until the agreement is signed or effective"; "a decision counts only when final — a recommendation pending the external authority does not", 'API only: the prerequisites screen is in progress (P2 web follow-up); prerequisites are not CPM nodes']
+  evidence: ['planning cross-project-and-prerequisites.spec.ts "a task is blocked by a pending agreement dependency (422, audited) and the prerequisite is listed as unsatisfied"; "evidence as a prerequisite: blocked until verified by someone else, then the task starts"; "a gate prerequisite is unsatisfied until the gate is approved; removal needs the manage permission and is audited" (DOM-P2-18)', D planning.test.ts "a task is blocked by a pending agreement dependency until the agreement is signed or effective"; "a decision counts only when final — a recommendation pending the external authority does not", 'web: e2e p2-web-followups.spec.ts "(d) a prerequisite blocks starting a task; the refusal is explained in English and Arabic; the prerequisite is removed"; prerequisites are not CPM nodes']
 - id: REQ-PLN-007
   section: "9"
   title: "FS relationships, lag and working calendars first"
@@ -2455,7 +2455,7 @@
   acceptance_tests: ["AT-07", "AT-16", "UT: rebaseline creates new baseline version and keeps previous"]
   phase: P2
   status: Tested
-  evidence: [planning at-16-baseline-concurrency.spec.ts "re-baselining after approval requires an approved change request; the previous baseline is preserved (superseded)", 'governance p2-governance-authority.spec.ts "within the DEMO limit (quantified cost) → approved, the authority basis is audited"; "the requester is refused by separation of duties (403) before any authority evaluation" (DOM-P2-03 fixed)', 'e2e p2-planning.spec.ts "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'web: the costImpact money field and the decision picker are in progress (P2 web follow-up); a cost impact typed only as text is refused at approval (422 amount_unquantified)']
+  evidence: [planning at-16-baseline-concurrency.spec.ts "re-baselining after approval requires an approved change request; the previous baseline is preserved (superseded)", 'governance p2-governance-authority.spec.ts "within the DEMO limit (quantified cost) → approved, the authority basis is audited"; "the requester is refused by separation of duties (403) before any authority evaluation" (DOM-P2-03 fixed)', 'e2e p2-planning.spec.ts "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'web: the costImpact money field and the decision picker, e2e p2-web-followups.spec.ts "(a) recusals on behalf; external approval rests on evidence verified by a second person; a change above the delegated limit is approved on that final decision" and p3-carveout.spec.ts "(a) AT-07"; a cost impact typed only as text is refused at approval (422 amount_unquantified)']
 - id: REQ-PLN-014
   section: "9"
   title: "Responsibility matrix and owner conflicts"
@@ -2746,7 +2746,7 @@
   acceptance_tests: ["AT-04", "E2E: decision lifecycle executed from Committee Hub"]
   phase: P2
   status: Implemented
-  evidence: ['Committee Hub (committee/*): charter, members, meetings, packs, voting, decisions, actions, escalations: e2e p2-governance.spec.ts "a decision goes from draft to a server-computed outcome through the UI; a recused vote is refused and shown" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'known regression: recording an external-authority approval from the decision page returns 422 (the API now requires a verified evidence link, DOM-P2-12); the evidence picker and the matrix approval-document / verification actions are P2 web follow-ups in progress; AT-04 in the UI is shown only as the Recommended — pending external authority metric']
+  evidence: ['Committee Hub (committee/*): charter, members, meetings, packs, voting, decisions, actions, escalations: e2e p2-governance.spec.ts "a decision goes from draft to a server-computed outcome through the UI; a recused vote is refused and shown" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'the evidence picker (external approval) and the matrix approval-document / verification actions: e2e p2-web-followups.spec.ts "(a) recusals on behalf; external approval rests on evidence verified by a second person" and "(b) a loaded authority matrix needs an approval document and stays pending until a second person verifies it"; AT-04 in the UI is shown only as the Recommended — pending external authority metric']
 - id: REQ-UX-008
   section: "10"
   title: "Screen 5: Integrated Plan"
@@ -2762,7 +2762,7 @@
   acceptance_tests: ["AT-15", "E2E: Gantt renders critical path and baseline variance"]
   phase: P2
   status: Implemented
-  evidence: ['Integrated Plan tabs: WBS, timeline (Gantt), milestones, deliverables, dependencies, baselines, look-ahead, what-if, health: e2e p2-planning.spec.ts "(a) PM confirms a Draft task into the plan, reports progress, and a stale version gets 409 ... review"; "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves"; "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no test asserts the critical path or baseline variance on the Gantt (AT); cross-project dependency and prerequisite screens are P2 web follow-ups in progress']
+  evidence: ['Integrated Plan tabs: WBS, timeline (Gantt), milestones, deliverables, dependencies, baselines, look-ahead, what-if, health: e2e p2-planning.spec.ts "(a) PM confirms a Draft task into the plan, reports progress, and a stale version gets 409 ... review"; "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves"; "(c) cockpit tile, workstream workspace and timeline render; screenshots in English, Arabic (RTL) and 390px mobile" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: no test asserts the critical path or baseline variance on the Gantt (AT); cross-project dependency and prerequisite screens: e2e p2-web-followups.spec.ts "(c) cross-project dependency" and "(d) a prerequisite blocks starting a task"']
 - id: REQ-UX-009
   section: "10"
   title: "Screen 6: Workstream Workspace"
@@ -2841,8 +2841,8 @@
   security_rule: "Finance Restricted ABAC; non-finance users see restricted state"
   acceptance_tests: ["AT-29", "E2E: restricted user sees restricted-access state"]
   phase: P4
-  status: Planned
-  evidence: ['the Finance & Value screen is a placeholder (apps/web/src/app/(app)/projects/[projectId]/finance/page.tsx renders PlaceholderSection, phase P4); the web screens are being built by another agent (in progress)', 'backend Tested: finance snapshots, budget lines, models, benefits, KPIs and reconciliations (apps/api/test/finance, 5 files); restricted access: finance finance-isolation.spec.ts "a project member without finance.record.read is refused (403); with it, lower clearance sees nothing above it"', the AT E2E (restricted user sees the restricted-access state) is not built]
+  status: Tested
+  evidence: ['e2e p4-finance.spec.ts "REQ-UX-013: a user without finance access sees the restricted-access state; a record above a reader...clearance is restricted too"; "Finance & Value screens in en / ar / 390 px with the Demo badge on seeded records (REQ-UX-013, REQ-UX-028)"; "AT-29 / REQ-DAT-004: a mixed-currency total is refused without a conversion basis"; "REQ-FIN-010: validated by a second person, approved by a third" (full Playwright suite 261/261 at ef8ea27 + JV fixture fix, local stack as in CI; CI run 34 green at 4fadf91)', 'backend: finance specs (apps/api/test/finance)']
 - id: REQ-UX-014
   section: "10"
   title: "Screen 11: JV & Diligence"
@@ -2857,8 +2857,8 @@
   security_rule: "Partner-room ABAC"
   acceptance_tests: ["AT-11", "AT-12", "E2E: closing blocked message shows unmet CPs"]
   phase: P4
-  status: Planned
-  evidence: ['the JV & Diligence screen is a placeholder (apps/web/src/app/(app)/projects/[projectId]/jv/page.tsx renders PlaceholderSection, phase P4); the web screens are being built by another agent (in progress)', 'backend Tested: partners, rooms, scenarios, DD requests and findings, signings, closings, CPs, post-close (apps/api/test/jv, 8 files); closing blocked with unmet CPs: jv at-12-closing-blocked-cp.spec.ts "IT: confirm with one unverified blocking CP is rejected and logged — the CP set is re-evaluated inside the confirm transaction"', the AT E2E (closing blocked message shows unmet CPs) is not built]
+  status: Tested
+  evidence: ['e2e p4-jv.spec.ts "AT-11: partner preparation and DD proceed before G3; stages are never skipped"; "AT-12: closing blocked — the message names the unmet CPs and the confirmation is refused"; "AT-13: a non-waivable CP offers no waiver in the UI; a bypassing request is refused and logged"; "AT-03: the partner-A user sees only its own room" (full Playwright suite 261/261 at ef8ea27 + JV fixture fix, local stack as in CI; CI run 34 green at 4fadf91)', 'backend: jv specs (apps/api/test/jv)']
 - id: REQ-UX-015
   section: "10"
   title: "Screen 12: RAID & Change Control"
@@ -2874,7 +2874,7 @@
   acceptance_tests: ["AT-07", "E2E: raise CR from risk"]
   phase: P2
   status: Implemented
-  evidence: ['RAID & Change Control screen: e2e p2-planning.spec.ts "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: raising a change request from a risk (AT) is not tested; the costImpact money field is a P2 web follow-up in progress (a cost impact typed only as text cannot be approved)']
+  evidence: ['RAID & Change Control screen: e2e p2-planning.spec.ts "(b) change request lifecycle and re-baseline: PM raises and assesses, Sponsor approves; PM proposes baseline, Sponsor approves" (passed in the local e2e run at 124f3d8; also green in CI run 23 at a471265)', 'gap: raising a change request from a risk (AT) is not tested; the costImpact money field: e2e p2-web-followups.spec.ts "(a) recusals on behalf" and p3-carveout.spec.ts "(a) AT-07" (a cost impact typed only as text cannot be approved)']
 - id: REQ-UX-016
   section: "10"
   title: "Screen 13: Document & Evidence Center"
