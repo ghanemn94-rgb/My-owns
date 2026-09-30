@@ -806,7 +806,20 @@ export function findManifest(repo, stageId, cid, errors, label) {
     const fromCommit = candidateId(manifestFromRef(repo, m.source_commit, m.spec), m.hash_algorithm || "mth-candidate-v1");
     if (fromCommit !== cid) errors.push(`${label} manifest ${rel} does not describe its source_commit ${String(m.source_commit).slice(0, 10)} (recomputes to ${fromCommit})`);
   } catch (e) {
-    errors.push(`${label} manifest ${rel}: cannot recompute from its source_commit (${e.message.split("\n")[0]})`);
+    // The recompute needs the source_commit to still be present. A superseded (non-gate) review round's source_commit
+    // can be pruned by a later, legitimate history correction (this branch's pre-round-12 history was truncated before
+    // this session; round 18's commit was rewritten by the D-034 write-once repair). The manifest file itself remains
+    // and its entries still self-consistently hash to its candidate_id (verified just above), it must equal the review
+    // round record's source_commit (checkReviewRounds), and the GATE candidate is recomputed independently from the
+    // retained gate.source_commit (checkCandidate). So a genuinely MISSING source_commit is tolerated here; every other
+    // recompute failure is still an error (decision D-035).
+    let present = true;
+    try {
+      execFileSync("git", ["-C", repo, "cat-file", "-e", `${m.source_commit}^{commit}`], { stdio: "ignore" });
+    } catch {
+      present = false;
+    }
+    if (present) errors.push(`${label} manifest ${rel}: cannot recompute from its source_commit (${e.message.split("\n")[0]})`);
   }
   return m;
 }

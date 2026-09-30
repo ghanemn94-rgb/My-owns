@@ -232,10 +232,9 @@
           "source_commit": "450c756f679a911b4c736e856fc9dd5e9b2c89a8",
           "records": {
             "domain-reviewer": "docs/delivery/reviews/DG0/round-18/domain-reviewer.json",
-            "code-security-reviewer": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json",
-            "qa-verifier": "docs/delivery/reviews/DG0/round-18/qa-verifier.json"
+            "code-security-reviewer": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json"
           },
-          "note": "Round 18: re-review after D-032 (finish() write-once-collision fix, F-DG0-150/238; docstring, F-DG0-151). code-security verifies F-DG0-150/151, re-accepts F-DG0-147, assesses F-DG0-149 read-only; qa verifies F-DG0-236/237."
+          "note": "Round 18: re-review after D-032. domain PASS; code-security FAIL — new F-DG0-152 (High, mandatory: cross-run isolation break via /proc/<peer>/root|cwd), F-DG0-153 (Low doc); verified F-DG0-150/151 CLOSED, re-accepted F-DG0-147, assessed F-DG0-149 read-only (stays OPEN). qa hit the account session limit before writing its verdict record: it wrote its sidecars (verified F-DG0-236/237 PASS, raised F-DG0-239 Low) but produced no qa-verifier.json, so its round-18 review is unbindable and re-runs in round 19; the committed sidecars are kept (write-once) but not imported. Repairs: D-033 (per-run Landlock domain, F-DG0-152), D-034 (write-once history repair), D-035 (validator tolerates pruned historical source_commits)."
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",

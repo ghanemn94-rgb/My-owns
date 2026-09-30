@@ -10,7 +10,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { candidateId, manifestFromRef, manifestFromWorkingTree } from "../lib/candidate.mjs";
-import { validateGate, validatePipeline, reconcile, REGISTER_COLUMNS, STAGE_ORDER } from "../lib/rules.mjs";
+import { validateGate, validatePipeline, reconcile, findManifest, REGISTER_COLUMNS, STAGE_ORDER } from "../lib/rules.mjs";
 import { parseCsv } from "../lib/csv.mjs";
 // Hermetic git: fixtures must not depend on the host's global or system git config (e.g. mandatory commit signing).
 process.env.GIT_CONFIG_GLOBAL = "/dev/null";
@@ -1016,4 +1016,30 @@ test("F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the wor
     sh(repo, "checkout", "-q", "--", ".");
     assert.equal(candidateId(manifestFromWorkingTree(repo, spec)), head);
   }
+});
+
+test("D-035: findManifest tolerates a pruned (missing) source_commit but still enforces entries self-consistency", () => {
+  const { repo } = buildValidRepo();
+  const spec = get(repo, "docs/delivery/stages.json").stages[0].candidate_spec;
+  const entries = manifestFromRef(repo, freezeCommit, spec);
+  const cid = candidateId(entries);
+  const rel = `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`;
+  const manifest = (over) => ({ stage_id: "DG0", candidate_id: cid, hash_algorithm: "mth-candidate-v2", source_commit: freezeCommit, frozen_at: T_FREEZE, spec, entries, ...over });
+  // A present, matching source_commit recomputes cleanly.
+  put(repo, rel, manifest({}));
+  let errs = [];
+  findManifest(repo, "DG0", cid, errs, "present");
+  assert.deepEqual(errs, [], "a present, matching source_commit must not error");
+  // A genuinely MISSING source_commit (pruned by a later legitimate history correction) is tolerated (D-035),
+  // because the manifest's entries still self-consistently hash to its candidate_id.
+  put(repo, rel, manifest({ source_commit: "0".repeat(40) }));
+  errs = [];
+  const m = findManifest(repo, "DG0", cid, errs, "pruned");
+  assert.deepEqual(errs, [], "a genuinely missing source_commit is tolerated");
+  assert.equal(m.candidate_id, cid);
+  // But tampering (entries that do not hash to the candidate_id) is still caught, missing source_commit or not.
+  put(repo, rel, manifest({ source_commit: "0".repeat(40), entries: entries.slice(1) }));
+  errs = [];
+  findManifest(repo, "DG0", cid, errs, "tampered");
+  assert.ok(errs.some((e) => /does not hash to/.test(e)), "entries must still self-consistently hash to the candidate_id");
 });
