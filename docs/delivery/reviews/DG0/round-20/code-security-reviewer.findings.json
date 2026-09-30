@@ -1,0 +1,32 @@
+{
+ "schema_version": 1,
+ "findings": [
+  {
+   "id": "F-DG0-157",
+   "stage_id": "DG0",
+   "requirement": "REQ-DLV-007",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "Leftover residual-7 wording after D-036: the agent_sandbox.py comment still claims /proc/sys is read-only for the agent's shell (the claim D-036 withdrew), and threat-model residual 7 still credits D-033 with closing a '/proc/<peer>/sys via /proc/<peer>/root' amplification that has no separate effect on a host-global tunable",
+   "reproduction": "Read-only document and code review; no /proc access was performed. (1) tools/agents/agent_sandbox.py:149-151 still says '/proc/sys kernel tunables are read-only for the agent's SHELL (the Claude Code Bash sandbox's user namespace, as in round 15)'. docs/delivery/threat-model.md:60 (residual 7, as corrected in D-036) withdraws this as unverified, so the code comment contradicts the threat model. (2) threat-model.md:60 still says the Landlock domain 'does close the cross-run amplification (reaching another run's /proc/<peer>/sys via /proc/<peer>/root, F-DG0-152)'. The same residual now correctly says /proc/sys is host-global kernel state that every run already reaches through the same host procfs bind (agent_sandbox.py:155), so reaching it through a peer's root adds no reach. D-033 does close the real cross-run path, /proc/<peer>/root|cwd into another run's writable areas, and residual 8 describes that correctly. Evidence: docs/delivery/test-evidence/DG0/code-security/round-20/06-scope-diff-secrets-wording.log.",
+   "expected": "The in-code comment matches the corrected threat model: no unverified claim of a read-only shell /proc/sys. Residual 7 credits D-033 only with the /proc/<peer>/root|cwd cross-run closure (residual 8) and not with a /proc/sys narrowing.",
+   "actual": "The authoritative residual-7 text now states the correct host-global scope, so the residual is no longer understated. Two stale sentences remain: an unverified claim in a code comment, and an extra claimed benefit of D-033. Neither changes any control or makes the disclosed residual larger than stated. I would accept this as an observation; fix it at the next edit to agent_sandbox.py or the threat model.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-20/06-scope-diff-secrets-wording.log",
+    "tools/agents/agent_sandbox.py#L149-L151",
+    "docs/delivery/threat-model.md#residual-7"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG0/round-20/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-09-30T09:56:02Z",
+     "status": "OPEN",
+     "note": "Raised in DG0 round 20 by code-security-reviewer. Low and non-mandatory: documentation only. The reporter would accept it as an observation."
+    }
+   ]
+  }
+ ]
+}

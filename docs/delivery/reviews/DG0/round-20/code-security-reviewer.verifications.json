@@ -1,0 +1,55 @@
+{
+ "verifications": [
+  {
+   "finding_id": "F-DG0-155",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Reproduced against the candidate: my round-19 repro, re-run as r20-d036-repro.mjs in a disposable clone at ce6d9b6 (a23c4d4 plus freeze metadata). checkCandidate in CURRENT mode with the gate and manifest source_commit set to ffff...ffff now returns 'candidate: gate source_commit ffffffffff is not a commit in this repository' (B1). In round 19 it returned 0 errors. The real-commit control returns 0 errors (B0). Historical mode rejects too (C1). A reachable but wrong commit is still rejected by findManifest (B2). Because the gate round's manifest must carry the same source_commit as the gate (rules.mjs:842), the existence check forces findManifest's recompute to run for the gate round, so the D-035 tolerance is non-gate in effect. The D-035 tolerance still holds for the genuinely pruned rounds 1-12 (0 errors each). Round 18's commit is present at its rewritten SHA and is recomputed cleanly. The unit test 'D-036: a gate whose source_commit does not exist is rejected in current mode too' passes (94/94).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-20/r20-d036-repro.mjs",
+    "docs/delivery/test-evidence/DG0/code-security/round-20/04-d036-repro.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-20/01-node-tests.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-156",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "At a23c4d4, .claude/settings.json has permissions.allow = [\"Bash(bwrap:*)\"] only. There is no git filter-branch/branch/push/update-ref rule (0 'git ' matches). .claude/settings.local.json is not tracked. The diff 0a65201..a23c4d4 shows exactly that removal.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-20/05-settings-allow-rules.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-154",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Verified by document and code review only; no /proc access. Threat-model residual 7 (threat-model.md:60) now states the following: the agent is uid 0 with only CAP_SETFCAP and no_new_privs; most /proc/sys tunables need CAP_SYS_ADMIN; the residual is the uid-0 DAC-writable subset; /proc/sys is host-global, so a write affects the whole host and every run; and the round-15 read-only-shell claim is withdrawn. This matches agent_sandbox.py:154-155 (--unshare-ipc only, --bind /proc /proc), and D-033's row carries the correction note. The integrity conclusion (no repository path, reviewer artefact, gate record or other run's scratch becomes writable) rests on the read-only binds and private tmpfs, independent of /proc/sys, and is sound. The substance of the finding (residual understated, and acceptance premised on the wrong scope) is fixed. Two leftover stale sentences (the agent_sandbox.py:149-151 comment and the '/proc/<peer>/sys' parenthetical) are raised separately as Low observation F-DG0-157, because they neither change a control nor understate the residual.",
+   "evidence": [
+    "docs/delivery/threat-model.md#residual-7",
+    "tools/agents/agent_sandbox.py#L154-L155",
+    "docs/delivery/test-evidence/DG0/code-security/round-20/06-scope-diff-secrets-wording.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-149",
+   "result": "PASS",
+   "status_after": "ACCEPTED_OBSERVATION",
+   "note": "Re-assessed at the corrected host-global scope, read-only (no /proc/sys access). I accept it as an observation for four reasons. (1) It is host availability and kernel tunables only. Repository, reviewer-artefact, gate-record and other-run integrity are held by read-only binds, the private /tmp and /var/tmp tmpfs, the capability drop and the per-run Landlock domain, none of which depend on /proc/sys. (2) The reachable set is small: only root-owned entries with a DAC-writable mode, because CAP_SYS_ADMIN and the other capabilities are dropped. (3) A file tool reaches it only by racing a symlink past the write guard, which refuses any path whose hop-by-hop resolution visits /proc, /sys or /dev (guard-write.mjs:110,141-144). (4) It is inherent to option A, which the user chose (D-030). The residual is now disclosed at its real scope. I still recommend a narrower control as a follow-up spike, not a DG0 blocker: run the claude process at a non-zero uid inside the process sandbox (a user namespace that does not map to host uid 0), provided the nested Bash and reviewer bwrap still obtain their required mapping. The release-auditor must concur for this to take effect.",
+   "evidence": [
+    "docs/delivery/threat-model.md#residual-7",
+    "tools/agents/guard-write.mjs#L141-L144",
+    "tools/agents/agent_sandbox.py#L154-L155"
+   ]
+  },
+  {
+   "finding_id": "F-DG0-157",
+   "result": "PASS",
+   "status_after": "ACCEPTED_OBSERVATION",
+   "note": "Reporter's acceptance as an observation, raised this round: the finding is documentation-only and Low, and it does not change any control or understate residual 7, which is now stated at its correct host-global scope. Fix it at the next edit to agent_sandbox.py or threat-model.md. The release-auditor must concur.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG0/code-security/round-20/06-scope-diff-secrets-wording.log"
+   ]
+  }
+ ]
+}
