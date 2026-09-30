@@ -8,7 +8,7 @@ branch, not yet merged — not a verification status).
 Engineering verification is distinct from Mobily production approval, which requires Mobily infrastructure, security
 and business owners (see `docs/assumptions-and-open-questions.md`). Nothing here means "Production Ready".
 
-_Last updated: 2026-09-30 at revision `b41fe6e`+ (API suite: 100 files, 847 passed + 2 expected fail at `b41fe6e`; domain 424, contracts 100; full Playwright suite 314 passed in the P2 QA final re-review at `9b8d59f`; CI runs 45 and 46 green). Per-requirement status with evidence is in
+_Last updated: 2026-09-30 at revision `3735be4` (API suite: 101 files, 856 passed + 2 expected fail; domain 424, contracts 100; full Playwright suite 314 passed in CI run 48 at `5bf274b`). Per-requirement status with evidence is in
 `docs/requirements/requirements-traceability.md` (generated; `scripts/requirements/apply_status.py --check` verifies that
 every cited test file and title exists). Counts below are from runs executed at that revision on PostgreSQL 16._
 
@@ -18,7 +18,7 @@ every cited test file and title exists). Counts below are from runs executed at 
 | Agent definitions (11) | Implemented | `.claude/agents/` | Executed as subagents in the build session (ADR-0015) |
 | Domain rules (state machines, quorum/authority, gates, schedule/CPM, measurement, money, carve-out, readiness, finance, JV, AI authority, policy matrix) | Tested | 424 unit tests (`packages/domain`, 21 files); contracts 100 | Policy matrix kept in sync with `docs/security/access-matrix.md` by a drift test |
 | Database schema, migrations, RLS, append-only audit + hash chain, cross-project/org FK guards | Tested | API integration suite (below) | One pre-release migration; post-migrate SQL holds RLS, guards and triggers |
-| API integration suite (all modules) | Tested | 849 tests in 100 files (847 passed, 2 expected-fail review probes of open Low findings) (`apps/api/test`: p1, governance, planning, gates, documents, carveout, readiness, finance, jv, ai, reviews) | Run on a reset database with the demo seed loaded through the real services; reviewers' DEFECT probes are kept as regression tests once fixed |
+| API integration suite (all modules) | Tested | 858 tests in 101 files (856 passed, 2 expected-fail review probes of open Low findings) (`apps/api/test`: p1, governance, planning, gates, documents, carveout, readiness, finance, jv, ai, reviews) | Run on a reset database with the demo seed loaded through the real services; reviewers' DEFECT probes are kept as regression tests once fixed |
 | Identity: demo login, logout, user admin, account type (internal/external) | Tested | `p1/isolation-and-auth.spec.ts`, `p1/security-p1-fixes.spec.ts` | Demo login exists only in `HUB_MODE=demo`; demo sessions are rejected outside demo mode |
 | Enterprise SSO (OIDC) | Tested (against an in-process test IdP) · Not configured (Mobily IdP) | `p1/oidc-sso.spec.ts` | Authorization Code + PKCE, signed ID token, no auto-provisioning; connecting Mobily's IdP needs Q-04 |
 | Portfolio: projects from templates, members, workstreams, activity, setup gaps | Tested | `p1/projects-templates-audit.spec.ts`, `p1/arch-rereview-hardening.spec.ts` | AT-02, AT-16, AT-27 |
