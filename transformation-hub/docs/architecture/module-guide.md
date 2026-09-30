@@ -60,7 +60,8 @@ Enum values already exist in `packages/domain/src/enums.ts` for all modules — 
 
 ### Outbox events (from `OUTBOX_EVENT_TYPES`)
 `task.overdue, source.updated, approval.pending, cp.changed, tsa.expiring, gate.blocked, decision.status_changed,
-evidence.changed, perimeter.changed, permission.changed, document.changed, report.generated`. Emit them from your
+evidence.changed, perimeter.changed, permission.changed, document.changed, report.generated, baseline.approved,
+change_request.decided, readiness.changed, legal_entity.changed`. Emit them from your
 commands; subscribe in `<module>.jobs.ts` (`registry.subscribe(eventType, jobKind)`; `registry.register(jobKind, handler)`).
 Job handlers receive ids only and must open their own context through `JobContextFactory` (never build a principal by
 hand): `db.run(jobs.forService(job, 'svc-<module>', ['<permission>', ...]), ...)` — a service principal is **deny-all
@@ -69,7 +70,13 @@ human principal at execution time and returns `null` when access was revoked (AT
 
 ### Cross-module contracts
 - Evidence: the documents module owns `evidence_link` writes (`POST /api/v1/projects/:pid/evidence`); other modules read
-  counts with `activeEvidenceCount(db, projectId, targetType, targetId)`. Target types used: `gate_criterion`,
+  counts with `activeEvidenceCount(db, projectId, targetType, targetId)` **for rules** (gates, sign-off, verification: every
+  link counts) and with `visibleEvidenceCounts(db, policy, ctx, projectId, targetType, ids)` **for display** (register rows,
+  detail views): the same visibility as the evidence list — links to documents above the caller's clearance or in rooms
+  they are not granted are not counted (SEC-P1R-05). Reading evidence of a record (list, link commands, document
+  counters) requires the target's READ permission (`EVIDENCE_TARGET_READ_PERMISSION` in `@hub/domain`, e.g. `jv.deal.read`
+  for a closing condition) plus the target's own visibility (classification, workstream reach); otherwise 404
+  (SEC-P1R-04). A new target type needs an entry in both `EVIDENCE_TARGET_PERMISSION` and `EVIDENCE_TARGET_READ_PERMISSION`. Target types used: `gate_criterion`,
   `closing_condition`, `perimeter_item`, `transfer`, `readiness_check`, `tsa_service`, `decision`, `action_item`,
   `task`, `deliverable`, `milestone`, `legal_entity`, `regulatory_requirement`, `agreement`, `benefit`,
   `financial_snapshot`, `post_close_obligation`, `closing_deliverable`.
@@ -125,6 +132,34 @@ human principal at execution time and returns `null` when access was revoked (AT
     translation, when placeholders differ, or when the catalogue keeps a stale code. Adding a code = domain template +
     en/ar catalogue entry in the same change.
 
+- **Separation of duties and authority fail CLOSED (I-R3).** For a permission with `not_self`, pass the subject's
+  requester / submitter / recorder id; a missing (undefined or null) id is **403 `policy.sod_subject_unknown`** — nobody
+  may approve a record whose requester is unknown. For a permission with `authority`, pass `withinAuthority` explicitly
+  (`true` only when the authority is the role grant itself, with the reason at the call site); `undefined` is 403
+  `policy.authority_unknown`. `NO_HUMAN_REQUESTER` (from `@hub/domain`) states that NO human requester exists — only when
+  the data proves it (a system-generated escalation; a criterion reviewed with no evidence linked). Approvals check in the
+  order **role → state → separation of duties** with `policy.assertApproval(ctx, perm, res, () => transition(...))`, so a
+  command in the wrong state is still 422; pre-checks before a per-subject loop use `policy.assertGranted` (never the only
+  check of an approval).
+- **Activity feed visibility (SEC-P1-03, SEC-P1R-02):** an event is listed only when the caller can see the record itself.
+  `apps/api/src/platform/record-visibility.ts` (`RecordVisibility`) holds one rule per entity type — own classification /
+  room, visibility INHERITED from the parent (meeting / agenda item / membership / authority matrix → committee; action /
+  escalation → decision; source claim → source record; document version → document; evidence link → document + target;
+  AI proposal / approval request / waiver / RAG override → target) and, for non-auditors, the workstream reach of the
+  type's read permission. **A new audited entity type whose visibility is not just its type permission must get a rule
+  there** (and an entry in `ACTIVITY_ENTITY_PERMISSION` to appear for non-auditors).
+- **Shared legal entities have ONE owning project (SEC-P1R-03).** `legal_entity` is organization-level and can be linked
+  to several projects (`project_entity`). Only the project that created it (`legal_entity.owner_project_id`, set by
+  `LegalEntitiesService.create` / project creation, immutable) changes it: descriptive edits (`PATCH …/legal-entities/:id`),
+  incorporation record / verify and the setup-wizard NewCo step. Linked projects read it (`ownedByThisProject: false`) and
+  get **403 `newco.legal_entity.not_owner`** for those commands (the owning project is not named). The database enforces
+  the same rule (restrictive RLS on UPDATE for full members of the owner; owner column immutable). Each change in the owning
+  project emits `legal_entity.changed` once per OTHER linked project (ids via the SECURITY DEFINER function
+  `hub_legal_entity_linked_projects`, callable by owner members only): the NewCo job records
+  `newco.legal_entity.changed_in_owning_project` in that project's activity (ids, change kind, version — no notes or
+  people) and the gates job recomputes its status dimensions. Apply the same single-writer model to any future
+  organization-level record shared by projects.
+
 ### Conventions the DATABASE enforces (post-migrate.sql — your tests will fail if you ignore them)
 - `project_id` and `org_id` are **immutable** after insert (`immutable_scope`). Moving a record between projects is a
   re-create command, never an UPDATE.
@@ -139,6 +174,10 @@ human principal at execution time and returns `null` when access was revoked (AT
 - `vote.user_id` must be the user of `vote.membership_id`, and the membership must belong to the decision's committee.
 - Room-only principals (clean team / external partner) see only their own `project_membership` and `room_grant` rows
   and can never write grants; full membership is required to administer rooms.
+- An account holding internal roles or grants cannot be switched to `account_type = 'external'` (I-R1): revoke them first.
+- `legal_entity.owner_project_id` is immutable; only full members of the owning project UPDATE a legal entity (SEC-P1R-03).
+- Service / non-person accounts (`is_service_account`) never hold an interactive session: `hub_auth_session` reports them
+  inactive and OIDC login refuses them (`oidc.service_account`, I-R5).
 
 ## 3. Database changes
 Edit only your schema file. For local testing run, in your worktree:
