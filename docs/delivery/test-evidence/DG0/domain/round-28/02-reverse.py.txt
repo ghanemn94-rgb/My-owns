@@ -1,0 +1,9 @@
+import zipfile,re,html,collections
+z=zipfile.ZipFile('docs/source/Business_Transformation_Playbook.docx')
+src=' '.join(re.findall(r'<w:t(?:\s[^>]*)?>([^<]*)</w:t>',''.join(z.read(n).decode() for n in z.namelist() if n.startswith('word/') and n.endswith('.xml'))))
+md=open('docs/source/playbook.md',encoding='utf-8').read()
+md=re.sub(r'<a id="B\d{4}"></a>','',md); md=re.sub(r'<!--.*?-->','',md,flags=re.S)
+tok=lambda s: collections.Counter(re.findall(r"[A-Za-z0-9]+",html.unescape(s).lower()))
+S,M=tok(src),tok(md)
+extra={k:v-S.get(k,0) for k,v in M.items() if v>S.get(k,0)}
+print('md tokens not accounted for by docx (token:excess):',sorted(extra.items(),key=lambda t:-t[1])[:40])

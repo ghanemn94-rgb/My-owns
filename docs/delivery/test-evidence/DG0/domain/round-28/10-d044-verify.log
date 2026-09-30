@@ -1,0 +1,22 @@
+# clone /var/tmp/mth-run.Q2MuJS/claude-0/review-dom28 @ 331407e9b6711abbc01f7ee0456e4fa92ff65cda (--no-local). Probe file = copy of tools/gates/tests/validator.test.mjs + 2 appended tests (see 10-d044-probe.tests.mjs.txt); run in the disposable clone only.
+$ node --test --test-name-pattern "D-044|DOM28|D-039 / F-DG0-164" tools/gates/tests/dom28-probe.test.mjs  (candidate rules.mjs)
+# DOM28 tag-head errors: ["review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): invocation DG0-T-REV-R2-domain-reviewer-20260928T123000Z-00000030: started from 0abae1bdd0, a tag object, not a commit","write-once: working-tree docs/delivery/runs/DG0/DG0-T-REV-R2-domain-reviewer-20260928T123000Z-00000030/meta.json differs from its committed content (edited locally, or hidden by skip-worktree/assume-unchanged)"]
+# DOM28 tree-fix errors: ["finding F-DG0-101 (High, mandatory): fix eb16d1af65 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+ok 1 - D-044 / F-DG0-250: a fix_revision that is an annotated tag object (not a commit) is rejected
+ok 2 - D-039 / F-DG0-164: checkInvocation requires a present head_commit_at_start that contains the manifest -- no absent-round escape
+# Subtest: DOM28 probe: a head_commit_at_start that is an annotated tag object is rejected; the peeled commit passes
+ok 3 - DOM28 probe: a head_commit_at_start that is an annotated tag object is rejected; the peeled commit passes
+# Subtest: DOM28 probe: a fix_revision that is a tree object is rejected (not only tags)
+ok 4 - DOM28 probe: a fix_revision that is a tree object is rejected (not only tags)
+# pass 4
+# fail 0
+exit=0
+
+$ mutation: tools/gates/lib/rules.mjs replaced with 49b5ad7 (pre-D-044) version, same probes
+not ok 1 - D-044 / F-DG0-250: a fix_revision that is an annotated tag object (not a commit) is rejected
+not ok 2 - DOM28 probe: a head_commit_at_start that is an annotated tag object is rejected; the peeled commit passes
+ok 3 - DOM28 probe: a fix_revision that is a tree object is rejected (not only tags)
+# pass 1
+# fail 2
+exit=1 (expected non-zero: the tag-object cases are accepted without D-044)
+restored; git diff --stat: 0 lines

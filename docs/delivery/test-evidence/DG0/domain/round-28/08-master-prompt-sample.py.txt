@@ -1,0 +1,35 @@
+import re,csv,random,collections
+txt=open('docs/source/master-prompt.anchored.md',encoding='utf-8').read()
+blocks={}
+for m in re.finditer(r'^(?:## )?\[(M\d{4}) (§[\w.]+)\] ?(.*)$',txt,re.M): blocks[m.group(1)]=(m.group(2),m.group(3))
+print('anchored blocks',len(blocks))
+cov={r['block_id']:r for r in csv.DictReader(open('docs/analysis/master-prompt-coverage.csv',encoding='utf-8'))}
+print('coverage rows',len(cov),'all M0001..M0423',sorted(cov)==['M%04d'%i for i in range(1,424)],collections.Counter(r['disposition'] for r in cov.values()))
+R={r['req_id']:r for r in csv.DictReader(open('docs/delivery/requirements.csv',encoding='utf-8'))}
+# register-wide check: every REQUIREMENT M block mapped to existing rows citing it
+bad=[]
+for b,r in cov.items():
+    ids=[x for x in re.split(r'[;\s,]+',r['req_ids']) if x]
+    if r['disposition']=='REQUIREMENT' and not ids: bad.append((b,'no ids'))
+    for i in ids:
+        if i not in R: bad.append((b,'unknown '+i))
+        elif b not in R[i]['source_ref'].split(';'): bad.append((b,i+' does not cite'))
+print('M mapping problems',len(bad),bad[:10])
+bysec=collections.defaultdict(list)
+for b,(s,t) in blocks.items(): bysec[s.split('.')[0]].append(b)
+random.seed(28); sample=[]
+for s in sorted(bysec,key=lambda x:(int(x[1:]) if x[1:].isdigit() else -1)):
+    bl=bysec[s]; rows=[b for b in bl if blocks[b][1].startswith('|')]
+    pick=random.sample(bl,min(3,len(bl)))
+    if rows: pick+= [random.choice(rows)]
+    sample+=sorted(set(pick))
+print('sample size',len(sample),'sections',len(bysec))
+print('SAMPLE:',' '.join(sample))
+for b in sample:
+    s,t=blocks[b]; c=cov[b]
+    ids=[x for x in re.split(r'[;\s,]+',c['req_ids']) if x]
+    print(f'\n{b} {s} [{c["disposition"]}] :: {t[:170]}')
+    if ids:
+        for i in ids[:3]: print(f'    -> {i} ({R[i]["class"]},{R[i]["final_gate"]}): {R[i]["title"][:140]}')
+        if len(ids)>3: print(f'    -> (+{len(ids)-3} more)')
+    else: print('    rationale:',c['rationale'][:160])

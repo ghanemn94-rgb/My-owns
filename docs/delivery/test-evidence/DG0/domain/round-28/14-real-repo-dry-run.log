@@ -1,0 +1,50 @@
+fresh --no-local clone @ 57d7a53f2a9670936c9a09f027b5c586fb025a4e (live HEAD incl. round-28 freeze metadata) shallow=false
+$ census: object type of every fix_revision in findings.json and every head_commit_at_start in runs/**/meta.json
+fix_revision object types: {"commit":118}
+fatal: git cat-file: could not get object info
+fatal: git cat-file: could not get object info
+fatal: git cat-file: could not get object info
+head_commit_at_start object types (all runs, all stages): {"commit":100,"ABSENT":3}
+
+$ node tools/gates/validate.mjs --stage DG0  (dry-run; the gate record does not exist yet, so a FAIL listing only missing round-28 records/gate is expected)
+exit=1
+2
+--- lines mentioning tag object / not a commit / fix_revision / head_commit:
+(none)
+--- full output:
+FAIL gate DG0 (current) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+
+=== synthetic-gate dry-run (disposable clone /var/tmp/mth-run.Q2MuJS/claude-0/dry28 only): a scratch docs/delivery/gates/DG0.json naming the round-28 candidate 1af91e8f / source_commit 331407e and the round-27 review paths, so validateGate walks every real closure (118 CLOSED_VERIFIED fix_revisions, three anchors each) and every referenced invocation. Scratch gate content:
+{"schema_version":1,"stage_id":"DG0","decision":"APPROVED","candidate_id":"sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b","source_commit":"331407e9b6711abbc01f7ee0456e4fa92ff65cda","manifest_path":"docs/delivery/candidates/DG0/1af91e8f620aec37.manifest.json","previous_gate":null,
+"reviews":{"domain-reviewer":"docs/delivery/reviews/DG0/round-27/domain-reviewer.json","code-security-reviewer":"docs/delivery/reviews/DG0/round-27/code-security-reviewer.json","qa-verifier":"docs/delivery/reviews/DG0/round-27/qa-verifier.json"},
+"release_audit":"docs/delivery/reviews/DG0/round-27/release-auditor.json","requirements":{"final_gate_ids":[]},"tests":[{"name":"x","command":"x","result":"PASS","evidence":["docs/delivery/decisions.md"]}],
+"blocking_conditions":[],"accepted_observations":[],"decided_at":"2026-09-30T15:00:00Z","decided_by":"release-auditor","invocation_reference":{"kind":"claude-code-cli-session","run_id":"DG0-synthetic","session_id":"00000000-0000-0000-0000-000000000000"}}
+$ node tools/gates/validate.mjs --stage DG0
+FAIL gate DG0 (current) (22 problems)
+  - stages.json: DG0 state REVIEWING not in VERIFYING/APPROVED
+  - review domain-reviewer (docs/delivery/reviews/DG0/round-27/domain-reviewer.json): reviewed candidate sha256:9420948b55a5131e5c0e61385071b6615b1d001bac9f7023c2e512e1e5ac8128 != gate candidate sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b
+  - review domain-reviewer (docs/delivery/reviews/DG0/round-27/domain-reviewer.json): invocation DG0-T-DG0-REV-DOM-R27-domain-reviewer-20260930T142642Z-5ecc9160: started 2026-09-30T14:26:42Z, before the candidate froze at 2026-09-30T14:49:46Z
+  - review domain-reviewer (docs/delivery/reviews/DG0/round-27/domain-reviewer.json): invocation DG0-T-DG0-REV-DOM-R27-domain-reviewer-20260930T142642Z-5ecc9160: started from a4c6f82a17, which does not contain docs/delivery/candidates/DG0/1af91e8f620aec37.manifest.json
+  - review code-security-reviewer (docs/delivery/reviews/DG0/round-27/code-security-reviewer.json): reviewed candidate sha256:9420948b55a5131e5c0e61385071b6615b1d001bac9f7023c2e512e1e5ac8128 != gate candidate sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b
+  - review code-security-reviewer (docs/delivery/reviews/DG0/round-27/code-security-reviewer.json): invocation DG0-T-DG0-REV-SEC-R27-code-security-reviewer-20260930T142646Z-03314056: started 2026-09-30T14:26:46Z, before the candidate froze at 2026-09-30T14:49:46Z
+  - review code-security-reviewer (docs/delivery/reviews/DG0/round-27/code-security-reviewer.json): invocation DG0-T-DG0-REV-SEC-R27-code-security-reviewer-20260930T142646Z-03314056: started from a4c6f82a17, which does not contain docs/delivery/candidates/DG0/1af91e8f620aec37.manifest.json
+  - review qa-verifier (docs/delivery/reviews/DG0/round-27/qa-verifier.json): reviewed candidate sha256:9420948b55a5131e5c0e61385071b6615b1d001bac9f7023c2e512e1e5ac8128 != gate candidate sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b
+  - review qa-verifier (docs/delivery/reviews/DG0/round-27/qa-verifier.json): invocation DG0-T-DG0-REV-QA-R27-qa-verifier-20260930T142650Z-0b5715f0: started 2026-09-30T14:26:50Z, before the candidate froze at 2026-09-30T14:49:46Z
+  - review qa-verifier (docs/delivery/reviews/DG0/round-27/qa-verifier.json): invocation DG0-T-DG0-REV-QA-R27-qa-verifier-20260930T142650Z-0b5715f0: started from a4c6f82a17, which does not contain docs/delivery/candidates/DG0/1af91e8f620aec37.manifest.json
+  - review release-auditor (docs/delivery/reviews/DG0/round-27/release-auditor.json): file not found (docs/delivery/reviews/DG0/round-27/release-auditor.json)
+  - review rounds: DG0 round 28 domain-reviewer: file not found (docs/delivery/reviews/DG0/round-28/domain-reviewer.json)
+  - review rounds: DG0 round 28 code-security-reviewer: file not found (docs/delivery/reviews/DG0/round-28/code-security-reviewer.json)
+  - review rounds: DG0 round 28 qa-verifier: file not found (docs/delivery/reviews/DG0/round-28/qa-verifier.json)
+  - finding F-DG0-147 (Low): no release-auditor sidecar accepts it
+  - finding F-DG0-147 (Low): findings.json accepted_by does not mirror the accepting sidecars (code-security-reviewer)
+  - finding F-DG0-147 (Low): not listed in the gate's accepted_observations
+  - finding F-DG0-149 (Low): no release-auditor sidecar accepts it
+  - finding F-DG0-149 (Low): findings.json accepted_by does not mirror the accepting sidecars (code-security-reviewer)
+  - finding F-DG0-149 (Low): not listed in the gate's accepted_observations
+  - finding F-DG0-250 (Low): unresolved (FIXED_PENDING_VERIFICATION)
+  - gate DG0: requirements.final_gate_ids does not match the register (expected 19, recorded 0)
+exit=1
+--- classification: every problem is an expected gate-round blocker (stage REVIEWING; round-27 records/invocations belong to another candidate; round-28 records and auditor not yet written; F-DG0-147/149 await auditor concurrence; F-DG0-250 pending this round's verification; scratch final_gate_ids empty).
+--- lines about tag objects / closure anchors / fix commits: 0
+note: the 3 head_commit_at_start values absent from a --no-local clone are the round-18 runs (ccb989f7…, the D-034/D-035 orphaned round); no gate record or closure references a round-18 run (0 closure/invocation errors above).

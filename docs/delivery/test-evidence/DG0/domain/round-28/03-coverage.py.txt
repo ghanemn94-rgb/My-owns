@@ -1,0 +1,34 @@
+import csv,re,json,collections
+cov=list(csv.DictReader(open('docs/analysis/source-coverage.csv',encoding='utf-8')))
+req=list(csv.DictReader(open('docs/delivery/requirements.csv',encoding='utf-8')))
+R={r['req_id']:r for r in req}
+ids=[c['block_id'] for c in cov]
+exp=['B%04d'%i for i in range(1,166)]
+print('coverage rows',len(cov),'unique',len(set(ids)),'== B0001..B0165',sorted(ids)==exp)
+print('dispositions',collections.Counter(c['disposition'] for c in cov))
+probs=[]
+for c in cov:
+    rs=[x for x in re.split(r'[;\s,]+',c['req_ids']) if x]
+    if c['disposition']=='REQUIREMENT':
+        if not rs: probs.append((c['block_id'],'no req'))
+        for r in rs:
+            if r not in R: probs.append((c['block_id'],'unknown '+r))
+            elif c['block_id'] not in R[r]['source_ref']: probs.append((c['block_id'],r+' does not cite block'))
+    elif not c['rationale'].strip(): probs.append((c['block_id'],'no rationale'))
+print('mapping problems',len(probs),probs[:20])
+print('register rows',len(req),'unique',len(R),'classes',collections.Counter(r['class'] for r in req))
+pb=[r for r in req if r['req_id'].startswith('REQ-PB-')]
+print('REQ-PB',len(pb),collections.Counter(r['class'] for r in pb),collections.Counter(r['status'] for r in pb))
+src=[r for r in req if r['class']=='SOURCE']
+print('SOURCE rows w/o B cite',[r['req_id'] for r in src if not re.search(r'B\d{4}',r['source_ref'])])
+print('SOURCE rows not REQ-PB',[r['req_id'] for r in src if not r['req_id'].startswith('REQ-PB-')])
+print('non-SOURCE rows citing only B blocks (no M)',[r['req_id'] for r in req if r['class']!='SOURCE' and re.search(r'B\d{4}',r['source_ref']) and not re.search(r'M\d{4}',r['source_ref'])][:20])
+badB=[(r['req_id'],b) for r in req for b in re.findall(r'B(\d{4})',r['source_ref']) if not 1<=int(b)<=165]
+print('bad B refs',badB)
+cited=set(b for r in req for b in re.findall(r'B\d{4}',r['source_ref']))
+print('REQUIREMENT blocks cited by no row',[c['block_id'] for c in cov if c['disposition']=='REQUIREMENT' and c['block_id'] not in cited])
+print('PB missing acceptance/final_gate',[r['req_id'] for r in pb if not r['acceptance'].strip() or not r['final_gate'].strip()])
+print('PB final_gate dist',collections.Counter(r['final_gate'] for r in pb))
+# non-REQUIREMENT blocks: print for manual judgement
+for c in cov:
+    if c['disposition']!='REQUIREMENT': print(' ',c['block_id'],c['disposition'],'|',c['rationale'][:110])

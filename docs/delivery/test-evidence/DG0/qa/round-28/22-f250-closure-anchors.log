@@ -1,0 +1,21 @@
+# F-DG0-250 closure anchors | qa-verifier round 28 | 2026-09-30T15:01:20Z | complete --no-local clone $TMPDIR/nl @ 57d7a53f2a9670936c9a09f027b5c586fb025a4e
+$ git cat-file -t 8fec92f88fa44a42b56932a4090b0e9854b5a24a
+commit
+$ git show --stat --format='%H %s' 8fec92f88fa44a42b56932a4090b0e9854b5a24a
+8fec92f88fa44a42b56932a4090b0e9854b5a24a DG0 round 27: domain+code-security PASS 0; repair (D-044) requires commit-object fix_revision and head_commit_at_start
+
+ docs/delivery/decisions.md           |  1 +
+ docs/delivery/stages.json            |  7 ++++++-
+ tools/gates/lib/rules.mjs            |  9 +++++++++
+ tools/gates/tests/validator.test.mjs | 12 ++++++++++++
+ 4 files changed, 28 insertions(+), 1 deletion(-)
+$ git merge-base --is-ancestor 8fec92f88fa44a42b56932a4090b0e9854b5a24a 331407e9 (anchor 1: round-28 frozen source_commit = anchor 3: gate candidate)
+rc=0
+$ git merge-base --is-ancestor 8fec92f88fa44a42b56932a4090b0e9854b5a24a 57d7a53 (anchor 2: this verifying run's starting HEAD)
+rc=0
+$ git show 8fec92f88fa44a42b56932a4090b0e9854b5a24a:tools/gates/lib/rules.mjs | grep -n 'objectType(repo, f.fix_revision) !== "commit"\|objectType(repo, head) !== "commit"'
+399:      } else if (objectType(repo, head) !== "commit") {
+744:    else if (objectType(repo, f.fix_revision) !== "commit")
+$ git diff 8fec92f88fa44a42b56932a4090b0e9854b5a24a 331407e9 -- tools/gates/lib/rules.mjs | wc -l  (0 = the fix is exactly what is frozen)
+0
+$ reproduction vs fix: see 13-qa28-negative-suite.log QA28-T1 (old 49b5ad79 ACCEPTED -> candidate REJECTED by exactly the D-044 error), QA28-T4 (nested tag), 10-r27-suite-rerun.log QA27-N3 (now REJECTED)

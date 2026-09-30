@@ -1,0 +1,37 @@
+# QA round-28 scope check  2026-09-30T14:52:00Z
+$ sha256sum docs/delivery/assignments/DG0/round-28/review-qa-verifier.md
+7bddd7024170720442225a8dcbd9056681b1250184f7d207c585613a9573b80a  docs/delivery/assignments/DG0/round-28/review-qa-verifier.md
+$ git rev-parse HEAD
+57d7a53f2a9670936c9a09f027b5c586fb025a4e
+$ git rev-parse --is-shallow-repository
+false
+$ git log --oneline 331407e9..HEAD
+57d7a53 DG0: freeze round-28 candidate, round-28 assignments; state REVIEWING
+$ git show --stat --format=%H 57d7a53 (post-freeze commit: metadata only)
+57d7a53f2a9670936c9a09f027b5c586fb025a4e
+
+ docs/delivery/assignments/DG0/round-28/audit.md    |  33 ++
+ .../DG0/round-28/review-code-security-reviewer.md  |  21 +
+ .../assignments/DG0/round-28/review-common.md      |  42 ++
+ .../DG0/round-28/review-domain-reviewer.md         |  24 ++
+ .../assignments/DG0/round-28/review-qa-verifier.md |  21 +
+ .../candidates/DG0/1af91e8f620aec37.manifest.json  | 473 +++++++++++++++++++++
+ docs/delivery/stages.json                          |  27 +-
+ 7 files changed, 636 insertions(+), 5 deletions(-)
+$ git diff --name-only 49b5ad79 331407e9 (candidate-scope, minus D-005 excluded paths)
+docs/delivery/decisions.md
+tools/gates/lib/rules.mjs
+tools/gates/tests/validator.test.mjs
+$ node tools/gates/candidate.mjs --stage DG0 (repo)
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b","files":91}
+exit=0
+$ (cd $TMPDIR/nl && node tools/gates/candidate.mjs --stage DG0)  [fresh git clone --no-local]
+57d7a53f2a9670936c9a09f027b5c586fb025a4e
+false
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b","files":91}
+exit=0
+$ node --version; git --version; python3 --version; uname -r
+v22.22.2
+git version 2.43.0
+Python 3.11.15
+6.18.44-fc-v50

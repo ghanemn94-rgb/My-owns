@@ -1,0 +1,31 @@
+import re,csv
+md=open('docs/source/playbook.md',encoding='utf-8').read().split('\n')
+fi=open('docs/analysis/field-inventory.md',encoding='utf-8').read()
+req={r['req_id']:r for r in csv.DictReader(open('docs/delivery/requirements.csv',encoding='utf-8'))}
+secs=re.split(r'\n(?=## )',fi)
+def sec(tid): return next(s for s in secs if s.startswith('## '+tid))
+allok=True
+for i,l in enumerate(md):
+    m=re.match(r'Template (\d+) — (.*?) <!--',l)
+    if not m: continue
+    n=int(m.group(1)); tid='T%02d'%n
+    j=i+1
+    while not md[j].startswith('|'): j+=1
+    hdr=[c.strip() for c in md[j].strip('|').split('|')]
+    rows=[]
+    k=j+2
+    while k<len(md) and md[k].startswith('|'): rows.append([c.strip() for c in md[k].strip('|').split('|')]); k+=1
+    s=sec(tid)
+    miss=[h for h in hdr if h not in s]
+    pb=[r for r in req.values() if tid in r['template_id']]
+    inreg=' '.join(r['input_fields'] for r in pb)
+    missreg=[h for h in hdr if h not in inreg]
+    # sample cell values (non-placeholder) presence in field inventory
+    vals=sorted(set(c for r in rows for c in r if c and not c.startswith('[')))
+    missval=[v for v in vals if v.replace('<br>',' ') not in s and v not in s]
+    print(f'{tid} {m.group(2)} | cols={hdr}')
+    print(f'   FI missing cols={miss} | register rows={[r["req_id"] for r in pb]} missing cols in input_fields={missreg}')
+    print(f'   literal cell values={vals[:14]}{"..." if len(vals)>14 else ""}')
+    print(f'   values not verbatim in FI section={missval}')
+    if miss or missreg: allok=False
+print('ALL COLUMNS VERBATIM IN FI AND REGISTER:',allok)

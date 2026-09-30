@@ -1,0 +1,17 @@
+# candidate & scope (2026-09-30T15:01:44Z), repo /home/user/My-owns
+# NOTE (reviewer, honest record): an earlier run of this log at 15:01Z showed working-tree candidate sha256:01bb160b... (92 files). diffManifests showed the only difference was an ADDED empty top-level 'package.json', created at 14:58Z by MY OWN probe command '{ printf '' >> package.json; }' (meant to test append-open on a protected file; it created a new file on the confined role's throwaway tmpfs top-level skeleton, which agent_sandbox.py discards at run end). I removed it (rm -f package.json, size 0 verified first) and recomputed below. It never existed in git or in the real tree.
+$ git rev-parse HEAD
+57d7a53f2a9670936c9a09f027b5c586fb025a4e
+$ git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b","files":91}
+$ node tools/gates/candidate.mjs --stage DG0 --ref 331407e9b6711abbc01f7ee0456e4fa92ff65cda
+{"stage":"DG0","source":"331407e9b6711abbc01f7ee0456e4fa92ff65cda","candidate_id":"sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b","files":91}
+manifest: sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b 331407e9b6711abbc01f7ee0456e4fa92ff65cda 2026-09-30T14:49:46Z entries 91
+post-freeze changed paths: 7 of which candidate paths: []
+round delta candidate paths: ['docs/delivery/decisions.md', 'tools/gates/lib/rules.mjs', 'tools/gates/tests/validator.test.mjs']
+stages DG0 state: REVIEWING candidate: {'candidate_id': 'sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b', 'source_commit': '331407e9b6711abbc01f7ee0456e4fa92ff65cda', 'frozen_at': '2026-09-30T14:49:46Z', 'manifest_path': 'docs/delivery/candidates/DG0/1af91e8f620aec37.manifest.json'}
+last round: 28 sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b 331407e9b6711abbc01f7ee0456e4fa92ff65cda 2026-09-30T14:49:46Z
+$ sha256sum docs/delivery/assignments/DG0/round-28/review-code-security-reviewer.md
+d8cb2a5ca760c899fae64fa8ad982092d1ed20cec3f424a2e6ad8dadb3ce7382  docs/delivery/assignments/DG0/round-28/review-code-security-reviewer.md

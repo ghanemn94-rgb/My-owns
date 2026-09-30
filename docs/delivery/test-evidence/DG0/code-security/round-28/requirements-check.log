@@ -1,0 +1,55 @@
+# code-security round 28: 19 DG0-final requirements; quoted test titles checked against my own node-tests.log (103 ok, 0 not ok)
+REQ-DLV-001: status=IMPLEMENTED evidence_files=4 missing=[] quoted_titles=0 passed=0 failed=0
+REQ-DLV-002: status=IMPLEMENTED evidence_files=3 missing=[] quoted_titles=0 passed=0 failed=0
+REQ-DLV-003: status=IMPLEMENTED evidence_files=2 missing=[] quoted_titles=0 passed=0 failed=0
+REQ-DLV-004: status=IMPLEMENTED evidence_files=12 missing=[] quoted_titles=0 passed=0 failed=0
+REQ-DLV-006: status=IMPLEMENTED evidence_files=5 missing=[] quoted_titles=2 passed=1 failed=0
+    not-in-node-log:  passes (tools/agents/run-agent.sh, driven with a stub claude, does no
+REQ-DLV-007: status=IMPLEMENTED evidence_files=18 missing=[] quoted_titles=32 passed=19 failed=0
+    not-in-node-log: test_every_role_denies_protected_paths
+    not-in-node-log: test_reviewers_are_confined_to_evidence
+    not-in-node-log: test_analyst_keeps_analysis_and_register_only
+    not-in-node-log: test_implementers_may_write_product_code
+    not-in-node-log: test_worktrees_are_covered
+    not-in-node-log: test_cwd_outside_the_repository_is_refused
+    not-in-node-log: test_unknown_role_is_refused
+    not-in-node-log: test_each_reviewer_writes_only_its_own_evidence_directory
+    not-in-node-log: test_roles_without_evidence_cannot_write_any
+    not-in-node-log: test_a_stage_is_required
+    not-in-node-log:  pass (a gate record from a run with no recorded sandbox settings, a w
+    not-in-node-log: test_no_change_records_an_empty_list
+    not-in-node-log: s configuration scan is covered in both directions: the runner tests 
+REQ-DLV-013: status=IMPLEMENTED evidence_files=8 missing=[] quoted_titles=18 passed=13 failed=0
+    not-in-node-log: file not found
+    not-in-node-log: s own successful Write/Edit calls, or a reviewer artefact whose HEAD o
+    not-in-node-log: test_write_then_edit_is_replayed_and_bound
+    not-in-node-log: test_failed_calls_and_shell_edits_are_not_bound
+    not-in-node-log: test_edit_without_a_prior_write_is_not_reconstructible
+REQ-DLV-015: status=IMPLEMENTED evidence_files=4 missing=[] quoted_titles=1 passed=1 failed=0
+REQ-DLV-016: status=IMPLEMENTED evidence_files=4 missing=[] quoted_titles=8 passed=8 failed=0
+REQ-DLV-017: status=IMPLEMENTED evidence_files=4 missing=[] quoted_titles=3 passed=3 failed=0
+REQ-DLV-019: status=IMPLEMENTED evidence_files=7 missing=[] quoted_titles=0 passed=0 failed=0
+REQ-DLV-020: status=IMPLEMENTED evidence_files=7 missing=[] quoted_titles=0 passed=0 failed=0
+REQ-DLV-022: status=IMPLEMENTED evidence_files=4 missing=[] quoted_titles=5 passed=5 failed=0
+REQ-DLV-023: status=IMPLEMENTED evidence_files=10 missing=[] quoted_titles=7 passed=6 failed=0
+    not-in-node-log: register equals the merge of docs/analysis/parts (sandboxed)
+REQ-DLV-026: status=IMPLEMENTED evidence_files=7 missing=[] quoted_titles=6 passed=1 failed=0
+    not-in-node-log: file not found
+    not-in-node-log: test_string_messages_and_non_object_lines_are_tolerated
+    not-in-node-log: test_snapshots_survive_a_failure_for_diagnosis
+    not-in-node-log: test_external_config_changes_are_recorded
+    not-in-node-log: test_no_change_records_an_empty_list
+REQ-DLV-029: status=IMPLEMENTED evidence_files=3 missing=[] quoted_titles=0 passed=0 failed=0
+REQ-DLV-032: status=IMPLEMENTED evidence_files=28 missing=[] quoted_titles=1 passed=1 failed=0
+REQ-S20-024: status=IMPLEMENTED evidence_files=3 missing=[] quoted_titles=0 passed=0 failed=0
+REQ-S20-025: status=IMPLEMENTED evidence_files=3 missing=[] quoted_titles=0 passed=0 failed=0
+## spot checks
+agent definitions: 10
+stages: ['DG0', 'DG1', 'DG2', 'DG3', 'DG4', 'DG5', 'DG6', 'DG7'] DG0 state: REVIEWING
+progress.md head: ['# Delivery progress checkpoint', '', '_Updated by the delivery-orchestrator at every step change. On resumption, run `node tools/gates/validate.mjs --reconcile` and `--pipeline` first. Then reconcile this file with `stages.json`, `findings.json` and the latest review round before assigning any write task._']
+decisions D-001/D-002/D-044 present: True
+trading_agent unchanged vs root commit: False
+G6/DG7 separation stated in CLAUDE.md and agent-protocol.md: True
+gate schema stage_id enum: {'type': 'string', 'pattern': '^DG[0-7]$'}
+TOTAL problems: 0
+# CORRECTION (reviewer): the 'trading_agent unchanged vs root commit: False' line above used the wrong base. The delivery base is f099f3d (environment.md line 12: branch created from ... @ f099f3d). 'git diff --quiet f099f3d HEAD -- trading_agent' exits 0: trading_agent identical f099f3d..HEAD; the only commits touching it are 6902f92 and f099f3d (user's pre-existing work, 2026-06-04). Python unittest (22 tests, exit 0) covers every cited test_* name: all 17 'not-in-node-log' test_* titles above are ok in 'python3 -m unittest discover -v -s tools/agents/tests -p test_*.py'. The remaining 'not-in-node-log' lines are quote-fragments of titles containing apostrophes or the prefreeze check label (PASS in prefreeze.log).

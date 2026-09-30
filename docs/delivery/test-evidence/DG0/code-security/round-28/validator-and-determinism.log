@@ -1,0 +1,26 @@
+# --no-local clone at HEAD=57d7a53f2a9670936c9a09f027b5c586fb025a4e (2026-09-30T14:57:38Z)
+$ node tools/gates/validate.mjs --register DG0
+PASS register rules at DG0
+exit=0
+$ node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+exit=0
+$ node tools/gates/validate.mjs --stage DG0
+FAIL gate DG0 (current) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+exit=1
+$ node tools/gates/validate.mjs --stage DG0 --historical
+FAIL gate DG0 (historical) (1 problem)
+  - gate DG0: file not found (docs/delivery/gates/DG0.json)
+exit=1
+$ node tools/gates/validate.mjs --stage DG9
+FAIL gate DG9 (current) (1 problem)
+  - stages.json: unknown stage DG9
+exit=1
+## candidate determinism
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e
+{"stage":"DG0","source":"331407e9b6711abbc01f7ee0456e4fa92ff65cda","candidate_id":"sha256:1af91e8f620aec37c560b7adae0b74
+{"stage":"DG0","source":"331407e9b6711abbc01f7ee0456e4fa92ff65cda","candidate_id":"sha256:1af91e8f620aec37c560b7adae0b74
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e
+manifest file candidate_id: sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b

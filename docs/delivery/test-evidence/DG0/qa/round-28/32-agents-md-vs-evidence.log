@@ -1,0 +1,29 @@
+# agents.md claims vs raw evidence | qa-verifier round 28 | 2026-09-30T14:58:35Z | repo HEAD 57d7a53
+$ git diff --stat 49b5ad79 331407e9 -- docs/delivery/agents.md .claude/agents tools/agents
+(empty = unchanged since the round-27 candidate)
+$ ls .claude/agents | wc -l; ls .claude/agents
+10
+backend-workflow-engineer.md code-security-reviewer.md devops-engineer.md domain-reviewer.md frontend-ux-engineer.md kpi-benefits-engineer.md qa-verifier.md release-auditor.md solution-architect.md transformation-analyst.md 
+$ grep -o "model: [a-z0-9-]*" .claude/agents/*.md | sort | uniq -c
+     10 model: inherit
+$ grep -n -- "--model\|--session-id\|--agent" tools/agents/run-agent.sh | head
+4:#   tools/agents/run-agent.sh --role <agent-name> --stage <DGx> --task <task-id> --assignment <file> [--cwd <dir>] [--model <id>]
+6:# - Loads .claude/agents/<role>.md via `claude -p --agent <role>`.
+7:# - Gives each run a unique --session-id (its invocation reference).
+9:#   don't run in --agent main-session mode; this was verified in P0 and is recorded in docs/delivery/agents.md.
+38:    --model) MODEL="$2"; shift 2 ;;
+42:[[ -n "$ROLE" && -n "$STAGE" && -n "$TASK" && -n "$ASSIGNMENT" ]] || { echo "usage: $0 --role R --stage DGx --task T --assignment FILE [--cwd DIR] [--model ID]" >&2; exit 64; }
+46:[[ "$MODEL" =~ ^[A-Za-z0-9._:-]+$ ]] || { echo "invalid --model '$MODEL'" >&2; exit 64; }
+183:( cd "$CWD" && user_message "$PROMPT" | bwrap "${SANDBOX[@]}" "$CLAUDE_BIN" -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
+184:    --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
+192:  ( cd "$CWD" && user_message "$RESUME_PROMPT" | bwrap "${SANDBOX[@]}" "$CLAUDE_BIN" -p --agent "$ROLE" --model "$MODEL" --permission-mode auto \
+$ grep -nE 'ten|10 ' docs/delivery/agents.md | head -5
+5:The ten definitions live in `.claude/agents/`. The main Claude Code session is the eleventh role, **delivery-orchestrator**: it plans, delegates, integrates and reports, and never records a review verdict.
+90:Result: 10/10 definitions load and run as separate invocations, with 10 distinct session IDs, all on the orchestrator's model. Out-of-scope writes were blocked 10/10, in-scope writes succeeded 10/10, and no probe file exists under `docs/source/`. 
+$ census over all committed DG0 run metas
+metas 103 distinct session_ids 103 distinct run_ids 103 model_requested {"claude-opus-5-5":103} roles 10 backend-workflow-engineer code-security-reviewer devops-engineer domain-reviewer frontend-ux-engineer kpi-benefits-engineer qa-verifier release-auditor solution-architect transformation-analyst
+$ own run (this invocation): ls docs/delivery/runs/DG0/DG0-T-DG0-REV-QA-R28-qa-verifier-20260930T145119Z-9c4b5a52/
+settings.json
+stderr.log
+transcript.jsonl
+Conclusion: agents.md statements (ten definitions, model inherit overridden by explicit --model = orchestrator model, fresh --session-id per run, guard via --settings hook, bubblewrap sandbox) match the definitions, the runner and the run-meta census; live probes in 31-live-guard-probe.log.

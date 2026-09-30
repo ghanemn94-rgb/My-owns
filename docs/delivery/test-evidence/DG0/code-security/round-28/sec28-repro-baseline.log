@@ -1,0 +1,22 @@
+# code-security-reviewer DG0 round 28. Command: bash run-sec28-repro.sh /home/user/My-owns 49b5ad790443409ec2248097727cd61fd34f42f4 baseline
+# EXPECTED: in baseline mode (SEC28_BASELINE=1) SEC28-1..4 ASSERT 0 errors, i.e. the pre-D-044 validator ACCEPTED the tag forgeries (the test titles describe the candidate behaviour). All pass => the D-044 checks are what reject them at 331407e.
+# mode=baseline clone: --no-local, shallow=false, HEAD=49b5ad790443409ec2248097727cd61fd34f42f4, rules.mjs sha256=2b6845395748b87ac4fc3801b75218804c5bd87e756a10fd10a6fa8507289717
+SEC28-0 errors: 0
+SEC28-1 errors: 0
+SEC28-2 errors: 0
+SEC28-3 errors: 0
+SEC28-4 errors: 0
+✔ SEC28-0 baseline: the stock fixture passes with 0 errors (361.557746ms)
+✔ SEC28-1 fix_revision = annotated TAG object peeling to the genuine fix commit -> rejected (D-044 checkClosure) (338.225987ms)
+✔ SEC28-2 the VERIFYING run's head_commit_at_start = annotated TAG object peeling to the real start commit -> rejected (D-044 checkInvocation) (310.37267ms)
+✔ SEC28-3 a NON-verifying reviewer run (domain-reviewer) with a TAG head_commit_at_start -> rejected (292.873829ms)
+✔ SEC28-4 fix_revision = NESTED tag (tag of a tag) -> rejected (319.760463ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1882.016268
+exit=0

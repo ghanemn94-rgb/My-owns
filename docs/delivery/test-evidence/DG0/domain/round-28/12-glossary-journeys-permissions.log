@@ -1,0 +1,64 @@
+$ grep -n "^#" docs/analysis/user-journeys.md
+1:# User journeys per role
+20:## J1. My Work (all roles)
+35:## J2. Phase journeys with their gates (End-to-End mode)
+49:### J2.1 Diagnose → G1 Case for Change (REQ-S04-003, REQ-PB-016/022/023/026/027/028/029)
+63:### J2.2 Define → G2 Direction (REQ-S04-004, REQ-PB-017/032–037, REQ-S07-001)
+73:### J2.3 Design → G3 Target State (REQ-S04-005, REQ-S05-003, REQ-PB-038–043; REQ-PB-042 absorbs former REQ-S05-004)
+84:### J2.4 Mobilize → G4 Mobilization (REQ-S04-006, REQ-S05-005, REQ-S08-*, REQ-S09-*)
+97:### J2.5 Transform → G5 Scale (REQ-S04-007, REQ-S07-*, REQ-S10-011–013, REQ-S11-*)
+109:### J2.6 Realize → G6 Sustain (REQ-S04-008, REQ-S08-*, REQ-S11-*)
+121:## J3. Modular entry (TL, TO; REQ-PB-005, REQ-S03-005, A03)
+135:## J4. KPI update: open KPI → select period → enter/import actual and evidence → submit (KDS, BO; REQ-S07-003…017, A04)
+151:## J5. Finance validation (FIN; REQ-PB-013, REQ-S08-015…017, A10)
+164:## J6. Committee workflow (SEC, CM, chair; REQ-S10-011…013, REQ-PB-060/061/068, A09)
+180:## J7. BAU handover (WL, TL → BO; REQ-PB-083 (absorbs former REQ-S12-017), REQ-S11-005, A11)
+193:## J8. Administrator publishing: Draft → Preview/Test → Review → Publish (ADM; REQ-S06-004…009, A06/A07)
+208:## Role summary: which journeys each role runs
+
+$ journeys phase/gate coverage
+G1 Case for Change         1
+G2 Direction               1
+G3 Target State            1
+G4 Mobilization            1
+G5 Scale                   1
+G6 Sustain                 1
+Modular entry              1
+KPI update                 1
+Finance validation         3
+Committee workflow         1
+BAU handover               2
+Administrator publishing   1
+
+$ permissions-matrix: ADM on approval rows; SoD rules
+70:| Charter, thesis, scope checks, guardrails | Ap | C U S | Rv | V | Rv | U | V | V | V | V | — |
+82:| Gate decision (approve, reject, request changes, defer) | Ap (default) | — (the submitter cannot approve; SoD) | Ap where configured (G3 per T11 Target-state design; G5 per T11 Go-live / scale) | — | Rv (Finance criteria) | — | — | — | — | V | — (never) |
+83:| Waiver or exception to mandatory evidence | Ap | S | Rv | — | Rv | Rv | — | — | — | V | — |
+87:| Business case (transformation, initiative) | Ap (RACI A) | C U S | Rv | C U (initiative case) | U Va (RACI R) | V | V | Rv | V | V | — |
+97:| Finance validation (baseline, formula, realized value, amendments or reversals) | — | — | — | — | Va (only FIN) | — | — | — | — | V | — (never) |
+100:| T11 decision rights matrix | Ap | U | Rv | V | Rv | U | V | V | V | V | — |
+101:| T11 decision "Go-live / scale" for an initiative (B0099: Recommend Initiative owner; Approve Business owner; Consult Risk / Tech / CX; Inform SteerCo) | V | Rv | Ap (Business owner) | S Rv (as initiative owner: Recommend) | V | Rv (Risk consult, via RAID) | V | Rv (Tech consult) | V (SteerCo members: Inform) | V | — |
+110:| BAU handover | V | C U S | Ac (receiving owner only; A/R per RACI) | C U S | Rv | V | Ac (as KPI owner, where named) | Rv | V | V | — |
+3:1. **Requester ≠ approver** (REQ-S10-016). Under the default policy the server rejects an approval by the requester, or by the requester's delegate acting for the requester. A configured exception
+4:2. **Technical administrators are not business approvers** (REQ-S10-003, REQ-S06-010).
+8:3. **Finance validation is exclusive to FIN** (REQ-PB-013). This holds even where the Business Owner remains accountable (M0211).
+9:4. **Stale approvals are rejected.** An approval must reference the current submitted version (REQ-S10-017).
+10:5. **Automation never approves.** Timers escalate, route and remind. They never set approve or validate outcomes (REQ-S10-019, REQ-S12-026).
+11:6. **One accountable per deliverable.** The exception is a documented governance rule; "A/R" counts as one accountable (REQ-S10-009).
+12:7. **Gate approvals** default to SP. The playbook's gate table (B0023) names no approver, and B0018 gives the Sponsor "approves major trade-offs". Where a T11 decision (B0099) matches what a gate d
+17:8. **Waivers** cannot be approved by the requester or by ADM (REQ-S04-013).
+
+$ glossary sample
+| Champion | سفير التغيير | مناصر التغيير | "سفير" (ambassador) stresses broadcasting messages, which B0116 explicitly says a champion does more than. |
+| Stage gate | بوابة المرحلة | A business decision point with a decision question and required evidence (G1–G6). It is not an engineering delivery gate (DG0–DG7). | B0023 |
+| Executive Sponsor | الراعي التنفيذي | Owns enterprise outcome, removes constraints, approves major trade-offs. | B0018 |
+| Finance / Value Office | الإدارة المالية / مكتب القيمة | Validates baseline, benefit logic, value realization. | B0018 |
+| Champion | مناصر التغيير | Person in impacted teams who surfaces constraints and shapes decisions, not only broadcasts messages. | B0116 |
+| North Star | النجم الشمالي (الغاية العليا) | Concise description of the desired future business state. | B0048 |
+| Target Operating Model (TOM) | نموذج التشغيل المستهدف | How the business will operate after the transformation, across ten dimensions; not a project portfolio. | B0056, B0059 |
+| Double counting | الاحتساب المزدوج | Counting the same benefit more than once; prevented by unique owner, baseline, formula and financial link. | B0088 |
+| RAG | حالة أحمر / كهرماني / أخضر | Red/Amber/Green status. | B0095 |
+| RACI (T12) | مصفوفة المسؤوليات (منفّذ/مساءَل/مستشار/مُطّلع) | Responsible, Accountable, Consulted, Informed per deliverable and role. | B0101 |
+| Adoption | التبنّي | The organization actually using the new way of working, managed as an outcome. | B0105 |
+| Realized value | القيمة المحقَّقة | Benefit actually achieved and evidenced. | B0123 |
+| BAU handover | التسليم إلى العمليات الاعتيادية | Transfer of ownership, controls and control cadence to BAU owners. | B0023, B0101, B0121 |

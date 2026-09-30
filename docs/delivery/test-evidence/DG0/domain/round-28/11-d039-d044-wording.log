@@ -1,0 +1,32 @@
+$ git cat-file -t 450c756 (live repo)
+fatal: Not a valid object name 450c756
+exit=128
+$ same in --no-local clone
+fatal: Not a valid object name 450c756
+exit=128
+$ git cat-file -t cb76260 (live repo)
+fatal: Not a valid object name cb76260
+exit=128
+$ same in --no-local clone
+fatal: Not a valid object name cb76260
+exit=128
+$ git cat-file -t ccb989f782b95003bf475bffc1d9d6ad40dde101 (live repo)
+fatal: git cat-file: could not get object info
+exit=128
+$ same in --no-local clone
+fatal: git cat-file: could not get object info
+exit=128
+$ round-18 source_commit in stages.json
+{"round":18,"candidate_id":"sha256:21efe44b6a4613a004b27282e66db59d42254903e5e2c6e2d0a8398a5e023cc5","frozen_at":"2026-09-29T16:23:25Z","source_commit":"450c756f679a911b4c736e856fc9dd5e9b2c89a8","records":{"domain-reviewer":"docs/delivery/reviews/DG0/round-18/domain-reviewer.json","code-security-reviewer":"docs/delivery/reviews/DG0/round-18/code-security-reviewer.json"},"note":"Round 18: re-review after D-032. domain PASS; code-security FAIL — new F-DG0-152 (High, mandatory: cross-run isolation break via /proc/<peer>/root|cwd), F-DG0-153 (Low doc); verified F-DG0-150/151 CLOSED, re-accepted F-DG0-147, assessed F-DG0-149 read-only (stays OPEN). qa hit the account session limit before writing its verdict record: it wrote its sidecars (verified F-DG0-236/237 PASS, raised F-DG0-239 Low) but produced no qa-verifier.json, so its round-18 review is unbindable and re-runs in round 19; the committed sidecars are kept (write-once) but not imported. Repairs: D-033 (per-run Landlock domain, F-DG0-152), D-034 (write-once history repair), D-035 (validator tolerates pruned historical source_commits)."}
+$ grep findings.json for 450c756 / cb76260
+27
+$ grep D-038 "uniformly absent" / D-039 correction
+$ business/source-provenance claims in D-039 and D-044 rows (grep playbook|PMI|Mobily|Finance|G1|G6|benefit|approval):
+
+$ D-038 correction text (grep)
+orrection, D-039/F-DG0-013/247: deleting the branch left `450c756` an *unreachable object*, which a local-path `git clone <dir>` still copies; D-039 then `gc --prune=now`'d it, so it is now genuinely absent everywhere and F-DG0-150/151 are additionally re-verified against the current candi
+$ fix_revision fields naming 450c756/cb76260:
+0
+(narrative mentions of the pruned ids exist in findings.json text fields — reproduction/history/fix_summary of F-DG0-013/150/151/160/161/164/239 — none in a commit-id field; D-039's 'No finding references either pruned object' holds for commit-id fields.)
+
+D-039/D-044 rows: 0 matches for playbook/PMI/Mobily/Finance approval/G1-G6/benefit/business approval (grep above) — delivery-tooling only; no business, operating-logic or source-provenance claim.

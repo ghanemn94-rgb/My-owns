@@ -1,0 +1,28 @@
+test("DOM28 probe: a head_commit_at_start that is an annotated tag object is rejected; the peeled commit passes", () => {
+  const { repo, records } = buildValidRepo();
+  approveAndCommit(repo);
+  assert.deepEqual(validateGate(repo, "DG0"), [], "the baseline gate must pass");
+  const rec = get(repo, records["domain-reviewer"]);
+  const metaRel = `docs/delivery/runs/DG0/${rec.invocation_reference.run_id}/meta.json`;
+  const meta = get(repo, metaRel);
+  const realHead = meta.head_commit_at_start;
+  sh(repo, "tag", "-a", "headtag", "-m", "annotated", realHead);
+  const tagObj = sh(repo, "rev-parse", "headtag");
+  assert.equal(sh(repo, "cat-file", "-t", tagObj), "tag");
+  assert.equal(sh(repo, "rev-parse", `${tagObj}^{commit}`), realHead);
+  edit(repo, metaRel, (m) => (m.head_commit_at_start = tagObj));
+  const errs = validateGate(repo, "DG0");
+  console.log("DOM28 tag-head errors:", JSON.stringify(errs));
+  expectError(errs, /started from .* a tag object, not a commit/);
+});
+
+test("DOM28 probe: a fix_revision that is a tree object is rejected (not only tags)", () => {
+  const { repo, head } = buildValidRepo();
+  approveAndCommit(repo);
+  assert.deepEqual(validateGate(repo, "DG0"), [], "the baseline gate must pass");
+  const tree = sh(repo, "rev-parse", `${head}^{tree}`);
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = tree));
+  const errs = validateGate(repo, "DG0");
+  console.log("DOM28 tree-fix errors:", JSON.stringify(errs));
+  assert.ok(errs.some((e) => /fix_revision|not a commit/.test(e)), errs.join(" | "));
+});
