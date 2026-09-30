@@ -601,11 +601,16 @@ export function assertObligationVerifiable(i: { activeEvidence: number; verifier
 // ---------------------------------------------------------------------------------------------------------
 // Program closure (REQ-JV-019)
 
+/** Program closure needs gate G7 (Stabilization & Handover) passed — approved, or approved with recorded exceptions. */
+export function assertG7Passed(g7Status: GateAssessmentStatus | null): void {
+  if (!g7Status || !APPROVED_GATE_STATUSES.includes(g7Status)) {
+    throw ruleViolation('jv.program_closure.g7_not_passed', `Program closure requires gate G7 (Stabilization & Handover) to pass (G7 is ${g7Status ?? 'not assessed'})`, { g7Status });
+  }
+}
+
 /** Program closure is separate from transaction closing: it requires gate G7 to have passed, and a second person. */
 export function assertProgramClosureAllowed(i: { g7Status: GateAssessmentStatus | null; confirmerUserId: string; requesterUserId: string }): void {
-  if (!i.g7Status || !APPROVED_GATE_STATUSES.includes(i.g7Status)) {
-    throw ruleViolation('jv.program_closure.g7_not_passed', `Program closure requires gate G7 (Stabilization & Handover) to pass (G7 is ${i.g7Status ?? 'not assessed'})`, { g7Status: i.g7Status });
-  }
+  assertG7Passed(i.g7Status);
   if (i.confirmerUserId === i.requesterUserId) throw forbidden('jv.program_closure.self_confirmation', 'The requester cannot confirm the program closure');
 }
 

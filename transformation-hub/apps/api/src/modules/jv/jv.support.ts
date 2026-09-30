@@ -394,4 +394,3 @@ export function money(amount: string | null, currency: string | null, unitScale:
   return amount !== null && currency && unitScale ? { amount: String(amount), currency, unitScale: unitScale as 1 | 1000 | 1000000 } : null;
 }
 
-export { payloadHash };
