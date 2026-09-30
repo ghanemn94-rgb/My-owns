@@ -16,12 +16,13 @@ import { createItem, ok, workstreamId } from '../carveout/carveout-kit';
  * also cover the combinations asked for in the final re-review: several change requests at once, the same change request
  * several times at once, a change request and a baseline, and a perimeter version and a gate cycle on one decision.
  *
- * Every race runs QA_RACE_RUNS times (default 2; the final review ran it with 5 and HUB_RATE_LIMIT_MUTATIONS_PER_MINUTE raised)
+ * Every race runs QA_RACE_RUNS times (default 1, within the default per-user mutation rate limit; the final review ran it with
+ * 5 and HUB_RATE_LIMIT_MUTATIONS_PER_MINUTE raised)
  * with fresh records; "forced" = a test-only owner transaction holds a
  * table lock on `outbox_event` (the last write of an approval) until the racing requests are waiting, then releases it.
  * One synthetic demo-flagged project (gate kit; DEMO matrix; change_request_budget limit 1,000,000 SAR).
  */
-const RUNS = Number(process.env.QA_RACE_RUNS ?? 2);
+const RUNS = Number(process.env.QA_RACE_RUNS ?? 1);
 let pid: string;
 let p: Personas;
 let gov: Gov;
@@ -100,6 +101,28 @@ async function forced(send: () => Promise<Res>[], expectWaiting: number): Promis
 const approveCr = (id: string, expectedVersion: number, decisionId: string): Promise<Res> =>
   p.sponsor.post(`${P(pid)}/change-requests/${id}/approve`, { expectedVersion, decisionId, note: 'QA final race probe (synthetic)' }).then((r) => ({ status: r.status, body: r.body }));
 const usesOf = async (decisionId: string) => (await owner().query<{ use_kind: string; subject_id: string }>(`select use_kind, subject_id from decision_use where decision_id = $1 order by use_kind`, [decisionId])).rows;
+
+// Runs first: the per-user mutation rate limit (HUB_RATE_LIMIT_MUTATIONS_PER_MINUTE, 120 by default) is shared with the
+// races below, which use the same personas; after them the PM / secretary budget of the minute can be spent (429).
+describe('F-03 re-check — agenda numbers stay distinct when requests are screened at the same instant [REQ-GOV-013]', () => {
+  it(`five agenda requests accepted onto one meeting at once, ×${RUNS} meetings: numbers 1..5, all 201`, async () => {
+    for (let run = 0; run < RUNS; run++) {
+      const m = await p.secretary.post(`${P(pid)}/committees/${gov.committeeId}/meetings`, { title: uniq('QA final numbering meeting'), scheduledAt: new Date().toISOString() });
+      expect(m.status, JSON.stringify(m.body)).toBe(201);
+      const reqs: { id: string; version: number }[] = [];
+      for (let i = 0; i < 5; i++) {
+        const r = await p.pm.post(`${P(pid)}/agenda-requests`, { committeeId: gov.committeeId, title: uniq(`QA final numbering item ${i}`), kind: 'information', meetingId: m.body.id });
+        expect(r.status, JSON.stringify(r.body)).toBe(201);
+        reqs.push(r.body as { id: string; version: number });
+      }
+      const res = await Promise.all(reqs.map((r) => p.secretary.post(`${P(pid)}/agenda-requests/${r.id}/screen`, { expectedVersion: r.version, outcome: 'accept', meetingId: m.body.id })));
+      const numbers = (await owner().query<{ number: number }>(`select number from agenda_item where meeting_id = $1 and screening_status = 'accepted' order by number`, [m.body.id])).rows.map((r) => r.number);
+      console.log(`F-03 final run ${run + 1}: statuses ${JSON.stringify(res.map((r) => r.status))} numbers ${JSON.stringify(numbers)}`);
+      expect(res.map((r) => r.status)).toEqual([201, 201, 201, 201, 201]);
+      expect(numbers).toEqual([1, 2, 3, 4, 5]);
+    }
+  }, 900_000);
+});
 
 describe('QA-P2-03 re-check — the gate approver cannot decide on a basis the gate reviewer did not endorse [REQ-LCY-010, DOM-P2-16, AT-16]', () => {
   it('evidence verified after submission: decide approve → 422 review_stale, nothing consumed; after a fresh review the SAME decision approves', async () => {
@@ -263,25 +286,5 @@ describe('QA-P2F-02 — a request that waits longer than the lock timeout gets a
     expect((await owner().query(`select status from change_request where id = $1`, [x])).rows[0].status).toBe('under_review');
     expect([409, 503]).toContain(r.status);
   }, 120_000);
-});
-
-describe('F-03 re-check — agenda numbers stay distinct when requests are screened at the same instant [REQ-GOV-013]', () => {
-  it(`five agenda requests accepted onto one meeting at once, ×${RUNS} meetings: numbers 1..5, all 201`, async () => {
-    for (let run = 0; run < RUNS; run++) {
-      const m = await p.secretary.post(`${P(pid)}/committees/${gov.committeeId}/meetings`, { title: uniq('QA final numbering meeting'), scheduledAt: new Date().toISOString() });
-      expect(m.status, JSON.stringify(m.body)).toBe(201);
-      const reqs: { id: string; version: number }[] = [];
-      for (let i = 0; i < 5; i++) {
-        const r = await p.pm.post(`${P(pid)}/agenda-requests`, { committeeId: gov.committeeId, title: uniq(`QA final numbering item ${i}`), kind: 'information', meetingId: m.body.id });
-        expect(r.status, JSON.stringify(r.body)).toBe(201);
-        reqs.push(r.body as { id: string; version: number });
-      }
-      const res = await Promise.all(reqs.map((r) => p.secretary.post(`${P(pid)}/agenda-requests/${r.id}/screen`, { expectedVersion: r.version, outcome: 'accept', meetingId: m.body.id })));
-      const numbers = (await owner().query<{ number: number }>(`select number from agenda_item where meeting_id = $1 and screening_status = 'accepted' order by number`, [m.body.id])).rows.map((r) => r.number);
-      console.log(`F-03 final run ${run + 1}: statuses ${JSON.stringify(res.map((r) => r.status))} numbers ${JSON.stringify(numbers)}`);
-      expect(res.map((r) => r.status)).toEqual([201, 201, 201, 201, 201]);
-      expect(numbers).toEqual([1, 2, 3, 4, 5]);
-    }
-  }, 900_000);
 });
 
