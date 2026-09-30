@@ -55,6 +55,12 @@ function viaCommittee(table: string): Rule {
     sql`exists (select 1 from ${sql.identifier(table)} ${raw(x)} join committee ${raw(`${x}c`)} on ${raw(`${x}c`)}.id = ${raw(x)}.committee_id where ${raw(x)}.id = ${id} and ${e.vis({ classification: `${x}c.classification` })})`;
 }
 
+/** A child whose visibility is its parent's own classification (parent referenced by `fkCol`). */
+function viaParent(table: string, fkCol: string, parent: string): Rule {
+  return (x, id, e) =>
+    sql`exists (select 1 from ${sql.identifier(table)} ${raw(x)} join ${sql.identifier(parent)} ${raw(`${x}p`)} on ${raw(`${x}p`)}.id = ${raw(x)}.${sql.identifier(fkCol)} where ${raw(x)}.id = ${id} and ${e.vis({ classification: `${x}p.classification` })})`;
+}
+
 /** A polymorphic record: visible when its (type, id) target is visible. */
 function viaTarget(table: string, typeCol: string, idCol: string): Rule {
   return (x, id, e, depth) =>
@@ -74,7 +80,7 @@ const RULES: Record<string, Rule> = {
   consent: own('consent', { c: true }),
   deal_scenario: own('deal_scenario', { c: true }),
   decision: own('decision', { c: true }),
-  diligence_finding: own('diligence_finding', { c: true }),
+  diligence_finding: own('diligence_finding', { c: true, r: true }), // room derived from its DD request (ARCH-22)
   diligence_request: own('diligence_request', { c: true, r: true }),
   document: own('document', { c: true, r: true }),
   financial_model_version: own('financial_model_version', { c: true }),
@@ -88,6 +94,9 @@ const RULES: Record<string, Rule> = {
   regulatory_requirement: own('regulatory_requirement', { c: true }),
   report_snapshot: own('report_snapshot', { c: true }),
   room_grant: own('room_grant', { r: true }),
+  room_disclosure: own('room_disclosure', { r: true }),
+  room_access_event: own('room_access_event', { r: true }),
+  partner_proposal: own('partner_proposal', { c: true }),
   source_record: own('source_record', { c: true }),
   tsa_service: own('tsa_service', { c: true, ws: READINESS }),
   // workstream-structured records (reach only)
@@ -111,6 +120,11 @@ const RULES: Record<string, Rule> = {
     sql`exists (select 1 from action_item ${raw(x)} left join decision ${raw(`${x}d`)} on ${raw(`${x}d`)}.id = ${raw(x)}.decision_id where ${raw(x)}.id = ${id} and (${raw(x)}.decision_id is null or ${e.vis({ classification: `${x}d.classification` })}))`,
   escalation: (x, id, e) =>
     sql`exists (select 1 from escalation ${raw(x)} left join decision ${raw(`${x}d`)} on ${raw(x)}.source_type = 'decision' and ${raw(`${x}d`)}.id = ${raw(x)}.source_id where ${raw(x)}.id = ${id} and (${raw(x)}.source_type <> 'decision' or ${e.vis({ classification: `${x}d.classification` })}))`,
+  // partner children inherit the partner's classification; scenario versions their scenario's
+  partner_conflict: viaParent('partner_conflict', 'partner_id', 'partner'),
+  partner_contact: viaParent('partner_contact', 'partner_id', 'partner'),
+  partner_assessment_entry: viaParent('partner_assessment_entry', 'partner_id', 'partner'),
+  deal_scenario_version: viaParent('deal_scenario_version', 'scenario_id', 'deal_scenario'),
   source_claim: (x, id, e) =>
     sql`exists (select 1 from source_claim ${raw(x)} join source_record ${raw(`${x}s`)} on ${raw(`${x}s`)}.id = ${raw(x)}.source_id where ${raw(x)}.id = ${id} and ${e.vis({ classification: `${x}s.classification` })})`,
   document_version: (x, id, e) =>
