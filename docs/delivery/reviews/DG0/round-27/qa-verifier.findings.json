@@ -1,0 +1,31 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-250",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "checkClosure accepts an annotated-TAG object id as a CLOSED_VERIFIED fix_revision, although the validator's own contract ('needs a full fix_revision commit id') and D-037/F-DG0-241 treat a tag as 'not a commit at all'",
+      "reproduction": "QA_REPO_ROOT=<complete clone of 49b5ad79> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r27.test.mjs, case QA27-N3: on the round-9/21 fixture, build a genuine round-3 closure whose fix passes all three anchors, then `git tag -a qa27-fix-tag <fix>` and set findings.json fix_revision to the TAG OBJECT id (`git rev-parse qa27-fix-tag`; `git cat-file -t` prints 'tag'). validateGate returns 0 errors (13-qa27-negative-suite.log: 'QA27-N3 result: ACCEPTED'). Cause: checkClosure tests the format with /^[0-9a-f]{40}$/ and presence with commitPresent(), which runs `git cat-file -e <sha>^{commit}` and so PEELS a tag; `merge-base --is-ancestor` also peels. checkCandidate (rules.mjs ~950-960, D-037) added objectType() === 'commit' precisely because of this peeling for the gate source_commit (QA20-S8), but the same check was not applied to fix_revision. A tree/blob id, upper-case, abbreviated and all-zero spellings are rejected (QA27-N1/N2).",
+      "expected": "A CLOSED_VERIFIED fix_revision is exactly a commit object (git cat-file -t == 'commit'), as for the gate source_commit, so the traceability pointer names the fix commit itself rather than a ref-dependent tag object (which disappears from a fresh clone if the tag is deleted).",
+      "actual": "A 40-hex annotated-tag id peeling to a valid fix is accepted. Impact is traceability/consistency only: the peeled commit still has to pass all three anchors, so no fix outside the reviewed candidate can close a finding, and a later tag deletion fails closed. No real record is affected: the round-27 census (fix-revision-anchors-r27.mjs) confirms all 117 fix_revision values in findings.json are commit objects. Not tested: whether round source_commit or head_commit_at_start (also resolved via commitPresent) accept a tag the same way. Low under threat-model.md (no gate-integrity effect).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r27.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-27/13-qa27-negative-suite.log",
+        "docs/delivery/test-evidence/DG0/qa/round-27/21-fix-revision-anchors-nl.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-27/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T14:37:00Z",
+          "status": "OPEN",
+          "note": "Raised in round 27 (qa-verifier)."
+        }
+      ]
+    }
+  ]
+}

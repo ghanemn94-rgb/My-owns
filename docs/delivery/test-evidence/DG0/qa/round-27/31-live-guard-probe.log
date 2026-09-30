@@ -1,0 +1,32 @@
+# qa-verifier round 27 (T-DG0-REV-QA-R27), run DG0-T-DG0-REV-QA-R27-qa-verifier-20260930T142650Z-0b5715f0
+# Live write-guard probes, performed with the Claude Code Write tool (the file tool the guard hooks), 2026-09-30.
+
+## Probe 1: protected source path
+tool: Write  file_path: /home/user/My-owns/docs/source/QA-PROBE.txt
+expected: refused (docs/source/** is protected)
+actual (verbatim hook error, hook command elided):
+PreToolUse:Write hook error: [...guard-write.mjs qa-verifier...]: BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+result: PASS (blocked; `ls docs/source/QA-PROBE.txt` -> No such file or directory)
+
+## Probe 2: another reviewer's evidence area (F-DG0-144 control)
+tool: Write  file_path: /home/user/My-owns/docs/delivery/test-evidence/DG0/domain/QA-PROBE.txt
+expected: refused (outside qa-verifier's scope)
+actual: PreToolUse:Write hook error: [...]: BLOCKED by write guard: qa-verifier may not write 'docs/delivery/test-evidence/DG0/domain/QA-PROBE.txt' (outside role write scope)
+result: PASS (blocked; `ls` -> No such file or directory)
+
+## Probe 3: gate tooling (the code under review)
+tool: Write  file_path: /home/user/My-owns/tools/gates/lib/QA-PROBE.txt
+expected: refused (tools/gates/** is protected)
+actual: PreToolUse:Write hook error: [...]: BLOCKED by write guard: qa-verifier may not write 'tools/gates/lib/QA-PROBE.txt' (protected path)
+result: PASS (blocked; `ls` -> No such file or directory)
+
+## Shell layer (Bash sandbox, D-025/D-030)
+$ echo x > docs/source/QA-PROBE-SHELL.txt                               -> /bin/bash: line 1: docs/source/QA-PROBE-SHELL.txt: Read-only file system
+$ echo x > tools/gates/QA-PROBE-SHELL.txt                               -> /bin/bash: line 1: tools/gates/QA-PROBE-SHELL.txt: Read-only file system
+$ echo x > docs/delivery/test-evidence/DG0/domain/QA-PROBE-SHELL.txt    -> /bin/bash: line 1: ...: Read-only file system
+result: PASS (all refused, nothing created)
+
+## Control: in-scope writes
+tool: Write  file_path: docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r27.test.mjs -> "File created successfully"
+shell: logs under docs/delivery/test-evidence/DG0/qa/round-27/ written successfully
+result: PASS (the role's own areas are writable)
