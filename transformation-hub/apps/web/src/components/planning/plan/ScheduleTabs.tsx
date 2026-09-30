@@ -37,6 +37,7 @@ import { CodeLink, DateText, FilterSelect, ForecastLabel, Section } from '../bit
 import { FormDialog } from '../dialogs';
 import { localized, useLocalized } from '@/lib/i18n-data';
 import type { Locale } from '@/i18n/config';
+import { ScrollRegion } from '../../ScrollRegion';
 
 /** `code — title`, in the active locale when the node has an Arabic title (QA-P1-14). */
 function nodeLabel(n: Pick<ScheduleNode, 'code' | 'title' | 'titleAr'>, locale: Locale) {
@@ -453,7 +454,7 @@ export function WhatIfTab({ initialNodeId }: { initialNodeId?: string }) {
             </p>
           ) : null}
           {d.affected.length ? (
-            <div className="overflow-x-auto">
+            <ScrollRegion label={t('planning.whatIf.affected')} className="overflow-x-auto">
               <table className="w-full text-sm">
                 <caption className="sr-only">{t('planning.whatIf.affected')}</caption>
                 <thead className="bg-surface-muted">
@@ -483,7 +484,7 @@ export function WhatIfTab({ initialNodeId }: { initialNodeId?: string }) {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollRegion>
           ) : null}
           <details>
             <summary className="cursor-pointer text-sm text-primary">{t('planning.schedule.assumptions', { count: d.assumptions.length })}</summary>

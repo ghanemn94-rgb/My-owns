@@ -127,8 +127,9 @@ function CriterionRow({ gate, c, onAction, expanded, onToggle }: { gate: GateDet
     <li className={cx(card, 'p-3')} data-testid="criterion-row" data-criterion-key={c.key} data-criterion-status={s}>
       <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
         <div className="min-w-0 flex-1">
-          <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold">
-            <span dir="ltr">{c.key}</span>
+          {/* The criterion key is the row's heading (h3 under the "Criteria" h2), so the h4 sections below nest correctly. */}
+          <div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold">
+            <h3 dir="ltr">{c.key}</h3>
             {c.mandatory ? <Flag>{t('gates.criterion.mandatory')}</Flag> : <Flag>{t('gates.criterion.optionalObservation')}</Flag>}
             {c.blocking ? <Flag tone="danger">{t('gates.criterion.blocking')}</Flag> : null}
             {c.waivable ? (
@@ -136,7 +137,7 @@ function CriterionRow({ gate, c, onAction, expanded, onToggle }: { gate: GateDet
             ) : (
               <Flag>{t('gates.criterion.nonWaivable')}</Flag>
             )}
-          </p>
+          </div>
           <p className={cx('mt-1 text-sm text-ink', !expanded && 'line-clamp-2')} dir="auto">
             {loc(c.description, c.descriptionAr)}
           </p>

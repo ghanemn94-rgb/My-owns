@@ -5,6 +5,7 @@ import { useId, useMemo, useState } from 'react';
 import { INTL_LOCALE } from '@/i18n/config';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { btn, card, cx } from '../ui';
+import { ScrollRegion } from '../ScrollRegion';
 
 export interface GanttRow {
   id: string;
@@ -102,7 +103,7 @@ export function Gantt({ rows, today, caption, testId }: { rows: GanttRow[]; toda
             </li>
           ))}
         </ol>
-        <div className="min-w-0 flex-1 overflow-x-auto" data-testid="gantt-scroll">
+        <ScrollRegion label={caption} className="min-w-0 flex-1 overflow-x-auto" data-testid="gantt-scroll">
           <svg width={W} height={H} role="img" aria-labelledby={titleId} className="block" style={{ minInlineSize: W }}>
             <title id={titleId}>{`${caption}. ${summary}`}</title>
             <defs>
@@ -181,7 +182,7 @@ export function Gantt({ rows, today, caption, testId }: { rows: GanttRow[]; toda
               {t('planning.gantt.today')}
             </text>
           </svg>
-        </div>
+        </ScrollRegion>
       </div>
       <ul className="flex flex-wrap gap-x-4 gap-y-1 border-t border-line px-3 py-2 text-xs text-muted" aria-label={t('planning.gantt.legend')}>
         <li className="inline-flex items-center gap-1.5">

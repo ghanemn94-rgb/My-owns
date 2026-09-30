@@ -58,7 +58,7 @@ export function MilestonesTab({ workstreamId: fixedWs }: { workstreamId?: string
     { key: 'critical', header: t('planning.milestone.critical'), cell: (m) => (m.isCritical ? t('planning.common.yes') : t('planning.common.no')) },
     { key: 'owner', header: t('planning.common.owner'), cell: (m) => (m.ownerName ? <span dir="auto">{m.ownerName}</span> : <span className="text-muted">{t('planning.common.unassigned')}</span>) },
     { key: 'evidence', header: t('planning.common.evidence'), cell: (m) => <span className="tabular">{m.evidenceCount}</span> },
-    { key: 'demo', header: '', cell: (m) => (m.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (m) => (m.isDemo ? <DemoBadge /> : null) },
   ];
 
   return (
@@ -194,7 +194,7 @@ export function DeliverablesTab({ workstreamId: fixedWs }: { workstreamId?: stri
     { key: 'ws', header: t('planning.common.workstream'), cell: (d) => <span dir="ltr">{d.workstreamCode ?? '—'}</span> },
     { key: 'owner', header: t('planning.common.owner'), cell: (d) => (d.ownerName ? <span dir="auto">{d.ownerName}</span> : <span className="text-muted">{t('planning.common.unassigned')}</span>) },
     { key: 'evidence', header: t('planning.common.evidence'), cell: (d) => <span className="tabular">{d.evidenceCount}</span> },
-    { key: 'demo', header: '', cell: (d) => (d.isDemo ? <DemoBadge /> : null) },
+    { key: 'demo', header: t('common.table.demoColumn'), headerHidden: true, cell: (d) => (d.isDemo ? <DemoBadge /> : null) },
   ];
 
   return (
