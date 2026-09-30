@@ -158,7 +158,7 @@ interface GateView {
   reviewerRole: string;
   assessment: { status: string; version: number; decisionId: string | null; reassessment: { needsReassessment: boolean } };
   review: { state: string };
-  criteria: { id: string; key: string; mandatory: boolean; reviewerRole: string; evidence: { active: number }; assessment: { status: string; version: number } }[];
+  criteria: { id: string; key: string; mandatory: boolean; ownerRole: string; reviewerRole: string; evidence: { active: number }; assessment: { status: string; version: number } }[];
 }
 
 /**
