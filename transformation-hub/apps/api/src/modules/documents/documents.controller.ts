@@ -7,13 +7,7 @@ import type { RequestContext } from '../../platform/context';
 import { DocumentsService } from './documents.service';
 import { EvidenceService } from './evidence.service';
 import { SourcesService } from './sources.service';
-
-/** RFC 6266 / 5987 attachment header with an ASCII fallback (the filename is already sanitised at upload). */
-export function attachmentDisposition(filename: string): string {
-  const ascii = filename.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
-  const encoded = encodeURIComponent(filename).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
-  return `attachment; filename="${ascii}"; filename*=UTF-8''${encoded}`;
-}
+import { attachmentDisposition } from '../../platform/helpers';
 
 @Controller()
 export class DocumentsController {

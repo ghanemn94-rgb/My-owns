@@ -67,7 +67,7 @@
   acceptance_tests: ["AT-30", "IT: records survive API, worker and database restart"]
   phase: P1
   status: Tested
-  evidence: ['P1 p1-closure-worker.spec.ts "a record written before the restarts reads back identically afterwards (same session), and the restarted worker resumes without re-processing" (API instance closed and re-created on the same database; worker = real dist/worker.js child process, stopped with SIGTERM and restarted)', 'database restart NOT automated (shared PostgreSQL cluster): manual QA docs/reviews/P1-qa-review.md §1.8 + CI restore drill; AT-30 verified with REQ-PLT-003 (P8)']
+  evidence: ['P1 p1-closure-worker.spec.ts "a record written before the restarts reads back identically afterwards (same session), and the restarted worker resumes without re-processing" (API instance closed and re-created on the same database; worker = real dist/worker.js child process, stopped with SIGTERM and restarted)', 'database restart NOT automated (shared PostgreSQL cluster): manual QA docs/reviews/P1-qa-review.md §1.8 and re-verified manually in docs/reviews/P1-qa-rereview.md (private cluster: 7,500 rows and the audit chain identical after an API, worker and PostgreSQL restart) + CI restore drill; the database-restart part of the acceptance test stays manual (QA-P1R-04); AT-30 verified with REQ-PLT-003 (P8)']
 - id: REQ-PLT-003
   section: "1"
   title: "End-to-end program management outcome"
@@ -197,8 +197,8 @@
   security_rule: "Claims readable only by project members"
   acceptance_tests: ["UT: every reference heading claim links to at least one template workstream"]
   phase: P1
-  status: Implemented
-  evidence: [packages/db/seed/templates/dc-carveout.v1.json, packages/db/scripts/validate-templates.mjs]
+  status: Tested
+  evidence: ['packages/db/scripts/validate-templates.mjs, REQ-SRC-002 block (CI unit job, pnpm --filter @hub/db run validate:templates): each of the 7 reference heading claims of docs/source-register.md (CLM-002..CLM-008) maps to at least one DC template workstream, and every mapped WBS activity exists and belongs to a mapped workstream (packages/db/seed/source-maps/dc-carveout.v1.json, mapping status proposed); negative probe (a heading removed, an activity of another workstream) fails the validator', 'executed locally at the P1 gate revision: PASS (7 headings, 9 workstreams, 25 WBS activities)']
 - id: REQ-SRC-003
   section: "2"
   title: "Historical statuses kept as source-reported values only"
@@ -2650,7 +2650,7 @@
   acceptance_tests: ["E2E: toggle locale switches dir and all visible strings"]
   phase: P1
   status: Implemented
-  evidence: ['e2e p1-smoke.spec.ts "(b) switching to Arabic sets html[dir=rtl] and translates navigation"', 'e2e qa-p1-review.spec.ts "AT-02 (ar, RTL) wizard"', e2e p2-documents.spec.ts "(d) bilingual and mobile screenshots of the center" (e2e 24/24 in CI run 36645986422 at 7959b44), 'gap: server-provided names (gates, dimension explanations, template RACI functions) stay English in the Arabic UI (QA-P1-14, apps/web/README.md Known limitations), so all visible strings is not met — re-phased to P2']
+  evidence: ['e2e p1-smoke.spec.ts "(b) switching to Arabic sets html[dir=rtl] and translates navigation"', 'e2e qa-p1-review.spec.ts "AT-02 (ar, RTL) wizard"', e2e p2-documents.spec.ts "(d) bilingual and mobile screenshots of the center" (e2e 24/24 in CI run 36645986422 at 7959b44), 'QA-P1-14 fixed: template-seeded names carry Arabic fields and server explanations carry message codes translated in the web (e2e qa-p1r-arabic-rtl.spec.ts, QA re-review)', 'remaining gap (QA-P1R-05): the free-text detail of refused commands, audit action codes in activity history and the demo seed text are English in the Arabic UI — not all visible strings are Arabic yet; owner ux-frontend-engineer, P6']
 - id: REQ-UX-002
   section: "10"
   title: "i18n for UI text, English technical names"
@@ -4162,8 +4162,8 @@
   security_rule: "Modules access each other through service interfaces only"
   acceptance_tests: ["UT: dependency-cruiser rule forbids cross-module internal imports"]
   phase: P1
-  status: Implemented
-  evidence: [ADR-0001]
+  status: Tested
+  evidence: [ADR-0001, 'apps/api/scripts/check-module-boundaries.mjs in pnpm lint (api, CI static job): a module imports another module only through its published surface (Nest module and listed services/helpers), and the module graph is acyclic; executed locally: 30 cross-module imports, 13 module edges, PASS; negative probe (internal import, cycle) fails', 'AT variance: a dependency-free checker instead of dependency-cruiser (same rule, no new dependency)']
 - id: REQ-ARC-012
   section: "13"
   title: "No external SaaS for core platform services"
@@ -6280,7 +6280,7 @@
   acceptance_tests: ["UT: bootstrap requires one-time token; no static credentials in repo"]
   phase: P1
   status: Tested
-  evidence: ['P1 p1-closure-empty-db.spec.ts "bootstrap on an empty database: one organization, templates, platform schedules and ONE IdP-bound first administrator — no password, no demo or fictional data; a second run changes nothing"', P1 p1-closure.spec.ts "POST /api/v1/auth/demo-login returns 404 in standard mode and creates no session; production refuses demo mode" (no password column anywhere; app_user holds no credential), 'CI job secret-scan: repository history and tree scanned for static credentials (gitleaks default rules plus the URL-embedded-password rule); allow-list limited to synthetic dev/CI values (scripts/ops/gitleaks.toml); executed locally at 049cf54 with 0 findings', 'GitHub Actions transformation-hub-ci run 14 (id 36686259255, revision 223e967): job secret-scan; the bootstrap-on-empty-database spec p1-closure-empty-db also passed in that run GREEN', 'AT variance: IdP-bound first administrator instead of a one-time token']
+  evidence: ['P1 p1-closure-empty-db.spec.ts "bootstrap on an empty database: one organization, templates, platform schedules and ONE IdP-bound first administrator — no password, no demo or fictional data; a second run changes nothing"', P1 p1-closure.spec.ts "POST /api/v1/auth/demo-login returns 404 in standard mode and creates no session; production refuses demo mode" (no password column anywhere; app_user holds no credential), 'CI job secret-scan: repository history and tree scanned for static credentials (gitleaks default rules plus the URL-embedded-password rule); allow-list limited to synthetic dev/CI values (scripts/ops/gitleaks.toml); executed locally at 049cf54 with 0 findings', 'GitHub Actions transformation-hub-ci run 16 (revision 4f05318): every job green, including secret-scan and the API integration job with p1-closure-empty-db (evidence corrected 2026-09-30, QA-P1R-06: run 14 integration job was red)', 'allow-list extended in d508929 for synthetic config-test values (path-scoped, exact values) and in the P1 gate commit for the redaction placeholder quoted in review documents; security-review confirmation pending', 'AT variance: IdP-bound first administrator instead of a one-time token']
 - id: REQ-SET-009
   section: "21"
   title: "Wizard step 1: program, objective, parties and sites"

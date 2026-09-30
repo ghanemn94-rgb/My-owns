@@ -82,3 +82,11 @@ paths = ['''(?:^|/)apps/api/test/documents/storage-contract\.spec\.ts$''']
 regexes = [
   '''^k8s-secret-ref-7fQ2mZx9LwP4$''',
 ]
+
+[[allowlists]]
+description = "gitleaks' own redaction placeholder quoted in review documents: the P1 QA re-review (docs/reviews/P1-qa-rereview.md) reproduces the scanner's redacted output (e.g. postgres://hub_app:REDACTED@db:5432). The literal word REDACTED is the scanner's placeholder, not a credential."
+condition = "AND"
+paths = ['''(?:^|/)docs/reviews/[^/]+\.md$''']
+regexes = [
+  '''^REDACTED$''',
+]

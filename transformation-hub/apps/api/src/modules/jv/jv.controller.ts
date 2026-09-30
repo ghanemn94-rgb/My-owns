@@ -3,7 +3,7 @@ import type { Response } from 'express';
 import { jvRoutes as R, RouteInput } from '@hub/contracts';
 import { ApiRoute, Ctx, Input } from '../../platform/contracts';
 import type { RequestContext } from '../../platform/context';
-import { attachmentDisposition } from '../documents/documents.controller';
+import { attachmentDisposition } from '../../platform/helpers';
 import { PartnersService } from './partners.service';
 import { DealsService } from './deals.service';
 import { RoomsService } from './rooms.service';
