@@ -1,0 +1,30 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-170",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-042 made anchor 1 unconditional and updated the checkClosure comment, but the commitPresent() header comment still describes anchor 1 as conditional ('when it resolves; this findManifest tolerance covers the one case it may not'). Two comments in rules.mjs now contradict each other about the closure guarantee",
+      "reproduction": "At 7edacdc, tools/gates/lib/rules.mjs:602-605 (the header comment above commitPresent) says: 'the fix must be an ancestor of THREE anchors -- the verifying round's frozen source_commit (when it resolves; this findManifest tolerance covers the one case it may not), the verifying run's real head, and the gate candidate'. The code it describes, rules.mjs:746-749, now rejects outright a closure verified in a round whose source_commit does not resolve ('... is not present; a closure must be verified against a retained candidate (F-DG0-169)'). The new checkClosure comment (:726-741) says the same. My round-25 finding F-DG0-169 named this exact comment in its 'expected' (c): 'correct the comments at rules.mjs:603-605 and :737-738'. D-042 corrected the checkClosure comment but left :603-605. Command: git show 7edacdc:tools/gates/lib/rules.mjs | sed -n 597,605p (output with line numbers in docs/delivery/test-evidence/DG0/code-security/round-26/stale-comment.log). Behaviour is unaffected: SEC26-1 and SEC26-2 in sec26-repro.log show that the absent-source case is rejected.",
+      "expected": "Every comment in rules.mjs describes anchor 1 the way the code enforces it: unconditionally, with a closure verified in an absent-source round rejected. Suggested wording at :603-605: 'the verifying round's frozen source_commit (which must be present: a closure verified in a round whose source_commit does not resolve is rejected, D-042), the verifying run's real head, and the gate candidate'. D-042's text is already accurate.",
+      "actual": "The header comment still reads as though anchor 1 is skipped for an absent-source round. That was the pre-D-042 behaviour. A reader auditing the validator from that comment would underestimate the guarantee and could misjudge a future change to this code. Impact is documentation accuracy only: no gate outcome depends on it, and the code and its test (validator.test.mjs 'D-042 / F-DG0-169') are correct. This is the same class as F-DG0-167/F-DG0-014, a stale comment after a validator change, recorded at Low under threat-model.md.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-26/stale-comment.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-26/sec26-repro.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-26/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T14:17:00Z",
+          "status": "OPEN",
+          "note": "Raised in round 26 (code-security-reviewer)."
+        }
+      ]
+    }
+  ]
+}
