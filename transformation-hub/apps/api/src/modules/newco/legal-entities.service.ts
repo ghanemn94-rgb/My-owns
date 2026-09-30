@@ -8,6 +8,7 @@ import {
   assertIncorporationRecord,
   assertIncorporationVerification,
   conflict,
+  forbidden,
   invalid,
   notFound,
   verificationAfterRecord,
@@ -15,6 +16,7 @@ import {
 import type { z } from 'zod';
 import type { CreateLegalEntityBody, SetupNewcoStatusBody } from '@hub/contracts';
 import { AuditService } from '../../platform/audit.service';
+import { OutboxService } from '../../platform/outbox.service';
 import { RecordVersionService, activeEvidenceCount, assertVersion } from '../../platform/helpers';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
@@ -30,7 +32,12 @@ const READ = 'newco.register.read';
 
 /**
  * Legal entities and incorporation (spec §3, §5, §21 step 2; AT-06; REQ-LCY-007, REQ-SET-010). A legal entity is
- * organization-level and may take part in several projects; a project only sees and edits entities linked to it.
+ * organization-level and may take part in several projects; a project only sees entities linked to it.
+ * SINGLE WRITER (SEC-P1R-03, module guide §2 "Shared legal entities"): only the OWNING project — the one that created the
+ * entity (`owner_project_id`) — changes its descriptive fields or its incorporation (record / verify); every other linked
+ * project reads it and gets 403 `newco.legal_entity.not_owner`. Each change made in the owning project is fanned out to the
+ * linked projects through the outbox (`legal_entity.changed`): their activity feed records it and the gates module
+ * recomputes their status dimensions.
  * Incorporation is recorded with evidence (proposed) and verified by someone else against that evidence. It is its own
  * status dimension: recording or verifying it never touches transfers or operations, and after each change the gates
  * module's StatusDimensionsService recomputes the four dimensions (the carve-out is never marked complete here).
@@ -43,6 +50,7 @@ export class LegalEntitiesService {
     private readonly versions: RecordVersionService,
     private readonly dims: StatusDimensionsService,
     private readonly evidence: EvidenceService,
+    private readonly outbox: OutboxService,
   ) {}
 
   private get tx() {
@@ -63,9 +71,39 @@ export class LegalEntitiesService {
     return { entity: r.e, role: r.role };
   }
 
-  private async dtos(projectId: string, rows: { e: Entity; role: EntityKind }[]) {
+  /**
+   * SEC-P1R-03: a shared entity is changed only from its owning project. Linked projects are read-only for it — a clear
+   * 403 (they can see the entity, so 404 would be wrong); the owning project is not named (the caller may not see it).
+   */
+  private assertOwningProject(p: NewcoProject, entity: Entity) {
+    if (entity.ownerProjectId !== p.id) {
+      throw forbidden('newco.legal_entity.not_owner', 'This legal entity is shared with this project read-only; it can only be changed in the project that owns it');
+    }
+  }
+
+  /**
+   * Tell every OTHER project linked to the entity that the owning project changed it (ids only). Their project_entity rows
+   * are invisible here under RLS, so the ids come from the narrow SECURITY DEFINER function
+   * `hub_legal_entity_linked_projects` (owner members only). The newco job records the change in each linked project's
+   * activity; the gates job recomputes its status dimensions.
+   */
+  private async fanOut(entityId: string, change: string, versionNo: number) {
+    const r = await this.s.db.query<{ project_id: string }>('select project_id from hub_legal_entity_linked_projects($1) as t(project_id)', [entityId]);
+    for (const { project_id } of r.rows) {
+      await this.outbox.emit({
+        type: 'legal_entity.changed',
+        projectId: project_id,
+        aggregateType: 'legal_entity',
+        aggregateId: entityId,
+        payload: { legalEntityId: entityId, change, versionNo },
+        dedupeKey: `legal_entity.changed:${entityId}:${versionNo}:${project_id}`,
+      });
+    }
+  }
+
+  private async dtos(ctx: RequestContext, projectId: string, rows: { e: Entity; role: EntityKind }[]) {
     const names = await this.s.userNames(rows.flatMap((r) => [r.e.incorporationRecordedBy, r.e.incorporationVerifiedBy]));
-    const ev = await this.s.evidenceCounts(projectId, 'legal_entity', rows.map((r) => r.e.id));
+    const ev = await this.s.visibleEvidenceCounts(ctx, projectId, 'legal_entity', rows.map((r) => r.e.id)); // display: SEC-P1R-05
     return rows.map(({ e, role }) => ({
       id: e.id,
       name: e.name,
@@ -84,6 +122,8 @@ export class LegalEntitiesService {
         verificationNote: e.incorporationVerificationNote,
       },
       evidence: ev.get(e.id) ?? { active: 0, conflicting: 0 },
+      // Read-only here when another project owns the entity (SEC-P1R-03).
+      ownedByThisProject: e.ownerProjectId === projectId,
       isDemo: e.isDemo,
       version: e.version,
     }));
@@ -93,13 +133,13 @@ export class LegalEntitiesService {
     const p = await this.s.project(ctx, projectId);
     this.s.assertProjectRead(ctx, p, READ);
     const rows = await this.tx.select({ e: LE, role: PE.role }).from(PE).innerJoin(LE, eq(LE.id, PE.legalEntityId)).where(eq(PE.projectId, projectId)).orderBy(asc(PE.role), asc(LE.name));
-    return { items: await this.dtos(projectId, rows) };
+    return { items: await this.dtos(ctx, projectId, rows) };
   }
 
   async get(ctx: RequestContext, projectId: string, entityId: string) {
     const p = await this.s.project(ctx, projectId);
     const r = await this.loadLinked(ctx, p, entityId);
-    const [dto] = await this.dtos(projectId, [{ e: r.entity, role: r.role }]);
+    const [dto] = await this.dtos(ctx, projectId, [{ e: r.entity, role: r.role }]);
     const RR = schema.regulatoryRequirement;
     const reqs = await this.tx
       .select({ id: RR.id, code: RR.code, title: RR.title, status: RR.status, applicability: RR.applicability })
@@ -141,6 +181,7 @@ export class LegalEntitiesService {
       // Never assumed: every entity starts unconfirmed with unknown verification (REQ-SET-010).
       incorporationStatus: 'unconfirmed',
       incorporationVerification: 'unknown',
+      ownerProjectId: projectId, // the creating project owns it (SEC-P1R-03)
       isDemo: p.isDemo,
       createdBy: ctx.principal.userId,
     });
@@ -184,6 +225,7 @@ export class LegalEntitiesService {
     const p = await this.s.project(ctx, projectId);
     const { entity } = await this.loadLinked(ctx, p, entityId);
     this.s.assertManage(ctx, p, 'newco.legal_entity.manage');
+    this.assertOwningProject(p, entity);
     const u: Partial<typeof schema.legalEntity.$inferInsert> = {};
     if (body.name !== undefined) u.name = body.name;
     if (body.registrationRef !== undefined) u.registrationRef = body.registrationRef;
@@ -192,6 +234,7 @@ export class LegalEntitiesService {
     const row = await this.updateEntity(entity, body.expectedVersion, u);
     await this.versions.snapshot({ projectId, entityType: 'legal_entity', entityId, versionNo: row.version, snapshot: row as unknown as Record<string, unknown>, reason: 'Descriptive update' });
     await this.audit.record({ action: 'newco.legal_entity.update', entityType: 'legal_entity', entityId, projectId, before: Object.fromEntries(Object.keys(u).map((k) => [k, (entity as Record<string, unknown>)[k]])), after: u as Record<string, unknown> });
+    await this.fanOut(entityId, 'update', row.version);
     return { id: entityId, version: row.version };
   }
 
@@ -206,6 +249,7 @@ export class LegalEntitiesService {
     const p = await this.s.project(ctx, projectId);
     const { entity } = await this.loadLinked(ctx, p, entityId);
     this.s.assertManage(ctx, p, 'newco.incorporation.manage');
+    this.assertOwningProject(p, entity);
     const ev = await activeEvidenceCount(this.s.db, projectId, 'legal_entity', entityId);
     assertIncorporationRecord({ status: body.status, activeEvidence: ev.active, conflictingEvidence: ev.conflicting, note: body.note ?? null });
     const verification = verificationAfterRecord(body.status);
@@ -229,12 +273,14 @@ export class LegalEntitiesService {
       after: { status: body.status, verification, activeEvidence: ev.active },
       reason: body.note ?? null,
     });
+    await this.fanOut(entityId, 'incorporation.record', row.version);
     return { id: entityId, version: row.version, status: body.status, verification, statusDimensions: await this.dimensions(ctx, projectId) };
   }
 
   async verifyIncorporation(ctx: RequestContext, projectId: string, entityId: string, body: { expectedVersion: number; outcome: 'confirm' | 'reject'; note?: string }) {
     const p = await this.s.project(ctx, projectId);
     const { entity } = await this.loadLinked(ctx, p, entityId);
+    this.assertOwningProject(p, entity);
     const recordedBy = entity.incorporationRecordedBy ?? entity.createdBy;
     // Separation of duties (not_self): the recorder of the status cannot verify it.
     this.s.policy.assert(ctx, 'newco.incorporation.verify', { projectId, classification: p.classification, requesterUserId: recordedBy });
@@ -265,6 +311,7 @@ export class LegalEntitiesService {
       after: { status: entity.incorporationStatus, verification, outcome: body.outcome, activeEvidence: ev.active },
       reason: body.note ?? null,
     });
+    await this.fanOut(entityId, 'incorporation.verify', row.version);
     return { id: entityId, version: row.version, status: entity.incorporationStatus as IncorporationStatus, verification, statusDimensions: await this.dimensions(ctx, projectId) };
   }
 
@@ -276,6 +323,7 @@ export class LegalEntitiesService {
     if (body.mode === 'existing') {
       const { entity, role } = await this.loadLinked(ctx, p, body.legalEntityId!);
       if (role !== 'newco' && entity.kind !== 'newco') throw invalid('newco.not_newco', 'The selected entity is not the project NewCo');
+      this.assertOwningProject(p, entity); // a NewCo shared from another project is read-only here (SEC-P1R-03)
       entityId = entity.id;
     } else {
       this.s.assertManage(ctx, p, 'newco.legal_entity.manage');

@@ -1,5 +1,5 @@
 {
-  "id": "5b8aee4b-51a3-41ad-820d-00009a8e7df1",
+  "id": "f37b2bc1-0a79-442d-a38d-14541c8b8cee",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -842,6 +842,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "owner_project_id": {
+          "name": "owner_project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "is_demo": {
           "name": "is_demo",
           "type": "boolean",
@@ -885,6 +891,19 @@
           "tableTo": "organization",
           "columnsFrom": [
             "org_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "legal_entity_owner_project_id_project_id_fk": {
+          "name": "legal_entity_owner_project_id_project_id_fk",
+          "tableFrom": "legal_entity",
+          "tableTo": "project",
+          "columnsFrom": [
+            "owner_project_id"
           ],
           "columnsTo": [
             "id"

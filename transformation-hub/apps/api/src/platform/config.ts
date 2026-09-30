@@ -1,3 +1,4 @@
+import { deflateRawSync } from 'node:zlib';
 import { z } from 'zod';
 
 /**
@@ -27,6 +28,11 @@ const Env = z.object({
   HUB_S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
   HUB_S3_SSE: z.enum(['none', 'AES256', 'aws:kms']).default('none'),
   HUB_S3_KMS_KEY_ID: z.string().min(1).optional(),
+  /**
+   * I-R4: production requires server-side encryption per object (HUB_S3_SSE=AES256 or aws:kms) unless the operator states
+   * that the bucket's default encryption was verified: `assured` (an explicit, documented risk acceptance).
+   */
+  HUB_S3_BUCKET_DEFAULT_ENCRYPTION: z.enum(['assured']).optional(),
   HUB_S3_TIMEOUT_MS: z.coerce.number().int().min(1000).max(300000).default(30000),
   HUB_MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(512).default(25),
   /** Files marked `not_scanned` (no enterprise malware scanner configured) may be downloaded/indexed. Default: true outside
@@ -37,6 +43,12 @@ const Env = z.object({
   HUB_OIDC_CLIENT_SECRET: z.string().optional(),
   HUB_OIDC_REDIRECT_URI: z.string().url().optional(),
   HUB_OIDC_LINK_BY_EMAIL: z.enum(['true', 'false']).default('false'),
+  /**
+   * Production acknowledgement for link-by-email (I-R2): the first OIDC login binds a pre-provisioned account by the IdP's
+   * VERIFIED email (SEC-P1-01). That trusts the IdP's email claims for accounts not bound yet; set exactly this value to
+   * accept it.
+   */
+  HUB_OIDC_LINK_BY_EMAIL_ACK: z.string().optional(),
   /** HMAC key for short-lived signed cookies (OIDC login state). Required when OIDC is enabled. */
   HUB_COOKIE_SECRET: z.string().min(32).optional(),
   HUB_AI_ALLOW_MOCK: z.enum(['true', 'false']).default('true'),
@@ -67,12 +79,76 @@ export function parseTrustProxy(v: string): false | number | string {
   return v.split(',').map((x) => x.trim()).filter(Boolean).join(', ');
 }
 
-/** Rejects obviously weak secrets: too few distinct characters or a known placeholder. */
+/**
+ * Conservative entropy ESTIMATE of a secret, in bits (I-R2): the Shannon entropy of its character distribution × length,
+ * discounted for repetition (how well it compresses — `abcdefghijkl` × 3 compresses to a third) and for predictable runs
+ * (`abcdef…`, `987654…`: a step of −1/0/+1 that repeats the previous step). Random secrets keep most of their estimate
+ * (32 random hex characters: ≥ 78 bits in 200 000 samples, average ≈ 115); patterned ones collapse (≤ 50 bits).
+ */
+export function secretEntropyBits(s: string): number {
+  if (!s) return 0;
+  const counts = new Map<string, number>();
+  const chars = [...s];
+  for (const c of chars) counts.set(c, (counts.get(c) ?? 0) + 1);
+  let perChar = 0;
+  for (const n of counts.values()) {
+    const p = n / chars.length;
+    perChar -= p * Math.log2(p);
+  }
+  const bytes = Buffer.byteLength(s, 'utf8');
+  const repetition = Math.min(1, (deflateRawSync(Buffer.from(s, 'utf8'), { level: 9 }).length - 1) / bytes);
+  const cp = chars.map((c) => c.codePointAt(0)!);
+  let predictable = 0;
+  for (let i = 2; i < cp.length; i++) {
+    const d = cp[i]! - cp[i - 1]!;
+    if (Math.abs(d) <= 1 && d === cp[i - 1]! - cp[i - 2]!) predictable++;
+  }
+  return perChar * chars.length * Math.max(0, repetition) * (1 - predictable / chars.length);
+}
+
+/** Minimum estimated entropy for a production secret (see secretEntropyBits for the calibration). */
+export const MIN_SECRET_BITS = 64;
+
+/**
+ * Rejects weak secrets: short, very few distinct characters, a known placeholder, or a low entropy estimate (repetition,
+ * sequences). The distinct-character floor is 8, not 12: a random 32-character HEX secret (`openssl rand -hex 16`, 16
+ * possible symbols) regularly shows only 11 distinct characters; the entropy estimate catches the patterned cases.
+ */
 export function weakSecret(s: string): boolean {
   if (s.length < 32) return true;
-  if (new Set(s).size < 12) return true;
-  return /change[-_ ]?me|secret|password|example|placeholder/i.test(s);
+  if (new Set(s).size < 8) return true;
+  if (/change[-_ ]?me|secret|password|example|placeholder/i.test(s)) return true;
+  return secretEntropyBits(s) < MIN_SECRET_BITS;
 }
+
+/**
+ * A trusted-proxy entry that trusts (almost) every client address (I-R2): with it, any client can forge
+ * X-Forwarded-For and pick its own rate-limit bucket and audited IP. IPv4 prefixes shorter than /8, IPv6 shorter than /16,
+ * and IPv4-mapped IPv6 ranges shorter than ::ffff:0:0/104 (= IPv4 /8) are refused — `0.0.0.0/0`, `0/0`, `::/0`,
+ * `::ffff:0:0/96`, `0.0.0.0/1` + `128.0.0.0/1` alike.
+ */
+export function trustsEveryone(entry: string): boolean {
+  const [addr = '', prefixText] = entry.trim().split('/');
+  if (!addr) return false;
+  const v6 = addr.includes(':');
+  const prefix = prefixText === undefined || prefixText === '' ? (v6 ? 128 : 32) : Number(prefixText);
+  if (!Number.isInteger(prefix) || prefix < 0) return true; // unparseable → refuse rather than guess
+  if (!v6) return prefix < 8;
+  if (/^::ffff:/i.test(addr)) return prefix < 104;
+  return prefix < 16;
+}
+
+/** Well-known default / documentation credentials of S3-compatible stores (MinIO, AWS examples) — never in production. */
+const DEFAULT_S3_KEYS = new Set(['minioadmin', 'minio', 'admin', 'root', 'user', 'test', 'akiaiosfodnn7example']);
+const DEFAULT_S3_SECRETS = new Set(['minioadmin', 'minio123', 'minio', 'password', 'admin', 'secret', 'changeme', 'test', 'wjalrxutnfemi/k7mdeng/bpxrficyexamplekey']);
+export function defaultS3Credentials(accessKeyId: string | undefined, secret: string | undefined): boolean {
+  const k = (accessKeyId ?? '').trim().toLowerCase();
+  const s = (secret ?? '').trim().toLowerCase();
+  return DEFAULT_S3_KEYS.has(k) || DEFAULT_S3_SECRETS.has(s) || /example/.test(k) || /example/.test(s) || (!!secret && secret.length < 16);
+}
+
+/** The exact acknowledgement value for HUB_OIDC_LINK_BY_EMAIL in production. */
+export const LINK_BY_EMAIL_ACK = 'accept-idp-verified-email-first-login-binding';
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
   // An empty HUB_* value (e.g. `HUB_OIDC_ISSUER=` from Compose/.env files) means "not set", not an invalid value.
@@ -94,6 +170,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
       if (!e.HUB_S3_ENDPOINT || !e.HUB_S3_BUCKET || !e.HUB_S3_ACCESS_KEY_ID || !e.HUB_S3_SECRET_ACCESS_KEY) problems.push('HUB_STORAGE_DRIVER=s3 needs HUB_S3_ENDPOINT, HUB_S3_BUCKET, HUB_S3_ACCESS_KEY_ID and HUB_S3_SECRET_ACCESS_KEY');
       if (e.HUB_S3_ENDPOINT && !e.HUB_S3_ENDPOINT.startsWith('https://')) problems.push('HUB_S3_ENDPOINT must use https in production');
       if (e.HUB_S3_SSE === 'aws:kms' && !e.HUB_S3_KMS_KEY_ID) problems.push('HUB_S3_SSE=aws:kms needs HUB_S3_KMS_KEY_ID');
+      if (e.HUB_S3_SSE === 'none' && e.HUB_S3_BUCKET_DEFAULT_ENCRYPTION !== 'assured') {
+        problems.push('HUB_S3_SSE must be AES256 or aws:kms in production (or set HUB_S3_BUCKET_DEFAULT_ENCRYPTION=assured after verifying the bucket default encryption)');
+      }
+      if (defaultS3Credentials(e.HUB_S3_ACCESS_KEY_ID, e.HUB_S3_SECRET_ACCESS_KEY)) problems.push('HUB_S3_ACCESS_KEY_ID / HUB_S3_SECRET_ACCESS_KEY are default or example credentials (or the secret is shorter than 16 characters)');
+    }
+    const broadProxy = e.HUB_TRUST_PROXY.split(',').filter((x) => /[.:/]/.test(x) && trustsEveryone(x));
+    if (broadProxy.length) problems.push(`HUB_TRUST_PROXY trusts (almost) every address (${broadProxy.map((x) => x.trim()).join(', ')}); list the ingress proxy addresses or use a hop count`);
+    if (e.HUB_OIDC_LINK_BY_EMAIL === 'true' && e.HUB_OIDC_LINK_BY_EMAIL_ACK !== LINK_BY_EMAIL_ACK) {
+      problems.push(`HUB_OIDC_LINK_BY_EMAIL=true binds unbound accounts by the IdP's verified email; set HUB_OIDC_LINK_BY_EMAIL_ACK=${LINK_BY_EMAIL_ACK} to accept that trust, or pre-provision the IdP subject instead`);
     }
     if (!e.HUB_OIDC_ISSUER) problems.push('OIDC issuer must be configured in production (no password login exists)');
     if (e.HUB_OIDC_ISSUER && !e.HUB_COOKIE_SECRET) problems.push('HUB_COOKIE_SECRET (>= 32 chars) is required when OIDC is enabled');
@@ -111,7 +196,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     }
   }
   if (problems.length) throw new Error(`Unsafe configuration rejected: ${problems.join('; ')}`);
+  // Accepted but noteworthy settings, logged once at startup (bootstrap).
+  const warnings: string[] = [];
+  if (e.HUB_OIDC_LINK_BY_EMAIL === 'true') warnings.push('OIDC link-by-email is enabled: the first login of a pre-provisioned, unbound account binds it by the IdP-verified email');
+  if (e.HUB_STORAGE_DRIVER === 's3' && e.HUB_S3_SSE === 'none') warnings.push('S3 objects are written without per-object server-side encryption (bucket default encryption relied upon)');
   return {
+    warnings,
     nodeEnv: e.NODE_ENV,
     demoMode: e.HUB_MODE === 'demo',
     orgSlug: e.HUB_ORG_SLUG,

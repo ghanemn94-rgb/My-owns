@@ -118,18 +118,36 @@ export class ProblemFilter implements ExceptionFilter {
     // Denied / rejected mutation attempts are audited even though the business transaction rolled back (AT-05, AT-13).
     const mutating = req.method !== 'GET' && req.method !== 'HEAD';
     if (req.hubCtx && mutating && [403, 404, 409, 422].includes(body.status)) {
-      const projectId = (req.params as Record<string, string> | undefined)?.projectId ?? null;
+      const attempted = attemptedIds(req.params as Record<string, unknown> | undefined);
       await this.audit.recordDetached(req.hubCtx, {
         action: req.hubRouteId ?? `${req.method} ${req.route?.path ?? req.path}`,
-        projectId,
+        projectId: attempted.projectId,
         outcome: body.status === 403 || body.status === 404 ? 'denied' : 'rejected',
         reason: `${body.code}${body.detail ? `: ${body.detail}` : ''}`.slice(0, 1000),
         entityType: 'request',
+        // SEC-P1R-06: the attempted project and target ids as plain values (never FKs, never content), so an investigator
+        // can tell which project / record was probed even when the project is outside the caller's scope (the row's
+        // project_id is then null: RLS WITH CHECK only admits in-scope projects).
+        after: attempted.projectId || Object.keys(attempted.ids).length ? { attempted: { projectId: attempted.projectId, ...attempted.ids } } : null,
       });
     }
 
     res.status(body.status).type('application/problem+json').send(JSON.stringify(body));
   }
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** UUID-shaped route params only (ids, never free text): `projectId` plus the route's other id params (`memberId`, `id`, …). */
+export function attemptedIds(params: Record<string, unknown> | undefined): { projectId: string | null; ids: Record<string, string> } {
+  const ids: Record<string, string> = {};
+  let projectId: string | null = null;
+  for (const [k, v] of Object.entries(params ?? {})) {
+    if (typeof v !== 'string' || !UUID.test(v)) continue;
+    if (k === 'projectId') projectId = v.toLowerCase();
+    else ids[k] = v.toLowerCase();
+  }
+  return { projectId, ids };
 }
 
 function isBodyParserError(e: unknown): boolean {

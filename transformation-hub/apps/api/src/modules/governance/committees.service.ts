@@ -157,7 +157,9 @@ export class CommitteesService {
   async approveCharter(ctx: RequestContext, projectId: string, committeeId: string, body: { expectedVersion: number; approvalReference?: string; note?: string }) {
     const c = await loadInProject(this.db, schema.committee, projectId, committeeId);
     const drafter = await this.charterDrafter(c);
-    this.policy.assert(ctx, 'governance.charter.approve', { projectId, classification: c.classification, requesterUserId: drafter });
+    // not_self: the charter's drafter. authority: approving a charter is a role authority (the permission is granted only to
+    // the approving roles; the approval reference is recorded) — no delegated amount applies, so it is stated explicitly.
+    this.policy.assert(ctx, 'governance.charter.approve', { projectId, classification: c.classification, requesterUserId: drafter, withinAuthority: true });
     if (c.status === 'dissolved') throw ruleViolation('governance.committee.dissolved', 'The committee is dissolved');
     assertVersion(c, body.expectedVersion, 'committee');
     if (c.charterApprovedVersionNo === c.charterVersionNo) {
@@ -327,7 +329,8 @@ export class CommitteesService {
     const c = await loadInProject(this.db, schema.committee, projectId, committeeId);
     const m = await loadInProject(this.db, schema.authorityMatrixVersion, projectId, versionId);
     if (m.committeeId !== c.id) throw notFound();
-    this.policy.assert(ctx, 'governance.authority_matrix.approve', { projectId, classification: c.classification, requesterUserId: m.createdBy });
+    // authority: a role authority (approving roles only; the external approval reference is required by the contract).
+    this.policy.assert(ctx, 'governance.authority_matrix.approve', { projectId, classification: c.classification, requesterUserId: m.createdBy, withinAuthority: true });
     if (m.status !== 'draft') throw ruleViolation('governance.authority_matrix.not_draft', `Only a draft matrix can be approved (current: ${m.status})`);
     const p = await this.sup.project(projectId);
     if (m.isDemoPolicy && !p.isDemo) {

@@ -68,10 +68,10 @@ export class WbsService {
     return allowedCommands(TASK_MACHINE, t.status as TaskStatus).filter((c) => (c === 'complete' ? !t.requiresAcceptance : c === 'submit_for_acceptance' ? t.requiresAcceptance : true));
   }
 
-  private async taskDtos(p: ProjectInfo, rows: Task[]) {
+  private async taskDtos(ctx: RequestContext, p: ProjectInfo, rows: Task[]) {
     const ws = await this.s.workstreamCodes(p.id);
     const names = await this.s.userNames(rows.map((r) => r.accountableUserId));
-    const ev = await this.s.evidenceCounts(p.id, 'task', rows.map((r) => r.id));
+    const ev = await this.s.visibleEvidenceCounts(ctx, p.id, 'task', rows.map((r) => r.id)); // display: SEC-P1R-05
     const today = this.s.today(p);
     return rows.map((t) => ({
       id: t.id,
@@ -142,14 +142,14 @@ export class WbsService {
     );
     const [{ n }] = (await this.tx.select({ n: count() }).from(T).where(where)) as [{ n: number }];
     const rows = await this.tx.select().from(T).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
-    return pageOf(await this.taskDtos(p, rows), Number(n), q);
+    return pageOf(await this.taskDtos(ctx, p, rows), Number(n), q);
   }
 
   async getTask(ctx: RequestContext, projectId: string, taskId: string) {
     const p = await this.s.project(ctx, projectId);
     const t = await loadInProject(this.s.db, schema.task, projectId, taskId);
     this.s.assertReadable(ctx, p, t.workstreamId);
-    return (await this.taskDtos(p, [t]))[0]!;
+    return (await this.taskDtos(ctx, p, [t]))[0]!;
   }
 
   async createTask(ctx: RequestContext, projectId: string, body: z.infer<typeof CreateTaskBody>) {
@@ -312,8 +312,8 @@ export class WbsService {
 
   async acceptTask(ctx: RequestContext, projectId: string, taskId: string, body: { expectedVersion: number; note?: string }) {
     const { p, t } = await this.loadTask(ctx, projectId, taskId);
-    // Separation of duties: the acceptor must not be the submitter (policy condition not_self).
-    this.s.assert(ctx, 'planning.deliverable.accept', p, { workstreamId: t.workstreamId, requesterUserId: t.submittedBy });
+    // Separation of duties: the acceptor must not be the submitter (policy condition not_self) — after the state check.
+    this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: t.workstreamId, requesterUserId: t.submittedBy }, () => transition('task', TASK_MACHINE, t.status as TaskStatus, 'accept'));
     this.s.assertVersion(t, body.expectedVersion, 'task');
     if (t.status === 'submitted_for_acceptance') await this.s.assertEvidence(projectId, 'task', t.id);
     const today = this.s.today(p);
@@ -322,7 +322,7 @@ export class WbsService {
 
   async rejectTaskAcceptance(ctx: RequestContext, projectId: string, taskId: string, body: { expectedVersion: number; reason: string }) {
     const { p, t } = await this.loadTask(ctx, projectId, taskId);
-    this.s.assert(ctx, 'planning.deliverable.accept', p, { workstreamId: t.workstreamId, requesterUserId: t.submittedBy });
+    this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: t.workstreamId, requesterUserId: t.submittedBy }, () => transition('task', TASK_MACHINE, t.status as TaskStatus, 'reject_acceptance'));
     return this.applyTask(ctx, p, t, 'reject_acceptance', body.expectedVersion, { submittedBy: null, submittedAt: null }, { reason: body.reason });
   }
 
@@ -522,10 +522,10 @@ export class WbsService {
     return allowedCommands(MILESTONE_MACHINE, m.status as MilestoneStatus);
   }
 
-  private async milestoneDtos(p: ProjectInfo, rows: Milestone[]) {
+  private async milestoneDtos(ctx: RequestContext, p: ProjectInfo, rows: Milestone[]) {
     const ws = await this.s.workstreamCodes(p.id);
     const names = await this.s.userNames(rows.map((r) => r.ownerUserId));
-    const ev = await this.s.evidenceCounts(p.id, 'milestone', rows.map((r) => r.id));
+    const ev = await this.s.visibleEvidenceCounts(ctx, p.id, 'milestone', rows.map((r) => r.id)); // display: SEC-P1R-05
     const today = this.s.today(p);
     return rows.map((m) => ({
       id: m.id,
@@ -576,14 +576,14 @@ export class WbsService {
       [sql`${M.plannedDate} asc nulls last`, asc(M.code), asc(M.id)],
     );
     const rows = await this.tx.select().from(M).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
-    return pageOf(await this.milestoneDtos(p, rows), Number(n), q);
+    return pageOf(await this.milestoneDtos(ctx, p, rows), Number(n), q);
   }
 
   async getMilestone(ctx: RequestContext, projectId: string, id: string) {
     const p = await this.s.project(ctx, projectId);
     const m = await loadInProject(this.s.db, schema.milestone, projectId, id);
     this.s.assertReadable(ctx, p, m.workstreamId);
-    return (await this.milestoneDtos(p, [m]))[0]!;
+    return (await this.milestoneDtos(ctx, p, [m]))[0]!;
   }
 
   async createMilestone(ctx: RequestContext, projectId: string, body: z.infer<typeof CreateMilestoneBody>) {
@@ -667,12 +667,12 @@ export class WbsService {
       }
       case 'verify_achieved':
         // Evidence-verified by someone other than the reporter (not_self), with ≥1 active evidence link.
-        this.s.assert(ctx, 'planning.deliverable.accept', p, { workstreamId: m.workstreamId, requesterUserId: m.reportedBy });
+        this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: m.workstreamId, requesterUserId: m.reportedBy }, () => transition('milestone', MILESTONE_MACHINE, m.status as MilestoneStatus, command));
         this.s.assertVersion(m, body.expectedVersion, 'milestone');
         if (m.status === 'achieved_pending_evidence') await this.s.assertEvidence(projectId, 'milestone', m.id);
         return this.applyMilestone(ctx, p, m, command, body.expectedVersion, { verifiedBy: ctx.principal.userId, verifiedAt: new Date(), verificationStatus: 'confirmed' }, reason);
       case 'reject_evidence':
-        this.s.assert(ctx, 'planning.deliverable.accept', p, { workstreamId: m.workstreamId, requesterUserId: m.reportedBy });
+        this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: m.workstreamId, requesterUserId: m.reportedBy }, () => transition('milestone', MILESTONE_MACHINE, m.status as MilestoneStatus, command));
         return this.applyMilestone(ctx, p, m, command, body.expectedVersion, { verifiedBy: null, verifiedAt: null, verificationStatus: 'proposed' }, reason);
       case 'mark_missed':
       case 'cancel':
@@ -684,10 +684,10 @@ export class WbsService {
   // =========================================================================================================
   // Deliverables
 
-  private async deliverableDtos(p: ProjectInfo, rows: Deliverable[]) {
+  private async deliverableDtos(ctx: RequestContext, p: ProjectInfo, rows: Deliverable[]) {
     const ws = await this.s.workstreamCodes(p.id);
     const names = await this.s.userNames(rows.map((r) => r.ownerUserId));
-    const ev = await this.s.evidenceCounts(p.id, 'deliverable', rows.map((r) => r.id));
+    const ev = await this.s.visibleEvidenceCounts(ctx, p.id, 'deliverable', rows.map((r) => r.id)); // display: SEC-P1R-05
     const today = this.s.today(p);
     return rows.map((d) => ({
       id: d.id,
@@ -735,14 +735,14 @@ export class WbsService {
     const [{ n }] = (await this.tx.select({ n: count() }).from(D).where(where)) as [{ n: number }];
     const order = orderBySort(q.sort, { code: D.code, title: D.title, status: D.status, dueDate: D.dueDate, updatedAt: D.updatedAt }, D.id, [asc(D.code), asc(D.id)]);
     const rows = await this.tx.select().from(D).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
-    return pageOf(await this.deliverableDtos(p, rows), Number(n), q);
+    return pageOf(await this.deliverableDtos(ctx, p, rows), Number(n), q);
   }
 
   async getDeliverable(ctx: RequestContext, projectId: string, id: string) {
     const p = await this.s.project(ctx, projectId);
     const d = await loadInProject(this.s.db, schema.deliverable, projectId, id);
     this.s.assertReadable(ctx, p, d.workstreamId);
-    return (await this.deliverableDtos(p, [d]))[0]!;
+    return (await this.deliverableDtos(ctx, p, [d]))[0]!;
   }
 
   async createDeliverable(ctx: RequestContext, projectId: string, body: z.infer<typeof CreateDeliverableBody>) {
@@ -813,11 +813,13 @@ export class WbsService {
    */
   async approveDeliverableWeights(ctx: RequestContext, projectId: string, body: { items: { id: string; expectedVersion: number }[]; note?: string }) {
     const p = await this.s.project(ctx, projectId);
-    this.s.assert(ctx, 'planning.baseline.approve', p);
+    // Role-level pre-check (also covers an empty list); separation of duties + authority are checked per deliverable below.
+    this.s.policy.assertGranted(ctx, 'planning.baseline.approve', { projectId: p.id, classification: p.classification });
     let approved = 0;
     for (const it of body.items) {
       const d = await this.s.lockInProject(schema.deliverable, projectId, it.id);
-      this.s.assert(ctx, 'planning.baseline.approve', p, { requesterUserId: d.weightSetBy });
+      // not_self against whoever set the weight (unknown → fail closed); authority: explicit role authority (I-R3).
+      this.s.assert(ctx, 'planning.baseline.approve', p, { requesterUserId: d.weightSetBy, withinAuthority: true });
       this.s.assertVersion(d, it.expectedVersion, `deliverable ${d.code}`);
       if (d.status === 'cancelled') throw ruleViolation('deliverable.cancelled', `Deliverable ${d.code} is cancelled`);
       if (d.weightApproved) continue;
@@ -840,13 +842,13 @@ export class WbsService {
         if (command === 'submit') extra = { submittedBy: ctx.principal.userId, submittedAt: new Date() };
         break;
       case 'accept':
-        this.s.assert(ctx, 'planning.deliverable.accept', p, { workstreamId: d.workstreamId, requesterUserId: d.submittedBy });
+        this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: d.workstreamId, requesterUserId: d.submittedBy }, () => transition('deliverable', DELIVERABLE_MACHINE, d.status as DeliverableStatus, command));
         this.s.assertVersion(d, body.expectedVersion, 'deliverable');
         if (d.status === 'submitted') await this.s.assertEvidence(projectId, 'deliverable', d.id);
         extra = { acceptedBy: ctx.principal.userId, acceptedAt: new Date() };
         break;
       case 'reject':
-        this.s.assert(ctx, 'planning.deliverable.accept', p, { workstreamId: d.workstreamId, requesterUserId: d.submittedBy });
+        this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: d.workstreamId, requesterUserId: d.submittedBy }, () => transition('deliverable', DELIVERABLE_MACHINE, d.status as DeliverableStatus, command));
         break;
       case 'cancel':
         this.s.assert(ctx, 'planning.wbs.manage', p, { workstreamId: d.workstreamId });
