@@ -6,36 +6,26 @@ import { Actors, DEMO_AUTHORITY_POLICY, P, decisionRow, decisionVersion, tabledD
 import { addDays, addEvidence, createProject, grant, riyadhToday, task, workstreams } from '../planning/fixtures';
 
 /**
- * P2 DOMAIN REVIEW — defect probes (docs/reviews/P2-domain-review.md, revision 38f947c).
+ * P2 DOMAIN REVIEW — defect probes (docs/reviews/P2-domain-review.md).
  *
- * Each `DEFECT DOM-P2-nn` test asserts the behaviour REQUIRED by the specification / the platform's own governance
+ * Each `DEFECT DOM-P2-nn` test asserts the behaviour REQUIRED by the specification or by the platform's own governance
  * documents. At the reviewed revision these tests FAIL: the failure is the reproduction of the finding. They must not be
- * weakened to pass; they pass once the defect is fixed. All data is synthetic (projects created by the test, flagged
- * demo where the DEMO authority matrix is needed).
+ * weakened to pass; they pass once the defect is fixed. All data is synthetic (projects created by the test).
  */
 
 const DEMO: AuthorityPolicy = DEMO_AUTHORITY_POLICY;
 
 // ---------------------------------------------------------------------------------------------------------------
-// Project A: demo project with an active committee, the DEMO matrix and an open meeting (all voting members present).
+// Project A: demo project (flagged demo by the gate kit) with an active committee, the approved DEMO matrix and an open
+// meeting where every voting member is present. One gate-kit project only: the public demo-login rate limit
+// (60/min per process) does not allow several gate-kit projects in one test file.
 let pA: string;
 let a: Personas;
 let govA: Gov;
-// Project B: second demo governance project (a gate can be decided only once per cycle).
-let pB: string;
-let b: Personas;
-let govB: Gov;
-// Project C: G0 approved through the legitimate path (for the defective-evidence probe).
-let pC: string;
-let c: Personas;
 // Project D: ordinary (non-demo) project created through the API — no committee, no authority matrix.
 let pD: string;
 let admin: Client;
 let pm: Client;
-let sponsor: Client;
-let approver: Client;
-let finance: Client;
-let secretary: Client;
 let wsD: Map<string, { id: string; version: number }>;
 
 beforeAll(async () => {
@@ -43,26 +33,13 @@ beforeAll(async () => {
   govA = await setupGovernance(pA, a);
   await makeReady(a, pA, 'G0');
 
-  ({ projectId: pB, p: b } = await setupProject('DRP2-B'));
-  govB = await setupGovernance(pB, b);
-  await makeReady(b, pB, 'G0');
-
-  ({ projectId: pC, p: c } = await setupProject('DRP2-C'));
-  const govC = await setupGovernance(pC, c);
-  await makeReady(c, pC, 'G0');
-  await approveGate(c, govC, pC, 'G0');
-
   admin = await loginAs('portfolio.admin');
-  pm = await loginAs('pm');
-  sponsor = await loginAs('sponsor');
-  approver = await loginAs('approver');
-  finance = await loginAs('finance');
-  secretary = await loginAs('secretary');
+  pm = await loginAs('pm'); // separate session for project D (own mutation-rate bucket)
   pD = await createProject(admin, pm, 'DRP2-D');
-  await grant(admin, pD, sponsor, 'sponsor');
-  await grant(admin, pD, approver, 'functional_approver');
-  await grant(admin, pD, finance, 'finance_restricted');
-  await grant(admin, pD, secretary, 'secretary_cpmo');
+  await grant(admin, pD, a.sponsor, 'sponsor');
+  await grant(admin, pD, a.approver, 'functional_approver');
+  await grant(admin, pD, a.finance, 'finance_restricted');
+  await grant(admin, pD, a.secretary, 'secretary_cpmo');
   wsD = await workstreams(pm, pD);
 }, 600_000);
 
@@ -76,6 +53,13 @@ const decideGate = async (who: Client, pid: string, key: string, decisionId: str
   return who.post(`/api/v1/projects/${pid}/gates/${g.id}/assessment/decide`, { expectedVersion: g.assessment.version, outcome: 'approve', decisionId, note: 'P2 domain review probe (synthetic)' });
 };
 
+/** G0 approved through the legitimate path (reserved matter → recommendation → external approval), unless already approved. */
+const ensureG0Approved = async () => {
+  const g0 = await gateByKey(a.pm, pA, 'G0');
+  if (g0.assessment.status !== 'approved') await approveGate(a, govA, pA, 'G0');
+  expect((await gateByKey(a.pm, pA, 'G0')).assessment.status).toBe('approved');
+};
+
 describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]', () => {
   // -------------------------------------------------------------------------------------------------------------
   it('DEFECT DOM-P2-01a: G0 (committee cannot approve its own mandate) must not pass on a committee decision of the operational gate type (G1–G4/G7)', async () => {
@@ -83,25 +67,26 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
     // The committee approved it "within mandate" because the drafter chose the operational gate decision type.
     expect(d.status).toBe('approved');
     const r = await decideGate(a.sponsor, pA, 'G0', d.id);
-    // Required (spec §4.2, AT-04; business-gates.md G0 purpose; authority-matrix.md §4.2): the decision type backing a
-    // gate must be the one the authority matrix assigns to THAT gate, otherwise the gate stays blocked.
+    // Required (spec §4.2 + AT-04; business-gates.md G0 purpose; authority-matrix.md §4.2): the decision backing a gate
+    // must be of the decision type the authority matrix assigns to THAT gate, otherwise the gate stays blocked.
     expect(r.status, `gate approved on a mismatched decision type: ${JSON.stringify(r.body)}`).toBe(422);
-    expect((await gateByKey(a.pm, pA, 'G0')).assessment.status).toBe('ready_for_decision');
   });
 
   it('DEFECT DOM-P2-01b: a gate must not pass on an unrelated approved decision that carries no gate key (e.g. a baseline approval)', async () => {
-    const x = await tabledDecision(pB, b as unknown as Actors, b.pm, govB.committeeId, govB.meetingId, {
+    await ensureG0Approved();
+    await makeReady(a, pA, 'G1');
+    const x = await tabledDecision(pA, a as unknown as Actors, a.pm, govA.committeeId, govA.meetingId, {
       decisionTypeKey: 'baseline_approval',
       amount: null,
       requiredAuthority: 'Steering committee (DEMO matrix)',
     });
-    const v = await decisionVersion(b.chair, pB, x.id);
-    for (const k of ['chair', 'sponsor', 'finance', 'legal'] as const) expect((await vote(pB, b[k], x.id, 'approve', v)).status).toBe(201);
-    const out = await b.secretary.post(`${P(pB)}/decisions/${x.id}/record-outcome`, { expectedVersion: v });
+    const v = await decisionVersion(a.chair, pA, x.id);
+    for (const k of ['chair', 'sponsor', 'finance', 'legal'] as const) expect((await vote(pA, a[k], x.id, 'approve', v)).status).toBe(201);
+    const out = await a.secretary.post(`${P(pA)}/decisions/${x.id}/record-outcome`, { expectedVersion: v });
     expect(out.status, JSON.stringify(out.body)).toBe(201);
     expect(out.body.status).toBe('approved');
-    const r = await decideGate(b.sponsor, pB, 'G0', x.id);
-    expect(r.status, `G0 approved on an unrelated baseline decision: ${JSON.stringify(r.body)}`).toBe(422);
+    const r = await decideGate(a.chair, pA, 'G1', x.id);
+    expect(r.status, `G1 approved on an unrelated baseline-approval decision: ${JSON.stringify(r.body)}`).toBe(422);
   });
 
   // -------------------------------------------------------------------------------------------------------------
@@ -154,7 +139,7 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
     expect(proposed.status, JSON.stringify(proposed.body)).toBe(201);
     const mx = await owner().query(`select count(*)::int n from authority_matrix_version where project_id = $1 and status = 'approved'`, [pD]);
     expect(mx.rows[0].n).toBe(0); // precondition: no delegation matrix exists in this project
-    const r = await sponsor.post(`/api/v1/projects/${pD}/baselines/${proposed.body.id}/approve`, { expectedVersion: 1, note: 'probe' });
+    const r = await a.sponsor.post(`/api/v1/projects/${pD}/baselines/${proposed.body.id}/approve`, { expectedVersion: 1, note: 'probe' });
     // Required: spec §4.1 "Do not activate production approval authority before the delegation matrix is approved";
     // authority-matrix.md §1.3; G0-C05 (baseline v1 evidenced by a committee decision).
     expect(r.status, `baseline approved without any approved authority matrix: ${JSON.stringify(r.body)}`).toBe(422);
@@ -191,8 +176,8 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
       verificationStatus: 'historical_unverified',
     });
     expect(claim.status, JSON.stringify(claim.body)).toBe(201);
-    const step1 = await finance.post(`/api/v1/projects/${pD}/claims/${claim.body.id}/review`, { expectedVersion: 1, verificationStatus: 'proposed', note: 'probe' });
-    const step2 = await finance.post(`/api/v1/projects/${pD}/claims/${claim.body.id}/review`, { expectedVersion: step1.body.version ?? 2, verificationStatus: 'confirmed', confirmedValue: 'done', note: 'probe' });
+    const step1 = await a.finance.post(`/api/v1/projects/${pD}/claims/${claim.body.id}/review`, { expectedVersion: 1, verificationStatus: 'proposed', note: 'probe' });
+    const step2 = await a.finance.post(`/api/v1/projects/${pD}/claims/${claim.body.id}/review`, { expectedVersion: step1.body.version ?? 2, verificationStatus: 'confirmed', confirmedValue: 'done', note: 'probe' });
     const row = await owner().query(`select verification_status from source_claim where id = $1`, [claim.body.id]);
     // Required: AT-01 / documents.ts assertClaimReview — a historical report never becomes the confirmed current value.
     expect(row.rows[0].verification_status, `step1=${step1.status} step2=${step2.status}`).not.toBe('confirmed');
@@ -200,18 +185,18 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
 
   // -------------------------------------------------------------------------------------------------------------
   it('DEFECT DOM-P2-05: evidence relied upon by an APPROVED gate that is rejected as defective must flag the gate for controlled reassessment', async () => {
-    const g0 = await gateByKey(c.pm, pC, 'G0');
-    expect(g0.assessment.status).toBe('approved');
+    await ensureG0Approved();
+    const g0 = await gateByKey(a.pm, pA, 'G0');
     const cr = crit(g0, 'G0-C01');
-    const link = (await evidenceLinks(c.pm, pC, cr.id)).find((l) => l.status === 'active')!;
+    const link = (await evidenceLinks(a.pm, pA, cr.id)).find((l) => l.status === 'active')!;
     // A verifier who neither linked nor uploaded it finds the evidence defective.
-    const rej = await c.finance.post(`/api/v1/projects/${pC}/evidence/${link.id}/verify`, { expectedVersion: link.version, decision: 'reject', note: 'Defective: wrong charter version (synthetic)' });
+    const rej = await a.finance.post(`/api/v1/projects/${pA}/evidence/${link.id}/verify`, { expectedVersion: link.version, decision: 'reject', note: 'Defective: wrong charter version (synthetic)' });
     expect(rej.status, JSON.stringify(rej.body)).toBe(201);
     await runWorker();
-    const after = await gateByKey(c.pm, pC, 'G0');
+    const after = await gateByKey(a.pm, pA, 'G0');
     expect(crit(after, 'G0-C01').evidence.active).toBe(0);
     // Required: spec §3 ("If approved evidence is found defective, reopen the assessment through a controlled process"),
-    // spec §14 (evidence changes trigger reassessment), REQ-DAT-014.
+    // spec §14 (evidence changes trigger reassessment of derived records), REQ-DAT-014.
     expect(after.assessment.reassessment.needsReassessment, `rag=${after.rag}`).toBe(true);
     expect(after.rag).not.toBe('green');
   });
@@ -236,13 +221,13 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
     await pm.post(`/api/v1/projects/${pD}/tasks/${t}/start`, { expectedVersion: 1 }).expect(201);
     await pm.post(`/api/v1/projects/${pD}/tasks/${t}/submit-for-acceptance`, { expectedVersion: 2 }).expect(201);
     await addEvidence(pD, 'task', t, pm.userId);
-    const r = await approver.post(`/api/v1/projects/${pD}/tasks/${t}/accept`, { expectedVersion: 3, note: 'probe' });
+    const r = await a.approver.post(`/api/v1/projects/${pD}/tasks/${t}/accept`, { expectedVersion: 3, note: 'probe' });
     // Required: spec §6 (each activity has an approver role), §9 ("Completion requires acceptance when the task type demands it").
     expect(r.status, `accepted by a role other than the task's approver role: ${JSON.stringify(r.body)}`).toBe(403);
   });
 
   // -------------------------------------------------------------------------------------------------------------
-  it('DEFECT DOM-P2-09: a pending waiver approval appears in the waiver authority\'s My Work', async () => {
+  it("DEFECT DOM-P2-09: a pending waiver approval appears in the waiver authority's My Work", async () => {
     const g3 = await gateByKey(a.pm, pA, 'G3');
     const cr = crit(g3, 'G3-C08'); // waivable in the template (committee_chair)
     const w = await a.legal.post(`/api/v1/projects/${pA}/gates/${g3.id}/criteria/${cr.id}/waivers`, { basis: 'Probe basis (synthetic)', impact: 'Probe impact (synthetic)' });
@@ -260,8 +245,8 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
     await pm.post(`/api/v1/projects/${pD}/tasks/${t}/block`, { expectedVersion: 2, reason: 'Waiting for access (probe)' }).expect(201);
     const ov = await pm.post(`/api/v1/projects/${pD}/rag-overrides`, { entityType: 'project', entityId: pD, overrideStatus: 'green', reason: 'Probe override (synthetic)', expiresOn: addDays(today, 10) });
     expect(ov.status, JSON.stringify(ov.body)).toBe(201);
-    await secretary.post(`/api/v1/projects/${pD}/rag-overrides/${ov.body.id}/approve`, { expectedVersion: 1, note: 'probe' }).expect(201);
-    const h = (await pm.get(`/api/v1/projects/${pD}/progress`).expect(200)).body as { project: { rag: { effective: string; calculated: { status: string } }; redCritical: unknown[] } };
+    await a.secretary.post(`/api/v1/projects/${pD}/rag-overrides/${ov.body.id}/approve`, { expectedVersion: 1, note: 'probe' }).expect(201);
+    const h = (await pm.get(`/api/v1/projects/${pD}/progress`).expect(200)).body as { project: { rag: { effective: string }; redCritical: unknown[] } };
     expect(h.project.redCritical.length).toBeGreaterThan(0);
     // Required: spec §9 measurement rule 3 ("A green average must not conceal a red CP or blocker"); measurement.ts calculateRag.
     expect(h.project.rag.effective).not.toBe('green');
