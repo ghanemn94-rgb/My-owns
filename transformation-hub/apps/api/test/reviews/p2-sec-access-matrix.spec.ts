@@ -1,5 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { closeApp, closePools, owner } from '../helpers';
+import { sql, type SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
+import { closeApp, closePools, getApp, owner } from '../helpers';
+import { PolicyService } from '../../src/platform/policy.service';
+import type { RequestContext } from '../../src/platform/context';
 import { setupProject, setupGovernance, gateByKey, gateDecision, Personas, Gov } from '../gates/gate-test-kit';
 import { createWithVersion, getBinary, login as docLogin, DocClient } from '../documents/doc-helpers';
 
@@ -180,5 +184,77 @@ describe('§2.2 strict rule — project-level finance records stay hidden from a
     expect(lines.items.map((x) => x.id)).toEqual([wsLine.body.id]);
     expect(lines.total).toBe(1);
     expect((await p.techLead.get(`${G(projectId)}/intercompany-reconciliations`).expect(200)).body.total).toBe(0);
+  });
+});
+
+describe('PolicyService — the §2.2.1 exception in check, permissionReach, reachSql and grantSql (synthetic principals, no I/O)', () => {
+  const PID = '0192f0c0-0000-7000-8000-0000000000a1';
+  const WS = '0192f0c0-0000-7000-8000-0000000000b1';
+  const OTHER_WS = '0192f0c0-0000-7000-8000-0000000000b2';
+  const ROOM = '0192f0c0-0000-7000-8000-0000000000c1';
+  const principal = (scope: { roles?: string[]; workstreamRoles?: { workstreamId: string; role: string }[]; roomIds?: string[]; roomRoles?: { roomId: string; role: string }[] }) =>
+    ({
+      correlationId: 'c',
+      sessionId: null,
+      ip: null,
+      authMethod: 'test',
+      locale: 'en',
+      projectIds: [PID],
+      principal: {
+        kind: 'user',
+        userId: '0192f0c0-0000-7000-8000-0000000000d1',
+        orgId: '0192f0c0-0000-7000-8000-0000000000e1',
+        displayName: 'probe',
+        email: null,
+        clearance: 'confidential',
+        isDemo: true,
+        orgRoles: new Set(),
+        projects: new Map([
+          [PID, { projectId: PID, roles: new Set(scope.roles ?? []), workstreamRoles: scope.workstreamRoles ?? [], roomIds: new Set(scope.roomIds ?? []), cleanTeamRoomIds: new Set(), roomRoles: scope.roomRoles ?? [] }],
+        ]),
+      },
+    }) as unknown as RequestContext;
+  const text = (s: SQL) => new PgDialect().sqlToQuery(s).sql;
+
+  it('a workstream-scoped grant reaches project-level records only for the four flagged reads; never other workstreams, rooms or other reads', async () => {
+    const policy = (await getApp()).get(PolicyService);
+    const lead = principal({ workstreamRoles: [{ workstreamId: WS, role: 'workstream_lead' }] });
+    // reach: the flag is present only for §2.2.1 permissions; `all` stays false (not a project-wide grant)
+    expect(policy.permissionReach(lead, 'gates.gate.read', PID)).toEqual({ all: false, workstreamIds: [WS], projectLevel: true });
+    expect(policy.permissionReach(lead, 'planning.plan.read', PID)).toEqual({ all: false, workstreamIds: [WS] });
+    expect(policy.permissionReach(lead, 'finance.record.read', PID)).toEqual({ all: false, workstreamIds: [WS] });
+    // check: project-level (no workstream, no room) → covered only for flagged reads
+    for (const perm of ['gates.gate.read', 'documents.document.read', 'documents.document.download', 'portfolio.project.read']) {
+      expect(policy.can(lead, perm, { projectId: PID, classification: 'internal' }), perm).toBe(true);
+      expect(policy.can(lead, perm, { projectId: PID, classification: 'internal', workstreamId: OTHER_WS }), `${perm} other workstream`).toBe(false);
+    }
+    for (const perm of ['planning.plan.read', 'finance.record.read', 'governance.decision.read', 'carveout.register.read', 'readiness.register.read', 'newco.register.read', 'documents.document.upload', 'documents.evidence.link', 'gates.evidence.attach']) {
+      expect(policy.can(lead, perm, { projectId: PID, classification: 'internal' }), perm).toBe(false);
+    }
+    expect(policy.can(lead, 'planning.plan.read', { projectId: PID, workstreamId: WS })).toBe(true); // own workstream (unchanged)
+    // clearance still binds (restricted > confidential → hidden, 404)
+    expect(() => policy.assert(lead, 'documents.document.read', { projectId: PID, classification: 'restricted' })).toThrow(expect.objectContaining({ kind: 'not_found' }));
+    // a room-bound record is never covered through §2.2.1 — even with a room grant (visible → 403, not 200)
+    const withRoomGrant = principal({ workstreamRoles: [{ workstreamId: WS, role: 'workstream_lead' }], roomIds: [ROOM] });
+    expect(() => policy.assert(withRoomGrant, 'documents.document.read', { projectId: PID, classification: 'internal', roomId: ROOM })).toThrow(expect.objectContaining({ kind: 'forbidden' }));
+    expect(() => policy.assert(lead, 'documents.document.read', { projectId: PID, classification: 'internal', roomId: ROOM })).toThrow(expect.objectContaining({ kind: 'not_found' }));
+  });
+
+  it('SQL: reachSql adds "or col is null" only for flagged reads; grantSql mirrors check (workstream, project-level, room role, project-wide)', async () => {
+    const policy = (await getApp()).get(PolicyService);
+    const lead = principal({ workstreamRoles: [{ workstreamId: WS, role: 'workstream_lead' }] });
+    const col = sql.raw('t.workstream_id');
+    expect(text(policy.reachSql(lead, 'gates.gate.read', PID, col))).toBe('(t.workstream_id in ($1::uuid) or t.workstream_id is null)');
+    expect(text(policy.reachSql(lead, 'planning.plan.read', PID, col))).toBe('t.workstream_id in ($1::uuid)');
+    const room = sql.raw('d.room_id');
+    expect(text(policy.grantSql(lead, 'documents.document.read', PID, { room }))).toBe('((true and d.room_id is null))');
+    expect(text(policy.grantSql(lead, 'documents.document.read', PID, { workstream: col, room }))).toBe('(t.workstream_id in ($1::uuid) or (t.workstream_id is null and d.room_id is null))');
+    expect(text(policy.grantSql(lead, 'governance.decision.read', PID, {}))).toBe('false'); // not flagged, no workstream column
+    expect(text(policy.grantSql(lead, 'planning.plan.read', PID, { workstream: col }))).toBe('(t.workstream_id in ($1::uuid))');
+    const cleanTeam = principal({ roomIds: [ROOM], roomRoles: [{ roomId: ROOM, role: 'clean_team' }] });
+    expect(text(policy.grantSql(cleanTeam, 'documents.document.read', PID, { room }))).toBe('(d.room_id in ($1::uuid))');
+    const pm = principal({ roles: ['project_manager'] });
+    expect(text(policy.grantSql(pm, 'documents.document.read', PID, { room }))).toBe('true');
+    expect(text(policy.grantSql(pm, 'documents.document.read', '0192f0c0-0000-7000-8000-0000000000ff', { room }))).toBe('false'); // not a member
   });
 });

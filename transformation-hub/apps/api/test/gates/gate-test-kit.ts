@@ -4,6 +4,7 @@ import { WorkerService } from '../../src/platform/jobs/worker.service';
 import { JobRegistry } from '../../src/platform/jobs/job-registry';
 import { registerJobHandlers } from '../../src/jobs';
 import { Actors, setupCommittee, openMeeting, tabledDecision, vote, decisionVersion, verifiedDecisionEvidence } from '../governance/gov-fixtures';
+import { demoEmail } from '../../src/cli/seed-demo';
 
 /**
  * Test kit for the gates acceptance tests. Each spec creates its OWN DC project through the portfolio API (isolated from
@@ -298,14 +299,26 @@ const CRITERION_OWNER_PERSONA: Record<string, keyof Personas> = {
   legal_restricted: 'legal',
 };
 
-/** A second project manager per project (the demo `pm.b` persona), granted on first use. */
+/**
+ * A second project manager per project, granted on first use: a dedicated synthetic test persona (`gates.pm2`, created with
+ * the owner pool like the JV kit's synthetic users — no provisioning API exists). Not a demo persona on purpose: `pm.b` and
+ * the others are outsiders / inbox owners in other specs, and a grant here would change what they see.
+ */
+const SECOND_PM = 'gates.pm2';
 const secondPms = new Map<string, Promise<Client>>();
 function secondPm(projectId: string): Promise<Client> {
   let c = secondPms.get(projectId);
   if (!c) {
     c = (async () => {
+      await owner().query(
+        `insert into app_user (id, org_id, email, display_name, title, clearance, is_demo, locale, account_type)
+         select gen_random_uuid(), org_id, $2, 'Test second project manager (synthetic)', 'Synthetic test persona', 'confidential', true, 'en', 'internal'
+           from project where id = $1
+         on conflict (org_id, email) do nothing`,
+        [projectId, demoEmail(SECOND_PM)],
+      );
       const admin = await loginAs('portfolio.admin');
-      const pm2 = await loginAs('pm.b');
+      const pm2 = await loginAs(SECOND_PM);
       await admin.post(`/api/v1/projects/${projectId}/members`, { userId: pm2.userId, role: 'project_manager', reason: 'gates test: second project manager (evidence linker)' }).expect(201);
       return pm2;
     })();
@@ -318,7 +331,7 @@ function secondPm(projectId: string): Promise<Client> {
  * Someone other than the reviewer links the evidence (not_self), and — SEC-P2-05 — only the criterion's OWNER role or a
  * project manager may link evidence to a criterion (the `W` condition of gates.evidence.attach, as for submitting it).
  * The PM links, unless the PM is the designated reviewer: then a project-wide holder of the owner role (finance / legal),
- * or else a second project manager (`pm.b`, granted on demand) — the workstream lead is workstream-scoped in the kit, and
+ * or else a second project manager (`gates.pm2`, granted on demand) — the workstream lead is workstream-scoped in the kit, and
  * a workstream-scoped grant does not reach gate criteria (access-matrix §2.2).
  */
 export async function evidenceAdderFor(p: Personas, projectId: string, c: { reviewerRole: string; ownerRole: string }): Promise<Client> {

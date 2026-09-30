@@ -77,7 +77,7 @@ Lists, counts and search apply the same coverage in SQL as the single-record che
 
 #### 2.2.1 Project-level read exceptions for workstream-scoped grants
 
-**Status: pending confirmation by Mobily data governance** (P2 security review §3, option B). Until confirmed, the list below is the
+**Status: pending confirmation by Mobily data governance** (AMQ-09; P2 security review §3, option B). Until confirmed, the list below is the
 implemented rule; removing an entry makes the strict §2.2 rule apply to that permission as well.
 
 A workstream-scoped assignment (for example `workstream_lead`, or a workstream-scoped `contributor` / `functional_approver`)
@@ -89,7 +89,7 @@ exception (room grants and room-scoped roles apply as in §2.4).
 | Permission | Why the workstream role needs it | What becomes readable |
 |---|---|---|
 | `gates.gate.read` | Gate owner and reviewer roles can be workstream-scoped (a workstream lead owns G1/G4/G5/G6 and reviews several criteria); gates and criteria carry no workstream | The gate register: definitions, criteria, cycles, evaluations and waivers. Linked governance decisions stay governed by `governance.decision.read` (shown only to its project-wide holders) |
-| `documents.document.read` | Documents carry no workstream; the role attaches and reads evidence for its own tasks | Metadata, versions and evidence counters of project documents that are not room-bound, up to the caller's clearance; list and search show exactly these documents. The source register (`documents.document.read` is also its read permission) follows the same rule |
+| `documents.document.read` | Documents carry no workstream; the role reads the evidence of its own tasks and gate criteria (linking evidence is a mutation and stays strict: `documents.evidence.link` is not in this list) | Metadata, versions and evidence counters of project documents that are not room-bound, up to the caller's clearance; list and search show exactly these documents. The source register (`documents.document.read` is also its read permission) follows the same rule |
 | `documents.document.download` | As above (audited read) | Download of the same documents |
 | `portfolio.project.read` | The project header and status dimensions frame the role's work | Project overview, parties, status dimensions (counts inside it keep their own permission's reach) |
 
@@ -103,8 +103,9 @@ Machine-readable list (`policy.test.ts` checks that it equals the permissions fl
 Implementation: `PolicyService.check` (a workstream-scoped grant of a flagged permission applies to a resource with no
 workstream and no room), `PolicyService.permissionReach` / `reachSql` (`col in (…) or col is null` for flagged permissions) and
 `PolicyService.grantSql` (the same coverage for lists, including room-scoped roles). Tests:
-`apps/api/test/reviews/p2-sec-probes.spec.ts` (§2.2 / SEC-P2-07 / SEC-P2-08), `finance-isolation.spec.ts` (project-level finance
-records stay hidden).
+`apps/api/test/reviews/p2-sec-access-matrix.spec.ts` (gate register, project header, documents incl. restricted / room /
+room-grant cases, finance stays strict, decisions stay 403), `apps/api/test/reviews/p2-sec-probes.spec.ts` (§2.2 / SEC-P2-07 /
+SEC-P2-08), `finance-isolation.spec.ts` (project-level finance records stay hidden), `packages/domain/src/policy/policy.test.ts`.
 
 ### 2.3 Classification and clearance
 
@@ -921,3 +922,4 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
 | AMQ-06 | Whether auditors may see strictly_confidential material by default or per engagement | Mobily Internal Audit | Auditor clearance |
 | AMQ-07 | Maximum room-grant and clearance-grant durations; periodic access-review cadence | Mobily Cybersecurity | Grant expiry defaults |
 | AMQ-08 | Document domain list | Mobily Data Governance | `domainClearance` |
+| AMQ-09 | Confirm the §2.2.1 project-level read exceptions for workstream-scoped roles (`gates.gate.read`, `documents.document.read`, `documents.document.download`, `portfolio.project.read`): may a workstream lead / workstream-scoped contributor read the gate register, the project's non-room documents up to its clearance, and the project header? | Mobily Data Governance | §2.2.1 (implemented, pending confirmation) |

@@ -98,16 +98,16 @@ export class PolicyService {
 
   /**
    * Where a permission applies inside a project (ARCH-14, access-matrix §2.2): everywhere (project-wide role or service
-   * allowlist), or only in the workstreams of workstream-scoped roles. `projectLevel`: the permission is a §2.2.1
-   * project-level read held through a workstream-scoped grant, so it ALSO reaches records with no workstream (not room-bound).
-   * `all` stays "project-wide grant": a workstream-scoped holder never gets `all`, whatever the permission. Room grants never
-   * extend to workstream-structured data.
+   * allowlist), or only in the workstreams of workstream-scoped roles. `projectLevel: true` (present only then): the
+   * permission is a §2.2.1 project-level read held through a workstream-scoped grant, so it ALSO reaches records with no
+   * workstream (not room-bound). `all` stays "project-wide grant": a workstream-scoped holder never gets `all`, whatever the
+   * permission. Room grants never extend to workstream-structured data.
    */
-  permissionReach(ctx: RequestContext, permission: string, projectId: string): { all: true } | { all: false; workstreamIds: string[]; projectLevel: boolean } {
-    if (ctx.principal.kind === 'service') return this.canInProject(ctx, permission, projectId) ? { all: true } : { all: false, workstreamIds: [], projectLevel: false };
+  permissionReach(ctx: RequestContext, permission: string, projectId: string): { all: true } | { all: false; workstreamIds: string[]; projectLevel?: true } {
+    if (ctx.principal.kind === 'service') return this.canInProject(ctx, permission, projectId) ? { all: true } : { all: false, workstreamIds: [] };
     if (this.projectPermissions(ctx.principal, projectId).has(permission)) return { all: true };
     const workstreamIds = [...(this.workstreamPermissions(ctx.principal, projectId).get(permission) ?? [])];
-    return { all: false, workstreamIds, projectLevel: workstreamIds.length > 0 && isProjectLevelRead(permission) };
+    return workstreamIds.length > 0 && isProjectLevelRead(permission) ? { all: false, workstreamIds, projectLevel: true } : { all: false, workstreamIds };
   }
 
   /**
