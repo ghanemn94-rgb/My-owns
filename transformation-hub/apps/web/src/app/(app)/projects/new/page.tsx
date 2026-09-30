@@ -263,11 +263,20 @@ export default function NewProjectPage() {
               dir="ltr"
               value={form.code}
               maxLength={31}
+              data-testid="wizard-code"
               onChange={(e) => set('code', e.target.value.toUpperCase())}
               hint={t('portfolio.wizard.codeHint')}
               error={err('code')}
             />
-            <TextField label={t('project.fields.name')} required value={form.name} maxLength={200} onChange={(e) => set('name', e.target.value)} error={err('name')} />
+            <TextField
+              label={t('project.fields.name')}
+              required
+              value={form.name}
+              maxLength={200}
+              onChange={(e) => set('name', e.target.value)}
+              error={err('name')}
+              data-testid="wizard-name"
+            />
             <TextAreaField
               className="sm:col-span-2"
               label={t('project.fields.description')}
@@ -455,7 +464,7 @@ export default function NewProjectPage() {
               {busy ? t('common.actions.working') : t('portfolio.wizard.submit')}
             </button>
           ) : (
-            <button type="button" className={btn.primary} onClick={next}>
+            <button type="button" className={btn.primary} onClick={next} data-testid="wizard-next">
               {t('common.actions.next')}
               <ChevronRight aria-hidden="true" className="size-4 rtl:rotate-180" />
             </button>
