@@ -590,7 +590,8 @@ test("F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification 
   sh(g.repo, "commit", "-qm", "later fix");
   const later = sh(g.repo, "rev-parse", "HEAD");
   edit(g.repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = later));
-  expectError(validateGate(g.repo, "DG0"), /is not in the verified round-2 candidate/);
+  // A fix committed after the candidate froze is not in the verifying run's starting history, nor the gate candidate (D-040).
+  expectError(validateGate(g.repo, "DG0"), /is not in the verifying run's starting history|is not in the gate candidate/);
 });
 
 test("F-DG0-101 residual: deleting an earlier review round is detected", () => {
@@ -1102,21 +1103,21 @@ test("D-037 / F-DG0-241: a gate source_commit that exists but is OFF this branch
     `an annotated tag that peels to the frozen commit must be rejected as a non-commit object; got: ${errs2.join(" | ")}`);
 });
 
-test("D-039 / F-DG0-164/246: checkClosure requires a present fix_revision -- no absent-round escape", () => {
+test("D-039/D-040 / F-DG0-164/166/246/249: checkClosure binds the fix to the verifying run's head, not forgeable round metadata", () => {
   const { repo } = buildValidRepo();
   approveAndCommit(repo);
   assert.deepEqual(validateGate(repo, "DG0"), [], "the baseline gate must pass");
-  // A fix_revision that IS present but is NOT an ancestor of the verified round's candidate is caught.
+  // A present fix committed after the verifier ran is not in the verifying run's starting history -- caught via the run
+  // head, which is real evidence, even after forging the round's source_commit absent (D-040, F-DG0-166/249).
   sh(repo, "commit", "--allow-empty", "-q", "-m", "a later empty commit");
-  const newer = sh(repo, "rev-parse", "HEAD"); // a real commit, descendant of head, so not an ancestor of it
+  const newer = sh(repo, "rev-parse", "HEAD"); // a real commit, descendant of the verifier's head, so not an ancestor
   edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = newer));
-  expectError(validateGate(repo, "DG0"), /fix .* is not in the verified round-2 candidate/);
-  // An ABSENT fix_revision is ALWAYS rejected now, even if the verifying round's source_commit is (forged) absent -- the
-  // D-038 "round absent" escape is gone (F-DG0-164/246). Make round 2 look absent AND the fix absent: still rejected.
-  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = "0".repeat(40)));
   edit(repo, "docs/delivery/stages.json", (d) => { d.stages[0].review_rounds[1].source_commit = "a".repeat(40); });
   const mpath = get(repo, "docs/delivery/gates/DG0.json").manifest_path;
   edit(repo, mpath, (m) => (m.source_commit = "a".repeat(40))); // findManifest tolerates this; the closure must not
+  expectError(validateGate(repo, "DG0"), /is not in the verifying run's starting history/);
+  // An ABSENT fix_revision is ALWAYS rejected (the D-038 "round absent" escape is gone, F-DG0-164/246).
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = "0".repeat(40)));
   expectError(validateGate(repo, "DG0"), /fix .* is not a commit present in this repository/);
   // A non-hex / short id is still rejected outright.
   edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = "1a99d13"));

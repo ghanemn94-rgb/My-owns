@@ -594,11 +594,14 @@ function roundEntry(stage, roundDir) {
   return stage.review_rounds.find((r) => `round-${r.round}` === roundDir);
 }
 
-// Whether a commit object is present in this repository. A commit referenced in write-once metadata (a fix_revision,
-// a run's head_commit_at_start, a round's source_commit) can be pruned by a later legitimate history correction -- this
-// branch's pre-round-12 history was truncated in an earlier session, and round 18 was rewritten by the D-034 write-once
-// repair. Provenance checks that need such a commit tolerate its genuine absence (D-035 for findManifest; D-037 for
-// checkClosure and checkInvocation), while every check whose commit IS present still runs (D-037, F-DG0-242).
+// Whether a commit object is present in this repository. Gate validation runs on a COMPLETE clone (validateGate refuses
+// a shallow one, F-DG0-160), so every commit a genuine record references is present. The ONLY absence tolerance is
+// findManifest's (D-035): a superseded review round's write-once manifest may name a `source_commit` that no longer
+// resolves (round 18 was rewritten by the D-034 write-once repair), and that is accepted because the manifest's entries
+// must still hash to its `candidate_id` -- a content-preserving check, not a skipped one. checkClosure and
+// checkInvocation are STRICT (D-039/D-040): a CLOSED_VERIFIED `fix_revision` and a run's `head_commit_at_start` must be
+// present, and the fix must be an ancestor of the verifying run's head and of the gate candidate. checkClosure skips the
+// round-side check only via the run's real head, never a round's self-declared source_commit (D-040, F-DG0-166/249).
 function commitPresent(repo, sha) {
   try {
     execFileSync("git", ["-C", repo, "cat-file", "-e", `${sha}^{commit}`], { stdio: "ignore" });
@@ -720,18 +723,20 @@ function checkClosure(repo, stage, gate, f, v, where, errors) {
     outputs: [v.recordPath, v.sidecar],
   });
   if (f.status === "CLOSED_VERIFIED") {
-    // Strict, with no absent-commit escape (D-039, F-DG0-164/246). Gate validation runs on a COMPLETE clone
-    // (validateGate refuses a shallow one, F-DG0-160), so every real fix commit is present; the earlier "the verifying
-    // round is absent" tolerance was forgeable (round.source_commit is orchestrator-written metadata that findManifest
-    // tolerates) and, once every closure is re-verified against a retained candidate, unnecessary. A CLOSED_VERIFIED
-    // fix must be a full 40-hex commit that is PRESENT and an ancestor of both the verifying round's candidate (when its
-    // source_commit resolves -- findManifest still tolerates a superseded round's write-once manifest, D-035) and the
-    // gate candidate. So an all-zero, typo'd or otherwise absent fix is always rejected, whatever the round metadata says.
+    // Strict, with no absent-commit escape (D-039). Gate validation runs on a COMPLETE clone (validateGate refuses a
+    // shallow one, F-DG0-160), so every real fix commit is present. A CLOSED_VERIFIED fix must be a full 40-hex commit
+    // that is PRESENT, in the history the VERIFYING RUN actually started from, and in the gate candidate. The verifying
+    // run's `head_commit_at_start` -- present, 40-hex and containing the round manifest (checkInvocation above enforced
+    // this) -- is REAL, run-bound evidence of what the verifier could see, so the fix is bound to it instead of the
+    // round's self-declared, forgeable `source_commit` (D-040, F-DG0-166/249; the earlier round.source_commit ancestry
+    // check was skipped whenever that metadata claimed the round absent, which findManifest tolerates). An all-zero,
+    // typo'd, absent, or committed-after-the-run fix is therefore always rejected, whatever the round metadata says.
     if (!f.fix_revision || !/^[0-9a-f]{40}$/.test(f.fix_revision)) errors.push(`${where}: CLOSED_VERIFIED needs a full fix_revision commit id`);
     else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
     else {
-      if (commitPresent(repo, round.source_commit) && !isAncestor(repo, f.fix_revision, round.source_commit))
-        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verified ${v.roundDir} candidate (${round.source_commit.slice(0, 10)})`);
+      const vhead = (readJson(repo, runFiles(stage.id, v.record.invocation_reference.run_id)[0], errors, `${where} verifying run`) || {}).head_commit_at_start;
+      if (typeof vhead === "string" && /^[0-9a-f]{40}$/.test(vhead) && commitPresent(repo, vhead) && !isAncestor(repo, f.fix_revision, vhead))
+        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verifying run's starting history (${vhead.slice(0, 10)}); it was not in the candidate the reviewer saw`);
       if (gate && !isAncestor(repo, f.fix_revision, gate.source_commit))
         errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the gate candidate`);
     }

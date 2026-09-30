@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -533,6 +533,11 @@
           "state": "REVIEWING",
           "at": "2026-09-30T13:05:00Z",
           "note": "Round-22 findings repaired (D-039): the absent-commit tolerance is REMOVED from checkClosure/checkInvocation (forgeable via round metadata, and unnecessary on the complete history; F-DG0-164/246); only findManifest content-preserving D-035 tolerance remains for round-18 write-once orphan manifest. Immutable-field drift across sidecar versions now errors (F-DG0-165). Dangling 450c756/cb76260 gc-pruned so local-path clones no longer carry them (F-DG0-013/247). Added a shallow-refusal unit test (F-DG0-248). Real-repo dry-run on the full history: 0 in every history bucket; only round-not-finished artifacts remain. Prefreeze all PASS; candidate re-frozen for review round 23."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-09-30T13:30:00Z",
+          "note": "Round 23: ALL THREE PASS (domain, code-security, qa). Verified CLOSED_VERIFIED: F-DG0-013/164/165/246/247/248. Only Low observations: F-DG0-166/249 (checkClosure skipped the round-side ancestry when the round source_commit was self-declared absent, so a fix committed after the verifier ran could close a finding -> bind to the verifying run head_commit_at_start instead) and F-DG0-014/167 (stale commitPresent comment). Repairs (D-040): checkClosure requires fix ancestor of the verifying run head (real run-bound evidence) plus the gate candidate; commitPresent comment corrected. Gate suite 62 pass."
         }
       ]
     },
