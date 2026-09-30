@@ -486,7 +486,7 @@ Foreign keys:
 
 ### `legal_entity`
 
-RLS: enabled (hub_org_isolation, hub_legal_entity_owner_update, hub_legal_entity_owner_insert) · Triggers: hub_legal_entity_owner_immutable, hub_scope_immutable
+RLS: enabled (hub_legal_entity_owner_update, hub_legal_entity_owner_insert, hub_org_isolation) · Triggers: hub_legal_entity_owner_immutable, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -668,11 +668,14 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
 | `title` | text | no |  |
 | `title_ar` | text | yes |  |
 | `description` | text | yes |  |
+| `description_ar` | text | yes |  |
 | `status` | enum task_status | no | `'draft'::task_status` |
 | `accountable_user_id` | uuid | yes |  |
 | `proposed_owner_function` | text | yes |  |
 | `output` | text | yes |  |
+| `output_ar` | text | yes |  |
 | `acceptance_criteria` | text | yes |  |
+| `acceptance_criteria_ar` | text | yes |  |
 | `approver_role` | character varying | yes |  |
 | `evidence_type` | character varying | yes |  |
 | `effort` | text | yes |  |
@@ -4048,7 +4051,7 @@ Foreign keys:
 
 ### `notification`
 
-RLS: enabled (hub_notification_write, hub_notification_update, hub_notification_read) · Triggers: hub_same_project_source, hub_scope_immutable
+RLS: enabled (hub_notification_update, hub_notification_write, hub_notification_read) · Triggers: hub_same_project_source, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|

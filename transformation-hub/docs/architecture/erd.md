@@ -320,11 +320,11 @@ erDiagram
     text title
     text title_ar
     text description
+    text description_ar
     task_status status
     uuid accountable_user_id
     text proposed_owner_function
     text output
-    text acceptance_criteria
     more more_columns
   }
   milestone {
