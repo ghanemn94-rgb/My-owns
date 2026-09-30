@@ -1,0 +1,39 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-245",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The D-037 absent-commit tolerance (commitPresent) is not scoped to genuinely pruned commits. checkInvocation now accepts a GATE-round review or audit run whose meta.head_commit_at_start is missing, null, the runner's own fallback 'unknown', or any non-existent 40-hex id. This reopens the round-9 QA5-N52/N53 controls (F-DG0-212 binding: the run must start from a commit that contains the frozen manifest). checkClosure likewise accepts a non-existent (typo'd or all-zero) fix_revision on a closure verified in a round whose own source_commit is present, including the gate round.",
+      "reproduction": "QA_REPO_ROOT=<fresh clone of a0e077d> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r21.test.mjs (log docs/delivery/test-evidence/DG0/qa/round-21/11-qa21-negative-tests.log). On the independent fully-evidenced fixture (0 errors as control, QA21-G0), for each of domain-reviewer, code-security-reviewer, qa-verifier and release-auditor in the gate round, rewrite the run's meta.json: QA21-C4 head_commit_at_start = 'f'x40, QA21-C5 field deleted, QA21-C5b null, QA21-C5d 'unknown' (tools/agents/run-agent.sh:64 writes exactly this when `git rev-parse HEAD` fails). validateGate(current) returns 0 errors in all 16 cases (ACCEPTED). The round-9 suite re-run under round-21 rules (log round-21/10-r20-suite-rerun.log, QA20-G1) now fails QA5-N52 and QA5-N53, which passed through round 20. QA21-C3: a closure verified in the gate round (round-2, source_commit present) with fix_revision = the real fix with its last hex digit changed, or '0'x40, gives 0 errors. In a full clone a missing commit can never be an ancestor of a present one, so this is provably not 'in the candidate'. The existing unit test 'D-037 / F-DG0-242' (validator.test.mjs line ~1115) codifies the all-zero case in the gate round as accepted. Root cause: rules.mjs checkInvocation calls `if (commitPresent(repo, meta.head_commit_at_start)) {...}` and checkClosure calls `commitPresent(fix) && commitPresent(round.source_commit) && !isAncestor(...)`. Any value that does not resolve, whatever its shape and whichever round it is in, is treated as 'pruned'. Controls: a PRESENT fix that is not in the candidate is still rejected (QA21-C1 descendant, QA21-C2 dangling), and the real-repo dry-run is clean (round-21/13-real-repo-gate-blockers.log).",
+      "expected": "D-037 states that the tolerance covers commits 'pruned by a later legitimate history correction (the pre-round-12 truncation, the D-034 rewrite)', and that 'a run that started before the manifest is still caught'. By the same reasoning as D-036/F-DG0-240 (the D-035 tolerance must not reach the gate's own round), the tolerance should apply only to (a) a well-formed ^[0-9a-f]{40}$ value, never to a missing, null, 'unknown' or other malformed head_commit_at_start (those were rejected before D-037), and (b) a round that is itself pruned, i.e. whose source_commit is also absent, and never to the gate round. This is feasible on the real history: every one of the 33 record runs with an absent head_commit_at_start belongs to rounds 1-12, whose source_commits are all absent, and all 61 verifier runs with an absent head belong to pruned rounds. For closures, only F-DG0-226/227/228 (verified in round 13, present, fix d1352f4 absent) would need their fix_revision re-pointed at a retained commit that contains the fix, as was done for F-DG0-150/151. Add unit tests for the checkInvocation tolerance; D-037 added one only for checkClosure.",
+      "actual": "The tolerance is a blanket skip for any unresolvable value in any round, including the gate round. Exploiting it needs a run meta.json written without (or with a bogus) head commit before the runner commits it, or a history rewrite, because runs/** is write-once after commit, i.e. the orchestrator-level actor of threat-model residual 1. An honest runner fault ('unknown') would also pass silently. Other run bindings (assignment sha, started_at >= frozen_at, transcript replay, outputs) still hold. Fail-open on a mechanically enforced control that passed in round 20, so Medium, not mandatory. Informational: head_commit_at_start = 'HEAD' (a symbolic ref) is accepted too (QA21-C5c), but that was already the pre-D-037 behaviour; requiring ^[0-9a-f]{40}$ would close it as well.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r21.test.mjs#QA21-C3",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r21.test.mjs#QA21-C4",
+        "docs/delivery/test-evidence/DG0/qa/round-21/11-qa21-negative-tests.log#QA21-C5",
+        "docs/delivery/test-evidence/DG0/qa/round-21/10-r20-suite-rerun.log#QA5-N52",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r9.test.mjs#QA5-N53",
+        "docs/delivery/test-evidence/DG0/qa/round-21/14-fix-revision-integrity.log",
+        "tools/gates/lib/rules.mjs#checkInvocation",
+        "tools/gates/lib/rules.mjs#checkClosure",
+        "tools/agents/run-agent.sh#L64",
+        "tools/gates/tests/validator.test.mjs#D-037-F-DG0-242",
+        "docs/delivery/decisions.md#D-037"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-21/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T11:49:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-21 QA review of candidate 7d00f857 (9e3c27f). Medium, not mandatory. The D-037 repair introduced it; it regresses round-9 QA5-N52/N53."
+        }
+      ]
+    }
+  ]
+}

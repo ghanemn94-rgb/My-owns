@@ -1,0 +1,50 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-241",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced the original shapes on the round-21 candidate (7d00f857, clone of a0e077d) with the independent fixture. QA21-C9a: gate source_commit = an off-branch commit with identical content (commit-tree) is rejected in current mode with 'is not a commit reachable on this branch'. QA21-C9b: an annotated tag object that peels to the frozen commit is rejected with 'is not a commit object in this repository (tag)'. QA21-C9c/C9d: missing and tree ids are still rejected (D-036 retained). The round-20 probes QA20-S7/S8 now give REJECTED in current and historical mode and in a --no-local fresh clone (round-21/10-r20-suite-rerun.log). QA20-S1..S3 are still rejected; they fail only on my round-20 test's regex, because the error text changed to 'not a commit object'. Mutation: with rules.mjs reverted to a23c4d4, the unit test 'D-037 / F-DG0-241' fails (round-21/12-d037-unit-test-mutation.log). Fix is in the candidate (rules.mjs checkCandidate, objectType + isAncestor HEAD).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-21/11-qa21-negative-tests.log#QA21-C9a",
+        "docs/delivery/test-evidence/DG0/qa/round-21/10-r20-suite-rerun.log#QA20-S7",
+        "docs/delivery/test-evidence/DG0/qa/round-21/12-d037-unit-test-mutation.log",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r21.test.mjs#QA21-C9"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-242",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The original problem (the DG0 gate cannot pass on the real history because of 132 pruned-fix_revision and 63 pruned-head_commit_at_start errors) is fixed. real-repo-gate-blockers.mjs on a fresh clone of a0e077d gives 0 PRUNED (both buckets), 0 verifier-head, 0 RECORD-LESS and 0 DROPPED errors, down from 263. The remaining 58 errors are round-not-finished artefacts: state REVIEWING, round-21 records absent, the 5 FIXED_PENDING findings, F-DG0-147/149 awaiting the auditor's acceptance and the gate's accepted_observations, per-requirement 'did not check' lines that clear with round-21 records, and the placeholder gate's final_gate_ids. The 64 absent fix_revisions are absent from the ORIGINAL repository too, including unreachable objects, so none is off-branch (round-21/14). A PRESENT fix that is not in the candidate is still rejected: QA21-C1 (descendant) and QA21-C2 (dangling) both give 'not in the verified round-2 candidate' and 'not in the gate candidate'. The unit test fails against the pre-D-037 rules. Separately, the tolerance is broader than needed (not limited to well-formed ids in pruned rounds). That is a new defect in the repair, tracked as F-DG0-245, and does not reopen this blocker. Any F-DG0-245 repair must keep this dry-run clean.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-21/13-real-repo-gate-blockers.log",
+        "docs/delivery/test-evidence/DG0/qa/round-21/14-fix-revision-integrity.log",
+        "docs/delivery/test-evidence/DG0/qa/round-21/11-qa21-negative-tests.log#QA21-C1",
+        "docs/delivery/test-evidence/DG0/qa/round-21/12-d037-unit-test-mutation.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-243",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Real-repo dry-run: 0 RECORD-LESS and 0 DROPPED errors. The round-17/18 qa-verifier sidecars and F-DG0-238 no longer error, and F-DG0-239 still counts as raised (no 'not raised' error). Independent fixture cases show the tolerance does not become a bypass. QA21-C6: a record-less verifications sidecar (a listed round with no record for the role, and an unlisted round-3) cannot close a finding; findings.json CLOSED_VERIFIED backed only by it is rejected ('differs from the reviewer's status_after'). QA21-C7: a record-less findings sidecar does not hide an imported OPEN High finding ('unresolved (OPEN)'), and a fake CLOSED_VERIFIED for it is rejected ('no reviewer verifications sidecar verifies it'). QA21-C8: when the role's record FILE exists but is unlisted, both 'not listed in stages.json review_rounds' and 'missing from findings.json (dropped)' are still reported. The unit test 'D-037 / F-DG0-243' fails against the pre-D-037 rules.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-21/13-real-repo-gate-blockers.log",
+        "docs/delivery/test-evidence/DG0/qa/round-21/11-qa21-negative-tests.log#QA21-C6",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r21.test.mjs#QA21-C8",
+        "docs/delivery/test-evidence/DG0/qa/round-21/12-d037-unit-test-mutation.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-244",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "(1) Round-19 and round-20 reviewer test evidence is tracked. git ls-files gives 13 (qa round-19), 7 (code-security round-19), 19 (domain round-19), and 10/7/14 for round-20, equal to the files on disk. The dry-run shows no 'verification evidence is not an existing repository file' error. (2) All 96 fix_revisions in findings.json match ^[0-9a-f]{40}$; the other 2 are the ACCEPTED_OBSERVATION findings 147/149 with no fix. 32 are commits that are ancestors of HEAD, 64 are absent from the original repository (pruned: truncation/D-034), 0 are present-but-off-branch, and 0 are non-commit objects. The dry-run shows no 'needs a full fix_revision' error. (3) F-DG0-150/151 fix_revision = 421c922233dc49adb4e8684628faa32b98506758: a commit, an ancestor of HEAD ('DG0 round-17 repair ... (D-032)'). Its tools/agents/agent_sandbox.py blob e5b0f20d is identical to the pre-rewrite cb76260, and the two commits differ only by the round-17 qa sidecars. Metadata-only, outside the candidate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-21/14-fix-revision-integrity.log",
+        "docs/delivery/test-evidence/DG0/qa/round-21/13-real-repo-gate-blockers.log"
+      ]
+    }
+  ]
+}
