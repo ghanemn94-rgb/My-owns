@@ -39,8 +39,8 @@ export function JvTabs() {
   const base = jvHref(projectId);
   const active = (segment: string) => (segment === '' ? pathname === base : pathname === `${base}${segment}` || pathname.startsWith(`${base}${segment}/`));
   return (
-    <nav aria-label={t('jv.tabs.label')} className="mb-5 overflow-x-auto border-b border-line" data-testid="jv-tabs">
-      <ul className="flex min-w-max gap-1">
+    <nav aria-label={t('jv.tabs.label')} className="mb-5 border-b border-line" data-testid="jv-tabs">
+      <ul className="flex flex-wrap gap-x-1">
         {TABS.filter((tab) => tab.permissions.length === 0 || can(tab.permissions)).map((tab) => {
           const on = active(tab.segment);
           return (

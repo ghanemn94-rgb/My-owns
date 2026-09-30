@@ -19,7 +19,7 @@ import { assignableClassifications } from '@/lib/documents';
 import { jvHref, useJvRefresh, usePartnerNames, useScenarios, type Scenario } from '@/lib/jv';
 import { useProjectContext } from '@/lib/project-context';
 import { Callout, FilterBar, FilterSelect, JvCommandDialog, useUrlState } from '../_components/jv';
-import { ContributionEditor, OwnershipEditor, OwnershipSummary, TermsFields, contributionBody, emptyOwnership, ownershipBody, type ContributionDraft, type OwnershipDraft } from '../_components/scenario-form';
+import { ContributionEditor, OwnershipEditor, OwnershipSummary, TermsFields, VersionText, contributionBody, emptyOwnership, ownershipBody, type ContributionDraft, type OwnershipDraft } from '../_components/scenario-form';
 
 const PAGE_SIZE = 25;
 const FILTERS = ['q', 'partnerId'] as const;
@@ -119,7 +119,7 @@ export default function ScenariosPage() {
       ),
     },
     { key: 'partner', header: t('jv.common.partner'), cell: (s) => <span dir="auto">{partners.label(s.partnerId) ?? t('jv.common.none')}</span> },
-    { key: 'version', header: t('jv.scenarios.fields.version'), sortValue: (s) => s.versionNo, cell: (s) => <span dir="auto">{t('jv.scenarios.versionValue', { no: s.versionNo, label: s.versionLabel })}</span> },
+    { key: 'version', header: t('jv.scenarios.fields.version'), sortValue: (s) => s.versionNo, cell: (s) => <VersionText no={s.versionNo} label={s.versionLabel} /> },
     { key: 'ownership', header: t('jv.scenarios.ownership'), cell: (s) => <OwnershipSummary s={s} /> },
     { key: 'state', header: t('jv.scenarios.fields.state'), cell: (s) => <StatusBadge enumName="approvalStates" value={s.approvalState} /> },
     { key: 'updated', header: t('jv.common.updated'), sortValue: (s) => s.updatedAt, cell: (s) => <span className="tabular">{formatDateTime(s.updatedAt)}</span> },

@@ -12,7 +12,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { SearchInput } from '@/components/SearchInput';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useToast } from '@/components/Toast';
-import { btn } from '@/components/ui';
+import { btn, cx } from '@/components/ui';
 import { Tabs, useTabParam } from '@/components/planning/Tabs';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
@@ -102,7 +102,7 @@ function EventsTab({ kind }: { kind: EventKind }) {
       sortValue: (e) => e.sequence,
       cell: (e) => (
         <span className="flex flex-wrap items-center gap-1">
-          <Link className={btn.link} href={`${base}/closing/${kind === 'signing' ? 'signings' : 'closings'}/${e.id}`} dir="ltr" data-testid={`${kind}-link`}>
+          <Link className={cx(btn.link, 'whitespace-nowrap')} href={`${base}/closing/${kind === 'signing' ? 'signings' : 'closings'}/${e.id}`} dir="ltr" data-testid={`${kind}-link`}>
             {e.code}
           </Link>
           {e.isDemo ? <DemoBadge /> : null}
@@ -174,7 +174,7 @@ function ConditionsTab() {
       sortValue: (c) => c.reference,
       cell: (c) => (
         <span className="flex flex-wrap items-center gap-1">
-          <Link className={btn.link} href={`${base}/closing/conditions/${c.id}`} dir="ltr" data-testid="cp-link">
+          <Link className={cx(btn.link, 'whitespace-nowrap')} href={`${base}/closing/conditions/${c.id}`} dir="ltr" data-testid="cp-link">
             {c.reference}
           </Link>
           {c.isDemo ? <DemoBadge /> : null}

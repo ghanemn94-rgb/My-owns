@@ -20,7 +20,7 @@ import { api, isApiError } from '@/lib/api';
 import { jvHref, useJvRefresh, usePartnerNames, useScenario, type ScenarioDetail } from '@/lib/jv';
 import { useProjectContext } from '@/lib/project-context';
 import { ButtonRow, Callout, CmdButton, Facts, JvCommandDialog, Money, Panel, Person, UText } from '../../_components/jv';
-import { ContributionEditor, OwnershipEditor, OwnershipSummary, TermsFields, contributionBody, ownershipBody, type ContributionDraft, type OwnershipDraft } from '../../_components/scenario-form';
+import { ContributionEditor, OwnershipEditor, OwnershipSummary, TermsFields, VersionText, contributionBody, ownershipBody, type ContributionDraft, type OwnershipDraft } from '../../_components/scenario-form';
 
 function AddVersionDialog({ s, onClose }: { s: ScenarioDetail; onClose: () => void }) {
   const { t } = useI18n();
@@ -97,7 +97,7 @@ export default function ScenarioPage() {
         badges={
           <>
             <StatusBadge enumName="approvalStates" value={s.approvalState} size="md" />
-            <span className="text-xs text-muted">{t('jv.scenarios.versionValue', { no: s.versionNo, label: s.versionLabel })}</span>
+            <span className="text-xs text-muted"><VersionText no={s.versionNo} label={s.versionLabel} /></span>
             <span className="text-xs text-muted">{tStatus('classifications', s.classification)}</span>
             {s.isDemo ? <DemoBadge /> : null}
           </>
@@ -147,7 +147,7 @@ export default function ScenarioPage() {
           <DataTable
             caption={t('jv.scenarios.versionsTitle')}
             columns={[
-              { key: 'no', header: t('jv.scenarios.fields.version'), isRowHeader: true, cell: (v) => <span dir="auto">{t('jv.scenarios.versionValue', { no: v.versionNo, label: v.versionLabel })}</span> },
+              { key: 'no', header: t('jv.scenarios.fields.version'), isRowHeader: true, cell: (v) => <VersionText no={v.versionNo} label={v.versionLabel} /> },
               { key: 'ownership', header: t('jv.scenarios.ownership'), cell: (v) => <OwnershipSummary s={{ ownership: v.ownership, ownershipComplete: v.ownership.every((o) => o.percent !== null), ownershipTotal: null }} /> },
               { key: 'change', header: t('jv.scenarios.addVersion.changeNote'), cell: (v) => <UText value={v.changeNote} /> },
               { key: 'by', header: t('jv.common.recordedBy'), cell: (v) => <Person id={v.createdBy} people={s.people} /> },

@@ -25,7 +25,7 @@ import { Tabs, useTabParam } from '@/components/planning/Tabs';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
 import { assignableClassifications, uploadVersion } from '@/lib/documents';
-import { EXTERNAL_GRANT_MAX_DAYS, jk, jvHref, useJvRefresh, usePartnerNames, useRoom, useRoomNames, type Disclosure, type People, type Room, type RoomDetail, type RoomGrant, type RoomIndexItem } from '@/lib/jv';
+import { EXTERNAL_GRANT_MAX_DAYS, jk, jvHref, useJvRefresh, useMemberNames, usePartnerNames, useRoom, useRoomNames, type Disclosure, type People, type Room, type RoomDetail, type RoomGrant, type RoomIndexItem } from '@/lib/jv';
 import { useProjectContext } from '@/lib/project-context';
 import { ButtonRow, Callout, CmdButton, FilterBar, FilterSelect, JvCommandDialog, Panel, Person, UText } from '../../_components/jv';
 
@@ -48,11 +48,12 @@ function useRoomPeople(roomId: string, enabled: boolean): People {
     queryFn: ({ signal }) => api(jvRoutes.listRoomGrants, { params: { projectId, roomId }, signal }),
     enabled: enabled && can('jv.room.revoke_access'),
   });
+  const members = useMemberNames();
   return useMemo(() => {
-    const out: People = { ...(log.data?.people ?? {}) };
+    const out: People = { ...members, ...(log.data?.people ?? {}) };
     for (const g of grants.data?.items ?? []) if (g.displayName) out[g.userId] = g.displayName;
     return out;
-  }, [log.data, grants.data]);
+  }, [members, log.data, grants.data]);
 }
 
 function AddDocumentDialog({ room, onClose }: { room: RoomMeta; onClose: () => void }) {
@@ -435,13 +436,14 @@ function GrantsTab({ room }: { room: RoomMeta }) {
   const toast = useToast();
   const [grantOpen, setGrantOpen] = useState(false);
   const [revoking, setRevoking] = useState<RoomGrant | null>(null);
+  const members = useMemberNames();
   const list = useQuery({
     queryKey: jk.roomGrants(projectId, room.id),
     queryFn: ({ signal }) => api(jvRoutes.listRoomGrants, { params: { projectId, roomId: room.id }, signal }),
     enabled: can('jv.room.revoke_access'),
   });
   if (!can('jv.room.revoke_access')) return <p className="text-sm text-muted">{t('jv.room.grants.noPermission')}</p>;
-  const people: People = Object.fromEntries((list.data?.items ?? []).filter((g) => g.displayName).map((g) => [g.userId, g.displayName!]));
+  const people: People = { ...members, ...Object.fromEntries((list.data?.items ?? []).filter((g) => g.displayName).map((g) => [g.userId, g.displayName!])) };
   return (
     <div className="space-y-3" data-testid="room-grants">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -649,8 +651,9 @@ export default function RoomPage() {
   const hidden = isApiError(q.error) && (q.error.status === 404 || q.error.status === 403);
   const meta: RoomMeta | undefined = q.data ?? rooms.get(roomId);
   const adminOnly = hidden && !!meta;
-  const tabKeys = (adminOnly ? (['grants', 'history'] as const) : TAB_KEYS).filter((k) => k !== 'history' || !adminOnly || can('jv.disclosure_log.read'));
-  const [tab, setTab] = useTabParam<TabKey>(tabKeys as readonly TabKey[], tabKeys[0] as TabKey);
+  // Without a grant only the administration (grants) remains: the access history is room content (grant required).
+  const tabKeys: readonly TabKey[] = adminOnly ? ['grants'] : TAB_KEYS;
+  const [tab, setTab] = useTabParam<TabKey>(tabKeys, tabKeys[0]!);
   const people = useRoomPeople(roomId, !!q.data);
   const base = jvHref(projectId);
 
@@ -705,7 +708,7 @@ export default function RoomPage() {
             <MetricCard label={t('jv.room.counts.findings')} value={d.counts.findings} href={`${base}/diligence?tab=findings&roomId=${d.id}`} />
           </div>
         ) : null}
-        <Tabs tabs={tabKeys.map((k) => ({ key: k as TabKey, label: t(`jv.room.tabs.${k}`) }))} value={tab} onChange={setTab} label={t('jv.room.tabs.label')} testId="room-tabs">
+        <Tabs tabs={tabKeys.map((k) => ({ key: k, label: t(`jv.room.tabs.${k}`) }))} value={tab} onChange={setTab} label={t('jv.room.tabs.label')} testId="room-tabs">
           {tab === 'index' && d ? <IndexTab room={meta} /> : null}
           {tab === 'disclosures' && d ? <DisclosuresTab room={meta} people={people} /> : null}
           {tab === 'grants' ? <GrantsTab room={meta} /> : null}

@@ -382,7 +382,7 @@ export default function PartnerPage() {
           {openConflictMine ? <p className="text-sm text-danger">{t('jv.partner.conflictedYou')}</p> : null}
         </Panel>
 
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
           <Panel title={t('jv.partner.outreach.title')} description={t('jv.partner.outreach.hint')} testId="outreach-panel">
             <Facts
               items={[

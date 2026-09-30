@@ -14,7 +14,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { RestrictedState } from '@/components/RestrictedState';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useToast } from '@/components/Toast';
-import { btn } from '@/components/ui';
+import { btn, cx } from '@/components/ui';
 import { UserPicker, type PickedUser } from '@/components/UserPicker';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
@@ -422,7 +422,7 @@ export function EventDetailScreen({ kind, eventId }: { kind: EventKind; eventId:
                   header: t('jv.cp.fields.reference'),
                   isRowHeader: true,
                   cell: (c) => (
-                    <Link className={btn.link} href={`${base}/closing/conditions/${c.id}`} dir="ltr" data-testid="event-cp-link">
+                    <Link className={cx(btn.link, 'whitespace-nowrap')} href={`${base}/closing/conditions/${c.id}`} dir="ltr" data-testid="event-cp-link">
                       {c.reference}
                     </Link>
                   ),

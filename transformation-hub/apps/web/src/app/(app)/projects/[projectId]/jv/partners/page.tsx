@@ -12,7 +12,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { SearchInput } from '@/components/SearchInput';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useToast } from '@/components/Toast';
-import { btn } from '@/components/ui';
+import { btn, cx } from '@/components/ui';
 import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { assignableClassifications } from '@/lib/documents';
@@ -214,14 +214,14 @@ export default function PartnersPage() {
       sortValue: (p) => p.code,
       cell: (p) => (
         <span className="flex flex-wrap items-center gap-1">
-          <Link href={`${base}/partners/${p.id}`} className={btn.link} dir="ltr" data-testid="partner-link">
+          <Link href={`${base}/partners/${p.id}`} className={cx(btn.link, 'whitespace-nowrap')} dir="ltr" data-testid="partner-link">
             {p.code}
           </Link>
           {p.isDemo ? <DemoBadge /> : null}
         </span>
       ),
     },
-    { key: 'name', header: t('jv.partners.columns.name'), sortValue: (p) => p.name, cell: (p) => <span dir="auto">{p.name}</span> },
+    { key: 'name', header: t('jv.partners.columns.name'), sortValue: (p) => p.name, className: 'min-w-48', cell: (p) => <span dir="auto">{p.name}</span> },
     { key: 'stage', header: t('jv.partners.columns.stage'), sortValue: (p) => PARTNER_STAGES.indexOf(p.stage), cell: (p) => <StatusBadge enumName="partnerStages" value={p.stage} /> },
     {
       key: 'list',

@@ -132,3 +132,9 @@ export function OwnershipSummary({ s }: { s: Pick<Scenario, 'ownership' | 'owner
   );
 }
 
+
+/** "Version 2" when the label is the default "v2"; otherwise "v2 · <label>" (labels are free text entered by people). */
+export function VersionText({ no, label }: { no: number; label: string }) {
+  const { t } = useI18n();
+  return <span dir="auto">{label.trim() === `v${no}` || !label.trim() ? t('jv.scenarios.versionOnly', { no }) : t('jv.scenarios.versionValue', { no, label })}</span>;
+}

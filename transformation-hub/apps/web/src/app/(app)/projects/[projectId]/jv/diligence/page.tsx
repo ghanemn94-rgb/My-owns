@@ -12,7 +12,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { SearchInput } from '@/components/SearchInput';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useToast } from '@/components/Toast';
-import { btn } from '@/components/ui';
+import { btn, cx } from '@/components/ui';
 import { UserPicker, type PickedUser } from '@/components/UserPicker';
 import { Tabs, useTabParam } from '@/components/planning/Tabs';
 import { EM_DASH, useI18n } from '@/i18n/provider';
@@ -294,7 +294,7 @@ function FindingsTab() {
       sortValue: (f) => f.code,
       cell: (f) => (
         <span className="flex flex-wrap items-center gap-1">
-          <Link className={btn.link} href={`${base}/diligence/findings/${f.id}`} dir="ltr" data-testid="finding-link">
+          <Link className={cx(btn.link, 'whitespace-nowrap')} href={`${base}/diligence/findings/${f.id}`} dir="ltr" data-testid="finding-link">
             {f.code}
           </Link>
           {f.isDemo ? <DemoBadge /> : null}
