@@ -1043,3 +1043,19 @@ test("D-035: findManifest tolerates a pruned (missing) source_commit but still e
   findManifest(repo, "DG0", cid, errs, "tampered");
   assert.ok(errs.some((e) => /does not hash to/.test(e)), "entries must still self-consistently hash to the candidate_id");
 });
+
+test("D-036: a gate whose source_commit does not exist is rejected in current mode too (F-DG0-240/155)", () => {
+  const { repo } = buildValidRepo();
+  const bogus = "0".repeat(40);
+  // Point the gate, its manifest and the stages candidate/review-round records at a commit that does not exist.
+  const mpath = get(repo, "docs/delivery/gates/DG0.json").manifest_path;
+  edit(repo, "docs/delivery/gates/DG0.json", (g) => (g.source_commit = bogus));
+  edit(repo, mpath, (m) => (m.source_commit = bogus));
+  edit(repo, "docs/delivery/stages.json", (d) => {
+    d.stages[0].candidate.source_commit = bogus;
+    for (const r of d.stages[0].review_rounds) r.source_commit = bogus;
+  });
+  const errs = validateGate(repo, "DG0"); // current mode
+  assert.ok(errs.some((e) => /gate source_commit .* is not a commit/.test(e)),
+    `current-mode validation must reject a missing gate source_commit; got: ${errs.join(" | ")}`);
+});

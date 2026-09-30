@@ -840,6 +840,16 @@ export function checkCandidate(repo, stage, gate, mode, errors) {
   }
   if (manifestHash !== manifest.candidate_id) errors.push("candidate manifest: entries do not hash to its candidate_id (tampered)");
   if (manifest.source_commit !== gate.source_commit) errors.push("candidate manifest: source_commit differs from the gate record");
+  // The gate's source_commit must be a real commit in this repository, in EVERY mode. Current-mode validation recomputes
+  // the candidate from the working tree (below), so without this check a gate whose source_commit does not exist would
+  // pass current-mode validation -- and the D-035 tolerance in findManifest (which is meant for superseded rounds only)
+  // would let the gate ROUND's manifest pass too. Requiring the commit here keeps D-035 non-gate in effect and closes
+  // that hole in both modes (F-DG0-240, F-DG0-155; decision D-036). --historical additionally recomputes from it below.
+  try {
+    execFileSync("git", ["-C", repo, "cat-file", "-e", `${gate.source_commit}^{commit}`], { stdio: "ignore" });
+  } catch {
+    errors.push(`candidate: gate source_commit ${String(gate.source_commit).slice(0, 10)} is not a commit in this repository`);
+  }
   if (JSON.stringify(manifest.spec) !== JSON.stringify(stage.candidate_spec)) errors.push("candidate manifest: spec differs from the stage's candidate_spec");
   for (const e of specPolicyErrors(manifest.spec)) errors.push(`candidate manifest: spec ${e}`);
   if (stage.candidate.candidate_id !== gate.candidate_id) errors.push(`stages.json: ${stage.id} candidate ${stage.candidate.candidate_id} != gate ${gate.candidate_id}`);
