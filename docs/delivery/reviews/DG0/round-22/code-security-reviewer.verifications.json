@@ -1,0 +1,86 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-150",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified against round-22 candidate 09072ce5… (source 480cd3f). Fix 421c922 is an ancestor of 480cd3f. Its finish() write-once-collision handling is unchanged in HEAD: the only diff in finish() since 421c922 is the D-033 'landlock' field added to the recorded sandbox dict, so the fix is intact but the assignment's 'byte-identical' wording is slightly overstated. Regression test 'F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash' passes (node-tests.log, ok 30; also inside prefreeze). The closure no longer depends on the orphaned round-18 commit 450c756: this round-22 verification supersedes the round-18 one, and f161-reverify-sim.log shows 0 fix-ancestry errors for F-DG0-150/151 in both a --no-local clone and a local clone that still holds 450c756.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-22/node-tests.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/prefreeze.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/f161-reverify-sim.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-151",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified against the round-22 candidate. The agent_sandbox.py module docstring (lines 24-31) now says the sandbox does NOT create a PID namespace and DOES create its own IPC namespace (--unshare-ipc), which matches bwrap_args (line 156: --unshare-ipc, no --unshare-pid). Fix 421c922 is an ancestor of 480cd3f. Same round-18 independence as F-DG0-150 (f161-reverify-sim.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-22/f161-reverify-sim.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/node-tests.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-158",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The recordless exemption is removed (rules.mjs:490-496, :527-535). SEC22-6: a finding raised only by a record-less findings sidecar and missing from findings.json is reported '(dropped)'. A record-less verifications sidecar still cannot close anything ('CLOSED_VERIFIED but no reviewer verifications sidecar verifies it'). F-DG0-238 is imported into findings.json (OPEN, qa-verifier), not exempted. The real-repo dry-run reports 0 DROPPED and 0 RECORD-LESS errors. The supersede aggravation noted in the original finding no longer applies to drops. The related immutable-field supersession is raised separately as F-DG0-165 (Low).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/real-repo-dryrun.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-159",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "checkInvocation (rules.mjs:397-410) now rejects a missing, null, 'unknown', 'HEAD', uppercase or short head_commit_at_start, and an absent well-formed head in a retained or gate round (SEC22-5: all rejected; unit test 'D-038 / F-DG0-159' passes). Remaining residue: the 'round absent' predicate itself can be spoofed through a superseded round's manifest source_commit. That residue is tracked in F-DG0-164, not here; the scope stated in this finding (gate round, malformed values) is fixed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/node-tests.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-160",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "git rev-parse --is-shallow-repository prints false in the working repository and in a --no-local clone. The pruned-era commits are real ancestors of HEAD: all 22 round source_commits except the D-034-orphaned 450c756 are present and ancestors, and 421c922 is an ancestor. On a --depth=1 --no-local clone, validate.mjs --stage DG0 reports the D-038 shallow error (exit 1); on a complete clone it does not. A clone disguised by deleting .git/shallow still fails closed ('write-once: cannot inspect git history'). CI checks out with fetch-depth: 0, so the refusal does not break CI.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-22/shallow-refusal.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/disguised-shallow.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/tolerance-census.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-161",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "No ref contains 450c756 any more (the backup/ branch is gone). It survives only as a reflog-held unreachable object in the working repository. The real-repo dry-run on a --no-local clone reports 0 in the PRUNED, RECORD-LESS and DROPPED buckets. Before this round's re-verification, a local clone that still holds 450c756 reports 2 extra errors for F-DG0-150/151 (dryrun-clone-modes.log). With the round-22 re-verification in place, both clone modes give 0 (f161-reverify-sim.log), so the verdict no longer depends on refs. This closure depends on the F-DG0-150/151 entries in this same sidecar being imported. The general object-store-vs-reachability issue is part of F-DG0-164.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-22/real-repo-dryrun.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/dryrun-clone-modes.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/f161-reverify-sim.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-162",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Wording verified against behaviour. The agent shell opens /proc/sys/vm/swappiness, kernel/shmmax, net/ipv4/ip_forward, kernel/panic and vm/drop_caches for write (open(O_WRONLY)+close only; nothing written). Inside tools/gates/sandbox-run.sh the same entries are 'Read-only file system', because of its explicit '--ro-bind /proc/sys /proc/sys' (sandbox-run.sh:36). Residual 7's body and the agent_sandbox.py comment (lines 149-155) now state exactly this. Cosmetic nit: residual 7's bold heading still reads 'file-tool writes to uid-0-writable /proc/sys entries', while the body correctly covers the shell.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-22/procsys-probe.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-163",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "schema.mjs uses Object.hasOwn for both required and properties. SEC22-7: additionalProperties:false now rejects constructor, toString, hasOwnProperty, valueOf, __proto__ (own key via JSON.parse), __defineGetter__ and isPrototypeOf, and a required 'constructor' is reported missing when absent. Unit test 'D-038 / F-DG0-163' passes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/node-tests.log"
+      ]
+    }
+  ]
+}

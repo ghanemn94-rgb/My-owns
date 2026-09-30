@@ -1,0 +1,62 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-164",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "D-038 scoping is keyed on a forgeable, object-store-based 'round absent' test: a superseded round whose frozen manifest records a non-existent source_commit re-opens the absent-fix tolerance, so a CLOSED_VERIFIED finding passes with an all-zero or typo'd fix_revision and the gate-candidate ancestry check is skipped",
+      "reproduction": "tools/gates/lib/rules.mjs:725-733 (checkClosure) sets roundAbsent = !commitPresent(round.source_commit), and when the fix_revision is also absent it pushes no error. The gate check at :731 sits only in the fix-PRESENT branch. round.source_commit is metadata: checkReviewRounds (:749) only requires it to equal the round's committed manifest.source_commit, and findManifest (:903-909) tolerates a manifest whose source_commit does not exist. Nothing requires a non-gate round's source_commit to exist or to be an ancestor of the commit that froze its manifest. Reproduction on the validator's own fixture (docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.tests.mjs.txt, run by run-sec22-repro.sh on a --no-local clone of 7cf94db; log sec22-repro.log): round 2 verifies F-DG0-101 (High, mandatory); round 3 is the gate round. The round-2 manifest is committed with source_commit 'deadbeef'x5, and real round-2 runs start from the commit that contains it. SEC22-1 (real fix): 0 errors. SEC22-2 (fix_revision = 0x40): 0 errors. SEC22-3 (fix_revision = one-character typo of the real fix): 0 errors. SEC22-4 control: a PRESENT off-branch fix is still caught ('is not in the gate candidate'). Retained and gate rounds hold (SEC22-5: unknown/HEAD/missing/null/zeros/uppercase/short heads and zero/f fix_revisions are all rejected). The same predicate gates checkInvocation's head tolerance (:399/:408), so in such a round a fabricated 40-hex head_commit_at_start is also accepted. Second symptom of the same root cause: commitPresent (:595-602) tests object-store membership, not reachability. The working repository still holds round 18's 450c756 through its reflog, while a --no-local clone does not, so validateGate(current) on the same commit differs by 2 errors (F-DG0-150/151 'fix 421c922 is not in the verified round-18 candidate') between the two clone modes (dryrun-clone-modes.mjs/.log). Why the tolerance has no remaining legitimate use: the validator now refuses shallow clones (F-DG0-160), and in a complete clone every ancestor of the gate source_commit is present. An absent fix_revision is therefore provably NOT in the gate candidate. Census on a --no-local clone (tolerance-census.log): 0 findings have an absent fix_revision; the only absent round is 18; and the only closures whose verifying run has an absent head are F-DG0-150/151, which this round re-verifies in round 22 (f161-reverify-sim.log: afterwards 0 dependent errors in both clone modes).",
+      "expected": "D-038 states the tolerance is 'never a retained round'. Retained-ness must not be something a single metadata value can declare. After this round nothing needs the absent-fix tolerance, so: (1) in checkClosure, reject any CLOSED_VERIFIED fix_revision that is not present AND an ancestor of the gate source_commit (and of the verifying round's source_commit when present), with no round-absent escape; (2) in checkInvocation, either drop the absent-head tolerance or restrict it to an explicit, reviewed allowlist of orphaned rounds (round 18, D-034); (3) decide 'absent' deterministically, e.g. by 'not an ancestor of HEAD' rather than by object-store membership, so unreachable reflog objects cannot change a verdict; (4) optionally, for a non-gate round whose manifest source_commit is present, require it to be an ancestor of the commit that introduced the manifest. Add fixture tests for SEC22-2/3.",
+      "actual": "A superseded round whose manifest names a non-existent source_commit passes checkReviewRounds/findManifest. Every closure verified in that round then skips both the fix-presence and the fix-in-gate-candidate checks: an all-zero or typo'd fix_revision on a High/mandatory CLOSED_VERIFIED finding produces 0 validator errors. Separately, the validator's answer depends on unreachable objects in the local object store (2-error difference today between the working repository and a fresh clone, until the round-22 re-verification of F-DG0-150/151 lands).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/run-sec22-repro.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/dryrun-clone-modes.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/dryrun-clone-modes.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/tolerance-census.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/f161-reverify-sim.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-22/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "OPEN",
+          "note": "Raised in round 22 (code-security-reviewer)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-165",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-017",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Findings sidecars in non-gate rounds are not bound to any run, and the latest raising sidecar supersedes the reviewer's immutable fields, so an added later-round sidecar can silently downgrade a finding's severity and mandatory_violation",
+      "reproduction": "tools/gates/lib/rules.mjs:495 keeps only the LATEST sidecar version of each finding ('later rounds supersede earlier versions'), and :537-539 compares findings.json's IMMUTABLE_FINDING_FIELDS (stage_id, requirement, severity, mandatory_violation, title, reported_by) against that version only. A <role>.findings.json is bound to a run's tool-authored outputs only for the gate-round records (checkReview :463). checkClosure binds only the verifications sidecar (:714), and checkReviewRounds (:752-763) only checks that a listed record's sidecar exists. write-once (:781) forbids modifying committed files, not adding new ones. Reproduction (sec22-repro.tests.mjs.txt SEC22-8, log sec22-repro.log): genuine 3-round fixture, with F-DG0-101 raised High/mandatory in round 1, verified in round 2, gate round 3; control 0 errors. With no reviewer run, add docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json re-listing F-DG0-101 as Low / mandatory_violation false, and set the same values in findings.json: 0 errors. Negative control: the same findings.json downgrade WITHOUT the added sidecar is caught ('severity in findings.json (\"Low\") differs from the reviewer's (\"High\")').",
+      "expected": "A reviewer's classification of a finding can change only through a sidecar that the reviewer's own run demonstrably wrote. Either bind every findings sidecar (any round) to its role's run for that round, i.e. require it to be among that run's tool-authored outputs, as checkReview does for the gate round; or compare the immutable fields against EVERY raising sidecar version (or the earliest), so a later version cannot differ.",
+      "actual": "An added, unbound findings sidecar in any non-gate round later than the raising round re-classifies a High/mandatory finding as Low/non-mandatory without a validator error. Closing it still needs bound reviewer and auditor runs (for example ACCEPTED_OBSERVATION, which is only allowed for Low non-mandatory findings), so the effect is a misrepresented finding presented to those reviewers, not a direct gate pass. Hence Low.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/run-sec22-repro.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-22/sec22-repro.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-22/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T12:38:40Z",
+          "status": "OPEN",
+          "note": "Raised in round 22 (code-security-reviewer)."
+        }
+      ]
+    }
+  ]
+}
