@@ -1,10 +1,7 @@
 'use client';
 
-import Link from 'next/link';
-import { ChevronRight, Flag } from 'lucide-react';
 import { ActivityHistory } from '@/components/ActivityHistory';
 import { MetricCard } from '@/components/MetricCard';
-import { NotImplementedYet } from '@/components/NotImplementedYet';
 import { DelayImpactTile } from '@/components/planning/DelayImpactTile';
 import { PageHeader } from '@/components/PageHeader';
 import { ProjectBadges } from '@/components/ProjectBadges';
@@ -13,55 +10,15 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { card, cx } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { useProjectContext } from '@/lib/project-context';
-import { nextGate, useGates } from '@/lib/gates';
 import { useLocalized } from '@/lib/i18n-data';
-import { BlockerList, GateStatusBadges } from './gates/_components/GateBits';
 import { sectionAppliesTo, sectionByKey, sectionHref, type SectionKey } from '@/lib/sections';
+import { CommitteeAsksTile, DelayImpactRestrictedTile, NextGateTile, OverallHealthTile, TopDecisionsTile } from './_components/CockpitTiles';
 
-/** The "next gate" tile from the live gate evaluation (status, RAG, blockers) when the caller can read gates. */
-function NextGateTile() {
-  const { t } = useI18n();
-  const loc = useLocalized();
-  const { project, projectId, can } = useProjectContext();
-  const canGates = can('gates.gate.read');
-  const gates = useGates(projectId, canGates);
-  const live = gates.data ? nextGate(gates.data.items) : null;
-  if (canGates && live) {
-    return (
-      <div className="mt-3 space-y-2" data-testid="next-gate" data-gate-key={live.key}>
-        <p className="text-base font-semibold" dir="auto">
-          <Link href={`/projects/${projectId}/gates/${live.id}`} className="hover:underline">
-            <span dir="ltr">{live.key}</span> — {loc(live.name, live.nameAr)}
-          </Link>
-        </p>
-        <GateStatusBadges gate={live} />
-        <BlockerList blockers={live.blockers} limit={2} />
-        <Link href={`/projects/${projectId}/gates/${live.id}`} className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline" data-testid="next-gate-link">
-          {t('gates.openGate', { key: live.key })}
-          <ChevronRight aria-hidden="true" className="size-4 rtl:rotate-180" />
-        </Link>
-        <p className="text-xs text-muted">{t('project.cockpit.gateHint')}</p>
-      </div>
-    );
-  }
-  if (project.nextGate) {
-    return (
-      <div className="mt-3 space-y-2" data-testid="next-gate">
-        <p className="text-base font-semibold" dir="auto">
-          <span dir="ltr">{project.nextGate.key}</span> — {loc(project.nextGate.name, project.nextGate.nameAr)}
-        </p>
-        <StatusBadge enumName="gateAssessmentStatuses" value={project.nextGate.status} size="md" />
-        <p className="text-xs text-muted">{t('project.cockpit.gateHint')}</p>
-      </div>
-    );
-  }
-  return (
-    <p className="mt-3 text-sm text-muted">
-      {EM_DASH} {t('portfolio.notVisible')}
-    </p>
-  );
-}
-
+/**
+ * Project home. For DC carve-out projects this is the DC Executive Cockpit (Screen 2, REQ-UX-005): overall health, the
+ * four independent status dimensions, the next gate, delay impact, the top three decisions and gate blockers, and the
+ * committee asks — each tile from the live API within the caller's scope, each figure linking to its records.
+ */
 export default function ProjectOverviewPage() {
   const { t, tStatus } = useI18n();
   const loc = useLocalized();
@@ -113,50 +70,62 @@ export default function ProjectOverviewPage() {
           <DimensionCards dimensions={project.dimensions} hrefFor={(key) => `/projects/${projectId}/dimensions/${key}`} linkLabel={t('gates.dimensions.openDetail')} />
         </section>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <section aria-labelledby="gate-title" className={cx(card, 'p-4')}>
-            <h2 id="gate-title" className="flex items-center gap-2 text-lg font-semibold">
-              <Flag aria-hidden="true" className="size-5 text-primary" />
-              {t('portfolio.nextGate')}
-            </h2>
+        <section aria-labelledby="signals-title">
+          <h2 id="signals-title" className="mb-3 text-lg font-semibold">
+            {t('project.cockpit.signalsTitle')}
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <OverallHealthTile />
             <NextGateTile />
-          </section>
+            {can('planning.plan.read') ? <DelayImpactTile /> : <DelayImpactRestrictedTile />}
+          </div>
+        </section>
 
-          <section aria-labelledby="phases-title" className={cx(card, 'p-4 lg:col-span-2')}>
-            <h2 id="phases-title" className="text-lg font-semibold">
-              {t('project.phases.title')}
-            </h2>
-            {project.phases.length === 0 ? (
-              <p className="mt-3 text-sm text-muted">{t('project.phases.empty')}</p>
-            ) : (
-              <ol className="mt-3 grid gap-2 sm:grid-cols-2" data-testid="phase-list">
-                {project.phases.map((ph, i) => {
-                  const current = ph.key === nextGatePhase;
-                  return (
-                    <li
-                      key={ph.key}
-                      className={cx('flex items-start gap-3 rounded-md border p-2.5', current ? 'border-primary bg-primary-soft' : 'border-line')}
-                      aria-current={current ? 'step' : undefined}
-                    >
-                      <span className="tabular flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-muted text-xs font-semibold text-ink">
-                        {i + 1}
+        <section aria-labelledby="asks-title">
+          <h2 id="asks-title" className="mb-3 text-lg font-semibold">
+            {t('project.cockpit.asksTitle')}
+          </h2>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <TopDecisionsTile />
+            {/* Committee asks: only for callers who can read governance (the decision register or the meetings). */}
+            {can(['governance.decision.read', 'governance.meeting.read']) ? <CommitteeAsksTile /> : null}
+          </div>
+        </section>
+
+        <section aria-labelledby="phases-title" className={cx(card, 'p-4')}>
+          <h2 id="phases-title" className="text-lg font-semibold">
+            {t('project.phases.title')}
+          </h2>
+          {project.phases.length === 0 ? (
+            <p className="mt-3 text-sm text-muted">{t('project.phases.empty')}</p>
+          ) : (
+            <ol className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4" data-testid="phase-list">
+              {project.phases.map((ph, i) => {
+                const current = ph.key === nextGatePhase;
+                return (
+                  <li
+                    key={ph.key}
+                    className={cx('flex items-start gap-3 rounded-md border p-2.5', current ? 'border-primary bg-primary-soft' : 'border-line')}
+                    aria-current={current ? 'step' : undefined}
+                  >
+                    <span className="tabular flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-muted text-xs font-semibold text-ink">
+                      {i + 1}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium" dir="auto">
+                        {loc(ph.name, ph.nameAr)}
                       </span>
-                      <span className="min-w-0">
-                        <span className="block text-sm font-medium" dir="auto">
-                          {loc(ph.name, ph.nameAr)}
-                        </span>
-                        <span className="block text-xs text-muted">
-                          {t('project.phases.gates')}: <span dir="ltr">{ph.gateKeys.join(', ') || EM_DASH}</span>
-                          {current ? <span className="ms-2 font-semibold text-primary">{t('project.phases.current')}</span> : null}
-                        </span>
+                      <span className="block text-xs text-muted">
+                        {t('project.phases.gates')}: <span dir="ltr">{ph.gateKeys.join(', ') || EM_DASH}</span>
+                        {current ? <span className="ms-2 font-semibold text-primary">{t('project.phases.current')}</span> : null}
                       </span>
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
-          </section>
-        </div>
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </section>
 
         {visibleMetrics.length > 0 ? (
           <section aria-labelledby="metrics-title">
@@ -186,17 +155,6 @@ export default function ProjectOverviewPage() {
             </ul>
           </section>
         ) : null}
-
-        <section aria-labelledby="later-title">
-          <h2 id="later-title" className="mb-3 text-lg font-semibold">
-            {t('project.cockpit.laterTitle')}
-          </h2>
-          <div className="grid gap-3 md:grid-cols-3">
-            {can('planning.plan.read') ? <DelayImpactTile /> : <NotImplementedYet compact phase="P2" feature={t('project.cockpit.delayImpact')} />}
-            <NotImplementedYet compact phase="P2" feature={t('project.cockpit.topDecisions')} />
-            <NotImplementedYet compact phase="P2" feature={t('project.cockpit.committeeAsks')} />
-          </div>
-        </section>
 
         <p className="text-xs text-muted">
           {t('project.fields.template')}: {tStatus('templateKinds', project.templateKind)} ({project.templateKey}) ·{' '}
