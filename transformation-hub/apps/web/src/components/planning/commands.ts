@@ -1,13 +1,21 @@
 'use client';
 
+import { createElement } from 'react';
 import { planningRoutes as P } from '@hub/contracts';
 import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { localToday, type ChangeRequest, type Deliverable, type Milestone, type RaidItem, type RaidKindPath, type StatusUpdate, type Task } from '@/lib/planning';
 import { useProjectContext } from '@/lib/project-context';
-import type { CommandSpec } from './CommandBar';
+import { ApprovalDecisionPicker, type ApprovalDecisionType } from './ApprovalDecisionPicker';
+import type { CommandExtra, CommandSpec } from './CommandBar';
+import { groupDecimal } from './money';
 
 const opt = (s: string) => (s ? s : undefined);
+
+/** Optional governance decision backing an approval outside delegated authority (DOM-P2-03). */
+export function approvalDecisionExtra(decisionTypeKey: ApprovalDecisionType): CommandExtra {
+  return { kind: 'custom', required: false, render: (value, onChange) => createElement(ApprovalDecisionPicker, { decisionTypeKey, value, onChange }) };
+}
 
 /** Task lifecycle (TASK_MACHINE) — reported vs evidence-verified progress; acceptance by someone other than the submitter. */
 export function useTaskCommands(task: Task | undefined): CommandSpec[] {
@@ -19,7 +27,7 @@ export function useTaskCommands(task: Task | undefined): CommandSpec[] {
   const today = localToday();
   return [
     { key: 'activate', label: t('planning.commands.task.activate'), effects: [t('planning.commands.task.activateEffect')], permission: 'planning.task.manage', noteMode: 'optional', primary: true, run: ({ note, expectedVersion }) => api(P.activateTask, { params, body: { expectedVersion, note: opt(note) } }) },
-    { key: 'start', label: t('planning.commands.task.start'), effects: [t('planning.commands.task.startEffect')], permission: 'planning.task.update_progress', noteMode: 'optional', primary: true, extra: { kind: 'date', label: t('planning.task.actualStart'), required: false, defaultValue: today }, run: ({ note, expectedVersion, extra }) => api(P.startTask, { params, body: { expectedVersion, note: opt(note), actualStart: opt(extra) } }) },
+    { key: 'start', label: t('planning.commands.task.start'), effects: [t('planning.commands.task.startEffect'), t('planning.commands.prerequisiteRule')], permission: 'planning.task.update_progress', noteMode: 'optional', primary: true, extra: { kind: 'date', label: t('planning.task.actualStart'), required: false, defaultValue: today }, run: ({ note, expectedVersion, extra }) => api(P.startTask, { params, body: { expectedVersion, note: opt(note), actualStart: opt(extra) } }) },
     { key: 'block', label: t('planning.commands.task.block'), effects: [t('planning.commands.task.blockEffect')], permission: 'planning.task.update_progress', noteMode: 'required', noteLabel: t('planning.common.reason'), run: ({ note, expectedVersion }) => api(P.blockTask, { params, body: { expectedVersion, reason: note } }) },
     { key: 'unblock', label: t('planning.commands.task.unblock'), effects: [t('planning.commands.task.unblockEffect')], permission: 'planning.task.update_progress', noteMode: 'optional', run: ({ note, expectedVersion }) => api(P.unblockTask, { params, body: { expectedVersion, note: opt(note) } }) },
     { key: 'submit_for_acceptance', label: t('planning.commands.task.submit'), effects: [t('planning.commands.task.submitEffect')], permission: 'planning.task.update_progress', noteMode: 'optional', primary: true, run: ({ note, expectedVersion }) => api(P.submitTaskForAcceptance, { params, body: { expectedVersion, note: opt(note) } }) },
@@ -38,7 +46,7 @@ export function useMilestoneCommands(m: Milestone | undefined): CommandSpec[] {
   const params = { projectId, milestoneId: m.id };
   const mine = m.reportedBy === me.user.id;
   return [
-    { key: 'report_achieved', label: t('planning.commands.milestone.report'), effects: [t('planning.commands.milestone.reportEffect')], permission: 'planning.task.update_progress', noteMode: 'optional', primary: true, extra: { kind: 'date', label: t('planning.milestone.actualDate'), required: true, defaultValue: localToday() }, run: ({ note, expectedVersion, extra }) => api(P.reportMilestoneAchieved, { params, body: { expectedVersion, note: opt(note), actualDate: extra } }) },
+    { key: 'report_achieved', label: t('planning.commands.milestone.report'), effects: [t('planning.commands.milestone.reportEffect'), t('planning.commands.prerequisiteRule')], permission: 'planning.task.update_progress', noteMode: 'optional', primary: true, extra: { kind: 'date', label: t('planning.milestone.actualDate'), required: true, defaultValue: localToday() }, run: ({ note, expectedVersion, extra }) => api(P.reportMilestoneAchieved, { params, body: { expectedVersion, note: opt(note), actualDate: extra } }) },
     { key: 'verify_achieved', label: t('planning.commands.milestone.verify'), effects: [t('planning.commands.milestone.verifyEffect'), t('planning.commands.evidenceRule')], permission: 'planning.deliverable.accept', noteMode: 'optional', primary: true, hidden: mine, run: ({ note, expectedVersion }) => api(P.verifyMilestoneAchieved, { params, body: { expectedVersion, note: opt(note) } }) },
     { key: 'reject_evidence', label: t('planning.commands.milestone.rejectEvidence'), effects: [t('planning.commands.milestone.rejectEvidenceEffect')], permission: 'planning.deliverable.accept', noteMode: 'required', noteLabel: t('planning.common.reason'), hidden: mine, run: ({ note, expectedVersion }) => api(P.rejectMilestoneEvidence, { params, body: { expectedVersion, reason: note } }) },
     { key: 'flag_at_risk', label: t('planning.commands.milestone.flag'), effects: [t('planning.commands.milestone.flagEffect')], permission: 'planning.task.update_progress', noteMode: 'required', noteLabel: t('planning.common.reason'), run: ({ note, expectedVersion }) => api(P.flagMilestoneAtRisk, { params, body: { expectedVersion, reason: note } }) },
@@ -96,10 +104,26 @@ export function useChangeRequestCommands(cr: ChangeRequest | undefined): Command
   if (!cr) return [];
   const params = { projectId, changeRequestId: cr.id };
   const mine = cr.requestedBy === me.user.id;
+  const costText = typeof cr.impacts.cost === 'string' && cr.impacts.cost.trim().length > 0;
+  const costEffect = cr.costImpact
+    ? t('planning.commands.cr.approveCost', { amount: `${groupDecimal(cr.costImpact.amount)} ${cr.costImpact.currency}${cr.costImpact.unitScale === 1 ? '' : ` × ${t(`planning.money.units.${cr.costImpact.unitScale === 1000 ? '1000' : '1000000'}`)}`}` })
+    : costText
+      ? t('planning.commands.cr.approveCostUnquantified')
+      : t('planning.commands.cr.approveNoCost');
   return [
     { key: 'submit', label: t('planning.commands.cr.submit'), effects: [t('planning.commands.cr.submitEffect')], permission: 'planning.change_request.create', noteMode: 'optional', primary: true, run: ({ note, expectedVersion }) => api(P.submitChangeRequest, { params, body: { expectedVersion, note: opt(note) } }) },
     { key: 'start_review', label: t('planning.commands.cr.startReview'), effects: [t('planning.commands.cr.startReviewEffect')], permission: 'planning.change_request.assess', noteMode: 'optional', primary: true, run: ({ note, expectedVersion }) => api(P.startChangeRequestReview, { params, body: { expectedVersion, note: opt(note) } }) },
-    { key: 'approve', label: t('planning.commands.cr.approve'), effects: [t('planning.commands.cr.approveEffect'), t('planning.commands.notSelf')], permission: 'planning.change_request.approve', noteMode: 'optional', primary: true, hidden: mine, run: ({ note, expectedVersion }) => api(P.approveChangeRequest, { params, body: { expectedVersion, note: opt(note) } }) },
+    {
+      key: 'approve',
+      label: t('planning.commands.cr.approve'),
+      effects: [t('planning.commands.cr.approveEffect'), costEffect, t('planning.commands.approvalAuthority'), t('planning.commands.notSelf')],
+      permission: 'planning.change_request.approve',
+      noteMode: 'optional',
+      primary: true,
+      hidden: mine,
+      extra: approvalDecisionExtra('change_request_budget'),
+      run: ({ note, expectedVersion, extra }) => api(P.approveChangeRequest, { params, body: { expectedVersion, note: opt(note), decisionId: opt(extra) } }),
+    },
     { key: 'reject', label: t('planning.commands.cr.reject'), effects: [t('planning.commands.cr.rejectEffect')], permission: 'planning.change_request.approve', noteMode: 'required', noteLabel: t('planning.common.reason'), danger: true, hidden: mine, run: ({ note, expectedVersion }) => api(P.rejectChangeRequest, { params, body: { expectedVersion, reason: note } }) },
     { key: 'withdraw', label: t('planning.commands.cr.withdraw'), effects: [t('planning.commands.cr.withdrawEffect')], permission: 'planning.change_request.create', noteMode: 'required', noteLabel: t('planning.common.reason'), danger: true, run: ({ note, expectedVersion }) => api(P.withdrawChangeRequest, { params, body: { expectedVersion, reason: note } }) },
     { key: 'mark_implemented', label: t('planning.commands.cr.implement'), effects: [t(cr.rebaseline ? 'planning.commands.cr.implementRebaseline' : 'planning.commands.cr.implementEffect')], permission: 'planning.change_request.assess', noteMode: 'optional', run: ({ note, expectedVersion }) => api(P.implementChangeRequest, { params, body: { expectedVersion, note: opt(note) } }) },

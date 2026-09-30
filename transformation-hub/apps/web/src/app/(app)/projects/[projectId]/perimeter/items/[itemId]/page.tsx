@@ -98,6 +98,11 @@ export default function PerimeterItemPage() {
           <p className="min-w-0 text-ink">
             <GitPullRequestArrow aria-hidden="true" className="me-1 inline size-4 text-warning" />
             {t('carveout.scope.pendingBanner', { code: it.pendingChange.code, status: tStatus('changeRequestStatuses', it.pendingChange.status) })}
+            {['submitted', 'under_review'].includes(it.pendingChange.status) ? (
+              <span className="mt-1 block text-xs" data-testid="pending-change-cost-hint">
+                {t('planning.cr.costBeforeApproval')}
+              </span>
+            ) : null}
           </p>
           <span className="flex flex-wrap gap-2">
             <Link href={changeRequestHref(projectId, it.pendingChange.id)} className={btn.secondary} data-testid="open-change-request">

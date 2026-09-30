@@ -20,6 +20,7 @@ import { useToast } from '../Toast';
 import { btn, card, cx } from '../ui';
 import { CodeLink, DateText, FilterSelect, FilterToggle } from './bits';
 import { FormDialog } from './dialogs';
+import { MoneyFields, MoneyText, moneyInputOf, parseMoney, type MoneyInput } from './money';
 
 const PAGE = 20;
 const KIND_OF: Record<RaidKindPath, 'risk' | 'issue' | 'assumption' | 'dependency'> = { risks: 'risk', issues: 'issue', assumptions: 'assumption', dependencies: 'dependency' };
@@ -327,6 +328,7 @@ export function ChangeRequestsPanel() {
     { key: 'code', header: t('planning.common.code'), isRowHeader: true, cell: (c) => <CodeLink href={changeRequestHref(projectId, c.id)} code={c.code} title={c.title} /> },
     { key: 'status', header: t('planning.common.status'), cell: (c) => <StatusBadge enumName="changeRequestStatuses" value={c.status} /> },
     { key: 'rebaseline', header: t('planning.cr.rebaseline'), cell: (c) => (c.rebaseline ? t('planning.common.yes') : t('planning.common.no')) },
+    { key: 'cost', header: t('planning.cr.costImpact'), cell: (c) => (c.costImpact ? <MoneyText value={c.costImpact} /> : c.impacts.cost ? <span className="text-xs text-warning">{t('planning.cr.costNotQuantifiedShort')}</span> : <span className="text-muted">—</span>) },
     { key: 'subject', header: t('planning.cr.subject'), cell: (c) => (c.subjectType ? <span dir="ltr" className="text-xs">{c.subjectType}</span> : '—') },
     { key: 'by', header: t('planning.cr.requestedBy'), cell: (c) => <span dir="auto">{c.requestedByName ?? '—'}</span> },
     { key: 'created', header: t('planning.baseline.createdAt'), cell: (c) => formatDateTime(c.createdAt) },
@@ -379,10 +381,15 @@ export function ChangeRequestFormDialog({ open, onClose, cr }: { open: boolean; 
   const refresh = useRefreshPlanning(projectId);
   const toast = useToast();
   const [f, setF] = useState({ title: '', rationale: '', alternatives: '', rebaseline: false, impacts: {} as Partial<Record<ImpactKey, string>> });
+  const [cost, setCost] = useState<MoneyInput>(() => moneyInputOf(cr?.costImpact));
   useEffect(() => {
     if (!open) return;
     setF({ title: cr?.title ?? '', rationale: cr?.rationale ?? '', alternatives: (cr?.alternatives ?? []).join('\n'), rebaseline: cr?.rebaseline ?? false, impacts: { ...(cr?.impacts ?? {}) } });
+    setCost(moneyInputOf(cr?.costImpact));
   }, [open, cr]);
+  const money = parseMoney(cost);
+  // Omitted = unchanged (edit) / none (create); emptying a recorded amount clears it.
+  const costImpact = money === 'invalid' ? undefined : money === null ? (cr?.costImpact ? null : undefined) : money;
   const alts = f.alternatives.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 10);
   const impacts = Object.fromEntries(Object.entries(f.impacts).filter(([, v]) => v && v.trim()).map(([k, v]) => [k, v!.trim()]));
   return (
@@ -393,14 +400,17 @@ export function ChangeRequestFormDialog({ open, onClose, cr }: { open: boolean; 
       testId="cr-form"
       title={cr ? t('planning.cr.editTitle', { code: cr.code }) : t('planning.cr.create')}
       submitLabel={cr ? t('common.actions.save') : t('planning.cr.saveDraft')}
-      disabled={!f.title.trim() || !f.rationale.trim()}
+      disabled={!f.title.trim() || !f.rationale.trim() || money === 'invalid'}
       onReload={() => void refresh()}
       onSubmit={async () => {
         if (cr) {
-          await api(P.updateChangeRequest, { params: { projectId, changeRequestId: cr.id }, body: { expectedVersion: cr.version, title: f.title.trim(), rationale: f.rationale.trim(), alternatives: alts, impacts, rebaseline: f.rebaseline } });
+          await api(P.updateChangeRequest, {
+            params: { projectId, changeRequestId: cr.id },
+            body: { expectedVersion: cr.version, title: f.title.trim(), rationale: f.rationale.trim(), alternatives: alts, impacts, ...(costImpact !== undefined ? { costImpact } : {}), rebaseline: f.rebaseline },
+          });
           toast.show('success', t('planning.common.saved'));
         } else {
-          const r = await api(P.createChangeRequest, { params: { projectId }, body: { title: f.title.trim(), rationale: f.rationale.trim(), alternatives: alts, impacts, rebaseline: f.rebaseline } });
+          const r = await api(P.createChangeRequest, { params: { projectId }, body: { title: f.title.trim(), rationale: f.rationale.trim(), alternatives: alts, impacts, ...(costImpact ? { costImpact } : {}), rebaseline: f.rebaseline } });
           toast.show('success', t('planning.common.createdCode', { code: r.code ?? '' }));
         }
         await refresh();
@@ -419,6 +429,7 @@ export function ChangeRequestFormDialog({ open, onClose, cr }: { open: boolean; 
           ))}
         </div>
       </fieldset>
+      <MoneyFields legend={t('planning.cr.costImpact')} hint={t('planning.cr.costImpactHint')} value={cost} onChange={setCost} testId="cr-form-cost-impact" />
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" className="mt-0.5 size-4" checked={f.rebaseline} onChange={(e) => setF({ ...f, rebaseline: e.target.checked })} />
         <span>
