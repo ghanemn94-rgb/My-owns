@@ -11,11 +11,10 @@ import { allTableCounts, allTableFingerprints, jsonStrings } from './closure-kit
  * database), through the real compiled CLIs (dist/cli/bootstrap.js, dist/cli/seed-demo.js).
  *
  * Throwaway database `<test db>_boot` (hub_test_boot in CI, hub_test_<you>_boot locally), guarded to hub_test* on localhost:
- *   - with an admin connection (TEST_DATABASE_ADMIN_URL, else the CI service container's PGADMIN_URL) it is created
- *     fresh and dropped at the end;
- *   - otherwise the owner role creates it if it has CREATEDB (and drops it at the end);
- *   - otherwise it must be pre-provisioned (HUB_DATABASES="hub_test_<you> hub_test_<you>_boot" bash scripts/dev/pg-init-roles.sh);
- *     its schema is reset to empty before each use and left empty afterwards.
+ *   - if it exists (pre-provisioned: HUB_DATABASES="hub_test_<you> hub_test_<you>_boot" bash scripts/dev/pg-init-roles.sh)
+ *     its schema is reset to empty before each use and left empty afterwards (never dropped);
+ *   - otherwise it is created with an admin connection (TEST_DATABASE_ADMIN_URL, else the CI service container's
+ *     PGADMIN_URL) or by the owner role if it has CREATEDB, and dropped at the end.
  */
 const API_ROOT = join(__dirname, '..', '..');
 const OWNER_URL = new URL(TEST_ENV.DATABASE_MIGRATION_URL!);
@@ -31,7 +30,7 @@ const BOOT_OWNER_URL = withDb(OWNER_URL, BOOT_DB);
 const BOOT_APP_URL = withDb(APP_URL, BOOT_DB);
 
 type Mode = 'admin' | 'owner-createdb' | 'preprovisioned';
-let mode: Mode;
+let mode: Mode | undefined;
 
 function adminUrl(): string | null {
   const u = process.env.TEST_DATABASE_ADMIN_URL ?? process.env.PGADMIN_URL;
@@ -48,8 +47,18 @@ async function onPool<T>(url: string, fn: (p: Pool) => Promise<T>): Promise<T> {
   }
 }
 
-/** A brand-new, empty database: dropped/created (admin or CREATEDB owner) or schema-reset (pre-provisioned). */
+/**
+ * A brand-new, empty database. An existing (pre-provisioned) one is schema-reset and never dropped; otherwise it is
+ * created — with the admin connection, else by the owner if it has CREATEDB — and dropped again at the end.
+ */
 async function freshBootDb(): Promise<void> {
+  const maint = withDb(OWNER_URL, 'postgres');
+  const exists = await onPool(maint, async (p) => (await p.query('select 1 from pg_database where datname = $1', [BOOT_DB])).rowCount === 1);
+  if (exists && (mode === undefined || mode === 'preprovisioned')) {
+    mode = 'preprovisioned';
+    await onPool(BOOT_OWNER_URL, (p) => p.query('DROP SCHEMA IF EXISTS public CASCADE; DROP SCHEMA IF EXISTS drizzle CASCADE; CREATE SCHEMA public; CREATE EXTENSION IF NOT EXISTS pgcrypto;'));
+    return;
+  }
   const admin = adminUrl();
   if (admin) {
     mode = 'admin';
@@ -61,15 +70,11 @@ async function freshBootDb(): Promise<void> {
     await onPool(withDb(new URL(admin), BOOT_DB), (p) => p.query('create extension if not exists pgcrypto'));
     return;
   }
-  const maint = withDb(OWNER_URL, 'postgres');
-  const created = await onPool(maint, async (p) => {
-    const exists = (await p.query('select 1 from pg_database where datname = $1', [BOOT_DB])).rowCount === 1;
-    if (exists && mode === 'owner-createdb') await p.query(`drop database "${BOOT_DB}"`);
-    else if (exists) return false;
+  await onPool(maint, async (p) => {
+    if (exists) await p.query(`drop database "${BOOT_DB}"`); // created by this spec earlier (owner-createdb)
     try {
       await p.query(`create database "${BOOT_DB}"`);
       await p.query(`grant connect on database "${BOOT_DB}" to hub_app`);
-      return true;
     } catch (e) {
       if ((e as { code?: string }).code === '42501') {
         throw new Error(
@@ -80,13 +85,8 @@ async function freshBootDb(): Promise<void> {
       throw e;
     }
   });
-  if (created) {
-    mode = 'owner-createdb';
-    await onPool(BOOT_OWNER_URL, (p) => p.query('create extension if not exists pgcrypto'));
-    return;
-  }
-  mode = 'preprovisioned';
-  await onPool(BOOT_OWNER_URL, (p) => p.query('DROP SCHEMA IF EXISTS public CASCADE; DROP SCHEMA IF EXISTS drizzle CASCADE; CREATE SCHEMA public; CREATE EXTENSION IF NOT EXISTS pgcrypto;'));
+  mode = 'owner-createdb';
+  await onPool(BOOT_OWNER_URL, (p) => p.query('create extension if not exists pgcrypto'));
 }
 
 async function removeBootDb(): Promise<void> {
