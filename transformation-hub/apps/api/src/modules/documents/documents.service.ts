@@ -30,6 +30,8 @@ import { APP_CONFIG, AppConfig } from '../../platform/config';
 import type { RequestContext } from '../../platform/context';
 import { newId, payloadHash } from '../../platform/ids';
 import { assertVersion, likeContains, loadInProject, pageOf, offsetOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, documentsRoutes } from '@hub/contracts';
 import { OBJECT_STORAGE, ObjectStorage, storageKey } from './storage/object-storage';
 import { MALWARE_SCANNER, MalwareScanner } from './files/scanner';
 import { listZipEntries } from './files/zip';
@@ -183,7 +185,7 @@ export class DocumentsService {
     };
   }
 
-  async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; sort?: string; kind?: string; classification?: string }) {
+  async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; sort?: RouteInput<typeof documentsRoutes.listDocuments>['query']['sort']; kind?: string; classification?: string }) {
     const tx = this.db.tx();
     const d = schema.document;
     const conds: (SQL | undefined)[] = [this.visibleDocsWhere(ctx, projectId)];
@@ -192,7 +194,7 @@ export class DocumentsService {
     if (q.q) conds.push(sql`(to_tsvector('simple', ${d.title}) @@ websearch_to_tsquery('simple', ${q.q}) or ${d.title} ilike ${likeContains(q.q)})`);
     const where = and(...conds);
     const [{ total }] = (await tx.select({ total: count() }).from(d).where(where)) as [{ total: number }];
-    const order = q.sort === 'title' ? [asc(d.title)] : q.sort === 'createdAt' ? [asc(d.createdAt)] : [desc(d.updatedAt), asc(d.title)];
+    const order = orderBySort(q.sort, { title: d.title, kind: d.kind, createdAt: d.createdAt, updatedAt: d.updatedAt }, d.id, [desc(d.updatedAt), asc(d.title), asc(d.id)]);
     const rows = await tx
       .select({ d, v: schema.documentVersion })
       .from(d)

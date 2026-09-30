@@ -97,7 +97,9 @@ test.describe('QA P1 review — AT-02 wizard creation (en/ar), AT-03 isolation, 
       await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
       await page.getByTestId('create-project').click();
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-      await page.getByRole('radio', { name: /DC Carve-out/ }).check();
+      // QA-P1-14: the Arabic UI shows the template's Arabic name (from the bilingual template), not the English one.
+      await expect(page.getByRole('radio', { name: /DC Carve-out/ })).toHaveCount(0);
+      await page.getByRole('radio', { name: /مراكز البيانات/ }).check();
       await page.screenshot({ path: join(SHOTS, 'ar-wizard-1-template.png'), fullPage: true });
       await page.getByRole('button', { name: 'التالي' }).click();
 

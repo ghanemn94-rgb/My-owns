@@ -18,6 +18,8 @@ import {
   ClassificationSchema,
   VerificationStatusSchema,
   PageQuery,
+  NoSort,
+  SortParam,
   paged,
   Text,
   RequiredText,
@@ -237,7 +239,8 @@ export const documentsRoutes = registerRoutes({
     tags: T,
     access: 'documents.document.read',
     params: ProjectParams,
-    query: PageQuery.extend({ kind: DocumentKindSchema.optional(), classification: ClassificationSchema.optional() }),
+    // Default order: most recently updated first, then title.
+    query: PageQuery.extend({ kind: DocumentKindSchema.optional(), classification: ClassificationSchema.optional(), sort: SortParam(['title', 'kind', 'createdAt', 'updatedAt']) }),
     response: paged(DocumentSummaryDto),
   }),
   searchDocuments: defineRoute({
@@ -248,7 +251,8 @@ export const documentsRoutes = registerRoutes({
     tags: T,
     access: 'documents.document.read',
     params: ProjectParams,
-    query: z.object({ q: RequiredText(200), page: PageQuery.shape.page, pageSize: PageQuery.shape.pageSize, kind: DocumentKindSchema.optional(), classification: ClassificationSchema.optional() }),
+    // Results are ranked by relevance (then title): no sort.
+    query: z.object({ q: RequiredText(200), page: PageQuery.shape.page, pageSize: PageQuery.shape.pageSize, kind: DocumentKindSchema.optional(), classification: ClassificationSchema.optional(), sort: NoSort }),
     response: paged(SearchHitDto),
   }),
   uploadPolicy: defineRoute({
@@ -408,7 +412,7 @@ export const documentsRoutes = registerRoutes({
     tags: T,
     access: 'documents.document.read',
     params: ProjectParams,
-    query: z.object({ targetType: EvidenceTargetTypeSchema, targetId: Uuid, includeInactive: z.enum(['true', 'false']).default('true') }),
+    query: z.object({ targetType: EvidenceTargetTypeSchema, targetId: Uuid, includeInactive: z.enum(['true', 'false']).default('true'), sort: NoSort }),
     response: z.object({ items: z.array(EvidenceLinkDto), total: z.number().int() }),
   }),
   linkEvidence: defineRoute({
@@ -480,7 +484,8 @@ export const documentsRoutes = registerRoutes({
     tags: T,
     access: 'documents.document.read',
     params: ProjectParams,
-    query: PageQuery,
+    // Default order: code.
+    query: PageQuery.extend({ sort: SortParam(['code', 'filename', 'reportDate', 'asOfDate', 'extractionDate', 'createdAt']) }),
     response: paged(SourceDto),
   }),
   createSource: defineRoute({

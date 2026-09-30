@@ -16,6 +16,8 @@ import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
 import { RecordVersionService, assertVersion, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, governanceRoutes } from '@hub/contracts';
 import { newId } from '../../platform/ids';
 import type { RequestContext } from '../../platform/context';
 import { ActionRow, GovernanceSupport, iso } from './governance.support';
@@ -47,7 +49,17 @@ export class ActionsService {
   async list(
     ctx: RequestContext,
     projectId: string,
-    q: { page: number; pageSize: number; q?: string; status?: ActionStatus; decisionId?: string; meetingId?: string; ownerUserId?: string; overdue?: 'true' | 'false' },
+    q: {
+      page: number;
+      pageSize: number;
+      q?: string;
+      status?: ActionStatus;
+      decisionId?: string;
+      meetingId?: string;
+      ownerUserId?: string;
+      overdue?: 'true' | 'false';
+      sort?: RouteInput<typeof governanceRoutes.listActions>['query']['sort'];
+    },
   ) {
     const a = schema.actionItem;
     const d = schema.decision;
@@ -67,7 +79,8 @@ export class ActionsService {
     );
     const tx = this.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(a).leftJoin(d, eq(d.id, a.decisionId)).where(where)) as [{ total: number }];
-    const rows = await tx.select({ a }).from(a).leftJoin(d, eq(d.id, a.decisionId)).where(where).orderBy(desc(a.createdAt)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { code: a.code, title: a.title, dueDate: a.dueDate, status: a.status, createdAt: a.createdAt }, a.id, [desc(a.createdAt), desc(a.id)]);
+    const rows = await tx.select({ a }).from(a).leftJoin(d, eq(d.id, a.decisionId)).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     const names = await this.sup.displayNames(rows.map((r) => r.a.ownerUserId));
     return pageOf(
       rows.map((r) => this.actionDto(r.a, names, today)),
@@ -189,7 +202,11 @@ export class ActionsService {
   // ---------------------------------------------------------------------------------------------------------
   // Escalations
 
-  async listEscalations(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; status?: EscalationStatus; sourceType?: EscalationSource; sourceId?: string }) {
+  async listEscalations(
+    ctx: RequestContext,
+    projectId: string,
+    q: { page: number; pageSize: number; q?: string; status?: EscalationStatus; sourceType?: EscalationSource; sourceId?: string; sort?: RouteInput<typeof governanceRoutes.listEscalations>['query']['sort'] },
+  ) {
     const e = schema.escalation;
     const d = schema.decision;
     const where = and(
@@ -205,7 +222,8 @@ export class ActionsService {
     const join = and(eq(e.sourceType, 'decision'), eq(d.id, e.sourceId));
     const tx = this.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(e).leftJoin(d, join).where(where)) as [{ total: number }];
-    const rows = await tx.select({ e }).from(e).leftJoin(d, join).where(where).orderBy(desc(e.createdAt)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { code: e.code, title: e.title, decisionDeadline: e.decisionDeadline, status: e.status, createdAt: e.createdAt }, e.id, [desc(e.createdAt), desc(e.id)]);
+    const rows = await tx.select({ e }).from(e).leftJoin(d, join).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     return pageOf(
       rows.map((r) => this.escalationDto(r.e)),
       Number(total),

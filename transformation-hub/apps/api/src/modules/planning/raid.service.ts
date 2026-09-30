@@ -31,6 +31,7 @@ import type {
 } from '@hub/contracts';
 import { AuditService } from '../../platform/audit.service';
 import { RecordVersionService, updateVersioned, loadInProject, nextCode, pageOf, offsetOf } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { PlanningSupport, ProjectInfo } from './planning-support';
@@ -132,14 +133,13 @@ export class RaidService {
       conds.push(sql`${schema.risk.probability} * ${schema.risk.impact} >= ${q.minScore}`);
     }
     const where = and(...conds);
-    const order =
-      q.sort === '-score' && k.kind === 'risk'
-        ? [sql`${schema.risk.probability} * ${schema.risk.impact} desc`, asc(T.code)]
-        : q.sort === 'dueDate'
-          ? [sql`${T.dueDate} asc nulls last`, asc(T.code)]
-          : q.sort === '-updatedAt'
-            ? [desc(T.updatedAt)]
-            : [asc(T.code)];
+    if ((q.sort === 'score' || q.sort === '-score') && k.kind !== 'risk') throw invalid('raid.sort_score_risks_only', 'Sorting by score applies to risks only');
+    const order = orderBySort(
+      q.sort,
+      { code: T.code, title: T.title, status: T.status, dueDate: T.dueDate, updatedAt: T.updatedAt, score: [sql`${schema.risk.probability} * ${schema.risk.impact}`, T.code] },
+      T.id,
+      [asc(T.code), asc(T.id)],
+    );
     const [{ n }] = (await this.tx.select({ n: count() }).from(T).where(where)) as [{ n: number }];
     const rows = (await this.tx.select().from(T).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q))) as unknown as AnyRaidRow[];
     return pageOf(await this.dtos(p, k.kind, rows), Number(n), q);

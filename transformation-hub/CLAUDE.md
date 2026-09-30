@@ -77,8 +77,11 @@ a status column.
 - Base path `/api/v1`. Project resources under `/api/v1/projects/:projectId/...`.
 - Errors: RFC 7807 `application/problem+json` with `type`, `title`, `status`, `detail`, `code`, `correlationId`.
   Never include secrets or stack traces.
-- Lists: `?page=&pageSize=(<=100)&q=&sort=` → `{ items, page, pageSize, total }`. Totals are computed inside
-  the caller's scope only.
+- Lists: `?page=&pageSize=(<=100)&q=&sort=` → `{ items, page, pageSize, total }`. `sort` is an allow-list declared
+  per list in its contract (`key` / `-key`; unknown → 400; fixed-order lists reject it); ties break by id, NULLs last.
+  Totals are computed inside the caller's scope only.
+- Bilingual data: template-seeded names carry `<field>` (English) + `<field>Ar`; server-computed explanations carry
+  `<field>I18n` codes + parameters that the web translates (docs/architecture/module-guide.md §2).
 - CSRF: cookie session (`hub_session`, httpOnly, SameSite=Lax, Secure in prod) + `x-csrf-token` header matching
   the `hub_csrf` cookie on every non-GET request.
 - Every route is declared in `packages/contracts` (`defineRoute`) with its permission; the API refuses to boot

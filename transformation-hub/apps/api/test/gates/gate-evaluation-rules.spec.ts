@@ -173,7 +173,15 @@ describe('Prerequisite gates and frozen cycles [REQ-LCY-010]', () => {
     const g1 = await gateByKey(p.pm, projectId, 'G1');
     expect(g1.evaluation.counts.unmet).toBe(0);
     expect(g1.evaluation.ready).toBe(false);
-    expect(g1.evaluation.blockers).toEqual([{ kind: 'prerequisite', ref: 'G0', message: 'Prerequisite gate G0 is not approved' }]);
+    expect(g1.evaluation.blockers).toEqual([
+      {
+        kind: 'prerequisite',
+        ref: 'G0',
+        message: 'Prerequisite gate G0 is not approved',
+        // QA-P1-14: the same blocker as a translatable code + parameters.
+        messageI18n: [{ code: 'gate.blocker.prerequisite_not_approved', params: { gate: 'G0' } }],
+      },
+    ]);
     const r = await p.pm.post(`/api/v1/projects/${projectId}/gates/${g1.id}/assessment/mark-ready`, { expectedVersion: g1.assessment.version });
     expect(r.status).toBe(422);
     expect(r.body.details.blockers[0].kind).toBe('prerequisite');

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { APPLICABILITY_STATUSES, APPROVAL_REGISTER_CATEGORIES, ENTITY_KINDS, INCORPORATION_STATUSES, REQUIREMENT_STATUSES } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
-import { ClassificationSchema, ExpectedVersion, IsoDate, PageQuery, ProjectParams, RequiredText, Text, Uuid, VerificationStatusSchema, idParams, paged } from './common';
+import { ClassificationSchema, ExpectedVersion, IsoDate, PageQuery, ProjectParams, RequiredText, ServerMessageSchema, SortParam, Text, Uuid, VerificationStatusSchema, idParams, paged } from './common';
 
 /**
  * NewCo: legal entities, incorporation status with verification (kept separate from transfers and operations — AT-06),
@@ -25,7 +25,7 @@ const Person = z.object({ userId: Uuid, name: z.string().nullable() }).nullable(
 const EvidenceCounts = z.object({ active: z.number().int(), conflicting: z.number().int() });
 
 export const StatusDimensionsSummary = z.object({
-  items: z.array(z.object({ key: z.string(), state: z.string(), explanation: z.string().nullable() })),
+  items: z.array(z.object({ key: z.string(), state: z.string(), explanation: z.string().nullable(), explanationI18n: z.array(ServerMessageSchema) })),
   /** Computed by the gates module (StatusDimensionsService) — incorporation alone never completes the carve-out. */
   carveOutComplete: z.boolean(),
 });
@@ -135,6 +135,8 @@ export const RegulatoryListQuery = PageQuery.extend({
   applicability: ApplicabilitySchema.optional(),
   status: RequirementStatusSchema.optional(),
   validity: z.enum(['expired', 'expiring']).optional(),
+  /** Default order: code. */
+  sort: SortParam(['code', 'title', 'authority', 'category', 'status', 'validTo', 'updatedAt']),
 });
 export const CreateRegulatoryBody = z
   .object({

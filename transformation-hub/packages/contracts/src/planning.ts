@@ -14,7 +14,7 @@ import {
   VERIFICATION_STATUSES,
 } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
-import { Uuid, IsoDate, PageQuery, paged, Text, RequiredText, ProjectParams, ExpectedVersion, MoneySchema, Ok } from './common';
+import { Uuid, IsoDate, PageQuery, NoSort, SortParam, paged, Text, RequiredText, ProjectParams, ExpectedVersion, MoneySchema, Ok } from './common';
 
 /**
  * Planning module contracts (spec §6, §9, §14): WBS/tasks, milestones, deliverables, dependencies, schedule
@@ -109,7 +109,8 @@ export const TaskListQuery = PageQuery.extend({
   ownerUserId: UserRef.optional(),
   gateKey: z.string().trim().max(16).optional(),
   overdue: BoolQuery.optional(),
-  sort: z.enum(['wbs', 'title', 'status', 'plannedFinish', '-plannedFinish', 'updatedAt', '-updatedAt']).optional(),
+  /** Default order: WBS (template sort order, then WBS code) — the same as `wbs`. `status` sorts in lifecycle order. */
+  sort: SortParam(['wbs', 'title', 'status', 'plannedFinish', 'updatedAt']),
 });
 
 export const CreateTaskBody = z.object({
@@ -237,6 +238,8 @@ export const MilestoneListQuery = PageQuery.extend({
   gateKey: z.string().trim().max(16).optional(),
   overdue: BoolQuery.optional(),
   critical: BoolQuery.optional(),
+  /** Default order: planned date (undated last), then code. */
+  sort: SortParam(['code', 'title', 'status', 'plannedDate', 'forecastDate', 'updatedAt']),
 });
 
 export const CreateMilestoneBody = z.object({
@@ -298,6 +301,8 @@ export const DeliverableListQuery = PageQuery.extend({
   gateKey: z.string().trim().max(16).optional(),
   weightApproved: BoolQuery.optional(),
   overdue: BoolQuery.optional(),
+  /** Default order: code. */
+  sort: SortParam(['code', 'title', 'status', 'dueDate', 'updatedAt']),
 });
 
 export const CreateDeliverableBody = z.object({
@@ -335,10 +340,12 @@ export const DependencyDto = z.object({
   predecessorId: Uuid,
   predecessorCode: z.string(),
   predecessorTitle: z.string(),
+  predecessorTitleAr: z.string().nullable(),
   successorType: z.enum(SCHEDULE_NODE_TYPES),
   successorId: Uuid,
   successorCode: z.string(),
   successorTitle: z.string(),
+  successorTitleAr: z.string().nullable(),
   type: z.enum(DEPENDENCY_TYPES),
   lagDays: z.number().int(),
   note: z.string().nullable(),
@@ -367,13 +374,14 @@ export const ScheduleDto = z.object({
   projectFinish: z.string().nullable(),
   issues: z.array(ScheduleIssue),
   assumptions: z.array(z.string()),
-  criticalPath: z.array(z.object({ id: Uuid, type: z.enum(SCHEDULE_NODE_TYPES), code: z.string(), title: z.string() })).nullable(),
+  criticalPath: z.array(z.object({ id: Uuid, type: z.enum(SCHEDULE_NODE_TYPES), code: z.string(), title: z.string(), titleAr: z.string().nullable() })).nullable(),
   nodes: z.array(
     z.object({
       id: Uuid,
       type: z.enum(SCHEDULE_NODE_TYPES),
       code: z.string(),
       title: z.string(),
+      titleAr: z.string().nullable(),
       workstreamCode: z.string().nullable(),
       status: z.string(),
       proposed: z.boolean(),
@@ -402,14 +410,25 @@ export const DelayImpactBody = z.object({
 export const DelayImpactDto = z.object({
   label: z.literal(PLANNING_SCHEDULE_LABEL),
   status: z.enum(['computed', 'incomplete', 'invalid']),
-  delayedNode: z.object({ id: Uuid, type: z.enum(SCHEDULE_NODE_TYPES), code: z.string(), title: z.string() }),
+  delayedNode: z.object({ id: Uuid, type: z.enum(SCHEDULE_NODE_TYPES), code: z.string(), title: z.string(), titleAr: z.string().nullable() }),
   delayWorkingDays: z.number().int(),
   scope: z.object({ kind: z.enum(['project', 'driving_network']), targetNodeId: Uuid.nullable(), nodeCount: z.number().int() }),
   finishBeforeDelay: z.string().nullable(),
   forecastFinish: z.string().nullable(),
   projectSlipWorkingDays: z.number().int().nullable(),
   affected: z.array(
-    z.object({ id: Uuid, type: z.enum(SCHEDULE_NODE_TYPES), code: z.string(), title: z.string(), earlyFinishBefore: z.string(), earlyFinishAfter: z.string(), slipWorkingDays: z.number().int(), critical: z.boolean(), gateKey: z.string().nullable() }),
+    z.object({
+      id: Uuid,
+      type: z.enum(SCHEDULE_NODE_TYPES),
+      code: z.string(),
+      title: z.string(),
+      titleAr: z.string().nullable(),
+      earlyFinishBefore: z.string(),
+      earlyFinishAfter: z.string(),
+      slipWorkingDays: z.number().int(),
+      critical: z.boolean(),
+      gateKey: z.string().nullable(),
+    }),
   ),
   affectedGateKeys: z.array(z.string()),
   issues: z.array(ScheduleIssue),
@@ -424,6 +443,7 @@ const LookAheadItem = z.object({
   type: z.enum(['task', 'milestone', 'deliverable']),
   code: z.string(),
   title: z.string(),
+  titleAr: z.string().nullable(),
   workstreamCode: z.string().nullable(),
   date: z.string(),
   dateKind: z.enum(['start', 'finish', 'due']),
@@ -532,6 +552,8 @@ export const ChangeRequestListQuery = PageQuery.extend({
   status: csvOf(CHANGE_REQUEST_STATUSES).optional(),
   subjectType: z.string().trim().max(32).optional(),
   subjectId: Uuid.optional(),
+  /** Default order: newest first. */
+  sort: SortParam(['code', 'title', 'status', 'createdAt', 'updatedAt']),
 });
 
 export const CreateChangeRequestBody = z.object({
@@ -614,7 +636,8 @@ export const RaidListQuery = PageQuery.extend({
   overdue: BoolQuery.optional(),
   gateKey: z.string().trim().max(16).optional(),
   minScore: z.coerce.number().int().min(1).max(25).optional(),
-  sort: z.enum(['code', '-score', 'dueDate', '-updatedAt']).optional(),
+  /** Default order: code. `score` (probability × impact) applies to risks only (400 for other RAID kinds). */
+  sort: SortParam(['code', 'title', 'status', 'dueDate', 'updatedAt', 'score']),
 });
 
 const RaidCommon = {
@@ -697,7 +720,12 @@ export const StatusUpdateDto = z.object({
   version: z.number().int(),
 });
 
-export const StatusUpdateListQuery = PageQuery.extend({ workstreamId: Uuid.optional(), status: csvOf(UPDATE_STATUSES).optional() });
+export const StatusUpdateListQuery = PageQuery.extend({
+  workstreamId: Uuid.optional(),
+  status: csvOf(UPDATE_STATUSES).optional(),
+  /** Default order: latest period first, then newest. */
+  sort: SortParam(['periodEnd', 'status', 'submittedAt', 'createdAt']),
+});
 
 export const CreateStatusUpdateBody = z.object({
   workstreamId: Uuid.optional(),
@@ -783,6 +811,7 @@ export const ProgressDto = z.object({
       id: Uuid,
       code: z.string(),
       name: z.string(),
+      nameAr: z.string().nullable(),
       leadName: z.string().nullable(),
       progress: WeightedProgressDto,
       rag: EffectiveRagDto,
@@ -885,7 +914,7 @@ export const planningRoutes = registerRoutes({
     tags: T,
     access: 'planning.plan.read',
     params: ProjectParams,
-    query: z.object({ entityType: RaciEntityType, entityId: Uuid }),
+    query: z.object({ entityType: RaciEntityType, entityId: Uuid, sort: NoSort }),
     response: z.object({ items: z.array(RaciDto) }),
   }),
   addRaci: defineRoute({
@@ -950,7 +979,7 @@ export const planningRoutes = registerRoutes({
     tags: T,
     access: 'planning.plan.read',
     params: ProjectParams,
-    query: z.object({ nodeId: Uuid.optional() }),
+    query: z.object({ nodeId: Uuid.optional(), sort: NoSort }),
     response: z.object({ items: z.array(DependencyDto) }),
   }),
   createDependency: defineRoute({ id: 'planning.createDependency', method: 'POST', path: p('/dependencies'), summary: 'Create an FS dependency (cycle-checked; same project only)', tags: T, access: 'planning.dependency.manage', params: ProjectParams, body: CreateDependencyBody, response: Created }),
@@ -1042,7 +1071,7 @@ export const planningRoutes = registerRoutes({
     tags: T,
     access: 'planning.plan.read',
     params: ProjectParams,
-    query: z.object({ state: z.enum(['pending', 'approved', 'rejected', 'expired']).optional() }),
+    query: z.object({ state: z.enum(['pending', 'approved', 'rejected', 'expired']).optional(), sort: NoSort }),
     response: z.object({ items: z.array(RagOverrideDto) }),
   }),
   requestRagOverride: defineRoute({ id: 'planning.requestRagOverride', method: 'POST', path: p('/rag-overrides'), summary: 'Request a manual RAG override (reason + expiry; needs review)', tags: T, access: 'planning.rag_override.set', params: ProjectParams, body: CreateRagOverrideBody, response: Created }),

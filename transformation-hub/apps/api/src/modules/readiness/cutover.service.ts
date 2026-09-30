@@ -24,6 +24,8 @@ import {
 } from '@hub/domain';
 import type { RequestContext } from '../../platform/context';
 import { assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, readinessRoutes } from '@hub/contracts';
 import { newId } from '../../platform/ids';
 import { ReadinessSupport, iso } from './readiness.support';
 import { runDto, waiverEffectiveFor } from './checks.service';
@@ -75,7 +77,11 @@ export class CutoverService {
     return and(eq(c.projectId, projectId), this.s.policy.visibilitySql(ctx, projectId, {}), this.s.policy.reachSql(ctx, 'readiness.register.read', projectId, c.workstreamId))!;
   }
 
-  async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; status?: CutoverStatus; siteId?: string }) {
+  async list(
+    ctx: RequestContext,
+    projectId: string,
+    q: { page: number; pageSize: number; q?: string; status?: CutoverStatus; siteId?: string; sort?: RouteInput<typeof readinessRoutes.listCutoverPlans>['query']['sort'] },
+  ) {
     await this.s.project(projectId);
     this.s.assertListable(ctx, projectId);
     const c = schema.cutoverPlan;
@@ -87,7 +93,8 @@ export class CutoverService {
     );
     const tx = this.s.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(c).where(where)) as [{ total: number }];
-    const rows = await tx.select().from(c).where(where).orderBy(asc(c.code)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { code: c.code, title: c.title, status: c.status, windowStart: c.windowStart, updatedAt: c.updatedAt }, c.id, [asc(c.code), asc(c.id)]);
+    const rows = await tx.select().from(c).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     return { ...pageOf(rows.map(planDto), Number(total), q), people: await this.s.people(rows.flatMap((r) => [r.accountableUserId, r.submittedForDecisionBy])) };
   }
 

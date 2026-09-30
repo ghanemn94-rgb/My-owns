@@ -22,6 +22,8 @@ import { OutboxService } from '../../platform/outbox.service';
 import type { RequestContext } from '../../platform/context';
 import { newId, payloadHash } from '../../platform/ids';
 import { assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, documentsRoutes } from '@hub/contracts';
 import { DocumentsService } from './documents.service';
 
 type SourceRow = typeof schema.sourceRecord.$inferSelect;
@@ -151,7 +153,7 @@ export class SourcesService {
   }
 
   // ------------------------------------------------------------------------------------------------ sources
-  async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string }) {
+  async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; sort?: RouteInput<typeof documentsRoutes.listSources>['query']['sort'] }) {
     const s = schema.sourceRecord;
     const where = and(
       eq(s.projectId, projectId),
@@ -169,7 +171,14 @@ export class SourcesService {
       })
       .from(s)
       .where(where)
-      .orderBy(asc(s.code))
+      .orderBy(
+        ...orderBySort(
+          q.sort,
+          { code: s.code, filename: s.filename, reportDate: s.reportDate, asOfDate: s.asOfDate, extractionDate: s.extractionDate, createdAt: s.createdAt },
+          s.id,
+          [asc(s.code), asc(s.id)],
+        ),
+      )
       .limit(q.pageSize)
       .offset(offsetOf(q));
     return pageOf(

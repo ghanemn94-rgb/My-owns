@@ -33,6 +33,8 @@ import {
 } from '@hub/domain';
 import type { RequestContext } from '../../platform/context';
 import { assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, readinessRoutes } from '@hub/contracts';
 import { newId, payloadHash } from '../../platform/ids';
 import { nextCronRun } from '../../platform/jobs/worker.service';
 import { ReadinessSupport, ProjectRow, iso } from './readiness.support';
@@ -154,7 +156,11 @@ export class TsaService {
     };
   }
 
-  async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; status?: TsaStatus; workstreamId?: string; enduring?: 'true' | 'false' }) {
+  async list(
+    ctx: RequestContext,
+    projectId: string,
+    q: { page: number; pageSize: number; q?: string; status?: TsaStatus; workstreamId?: string; enduring?: 'true' | 'false'; sort?: RouteInput<typeof readinessRoutes.listTsaServices>['query']['sort'] },
+  ) {
     const p = await this.s.project(projectId);
     this.s.assertListable(ctx, projectId);
     const t = schema.tsaService;
@@ -167,7 +173,8 @@ export class TsaService {
     );
     const tx = this.s.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(t).where(where)) as [{ total: number }];
-    const rows = await tx.select().from(t).where(where).orderBy(asc(t.code)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { code: t.code, name: t.name, status: t.status, startDate: t.startDate, endDate: t.endDate, updatedAt: t.updatedAt }, t.id, [asc(t.code), asc(t.id)]);
+    const rows = await tx.select().from(t).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     const today = this.s.today(p);
     return { ...pageOf(rows.map((r) => this.dto(r, today)), Number(total), q), people: await this.s.people(rows.map((r) => r.ownerUserId)) };
   }

@@ -24,6 +24,8 @@ import { PolicyService } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { RecordVersionService, assertVersion, loadInProject, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, governanceRoutes } from '@hub/contracts';
 import { newId, payloadHash } from '../../platform/ids';
 import type { RequestContext } from '../../platform/context';
 import { CommitteeRow, GovernanceSupport, MeetingRow, ProjectInfo, amountOf, iso } from './governance.support';
@@ -54,7 +56,11 @@ export class MeetingsService {
   // ---------------------------------------------------------------------------------------------------------
   // Reads
 
-  async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; committeeId?: string; status?: MeetingStatus; isCirculation?: 'true' | 'false' }) {
+  async list(
+    ctx: RequestContext,
+    projectId: string,
+    q: { page: number; pageSize: number; q?: string; committeeId?: string; status?: MeetingStatus; isCirculation?: 'true' | 'false'; sort?: RouteInput<typeof governanceRoutes.listMeetings>['query']['sort'] },
+  ) {
     const tx = this.db.tx();
     const m = schema.meeting;
     const c = schema.committee;
@@ -72,7 +78,7 @@ export class MeetingsService {
       .from(m)
       .innerJoin(c, eq(c.id, m.committeeId))
       .where(where)
-      .orderBy(desc(m.scheduledAt), desc(m.number))
+      .orderBy(...orderBySort(q.sort, { number: m.number, title: m.title, scheduledAt: m.scheduledAt, status: m.status }, m.id, [desc(m.scheduledAt), desc(m.number), desc(m.id)]))
       .limit(q.pageSize)
       .offset(offsetOf(q));
     return pageOf(
@@ -124,7 +130,11 @@ export class MeetingsService {
     };
   }
 
-  async listAgenda(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; committeeId?: string; meetingId?: string; screeningStatus?: ScreeningStatus }) {
+  async listAgenda(
+    ctx: RequestContext,
+    projectId: string,
+    q: { page: number; pageSize: number; q?: string; committeeId?: string; meetingId?: string; screeningStatus?: ScreeningStatus; sort?: RouteInput<typeof governanceRoutes.listAgendaRequests>['query']['sort'] },
+  ) {
     const a = schema.agendaItem;
     const c = schema.committee;
     const where = and(
@@ -143,7 +153,7 @@ export class MeetingsService {
       .innerJoin(c, eq(c.id, a.committeeId))
       .leftJoin(schema.decision, eq(schema.decision.id, a.decisionId))
       .where(where)
-      .orderBy(desc(a.createdAt))
+      .orderBy(...orderBySort(q.sort, { number: a.number, title: a.title, screeningStatus: a.screeningStatus, createdAt: a.createdAt }, a.id, [desc(a.createdAt), desc(a.id)]))
       .limit(q.pageSize)
       .offset(offsetOf(q));
     return pageOf(

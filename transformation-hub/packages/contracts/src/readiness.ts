@@ -14,7 +14,7 @@ import {
   LINKED_DECISION_ISSUE_CODES,
 } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
-import { ClassificationSchema, ExpectedVersion, IsoDate, IsoInstant, MoneySchema, PageQuery, ProjectParams, RequiredText, Text, Uuid, paged } from './common';
+import { ClassificationSchema, ExpectedVersion, IsoDate, IsoInstant, MoneySchema, NoSort, PageQuery, ProjectParams, RequiredText, SortParam, Text, Uuid, paged } from './common';
 
 /**
  * Day-1 readiness checks, cutover plans / go-no-go and TSA services (spec §7.3, §7.4; AT-09, AT-10; REQ-RDY-*,
@@ -445,6 +445,8 @@ export const readinessRoutes = registerRoutes({
       workstreamId: Uuid.optional(),
       cutoverPlanId: Uuid.optional(),
       blocker: BoolQuery,
+      // Default order: code. `area` and `status` sort in enum order.
+      sort: SortParam(['code', 'title', 'area', 'status', 'dueDate', 'updatedAt']),
     }),
     response: paged(ReadinessCheckDto).extend({ people: PeopleDto }),
   }),
@@ -572,7 +574,7 @@ export const readinessRoutes = registerRoutes({
     tags,
     access: 'readiness.register.read',
     params: ProjectParams,
-    query: z.object({ status: z.enum(WAIVER_STATUSES).optional() }),
+    query: z.object({ status: z.enum(WAIVER_STATUSES).optional(), sort: NoSort }),
     response: listOf(ReadinessWaiverDto).extend({ people: PeopleDto }),
   }),
   approveReadinessWaiver: defineRoute({
@@ -609,7 +611,8 @@ export const readinessRoutes = registerRoutes({
     tags,
     access: 'readiness.register.read',
     params: ProjectParams,
-    query: PageQuery.extend({ status: CStatus.optional(), siteId: Uuid.optional() }),
+    // Default order: code.
+    query: PageQuery.extend({ status: CStatus.optional(), siteId: Uuid.optional(), sort: SortParam(['code', 'title', 'status', 'windowStart', 'updatedAt']) }),
     response: paged(CutoverPlanDto).extend({ people: PeopleDto }),
   }),
   getCutoverPlan: defineRoute({
@@ -762,7 +765,8 @@ export const readinessRoutes = registerRoutes({
     tags,
     access: 'readiness.register.read',
     params: ProjectParams,
-    query: PageQuery.extend({ status: TStatus.optional(), workstreamId: Uuid.optional(), enduring: BoolQuery }),
+    // Default order: code.
+    query: PageQuery.extend({ status: TStatus.optional(), workstreamId: Uuid.optional(), enduring: BoolQuery, sort: SortParam(['code', 'name', 'status', 'startDate', 'endDate', 'updatedAt']) }),
     response: paged(TsaServiceDto).extend({ people: PeopleDto }),
   }),
   getTsaService: defineRoute({

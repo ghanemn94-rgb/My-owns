@@ -31,6 +31,7 @@ import type { StatusUpdateListQuery, CreateStatusUpdateBody, UpdateStatusUpdateB
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { RecordVersionService, updateVersioned, loadInProject, pageOf, offsetOf } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { PlanningSupport, ProjectInfo } from './planning-support';
@@ -44,6 +45,7 @@ export interface WorkstreamHealth {
   id: string;
   code: string;
   name: string;
+  nameAr: string | null;
   leadName: string | null;
   progress: ReturnType<typeof weightedProgress>;
   rag: { calculated: RagResult; effective: RagStatus; overridden: boolean; overrideExpired: boolean; explanation: string; reported: RagStatus | null };
@@ -178,6 +180,7 @@ export class HealthService {
         id: w.id,
         code: w.code,
         name: w.name,
+        nameAr: w.nameAr,
         leadName: w.leadUserId ? (names.get(w.leadUserId) ?? null) : null,
         progress,
         rag: { calculated: calc, effective: eff.effective, overridden: eff.overridden, overrideExpired: eff.overrideExpired, explanation: eff.explanation, reported: f.reported },
@@ -282,7 +285,8 @@ export class HealthService {
     if (q.q) conds.push(sql`${U.summary} ilike ${'%' + q.q + '%'}`);
     const where = and(...conds);
     const [{ n }] = (await this.tx.select({ n: count() }).from(U).where(where)) as [{ n: number }];
-    const rows = await this.tx.select().from(U).where(where).orderBy(desc(U.periodEnd), desc(U.createdAt)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { periodEnd: U.periodEnd, status: U.status, submittedAt: U.submittedAt, createdAt: U.createdAt }, U.id, [desc(U.periodEnd), desc(U.createdAt), desc(U.id)]);
+    const rows = await this.tx.select().from(U).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     return pageOf(await this.updateDtos(p, rows), Number(n), q);
   }
 

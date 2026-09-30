@@ -20,6 +20,7 @@ import type { ChangeRequestListQuery, CreateChangeRequestBody, UpdateChangeReque
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { RecordVersionService, updateVersioned, loadInProject, nextCode, pageOf, offsetOf } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { PlanningSupport, ProjectInfo } from './planning-support';
@@ -372,7 +373,8 @@ export class ChangeControlService {
     if (q.q) conds.push(or(ilike(C.title, likeContains(q.q)), ilike(C.code, likeContains(q.q)))!);
     const where = and(...conds);
     const [{ n }] = (await this.tx.select({ n: count() }).from(C).where(where)) as [{ n: number }];
-    const rows = await this.tx.select().from(C).where(where).orderBy(desc(C.createdAt)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { code: C.code, title: C.title, status: C.status, createdAt: C.createdAt, updatedAt: C.updatedAt }, C.id, [desc(C.createdAt), desc(C.id)]);
+    const rows = await this.tx.select().from(C).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     return pageOf(await this.crDtos(rows, projectId), Number(n), q);
   }
 

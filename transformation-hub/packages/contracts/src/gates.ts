@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { CRITERION_STATUSES, GATE_ASSESSMENT_STATUSES, ROLE_KEYS, STATUS_DIMENSION_KEYS, WAIVER_STATUSES, DECISION_STATUSES, DECISION_AUTHORITY_OUTCOMES } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
-import { Uuid, IsoDate, ProjectParams, ExpectedVersion, Text, RequiredText, idParams } from './common';
+import { Uuid, IsoDate, ProjectParams, ExpectedVersion, Text, RequiredText, idParams, NoSort, ServerMessageSchema } from './common';
 
 /**
  * Business gates G0–G7 (spec §3): definitions, criteria, assessment cycles, waivers, status dimensions.
@@ -16,7 +16,9 @@ const Role = z.enum(ROLE_KEYS);
 export const GateBlockerDto = z.object({
   kind: z.enum(['criterion', 'prerequisite', 'evidence_conflict', 'decision']),
   ref: z.string(),
+  /** English sentence (kept for compatibility); clients render `messageI18n` in the active locale. */
   message: z.string(),
+  messageI18n: z.array(ServerMessageSchema),
 });
 
 export const GateEvaluationDto = z.object({
@@ -71,6 +73,8 @@ export const LinkedDecisionDto = z.object({
   isDemo: z.boolean(),
   /** Whether the decision can back a gate approval (AT-04); null blocker when it can. */
   blocker: z.string().nullable(),
+  /** The blocker as translatable codes (empty when there is no blocker). */
+  blockerI18n: z.array(ServerMessageSchema),
 });
 
 export const GateSummaryDto = z.object({
@@ -79,6 +83,8 @@ export const GateSummaryDto = z.object({
   name: z.string(),
   nameAr: z.string().nullable(),
   purpose: z.string().nullable(),
+  /** Arabic purpose from the pinned template version (null when the template has none or the purpose differs from it). */
+  purposeAr: z.string().nullable(),
   sortOrder: z.number().int(),
   prerequisiteGateKeys: z.array(z.string()),
   ownerRole: Role,
@@ -192,7 +198,10 @@ export const StatusDimensionDto = z.object({
   id: Uuid,
   key: z.enum(STATUS_DIMENSION_KEYS),
   state: z.string(),
+  /** English explanation (kept for compatibility); clients render `explanationI18n` in the active locale. */
   explanation: z.string().nullable(),
+  /** The explanation as translatable codes + parameters; empty for rows computed before QA-P1-14 (show `explanation`). */
+  explanationI18n: z.array(ServerMessageSchema),
   counts: z.record(z.string(), z.number()).nullable(),
   computedAt: z.string(),
   version: z.number().int(),
@@ -399,7 +408,7 @@ export const gatesRoutes = registerRoutes({
     tags: ['gates'],
     access: 'gates.gate.read',
     params: ProjectParams,
-    query: z.object({ status: z.enum(WAIVER_STATUSES).optional() }),
+    query: z.object({ status: z.enum(WAIVER_STATUSES).optional(), sort: NoSort }),
     response: z.object({ items: z.array(WaiverDto) }),
   }),
   approveWaiver: defineRoute({

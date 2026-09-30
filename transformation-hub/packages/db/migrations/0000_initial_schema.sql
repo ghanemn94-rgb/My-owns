@@ -1113,6 +1113,7 @@ CREATE TABLE "status_dimension" (
 	"key" "status_dimension_key" NOT NULL,
 	"state" varchar(48) NOT NULL,
 	"explanation" text,
+	"explanation_i18n" jsonb,
 	"counts" jsonb,
 	"computed_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL
