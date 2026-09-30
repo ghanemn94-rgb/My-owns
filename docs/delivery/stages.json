@@ -20,10 +20,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:1af91e8f620aec37c560b7adae0b74c8644a5983bb15d02044f312407e05571b",
-        "source_commit": "331407e9b6711abbc01f7ee0456e4fa92ff65cda",
-        "frozen_at": "2026-09-30T14:49:46Z",
-        "manifest_path": "docs/delivery/candidates/DG0/1af91e8f620aec37.manifest.json"
+        "candidate_id": "sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd",
+        "source_commit": "1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac",
+        "frozen_at": "2026-09-30T15:19:05Z",
+        "manifest_path": "docs/delivery/candidates/DG0/84130c624e877424.manifest.json"
       },
       "review_rounds": [
         {
@@ -355,6 +355,18 @@
             "qa-verifier": "docs/delivery/reviews/DG0/round-28/qa-verifier.json"
           },
           "note": "Round 28: re-review after the D-044 commit-object repair. Gate round: domain+code-security check all 19 DG0-final requirements; reviewers verify F-DG0-250; auditor concurs on F-DG0-147/149."
+        },
+        {
+          "round": 29,
+          "candidate_id": "sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd",
+          "frozen_at": "2026-09-30T15:19:05Z",
+          "source_commit": "1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG0/round-29/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG0/round-29/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG0/round-29/qa-verifier.json"
+          },
+          "note": "Round 29: re-review after the D-045 commit-object repair. Gate round: domain+code-security check all 19 DG0-final requirements; code-security verifies F-DG0-171 and qa verifies F-DG0-251 (the same review-round source_commit residual, fixed together); auditor concurs on F-DG0-147/149."
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
@@ -643,6 +655,16 @@
           "state": "REVIEWING",
           "at": "2026-09-30T15:45:00Z",
           "note": "Round-27 findings repaired (D-044): fix_revision and head_commit_at_start must be commit objects (objectType==commit), not annotated tags, matching the gate source_commit rule (D-037). Closes the whole tag-object-id class (F-DG0-250). Real-repo dry-run: 0 in every history bucket. Prefreeze all PASS; candidate re-frozen for review round 28."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-09-30T15:16:00Z",
+          "note": "Round 28: domain PASS (0), code-security PASS (1 Low: F-DG0-171), qa PASS (1 Low: F-DG0-251) — the same residual, found independently. Verified F-DG0-250 CLOSED_VERIFIED. F-DG0-171/251: review_rounds[].source_commit (closure anchor 1, and the source findManifest recomputes the round manifest from) accepted an annotated-tag object id because commitPresent/isAncestor/manifestFromRef all peel a tag. Repair (D-045): checkReviewRounds requires objectType(r.source_commit)==='commit' when the object is present; a genuinely absent source_commit stays tolerated (round 18's D-034/D-035 orphan). Fourth and last commit-id field the gate depends on; the tag-object class is closed. Added 2 unit tests (round source_commit; head_commit_at_start). Gate+agent suites 105 pass."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-09-30T15:19:30Z",
+          "note": "Round-28 findings repaired (D-045): a review round's source_commit must be a commit object when present, matching the D-037/D-044 rule for the gate source_commit, fix_revision and head_commit_at_start (F-DG0-171/251). Completes D-044's class — no remaining commit-id field. Census: all 27 present round source_commits are commit objects, round 18 is the known absent orphan; 0 new errors. Prefreeze all PASS; candidate re-frozen for review round 29."
         }
       ]
     },
