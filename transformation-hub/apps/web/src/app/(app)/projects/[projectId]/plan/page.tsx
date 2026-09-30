@@ -13,8 +13,9 @@ import { TimelineTab } from '@/components/planning/plan/TimelineTab';
 import { DeliverablesTab, MilestonesTab } from '@/components/planning/plan/RegisterTabs';
 import { BaselinesTab, DependenciesTab, LookAheadTab, WhatIfTab } from '@/components/planning/plan/ScheduleTabs';
 import { HealthTab } from '@/components/planning/plan/HealthTab';
+import { CrossProjectTab } from '@/components/planning/plan/CrossProjectTab';
 
-const TABS = ['wbs', 'timeline', 'milestones', 'deliverables', 'dependencies', 'baselines', 'lookahead', 'whatif', 'health'] as const;
+const TABS = ['wbs', 'timeline', 'milestones', 'deliverables', 'dependencies', 'crossproject', 'baselines', 'lookahead', 'whatif', 'health'] as const;
 type TabKey = (typeof TABS)[number];
 
 function PlanScreen() {
@@ -31,6 +32,7 @@ function PlanScreen() {
         {tab === 'milestones' ? <MilestonesTab /> : null}
         {tab === 'deliverables' ? <DeliverablesTab /> : null}
         {tab === 'dependencies' ? <DependenciesTab /> : null}
+        {tab === 'crossproject' ? <CrossProjectTab /> : null}
         {tab === 'baselines' ? <BaselinesTab /> : null}
         {tab === 'lookahead' ? <LookAheadTab /> : null}
         {tab === 'whatif' ? <WhatIfTab initialNodeId={node} /> : null}

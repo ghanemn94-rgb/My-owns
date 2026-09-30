@@ -13,6 +13,7 @@ import { SectionGuard } from '@/components/SectionGuard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { btn } from '@/components/ui';
 import { CommandBar, type CommandSpec } from '@/components/planning/CommandBar';
+import { approvalDecisionExtra } from '@/components/planning/commands';
 import { BackLink, Notice } from '@/components/planning/DetailShell';
 import { DateText, Fact, Section } from '@/components/planning/bits';
 import { EM_DASH, useI18n } from '@/i18n/provider';
@@ -33,7 +34,17 @@ export default function BaselinePage() {
   const b = q.data;
   const mine = b.proposedBy === me.user.id;
   const commands: CommandSpec[] = [
-    { key: 'approve', label: t('planning.baseline.approve'), effects: [t('planning.baseline.approveEffect', { version: b.versionNo }), t('planning.baseline.approveWeights'), t('planning.commands.notSelf')], permission: 'planning.baseline.approve', noteMode: 'optional', primary: true, hidden: mine, run: ({ note, expectedVersion }) => api(P.approveBaseline, { params: { projectId, baselineId }, body: { expectedVersion, note: note || undefined } }) },
+    {
+      key: 'approve',
+      label: t('planning.baseline.approve'),
+      effects: [t('planning.baseline.approveEffect', { version: b.versionNo }), t('planning.baseline.approveWeights'), t('planning.baseline.approveAmount'), t('planning.commands.approvalAuthority'), t('planning.commands.notSelf')],
+      permission: 'planning.baseline.approve',
+      noteMode: 'optional',
+      primary: true,
+      hidden: mine,
+      extra: approvalDecisionExtra('baseline_approval'),
+      run: ({ note, expectedVersion, extra }) => api(P.approveBaseline, { params: { projectId, baselineId }, body: { expectedVersion, note: note || undefined, decisionId: extra || undefined } }),
+    },
     { key: 'reject', label: t('planning.baseline.reject'), effects: [t('planning.baseline.rejectEffect')], permission: 'planning.baseline.approve', noteMode: 'required', noteLabel: t('planning.common.reason'), danger: true, hidden: mine, run: ({ note, expectedVersion }) => api(P.rejectBaseline, { params: { projectId, baselineId }, body: { expectedVersion, reason: note } }) },
   ];
   const s = b.snapshot;
@@ -74,6 +85,17 @@ export default function BaselinePage() {
             </Fact>
             <Fact label={t('planning.baseline.decisionNote')}>
               <span dir="auto">{b.decisionNote ?? EM_DASH}</span>
+            </Fact>
+            <Fact label={t('planning.approvalDecision.backedBy')}>
+              {b.decisionId ? (
+                <Link className={btn.link} href={`/projects/${projectId}/committee/decisions/${b.decisionId}`} data-testid="baseline-decision-link">
+                  {t('planning.approvalDecision.open')}
+                </Link>
+              ) : b.approvedAt ? (
+                <span className="text-muted">{t('planning.approvalDecision.delegated')}</span>
+              ) : (
+                EM_DASH
+              )}
             </Fact>
           </dl>
         </Section>

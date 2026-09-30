@@ -8,14 +8,22 @@ import { TextField } from '../Field';
 import { useToast } from '../Toast';
 import { btn } from '../ui';
 
-export interface CommandExtra {
-  kind: 'date' | 'number';
-  label: string;
-  required: boolean;
-  min?: number;
-  max?: number;
-  defaultValue?: string;
-}
+export type CommandExtra =
+  | {
+      kind: 'date' | 'number';
+      label: string;
+      required: boolean;
+      min?: number;
+      max?: number;
+      defaultValue?: string;
+    }
+  | {
+      /** A command-specific input (e.g. the governance decision backing an approval); its value is passed as `extra`. */
+      kind: 'custom';
+      required: boolean;
+      defaultValue?: string;
+      render: (value: string, onChange: (value: string) => void) => ReactNode;
+    };
 
 /**
  * One domain command of a record. Shown only when the state machine allows it (`allowedCommands` from the API)
@@ -102,7 +110,9 @@ export function CommandBar({
             setOpen(null);
           }}
         >
-          {open.extra ? (
+          {open.extra?.kind === 'custom' ? (
+            open.extra.render(extra, setExtra)
+          ) : open.extra ? (
             <TextField
               label={open.extra.label}
               type={open.extra.kind}

@@ -44,7 +44,8 @@
     "baselines": "Baselines",
     "lookahead": "Look-ahead",
     "whatif": "What-if",
-    "health": "Progress & health"
+    "health": "Progress & health",
+    "crossproject": "Cross-project"
   },
   "wbs": {
     "title": "Work breakdown structure",
@@ -267,7 +268,8 @@
     "frozenTasks": "Frozen task dates",
     "noTasks": "No confirmed tasks in this baseline.",
     "selfNotice": "You proposed this baseline, so someone else must approve or reject it.",
-    "back": "Baselines"
+    "back": "Baselines",
+    "approveAmount": "The amount compared with the delegated limit is the total of the approved budget lines frozen in the snapshot."
   },
   "lookAhead": {
     "window": "Look-ahead window",
@@ -486,7 +488,14 @@
     "assessHint": "Describe each impact in plain language; leave a field empty when it does not apply.",
     "assessed": "Impact assessment recorded.",
     "selfNotice": "You requested this change, so someone else must approve or reject it.",
-    "back": "Change requests"
+    "back": "Change requests",
+    "costImpact": "Cost impact (money)",
+    "costImpactHint": "Record the budget impact as an amount with currency and unit; enter 0 when the change has no cost impact. Approval compares it with the delegated limit.",
+    "costTextOnly": "A cost impact is described in text but has no amount: approval will be refused until you record it as money (0 when none).",
+    "costNotQuantified": "Described in text only — not quantified",
+    "costNotRecorded": "Not recorded",
+    "costNotQuantifiedShort": "Not quantified",
+    "costBeforeApproval": "Before approval, the assessor records the budget effect as an amount with currency and unit (0 when none) in the change request's impact assessment; a cost stated in text only is refused."
   },
   "commands": {
     "evidenceRule": "At least one active evidence link is required and no conflicting evidence may be open.",
@@ -570,7 +579,10 @@
       "withdrawEffect": "The change request is withdrawn and stays on record.",
       "implement": "Mark implemented",
       "implementEffect": "The approved change is recorded as implemented.",
-      "implementRebaseline": "Allowed only once a baseline linked to this request has been approved."
+      "implementRebaseline": "Allowed only once a baseline linked to this request has been approved.",
+      "approveCost": "Budget impact compared with the delegated limit: {amount}.",
+      "approveCostUnquantified": "The cost impact is stated in text only: the server refuses the approval until it is recorded as an amount.",
+      "approveNoCost": "No cost impact is recorded."
     },
     "update": {
       "submit": "Submit for review",
@@ -579,7 +591,9 @@
       "acceptEffect": "The update and its metrics are frozen as a historical reporting version.",
       "return": "Return for rework",
       "returnEffect": "The update goes back to its author with your reason."
-    }
+    },
+    "prerequisiteRule": "Refused while a prerequisite (decision, gate, agreement, approval or evidence) is not satisfied.",
+    "approvalAuthority": "Within the approved authority matrix the approval rests on your delegated authority; outside it (or without an approved matrix) select the final committee decision that covers it — otherwise the server refuses."
   },
   "ws": {
     "workspace": "Workstream workspace",
@@ -633,5 +647,155 @@
     "slip": "+{days} working days",
     "whatIf": "Run a delay what-if",
     "timeline": "Open the timeline"
+  },
+  "refusal": {
+    "codes": {
+      "change_control_no_usable_matrix": "No approved, verified authority matrix is in force for this project, so no one holds delegated approval authority. Route the change to a committee decision and approve it on that final decision.",
+      "change_control_outside_delegated_authority": "This approval is outside your delegated authority. Route it to a committee decision of the matching type (escalated to {body} when above the committee's limit) and approve it on that final decision.",
+      "change_control_outside_delegated_authority_noBody": "This approval is outside your delegated authority. Route it to a committee decision of the matching type and approve it on that final decision.",
+      "change_control_amount_unquantified": "The cost impact is stated in text only, so it cannot be compared with a limit. Record it as an amount with currency and unit (0 when there is none) in the impact assessment before approval.",
+      "change_control_decision_not_final": "The selected decision is not final. Only a decision approved within the committee mandate, or approved by the external authority and recorded, can back this approval.",
+      "change_control_decision_type_mismatch": "The selected decision is of another decision type. Select a decision of the type this approval needs.",
+      "change_control_decision_amount_missing": "The selected decision carries no amount, so it cannot cover this monetary impact.",
+      "change_control_decision_amount_currency": "The selected decision is in another currency; no conversion is applied.",
+      "change_control_decision_amount_insufficient": "The selected decision's amount does not cover this monetary impact.",
+      "change_control_decision_already_used": "The selected decision already backs another approval: one decision backs one approval.",
+      "prerequisite_pending": "Blocked by prerequisites not yet satisfied: {count} (decision, gate, agreement, approval or evidence). Some of them may not be visible to you.",
+      "prerequisite_pending_noCount": "Blocked by prerequisites not yet satisfied (decision, gate, agreement, approval or evidence). Some of them may not be visible to you.",
+      "prerequisite_duplicate": "This prerequisite already exists.",
+      "xproj_same_project": "Both ends are in this project: use an ordinary dependency instead.",
+      "xproj_already_closed": "This cross-project dependency is already closed.",
+      "xproj_local_item_incomplete": "Select both the type and the item of this project, or neither."
+    }
+  },
+  "money": {
+    "amount": "Amount (decimal)",
+    "amountInvalid": "Enter a decimal amount (at most 4 decimal places), or 0 when there is no cost impact.",
+    "currency": "Currency (ISO 4217)",
+    "currencyInvalid": "Enter a three-letter currency code, e.g. SAR.",
+    "unitScale": "Unit",
+    "units": {
+      "1": "Units",
+      "1000": "Thousands",
+      "1000000": "Millions"
+    },
+    "none": "no cost impact"
+  },
+  "approvalDecision": {
+    "types": {
+      "baseline_approval": "Baseline approval",
+      "change_request_budget": "Change request with budget impact"
+    },
+    "noAccess": "You cannot read committee decisions, so you cannot select one. The approval can only rest on your delegated authority; outside it the server refuses it.",
+    "label": "Backing governance decision",
+    "hint": "Optional within your delegated authority. Needed outside it, or when no approved authority matrix is in force: select the final committee decision of type \"{type}\" that covers the amount.",
+    "loading": "Loading decisions…",
+    "none": "None — approve within my delegated authority",
+    "empty": "No final decision of type \"{type}\" exists yet. A recommendation counts only once the external authority's decision is recorded with verified evidence.",
+    "notFinal": "Decisions of this type that are not final yet (not offered): {count}.",
+    "amount": "Decision amount",
+    "externalReference": "External authority reference",
+    "backedBy": "Governance decision",
+    "open": "Open the decision",
+    "delegated": "No decision linked"
+  },
+  "xproj": {
+    "itemTypes": {
+      "task": "Task",
+      "milestone": "Milestone"
+    },
+    "wholeProject": "The project as a whole",
+    "atRisk": "At risk (schedule-based)",
+    "onTrack": "On track",
+    "noNeededBy": "No needed-by date",
+    "close": "Close dependency",
+    "closeLabel": "Close the dependency on {code}",
+    "closeTitle": "Close the dependency on {code}",
+    "closeEffect": "The dependency is closed with your reason and stays on record.",
+    "closed": "Cross-project dependency closed.",
+    "neededBy": "Needed by",
+    "neededByHint": "The date this project needs the other item. At risk = the other item finishes later (schedule-based, no probability).",
+    "risk": "Risk",
+    "description": "Description",
+    "ourItem": "Our item",
+    "dependsOn": "Depends on",
+    "theirFinish": "Their finish",
+    "dependentItem": "Dependent project and item",
+    "ourItemDependedOn": "Our item depended upon",
+    "ourFinish": "Our finish",
+    "search": "Search cross-project dependencies",
+    "direction": "Direction",
+    "outgoingShort": "This project depends on others",
+    "incomingShort": "Others depend on this project",
+    "outgoing": "This project depends on other projects",
+    "incoming": "Other projects depend on this project",
+    "emptyOutgoing": "No dependencies on other projects that you can see.",
+    "emptyIncoming": "No other project that you can read depends on this project.",
+    "emptyHint": "Only dependencies whose both ends you can read are shown; nothing is shown about projects you cannot read.",
+    "disclosure": "Minimum disclosure: a cross-project dependency is shown only to people who can read both items. Dates and risk are schedule-based.",
+    "create": "New cross-project dependency",
+    "createHint": "Record that this project needs a task or milestone of another project that you can read.",
+    "created": "Cross-project dependency recorded.",
+    "noOtherProjects": "You can read no other project, so you cannot record a dependency on one.",
+    "otherProject": "Other project",
+    "loading": "Loading…",
+    "otherItemType": "Type of the other item",
+    "otherItemSearch": "Search the other project",
+    "otherItem": "Item depended upon",
+    "otherItemsRestricted": "The other project's items could not be loaded with your access.",
+    "localItem": "Dependent item of this project",
+    "localItemHint": "Optional: leave empty when the project as a whole depends on it."
+  },
+  "prerequisites": {
+    "title": "Prerequisites (non-schedule)",
+    "hint": "Decisions, gates, agreements, approvals or verified evidence this item waits for. They are not schedule (critical path) dependencies.",
+    "add": "Add prerequisite",
+    "addTitle": "Add a prerequisite to {code}",
+    "addHintTask": "The task cannot be started while any prerequisite is unsatisfied.",
+    "addHintMilestone": "The milestone cannot be reported achieved while any prerequisite is unsatisfied.",
+    "added": "Prerequisite added.",
+    "empty": "No prerequisites that you can see.",
+    "emptyHint": "Prerequisites whose record you cannot see are not listed.",
+    "blocksStart": "Unsatisfied prerequisites: {count}. The task cannot be started until they are satisfied.",
+    "blocksReport": "Unsatisfied prerequisites: {count}. The milestone cannot be reported achieved until they are satisfied.",
+    "satisfied": "Satisfied",
+    "unsatisfied": "Not yet satisfied",
+    "types": {
+      "decision": "Decision",
+      "gate": "Gate",
+      "agreement": "Agreement",
+      "approval_request": "Approval request",
+      "evidence_link": "Evidence"
+    },
+    "rule": {
+      "decision": "Satisfied by a final decision (approved within the mandate, or approved by the external authority and recorded) — never by a recommendation.",
+      "gate": "Satisfied when the gate is approved and not flagged for reassessment.",
+      "agreement": "Satisfied when the agreement is signed or effective.",
+      "approval_request": "Satisfied when the approval request is approved.",
+      "evidence_link": "Satisfied when the evidence is active and verified by a second person."
+    },
+    "addedAt": "Added {date}",
+    "hiddenNote": "A start or achievement refusal counts every prerequisite, including any you cannot see.",
+    "remove": "Remove prerequisite",
+    "removeTitle": "Remove prerequisite",
+    "removeLabel": "Remove prerequisite {label}",
+    "removeEffect": "{code} no longer waits for this {type}: {label}.",
+    "removed": "Prerequisite removed.",
+    "notYetFinal": "not final yet",
+    "evidenceVerified": "verified",
+    "evidenceUnverified": "not verified yet",
+    "noTypes": "You cannot read any record type that can be a prerequisite.",
+    "type": "Prerequisite type",
+    "approvalRequestHint": "Approval requests (finance, readiness) have no register on this screen yet and cannot be selected here.",
+    "evidenceRecord": "Record the evidence is linked to",
+    "pick": {
+      "decision": "Decision",
+      "gate": "Gate",
+      "agreement": "Agreement",
+      "evidence_link": "Evidence link"
+    },
+    "noRecords": "No records available",
+    "notCpm": "Prerequisites do not move schedule dates; they block starting / reporting achieved until satisfied.",
+    "visibility": "People who cannot see the prerequisite record do not see it in this list."
   }
 }

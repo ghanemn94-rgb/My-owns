@@ -121,14 +121,38 @@ const SCREENS: readonly Screen[] = [
   { id: 'committee-meetings', persona: 'pm', path: (i) => `/projects/${i.dc}/committee/meetings` },
   { id: 'committee-meeting-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/committee/meetings/${i.meeting}` },
   { id: 'committee-decisions', persona: 'pm', path: (i) => `/projects/${i.dc}/committee/decisions` },
-  { id: 'committee-decision-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/committee/decisions/${i.decision}` },
+  { id: 'committee-decision-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/committee/decisions/${i.decision}`, ready: visible('[data-testid="evidence-panel"][data-target-type="decision"]') },
   { id: 'committee-actions', persona: 'pm', path: (i) => `/projects/${i.dc}/committee/actions` },
   { id: 'committee-escalations', persona: 'pm', path: (i) => `/projects/${i.dc}/committee/escalations` },
   // Plan.
-  ...(['wbs', 'timeline', 'milestones', 'deliverables', 'dependencies', 'baselines', 'lookahead', 'whatif', 'health'] as const).map(
+  ...(['wbs', 'timeline', 'milestones', 'deliverables', 'dependencies', 'crossproject', 'baselines', 'lookahead', 'whatif', 'health'] as const).map(
     (tab): Screen => ({ id: `plan-${tab}`, persona: 'pm', path: (i) => `/projects/${i.dc}/plan?tab=${tab}`, ready: visible(`[role="tab"][data-tab="${tab}"][aria-selected="true"]`) }),
   ),
-  { id: 'plan-task-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/plan/tasks/${i.task}` },
+  {
+    // Cross-project dependency form (DOM-P2-17): other project / item pickers; nothing is submitted.
+    id: 'plan-crossproject-dialog-open',
+    persona: 'pm',
+    path: (i) => `/projects/${i.dc}/plan?tab=crossproject`,
+    ready: visible('[role="tab"][data-tab="crossproject"][aria-selected="true"]'),
+    prepare: async (page) => {
+      await page.getByTestId('xproj-create').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+      await expect(page.getByTestId('xproj-other-project')).toBeVisible();
+    },
+  },
+  { id: 'plan-task-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/plan/tasks/${i.task}`, ready: visible('[data-testid="prerequisites"]') },
+  {
+    // Prerequisite form (DOM-P2-18) on a task; nothing is submitted.
+    id: 'plan-task-prerequisite-dialog-open',
+    persona: 'pm',
+    path: (i) => `/projects/${i.dc}/plan/tasks/${i.task}`,
+    ready: visible('[data-testid="prerequisites"]'),
+    prepare: async (page) => {
+      await page.getByTestId('prerequisite-add').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+      await expect(page.getByTestId('prerequisite-record')).toBeVisible();
+    },
+  },
   { id: 'plan-milestone-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/plan/milestones/${i.milestone}` },
   { id: 'plan-deliverable-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/plan/deliverables/${i.deliverable}` },
   { id: 'plan-baseline-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/plan/baselines/${i.baseline}` },
@@ -141,7 +165,19 @@ const SCREENS: readonly Screen[] = [
     (tab): Screen => ({ id: `raid-${tab}`, persona: 'pm', path: (i) => `/projects/${i.dc}/raid?tab=${tab}`, ready: visible(`[role="tab"][data-tab="${tab}"][aria-selected="true"]`) }),
   ),
   { id: 'raid-risk-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/raid/risks/${i.risk}` },
-  { id: 'change-request-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/raid/changes/${i.changeRequest}` },
+  { id: 'change-request-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/raid/changes/${i.changeRequest}`, ready: visible('[data-testid="cr-cost-impact-fact"]') },
+  {
+    // New change request form with the structured cost impact (DOM-P2-03); nothing is submitted.
+    id: 'change-request-form-dialog-open',
+    persona: 'pm',
+    path: (i) => `/projects/${i.dc}/raid?tab=changes`,
+    ready: visible('[role="tab"][data-tab="changes"][aria-selected="true"]'),
+    prepare: async (page) => {
+      await page.getByTestId('cr-create').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+      await expect(page.getByTestId('cr-form-cost-impact')).toBeVisible();
+    },
+  },
   // Gates.
   { id: 'gates', persona: 'pm', path: (i) => `/projects/${i.dc}/gates` },
   { id: 'gate-detail', persona: 'pm', path: (i) => `/projects/${i.dc}/gates/${i.gate}`, ready: visible('[data-testid="criterion-row"]') },
