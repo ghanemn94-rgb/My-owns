@@ -16,11 +16,11 @@ route that never consulted the policy function is turned into a 500 (fail closed
 
 ## Run
 
-| What | Command |
-|---|---|
-| Build | `pnpm --filter @mth/api build` |
-| Start (production) | `node apps/api/dist/main.js` (`pnpm --filter @mth/api start`) |
-| Dev (type stripping, `@mth/source`) | `pnpm --filter @mth/api dev` |
+| What                                | Command                                                       |
+| ----------------------------------- | ------------------------------------------------------------- |
+| Build                               | `pnpm --filter @mth/api build`                                |
+| Start (production)                  | `node apps/api/dist/main.js` (`pnpm --filter @mth/api start`) |
+| Dev (type stripping, `@mth/source`) | `pnpm --filter @mth/api dev`                                  |
 
 Environment: see `packages/config/src/index.ts` (`ENV_VARS`). The API connects as `mth_app` (`DATABASE_URL`) and
 needs `APP_BASE_URL`, `AUTH_MODE` and, for `AUTH_MODE=oidc`, `OIDC_ISSUER_URL`, `OIDC_CLIENT_ID`,

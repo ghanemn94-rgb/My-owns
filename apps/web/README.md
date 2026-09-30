@@ -34,9 +34,9 @@ would be cleaner; it is requested in the T-DG1-FE handback.
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `pnpm --filter @mth/web typecheck` | `tsc` (strict, zero errors) |
-| `pnpm --filter @mth/web build` | typecheck + Vite build to `dist/` (served by the API in production) |
-| `pnpm --filter @mth/web test` | unit/component tests in jsdom (i18n key parity, states, shell, journeys against a scripted API) |
-| `apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1` | real-API journeys in EN and AR with axe and screenshots (see `e2e/README.md`) |
+| Command                                                                           | What it does                                                                                    |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `pnpm --filter @mth/web typecheck`                                                | `tsc` (strict, zero errors)                                                                     |
+| `pnpm --filter @mth/web build`                                                    | typecheck + Vite build to `dist/` (served by the API in production)                             |
+| `pnpm --filter @mth/web test`                                                     | unit/component tests in jsdom (i18n key parity, states, shell, journeys against a scripted API) |
+| `apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1` | real-API journeys in EN and AR with axe and screenshots (see `e2e/README.md`)                   |

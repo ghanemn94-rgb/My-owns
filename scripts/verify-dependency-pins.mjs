@@ -9,11 +9,24 @@ import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
-const ALLOWED_LICENCES = new Set(["MIT", "ISC", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "0BSD", "BlueOak-1.0.0", "MPL-2.0", "OFL-1.1", "Python-2.0", "CC0-1.0"]);
+const ALLOWED_LICENCES = new Set([
+  "MIT",
+  "ISC",
+  "Apache-2.0",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "0BSD",
+  "BlueOak-1.0.0",
+  "MPL-2.0",
+  "OFL-1.1",
+  "Python-2.0",
+  "CC0-1.0",
+]);
 const manifests = ["package.json"];
 for (const dir of ["apps", "packages"]) {
   if (!existsSync(dir)) continue;
-  for (const d of readdirSync(dir)) if (existsSync(join(dir, d, "package.json"))) manifests.push(join(dir, d, "package.json"));
+  for (const d of readdirSync(dir))
+    if (existsSync(join(dir, d, "package.json"))) manifests.push(join(dir, d, "package.json"));
 }
 const pins = new Map();
 for (const m of manifests) {
@@ -27,7 +40,8 @@ for (const m of manifests) {
     }
   }
 }
-const view = (arg) => JSON.parse(execFileSync("npm", ["view", arg, "--json"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
+const view = (arg) =>
+  JSON.parse(execFileSync("npm", ["view", arg, "--json"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
 const semverSatisfies = (v, range) => {
   // Minimal check for common peer ranges (^x, >=x, x || y). Anything else is reported for manual review.
   return range.split("||").some((part) => {
@@ -48,8 +62,14 @@ let failed = 0;
 const rows = [];
 for (const [name, { spec, where, conflict }] of [...pins].sort()) {
   const row = { name, spec, where, status: "OK", notes: [] };
-  if (!/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(spec)) { row.status = "FAIL"; row.notes.push("not an exact pin"); }
-  if (conflict) { row.status = "FAIL"; row.notes.push(`conflicting pins: ${conflict}`); }
+  if (!/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(spec)) {
+    row.status = "FAIL";
+    row.notes.push("not an exact pin");
+  }
+  if (conflict) {
+    row.status = "FAIL";
+    row.notes.push(`conflicting pins: ${conflict}`);
+  }
   try {
     const meta = view(`${name}@${spec}`);
     const info = Array.isArray(meta) ? meta[meta.length - 1] : meta;
@@ -58,13 +78,22 @@ for (const [name, { spec, where, conflict }] of [...pins].sort()) {
     row.latest = all["dist-tags"]?.latest ?? "?";
     row.published = all.time?.[spec]?.slice(0, 10) ?? "?";
     row.engines = info.engines?.node ?? "";
-    if (info.deprecated) { row.status = "FAIL"; row.notes.push(`deprecated: ${info.deprecated}`); }
-    if (!ALLOWED_LICENCES.has(row.licence)) { row.status = "FAIL"; row.notes.push(`licence needs review: ${row.licence}`); }
+    if (info.deprecated) {
+      row.status = "FAIL";
+      row.notes.push(`deprecated: ${info.deprecated}`);
+    }
+    if (!ALLOWED_LICENCES.has(row.licence)) {
+      row.status = "FAIL";
+      row.notes.push(`licence needs review: ${row.licence}`);
+    }
     for (const [peer, range] of Object.entries(info.peerDependencies ?? {})) {
       const p = pins.get(peer);
       if (!p) continue;
       const ok = semverSatisfies(p.spec, range);
-      if (ok === false) { row.status = "FAIL"; row.notes.push(`peer ${peer}@${range} not satisfied by ${p.spec}`); }
+      if (ok === false) {
+        row.status = "FAIL";
+        row.notes.push(`peer ${peer}@${range} not satisfied by ${p.spec}`);
+      }
       if (ok === null) row.notes.push(`peer ${peer}@${range}: check manually against ${p.spec}`);
     }
     if (row.latest !== spec) row.notes.push(`latest is ${row.latest}`);
@@ -75,8 +104,13 @@ for (const [name, { spec, where, conflict }] of [...pins].sort()) {
   if (row.status === "FAIL") failed++;
   rows.push(row);
 }
-console.log(`Checked ${rows.length} pins on ${new Date().toISOString()} with npm ${execFileSync("npm", ["--version"], { encoding: "utf8" }).trim()}\n`);
+console.log(
+  `Checked ${rows.length} pins on ${new Date().toISOString()} with npm ${execFileSync("npm", ["--version"], { encoding: "utf8" }).trim()}\n`,
+);
 console.log("| Package | Pin | Licence | Published | engines.node | Latest | Status | Notes |");
 console.log("|---|---|---|---|---|---|---|---|");
-for (const r of rows) console.log(`| ${r.name} | ${r.spec} | ${r.licence ?? ""} | ${r.published ?? ""} | ${r.engines ?? ""} | ${r.latest ?? ""} | ${r.status} | ${r.notes.join("; ")} |`);
+for (const r of rows)
+  console.log(
+    `| ${r.name} | ${r.spec} | ${r.licence ?? ""} | ${r.published ?? ""} | ${r.engines ?? ""} | ${r.latest ?? ""} | ${r.status} | ${r.notes.join("; ")} |`,
+  );
 process.exit(failed ? 1 : 0);

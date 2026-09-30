@@ -14,7 +14,9 @@ export const TRANSFORMATION_STATUSES = ["draft", "active", "on_hold", "closed"] 
 export type TransformationStatus = (typeof TRANSFORMATION_STATUSES)[number];
 
 /** Explicit status transitions (REQ-S16-023). Anything not listed is rejected server-side with 422. */
-export const TRANSFORMATION_STATUS_TRANSITIONS: Readonly<Record<TransformationStatus, readonly TransformationStatus[]>> = {
+export const TRANSFORMATION_STATUS_TRANSITIONS: Readonly<
+  Record<TransformationStatus, readonly TransformationStatus[]>
+> = {
   draft: ["active"],
   active: ["on_hold", "closed"],
   on_hold: ["active", "closed"],
@@ -22,7 +24,11 @@ export const TRANSFORMATION_STATUS_TRANSITIONS: Readonly<Record<TransformationSt
 };
 
 /** Optional standalone deliverable for Modular entry (B0008). */
-export const STANDALONE_DELIVERABLE_TYPES = ["target_operating_model", "initiative_business_case", "benefits_register"] as const;
+export const STANDALONE_DELIVERABLE_TYPES = [
+  "target_operating_model",
+  "initiative_business_case",
+  "benefits_register",
+] as const;
 export type StandaloneDeliverableType = (typeof STANDALONE_DELIVERABLE_TYPES)[number];
 
 /**
@@ -41,7 +47,11 @@ export const SCOPE_TYPES = [
   "record",
 ] as const;
 export type ScopeType = (typeof SCOPE_TYPES)[number];
-export const P1_SCOPE_TYPES = ["organization", "business_unit", "transformation"] as const satisfies readonly ScopeType[];
+export const P1_SCOPE_TYPES = [
+  "organization",
+  "business_unit",
+  "transformation",
+] as const satisfies readonly ScopeType[];
 
 export const LOCALES = ["ar", "en"] as const;
 export type Locale = (typeof LOCALES)[number];

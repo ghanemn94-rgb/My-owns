@@ -28,17 +28,21 @@ for (const [path, item] of Object.entries(api.paths ?? {})) {
     if (!id) problems.push(`${method.toUpperCase()} ${path}: missing operationId`);
     else if (seen.has(id)) problems.push(`duplicate operationId ${id}`);
     else seen.add(id);
-    if (!path.startsWith("/api/v1/") && !["/healthz", "/readyz"].includes(path)) problems.push(`${path}: outside /api/v1`);
+    if (!path.startsWith("/api/v1/") && !["/healthz", "/readyz"].includes(path))
+      problems.push(`${path}: outside /api/v1`);
     if (UNSAFE.has(method) && !PUBLIC_UNSAFE.has(id)) {
       const sec = op.security ?? api.security ?? [];
-      if (!sec.some((req) => "csrfToken" in req && "sessionCookie" in req)) problems.push(`${id}: unsafe method without sessionCookie+csrfToken`);
+      if (!sec.some((req) => "csrfToken" in req && "sessionCookie" in req))
+        problems.push(`${id}: unsafe method without sessionCookie+csrfToken`);
     }
     const params = [...(item.parameters ?? []), ...(op.parameters ?? [])];
     if (params.some((p) => p.in === "header" && p.name === "If-Match")) {
-      for (const code of ["409", "428"]) if (!op.responses?.[code]) problems.push(`${id}: If-Match operation lacks ${code}`);
+      for (const code of ["409", "428"])
+        if (!op.responses?.[code]) problems.push(`${id}: If-Match operation lacks ${code}`);
     }
     for (const [code, resp] of Object.entries(op.responses ?? {})) {
-      if (Number(code) >= 400 && code !== "503" && !resp.content?.["application/problem+json"]) problems.push(`${id} ${code}: error response is not application/problem+json`);
+      if (Number(code) >= 400 && code !== "503" && !resp.content?.["application/problem+json"])
+        problems.push(`${id} ${code}: error response is not application/problem+json`);
     }
   }
 }

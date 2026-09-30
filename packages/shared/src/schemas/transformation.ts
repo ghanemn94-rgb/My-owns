@@ -61,7 +61,8 @@ export const transformationCreate = z
     }
     if (t.mode === "end_to_end") {
       for (const key of ["entryPhase", "standaloneDeliverableType"] as const) {
-        if (t[key] !== undefined) ctx.addIssue({ code: "custom", path: [key], message: "validation.not_allowed_for_mode" });
+        if (t[key] !== undefined)
+          ctx.addIssue({ code: "custom", path: [key], message: "validation.not_allowed_for_mode" });
       }
     }
   });
@@ -87,7 +88,9 @@ export const transformationListQuery = z.object({
   phase: phase.optional(),
   q: z.string().min(1).max(200).optional(),
   includeArchived: z.stringbool().default(false),
-  sort: z.enum(["updatedAt:desc", "updatedAt:asc", "name:asc", "name:desc", "code:asc", "code:desc"]).default("updatedAt:desc"),
+  sort: z
+    .enum(["updatedAt:desc", "updatedAt:asc", "name:asc", "name:desc", "code:asc", "code:desc"])
+    .default("updatedAt:desc"),
 });
 
 export type Transformation = z.infer<typeof transformation>;

@@ -22,8 +22,8 @@
 
 The web app does not read `dist/`: its Vite plugin calls `generateTokensCss()` from the same source at build time.
 
-| Script | What it does |
-|---|---|
+| Script                                                | What it does                                                     |
+| ----------------------------------------------------- | ---------------------------------------------------------------- |
 | `pnpm --filter @mth/design-tokens run check:contrast` | lists every declared pair with its ratio; exits 1 on any failure |
-| `pnpm --filter @mth/design-tokens run generate` | writes `dist/tokens.css` |
-| `pnpm --filter @mth/design-tokens build` | `tsc` + `generate` |
+| `pnpm --filter @mth/design-tokens run generate`       | writes `dist/tokens.css`                                         |
+| `pnpm --filter @mth/design-tokens build`              | `tsc` + `generate`                                               |

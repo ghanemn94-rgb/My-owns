@@ -1,6 +1,7 @@
 # @mth/shared
 
 **Responsibility.** Code shared by API, worker and web (ADR-0002):
+
 - `src/constants.ts`: phases, modes, statuses and transitions, scope types, locales, defaults (Asia/Riyadh, SAR).
 - `src/permissions.ts`: the permission catalogue and seeded role defaults (from `docs/analysis/permissions-matrix.md`).
 - `src/problem.ts`: RFC 9457 problem types.

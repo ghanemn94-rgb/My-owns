@@ -28,7 +28,11 @@ const BANNED = [
 const hits = [];
 function walk(dir) {
   let entries;
-  try { entries = readdirSync(dir); } catch { return; }
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return;
+  }
   for (const name of entries) {
     if (SKIP_DIRS.has(name)) continue;
     const p = join(dir, name);

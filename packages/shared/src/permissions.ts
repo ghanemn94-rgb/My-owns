@@ -46,7 +46,13 @@ export const ROLES = {
   TL: {
     kind: "source",
     inheritsDownward: false,
-    permissions: [...BASE_READ, "transformation.create", "transformation.update", "transformation.archive", "audit.read"],
+    permissions: [
+      ...BASE_READ,
+      "transformation.create",
+      "transformation.update",
+      "transformation.archive",
+      "audit.read",
+    ],
   },
   BO: { kind: "source", inheritsDownward: false, permissions: [...BASE_READ, "gate.decide"] },
   WL: { kind: "source", inheritsDownward: false, permissions: [...BASE_READ] },
@@ -54,7 +60,13 @@ export const ROLES = {
   TO: {
     kind: "source",
     inheritsDownward: true,
-    permissions: [...BASE_READ, "transformation.create", "transformation.update", "transformation.archive", "audit.read"],
+    permissions: [
+      ...BASE_READ,
+      "transformation.create",
+      "transformation.update",
+      "transformation.archive",
+      "audit.read",
+    ],
   },
   KDS: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ] },
   TD: { kind: "implementation", inheritsDownward: false, permissions: [...BASE_READ] },
@@ -70,12 +82,26 @@ export const ROLES = {
   ADM_TECH: {
     kind: "technical_admin",
     inheritsDownward: false,
-    permissions: ["organization.read", "organization.manage", "business_unit.read", "business_unit.manage", "role.read"],
+    permissions: [
+      "organization.read",
+      "organization.manage",
+      "business_unit.read",
+      "business_unit.manage",
+      "role.read",
+    ],
   },
   ADM_ACCESS: {
     kind: "technical_admin",
     inheritsDownward: false,
-    permissions: ["organization.read", "business_unit.read", "role.read", "user.read", "user.manage", "access.read", "access.assign"],
+    permissions: [
+      "organization.read",
+      "business_unit.read",
+      "role.read",
+      "user.read",
+      "user.manage",
+      "access.read",
+      "access.assign",
+    ],
   },
   ADM_METHOD: { kind: "technical_admin", inheritsDownward: false, permissions: ["organization.read", "role.read"] },
 } as const satisfies Record<string, RoleDefinition>;

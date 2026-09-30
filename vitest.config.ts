@@ -17,7 +17,12 @@ export default defineConfig({
         test: {
           name: "unit-node",
           environment: "node",
-          include: ["apps/api/src/**/*.test.ts", "apps/worker/src/**/*.test.ts", "packages/*/src/**/*.test.ts", "tests/qa/unit/**/*.test.ts"],
+          include: [
+            "apps/api/src/**/*.test.ts",
+            "apps/worker/src/**/*.test.ts",
+            "packages/*/src/**/*.test.ts",
+            "tests/qa/unit/**/*.test.ts",
+          ],
         },
       },
       "apps/web/vitest.config.ts",
@@ -27,7 +32,11 @@ export default defineConfig({
         test: {
           name: "integration",
           environment: "node",
-          include: ["apps/*/test/integration/**/*.test.ts", "packages/*/test/integration/**/*.test.ts", "tests/qa/integration/**/*.test.ts"],
+          include: [
+            "apps/*/test/integration/**/*.test.ts",
+            "packages/*/test/integration/**/*.test.ts",
+            "tests/qa/integration/**/*.test.ts",
+          ],
           // One disposable database per run; created/dropped by the global setup owned by backend-workflow-engineer.
           globalSetup: ["packages/db/test/global-setup.ts"],
           fileParallelism: false,
