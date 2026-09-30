@@ -466,7 +466,7 @@ weakened. Then request a re-review.
 | Item | Value |
 |---|---|
 | Implementer | backend-data-engineer (implementation mode, separate context; not the author of this review) |
-| Branch | `worktree-agent-a3eb13e67ee309a34`, started from `claude/mobily-transformation-hub` `4f05318` + this review (`640dc99`), with the P1 security re-review fixes (`7751b98`) merged in before the final runs |
+| Branch | `worktree-agent-a3eb13e67ee309a34`, started from `claude/mobily-transformation-hub` `4f05318` + this review (`640dc99`), with the lead branch merged in before the final runs (P1 security re-review fixes `7751b98`, then P4 finance / JV up to `b6e8d45`; migration conflicts resolved by regenerating the single migration) |
 | Findings in scope | DOM-P2-01, -04, -05, -07, -09, -10, -15, -16, -19, -21; feature gaps DOM-P2-17, -18 |
 | Not in scope | DOM-P2-02, -03, -06, -12, -13, -20 (governance / authority agent, working in parallel) |
 | Re-phased, not done here | DOM-P2-08 → P6 configuration module (per-project RAG thresholds, approved change, snapshot in frozen updates); DOM-P2-11 → P6 notifications (scoped inbox API/UI, outbox delivery, suppression after revocation, AT-19) |
@@ -540,15 +540,16 @@ $ HUB_DATABASES="hub_test_gatefix hub_test_gatefix_boot" bash scripts/dev/pg-ini
 roles hub_owner/hub_app and databases ready: hub_test_gatefix hub_test_gatefix_boot
 $ pnpm build:packages                                               # OK
 $ pnpm --filter @hub/domain --filter @hub/contracts run test
-packages/domain test:     Test Files  14 passed (14)      Tests  267 passed (267)
-packages/contracts test:  Test Files  2 passed (2)        Tests  71 passed (71)
+packages/domain test:     Test Files  16 passed (16)      Tests  328 passed (328)
+packages/contracts test:  Test Files  2 passed (2)        Tests  100 passed (100)
 $ TEST_DATABASE_URL=postgres://hub_app:…@127.0.0.1:5432/hub_test_gatefix \
   TEST_DATABASE_MIGRATION_URL=postgres://hub_owner:…@127.0.0.1:5432/hub_test_gatefix pnpm --filter @hub/api test
- Test Files  1 failed | 63 passed (64)
-      Tests  5 failed | 563 passed (568)     Duration 350.20s
+ Test Files  1 failed | 76 passed (77)
+      Tests  5 failed | 664 passed (669)     Duration 452.85s      (merged tree, final run)
    -> the only failures are the governance agent's five DEFECT probes in test/reviews/p2-domain.spec.ts:
       DOM-P2-02 (domain), DOM-P2-02 (API), DOM-P2-03a, DOM-P2-03b, DOM-P2-06
 $ pnpm lint     # tsc in every package + web i18n check (42 server message codes) + hard-coded-string check: passed
+$ python3 scripts/requirements/apply_status.py --check      # status-evidence.yaml OK (102 entries)
 $ node apps/api/dist/cli/openapi.js …      # 353 operations (incl. the 6 new DOM-P2-17/-18 routes)
 ```
 
