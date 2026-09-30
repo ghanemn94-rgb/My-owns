@@ -22,16 +22,21 @@ Legend: **Req-prod** = production requirement enforced by config.ts (E) or by th
 | `HUB_COOKIE_SECURE` | `false` | `true` (E, C) | `app.cookieSecure` |
 | `HUB_SESSION_IDLE_MINUTES` | `60` | Proposal pending Mobily Cybersecurity (MQ-15) | `app.session.idleMinutes` |
 | `HUB_SESSION_ABSOLUTE_HOURS` | `12` | Same as above | `app.session.absoluteHours` |
-| `HUB_TRUST_PROXY` | `false` | `true` behind an ingress/route (ADR-0017). The proxy must **overwrite** `X-Forwarded-For` | `app.trustProxy` |
-| `HUB_STORAGE_DRIVER` | `local` | `s3` (E, C). **The S3 adapter is *Not configured* at this commit: uploads fail closed** | `storage.driver` |
+| `HUB_TRUST_PROXY` | `false` | `true` (= 1 hop) behind an ingress/route, a hop count, or the proxy addresses/CIDRs (ADR-0017). The proxy must **overwrite** `X-Forwarded-For`. Catch-all ranges (`0.0.0.0/0`, `::/0`, IPv4 wider than /8, IPv6 wider than /16, `::ffff:0:0/96`) are refused (E, I-R2) | `app.trustProxy` |
+| `HUB_STORAGE_DRIVER` | `local` | `s3` (E, C). The S3-compatible adapter is implemented; connecting it to Mobily storage is *Not configured* | `storage.driver` |
+| `HUB_S3_ENDPOINT`, `HUB_S3_BUCKET`, `HUB_S3_REGION` | — | Required with `s3` (E). `https://` and host on `HUB_EGRESS_ALLOWLIST` (E) | `storage.s3.*` |
+| `HUB_S3_ACCESS_KEY_ID`, `HUB_S3_SECRET_ACCESS_KEY` | — | **Secret**. Default/example credentials (`minioadmin`, AWS documentation keys …) and secrets shorter than 16 characters are refused (E, I-R2) | `storage.s3.credentialsSecret` |
+| `HUB_S3_SSE`, `HUB_S3_KMS_KEY_ID` | `none` | `AES256` or `aws:kms` (+ key id) — required (E, I-R4); the chart default is `AES256` | `storage.s3.sse`, `storage.s3.kmsKeyId` |
+| `HUB_S3_BUCKET_DEFAULT_ENCRYPTION` | — | `assured` only with `HUB_S3_SSE=none` after verifying the bucket's default encryption (explicit risk acceptance, logged at startup) | `storage.s3.bucketDefaultEncryptionAssured` |
 | `HUB_STORAGE_LOCAL_DIR` | `.data/objects` | Development only. The image default is `/data/objects` | `storage.local.mountPath` |
 | `HUB_MAX_UPLOAD_MB` | `25` | Align with the ingress body-size limit | `app.maxUploadMb` |
 | `HUB_OIDC_ISSUER` | — | Required (E, C). Must be `https://` (E, C) | `oidc.issuer` |
 | `HUB_OIDC_CLIENT_ID` | — | Required with OIDC | `oidc.clientId` |
 | `HUB_OIDC_CLIENT_SECRET` | — | **Secret** | `oidc.clientSecret` |
 | `HUB_OIDC_REDIRECT_URI` | — | `https://<host>/api/v1/auth/oidc/callback` (chart default derived from `app.publicUrl`) | `oidc.redirectUri` |
-| `HUB_OIDC_LINK_BY_EMAIL` | `false` | Keep `false` unless the IdP e-mail claim is verified and unique (links a pre-provisioned user to their first OIDC subject) | `oidc.linkByEmail` |
-| `HUB_COOKIE_SECRET` | — | **Secret**, ≥ 32 characters, required with OIDC (E) | `oidc.cookieSecret` |
+| `HUB_OIDC_LINK_BY_EMAIL` | `false` | Keep `false` unless the IdP e-mail claim is verified and unique (links a pre-provisioned, not yet bound user to their first OIDC subject; `email_verified` must be `true`). In production it also needs `HUB_OIDC_LINK_BY_EMAIL_ACK` (E, I-R2) and is logged at startup | `oidc.linkByEmail` |
+| `HUB_OIDC_LINK_BY_EMAIL_ACK` | — | Exactly `accept-idp-verified-email-first-login-binding` to accept the IdP-email trust in production | `oidc.linkByEmailAck` |
+| `HUB_COOKIE_SECRET` | — | **Secret**, ≥ 32 characters, required with OIDC (E). Refused when it has < 8 distinct characters, a placeholder word, or an estimated entropy < 64 bits (repetition / sequences; `openssl rand -base64 48` and `openssl rand -hex 16` pass) (E, I-R2) | `oidc.cookieSecret` |
 | `HUB_AI_ALLOW_MOCK` | `true` | `false` (E, C) | `ai.allowMock` |
 | `HUB_PRIVATE_MODE` | `true` | `true` | `app.privateMode` |
 | `HUB_EGRESS_ALLOWLIST` | empty | Host names the app may call (in-app guard). Keep in sync with the NetworkPolicies | `app.egressAllowlist` |
@@ -74,7 +79,6 @@ corresponding adapter is implemented. They are marked *proposed* in `values.yaml
 
 | Variable | For | Owner |
 |---|---|---|
-| `HUB_S3_ENDPOINT`, `HUB_S3_BUCKET`, `HUB_S3_REGION`, `HUB_S3_FORCE_PATH_STYLE`, `HUB_S3_ACCESS_KEY_ID` (secret), `HUB_S3_SECRET_ACCESS_KEY` (secret) | S3-compatible storage adapter (`s3-compatible.storage.ts` is a fail-closed skeleton) | backend/platform |
 | `HUB_AI_MODE`, `HUB_AI_BASE_URL`, `HUB_AI_MODEL`, `HUB_AI_API_KEY` (secret) | AI provider adapters (ADR-0009; P5) | ai-runtime |
 
 ## Web image build arguments

@@ -77,6 +77,11 @@ export class PlanningSupport {
   }
 
   /** RBAC + ABAC with the project's classification. */
+  /** Approval order role → state → separation of duties (PolicyService.assertApproval, I-R3). */
+  assertApproval(ctx: RequestContext, permission: string, p: ProjectInfo, attrs: ActAttrs, stateCheck: () => void) {
+    this.policy.assertApproval(ctx, permission, { projectId: p.id, classification: p.classification, ...attrs }, stateCheck);
+  }
+
   assert(ctx: RequestContext, permission: string, p: ProjectInfo, attrs: ActAttrs = {}) {
     this.policy.assert(ctx, permission, { projectId: p.id, classification: p.classification, ...attrs });
   }

@@ -11,7 +11,7 @@ import {
   isActionOverdue,
   ruleViolation,
   transition,
-  SYSTEM_SUBJECT,
+  NO_HUMAN_REQUESTER,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
@@ -184,13 +184,13 @@ export class ActionsService {
   }
 
   async verifyClosure(ctx: RequestContext, projectId: string, actionId: string, body: { expectedVersion: number; note?: string }) {
-    const a = await this.loadAction(ctx, projectId, actionId, 'governance.action.verify_closure', a0 => ({ requesterUserId: a0.reportedDoneBy }));
+    const a = await this.loadAction(ctx, projectId, actionId, 'governance.action.verify_closure', (a0) => ({ requesterUserId: a0.reportedDoneBy }), 'verify_closure');
     if (a.ownerUserId === ctx.principal.userId) throw ruleViolation('governance.action.self_verification', 'The owner of an action cannot verify its closure');
     return this.apply(ctx, a, 'verify_closure', body.expectedVersion, { verifiedBy: ctx.principal.userId, verifiedAt: new Date() }, body.note);
   }
 
   async rejectClosure(ctx: RequestContext, projectId: string, actionId: string, body: { expectedVersion: number; note: string }) {
-    const a = await this.loadAction(ctx, projectId, actionId, 'governance.action.verify_closure', a0 => ({ requesterUserId: a0.reportedDoneBy }));
+    const a = await this.loadAction(ctx, projectId, actionId, 'governance.action.verify_closure', (a0) => ({ requesterUserId: a0.reportedDoneBy }), 'reject_closure');
     if (a.ownerUserId === ctx.principal.userId) throw ruleViolation('governance.action.self_verification', 'The owner of an action cannot review its own closure');
     return this.apply(ctx, a, 'reject_closure', body.expectedVersion, {}, body.note);
   }
@@ -288,7 +288,7 @@ export class ActionsService {
     // not_self against whoever raised it; an escalation the SYSTEM raised (is_system_generated, no human raiser) has no human
     // requester. Resolving is procedural: authority is the recording role (explicit, I-R3).
     const e = await this.loadEscalation(ctx, projectId, escalationId, 'governance.decision.record_outcome', (x) => ({
-      requesterUserId: x.raisedBy ?? (x.isSystemGenerated ? SYSTEM_SUBJECT : null),
+      requesterUserId: x.raisedBy ?? (x.isSystemGenerated ? NO_HUMAN_REQUESTER : null),
       withinAuthority: true,
     }));
     assertVersion(e, body.expectedVersion, 'escalation');
@@ -308,14 +308,24 @@ export class ActionsService {
   // ---------------------------------------------------------------------------------------------------------
   // Helpers
 
-  private async loadAction(ctx: RequestContext, projectId: string, actionId: string, permission: string, extra: (a: ActionRow) => { requesterUserId?: string | null } = () => ({})) {
+  /** `approvalCommand`: the command approves someone's report → role → state → separation of duties (I-R3). */
+  private async loadAction(
+    ctx: RequestContext,
+    projectId: string,
+    actionId: string,
+    permission: string,
+    extra: (a: ActionRow) => { requesterUserId?: string | null } = () => ({}),
+    approvalCommand?: 'verify_closure' | 'reject_closure',
+  ) {
     const a = await loadInProject(this.db, schema.actionItem, projectId, actionId);
     let classification: Classification | null = null;
     if (a.decisionId) {
       const [d] = await this.db.tx().select({ c: schema.decision.classification }).from(schema.decision).where(eq(schema.decision.id, a.decisionId));
       classification = d?.c ?? null;
     }
-    this.policy.assert(ctx, permission, { projectId, classification, ownerUserIds: [a.ownerUserId, a.createdBy], ...extra(a) });
+    const res = { projectId, classification, ownerUserIds: [a.ownerUserId, a.createdBy], ...extra(a) };
+    if (approvalCommand) this.policy.assertApproval(ctx, permission, res, () => transition('action', ACTION_ITEM_MACHINE, a.status as ActionStatus, approvalCommand));
+    else this.policy.assert(ctx, permission, res);
     return a;
   }
 

@@ -22,7 +22,7 @@ afterAll(async () => {
 });
 
 describe('P1 security re-review — defects', () => {
-  it('DEFECT SEC-P1R-01: CSRF denials are audited BEFORE the rate limiter, so one session can write unbounded audit rows', async () => {
+  it('SEC-P1R-01: CSRF denials are audited BEFORE the rate limiter, so one session can write unbounded audit rows', async () => {
     const pm = await loginAs('pm');
     const count = async () => Number((await owner().query(`select count(*)::int n from audit_event where action = 'auth.csrf' and actor_user_id = $1`, [pm.userId])).rows[0].n);
     const before = await count();
@@ -38,7 +38,7 @@ describe('P1 security re-review — defects', () => {
     expect(added).toBeLessThanOrEqual(120);
   });
 
-  it('DEFECT SEC-P1R-02: the activity feed still shows events of records whose visibility is inherited (meeting of a restricted committee)', async () => {
+  it('SEC-P1R-02: the activity feed still shows events of records whose visibility is inherited (meeting of a restricted committee)', async () => {
     const auditor = await loginAs('auditor'); // clearance: confidential
     const [c] = (await owner().query(`select c.id, c.classification from committee c where c.project_id = $1 and exists (select 1 from meeting m where m.committee_id = c.id) order by c.created_at limit 1`, [dcId])).rows;
     const [m] = (await owner().query(`select id from meeting where committee_id = $1 order by created_at limit 1`, [c.id])).rows;
@@ -54,7 +54,7 @@ describe('P1 security re-review — defects', () => {
     }
   });
 
-  it('DEFECT SEC-P1R-03: a shared legal entity can be changed from another project without any trace in the owning project', async () => {
+  it('SEC-P1R-03: a shared legal entity can be changed from another project without any trace in the owning project', async () => {
     const [le] = (await owner().query(`select le.id, le.name, le.version from project_entity pe join legal_entity le on le.id = pe.legal_entity_id where pe.project_id = $1 and pe.role = 'newco'`, [dcId])).rows;
     // The entity is linked to project B as well (legitimately done through POST …/legal-entities/link by someone who sees both).
     const link = (await owner().query(`insert into project_entity (org_id, project_id, legal_entity_id, role) values ($1,$2,$3,'other') returning id`, [orgId, genId, le.id])).rows[0].id;
@@ -75,7 +75,7 @@ describe('P1 security re-review — defects', () => {
     }
   });
 
-  it('DEFECT SEC-P1R-04: listing evidence does not check the target module read permission (JV closing-condition notes readable by a contributor)', async () => {
+  it('SEC-P1R-04: listing evidence does not check the target module read permission (JV closing-condition notes readable by a contributor)', async () => {
     const contributor = await loginAs('contributor'); // holds documents.document.read, NOT jv.deal.read
     const cc = (await owner().query(`insert into closing_condition (org_id, project_id, reference, title) values ($1,$2,'SECRR-CP-1','Closing condition (SEC-P1R-04 test, synthetic)') returning id`, [orgId, dcId])).rows[0].id;
     const link = (await owner().query(`insert into evidence_link (org_id, project_id, target_type, target_id, note, status, added_by, purpose) values ($1,$2,'closing_condition',$3,'Negotiation note (SEC-P1R-04 test, synthetic)','active',$4,'test') returning id`, [orgId, dcId, cc, await demoUserId('legal')])).rows[0].id;
@@ -88,7 +88,7 @@ describe('P1 security re-review — defects', () => {
     }
   });
 
-  it('DEFECT SEC-P1R-05: register evidence counts include links to documents the caller cannot read', async () => {
+  it('SEC-P1R-05: register evidence counts include links to documents the caller cannot read', async () => {
     const contributor = await loginAs('contributor'); // clearance: confidential
     const check = (await owner().query(`select id from readiness_check where project_id = $1 order by created_at limit 1`, [dcId])).rows[0].id;
     const doc = (await owner().query(`insert into document (org_id, project_id, title, kind, classification) values ($1,$2,'Restricted evidence (SEC-P1R-05 test, synthetic)','evidence','restricted') returning id`, [orgId, dcId])).rows[0].id;
@@ -105,7 +105,7 @@ describe('P1 security re-review — defects', () => {
     }
   });
 
-  it('DEFECT SEC-P1R-06: a denied cross-project mutation is audited without the attempted project or target (SEC-P1-11 residual)', async () => {
+  it('SEC-P1R-06: a denied cross-project mutation is audited without the attempted project or target (SEC-P1-11 residual)', async () => {
     const pmB = await loginAs('pm.b');
     const mem = (await owner().query(`select id from project_membership where project_id = $1 order by created_at limit 1`, [dcId])).rows[0].id;
     const r = await pmB.post(`/api/v1/projects/${dcId}/members/${mem}/revoke`, { reason: 'SEC-P1R-06 test' });

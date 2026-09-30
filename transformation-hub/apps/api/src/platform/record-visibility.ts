@@ -166,17 +166,30 @@ export class RecordVisibility {
   }
 
   /**
-   * The polymorphic (type, id) pair is visible. Types with a rule: `type = T and <rule>`, and only when the caller holds
-   * the type's read permission (`readPermission`). Types without a rule: visible unless the caller lacks their read
-   * permission. A null type (no target) is visible.
+   * Visibility of a (type, id) pair for EVERY type, as one `CASE type WHEN 'T' THEN <rule for T> … ELSE true END`
+   * (activity feed rows). Only the matching branch runs per row — a primary-key probe — instead of one hashed sub-plan per
+   * type over whole tables (45 `type <> T OR EXISTS …` clauses took ~38 s on the test data; the CASE form is linear).
+   */
+  caseSql(typeCol: SQL | PgColumn, idCol: SQL | PgColumn, types: readonly string[] = RecordVisibility.TYPES): SQL {
+    const branches = types.filter((t) => RULES[t]).map((t) => sql` when ${t} then ${this.exists(t, idCol)}`);
+    if (!branches.length) return TRUE;
+    return sql`(case ${typeCol}${sql.join(branches, sql``)} else true end)`;
+  }
+
+  /**
+   * The polymorphic (type, id) pair is visible. Types with a rule: the rule, and only when the caller holds the type's read
+   * permission (`readPermission`). Types without a rule: visible unless the caller lacks their read permission. A null
+   * type (no target) is visible. One CASE, so only the target's own branch is evaluated.
    */
   targetSql(typeCol: SQL | PgColumn, idCol: SQL | PgColumn, depth = 0): SQL {
     if (depth > 2) return sql`false`; // defensive: polymorphic chains are never deeper than one level
-    const ruled = Object.keys(RULES).filter((t) => !POLYMORPHIC.has(t));
-    const branches: SQL[] = ruled.filter((t) => this.permitted(t)).map((t) => sql`(${typeCol} = ${t} and ${this.exists(t, idCol, depth)})`);
-    const excluded = [...ruled, ...POLYMORPHIC, ...UNRULED_TARGET_TYPES.filter((t) => !this.permitted(t))];
-    branches.push(sql`(${typeCol} is null or ${typeCol} not in (${sql.join(excluded.map((t) => sql`${t}`), sql`, `)}))`);
-    return sql`(${sql.join(branches, sql` or `)})`;
+    const branches: SQL[] = [];
+    for (const t of Object.keys(RULES)) {
+      if (POLYMORPHIC.has(t)) branches.push(sql` when ${t} then false`); // never a target of another polymorphic record
+      else branches.push(sql` when ${t} then ${this.permitted(t) ? this.exists(t, idCol, depth) : sql`false`}`);
+    }
+    for (const t of UNRULED_TARGET_TYPES) if (!this.permitted(t)) branches.push(sql` when ${t} then false`);
+    return sql`(case ${typeCol}${sql.join(branches, sql``)} else true end)`;
   }
 
   /** Type-level read permission of a target type (always true when no `readPermission` resolver was given). */

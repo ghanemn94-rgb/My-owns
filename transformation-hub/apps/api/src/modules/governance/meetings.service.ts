@@ -357,7 +357,8 @@ export class MeetingsService {
 
   async approveMinutes(ctx: RequestContext, projectId: string, meetingId: string, body: { expectedVersion: number; note?: string }) {
     const { meeting: m, committee: c } = await this.sup.meeting(ctx, projectId, meetingId);
-    this.policy.assert(ctx, 'governance.minutes.approve', { projectId, classification: c.classification, requesterUserId: m.minutesDraftedBy });
+    // Role → state → not the drafter (unknown → fail closed), I-R3.
+    this.policy.assertApproval(ctx, 'governance.minutes.approve', { projectId, classification: c.classification, requesterUserId: m.minutesDraftedBy }, () => transition('meeting', MEETING_MACHINE, m.status, 'approve_minutes'));
     assertVersion(m, body.expectedVersion, 'meeting');
     const to = transition('meeting', MEETING_MACHINE, m.status, 'approve_minutes');
     const row = await updateVersioned(this.db, schema.meeting, { id: m.id, projectId, expectedVersion: body.expectedVersion }, { status: to, minutesApprovedBy: ctx.principal.userId, minutesApprovedAt: new Date() });

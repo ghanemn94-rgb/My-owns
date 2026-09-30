@@ -312,8 +312,8 @@ export class WbsService {
 
   async acceptTask(ctx: RequestContext, projectId: string, taskId: string, body: { expectedVersion: number; note?: string }) {
     const { p, t } = await this.loadTask(ctx, projectId, taskId);
-    // Separation of duties: the acceptor must not be the submitter (policy condition not_self).
-    this.s.assert(ctx, 'planning.deliverable.accept', p, { workstreamId: t.workstreamId, requesterUserId: t.submittedBy });
+    // Separation of duties: the acceptor must not be the submitter (policy condition not_self) — after the state check.
+    this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: t.workstreamId, requesterUserId: t.submittedBy }, () => transition('task', TASK_MACHINE, t.status as TaskStatus, 'accept'));
     this.s.assertVersion(t, body.expectedVersion, 'task');
     if (t.status === 'submitted_for_acceptance') await this.s.assertEvidence(projectId, 'task', t.id);
     const today = this.s.today(p);
@@ -322,7 +322,7 @@ export class WbsService {
 
   async rejectTaskAcceptance(ctx: RequestContext, projectId: string, taskId: string, body: { expectedVersion: number; reason: string }) {
     const { p, t } = await this.loadTask(ctx, projectId, taskId);
-    this.s.assert(ctx, 'planning.deliverable.accept', p, { workstreamId: t.workstreamId, requesterUserId: t.submittedBy });
+    this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: t.workstreamId, requesterUserId: t.submittedBy }, () => transition('task', TASK_MACHINE, t.status as TaskStatus, 'reject_acceptance'));
     return this.applyTask(ctx, p, t, 'reject_acceptance', body.expectedVersion, { submittedBy: null, submittedAt: null }, { reason: body.reason });
   }
 
@@ -667,12 +667,12 @@ export class WbsService {
       }
       case 'verify_achieved':
         // Evidence-verified by someone other than the reporter (not_self), with ≥1 active evidence link.
-        this.s.assert(ctx, 'planning.deliverable.accept', p, { workstreamId: m.workstreamId, requesterUserId: m.reportedBy });
+        this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: m.workstreamId, requesterUserId: m.reportedBy }, () => transition('milestone', MILESTONE_MACHINE, m.status as MilestoneStatus, command));
         this.s.assertVersion(m, body.expectedVersion, 'milestone');
         if (m.status === 'achieved_pending_evidence') await this.s.assertEvidence(projectId, 'milestone', m.id);
         return this.applyMilestone(ctx, p, m, command, body.expectedVersion, { verifiedBy: ctx.principal.userId, verifiedAt: new Date(), verificationStatus: 'confirmed' }, reason);
       case 'reject_evidence':
-        this.s.assert(ctx, 'planning.deliverable.accept', p, { workstreamId: m.workstreamId, requesterUserId: m.reportedBy });
+        this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: m.workstreamId, requesterUserId: m.reportedBy }, () => transition('milestone', MILESTONE_MACHINE, m.status as MilestoneStatus, command));
         return this.applyMilestone(ctx, p, m, command, body.expectedVersion, { verifiedBy: null, verifiedAt: null, verificationStatus: 'proposed' }, reason);
       case 'mark_missed':
       case 'cancel':
@@ -842,13 +842,13 @@ export class WbsService {
         if (command === 'submit') extra = { submittedBy: ctx.principal.userId, submittedAt: new Date() };
         break;
       case 'accept':
-        this.s.assert(ctx, 'planning.deliverable.accept', p, { workstreamId: d.workstreamId, requesterUserId: d.submittedBy });
+        this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: d.workstreamId, requesterUserId: d.submittedBy }, () => transition('deliverable', DELIVERABLE_MACHINE, d.status as DeliverableStatus, command));
         this.s.assertVersion(d, body.expectedVersion, 'deliverable');
         if (d.status === 'submitted') await this.s.assertEvidence(projectId, 'deliverable', d.id);
         extra = { acceptedBy: ctx.principal.userId, acceptedAt: new Date() };
         break;
       case 'reject':
-        this.s.assert(ctx, 'planning.deliverable.accept', p, { workstreamId: d.workstreamId, requesterUserId: d.submittedBy });
+        this.s.assertApproval(ctx, 'planning.deliverable.accept', p, { workstreamId: d.workstreamId, requesterUserId: d.submittedBy }, () => transition('deliverable', DELIVERABLE_MACHINE, d.status as DeliverableStatus, command));
         break;
       case 'cancel':
         this.s.assert(ctx, 'planning.wbs.manage', p, { workstreamId: d.workstreamId });

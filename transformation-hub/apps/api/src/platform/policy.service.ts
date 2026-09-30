@@ -137,6 +137,23 @@ export class PolicyService {
   }
 
   /**
+   * Approval / verification of someone's submission, in the order ROLE → STATE → SEPARATION OF DUTIES (I-R3):
+   *   1. RBAC, visibility and non-subject conditions (404 / 403 — a caller without the grant learns nothing more);
+   *   2. `stateCheck` (e.g. the state machine): a command in the wrong state is 422 — before submission the requester is
+   *      naturally unknown, and "nothing to approve yet" is the true answer;
+   *   3. `not_self` / `authority` with the subject's requester: a known state with an unknown requester still fails
+   *      CLOSED (403 policy.sod_subject_unknown).
+   */
+  assertApproval(ctx: RequestContext, permission: string, res: ResourceAttrs, stateCheck?: () => void): void {
+    const { requesterUserId: _requester, withinAuthority: _authority, ...roleLevel } = res;
+    void _requester;
+    void _authority;
+    this.assertGranted(ctx, permission, roleLevel);
+    stateCheck?.();
+    this.assert(ctx, permission, res);
+  }
+
+  /**
    * Role-level PRE-check (I-R3): RBAC, visibility and every condition EXCEPT the subject-specific `not_self` / `authority`.
    * Use it only before a loop / flow that then calls `assert(...)` per subject with its requester and authority — it never
    * authorizes an approval on its own. (Calling `assert` without those inputs fails closed.)

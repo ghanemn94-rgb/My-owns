@@ -3,6 +3,7 @@ import { and, eq, inArray, isNull, or, gt, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
   GATE_ASSESSMENT_MACHINE,
+  NO_HUMAN_REQUESTER,
   POLICY_MATRIX,
   DECIDED_GATE_STATUSES,
   APPROVED_GATE_STATUSES,
@@ -218,7 +219,11 @@ export class GatesService implements OnModuleInit {
   ) {
     const { b, gate, cur } = await this.loadGate(projectId, gateId);
     const withinAuthority = this.rolesOf(ctx, projectId).includes(gate.approverRole);
-    this.commandAssert(ctx, 'gates.assessment.decide', { projectId, classification: b.project.classification, requesterUserId: cur.submittedBy, withinAuthority });
+    // Role → state → not the submitter + within authority (I-R3): deciding an assessment nobody submitted is 422, not 403.
+    assertHumanActor(ctx, 'gates.assessment.decide');
+    this.policy.assertApproval(ctx, 'gates.assessment.decide', { projectId, classification: b.project.classification, requesterUserId: cur.submittedBy, withinAuthority }, () =>
+      transition('gate_assessment', GATE_ASSESSMENT_MACHINE, cur.status, body.outcome),
+    );
     const to = transition('gate_assessment', GATE_ASSESSMENT_MACHINE, cur.status, body.outcome);
     const decisionId = body.decisionId ?? cur.decisionId ?? null;
     const d = decisionId ? await this.loadDecision(ctx, projectId, decisionId) : null;
@@ -381,12 +386,12 @@ export class GatesService implements OnModuleInit {
     const { b, gate, crit, cur } = await this.loadCriterion(projectId, gateId, criterionId);
     const ev = b.evidenceOf(crit.id);
     const actor = ctx.principal.userId;
-    // `met` approves someone's submission: separation of duties against the evidence submitter(s) — or, with no evidence
-    // linked, whoever submitted the criterion for review; unknown → fail closed (I-R3). Returning it (`unmet`) approves
-    // nothing, so only the role-level check applies.
+    // `met` accepts the evidence: separation of duties against its submitter(s) (not_self). With no active evidence at all
+    // there is no evidence owner — stated explicitly (NO_HUMAN_REQUESTER, I-R3); the evidence rules below still refuse a
+    // criterion that requires evidence (422). Returning it (`unmet`) approves nothing: role-level check only.
     const sod =
       body.outcome === 'met'
-        ? { requesterUserId: actor && ev.submitters.includes(actor) ? actor : (ev.submitters[0] ?? b.ca(cur.id, crit.id)?.assessedBy ?? null) }
+        ? { requesterUserId: ev.submitters.length ? (actor && ev.submitters.includes(actor) ? actor : ev.submitters[0]!) : NO_HUMAN_REQUESTER }
         : ('none' as const);
     this.assertDesignatedReviewer(ctx, projectId, b.project.classification, crit, sod);
     assertCriterionEditable(gate.key, cur.status);

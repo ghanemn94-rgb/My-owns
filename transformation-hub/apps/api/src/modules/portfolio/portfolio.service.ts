@@ -626,8 +626,7 @@ export class PortfolioService {
       reach: !canAudit,
       readPermission: canAudit ? undefined : (t) => ACTIVITY_ENTITY_PERMISSION[t] ?? (EVIDENCE_TARGET_READ_PERMISSION as Record<string, string>)[t],
     });
-    const parts = RecordVisibility.TYPES.filter((t) => t !== 'transfer').map((t) => sql`(${ae.entityType} <> ${t} or ${rv.exists(t, ae.entityId)})`);
-    return sql.join(parts, sql` and `);
+    return rv.caseSql(ae.entityType, ae.entityId);
   }
 
   async activity(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; entityType?: string; entityId?: string }) {

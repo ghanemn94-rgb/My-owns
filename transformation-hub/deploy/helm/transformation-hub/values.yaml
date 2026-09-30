@@ -78,7 +78,11 @@ storage:
     endpoint: https://s3.example.internal       # REPLACE
     bucket: hub-objects                         # REPLACE
     region: us-east-1                           # placeholder required by most S3 SDKs; set per provider
-    forcePathStyle: true                        # the adapter always uses path-style URLs (MinIO / Ceph RGW / on-prem S3)
+                                                # (the adapter always uses path-style URLs: MinIO / Ceph RGW / on-prem S3)
+    sse: AES256                                 # HUB_S3_SSE — per-object server-side encryption: AES256 or aws:kms (I-R4)
+    kmsKeyId: ""                                # HUB_S3_KMS_KEY_ID — required with sse: aws:kms
+    bucketDefaultEncryptionAssured: false       # true = HUB_S3_BUCKET_DEFAULT_ENCRYPTION=assured: only with sse: none AND a
+                                                # verified bucket default encryption (documented risk acceptance)
     credentialsSecret:
       name: hub-object-storage
       accessKeyIdKey: HUB_S3_ACCESS_KEY_ID
@@ -92,7 +96,8 @@ oidc:
   issuer: https://idp.example.internal/realms/hub   # REPLACE (https required in production)
   clientId: transformation-hub                  # REPLACE
   redirectUri: ""                               # default: <publicUrl>/api/v1/auth/oidc/callback (contract route)
-  linkByEmail: false
+  linkByEmail: false                            # first-login binding by the IdP-VERIFIED email (SEC-P1-01); production also
+  linkByEmailAck: ""                            # needs linkByEmailAck: accept-idp-verified-email-first-login-binding (I-R2)
   clientSecret:
     name: hub-oidc
     key: HUB_OIDC_CLIENT_SECRET

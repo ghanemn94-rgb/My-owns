@@ -592,7 +592,10 @@ export class DecisionsService {
 
   async verifyImplementation(ctx: RequestContext, projectId: string, decisionId: string, body: { expectedVersion: number; evidenceNote?: string }) {
     const d = await loadInProject(this.db, schema.decision, projectId, decisionId);
-    this.policy.assert(ctx, 'governance.decision.verify_implementation', { projectId, classification: d.classification, requesterUserId: d.implementationStartedBy });
+    // Role → state → not the person who started tracking (unknown → fail closed), I-R3.
+    this.policy.assertApproval(ctx, 'governance.decision.verify_implementation', { projectId, classification: d.classification, requesterUserId: d.implementationStartedBy }, () =>
+      transition('decision', DECISION_MACHINE, d.status as DecisionStatus, 'verify_implementation'),
+    );
     assertVersion(d, body.expectedVersion, 'decision');
     const to = transition('decision', DECISION_MACHINE, d.status as DecisionStatus, 'verify_implementation');
     assertImplementationVerifiable({ actions: await this.linkedActions(d), verifierUserId: ctx.principal.userId!, evidenceNote: body.evidenceNote });

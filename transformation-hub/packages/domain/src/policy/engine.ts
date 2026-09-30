@@ -57,11 +57,14 @@ export interface AbacAttributes {
 }
 
 /**
- * Explicit "no human requester" marker for `not_self` (I-R3): the subject was raised by the system itself (e.g. an
- * escalation flagged `is_system_generated`), so no human approver can be approving their own request. Callers pass it ONLY
- * when the record itself says so — a missing requester id is never treated as system-originated.
+ * Explicit "there is no human requester" marker for `not_self` (I-R3). Callers pass it ONLY when the data PROVES that
+ * nobody else's submission is being approved:
+ *  - the subject was raised by the system itself (an escalation flagged `is_system_generated` with no raiser);
+ *  - a gate criterion is reviewed with no evidence linked at all (the not_self subject is the evidence owner; with no
+ *    evidence there is none — the evidence rules still apply).
+ * A missing requester id (undefined / null) is never read as this marker: it fails closed.
  */
-export const SYSTEM_SUBJECT = 'system:no-human-requester';
+export const NO_HUMAN_REQUESTER = 'none:no-human-requester';
 
 export interface AbacResult {
   allowed: boolean;
