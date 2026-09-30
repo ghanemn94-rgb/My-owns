@@ -298,7 +298,7 @@ function DecisionRow({ d, rank, today, testId }: { d: CockpitDecision; rank: num
           <span dir="ltr" className="block text-xs font-semibold text-muted">
             {d.code}
           </span>
-          <span dir="auto" className="block font-medium text-primary group-hover:underline" data-testid={`${testId}-title`}>
+          <span dir="auto" className="block font-medium text-primary group-hover:underline" data-testid={`${testId}-title`} data-user-text>
             {d.title}
           </span>
         </Link>
@@ -521,7 +521,7 @@ export function CommitteeAsksTile() {
       <ol aria-labelledby="asks-agenda-title" className="space-y-2" data-testid="pending-agenda">
         {agenda.data.items.map((a) => (
           <li key={a.id} className="rounded-md border border-line p-2.5" data-testid="pending-agenda-item">
-            <Link href={agendaItemHref(projectId, a)} className="break-words font-medium text-primary hover:underline" dir="auto" data-testid="pending-agenda-link">
+            <Link href={agendaItemHref(projectId, a)} className="break-words font-medium text-primary hover:underline" dir="auto" data-testid="pending-agenda-link" data-user-text>
               {a.title}
             </Link>
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted">

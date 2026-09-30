@@ -90,7 +90,8 @@ export async function visibleTexts(page: Page, scope?: Locator): Promise<Visible
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
       const t = (n.textContent ?? '').replace(/\s+/g, ' ').trim();
       const el = n.parentElement;
-      if (!t || !el || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName) || !shown(el)) continue;
+      // Text a user typed (marked data-user-text, e.g. a decision title) is shown as entered and is not translatable.
+      if (!t || !el || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName) || !shown(el) || el.closest('[data-user-text]')) continue;
       out.push({ text: t, where: `${el.tagName.toLowerCase()}${el.getAttribute('data-testid') ? `[data-testid=${el.getAttribute('data-testid')}]` : ''}` });
     }
     for (const el of Array.from(root.querySelectorAll('[placeholder],[aria-label],[title],img[alt]'))) {
