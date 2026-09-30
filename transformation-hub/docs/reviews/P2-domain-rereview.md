@@ -406,3 +406,33 @@ Pattern scans (dates, percentages, money-like numbers, currencies, honorific + n
 `apps/api/test/reviews/p2-domain-rereview*.spec.ts` pass without weakening them, and rename them without `DEFECT`. Obtain
 the governance owner's decision on Q-40 / DOM-P2R-01 and F-01, or implement the recommended rule. Then request a focused
 re-review of those findings. The rest of this review stands.
+
+---
+
+## Fix status (implementation, 2026-09-30)
+
+Appended by the implementing `backend-data-engineer` (implementation mode, separate context; not the author of this
+review). The reviewer's text above is unchanged. No probe was weakened: the five `DEFECT` probes of this re-review pass
+and were renamed `… (fixed, regression)`; the two `OBSERVATION` probes (DOM-P2R-01, -02) now assert the implemented rule.
+Branch `worktree-agent-a667570d205e1a5d2` (from `claude/mobily-transformation-hub` `e75f7fd` + this review branch, then
+`5b2a3bc` — P2 QA review — and `1c6b375` merged in; the single migration regenerated). The P2 QA findings QA-P2-01,
+QA-P2-03, O-1 and F-03 were fixed on the same branch (see `P2-qa-review.md`, "Fix status").
+
+| Finding | Status | What changed (rule → where) |
+|---|---|---|
+| DOM-P2R-03 (High) | Fixed | A decision paper names the record it authorizes (`subjectType` + `subjectId`: change request, baseline version, perimeter version), validated in the project (404 otherwise), only while that record awaits approval (422 `governance.decision.subject_not_open`), fixed from the first submission (`governance.decision.subject_locked`); DB check + same-project trigger. Change-request and baseline approvals rest only on a decision raised for that record (`change_control.decision_no_subject` / `…decision_other_subject`); a perimeter version on a G1 decision raised for it or for no record. Web: paper form subject fieldset; decision pickers offer only matching decisions; "Raise decision paper" from the change request and baseline pages. |
+| DOM-P2R-04 (High) | Fixed | Every reliance re-reads the external approval's evidence link: only an ACTIVE link verified by a second person counts — gate approval and gate blockers, change-request / baseline approval, perimeter-version approval, prerequisite satisfaction. Rejected / superseded / conflicting decision evidence flags the approved gates that relied on it (`reassessment.decisionEvidence`, escalation, notifications, `gate.blocked`, downstream flags, recompute) — the recorded decision and cycle are never modified. |
+| DOM-P2R-05 (High, P3) | Fixed | One decision backs one record of each kind: decision-use registry (`decision_use`, unique per decision and kind; `SELECT … FOR UPDATE` on the decision; 422 `perimeter.version.decision_already_used`, 409 on a lost race); a partial unique index on `perimeter_version.decision_id` is a second backstop. |
+| DOM-P2R-01 (Medium) | Fixed — rule PROPOSED, pending the governance owner (Q-40) | The outcome is recorded only when every present, eligible, non-recused voting member voted (circulation: every appointed eligible member, or the deadline passed), or the chair closed voting with an audited reason (`POST …/close-voting`, chair of the committee only; later votes 422 `governance.vote.voting_closed`). Non-voters are listed in the tally snapshot and not counted (abstention rule unchanged). In a meeting a missing quorum is reported first. Web: voting-state panel, chair command, outcome disabled while votes are outstanding. `authority-matrix.md` §3, `decision-workflow.md` §2. |
+| F-01 / REQ-GOV-015 | Fixed — PROPOSED (A-50) | A member votes only after their OWN declaration for the item ("no conflict" with the vote or at the meeting; a conflict → recusal); on-behalf "no conflict" does not count (422 `governance.vote.declaration_required`). Web: conflict step in the vote dialog. |
+| DOM-P2-14 (Low) | Fixed | Submission needs ≥ 1 active evidence link on the paper (attachments are documents linked as evidence) or `evidenceNoneReason`. Web: paper field + evidence count. |
+| DOM-P2R-02 (Low) | Fixed — conservative option, pending Q-43 | A requester-stated cost impact may refuse an approval but decides it only once an assessor other than the requester recorded or confirmed it (`costImpactRecordedBy`; 422 `change_control.amount_unconfirmed`). Web: confirmation shown on the change request. |
+| DOM-P2R-07 (Low) | Fixed — PROPOSED (A-53) | Removing a prerequisite needs a reason; while it still blocks, not by the person accountable for the task / milestone (403 `planning.prerequisite.removal_by_blocked_party`); audited with the reason. Web: reason field + rule. |
+| DOM-P2R-06, DOM-P2R-08 (Low) | Not addressed | Governance-owner decisions (gate ownership override; on-behalf recusal ruling); outside this assignment. |
+
+Status of the requirements this review lowered or questioned (`docs/requirements/status-evidence.yaml`): REQ-GOV-022,
+REQ-PLN-013, REQ-LCY-015 and REQ-DAT-014 keep **Tested** with the new evidence; REQ-GOV-013, -014 and -015 move to
+**Tested**; REQ-GOV-016, REQ-LCY-010, REQ-PLN-006 and REQ-SET-012 gain evidence.
+
+Verification: see the branch's final report (commands and results are recorded in the "Fix status" section of
+`P2-qa-review.md`, which covers the same runs).
