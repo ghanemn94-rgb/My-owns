@@ -53,7 +53,8 @@ for (const file of files(ROOT)) {
   const rel = relative(ROOT, file).split(sep);
   const from = rel[0];
   const src = readFileSync(file, 'utf8');
-  for (const m of src.matchAll(/(?:from|import)\s*\(?\s*'(\.[^']+)'/g)) {
+  // static and dynamic imports, re-exports and require(), with single or double quotes (SEC-P1S-07)
+  for (const m of src.matchAll(/(?:from|import|require)\s*\(?\s*['"](\.[^'"]+)['"]/g)) {
     const target = relative(ROOT, join(dirname(file), m[1])).split(sep);
     if (target[0] === '..' || target[0] === from) continue; // platform / same module
     imports++;

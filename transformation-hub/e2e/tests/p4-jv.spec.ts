@@ -112,10 +112,20 @@ async function finalJvDecision(baseURL: string, pid: string, decisionTypeKey: st
     }
     const out = await post(sec, `${base}/decisions/${d.id}/record-outcome`, { expectedVersion: (await get(sec, `${base}/decisions/${d.id}`)).version });
     expect(out.status, `${decisionTypeKey} is outside the committee delegation → recommendation`).toBe('recommended');
+    // DOM-P2-12: the external decision rests on an evidence link on the decision that another person verified (PM links,
+    // Legal verifies; the chair records the approval).
+    const link = await post(pm, `${base}/evidence`, { targetType: 'decision', targetId: d.id, note: `Synthetic record of the authorized body's decision ${STAMP} (e2e)`, purpose: 'External authority decision (e2e)' });
+    const legal = await apiSessionAs(baseURL, P.legal);
+    try {
+      await post(legal, `${base}/evidence/${link.id}/verify`, { expectedVersion: 1, decision: 'accept', note: 'Checked against the synthetic reference (e2e)' });
+    } finally {
+      await legal.dispose();
+    }
     const ext = await post(chair, `${base}/decisions/${d.id}/record-external-approval`, {
       expectedVersion: (await get(chair, `${base}/decisions/${d.id}`)).version,
       outcome: 'approved',
       externalReference: `E2E-AUTHORIZED-BODY-${STAMP} (synthetic reference)`,
+      evidenceLinkId: link.id,
       note: 'Synthetic external approval (e2e)',
     });
     expect(ext.status).toBe('approved');

@@ -276,7 +276,7 @@ describe('Security review probes — finance records in evidence and history [45
     }
   });
 
-  it('DEFECT SEC-P1S-04: the evidence counter of a figure / benefit detail counts only evidence the caller can read (SEC-P1R-05)', async () => {
+  it('SEC-P1S-04 (fixed, regression): the evidence counter of a figure / benefit detail counts only evidence the caller can read (SEC-P1R-05)', async () => {
     const sponsorDocs = await login('sponsor');
     const hidden = await createWithVersion(sponsorDocs, projectId, { title: 'Strictly confidential working paper (synthetic)', classification: 'strictly_confidential' }, { bytes: Buffer.from('synthetic,1\n', 'utf8'), name: 'working-paper.csv' });
     expect(hidden.upload.status, JSON.stringify(hidden.upload.body)).toBe(201);

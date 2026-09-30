@@ -177,7 +177,7 @@ export class SnapshotsService {
       ...this.dto(r, p),
       approval: await this.approvalDto(p, r, r.validationNote, contentHash(r)),
       reconciliations: recons,
-      evidence: await this.s.evidence(projectId, 'financial_snapshot', r.id),
+      evidence: await this.s.evidenceShown(ctx, projectId, 'financial_snapshot', r.id),
       allowedCommands: allowedCommands(FIGURE_APPROVAL_MACHINE, r.approvalState).filter((c) => c !== 'invalidate' && c !== 'supersede'),
       people: await this.s.people([r.createdBy, r.preparedBy, r.validatedBy, r.approvedBy, ...recons.flatMap((x) => [x.preparedBy, x.reviewerUserId])]),
     };

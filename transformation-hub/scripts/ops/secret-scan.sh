@@ -44,6 +44,15 @@ scan() {
 }
 
 echo "gitleaks $("$GL" version) · config $(realpath --relative-to="$ROOT" "$CONFIG")"
+# A .gitleaksignore silently suppresses findings by fingerprint; every exception must be a reviewed allow-list entry in
+# gitleaks.toml instead (SEC-P1S-02). Refuse to scan while one exists in the repository or the project directory.
+REPO_ROOT="$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || echo "$ROOT")"
+for f in "$ROOT/.gitleaksignore" "$REPO_ROOT/.gitleaksignore"; do
+  if [ -e "$f" ]; then echo "FAIL  $f exists: fingerprint suppressions are not allowed — use a reviewed entry in scripts/ops/gitleaks.toml" >&2; exit 1; fi
+done
+if git -C "$REPO_ROOT" ls-files --error-unmatch .gitleaksignore '*/.gitleaksignore' >/dev/null 2>&1; then
+  echo "FAIL  a committed .gitleaksignore exists: fingerprint suppressions are not allowed" >&2; exit 1
+fi
 case "$MODE" in
   history)
     REPO="$(git -C "$ROOT" rev-parse --show-toplevel)"

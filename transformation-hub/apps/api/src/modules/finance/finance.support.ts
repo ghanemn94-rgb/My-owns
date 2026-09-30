@@ -21,7 +21,7 @@ import { PolicyService, ResourceAttrs } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { Clock } from '../../platform/clock';
-import { RecordVersionService, activeEvidenceCount, loadInProject } from '../../platform/helpers';
+import { RecordVersionService, activeEvidenceCount, loadInProject, visibleEvidenceCounts } from '../../platform/helpers';
 import type { RequestContext } from '../../platform/context';
 import { newId, payloadHash } from '../../platform/ids';
 
@@ -282,8 +282,17 @@ export class FinanceSupport {
     return Object.fromEntries(rows.map((r) => [r.id, r.name]));
   }
 
+  /** Evidence count FOR RULES (every link, whoever can read it). */
   evidence(projectId: string, targetType: 'benefit' | 'financial_snapshot', targetId: string) {
     return activeEvidenceCount(this.db, projectId, targetType, targetId);
+  }
+
+  /**
+   * Evidence counters DISPLAYED to the caller: only links the caller could open in the evidence list (SEC-P1R-05,
+   * SEC-P1S-04) — a counter never reveals evidence the caller cannot read.
+   */
+  async evidenceShown(ctx: RequestContext, projectId: string, targetType: 'benefit' | 'financial_snapshot', targetId: string) {
+    return (await visibleEvidenceCounts(this.db, this.policy, ctx, projectId, targetType, [targetId])).get(targetId) ?? { active: 0, conflicting: 0 };
   }
 
   async snapshotVersion(projectId: string, entityType: string, row: { id: string; version: number } & Record<string, unknown>, reason: string) {
