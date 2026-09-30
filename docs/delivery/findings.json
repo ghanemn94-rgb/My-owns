@@ -7447,7 +7447,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-26/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T14:17:00Z",
@@ -7458,10 +7458,67 @@
           "at": "2026-09-30T14:23:58Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at db5afe88222cce71f15ef4935e6636f124d48dac"
+        },
+        {
+          "at": "2026-09-30T14:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 27: PASS"
         }
       ],
       "fix_revision": "db5afe88222cce71f15ef4935e6636f124d48dac",
-      "fix_summary": "D-043: the commitPresent() header comment is reduced to answering presence only (no policy); the closure model is documented once, in checkClosure. Comment audit confirms no other drift. No behaviour change."
+      "fix_summary": "D-043: the commitPresent() header comment is reduced to answering presence only (no policy); the closure model is documented once, in checkClosure. Comment audit confirms no other drift. No behaviour change.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R27-code-security-reviewer-20260930T142646Z-03314056",
+          "session_id": "03314056-0eee-4f47-bdb0-7437f85d0439"
+        },
+        "at": "2026-09-30T14:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-27/stale-comment.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-27/d043-comment-only.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-27/closure-comment-consistency.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-27/sec27-repro.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-27/node-tests.log"
+        ],
+        "note": "Verified against the round-27 candidate sha256:9420948b... (source 49b5ad7). F-DG0-170 (Low, non-mandatory, documentation only): at the round-26 baseline 7edacdc the commitPresent() header comment (rules.mjs:597-605) still described anchor 1 as conditional ('the verifying round's frozen source_commit (when it resolves; this findManifest tolerance covers the one case it may not)'), contradicting the checkClosure block comment and the code, which since D-042 enforce anchor 1 unconditionally. D-043 (fix_revision db5afe8, this round's delta) rewrote that header so it states no closure policy ('This helper only answers presence -- it states no policy, so there is nothing here to drift'), pointing to findManifest and checkClosure. REPRODUCED, THEN SHOWN FIXED: git show 7edacdc:rules.mjs shows the stale 'when it resolves' wording; git show 49b5ad7:rules.mjs shows it removed (stale-comment.log). The change is COMMENT-ONLY: git diff -U0 7edacdc..49b5ad7 -- rules.mjs has 0 non-comment changed lines, rules.mjs with all full-line // comments stripped is byte-identical (sha256 352604df...) at both commits, and node --check passes (d043-comment-only.log). The closure model is now documented in EXACTLY ONE place (checkClosure, rules.mjs:721-737), matching the code (anchor 1 unconditional at :741-744); no remaining comment describes the anchor model inconsistently with the code (closure-comment-consistency.log). Because behaviour is unchanged, the standing closure controls still hold: the SEC24-SEC27 reproductions produce an IDENTICAL pass/fail set on 7edacdc and 49b5ad7, covering absent-source-round rejection (F-DG0-169), post-freeze fix by anchor 1 (F-DG0-168), forged-absent-round fix by anchor 2 (F-DG0-166/249), absent/all-zero/short fix_revision and head_commit_at_start, the immutable-field lock (F-DG0-165), shallow refusal (F-DG0-160) and anchor independence (sec27-repro.log). ANCHORS for this closure: fix db5afe8 is present and an ancestor of the round-27 candidate/gate source_commit 49b5ad7 (anchors 1 & 3) and of this verifying run's head (anchor 2). I am the reporter (code-security-reviewer); the owner is delivery-orchestrator, so this is not an author self-close."
+      }
+    },
+    {
+      "id": "F-DG0-250",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "checkClosure accepts an annotated-TAG object id as a CLOSED_VERIFIED fix_revision, although the validator's own contract ('needs a full fix_revision commit id') and D-037/F-DG0-241 treat a tag as 'not a commit at all'",
+      "reproduction": "QA_REPO_ROOT=<complete clone of 49b5ad79> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r27.test.mjs, case QA27-N3: on the round-9/21 fixture, build a genuine round-3 closure whose fix passes all three anchors, then `git tag -a qa27-fix-tag <fix>` and set findings.json fix_revision to the TAG OBJECT id (`git rev-parse qa27-fix-tag`; `git cat-file -t` prints 'tag'). validateGate returns 0 errors (13-qa27-negative-suite.log: 'QA27-N3 result: ACCEPTED'). Cause: checkClosure tests the format with /^[0-9a-f]{40}$/ and presence with commitPresent(), which runs `git cat-file -e <sha>^{commit}` and so PEELS a tag; `merge-base --is-ancestor` also peels. checkCandidate (rules.mjs ~950-960, D-037) added objectType() === 'commit' precisely because of this peeling for the gate source_commit (QA20-S8), but the same check was not applied to fix_revision. A tree/blob id, upper-case, abbreviated and all-zero spellings are rejected (QA27-N1/N2).",
+      "expected": "A CLOSED_VERIFIED fix_revision is exactly a commit object (git cat-file -t == 'commit'), as for the gate source_commit, so the traceability pointer names the fix commit itself rather than a ref-dependent tag object (which disappears from a fresh clone if the tag is deleted).",
+      "actual": "A 40-hex annotated-tag id peeling to a valid fix is accepted. Impact is traceability/consistency only: the peeled commit still has to pass all three anchors, so no fix outside the reviewed candidate can close a finding, and a later tag deletion fails closed. No real record is affected: the round-27 census (fix-revision-anchors-r27.mjs) confirms all 117 fix_revision values in findings.json are commit objects. Not tested: whether round source_commit or head_commit_at_start (also resolved via commitPresent) accept a tag the same way. Low under threat-model.md (no gate-integrity effect).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r27.test.mjs",
+        "docs/delivery/test-evidence/DG0/qa/round-27/13-qa27-negative-suite.log",
+        "docs/delivery/test-evidence/DG0/qa/round-27/21-fix-revision-anchors-nl.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-27/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "FIXED_PENDING_VERIFICATION",
+      "history": [
+        {
+          "at": "2026-09-30T14:37:00Z",
+          "status": "OPEN",
+          "note": "Raised in round 27 (qa-verifier)."
+        },
+        {
+          "at": "2026-09-30T14:48:17Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 8fec92f88fa44a42b56932a4090b0e9854b5a24a"
+        }
+      ],
+      "fix_revision": "8fec92f88fa44a42b56932a4090b0e9854b5a24a",
+      "fix_summary": "D-044: checkClosure requires objectType(fix_revision)==commit (rejects a tag); checkInvocation requires the same for head_commit_at_start. Matches the gate source_commit rule. Test in validator.test.mjs."
     }
   ]
 }
