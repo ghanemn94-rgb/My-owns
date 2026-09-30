@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -20,10 +20,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:7d00f8574a41648a4e9e9c7af97dc0e251db398a6251f6738a783c6fdcb5f270",
-        "source_commit": "9e3c27ffe65787f2d510ae5dabf26d271aaae46f",
-        "frozen_at": "2026-09-30T11:28:51Z",
-        "manifest_path": "docs/delivery/candidates/DG0/7d00f8574a41648a.manifest.json"
+        "candidate_id": "sha256:09072ce5f5cb64417bb0c417a10252b4101679dd0332d6b4016296404c6b5600",
+        "source_commit": "480cd3ff2b1048439bafebf0bf40151a11d84ea7",
+        "frozen_at": "2026-09-30T12:20:48Z",
+        "manifest_path": "docs/delivery/candidates/DG0/09072ce5f5cb6441.manifest.json"
       },
       "review_rounds": [
         {
@@ -271,6 +271,18 @@
             "qa-verifier": "docs/delivery/reviews/DG0/round-21/qa-verifier.json"
           },
           "note": "Round 21: re-review after the D-037 repairs (pruned-commit tolerance in checkClosure/checkInvocation F-DG0-242; record-less interrupted-run sidecars matched to import-findings F-DG0-243; gate source_commit branch-reachability + object type F-DG0-241; delivery metadata / evidence committed + full fix_revisions F-DG0-244; residual-7 wording F-DG0-157). This is the gate round: domain+code-security together check all 19 DG0-final requirements. F-DG0-152 (High) stays CLOSED_VERIFIED."
+        },
+        {
+          "round": 22,
+          "candidate_id": "sha256:09072ce5f5cb64417bb0c417a10252b4101679dd0332d6b4016296404c6b5600",
+          "frozen_at": "2026-09-30T12:20:48Z",
+          "source_commit": "480cd3ff2b1048439bafebf0bf40151a11d84ea7",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG0/round-22/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG0/round-22/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG0/round-22/qa-verifier.json"
+          },
+          "note": "Round 22: re-review after the D-038 scoping repairs. Gate round: domain+code-security together check all 19 DG0-final requirements. code-security re-verifies F-DG0-150/151 (fix 421c922) against this candidate; qa closes F-DG0-238 (dup of CLOSED_VERIFIED F-DG0-150). Reviewers verify F-DG0-158/159/160/161/162/163/245."
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
@@ -494,6 +506,11 @@
           "state": "FIXING",
           "at": "2026-09-30T12:00:00Z",
           "note": "Round 21: domain PASS (0 findings, 97 reqs); code-security FAIL (6 findings F-DG0-158..163); qa FAIL (F-DG0-245). QA verified F-DG0-241/242/243/244 CLOSED_VERIFIED and code-security verified F-DG0-157 CLOSED_VERIFIED, so the D-037 pruned-tolerance/record-less/metadata/gate-source fixes WORK for their intended cases. New findings are about SCOPING: F-DG0-158 (Med, mandatory) record-less exemption could hide a silent finding deletion; F-DG0-159/245 (Low/Med) the commitPresent tolerance is a blanket skip (accepts missing/malformed/gate-round head_commit and fix_revision); F-DG0-160 (Med) the repo is SHALLOW not pruned and the validator never detects it; F-DG0-161 (Med) F-DG0-150/151 re-point is clone-dependent (backup branch); F-DG0-162 (Low) residual-7 shell /proc/sys wording; F-DG0-163 (Low) schema subset validator accepts Object.prototype key names. Unshallowing this container (git fetch --unshallow) confirmed the pre-round-12 commits are real ancestors present in a full clone -- the history damage was a shallow-clone artifact; only the round-18 D-034 orphan 450c756 is a genuine anomaly. Repairs (D-038) in progress."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-09-30T12:20:00Z",
+          "note": "Round-21 findings repaired (D-038): the history damage was a SHALLOW clone (unshallow restored the pre-round-12 commits as real ancestors); validateGate refuses a shallow repo (F-DG0-160); the commitPresent tolerance is scoped to well-formed 40-hex values in genuinely-absent rounds, never gate/retained rounds (F-DG0-159/245); the record-less drop exemption is withdrawn and F-DG0-238 imported (F-DG0-158); F-DG0-150/151 re-verified in round 22 and the backup branch deleted (F-DG0-161); residual-7 shell /proc/sys wording (F-DG0-162); schema Object.hasOwn (F-DG0-163). Real-repo dry-run on the full history is clean of all history-damage buckets. Prefreeze all PASS; candidate re-frozen for review round 22."
         }
       ]
     },
