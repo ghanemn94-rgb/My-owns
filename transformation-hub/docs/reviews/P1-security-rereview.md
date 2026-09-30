@@ -219,3 +219,135 @@ Conditions, which must be carried with owners:
 4. Add an automated test for `safeNext` (SEC-P1-05). Track I-R1…I-R5.
 
 The six `DEFECT SEC-P1R-0n` tests fail on purpose (C11, C12: 6 failed, 458 passed). They must turn green with the fixes. They must not be skipped or weakened.
+
+## Fix status (implementation, 2026-09-30)
+
+Appended by the implementing `backend-data-engineer` (not the reviewer). The reviewer's text above is unchanged.
+Implementation commits on branch `worktree-agent-a56863fb27b864dea`: `0d1542e` and `8c685f6` (work in progress, merged with `claude/mobily-transformation-hub` @ `223e967` in `7d5e823`) and **`d87a6d3`** (final: docs, ADR-0017, threat model, module guide, web i18n entry for the new outbox event type).
+The six reviewer tests keep their assertions and were renamed from `DEFECT SEC-P1R-0n …` to `SEC-P1R-0n …`
+(`apps/api/test/reviews/sec-p1-rereview.spec.ts`). Additional regression tests: `apps/api/test/p1/sec-p1r-fixes.spec.ts`,
+`apps/api/test/p1/oidc-sso.spec.ts` (I-R5), `apps/api/test/documents/storage-contract.spec.ts` (I-R2/I-R4),
+`packages/domain/src/policy/policy.test.ts` (I-R3), `packages/domain/src/documents.test.ts` (SEC-P1R-04).
+Verification (own database `hub_test_secfix`, source identical to `d87a6d3` for API and packages):
+full API suite `Test Files 59 passed (59)`, `Tests 527 passed (527)` (315.69 s); the five security spec files verbose
+`Tests 78 passed (78)`; domain `Tests 248 passed (248)`; contracts `Tests 69 passed (69)`; `pnpm lint` exit 0;
+`apply_status.py --check` OK. Baseline before the fixes (`581493a`, i.e. before merging `223e967`): `Test Files 1 failed | 53 passed (54)`, `Tests 6 failed | 473 passed (479)` — the six DEFECT tests.
+
+### SEC-P1R-01 (Low) — Fixed
+- `hub.guard.ts`: the per-session rate limiter now runs **before** the CSRF check, so a CSRF-failing request consumes the
+  mutation budget (120/min default) and the rest get 429 (logged, not audited).
+- CSRF denials are **coalesced** per session and minute (`RateLimiter.tally`): the first denial of each window is audited
+  with its correlation id, then one row when the window's count reaches 10, 100, 1000 …, each with
+  `after.deniedInCurrentMinute`; every denial is still logged with session and correlation id. ADR-0017 amended.
+- Tests: `SEC-P1R-01: CSRF denials are audited BEFORE the rate limiter, …` (reviewer; now 403×120 then 429, ≤ 120 rows);
+  `SEC-P1R-01: one audit row for the first denial of the minute (with its correlation id), then at 10 and 100; 429 after the budget`
+  (rows `[1, 10, 100]`); `SEC-P1-11: CSRF denials are audited …` still passes.
+
+### SEC-P1R-02 (Low) — Fixed
+- New `apps/api/src/platform/record-visibility.ts` (`RecordVisibility`): one SQL rule per entity type — own
+  classification / room; visibility inherited from the parent (meeting, agenda item, committee membership, authority
+  matrix version → committee; action item → decision when linked; escalation → decision when raised about one; source
+  claim → source record; document version → document; evidence link → document **and** target); polymorphic records
+  (AI proposal, approval request, waiver, RAG override) → their target; and, for non-auditors, the workstream reach of the
+  type's read permission. The activity feed applies it inside SQL for the list and the total, as one
+  `CASE entity_type WHEN … END` (only the matching branch runs per row).
+- Performance note found while fixing: the per-type predicate triggered PostgreSQL JIT (42 s of compilation for a query
+  that runs in 74 ms). `DbService.applyContext` now sets `jit = off` per request/job transaction (OLTP workload).
+- Tests: `SEC-P1R-02: the activity feed still shows events of records whose visibility is inherited …` (reviewer; total 0);
+  per inherited type `SEC-P1R-02: events of a <type> disappear when its <parent> becomes restricted (auditor, list and total)`
+  for agenda_item, committee_membership, authority_matrix_version, action_item, escalation, source_claim,
+  document_version and evidence_link (each with a positive control); `SEC-P1R-02: a workstream-only reader sees task events
+  of its own workstream only (reach of planning.plan.read)`; `SEC-P1-03 …` still passes.
+
+### SEC-P1R-03 (Medium) — Fixed (single-writer model)
+- Model: a legal entity has ONE owning project, the one that created it (`legal_entity.owner_project_id`, NOT NULL, set by
+  `LegalEntitiesService.create` and by project creation, immutable). Only the owning project changes it: descriptive
+  edits, incorporation record / verify, setup-wizard NewCo step. Linked projects read it (`ownedByThisProject: false` in
+  the DTO) and get **403 `newco.legal_entity.not_owner`** (the owning project is not named).
+- Database: restrictive RLS policies on `legal_entity` (INSERT only for an in-scope owner; UPDATE only for full members of
+  the owner), composite `(org_id, owner_project_id)` FK, immutability trigger (`immutable_owner`).
+- Changes made in the owning project are fanned out: one `legal_entity.changed` outbox event per other linked project
+  (ids from the SECURITY DEFINER function `hub_legal_entity_linked_projects`, callable only by owner members); the NewCo job
+  records `newco.legal_entity.changed_in_owning_project` in that project's activity (ids, change kind, version only) and the
+  gates job recomputes its status dimensions. Documented in `docs/architecture/module-guide.md` §2; threat model T-63a.
+- Schema change → the single migration `0000_initial_schema.sql` was regenerated (one added column + FK).
+- Tests: `SEC-P1R-03: a shared legal entity can be changed from another project …` (reviewer; now 403);
+  `SEC-P1R-03: the linked project gets 403 newco.legal_entity.not_owner on every change; the owner changes it and the linked project is told`;
+  `SEC-P1R-03: database — only full members of the owner update it, the owner is immutable, and the link fan-out needs the owner`.
+
+### SEC-P1R-04 (Low) — Fixed
+- `EVIDENCE_TARGET_READ_PERMISSION` (domain) maps every evidence target type to its READ permission. `EvidenceService.loadTarget`
+  requires it, full (non room-only) membership, and the target's own visibility through `RecordVisibility` (classification —
+  own or inherited —, workstream reach); NewCo targets follow the NewCo read rule. It guards the list and the link commands
+  (verify, flag-conflict, supersede, link); anything else is 404. Document detail counters count only links whose target
+  the caller can read.
+- Tests: `SEC-P1R-04: listing evidence does not check the target module read permission …` (reviewer; now 404);
+  `SEC-P1R-04: evidence of a restricted decision and link commands on an unreadable target are 404`;
+  `SEC-P1R-04: a workstream-only reader cannot list evidence of another workstream's task (404), but can for its own`
+  (the reach variant the review could not execute); domain `Evidence target read permissions (SEC-P1R-04)`.
+
+### SEC-P1R-05 (Low) — Fixed
+- `visibleEvidenceCounts` / `evidenceLinkVisibleSql` (platform helpers) count display counters with the evidence list's
+  predicate (link room + document classification / room). Used for readiness checks, TSA services, cutover plans,
+  perimeter items and transfers, agreements, legal entities, regulatory requirements, tasks, milestones, deliverables,
+  gate criteria and the AI closing-condition context. Rules (gates evaluation, sign-off, transfer / incorporation /
+  regulatory verification, TSA exit, perimeter reconciliation) keep the unfiltered `activeEvidenceCount`.
+- Tests: `SEC-P1R-05: register evidence counts include links to documents the caller cannot read` (reviewer; counts agree);
+  `SEC-P1R-05: task counters and document counters count only evidence the caller could list`.
+
+### SEC-P1R-06 (Low) — Fixed
+- `ProblemFilter` stores the attempted ids of a denied / rejected mutation as plain values in
+  `after.attempted = { projectId, <idParam>: … }` — UUID-shaped route params only, never body content. The row's
+  `project_id` stays null for an out-of-scope project (RLS).
+- Tests: `SEC-P1R-06: a denied cross-project mutation is audited without the attempted project or target` (reviewer);
+  `SEC-P1R-06: an out-of-scope PATCH records the attempted project and target ids as plain values, no body content`.
+
+### I-R1 (Info) — Fixed
+- Trigger `hub_account_type_flip_guard` on `app_user.account_type`: switching to `external` is refused while internal
+  project / workstream memberships, org roles, committee memberships or non-`external_partner_limited` room grants are active
+  or future-dated. Test: `I-R1: flipping account_type to external is refused while an internal grant is active, allowed after revocation`.
+
+### I-R2 (Info) — Fixed
+- Production refuses trust-everyone `HUB_TRUST_PROXY` ranges (`0.0.0.0/0`, `0/0`, `::/0`, IPv4 wider than /8, IPv6 wider
+  than /16, `::ffff:0:0/96`); default / example S3 credentials (`minioadmin`, `minio123`, AWS documentation keys …) and S3
+  secrets shorter than 16 characters; and `HUB_OIDC_LINK_BY_EMAIL=true` unless
+  `HUB_OIDC_LINK_BY_EMAIL_ACK=accept-idp-verified-email-first-login-binding`. Choice: link-by-email stays available
+  (first-login binding of pre-provisioned accounts, hardened by SEC-P1-01) but is an explicit, acknowledged trust decision
+  in production and is logged as a startup warning. `weakSecret` adds an entropy estimate (Shannon × repetition
+  (deflate) × sequence discount, floor 64 bits; distinct-character floor lowered from 12 to 8 because random 32-hex secrets
+  often show 11): `'abcdefghijkl'×3`, `'Password123!'×3` and sequences are refused; 2 000 random base64 / hex secrets pass.
+  `HUB_PRIVATE_MODE=false` remains accepted (a deployment choice, not a weakness).
+- Tests: `I-R2: trust-everyone proxy ranges are refused; …`, `I-R2: link-by-email must be explicitly acknowledged …`,
+  `I-R2: weak-but-varied cookie secrets are refused …`, `I-R2: default MinIO / documentation S3 credentials are refused`,
+  and the S3 block of `storage-contract.spec.ts`.
+
+### I-R3 (Info) — Fixed
+- `evaluateConditions`: `not_self` without the subject's requester (undefined, null or empty) or without the actor, and
+  `authority` without an explicit result, now **fail closed** and are reported in `AbacResult.missing`;
+  `PolicyService` answers 403 `policy.sod_subject_unknown` / `policy.authority_unknown`. `NO_HUMAN_REQUESTER` states
+  explicitly that no human requester exists (system-generated escalation; criterion reviewed with no evidence linked) — it
+  is never inferred from null. `PolicyService.assertApproval` checks role → state → separation of duties so that a command
+  in the wrong state stays 422; `assertGranted` is a role-level pre-check. Every `not_self` / `authority` call site was
+  reviewed: authority is now passed explicitly everywhere (role authority where the delegation matrix has no decision type,
+  commented at the call site — planning baseline / change requests, charter / matrix approval, outcome recording, TSA exit,
+  perimeter rejection).
+- Tests: domain `I-R3: separation of duties and authority fail CLOSED when their inputs are missing` (8 cases, incl. every
+  matrix permission with `not_self`/`authority`); API `I-R3: approving a deliverable weight whose setter is unknown is refused with 403 policy.sod_subject_unknown (and audited)`.
+
+### I-R4 (Info) — Fixed
+- Production with `HUB_STORAGE_DRIVER=s3` requires `HUB_S3_SSE=AES256|aws:kms` unless
+  `HUB_S3_BUCKET_DEFAULT_ENCRYPTION=assured` (logged as a startup warning). Helm: `storage.s3.sse` (default `AES256`),
+  `kmsKeyId`, `bucketDefaultEncryptionAssured` wired to the env; the unused `HUB_S3_FORCE_PATH_STYLE` was removed.
+- Tests: `I-R4: S3 objects must be encrypted server-side in production unless the bucket default encryption is assured`;
+  `storage-contract.spec.ts` configuration test. Helm rendering was NOT EXECUTED (no `helm` binary here; CI lints the chart).
+
+### I-R5 (Info) — Fixed
+- `OidcService.complete` refuses service / non-person accounts (`oidc.service_account`), link-by-email never binds one,
+  and `hub_auth_session` reports a service account's session as inactive (defence in depth).
+- Tests: `I-R5: a service / non-person account never signs in interactively, …`, `I-R5: link-by-email never binds a service account, and a service account session is never valid`.
+
+### Residuals / follow-ups
+- Web (not in this change): the NewCo entity screens should hide edit / incorporation actions when
+  `ownedByThisProject` is false (the server already answers 403).
+- The planning baseline / change-request approvals have no delegation-matrix decision type: their `authority` is the role
+  grant, now stated explicitly at the call sites (I-R3) rather than implied.
