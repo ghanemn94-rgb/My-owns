@@ -329,7 +329,9 @@ export class ChangeControlService {
   async approveBaseline(ctx: RequestContext, projectId: string, baselineId: string, body: { expectedVersion: number; note?: string }) {
     const p = await this.s.project(ctx, projectId);
     const b = await this.s.lockInProject(schema.baselineVersion, projectId, baselineId);
-    this.s.assert(ctx, 'planning.baseline.approve', p, { requesterUserId: b.proposedBy });
+    // authority (I-R3, explicit): the approving role's grant; the delegation matrix has no baseline / change-request decision
+    // types, so no amount limit applies here (access-matrix §2.4 — reported as a residual).
+    this.s.assert(ctx, 'planning.baseline.approve', p, { requesterUserId: b.proposedBy, withinAuthority: true });
     this.s.assertVersion(b, body.expectedVersion, 'baseline');
     const to = transition('baseline', BASELINE_MACHINE, b.status as BaselineStatus, 'approve');
     const previous = await this.s.currentBaselineRow(projectId);
@@ -369,7 +371,7 @@ export class ChangeControlService {
   async rejectBaseline(ctx: RequestContext, projectId: string, baselineId: string, body: { expectedVersion: number; reason: string }) {
     const p = await this.s.project(ctx, projectId);
     const b = await this.s.lockInProject(schema.baselineVersion, projectId, baselineId);
-    this.s.assert(ctx, 'planning.baseline.approve', p, { requesterUserId: b.proposedBy });
+    this.s.assert(ctx, 'planning.baseline.approve', p, { requesterUserId: b.proposedBy, withinAuthority: true }); // see approveBaseline
     this.s.assertVersion(b, body.expectedVersion, 'baseline');
     const to = transition('baseline', BASELINE_MACHINE, b.status as BaselineStatus, 'reject');
     const row = await updateVersioned(this.s.db, schema.baselineVersion, { id: baselineId, projectId, expectedVersion: body.expectedVersion }, { status: to, rejectedBy: ctx.principal.userId, rejectedAt: new Date(), decisionNote: body.reason });
@@ -583,7 +585,8 @@ export class ChangeControlService {
       case 'approve':
       case 'reject':
         // Separation of duties: the approver cannot be the requester (not_self).
-        this.s.assert(ctx, 'planning.change_request.approve', p, { requesterUserId: c.requestedBy });
+        // authority: explicit role authority (see approveBaseline) — I-R3.
+        this.s.assert(ctx, 'planning.change_request.approve', p, { requesterUserId: c.requestedBy, withinAuthority: true });
         extra.decidedBy = ctx.principal.userId;
         extra.decidedAt = new Date();
         extra.decisionNote = body.reason ?? body.note ?? null;

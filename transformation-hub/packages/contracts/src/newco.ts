@@ -50,7 +50,13 @@ export const LegalEntityDto = z.object({
   registrationRef: z.string().nullable(),
   jurisdiction: z.string().nullable(),
   incorporation: IncorporationDto,
+  /** Active / conflicting evidence the caller can see (links to documents above their clearance or in other rooms are not counted). */
   evidence: EvidenceCounts,
+  /**
+   * True when THIS project owns the entity (it created it). A shared entity is changed only in its owning project; linked
+   * projects read it and their edit / incorporation commands answer 403 `newco.legal_entity.not_owner` (SEC-P1R-03).
+   */
+  ownedByThisProject: z.boolean(),
   isDemo: z.boolean(),
   version: z.number().int(),
 });
@@ -203,9 +209,9 @@ export const newcoRoutes = registerRoutes({
   getLegalEntity: defineRoute({ id: 'newco.getLegalEntity', method: 'GET', path: p('/legal-entities/:entityId'), summary: 'Legal entity with incorporation history and linked requirements', tags: T, access: 'newco.register.read', params: EntityP, response: LegalEntityDetailDto }),
   createLegalEntity: defineRoute({ id: 'newco.createLegalEntity', method: 'POST', path: p('/legal-entities'), summary: 'Create a legal entity and link it to the project (status starts unconfirmed)', tags: T, access: 'newco.legal_entity.manage', params: ProjectParams, body: CreateLegalEntityBody, response: VersionResult }),
   linkLegalEntity: defineRoute({ id: 'newco.linkLegalEntity', method: 'POST', path: p('/legal-entities/link'), summary: 'Link an existing entity (visible to you in another project, or unlinked) to this project', tags: T, access: 'newco.legal_entity.manage', params: ProjectParams, body: LinkLegalEntityBody, response: VersionResult }),
-  updateLegalEntity: defineRoute({ id: 'newco.updateLegalEntity', method: 'PATCH', path: p('/legal-entities/:entityId'), summary: 'Edit descriptive fields (never the incorporation status)', tags: T, access: 'newco.legal_entity.manage', params: EntityP, body: UpdateLegalEntityBody, response: VersionResult }),
-  recordIncorporation: defineRoute({ id: 'newco.recordIncorporation', method: 'POST', path: p('/legal-entities/:entityId/incorporation'), summary: 'Record the incorporation status with evidence (proposed until verified)', tags: T, access: 'newco.incorporation.manage', command: true, params: EntityP, body: RecordIncorporationBody, response: IncorporationResult }),
-  verifyIncorporation: defineRoute({ id: 'newco.verifyIncorporation', method: 'POST', path: p('/legal-entities/:entityId/incorporation/verify'), summary: 'Verify (or reject) the recorded status against evidence — not the recorder; transfers and operations are unaffected (AT-06)', tags: T, access: 'newco.incorporation.verify', command: true, params: EntityP, body: VerifyIncorporationBody, response: IncorporationResult }),
+  updateLegalEntity: defineRoute({ id: 'newco.updateLegalEntity', method: 'PATCH', path: p('/legal-entities/:entityId'), summary: 'Edit descriptive fields (never the incorporation status); owning project only — a linked project gets 403 newco.legal_entity.not_owner', tags: T, access: 'newco.legal_entity.manage', params: EntityP, body: UpdateLegalEntityBody, response: VersionResult }),
+  recordIncorporation: defineRoute({ id: 'newco.recordIncorporation', method: 'POST', path: p('/legal-entities/:entityId/incorporation'), summary: 'Record the incorporation status with evidence (proposed until verified); owning project only', tags: T, access: 'newco.incorporation.manage', command: true, params: EntityP, body: RecordIncorporationBody, response: IncorporationResult }),
+  verifyIncorporation: defineRoute({ id: 'newco.verifyIncorporation', method: 'POST', path: p('/legal-entities/:entityId/incorporation/verify'), summary: 'Verify (or reject) the recorded status against evidence — not the recorder; owning project only; transfers and operations are unaffected (AT-06)', tags: T, access: 'newco.incorporation.verify', command: true, params: EntityP, body: VerifyIncorporationBody, response: IncorporationResult }),
   setupNewcoStatus: defineRoute({ id: 'newco.setupNewcoStatus', method: 'POST', path: p('/setup/steps/newco-status'), summary: 'Setup wizard step 2: NewCo status (incorporated / in progress / unconfirmed) with evidence', tags: T, access: 'newco.incorporation.manage', command: true, params: ProjectParams, body: SetupNewcoStatusBody, response: IncorporationResult }),
 
   listRequirements: defineRoute({ id: 'newco.listRequirements', method: 'GET', path: p('/regulatory-requirements'), summary: 'Regulatory, external-party and internal approval register with applicability, conditions and validity', tags: T, access: 'newco.register.read', params: ProjectParams, query: RegulatoryListQuery, response: paged(RegulatoryRequirementDto) }),

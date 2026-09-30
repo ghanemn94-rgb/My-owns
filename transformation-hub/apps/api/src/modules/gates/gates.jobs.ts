@@ -15,7 +15,7 @@ import { StatusDimensionsService } from './status-dimensions.service';
 export const GATES_SERVICE_PERMISSIONS = ['gates.gate.read', 'portfolio.project.read', 'carveout.register.read', 'readiness.register.read', 'governance.decision.read'];
 
 /** Events that can move a status dimension (module guide §2 "Status dimensions"). */
-export const DIMENSION_EVENTS: OutboxEventType[] = ['perimeter.changed', 'evidence.changed', 'cp.changed', 'tsa.expiring', 'decision.status_changed', 'document.changed', 'readiness.changed'];
+export const DIMENSION_EVENTS: OutboxEventType[] = ['perimeter.changed', 'evidence.changed', 'cp.changed', 'tsa.expiring', 'decision.status_changed', 'document.changed', 'readiness.changed', 'legal_entity.changed'];
 
 /** Register this module's job handlers and outbox subscriptions (called by src/jobs.ts in the worker). */
 export function registerGatesJobs(app: INestApplicationContext): void {

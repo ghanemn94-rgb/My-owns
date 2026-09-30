@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { POLICY_MATRIX, permissionsOf, evaluateConditions, clearanceAllows } from './index';
+import { POLICY_MATRIX, permissionsOf, evaluateConditions, clearanceAllows, NO_HUMAN_REQUESTER } from './index';
 import { ROLE_KEYS } from '../enums';
 
 describe('policy matrix', () => {
@@ -42,5 +42,55 @@ describe('policy matrix', () => {
     expect(evaluateConditions(['clean_team'], { clearance: 'restricted', roomId: 'r1', roomIsCleanTeam: true, userCleanTeamRoomIds: new Set() }).allowed).toBe(false);
     expect(evaluateConditions(['not_self'], { clearance: 'internal', actorUserId: 'u', subjectRequesterId: 'u' }).allowed).toBe(false);
     expect(evaluateConditions(['own_workstream'], { clearance: 'internal', workstreamId: 'w2', userWorkstreamIds: new Set(['w1']) }).allowed).toBe(false);
+  });
+});
+
+describe('I-R3: separation of duties and authority fail CLOSED when their inputs are missing', () => {
+  const base = { clearance: 'strictly_confidential' as const, actorUserId: 'actor' };
+
+  it('not_self: missing (undefined / null / empty) requester -> denied and reported as missing', () => {
+    for (const subjectRequesterId of [undefined, null, '']) {
+      const r = evaluateConditions(['not_self'], { ...base, subjectRequesterId });
+      expect(r.allowed, String(subjectRequesterId)).toBe(false);
+      expect(r.missing).toEqual(['not_self']);
+    }
+  });
+  it('not_self: missing actor -> denied (a principal without a user id never passes separation of duties)', () => {
+    const r = evaluateConditions(['not_self'], { clearance: 'internal', actorUserId: null, subjectRequesterId: 'requester' });
+    expect(r).toEqual({ allowed: false, failed: ['not_self'], missing: ['not_self'] });
+  });
+  it('not_self: the requester themself -> denied (not "missing"); someone else -> allowed', () => {
+    expect(evaluateConditions(['not_self'], { ...base, subjectRequesterId: 'actor' })).toEqual({ allowed: false, failed: ['not_self'], missing: [] });
+    expect(evaluateConditions(['not_self'], { ...base, subjectRequesterId: 'requester' })).toEqual({ allowed: true, failed: [], missing: [] });
+  });
+  it('not_self: an explicit NO_HUMAN_REQUESTER (system-raised subject / no evidence owner) passes; it is never inferred from null -> allowed', () => {
+    expect(evaluateConditions(['not_self'], { ...base, subjectRequesterId: NO_HUMAN_REQUESTER }).allowed).toBe(true);
+  });
+  it('authority: undefined -> denied and reported as missing; false -> denied; true -> allowed', () => {
+    expect(evaluateConditions(['authority'], { ...base })).toEqual({ allowed: false, failed: ['authority'], missing: ['authority'] });
+    expect(evaluateConditions(['authority'], { ...base, withinAuthority: false })).toEqual({ allowed: false, failed: ['authority'], missing: [] });
+    expect(evaluateConditions(['authority'], { ...base, withinAuthority: true })).toEqual({ allowed: true, failed: [], missing: [] });
+  });
+  it('own_workstream: no ownership input -> denied (unchanged fail-closed rule)', () => {
+    expect(evaluateConditions(['own_workstream'], { ...base }).allowed).toBe(false);
+    expect(evaluateConditions(['own_workstream'], { ...base, ownWorkstreamSatisfied: true }).allowed).toBe(true);
+  });
+  it('classification / room / clean_team restrict only a resource that HAS a classification / room', () => {
+    expect(evaluateConditions(['classification', 'room', 'clean_team'], { clearance: 'public' }).allowed).toBe(true);
+    expect(evaluateConditions(['classification'], { clearance: 'public', classification: 'internal' }).allowed).toBe(false);
+    expect(evaluateConditions(['room'], { clearance: 'public', roomId: 'r1' }).allowed).toBe(false); // no userRoomIds -> denied
+    expect(evaluateConditions(['clean_team'], { clearance: 'public', roomId: 'r1', roomIsCleanTeam: true }).allowed).toBe(false);
+  });
+  it('every permission of the matrix with not_self or authority is denied when those inputs are omitted', () => {
+    const guarded = Object.entries(POLICY_MATRIX.permissions).filter(([, p]) => p.conditions.includes('not_self') || p.conditions.includes('authority'));
+    expect(guarded.length).toBeGreaterThanOrEqual(50);
+    for (const [key, p] of guarded) {
+      const r = evaluateConditions(p.conditions, { ...base, ownWorkstreamSatisfied: true });
+      expect(r.allowed, key).toBe(false);
+      expect(r.missing.length, key).toBeGreaterThan(0);
+      // ...and allowed once every input is supplied (someone else's request, within authority)
+      const ok = evaluateConditions(p.conditions, { ...base, ownWorkstreamSatisfied: true, subjectRequesterId: 'requester', withinAuthority: true });
+      expect(ok.allowed, key).toBe(true);
+    }
   });
 });

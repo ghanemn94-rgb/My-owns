@@ -51,12 +51,12 @@ export class RegulatoryService {
     return this.s.db.tx();
   }
 
-  private async dtos(projectId: string, rows: Req[], today: string) {
+  private async dtos(ctx: RequestContext, projectId: string, rows: Req[], today: string) {
     const names = await this.s.userNames(rows.flatMap((r) => [r.ownerUserId, r.applicabilityAssessedBy, r.outcomeRecordedBy]));
     const entIds = rows.map((r) => r.legalEntityId).filter((x): x is string => !!x);
     const ents = entIds.length ? await this.tx.select({ id: schema.legalEntity.id, name: schema.legalEntity.name }).from(schema.legalEntity).where(inArray(schema.legalEntity.id, entIds)) : [];
     const eM = new Map(ents.map((e) => [e.id, e.name]));
-    const ev = await this.s.evidenceCounts(projectId, 'regulatory_requirement', rows.map((r) => r.id));
+    const ev = await this.s.visibleEvidenceCounts(ctx, projectId, 'regulatory_requirement', rows.map((r) => r.id)); // display: SEC-P1R-05
     return rows.map((r) => {
       const status = r.status as RequirementStatus;
       const applicability = r.applicability as ApplicabilityStatus;
@@ -115,7 +115,7 @@ export class RegulatoryService {
       [asc(RR.code), asc(RR.id)],
     );
     const rows = await this.tx.select().from(RR).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
-    return pageOf(await this.dtos(projectId, rows, today), Number(n), q);
+    return pageOf(await this.dtos(ctx, projectId, rows, today), Number(n), q);
   }
 
   private async load(ctx: RequestContext, p: NewcoProject, id: string): Promise<Req> {
@@ -128,11 +128,11 @@ export class RegulatoryService {
   async get(ctx: RequestContext, projectId: string, id: string) {
     const p = await this.s.project(ctx, projectId);
     const r = await this.load(ctx, p, id);
-    return (await this.dtos(projectId, [r], this.s.today(p)))[0]!;
+    return (await this.dtos(ctx, projectId, [r], this.s.today(p)))[0]!;
   }
 
-  private async result(p: NewcoProject, row: Record<string, unknown>) {
-    const [dto] = await this.dtos(p.id, [row as unknown as Req], this.s.today(p));
+  private async result(ctx: RequestContext, p: NewcoProject, row: Record<string, unknown>) {
+    const [dto] = await this.dtos(ctx, p.id, [row as unknown as Req], this.s.today(p));
     return { id: dto!.id, status: dto!.status, applicability: dto!.applicability, applicabilityLabel: dto!.applicabilityLabel, validityState: dto!.validityState, conditionsState: dto!.conditionsState, version: dto!.version };
   }
 
@@ -218,7 +218,7 @@ export class RegulatoryService {
     });
     await this.versions.snapshot({ projectId, entityType: 'regulatory_requirement', entityId: id, versionNo: row['version'] as number, snapshot: row, reason: `Applicability: ${body.applicability}` });
     await this.audit.record({ action: 'newco.regulatory.assess_applicability', entityType: 'regulatory_requirement', entityId: id, projectId, before: { applicability: r.applicability }, after: { applicability: body.applicability }, reason: body.basis });
-    return this.result(p, row);
+    return this.result(ctx, p, row);
   }
 
   private async command(ctx: RequestContext, p: NewcoProject, r: Req, body: { expectedVersion: number; command: RequirementCommand; date?: string; conditions?: string; validFrom?: string; validTo?: string; note?: string }) {
@@ -255,7 +255,7 @@ export class RegulatoryService {
       after: { status: to, date: body.date ?? null, validFrom: u.validFrom ?? null, validTo: u.validTo ?? null, activeEvidence: ev.active },
       reason: body.note ?? null,
     });
-    return this.result(p, row);
+    return this.result(ctx, p, row);
   }
 
   async progress(ctx: RequestContext, projectId: string, id: string, body: z.infer<typeof RequirementProgressBody>) {
@@ -284,7 +284,7 @@ export class RegulatoryService {
     const row = await updateVersioned(this.s.db, RR, { id, projectId, expectedVersion: body.expectedVersion }, { conditionsSatisfiedAt: new Date(), conditionsSatisfiedBy: ctx.principal.userId, conditionsSatisfactionNote: body.note });
     await this.versions.snapshot({ projectId, entityType: 'regulatory_requirement', entityId: id, versionNo: row['version'] as number, snapshot: row, reason: 'Conditions satisfied' });
     await this.audit.record({ action: 'newco.regulatory.conditions_satisfied', entityType: 'regulatory_requirement', entityId: id, projectId, before: { conditionsState: state }, after: { conditionsState: 'satisfied', activeEvidence: ev.active }, reason: body.note });
-    return this.result(p, row);
+    return this.result(ctx, p, row);
   }
 }
 

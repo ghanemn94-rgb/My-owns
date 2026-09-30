@@ -1,17 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { POLICY_MATRIX, permissionsOf, evaluateConditions, isKnownPermission, forbidden, notFound, clearanceAllows, AbacAttributes, Classification, RoleKey } from '@hub/domain';
+import { POLICY_MATRIX, permissionsOf, evaluateConditions, isKnownPermission, forbidden, notFound, clearanceAllows, AbacAttributes, AbacCondition, Classification, RoleKey } from '@hub/domain';
 import { sql, SQL } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import { CLASSIFICATIONS } from '@hub/domain';
 import { isFullScope, Principal, RequestContext } from './context';
+
+/** Conditions that depend on the concrete subject (who requested it; what authority it needs) — see assertGranted. */
+const SUBJECT_CONDITIONS: readonly AbacCondition[] = ['not_self', 'authority'];
 
 export interface ResourceAttrs {
   projectId: string;
   classification?: Classification | null;
   roomId?: string | null;
   roomIsCleanTeam?: boolean;
-  requesterUserId?: string | null; // for not_self (separation of duties)
+  /** For `not_self` (separation of duties): REQUIRED — missing / null fails closed with 403 policy.sod_subject_unknown (I-R3). */
+  requesterUserId?: string | null;
   workstreamId?: string | null;
+  /** For `authority`: REQUIRED — undefined fails closed with 403 policy.authority_unknown (I-R3). */
   withinAuthority?: boolean;
   /** Owner / assignee / creator ids of the resource (for `own_workstream`); for a CREATE, the actor is the creator. */
   ownerUserIds?: (string | null | undefined)[];
@@ -123,12 +128,42 @@ export class PolicyService {
     const r = this.check(ctx, permission, res);
     if (!r.allowed) {
       if (r.hide) throw notFound();
-      throw forbidden('policy.forbidden', r.reason);
+      throw forbidden(r.code, r.reason);
     }
   }
 
   can(ctx: RequestContext, permission: string, res: ResourceAttrs): boolean {
     return this.check(ctx, permission, res).allowed;
+  }
+
+  /**
+   * Approval / verification of someone's submission, in the order ROLE → STATE → SEPARATION OF DUTIES (I-R3):
+   *   1. RBAC, visibility and non-subject conditions (404 / 403 — a caller without the grant learns nothing more);
+   *   2. `stateCheck` (e.g. the state machine): a command in the wrong state is 422 — before submission the requester is
+   *      naturally unknown, and "nothing to approve yet" is the true answer;
+   *   3. `not_self` / `authority` with the subject's requester: a known state with an unknown requester still fails
+   *      CLOSED (403 policy.sod_subject_unknown).
+   */
+  assertApproval(ctx: RequestContext, permission: string, res: ResourceAttrs, stateCheck?: () => void): void {
+    const { requesterUserId: _requester, withinAuthority: _authority, ...roleLevel } = res;
+    void _requester;
+    void _authority;
+    this.assertGranted(ctx, permission, roleLevel);
+    stateCheck?.();
+    this.assert(ctx, permission, res);
+  }
+
+  /**
+   * Role-level PRE-check (I-R3): RBAC, visibility and every condition EXCEPT the subject-specific `not_self` / `authority`.
+   * Use it only before a loop / flow that then calls `assert(...)` per subject with its requester and authority — it never
+   * authorizes an approval on its own. (Calling `assert` without those inputs fails closed.)
+   */
+  assertGranted(ctx: RequestContext, permission: string, res: Omit<ResourceAttrs, 'requesterUserId' | 'withinAuthority'>): void {
+    const r = this.check(ctx, permission, res, SUBJECT_CONDITIONS);
+    if (!r.allowed) {
+      if (r.hide) throw notFound();
+      throw forbidden(r.code, r.reason);
+    }
   }
 
   /**
@@ -159,20 +194,20 @@ export class PolicyService {
     if (!isKnownPermission(permission)) throw new Error(`Unknown permission key ${permission} (not in policy matrix)`);
   }
 
-  private check(ctx: RequestContext, permission: string, res: ResourceAttrs): { allowed: boolean; hide: boolean; reason: string } {
+  private check(ctx: RequestContext, permission: string, res: ResourceAttrs, skip: readonly AbacCondition[] = []): { allowed: boolean; hide: boolean; reason: string; code: string } {
     this.assertKnown(permission);
     const p = ctx.principal;
     const scope = p.projects.get(res.projectId);
-    if (!scope) return { allowed: false, hide: true, reason: 'out of scope' };
+    if (!scope) return { allowed: false, hide: true, reason: 'out of scope', code: 'not_found' };
 
     // Visibility first → 404
-    if (p.kind !== 'service' && !this.canSee(ctx, res)) return { allowed: false, hide: true, reason: 'not visible' };
+    if (p.kind !== 'service' && !this.canSee(ctx, res)) return { allowed: false, hide: true, reason: 'not visible', code: 'not_found' };
 
     // Service principals: explicit permission allowlist only (deny by default — ARCH-09).
     if (p.kind === 'service') {
       return p.servicePermissions?.has(permission)
-        ? { allowed: true, hide: false, reason: '' }
-        : { allowed: false, hide: false, reason: `Service identity ${p.serviceIdentity} is not allowed ${permission}` };
+        ? { allowed: true, hide: false, reason: '', code: '' }
+        : { allowed: false, hide: false, reason: `Service identity ${p.serviceIdentity} is not allowed ${permission}`, code: 'policy.forbidden' };
     }
 
     const projectWide = this.projectPermissions(p, res.projectId).has(permission);
@@ -188,10 +223,10 @@ export class PolicyService {
     if (!projectWide && !viaWorkstream && !viaRoom) {
       // A room-only principal must not learn that out-of-room resources exist.
       const roomOnly = scope.roles.size === 0 && scope.workstreamRoles.length === 0;
-      return { allowed: false, hide: roomOnly, reason: `Missing permission ${permission}` };
+      return { allowed: false, hide: roomOnly, reason: `Missing permission ${permission}`, code: 'policy.forbidden' };
     }
 
-    const conds = POLICY_MATRIX.permissions[permission]!.conditions;
+    const conds = POLICY_MATRIX.permissions[permission]!.conditions.filter((c) => !skip.includes(c));
     const attrs: AbacAttributes = {
       clearance: p.clearance,
       classification: res.classification ?? null,
@@ -213,15 +248,22 @@ export class PolicyService {
     };
     const r = evaluateConditions(conds, attrs);
     if (!r.allowed) {
+      // Missing inputs fail CLOSED with their own code (I-R3): a programming or data gap is never read as "allowed".
+      if (r.missing.includes('not_self')) {
+        return { allowed: false, hide: false, code: 'policy.sod_subject_unknown', reason: 'Separation of duties cannot be established: the requester / recorder of this record is unknown, so nobody may approve or verify it' };
+      }
+      if (r.missing.includes('authority')) {
+        return { allowed: false, hide: false, code: 'policy.authority_unknown', reason: 'Approval authority could not be established for this action' };
+      }
       const reason =
         r.failed.includes('not_self')
           ? 'Separation of duties: you cannot approve/verify your own request'
           : r.failed.includes('authority')
             ? 'Outside delegated authority'
             : `Condition(s) not met: ${r.failed.join(', ')}`;
-      return { allowed: false, hide: false, reason };
+      return { allowed: false, hide: false, reason, code: 'policy.forbidden' };
     }
-    return { allowed: true, hide: false, reason: '' };
+    return { allowed: true, hide: false, reason: '', code: '' };
   }
 
   /**

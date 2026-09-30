@@ -303,8 +303,10 @@ export class AiSettingsService {
   async approveAutopilot(ctx: RequestContext, projectId: string, body: { expectedVersion: number; note?: string }) {
     const cur = await this.load(projectId);
     const p = cur.autopilotPolicy as AutopilotPolicyStored | null;
-    // not_self: the proposer of the policy may not approve it (access-matrix §5.1).
-    this.policy.assert(ctx, 'ai.autopilot_policy.approve', { projectId, requesterUserId: p?.proposedBy ?? null, withinAuthority: true });
+    // not_self: the proposer of the policy may not approve it (access-matrix §5.1); a proposal without a known proposer
+    // fails closed (I-R3). With no proposal at all only the role is checked and the command is refused below (422).
+    if (p) this.policy.assert(ctx, 'ai.autopilot_policy.approve', { projectId, requesterUserId: p.proposedBy ?? null, withinAuthority: true });
+    else this.policy.assertGranted(ctx, 'ai.autopilot_policy.approve', { projectId });
     if (cur.version !== body.expectedVersion) throw conflict('concurrency.version_mismatch', 'AI settings were changed by someone else — reload and review before retrying');
     const today = this.clock.today(await this.projectTimezone(projectId));
     if (!p || autopilotStatus(p, today) !== 'proposed') throw ruleViolation('ai.no_proposed_policy', 'There is no proposed autopilot policy to approve');
@@ -367,9 +369,12 @@ export class AiSettingsService {
 
   async releaseKillSwitch(ctx: RequestContext, projectId: string, reason: string) {
     const cur = await this.load(projectId);
-    // not_self: the activator may not release their own emergency stop.
+    // not_self: the activator may not release their own emergency stop (activator unknown → fail closed, I-R3).
+    if (!cur.killSwitch) {
+      this.policy.assertGranted(ctx, 'ai.killswitch.release', { projectId });
+      throw ruleViolation('ai.kill_switch_not_active', 'The emergency stop is not active');
+    }
     this.policy.assert(ctx, 'ai.killswitch.release', { projectId, requesterUserId: cur.killSwitchBy });
-    if (!cur.killSwitch) throw ruleViolation('ai.kill_switch_not_active', 'The emergency stop is not active');
     const now = this.clock.now();
     await this.db
       .tx()
