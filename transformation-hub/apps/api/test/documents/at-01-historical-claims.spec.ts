@@ -131,7 +131,13 @@ describe('AT-01 — historical Completed/On Track statuses stay historical-unver
   it('claim corrections never rewrite what the source said, and confirmed claims are locked', async () => {
     const detail = await pm.get(`${sourcesPath(dcId)}/${imageSourceId}`).expect(200);
     const clm9 = detail.body.claims.find((c: { subject: string }) => c.subject.startsWith('CLM-009'));
-    const r = await pm.patch(`${claimsPath(dcId)}/${clm9.id}`, { expectedVersion: clm9.version, location: 'Master prompt §2, paragraph 2 (second-hand)', extractedValue: 'On Track', verificationStatus: 'confirmed' }).expect(200);
+    // REQ-DAT-013: the PATCH body is strict — a correction that also tries to rewrite the extracted value or the verification
+    // status is refused as a whole (400; it used to be accepted with those fields stripped) and changes nothing.
+    const refused = await pm.patch(`${claimsPath(dcId)}/${clm9.id}`, { expectedVersion: clm9.version, location: 'Master prompt §2, paragraph 2 (second-hand)', extractedValue: 'On Track', verificationStatus: 'confirmed' });
+    expect(refused.status).toBe(400);
+    expect(refused.body.code).toBe('validation_failed');
+    expect((await owner().query('select location, version from source_claim where id = $1', [clm9.id])).rows[0]).toMatchObject({ version: clm9.version });
+    const r = await pm.patch(`${claimsPath(dcId)}/${clm9.id}`, { expectedVersion: clm9.version, location: 'Master prompt §2, paragraph 2 (second-hand)' }).expect(200);
     const row = (await owner().query('select location, extracted_value, verification_status, version from source_claim where id = $1', [clm9.id])).rows[0];
     expect(row).toMatchObject({ location: 'Master prompt §2, paragraph 2 (second-hand)', extracted_value: 'Completed; On Track', verification_status: 'historical_unverified', version: r.body.version });
     const confirmed = detail.body.claims.find((c: { verificationStatus: string }) => c.verificationStatus === 'confirmed');
