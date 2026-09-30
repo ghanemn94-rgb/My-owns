@@ -725,15 +725,21 @@ function checkClosure(repo, stage, gate, f, v, where, errors) {
   if (f.status === "CLOSED_VERIFIED") {
     // Strict, with no absent-commit escape (D-039). Gate validation runs on a COMPLETE clone (validateGate refuses a
     // shallow one, F-DG0-160), so every real fix commit is present. A CLOSED_VERIFIED fix must be a full 40-hex commit
-    // that is PRESENT, in the history the VERIFYING RUN actually started from, and in the gate candidate. The verifying
-    // run's `head_commit_at_start` -- present, 40-hex and containing the round manifest (checkInvocation above enforced
-    // this) -- is REAL, run-bound evidence of what the verifier could see, so the fix is bound to it instead of the
-    // round's self-declared, forgeable `source_commit` (D-040, F-DG0-166/249; the earlier round.source_commit ancestry
-    // check was skipped whenever that metadata claimed the round absent, which findManifest tolerates). An all-zero,
-    // typo'd, absent, or committed-after-the-run fix is therefore always rejected, whatever the round metadata says.
+    // that is PRESENT and an ancestor of THREE independent anchors, all of which must hold (D-041, F-DG0-168):
+    //   1. the verifying round's frozen candidate (`round.source_commit`, when it resolves -- findManifest still
+    //      content-preservingly tolerates a superseded round's write-once orphan manifest, D-035): this pins the fix to
+    //      exactly the FROZEN candidate the reviewer was assigned, so a fix committed after the freeze is caught;
+    //   2. the verifying RUN's `head_commit_at_start` (present, 40-hex, containing the round manifest -- checkInvocation
+    //      enforced this): REAL, run-bound evidence that catches a forged superseded round whose source_commit is
+    //      self-declared absent (D-040, F-DG0-166/249), where anchor 1 cannot run;
+    //   3. the gate candidate (`gate.source_commit`, which checkCandidate requires present and branch-reachable).
+    // An all-zero, typo'd, absent, or committed-after-the-freeze/run fix is therefore always rejected, whatever the
+    // round metadata says. Anchor 1 was wrongly REPLACED by anchor 2 in D-040; D-041 restores it alongside.
     if (!f.fix_revision || !/^[0-9a-f]{40}$/.test(f.fix_revision)) errors.push(`${where}: CLOSED_VERIFIED needs a full fix_revision commit id`);
     else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
     else {
+      if (commitPresent(repo, round.source_commit) && !isAncestor(repo, f.fix_revision, round.source_commit))
+        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verified ${v.roundDir} candidate (${round.source_commit.slice(0, 10)})`);
       const vhead = (readJson(repo, runFiles(stage.id, v.record.invocation_reference.run_id)[0], errors, `${where} verifying run`) || {}).head_commit_at_start;
       if (typeof vhead === "string" && /^[0-9a-f]{40}$/.test(vhead) && commitPresent(repo, vhead) && !isAncestor(repo, f.fix_revision, vhead))
         errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verifying run's starting history (${vhead.slice(0, 10)}); it was not in the candidate the reviewer saw`);

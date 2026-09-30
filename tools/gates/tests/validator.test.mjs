@@ -590,8 +590,13 @@ test("F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification 
   sh(g.repo, "commit", "-qm", "later fix");
   const later = sh(g.repo, "rev-parse", "HEAD");
   edit(g.repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = later));
-  // A fix committed after the candidate froze is not in the verifying run's starting history, nor the gate candidate (D-040).
-  expectError(validateGate(g.repo, "DG0"), /is not in the verifying run's starting history|is not in the gate candidate/);
+  // A fix committed after the candidate froze fails ALL THREE closure anchors (D-041): the frozen round candidate
+  // (anchor 1, restored after D-040 wrongly replaced it), the verifying run's starting history (anchor 2), and the gate
+  // candidate (anchor 3).
+  const errs = validateGate(g.repo, "DG0");
+  expectError(errs, /is not in the verified round-2 candidate/);
+  expectError(errs, /is not in the verifying run's starting history/);
+  expectError(errs, /is not in the gate candidate/);
 });
 
 test("F-DG0-101 residual: deleting an earlier review round is detected", () => {

@@ -7095,7 +7095,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-23/domain-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T13:03:31Z",
@@ -7106,10 +7106,33 @@
           "at": "2026-09-30T13:17:58Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 81f036db0760c434f060c9bdb5f1fc034d99446b"
+        },
+        {
+          "at": "2026-09-30T13:35:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 24: PASS"
         }
       ],
       "fix_revision": "81f036db0760c434f060c9bdb5f1fc034d99446b",
-      "fix_summary": "D-040 repair (see decisions.md D-040)."
+      "fix_summary": "D-040 repair (see decisions.md D-040).",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-DOM-R24-domain-reviewer-20260930T132351Z-561163f2",
+          "session_id": "561163f2-3ee4-4ab9-bea1-f33e77ffd9df"
+        },
+        "at": "2026-09-30T13:35:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/domain/round-24/19-commitPresent-comment-verify.log",
+          "docs/delivery/test-evidence/DG0/domain/round-24/18-d040-tests.log",
+          "docs/delivery/test-evidence/DG0/domain/round-24/18b-gate-suite.log",
+          "docs/delivery/test-evidence/DG0/domain/round-24/15-real-repo-dry-run.log",
+          "tools/gates/lib/rules.mjs"
+        ],
+        "note": "I reproduced the original condition first. At the round-23 baseline 6438e20, rules.mjs lines 596-601 say that checkClosure and checkInvocation tolerate an absent commit (D-037). Then I showed it fixed. At the fix commit 81f036d and at the candidate 6db3b83, the commitPresent() header comment says the validator runs on a complete clone and that findManifest's content-preserving tolerance (D-035) is the ONLY absence tolerance. It says checkClosure and checkInvocation are strict (D-039/D-040) and that the fix must be an ancestor of the verifying run's head and of the gate candidate. That matches the code. checkInvocation rejects a non-hex or absent head_commit_at_start. checkClosure rejects a malformed or absent fix_revision, a fix outside the verifying run's head, and a fix outside the gate source_commit. The findManifest comment (corrected again in 6db3b83) also matches the code. The only D-037 mentions left in rules.mjs are about unrelated behaviours (the annotated-tag gate commit and the listed-round checks). One small wording point, which is not a new finding: the header's last sentence, 'checkClosure skips the round-side check only via the run's real head', would read better as 'performs the round-side check only against the run's real head'. The behaviour is correct either way. The fix_revision 81f036d is an ancestor of the candidate 6db3b83 and of my run's head 79fb0f8. The D-040 unit tests pass, and so does the full gate suite (62/62). In the real-repo dry run (a --no-local clone), 0 closures fail the run-head ancestry check."
+      }
     },
     {
       "id": "F-DG0-166",
@@ -7130,7 +7153,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-23/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T13:06:40Z",
@@ -7141,10 +7164,34 @@
           "at": "2026-09-30T13:17:58Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 81f036db0760c434f060c9bdb5f1fc034d99446b"
+        },
+        {
+          "at": "2026-09-30T13:32:51Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 24: PASS"
         }
       ],
       "fix_revision": "81f036db0760c434f060c9bdb5f1fc034d99446b",
-      "fix_summary": "D-040 repair (see decisions.md D-040)."
+      "fix_summary": "D-040 repair (see decisions.md D-040).",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R24-code-security-reviewer-20260930T132356Z-9132b6ee",
+          "session_id": "9132b6ee-8c97-4166-b54f-2b919d75285b"
+        },
+        "at": "2026-09-30T13:32:51Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.tests.mjs.txt",
+          "docs/delivery/test-evidence/DG0/code-security/round-24/run-sec24-repro.sh",
+          "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-24/closure-census.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-24/real-repo-gate-dryrun.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-24/node-tests.log"
+        ],
+        "note": "Verified against the round-24 candidate f0f3a93a… (source 6db3b83). Fix 81f036d is an ancestor of 6db3b83. checkClosure (rules.mjs:737-739) now reads the verifying run's meta.json (same run_id as the verifying record's invocation_reference) and rejects a CLOSED_VERIFIED fix_revision that is not an ancestor of its head_commit_at_start. round.source_commit is no longer used for the round-side check. The guard at :738 skips only when the head is malformed or absent, and checkInvocation (:388-405, binding.manifestPath set at :722) already records an error in each such case, so there is no escape (SEC24-4: unknown/HEAD/missing/null/zeros/absent-40hex/UPPERHEX/short all rejected). I reran my round-23 forge (SEC24-1, run on --no-local clones of both commits): a superseded round 2 whose manifest and stages entry name 'deadbeef'x5, a genuine verifier run, and a fix committed after the run started that is present in the gate candidate. At 6db3b83 this gives 'fix … is not in the verifying run's starting history' for both the forged and the genuine variant. At 6438e20 the forged variant gave 0 errors, which is the original bug reproduced. No regression: the forged round with a real fix still passes (SEC24-2, 0 errors; the findManifest D-035 tolerance only). The real-repo census on a --no-local clone shows all 110 CLOSED_VERIFIED fixes are ancestors of their verifying run's head and of the gate candidate, and the synthetic-gate dry run reports no starting-history, gate-candidate or absent-fix error. Unit tests 'D-039/D-040 / F-DG0-164/166/246/249' and 'F-DG0-110 / F-DG0-204' pass (101/101). D-040 replaced the round-candidate check rather than adding to it, which weakens a genuine-round case. That residual is raised separately as F-DG0-168 (Low) and does not reopen this finding, whose forged-metadata bypass is closed."
+      }
     },
     {
       "id": "F-DG0-167",
@@ -7163,7 +7210,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-23/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T13:06:40Z",
@@ -7174,10 +7221,30 @@
           "at": "2026-09-30T13:17:58Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 81f036db0760c434f060c9bdb5f1fc034d99446b"
+        },
+        {
+          "at": "2026-09-30T13:32:51Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 24: PASS"
         }
       ],
       "fix_revision": "81f036db0760c434f060c9bdb5f1fc034d99446b",
-      "fix_summary": "D-040 repair (see decisions.md D-040)."
+      "fix_summary": "D-040 repair (see decisions.md D-040).",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R24-code-security-reviewer-20260930T132356Z-9132b6ee",
+          "session_id": "9132b6ee-8c97-4166-b54f-2b919d75285b"
+        },
+        "at": "2026-09-30T13:32:51Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-24/candidate-and-scope.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.log"
+        ],
+        "note": "Verified against the round-24 candidate (source 6db3b83). Fix 81f036d (the commitPresent comment) is an ancestor of 6db3b83. The findManifest comment was also corrected in 6db3b83 itself. The commitPresent() header (rules.mjs:597-604) now says gate validation runs on a complete clone, that the ONLY absence tolerance is findManifest's content-preserving one (D-035), that checkClosure and checkInvocation are strict (D-039/D-040), and that the fix must be an ancestor of the verifying run's head and the gate candidate. The findManifest comment (:904-912) describes the same model and states that a reachable commit whose content does not match is still an error. Code census: the only tolerance site is findManifest's `present` flag (:913-919), which is reached only after the entries hash to candidate_id (:895-899). commitPresent is used at :397 (hard error), :735 (hard error) and :738 (after checkInvocation's hard error). The comments match the behaviour. The phrase 'skips the round-side check only via the run's real head' (:603-604) is awkward but not wrong."
+      }
     },
     {
       "id": "F-DG0-249",
@@ -7200,7 +7267,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-23/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-30T13:12:00Z",
@@ -7211,10 +7278,65 @@
           "at": "2026-09-30T13:17:58Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 81f036db0760c434f060c9bdb5f1fc034d99446b"
+        },
+        {
+          "at": "2026-09-30T13:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 24: PASS"
         }
       ],
       "fix_revision": "81f036db0760c434f060c9bdb5f1fc034d99446b",
-      "fix_summary": "D-040 repair (see decisions.md D-040)."
+      "fix_summary": "D-040 repair (see decisions.md D-040).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R24-qa-verifier-20260930T132400Z-cbdb640e",
+          "session_id": "cbdb640e-0ee8-44a3-ba6f-809811bb7b2c"
+        },
+        "at": "2026-09-30T13:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-24/13-qa24-negative-suite.log",
+          "docs/delivery/test-evidence/DG0/qa/round-24/14-qa24-suite-on-pre-D040-baseline.log",
+          "docs/delivery/test-evidence/DG0/qa/round-24/10-r23-suite-rerun.log",
+          "docs/delivery/test-evidence/DG0/qa/round-24/02-gates-selftests.log",
+          "docs/delivery/test-evidence/DG0/qa/round-24/21-fix-revision-integrity-nl.log",
+          "docs/delivery/test-evidence/DG0/qa/round-24/08-real-repo-gate-blockers-nl.log",
+          "docs/delivery/test-evidence/DG0/qa/round-24/11-tolerance-census.log",
+          "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r24.test.mjs"
+        ],
+        "note": "Reproduced, then shown fixed. Reproduced: my round-24 suite run against the pre-D-040 round-23 candidate (6438e20) ACCEPTS the exploit. QA24-N1 (the QA23-P1 shape: a self-declared absent round-3, a genuine run whose head holds the manifest but not the fix, and the fix in the gate candidate) and QA24-N2 (the fix committed AFTER the verifier's run started, still in the gate candidate, with the round-3 source_commit forged absent and, separately, genuine) are both ACCEPTED there. Fixed: on candidate f0f3a93a (6db3b83), in a complete --no-local clone, QA24-N1 and QA24-N2 (both variants) are REJECTED with \"is not in the verifying run's starting history\" as the only non-harness error; the gate-ancestry check does not fire because the fix IS in the gate candidate. The round-23 probe QA23-P1, re-run unchanged, now reports REJECTED. Boundaries are correct: fix == run head and fix a strict ancestor of it are ACCEPTED (QA24-N3); a fix only on the run's side branch is rejected by the gate check alone (QA24-N4); the head can never be a tree id, upper-case, prefix or pre-manifest commit (QA24-N6), so the vhead guard in checkClosure cannot be bypassed. The unit tests 'D-039/D-040 / F-DG0-164/166/246/249' and 'F-DG0-110 / F-DG0-204' pass (62/62). On the complete real history, all 110 CLOSED_VERIFIED fix_revisions are present and ancestors of their verifying run's head_commit_at_start, HEAD and the gate candidate; the dry-run shows no starting-history error. The fix commit 81f036d is an ancestor of this run's head (79fb0f8) and of the candidate (6db3b83)."
+      }
+    },
+    {
+      "id": "F-DG0-168",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-040 replaced the round-candidate ancestry check instead of adding to it. In a GENUINE round (no forged metadata), a candidate-scope fix committed after the round froze but before the verifier's run started now closes a finding even though it is not in the frozen candidate the verifier reviewed. Round 23's validator rejected this",
+      "reproduction": "tools/gates/lib/rules.mjs:737-739 (at 6db3b83) now checks only isAncestor(fix_revision, verifyingRun.head_commit_at_start). The earlier `commitPresent(round.source_commit) && !isAncestor(fix, round.source_commit)` check was removed, not kept alongside. checkInvocation (:388-405) requires the head to be present, 40-hex and to contain the round manifest. Nothing requires the head's candidate CONTENT to equal the round candidate, i.e. that only metadata was committed between the freeze and the run start. SEC24-6 in docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.tests.mjs.txt (run by run-sec24-repro.sh on --no-local clones; log sec24-repro.log) uses the stock fixture. Round 2 is genuine (its source_commit is present). A content change to src/app.txt is committed after the round-2 freeze, the round-2 runs start from that commit, the round-2 code-security run verifies F-DG0-101 (High, mandatory) with fix_revision = that commit, and round 3 is the gate round on a candidate containing it. Probe output: 'fix in round-2 frozen candidate: false; verifier head content hashes to round-2 candidate: false'. At 6438e20 (round-23 baseline): 1 error, 'fix … is not in the verified round-2 candidate'. At 6db3b83 (this candidate): 0 errors.",
+      "expected": "A CLOSED_VERIFIED closure stays bound to the frozen candidate the verifying round reviewed, as well as to the run head. Either (a) keep the D-040 run-head check AND restore `if (commitPresent(round.source_commit) && !isAncestor(fix, round.source_commit)) error`, or preferably (b) in checkInvocation, when binding.manifestPath is given, require candidateId(manifestFromRef(head, manifest.spec)) to equal the round's candidate_id. That means only metadata-only commits between the freeze and the run start. It binds the run head's content to the reviewed candidate and makes the run-head ancestry check equivalent to 'in the reviewed candidate'. The real-repo census (closure-census.log, --no-local clone) shows all 61 computable review-run heads already hash to their round candidate. The 2 non-computable runs are round 18's D-034-orphaned heads, and neither is a verifying or gate run. Option (b) therefore breaks no genuine record. Also correct the checkClosure error text 'it was not in the candidate the reviewer saw' (:739), which the head check does not establish without (b). Add a fixture test like SEC24-6.",
+      "actual": "With genuine round metadata, a fix absent from the verified round's frozen candidate (but committed before the verifier's run started) passes validateGate with 0 errors. The round-23 validator reported the error. The effect is a verification attributed to a candidate that did not contain the fix. The fix must still be an ancestor of the gate candidate (:740-741), which all three reviewers review at the gate, and a reviewer following the protocol would see a candidate-ID mismatch at the start of the run. So this is a mis-attribution, not an unreviewed fix in the gate. Real-repo census: 0 of 110 closures depend on it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/run-sec24-repro.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/closure-census.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/closure-census.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-24/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T13:32:51Z",
+          "status": "OPEN",
+          "note": "Raised in round 24 (code-security-reviewer)."
+        }
+      ]
     }
   ]
 }

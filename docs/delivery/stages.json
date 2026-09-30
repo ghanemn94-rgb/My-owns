@@ -5,7 +5,7 @@
       "id": "DG0",
       "stage": "P0",
       "name": "Discovery and execution setup",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [],
       "implementation_owners": [
         "transformation-analyst",
@@ -555,6 +555,11 @@
           "state": "REVIEWING",
           "at": "2026-09-30T13:45:00Z",
           "note": "Round-23 findings repaired (D-040): checkClosure binds a CLOSED_VERIFIED fix to the verifying run's real head_commit_at_start (present, 40-hex, contains the manifest) plus the gate candidate, instead of the round's forgeable self-declared source_commit (F-DG0-166/249); the stale commitPresent/findManifest tolerance comments were corrected to the strict complete-history model (F-DG0-014/167). Real-repo dry-run: 0 in every history bucket, no verifying-run-head failures. Prefreeze all PASS; candidate re-frozen for review round 24."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-09-30T14:05:00Z",
+          "note": "Round 24: domain PASS (0 findings), qa PASS (0 findings), code-security PASS (1 Low: F-DG0-168). Verified CLOSED_VERIFIED: F-DG0-014/166/167/249. F-DG0-168: D-040 replaced the frozen-round-candidate closure anchor instead of adding to it, so a candidate-scope fix committed after the freeze but before the verifier ran could close in a genuine round. Repair (D-041): checkClosure now requires the fix to be an ancestor of all three anchors (frozen round source_commit when present, verifying run head, gate candidate), every one enforced. Gate suite 62 pass."
         }
       ]
     },
