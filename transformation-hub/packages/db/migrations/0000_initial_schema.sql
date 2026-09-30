@@ -1,7 +1,7 @@
 CREATE TYPE "public"."action_item_status" AS ENUM('open', 'in_progress', 'done_pending_verification', 'verified_closed', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."actor_kind" AS ENUM('user', 'service', 'system');--> statement-breakpoint
 CREATE TYPE "public"."agenda_item_kind" AS ENUM('decision', 'information', 'discussion', 'escalation');--> statement-breakpoint
-CREATE TYPE "public"."agenda_screening_status" AS ENUM('requested', 'accepted', 'returned', 'deferred', 'withdrawn');--> statement-breakpoint
+CREATE TYPE "public"."agenda_screening_status" AS ENUM('requested', 'accepted', 'returned', 'deferred', 'withdrawn', 'merged', 'rejected');--> statement-breakpoint
 CREATE TYPE "public"."agreement_stage" AS ENUM('identified', 'drafting', 'negotiating', 'agreed_in_principle', 'signed', 'effective', 'terminated', 'expired');--> statement-breakpoint
 CREATE TYPE "public"."ai_mode" AS ENUM('off', 'advisory', 'assisted', 'autopilot');--> statement-breakpoint
 CREATE TYPE "public"."ai_proposal_status" AS ENUM('proposed', 'approved', 'rejected', 'invalidated', 'executing', 'executed', 'failed', 'expired', 'cancelled');--> statement-breakpoint
@@ -57,7 +57,7 @@ CREATE TYPE "public"."integration_status" AS ENUM('not_configured', 'configured_
 CREATE TYPE "public"."job_status" AS ENUM('queued', 'running', 'succeeded', 'failed', 'dead', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."kpi_direction" AS ENUM('higher_is_better', 'lower_is_better');--> statement-breakpoint
 CREATE TYPE "public"."materiality" AS ENUM('low', 'medium', 'high', 'critical');--> statement-breakpoint
-CREATE TYPE "public"."meeting_status" AS ENUM('planned', 'agenda_published', 'in_session', 'held', 'minutes_draft', 'minutes_approved', 'cancelled');--> statement-breakpoint
+CREATE TYPE "public"."meeting_status" AS ENUM('proposed', 'planned', 'agenda_published', 'in_session', 'held', 'minutes_draft', 'minutes_approved', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."milestone_status" AS ENUM('planned', 'at_risk', 'achieved_pending_evidence', 'achieved_verified', 'missed', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."model_case" AS ENUM('base', 'downside', 'upside');--> statement-breakpoint
 CREATE TYPE "public"."model_kind" AS ENUM('business_plan', 'valuation');--> statement-breakpoint
@@ -791,6 +791,7 @@ CREATE TABLE "agenda_item" (
 	"screening_status" "agenda_screening_status" DEFAULT 'requested' NOT NULL,
 	"screening_note" text,
 	"screened_by" uuid,
+	"merged_into_agenda_item_id" uuid,
 	"presenter_user_id" uuid,
 	"minutes_note" text,
 	"sort_order" integer DEFAULT 0 NOT NULL,
@@ -798,7 +799,8 @@ CREATE TABLE "agenda_item" (
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
-	CONSTRAINT "agenda_item_pid_uq" UNIQUE("project_id","id")
+	CONSTRAINT "agenda_item_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "agenda_item_merged_ck" CHECK (("agenda_item"."screening_status" = 'merged') = ("agenda_item"."merged_into_agenda_item_id" is not null))
 );
 --> statement-breakpoint
 CREATE TABLE "approval_record" (
@@ -811,7 +813,9 @@ CREATE TABLE "approval_record" (
 	"comment" text,
 	"authority_basis" text,
 	"payload_hash" text NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"method" varchar(32) DEFAULT 'internal_electronic' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "approval_record_method_ck" CHECK ("approval_record"."method" = 'internal_electronic')
 );
 --> statement-breakpoint
 CREATE TABLE "approval_request" (
@@ -1044,6 +1048,7 @@ CREATE TABLE "meeting" (
 	"minutes_approved_by" uuid,
 	"minutes_approved_at" timestamp with time zone,
 	"authority_matrix_version_id" uuid,
+	"cadence_charter_version_no" integer,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
@@ -2991,6 +2996,7 @@ ALTER TABLE "agenda_item" ADD CONSTRAINT "agenda_item_project_id_project_id_fk" 
 ALTER TABLE "agenda_item" ADD CONSTRAINT "agenda_item_committee_fk" FOREIGN KEY ("project_id","committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agenda_item" ADD CONSTRAINT "agenda_item_meeting_fk" FOREIGN KEY ("project_id","meeting_id") REFERENCES "public"."meeting"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agenda_item" ADD CONSTRAINT "agenda_item_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "agenda_item" ADD CONSTRAINT "agenda_item_merged_into_fk" FOREIGN KEY ("project_id","merged_into_agenda_item_id") REFERENCES "public"."agenda_item"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "approval_record" ADD CONSTRAINT "approval_record_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "approval_record" ADD CONSTRAINT "approval_record_request_fk" FOREIGN KEY ("project_id","approval_request_id") REFERENCES "public"."approval_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "approval_request" ADD CONSTRAINT "approval_request_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

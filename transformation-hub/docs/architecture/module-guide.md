@@ -61,7 +61,8 @@ Enum values already exist in `packages/domain/src/enums.ts` for all modules — 
 ### Outbox events (from `OUTBOX_EVENT_TYPES`)
 `task.overdue, source.updated, approval.pending, cp.changed, tsa.expiring, gate.blocked, decision.status_changed,
 evidence.changed, perimeter.changed, permission.changed, document.changed, report.generated, baseline.approved,
-change_request.decided, readiness.changed, legal_entity.changed`. Emit them from your
+change_request.decided, readiness.changed, legal_entity.changed, agenda_request.screened` (the last: ids + outcome of a
+screening, for the requester's notification in P6). Emit them from your
 commands; subscribe in `<module>.jobs.ts` (`registry.subscribe(eventType, jobKind)`; `registry.register(jobKind, handler)`).
 Job handlers receive ids only and must open their own context through `JobContextFactory` (never build a principal by
 hand): `db.run(jobs.forService(job, 'svc-<module>', ['<permission>', ...]), ...)` — a service principal is **deny-all

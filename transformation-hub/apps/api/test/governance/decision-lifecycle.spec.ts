@@ -63,10 +63,12 @@ describe('P2 exit criterion — decision lifecycle end to end [REQ-GOV-012, 013,
     expect(stale.status).toBe(409);
     expect(stale.body.code).toBe('concurrency.version_mismatch');
     expect((await decisionRow(decisionId)).recommendation).toBe('Approve');
-    // PATCH cannot change the status (unknown fields are stripped; status is a command).
+    // PATCH cannot change the status: the body is strict, so a status field is refused with 400 (REQ-DAT-013; it used to be
+    // stripped with 200) — the status is a command.
     const sneaky = await a.pm.patch(`${P(pid)}/decisions/${decisionId}`, { expectedVersion: first.body.version, status: 'approved' });
-    expect(sneaky.status).toBe(200);
-    expect((await decisionRow(decisionId)).status).toBe('draft');
+    expect(sneaky.status).toBe(400);
+    expect(sneaky.body.code).toBe('validation_failed');
+    expect(await decisionRow(decisionId)).toMatchObject({ status: 'draft', version: first.body.version });
   });
 
   it('3. submit → secretariat review (not the requester); entering review emits approval.pending', async () => {

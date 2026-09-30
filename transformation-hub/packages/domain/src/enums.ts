@@ -121,6 +121,8 @@ export type CommitteeMemberRole = (typeof COMMITTEE_MEMBER_ROLES)[number];
 export const AUTHORITY_MATRIX_STATUSES = ['draft', 'approved', 'superseded'] as const;
 
 export const MEETING_STATUSES = [
+  /** REQ-GOV-009: generated from the charter cadence — a proposal until the secretariat confirms it (never auto-scheduled). */
+  'proposed',
   'planned',
   'agenda_published',
   'in_session',
@@ -132,7 +134,8 @@ export const MEETING_STATUSES = [
 export type MeetingStatus = (typeof MEETING_STATUSES)[number];
 
 export const AGENDA_ITEM_KINDS = ['decision', 'information', 'discussion', 'escalation'] as const;
-export const AGENDA_SCREENING_STATUSES = ['requested', 'accepted', 'returned', 'deferred', 'withdrawn'] as const;
+/** REQ-GOV-012: `merged` into another request of the same meeting, or `rejected` (screened out) — both with a reason. */
+export const AGENDA_SCREENING_STATUSES = ['requested', 'accepted', 'returned', 'deferred', 'withdrawn', 'merged', 'rejected'] as const;
 
 export const ATTENDANCE_STATUSES = ['present', 'remote', 'absent', 'apologies', 'delegated'] as const;
 
@@ -491,5 +494,7 @@ export const OUTBOX_EVENT_TYPES = [
   'readiness.changed',
   /** A shared legal entity was changed in its owning project; emitted once per OTHER linked project (SEC-P1R-03). */
   'legal_entity.changed',
+  /** REQ-GOV-012: an agenda request was screened (ids + outcome only); the requester notification consumes it in P6. */
+  'agenda_request.screened',
 ] as const;
 export type OutboxEventType = (typeof OUTBOX_EVENT_TYPES)[number];

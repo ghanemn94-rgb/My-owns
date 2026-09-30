@@ -4,6 +4,7 @@ import { renderMessagesEn, serverMessage, type ServerMessage } from './messages'
 import { decisionRelianceIssue, type DecisionSubject, type DecisionUseRecord, type ExternalEvidenceState } from './decision-reliance';
 import type { ActionItemStatus, AGENDA_SCREENING_STATUSES, ATTENDANCE_STATUSES, CommitteeMemberRole, MeetingStatus, VoteChoice } from './enums';
 import type { Machine } from './workflows';
+import { addCalendarDays, assertIsoDate, isWorkingDay, localDate, tzOffsetMinutes, type WorkingCalendar } from './calendar';
 
 // Local aliases (enums.ts exports the value lists only for these vocabularies).
 type AgendaScreeningStatus = (typeof AGENDA_SCREENING_STATUSES)[number];
@@ -758,9 +759,14 @@ export function assertApprovalAllowed(input: {
 // action / implementation guards. Pure rules — the API command services call these (spec §4.2).
 // =============================================================================================================
 
-/** Meeting lifecycle. Circulations are `meeting` rows flagged `is_circulation` and are opened directly `in_session`. */
-export type MeetingCommand = 'publish_agenda' | 'start_session' | 'close_session' | 'draft_minutes' | 'approve_minutes' | 'cancel';
+/**
+ * Meeting lifecycle. Circulations are `meeting` rows flagged `is_circulation` and are opened directly `in_session`.
+ * REQ-GOV-009: a meeting generated from the charter cadence starts `proposed`; only the secretariat's explicit
+ * `confirm_schedule` makes it `planned` (a proposed meeting is never published, opened or scheduled automatically).
+ */
+export type MeetingCommand = 'confirm_schedule' | 'publish_agenda' | 'start_session' | 'close_session' | 'draft_minutes' | 'approve_minutes' | 'cancel';
 export const MEETING_MACHINE: Machine<MeetingStatus, MeetingCommand> = {
+  confirm_schedule: { from: ['proposed'], to: 'planned', description: 'Secretariat confirms a proposed (cadence-generated) meeting into the schedule' },
   publish_agenda: { from: ['planned'], to: 'agenda_published', description: 'Numbered agenda published to members' },
   start_session: { from: ['agenda_published'], to: 'in_session', description: 'Session opened (attendance, conflicts, votes)' },
   close_session: { from: ['in_session'], to: 'held', description: 'Session closed' },
@@ -770,16 +776,120 @@ export const MEETING_MACHINE: Machine<MeetingStatus, MeetingCommand> = {
     description: 'Minutes drafted; a correction of approved minutes creates a new version with a reason',
   },
   approve_minutes: { from: ['minutes_draft'], to: 'minutes_approved', description: 'Minutes approved (immutable version)' },
-  cancel: { from: ['planned', 'agenda_published'], to: 'cancelled', description: 'Meeting cancelled' },
+  cancel: { from: ['proposed', 'planned', 'agenda_published'], to: 'cancelled', description: 'Meeting cancelled (a proposed meeting is declined)' },
 };
 
-/** Secretariat screening of agenda requests. */
-export type AgendaScreeningCommand = 'accept' | 'return' | 'defer';
+/**
+ * Secretariat screening of agenda requests (REQ-GOV-012): accept onto a numbered agenda, return, defer, merge into another
+ * request of the same meeting, or reject (screened out). Every outcome but `accept` needs a reason (contract + service).
+ */
+export type AgendaScreeningCommand = 'accept' | 'return' | 'defer' | 'merge' | 'reject';
 export const AGENDA_SCREENING_MACHINE: Machine<AgendaScreeningStatus, AgendaScreeningCommand> = {
   accept: { from: ['requested', 'deferred'], to: 'accepted', description: 'Accepted onto a numbered meeting agenda' },
   return: { from: ['requested', 'deferred'], to: 'returned', description: 'Returned to the requester with reasons' },
   defer: { from: ['requested'], to: 'deferred', description: 'Deferred to a later meeting' },
+  merge: { from: ['requested', 'deferred'], to: 'merged', description: 'Merged into another request of the same meeting (with reasons)' },
+  reject: { from: ['requested', 'deferred'], to: 'rejected', description: 'Screened out (rejected) with reasons' },
 };
+
+/** Screening states a request can be merged INTO: a live request of the meeting (never a closed or merged one). */
+export const AGENDA_MERGE_TARGET_STATES: readonly AgendaScreeningStatus[] = ['requested', 'accepted'];
+
+/** Screening outcomes that need a reason (everything but accepting the request onto an agenda). */
+export function screeningReasonRequired(outcome: AgendaScreeningCommand): boolean {
+  return outcome !== 'accept';
+}
+
+/**
+ * REQ-GOV-012 merge guard: the request joins another, live request of the SAME committee and the SAME meeting, never itself;
+ * a request that carries a decision paper merges only into a request for that same paper (two papers are never one item).
+ */
+export function assertAgendaMerge(input: {
+  source: { id: string; committeeId: string; decisionId: string | null };
+  target: { id: string; committeeId: string; meetingId: string | null; screeningStatus: AgendaScreeningStatus; decisionId: string | null };
+  meetingId: string | null;
+}): void {
+  const { source, target } = input;
+  if (target.id === source.id) throw ruleViolation('governance.agenda.merge_self', 'A request cannot be merged into itself');
+  if (target.committeeId !== source.committeeId) throw ruleViolation('governance.agenda.merge_other_committee', 'The target request belongs to another committee');
+  if (!input.meetingId) throw ruleViolation('governance.agenda.merge_meeting_required', 'Choose the meeting: a request is merged into another request of the same meeting');
+  if (target.meetingId !== input.meetingId) throw ruleViolation('governance.agenda.merge_other_meeting', 'The target request is not for the same meeting');
+  if (!AGENDA_MERGE_TARGET_STATES.includes(target.screeningStatus)) {
+    throw ruleViolation('governance.agenda.merge_target_closed', `The target request is ${target.screeningStatus}; merge into a requested or accepted request`, { targetStatus: target.screeningStatus });
+  }
+  if (source.decisionId && source.decisionId !== target.decisionId) {
+    throw ruleViolation('governance.agenda.merge_decision_conflict', 'A request for a decision paper can only be merged into a request for the same decision paper');
+  }
+}
+
+// ---- Proposed meeting series from the charter cadence (REQ-GOV-009) -----------------------------------------------------
+
+/** Structured cadence of a charter (the charter's free-text `cadence` stays the description). A proposal until confirmed. */
+export const CADENCE_FREQUENCIES = ['weekly', 'every_two_weeks', 'monthly'] as const;
+export type CadenceFrequency = (typeof CADENCE_FREQUENCIES)[number];
+export const MAX_PROPOSED_MEETINGS = 12;
+
+export interface ProposedMeetingSlot {
+  /** 0-based position in the series (0 = the first meeting given by the user). */
+  index: number;
+  /** Local business date in the project timezone. */
+  localDate: string;
+  scheduledAt: Date;
+  /** The date is not a working day of the project calendar (weekend / holiday) — shown to the secretariat, never moved. */
+  nonWorkingDay: boolean;
+}
+
+function addMonthsKeepDay(date: string, months: number): string {
+  const [y, m, d] = date.split('-').map(Number) as [number, number, number];
+  const idx = y * 12 + (m - 1) + months;
+  const ny = Math.floor(idx / 12);
+  const nm = (idx % 12) + 1;
+  return `${String(ny).padStart(4, '0')}-${String(nm).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+/**
+ * The meeting instants a cadence determines from the FIRST meeting the user gives (date and time) — nothing else is
+ * invented: weekly = +7 days, every two weeks = +14 days, monthly = the same day of the month, all at the first meeting's
+ * local time in the project timezone. A monthly cadence starting after the 28th is refused (the day would not exist in
+ * every month and the platform does not pick another day). Dates falling on non-working days are flagged, not moved.
+ */
+export function proposedMeetingSeries(input: { frequency: CadenceFrequency; firstMeetingAt: Date; count: number; calendar: WorkingCalendar }): ProposedMeetingSlot[] {
+  if (!CADENCE_FREQUENCIES.includes(input.frequency)) throw ruleViolation('governance.cadence.unknown_frequency', `Unknown cadence ${String(input.frequency)}`);
+  if (!Number.isInteger(input.count) || input.count < 1 || input.count > MAX_PROPOSED_MEETINGS) {
+    throw ruleViolation('governance.cadence.invalid_count', `Between 1 and ${MAX_PROPOSED_MEETINGS} meetings can be proposed at a time`, { max: MAX_PROPOSED_MEETINGS });
+  }
+  if (Number.isNaN(input.firstMeetingAt.getTime())) throw ruleViolation('governance.cadence.invalid_start', 'The first meeting date and time are required');
+  const tz = input.calendar.timezone;
+  const d0 = localDate(input.firstMeetingAt, tz);
+  assertIsoDate(d0);
+  if (input.frequency === 'monthly' && Number(d0.slice(8, 10)) > 28) {
+    throw ruleViolation('governance.cadence.monthly_day_unsupported', 'A monthly cadence must start on day 1–28 of a month (later days do not exist in every month)', { day: Number(d0.slice(8, 10)) });
+  }
+  const dayMs = 86_400_000;
+  const localMs = input.firstMeetingAt.getTime() + tzOffsetMinutes(d0, tz) * 60_000;
+  const timeOfDayMs = ((localMs % dayMs) + dayMs) % dayMs;
+  const out: ProposedMeetingSlot[] = [];
+  for (let k = 0; k < input.count; k++) {
+    const date = input.frequency === 'monthly' ? addMonthsKeepDay(d0, k) : addCalendarDays(d0, k * (input.frequency === 'weekly' ? 7 : 14));
+    const [y, m, d] = date.split('-').map(Number) as [number, number, number];
+    const scheduledAt = new Date(Date.UTC(y, m - 1, d) + timeOfDayMs - tzOffsetMinutes(date, tz) * 60_000);
+    out.push({ index: k, localDate: date, scheduledAt, nonWorkingDay: !isWorkingDay(date, input.calendar) });
+  }
+  return out;
+}
+
+// ---- Internal electronic approvals (REQ-GOV-027) -------------------------------------------------------------------------
+
+/**
+ * Every approval recorded by the platform (decision outcomes and external decisions, charter, authority matrix, minutes,
+ * approval records of other modules) is an INTERNAL electronic approval — never a legally certified signature, until an
+ * approved signature solution is integrated and verified. API responses carry this label next to each approval record.
+ */
+export const INTERNAL_APPROVAL_METHOD = 'internal_electronic' as const;
+export const INTERNAL_APPROVAL_LABEL_EN = 'Internal electronic approval — not a legally certified signature' as const;
+export function internalApprovalLabel(): { method: typeof INTERNAL_APPROVAL_METHOD; label: typeof INTERNAL_APPROVAL_LABEL_EN } {
+  return { method: INTERNAL_APPROVAL_METHOD, label: INTERNAL_APPROVAL_LABEL_EN };
+}
 
 /** Seats that may carry a vote (charter §7): secretary, advisory members and guests never vote. */
 export const VOTING_SEAT_ROLES: readonly CommitteeMemberRole[] = ['chair', 'sponsor', 'voting_member'];

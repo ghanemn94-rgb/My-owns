@@ -6,18 +6,25 @@ import {
   AGENDA_SCREENING_MACHINE,
   AGENDA_SCREENING_STATUSES,
   ATTENDANCE_STATUSES,
+  CADENCE_FREQUENCIES,
   Classification,
+  INTERNAL_APPROVAL_LABEL_EN,
+  INTERNAL_APPROVAL_METHOD,
   MEETING_MACHINE,
   MEETING_STATUSES,
   MeetingCommand,
+  assertAgendaMerge,
   assertAttendanceChangeable,
   clearanceAllows,
   CLASSIFICATIONS,
   computeQuorum,
   isMemberActiveOn,
   notFound,
+  internalApprovalLabel,
   presentUserIds,
+  proposedMeetingSeries,
   ruleViolation,
+  screeningReasonRequired,
   transition,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
@@ -36,6 +43,8 @@ type MeetingStatus = (typeof MEETING_STATUSES)[number];
 type AgendaKind = (typeof AGENDA_ITEM_KINDS)[number];
 type ScreeningStatus = (typeof AGENDA_SCREENING_STATUSES)[number];
 type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
+type CadenceFrequency = (typeof CADENCE_FREQUENCIES)[number];
+type ScreeningOutcome = 'accept' | 'return' | 'defer' | 'merge' | 'reject';
 
 const MINUTES_ENTITY = 'meeting_minutes';
 /** Decision states whose tabling at a meeting can still change. */
@@ -107,6 +116,8 @@ export class MeetingsService {
       minutesText: m.minutesText,
       minutesDraftedBy: m.minutesDraftedBy,
       minutesApprovedBy: m.minutesApprovedBy,
+      // REQ-GOV-027: approved minutes are an internal electronic approval record.
+      minutesApproval: m.minutesApprovedBy ? internalApprovalLabel() : null,
       authorityMatrixVersionId: m.authorityMatrixVersionId,
       agenda,
       attendance: att.map((a) => {
@@ -211,6 +222,74 @@ export class MeetingsService {
       });
     await this.audit.record({ action: 'governance.meeting.create', entityType: 'meeting', entityId: id, projectId, after: { committeeId: c.id, number, title: body.title, scheduledAt: body.scheduledAt } });
     return { id, number, version: 1 };
+  }
+
+  /**
+   * REQ-GOV-009: a series of PROPOSED meetings from the charter's cadence rule and the first meeting given by the
+   * secretariat. Nothing is scheduled, published or opened automatically (each meeting stays `proposed` until the explicit
+   * `confirm` command). Idempotent: a slot where the committee already has a meeting (any status, a declined one included)
+   * is skipped. Generation of one committee is serialized on the committee row.
+   */
+  async proposeSeries(ctx: RequestContext, projectId: string, committeeId: string, body: { expectedVersion: number; firstMeetingAt: string; count: number; title: string; location?: string }) {
+    const c = await this.sup.committee(ctx, projectId, committeeId, 'governance.meeting.manage');
+    if (c.status !== 'active') throw ruleViolation('governance.committee.not_active', `Meetings can only be proposed for an active committee (current: ${c.status})`);
+    assertVersion(c, body.expectedVersion, 'committee');
+    const frequency = c.charter.cadenceRule?.frequency as CadenceFrequency | undefined;
+    if (!frequency) {
+      throw ruleViolation('governance.cadence.not_configured', 'The committee charter has no cadence rule — set it in the charter (weekly, every two weeks or monthly) before proposing meetings');
+    }
+    const tx = this.db.tx();
+    await tx.execute(sql`select id from committee where id = ${c.id} and project_id = ${projectId} for update`);
+    const calendar = await this.sup.calendar(projectId);
+    const slots = proposedMeetingSeries({ frequency, firstMeetingAt: new Date(body.firstMeetingAt), count: body.count, calendar });
+    const existing = await tx
+      .select({ id: schema.meeting.id, scheduledAt: schema.meeting.scheduledAt })
+      .from(schema.meeting)
+      .where(and(eq(schema.meeting.projectId, projectId), eq(schema.meeting.committeeId, c.id), eq(schema.meeting.isCirculation, false), inArray(schema.meeting.scheduledAt, slots.map((s) => s.scheduledAt))));
+    const byInstant = new Map(existing.map((e) => [e.scheduledAt.getTime(), e.id]));
+    const p = await this.sup.project(projectId);
+    const created: { id: string; number: number; scheduledAt: string; localDate: string; nonWorkingDay: boolean }[] = [];
+    const skipped: { scheduledAt: string; localDate: string; existingMeetingId: string }[] = [];
+    for (const s of slots) {
+      const at = s.scheduledAt.toISOString();
+      const other = byInstant.get(s.scheduledAt.getTime());
+      if (other) {
+        skipped.push({ scheduledAt: at, localDate: s.localDate, existingMeetingId: other });
+        continue;
+      }
+      const number = await this.nextNumber(c.id);
+      const id = newId();
+      await tx.insert(schema.meeting).values({
+        id,
+        orgId: ctx.principal.orgId,
+        projectId,
+        committeeId: c.id,
+        number,
+        title: body.title,
+        scheduledAt: s.scheduledAt,
+        location: body.location ?? null,
+        status: 'proposed',
+        cadenceCharterVersionNo: c.charterVersionNo,
+        isDemo: p.isDemo,
+        createdBy: ctx.principal.userId,
+      });
+      await this.audit.record({
+        action: 'governance.meeting.create',
+        entityType: 'meeting',
+        entityId: id,
+        projectId,
+        after: { committeeId: c.id, number, title: body.title, scheduledAt: at, status: 'proposed', origin: 'cadence', frequency, charterVersionNo: c.charterVersionNo, nonWorkingDay: s.nonWorkingDay },
+      });
+      created.push({ id, number, scheduledAt: at, localDate: s.localDate, nonWorkingDay: s.nonWorkingDay });
+    }
+    await this.audit.record({
+      action: 'governance.meeting.propose_series',
+      entityType: 'committee',
+      entityId: c.id,
+      projectId,
+      after: { frequency, charterVersionNo: c.charterVersionNo, firstMeetingAt: new Date(body.firstMeetingAt).toISOString(), count: body.count, created: created.map((x) => x.id), skipped: skipped.length },
+    });
+    return { frequency, charterVersionNo: c.charterVersionNo, created, skipped };
   }
 
   async nextNumber(committeeId: string): Promise<number> {
@@ -384,7 +463,7 @@ export class MeetingsService {
     const version = row['version'] as number;
     await this.versions.snapshot({ projectId, entityType: MINUTES_ENTITY, entityId: m.id, versionNo: version, snapshot: { status: to, text: m.minutesText, draftedBy: m.minutesDraftedBy, approvedBy: ctx.principal.userId }, reason: 'approved' });
     await this.audit.record({ action: 'governance.minutes.approve', entityType: 'meeting', entityId: m.id, projectId, before: { status: m.status }, after: { status: to, method: 'internal_electronic_approval' }, reason: body.note ?? null });
-    return { id: m.id, version };
+    return { id: m.id, version, approvalRecord: internalApprovalLabel() };
   }
 
   // ---------------------------------------------------------------------------------------------------------
@@ -468,7 +547,8 @@ export class MeetingsService {
       openActions: openActions.map((a) => ({ id: a.id, code: a.code, title: a.title, ownerUserId: a.ownerUserId, dueDate: a.dueDate, status: a.status, decisionId: a.decisionId, overdue: !!a.dueDate && a.dueDate < today && (a.status === 'open' || a.status === 'in_progress') })),
       quorum: m.quorumSnapshot ?? null,
       authorityMatrix: mx.row ? { id: mx.row.id, versionNo: mx.row.versionNo, isDemoPolicy: mx.row.isDemoPolicy, usable: mx.usable, reason: mx.reason } : null,
-      labels: { isDemo: p.isDemo, approvals: 'Internal electronic approvals — not legally certified signatures' },
+      // REQ-GOV-027: every approval in the pack is an internal electronic approval, never a legally certified signature.
+      labels: { isDemo: p.isDemo, approvals: INTERNAL_APPROVAL_LABEL_EN, approvalMethod: INTERNAL_APPROVAL_METHOD },
     };
     const contentHash = payloadHash(payload);
     const id = newId();
@@ -556,14 +636,23 @@ export class MeetingsService {
     return { id, version: 1 };
   }
 
-  async screenAgendaRequest(ctx: RequestContext, projectId: string, agendaItemId: string, body: { expectedVersion: number; outcome: 'accept' | 'return' | 'defer'; meetingId?: string; note?: string }) {
+  /**
+   * Secretariat screening (REQ-GOV-012): accept onto a numbered agenda, return, defer, merge into another request of the
+   * same meeting, or reject — every outcome but accept with a reason. Emits `agenda_request.screened` (ids + outcome) for
+   * the requester's notification (P6, REQ-PLT-008).
+   */
+  async screenAgendaRequest(ctx: RequestContext, projectId: string, agendaItemId: string, body: { expectedVersion: number; outcome: ScreeningOutcome; meetingId?: string; mergeIntoAgendaItemId?: string; note?: string }) {
     const a = await loadInProject(this.db, schema.agendaItem, projectId, agendaItemId);
     const c = await loadInProject(this.db, schema.committee, projectId, a.committeeId);
     this.policy.assert(ctx, 'governance.agenda_request.screen', { projectId, classification: c.classification, requesterUserId: a.requestedBy });
     assertVersion(a, body.expectedVersion, 'agenda request');
     const to = transition('agenda_request', AGENDA_SCREENING_MACHINE, a.screeningStatus, body.outcome);
+    if (screeningReasonRequired(body.outcome) && !body.note?.trim()) {
+      throw ruleViolation('governance.agenda.reason_required', 'A reason is required to return, defer, merge or reject a request');
+    }
     const values: Record<string, unknown> = { screeningStatus: to, screenedBy: ctx.principal.userId, screeningNote: body.note ?? null };
     let number: number | null = a.number;
+    let mergedInto: string | null = null;
     if (body.outcome === 'accept') {
       const meetingId = body.meetingId ?? a.meetingId;
       if (!meetingId) throw ruleViolation('governance.agenda.meeting_required', 'Choose the meeting whose agenda the item joins');
@@ -586,26 +675,49 @@ export class MeetingsService {
           await this.audit.record({ action: 'governance.decision.table', entityType: 'decision', entityId: d.id, projectId, before: { meetingId: d.meetingId }, after: { meetingId: m.id, agendaItemId: a.id } });
         }
       }
-    } else if (body.outcome === 'return') {
+    } else if (body.outcome === 'merge') {
+      // The target is locked, then read, so it cannot be closed or merged elsewhere while this request joins it.
+      if (!body.mergeIntoAgendaItemId) throw ruleViolation('governance.agenda.merge_target_required', 'Choose the request this one is merged into');
+      await this.db.tx().execute(sql`select id from agenda_item where id = ${body.mergeIntoAgendaItemId} and project_id = ${projectId} for update`);
+      const target = await loadInProject(this.db, schema.agendaItem, projectId, body.mergeIntoAgendaItemId);
+      const meetingId = body.meetingId ?? a.meetingId;
+      assertAgendaMerge({ source: a, target, meetingId });
+      this.assertAgendaOpen(await loadInProject(this.db, schema.meeting, projectId, meetingId!), c.id);
+      mergedInto = target.id;
+      Object.assign(values, { meetingId, number: null, mergedIntoAgendaItemId: target.id });
+      number = null;
+    } else if (body.outcome === 'return' || body.outcome === 'reject') {
       Object.assign(values, { number: null });
       number = null;
     }
     const row = await updateVersioned(this.db, schema.agendaItem, { id: a.id, projectId, expectedVersion: body.expectedVersion }, values);
+    const meetingId = (values['meetingId'] as string | null | undefined) ?? a.meetingId;
     await this.audit.record({
       action: 'governance.agenda_request.screen',
       entityType: 'agenda_item',
       entityId: a.id,
       projectId,
       before: { screeningStatus: a.screeningStatus },
-      after: { screeningStatus: to, meetingId: values['meetingId'] ?? a.meetingId, number },
+      after: { screeningStatus: to, meetingId, number, mergedIntoAgendaItemId: mergedInto },
       reason: body.note ?? null,
     });
-    return { id: a.id, screeningStatus: to, number, version: row['version'] as number };
+    // The requester is told the outcome (notification: P6). Ids and the outcome only — the reason stays on the record.
+    await this.outbox.emit({
+      type: 'agenda_request.screened',
+      projectId,
+      aggregateType: 'agenda_item',
+      aggregateId: a.id,
+      payload: { agendaItemId: a.id, committeeId: c.id, meetingId, requesterUserId: a.requestedBy, outcome: body.outcome, screeningStatus: to, number, mergedIntoAgendaItemId: mergedInto },
+    });
+    return { id: a.id, screeningStatus: to, number, mergedIntoAgendaItemId: mergedInto, version: row['version'] as number };
   }
 
   private assertAgendaOpen(m: MeetingRow, committeeId: string) {
     if (m.committeeId !== committeeId) throw ruleViolation('governance.agenda.other_committee', 'The meeting belongs to another committee');
     if (m.isCirculation) throw ruleViolation('governance.agenda.circulation', 'Items cannot be added to a circulation');
+    if (m.status === 'proposed') {
+      throw ruleViolation('governance.agenda.meeting_proposed', `Meeting #${m.number} is only proposed — the secretariat confirms it before items join its agenda`);
+    }
     if (m.status !== 'planned' && m.status !== 'agenda_published') throw ruleViolation('governance.agenda.closed', `The agenda of meeting #${m.number} is closed (${m.status})`);
   }
 
@@ -626,6 +738,7 @@ export class MeetingsService {
       responseDeadline: m.responseDeadline,
       packSnapshotId: m.packSnapshotId,
       minutesApprovedAt: iso(m.minutesApprovedAt),
+      cadenceCharterVersionNo: m.cadenceCharterVersionNo,
       isDemo: m.isDemo,
       version: m.version,
     };
@@ -645,6 +758,7 @@ export class MeetingsService {
       screeningStatus: a.screeningStatus,
       screeningNote: a.screeningNote,
       screenedBy: a.screenedBy,
+      mergedIntoAgendaItemId: a.mergedIntoAgendaItemId,
       presenterUserId: a.presenterUserId,
       version: a.version,
       createdAt: a.createdAt.toISOString(),

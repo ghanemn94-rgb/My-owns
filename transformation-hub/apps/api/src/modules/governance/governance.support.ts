@@ -15,6 +15,7 @@ import {
   outstandingVoters,
   presentUserIds,
   ruleViolation,
+  type WorkingCalendar,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService, ResourceAttrs } from '../../platform/policy.service';
@@ -79,6 +80,18 @@ export class GovernanceSupport {
 
   today(p: ProjectInfo): string {
     return this.clock.today(p.timezone);
+  }
+
+  /** The project's working calendar (timezone, working week, confirmed holidays) — to flag proposed meeting dates. */
+  async calendar(projectId: string): Promise<WorkingCalendar> {
+    const [p] = await this.db.tx().select({ timezone: schema.project.timezone, workingDays: schema.project.workingDays }).from(schema.project).where(eq(schema.project.id, projectId));
+    if (!p) throw notFound();
+    const hol = await this.db
+      .tx()
+      .select({ date: schema.calendarHoliday.date })
+      .from(schema.calendarHoliday)
+      .where(and(eq(schema.calendarHoliday.projectId, projectId), eq(schema.calendarHoliday.isProposed, false)));
+    return { timezone: p.timezone, workingDays: p.workingDays, holidays: hol.map((h) => h.date) };
   }
 
   localDateOf(instant: Date, p: ProjectInfo): string {

@@ -661,7 +661,8 @@ const CreatePartnerBody = z.object({
   legalEntityId: Uuid.optional(),
   classification: ClassificationSchema.default('confidential'),
 });
-const UpdatePartnerBody = z.object({ expectedVersion: ExpectedVersion, name: RequiredText(200).optional(), description: Text(4000).nullable().optional(), legalEntityId: Uuid.nullable().optional() });
+// PATCH / PUT bodies are strict (REQ-DAT-013): an unknown field — a status or stage included — is refused with 400.
+const UpdatePartnerBody = z.object({ expectedVersion: ExpectedVersion, name: RequiredText(200).optional(), description: Text(4000).nullable().optional(), legalEntityId: Uuid.nullable().optional() }).strict();
 const EventCommandNames = ['start_preparation', 'mark_ready', 'back_to_preparation', 'abort'] as const;
 
 export const jvRoutes = registerRoutes({
@@ -807,11 +808,13 @@ export const jvRoutes = registerRoutes({
     tags,
     access: 'jv.partner.manage',
     params: ProjectParams,
-    body: z.object({
-      expectedVersion: z.number().int().min(0),
-      criteria: z.array(z.object({ key: z.string().trim().min(1).max(32), name: RequiredText(200), nameAr: Text(200).nullable().optional(), weight: Weight })).min(1).max(30),
-      note: Text(2000).optional(),
-    }),
+    body: z
+      .object({
+        expectedVersion: z.number().int().min(0),
+        criteria: z.array(z.object({ key: z.string().trim().min(1).max(32), name: RequiredText(200), nameAr: Text(200).nullable().optional(), weight: Weight })).min(1).max(30),
+        note: Text(2000).optional(),
+      })
+      .strict(),
     response: VersionResult,
   }),
   listAssessments: defineRoute({
@@ -960,18 +963,20 @@ export const jvRoutes = registerRoutes({
     tags,
     access: 'jv.negotiation.manage',
     params: idP('issueId'),
-    body: z.object({
-      expectedVersion: ExpectedVersion,
-      issue: RequiredText(4000).optional(),
-      positions: z.array(Position).max(10).optional(),
-      alternatives: Text(4000).nullable().optional(),
-      requiredApproval: Text(1000).nullable().optional(),
-      requiresApproval: z.boolean().optional(),
-      decisionId: Uuid.nullable().optional(),
-      documentId: Uuid.nullable().optional(),
-      documentRef: Text(500).nullable().optional(),
-      resolution: Text(4000).nullable().optional(),
-    }),
+    body: z
+      .object({
+        expectedVersion: ExpectedVersion,
+        issue: RequiredText(4000).optional(),
+        positions: z.array(Position).max(10).optional(),
+        alternatives: Text(4000).nullable().optional(),
+        requiredApproval: Text(1000).nullable().optional(),
+        requiresApproval: z.boolean().optional(),
+        decisionId: Uuid.nullable().optional(),
+        documentId: Uuid.nullable().optional(),
+        documentRef: Text(500).nullable().optional(),
+        resolution: Text(4000).nullable().optional(),
+      })
+      .strict(),
     response: VersionResult,
   }),
   transitionNegotiationIssue: defineRoute({
@@ -1019,7 +1024,7 @@ export const jvRoutes = registerRoutes({
     tags,
     access: 'jv.room.manage',
     params: RoomParams,
-    body: z.object({ expectedVersion: ExpectedVersion, name: RequiredText(200).optional(), description: Text(2000).nullable().optional() }),
+    body: z.object({ expectedVersion: ExpectedVersion, name: RequiredText(200).optional(), description: Text(2000).nullable().optional() }).strict(),
     response: VersionResult,
   }),
   lockRoom: defineRoute({ id: 'jv.lockRoom', method: 'POST', path: `${P}/partner-rooms/:roomId/lock`, summary: 'Lock the room: every grant and download is suspended immediately (containment)', tags, access: 'jv.room.lock', command: true, params: RoomParams, body: CmdWithReason, response: VersionResult }),
@@ -1325,7 +1330,7 @@ export const jvRoutes = registerRoutes({
       documentImplication: Text(4000).nullable().optional(),
       cpImplication: Text(4000).nullable().optional(),
       conditionId: Uuid.nullable().optional(),
-    }),
+    }).strict(),
     response: VersionResult,
   }),
   transitionFinding: defineRoute({
@@ -1540,7 +1545,7 @@ export const jvRoutes = registerRoutes({
       parties: Text(1000).nullable().optional(),
       validTo: IsoDate.nullable().optional(),
       longStopDate: IsoDate.nullable().optional(),
-    }),
+    }).strict(),
     response: VersionResult,
   }),
   determineConditionWaivability: defineRoute({

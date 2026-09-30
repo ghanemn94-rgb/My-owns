@@ -537,14 +537,16 @@ export const documentsRoutes = registerRoutes({
     tags: T,
     access: 'documents.source.manage',
     params: idParams('sourceId'),
-    body: z.object({
-      expectedVersion: ExpectedVersion,
-      filename: Text(300).nullable().optional(),
-      sourceVersion: Text(32).nullable().optional(),
-      ownerLabel: Text(200).nullable().optional(),
-      reportDate: IsoDate.nullable().optional(),
-      asOfDate: IsoDate.nullable().optional(),
-    }),
+    body: z
+      .object({
+        expectedVersion: ExpectedVersion,
+        filename: Text(300).nullable().optional(),
+        sourceVersion: Text(32).nullable().optional(),
+        ownerLabel: Text(200).nullable().optional(),
+        reportDate: IsoDate.nullable().optional(),
+        asOfDate: IsoDate.nullable().optional(),
+      })
+      .strict(),
     response: z.object({ id: Uuid, version: z.number().int() }),
   }),
   recordExtraction: defineRoute({
@@ -599,15 +601,17 @@ export const documentsRoutes = registerRoutes({
     tags: T,
     access: 'documents.source.manage',
     params: idParams('claimId'),
-    body: z.object({
-      expectedVersion: ExpectedVersion,
-      location: RequiredText(500).optional(),
-      subject: RequiredText(500).optional(),
-      targetType: ClaimTargetTypeSchema.nullable().optional(),
-      targetId: Uuid.nullable().optional(),
-      field: z.string().trim().max(64).nullable().optional(),
-      confidence: Confidence.nullable().optional(),
-    }),
+    body: z
+      .object({
+        expectedVersion: ExpectedVersion,
+        location: RequiredText(500).optional(),
+        subject: RequiredText(500).optional(),
+        targetType: ClaimTargetTypeSchema.nullable().optional(),
+        targetId: Uuid.nullable().optional(),
+        field: z.string().trim().max(64).nullable().optional(),
+        confidence: Confidence.nullable().optional(),
+      })
+      .strict(),
     response: z.object({ id: Uuid, version: z.number().int() }),
   }),
   reviewClaim: defineRoute({

@@ -669,7 +669,7 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
     "governance.meeting.read": {"description": "View meetings, agendas, attendance, frozen meeting packs and minutes.", "conditions": ["classification"], "ai": "retrieve"},
     "governance.meeting.manage": {"description": "Schedule meetings, build numbered agendas, record attendance, freeze meeting-pack snapshots.", "conditions": ["classification"], "ai": "none"},
     "governance.agenda_request.create": {"description": "Request an agenda item.", "conditions": ["classification"], "ai": "propose"},
-    "governance.agenda_request.screen": {"description": "Secretariat screening: accept, return or defer an agenda request.", "conditions": ["classification", "not_self"], "ai": "none"},
+    "governance.agenda_request.screen": {"description": "Secretariat screening: accept, return, defer, merge or reject an agenda request (a reason is required except to accept).", "conditions": ["classification", "not_self"], "ai": "none"},
     "governance.decision.read": {"description": "View decision papers, states, votes and outcomes.", "conditions": ["classification"], "ai": "retrieve"},
     "governance.decision.draft": {"description": "Create and edit decision papers in Draft.", "conditions": ["classification"], "ai": "propose"},
     "governance.decision.submit": {"description": "Submit a decision paper (Draft to Submitted).", "conditions": ["classification"], "ai": "none"},
