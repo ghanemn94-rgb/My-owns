@@ -58,7 +58,8 @@ export default function DecisionsPage() {
       sortValue: (d) => d.title,
       cell: (d) => (
         <span className="flex flex-col gap-1">
-          <Link href={`${base}/decisions/${d.id}`} className="hover:underline" dir="auto">
+          {/* The title is free text typed by the requester in the decision paper: shown as entered (data-user-text). */}
+          <Link href={`${base}/decisions/${d.id}`} className="hover:underline" dir="auto" data-user-text>
             {d.title}
           </Link>
           <span className="flex flex-wrap items-center gap-1 text-xs text-muted">

@@ -1152,11 +1152,11 @@ export class GatesService implements OnModuleInit {
    * assessment whose criteria are all satisfied and whose current state has not been reviewed yet (never reviewed, or
    * changed after the last review), the gate's designated reviewer role, and not the person who started the cycle.
    */
-  async pendingGateReviews(ctx: RequestContext, projectId: string): Promise<{ assessmentId: string; gateId: string; key: string; name: string; state: GateReviewState }[]> {
+  async pendingGateReviews(ctx: RequestContext, projectId: string): Promise<{ assessmentId: string; gateId: string; key: string; name: string; nameAr: string | null; state: GateReviewState }[]> {
     const permission = 'gates.assessment.review';
     if (ctx.principal.kind !== 'user' || !this.policy.canInProject(ctx, permission, projectId)) return [];
     const b = await this.loader.bundle(projectId);
-    const out: { assessmentId: string; gateId: string; key: string; name: string; state: GateReviewState }[] = [];
+    const out: { assessmentId: string; gateId: string; key: string; name: string; nameAr: string | null; state: GateReviewState }[] = [];
     for (const g of b.gates) {
       const cur = b.current(g.id);
       if (!GATE_REVIEWABLE_STATUSES.includes(cur.status)) continue;
@@ -1166,7 +1166,7 @@ export class GatesService implements OnModuleInit {
       if (!gateReviewPending(reviewOf(cur), basis)) continue;
       const res = { projectId, classification: b.project.classification, workstreamId: grant.workstreamId, requesterUserId: separationSubject(ctx.principal.userId, [cur.startedBy]) };
       if (!this.policy.can(ctx, permission, res)) continue;
-      out.push({ assessmentId: cur.id, gateId: g.id, key: g.key, name: g.name, state: gateReviewState(reviewOf(cur), basis) });
+      out.push({ assessmentId: cur.id, gateId: g.id, key: g.key, name: g.name, nameAr: g.nameAr, state: gateReviewState(reviewOf(cur), basis) });
     }
     return out;
   }

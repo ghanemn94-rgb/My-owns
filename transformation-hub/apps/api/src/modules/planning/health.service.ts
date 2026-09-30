@@ -26,6 +26,9 @@ import {
   RaidStatus,
   DeliverableStatus,
   RagResult,
+  ServerMessage,
+  planMessage,
+  planningEn,
 } from '@hub/domain';
 import type { z } from 'zod';
 import type { StatusUpdateListQuery, CreateStatusUpdateBody, UpdateStatusUpdateBody, CreateRagOverrideBody } from '@hub/contracts';
@@ -49,17 +52,20 @@ export interface WorkstreamHealth {
   nameAr: string | null;
   leadName: string | null;
   progress: ReturnType<typeof weightedProgress>;
-  rag: { calculated: RagResult; effective: RagStatus; overridden: boolean; overrideExpired: boolean; explanation: string; reported: RagStatus | null };
+  rag: { calculated: RagResult; effective: RagStatus; overridden: boolean; overrideExpired: boolean; explanation: string; explanationI18n: ServerMessage[]; reported: RagStatus | null };
   baselineFinish: string | null;
   forecastFinish: string | null;
   lastAcceptedUpdate: { id: string; periodEnd: string; acceptedAt: string } | null;
-  openBlockers: { id: string; type: 'task' | 'issue'; code: string; title: string }[];
+  openBlockers: { id: string; type: 'task' | 'issue'; code: string; title: string; titleAr?: string | null }[];
   taskCounts: Record<string, number>;
   reportedProgressAvg: number | null;
   dataQuality: string[];
+  dataQualityI18n: ServerMessage[];
 }
 
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
+/** `code name` label and its Arabic form (null when the record has no Arabic name). */
+const labels = (code: string, name: string, nameAr: string | null | undefined) => ({ label: `${code} ${name}`, labelAr: nameAr ? `${code} ${nameAr}` : null });
 
 /**
  * Measurement (spec §9 rules 1–8): weighted progress on approved deliverable weights, calculated RAG (configurable
@@ -106,7 +112,7 @@ export class HealthService {
     const workstreams = await this.tx.select().from(schema.workstream).where(eq(schema.workstream.projectId, p.id)).orderBy(asc(schema.workstream.sortOrder));
     const names = await this.s.userNames(workstreams.map((w) => w.leadUserId));
     const tasks = await this.tx
-      .select({ id: schema.task.id, code: schema.task.wbsCode, title: schema.task.title, ws: schema.task.workstreamId, status: schema.task.status, plannedFinish: schema.task.plannedFinish, forecastFinish: schema.task.forecastFinish, actualFinish: schema.task.actualFinish, progress: schema.task.reportedProgress, owner: schema.task.accountableUserId, duration: schema.task.durationDays })
+      .select({ id: schema.task.id, code: schema.task.wbsCode, title: schema.task.title, titleAr: schema.task.titleAr, ws: schema.task.workstreamId, status: schema.task.status, plannedFinish: schema.task.plannedFinish, forecastFinish: schema.task.forecastFinish, actualFinish: schema.task.actualFinish, progress: schema.task.reportedProgress, owner: schema.task.accountableUserId, duration: schema.task.durationDays })
       .from(schema.task)
       .where(eq(schema.task.projectId, p.id));
     const milestones = await this.tx.select().from(schema.milestone).where(eq(schema.milestone.projectId, p.id));
@@ -142,23 +148,25 @@ export class HealthService {
       const wt = tasks.filter((t) => t.ws === w.id);
       const wm = milestones.filter((m) => m.workstreamId === w.id);
       const wd = deliverables.filter((d) => d.workstreamId === w.id);
-      const progress = weightedProgress(wd.map((d) => deliverableProgressItem({ id: d.id, code: d.code, title: d.title, status: d.status as DeliverableStatus, weight: d.weight, weightApproved: d.weightApproved })));
-      const dq: string[] = [];
+      const progress = weightedProgress(wd.map((d) => deliverableProgressItem({ id: d.id, code: d.code, title: d.title, titleAr: d.titleAr, status: d.status as DeliverableStatus, weight: d.weight, weightApproved: d.weightApproved })));
+      // Data-quality gaps as codes (QA-P2-04); the English list is rendered from them.
+      const dqI18n: ServerMessage[] = [];
+      const gap = (code: string, params: Record<string, number> = {}) => dqI18n.push(planMessage(code, params));
       // Baseline finish: latest planned finish among this workstream's baselined items (undated items flagged).
       let baselineFinish: string | null = null;
       if (snap) {
         const dates = [...snap.tasks.filter((t) => t.workstreamId === w.id).map((t) => t.plannedFinish), ...snap.milestones.filter((m) => m.workstreamId === w.id).map((m) => m.plannedDate)];
         baselineFinish = latestDate(dates, false);
         const undated = dates.filter((d) => !d).length;
-        if (undated > 0) dq.push(`${undated} baselined item(s) have no planned finish`);
-      } else dq.push('No approved baseline');
+        if (undated > 0) gap('plan.dq.baselined_undated', { count: undated });
+      } else gap('plan.dq.no_baseline');
       const fDates = [
         ...wt.filter((t) => active(t.status)).map((t) => t.actualFinish ?? t.forecastFinish ?? t.plannedFinish),
         ...wm.filter((m) => m.status !== 'cancelled').map((m) => m.actualDate ?? m.forecastDate ?? m.plannedDate),
       ];
       const forecastFinish = latestDate(fDates, false);
       const blockers = [
-        ...wt.filter((t) => t.status === 'blocked').map((t) => ({ id: t.id, type: 'task' as const, code: t.code, title: t.title })),
+        ...wt.filter((t) => t.status === 'blocked').map((t) => ({ id: t.id, type: 'task' as const, code: t.code, title: t.title, titleAr: t.titleAr })),
         ...issues.filter((i) => i.ws === w.id && isBlockingIssue({ status: i.status as RaidStatus, severity: i.severity })).map((i) => ({ id: i.id, type: 'issue' as const, code: i.code, title: i.title })),
       ];
       const f = freshness(w.id);
@@ -168,15 +176,15 @@ export class HealthService {
       const counts: Record<string, number> = {};
       for (const t of wt) counts[t.status] = (counts[t.status] ?? 0) + 1;
       const act = wt.filter((t) => active(t.status));
-      if (!w.leadUserId) dq.push('No accountable workstream lead');
+      if (!w.leadUserId) gap('plan.dq.no_lead');
       const noOwner = act.filter((t) => !t.owner).length;
-      if (noOwner) dq.push(`${noOwner} active task(s) without an accountable owner`);
+      if (noOwner) gap('plan.dq.tasks_no_owner', { count: noOwner });
       const noDur = act.filter((t) => t.duration === null).length;
-      if (noDur) dq.push(`${noDur} active task(s) without a duration`);
+      if (noDur) gap('plan.dq.tasks_no_duration', { count: noDur });
       const undatedActive = act.filter((t) => !(t.actualFinish ?? t.forecastFinish ?? t.plannedFinish)).length;
-      if (undatedActive) dq.push(`${undatedActive} active task(s) without planned/forecast finish`);
+      if (undatedActive) gap('plan.dq.tasks_undated', { count: undatedActive });
       const unapproved = wd.filter((d) => d.status !== 'cancelled' && !d.weightApproved).length;
-      if (unapproved) dq.push(`${unapproved} deliverable weight(s) not approved`);
+      if (unapproved) gap('plan.dq.weights_unapproved', { count: unapproved });
       out.push({
         id: w.id,
         code: w.code,
@@ -184,14 +192,15 @@ export class HealthService {
         nameAr: w.nameAr,
         leadName: w.leadUserId ? (names.get(w.leadUserId) ?? null) : null,
         progress,
-        rag: { calculated: calc, effective: eff.effective, overridden: eff.overridden, overrideExpired: eff.overrideExpired, explanation: eff.explanation, reported: f.reported },
+        rag: { calculated: calc, effective: eff.effective, overridden: eff.overridden, overrideExpired: eff.overrideExpired, explanation: eff.explanation, explanationI18n: eff.explanationI18n, reported: f.reported },
         baselineFinish,
         forecastFinish,
         lastAcceptedUpdate: f.update ? { id: f.update.id, periodEnd: f.update.periodEnd, acceptedAt: f.update.reviewedAt!.toISOString() } : null,
         openBlockers: blockers,
         taskCounts: counts,
         reportedProgressAvg: act.length ? Math.round((act.reduce((a, t) => a + t.progress, 0) / act.length) * 10) / 10 : null,
-        dataQuality: dq,
+        dataQuality: dqI18n.map((m) => planningEn([m])),
+        dataQualityI18n: dqI18n,
       });
     }
 
@@ -199,21 +208,22 @@ export class HealthService {
     // A manual override changes the displayed (effective) status, but an open blocker is never concealed from the
     // aggregate (measurement rule 3): workstreams with open blockers always count — and are listed — as red critical.
     const items: { id: string; status: RagStatus; critical?: boolean }[] = out.map((w) => ({ id: w.id, status: w.openBlockers.length > 0 ? 'red' : w.rag.effective, critical: w.openBlockers.length > 0 }));
-    const redCritical: { id: string; type: 'workstream' | 'milestone'; label: string; reason: string }[] = [];
+    const redCritical: { id: string; type: 'workstream' | 'milestone'; label: string; labelAr: string | null; reason: string; reasonI18n: ServerMessage[] }[] = [];
     for (const w of out) {
       if (w.rag.effective !== 'red' && w.openBlockers.length === 0) continue;
-      const overridden = w.rag.overridden && w.rag.effective !== 'red' ? ` (manual override to ${w.rag.effective} does not hide the blocker)` : '';
-      redCritical.push({ id: w.id, type: 'workstream', label: `${w.code} ${w.name}`, reason: `${w.rag.calculated.explanation}${overridden}` });
+      const reasonI18n = [...w.rag.calculated.explanationI18n, ...(w.rag.overridden && w.rag.effective !== 'red' ? [planMessage('plan.red.override_not_hiding', { status: w.rag.effective })] : [])];
+      redCritical.push({ id: w.id, type: 'workstream', ...labels(w.code, w.name, w.nameAr), reason: planningEn(reasonI18n), reasonI18n });
     }
     for (const m of milestones.filter((x) => x.isCritical && x.status !== 'cancelled')) {
       const overdue = ['planned', 'at_risk'].includes(m.status) && !!m.plannedDate && m.plannedDate < today;
       if (m.status === 'missed' || overdue) {
         items.push({ id: m.id, status: 'red', critical: true });
-        redCritical.push({ id: m.id, type: 'milestone', label: `${m.code} ${m.title}`, reason: m.status === 'missed' ? 'Critical milestone missed' : `Critical milestone overdue (planned ${m.plannedDate})` });
+        const reasonI18n = [m.status === 'missed' ? planMessage('plan.red.milestone_missed') : planMessage('plan.red.milestone_overdue', { date: m.plannedDate! })];
+        redCritical.push({ id: m.id, type: 'milestone', ...labels(m.code, m.title, m.titleAr), reason: planningEn(reasonI18n), reasonI18n });
       } else if (m.status === 'at_risk') items.push({ id: m.id, status: 'amber', critical: true });
     }
     const agg = aggregateRag(items);
-    const projCalc: RagResult = { status: agg.status, explanation: agg.explanation, slipDays: null };
+    const projCalc: RagResult = { status: agg.status, explanation: agg.explanation, explanationI18n: agg.explanationI18n, slipDays: null };
     const pov = overrides.get(`project:${p.id}`) ?? null;
     // DOM-P2-10: the project override is capped at red while a red critical item (open blocker, critical milestone) is open.
     const peff = capOverrideAtOpenBlockers(
@@ -221,20 +231,34 @@ export class HealthService {
       agg.redCritical.length,
     );
     const pf = freshness('project');
-    const dataQualityIssues: { id: string; label: string; issue: string }[] = [];
-    for (const w of out) if (['unknown', 'stale', 'not_updated'].includes(w.rag.calculated.status)) dataQualityIssues.push({ id: w.id, label: `${w.code} ${w.name}`, issue: w.rag.calculated.explanation });
-    if (!baseline) dataQualityIssues.push({ id: p.id, label: p.code, issue: 'No approved baseline — variance cannot be measured' });
+    const dataQualityIssues: { id: string; label: string; labelAr: string | null; issue: string; issueI18n: ServerMessage[] }[] = [];
+    // Project-level issues are labelled with the project code, which is the same in both languages.
+    const projectIssue = (issueI18n: ServerMessage[]) => dataQualityIssues.push({ id: p.id, label: p.code, labelAr: p.code, issue: planningEn(issueI18n), issueI18n });
+    for (const w of out) {
+      if (['unknown', 'stale', 'not_updated'].includes(w.rag.calculated.status)) {
+        dataQualityIssues.push({ id: w.id, ...labels(w.code, w.name, w.nameAr), issue: w.rag.calculated.explanation, issueI18n: w.rag.calculated.explanationI18n });
+      }
+    }
+    if (!baseline) projectIssue([planMessage('plan.dq.project_no_baseline')]);
     const sched = await this.schedule.compute(p);
-    if (sched.result.status !== 'complete') dataQualityIssues.push({ id: p.id, label: p.code, issue: `Schedule ${sched.result.status}: ${sched.result.issues.length} issue(s) (e.g. ${sched.result.issues[0]?.message ?? 'n/a'})` });
-    const projectProgress = weightedProgress(deliverables.map((d) => deliverableProgressItem({ id: d.id, code: d.code, title: d.title, status: d.status as DeliverableStatus, weight: d.weight, weightApproved: d.weightApproved })));
+    if (sched.result.status !== 'complete') {
+      // The first gap as an example, naming the activity by its code (its title is data, shown on the Timeline tab).
+      const first = sched.result.issues[0];
+      const node = first?.nodeIds[0] ? (sched.g.nodes.find((n) => n.id === first.nodeIds[0])?.code ?? '?') : '?';
+      projectIssue([
+        planMessage(sched.result.status === 'invalid' ? 'plan.dq.schedule_invalid' : 'plan.dq.schedule_incomplete', { count: sched.result.issues.length }),
+        ...(first ? [planMessage(`plan.dq.example.${first.code}`, ['missing_duration', 'negative_duration', 'unsupported_dependency_type'].includes(first.code) ? { node } : {})] : []),
+      ]);
+    }
+    const projectProgress = weightedProgress(deliverables.map((d) => deliverableProgressItem({ id: d.id, code: d.code, title: d.title, titleAr: d.titleAr, status: d.status as DeliverableStatus, weight: d.weight, weightApproved: d.weightApproved })));
     return {
       today,
       thresholds,
       baseline: baseline ? { id: baseline.id, versionNo: baseline.versionNo } : null,
       project: {
         progress: projectProgress,
-        rag: { calculated: projCalc, effective: peff.effective, overridden: peff.overridden, overrideExpired: peff.overrideExpired, explanation: peff.explanation, reported: pf.reported },
-        aggregate: { status: agg.status, explanation: agg.explanation },
+        rag: { calculated: projCalc, effective: peff.effective, overridden: peff.overridden, overrideExpired: peff.overrideExpired, explanation: peff.explanation, explanationI18n: peff.explanationI18n, reported: pf.reported },
+        aggregate: { status: agg.status, explanation: agg.explanation, explanationI18n: agg.explanationI18n },
         redCritical,
         dataQualityIssues,
       },
@@ -418,6 +442,7 @@ export class HealthService {
           entityType: o.entityType as 'workstream' | 'project',
           entityId: o.entityId,
           entityLabel: o.entityType === 'workstream' ? (w ? `${w.code} ${w.name}` : '?') : p.code,
+          entityLabelAr: o.entityType === 'workstream' ? (w ? labels(w.code, w.name, w.nameAr).labelAr : null) : p.code,
           calculatedAtRequest: o.calculatedStatus as RagStatus,
           overrideStatus: o.overrideStatus as RagStatus,
           reason: o.reason,
@@ -429,7 +454,7 @@ export class HealthService {
           reviewedAt: iso(o.reviewedAt),
           reviewNote: o.reviewNote,
           state: this.overrideState(o, today),
-          current: { calculated: (cur?.calculated.status ?? 'unknown') as RagStatus, effective: (cur?.effective ?? 'unknown') as RagStatus, overridden: cur?.overridden ?? false, explanation: cur?.explanation ?? '' },
+          current: { calculated: (cur?.calculated.status ?? 'unknown') as RagStatus, effective: (cur?.effective ?? 'unknown') as RagStatus, overridden: cur?.overridden ?? false, explanation: cur?.explanation ?? '', explanationI18n: cur?.explanationI18n ?? [] },
           isDemo: o.isDemo,
           version: o.version,
         };

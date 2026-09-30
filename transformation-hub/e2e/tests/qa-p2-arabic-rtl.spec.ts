@@ -113,12 +113,11 @@ test.describe('QA P2 — Arabic/RTL: P2 screens and the P2 follow-up / DOM-P2-16
     await pm.dispose();
   });
 
-  // QA-P2-04 (docs/reviews/P2-qa-review.md): these P2 screens show English in Arabic — the task's description and acceptance
-  // criteria and its dependency titles (the template has Arabic, the API returns English only), the Health tab's workstream
-  // names and server explanations, the Timeline's schedule assumptions, My Work item titles (MyWorkItemDto has no Arabic title),
-  // the decision page's authority reason (server text), and English demo-seed decision titles (data; the QA-P1R-05 remainder).
-  // Expected to fail at the final assertion until fixed; the problems are printed.
-  test.fail('PM (known English remainders, QA-P2-04): decisions list and detail, plan Health and Timeline, task detail page, My Work', async ({ page, baseURL }, testInfo) => {
+  // QA-P2-04 (docs/reviews/P2-qa-review.md): these P2 screens showed English in Arabic — the task's description, output,
+  // acceptance criteria, effort and dependency titles, the Health tab's workstream names and server explanations, the
+  // Timeline's schedule assumptions, My Work item titles and the decision page's authority reason. Fixed: the DTOs carry the
+  // template's Arabic (`<field>Ar`) and the explanations as codes (`<field>I18n`); strict since the fix (was `test.fail`).
+  test('PM (formerly known English remainders, QA-P2-04): decisions list and detail, plan Health and Timeline, task detail page, My Work', async ({ page, baseURL }, testInfo) => {
     test.setTimeout(240_000);
     const bilingual = watchBilingual(page);
     await arabic(page, baseURL!, P.pm);

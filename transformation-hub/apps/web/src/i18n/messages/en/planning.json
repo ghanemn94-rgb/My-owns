@@ -106,7 +106,13 @@
     "blockedReason": "Blocked because",
     "draftNotice": "This activity is still Draft (proposed by the template). Confirm it into the plan before work starts.",
     "whatIf": "What-if",
-    "whatIfLink": "Analyse a delay of this activity"
+    "whatIfLink": "Analyse a delay of this activity",
+    "durationBases": {
+      "assumed": "Assumed",
+      "estimated": "Estimated",
+      "confirmed": "Confirmed",
+      "tbd": "To be determined"
+    }
   },
   "milestone": {
     "search": "Search milestones",
@@ -624,7 +630,6 @@
     "empty": "Nothing needs your action right now.",
     "emptyHint": "Items appear here when you own open work or when something awaits your review or approval.",
     "emptyFiltered": "No items match the filters.",
-    "baselineTitle": "Baseline awaiting approval",
     "generated": "Updated {at}.",
     "type_task_accountable": "My task",
     "type_task_acceptance": "Task to accept",
@@ -810,5 +815,83 @@
     "noRecords": "No records available",
     "notCpm": "Prerequisites do not move schedule dates; they block starting / reporting achieved until satisfied.",
     "visibility": "People who cannot see the prerequisite record do not see it in this list."
+  },
+  "messages": {
+    "plan": {
+      "rag": {
+        "open_blocker": "An open blocker is recorded.",
+        "not_updated": "No accepted update has been recorded.",
+        "stale": "Last accepted update is {age} days old (stale after {limit}).",
+        "unknown": "Baseline or forecast finish is missing.",
+        "green": "Forecast within tolerance (slip {slip} working days).",
+        "amber": "Forecast slip of {slip} working days (amber ≤ {limit}).",
+        "red": "Forecast slip of {slip} working days exceeds {limit}.",
+        "aggregate_empty": "No items to aggregate.",
+        "aggregate": "Worst-of {count} item(s): {status}. {red} critical red, {gaps} with data-quality gaps.",
+        "override": "Manual override ({reason}) until {until}; calculated: {calculated}.",
+        "override_capped": "Manual override to {status} is not applied while {count} red critical item(s) (open blocker / critical milestone) exist — an override cannot conceal them; calculated: {calculated}."
+      },
+      "progress": {
+        "none": "No weighted deliverables in scope — progress cannot be calculated.",
+        "basis": "{num} of {den} weight points accepted across {count} deliverable(s); {excluded} excluded.",
+        "excluded_cancelled": "Cancelled",
+        "excluded": "Excluded",
+        "no_approved_weight": "No approved weight",
+        "deliverable_cancelled": "Cancelled — excluded from the denominator, not counted as complete",
+        "weight_not_approved": "Weight not approved"
+      },
+      "dq": {
+        "baselined_undated": "{count} baselined item(s) have no planned finish",
+        "no_baseline": "No approved baseline",
+        "no_lead": "No accountable workstream lead",
+        "tasks_no_owner": "{count} active task(s) without an accountable owner",
+        "tasks_no_duration": "{count} active task(s) without a duration",
+        "tasks_undated": "{count} active task(s) without planned/forecast finish",
+        "weights_unapproved": "{count} deliverable weight(s) not approved",
+        "project_no_baseline": "No approved baseline — variance cannot be measured",
+        "schedule_incomplete": "Schedule incomplete: {count} issue(s)",
+        "schedule_invalid": "Schedule invalid: {count} issue(s)",
+        "example": {
+          "missing_duration": "(e.g. activity {node} has no duration)",
+          "negative_duration": "(e.g. activity {node} has an invalid duration)",
+          "unsupported_dependency_type": "(e.g. a dependency of {node} uses a type the schedule engine does not support yet)",
+          "unknown_node": "(e.g. a dependency references an unknown activity)",
+          "cycle": "(e.g. dependencies contain a cycle)",
+          "invalid_date": "(e.g. the project start date is invalid)",
+          "missing_project_start": "(e.g. the project has no planned start date)"
+        }
+      },
+      "red": {
+        "override_not_hiding": "(manual override to {status} does not hide the blocker)",
+        "milestone_missed": "Critical milestone missed",
+        "milestone_overdue": "Critical milestone overdue (planned {date})"
+      },
+      "assumption": {
+        "calendar": "Durations are in working days on the project calendar ({timezone}, working days {days}, {holidays} holiday(s)).",
+        "fs_only": "Only Finish-to-Start dependencies with working-day lag are used.",
+        "no_predecessor_start": "Activities without predecessors start at the project start or their start-no-earlier-than date.",
+        "not_probability": "Results are schedule-based forecasts derived from the plan, not probabilities.",
+        "delay_applied": "Delay applied as +{days} working day(s) to the duration (and any owner forecast finish) of {node}.",
+        "planned_start_snet": "Planned start dates act as start-no-earlier-than constraints.",
+        "forecast_extends": "Owner-entered forecast finish dates can only extend an activity; actual dates replace plan dates.",
+        "cancelled_ignored": "Cancelled activities and their links are ignored.",
+        "milestones_zero": "Milestones have zero duration.",
+        "draft_one": "1 activity is still Draft (proposed, not yet confirmed into the plan) and included as proposed.",
+        "drafts": "{count} activities are still Draft (proposed, not yet confirmed into the plan) and included as proposed.",
+        "driving_network": "Scope: the selected activity and every activity that drives it (transitive predecessors) — other activities are not shown.",
+        "deterministic": "Deterministic: the same plan, calendar and inputs always give the same result. No probability is estimated."
+      },
+      "effort": {
+        "tbd": "TBD",
+        "assumed_person_days": "Assumed: {days} person-days"
+      },
+      "work": {
+        "status_update_workstream": "{workstream} update — period ending {date}",
+        "status_update_project": "Project update — period ending {date}",
+        "rag_override_workstream": "RAG override to {status} (calculated {calculated}) — {workstream}",
+        "rag_override_project": "RAG override to {status} (calculated {calculated}) — Project",
+        "baseline": "Baseline version {version} awaiting approval"
+      }
+    }
   }
 }

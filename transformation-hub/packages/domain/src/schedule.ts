@@ -8,6 +8,8 @@ import {
   assertIsoDate,
 } from './calendar';
 import { SUPPORTED_DEPENDENCY_TYPES, DependencyType } from './enums';
+import type { ServerMessage } from './messages';
+import { planMessage, planningEn } from './planning-messages';
 
 /**
  * Deterministic critical-path engine (spec §9, AT-15).
@@ -23,6 +25,8 @@ import { SUPPORTED_DEPENDENCY_TYPES, DependencyType } from './enums';
 export interface ScheduleNode {
   id: string;
   label?: string;
+  /** Record code (e.g. WBS code) — used in translated assumptions instead of the (English) label. */
+  code?: string;
   durationDays: number | null; // working days; 0 = milestone; null = missing
   /** Start-no-earlier-than constraint (e.g. planned start). */
   earliestStart?: string | null;
@@ -70,6 +74,8 @@ export interface ScheduleResult {
   status: 'complete' | 'incomplete' | 'invalid';
   issues: ScheduleIssue[];
   assumptions: string[];
+  /** One message per assumption, same order (QA-P2-04): the client translates them. */
+  assumptionsI18n: ServerMessage[];
   projectStart: string;
   projectFinish: string | null;
   nodes: Record<string, NodeResult>;
@@ -173,13 +179,13 @@ export function computeSchedule(
   cal: WorkingCalendar = DEFAULT_CALENDAR,
 ): ScheduleResult {
   const issues: ScheduleIssue[] = [];
-  const assumptions: string[] = [
-    'Durations are in working days on the project calendar (' +
-      `${cal.timezone}, working days ${cal.workingDays.join(',')}, ${cal.holidays.length} holiday(s)).`,
-    'Only Finish-to-Start dependencies with working-day lag are used.',
-    'Activities without predecessors start at the project start or their start-no-earlier-than date.',
-    'Results are schedule-based forecasts derived from the plan, not probabilities.',
+  const assumptionsI18n: ServerMessage[] = [
+    planMessage('plan.assumption.calendar', { timezone: cal.timezone, days: cal.workingDays.join(','), holidays: cal.holidays.length }),
+    planMessage('plan.assumption.fs_only'),
+    planMessage('plan.assumption.no_predecessor_start'),
+    planMessage('plan.assumption.not_probability'),
   ];
+  const assumptions: string[] = assumptionsI18n.map((m) => planningEn([m]));
   try {
     assertIsoDate(projectStart);
   } catch {
@@ -187,6 +193,7 @@ export function computeSchedule(
       status: 'invalid',
       issues: [{ code: 'invalid_date', nodeIds: [], message: `Invalid project start ${projectStart}` }],
       assumptions,
+      assumptionsI18n,
       projectStart,
       projectFinish: null,
       nodes: {},
@@ -225,10 +232,10 @@ export function computeSchedule(
   const cycle = findCycle(active.map((n) => n.id), usableEdges);
   if (cycle) {
     issues.push({ code: 'cycle', nodeIds: cycle, message: 'Dependencies contain a cycle' });
-    return { status: 'invalid', issues, assumptions, projectStart, projectFinish: null, nodes: {}, criticalPath: null };
+    return { status: 'invalid', issues, assumptions, assumptionsI18n, projectStart, projectFinish: null, nodes: {}, criticalPath: null };
   }
   if (issues.length > 0) {
-    return { status: 'incomplete', issues, assumptions, projectStart, projectFinish: null, nodes: {}, criticalPath: null };
+    return { status: 'incomplete', issues, assumptions, assumptionsI18n, projectStart, projectFinish: null, nodes: {}, criticalPath: null };
   }
 
   const day0 = onOrNextWorkingDay(projectStart, cal);
@@ -308,6 +315,7 @@ export function computeSchedule(
     status: 'complete',
     issues,
     assumptions,
+    assumptionsI18n,
     projectStart: day0,
     projectFinish: lastDay,
     nodes: results,
@@ -407,6 +415,7 @@ export interface DelayImpact {
   affected: { id: string; label?: string; earlyFinishBefore: string; earlyFinishAfter: string; slipWorkingDays: number; critical: boolean }[];
   issues: ScheduleIssue[];
   assumptions: string[];
+  assumptionsI18n: ServerMessage[];
 }
 
 /**
@@ -432,6 +441,7 @@ export function delayImpact(
       affected: [],
       issues: before.issues,
       assumptions: before.assumptions,
+      assumptionsI18n: before.assumptionsI18n,
     };
   }
   // The delay applies on top of the activity's CURRENT finish: its duration and, when the owner recorded a forecast
@@ -448,6 +458,7 @@ export function delayImpact(
   const after = computeSchedule(delayed, edges, projectStart, cal);
   const affected: DelayImpact['affected'] = [];
   const label = new Map(nodes.map((n) => [n.id, n.label]));
+  const code = new Map(nodes.map((n) => [n.id, n.code]));
   for (const id of Object.keys(after.nodes)) {
     const b = before.nodes[id]!;
     const a = after.nodes[id]!;
@@ -462,6 +473,8 @@ export function delayImpact(
       });
     }
   }
+  // The delayed activity is named by its record code (its title is data, shown separately in the client's language).
+  const delayed1 = planMessage('plan.assumption.delay_applied', { days: delayWorkingDays, node: code.get(delayedNodeId) ?? label.get(delayedNodeId) ?? delayedNodeId });
   return {
     status: 'computed',
     delayedNodeId,
@@ -472,10 +485,8 @@ export function delayImpact(
       before.projectFinish && after.projectFinish ? countWorkingDaySlip(before.projectFinish, after.projectFinish, cal) : null,
     affected,
     issues: [],
-    assumptions: [
-      ...after.assumptions,
-      `Delay applied as +${delayWorkingDays} working day(s) to the duration (and any owner forecast finish) of ${label.get(delayedNodeId) ?? delayedNodeId}.`,
-    ],
+    assumptions: [...after.assumptions, planningEn([delayed1])],
+    assumptionsI18n: [...after.assumptionsI18n, delayed1],
   };
 }
 

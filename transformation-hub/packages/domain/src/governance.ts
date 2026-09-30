@@ -1,5 +1,6 @@
 import Decimal from 'decimal.js';
 import { forbidden, ruleViolation } from './errors';
+import { renderMessagesEn, serverMessage, type ServerMessage } from './messages';
 import { decisionRelianceIssue, type DecisionSubject, type DecisionUseRecord, type ExternalEvidenceState } from './decision-reliance';
 import type { ActionItemStatus, AGENDA_SCREENING_STATUSES, ATTENDANCE_STATUSES, CommitteeMemberRole, MeetingStatus, VoteChoice } from './enums';
 import type { Machine } from './workflows';
@@ -275,6 +276,27 @@ export interface AuthorityCheckResult {
   outcome: 'within_mandate' | 'pending_external_authority';
   escalateTo: string | null;
   reason: string;
+  /** The reason as codes + parameters (QA-P2-04), same content as `reason`; translated by the client. */
+  reasonI18n: ServerMessage[];
+}
+
+/**
+ * Authority assessment reasons (QA-P2-04): English templates of the `authority.*` codes of `AuthorityCheckResult.reasonI18n`
+ * (web: `governance.messages.<code>`, en + ar, checked by apps/web/scripts/check-i18n.mjs). `decisionType` is the decision
+ * type key (the client shows the matrix's name for it); `body` is the escalation body as written in the authority matrix.
+ */
+export const AUTHORITY_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'authority.type_not_in_matrix': 'Decision type "{decisionType}" is not in the approved authority matrix.',
+  'authority.reserved': 'Decision type "{decisionType}" is reserved for {body}.',
+  'authority.amount_required': 'Amount required to assess delegated limit but none was provided.',
+  'authority.currency_mismatch': 'Amount currency {currency} differs from limit currency {limitCurrency}; conversion basis needed.',
+  'authority.above_limit': 'Amount exceeds the committee delegated limit.',
+  'authority.within_mandate': 'Within delegated authority.',
+};
+
+function authorityResult(outcome: AuthorityCheckResult['outcome'], escalateTo: string | null, code: string, params: Record<string, string | number> = {}): AuthorityCheckResult {
+  const reasonI18n = [serverMessage(code, params)];
+  return { outcome, escalateTo, reason: renderMessagesEn(reasonI18n, AUTHORITY_MESSAGES_EN), reasonI18n };
 }
 
 /**
@@ -284,29 +306,25 @@ export interface AuthorityCheckResult {
 export function checkAuthority(input: AuthorityCheckInput): AuthorityCheckResult {
   const t = input.policy.decisionTypes.find((d) => d.key === input.decisionTypeKey);
   if (!t) {
-    return { outcome: 'pending_external_authority', escalateTo: 'Authority to be confirmed', reason: `Decision type "${input.decisionTypeKey}" is not in the approved authority matrix.` };
+    return authorityResult('pending_external_authority', 'Authority to be confirmed', 'authority.type_not_in_matrix', { decisionType: input.decisionTypeKey });
   }
   if (!t.withinCommitteeAuthority) {
-    return { outcome: 'pending_external_authority', escalateTo: t.escalateTo, reason: `Decision type "${t.key}" is reserved for ${t.escalateTo}.` };
+    return authorityResult('pending_external_authority', t.escalateTo, 'authority.reserved', { decisionType: t.key, body: t.escalateTo });
   }
   if (t.maxAmount !== null) {
     if (!input.amount) {
-      return { outcome: 'pending_external_authority', escalateTo: t.escalateTo, reason: 'Amount required to assess delegated limit but none was provided.' };
+      return authorityResult('pending_external_authority', t.escalateTo, 'authority.amount_required');
     }
     if (input.amount.currency !== t.currency) {
-      return {
-        outcome: 'pending_external_authority',
-        escalateTo: t.escalateTo,
-        reason: `Amount currency ${input.amount.currency} differs from limit currency ${t.currency}; conversion basis needed.`,
-      };
+      return authorityResult('pending_external_authority', t.escalateTo, 'authority.currency_mismatch', { currency: input.amount.currency, limitCurrency: t.currency });
     }
     const amt = new Decimal(input.amount.amount).mul(input.amount.unitScale);
     const limit = new Decimal(t.maxAmount).mul(t.unitScale);
     if (amt.gt(limit)) {
-      return { outcome: 'pending_external_authority', escalateTo: t.escalateTo, reason: 'Amount exceeds the committee delegated limit.' };
+      return authorityResult('pending_external_authority', t.escalateTo, 'authority.above_limit');
     }
   }
-  return { outcome: 'within_mandate', escalateTo: null, reason: 'Within delegated authority.' };
+  return authorityResult('within_mandate', null, 'authority.within_mandate');
 }
 
 // =============================================================================================================

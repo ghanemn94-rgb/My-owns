@@ -109,6 +109,66 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'gates.decide.decision_reused': 'gates.refusal.decisionReused',
   // Decision-use registry backstop (a concurrent gate decision registered the decision first) — same meaning.
   'gates.decide.decision_already_used': 'gates.refusal.decisionReused',
+  // Every other refusal the gates module raises (QA-P2-04; apps/web/scripts/check-i18n.mjs checks the list is complete).
+  // Gate roles and the gate-level review (DOM-P2-16, REQ-LCY-010)
+  'gates.definition.roles_incomplete': 'gates.refusal.rolesIncomplete',
+  'gates.not_gate_owner': 'gates.refusal.notGateOwner',
+  'gates.not_designated_gate_reviewer': 'gates.refusal.notDesignatedGateReviewer',
+  'gates.review.invalid_state': (d) => ({ key: str(d?.['status']) === 'ready_for_decision' ? 'gates.refusal.reviewInvalidStateReady' : 'gates.refusal.reviewInvalidState' }),
+  'gates.review.criteria_incomplete': (d, f) => {
+    const count = Array.isArray(d?.['blockers']) ? (d!['blockers'] as unknown[]).length : null;
+    return count === null ? { key: 'gates.refusal.reviewCriteriaIncompleteNoCount' } : { key: 'gates.refusal.reviewCriteriaIncomplete', values: { count: f.formatNumber(count) } };
+  },
+  'gates.assessment.review_required': 'gates.refusal.reviewRequired',
+  'gates.assessment.review_returned': 'gates.refusal.reviewReturned',
+  'gates.assessment.reviewer_cannot_submit': 'gates.refusal.reviewerCannotSubmit',
+  // Assessment cycle and decision
+  'gates.assessment.not_ready': (d, f) => {
+    const count = Array.isArray(d?.['blockers']) ? (d!['blockers'] as unknown[]).length : null;
+    return count === null ? { key: 'gates.refusal.assessmentNotReadyNoCount' } : { key: 'gates.refusal.assessmentNotReady', values: { count: f.formatNumber(count) } };
+  },
+  'gates.assessment.decided': 'gates.refusal.assessmentDecided',
+  'gates.assessment.not_editable': (d) => ({ key: str(d?.['status']) === 'ready_for_decision' ? 'gates.refusal.assessmentNotEditableReady' : 'gates.refusal.assessmentNotEditable' }),
+  'gates.decision.not_for_gate': 'gates.refusal.decisionNotForGate',
+  'gates.decide.decision_not_for_gate': 'gates.refusal.decisionNotForGate',
+  'gates.decide.decision_not_final': 'gates.refusal.decisionNotFinal',
+  'gates.decide.missing_reason': 'gates.refusal.decideMissingReason',
+  'gates.decide.not_ready': (d, f) => {
+    const count = Array.isArray(d?.['blockers']) ? (d!['blockers'] as unknown[]).length : null;
+    return count === null ? { key: 'gates.refusal.decideNotReadyNoCount' } : { key: 'gates.refusal.decideNotReady', values: { count: f.formatNumber(count) } };
+  },
+  'gates.decide.no_exceptions': 'gates.refusal.decideNoExceptions',
+  'gates.decide.exceptions_present': 'gates.refusal.decideExceptionsPresent',
+  'gates.reopen.invalid_state': 'gates.refusal.reopenInvalidState',
+  'gates.reopen.missing_reason': 'gates.refusal.reopenMissingReason',
+  // Criteria, evidence and not-applicable determinations
+  'gates.criterion.evidence_conflict': 'gates.refusal.criterionEvidenceConflict',
+  'gates.criterion.no_evidence': 'gates.refusal.criterionNoEvidence',
+  'gates.criterion.invalid_transition': 'gates.refusal.criterionInvalidTransition',
+  'gates.not_designated_reviewer': 'gates.refusal.notDesignatedReviewer',
+  'gates.na.no_proposal': 'gates.refusal.naNoProposal',
+  'gates.na.missing_basis': 'gates.refusal.naMissingBasis',
+  'gates.na.unauthorized': 'gates.refusal.naUnauthorized',
+  'gates.na.self_approval': 'gates.refusal.naSelfApproval',
+  // Waivability and waivers (AT-13)
+  'gates.waivability.not_designated_specialist': 'gates.refusal.waivabilityNotDesignatedSpecialist',
+  'gates.waivability.missing_basis': 'gates.refusal.waivabilityMissingBasis',
+  'gates.waivability.missing_authority': 'gates.refusal.waivabilityMissingAuthority',
+  'gates.waivability.invalid_authority': 'gates.refusal.waivabilityInvalidAuthority',
+  'gates.waiver.not_needed': 'gates.refusal.waiverNotNeeded',
+  'gates.waiver.non_waivable': 'gates.refusal.waiverNonWaivable',
+  'gates.waiver.expiry_in_past': 'gates.refusal.waiverExpiryInPast',
+  'gates.waiver.already_open': 'gates.refusal.waiverAlreadyOpen',
+  'gates.waiver.invalid_state': 'gates.refusal.waiverInvalidState',
+  'gates.waiver.expired': 'gates.refusal.waiverExpired',
+  'gates.waiver.no_approval_request': 'gates.refusal.waiverNoApprovalRequest',
+  'gates.waiver.approval_not_pending': 'gates.refusal.waiverApprovalNotPending',
+  'gates.waiver.approval_stale': 'gates.refusal.waiverApprovalStale',
+  'gates.waiver.unauthorized': 'gates.refusal.waiverUnauthorized',
+  'gates.waiver.self_approval': 'gates.refusal.waiverSelfApproval',
+  'gates.waiver.missing_basis': 'gates.refusal.waiverMissingBasis',
+  'gates.human_only': 'gates.refusal.humanOnly',
+  'waiver.unsupported_target': 'gates.refusal.waiverUnsupportedTarget',
   'xproj.same_project': 'planning.refusal.codes.xproj_same_project',
   'xproj.already_closed': 'planning.refusal.codes.xproj_already_closed',
   'xproj.local_item_incomplete': 'planning.refusal.codes.xproj_local_item_incomplete',

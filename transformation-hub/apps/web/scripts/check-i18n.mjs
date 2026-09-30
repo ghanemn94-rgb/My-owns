@@ -10,8 +10,13 @@
  *     finance explanations and EV / equity / currency / unit findings — FINANCE_MESSAGES_EN) has a translation
  *     `<namespace>.messages.<code>` (gates / finance) in en and ar with the same placeholders as the domain's English
  *     template, and no stale code is left in the catalogue;
+ *     QA-P2-04: planning explanations (PLANNING_MESSAGES_EN, `planning.messages.plan.*`) and authority reasons
+ *     (AUTHORITY_MESSAGES_EN, `governance.messages.authority.*`) — the web routes `plan.*` / `authority.*` codes to those
+ *     catalogues (lib/i18n-data.ts `serverMessageKey`), so no other catalogue may use these prefixes;
  *  6. every AI refusal code raised in apps/api/src/modules/ai has `ai.errors.<code>` in en and ar, and every AI detection
- *     code / proposable action has its label.
+ *     code / proposable action has its label;
+ *  7. every refusal code the gates module raises (apps/api/src/modules/gates, packages/domain/src/gates.ts) has a
+ *     translated explanation in apps/web/src/lib/refusals.ts (QA-P2-04), whose keys are typed and checked by 1–3.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -87,8 +92,22 @@ for (const locale of ['en', 'ar']) {
 const { DIMENSION_MESSAGES_EN } = require('@hub/domain/dist/carveout.js');
 const { GATE_MESSAGES_EN } = require('@hub/domain/dist/gates.js');
 const { FINANCE_MESSAGES_EN } = require('@hub/domain/dist/finance.js');
+const { PLANNING_MESSAGES_EN } = require('@hub/domain/dist/planning-messages.js');
+const { AUTHORITY_MESSAGES_EN } = require('@hub/domain/dist/governance.js');
 const { JV_MESSAGES_EN } = jv;
-const serverCatalogues = { gates: { ...DIMENSION_MESSAGES_EN, ...GATE_MESSAGES_EN, ...JV_MESSAGES_EN }, finance: FINANCE_MESSAGES_EN };
+const serverCatalogues = {
+  gates: { ...DIMENSION_MESSAGES_EN, ...GATE_MESSAGES_EN, ...JV_MESSAGES_EN },
+  finance: FINANCE_MESSAGES_EN,
+  planning: PLANNING_MESSAGES_EN,
+  governance: AUTHORITY_MESSAGES_EN,
+};
+// Code prefixes routed to a catalogue other than `gates` by useServerMessages (lib/i18n-data.ts serverMessageKey).
+const ROUTED_PREFIXES = { planning: 'plan.', governance: 'authority.' };
+for (const [ns, prefix] of Object.entries(ROUTED_PREFIXES)) {
+  if (!serverCatalogues[ns] || Object.keys(serverCatalogues[ns]).length === 0) errors.push(`server message catalogue ${ns} is empty or missing`);
+  for (const code of Object.keys(serverCatalogues[ns] ?? {})) if (!code.startsWith(prefix)) errors.push(`${ns} server message code ${code} must start with "${prefix}" (routed by prefix)`);
+  for (const code of Object.keys(serverCatalogues.gates)) if (code.startsWith(prefix)) errors.push(`gates server message code ${code} uses the prefix "${prefix}" routed to ${ns}.messages`);
+}
 let serverCodeCount = 0;
 for (const [ns, serverCodes] of Object.entries(serverCatalogues)) {
   serverCodeCount += Object.keys(serverCodes).length;
@@ -126,10 +145,28 @@ for (const locale of ['en', 'ar']) {
   for (const a of AI_PROPOSABLE_ACTIONS) if (!cat.actions?.[a]) errors.push(`${locale} ai.actions.${a} missing (AI_PROPOSABLE_ACTIONS)`);
 }
 
+// 7. Gate refusals (QA-P2-04): every code raised with ruleViolation / conflict / forbidden in the gates module and the gate
+//    rules has an entry in lib/refusals.ts, so no gate refusal reaches an Arabic user as the server's English detail only.
+//    404 codes (notFound) are never explained (existence is not revealed) and are not listed.
+const gateSources = [
+  ...readdirSync(join(here, '..', '..', 'api', 'src', 'modules', 'gates')).filter((x) => x.endsWith('.ts')).map((f) => join(here, '..', '..', 'api', 'src', 'modules', 'gates', f)),
+  join(here, '..', '..', '..', 'packages', 'domain', 'src', 'gates.ts'),
+];
+// Raised indirectly (a conditional expression or the decision-use registry's `${codePrefix}.decision_already_used`).
+const gateCodes = new Set(['gates.decide.decision_not_for_gate', 'gates.decide.decision_evidence_invalid', 'gates.decide.decision_not_final', 'gates.decide.decision_already_used']);
+for (const f of gateSources) {
+  const src = readFileSync(f, 'utf8');
+  for (const m of src.matchAll(/\b(?:ruleViolation|conflict|forbidden)\(\s*'((?:gates|waiver)\.[a-z_.]+)'/g)) gateCodes.add(m[1]);
+}
+const refusalsSrc = readFileSync(join(here, '..', 'src', 'lib', 'refusals.ts'), 'utf8');
+const refusalCodes = new Set([...refusalsSrc.matchAll(/^\s*'([a-z_.]+)':/gm)].map((m) => m[1]));
+if (gateCodes.size < 30) errors.push(`only ${gateCodes.size} gate refusal codes found — scan broken?`);
+for (const code of gateCodes) if (!refusalCodes.has(code)) errors.push(`gate refusal code ${code} has no translated explanation in src/lib/refusals.ts`);
+
 if (errors.length) {
   console.error(`i18n check FAILED (${errors.length} problems):\n  ${errors.join('\n  ')}`);
   process.exit(1);
 }
 console.log(
-  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV + finance), ${aiCodes.size} AI refusal codes.`,
+  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV, finance, planning, governance), ${aiCodes.size} AI refusal codes, ${gateCodes.size} gate refusal codes.`,
 );
