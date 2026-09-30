@@ -1,5 +1,5 @@
 {
-  "id": "b6870462-ef63-425c-9d2c-a3871e7aeb4b",
+  "id": "2f821652-1eca-48f1-9301-64d402a800af",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -13316,14 +13316,44 @@
           "primaryKey": false,
           "notNull": false
         },
+        "realized_amount": {
+          "name": "realized_amount",
+          "type": "numeric(20, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "realized_currency": {
+          "name": "realized_currency",
+          "type": "varchar(3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "realized_unit_scale": {
+          "name": "realized_unit_scale",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "owner_user_id": {
           "name": "owner_user_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
+        "workstream_id": {
+          "name": "workstream_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "realization_date": {
           "name": "realization_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "realized_on": {
+          "name": "realized_on",
           "type": "date",
           "primaryKey": false,
           "notNull": false
@@ -13342,6 +13372,30 @@
           "notNull": true,
           "default": "'proposed'"
         },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "realization_recorded_by": {
+          "name": "realization_recorded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "realization_recorded_at": {
+          "name": "realization_recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "verified_by": {
           "name": "verified_by",
           "type": "uuid",
@@ -13353,6 +13407,26 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "verification_note": {
+          "name": "verification_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_note": {
+          "name": "status_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "classification": {
+          "name": "classification",
+          "type": "classification",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'confidential'"
         },
         "is_demo": {
           "name": "is_demo",
@@ -13438,6 +13512,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "benefit_ws_fk": {
+          "name": "benefit_ws_fk",
+          "tableFrom": "benefit",
+          "tableTo": "workstream",
+          "columnsFrom": [
+            "project_id",
+            "workstream_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -13452,7 +13541,24 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "benefit_value_chk": {
+          "name": "benefit_value_chk",
+          "value": "(\"benefit\".\"value_amount\" is null) = (\"benefit\".\"value_currency\" is null) and (\"benefit\".\"value_amount\" is null) = (\"benefit\".\"value_unit_scale\" is null) and coalesce(\"benefit\".\"value_unit_scale\", 1) in (1, 1000, 1000000)"
+        },
+        "benefit_realized_money_chk": {
+          "name": "benefit_realized_money_chk",
+          "value": "(\"benefit\".\"realized_amount\" is null) = (\"benefit\".\"realized_currency\" is null) and (\"benefit\".\"realized_amount\" is null) = (\"benefit\".\"realized_unit_scale\" is null) and coalesce(\"benefit\".\"realized_unit_scale\", 1) in (1, 1000, 1000000)"
+        },
+        "benefit_realized_chk": {
+          "name": "benefit_realized_chk",
+          "value": "\"benefit\".\"status\" not in ('realized_unverified', 'realized_verified') or (nullif(btrim(\"benefit\".\"verification_source\"), '') is not null and \"benefit\".\"realization_recorded_by\" is not null and \"benefit\".\"realized_on\" is not null)"
+        },
+        "benefit_verified_chk": {
+          "name": "benefit_verified_chk",
+          "value": "\"benefit\".\"status\" <> 'realized_verified' or (\"benefit\".\"verified_by\" is not null and \"benefit\".\"verified_at\" is not null and \"benefit\".\"verified_by\" <> \"benefit\".\"realization_recorded_by\" and \"benefit\".\"verified_by\" is distinct from \"benefit\".\"owner_user_id\")"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.budget_line": {
@@ -13503,6 +13609,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "proposed_amount": {
+          "name": "proposed_amount",
+          "type": "numeric(20, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "approved_amount": {
           "name": "approved_amount",
           "type": "numeric(20, 4)",
@@ -13536,6 +13648,24 @@
           "notNull": true,
           "default": 1
         },
+        "actuals_as_of": {
+          "name": "actuals_as_of",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actuals_source_ref": {
+          "name": "actuals_source_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tsa_service_id": {
+          "name": "tsa_service_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "approval_state": {
           "name": "approval_state",
           "type": "approval_state",
@@ -13543,6 +13673,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'proposed'"
+        },
+        "approval_decision_id": {
+          "name": "approval_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "approved_by": {
           "name": "approved_by",
@@ -13568,7 +13704,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'restricted'"
+          "default": "'confidential'"
         },
         "is_demo": {
           "name": "is_demo",
@@ -13626,6 +13762,28 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "budget_line_tsa_uq": {
+          "name": "budget_line_tsa_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tsa_service_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"budget_line\".\"tsa_service_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -13656,6 +13814,36 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "budget_line_tsa_fk": {
+          "name": "budget_line_tsa_fk",
+          "tableFrom": "budget_line",
+          "tableTo": "tsa_service",
+          "columnsFrom": [
+            "project_id",
+            "tsa_service_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "budget_line_decision_fk": {
+          "name": "budget_line_decision_fk",
+          "tableFrom": "budget_line",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "approval_decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -13674,12 +13862,32 @@
         "budget_line_scale_chk": {
           "name": "budget_line_scale_chk",
           "value": "\"budget_line\".\"unit_scale\" in (1, 1000, 1000000)"
+        },
+        "budget_line_currency_chk": {
+          "name": "budget_line_currency_chk",
+          "value": "\"budget_line\".\"currency\" ~ '^[A-Z]{3}$'"
+        },
+        "budget_line_tsa_chk": {
+          "name": "budget_line_tsa_chk",
+          "value": "(\"budget_line\".\"category\" = 'tsa_charge') = (\"budget_line\".\"tsa_service_id\" is not null)"
+        },
+        "budget_line_nonneg_chk": {
+          "name": "budget_line_nonneg_chk",
+          "value": "\"budget_line\".\"committed_amount\" >= 0 and \"budget_line\".\"spent_amount\" >= 0 and coalesce(\"budget_line\".\"approved_amount\", 0) >= 0 and coalesce(\"budget_line\".\"proposed_amount\", 0) >= 0"
+        },
+        "budget_line_approved_chk": {
+          "name": "budget_line_approved_chk",
+          "value": "\"budget_line\".\"approved_amount\" is null or (\"budget_line\".\"approval_decision_id\" is not null and \"budget_line\".\"approved_by\" is not null and \"budget_line\".\"approved_at\" is not null and \"budget_line\".\"approval_state\" = 'approved')"
+        },
+        "budget_line_state_chk": {
+          "name": "budget_line_state_chk",
+          "value": "\"budget_line\".\"approval_state\" <> 'approved' or \"budget_line\".\"approved_amount\" is not null"
         }
       },
       "isRLSEnabled": false
     },
-    "public.financial_model_version": {
-      "name": "financial_model_version",
+    "public.financial_model": {
+      "name": "financial_model",
       "schema": "",
       "columns": {
         "id": {
@@ -13701,6 +13909,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "code": {
+          "name": "code",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
         "kind": {
           "name": "kind",
           "type": "model_kind",
@@ -13708,74 +13922,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "version_label": {
-          "name": "version_label",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "model_case": {
-          "name": "model_case",
-          "type": "model_case",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "assumptions": {
-          "name": "assumptions",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "outputs": {
-          "name": "outputs",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "headline_basis": {
-          "name": "headline_basis",
-          "type": "value_basis",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "source_document_id": {
-          "name": "source_document_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "source_ref": {
-          "name": "source_ref",
+        "name": {
+          "name": "name",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "approval_state": {
-          "name": "approval_state",
-          "type": "approval_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'proposed'"
-        },
-        "approved_by": {
-          "name": "approved_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "approved_at": {
-          "name": "approved_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "human_validation_note": {
-          "name": "human_validation_note",
+        "description": {
+          "name": "description",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -13824,8 +13978,8 @@
         }
       },
       "indexes": {
-        "financial_model_uq": {
-          "name": "financial_model_uq",
+        "financial_model_code_uq": {
+          "name": "financial_model_code_uq",
           "columns": [
             {
               "expression": "project_id",
@@ -13834,19 +13988,309 @@
               "nulls": "last"
             },
             {
-              "expression": "kind",
+              "expression": "code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "financial_model_project_id_project_id_fk": {
+          "name": "financial_model_project_id_project_id_fk",
+          "tableFrom": "financial_model",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "financial_model_pid_uq": {
+          "name": "financial_model_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.financial_model_version": {
+      "name": "financial_model_version",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model_id": {
+          "name": "model_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "model_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_no": {
+          "name": "version_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_label": {
+          "name": "version_label",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model_case": {
+          "name": "model_case",
+          "type": "model_case",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "based_on_version_id": {
+          "name": "based_on_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "superseded_by_id": {
+          "name": "superseded_by_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assumptions": {
+          "name": "assumptions",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "outputs": {
+          "name": "outputs",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "headline_basis": {
+          "name": "headline_basis",
+          "type": "value_basis",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_type": {
+          "name": "source_type",
+          "type": "source_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manual_entry'"
+        },
+        "source_document_id": {
+          "name": "source_document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_document_version_id": {
+          "name": "source_document_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_ref": {
+          "name": "source_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "import_batch_id": {
+          "name": "import_batch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "change_note": {
+          "name": "change_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_state": {
+          "name": "approval_state",
+          "type": "approval_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'proposed'"
+        },
+        "prepared_by": {
+          "name": "prepared_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_by": {
+          "name": "validated_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_at": {
+          "name": "validated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "human_validation_note": {
+          "name": "human_validation_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_hash": {
+          "name": "validated_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_request_id": {
+          "name": "approval_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_decision_id": {
+          "name": "approval_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_values": {
+          "name": "approved_values",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "classification": {
+          "name": "classification",
+          "type": "classification",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'strictly_confidential'"
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "financial_model_version_uq": {
+          "name": "financial_model_version_uq",
+          "columns": [
+            {
+              "expression": "project_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "version_label",
+              "expression": "model_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
               "expression": "model_case",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version_no",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -13872,6 +14316,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "financial_model_version_model_fk": {
+          "name": "financial_model_version_model_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "financial_model",
+          "columnsFrom": [
+            "project_id",
+            "model_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "financial_model_doc_fk": {
           "name": "financial_model_doc_fk",
           "tableFrom": "financial_model_version",
@@ -13886,12 +14345,102 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "financial_model_docver_fk": {
+          "name": "financial_model_docver_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "document_version",
+          "columnsFrom": [
+            "project_id",
+            "source_document_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_model_import_fk": {
+          "name": "financial_model_import_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "import_batch",
+          "columnsFrom": [
+            "project_id",
+            "import_batch_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_model_based_on_fk": {
+          "name": "financial_model_based_on_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "financial_model_version",
+          "columnsFrom": [
+            "project_id",
+            "based_on_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_model_superseded_fk": {
+          "name": "financial_model_superseded_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "financial_model_version",
+          "columnsFrom": [
+            "project_id",
+            "superseded_by_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_model_request_fk": {
+          "name": "financial_model_request_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "approval_request",
+          "columnsFrom": [
+            "project_id",
+            "approval_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_model_decision_fk": {
+          "name": "financial_model_decision_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "approval_decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "financial_model_pid_uq": {
-          "name": "financial_model_pid_uq",
+        "financial_model_version_pid_uq": {
+          "name": "financial_model_version_pid_uq",
           "nullsNotDistinct": false,
           "columns": [
             "project_id",
@@ -13900,7 +14449,24 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "financial_model_source_chk": {
+          "name": "financial_model_source_chk",
+          "value": "\"financial_model_version\".\"source_document_id\" is not null or nullif(btrim(\"financial_model_version\".\"source_ref\"), '') is not null"
+        },
+        "financial_model_validator_chk": {
+          "name": "financial_model_validator_chk",
+          "value": "\"financial_model_version\".\"validated_by\" is null or (\"financial_model_version\".\"validated_by\" is distinct from \"financial_model_version\".\"prepared_by\" and \"financial_model_version\".\"validated_hash\" is not null and \"financial_model_version\".\"validated_at\" is not null)"
+        },
+        "financial_model_approved_values_chk": {
+          "name": "financial_model_approved_values_chk",
+          "value": "\"financial_model_version\".\"approved_values\" is null or (\"financial_model_version\".\"approval_state\" = 'approved' and \"financial_model_version\".\"approval_decision_id\" is not null and \"financial_model_version\".\"approved_by\" is not null and \"financial_model_version\".\"validated_by\" is not null and \"financial_model_version\".\"approved_by\" <> \"financial_model_version\".\"validated_by\")"
+        },
+        "financial_model_approved_chk": {
+          "name": "financial_model_approved_chk",
+          "value": "\"financial_model_version\".\"approval_state\" <> 'approved' or \"financial_model_version\".\"approved_values\" is not null"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.financial_snapshot": {
@@ -13977,6 +14543,14 @@
           "notNull": true,
           "default": 1
         },
+        "source_type": {
+          "name": "source_type",
+          "type": "source_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manual_entry'"
+        },
         "source_ref": {
           "name": "source_ref",
           "type": "text",
@@ -13989,6 +14563,36 @@
           "primaryKey": false,
           "notNull": false
         },
+        "source_document_version_id": {
+          "name": "source_document_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_sheet": {
+          "name": "source_sheet",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_cell": {
+          "name": "source_cell",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "import_batch_id": {
+          "name": "import_batch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tsa_service_id": {
+          "name": "tsa_service_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "approval_state": {
           "name": "approval_state",
           "type": "approval_state",
@@ -13996,6 +14600,48 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'proposed'"
+        },
+        "prepared_by": {
+          "name": "prepared_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_by": {
+          "name": "validated_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_at": {
+          "name": "validated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validation_note": {
+          "name": "validation_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_hash": {
+          "name": "validated_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_request_id": {
+          "name": "approval_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_decision_id": {
+          "name": "approval_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "approved_by": {
           "name": "approved_by",
@@ -14091,6 +14737,67 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "financial_snapshot_tsa_uq": {
+          "name": "financial_snapshot_tsa_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tsa_service_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "period",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"financial_snapshot\".\"tsa_service_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "financial_snapshot_period_idx": {
+          "name": "financial_snapshot_period_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "period",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -14114,6 +14821,81 @@
           "columnsFrom": [
             "project_id",
             "source_document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_snapshot_docver_fk": {
+          "name": "financial_snapshot_docver_fk",
+          "tableFrom": "financial_snapshot",
+          "tableTo": "document_version",
+          "columnsFrom": [
+            "project_id",
+            "source_document_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_snapshot_import_fk": {
+          "name": "financial_snapshot_import_fk",
+          "tableFrom": "financial_snapshot",
+          "tableTo": "import_batch",
+          "columnsFrom": [
+            "project_id",
+            "import_batch_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_snapshot_tsa_fk": {
+          "name": "financial_snapshot_tsa_fk",
+          "tableFrom": "financial_snapshot",
+          "tableTo": "tsa_service",
+          "columnsFrom": [
+            "project_id",
+            "tsa_service_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_snapshot_request_fk": {
+          "name": "financial_snapshot_request_fk",
+          "tableFrom": "financial_snapshot",
+          "tableTo": "approval_request",
+          "columnsFrom": [
+            "project_id",
+            "approval_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_snapshot_decision_fk": {
+          "name": "financial_snapshot_decision_fk",
+          "tableFrom": "financial_snapshot",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "approval_decision_id"
           ],
           "columnsTo": [
             "project_id",
@@ -14154,6 +14936,34 @@
         "financial_snapshot_scale_chk": {
           "name": "financial_snapshot_scale_chk",
           "value": "\"financial_snapshot\".\"unit_scale\" in (1, 1000, 1000000)"
+        },
+        "financial_snapshot_currency_chk": {
+          "name": "financial_snapshot_currency_chk",
+          "value": "\"financial_snapshot\".\"currency\" ~ '^[A-Z]{3}$'"
+        },
+        "financial_snapshot_tsa_chk": {
+          "name": "financial_snapshot_tsa_chk",
+          "value": "(\"financial_snapshot\".\"category\" = 'tsa_charge') = (\"financial_snapshot\".\"tsa_service_id\" is not null)"
+        },
+        "financial_snapshot_source_chk": {
+          "name": "financial_snapshot_source_chk",
+          "value": "\"financial_snapshot\".\"source_document_id\" is not null or nullif(btrim(\"financial_snapshot\".\"source_ref\"), '') is not null"
+        },
+        "financial_snapshot_import_ref_chk": {
+          "name": "financial_snapshot_import_ref_chk",
+          "value": "\"financial_snapshot\".\"source_type\" not in ('excel', 'csv') or (\"financial_snapshot\".\"source_document_id\" is not null and \"financial_snapshot\".\"source_cell\" is not null and (\"financial_snapshot\".\"source_type\" = 'csv' or \"financial_snapshot\".\"source_sheet\" is not null))"
+        },
+        "financial_snapshot_validator_chk": {
+          "name": "financial_snapshot_validator_chk",
+          "value": "\"financial_snapshot\".\"validated_by\" is null or (\"financial_snapshot\".\"validated_by\" is distinct from \"financial_snapshot\".\"prepared_by\" and \"financial_snapshot\".\"validated_hash\" is not null and \"financial_snapshot\".\"validated_at\" is not null)"
+        },
+        "financial_snapshot_approved_chk": {
+          "name": "financial_snapshot_approved_chk",
+          "value": "\"financial_snapshot\".\"approval_state\" <> 'approved' or (\"financial_snapshot\".\"validated_by\" is not null and \"financial_snapshot\".\"approved_by\" is not null and \"financial_snapshot\".\"approved_at\" is not null and \"financial_snapshot\".\"approved_by\" <> \"financial_snapshot\".\"validated_by\" and \"financial_snapshot\".\"approved_by\" is distinct from \"financial_snapshot\".\"prepared_by\")"
+        },
+        "financial_snapshot_opening_chk": {
+          "name": "financial_snapshot_opening_chk",
+          "value": "\"financial_snapshot\".\"approval_state\" <> 'approved' or \"financial_snapshot\".\"category\" <> 'opening_balance' or \"financial_snapshot\".\"approval_decision_id\" is not null"
         }
       },
       "isRLSEnabled": false
@@ -14186,6 +14996,12 @@
           "type": "varchar(32)",
           "primaryKey": false,
           "notNull": true
+        },
+        "financial_snapshot_id": {
+          "name": "financial_snapshot_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "counterparty_label": {
           "name": "counterparty_label",
@@ -14240,6 +15056,12 @@
         "source_ref": {
           "name": "source_ref",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prepared_by": {
+          "name": "prepared_by",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -14334,6 +15156,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "intercompany_reconciliation_snapshot_fk": {
+          "name": "intercompany_reconciliation_snapshot_fk",
+          "tableFrom": "intercompany_reconciliation",
+          "tableTo": "financial_snapshot",
+          "columnsFrom": [
+            "project_id",
+            "financial_snapshot_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -14352,6 +15189,14 @@
         "intercompany_reconciliation_scale_chk": {
           "name": "intercompany_reconciliation_scale_chk",
           "value": "\"intercompany_reconciliation\".\"unit_scale\" in (1, 1000, 1000000)"
+        },
+        "intercompany_reconciliation_status_chk": {
+          "name": "intercompany_reconciliation_status_chk",
+          "value": "\"intercompany_reconciliation\".\"status\" in ('open', 'reconciled', 'disputed')"
+        },
+        "intercompany_reconciliation_reconciled_chk": {
+          "name": "intercompany_reconciliation_reconciled_chk",
+          "value": "\"intercompany_reconciliation\".\"status\" <> 'reconciled' or (\"intercompany_reconciliation\".\"their_balance\" is not null and \"intercompany_reconciliation\".\"reviewer_user_id\" is not null and \"intercompany_reconciliation\".\"reviewed_at\" is not null and \"intercompany_reconciliation\".\"reviewer_user_id\" is distinct from \"intercompany_reconciliation\".\"prepared_by\" and (\"intercompany_reconciliation\".\"their_balance\" = \"intercompany_reconciliation\".\"our_balance\" or nullif(btrim(\"intercompany_reconciliation\".\"explanation\"), '') is not null))"
         }
       },
       "isRLSEnabled": false
@@ -14433,6 +15278,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "benefit_id": {
+          "name": "benefit_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "source": {
           "name": "source",
           "type": "text",
@@ -14484,12 +15335,33 @@
           "primaryKey": false,
           "notNull": false
         },
+        "classification": {
+          "name": "classification",
+          "type": "classification",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'confidential'"
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "updated_at": {
           "name": "updated_at",
@@ -14551,6 +15423,21 @@
             "owner_user_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "kpi_benefit_fk": {
+          "name": "kpi_benefit_fk",
+          "tableFrom": "kpi",
+          "tableTo": "benefit",
+          "columnsFrom": [
+            "project_id",
+            "benefit_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -14639,6 +15526,18 @@
           "notNull": true,
           "default": "'[]'::jsonb"
         },
+        "source_ref": {
+          "name": "source_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -14652,6 +15551,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'system'"
+        },
+        "recorded_by": {
+          "name": "recorded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -14710,7 +15615,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "kpi_observation_quality_chk": {
+          "name": "kpi_observation_quality_chk",
+          "value": "\"kpi_observation\".\"data_quality\" in ('ok', 'incomplete', 'stale', 'unknown')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.closing": {
