@@ -239,12 +239,15 @@
         }
       ],
       "gate_record": "docs/delivery/gates/DG0.json",
-      "blockers": [
+      "blockers": [],
+      "resolved_blockers": [
         {
           "id": "BLK-DG0-writeonce",
           "severity": "gate-blocking",
           "opened_at": "2026-09-29T16:45:00Z",
-          "summary": "Write-once history poisoning: commit 0947a8b (round-17 outcome, ancestor of HEAD) deleted the round-17 qa-verifier sidecars committed by e9a00fd. checkWriteOnce (tools/gates/lib/rules.mjs:678, gate path) fails with 6 errors (D and removal events under reviews/DG0/**), so DG0 cannot pass its gate. The correct fix is a git history rewrite over 0947a8b^..HEAD that un-deletes the two files (restores evidence, loses nothing) plus a force-push; the auto-mode safety classifier denies it as Git Destructive. Awaiting a user permission rule or a decision on how to proceed. import-findings.mjs has been hardened to skip an interrupted run's record-less verifications so this class of mistake cannot recur."
+          "resolved_at": "2026-09-30T08:10:00Z",
+          "summary": "Write-once history poisoning: commit 0947a8b (round-17 outcome) deleted the round-17 qa-verifier sidecars committed by e9a00fd; checkWriteOnce (gate path) failed with 6 errors under reviews/DG0/**.",
+          "resolution": "The user added the permission rule (commit 565ab3f). The linear range 0947a8b^..HEAD was rewritten with git filter-branch --index-filter, re-adding the two sidecars at their original blobs to every commit so no delete event remains (evidence restored, nothing lost). Verified: checkWriteOnce=0, restored blobs byte-identical, validator 47/47; refs/original removed; force-pushed to HEAD 5a49719; local backup ref backup/pre-writeonce-repair-565ab3f kept. See decision D-034. import-findings.mjs hardened so an interrupted run's record-less verifications are skipped, not forcing a deletion, so this cannot recur."
         }
       ],
       "history": [

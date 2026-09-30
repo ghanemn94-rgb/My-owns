@@ -5473,14 +5473,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-29T16:35:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer in DG0 round 18; reproduced with the real agent_sandbox.py args in a disposable fixture under $TMPDIR; live peer runs deliberately not probed."
+        },
+        {
+          "at": "2026-09-30T08:08:04Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 1a99d13"
         }
-      ]
+      ],
+      "fix_revision": "1a99d13",
+      "fix_summary": "D-033: each run enters its own scope-only Landlock domain (landlock_exec.py, after setpriv, before claude execs; handled_access_fs=0, handled_access_net=0, scoped=SIGNAL+ABSTRACT_UNIX_SOCKET, ABI7). Sibling domains cannot ptrace each other, so cross-run /proc/<peer>/root|cwd access and signals are refused; own areas and nested bwrap still work; fail-closed if Landlock is unavailable. Test: process-sandbox.test.mjs F-DG0-152 with a positive control; validator requires the per-run landlock evidence."
     },
     {
       "id": "F-DG0-153",
@@ -5499,14 +5506,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-29T16:35:00Z",
           "status": "OPEN",
           "note": "raised by code-security-reviewer in DG0 round 18 by source inspection."
+        },
+        {
+          "at": "2026-09-30T08:08:04Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 1a99d13"
         }
-      ]
+      ],
+      "fix_revision": "1a99d13",
+      "fix_summary": "Fixed threat-model.md Mechanically-prevented row 1 wording: shared host PID namespace, private IPC namespace (--unshare-ipc), host-bind procfs; consistent with residual 8 and sandbox.json."
     },
     {
       "id": "F-DG0-239",
@@ -5528,14 +5542,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-18/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-09-29T17:00:00Z",
           "status": "OPEN",
           "note": "Raised in the DG0 round-18 QA review of candidate 21efe44b (450c756). Low, documentation only; I'd accept it as an observation."
+        },
+        {
+          "at": "2026-09-30T08:08:04Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 38ffd1d"
         }
-      ]
+      ],
+      "fix_revision": "38ffd1d",
+      "fix_summary": "Fixed docs/delivery/agents.md Process-sandbox line: shared host PID namespace, private IPC, host-bind rw procfs, plus the per-run Landlock domain (D-033); matches the code and sandbox.json."
     }
   ]
 }
