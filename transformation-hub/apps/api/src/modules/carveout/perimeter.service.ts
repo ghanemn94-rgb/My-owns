@@ -44,6 +44,7 @@ import type {
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { RecordVersionService, assertVersion, likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { ChangeControlService } from '../planning/change-control.service';
@@ -159,7 +160,8 @@ export class PerimeterService {
     if (q.q) conds.push(or(ilike(PI.name, likeContains(q.q)), ilike(PI.code, likeContains(q.q)))!);
     const where = and(...conds);
     const [{ n }] = (await this.tx.select({ n: count() }).from(PI).where(where)) as [{ n: number }];
-    const rows = await this.tx.select().from(PI).where(where).orderBy(asc(PI.code)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { code: PI.code, name: PI.name, type: PI.type, disposition: PI.disposition, updatedAt: PI.updatedAt }, PI.id, [asc(PI.code), asc(PI.id)]);
+    const rows = await this.tx.select().from(PI).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     void p;
     return pageOf(await this.summaries(projectId, rows), Number(n), q);
   }

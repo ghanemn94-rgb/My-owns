@@ -33,6 +33,8 @@ import { PolicyService } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { RecordVersionService, assertVersion, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, governanceRoutes } from '@hub/contracts';
 import { newId } from '../../platform/ids';
 import type { RequestContext } from '../../platform/context';
 import { DecisionRow, GovernanceSupport, MeetingRow, amountOf, iso } from './governance.support';
@@ -82,7 +84,16 @@ export class DecisionsService {
   async list(
     ctx: RequestContext,
     projectId: string,
-    q: { page: number; pageSize: number; q?: string; committeeId?: string; meetingId?: string; status?: DecisionStatus; authorityOutcome?: AuthorityOutcome },
+    q: {
+      page: number;
+      pageSize: number;
+      q?: string;
+      committeeId?: string;
+      meetingId?: string;
+      status?: DecisionStatus;
+      authorityOutcome?: AuthorityOutcome;
+      sort?: RouteInput<typeof governanceRoutes.listDecisions>['query']['sort'];
+    },
   ) {
     const d = schema.decision;
     const where = and(
@@ -96,7 +107,13 @@ export class DecisionsService {
     );
     const tx = this.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(d).where(where)) as [{ total: number }];
-    const rows = await tx.select().from(d).where(where).orderBy(desc(d.createdAt)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(
+      q.sort,
+      { code: d.code, title: d.title, status: d.status, latestSafeDate: d.latestSafeDate, createdAt: d.createdAt, updatedAt: d.updatedAt },
+      d.id,
+      [desc(d.createdAt), desc(d.id)],
+    );
+    const rows = await tx.select().from(d).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     const names = await this.sup.displayNames(rows.map((r) => r.requesterUserId));
     return pageOf(
       rows.map((r) => this.summaryDto(r, names)),

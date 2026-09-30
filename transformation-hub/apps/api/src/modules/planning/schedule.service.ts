@@ -30,6 +30,7 @@ interface GraphNode {
   type: NodeType;
   code: string;
   title: string;
+  titleAr: string | null;
   workstreamId: string | null;
   status: string;
   durationDays: number | null;
@@ -64,6 +65,7 @@ export class ScheduleService {
         id: T.id,
         code: T.wbsCode,
         title: T.title,
+        titleAr: T.titleAr,
         workstreamId: T.workstreamId,
         status: T.status,
         durationDays: T.durationDays,
@@ -83,6 +85,7 @@ export class ScheduleService {
         id: M.id,
         code: M.code,
         title: M.title,
+        titleAr: M.titleAr,
         workstreamId: M.workstreamId,
         status: M.status,
         plannedDate: M.plannedDate,
@@ -102,6 +105,7 @@ export class ScheduleService {
         type: 'milestone' as const,
         code: m.code,
         title: m.title,
+        titleAr: m.titleAr,
         workstreamId: m.workstreamId,
         status: m.status,
         durationDays: 0,
@@ -203,7 +207,9 @@ export class ScheduleService {
       projectFinish: result.projectFinish,
       issues: result.issues,
       assumptions: [...result.assumptions, ...this.serviceAssumptions(sc.nodes, sc.kind)],
-      criticalPath: result.criticalPath ? result.criticalPath.map((id) => ({ id, type: byId.get(id)!.type, code: byId.get(id)!.code, title: byId.get(id)!.title })) : null,
+      criticalPath: result.criticalPath
+        ? result.criticalPath.map((id) => ({ id, type: byId.get(id)!.type, code: byId.get(id)!.code, title: byId.get(id)!.title, titleAr: byId.get(id)!.titleAr }))
+        : null,
       nodes: sc.nodes
         .filter((n) => n.status !== 'cancelled')
         .map((n) => {
@@ -213,6 +219,7 @@ export class ScheduleService {
             type: n.type,
             code: n.code,
             title: n.title,
+            titleAr: n.titleAr,
             workstreamCode: n.workstreamId ? (ws.get(n.workstreamId)?.code ?? null) : null,
             status: n.status,
             proposed: n.type === 'task' && n.status === 'draft',
@@ -246,7 +253,7 @@ export class ScheduleService {
     const byId = new Map(g.nodes.map((n) => [n.id, n]));
     const base = {
       label: PLANNING_SCHEDULE_LABEL,
-      delayedNode: { id: node.id, type: node.type, code: node.code, title: node.title },
+      delayedNode: { id: node.id, type: node.type, code: node.code, title: node.title, titleAr: node.titleAr },
       delayWorkingDays: body.delayWorkingDays,
       scope: { kind: sc.kind, targetNodeId: body.targetNodeId ?? null, nodeCount: sc.nodes.filter((n) => n.status !== 'cancelled').length },
     };
@@ -256,7 +263,7 @@ export class ScheduleService {
     const r = delayImpact(sc.nodes.map((n) => this.toScheduleNode(n)), sc.edges, p.plannedStart, body.nodeId, body.delayWorkingDays, cal);
     const affected = r.affected.map((a) => {
       const n = byId.get(a.id)!;
-      return { id: a.id, type: n.type, code: n.code, title: n.title, earlyFinishBefore: a.earlyFinishBefore, earlyFinishAfter: a.earlyFinishAfter, slipWorkingDays: a.slipWorkingDays, critical: a.critical, gateKey: n.gateKey };
+      return { id: a.id, type: n.type, code: n.code, title: n.title, titleAr: n.titleAr, earlyFinishBefore: a.earlyFinishBefore, earlyFinishAfter: a.earlyFinishAfter, slipWorkingDays: a.slipWorkingDays, critical: a.critical, gateKey: n.gateKey };
     });
     return {
       ...base,
@@ -287,10 +294,12 @@ export class ScheduleService {
         predecessorId: d.predecessorId,
         predecessorCode: byId.get(d.predecessorId)?.code ?? '?',
         predecessorTitle: byId.get(d.predecessorId)?.title ?? '?',
+        predecessorTitleAr: byId.get(d.predecessorId)?.titleAr ?? null,
         successorType: d.successorType as NodeType,
         successorId: d.successorId,
         successorCode: byId.get(d.successorId)?.code ?? '?',
         successorTitle: byId.get(d.successorId)?.title ?? '?',
+        successorTitleAr: byId.get(d.successorId)?.titleAr ?? null,
         type: d.type as DependencyType,
         lagDays: d.lagDays,
         note: d.note,
@@ -399,7 +408,7 @@ export class ScheduleService {
     const ws = await this.s.workstreamCodes(projectId);
     const inScope = (wsId: string | null) => (!q.workstreamId || wsId === q.workstreamId) && (!scope || (!!wsId && scope.has(wsId)));
     const names = await this.s.userNames(g.nodes.map((n) => n.ownerUserId));
-    type Item = { id: string; type: 'task' | 'milestone' | 'deliverable'; code: string; title: string; workstreamCode: string | null; date: string; dateKind: 'start' | 'finish' | 'due'; status: string; ownerName: string | null; critical: boolean };
+    type Item = { id: string; type: 'task' | 'milestone' | 'deliverable'; code: string; title: string; titleAr: string | null; workstreamCode: string | null; date: string; dateKind: 'start' | 'finish' | 'due'; status: string; ownerName: string | null; critical: boolean };
     const starting: Item[] = [];
     const due: Item[] = [];
     const overdue: Item[] = [];
@@ -407,7 +416,7 @@ export class ScheduleService {
     for (const n of g.nodes) {
       if (!inScope(n.workstreamId)) continue;
       const owner = n.ownerUserId ? (names.get(n.ownerUserId) ?? null) : null;
-      const base = { id: n.id, type: n.type, code: n.code, title: n.title, workstreamCode: wsCode(n.workstreamId), status: n.status, ownerName: owner, critical: critical.has(n.id) || n.isCritical };
+      const base = { id: n.id, type: n.type, code: n.code, title: n.title, titleAr: n.titleAr, workstreamCode: wsCode(n.workstreamId), status: n.status, ownerName: owner, critical: critical.has(n.id) || n.isCritical };
       if (n.type === 'task') {
         if (n.status === 'draft' || n.status === 'cancelled') continue;
         const open = ['not_started', 'in_progress', 'blocked'].includes(n.status);
@@ -424,13 +433,13 @@ export class ScheduleService {
       }
     }
     const dels = await this.tx
-      .select({ id: schema.deliverable.id, code: schema.deliverable.code, title: schema.deliverable.title, workstreamId: schema.deliverable.workstreamId, status: schema.deliverable.status, dueDate: schema.deliverable.dueDate, ownerUserId: schema.deliverable.ownerUserId })
+      .select({ id: schema.deliverable.id, code: schema.deliverable.code, title: schema.deliverable.title, titleAr: schema.deliverable.titleAr, workstreamId: schema.deliverable.workstreamId, status: schema.deliverable.status, dueDate: schema.deliverable.dueDate, ownerUserId: schema.deliverable.ownerUserId })
       .from(schema.deliverable)
       .where(and(eq(schema.deliverable.projectId, projectId), or(eq(schema.deliverable.status, 'planned'), eq(schema.deliverable.status, 'in_progress'), eq(schema.deliverable.status, 'rejected'), eq(schema.deliverable.status, 'submitted'))));
     const dNames = await this.s.userNames(dels.map((d) => d.ownerUserId));
     for (const d of dels) {
       if (!inScope(d.workstreamId) || !d.dueDate) continue;
-      const base = { id: d.id, type: 'deliverable' as const, code: d.code, title: d.title, workstreamCode: wsCode(d.workstreamId), status: d.status, ownerName: d.ownerUserId ? (dNames.get(d.ownerUserId) ?? null) : null, critical: false, date: d.dueDate, dateKind: 'due' as const };
+      const base = { id: d.id, type: 'deliverable' as const, code: d.code, title: d.title, titleAr: d.titleAr, workstreamCode: wsCode(d.workstreamId), status: d.status, ownerName: d.ownerUserId ? (dNames.get(d.ownerUserId) ?? null) : null, critical: false, date: d.dueDate, dateKind: 'due' as const };
       if (inWindow(d.dueDate, w)) due.push(base);
       if (isOverdue(d.dueDate, today, d.status !== 'submitted')) overdue.push(base);
     }

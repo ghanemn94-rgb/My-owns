@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { AI_MODES, AI_PROVIDERS, AI_RUN_STATUSES, AI_PROPOSAL_STATUSES, AI_PROPOSABLE_ACTIONS, CLASSIFICATIONS } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
-import { ProjectParams, idParams, Uuid, IsoDate, PageQuery, paged, RequiredText, Text, ExpectedVersion, DecimalString, Currency } from './common';
+import { ProjectParams, idParams, Uuid, IsoDate, PageQuery, SortParam, paged, RequiredText, Text, ExpectedVersion, DecimalString, Currency } from './common';
 
 /**
  * Runtime AI project manager — contract routes (spec §12, §15, §16; AT-17…AT-22, AT-28).
@@ -374,7 +374,8 @@ export const aiRoutes = registerRoutes({
     tags: Tag,
     access: 'ai.run.read',
     params: ProjectParams,
-    query: PageQuery,
+    // Default order: newest first.
+    query: PageQuery.extend({ sort: SortParam(['createdAt', 'kind', 'status']) }),
     response: paged(AiRunSummaryDto),
   }),
   getRun: defineRoute({
@@ -435,7 +436,8 @@ export const aiRoutes = registerRoutes({
     tags: Tag,
     access: 'ai.proposal.read',
     params: ProjectParams,
-    query: PageQuery.extend({ status: z.enum(AI_PROPOSAL_STATUSES).optional() }),
+    // Default order: newest first.
+    query: PageQuery.extend({ status: z.enum(AI_PROPOSAL_STATUSES).optional(), sort: SortParam(['createdAt', 'updatedAt', 'status', 'actionType']) }),
     response: paged(AiProposalDto),
   }),
   approveProposal: defineRoute({

@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import type { AiRunOutput } from '@hub/contracts';
+import type { AiRunOutput, RouteInput, aiRoutes } from '@hub/contracts';
 import { AI_ACTION_PERMISSION, AI_AUTOPILOT_ELIGIBLE, AI_MODES, AI_PROHIBITED_ACTIONS, AI_TOOLS, aiFlagOf, circuitIsOpen, notFound, POLICY_VERSION, toolAllowedInMode, type AiProposableAction } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import { Clock } from '../../platform/clock';
 import type { RequestContext } from '../../platform/context';
+import { orderBySort } from '../../platform/sort';
 import { AiSettingsService, AI_BRIEFING_JOB } from './ai-settings.service';
 import { AiRuntimeService } from './ai-runtime.service';
 import { AiGatewayService } from './ai-gateway.service';
@@ -35,11 +36,11 @@ export class AiOpsService {
   ) {}
 
   /** Runs are per user and never shared (AIT-08): only runs requested by / scheduled for the caller. */
-  async listRuns(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number }) {
+  async listRuns(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; sort?: RouteInput<typeof aiRoutes.listRuns>['query']['sort'] }) {
     this.policy.assert(ctx, 'ai.run.read', { projectId });
     const where = and(eq(schema.aiRun.projectId, projectId), eq(schema.aiRun.requestedBy, ctx.principal.userId!));
     const [{ n }] = (await this.db.tx().select({ n: sql<number>`count(*)::int` }).from(schema.aiRun).where(where)) as [{ n: number }];
-    const rows = await this.db.tx().select().from(schema.aiRun).where(where).orderBy(desc(schema.aiRun.createdAt)).limit(q.pageSize).offset((q.page - 1) * q.pageSize);
+    const rows = await this.db.tx().select().from(schema.aiRun).where(where).orderBy(...orderBySort(q.sort, { createdAt: schema.aiRun.createdAt, kind: schema.aiRun.kind, status: schema.aiRun.status }, schema.aiRun.id, [desc(schema.aiRun.createdAt), desc(schema.aiRun.id)])).limit(q.pageSize).offset((q.page - 1) * q.pageSize);
     return {
       items: rows.map((r) => {
         const { output: _o, ...summary } = this.runtime.toDto(r);

@@ -4,7 +4,10 @@
  *  1. en and ar catalogues have exactly the same keys in every namespace;
  *  2. no message is empty;
  *  3. {placeholders} are identical between languages;
- *  4. statuses.<enumName> covers every value of every enum exported by packages/domain/src/enums.ts.
+ *  4. statuses.<enumName> covers every value of every enum exported by packages/domain/src/enums.ts;
+ *  5. every server message code the domain emits (status dimensions, gate blockers — QA-P1-14) has a translation
+ *     `gates.messages.<code>` in en and ar with the same placeholders as the domain's English template, and no stale code
+ *     is left in the catalogue.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -67,8 +70,25 @@ for (const locale of ['en', 'ar']) {
   }
 }
 
+// 5. Server message codes (packages/domain: DIMENSION_MESSAGES_EN, GATE_MESSAGES_EN) ↔ gates.messages.*
+const { DIMENSION_MESSAGES_EN } = require('@hub/domain/dist/carveout.js');
+const { GATE_MESSAGES_EN } = require('@hub/domain/dist/gates.js');
+const serverCodes = { ...DIMENSION_MESSAGES_EN, ...GATE_MESSAGES_EN };
+for (const locale of ['en', 'ar']) {
+  const catalogue = flatten(load(locale, 'gates').messages ?? {});
+  for (const [code, template] of Object.entries(serverCodes)) {
+    if (!catalogue.has(code)) errors.push(`${locale} gates.messages.${code} missing (server message code)`);
+    else if (placeholders(catalogue.get(code)) !== placeholders(template)) {
+      errors.push(`placeholder mismatch ${locale} gates.messages.${code} (server: ${placeholders(template)} / ${locale}: ${placeholders(catalogue.get(code))})`);
+    }
+  }
+  for (const code of catalogue.keys()) if (!(code in serverCodes)) errors.push(`${locale} gates.messages.${code} is not a server message code`);
+}
+
 if (errors.length) {
   console.error(`i18n check FAILED (${errors.length} problems):\n  ${errors.join('\n  ')}`);
   process.exit(1);
 }
-console.log(`i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar.`);
+console.log(
+  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${Object.keys(serverCodes).length} server message codes.`,
+);

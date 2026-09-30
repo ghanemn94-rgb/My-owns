@@ -19,6 +19,7 @@ import { btn, card, cx } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { canInOrg, qk, useMe } from '@/lib/queries';
+import { useLocalized } from '@/lib/i18n-data';
 
 type Template = RouteResponse<typeof portfolioRoutes.listTemplates>['items'][number];
 type NewcoStatus = 'incorporated' | 'incorporation_in_progress' | 'unconfirmed';
@@ -68,6 +69,7 @@ function Summary({ label, children }: { label: string; children: ReactNode }) {
 
 export default function NewProjectPage() {
   const { t, tStatus, formatNumber, formatDate } = useI18n();
+  const loc = useLocalized();
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -233,7 +235,7 @@ export default function NewProjectPage() {
                     />
                     <span className="min-w-0">
                       <span className="block font-medium" dir="auto">
-                        {tpl.name}
+                        {loc(tpl.name, tpl.nameAr)}
                       </span>
                       <span className="block text-xs text-muted">
                         {tStatus('templateKinds', tpl.kind)} · {t('portfolio.templateVersion', { version: tpl.versionNo })}
@@ -391,7 +393,7 @@ export default function NewProjectPage() {
           <div className="space-y-5">
             <dl className="space-y-2">
               <Summary label={t('portfolio.wizard.steps.template')}>
-                {template ? `${template.name} · ${t('portfolio.templateVersion', { version: template.versionNo })}` : EM_DASH}
+                {template ? `${loc(template.name, template.nameAr)} · ${t('portfolio.templateVersion', { version: template.versionNo })}` : EM_DASH}
               </Summary>
               <Summary label={t('project.fields.code')}>
                 <span dir="ltr">{form.code || EM_DASH}</span>
@@ -425,7 +427,7 @@ export default function NewProjectPage() {
                   <li>
                     {t('portfolio.wizard.effects.create', {
                       code: form.code,
-                      template: template.name,
+                      template: loc(template.name, template.nameAr),
                       gates: formatNumber(template.counts.gates),
                       workstreams: formatNumber(template.counts.workstreams),
                       activities: formatNumber(template.counts.activities),

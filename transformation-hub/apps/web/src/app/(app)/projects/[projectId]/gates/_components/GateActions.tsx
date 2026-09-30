@@ -11,6 +11,8 @@ import { useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { holdsRole, useDecisionOptions, useInvalidateGates, type GateDetail } from '@/lib/gates';
 import { projectAccess } from '@/lib/queries';
+import { useLocalized, useServerMessages } from '@/lib/i18n-data';
+import type { ServerMessageDto } from '@hub/contracts';
 import { useProjectContext } from '@/lib/project-context';
 
 type Cmd = 'start' | 'markReady' | 'back' | 'link' | 'decide' | 'reopen';
@@ -25,6 +27,7 @@ interface DecisionOption {
   status: string;
   authorityOutcome: string;
   blocker: string | null;
+  blockerI18n: ServerMessageDto[];
 }
 
 /** Decisions offered for linking: those raised for this gate (with their AT-04 blocker) + the visible register. */
@@ -33,10 +36,10 @@ function useDecisionChoices(gate: GateDetail, enabled: boolean): DecisionOption[
   const register = useDecisionOptions(projectId, enabled && can('governance.decision.read'));
   return useMemo(() => {
     const out = new Map<string, DecisionOption>();
-    for (const d of gate.decisions) out.set(d.id, { id: d.id, code: d.code, title: d.title, status: d.status, authorityOutcome: d.authorityOutcome, blocker: d.blocker });
+    for (const d of gate.decisions) out.set(d.id, { id: d.id, code: d.code, title: d.title, status: d.status, authorityOutcome: d.authorityOutcome, blocker: d.blocker, blockerI18n: d.blockerI18n });
     if (gate.decision) out.set(gate.decision.id, { ...gate.decision });
     for (const d of register.data?.items ?? []) {
-      if (!out.has(d.id)) out.set(d.id, { id: d.id, code: d.code, title: d.title, status: d.status, authorityOutcome: d.authorityOutcome, blocker: null });
+      if (!out.has(d.id)) out.set(d.id, { id: d.id, code: d.code, title: d.title, status: d.status, authorityOutcome: d.authorityOutcome, blocker: null, blockerI18n: [] });
     }
     return [...out.values()].sort((a, b) => a.code.localeCompare(b.code));
   }, [gate.decisions, gate.decision, register.data]);
@@ -44,6 +47,8 @@ function useDecisionChoices(gate: GateDetail, enabled: boolean): DecisionOption[
 
 export function GateActions({ gate }: { gate: GateDetail }) {
   const { t, tStatus } = useI18n();
+  const loc = useLocalized();
+  const serverText = useServerMessages();
   const { projectId, can, me } = useProjectContext();
   const toast = useToast();
   const invalidate = useInvalidateGates(projectId);
@@ -74,7 +79,7 @@ export function GateActions({ gate }: { gate: GateDetail }) {
     toast.show('success', message);
     close();
   };
-  const gateLabel = `${gate.key} — ${gate.name}`;
+  const gateLabel = `${gate.key} — ${loc(gate.name, gate.nameAr)}`;
 
   const buttons: { cmd: Cmd; show: boolean; label: string; icon: typeof Play; primary?: boolean }[] = [
     { cmd: 'start', show: canSubmit && (status === 'not_started' || status === 'reopened'), label: t('gates.actions.start'), icon: Play, primary: true },
@@ -107,9 +112,15 @@ export function GateActions({ gate }: { gate: GateDetail }) {
     <p className="rounded-md border border-line bg-surface-muted p-2 text-xs text-ink" data-testid="chosen-decision">
       {t('gates.decide.chosenState', { status: tStatus('decisionStatuses', chosen.status), authority: tStatus('decisionAuthorityOutcomes', chosen.authorityOutcome) })}
       {chosen.blocker ? (
-        <span className="mt-1 block text-danger" dir="ltr" lang="en">
-          {chosen.blocker}
-        </span>
+        chosen.blockerI18n.length ? (
+          <span className="mt-1 block text-danger" dir="auto">
+            {serverText(chosen.blockerI18n, chosen.blocker)}
+          </span>
+        ) : (
+          <span className="mt-1 block text-danger" dir="ltr" lang="en">
+            {chosen.blocker}
+          </span>
+        )
       ) : null}
     </p>
   ) : null;

@@ -21,6 +21,8 @@ import {
 } from '@hub/domain';
 import type { RequestContext } from '../../platform/context';
 import { likeContains, loadInProject, nextCode, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, readinessRoutes } from '@hub/contracts';
 import { newId } from '../../platform/ids';
 import { WaiverService, WaiverRecord } from '../gates/waiver.service';
 import { ReadinessSupport, iso } from './readiness.support';
@@ -41,6 +43,7 @@ export interface CheckListQuery {
   workstreamId?: string;
   cutoverPlanId?: string;
   blocker?: 'true' | 'false';
+  sort?: RouteInput<typeof readinessRoutes.listReadinessChecks>['query']['sort'];
 }
 
 /**
@@ -109,7 +112,8 @@ export class ReadinessChecksService implements OnModuleInit {
     );
     const tx = this.s.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(c).where(where)) as [{ total: number }];
-    const rows = await tx.select().from(c).where(where).orderBy(asc(c.code)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { code: c.code, title: c.title, area: c.area, status: c.status, dueDate: c.dueDate, updatedAt: c.updatedAt }, c.id, [asc(c.code), asc(c.id)]);
+    const rows = await tx.select().from(c).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     return pageOf(await this.dtos(projectId, rows), Number(total), q);
   }
 

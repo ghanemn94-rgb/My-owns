@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ROLE_KEYS } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
-import { Uuid, ClassificationSchema, Ok, PageQuery, paged, Text } from './common';
+import { Uuid, ClassificationSchema, Ok, PageQuery, SortParam, paged, Text } from './common';
 
 export const RoleKeySchema = z.enum(ROLE_KEYS);
 
@@ -114,7 +114,8 @@ export const identityRoutes = registerRoutes({
     summary: 'List organization users (account administration — no project content)',
     tags: ['admin'],
     access: { org: 'admin.users.read' },
-    query: PageQuery,
+    // Default order: displayName.
+    query: PageQuery.extend({ sort: SortParam(['displayName', 'email', 'lastLoginAt']) }),
     response: paged(UserDto),
   }),
   createUser: defineRoute({

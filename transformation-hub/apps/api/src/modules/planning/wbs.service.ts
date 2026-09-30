@@ -33,6 +33,7 @@ import type {
 import { AuditService } from '../../platform/audit.service';
 import { OutboxService } from '../../platform/outbox.service';
 import { RecordVersionService, updateVersioned, loadInProject, nextCode, pageOf, offsetOf } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { PlanningSupport, ProjectInfo } from './planning-support';
@@ -133,8 +134,12 @@ export class WbsService {
     if (q.overdue === 'true') conds.push(overdueSql);
     if (q.overdue === 'false') conds.push(sql`not ${overdueSql}`);
     const where = and(...conds);
-    const order =
-      q.sort === 'title' ? [asc(T.title)] : q.sort === 'status' ? [asc(T.status), asc(T.sortOrder)] : q.sort === 'plannedFinish' ? [sql`${T.plannedFinish} asc nulls last`, asc(T.wbsCode)] : q.sort === '-plannedFinish' ? [sql`${T.plannedFinish} desc nulls last`, asc(T.wbsCode)] : q.sort === 'updatedAt' ? [asc(T.updatedAt)] : q.sort === '-updatedAt' ? [desc(T.updatedAt)] : [asc(T.sortOrder), asc(T.wbsCode)];
+    const order = orderBySort(
+      q.sort,
+      { wbs: [T.sortOrder, T.wbsCode], title: T.title, status: [T.status, T.sortOrder, T.wbsCode], plannedFinish: [T.plannedFinish, T.wbsCode], updatedAt: T.updatedAt },
+      T.id,
+      [asc(T.sortOrder), asc(T.wbsCode), asc(T.id)],
+    );
     const [{ n }] = (await this.tx.select({ n: count() }).from(T).where(where)) as [{ n: number }];
     const rows = await this.tx.select().from(T).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     return pageOf(await this.taskDtos(p, rows), Number(n), q);
@@ -564,7 +569,13 @@ export class WbsService {
     if (q.overdue === 'false') conds.push(sql`not coalesce(${od}, false)`);
     const where = and(...conds);
     const [{ n }] = (await this.tx.select({ n: count() }).from(M).where(where)) as [{ n: number }];
-    const rows = await this.tx.select().from(M).where(where).orderBy(sql`${M.plannedDate} asc nulls last`, asc(M.code)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(
+      q.sort,
+      { code: M.code, title: M.title, status: M.status, plannedDate: M.plannedDate, forecastDate: M.forecastDate, updatedAt: M.updatedAt },
+      M.id,
+      [sql`${M.plannedDate} asc nulls last`, asc(M.code), asc(M.id)],
+    );
+    const rows = await this.tx.select().from(M).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     return pageOf(await this.milestoneDtos(p, rows), Number(n), q);
   }
 
@@ -722,7 +733,8 @@ export class WbsService {
     if (q.overdue === 'false') conds.push(sql`not coalesce(${od}, false)`);
     const where = and(...conds);
     const [{ n }] = (await this.tx.select({ n: count() }).from(D).where(where)) as [{ n: number }];
-    const rows = await this.tx.select().from(D).where(where).orderBy(asc(D.code)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { code: D.code, title: D.title, status: D.status, dueDate: D.dueDate, updatedAt: D.updatedAt }, D.id, [asc(D.code), asc(D.id)]);
+    const rows = await this.tx.select().from(D).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     return pageOf(await this.deliverableDtos(p, rows), Number(n), q);
   }
 

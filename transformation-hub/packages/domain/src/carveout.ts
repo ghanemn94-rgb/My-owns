@@ -1,4 +1,5 @@
 import { ruleViolation } from './errors';
+import { renderMessagesEn, serverMessage, type ServerMessage } from './messages';
 import type {
   IncorporationStatus,
   PerimeterDisposition,
@@ -35,8 +36,49 @@ export interface DimensionInput {
 export interface DimensionState {
   key: 'incorporation' | 'perimeter_transfer' | 'operational_readiness' | 'jv_transaction';
   state: string;
+  /** English sentence(s) — kept for audit rows, record history and AI context; rendered from `explanationI18n`. */
   explanation: string;
+  /** The same explanation as translatable codes + parameters (QA-P1-14); clients translate `gates.messages.<code>`. */
+  explanationI18n: ServerMessage[];
   counts?: Record<string, number>;
+}
+
+/**
+ * English templates of every status-dimension message code. The web catalogue (`gates.messages.dimension.*`, en + ar)
+ * carries the same codes and placeholders.
+ */
+export const DIMENSION_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'dimension.not_yet_assessed': 'Not yet assessed',
+  'dimension.incorporation.no_entity': 'No NewCo legal entity recorded.',
+  'dimension.incorporation.verified': 'Incorporation confirmed with verified evidence.',
+  'dimension.incorporation.unverified': 'Reported incorporated; evidence not yet verified.',
+  /** `status` is an incorporation status enum value. */
+  'dimension.incorporation.status': 'Incorporation status: {status}.',
+  'dimension.perimeter.not_defined': 'No included/shared perimeter items.',
+  'dimension.perimeter.blocked': '{blocked} perimeter item(s) blocked.',
+  'dimension.perimeter.verified': 'All in-scope items transferred with verified evidence.',
+  'dimension.perimeter.in_progress': '{verified} of {inScope} in-scope items verified; {pending} item(s) with pending disposition.',
+  'dimension.perimeter.not_started': '{inScope} in-scope items; none transferred.',
+  'dimension.readiness.standalone_accepted': 'Standalone operations accepted (G4).',
+  'dimension.readiness.tsa_blocked': '{tsaProblems} TSA(s) breached or expired without an accepted exit.',
+  'dimension.readiness.no_checks': 'No mandatory readiness checks defined.',
+  'dimension.readiness.blockers_failed': '{failedBlockers} blocking readiness check(s) failed or improperly waived.',
+  'dimension.readiness.all_passed': 'All mandatory readiness checks passed.',
+  'dimension.readiness.in_progress': '{passed} of {required} mandatory/blocking checks cleared.',
+  'dimension.readiness.dependencies': 'Dependencies: {active} transitional service(s) not yet exited, {enduring} approved enduring arrangement(s).',
+  'dimension.readiness.definition_pending': 'The definition of operational independence is not yet approved.',
+  'dimension.jv.closed': 'All {closings} closing(s) confirmed.',
+  'dimension.jv.partially_closed': '{confirmed} of {closings} closing(s) confirmed.',
+  'dimension.jv.signed': 'Signing confirmed; closing pending.',
+  'dimension.jv.preparing': 'Signing/closing in preparation.',
+  'dimension.jv.not_started': 'No signing/closing events defined.',
+};
+
+/** Message of a dimension that has never been computed (created with the project). */
+export const DIMENSION_NOT_YET_ASSESSED: ServerMessage[] = [serverMessage('dimension.not_yet_assessed')];
+
+function dimension(key: DimensionState['key'], state: string, messages: ServerMessage[], counts?: Record<string, number>): DimensionState {
+  return { key, state, explanation: renderMessagesEn(messages, DIMENSION_MESSAGES_EN), explanationI18n: messages, ...(counts ? { counts } : {}) };
 }
 
 const TRANSFER_RANK: Record<TransferStatus, number> = {
@@ -57,12 +99,13 @@ export function combinedTransferStatus(legal: TransferStatus, economic: Transfer
 }
 
 export function computeStatusDimensions(input: DimensionInput): DimensionState[] {
+  const m = serverMessage;
   const inc: DimensionState = (() => {
-    if (!input.newcoIncorporation) return { key: 'incorporation', state: 'unconfirmed', explanation: 'No NewCo legal entity recorded.' };
+    if (!input.newcoIncorporation) return dimension('incorporation', 'unconfirmed', [m('dimension.incorporation.no_entity')]);
     const { status, evidenceVerified } = input.newcoIncorporation;
-    if (status === 'incorporated' && evidenceVerified) return { key: 'incorporation', state: 'incorporated_verified', explanation: 'Incorporation confirmed with verified evidence.' };
-    if (status === 'incorporated') return { key: 'incorporation', state: 'incorporated_unverified', explanation: 'Reported incorporated; evidence not yet verified.' };
-    return { key: 'incorporation', state: status, explanation: `Incorporation status: ${status}.` };
+    if (status === 'incorporated' && evidenceVerified) return dimension('incorporation', 'incorporated_verified', [m('dimension.incorporation.verified')]);
+    if (status === 'incorporated') return dimension('incorporation', 'incorporated_unverified', [m('dimension.incorporation.unverified')]);
+    return dimension('incorporation', status, [m('dimension.incorporation.status', { status })]);
   })();
 
   const inScope = input.perimeter
@@ -75,13 +118,14 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
   const blocked = counts['blocked'] ?? 0;
   const naCount = counts['not_applicable'] ?? 0;
   const perimeter: DimensionState = (() => {
-    if (inScope.length === 0) return { key: 'perimeter_transfer', state: 'perimeter_not_defined', explanation: 'No included/shared perimeter items.', counts };
-    if (blocked > 0) return { key: 'perimeter_transfer', state: 'blocked', explanation: `${blocked} perimeter item(s) blocked.`, counts };
-    if (verified + naCount === inScope.length && pending === 0) return { key: 'perimeter_transfer', state: 'transferred_verified', explanation: 'All in-scope items transferred with verified evidence.', counts };
+    const k = 'perimeter_transfer' as const;
+    if (inScope.length === 0) return dimension(k, 'perimeter_not_defined', [m('dimension.perimeter.not_defined')], counts);
+    if (blocked > 0) return dimension(k, 'blocked', [m('dimension.perimeter.blocked', { blocked })], counts);
+    if (verified + naCount === inScope.length && pending === 0) return dimension(k, 'transferred_verified', [m('dimension.perimeter.verified')], counts);
     if (verified > 0 || (counts['transferred_pending_evidence'] ?? 0) > 0 || (counts['in_progress'] ?? 0) > 0) {
-      return { key: 'perimeter_transfer', state: 'in_progress', explanation: `${verified} of ${inScope.length} in-scope items verified; ${pending} item(s) with pending disposition.`, counts };
+      return dimension(k, 'in_progress', [m('dimension.perimeter.in_progress', { verified, inScope: inScope.length, pending })], counts);
     }
-    return { key: 'perimeter_transfer', state: 'not_started', explanation: `${inScope.length} in-scope items; none transferred.`, counts };
+    return dimension(k, 'not_started', [m('dimension.perimeter.not_started', { inScope: inScope.length })], counts);
   })();
 
   // Blockers count even when not flagged mandatory (D-15b); "waived" counts only as a valid waiver (D-02).
@@ -93,26 +137,28 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
   const tsaProblems = tsas.filter((t) => t.status === 'breached' || t.status === 'expired_unresolved').length;
   const tsaActive = tsas.filter((t) => !t.isEnduringArrangement && ['approved', 'active', 'exit_in_progress', 'extended', 'breached', 'expired_unresolved'].includes(t.status)).length;
   const enduring = tsas.filter((t) => t.isEnduringArrangement).length;
-  const depNote = tsas.length ? ` Dependencies: ${tsaActive} transitional service(s) not yet exited, ${enduring} approved enduring arrangement(s).` : '';
-  const defNote = input.independenceDefinitionApproved === false ? ' The definition of operational independence is not yet approved.' : '';
+  const dep: ServerMessage[] = tsas.length ? [m('dimension.readiness.dependencies', { active: tsaActive, enduring })] : [];
+  const def: ServerMessage[] = input.independenceDefinitionApproved === false ? [m('dimension.readiness.definition_pending')] : [];
   const ops: DimensionState = (() => {
-    if (input.standaloneAccepted) return { key: 'operational_readiness', state: 'standalone_accepted', explanation: `Standalone operations accepted (G4).${depNote}` };
-    if (tsaProblems > 0) return { key: 'operational_readiness', state: 'blocked', explanation: `${tsaProblems} TSA(s) breached or expired without an accepted exit.${depNote}` };
-    if (required.length === 0) return { key: 'operational_readiness', state: 'not_assessed', explanation: `No mandatory readiness checks defined.${depNote}${defNote}` };
-    if (failedBlockers > 0) return { key: 'operational_readiness', state: 'blocked', explanation: `${failedBlockers} blocking readiness check(s) failed or improperly waived.${depNote}` };
-    if (passed === required.length) return { key: 'operational_readiness', state: 'day1_ready', explanation: `All mandatory readiness checks passed.${depNote}${defNote}` };
-    return { key: 'operational_readiness', state: 'in_progress', explanation: `${passed} of ${required.length} mandatory/blocking checks cleared.${depNote}${defNote}` };
+    const k = 'operational_readiness' as const;
+    if (input.standaloneAccepted) return dimension(k, 'standalone_accepted', [m('dimension.readiness.standalone_accepted'), ...dep]);
+    if (tsaProblems > 0) return dimension(k, 'blocked', [m('dimension.readiness.tsa_blocked', { tsaProblems }), ...dep]);
+    if (required.length === 0) return dimension(k, 'not_assessed', [m('dimension.readiness.no_checks'), ...dep, ...def]);
+    if (failedBlockers > 0) return dimension(k, 'blocked', [m('dimension.readiness.blockers_failed', { failedBlockers }), ...dep]);
+    if (passed === required.length) return dimension(k, 'day1_ready', [m('dimension.readiness.all_passed'), ...dep, ...def]);
+    return dimension(k, 'in_progress', [m('dimension.readiness.in_progress', { passed, required: required.length }), ...dep, ...def]);
   })();
 
   const signing = input.closings.filter((c) => c.kind === 'signing');
   const closing = input.closings.filter((c) => c.kind === 'closing');
   const jv: DimensionState = (() => {
+    const k = 'jv_transaction' as const;
     const closingsConfirmed = closing.filter((c) => c.status === 'confirmed').length;
-    if (closing.length > 0 && closingsConfirmed === closing.length) return { key: 'jv_transaction', state: 'closed', explanation: `All ${closing.length} closing(s) confirmed.` };
-    if (closingsConfirmed > 0) return { key: 'jv_transaction', state: 'partially_closed', explanation: `${closingsConfirmed} of ${closing.length} closing(s) confirmed.` };
-    if (signing.some((s) => s.status === 'confirmed')) return { key: 'jv_transaction', state: 'signed', explanation: 'Signing confirmed; closing pending.' };
-    if (signing.length + closing.length > 0) return { key: 'jv_transaction', state: 'preparing', explanation: 'Signing/closing in preparation.' };
-    return { key: 'jv_transaction', state: 'not_started', explanation: 'No signing/closing events defined.' };
+    if (closing.length > 0 && closingsConfirmed === closing.length) return dimension(k, 'closed', [m('dimension.jv.closed', { closings: closing.length })]);
+    if (closingsConfirmed > 0) return dimension(k, 'partially_closed', [m('dimension.jv.partially_closed', { confirmed: closingsConfirmed, closings: closing.length })]);
+    if (signing.some((s) => s.status === 'confirmed')) return dimension(k, 'signed', [m('dimension.jv.signed')]);
+    if (signing.length + closing.length > 0) return dimension(k, 'preparing', [m('dimension.jv.preparing')]);
+    return dimension(k, 'not_started', [m('dimension.jv.not_started')]);
   })();
 
   return [inc, perimeter, ops, jv];

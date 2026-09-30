@@ -1,4 +1,5 @@
 import { ruleViolation } from './errors';
+import { formatMessage, serverMessage, type ServerMessage } from './messages';
 import type { CriterionStatus, GateAssessmentStatus, DecisionStatus, DecisionAuthorityOutcome } from './enums';
 
 /**
@@ -32,7 +33,35 @@ export interface GateEvaluationInput {
 export interface GateBlocker {
   kind: 'criterion' | 'prerequisite' | 'evidence_conflict' | 'decision';
   ref: string;
+  /** English sentence (kept for problem details, audit and AI context); rendered from `messageI18n`. */
   message: string;
+  /** The same sentence as a translatable code + parameters (QA-P1-14); clients translate `gates.messages.<code>`. */
+  messageI18n: ServerMessage[];
+}
+
+/**
+ * English templates of every gate blocker code. The web catalogue (`gates.messages.gate.*`, en + ar) carries the same codes
+ * and placeholders. `{status}` is a decision status enum value.
+ */
+export const GATE_MESSAGES_EN: Readonly<Record<string, string>> = {
+  'gate.blocker.evidence_conflict': 'Criterion {criterion} has conflicting evidence requiring reassessment',
+  'gate.blocker.met_without_evidence': 'Criterion {criterion} is marked met but has no active evidence',
+  'gate.blocker.waiver_invalid': 'Criterion {criterion} waiver is not valid',
+  'gate.blocker.not_applicable_undetermined': 'Criterion {criterion} is marked not applicable without an approved specialist determination',
+  'gate.blocker.criterion_unmet': 'Mandatory criterion {criterion} is not met',
+  'gate.blocker.prerequisite_not_approved': 'Prerequisite gate {gate} is not approved',
+  'gate.blocker.no_decision': 'No approved governance decision is linked to gate {gate}',
+  'gate.blocker.decision_other_gate': 'The linked decision was raised for gate {decisionGate}, not {gate}',
+  'gate.blocker.decision_recommended': 'The linked decision is recommended — pending the external authority; it is not a final approval and the gate stays blocked',
+  'gate.blocker.decision_not_approved': 'The linked decision is {status}; only an approved decision can back a gate approval',
+  'gate.blocker.decision_external_unrecorded': 'The linked decision is outside the committee delegation and no approval by the authorized body is recorded',
+  'gate.blocker.decision_no_authority': 'The linked decision has no authority assessment (within mandate / external authority)',
+};
+
+function blocker(kind: GateBlocker['kind'], ref: string, code: string, params: Record<string, string | number> = {}): GateBlocker {
+  const template = GATE_MESSAGES_EN[code];
+  if (template === undefined) throw new Error(`No English template for message code ${code}`);
+  return { kind, ref, message: formatMessage(template, params), messageI18n: [serverMessage(code, params)] };
 }
 
 export interface GateEvaluation {
@@ -51,14 +80,14 @@ export function evaluateGate(input: GateEvaluationInput): GateEvaluation {
   for (const c of input.criteria) {
     const conflicting = c.conflictingEvidenceCount > 0 || c.status === 'conflicting';
     if (conflicting) {
-      blockers.push({ kind: 'evidence_conflict', ref: c.key, message: `Criterion ${c.key} has conflicting evidence requiring reassessment` });
+      blockers.push(blocker('evidence_conflict', c.key, 'gate.blocker.evidence_conflict', { criterion: c.key }));
     }
     let satisfied = false;
     switch (c.status) {
       case 'met':
         if (c.evidenceRequired && c.activeEvidenceCount === 0) {
           unmet++;
-          if (c.mandatory || c.blocking) blockers.push({ kind: 'criterion', ref: c.key, message: `Criterion ${c.key} is marked met but has no active evidence` });
+          if (c.mandatory || c.blocking) blockers.push(blocker('criterion', c.key, 'gate.blocker.met_without_evidence', { criterion: c.key }));
         } else {
           met++;
           satisfied = true;
@@ -67,7 +96,7 @@ export function evaluateGate(input: GateEvaluationInput): GateEvaluation {
       case 'waived':
         if (!c.waivable || !c.approvedWaiverId) {
           unmet++;
-          if (c.mandatory || c.blocking) blockers.push({ kind: 'criterion', ref: c.key, message: `Criterion ${c.key} waiver is not valid` });
+          if (c.mandatory || c.blocking) blockers.push(blocker('criterion', c.key, 'gate.blocker.waiver_invalid', { criterion: c.key }));
         } else {
           waived++;
           satisfied = true;
@@ -77,7 +106,7 @@ export function evaluateGate(input: GateEvaluationInput): GateEvaluation {
         if (!c.naDetermination?.approved || !c.naDetermination.basis.trim()) {
           unmet++;
           if (c.mandatory || c.blocking) {
-            blockers.push({ kind: 'criterion', ref: c.key, message: `Criterion ${c.key} is marked not applicable without an approved specialist determination` });
+            blockers.push(blocker('criterion', c.key, 'gate.blocker.not_applicable_undetermined', { criterion: c.key }));
           }
         } else {
           na++;
@@ -86,13 +115,13 @@ export function evaluateGate(input: GateEvaluationInput): GateEvaluation {
         break;
       default:
         unmet++;
-        if (c.mandatory || c.blocking) blockers.push({ kind: 'criterion', ref: c.key, message: `Mandatory criterion ${c.key} is not met` });
+        if (c.mandatory || c.blocking) blockers.push(blocker('criterion', c.key, 'gate.blocker.criterion_unmet', { criterion: c.key }));
     }
     if (c.blocking && (!satisfied || conflicting)) blockingUnmet++;
   }
   for (const p of input.prerequisites) {
     if (!APPROVED.includes(p.status)) {
-      blockers.push({ kind: 'prerequisite', ref: p.gateKey, message: `Prerequisite gate ${p.gateKey} is not approved` });
+      blockers.push(blocker('prerequisite', p.gateKey, 'gate.blocker.prerequisite_not_approved', { gate: p.gateKey }));
     }
   }
   return {
@@ -159,30 +188,18 @@ export interface GateDecisionBacking {
  * Returns null when the decision can back the approval, otherwise the blocker.
  */
 export function gateDecisionIssue(d: GateDecisionBacking | null, gateKey: string): GateBlocker | null {
-  if (!d) return { kind: 'decision', ref: gateKey, message: `No approved governance decision is linked to gate ${gateKey}` };
-  if (d.gateKey && d.gateKey !== gateKey) {
-    return { kind: 'decision', ref: d.id, message: `The linked decision was raised for gate ${d.gateKey}, not ${gateKey}` };
-  }
+  if (!d) return blocker('decision', gateKey, 'gate.blocker.no_decision', { gate: gateKey });
+  if (d.gateKey && d.gateKey !== gateKey) return blocker('decision', d.id, 'gate.blocker.decision_other_gate', { decisionGate: d.gateKey, gate: gateKey });
   if (!FINAL_APPROVED_DECISION_STATUSES.includes(d.status)) {
-    return {
-      kind: 'decision',
-      ref: d.id,
-      message:
-        d.status === 'recommended'
-          ? 'The linked decision is recommended — pending the external authority; it is not a final approval and the gate stays blocked'
-          : `The linked decision is ${d.status}; only an approved decision can back a gate approval`,
-    };
+    return d.status === 'recommended'
+      ? blocker('decision', d.id, 'gate.blocker.decision_recommended')
+      : blocker('decision', d.id, 'gate.blocker.decision_not_approved', { status: d.status });
   }
   if (d.authorityOutcome === 'within_mandate') return null;
   if (d.authorityOutcome === 'pending_external_authority' && d.externalAuthorityReference?.trim()) return null;
-  return {
-    kind: 'decision',
-    ref: d.id,
-    message:
-      d.authorityOutcome === 'pending_external_authority'
-        ? 'The linked decision is outside the committee delegation and no approval by the authorized body is recorded'
-        : 'The linked decision has no authority assessment (within mandate / external authority)',
-  };
+  return d.authorityOutcome === 'pending_external_authority'
+    ? blocker('decision', d.id, 'gate.blocker.decision_external_unrecorded')
+    : blocker('decision', d.id, 'gate.blocker.decision_no_authority');
 }
 
 export type GateDecisionOutcome = 'approve' | 'approve_with_exceptions' | 'reject';

@@ -58,4 +58,9 @@ src/i18n/messages/{en,ar}/*.json   UI text; `statuses.json` translates every enu
 
 - CSP allows `'unsafe-inline'` scripts (the App Router inlines its flight payload). A nonce-based CSP via `proxy.ts`
   is a follow-up.
-- Some server-provided strings are English only (gate names, dimension explanations, template RACI functions).
+- Server strings follow the bilingual pattern of `docs/architecture/module-guide.md` §2 (QA-P1-14): template-seeded
+  names/titles come as `<field>` + `<field>Ar` and are picked by locale (`src/lib/i18n-data.ts`); status-dimension
+  explanations and gate blockers come as message codes translated from `gates.messages.*`. Still English only (no
+  codes yet): RAG / measurement explanations and data-quality notes on the plan Health tab, schedule issues and
+  assumptions, governance quorum / tally explanations, and template RACI function labels. Data entered in English
+  only (or edited after instantiation without an Arabic text) is shown as entered — nothing is machine-translated.

@@ -23,6 +23,8 @@ import {
   GateEvaluation,
   GateDecisionBacking,
   RoleKey,
+  type I18nText,
+  type ProjectTemplateDefinition,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
@@ -39,6 +41,7 @@ import {
   GateBundle,
   GateLoader,
   GateRow,
+  ProjectRow,
   ReassessmentFlags,
   reassessmentOf,
   WaiverRow,
@@ -111,7 +114,8 @@ export class GatesService implements OnModuleInit {
     const b = await this.loader.bundle(projectId);
     this.policy.assert(ctx, 'gates.gate.read', { projectId, classification: b.project.classification });
     const decisions = await this.decisionsFor(projectId, b.assessments.filter((a) => a.isCurrent).map((a) => a.decisionId), []);
-    return { items: b.gates.map((g) => this.summary(ctx, b, g, decisions)) };
+    const purposes = await this.templatePurposes(b.project);
+    return { items: b.gates.map((g) => this.summary(ctx, b, g, decisions, purposes)) };
   }
 
   async getGate(ctx: RequestContext, projectId: string, gateId: string) {
@@ -120,7 +124,7 @@ export class GatesService implements OnModuleInit {
     this.policy.assert(ctx, 'gates.gate.read', { projectId, classification: b.project.classification });
     const cycles = b.cycles(gate.id);
     const decisions = await this.decisionsFor(projectId, cycles.map((a) => a.decisionId), [gate.key]);
-    const summary = this.summary(ctx, b, gate, decisions);
+    const summary = this.summary(ctx, b, gate, decisions, await this.templatePurposes(b.project));
     const cur = b.current(gate.id);
     const crits = b.criteriaOf(gate.id);
     const critIds = new Set(crits.map((c) => c.id));
@@ -892,7 +896,18 @@ export class GatesService implements OnModuleInit {
     return this.policy.canInProject(ctx, 'governance.decision.read', projectId) && this.policy.canSee(ctx, { projectId, classification: d.classification });
   }
 
-  private summary(ctx: RequestContext, b: GateBundle, g: GateRow, decisions: Map<string, DecisionRow>) {
+  /** Bilingual gate purposes of the project's pinned template version, by gate key (QA-P1-14). */
+  private async templatePurposes(project: ProjectRow): Promise<Map<string, I18nText>> {
+    const [tv] = await this.db
+      .tx()
+      .select({ definition: schema.projectTemplateVersion.definition })
+      .from(schema.projectTemplateVersion)
+      .where(eq(schema.projectTemplateVersion.id, project.templateVersionId));
+    const def = tv?.definition as unknown as ProjectTemplateDefinition | undefined;
+    return new Map((def?.gates ?? []).map((g) => [g.key, g.purpose]));
+  }
+
+  private summary(ctx: RequestContext, b: GateBundle, g: GateRow, decisions: Map<string, DecisionRow>, purposes: Map<string, I18nText>) {
     const cur = b.current(g.id);
     const evaluation = b.evaluate(g);
     const flags = reassessmentOf(cur);
@@ -909,6 +924,8 @@ export class GatesService implements OnModuleInit {
       name: g.name,
       nameAr: g.nameAr,
       purpose: g.purpose,
+      // The template's Arabic purpose applies only while the stored purpose is still the template's English text.
+      purposeAr: ((p) => (p && p.ar && g.purpose === p.en ? p.ar : null))(purposes.get(g.key)),
       sortOrder: g.sortOrder,
       prerequisiteGateKeys: g.prerequisiteGateKeys ?? [],
       ownerRole: g.ownerRole,
@@ -955,7 +972,7 @@ export class GatesService implements OnModuleInit {
       authorityOutcome: d.authorityOutcome,
       gateKey: d.gateKey,
       isDemo: d.isDemo,
-      blocker: gateDecisionIssue(this.backing(d), gateKey)?.message ?? null,
+      ...((issue) => ({ blocker: issue?.message ?? null, blockerI18n: issue?.messageI18n ?? [] }))(gateDecisionIssue(this.backing(d), gateKey)),
     };
   }
 

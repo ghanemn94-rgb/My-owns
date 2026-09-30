@@ -13,6 +13,7 @@ import { StatusBadge } from '../../StatusBadge';
 import { card, cx } from '../../ui';
 import { FilterSelect, FilterToggle, ForecastLabel } from '../bits';
 import { Gantt, type GanttRow } from '../Gantt';
+import { localized, useLocalized } from '@/lib/i18n-data';
 
 const ISSUES = ['missing_duration', 'unsupported_dependency_type', 'cycle', 'unknown_node', 'negative_duration', 'invalid_date', 'missing_project_start'] as const;
 type IssueCode = (typeof ISSUES)[number];
@@ -20,6 +21,7 @@ type IssueCode = (typeof ISSUES)[number];
 /** Schedule status block: complete / incomplete / invalid, gaps, assumptions and the critical path (REQ-PLN-008/009). */
 export function ScheduleStatus({ s }: { s: Schedule }) {
   const { t, formatDate } = useI18n();
+  const loc = useLocalized();
   const { projectId } = useProjectContext();
   const tone = s.status === 'complete' ? 'success' : s.status === 'invalid' ? 'danger' : 'warning';
   return (
@@ -66,7 +68,7 @@ export function ScheduleStatus({ s }: { s: Schedule }) {
                     →
                   </span>
                 ) : null}
-                <Link href={nodeHref(projectId, n.type, n.id)} className="rounded bg-danger-soft px-1.5 py-0.5 font-medium text-danger hover:underline" dir="ltr" title={n.title}>
+                <Link href={nodeHref(projectId, n.type, n.id)} className="rounded bg-danger-soft px-1.5 py-0.5 font-medium text-danger hover:underline" dir="ltr" title={loc(n.title, n.titleAr)}>
                   {n.code}
                 </Link>
               </li>
@@ -107,7 +109,7 @@ export function TimelineTab() {
         id: n.id,
         type: n.type,
         code: n.code,
-        title: n.title,
+        title: localized(locale, n.title, n.titleAr),
         // Complete schedule → early dates (schedule-based forecast); otherwise the planned dates only.
         start: complete ? n.earlyStart : n.type === 'milestone' ? n.plannedFinish : n.plannedStart,
         finish: complete ? n.earlyFinish : n.plannedFinish,
@@ -118,7 +120,7 @@ export function TimelineTab() {
       }))
       .filter((r) => !datedOnly || !!r.finish)
       .sort((a, b) => (a.start ?? a.finish ?? '9999').localeCompare(b.start ?? b.finish ?? '9999') || a.code.localeCompare(b.code));
-  }, [s.data, wsFilter, datedOnly, projectId]);
+  }, [s.data, wsFilter, datedOnly, projectId, locale]);
 
   const targets = (whole.data?.nodes ?? []).filter((n) => n.type === 'milestone' || n.status !== 'draft');
 
@@ -129,7 +131,7 @@ export function TimelineTab() {
           <option value="">{t('planning.schedule.wholeProject')}</option>
           {targets.map((n) => (
             <option key={n.id} value={n.id}>
-              {n.code} — {n.title}
+              {n.code} — {localized(locale, n.title, n.titleAr)}
             </option>
           ))}
         </FilterSelect>

@@ -27,6 +27,16 @@ export const STANDALONE_GATE_KEY = 'G4';
 type DimRow = typeof schema.statusDimension.$inferSelect;
 
 /**
+ * Key-order-independent JSON: jsonb does not keep object key order, so a stored value read back must compare equal to
+ * the same freshly computed value (otherwise every recompute would re-version and re-audit an unchanged dimension).
+ */
+function canonicalJson(value: unknown): string {
+  return JSON.stringify(value, (_k, v: unknown) =>
+    v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) : v,
+  );
+}
+
+/**
  * Owner of the four independent status dimensions (spec §3, AT-06, REQ-LCY-006/007/014). Each dimension is computed from
  * its own registers and evidence — never from task completion and never from another dimension — and each change is
  * versioned (record_version) and audited. The carve-out is complete only when every dimension reaches its terminal state.
@@ -61,13 +71,14 @@ export class StatusDimensionsService {
     const rows = await this.db.tx().select().from(schema.statusDimension).where(eq(schema.statusDimension.projectId, projectId)).orderBy(asc(schema.statusDimension.key));
     const order = ['incorporation', 'perimeter_transfer', 'operational_readiness', 'jv_transaction'];
     rows.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
-    const dims: DimensionState[] = rows.map((r) => ({ key: r.key, state: r.state, explanation: r.explanation ?? '' }));
+    const dims: DimensionState[] = rows.map((r) => ({ key: r.key, state: r.state, explanation: r.explanation ?? '', explanationI18n: r.explanationI18n ?? [] }));
     return {
       items: rows.map((r) => ({
         id: r.id,
         key: r.key,
         state: r.state,
         explanation: r.explanation,
+        explanationI18n: r.explanationI18n ?? [],
         counts: r.counts ?? null,
         computedAt: r.computedAt.toISOString(),
         version: r.version,
@@ -152,26 +163,44 @@ export class StatusDimensionsService {
     for (const d of computed) {
       const counts = d.counts ?? null;
       const prev = byKey.get(d.key);
-      const snap = (r: { state: string; explanation: string | null; counts: Record<string, number> | null }) => ({ state: r.state, explanation: r.explanation, counts: r.counts, computedAt: now.toISOString() });
+      const snap = (r: { state: string; explanation: string | null; explanationI18n: DimensionState['explanationI18n'] | null; counts: Record<string, number> | null }) => ({
+        state: r.state,
+        explanation: r.explanation,
+        explanationI18n: r.explanationI18n,
+        counts: r.counts,
+        computedAt: now.toISOString(),
+      });
+      const next = { state: d.state, explanation: d.explanation, explanationI18n: d.explanationI18n, counts };
       if (!prev) {
         const id = newId();
-        await tx.insert(schema.statusDimension).values({ id, orgId: tv.orgId, projectId, key: d.key, state: d.state, explanation: d.explanation, counts, computedAt: now });
-        await this.versions.snapshot({ projectId, entityType: 'status_dimension', entityId: id, versionNo: 1, snapshot: snap({ state: d.state, explanation: d.explanation, counts }), reason: 'recomputed' });
+        await tx.insert(schema.statusDimension).values({ id, orgId: tv.orgId, projectId, key: d.key, ...next, computedAt: now });
+        await this.versions.snapshot({ projectId, entityType: 'status_dimension', entityId: id, versionNo: 1, snapshot: snap(next), reason: 'recomputed' });
         await this.audit.record({ action: 'gates.status_dimension.recompute', entityType: 'status_dimension', entityId: id, projectId, after: { key: d.key, state: d.state, explanation: d.explanation } });
         changed.push(d.key);
         continue;
       }
-      const same = prev.state === d.state && (prev.explanation ?? '') === d.explanation && JSON.stringify(prev.counts ?? null) === JSON.stringify(counts);
+      const same =
+        prev.state === d.state &&
+        (prev.explanation ?? '') === d.explanation &&
+        canonicalJson(prev.explanationI18n ?? null) === canonicalJson(d.explanationI18n) &&
+        canonicalJson(prev.counts ?? null) === canonicalJson(counts);
       if (same) {
         await tx.update(schema.statusDimension).set({ computedAt: now }).where(eq(schema.statusDimension.id, prev.id));
         continue;
       }
-      await this.versions.snapshot({ projectId, entityType: 'status_dimension', entityId: prev.id, versionNo: prev.version, snapshot: snap({ state: prev.state, explanation: prev.explanation, counts: prev.counts ?? null }), reason: 'previous state' });
+      await this.versions.snapshot({
+        projectId,
+        entityType: 'status_dimension',
+        entityId: prev.id,
+        versionNo: prev.version,
+        snapshot: snap({ state: prev.state, explanation: prev.explanation, explanationI18n: prev.explanationI18n ?? null, counts: prev.counts ?? null }),
+        reason: 'previous state',
+      });
       await tx
         .update(schema.statusDimension)
-        .set({ state: d.state, explanation: d.explanation, counts, computedAt: now, version: sql`${schema.statusDimension.version} + 1` })
+        .set({ ...next, computedAt: now, version: sql`${schema.statusDimension.version} + 1` })
         .where(eq(schema.statusDimension.id, prev.id));
-      await this.versions.snapshot({ projectId, entityType: 'status_dimension', entityId: prev.id, versionNo: prev.version + 1, snapshot: snap({ state: d.state, explanation: d.explanation, counts }), reason: 'recomputed' });
+      await this.versions.snapshot({ projectId, entityType: 'status_dimension', entityId: prev.id, versionNo: prev.version + 1, snapshot: snap(next), reason: 'recomputed' });
       await this.audit.record({
         action: 'gates.status_dimension.recompute',
         entityType: 'status_dimension',

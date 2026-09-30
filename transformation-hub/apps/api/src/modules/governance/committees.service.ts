@@ -18,6 +18,8 @@ import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
 import { AuditService } from '../../platform/audit.service';
 import { RecordVersionService, assertVersion, loadInProject, offsetOf, pageOf, updateVersioned } from '../../platform/helpers';
+import { orderBySort } from '../../platform/sort';
+import type { RouteInput, governanceRoutes } from '@hub/contracts';
 import { newId, payloadHash } from '../../platform/ids';
 import type { RequestContext } from '../../platform/context';
 import { CommitteeRow, GovernanceSupport, MatrixRow, MembershipRow, ProjectInfo, iso } from './governance.support';
@@ -43,7 +45,11 @@ export class CommitteesService {
   // ---------------------------------------------------------------------------------------------------------
   // Reads
 
-  async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; q?: string; kind?: CommitteeKind; status?: CommitteeStatus }) {
+  async list(
+    ctx: RequestContext,
+    projectId: string,
+    q: { page: number; pageSize: number; q?: string; kind?: CommitteeKind; status?: CommitteeStatus; sort?: RouteInput<typeof governanceRoutes.listCommittees>['query']['sort'] },
+  ) {
     const tx = this.db.tx();
     const t = schema.committee;
     const where = and(
@@ -54,7 +60,8 @@ export class CommitteesService {
       q.q ? ilike(t.name, likeContains(q.q)) : undefined,
     );
     const [{ total }] = (await tx.select({ total: count() }).from(t).where(where)) as [{ total: number }];
-    const rows = await tx.select().from(t).where(where).orderBy(asc(t.kind), asc(t.createdAt)).limit(q.pageSize).offset(offsetOf(q));
+    const order = orderBySort(q.sort, { name: t.name, kind: t.kind, status: t.status, createdAt: t.createdAt }, t.id, [asc(t.kind), asc(t.createdAt), asc(t.id)]);
+    const rows = await tx.select().from(t).where(where).orderBy(...order).limit(q.pageSize).offset(offsetOf(q));
     const p = await this.sup.project(projectId);
     const items = [];
     for (const c of rows) items.push(await this.summary(c, p));

@@ -1,0 +1,1 @@
+ALTER TABLE "status_dimension" ADD COLUMN "explanation_i18n" jsonb;

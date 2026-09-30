@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs';
 import { z } from 'zod';
-import { ROUTES } from '@hub/contracts';
+import { ROUTES, declaredSortKeys } from '@hub/contracts';
 
 /** Emit OpenAPI 3.1 from the contract registry (ADR-0007). Usage: node dist/cli/openapi.js [outfile] */
 function toSchema(s: z.ZodTypeAny) {
@@ -21,12 +21,24 @@ for (const r of Object.values(ROUTES)) {
   const p = r.path.replace(/:([A-Za-z0-9_]+)/g, '{$1}');
   const params = Object.keys((r.params as z.ZodObject<z.ZodRawShape>).shape ?? {}).map((name) => ({ name, in: 'path', required: true, schema: { type: 'string' } }));
   const querySchema = toSchema(r.query) as { properties?: Record<string, unknown>; required?: string[] };
-  const query = Object.entries(querySchema.properties ?? {}).map(([name, schema]) => ({ name, in: 'query', required: querySchema.required?.includes(name) ?? false, schema }));
+  // A parameter whose schema accepts nothing (`sort` on fixed-order lists) is not advertised; the description says so.
+  const acceptsNothing = (schema: unknown) => JSON.stringify((schema as { not?: unknown }).not) === '{}';
+  const query = Object.entries(querySchema.properties ?? {})
+    .filter(([, schema]) => !acceptsNothing(schema))
+    .map(([name, schema]) => ({ name, in: 'query', required: querySchema.required?.includes(name) ?? false, schema }));
+  // List sorting (QA-P1-13): allow-listed keys per route; anything else is a 400.
+  const sortKeys = declaredSortKeys(r.query);
+  const sortNote =
+    sortKeys === undefined
+      ? ''
+      : sortKeys.length
+        ? ` Sort: \`?sort=\` one of ${sortKeys.map((k) => `\`${k}\``).join(', ')} (prefix \`-\` for descending; ties by id, NULLs last); other values → 400.`
+        : ' Sort: fixed order; \`?sort=\` → 400.';
   const access = typeof r.access === 'object' ? `organization permission \`${r.access.org}\`` : r.access === 'public' ? 'public' : r.access === 'authenticated' ? 'any authenticated user' : `project permission \`${r.access}\``;
   (paths[p] ??= {})[r.method.toLowerCase()] = {
     operationId: r.id,
     summary: r.summary,
-    description: `Access: ${access}.${r.command ? ' Domain command (explicit state change; audited).' : ''}`,
+    description: `Access: ${access}.${r.command ? ' Domain command (explicit state change; audited).' : ''}${sortNote}`,
     tags: r.tags,
     parameters: [...params, ...query, ...(r.upload ? UPLOAD_HEADERS : [])],
     ...(r.method !== 'GET'
