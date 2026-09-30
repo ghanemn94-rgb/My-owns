@@ -444,12 +444,23 @@ CREATE TABLE "cross_project_dependency" (
 	"org_id" uuid NOT NULL,
 	"project_id" uuid NOT NULL,
 	"other_project_id" uuid NOT NULL,
+	"local_item_type" "schedule_node_type",
+	"local_item_id" uuid,
+	"other_item_type" "schedule_node_type" NOT NULL,
+	"other_item_id" uuid NOT NULL,
 	"description" text NOT NULL,
 	"needed_by" date,
 	"status" "raid_status" DEFAULT 'open' NOT NULL,
+	"closed_reason" text,
+	"closed_by" uuid,
+	"closed_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
-	"version" integer DEFAULT 1 NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "cross_project_dependency_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "cross_project_dependency_other_chk" CHECK ("cross_project_dependency"."other_project_id" <> "cross_project_dependency"."project_id"),
+	CONSTRAINT "cross_project_dependency_local_chk" CHECK (("cross_project_dependency"."local_item_type" is null) = ("cross_project_dependency"."local_item_id" is null))
 );
 --> statement-breakpoint
 CREATE TABLE "deliverable" (
@@ -607,6 +618,21 @@ CREATE TABLE "raid_dependency" (
 	"depends_on" text NOT NULL,
 	"needed_by" date,
 	CONSTRAINT "raid_dependency_pid_uq" UNIQUE("project_id","id")
+);
+--> statement-breakpoint
+CREATE TABLE "record_dependency" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"successor_type" "schedule_node_type" NOT NULL,
+	"successor_id" uuid NOT NULL,
+	"predecessor_type" varchar(32) NOT NULL,
+	"predecessor_id" uuid NOT NULL,
+	"note" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	CONSTRAINT "record_dependency_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "record_dependency_type_chk" CHECK ("record_dependency"."predecessor_type" in ('decision', 'gate', 'agreement', 'approval_request', 'evidence_link'))
 );
 --> statement-breakpoint
 CREATE TABLE "risk" (
@@ -2562,6 +2588,7 @@ ALTER TABLE "rag_override" ADD CONSTRAINT "rag_override_project_id_project_id_fk
 ALTER TABLE "raid_dependency" ADD CONSTRAINT "raid_dependency_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "raid_dependency" ADD CONSTRAINT "raid_dependency_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "raid_dependency" ADD CONSTRAINT "raid_dependency_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "record_dependency" ADD CONSTRAINT "record_dependency_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "risk" ADD CONSTRAINT "risk_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "risk" ADD CONSTRAINT "risk_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "risk" ADD CONSTRAINT "risk_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2805,6 +2832,7 @@ CREATE UNIQUE INDEX "baseline_version_uq" ON "baseline_version" USING btree ("pr
 CREATE UNIQUE INDEX "baseline_one_proposed_uq" ON "baseline_version" USING btree ("project_id") WHERE status = 'proposed';--> statement-breakpoint
 CREATE UNIQUE INDEX "baseline_one_approved_uq" ON "baseline_version" USING btree ("project_id") WHERE status = 'approved';--> statement-breakpoint
 CREATE UNIQUE INDEX "change_request_code_uq" ON "change_request" USING btree ("project_id","code");--> statement-breakpoint
+CREATE INDEX "cross_project_dependency_other_idx" ON "cross_project_dependency" USING btree ("other_project_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "deliverable_code_uq" ON "deliverable" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "dependency_uq" ON "dependency" USING btree ("project_id","predecessor_id","successor_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "issue_code_uq" ON "issue" USING btree ("project_id","code");--> statement-breakpoint
@@ -2812,6 +2840,8 @@ CREATE UNIQUE INDEX "milestone_code_uq" ON "milestone" USING btree ("project_id"
 CREATE INDEX "raci_entity_idx" ON "raci_assignment" USING btree ("project_id","entity_type","entity_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "rag_override_pending_uq" ON "rag_override" USING btree ("project_id","entity_type","entity_id") WHERE reviewed_at is null;--> statement-breakpoint
 CREATE UNIQUE INDEX "raid_dependency_code_uq" ON "raid_dependency" USING btree ("project_id","code");--> statement-breakpoint
+CREATE UNIQUE INDEX "record_dependency_uq" ON "record_dependency" USING btree ("project_id","successor_id","predecessor_id");--> statement-breakpoint
+CREATE INDEX "record_dependency_successor_idx" ON "record_dependency" USING btree ("project_id","successor_type","successor_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "risk_code_uq" ON "risk" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "task_wbs_uq" ON "task" USING btree ("project_id","wbs_code");--> statement-breakpoint
 CREATE INDEX "task_ws_idx" ON "task" USING btree ("workstream_id");--> statement-breakpoint

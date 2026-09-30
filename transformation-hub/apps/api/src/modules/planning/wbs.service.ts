@@ -38,6 +38,7 @@ import { orderBySort } from '../../platform/sort';
 import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { PlanningSupport, ProjectInfo } from './planning-support';
+import { PrerequisiteService } from './prerequisites.service';
 import { likeContains } from '../../platform/helpers';
 
 type Task = typeof schema.task.$inferSelect;
@@ -56,6 +57,7 @@ export class WbsService {
     private readonly audit: AuditService,
     private readonly outbox: OutboxService,
     private readonly versions: RecordVersionService,
+    private readonly prerequisites: PrerequisiteService,
   ) {}
 
   private get tx() {
@@ -291,6 +293,8 @@ export class WbsService {
     const today = this.s.today(p);
     const actualStart = body.actualStart ?? today;
     if (actualStart > today) throw ruleViolation('task.actual_in_future', 'An actual start cannot be in the future');
+    // DOM-P2-18 / REQ-PLN-006: a pending decision / gate / agreement / approval / evidence prerequisite blocks the start.
+    await this.prerequisites.assertNonePending(projectId, 'task', t.id, `Task ${t.wbsCode}`);
     return this.applyTask(ctx, p, t, 'start', body.expectedVersion, { actualStart }, { reason: body.note, after: { actualStart } });
   }
 
@@ -671,6 +675,7 @@ export class WbsService {
         await this.s.assertOwnerOrAssigned(ctx, p, owner);
         const today = this.s.today(p);
         if (!body.actualDate || body.actualDate > today) throw ruleViolation('milestone.actual_in_future', 'The achievement date cannot be in the future');
+        await this.prerequisites.assertNonePending(projectId, 'milestone', m.id, `Milestone ${m.code}`); // DOM-P2-18
         return this.applyMilestone(ctx, p, m, command, body.expectedVersion, { actualDate: body.actualDate, reportedBy: ctx.principal.userId, reportedAt: new Date(), verifiedBy: null, verifiedAt: null }, reason);
       }
       case 'verify_achieved':

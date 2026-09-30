@@ -1,9 +1,10 @@
-import type { RaidStatus, RagStatus, TaskStatus, MilestoneStatus, DeliverableStatus } from './enums';
+import type { RaidStatus, RagStatus, TaskStatus, MilestoneStatus, DeliverableStatus, DecisionStatus, DecisionAuthorityOutcome, GateAssessmentStatus, AgreementStage, ApprovalRequestStatus } from './enums';
 import type { Machine } from './workflows';
 import type { WeightedItem } from './measurement';
 import { addCalendarDays } from './calendar';
 import { canonicalJson } from './canonical';
-import { forbidden } from './errors';
+import { forbidden, ruleViolation } from './errors';
+import { APPROVED_GATE_STATUSES, gateDecisionIssue } from './gates';
 
 /**
  * Planning rules that are not schedule/measurement maths (spec §9): RAID lifecycle and exposure, open blockers,
@@ -66,6 +67,52 @@ export const OPEN_DELIVERABLE_STATUSES: readonly DeliverableStatus[] = ['planned
 export function assertDesignatedApprover(input: { subject: string; approverRole: string | null; actorRoles: readonly string[] }): void {
   if (input.approverRole && !input.actorRoles.includes(input.approverRole)) {
     throw forbidden('planning.acceptance.not_approver_role', `Only the designated approver role (${input.approverRole}) may accept or return ${input.subject}`);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Non-schedule prerequisites (spec §9 "Dependency graph … linking approvals, agreements, evidence, decisions, and gates";
+// REQ-PLN-006; DOM-P2-18)
+
+export const PREREQUISITE_TYPES = ['decision', 'gate', 'agreement', 'approval_request', 'evidence_link'] as const;
+export type PrerequisiteType = (typeof PREREQUISITE_TYPES)[number];
+
+export type PrerequisiteState =
+  | { type: 'decision'; status: DecisionStatus; authorityOutcome: DecisionAuthorityOutcome; externalAuthorityReference: string | null }
+  | { type: 'gate'; status: GateAssessmentStatus | 'not_started'; needsReassessment: boolean }
+  | { type: 'agreement'; stage: AgreementStage }
+  | { type: 'approval_request'; status: ApprovalRequestStatus }
+  | { type: 'evidence_link'; status: 'active' | 'superseded' | 'conflicting' | 'rejected'; verified: boolean };
+
+/**
+ * Whether a non-schedule predecessor is satisfied: a FINAL decision (approved within the mandate, or approved by the
+ * authorized body with its reference — never a recommendation); an approved gate not flagged for reassessment; a signed
+ * or effective agreement; an approved approval request; active evidence that passed verification.
+ */
+export function prerequisiteSatisfied(s: PrerequisiteState): boolean {
+  switch (s.type) {
+    case 'decision':
+      return gateDecisionIssue({ id: 'prerequisite', status: s.status, authorityOutcome: s.authorityOutcome, externalAuthorityReference: s.externalAuthorityReference }, 'prerequisite') === null;
+    case 'gate':
+      return (APPROVED_GATE_STATUSES as readonly string[]).includes(s.status) && !s.needsReassessment;
+    case 'agreement':
+      return s.stage === 'signed' || s.stage === 'effective';
+    case 'approval_request':
+      return s.status === 'approved';
+    case 'evidence_link':
+      return s.status === 'active' && s.verified;
+  }
+}
+
+/** Finish-to-Start: a task / milestone with an unsatisfied prerequisite cannot start / be reported achieved (count only). */
+export function assertPrerequisitesSatisfied(subject: string, states: readonly PrerequisiteState[]): void {
+  const pending = states.filter((s) => !prerequisiteSatisfied(s));
+  if (pending.length) {
+    throw ruleViolation(
+      'planning.prerequisite_pending',
+      `${subject} is blocked by ${pending.length} prerequisite(s) not yet satisfied (decision, gate, agreement, approval or evidence)`,
+      { pending: pending.length, types: [...new Set(pending.map((s) => s.type))] },
+    );
   }
 }
 

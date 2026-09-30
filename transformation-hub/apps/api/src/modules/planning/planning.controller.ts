@@ -8,6 +8,8 @@ import { ChangeControlService } from './change-control.service';
 import { RaidService } from './raid.service';
 import { HealthService } from './health.service';
 import { MyWorkService } from './my-work.service';
+import { CrossProjectDependencyService } from './cross-project.service';
+import { PrerequisiteService } from './prerequisites.service';
 
 type C = RequestContext;
 
@@ -65,6 +67,22 @@ export class PlanningWbsController {
   @ApiRoute(R.cancelDeliverable) dCancel(@Ctx() c: C, @Input() i: RouteInput<typeof R.cancelDeliverable>) { return this.svc.deliverableCommand(c, i.params.projectId, i.params.deliverableId, 'cancel', i.body); }
   @ApiRoute(R.reopenDeliverable) dReopen(@Ctx() c: C, @Input() i: RouteInput<typeof R.reopenDeliverable>) { return this.svc.deliverableCommand(c, i.params.projectId, i.params.deliverableId, 'reopen', i.body); }
   @ApiRoute(R.assignDeliverableOwner) dOwner(@Ctx() c: C, @Input() i: RouteInput<typeof R.assignDeliverableOwner>) { return this.svc.assignOwner(c, i.params.projectId, 'deliverable', i.params.deliverableId, i.body); }
+}
+
+/** Cross-project dependencies (REQ-ENT-010) and non-schedule prerequisites (REQ-PLN-006) — P2 domain review DOM-P2-17/-18. */
+@Controller()
+export class PlanningLinksController {
+  constructor(
+    private readonly xproj: CrossProjectDependencyService,
+    private readonly prereq: PrerequisiteService,
+  ) {}
+
+  @ApiRoute(R.listCrossProjectDependencies) listX(@Ctx() c: C, @Input() i: RouteInput<typeof R.listCrossProjectDependencies>) { return this.xproj.list(c, i.params.projectId, i.query); }
+  @ApiRoute(R.createCrossProjectDependency) createX(@Ctx() c: C, @Input() i: RouteInput<typeof R.createCrossProjectDependency>) { return this.xproj.create(c, i.params.projectId, i.body); }
+  @ApiRoute(R.closeCrossProjectDependency) closeX(@Ctx() c: C, @Input() i: RouteInput<typeof R.closeCrossProjectDependency>) { return this.xproj.close(c, i.params.projectId, i.params.dependencyId, i.body); }
+  @ApiRoute(R.listPrerequisites) listP(@Ctx() c: C, @Input() i: RouteInput<typeof R.listPrerequisites>) { return this.prereq.list(c, i.params.projectId, i.query); }
+  @ApiRoute(R.createPrerequisite) createP(@Ctx() c: C, @Input() i: RouteInput<typeof R.createPrerequisite>) { return this.prereq.create(c, i.params.projectId, i.body); }
+  @ApiRoute(R.removePrerequisite) removeP(@Ctx() c: C, @Input() i: RouteInput<typeof R.removePrerequisite>) { return this.prereq.remove(c, i.params.projectId, i.params.prerequisiteId, i.body.reason); }
 }
 
 /** Dependencies, schedule-based forecasts, calendar and look-ahead. */

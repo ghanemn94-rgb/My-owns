@@ -6,7 +6,9 @@ import { ChangeControlService } from './change-control.service';
 import { RaidService } from './raid.service';
 import { HealthService } from './health.service';
 import { MyWorkService } from './my-work.service';
-import { PlanningWbsController, PlanningScheduleController, PlanningChangeController, PlanningRaidController, PlanningHealthController } from './planning.controller';
+import { CrossProjectDependencyService } from './cross-project.service';
+import { PrerequisiteService } from './prerequisites.service';
+import { PlanningWbsController, PlanningScheduleController, PlanningChangeController, PlanningRaidController, PlanningHealthController, PlanningLinksController } from './planning.controller';
 
 /**
  * WBS/tasks, milestones, deliverables, dependencies, schedule, baselines, change requests, RAID, status updates, my work.
@@ -14,8 +16,8 @@ import { PlanningWbsController, PlanningScheduleController, PlanningChangeContro
  * ScheduleService / HealthService for reporting.
  */
 @Module({
-  controllers: [PlanningWbsController, PlanningScheduleController, PlanningChangeController, PlanningRaidController, PlanningHealthController],
-  providers: [PlanningSupport, WbsService, ScheduleService, ChangeControlService, RaidService, HealthService, MyWorkService],
+  controllers: [PlanningWbsController, PlanningScheduleController, PlanningChangeController, PlanningRaidController, PlanningHealthController, PlanningLinksController],
+  providers: [PlanningSupport, WbsService, ScheduleService, ChangeControlService, RaidService, HealthService, MyWorkService, CrossProjectDependencyService, PrerequisiteService],
   exports: [ChangeControlService, ScheduleService, HealthService, WbsService],
 })
 export class PlanningModule {}
