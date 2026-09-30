@@ -171,6 +171,12 @@ describe('P1 closure — PLT-002: records survive an API restart and a worker re
         const ev = await outboxOfProject(projectId);
         return ev.length > 0 && ev.every((e) => e.dispatched_at) ? ev : null;
       }, 30_000, w1);
+      // Dispatch only enqueues the subscribed jobs; let worker #1 also finish them, so the snapshot below is final and
+      // a job still queued at shutdown (run once by worker #2 — correct) is not mistaken for re-processing.
+      await waitFor('worker #1 idle on this project', async () => {
+        const n = (await owner().query<{ n: number }>(`select count(*)::int n from job where project_id = $1 and status in ('queued', 'running')`, [projectId])).rows[0]!.n;
+        return n === 0;
+      }, 30_000, w1);
     } finally {
       expect(await stopWorker(w1)).toBe(0);
     }
