@@ -10,6 +10,10 @@ export default defineConfig({
     projects: [
       {
         resolve: { conditions: ["@mth/source"] },
+        // Node-environment tests transform workspace deps through Vite's SSR pipeline, which uses its own condition
+        // list; without this, `@mth/source` is honored only by the non-SSR resolver and tests load stale built dist
+        // (T-DG1-BE R-1). Mirror the source condition into SSR resolution and externalization.
+        ssr: { resolve: { conditions: ["@mth/source"], externalConditions: ["@mth/source"] } },
         test: {
           name: "unit-node",
           environment: "node",
@@ -19,6 +23,7 @@ export default defineConfig({
       "apps/web/vitest.config.ts",
       {
         resolve: { conditions: ["@mth/source"] },
+        ssr: { resolve: { conditions: ["@mth/source"], externalConditions: ["@mth/source"] } },
         test: {
           name: "integration",
           environment: "node",
