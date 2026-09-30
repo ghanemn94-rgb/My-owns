@@ -51,9 +51,9 @@ regexes = [
 ]
 
 [[allowlists]]
-description = "Synthetic production-shaped configuration in the config-validation test (apps/api/test/p1/oidc-sso.spec.ts): a made-up HUB_COOKIE_SECRET that passes the strength check and a made-up database password, passed only to loadConfig() in memory. Never used by a running system."
+description = "Synthetic production-shaped configuration in the config-validation tests (apps/api/test/p1/oidc-sso.spec.ts and the I-R2/I-R4 production-configuration cases of apps/api/test/p1/sec-p1r-fixes.spec.ts, which reuse the same values): a made-up HUB_COOKIE_SECRET that passes the strength check and a made-up database password, passed only to loadConfig() in memory. Never used by a running system."
 condition = "AND"
-paths = ['''(?:^|/)apps/api/test/p1/oidc-sso\.spec\.ts$''']
+paths = ['''(?:^|/)apps/api/test/p1/oidc-sso\.spec\.ts$''', '''(?:^|/)apps/api/test/p1/sec-p1r-fixes\.spec\.ts$''']
 regexes = [
   '''^q7Vd2LxP9rTb4NwZ8kHs3JmC6yFa1GeU5oRi0XpQ$''',
   '''^strong-secret$''',
@@ -73,4 +73,12 @@ condition = "AND"
 paths = ['''(?:^|/)deploy/docker/api-entrypoint\.cjs$''']
 regexes = [
   '''^secret$''',
+]
+
+[[allowlists]]
+description = "Synthetic S3 credential in the storage configuration-validation test (apps/api/test/documents/storage-contract.spec.ts): a made-up HUB_S3_SECRET_ACCESS_KEY that passes the production length/default-value checks, passed only to loadConfig() in memory. Never used by a running system or an object store."
+condition = "AND"
+paths = ['''(?:^|/)apps/api/test/documents/storage-contract\.spec\.ts$''']
+regexes = [
+  '''^k8s-secret-ref-7fQ2mZx9LwP4$''',
 ]
