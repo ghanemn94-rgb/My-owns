@@ -27,7 +27,7 @@ beforeAll(async () => {
   taskId = (await owner().query<{ id: string }>('select id from task where project_id = $1 order by wbs_code limit 1', [dcId])).rows[0]!.id;
 
   // Own fixtures, so the ordering checks never depend on data left by other spec files: three projects managed by the PM
-  // (mixed-case names — C collation sorts upper case first) and four documents, two with the same title (id tiebreaker).
+  // (mixed-case names — the ICU root collation sorts case-insensitively first, unlike C) and four documents, two with the same title (id tiebreaker).
   const run = Date.now().toString(36).toUpperCase();
   const templates = (await portfolioAdmin.get('/api/v1/templates').expect(200)).body.items as { id: string; templateKey: string }[];
   const gen = templates.find((t) => t.templateKey === 'general-transformation')!;
@@ -50,6 +50,10 @@ type Val = string | number | null;
  * Asserts the SQL order: key ascending/descending with NULLs last in both directions; equal keys ordered by id in the
  * same direction (skipped for timestamps, whose JSON form loses the database's microsecond precision).
  */
+/** Text keys are sorted with the ICU root collation in SQL (platform/sort.ts); compare the same way here. */
+const icuRoot = new Intl.Collator('und');
+const cmp = (a: string | number, b: string | number) => (typeof a === 'string' && typeof b === 'string' ? icuRoot.compare(a, b) : a < b ? -1 : a > b ? 1 : 0);
+
 function expectSorted(items: Row[], value: (r: Row) => Val, desc: boolean, opts: { ties?: boolean } = {}) {
   const ties = opts.ties ?? true;
   for (let i = 1; i < items.length; i++) {
@@ -61,7 +65,7 @@ function expectSorted(items: Row[], value: (r: Row) => Val, desc: boolean, opts:
     if (va === null) {
       expect(vb, `NULLs sort last — ${where}`).toBeNull();
     } else if (vb !== null && va !== vb) {
-      expect(desc ? va > vb : va < vb, `order — ${where}`).toBe(true);
+      expect(desc ? cmp(va, vb) > 0 : cmp(va, vb) < 0, `order — ${where}`).toBe(true);
       continue;
     } else if (vb === null) {
       continue;

@@ -1,5 +1,6 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import { ZodError } from 'zod';
 import { DomainError } from '@hub/domain';
 import { AuditService } from './audit.service';
@@ -59,7 +60,11 @@ export class ProblemFilter implements ExceptionFilter {
     const http = host.switchToHttp();
     const req = http.getRequest<Request & { hubCtx?: RequestContext; hubRouteId?: string }>();
     const res = http.getResponse<Response>();
-    const correlationId = req.hubCtx?.correlationId ?? (req.headers['x-correlation-id'] as string | undefined);
+    // Errors raised before the guard ran (body parsing, unknown route) still carry a correlation id (REQ-DAT-017); a
+    // client-supplied id is echoed only in the same safe format the guard accepts.
+    const clientId = req.headers['x-correlation-id'];
+    const correlationId = req.hubCtx?.correlationId ?? (typeof clientId === 'string' && /^[\w-]{8,64}$/.test(clientId) ? clientId : randomUUID());
+    if (!res.headersSent && !res.getHeader('x-correlation-id')) res.setHeader('x-correlation-id', correlationId);
     let body: ProblemBody;
 
     if (exception instanceof DomainError) {

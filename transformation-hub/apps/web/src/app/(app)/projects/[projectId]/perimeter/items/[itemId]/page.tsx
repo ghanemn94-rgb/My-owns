@@ -257,7 +257,7 @@ export default function PerimeterItemPage() {
           <ol className="space-y-1.5 text-sm" data-testid="item-history">
             {it.history.map((h) => (
               <li key={h.versionNo} className="flex flex-wrap gap-x-2">
-                <span className="tabular font-medium">v{h.versionNo}</span>
+                <span className="tabular font-medium">{t('documents.versions.label', { version: h.versionNo })}</span>
                 <span dir="auto">{h.reason ?? EM_DASH}</span>
                 <span className="text-muted">
                   · <span dir="auto">{h.changedByName ?? EM_DASH}</span> · {formatDateTime(h.changedAt)}

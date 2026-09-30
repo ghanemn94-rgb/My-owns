@@ -179,6 +179,8 @@ export class StatusDimensionsService {
         changed.push(d.key);
         continue;
       }
+      // Key-order-insensitive (canonicalJson): jsonb returns object keys in its own order, so a plain JSON.stringify
+      // comparison reported a change (new version, history row, audit event) on every recompute (REQ-SET-001, QA-P1-14).
       const same =
         prev.state === d.state &&
         (prev.explanation ?? '') === d.explanation &&

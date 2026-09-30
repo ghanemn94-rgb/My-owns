@@ -272,7 +272,7 @@ export function PerimeterVersionsPanel() {
   const [propose, setPropose] = useState(false);
   const [decide, setDecide] = useState<{ v: PerimeterVersion; kind: 'approve' | 'reject' } | null>(null);
   const columns: Column<PerimeterVersion>[] = [
-    { key: 'no', header: t('carveout.versions.version'), isRowHeader: true, cell: (v) => <span className="tabular font-medium">v{v.versionNo}</span> },
+    { key: 'no', header: t('carveout.versions.version'), isRowHeader: true, cell: (v) => <span className="tabular font-medium">{t('documents.versions.label', { version: v.versionNo })}</span> },
     { key: 'status', header: t('carveout.common.status'), cell: (v) => <StatusBadge enumName="baselineStatuses" value={v.status} tone={VERSION_TONE[v.status]} label={t(`carveout.versions.status.${v.status}`)} /> },
     { key: 'items', header: t('carveout.versions.items'), cell: (v) => <span className="tabular">{v.itemCount}</span> },
     { key: 'proposed', header: t('carveout.versions.proposed'), cell: (v) => <span className="text-sm"><span dir="auto">{v.proposedByName ?? EM_DASH}</span> · {formatDateTime(v.createdAt)}</span> },

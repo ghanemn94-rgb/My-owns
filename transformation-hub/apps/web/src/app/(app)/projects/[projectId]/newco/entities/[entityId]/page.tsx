@@ -162,7 +162,7 @@ export default function LegalEntityPage() {
               <ol className="space-y-1.5 text-sm" data-testid="entity-history">
                 {[...e.history].reverse().map((h) => (
                   <li key={h.versionNo}>
-                    <span className="font-medium tabular">v{h.versionNo}</span> <span dir="auto">{h.reason ?? EM_DASH}</span>{' '}
+                    <span className="font-medium tabular">{t('documents.versions.label', { version: h.versionNo })}</span> <span dir="auto">{h.reason ?? EM_DASH}</span>{' '}
                     <span className="text-muted">
                       · <span dir="auto">{h.changedByName ?? EM_DASH}</span> · {formatDateTime(h.changedAt)}
                     </span>
