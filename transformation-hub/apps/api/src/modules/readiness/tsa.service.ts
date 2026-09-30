@@ -6,10 +6,19 @@ import {
   TSA_DECISION_TYPE_KEYS,
   TSA_MACHINE,
   TSA_SIMPLE_COMMANDS,
+  TSA_TERMS_OPEN_STATUSES,
   allowedCommands,
   assessTsaExpiry,
   assertDecisionLinkable,
+  assertExtensionEndDateAhead,
   assertExtensionRequestValid,
+  assertTsaActivatable,
+  clearanceAllows,
+  extensionTermsBinding,
+  financeDomainClearance,
+  forbidden,
+  statusAfterRemedy,
+  DecisionUseRecord,
   assertReplacementAcceptable,
   assertTsaApprovable,
   assertTsaExitAcceptable,
@@ -62,6 +71,21 @@ const tsaExtensionRule = (tsaId: string): RelianceRule => ({
 
 type TsaRow = typeof schema.tsaService.$inferSelect;
 type Money = { amount: string; currency: string; unitScale: 1 | 1000 | 1000000 };
+
+/**
+ * DOM-P3-13 — conservative option until a decision paper can name a TSA (open question for the governance owner,
+ * docs/assumptions-and-open-questions.md): one `tsa_approval_or_extension` decision backs the terms of a TSA and one
+ * extension OF THE SAME TSA. A decision already used (terms or extension) for TSA A never backs a use for TSA B.
+ */
+function assertSameTsa(d: DecisionRow, tsaId: string, uses: DecisionUseRecord[], codePrefix: 'tsa.approve' | 'tsa.extension') {
+  const other = uses.find((u) => (u.kind === 'tsa_service' || u.kind === 'tsa_extension') && u.subjectId !== tsaId);
+  if (other) {
+    throw ruleViolation(`${codePrefix}.decision_other_tsa`, `Decision ${d.code} already backs another TSA (${other.kind === 'tsa_service' ? 'its terms' : 'its extension'}); a decision about one TSA does not back another TSA`, {
+      decisionId: d.id,
+      otherUseKind: other.kind,
+    });
+  }
+}
 
 /** Days before the end date at which the expiry job starts warning (proposed default, to be confirmed). */
 export const TSA_EXPIRY_WARN_DAYS = 30;
@@ -129,6 +153,18 @@ export class TsaService {
 
   // ---------------------------------------------------------------------------------------------------------
   // Reads
+
+  /**
+   * SEC-P34-06: the finance read of the finance module (FinanceSupport.canRead semantics): finance-domain clearance
+   * (access-matrix §2.3) and the reach of `finance.record.read` for the TSA's workstream.
+   */
+  private canSeeCharge(ctx: RequestContext, projectId: string, t: Pick<TsaRow, 'classification' | 'workstreamId'>): boolean {
+    const p = ctx.principal;
+    const scope = p.kind === 'service' ? undefined : p.projects.get(projectId);
+    const clearance = scope ? financeDomainClearance(p.clearance, scope.roles) : p.clearance;
+    const fx: RequestContext = clearance === p.clearance ? ctx : { ...ctx, principal: { ...p, clearance } };
+    return this.s.policy.can(fx, 'finance.record.read', { projectId, classification: t.classification, workstreamId: t.workstreamId });
+  }
 
   private async loadReadable(ctx: RequestContext, projectId: string, id: string): Promise<TsaRow> {
     const t = await loadInProject(this.s.db, schema.tsaService, projectId, id);
@@ -204,8 +240,9 @@ export class TsaService {
     const t = await this.loadReadable(ctx, projectId, id);
     const p = await this.s.project(projectId);
     const today = this.s.today(p);
-    // Charge basis/amount: finance readers only (REQ-TSA-001 security rule).
-    const showCharge = this.s.policy.canInProject(ctx, 'finance.record.read', projectId);
+    // Charge basis/amount: finance readers only (REQ-TSA-001 security rule) — with the finance-domain clearance AND the reach
+    // of finance.record.read over this TSA (its workstream; a TSA without one needs a project-wide grant) — SEC-P34-06.
+    const showCharge = this.canSeeCharge(ctx, projectId, t);
     const esc = t.escalationId && this.s.policy.canInProject(ctx, 'governance.decision.read', projectId) ? await loadInProject(this.s.db, schema.escalation, projectId, t.escalationId) : null;
     const req = t.exitApprovalRequestId ? await loadInProject(this.s.db, schema.approvalRequest, projectId, t.exitApprovalRequestId) : null;
     const d = await this.s.decisionRow(projectId, t.extensionDecisionId);
@@ -305,8 +342,17 @@ export class TsaService {
     if (t.replacementAccepted && ('replacementService' in effective || 'replacementPlan' in effective)) {
       throw ruleViolation('tsa.replacement_locked', 'The replacement was accepted as defined; report a replacement failure before redefining it');
     }
+    // DOM-P3-15: whether the service is an ENDURING arrangement (it then never has to be exited) is part of the approved
+    // terms — the dimension counts it as an approved enduring arrangement — so it changes only before the terms approval.
+    if ('isEnduringArrangement' in effective && !TSA_TERMS_OPEN_STATUSES.includes(t.status)) {
+      throw ruleViolation('tsa.enduring_locked', 'Whether the service is an enduring arrangement is part of its approved terms; it cannot be changed after the approval', { status: t.status });
+    }
     if (effective['classification'] && rank(effective['classification'] as Classification) < rank(t.classification)) {
       throw ruleViolation('tsa.declassification', 'Lowering the classification of a TSA record is a declassification decision outside this command');
+    }
+    // SEC-P34-08 (access-matrix §2.4): the resulting classification may not exceed the editor's own clearance.
+    if (effective['classification'] && ctx.principal.kind !== 'service' && !clearanceAllows(ctx.principal.clearance, effective['classification'] as Classification)) {
+      throw forbidden('readiness.classification_above_clearance', 'You cannot classify a record above your own clearance');
     }
     if (effective['workstreamId']) this.s.policy.assert(ctx, 'readiness.tsa.manage', { projectId, workstreamId: effective['workstreamId'] as string, classification: t.classification, ownerUserIds: [t.ownerUserId, t.createdBy] });
     await this.validate(ctx, projectId, effective as TsaBody);
@@ -325,8 +371,9 @@ export class TsaService {
     return { id: t.id, version: row.version };
   }
 
-  private async applyStatus(ctx: RequestContext, t: TsaRow, cmd: TsaCommand, expectedVersion: number, values: Record<string, unknown>, reason: string | null, extraAudit: Record<string, unknown> = {}) {
-    const to = transition('tsa', TSA_MACHINE, t.status, cmd);
+  private async applyStatus(ctx: RequestContext, t: TsaRow, cmd: TsaCommand, expectedVersion: number, values: Record<string, unknown>, reason: string | null, extraAudit: Record<string, unknown> = {}, resultingStatus?: (machineTo: TsaStatus) => TsaStatus) {
+    const machineTo = transition('tsa', TSA_MACHINE, t.status, cmd);
+    const to = resultingStatus ? resultingStatus(machineTo) : machineTo;
     const row = (await updateVersioned(this.s.db, schema.tsaService, { id: t.id, projectId: t.projectId, expectedVersion }, { status: to, ...values })) as TsaRow;
     await this.s.versions.snapshot({ projectId: t.projectId, entityType: 'tsa_service', entityId: t.id, versionNo: row.version, snapshot: row, reason: cmd });
     await this.s.audit.record({ action: `readiness.tsa.${cmd}`, entityType: 'tsa_service', entityId: t.id, projectId: t.projectId, before: { status: t.status }, after: { status: to, ...extraAudit }, reason });
@@ -339,11 +386,15 @@ export class TsaService {
     const t = await loadInProject(this.s.db, schema.tsaService, projectId, id);
     this.assertManage(ctx, projectId, t);
     if (!(TSA_SIMPLE_COMMANDS as readonly string[]).includes(body.command)) throw invalid('tsa.command_not_allowed', `${body.command} has its own command`);
-    if (body.command === 'start_exit') assertTsaExitStartable(t);
-    if ((body.command === 'record_breach' || body.command === 'remedy_breach') && !body.note?.trim()) {
-      throw ruleViolation('tsa.note_required', 'Describe the breach / the remedy');
+    if (body.command === 'start_exit' || body.command === 'accelerate_exit') assertTsaExitStartable(t);
+    if ((body.command === 'record_breach' || body.command === 'remedy_breach' || body.command === 'accelerate_exit') && !body.note?.trim()) {
+      throw ruleViolation('tsa.note_required', body.command === 'accelerate_exit' ? 'State the decision that accelerates the exit' : 'Describe the breach / the remedy');
     }
-    const row = await this.applyStatus(ctx, t, body.command, body.expectedVersion, {}, body.note ?? null);
+    // DOM-P3-17: activation needs the start date reached; a breach remembers the status it interrupted and its remedy
+    // returns to it (an extended TSA stays extended); a breach may accelerate the exit.
+    if (body.command === 'activate') assertTsaActivatable({ startDate: t.startDate, today: this.s.today(await this.s.project(projectId)) });
+    const values: Record<string, unknown> = body.command === 'record_breach' ? { preBreachStatus: t.status } : body.command === 'remedy_breach' || body.command === 'accelerate_exit' ? { preBreachStatus: null } : {};
+    const row = await this.applyStatus(ctx, t, body.command, body.expectedVersion, values, body.note ?? null, {}, body.command === 'remedy_breach' ? () => statusAfterRemedy(t.preBreachStatus) : undefined);
     return { id: t.id, status: row.status, version: row.version };
   }
 
@@ -364,6 +415,7 @@ export class TsaService {
     const rule = tsaApprovalRule(t.id);
     const reliance = await currentDecisionReliance(this.s.db, projectId, d, rule);
     if (reliance.issue) throw ruleViolation(reliance.issue.code, reliance.issue.reason, reliance.issue.params);
+    assertSameTsa(d, t.id, reliance.uses, 'tsa.approve');
     await lockDecisionAndRecheck(this.s.db, projectId, d.id, rule, reliance.uses);
     const row = await this.applyStatus(ctx, t, 'approve', body.expectedVersion, { approvalDecisionId: d.id }, body.note ?? null, { decisionId: d.id, decisionCode: d.code });
     await registerDecisionUse(this.s.db, { orgId: ctx.principal.orgId, projectId, decisionId: d.id, decisionCode: d.code, kind: 'tsa_service', subjectId: t.id, usedBy: ctx.principal.userId, codePrefix: 'tsa.approve' });
@@ -382,6 +434,7 @@ export class TsaService {
       throw ruleViolation('tsa.extension.decision_already_used', `Decision ${d.code} already authorized an extension of this TSA; a further extension needs a new decision`, { decisionId: d.id });
     }
     if (r.issue) throw ruleViolation(r.issue.code, r.issue.reason, r.issue.params);
+    assertSameTsa(d, tsaId, r.uses, 'tsa.extension');
     return { rule, uses: r.uses };
   }
 
@@ -448,7 +501,22 @@ export class TsaService {
     this.assertManage(ctx, projectId, t);
     const d = await this.s.decision(ctx, projectId, body.decisionId);
     assertDecisionLinkable(this.s.linked(d), TSA_DECISION_TYPE_KEYS, 'A TSA extension');
-    assertExtensionRequestValid({ status: t.status, currentEndDate: t.endDate, proposedEndDate: body.proposedEndDate, continuityPlan: body.continuityPlan });
+    const today = this.s.today(await this.s.project(projectId));
+    assertExtensionRequestValid({ status: t.status, currentEndDate: t.endDate, proposedEndDate: body.proposedEndDate, continuityPlan: body.continuityPlan, today });
+    // DOM-P3-06: once the linked decision left draft, the requested terms are bound to it — a new date needs a new decision;
+    // repeating the bound terms changes nothing.
+    const linked = t.extensionDecisionId === d.id ? d : null;
+    const binding = extensionTermsBinding({
+      linkedDecisionId: t.extensionDecisionId,
+      requestedDecisionId: d.id,
+      linkedDecisionStatus: linked?.status ?? null,
+      bound: { proposedEndDate: t.proposedEndDate, continuityPlan: t.continuityPlan },
+      requested: { proposedEndDate: body.proposedEndDate, continuityPlan: body.continuityPlan },
+    });
+    if (binding === 'same') {
+      assertVersion(t, body.expectedVersion, 'TSA service');
+      return { id: t.id, status: t.status, version: t.version };
+    }
     // DOM-P2F-09: the decision-use registry (and the external evidence) decide — the decision may still be pending here.
     await this.extensionReliance(projectId, t.id, d, false);
     const row = (await updateVersioned(this.s.db, schema.tsaService, { id: t.id, projectId, expectedVersion: body.expectedVersion }, {
@@ -478,6 +546,8 @@ export class TsaService {
       }
       throw e;
     }
+    // DOM-P3-07: the requested end date must still be ahead when the extension is recorded (a passed date needs a new request).
+    assertExtensionEndDateAhead(t.proposedEndDate, this.s.today(await this.s.project(projectId)));
     // DOM-P2F-09: the FINAL decision (checked above) authorizes this one extension — evidence re-checked, registry pre-check,
     // then the row lock and the re-check (a concurrent extension on the same decision is 409), the write and the use.
     const { rule, uses } = await this.extensionReliance(projectId, t.id, d!, true);

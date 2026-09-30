@@ -376,8 +376,59 @@ export function linkedDecisionIssueCode(d: LinkedDecision | null, allowedTypeKey
 // TSA commands (§7.3; REQ-TSA-001..006; AT-10)
 
 /** Commands executable through the generic transition endpoint; guarded commands have dedicated endpoints. */
-export const TSA_SIMPLE_COMMANDS = ['start_negotiation', 'activate', 'start_exit', 'record_breach', 'remedy_breach'] as const;
+export const TSA_SIMPLE_COMMANDS = ['start_negotiation', 'activate', 'start_exit', 'record_breach', 'remedy_breach', 'accelerate_exit'] as const;
 export type TsaSimpleCommand = (typeof TSA_SIMPLE_COMMANDS)[number];
+
+/** Statuses a breach can return to when remedied (DOM-P3-17). */
+const PRE_BREACH_STATUSES: readonly TsaStatus[] = ['active', 'extended', 'exit_in_progress'];
+
+/** DOM-P3-17: a remedied breach returns the TSA to the status it had when the breach was recorded (`active` if unknown). */
+export function statusAfterRemedy(preBreachStatus: TsaStatus | null | undefined): TsaStatus {
+  return preBreachStatus && PRE_BREACH_STATUSES.includes(preBreachStatus) ? preBreachStatus : 'active';
+}
+
+/**
+ * DOM-P3-17 (business-gates.md §6 "approved → active: service start date reached and service confirmed"): a TSA is activated
+ * only once its start date is reached (project timezone).
+ */
+export function assertTsaActivatable(t: { startDate: string | null; today: string }): void {
+  if (!t.startDate || t.startDate > t.today) {
+    throw ruleViolation('tsa.activate.not_started', t.startDate ? `The service starts on ${t.startDate}; it can be activated from that date` : 'The TSA has no start date', { startDate: t.startDate });
+  }
+}
+
+/** Whether a TSA's terms are approved (its descriptive terms are then part of the approval — DOM-P3-15). */
+export const TSA_TERMS_OPEN_STATUSES: readonly TsaStatus[] = ['proposed', 'negotiating'];
+
+/**
+ * DOM-P3-06: the terms of an extension request (end date, continuity plan) are bound to the decision they were linked to
+ * once that decision has left `draft` (the paper went to the committee with them): a different end date or continuity plan
+ * needs a NEW decision. Returns `same` when the request repeats the bound terms (idempotent), `free` when they may change.
+ */
+export function extensionTermsBinding(i: {
+  linkedDecisionId: string | null;
+  requestedDecisionId: string;
+  linkedDecisionStatus: DecisionStatus | null;
+  bound: { proposedEndDate: string | null; continuityPlan: string | null };
+  requested: { proposedEndDate: string; continuityPlan: string };
+}): 'free' | 'same' {
+  if (!i.linkedDecisionId || i.linkedDecisionId !== i.requestedDecisionId || !i.bound.proposedEndDate) return 'free';
+  const same = i.bound.proposedEndDate === i.requested.proposedEndDate && (i.bound.continuityPlan ?? '') === i.requested.continuityPlan;
+  if (same) return 'same';
+  if (i.linkedDecisionStatus === 'draft') return 'free';
+  throw ruleViolation(
+    'tsa.extension.terms_bound',
+    `The extension requested on this decision (end date ${i.bound.proposedEndDate}) is before the committee: a different end date or continuity plan needs a new decision`,
+    { boundEndDate: i.bound.proposedEndDate, requestedEndDate: i.requested.proposedEndDate },
+  );
+}
+
+/** DOM-P3-07: an extension ends after "today" (project timezone) — an expired TSA is never "extended" into the past. */
+export function assertExtensionEndDateAhead(proposedEndDate: string, today: string): void {
+  if (proposedEndDate <= today) {
+    throw ruleViolation('tsa.extension.end_date_past', `The new end date ${proposedEndDate} is not after today (${today}); an extension must extend the service`, { proposedEndDate, today });
+  }
+}
 
 /**
  * The continuity options attached to every TSA escalation (expiry or replacement failure). The server stores the
@@ -427,14 +478,15 @@ export function assertReplacementAcceptable(t: { status: TsaStatus; replacementS
   if (!filled(t.note)) throw ruleViolation('tsa.replacement.note_required', 'Record the acceptance basis');
 }
 
-/** An extension request states the new end date (after the current one) and the continuity plan. */
-export function assertExtensionRequestValid(t: { status: TsaStatus; currentEndDate: string | null; proposedEndDate: string; continuityPlan: string }): void {
+/** An extension request states the new end date (after the current one AND after today — DOM-P3-07) and the continuity plan. */
+export function assertExtensionRequestValid(t: { status: TsaStatus; currentEndDate: string | null; proposedEndDate: string; continuityPlan: string; today: string }): void {
   if (!TSA_MACHINE.record_extension.from.includes(t.status)) {
     throw ruleViolation('tsa.extension.invalid_state', `An extension cannot be requested while the TSA is ${t.status}`);
   }
   if (t.currentEndDate && t.proposedEndDate <= t.currentEndDate) {
     throw ruleViolation('tsa.extension.end_date_not_later', `The proposed end date must be after the current end date (${t.currentEndDate})`);
   }
+  assertExtensionEndDateAhead(t.proposedEndDate, t.today);
   if (!filled(t.continuityPlan)) throw ruleViolation('tsa.extension_requires_continuity_plan', 'An extension must reference the continuity plan');
 }
 

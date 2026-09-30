@@ -188,6 +188,7 @@ export type TsaCommand =
   | 'record_extension'
   | 'record_breach'
   | 'remedy_breach'
+  | 'accelerate_exit'
   | 'mark_expired_unresolved';
 export const TSA_MACHINE: Machine<TsaStatus, TsaCommand> = {
   start_negotiation: { from: ['proposed'], to: 'negotiating', description: 'Negotiation started' },
@@ -206,7 +207,10 @@ export const TSA_MACHINE: Machine<TsaStatus, TsaCommand> = {
     description: 'Extension recorded ONLY with an approved decision (guard: assertTsaExtensionAllowed); never automatic',
   },
   record_breach: { from: ['active', 'extended', 'exit_in_progress'], to: 'breached', description: 'SLA/contract breach recorded' },
-  remedy_breach: { from: ['breached'], to: 'active', description: 'Breach remedied' },
+  // DOM-P3-17: the resulting status is the one the TSA had before the breach (active / extended / exit in progress) —
+  // `statusAfterRemedy` in readiness.ts; `active` when unknown (a breach recorded before the status was kept).
+  remedy_breach: { from: ['breached'], to: 'active', description: 'Breach remedied — back to the status before the breach' },
+  accelerate_exit: { from: ['breached'], to: 'exit_in_progress', description: 'Exit accelerated after a breach (by decision; reason recorded)' },
   mark_expired_unresolved: {
     // `approved` included (P0 review D-25): an approved TSA whose end date passes without an exit is not "ok".
     from: ['approved', 'active', 'extended', 'exit_in_progress', 'breached'],

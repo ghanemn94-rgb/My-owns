@@ -8,6 +8,7 @@ import {
   READINESS_AREAS,
   READINESS_STATUSES,
   ROLE_KEYS,
+  TSA_SIMPLE_COMMANDS,
   TSA_STATUSES,
   WAIVER_STATUSES,
   APPROVAL_REQUEST_STATUSES,
@@ -364,12 +365,13 @@ export const CreateReadinessCheckBody = z.object({
 }).strict(); // unknown fields (e.g. status, waivable) are a 400 (QA-P1-12)
 
 /**
- * Descriptive fields only (DOM-P3-01): which transition a check gates (`siteId`, `cutoverPlanId`) changes only through the
- * re-binding command — a 400 here.
+ * Descriptive fields only (DOM-P3-01 / DOM-P3-15): which transition a check gates (`siteId`, `cutoverPlanId`) changes only
+ * through the re-binding command, and the recorded test result only through a test run — both are a 400 here.
  */
-const { siteId: _siteId, cutoverPlanId: _cutoverPlanId, ...checkEditable } = checkDescriptive;
+const { siteId: _siteId, cutoverPlanId: _cutoverPlanId, testResult: _testResult, ...checkEditable } = checkDescriptive;
 void _siteId;
 void _cutoverPlanId;
+void _testResult;
 export const UpdateReadinessCheckBody = z
   .object({
     expectedVersion: ExpectedVersion,
@@ -843,12 +845,12 @@ export const readinessRoutes = registerRoutes({
     id: 'readiness.transitionTsaService',
     method: 'POST',
     path: `${P}/tsa-services/:tsaServiceId/transition`,
-    summary: 'State-machine command: start_negotiation | activate | start_exit | record_breach | remedy_breach (illegal transitions → 422)',
+    summary: 'State-machine command: start_negotiation | activate (start date reached) | start_exit | record_breach | remedy_breach (back to the status before the breach) | accelerate_exit (after a breach) — illegal transitions → 422',
     tags,
     access: 'readiness.tsa.manage',
     command: true,
     params: TsaParams,
-    body: z.object({ expectedVersion: ExpectedVersion, command: z.enum(['start_negotiation', 'activate', 'start_exit', 'record_breach', 'remedy_breach']), note: Text(4000).optional() }),
+    body: z.object({ expectedVersion: ExpectedVersion, command: z.enum(TSA_SIMPLE_COMMANDS), note: Text(4000).optional() }),
     response: TsaCommandResult,
   }),
   approveTsaTerms: defineRoute({

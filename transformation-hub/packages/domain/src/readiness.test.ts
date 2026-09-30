@@ -14,7 +14,11 @@ import {
   READINESS_CHECK_MACHINE,
   DAY1_READINESS_AREAS,
   assertExecutionAllowed,
+  assertExtensionEndDateAhead,
   assertReadinessCheckRebind,
+  assertTsaActivatable,
+  extensionTermsBinding,
+  statusAfterRemedy,
   assertCutoverSubmittable,
   assertDecisionLinkable,
   assertExtensionRequestValid,
@@ -348,9 +352,34 @@ describe('TSA (REQ-TSA-001..006, AT-10, D-25)', () => {
   });
   it('REQ-TSA-005: an extension needs an approved decision, a later end date and a continuity plan', () => {
     expect(codeOf(() => assertTsaExtensionAllowed({ extensionDecisionApproved: false, newEndDate: '2027-06-30', continuityPlan: 'x' }))).toBe('rule_violation:tsa.extension_requires_decision');
-    expect(codeOf(() => assertExtensionRequestValid({ status: 'active', currentEndDate: '2027-03-31', proposedEndDate: '2027-03-01', continuityPlan: 'x' }))).toBe('rule_violation:tsa.extension.end_date_not_later');
-    expect(codeOf(() => assertExtensionRequestValid({ status: 'proposed', currentEndDate: null, proposedEndDate: '2027-03-01', continuityPlan: 'x' }))).toBe('rule_violation:tsa.extension.invalid_state');
-    expect(codeOf(() => assertExtensionRequestValid({ status: 'active', currentEndDate: '2027-03-31', proposedEndDate: '2027-06-30', continuityPlan: ' ' }))).toBe('rule_violation:tsa.extension_requires_continuity_plan');
+    const today = '2026-09-30';
+    expect(codeOf(() => assertExtensionRequestValid({ status: 'active', currentEndDate: '2027-03-31', proposedEndDate: '2027-03-01', continuityPlan: 'x', today }))).toBe('rule_violation:tsa.extension.end_date_not_later');
+    expect(codeOf(() => assertExtensionRequestValid({ status: 'proposed', currentEndDate: null, proposedEndDate: '2027-03-01', continuityPlan: 'x', today }))).toBe('rule_violation:tsa.extension.invalid_state');
+    expect(codeOf(() => assertExtensionRequestValid({ status: 'active', currentEndDate: '2027-03-31', proposedEndDate: '2027-06-30', continuityPlan: ' ', today }))).toBe('rule_violation:tsa.extension_requires_continuity_plan');
+    // DOM-P3-07: an expired TSA (end 2026-09-20) is not "extended" to a date that has already passed.
+    expect(codeOf(() => assertExtensionRequestValid({ status: 'expired_unresolved', currentEndDate: '2026-09-20', proposedEndDate: '2026-09-25', continuityPlan: 'x', today }))).toBe('rule_violation:tsa.extension.end_date_past');
+    expect(() => assertExtensionRequestValid({ status: 'expired_unresolved', currentEndDate: '2026-09-20', proposedEndDate: '2026-10-25', continuityPlan: 'x', today })).not.toThrow();
+    expect(codeOf(() => assertExtensionEndDateAhead('2026-09-30', today))).toBe('rule_violation:tsa.extension.end_date_past');
+  });
+  it('DOM-P3-06: the extension terms are bound to their decision once it left draft; the same terms are idempotent', () => {
+    const base = { linkedDecisionId: 'd1', requestedDecisionId: 'd1', linkedDecisionStatus: 'under_review' as const, bound: { proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' }, requested: { proposedEndDate: '2027-01-19', continuityPlan: 'Keep the bridge' } };
+    expect(extensionTermsBinding(base)).toBe('same');
+    expect(codeOf(() => extensionTermsBinding({ ...base, requested: { proposedEndDate: '2036-09-28', continuityPlan: 'Keep the bridge' } }))).toBe('rule_violation:tsa.extension.terms_bound');
+    expect(codeOf(() => extensionTermsBinding({ ...base, linkedDecisionStatus: 'approved', requested: { proposedEndDate: '2027-01-19', continuityPlan: 'Another plan' } }))).toBe('rule_violation:tsa.extension.terms_bound');
+    expect(extensionTermsBinding({ ...base, linkedDecisionStatus: 'draft', requested: { proposedEndDate: '2027-02-19', continuityPlan: 'x' } })).toBe('free');
+    expect(extensionTermsBinding({ ...base, requestedDecisionId: 'd2', requested: { proposedEndDate: '2036-09-28', continuityPlan: 'x' } })).toBe('free');
+    expect(extensionTermsBinding({ ...base, bound: { proposedEndDate: null, continuityPlan: null } })).toBe('free');
+  });
+  it('DOM-P3-17: activation needs the start date reached; a remedied breach returns to the status before the breach; a breach may accelerate the exit', () => {
+    expect(codeOf(() => assertTsaActivatable({ startDate: '2026-10-05', today: '2026-09-30' }))).toBe('rule_violation:tsa.activate.not_started');
+    expect(codeOf(() => assertTsaActivatable({ startDate: null, today: '2026-09-30' }))).toBe('rule_violation:tsa.activate.not_started');
+    expect(() => assertTsaActivatable({ startDate: '2026-09-30', today: '2026-09-30' })).not.toThrow();
+    expect(statusAfterRemedy('extended')).toBe('extended');
+    expect(statusAfterRemedy('exit_in_progress')).toBe('exit_in_progress');
+    expect(statusAfterRemedy(null)).toBe('active');
+    expect(statusAfterRemedy('breached')).toBe('active');
+    expect(transition('tsa', TSA_MACHINE, 'breached', 'accelerate_exit')).toBe('exit_in_progress');
+    expect(() => transition('tsa', TSA_MACHINE, 'active', 'accelerate_exit')).toThrow();
   });
   it('REQ-TSA-006: approveTSAExit without acceptance evidence is rejected; the approver is independent', () => {
     expect(codeOf(() => assertTsaExitAcceptable({ replacementAccepted: true, acceptanceEvidenceCount: 0 }))).toBe('rule_violation:tsa.exit_not_evidenced');

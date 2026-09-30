@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { PoolClient } from 'pg';
 import { closeApp, closePools, loginAs, owner, projectIdByCode, runtimePool, Client, GEN } from '../helpers';
 import { insertDecisionRow } from '../gates/gate-test-kit';
+import { syntheticUser } from '../jv/jv-kit';
 import { P, completePlan, createCheck, grantWorkstreamRole, insertSite, orgOf, plusDays, setupProject, workstreamId, Personas, drainWorker } from './readiness-kit';
 
 /**
@@ -144,7 +145,16 @@ describe('Readiness isolation — other projects, foreign ids, workstream reach,
 
   it('classification applies in SQL: a TSA raised above the caller’s clearance disappears from their list and count', async () => {
     const t = (await p.pm.get(`${P(projectId)}/tsa-services/${tsaId}`).expect(200)).body;
-    const r = await p.pm.patch(`${P(projectId)}/tsa-services/${tsaId}`, { expectedVersion: t.version, classification: 'restricted' });
+    // SEC-P34-08 (access-matrix §2.4): the PM (clearance confidential) may not raise the TSA above its own clearance …
+    const refused = await p.pm.patch(`${P(projectId)}/tsa-services/${tsaId}`, { expectedVersion: t.version, classification: 'restricted' });
+    expect(refused.status).toBe(403);
+    expect(refused.body.code).toBe('readiness.classification_above_clearance');
+    // … a TSA manager cleared `restricted` does (synthetic project manager, granted through the portfolio API).
+    const cleared = await syntheticUser(orgId, 'rd-iso.pm.restricted', 'internal', 'restricted');
+    const admin = await loginAs('portfolio.admin');
+    const grant = await admin.post(`${P(projectId)}/members`, { userId: cleared.userId, role: 'project_manager', reason: 'Readiness isolation test (TSA manager cleared restricted, synthetic)' });
+    expect(grant.status, JSON.stringify(grant.body)).toBe(201);
+    const r = await cleared.patch(`${P(projectId)}/tsa-services/${tsaId}`, { expectedVersion: t.version, classification: 'restricted' });
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     const pmList = (await p.pm.get(`${P(projectId)}/tsa-services`).expect(200)).body;
     expect(pmList.items.map((x: { id: string }) => x.id)).not.toContain(tsaId);
@@ -155,6 +165,7 @@ describe('Readiness isolation — other projects, foreign ids, workstream reach,
     // Lowering it again is a declassification, not an edit.
     const down = await p.sponsor.patch(`${P(projectId)}/tsa-services/${tsaId}`, { expectedVersion: r.body.version, classification: 'internal' });
     expect(down.status).toBe(403); // the sponsor holds no readiness.tsa.manage
+    expect((await admin.post(`${P(projectId)}/members/${grant.body.id}/revoke`, { reason: 'Readiness isolation test done' })).status).toBe(201);
   });
 
   it('search terms are literal (LIKE wildcards escaped)', async () => {

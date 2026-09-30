@@ -11,7 +11,10 @@ import { decisionVersion, vote } from '../governance/gov-fixtures';
  * `DEFECT …` is declared with `it.fails` while open (`P3D_PROBE_PLAIN=1` runs it plain); `OBSERVED …` pins current
  * behaviour. All data is synthetic.
  */
+// Implementer (fix of the P3 domain review): the DEFECT probe of this file is fixed and renamed `… (fixed, regression)` — a
+// plain `it`, assertion unchanged. The alias stays so that P3D_PROBE_PLAIN=1 keeps working for any probe added later.
 const defect = process.env['P3D_PROBE_PLAIN'] ? it : it.fails;
+void defect;
 
 let projectId: string;
 let p: Personas;
@@ -55,7 +58,7 @@ async function activeTsa(name: string, startDate: string, endDate: string) {
 let lastTermsDecision = '';
 
 describe('P3 domain review — what an approved TSA extension decision authorizes [AT-10, REQ-TSA-005]', () => {
-  defect('DEFECT DOM-P3-06: after the committee approved the extension requested "to X", the TSA manager re-requests it "to Y" on the same decision and records Y', async () => {
+  it('DOM-P3-06: after the committee approved the extension requested "to X", the TSA manager re-requests it "to Y" on the same decision and records Y (fixed, regression)', async () => {
     const id = await activeTsa('Monitoring bridge (probe, synthetic)', plusDays(-60), plusDays(20));
     // The extension is requested while the committee's paper is still under review: proposed end date X.
     const ext = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension', { vote: false });
@@ -87,44 +90,36 @@ describe('P3 domain review — what an approved TSA extension decision authorize
     expect(final.endDate, `request 1 (X=${X}) ${req1.status}; request 2 (Y=${Y}) ${req2.status} ${JSON.stringify(req2.body)}; record ${rec.status} ${JSON.stringify(rec.body)}; TSA ${final.status} end ${final.endDate}; audit ${JSON.stringify(audit)}`).not.toBe(Y);
   });
 
-  it('OBSERVED DOM-P3-13: the decision that approved the TERMS of TSA A authorizes an EXTENSION of another TSA B (documented "of that TSA or another")', async () => {
+  // Implementer (fix): the two OBSERVED probes below pinned the reported behaviour; per the probe convention they were updated
+  // together with the fix (setup unchanged) and now pin the implemented rule — see the "Fix status" of the review.
+  it('DOM-P3-13 (fixed — conservative option, governance owner to confirm): the decision that approved the TERMS of TSA A does not authorize an EXTENSION of another TSA B', async () => {
     const a = await activeTsa('NOC service A (probe, synthetic)', plusDays(-30), plusDays(40));
     const termsOfA = lastTermsDecision;
     const b = await activeTsa('Facility service B (probe, synthetic)', plusDays(-30), plusDays(45));
-    let t = await tsa(p.pm, projectId, b);
+    const t = await tsa(p.pm, projectId, b);
     const req = await cmd(b, 'request-extension', { expectedVersion: t.version, decisionId: termsOfA, proposedEndDate: plusDays(200), continuityPlan: 'Continuity for service B (synthetic)' });
-    expect(req.status, JSON.stringify(req.body)).toBe(201);
-    t = await tsa(p.pm, projectId, b);
-    const rec = await cmd(b, 'record-extension', { expectedVersion: t.version, note: 'Extension of B on the decision about A (probe)' });
     const uses = (await owner().query(`select use_kind, subject_id from decision_use where decision_id = $1 order by use_kind`, [termsOfA])).rows;
-    // Current behaviour (module-guide.md "Relying on a governance decision": "one decision may approve the terms of a TSA and
-    // one extension (of that TSA or another)"): the committee decided about TSA A's terms; the platform records TSA B as
-    // extended on that decision. See finding DOM-P3-13 (governance owner to confirm; conservative option: the extension
-    // use of a decision is bound to the TSA whose terms it approved).
-    expect(rec.status, JSON.stringify(rec.body)).toBe(201);
-    expect(uses).toEqual([
-      { use_kind: 'tsa_extension', subject_id: b },
-      { use_kind: 'tsa_service', subject_id: a },
-    ]);
+    // Implemented (conservative option of the review; open question for the governance owner): a decision used for TSA A (its
+    // terms) backs no use for another TSA — the request on B is refused and no use is registered for B.
+    expect(req.status, JSON.stringify(req.body)).toBe(422);
+    expect(req.body.code).toBe('tsa.extension.decision_other_tsa');
+    expect(uses).toEqual([{ use_kind: 'tsa_service', subject_id: a }]);
   });
 
-  it('OBSERVED DOM-P3-07: an expired TSA is "extended" to an end date that has already passed (the new date only has to be after the old one)', async () => {
+  it('DOM-P3-07 (fixed): an expired TSA is not "extended" to an end date that has already passed (the new date must be after today)', async () => {
     const id = await activeTsa('Legacy access bridge (probe, synthetic)', plusDays(-120), plusDays(-10));
     const scan = await runExpirySchedule(projectId);
     expect(scan['markedExpired']).toBeGreaterThanOrEqual(1);
-    let t = await tsa(p.pm, projectId, id);
+    const t = await tsa(p.pm, projectId, id);
     expect(t.status).toBe('expired_unresolved');
     const ext = await decisionOfType(projectId, p, gov, 'tsa_approval_or_extension');
     const past = plusDays(-5);
     const req = await cmd(id, 'request-extension', { expectedVersion: t.version, decisionId: ext.id, proposedEndDate: past, continuityPlan: 'Continuity: keep the bridge (synthetic)' });
-    expect(req.status, JSON.stringify(req.body)).toBe(201);
-    t = await tsa(p.pm, projectId, id);
-    const rec = await cmd(id, 'record-extension', { expectedVersion: t.version, note: 'Extension (probe)' });
-    expect(rec.status, JSON.stringify(rec.body)).toBe(201);
+    // Implemented: the request is refused (422 tsa.extension.end_date_past); the TSA stays expired-unresolved.
+    expect(req.status, JSON.stringify(req.body)).toBe(422);
+    expect(req.body.code).toBe('tsa.extension.end_date_past');
     const after = await tsa(p.pm, projectId, id);
-    // Current behaviour: the TSA leaves expired_unresolved for `extended` with an end date in the past (until the next daily
-    // scan marks it expired again) — the escalation's "extend" option can be discharged by an extension that extends nothing.
-    expect(after).toMatchObject({ status: 'extended', endDate: past });
+    expect(after).toMatchObject({ status: 'expired_unresolved', endDate: plusDays(-10) });
     expect(after.expiry.kind).toBe('expired_unresolved');
   });
 });

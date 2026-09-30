@@ -336,13 +336,13 @@ export class ReadinessChecksService implements OnModuleInit {
 
   /**
    * Descriptive fields only. Which transition the check gates (`siteId`, `cutoverPlanId`) changes through `rebind` (DOM-P3-01)
-   * — the contract refuses it here (400).
+   * and the recorded test result through a test run (DOM-P3-15) — the contract refuses both here (400).
    */
   async update(
     ctx: RequestContext,
     projectId: string,
     checkId: string,
-    body: { expectedVersion: number; title?: string; titleAr?: string | null; workstreamId?: string | null; ownerUserId?: string | null; testResult?: string | null; failureContingency?: string | null; dueDate?: string | null },
+    body: { expectedVersion: number; title?: string; titleAr?: string | null; workstreamId?: string | null; ownerUserId?: string | null; failureContingency?: string | null; dueDate?: string | null },
   ) {
     const c = await loadInProject(this.s.db, schema.readinessCheck, projectId, checkId);
     this.assertManage(ctx, projectId, c);

@@ -159,6 +159,10 @@ export class StatusDimensionsService {
    * Service method other modules/jobs may call inside a project-scoped context.
    */
   async recomputeDimensions(projectId: string): Promise<{ changed: StatusDimensionKey[] }> {
+    // DOM-P3-14: one recompute of a project's dimensions at a time (HTTP commands and the worker job) — the transaction-
+    // scoped advisory lock `hub_dimensions:<projectId>` is taken before any register is read, so a recompute never stores
+    // a state computed from an older snapshot after a newer one, and history rows are never dropped by a concurrent writer.
+    await this.db.query(`select pg_advisory_xact_lock(hashtextextended('hub_dimensions:' || $1, 0))`, [projectId]);
     const tx = this.db.tx();
     const [tv] = await tx
       .select({ definition: schema.projectTemplateVersion.definition, orgId: schema.project.orgId })

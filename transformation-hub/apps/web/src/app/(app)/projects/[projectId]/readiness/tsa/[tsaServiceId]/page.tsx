@@ -77,7 +77,7 @@ function TsaDialogs({ x, cmd, onClose }: { x: TsaServiceDetail; cmd: Cmd; onClos
           {...common}
           title={t('readiness.tsaDetail.transition.title')}
           confirmLabel={t('readiness.tsaDetail.transition.confirm')}
-          noteMode={command === 'record_breach' || command === 'remedy_breach' ? 'required' : 'optional'}
+          noteMode={command === 'record_breach' || command === 'remedy_breach' || command === 'accelerate_exit' ? 'required' : 'optional'}
           confirmDisabled={!command}
           consequences={[t('readiness.tsaDetail.transition.effect'), t('common.command.audited')]}
           onConfirm={async ({ note }) => {

@@ -199,7 +199,7 @@ describe('SEC-P34-06 — TSA charge shown by RBAC alone, outside the caller’s 
     expect((await p.techLead.get(`${G(projectId)}/budget-lines/${lineId}`)).status).toBe(404); // finance reach: its workstream only
   });
 
-  it.fails('DEFECT SEC-P34-06: the tech lead (finance.record.read on one workstream only) does not see the charge of a project-level TSA', async () => {
+  it('SEC-P34-06 (fixed, regression): the tech lead (finance.record.read on one workstream only) does not see the charge of a project-level TSA', async () => {
     const r = (await p.techLead.get(`${G(projectId)}/tsa-services/${tsaId}`).expect(200)).body;
     console.log(`SEC-P34-06 observed: charge shown to the tech lead → ${JSON.stringify({ charge: r.charge, chargeBasis: r.chargeBasis, chargeRedacted: r.chargeRedacted })}`);
     expect(r.charge).toBeNull();
@@ -251,7 +251,7 @@ describe('SEC-P34-08 — a TSA is relabelled above its editor’s clearance [acc
     expect([403, 404]).toContain(r.status);
   });
 
-  it.fails('DEFECT SEC-P34-08: PATCH may not raise the classification above the editor’s clearance (403, record unchanged)', async () => {
+  it('SEC-P34-08 (fixed, regression): PATCH may not raise the classification above the editor’s clearance (403, record unchanged)', async () => {
     const r = await p.pm.patch(`${G(projectId)}/tsa-services/${tsaId}`, { expectedVersion: 1, classification: 'strictly_confidential' });
     const row = (await owner().query(`select classification from tsa_service where id = $1`, [tsaId])).rows[0];
     console.log(`SEC-P34-08 observed: relabel by the PM (clearance confidential) → ${r.status}; stored classification ${row.classification}`);
