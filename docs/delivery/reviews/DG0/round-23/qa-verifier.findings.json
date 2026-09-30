@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG0-249",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "checkClosure still skips the verified-round ancestry check when the round's source_commit is (self-declared) absent. A present fix that is in the gate candidate but NOT in the verifying run's starting history closes a finding. D-039 now requires head_commit_at_start to be present, so the head could bind the fix instead.",
+      "reproduction": "QA_REPO_ROOT=<complete clone of the candidate> node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r23.test.mjs, case QA23-P1 (log docs/delivery/test-evidence/DG0/qa/round-23/13-qa23-negative-suite.log). Start from the independent fixture, which validates with 0 errors (QA23-G0). (1) Commit a round-3 manifest whose entries hash correctly to its candidate_id and whose source_commit = 'ab' x 20 (never existed). Add a matching stages.json round-3 entry. (2) The qa-verifier round-3 run's head_commit_at_start is a PRESENT commit that contains that manifest but does not have the fix in its history (the fixture uses a parentless commit on a kept branch; on a linear history this is any fix committed after the run started). (3) The run's sidecar closes F-DG0-201 (High). The mirror sets fix_revision = a real commit that IS an ancestor of the gate candidate. validateGate = [] (ACCEPTED). Root cause: tools/gates/lib/rules.mjs checkClosure `if (commitPresent(repo, round.source_commit) && !isAncestor(repo, f.fix_revision, round.source_commit))` skips the round binding when round.source_commit is absent. That is a corollary of findManifest's D-035 tolerance and is documented in D-039 ('when its source_commit resolves'). The fix is not compared with the verifying run's head_commit_at_start, which D-039 now requires to be present.",
+      "expected": "A CLOSED_VERIFIED fix_revision is bound to content the verifier could have seen, whatever the round metadata says. Proposal: in checkClosure, also require isAncestor(fix_revision, <verifying run's head_commit_at_start>), or use that as the fallback when round.source_commit is absent. The head is now always present and must contain the round manifest, and on a genuine history fix <= source_commit <= freeze/manifest commit <= head. Feasibility on the real history: all 104 CLOSED_VERIFIED fixes are already ancestors of their verifying run's head, and none is verified in a round whose source_commit is absent (docs/delivery/test-evidence/DG0/qa/round-23/21-fix-revision-integrity-nl.log). So the stricter rule costs nothing today. Add a unit test for the QA23-P1 shape.",
+      "actual": "validateGate returns 0 errors for QA23-P1. Scope is narrower than F-DG0-246, which this round verifies as fixed: the fix must be a real, present commit in the gate candidate (QA23-N1/N2/N4 show absent, all-zero and off-branch fixes are rejected), and the closure still comes from a genuine reviewer sidecar. Only the binding between the verifying run and the named fix commit depends on orchestrator-written round metadata. No real closure is affected (0 on the full history).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r23.test.mjs#QA23-P1",
+        "docs/delivery/test-evidence/DG0/qa/round-23/13-qa23-negative-suite.log#QA23-P1",
+        "docs/delivery/test-evidence/DG0/qa/round-23/21-fix-revision-integrity-nl.log",
+        "docs/delivery/test-evidence/DG0/qa/round-23/fix-revision-integrity.mjs",
+        "tools/gates/lib/rules.mjs#checkClosure",
+        "docs/delivery/decisions.md#D-039"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-23/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T13:12:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-23 QA review of candidate e6df2e1e (6438e20). Low, not mandatory: traceability hardening, 0 real closures affected. I would accept it as an observation if the orchestrator prefers to defer it."
+        }
+      ]
+    }
+  ]
+}

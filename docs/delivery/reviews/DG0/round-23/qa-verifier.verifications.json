@@ -1,0 +1,44 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-246",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced, then shown fixed on candidate e6df2e1e (6438e20) in a --no-local complete clone. My round-22 probe QA22-N7, re-run unchanged, is now REJECTED: 'fix 0000000000 is not a commit present in this repository'. New independent cases: QA23-N1 (the same forged absent round with a genuine run; all-zero and well-formed-absent fixes are both REJECTED), QA23-N2 (the former D-038 tolerance shape, head and source both absent, is now REJECTED on the head AND the fix), QA23-N3 (a non-gate round-3 verifying run's head missing/null/'unknown'/absent-40hex is REJECTED), QA23-N4 (a present off-branch fix in an absent round is REJECTED by the gate-ancestry check). Unit tests 'D-039 / F-DG0-164/246' and 'D-039 / F-DG0-164' exist and pass (62/62). Census: roundAbsent/roundSourceCommit are gone from tools/. The only absence-conditioned logic left is findManifest's D-035 tolerance, which is content-preserving (QA23-N8: tampered entries rejected; QA23-N9: a present but non-matching source_commit rejected), plus its corollary in checkClosure. That corollary skips the round-ancestry check for an absent round. It is a narrower, separate residual, raised as F-DG0-249 (Low). The full-history dry-run shows 0 PRUNED/RECORD-LESS/DROPPED errors, and all 110 fix_revisions are present ancestors of HEAD.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-23/10-r22-suite-rerun.log",
+        "docs/delivery/test-evidence/DG0/qa/round-23/13-qa23-negative-suite.log",
+        "docs/delivery/test-evidence/DG0/qa/round-23/11-tolerance-census.log",
+        "docs/delivery/test-evidence/DG0/qa/round-23/02-gates-selftests.log",
+        "docs/delivery/test-evidence/DG0/qa/round-23/08-real-repo-gate-blockers-nl.log",
+        "docs/delivery/test-evidence/DG0/qa/round-23/21-fix-revision-integrity-nl.log",
+        "docs/delivery/test-evidence/DG0/qa/round-23/15-regression-analysis.md",
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r23.test.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-247",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced the round-22 condition's absence and shown fixed. `git cat-file -t 450c756f679a911b4c736e856fc9dd5e9b2c89a8` fails (exit 128) in the origin repository, in a --no-local clone and in a plain local-path clone; cb76260 does not resolve in any of them. real-repo-gate-blockers.mjs gives byte-identical output on the --no-local and the plain clone (59 errors, PRUNED/RECORD-LESS/DROPPED = 0 in both; the rest are round-not-finished artifacts). D-038 is reworded ('absent from every transport clone' plus the D-039 correction), and the round-23 review-common.md prescribes git clone --no-local. No structured commit field in findings.json (fix_revision, verification invocation) names either pruned object; the 23 textual mentions are prose or a log filename.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-23/12-orphan-and-shallow.log",
+        "docs/delivery/test-evidence/DG0/qa/round-23/08-real-repo-gate-blockers-nl.log",
+        "docs/delivery/test-evidence/DG0/qa/round-23/08-real-repo-gate-blockers-loc.log",
+        "docs/delivery/decisions.md#D-039"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-248",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The unit test 'D-039 / F-DG0-248: validateGate refuses a shallow clone' exists in tools/gates/tests/validator.test.mjs and passes: a --depth=1 clone of a valid fixture is refused, and a complete clone is not. Independent extensions: QA23-N7 (a --depth=3 clone and a --shallow-exclude clone are both refused; a complete --no-local clone validates with 0 errors), QA22-N1 still passes (the unshallowed clone is no longer refused), and on the real repository a --depth=1 clone reports the F-DG0-160 shallow error while the complete clone reports none.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/round-23/02-gates-selftests.log",
+        "docs/delivery/test-evidence/DG0/qa/round-23/13-qa23-negative-suite.log",
+        "docs/delivery/test-evidence/DG0/qa/round-23/10-r22-suite-rerun.log",
+        "docs/delivery/test-evidence/DG0/qa/round-23/12-orphan-and-shallow.log"
+      ]
+    }
+  ]
+}
