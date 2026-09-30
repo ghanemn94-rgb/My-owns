@@ -238,12 +238,12 @@ export class AiProposalsService {
     if (s.killSwitch) throw ruleViolation('ai.kill_switch', 'AI emergency stop is active');
     if (s.mode !== 'assisted' && s.mode !== 'autopilot') throw ruleViolation('ai.mode_forbids_execution', `AI mode "${s.mode}" does not allow executing proposals`);
     if (payloadHash(p.payload) !== p.payloadHash) {
-      await this.invalidate(p, null, 'payload_changed');
+      await this.invalidateDetached(ctx, p, 'payload_changed');
       throw conflict('ai.approval_invalidated', 'The proposal payload no longer matches its hash — a fresh proposal is required');
     }
     const tv = await this.knowledge.targetVersion(projectId, p.targetType, p.targetId);
     if (tv === 'missing' || tv !== p.targetVersion) {
-      await this.invalidate(p, null, 'target_version_changed');
+      await this.invalidateDetached(ctx, p, 'target_version_changed');
       throw conflict('ai.approval_invalidated', 'The target record changed after the proposal was prepared — a fresh review is required');
     }
     const recipient = (p.payload as { recipientUserId?: string }).recipientUserId;
@@ -332,6 +332,26 @@ export class AiProposalsService {
       .where(and(eq(schema.aiActionApproval.proposalId, proposalId), eq(schema.aiActionApproval.projectId, projectId), eq(schema.aiActionApproval.status, 'valid')))
       .returning({ id: schema.aiActionApproval.id });
     return r.length;
+  }
+
+  /**
+   * The same invalidation when the caller then REFUSES the request (409 ai.approval_invalidated): the refusal rolls the
+   * request transaction back, so the invalidation and its AI_APPROVAL_INVALIDATED audit row are written in an autonomous
+   * transaction (as the refused cutover GO, readiness module) — otherwise the proposal stayed "proposed" with nothing
+   * recorded. Safe here: approve() has not written or locked the proposal or its approvals before this point.
+   */
+  private async invalidateDetached(ctx: RequestContext, p: ProposalRow, reason: string) {
+    await this.db.runDetached(ctx, async (tx) => {
+      await tx
+        .update(schema.aiActionApproval)
+        .set({ status: 'invalidated', invalidatedReason: reason })
+        .where(and(eq(schema.aiActionApproval.proposalId, p.id), eq(schema.aiActionApproval.projectId, p.projectId), eq(schema.aiActionApproval.status, 'valid')));
+      await tx
+        .update(schema.aiProposal)
+        .set({ status: 'invalidated', invalidatedReason: reason, updatedAt: this.clock.now(), version: sql`${schema.aiProposal.version} + 1` })
+        .where(and(eq(schema.aiProposal.id, p.id), eq(schema.aiProposal.projectId, p.projectId), inArray(schema.aiProposal.status, ['proposed', 'approved', 'executing'])));
+    });
+    await this.audit.recordDetached(ctx, { action: 'AI_APPROVAL_INVALIDATED', entityType: 'ai_proposal', entityId: p.id, projectId: p.projectId, outcome: 'rejected', reason });
   }
 
   /** Marks the proposal (and its valid approvals) invalidated and audits AI_APPROVAL_INVALIDATED. Current transaction. */

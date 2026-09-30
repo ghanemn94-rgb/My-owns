@@ -235,7 +235,7 @@ describe('QA-P2-01 re-check — one decision backs one change request, also at t
 });
 
 describe('QA-P2-01 re-check — a G1 decision relied upon by a perimeter version and the G1 gate cycle at the same time [REQ-GOV-022, REQ-SET-012, REQ-LCY-010, AT-04]', () => {
-  it('both kinds of use are accepted on one G1 decision (documented rule: one record of EACH kind); registered once each; a second decision attempt on the cycle is 409', async () => {
+  it('both kinds of use are accepted on one G1 decision (documented rule: one record of EACH kind); registered once each; a second decision attempt on the cycle is refused', async () => {
     // Perimeter version 1 proposed (one site), G0 approved, G1 ready for decision, a final G1 decision.
     const ws = await workstreamId(p.pm, pid, 'WS05');
     await createItem(p.pm, pid, { type: 'site', name: 'QA final site (synthetic)', disposition: 'included', workstreamId: ws, ownerUserId: p.pm.userId });
@@ -243,7 +243,10 @@ describe('QA-P2-01 re-check — a G1 decision relied upon by a perimeter version
     const g0 = await gateByKey(p.pm, pid, 'G0');
     if (g0.assessment.status !== 'approved') await approveGate(p, gov, pid, 'G0');
     await makeReady(p, pid, 'G1');
-    const d = await gateDecision(pid, p, gov, 'G1');
+    // DOM-P2F-08 (fixed after this review): a G1 paper must be raised FOR the perimeter version it approves (subject rule
+    // `required`); the gate path does not bind the subject (DOM-P2F-10), so the same decision still backs the G1 cycle.
+    // Fixture adapted by the lead; the assertions are unchanged.
+    const d = await gateDecision(pid, p, gov, 'G1', { subject: { type: 'perimeter_version', id: v1.id } });
     expect(d.status).toBe('approved');
     const g1 = await gateByKey(p.pm, pid, 'G1');
     const pvVersion = (await owner().query(`select version from perimeter_version where id = $1`, [v1.id])).rows[0].version as number;
@@ -255,7 +258,11 @@ describe('QA-P2-01 re-check — a G1 decision relied upon by a perimeter version
     console.log(`QA-P2-01 final perimeter+gate forced: waiting ${waiting}; perimeter ${summary([results[0]!])} gate ${JSON.stringify(summary(results.slice(1)))}`);
     expect(results.every((r) => r.status < 500)).toBe(true);
     expect(results[0]!.status, JSON.stringify(results[0]!.body)).toBe(201);
-    expect(results.slice(1).map((r) => r.status).sort()).toEqual([201, 409]);
+    // Since the per-project gate lock (module guide, "One writer of a project's gate state at a time"), the second decide
+    // waits for the first and then sees the cycle already approved, exactly as a sequential second attempt: 422
+    // gate_assessment.invalid_transition (before the lock the two raced into the version check: 409). Either way one
+    // approval and one registered gate_cycle use.
+    expect(summary(results.slice(1)).sort()).toEqual(['201:approved', '422:gate_assessment.invalid_transition']);
     const uses = await usesOf(d.id);
     expect(uses.map((u) => u.use_kind)).toEqual(['gate_cycle', 'perimeter_version']);
     expect(uses.find((u) => u.use_kind === 'perimeter_version')!.subject_id).toBe(v1.id);
