@@ -246,7 +246,8 @@ export class ReconciliationsService {
 
   async reopen(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note: string }) {
     const r = await loadInProject(this.s.db, T, projectId, id);
-    this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: r.classification });
+    // Reopening is a role-level act (audited with a reason); the reconciliation then needs a fresh review.
+    this.s.assertGranted(ctx, 'finance.snapshot.approve', { projectId, classification: r.classification });
     assertHumanActor(actorOf(ctx), 'Reopening a reconciliation');
     if (r.status === 'open') throw ruleViolation('finance.recon.invalid_state', 'The reconciliation is already open');
     return this.setStatus(ctx, r, 'open', body.expectedVersion, { reviewerUserId: null, reviewedAt: null }, body.note);

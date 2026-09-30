@@ -375,7 +375,9 @@ export class ModelsService {
   /** REQ-FIN-010: human financial validation of a version (not by its preparer; never a service identity). */
   async validate(ctx: RequestContext, projectId: string, modelId: string, versionId: string, body: { expectedVersion: number; note: string }) {
     const { m, v } = await this.loadWritable(ctx, projectId, modelId, versionId);
-    this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: v.classification, requesterUserId: v.preparedBy });
+    // Validation / rejection is a role-level Finance act (separation of duties still applies); approval authority is
+    // evaluated where the figure is approved.
+    this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: v.classification, requesterUserId: v.preparedBy, withinAuthority: true });
     if (v.supersededById) throw ruleViolation('finance.model.superseded', 'A newer version of this case exists: validate the latest version');
     const hash = contentHash(v);
     assertFigureValidatable({ state: v.approvalState, createdBy: v.createdBy, preparedBy: v.preparedBy, validatedBy: v.validatedBy, validatedHash: v.validatedHash, currentHash: hash }, actorOf(ctx), describe(m, v));
@@ -409,7 +411,7 @@ export class ModelsService {
    */
   async approveValues(ctx: RequestContext, projectId: string, modelId: string, versionId: string, body: { expectedVersion: number; decisionId: string; note?: string }) {
     const { m, v } = await this.loadWritable(ctx, projectId, modelId, versionId);
-    this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: v.classification });
+    this.s.assertGranted(ctx, 'finance.snapshot.approve', { projectId, classification: v.classification });
     if (m.kind !== 'valuation') {
       throw ruleViolation('finance.model.approval_not_configured', 'No decision type of the authority matrix covers the approval of a business plan (to be confirmed): business plan versions are validated, not approved here');
     }
@@ -446,7 +448,9 @@ export class ModelsService {
 
   async reject(ctx: RequestContext, projectId: string, modelId: string, versionId: string, body: { expectedVersion: number; note: string }) {
     const { v } = await this.loadWritable(ctx, projectId, modelId, versionId);
-    this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: v.classification, requesterUserId: v.preparedBy });
+    // Validation / rejection is a role-level Finance act (separation of duties still applies); approval authority is
+    // evaluated where the figure is approved.
+    this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: v.classification, requesterUserId: v.preparedBy, withinAuthority: true });
     assertHumanActor(actorOf(ctx), 'Rejecting a model version');
     const to = transition('figure', FIGURE_APPROVAL_MACHINE, v.approvalState, 'reject');
     assertVersion(v, body.expectedVersion, 'model version');

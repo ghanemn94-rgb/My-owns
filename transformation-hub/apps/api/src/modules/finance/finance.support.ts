@@ -123,6 +123,15 @@ export class FinanceSupport {
   }
 
   /**
+   * Role-level pre-check (RBAC, visibility, classification — not the subject conditions `not_self` / `authority`), with the
+   * finance-domain clearance. Never authorizes an approval on its own: the approval path then calls `assert` with the
+   * subject's requester and authority (I-R3 — those conditions fail closed when missing).
+   */
+  assertGranted(ctx: RequestContext, permission: string, attrs: Omit<ResourceAttrs, 'requesterUserId' | 'withinAuthority'>) {
+    this.policy.assertGranted(this.fx(ctx, attrs.projectId), permission, attrs);
+  }
+
+  /**
    * Create / reclassify: the RESULTING classification must not exceed the caller's (finance-domain) clearance —
    * 403, since the caller is the author (access-matrix §2.4). Checked before visibility so a create is never a 404.
    */

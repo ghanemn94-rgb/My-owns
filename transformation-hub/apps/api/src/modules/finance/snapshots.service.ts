@@ -423,7 +423,9 @@ export class SnapshotsService {
   /** REQ-FIN-010: human financial validation (never the preparer, never a service identity) → approval request. */
   async validate(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note: string }) {
     const r = await loadInProject(this.s.db, T, projectId, id);
-    this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: r.classification, workstreamId: r.workstreamId, requesterUserId: r.preparedBy });
+    // Validation / rejection is a role-level Finance act (separation of duties still applies); approval authority is
+    // evaluated where the figure is approved.
+    this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: r.classification, workstreamId: r.workstreamId, requesterUserId: r.preparedBy, withinAuthority: true });
     const hash = contentHash(r);
     assertFigureValidatable({ state: r.approvalState, createdBy: r.createdBy, preparedBy: r.preparedBy, validatedBy: r.validatedBy, validatedHash: r.validatedHash, currentHash: hash }, actorOf(ctx), describe(r));
     assertVersion(r, body.expectedVersion, 'figure');
@@ -455,7 +457,7 @@ export class SnapshotsService {
   async approve(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; decisionId?: string; note?: string }) {
     const r = await loadInProject(this.s.db, T, projectId, id);
     // RBAC first (a caller without the permission learns nothing more), then the separation / authority conditions.
-    this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: r.classification, workstreamId: r.workstreamId });
+    this.s.assertGranted(ctx, 'finance.snapshot.approve', { projectId, classification: r.classification, workstreamId: r.workstreamId });
     const needsDecision = r.category === 'opening_balance';
     const allowed = needsDecision ? OPENING_BALANCE_DECISION_TYPE_KEYS : [...OPENING_BALANCE_DECISION_TYPE_KEYS, ...BUDGET_DECISION_TYPE_KEYS];
     if (needsDecision && !body.decisionId) {
@@ -495,14 +497,17 @@ export class SnapshotsService {
 
   async reject(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note: string }) {
     const r = await loadInProject(this.s.db, T, projectId, id);
-    this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: r.classification, workstreamId: r.workstreamId, requesterUserId: r.preparedBy });
+    // Validation / rejection is a role-level Finance act (separation of duties still applies); approval authority is
+    // evaluated where the figure is approved.
+    this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: r.classification, workstreamId: r.workstreamId, requesterUserId: r.preparedBy, withinAuthority: true });
     assertHumanActor(actorOf(ctx), 'Rejecting a figure');
     return this.applyState(ctx, r, 'reject', body.expectedVersion, {}, body.note, async () => this.s.closeApprovalRequest(ctx, projectId, r.approvalRequestId, 'reject', body.note, 'finance.snapshot.approve (policy matrix)'));
   }
 
   async reopen(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note: string }) {
     const r = await loadInProject(this.s.db, T, projectId, id);
-    this.s.assert(ctx, 'finance.snapshot.approve', { projectId, classification: r.classification, workstreamId: r.workstreamId });
+    // Reopening is a role-level act (audited with a reason); the figure then needs a fresh validation and approval.
+    this.s.assertGranted(ctx, 'finance.snapshot.approve', { projectId, classification: r.classification, workstreamId: r.workstreamId });
     assertHumanActor(actorOf(ctx), 'Reopening an approved figure');
     return this.applyState(ctx, r, 'reopen', body.expectedVersion, {
       validatedBy: null,
