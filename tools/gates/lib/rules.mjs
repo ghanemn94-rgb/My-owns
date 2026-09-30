@@ -901,13 +901,15 @@ export function findManifest(repo, stageId, cid, errors, label) {
     const fromCommit = candidateId(manifestFromRef(repo, m.source_commit, m.spec), m.hash_algorithm || "mth-candidate-v1");
     if (fromCommit !== cid) errors.push(`${label} manifest ${rel} does not describe its source_commit ${String(m.source_commit).slice(0, 10)} (recomputes to ${fromCommit})`);
   } catch (e) {
-    // The recompute needs the source_commit to still be present. A superseded (non-gate) review round's source_commit
-    // can be pruned by a later, legitimate history correction (this branch's pre-round-12 history was truncated before
-    // this session; round 18's commit was rewritten by the D-034 write-once repair). The manifest file itself remains
-    // and its entries still self-consistently hash to its candidate_id (verified just above), it must equal the review
-    // round record's source_commit (checkReviewRounds), and the GATE candidate is recomputed independently from the
-    // retained gate.source_commit (checkCandidate). So a genuinely MISSING source_commit is tolerated here; every other
-    // recompute failure is still an error (decision D-035).
+    // The recompute needs the source_commit to still be present. Gate validation runs on a COMPLETE clone (validateGate
+    // refuses a shallow one, F-DG0-160), so a genuinely absent source_commit means a superseded (non-gate) review round
+    // whose freeze commit was orphaned by a later, legitimate history correction -- on this branch, round 18's commit,
+    // rewritten by the D-034 write-once repair (its pre-rewrite source_commit is on no branch). This is the ONLY absence
+    // tolerance in the validator, and it is content-preserving, not a skipped check: the manifest file itself remains and
+    // its entries still self-consistently hash to its candidate_id (verified just above), it must equal the review round
+    // record's source_commit (checkReviewRounds), and the GATE candidate is recomputed independently from the retained,
+    // branch-reachable gate.source_commit (checkCandidate). So a genuinely MISSING source_commit is tolerated here; every
+    // other recompute failure -- including a reachable commit whose content does not match -- is still an error (D-035).
     let present = true;
     try {
       execFileSync("git", ["-C", repo, "cat-file", "-e", `${m.source_commit}^{commit}`], { stdio: "ignore" });
