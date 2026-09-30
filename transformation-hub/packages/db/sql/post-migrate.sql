@@ -695,6 +695,30 @@ BEGIN
 END
 $userfk$;
 
+-- Enterprise hierarchy (REQ-ENT-002): Organization → Portfolio → Program → Project stays inside ONE organization. A plain
+-- FK to portfolio(id) / program(id) does not bind the organization (and FK checks bypass RLS), so every portfolio_id /
+-- program_id column on a table with org_id also gets a composite FK (org_id, col) → portfolio/program (org_id, id).
+CREATE UNIQUE INDEX IF NOT EXISTS portfolio_org_id_uq ON portfolio (org_id, id);
+CREATE UNIQUE INDEX IF NOT EXISTS program_org_id_uq ON program (org_id, id);
+
+DO $hierfk$
+DECLARE r record; cname text;
+BEGIN
+  FOR r IN
+    SELECT c.table_name, c.column_name, CASE c.column_name WHEN 'portfolio_id' THEN 'portfolio' ELSE 'program' END AS parent
+    FROM information_schema.columns c
+    JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name AND t.table_type = 'BASE TABLE'
+    WHERE c.table_schema = 'public' AND c.data_type = 'uuid' AND c.column_name IN ('portfolio_id', 'program_id')
+      AND EXISTS (SELECT 1 FROM information_schema.columns o WHERE o.table_schema = 'public' AND o.table_name = c.table_name AND o.column_name = 'org_id')
+  LOOP
+    cname := left('hub_hfk_' || r.table_name || '_' || r.column_name, 63);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = cname AND conrelid = format('public.%I', r.table_name)::regclass) THEN
+      EXECUTE format('ALTER TABLE %I ADD CONSTRAINT %I FOREIGN KEY (org_id, %I) REFERENCES %I (org_id, id)', r.table_name, cname, r.column_name, r.parent);
+    END IF;
+  END LOOP;
+END
+$hierfk$;
+
 -- 15. document.current_version_id must be a version of THIS document (ARCH-21) ------------------------------------
 -- Deferred constraint trigger: checked at COMMIT for INSERT and UPDATE, so a document and its first version can be
 -- written in either order inside one transaction. SECURITY DEFINER only to see the version row regardless of the

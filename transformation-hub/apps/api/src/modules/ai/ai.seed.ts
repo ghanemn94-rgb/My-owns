@@ -42,7 +42,12 @@ export const aiSeed: ModuleSeed = {
     });
 
     // 2. pm's durable daily briefing at 07:30 Asia/Riyadh.
-    await asUser('pm', (ctx) => settings.subscribeBriefing(ctx, dcProjectId, { kind: 'daily', cron: '30 7 * * *', timezone: 'Asia/Riyadh', enabled: true }));
+    // Idempotent: an existing subscription is left as is (re-subscribing would bump it and write another audit row).
+    await asUser('pm', async (ctx) => {
+      const existing = await settings.listBriefings(ctx, dcProjectId);
+      if (existing.items.some((b) => b.kind === 'daily')) return;
+      await settings.subscribeBriefing(ctx, dcProjectId, { kind: 'daily', cron: '30 7 * * *', timezone: 'Asia/Riyadh', enabled: true });
+    });
 
     // 3. One completed briefing run (Simulated) with citations.
     const runId = await asUser('pm', async (ctx) => {

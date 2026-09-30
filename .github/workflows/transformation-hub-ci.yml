@@ -97,7 +97,7 @@ jobs:
         with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm, cache-dependency-path: transformation-hub/pnpm-lock.yaml }
       - run: pnpm install --frozen-lockfile
       - name: Create roles hub_owner / hub_app (NOBYPASSRLS) and the test database
-        run: HUB_OWNER_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_APP_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_DATABASES=hub_test bash scripts/ops/db-init-roles.sh
+        run: HUB_OWNER_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_APP_DB_PASSWORD="$HUB_DEV_DB_PASSWORD" HUB_DATABASES="hub_test hub_test_boot" bash scripts/ops/db-init-roles.sh
       - run: pnpm build:packages
       - run: pnpm --filter @hub/api test
 
