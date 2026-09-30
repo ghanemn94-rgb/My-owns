@@ -94,34 +94,46 @@ describe('SEC-P2-01 — prerequisites disclose the predecessor record to callers
     expect((await admin.get(`${G(projectId)}/agreements/${agreementId}`)).status).toBe(403);
   });
 
-  it('DEFECT SEC-P2-01: the prerequisite list never shows a decision / agreement to a caller who cannot read it', async () => {
+  it('SEC-P2-01 (fixed, regression): the prerequisite list never shows a decision / agreement to a caller who cannot read it', async () => {
     const items = (await admin.get(`${G(projectId)}/prerequisites?successorId=${taskId}`).expect(200)).body.items as { predecessorId: string; predecessorLabel: string }[];
     const leaked = items.filter((i) => i.predecessorId === decisionId || i.predecessorId === agreementId).map((i) => i.predecessorLabel);
     expect(leaked, `labels shown to the portfolio administrator: ${JSON.stringify(leaked)}`).toEqual([]);
   });
 
-  it('DEFECT SEC-P2-01: the activity feed lists a prerequisite only when its predecessor is readable (record-visibility rule)', async () => {
+  it('SEC-P2-01 (fixed, regression): the activity feed lists a prerequisite only when its predecessor is readable (record-visibility rule)', async () => {
     const feed = (await admin.get(`${G(projectId)}/activity?entityType=record_dependency&pageSize=100`).expect(200)).body as { total: number };
     expect(feed.total, 'record_dependency events listed to the portfolio administrator').toBe(0);
   });
 });
 
 describe('SEC-P2-02 — decision separation of duties: the paper editor / submitter votes on it [access-matrix §5.1]', () => {
-  it('DEFECT SEC-P2-02: a member who rewrote and submitted the paper cannot vote on it', async () => {
-    const d = (await p.pm.post(`${G(projectId)}/decisions`, paper(gov.committeeId, { title: 'Paper drafted by the PM, rewritten by Finance (synthetic)' })).expect(201)).body;
+  // Fix (lead): the reviewer's first option — only the requester writes and submits the paper (decision-workflow step 3), so
+  // "a member who rewrote and submitted the paper" can no longer exist; the requester (the only paper party) is already
+  // excluded by every not_self check. The original DEFECT sequence (finance edits 200, submits 201, votes 201) is now
+  // refused at the first step.
+  it('SEC-P2-02 (fixed, regression): only the requester writes and submits the paper; another member cannot shape it', async () => {
+    const d = (await p.pm.post(`${G(projectId)}/decisions`, paper(gov.committeeId, { title: 'Paper drafted by the PM, rewrite attempted by Finance (synthetic)' })).expect(201)).body;
     const edited = await p.finance.patch(`${G(projectId)}/decisions/${d.id}`, { expectedVersion: d.version, recommendation: 'Approve the larger option (rewritten by the finance member, synthetic)' });
-    expect(edited.status, JSON.stringify(edited.body)).toBe(200);
-    const sub = await p.finance.post(`${G(projectId)}/decisions/${d.id}/submit`, { expectedVersion: edited.body.version });
-    expect(sub.status, JSON.stringify(sub.body)).toBe(201);
-    const rev = await p.secretary.post(`${G(projectId)}/decisions/${d.id}/start-review`, { expectedVersion: sub.body.version, meetingId: gov.meetingId });
+    expect(edited.status, JSON.stringify(edited.body)).toBe(403);
+    expect(edited.body.code).toBe('governance.decision.not_requester');
+    const sub = await p.finance.post(`${G(projectId)}/decisions/${d.id}/submit`, { expectedVersion: d.version });
+    expect(sub.status, JSON.stringify(sub.body)).toBe(403);
+    expect(sub.body.code).toBe('governance.decision.not_requester');
+    const row = (await p.pm.get(`${G(projectId)}/decisions/${d.id}`).expect(200)).body;
+    expect(row.version).toBe(d.version); // unchanged
+    expect(row.status).toBe('draft');
+    // The requester submits; a member who did not shape the paper then votes normally.
+    const own = await p.pm.post(`${G(projectId)}/decisions/${d.id}/submit`, { expectedVersion: d.version });
+    expect(own.status, JSON.stringify(own.body)).toBe(201);
+    const rev = await p.secretary.post(`${G(projectId)}/decisions/${d.id}/start-review`, { expectedVersion: own.body.version, meetingId: gov.meetingId });
     expect(rev.status, JSON.stringify(rev.body)).toBe(201);
     const v = await p.finance.post(`${G(projectId)}/decisions/${d.id}/votes`, { expectedVersion: rev.body.version, choice: 'approve' });
-    expect(v.status, JSON.stringify(v.body)).toBe(403);
+    expect(v.status, JSON.stringify(v.body)).toBe(201);
   });
 });
 
 describe('SEC-P2-03 — My Work offers a gate decision the command refuses (gate reviewer holding the approver role) [DOM-P2-16]', () => {
-  it('OBSERVED: the sponsor endorsed G0 (as PM) and holds the approver role: offered gate_decision, refused by decide (403)', async () => {
+  it('SEC-P2-03 (fixed, regression): a gate reviewer holding the approver role is not offered gate_decision, and decide refuses it (403)', async () => {
     let g0 = await gateByKey(p.pm, projectId, 'G0');
     expect([g0.ownerRole, g0.reviewerRole, g0.approverRole]).toEqual(['secretary_cpmo', 'project_manager', 'sponsor']);
     await p.secretary.post(gateCmd(projectId, g0.id, 'start'), { expectedVersion: g0.assessment.version }).expect(201);
@@ -133,7 +145,7 @@ describe('SEC-P2-03 — My Work offers a gate decision the command refuses (gate
     g0 = await gateByKey(p.pm, projectId, 'G0');
     expect(g0.assessment.reviewedBy).toBe(p.sponsor.userId);
     const offered = (await myWork(p.sponsor, projectId)).some((i) => i.type === 'gate_decision' && i.entityId === g0.assessment.id);
-    expect(offered).toBe(true); // OBSERVED: the inbox passes only the submitter as not_self subject
+    expect(offered).toBe(false); // fixed: My Work uses the command's subjects (submitter AND gate reviewer)
     const decide = await p.sponsor.post(gateCmd(projectId, g0.id, 'decide'), { expectedVersion: g0.assessment.version, outcome: 'reject', note: 'probe (synthetic)' });
     expect(decide.status).toBe(403); // the command: not the submitter NOR the gate reviewer
   }, 300_000);
@@ -152,7 +164,7 @@ describe('SEC-P2-05 — evidence can be linked to a gate criterion the caller do
 });
 
 describe('SEC-P2-06 — disposal endpoint answers before authorization (existence of hidden documents)', () => {
-  it('OBSERVED: for a document the caller cannot see, dispose answers 422 (known id) vs 404 (unknown id)', async () => {
+  it('SEC-P2-06 (fixed, regression): for a document the caller cannot see, dispose answers 404 like an unknown id', async () => {
     const sponsorDocs = await docLogin('sponsor');
     const hidden = await createWithVersion(sponsorDocs, projectId, { title: 'Restricted probe document (synthetic)', classification: 'restricted' }, { bytes: Buffer.from('synthetic,1\n', 'utf8'), name: 'restricted-probe.csv' });
     expect(hidden.upload.status, JSON.stringify(hidden.upload.body)).toBe(201);
@@ -168,8 +180,7 @@ describe('SEC-P2-06 — disposal endpoint answers before authorization (existenc
     const known = await legalDocs.post(`${G(projectId)}/documents/${hidden.id}/dispose`, { expectedVersion: 1, requestId: req.body.requestId, reason: 'probe' });
     const unknown = await legalDocs.post(`${G(projectId)}/documents/0192f0c0-0000-7000-8000-000000000001/dispose`, { expectedVersion: 1, requestId: req.body.requestId, reason: 'probe' });
     expect(unknown.status).toBe(404);
-    expect(known.status).toBe(422); // OBSERVED: differs from the unknown id (should be 404 like a missing document)
-    expect(known.body.code).toBe('documents.disposal_request_invalid');
+    expect(known.status).toBe(404); // fixed: authorization and visibility before request validation — same as a missing id
   });
 });
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { Classification, CRITERION_EDITABLE_GATE_STATUSES, EVIDENCE_TARGET_READ_PERMISSION, NO_HUMAN_REQUESTER, RoleKey, isOverdue } from '@hub/domain';
+import { Classification, CRITERION_EDITABLE_GATE_STATUSES, EVIDENCE_TARGET_READ_PERMISSION, NO_HUMAN_REQUESTER, RoleKey, isOverdue , separationSubject } from '@hub/domain';
 import type { MY_WORK_TYPES } from '@hub/contracts';
 import type { RequestContext } from '../../platform/context';
 import { isFullScope } from '../../platform/context';
@@ -164,7 +164,8 @@ export class MyWorkService {
       const p = byId.get(a.projectId)!;
       const withinAuthority = holds(a.projectId, g.approverRole);
       if (!withinAuthority) continue;
-      if (!this.s.policy.can(ctx, 'gates.assessment.decide', { projectId: p.id, classification: p.classification, requesterUserId: a.submittedBy, withinAuthority })) continue;
+      // Same subjects as the decide command (SEC-P2-03): neither the submitter nor the gate reviewer.
+      if (!this.s.policy.can(ctx, 'gates.assessment.decide', { projectId: p.id, classification: p.classification, requesterUserId: separationSubject(ctx.principal.userId, [a.submittedBy, a.reviewedBy]), withinAuthority })) continue;
       push(p, { type: 'gate_decision', entityId: a.id, code: g.key, title: g.name, status: a.status, dueDate: null, overdue: false, linkPath: `/projects/${p.id}/gates/${g.id}` }, p.isDemo);
     }
 

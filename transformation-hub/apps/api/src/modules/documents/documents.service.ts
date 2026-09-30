@@ -620,6 +620,8 @@ export class DocumentsService {
 
   async dispose(ctx: RequestContext, projectId: string, documentId: string, body: { expectedVersion: number; requestId: string; reason: string }) {
     const l = await this.loadDoc(projectId, documentId);
+    // SEC-P2-06: role and visibility first — a document the caller cannot see answers 404 before any request validation.
+    this.policy.assertGranted(ctx, 'documents.document.dispose', this.attrs(l));
     const p = await this.project(projectId);
     const today = this.clock.today(p.timezone);
     const req = await loadInProject(this.db, schema.approvalRequest, projectId, body.requestId);

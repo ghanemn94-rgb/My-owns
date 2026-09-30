@@ -36,6 +36,8 @@ interface Env {
   reach: (permission: string, workstreamExpr: string) => SQL;
   /** Visibility of a polymorphic (type, id) pair referenced from alias columns (depth-limited). */
   target: (typeExpr: string, idExpr: string, depth: number) => SQL;
+  /** The caller holds the type-level read permission of `type` (always true without a `readPermission` resolver). */
+  permitted: (type: string) => boolean;
 }
 /** A rule receives a fresh table alias, the id expression and the environment; it returns an EXISTS predicate. */
 type Rule = (x: string, id: SQL, e: Env, depth: number) => SQL;
@@ -151,11 +153,15 @@ const RULES: Record<string, Rule> = {
   // predecessor are — a decision / agreement by classification, an approval request / evidence link by their own rules
   // (both polymorphic, so they are resolved directly rather than through `target`); a gate definition has no record rule
   record_dependency: (x, id, e, depth) => {
-    const pred = (t: string) => RULES[t]!(`${x}q`, raw(`${x}.predecessor_id`), e, depth + 1);
+    // SEC-P2-01: each predecessor needs its type-level read permission (decision → governance.decision.read, agreement →
+    // carveout.register.read, gate → gates.gate.read) on top of its own record rule — never classification alone.
+    const pred = (t: string) => (e.permitted(t) ? RULES[t]!(`${x}q`, raw(`${x}.predecessor_id`), e, depth + 1) : sql`false`);
+    const gate = e.permitted('gate_definition') ? TRUE : sql`false`;
     return sql`exists (select 1 from record_dependency ${raw(x)} where ${raw(x)}.id = ${id}
       and ${e.target(`${x}.successor_type::text`, `${x}.successor_id`, depth + 1)}
       and (case ${raw(x)}.predecessor_type when 'decision' then ${pred('decision')} when 'agreement' then ${pred('agreement')}
-        when 'approval_request' then ${pred('approval_request')} when 'evidence_link' then ${pred('evidence_link')} else true end))`;
+        when 'approval_request' then ${pred('approval_request')} when 'evidence_link' then ${pred('evidence_link')}
+        when 'gate' then ${gate} else false end))`;
   },
   // polymorphic records: visible when their target is
   ai_proposal: viaTarget('ai_proposal', 'target_type', 'target_id'),
@@ -191,6 +197,7 @@ export class RecordVisibility {
         }),
       reach: (permission, wsExpr) => (this.opts.reach ? this.policy.reachSql(this.ctx, permission, this.projectId, raw(wsExpr)) : TRUE),
       target: (typeExpr, idExpr, depth) => this.targetSql(raw(typeExpr), raw(idExpr), depth),
+      permitted: (type) => this.permitted(type),
     };
   }
 
@@ -205,6 +212,8 @@ export class RecordVisibility {
 
   /** The record `type`/`id` is visible (TRUE for a type without a record-level rule). */
   exists(type: string, id: SQL | PgColumn, depth = 0): SQL {
+    // SEC-P2-01: with a `readPermission` resolver the type-level read permission applies to direct checks too.
+    if (!this.permitted(type)) return sql`false`;
     const rule = RULES[type];
     if (!rule) return TRUE;
     return rule(`rv${depth}`, sql`${id}`, this.env(), depth);

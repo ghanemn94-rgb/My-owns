@@ -50,9 +50,13 @@ REPO_ROOT="$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || echo "$ROOT
 for f in "$ROOT/.gitleaksignore" "$REPO_ROOT/.gitleaksignore"; do
   if [ -e "$f" ]; then echo "FAIL  $f exists: fingerprint suppressions are not allowed — use a reviewed entry in scripts/ops/gitleaks.toml" >&2; exit 1; fi
 done
-if git -C "$REPO_ROOT" ls-files --error-unmatch .gitleaksignore '*/.gitleaksignore' >/dev/null 2>&1; then
+# Any committed .gitleaksignore at any depth (SEC-P2-09: gitleaks also honours one in the scan root or working directory).
+if [ -n "$(git -C "$REPO_ROOT" ls-files -- ':(glob)**/.gitleaksignore' 2>/dev/null)" ]; then
   echo "FAIL  a committed .gitleaksignore exists: fingerprint suppressions are not allowed" >&2; exit 1
 fi
+for f in "$PWD/.gitleaksignore"; do
+  if [ -e "$f" ]; then echo "FAIL  $f exists in the working directory: fingerprint suppressions are not allowed" >&2; exit 1; fi
+done
 case "$MODE" in
   history)
     REPO="$(git -C "$ROOT" rev-parse --show-toplevel)"

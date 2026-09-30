@@ -22,6 +22,7 @@ import {
   clearanceAllows,
   computeQuorum,
   conflict,
+  forbidden,
 
   missingDecisionPaperFields,
   planDecisionOutcome,
@@ -221,6 +222,7 @@ export class DecisionsService {
   async update(ctx: RequestContext, projectId: string, decisionId: string, body: PaperInput & { expectedVersion: number }) {
     const d = await this.sup.decision(ctx, projectId, decisionId, 'governance.decision.draft');
     if (d.status !== 'draft') throw ruleViolation('governance.decision.not_draft', `Only a draft paper can be edited (current: ${d.status}); ask the secretariat to return it`);
+    this.assertPaperAuthor(ctx, d);
     if (body.classification) this.assertClassifiable(ctx, body.classification);
     const values: Record<string, unknown> = this.paperValues(body);
     if (body.title !== undefined) values['title'] = body.title;
@@ -231,10 +233,24 @@ export class DecisionsService {
     return { id: d.id, version: row.version };
   }
 
+  /**
+   * SEC-P2-02 (access-matrix §5.1, decision-workflow step 3): the paper is written and submitted by its requester only, so
+   * the requester is the only "self" of the paper (author = submitter = requester) and every separation-of-duties check
+   * on `requesterUserId` (review, vote, outcome, external approval) covers whoever shaped the paper. Checked after role and
+   * state (I-R3); an unknown requester fails closed.
+   */
+  private assertPaperAuthor(ctx: RequestContext, d: DecisionRow) {
+    if (!d.requesterUserId) throw forbidden('policy.sod_subject_unknown', 'The requester of this paper is unknown, so nobody may edit or submit it');
+    if (d.requesterUserId !== ctx.principal.userId) {
+      throw forbidden('governance.decision.not_requester', 'Only the requester writes and submits the decision paper; ask the requester, or raise your own paper');
+    }
+  }
+
   async submit(ctx: RequestContext, projectId: string, decisionId: string, body: { expectedVersion: number; note?: string }) {
     const d = await this.sup.decision(ctx, projectId, decisionId, 'governance.decision.submit');
     assertVersion(d, body.expectedVersion, 'decision');
     const to = transition('decision', DECISION_MACHINE, d.status as DecisionStatus, 'submit');
+    this.assertPaperAuthor(ctx, d);
     const missing = missingDecisionPaperFields(d);
     if (missing.length) throw ruleViolation('governance.decision.incomplete_paper', `The decision paper is incomplete: ${missing.join(', ')}`, { missing });
     return this.applyTransition(ctx, d, 'submit', to, body.expectedVersion, {}, body.note);
