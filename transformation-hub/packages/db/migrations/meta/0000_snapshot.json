@@ -1,5 +1,5 @@
 {
-  "id": "394c0cbf-7711-4fbc-9b71-42da9659f562",
+  "id": "f4268e57-d2bb-4462-8a74-bbb1667a00cb",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -13579,14 +13579,44 @@
           "primaryKey": false,
           "notNull": false
         },
+        "realized_amount": {
+          "name": "realized_amount",
+          "type": "numeric(20, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "realized_currency": {
+          "name": "realized_currency",
+          "type": "varchar(3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "realized_unit_scale": {
+          "name": "realized_unit_scale",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "owner_user_id": {
           "name": "owner_user_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
+        "workstream_id": {
+          "name": "workstream_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "realization_date": {
           "name": "realization_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "realized_on": {
+          "name": "realized_on",
           "type": "date",
           "primaryKey": false,
           "notNull": false
@@ -13605,6 +13635,30 @@
           "notNull": true,
           "default": "'proposed'"
         },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "realization_recorded_by": {
+          "name": "realization_recorded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "realization_recorded_at": {
+          "name": "realization_recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "verified_by": {
           "name": "verified_by",
           "type": "uuid",
@@ -13616,6 +13670,26 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "verification_note": {
+          "name": "verification_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_note": {
+          "name": "status_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "classification": {
+          "name": "classification",
+          "type": "classification",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'confidential'"
         },
         "is_demo": {
           "name": "is_demo",
@@ -13701,6 +13775,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "benefit_ws_fk": {
+          "name": "benefit_ws_fk",
+          "tableFrom": "benefit",
+          "tableTo": "workstream",
+          "columnsFrom": [
+            "project_id",
+            "workstream_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -13715,7 +13804,24 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "benefit_value_chk": {
+          "name": "benefit_value_chk",
+          "value": "(\"benefit\".\"value_amount\" is null) = (\"benefit\".\"value_currency\" is null) and (\"benefit\".\"value_amount\" is null) = (\"benefit\".\"value_unit_scale\" is null) and coalesce(\"benefit\".\"value_unit_scale\", 1) in (1, 1000, 1000000)"
+        },
+        "benefit_realized_money_chk": {
+          "name": "benefit_realized_money_chk",
+          "value": "(\"benefit\".\"realized_amount\" is null) = (\"benefit\".\"realized_currency\" is null) and (\"benefit\".\"realized_amount\" is null) = (\"benefit\".\"realized_unit_scale\" is null) and coalesce(\"benefit\".\"realized_unit_scale\", 1) in (1, 1000, 1000000)"
+        },
+        "benefit_realized_chk": {
+          "name": "benefit_realized_chk",
+          "value": "\"benefit\".\"status\" not in ('realized_unverified', 'realized_verified') or (nullif(btrim(\"benefit\".\"verification_source\"), '') is not null and \"benefit\".\"realization_recorded_by\" is not null and \"benefit\".\"realized_on\" is not null)"
+        },
+        "benefit_verified_chk": {
+          "name": "benefit_verified_chk",
+          "value": "\"benefit\".\"status\" <> 'realized_verified' or (\"benefit\".\"verified_by\" is not null and \"benefit\".\"verified_at\" is not null and \"benefit\".\"verified_by\" <> \"benefit\".\"realization_recorded_by\" and \"benefit\".\"verified_by\" is distinct from \"benefit\".\"owner_user_id\")"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.budget_line": {
@@ -13766,6 +13872,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "proposed_amount": {
+          "name": "proposed_amount",
+          "type": "numeric(20, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "approved_amount": {
           "name": "approved_amount",
           "type": "numeric(20, 4)",
@@ -13799,6 +13911,24 @@
           "notNull": true,
           "default": 1
         },
+        "actuals_as_of": {
+          "name": "actuals_as_of",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actuals_source_ref": {
+          "name": "actuals_source_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tsa_service_id": {
+          "name": "tsa_service_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "approval_state": {
           "name": "approval_state",
           "type": "approval_state",
@@ -13806,6 +13936,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'proposed'"
+        },
+        "approval_decision_id": {
+          "name": "approval_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "approved_by": {
           "name": "approved_by",
@@ -13831,7 +13967,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'restricted'"
+          "default": "'confidential'"
         },
         "is_demo": {
           "name": "is_demo",
@@ -13889,6 +14025,28 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "budget_line_tsa_uq": {
+          "name": "budget_line_tsa_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tsa_service_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"budget_line\".\"tsa_service_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -13919,6 +14077,36 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "budget_line_tsa_fk": {
+          "name": "budget_line_tsa_fk",
+          "tableFrom": "budget_line",
+          "tableTo": "tsa_service",
+          "columnsFrom": [
+            "project_id",
+            "tsa_service_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "budget_line_decision_fk": {
+          "name": "budget_line_decision_fk",
+          "tableFrom": "budget_line",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "approval_decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -13937,12 +14125,32 @@
         "budget_line_scale_chk": {
           "name": "budget_line_scale_chk",
           "value": "\"budget_line\".\"unit_scale\" in (1, 1000, 1000000)"
+        },
+        "budget_line_currency_chk": {
+          "name": "budget_line_currency_chk",
+          "value": "\"budget_line\".\"currency\" ~ '^[A-Z]{3}$'"
+        },
+        "budget_line_tsa_chk": {
+          "name": "budget_line_tsa_chk",
+          "value": "(\"budget_line\".\"category\" = 'tsa_charge') = (\"budget_line\".\"tsa_service_id\" is not null)"
+        },
+        "budget_line_nonneg_chk": {
+          "name": "budget_line_nonneg_chk",
+          "value": "\"budget_line\".\"committed_amount\" >= 0 and \"budget_line\".\"spent_amount\" >= 0 and coalesce(\"budget_line\".\"approved_amount\", 0) >= 0 and coalesce(\"budget_line\".\"proposed_amount\", 0) >= 0"
+        },
+        "budget_line_approved_chk": {
+          "name": "budget_line_approved_chk",
+          "value": "\"budget_line\".\"approved_amount\" is null or \"budget_line\".\"approval_state\" = 'approved'"
+        },
+        "budget_line_state_chk": {
+          "name": "budget_line_state_chk",
+          "value": "\"budget_line\".\"approval_state\" <> 'approved' or \"budget_line\".\"approved_amount\" is not null"
         }
       },
       "isRLSEnabled": false
     },
-    "public.financial_model_version": {
-      "name": "financial_model_version",
+    "public.financial_model": {
+      "name": "financial_model",
       "schema": "",
       "columns": {
         "id": {
@@ -13964,6 +14172,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "code": {
+          "name": "code",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
         "kind": {
           "name": "kind",
           "type": "model_kind",
@@ -13971,74 +14185,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "version_label": {
-          "name": "version_label",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "model_case": {
-          "name": "model_case",
-          "type": "model_case",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "assumptions": {
-          "name": "assumptions",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "outputs": {
-          "name": "outputs",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "headline_basis": {
-          "name": "headline_basis",
-          "type": "value_basis",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "source_document_id": {
-          "name": "source_document_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "source_ref": {
-          "name": "source_ref",
+        "name": {
+          "name": "name",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "approval_state": {
-          "name": "approval_state",
-          "type": "approval_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'proposed'"
-        },
-        "approved_by": {
-          "name": "approved_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "approved_at": {
-          "name": "approved_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "human_validation_note": {
-          "name": "human_validation_note",
+        "description": {
+          "name": "description",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -14087,8 +14241,8 @@
         }
       },
       "indexes": {
-        "financial_model_uq": {
-          "name": "financial_model_uq",
+        "financial_model_code_uq": {
+          "name": "financial_model_code_uq",
           "columns": [
             {
               "expression": "project_id",
@@ -14097,19 +14251,309 @@
               "nulls": "last"
             },
             {
-              "expression": "kind",
+              "expression": "code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "financial_model_project_id_project_id_fk": {
+          "name": "financial_model_project_id_project_id_fk",
+          "tableFrom": "financial_model",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "financial_model_pid_uq": {
+          "name": "financial_model_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.financial_model_version": {
+      "name": "financial_model_version",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model_id": {
+          "name": "model_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "model_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_no": {
+          "name": "version_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_label": {
+          "name": "version_label",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model_case": {
+          "name": "model_case",
+          "type": "model_case",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "based_on_version_id": {
+          "name": "based_on_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "superseded_by_id": {
+          "name": "superseded_by_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assumptions": {
+          "name": "assumptions",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "outputs": {
+          "name": "outputs",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "headline_basis": {
+          "name": "headline_basis",
+          "type": "value_basis",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_type": {
+          "name": "source_type",
+          "type": "source_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manual_entry'"
+        },
+        "source_document_id": {
+          "name": "source_document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_document_version_id": {
+          "name": "source_document_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_ref": {
+          "name": "source_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "import_batch_id": {
+          "name": "import_batch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "change_note": {
+          "name": "change_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_state": {
+          "name": "approval_state",
+          "type": "approval_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'proposed'"
+        },
+        "prepared_by": {
+          "name": "prepared_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_by": {
+          "name": "validated_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_at": {
+          "name": "validated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "human_validation_note": {
+          "name": "human_validation_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_hash": {
+          "name": "validated_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_request_id": {
+          "name": "approval_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_decision_id": {
+          "name": "approval_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_values": {
+          "name": "approved_values",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "classification": {
+          "name": "classification",
+          "type": "classification",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'strictly_confidential'"
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "financial_model_version_uq": {
+          "name": "financial_model_version_uq",
+          "columns": [
+            {
+              "expression": "project_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "version_label",
+              "expression": "model_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
               "expression": "model_case",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version_no",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -14135,6 +14579,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "financial_model_version_model_fk": {
+          "name": "financial_model_version_model_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "financial_model",
+          "columnsFrom": [
+            "project_id",
+            "model_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "financial_model_doc_fk": {
           "name": "financial_model_doc_fk",
           "tableFrom": "financial_model_version",
@@ -14149,12 +14608,102 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "financial_model_docver_fk": {
+          "name": "financial_model_docver_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "document_version",
+          "columnsFrom": [
+            "project_id",
+            "source_document_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_model_import_fk": {
+          "name": "financial_model_import_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "import_batch",
+          "columnsFrom": [
+            "project_id",
+            "import_batch_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_model_based_on_fk": {
+          "name": "financial_model_based_on_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "financial_model_version",
+          "columnsFrom": [
+            "project_id",
+            "based_on_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_model_superseded_fk": {
+          "name": "financial_model_superseded_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "financial_model_version",
+          "columnsFrom": [
+            "project_id",
+            "superseded_by_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_model_request_fk": {
+          "name": "financial_model_request_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "approval_request",
+          "columnsFrom": [
+            "project_id",
+            "approval_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_model_decision_fk": {
+          "name": "financial_model_decision_fk",
+          "tableFrom": "financial_model_version",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "approval_decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "financial_model_pid_uq": {
-          "name": "financial_model_pid_uq",
+        "financial_model_version_pid_uq": {
+          "name": "financial_model_version_pid_uq",
           "nullsNotDistinct": false,
           "columns": [
             "project_id",
@@ -14163,7 +14712,24 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "financial_model_source_chk": {
+          "name": "financial_model_source_chk",
+          "value": "\"financial_model_version\".\"source_document_id\" is not null or nullif(btrim(\"financial_model_version\".\"source_ref\"), '') is not null"
+        },
+        "financial_model_validator_chk": {
+          "name": "financial_model_validator_chk",
+          "value": "\"financial_model_version\".\"validated_by\" is null or (\"financial_model_version\".\"validated_by\" is distinct from \"financial_model_version\".\"prepared_by\" and \"financial_model_version\".\"validated_hash\" is not null and \"financial_model_version\".\"validated_at\" is not null)"
+        },
+        "financial_model_approved_values_chk": {
+          "name": "financial_model_approved_values_chk",
+          "value": "\"financial_model_version\".\"approved_values\" is null or (\"financial_model_version\".\"approval_state\" = 'approved' and \"financial_model_version\".\"approval_decision_id\" is not null and \"financial_model_version\".\"approved_by\" is not null and \"financial_model_version\".\"validated_by\" is not null and \"financial_model_version\".\"approved_by\" <> \"financial_model_version\".\"validated_by\")"
+        },
+        "financial_model_approved_chk": {
+          "name": "financial_model_approved_chk",
+          "value": "\"financial_model_version\".\"approval_state\" <> 'approved' or \"financial_model_version\".\"approved_values\" is not null"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.financial_snapshot": {
@@ -14240,6 +14806,14 @@
           "notNull": true,
           "default": 1
         },
+        "source_type": {
+          "name": "source_type",
+          "type": "source_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manual_entry'"
+        },
         "source_ref": {
           "name": "source_ref",
           "type": "text",
@@ -14252,6 +14826,36 @@
           "primaryKey": false,
           "notNull": false
         },
+        "source_document_version_id": {
+          "name": "source_document_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_sheet": {
+          "name": "source_sheet",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_cell": {
+          "name": "source_cell",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "import_batch_id": {
+          "name": "import_batch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tsa_service_id": {
+          "name": "tsa_service_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "approval_state": {
           "name": "approval_state",
           "type": "approval_state",
@@ -14259,6 +14863,48 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'proposed'"
+        },
+        "prepared_by": {
+          "name": "prepared_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_by": {
+          "name": "validated_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_at": {
+          "name": "validated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validation_note": {
+          "name": "validation_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "validated_hash": {
+          "name": "validated_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_request_id": {
+          "name": "approval_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_decision_id": {
+          "name": "approval_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "approved_by": {
           "name": "approved_by",
@@ -14354,6 +15000,67 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "financial_snapshot_tsa_uq": {
+          "name": "financial_snapshot_tsa_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tsa_service_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "period",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"financial_snapshot\".\"tsa_service_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "financial_snapshot_period_idx": {
+          "name": "financial_snapshot_period_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "period",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -14377,6 +15084,81 @@
           "columnsFrom": [
             "project_id",
             "source_document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_snapshot_docver_fk": {
+          "name": "financial_snapshot_docver_fk",
+          "tableFrom": "financial_snapshot",
+          "tableTo": "document_version",
+          "columnsFrom": [
+            "project_id",
+            "source_document_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_snapshot_import_fk": {
+          "name": "financial_snapshot_import_fk",
+          "tableFrom": "financial_snapshot",
+          "tableTo": "import_batch",
+          "columnsFrom": [
+            "project_id",
+            "import_batch_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_snapshot_tsa_fk": {
+          "name": "financial_snapshot_tsa_fk",
+          "tableFrom": "financial_snapshot",
+          "tableTo": "tsa_service",
+          "columnsFrom": [
+            "project_id",
+            "tsa_service_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_snapshot_request_fk": {
+          "name": "financial_snapshot_request_fk",
+          "tableFrom": "financial_snapshot",
+          "tableTo": "approval_request",
+          "columnsFrom": [
+            "project_id",
+            "approval_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "financial_snapshot_decision_fk": {
+          "name": "financial_snapshot_decision_fk",
+          "tableFrom": "financial_snapshot",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "approval_decision_id"
           ],
           "columnsTo": [
             "project_id",
@@ -14417,6 +15199,34 @@
         "financial_snapshot_scale_chk": {
           "name": "financial_snapshot_scale_chk",
           "value": "\"financial_snapshot\".\"unit_scale\" in (1, 1000, 1000000)"
+        },
+        "financial_snapshot_currency_chk": {
+          "name": "financial_snapshot_currency_chk",
+          "value": "\"financial_snapshot\".\"currency\" ~ '^[A-Z]{3}$'"
+        },
+        "financial_snapshot_tsa_chk": {
+          "name": "financial_snapshot_tsa_chk",
+          "value": "(\"financial_snapshot\".\"category\" = 'tsa_charge') = (\"financial_snapshot\".\"tsa_service_id\" is not null)"
+        },
+        "financial_snapshot_source_chk": {
+          "name": "financial_snapshot_source_chk",
+          "value": "\"financial_snapshot\".\"source_document_id\" is not null or nullif(btrim(\"financial_snapshot\".\"source_ref\"), '') is not null"
+        },
+        "financial_snapshot_import_ref_chk": {
+          "name": "financial_snapshot_import_ref_chk",
+          "value": "\"financial_snapshot\".\"source_type\" not in ('excel', 'csv') or (\"financial_snapshot\".\"source_document_id\" is not null and \"financial_snapshot\".\"source_cell\" is not null and (\"financial_snapshot\".\"source_type\" = 'csv' or \"financial_snapshot\".\"source_sheet\" is not null))"
+        },
+        "financial_snapshot_validator_chk": {
+          "name": "financial_snapshot_validator_chk",
+          "value": "\"financial_snapshot\".\"validated_by\" is null or (\"financial_snapshot\".\"validated_by\" is distinct from \"financial_snapshot\".\"prepared_by\" and \"financial_snapshot\".\"validated_hash\" is not null and \"financial_snapshot\".\"validated_at\" is not null)"
+        },
+        "financial_snapshot_approved_chk": {
+          "name": "financial_snapshot_approved_chk",
+          "value": "\"financial_snapshot\".\"approval_state\" <> 'approved' or (\"financial_snapshot\".\"validated_by\" is not null and \"financial_snapshot\".\"approved_by\" is not null and \"financial_snapshot\".\"approved_at\" is not null and \"financial_snapshot\".\"approved_by\" <> \"financial_snapshot\".\"validated_by\" and \"financial_snapshot\".\"approved_by\" is distinct from \"financial_snapshot\".\"prepared_by\")"
+        },
+        "financial_snapshot_opening_chk": {
+          "name": "financial_snapshot_opening_chk",
+          "value": "\"financial_snapshot\".\"approval_state\" <> 'approved' or \"financial_snapshot\".\"category\" <> 'opening_balance' or \"financial_snapshot\".\"approval_decision_id\" is not null"
         }
       },
       "isRLSEnabled": false
@@ -14449,6 +15259,12 @@
           "type": "varchar(32)",
           "primaryKey": false,
           "notNull": true
+        },
+        "financial_snapshot_id": {
+          "name": "financial_snapshot_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "counterparty_label": {
           "name": "counterparty_label",
@@ -14503,6 +15319,12 @@
         "source_ref": {
           "name": "source_ref",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prepared_by": {
+          "name": "prepared_by",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -14597,6 +15419,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "intercompany_reconciliation_snapshot_fk": {
+          "name": "intercompany_reconciliation_snapshot_fk",
+          "tableFrom": "intercompany_reconciliation",
+          "tableTo": "financial_snapshot",
+          "columnsFrom": [
+            "project_id",
+            "financial_snapshot_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -14615,6 +15452,14 @@
         "intercompany_reconciliation_scale_chk": {
           "name": "intercompany_reconciliation_scale_chk",
           "value": "\"intercompany_reconciliation\".\"unit_scale\" in (1, 1000, 1000000)"
+        },
+        "intercompany_reconciliation_status_chk": {
+          "name": "intercompany_reconciliation_status_chk",
+          "value": "\"intercompany_reconciliation\".\"status\" in ('open', 'reconciled', 'disputed')"
+        },
+        "intercompany_reconciliation_reconciled_chk": {
+          "name": "intercompany_reconciliation_reconciled_chk",
+          "value": "\"intercompany_reconciliation\".\"status\" <> 'reconciled' or (\"intercompany_reconciliation\".\"their_balance\" is not null and \"intercompany_reconciliation\".\"reviewer_user_id\" is not null and \"intercompany_reconciliation\".\"reviewed_at\" is not null and \"intercompany_reconciliation\".\"reviewer_user_id\" is distinct from \"intercompany_reconciliation\".\"prepared_by\" and (\"intercompany_reconciliation\".\"their_balance\" = \"intercompany_reconciliation\".\"our_balance\" or nullif(btrim(\"intercompany_reconciliation\".\"explanation\"), '') is not null))"
         }
       },
       "isRLSEnabled": false
@@ -14696,6 +15541,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "benefit_id": {
+          "name": "benefit_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "source": {
           "name": "source",
           "type": "text",
@@ -14747,12 +15598,26 @@
           "primaryKey": false,
           "notNull": false
         },
+        "classification": {
+          "name": "classification",
+          "type": "classification",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'confidential'"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "updated_at": {
           "name": "updated_at",
@@ -14814,6 +15679,21 @@
             "owner_user_id"
           ],
           "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "kpi_benefit_fk": {
+          "name": "kpi_benefit_fk",
+          "tableFrom": "kpi",
+          "tableTo": "benefit",
+          "columnsFrom": [
+            "project_id",
+            "benefit_id"
+          ],
+          "columnsTo": [
+            "project_id",
             "id"
           ],
           "onDelete": "no action",
@@ -14902,6 +15782,18 @@
           "notNull": true,
           "default": "'[]'::jsonb"
         },
+        "source_ref": {
+          "name": "source_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -14915,6 +15807,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'system'"
+        },
+        "recorded_by": {
+          "name": "recorded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -14973,7 +15871,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "kpi_observation_quality_chk": {
+          "name": "kpi_observation_quality_chk",
+          "value": "\"kpi_observation\".\"data_quality\" in ('ok', 'incomplete', 'stale', 'unknown')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.closing": {
@@ -15012,6 +15915,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "code": {
+          "name": "code",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "sequence": {
           "name": "sequence",
           "type": "integer",
@@ -15024,6 +15933,18 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "signing_id": {
+          "name": "signing_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "target_date": {
           "name": "target_date",
@@ -15038,6 +15959,18 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'planned'"
+        },
+        "confirmation_request_id": {
+          "name": "confirmation_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "executed_document_id": {
+          "name": "executed_document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "confirmed_by": {
           "name": "confirmed_by",
@@ -15066,6 +15999,12 @@
         "readiness_snapshot": {
           "name": "readiness_snapshot",
           "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_reason": {
+          "name": "status_reason",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -15131,6 +16070,27 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "closing_code_uq": {
+          "name": "closing_code_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -15176,6 +16136,51 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "closing_signing_fk": {
+          "name": "closing_signing_fk",
+          "tableFrom": "closing",
+          "tableTo": "closing",
+          "columnsFrom": [
+            "project_id",
+            "signing_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "closing_confirmation_request_fk": {
+          "name": "closing_confirmation_request_fk",
+          "tableFrom": "closing",
+          "tableTo": "approval_request",
+          "columnsFrom": [
+            "project_id",
+            "confirmation_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "closing_executed_document_fk": {
+          "name": "closing_executed_document_fk",
+          "tableFrom": "closing",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "executed_document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -15190,7 +16195,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "closing_signing_kind_ck": {
+          "name": "closing_signing_kind_ck",
+          "value": "(\"closing\".\"kind\" = 'signing' and \"closing\".\"signing_id\" is null) or \"closing\".\"kind\" = 'closing'"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.closing_condition": {
@@ -15287,6 +16297,24 @@
           "primaryKey": false,
           "notNull": false
         },
+        "waivability_basis": {
+          "name": "waivability_basis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "waivability_determined_by": {
+          "name": "waivability_determined_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "waivability_determined_at": {
+          "name": "waivability_determined_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "valid_to": {
           "name": "valid_to",
           "type": "date",
@@ -15307,6 +16335,18 @@
           "notNull": true,
           "default": "'open'"
         },
+        "evidence_submitted_by": {
+          "name": "evidence_submitted_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evidence_submitted_at": {
+          "name": "evidence_submitted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "verified_by": {
           "name": "verified_by",
           "type": "uuid",
@@ -15316,6 +16356,12 @@
         "verified_at": {
           "name": "verified_at",
           "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_note": {
+          "name": "status_note",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -15491,6 +16537,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "code": {
+          "name": "code",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "title": {
           "name": "title",
           "type": "text",
@@ -15509,6 +16561,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "due_date": {
+          "name": "due_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decision_id": {
+          "name": "decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "status": {
           "name": "status",
           "type": "closing_deliverable_status",
@@ -15523,6 +16587,24 @@
           "primaryKey": false,
           "notNull": false
         },
+        "executed_version_id": {
+          "name": "executed_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivered_by": {
+          "name": "delivered_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivered_at": {
+          "name": "delivered_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "verified_by": {
           "name": "verified_by",
           "type": "uuid",
@@ -15532,6 +16614,12 @@
         "verified_at": {
           "name": "verified_at",
           "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_note": {
+          "name": "status_note",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -15570,7 +16658,29 @@
           "default": 1
         }
       },
-      "indexes": {},
+      "indexes": {
+        "closing_deliverable_code_uq": {
+          "name": "closing_deliverable_code_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "closing_deliverable_project_id_project_id_fk": {
           "name": "closing_deliverable_project_id_project_id_fk",
@@ -15605,6 +16715,36 @@
           "columnsFrom": [
             "project_id",
             "document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "closing_deliverable_version_fk": {
+          "name": "closing_deliverable_version_fk",
+          "tableFrom": "closing_deliverable",
+          "tableTo": "document_version",
+          "columnsFrom": [
+            "project_id",
+            "executed_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "closing_deliverable_decision_fk": {
+          "name": "closing_deliverable_decision_fk",
+          "tableFrom": "closing_deliverable",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "decision_id"
           ],
           "columnsTo": [
             "project_id",
@@ -15673,11 +16813,24 @@
           "primaryKey": false,
           "notNull": false
         },
+        "code": {
+          "name": "code",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "name": {
           "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "version_no": {
+          "name": "version_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
         },
         "version_label": {
           "name": "version_label",
@@ -15701,6 +16854,12 @@
         },
         "governance_terms": {
           "name": "governance_terms",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assumptions": {
+          "name": "assumptions",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -15768,7 +16927,29 @@
           "default": 1
         }
       },
-      "indexes": {},
+      "indexes": {
+        "deal_scenario_code_uq": {
+          "name": "deal_scenario_code_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "deal_scenario_project_id_project_id_fk": {
           "name": "deal_scenario_project_id_project_id_fk",
@@ -15814,6 +16995,150 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.deal_scenario_version": {
+      "name": "deal_scenario_version",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scenario_id": {
+          "name": "scenario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_no": {
+          "name": "version_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_label": {
+          "name": "version_label",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownership": {
+          "name": "ownership",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contributions": {
+          "name": "contributions",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "governance_terms": {
+          "name": "governance_terms",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assumptions": {
+          "name": "assumptions",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "change_note": {
+          "name": "change_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "deal_scenario_version_uq": {
+          "name": "deal_scenario_version_uq",
+          "columns": [
+            {
+              "expression": "scenario_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version_no",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "deal_scenario_version_project_id_project_id_fk": {
+          "name": "deal_scenario_version_project_id_project_id_fk",
+          "tableFrom": "deal_scenario_version",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "deal_scenario_version_scenario_fk": {
+          "name": "deal_scenario_version_scenario_fk",
+          "tableFrom": "deal_scenario_version",
+          "tableTo": "deal_scenario",
+          "columnsFrom": [
+            "project_id",
+            "scenario_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.diligence_finding": {
       "name": "diligence_finding",
       "schema": "",
@@ -15839,6 +17164,18 @@
         },
         "partner_id": {
           "name": "partner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diligence_request_id": {
+          "name": "diligence_request_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -15880,6 +17217,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "remediation_owner_user_id": {
+          "name": "remediation_owner_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "remediation_due_date": {
+          "name": "remediation_due_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
         "valuation_implication": {
           "name": "valuation_implication",
           "type": "text",
@@ -15894,6 +17243,18 @@
         },
         "cp_implication": {
           "name": "cp_implication",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "condition_id": {
+          "name": "condition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_reason": {
+          "name": "status_reason",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -16015,6 +17376,51 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "diligence_finding_room_fk": {
+          "name": "diligence_finding_room_fk",
+          "tableFrom": "diligence_finding",
+          "tableTo": "partner_room",
+          "columnsFrom": [
+            "project_id",
+            "room_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "diligence_finding_request_fk": {
+          "name": "diligence_finding_request_fk",
+          "tableFrom": "diligence_finding",
+          "tableTo": "diligence_request",
+          "columnsFrom": [
+            "project_id",
+            "diligence_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "diligence_finding_condition_fk": {
+          "name": "diligence_finding_condition_fk",
+          "tableFrom": "diligence_finding",
+          "tableTo": "closing_condition",
+          "columnsFrom": [
+            "project_id",
+            "condition_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -16029,7 +17435,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "diligence_finding_material_owner_ck": {
+          "name": "diligence_finding_material_owner_ck",
+          "value": "\"diligence_finding\".\"materiality\" not in ('high', 'critical') or \"diligence_finding\".\"remediation_owner_user_id\" is not null"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.diligence_request": {
@@ -16073,6 +17484,13 @@
           "primaryKey": false,
           "notNull": true
         },
+        "origin": {
+          "name": "origin",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'internal'"
+        },
         "question": {
           "name": "question",
           "type": "text",
@@ -16109,6 +17527,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "drafted_by": {
+          "name": "drafted_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "evidence_document_ids": {
           "name": "evidence_document_ids",
           "type": "jsonb",
@@ -16122,6 +17546,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "submitted_for_review_by": {
+          "name": "submitted_for_review_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "submitted_for_review_at": {
+          "name": "submitted_for_review_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "release_status": {
           "name": "release_status",
           "type": "dd_release_status",
@@ -16132,6 +17568,24 @@
         },
         "release_approved_by": {
           "name": "release_approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "release_approved_at": {
+          "name": "release_approved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_note": {
+          "name": "review_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "released_by": {
+          "name": "released_by",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -16208,7 +17662,7 @@
               "nulls": "last"
             },
             {
-              "expression": "partner_id",
+              "expression": "room_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -16309,7 +17763,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "diligence_request_origin_ck": {
+          "name": "diligence_request_origin_ck",
+          "value": "\"diligence_request\".\"origin\" in ('internal', 'partner')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.funds_flow_item": {
@@ -16340,6 +17799,12 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
         },
         "description": {
           "name": "description",
@@ -16377,6 +17842,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "value_date": {
+          "name": "value_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
         "status": {
           "name": "status",
           "type": "funds_flow_status",
@@ -16388,6 +17859,36 @@
         "confirmed_by": {
           "name": "confirmed_by",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmed_at": {
+          "name": "confirmed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "settlement_reference": {
+          "name": "settlement_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "settlement_reported_by": {
+          "name": "settlement_reported_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "settlement_reported_at": {
+          "name": "settlement_reported_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_note": {
+          "name": "status_note",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -16411,6 +17912,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
         "version": {
           "name": "version",
           "type": "integer",
@@ -16419,7 +17927,29 @@
           "default": 1
         }
       },
-      "indexes": {},
+      "indexes": {
+        "funds_flow_item_code_uq": {
+          "name": "funds_flow_item_code_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "funds_flow_item_project_id_project_id_fk": {
           "name": "funds_flow_item_project_id_project_id_fk",
@@ -16451,9 +17981,27 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "funds_flow_item_pid_uq": {
+          "name": "funds_flow_item_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "funds_flow_scale_ck": {
+          "name": "funds_flow_scale_ck",
+          "value": "\"funds_flow_item\".\"unit_scale\" is null or \"funds_flow_item\".\"unit_scale\" in (1, 1000, 1000000)"
+        },
+        "funds_flow_money_ck": {
+          "name": "funds_flow_money_ck",
+          "value": "(\"funds_flow_item\".\"amount\" is null) = (\"funds_flow_item\".\"currency\" is null) and (\"funds_flow_item\".\"amount\" is null) = (\"funds_flow_item\".\"unit_scale\" is null)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.negotiation_issue": {
@@ -16522,8 +18070,33 @@
           "primaryKey": false,
           "notNull": false
         },
+        "requires_approval": {
+          "name": "requires_approval",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "decision_id": {
+          "name": "decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "document_ref": {
           "name": "document_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resolution": {
+          "name": "resolution",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -16645,6 +18218,36 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "negotiation_issue_decision_fk": {
+          "name": "negotiation_issue_decision_fk",
+          "tableFrom": "negotiation_issue",
+          "tableTo": "decision",
+          "columnsFrom": [
+            "project_id",
+            "decision_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "negotiation_issue_document_fk": {
+          "name": "negotiation_issue_document_fk",
+          "tableFrom": "negotiation_issue",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -16659,7 +18262,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "negotiation_issue_approval_link_ck": {
+          "name": "negotiation_issue_approval_link_ck",
+          "value": "not \"negotiation_issue\".\"requires_approval\" or \"negotiation_issue\".\"decision_id\" is not null"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.partner": {
@@ -16697,6 +18305,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "legal_entity_id": {
           "name": "legal_entity_id",
           "type": "uuid",
@@ -16711,12 +18325,36 @@
           "notNull": true,
           "default": "'identified'"
         },
+        "stage_changed_at": {
+          "name": "stage_changed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "shortlisted": {
           "name": "shortlisted",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "outreach_request_id": {
+          "name": "outreach_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "outreach_approved_by": {
+          "name": "outreach_approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "outreach_approved_at": {
+          "name": "outreach_approved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "nda_status": {
           "name": "nda_status",
@@ -16732,14 +18370,26 @@
           "primaryKey": false,
           "notNull": false
         },
-        "outreach_approved_by": {
-          "name": "outreach_approved_by",
+        "nda_document_id": {
+          "name": "nda_document_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "outreach_approved_at": {
-          "name": "outreach_approved_at",
+        "nda_request_id": {
+          "name": "nda_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nda_recorded_by": {
+          "name": "nda_recorded_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nda_recorded_at": {
+          "name": "nda_recorded_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
@@ -16756,27 +18406,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "criteria_scores": {
-          "name": "criteria_scores",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "conflict_disclosures": {
-          "name": "conflict_disclosures",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "proposal_summary": {
-          "name": "proposal_summary",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "facts_vs_judgment_note": {
-          "name": "facts_vs_judgment_note",
+        "withdrawn_reason": {
+          "name": "withdrawn_reason",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -16873,12 +18504,844 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "partner_nda_document_fk": {
+          "name": "partner_nda_document_fk",
+          "tableFrom": "partner",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "nda_document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "partner_outreach_request_fk": {
+          "name": "partner_outreach_request_fk",
+          "tableFrom": "partner",
+          "tableTo": "approval_request",
+          "columnsFrom": [
+            "project_id",
+            "outreach_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "partner_nda_request_fk": {
+          "name": "partner_nda_request_fk",
+          "tableFrom": "partner",
+          "tableTo": "approval_request",
+          "columnsFrom": [
+            "project_id",
+            "nda_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "partner_pid_uq": {
           "name": "partner_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.partner_assessment_entry": {
+      "name": "partner_assessment_entry",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "partner_id": {
+          "name": "partner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "proposal_id": {
+          "name": "proposal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "criterion_key": {
+          "name": "criterion_key",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "basis": {
+          "name": "basis",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "statement": {
+          "name": "statement",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "score": {
+          "name": "score",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_reference": {
+          "name": "source_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "partner_assessment_partner_idx": {
+          "name": "partner_assessment_partner_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "partner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "partner_assessment_entry_project_id_project_id_fk": {
+          "name": "partner_assessment_entry_project_id_project_id_fk",
+          "tableFrom": "partner_assessment_entry",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "partner_assessment_partner_fk": {
+          "name": "partner_assessment_partner_fk",
+          "tableFrom": "partner_assessment_entry",
+          "tableTo": "partner",
+          "columnsFrom": [
+            "project_id",
+            "partner_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "partner_assessment_proposal_fk": {
+          "name": "partner_assessment_proposal_fk",
+          "tableFrom": "partner_assessment_entry",
+          "tableTo": "partner_proposal",
+          "columnsFrom": [
+            "project_id",
+            "proposal_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "partner_assessment_document_fk": {
+          "name": "partner_assessment_document_fk",
+          "tableFrom": "partner_assessment_entry",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "partner_assessment_basis_ck": {
+          "name": "partner_assessment_basis_ck",
+          "value": "\"partner_assessment_entry\".\"basis\" in ('fact', 'judgement')"
+        },
+        "partner_assessment_score_ck": {
+          "name": "partner_assessment_score_ck",
+          "value": "\"partner_assessment_entry\".\"score\" is null or (\"partner_assessment_entry\".\"score\" >= 0 and \"partner_assessment_entry\".\"score\" <= 5)"
+        },
+        "partner_assessment_fact_source_ck": {
+          "name": "partner_assessment_fact_source_ck",
+          "value": "\"partner_assessment_entry\".\"basis\" <> 'fact' or \"partner_assessment_entry\".\"source_reference\" is not null or \"partner_assessment_entry\".\"document_id\" is not null"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.partner_conflict": {
+      "name": "partner_conflict",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "partner_id": {
+          "name": "partner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "declarant_user_id": {
+          "name": "declarant_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mitigation": {
+          "name": "mitigation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'open'"
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "partner_conflict_project_id_project_id_fk": {
+          "name": "partner_conflict_project_id_project_id_fk",
+          "tableFrom": "partner_conflict",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "partner_conflict_partner_fk": {
+          "name": "partner_conflict_partner_fk",
+          "tableFrom": "partner_conflict",
+          "tableTo": "partner",
+          "columnsFrom": [
+            "project_id",
+            "partner_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "partner_conflict_status_ck": {
+          "name": "partner_conflict_status_ck",
+          "value": "\"partner_conflict\".\"status\" in ('open', 'mitigated', 'cleared')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.partner_contact": {
+      "name": "partner_contact",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "partner_id": {
+          "name": "partner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_by": {
+          "name": "revoked_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "partner_contact_active_uq": {
+          "name": "partner_contact_active_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"partner_contact\".\"revoked_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "partner_contact_project_id_project_id_fk": {
+          "name": "partner_contact_project_id_project_id_fk",
+          "tableFrom": "partner_contact",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "partner_contact_partner_fk": {
+          "name": "partner_contact_partner_fk",
+          "tableFrom": "partner_contact",
+          "tableTo": "partner",
+          "columnsFrom": [
+            "project_id",
+            "partner_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "partner_contact_pid_uq": {
+          "name": "partner_contact_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.partner_criteria_set": {
+      "name": "partner_criteria_set",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "criteria": {
+          "name": "criteria",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "partner_criteria_set_project_uq": {
+          "name": "partner_criteria_set_project_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "partner_criteria_set_project_id_project_id_fk": {
+          "name": "partner_criteria_set_project_id_project_id_fk",
+          "tableFrom": "partner_criteria_set",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.partner_proposal": {
+      "name": "partner_proposal",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "partner_id": {
+          "name": "partner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "received_on": {
+          "name": "received_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "terms_summary": {
+          "name": "terms_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "supersedes_proposal_id": {
+          "name": "supersedes_proposal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "classification": {
+          "name": "classification",
+          "type": "classification",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'strictly_confidential'"
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "partner_proposal_code_uq": {
+          "name": "partner_proposal_code_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "partner_proposal_project_id_project_id_fk": {
+          "name": "partner_proposal_project_id_project_id_fk",
+          "tableFrom": "partner_proposal",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "partner_proposal_partner_fk": {
+          "name": "partner_proposal_partner_fk",
+          "tableFrom": "partner_proposal",
+          "tableTo": "partner",
+          "columnsFrom": [
+            "project_id",
+            "partner_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "partner_proposal_document_fk": {
+          "name": "partner_proposal_document_fk",
+          "tableFrom": "partner_proposal",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "partner_proposal_supersedes_fk": {
+          "name": "partner_proposal_supersedes_fk",
+          "tableFrom": "partner_proposal",
+          "tableTo": "partner_proposal",
+          "columnsFrom": [
+            "project_id",
+            "supersedes_proposal_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "partner_proposal_pid_uq": {
+          "name": "partner_proposal_pid_uq",
           "nullsNotDistinct": false,
           "columns": [
             "project_id",
@@ -16925,6 +19388,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "is_clean_team": {
           "name": "is_clean_team",
           "type": "boolean",
@@ -16940,6 +19409,31 @@
           "notNull": true,
           "default": "'strictly_confidential'"
         },
+        "locked_at": {
+          "name": "locked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "locked_by": {
+          "name": "locked_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lock_reason": {
+          "name": "lock_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -16952,6 +19446,13 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         },
         "version": {
           "name": "version",
@@ -17049,6 +19550,18 @@
           "primaryKey": false,
           "notNull": true
         },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "responsible_party": {
+          "name": "responsible_party",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "owner_user_id": {
           "name": "owner_user_id",
           "type": "uuid",
@@ -17075,6 +19588,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "completion_reported_by": {
+          "name": "completion_reported_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completion_reported_at": {
+          "name": "completion_reported_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "verified_by": {
           "name": "verified_by",
           "type": "uuid",
@@ -17084,6 +19609,24 @@
         "verified_at": {
           "name": "verified_at",
           "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "overdue_since": {
+          "name": "overdue_since",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "escalation_id": {
+          "name": "escalation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_note": {
+          "name": "status_note",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -17192,6 +19735,21 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "post_close_obligation_escalation_fk": {
+          "name": "post_close_obligation_escalation_fk",
+          "tableFrom": "post_close_obligation",
+          "tableTo": "escalation",
+          "columnsFrom": [
+            "project_id",
+            "escalation_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -17207,6 +19765,645 @@
       },
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.program_closure": {
+      "name": "program_closure",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'requested'"
+        },
+        "handover_note": {
+          "name": "handover_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "g7_assessment_id": {
+          "name": "g7_assessment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_request_id": {
+          "name": "approval_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "requested_by": {
+          "name": "requested_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "confirmed_by": {
+          "name": "confirmed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmed_at": {
+          "name": "confirmed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_note": {
+          "name": "status_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "program_closure_project_uq": {
+          "name": "program_closure_project_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "program_closure_project_id_project_id_fk": {
+          "name": "program_closure_project_id_project_id_fk",
+          "tableFrom": "program_closure",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "program_closure_g7_fk": {
+          "name": "program_closure_g7_fk",
+          "tableFrom": "program_closure",
+          "tableTo": "gate_assessment",
+          "columnsFrom": [
+            "project_id",
+            "g7_assessment_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "program_closure_request_fk": {
+          "name": "program_closure_request_fk",
+          "tableFrom": "program_closure",
+          "tableTo": "approval_request",
+          "columnsFrom": [
+            "project_id",
+            "approval_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "program_closure_status_ck": {
+          "name": "program_closure_status_ck",
+          "value": "\"program_closure\".\"status\" in ('requested', 'confirmed', 'rejected')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.room_access_event": {
+      "name": "room_access_event",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subject_user_id": {
+          "name": "subject_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "grant_id": {
+          "name": "grant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disclosure_id": {
+          "name": "disclosure_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diligence_request_id": {
+          "name": "diligence_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "document_version_id": {
+          "name": "document_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "room_access_event_room_idx": {
+          "name": "room_access_event_room_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "room_access_event_project_id_project_id_fk": {
+          "name": "room_access_event_project_id_project_id_fk",
+          "tableFrom": "room_access_event",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "room_access_event_room_fk": {
+          "name": "room_access_event_room_fk",
+          "tableFrom": "room_access_event",
+          "tableTo": "partner_room",
+          "columnsFrom": [
+            "project_id",
+            "room_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "room_access_event_grant_fk": {
+          "name": "room_access_event_grant_fk",
+          "tableFrom": "room_access_event",
+          "tableTo": "room_grant",
+          "columnsFrom": [
+            "project_id",
+            "grant_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "room_access_event_disclosure_fk": {
+          "name": "room_access_event_disclosure_fk",
+          "tableFrom": "room_access_event",
+          "tableTo": "room_disclosure",
+          "columnsFrom": [
+            "project_id",
+            "disclosure_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "room_access_event_dd_request_fk": {
+          "name": "room_access_event_dd_request_fk",
+          "tableFrom": "room_access_event",
+          "tableTo": "diligence_request",
+          "columnsFrom": [
+            "project_id",
+            "diligence_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "room_access_event_version_fk": {
+          "name": "room_access_event_version_fk",
+          "tableFrom": "room_access_event",
+          "tableTo": "document_version",
+          "columnsFrom": [
+            "project_id",
+            "document_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "room_access_event_kind_ck": {
+          "name": "room_access_event_kind_ck",
+          "value": "\"room_access_event\".\"kind\" in ('grant', 'grant_revoked', 'disclosure_requested', 'disclosure_released', 'disclosure_rejected', 'disclosure_revoked', 'dd_answer_released', 'download', 'room_locked', 'room_unlocked')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.room_disclosure": {
+      "name": "room_disclosure",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document_version_id": {
+          "name": "document_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "diligence_request_id": {
+          "name": "diligence_request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'requested'"
+        },
+        "request_note": {
+          "name": "request_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "requested_by": {
+          "name": "requested_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "released_by": {
+          "name": "released_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "released_at": {
+          "name": "released_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rejected_by": {
+          "name": "rejected_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_by": {
+          "name": "revoked_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_reason": {
+          "name": "status_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "room_disclosure_live_uq": {
+          "name": "room_disclosure_live_uq",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "document_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"room_disclosure\".\"status\" in ('requested', 'released')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "room_disclosure_project_id_project_id_fk": {
+          "name": "room_disclosure_project_id_project_id_fk",
+          "tableFrom": "room_disclosure",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "room_disclosure_room_fk": {
+          "name": "room_disclosure_room_fk",
+          "tableFrom": "room_disclosure",
+          "tableTo": "partner_room",
+          "columnsFrom": [
+            "project_id",
+            "room_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "room_disclosure_document_fk": {
+          "name": "room_disclosure_document_fk",
+          "tableFrom": "room_disclosure",
+          "tableTo": "document",
+          "columnsFrom": [
+            "project_id",
+            "document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "room_disclosure_version_fk": {
+          "name": "room_disclosure_version_fk",
+          "tableFrom": "room_disclosure",
+          "tableTo": "document_version",
+          "columnsFrom": [
+            "project_id",
+            "document_version_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "room_disclosure_dd_request_fk": {
+          "name": "room_disclosure_dd_request_fk",
+          "tableFrom": "room_disclosure",
+          "tableTo": "diligence_request",
+          "columnsFrom": [
+            "project_id",
+            "diligence_request_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "room_disclosure_pid_uq": {
+          "name": "room_disclosure_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "room_disclosure_status_ck": {
+          "name": "room_disclosure_status_ck",
+          "value": "\"room_disclosure\".\"status\" in ('requested', 'released', 'rejected', 'revoked')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.room_grant": {
@@ -17264,6 +20461,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "attestation_ref": {
+          "name": "attestation_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "granted_by": {
           "name": "granted_by",
           "type": "uuid",
@@ -17292,6 +20495,12 @@
         "revoked_by": {
           "name": "revoked_by",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoke_reason": {
+          "name": "revoke_reason",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         }
@@ -17357,9 +20566,27 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "room_grant_pid_uq": {
+          "name": "room_grant_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "room_grant_access_level_ck": {
+          "name": "room_grant_access_level_ck",
+          "value": "\"room_grant\".\"access_level\" in ('read', 'contribute', 'manage')"
+        },
+        "room_grant_role_ck": {
+          "name": "room_grant_role_ck",
+          "value": "\"room_grant\".\"role\" is null or \"room_grant\".\"role\" in ('clean_team', 'external_partner_limited')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.document": {
