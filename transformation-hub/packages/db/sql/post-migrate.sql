@@ -415,9 +415,9 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public, pg_te
   WHERE ora.user_id = p_user AND ora.scope_type = 'portfolio' AND ora.revoked_at IS NULL
     AND ora.valid_from <= now() AND (ora.valid_to IS NULL OR ora.valid_to > now())
   UNION ALL
-  -- partner / clean-team room grants
+  -- partner / clean-team room grants (a LOCKED room suspends every grant immediately — jv.room.lock, section 23)
   SELECT 'room_grant', rg.project_id, rg.role::text, NULL::uuid, rg.room_id, r.is_clean_team
-  FROM room_grant rg JOIN partner_room r ON r.id = rg.room_id
+  FROM room_grant rg JOIN partner_room r ON r.id = rg.room_id AND r.locked_at IS NULL
   JOIN app_user u ON u.id = rg.user_id AND u.is_active AND u.org_id = rg.org_id
   WHERE rg.user_id = p_user AND rg.revoked_at IS NULL AND (rg.expires_at IS NULL OR rg.expires_at > now())
 $$;
@@ -921,3 +921,249 @@ BEGIN
   END IF;
 END
 $legrant$;
+
+-- 22. Finance (REQ-FIN-001..010, AT-29) -----------------------------------------------------------------------------------
+-- (a) A business plan / valuation version is frozen at insert: its assumptions, outputs and source never change (a change
+--     is a NEW version, so prior assumptions are preserved — REQ-FIN-005). Approved values, once recorded from a final
+--     governance decision, never change either (REQ-FIN-006). Versions are never deleted.
+CREATE OR REPLACE FUNCTION hub_finance_model_version_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    RAISE EXCEPTION 'append_only_violation: financial model versions are never deleted' USING ERRCODE = 'P0001';
+  END IF;
+  IF (NEW.model_id, NEW.kind, NEW.version_no, NEW.version_label, NEW.model_case, NEW.based_on_version_id, NEW.assumptions, NEW.outputs,
+      NEW.headline_basis, NEW.source_type, NEW.source_document_id, NEW.source_document_version_id, NEW.source_ref, NEW.import_batch_id,
+      NEW.prepared_by, NEW.created_by, NEW.created_at)
+     IS DISTINCT FROM (OLD.model_id, OLD.kind, OLD.version_no, OLD.version_label, OLD.model_case, OLD.based_on_version_id, OLD.assumptions, OLD.outputs,
+      OLD.headline_basis, OLD.source_type, OLD.source_document_id, OLD.source_document_version_id, OLD.source_ref, OLD.import_batch_id,
+      OLD.prepared_by, OLD.created_by, OLD.created_at) THEN
+    RAISE EXCEPTION 'append_only_violation: a financial model version is frozen — create a new version' USING ERRCODE = 'P0001';
+  END IF;
+  IF OLD.approved_values IS NOT NULL AND NEW.approved_values IS DISTINCT FROM OLD.approved_values THEN
+    RAISE EXCEPTION 'append_only_violation: approved values are immutable once recorded' USING ERRCODE = 'P0001';
+  END IF;
+  IF OLD.superseded_by_id IS NOT NULL AND NEW.superseded_by_id IS DISTINCT FROM OLD.superseded_by_id THEN
+    RAISE EXCEPTION 'append_only_violation: the successor of a model version cannot change' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_finance_model_version_guard ON financial_model_version;
+CREATE TRIGGER hub_finance_model_version_guard BEFORE UPDATE OR DELETE ON financial_model_version FOR EACH ROW EXECUTE FUNCTION hub_finance_model_version_guard();
+
+-- (b) An APPROVED figure is immutable while approved: its content changes only after an explicit reopen (state → proposed,
+--     recorded in audit + record_version). Approved budget amounts change only with a new approval decision.
+CREATE OR REPLACE FUNCTION hub_finance_approved_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_TABLE_NAME = 'financial_snapshot' THEN
+    IF OLD.approval_state = 'approved' AND NEW.approval_state = 'approved'
+       AND (NEW.kind, NEW.category, NEW.line_ref, NEW.label, NEW.period, NEW.amount, NEW.currency, NEW.unit_scale, NEW.tsa_service_id,
+            NEW.source_ref, NEW.source_document_id, NEW.source_document_version_id, NEW.source_sheet, NEW.source_cell,
+            NEW.validated_by, NEW.validated_hash, NEW.approved_by, NEW.approved_at, NEW.approval_decision_id)
+           IS DISTINCT FROM (OLD.kind, OLD.category, OLD.line_ref, OLD.label, OLD.period, OLD.amount, OLD.currency, OLD.unit_scale, OLD.tsa_service_id,
+            OLD.source_ref, OLD.source_document_id, OLD.source_document_version_id, OLD.source_sheet, OLD.source_cell,
+            OLD.validated_by, OLD.validated_hash, OLD.approved_by, OLD.approved_at, OLD.approval_decision_id) THEN
+      RAISE EXCEPTION 'append_only_violation: an approved financial figure is immutable — reopen it first' USING ERRCODE = 'P0001';
+    END IF;
+  ELSIF TG_TABLE_NAME = 'budget_line' THEN
+    IF OLD.approved_amount IS NOT NULL AND NEW.approved_amount IS DISTINCT FROM OLD.approved_amount
+       AND NEW.approval_decision_id IS NOT DISTINCT FROM OLD.approval_decision_id THEN
+      RAISE EXCEPTION 'append_only_violation: an approved budget changes only with a new approval decision' USING ERRCODE = 'P0001';
+    END IF;
+    IF OLD.approved_amount IS NOT NULL AND (NEW.currency, NEW.unit_scale) IS DISTINCT FROM (OLD.currency, OLD.unit_scale) THEN
+      RAISE EXCEPTION 'append_only_violation: the currency / unit of an approved budget line cannot change' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_finance_approved_guard ON financial_snapshot;
+CREATE TRIGGER hub_finance_approved_guard BEFORE UPDATE ON financial_snapshot FOR EACH ROW EXECUTE FUNCTION hub_finance_approved_guard();
+DROP TRIGGER IF EXISTS hub_finance_approved_guard ON budget_line;
+CREATE TRIGGER hub_finance_approved_guard BEFORE UPDATE ON budget_line FOR EACH ROW EXECUTE FUNCTION hub_finance_approved_guard();
+
+-- (c) KPI observations are append-only (a correction is a new observation); finance registers are never hard-deleted.
+DROP TRIGGER IF EXISTS hub_append_only ON kpi_observation;
+CREATE TRIGGER hub_append_only BEFORE UPDATE OR DELETE ON kpi_observation FOR EACH ROW EXECUTE FUNCTION hub_reject_mutation();
+DROP TRIGGER IF EXISTS hub_no_truncate ON kpi_observation;
+CREATE TRIGGER hub_no_truncate BEFORE TRUNCATE ON kpi_observation FOR EACH STATEMENT EXECUTE FUNCTION hub_reject_mutation();
+DO $finance_grants$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
+    EXECUTE 'REVOKE UPDATE, DELETE ON kpi_observation FROM hub_app';
+    EXECUTE 'REVOKE DELETE ON financial_snapshot, budget_line, financial_model, financial_model_version, intercompany_reconciliation, benefit, kpi FROM hub_app';
+  END IF;
+END
+$finance_grants$;
+
+-- 23. JV: partner rooms, disclosures, due diligence, signing/closing (P4 — REQ-JV-*, REQ-ENT-012, ARCH-22) -------------
+-- (a) A DD finding's room is DERIVED from the DD request it was raised from (never client-set) and cascaded when the
+--     request's room changes, exactly like document_version.room_id (ARCH-22). RLS on diligence_finding then limits a
+--     room's findings to that room's members. A standalone finding keeps the room the service validated.
+CREATE OR REPLACE FUNCTION hub_finding_room_sync() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE r record;
+BEGIN
+  IF NEW.diligence_request_id IS NOT NULL THEN
+    SELECT room_id, project_id INTO r FROM diligence_request WHERE id = NEW.diligence_request_id;
+    IF r IS NULL OR r.project_id IS DISTINCT FROM NEW.project_id THEN
+      RAISE EXCEPTION 'cross_project_reference: the DD request is not a record of this project' USING ERRCODE = 'P0001';
+    END IF;
+    NEW.room_id := r.room_id;
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_finding_room_sync ON diligence_finding;
+CREATE TRIGGER hub_finding_room_sync BEFORE INSERT OR UPDATE ON diligence_finding FOR EACH ROW EXECUTE FUNCTION hub_finding_room_sync();
+
+CREATE OR REPLACE FUNCTION hub_dd_request_room_cascade() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.room_id IS DISTINCT FROM OLD.room_id THEN
+    UPDATE diligence_finding SET room_id = NEW.room_id WHERE diligence_request_id = NEW.id;
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_dd_request_room_cascade ON diligence_request;
+CREATE TRIGGER hub_dd_request_room_cascade AFTER UPDATE OF room_id ON diligence_request FOR EACH ROW EXECUTE FUNCTION hub_dd_request_room_cascade();
+
+-- (b) A disclosure is a VERSION of a document filed in a room; its room is derived from the document at disclosure time
+--     and its identity (room, document, version, requester) never changes afterwards (status changes only).
+CREATE OR REPLACE FUNCTION hub_room_disclosure_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE d record; v record;
+BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    IF (NEW.room_id, NEW.document_id, NEW.document_version_id, NEW.requested_by) IS DISTINCT FROM (OLD.room_id, OLD.document_id, OLD.document_version_id, OLD.requested_by) THEN
+      RAISE EXCEPTION 'append_only_violation: a disclosure''s room, document, version and requester are immutable' USING ERRCODE = 'P0001';
+    END IF;
+    RETURN NEW;
+  END IF;
+  SELECT room_id, project_id INTO d FROM document WHERE id = NEW.document_id;
+  IF d IS NULL OR d.project_id IS DISTINCT FROM NEW.project_id THEN
+    RAISE EXCEPTION 'cross_project_reference: the document is not a record of this project' USING ERRCODE = 'P0001';
+  END IF;
+  SELECT document_id INTO v FROM document_version WHERE id = NEW.document_version_id AND project_id = NEW.project_id;
+  IF v IS NULL OR v.document_id IS DISTINCT FROM NEW.document_id THEN
+    RAISE EXCEPTION 'cross_project_reference: the disclosed version is not a version of this document' USING ERRCODE = 'P0001';
+  END IF;
+  IF d.room_id IS NULL THEN
+    RAISE EXCEPTION 'disclosure_room_required: only a document filed in a room can be disclosed' USING ERRCODE = 'P0001';
+  END IF;
+  NEW.room_id := d.room_id;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_room_disclosure_guard ON room_disclosure;
+CREATE TRIGGER hub_room_disclosure_guard BEFORE INSERT OR UPDATE ON room_disclosure FOR EACH ROW EXECUTE FUNCTION hub_room_disclosure_guard();
+
+-- (c) A checklist item / condition belongs to EXACTLY ONE event and is never moved (REQ-JV-012); conditions belong to a
+--     closing (not a signing); a closing references a signing and an event never changes kind (REQ-LCY-009).
+CREATE OR REPLACE FUNCTION hub_jv_event_link_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE k text;
+BEGIN
+  IF TG_OP = 'UPDATE' AND OLD.closing_id IS NOT NULL AND NEW.closing_id IS DISTINCT FROM OLD.closing_id THEN
+    RAISE EXCEPTION 'immutable_event_link: a % belongs to exactly one signing or closing and cannot be moved', TG_TABLE_NAME USING ERRCODE = 'P0001';
+  END IF;
+  IF TG_TABLE_NAME = 'closing_condition' AND NEW.closing_id IS NOT NULL THEN
+    SELECT kind::text INTO k FROM closing WHERE id = NEW.closing_id AND project_id = NEW.project_id;
+    IF k IS DISTINCT FROM 'closing' THEN
+      RAISE EXCEPTION 'invalid_event_kind: conditions belong to a closing, not to a signing' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_jv_event_link_guard ON closing_deliverable;
+CREATE TRIGGER hub_jv_event_link_guard BEFORE INSERT OR UPDATE OF closing_id ON closing_deliverable FOR EACH ROW EXECUTE FUNCTION hub_jv_event_link_guard();
+DROP TRIGGER IF EXISTS hub_jv_event_link_guard ON closing_condition;
+CREATE TRIGGER hub_jv_event_link_guard BEFORE INSERT OR UPDATE OF closing_id ON closing_condition FOR EACH ROW EXECUTE FUNCTION hub_jv_event_link_guard();
+
+CREATE OR REPLACE FUNCTION hub_closing_signing_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE k text;
+BEGIN
+  IF TG_OP = 'UPDATE' AND (NEW.kind IS DISTINCT FROM OLD.kind OR (OLD.signing_id IS NOT NULL AND NEW.signing_id IS DISTINCT FROM OLD.signing_id)) THEN
+    RAISE EXCEPTION 'immutable_event_link: the kind of an event and the signing of a closing never change' USING ERRCODE = 'P0001';
+  END IF;
+  IF NEW.signing_id IS NOT NULL THEN
+    SELECT kind::text INTO k FROM closing WHERE id = NEW.signing_id AND project_id = NEW.project_id;
+    IF k IS DISTINCT FROM 'signing' THEN
+      RAISE EXCEPTION 'invalid_event_kind: a closing must reference a signing' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+  RETURN NEW;
+END
+$$;
+DROP TRIGGER IF EXISTS hub_closing_signing_guard ON closing;
+CREATE TRIGGER hub_closing_signing_guard BEFORE INSERT OR UPDATE OF kind, signing_id ON closing FOR EACH ROW EXECUTE FUNCTION hub_closing_signing_guard();
+
+-- (d) Room grants: the room-scoped roles go only where they belong (access-matrix §2.4, §2.8; section 20 keeps external
+--     accounts to external_partner_limited): an internal account never holds external_partner_limited, the clean_team
+--     role exists only inside a clean-team room, and a grant's identity is immutable (revocation only, history kept).
+CREATE OR REPLACE FUNCTION hub_room_grant_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+DECLARE acct text; ct boolean;
+BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    IF (NEW.room_id, NEW.user_id, NEW.role, NEW.access_level, NEW.granted_by, NEW.created_at, NEW.expires_at)
+       IS DISTINCT FROM (OLD.room_id, OLD.user_id, OLD.role, OLD.access_level, OLD.granted_by, OLD.created_at, OLD.expires_at) THEN
+      RAISE EXCEPTION 'append_only_violation: a room grant is revoked and re-granted, never edited' USING ERRCODE = 'P0001';
+    END IF;
+    IF OLD.revoked_at IS NOT NULL AND NEW.revoked_at IS DISTINCT FROM OLD.revoked_at THEN
+      RAISE EXCEPTION 'append_only_violation: a revoked grant stays revoked (history is retained)' USING ERRCODE = 'P0001';
+    END IF;
+    RETURN NEW;
+  END IF;
+  IF NEW.role::text = 'external_partner_limited' THEN
+    SELECT account_type INTO acct FROM app_user WHERE id = NEW.user_id;
+    IF acct IS DISTINCT FROM 'external' THEN
+      RAISE EXCEPTION 'external_account_role: external_partner_limited is held only by external accounts' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+  IF NEW.role::text = 'clean_team' THEN
+    SELECT is_clean_team INTO ct FROM partner_room WHERE id = NEW.room_id AND project_id = NEW.project_id;
+    IF ct IS DISTINCT FROM true THEN
+      RAISE EXCEPTION 'clean_team_room_only: the clean_team role is granted only into a clean-team room' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+  RETURN NEW;
+END
+$$;
+REVOKE ALL ON FUNCTION hub_room_grant_guard() FROM PUBLIC;
+DROP TRIGGER IF EXISTS hub_room_grant_guard ON room_grant;
+CREATE TRIGGER hub_room_grant_guard BEFORE INSERT OR UPDATE ON room_grant FOR EACH ROW EXECUTE FUNCTION hub_room_grant_guard();
+
+-- (e) A partner contact is an EXTERNAL account bound to one counterparty (access-matrix §2.8); never re-pointed.
+CREATE OR REPLACE FUNCTION hub_partner_contact_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public, pg_temp AS $$
+DECLARE acct text;
+BEGIN
+  IF TG_OP = 'UPDATE' AND (NEW.partner_id, NEW.user_id) IS DISTINCT FROM (OLD.partner_id, OLD.user_id) THEN
+    RAISE EXCEPTION 'append_only_violation: a partner contact binding is revoked, never re-pointed' USING ERRCODE = 'P0001';
+  END IF;
+  SELECT account_type INTO acct FROM app_user WHERE id = NEW.user_id;
+  IF acct IS DISTINCT FROM 'external' THEN
+    RAISE EXCEPTION 'external_account_required: only an external account can be bound to a partner' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END
+$$;
+REVOKE ALL ON FUNCTION hub_partner_contact_guard() FROM PUBLIC;
+DROP TRIGGER IF EXISTS hub_partner_contact_guard ON partner_contact;
+CREATE TRIGGER hub_partner_contact_guard BEFORE INSERT OR UPDATE ON partner_contact FOR EACH ROW EXECUTE FUNCTION hub_partner_contact_guard();
+
+-- (f) History tables are append-only (room access/disclosure history, deal scenario versions, assessment entries);
+--     JV business records are never hard-deleted (status commands, revocation and history instead).
+DO $jvappend$
+DECLARE t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['room_access_event', 'deal_scenario_version', 'partner_assessment_entry'] LOOP
+    EXECUTE format('DROP TRIGGER IF EXISTS hub_append_only ON %I', t);
+    EXECUTE format('CREATE TRIGGER hub_append_only BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION hub_reject_mutation()', t);
+    EXECUTE format('DROP TRIGGER IF EXISTS hub_no_truncate ON %I', t);
+    EXECUTE format('CREATE TRIGGER hub_no_truncate BEFORE TRUNCATE ON %I FOR EACH STATEMENT EXECUTE FUNCTION hub_reject_mutation()', t);
+  END LOOP;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_app') THEN
+    EXECUTE 'REVOKE UPDATE, DELETE ON room_access_event, deal_scenario_version, partner_assessment_entry FROM hub_app';
+    EXECUTE 'REVOKE DELETE ON partner, partner_room, partner_contact, partner_conflict, partner_proposal, partner_criteria_set, room_disclosure, deal_scenario, negotiation_issue, diligence_request, diligence_finding, closing, closing_condition, closing_deliverable, funds_flow_item, post_close_obligation, program_closure FROM hub_app';
+  END IF;
+END
+$jvappend$;
+

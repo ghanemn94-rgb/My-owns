@@ -1599,18 +1599,34 @@ CREATE TABLE "benefit" (
 	"value_amount" numeric(20, 4),
 	"value_currency" varchar(3),
 	"value_unit_scale" integer,
+	"realized_amount" numeric(20, 4),
+	"realized_currency" varchar(3),
+	"realized_unit_scale" integer,
 	"owner_user_id" uuid,
+	"workstream_id" uuid,
 	"realization_date" date,
+	"realized_on" date,
 	"verification_source" text,
 	"status" "benefit_status" DEFAULT 'proposed' NOT NULL,
+	"approved_by" uuid,
+	"approved_at" timestamp with time zone,
+	"realization_recorded_by" uuid,
+	"realization_recorded_at" timestamp with time zone,
 	"verified_by" uuid,
 	"verified_at" timestamp with time zone,
+	"verification_note" text,
+	"status_note" text,
+	"classification" "classification" DEFAULT 'confidential' NOT NULL,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
-	CONSTRAINT "benefit_pid_uq" UNIQUE("project_id","id")
+	CONSTRAINT "benefit_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "benefit_value_chk" CHECK (("benefit"."value_amount" is null) = ("benefit"."value_currency" is null) and ("benefit"."value_amount" is null) = ("benefit"."value_unit_scale" is null) and coalesce("benefit"."value_unit_scale", 1) in (1, 1000, 1000000)),
+	CONSTRAINT "benefit_realized_money_chk" CHECK (("benefit"."realized_amount" is null) = ("benefit"."realized_currency" is null) and ("benefit"."realized_amount" is null) = ("benefit"."realized_unit_scale" is null) and coalesce("benefit"."realized_unit_scale", 1) in (1, 1000, 1000000)),
+	CONSTRAINT "benefit_realized_chk" CHECK ("benefit"."status" not in ('realized_unverified', 'realized_verified') or (nullif(btrim("benefit"."verification_source"), '') is not null and "benefit"."realization_recorded_by" is not null and "benefit"."realized_on" is not null)),
+	CONSTRAINT "benefit_verified_chk" CHECK ("benefit"."status" <> 'realized_verified' or ("benefit"."verified_by" is not null and "benefit"."verified_at" is not null and "benefit"."verified_by" <> "benefit"."realization_recorded_by" and "benefit"."verified_by" is distinct from "benefit"."owner_user_id"))
 );
 --> statement-breakpoint
 CREATE TABLE "budget_line" (
@@ -1621,41 +1637,43 @@ CREATE TABLE "budget_line" (
 	"code" varchar(32) NOT NULL,
 	"name" text NOT NULL,
 	"category" "financial_category" NOT NULL,
+	"proposed_amount" numeric(20, 4),
 	"approved_amount" numeric(20, 4),
 	"committed_amount" numeric(20, 4) DEFAULT '0' NOT NULL,
 	"spent_amount" numeric(20, 4) DEFAULT '0' NOT NULL,
 	"currency" varchar(3) NOT NULL,
 	"unit_scale" integer DEFAULT 1 NOT NULL,
+	"actuals_as_of" date,
+	"actuals_source_ref" text,
+	"tsa_service_id" uuid,
 	"approval_state" "approval_state" DEFAULT 'proposed' NOT NULL,
+	"approval_decision_id" uuid,
 	"approved_by" uuid,
 	"approved_at" timestamp with time zone,
 	"source_ref" text,
-	"classification" "classification" DEFAULT 'restricted' NOT NULL,
+	"classification" "classification" DEFAULT 'confidential' NOT NULL,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	CONSTRAINT "budget_line_pid_uq" UNIQUE("project_id","id"),
-	CONSTRAINT "budget_line_scale_chk" CHECK ("budget_line"."unit_scale" in (1, 1000, 1000000))
+	CONSTRAINT "budget_line_scale_chk" CHECK ("budget_line"."unit_scale" in (1, 1000, 1000000)),
+	CONSTRAINT "budget_line_currency_chk" CHECK ("budget_line"."currency" ~ '^[A-Z]{3}$'),
+	CONSTRAINT "budget_line_tsa_chk" CHECK (("budget_line"."category" = 'tsa_charge') = ("budget_line"."tsa_service_id" is not null)),
+	CONSTRAINT "budget_line_nonneg_chk" CHECK ("budget_line"."committed_amount" >= 0 and "budget_line"."spent_amount" >= 0 and coalesce("budget_line"."approved_amount", 0) >= 0 and coalesce("budget_line"."proposed_amount", 0) >= 0),
+	CONSTRAINT "budget_line_approved_chk" CHECK ("budget_line"."approved_amount" is null or "budget_line"."approval_state" = 'approved'),
+	CONSTRAINT "budget_line_state_chk" CHECK ("budget_line"."approval_state" <> 'approved' or "budget_line"."approved_amount" is not null)
 );
 --> statement-breakpoint
-CREATE TABLE "financial_model_version" (
+CREATE TABLE "financial_model" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"org_id" uuid NOT NULL,
 	"project_id" uuid NOT NULL,
+	"code" varchar(32) NOT NULL,
 	"kind" "model_kind" NOT NULL,
-	"version_label" varchar(32) NOT NULL,
-	"model_case" "model_case" NOT NULL,
-	"assumptions" jsonb DEFAULT '[]'::jsonb NOT NULL,
-	"outputs" jsonb DEFAULT '[]'::jsonb NOT NULL,
-	"headline_basis" "value_basis",
-	"source_document_id" uuid,
-	"source_ref" text,
-	"approval_state" "approval_state" DEFAULT 'proposed' NOT NULL,
-	"approved_by" uuid,
-	"approved_at" timestamp with time zone,
-	"human_validation_note" text,
+	"name" text NOT NULL,
+	"description" text,
 	"classification" "classification" DEFAULT 'strictly_confidential' NOT NULL,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -1663,6 +1681,50 @@ CREATE TABLE "financial_model_version" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	CONSTRAINT "financial_model_pid_uq" UNIQUE("project_id","id")
+);
+--> statement-breakpoint
+CREATE TABLE "financial_model_version" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"model_id" uuid NOT NULL,
+	"kind" "model_kind" NOT NULL,
+	"version_no" integer NOT NULL,
+	"version_label" varchar(32) NOT NULL,
+	"model_case" "model_case" NOT NULL,
+	"based_on_version_id" uuid,
+	"superseded_by_id" uuid,
+	"assumptions" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"outputs" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"headline_basis" "value_basis",
+	"source_type" "source_type" DEFAULT 'manual_entry' NOT NULL,
+	"source_document_id" uuid,
+	"source_document_version_id" uuid,
+	"source_ref" text,
+	"import_batch_id" uuid,
+	"change_note" text,
+	"approval_state" "approval_state" DEFAULT 'proposed' NOT NULL,
+	"prepared_by" uuid,
+	"validated_by" uuid,
+	"validated_at" timestamp with time zone,
+	"human_validation_note" text,
+	"validated_hash" text,
+	"approval_request_id" uuid,
+	"approval_decision_id" uuid,
+	"approved_values" jsonb,
+	"approved_by" uuid,
+	"approved_at" timestamp with time zone,
+	"classification" "classification" DEFAULT 'strictly_confidential' NOT NULL,
+	"is_demo" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "financial_model_version_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "financial_model_source_chk" CHECK ("financial_model_version"."source_document_id" is not null or nullif(btrim("financial_model_version"."source_ref"), '') is not null),
+	CONSTRAINT "financial_model_validator_chk" CHECK ("financial_model_version"."validated_by" is null or ("financial_model_version"."validated_by" is distinct from "financial_model_version"."prepared_by" and "financial_model_version"."validated_hash" is not null and "financial_model_version"."validated_at" is not null)),
+	CONSTRAINT "financial_model_approved_values_chk" CHECK ("financial_model_version"."approved_values" is null or ("financial_model_version"."approval_state" = 'approved' and "financial_model_version"."approval_decision_id" is not null and "financial_model_version"."approved_by" is not null and "financial_model_version"."validated_by" is not null and "financial_model_version"."approved_by" <> "financial_model_version"."validated_by")),
+	CONSTRAINT "financial_model_approved_chk" CHECK ("financial_model_version"."approval_state" <> 'approved' or "financial_model_version"."approved_values" is not null)
 );
 --> statement-breakpoint
 CREATE TABLE "financial_snapshot" (
@@ -1677,9 +1739,22 @@ CREATE TABLE "financial_snapshot" (
 	"amount" numeric(20, 4) NOT NULL,
 	"currency" varchar(3) NOT NULL,
 	"unit_scale" integer DEFAULT 1 NOT NULL,
+	"source_type" "source_type" DEFAULT 'manual_entry' NOT NULL,
 	"source_ref" text,
 	"source_document_id" uuid,
+	"source_document_version_id" uuid,
+	"source_sheet" varchar(128),
+	"source_cell" varchar(64),
+	"import_batch_id" uuid,
+	"tsa_service_id" uuid,
 	"approval_state" "approval_state" DEFAULT 'proposed' NOT NULL,
+	"prepared_by" uuid,
+	"validated_by" uuid,
+	"validated_at" timestamp with time zone,
+	"validation_note" text,
+	"validated_hash" text,
+	"approval_request_id" uuid,
+	"approval_decision_id" uuid,
 	"approved_by" uuid,
 	"approved_at" timestamp with time zone,
 	"workstream_id" uuid,
@@ -1690,7 +1765,14 @@ CREATE TABLE "financial_snapshot" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	CONSTRAINT "financial_snapshot_pid_uq" UNIQUE("project_id","id"),
-	CONSTRAINT "financial_snapshot_scale_chk" CHECK ("financial_snapshot"."unit_scale" in (1, 1000, 1000000))
+	CONSTRAINT "financial_snapshot_scale_chk" CHECK ("financial_snapshot"."unit_scale" in (1, 1000, 1000000)),
+	CONSTRAINT "financial_snapshot_currency_chk" CHECK ("financial_snapshot"."currency" ~ '^[A-Z]{3}$'),
+	CONSTRAINT "financial_snapshot_tsa_chk" CHECK (("financial_snapshot"."category" = 'tsa_charge') = ("financial_snapshot"."tsa_service_id" is not null)),
+	CONSTRAINT "financial_snapshot_source_chk" CHECK ("financial_snapshot"."source_document_id" is not null or nullif(btrim("financial_snapshot"."source_ref"), '') is not null),
+	CONSTRAINT "financial_snapshot_import_ref_chk" CHECK ("financial_snapshot"."source_type" not in ('excel', 'csv') or ("financial_snapshot"."source_document_id" is not null and "financial_snapshot"."source_cell" is not null and ("financial_snapshot"."source_type" = 'csv' or "financial_snapshot"."source_sheet" is not null))),
+	CONSTRAINT "financial_snapshot_validator_chk" CHECK ("financial_snapshot"."validated_by" is null or ("financial_snapshot"."validated_by" is distinct from "financial_snapshot"."prepared_by" and "financial_snapshot"."validated_hash" is not null and "financial_snapshot"."validated_at" is not null)),
+	CONSTRAINT "financial_snapshot_approved_chk" CHECK ("financial_snapshot"."approval_state" <> 'approved' or ("financial_snapshot"."validated_by" is not null and "financial_snapshot"."approved_by" is not null and "financial_snapshot"."approved_at" is not null and "financial_snapshot"."approved_by" <> "financial_snapshot"."validated_by" and "financial_snapshot"."approved_by" is distinct from "financial_snapshot"."prepared_by")),
+	CONSTRAINT "financial_snapshot_opening_chk" CHECK ("financial_snapshot"."approval_state" <> 'approved' or "financial_snapshot"."category" <> 'opening_balance' or "financial_snapshot"."approval_decision_id" is not null)
 );
 --> statement-breakpoint
 CREATE TABLE "intercompany_reconciliation" (
@@ -1698,6 +1780,7 @@ CREATE TABLE "intercompany_reconciliation" (
 	"org_id" uuid NOT NULL,
 	"project_id" uuid NOT NULL,
 	"code" varchar(32) NOT NULL,
+	"financial_snapshot_id" uuid,
 	"counterparty_label" text NOT NULL,
 	"period" varchar(16) NOT NULL,
 	"our_balance" numeric(20, 4) NOT NULL,
@@ -1707,6 +1790,7 @@ CREATE TABLE "intercompany_reconciliation" (
 	"status" varchar(16) DEFAULT 'open' NOT NULL,
 	"explanation" text,
 	"source_ref" text,
+	"prepared_by" uuid,
 	"reviewer_user_id" uuid,
 	"reviewed_at" timestamp with time zone,
 	"classification" "classification" DEFAULT 'restricted' NOT NULL,
@@ -1716,7 +1800,9 @@ CREATE TABLE "intercompany_reconciliation" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	CONSTRAINT "intercompany_reconciliation_pid_uq" UNIQUE("project_id","id"),
-	CONSTRAINT "intercompany_reconciliation_scale_chk" CHECK ("intercompany_reconciliation"."unit_scale" in (1, 1000, 1000000))
+	CONSTRAINT "intercompany_reconciliation_scale_chk" CHECK ("intercompany_reconciliation"."unit_scale" in (1, 1000, 1000000)),
+	CONSTRAINT "intercompany_reconciliation_status_chk" CHECK ("intercompany_reconciliation"."status" in ('open', 'reconciled', 'disputed')),
+	CONSTRAINT "intercompany_reconciliation_reconciled_chk" CHECK ("intercompany_reconciliation"."status" <> 'reconciled' or ("intercompany_reconciliation"."their_balance" is not null and "intercompany_reconciliation"."reviewer_user_id" is not null and "intercompany_reconciliation"."reviewed_at" is not null and "intercompany_reconciliation"."reviewer_user_id" is distinct from "intercompany_reconciliation"."prepared_by" and ("intercompany_reconciliation"."their_balance" = "intercompany_reconciliation"."our_balance" or nullif(btrim("intercompany_reconciliation"."explanation"), '') is not null)))
 );
 --> statement-breakpoint
 CREATE TABLE "kpi" (
@@ -1732,6 +1818,7 @@ CREATE TABLE "kpi" (
 	"period" varchar(32) NOT NULL,
 	"owner_role" varchar(32),
 	"owner_user_id" uuid,
+	"benefit_id" uuid,
 	"source" text NOT NULL,
 	"target" text,
 	"thresholds" jsonb NOT NULL,
@@ -1740,7 +1827,9 @@ CREATE TABLE "kpi" (
 	"computation" varchar(64),
 	"verification_status" "verification_status" DEFAULT 'proposed' NOT NULL,
 	"last_verified_at" timestamp with time zone,
+	"classification" "classification" DEFAULT 'confidential' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	CONSTRAINT "kpi_pid_uq" UNIQUE("project_id","id")
@@ -1757,8 +1846,12 @@ CREATE TABLE "kpi_observation" (
 	"denominator" numeric(20, 4),
 	"data_quality" varchar(16) DEFAULT 'ok' NOT NULL,
 	"source_refs" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"source_ref" text,
+	"note" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"computed_by" varchar(32) DEFAULT 'system' NOT NULL
+	"computed_by" varchar(32) DEFAULT 'system' NOT NULL,
+	"recorded_by" uuid,
+	CONSTRAINT "kpi_observation_quality_chk" CHECK ("kpi_observation"."data_quality" in ('ok', 'incomplete', 'stale', 'unknown'))
 );
 --> statement-breakpoint
 CREATE TABLE "closing" (
@@ -1767,21 +1860,28 @@ CREATE TABLE "closing" (
 	"project_id" uuid NOT NULL,
 	"partner_id" uuid,
 	"kind" "closing_kind" NOT NULL,
+	"code" varchar(32),
 	"sequence" integer DEFAULT 1 NOT NULL,
 	"name" text NOT NULL,
+	"description" text,
+	"signing_id" uuid,
 	"target_date" date,
 	"status" "closing_status" DEFAULT 'planned' NOT NULL,
+	"confirmation_request_id" uuid,
+	"executed_document_id" uuid,
 	"confirmed_by" uuid,
 	"confirmed_at" timestamp with time zone,
 	"confirmation_authority" text,
 	"confirmation_decision_id" uuid,
 	"readiness_snapshot" jsonb,
+	"status_reason" text,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
-	CONSTRAINT "closing_pid_uq" UNIQUE("project_id","id")
+	CONSTRAINT "closing_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "closing_signing_kind_ck" CHECK (("closing"."kind" = 'signing' and "closing"."signing_id" is null) or "closing"."kind" = 'closing')
 );
 --> statement-breakpoint
 CREATE TABLE "closing_condition" (
@@ -1799,11 +1899,17 @@ CREATE TABLE "closing_condition" (
 	"waivable" boolean DEFAULT false NOT NULL,
 	"waiver_authority_role" "role_key",
 	"waiver_authority_note" text,
+	"waivability_basis" text,
+	"waivability_determined_by" uuid,
+	"waivability_determined_at" timestamp with time zone,
 	"valid_to" date,
 	"long_stop_date" date,
 	"status" "condition_status" DEFAULT 'open' NOT NULL,
+	"evidence_submitted_by" uuid,
+	"evidence_submitted_at" timestamp with time zone,
 	"verified_by" uuid,
 	"verified_at" timestamp with time zone,
+	"status_note" text,
 	"waiver_id" uuid,
 	"gate_key" varchar(16),
 	"is_demo" boolean DEFAULT false NOT NULL,
@@ -1819,13 +1925,20 @@ CREATE TABLE "closing_deliverable" (
 	"org_id" uuid NOT NULL,
 	"project_id" uuid NOT NULL,
 	"closing_id" uuid NOT NULL,
+	"code" varchar(32),
 	"title" text NOT NULL,
 	"responsible_party" text,
 	"owner_user_id" uuid,
+	"due_date" date,
+	"decision_id" uuid,
 	"status" "closing_deliverable_status" DEFAULT 'pending' NOT NULL,
 	"document_id" uuid,
+	"executed_version_id" uuid,
+	"delivered_by" uuid,
+	"delivered_at" timestamp with time zone,
 	"verified_by" uuid,
 	"verified_at" timestamp with time zone,
+	"status_note" text,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
@@ -1839,11 +1952,14 @@ CREATE TABLE "deal_scenario" (
 	"org_id" uuid NOT NULL,
 	"project_id" uuid NOT NULL,
 	"partner_id" uuid,
+	"code" varchar(32),
 	"name" text NOT NULL,
+	"version_no" integer DEFAULT 1 NOT NULL,
 	"version_label" varchar(32) NOT NULL,
 	"ownership" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"contributions" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"governance_terms" text,
+	"assumptions" text,
 	"approval_state" "approval_state" DEFAULT 'proposed' NOT NULL,
 	"approved_by" uuid,
 	"approved_at" timestamp with time zone,
@@ -1856,20 +1972,42 @@ CREATE TABLE "deal_scenario" (
 	CONSTRAINT "deal_scenario_pid_uq" UNIQUE("project_id","id")
 );
 --> statement-breakpoint
+CREATE TABLE "deal_scenario_version" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"scenario_id" uuid NOT NULL,
+	"version_no" integer NOT NULL,
+	"version_label" varchar(32) NOT NULL,
+	"ownership" jsonb NOT NULL,
+	"contributions" jsonb NOT NULL,
+	"governance_terms" text,
+	"assumptions" text,
+	"change_note" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid
+);
+--> statement-breakpoint
 CREATE TABLE "diligence_finding" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"org_id" uuid NOT NULL,
 	"project_id" uuid NOT NULL,
 	"partner_id" uuid,
+	"room_id" uuid,
+	"diligence_request_id" uuid,
 	"code" varchar(32) NOT NULL,
 	"title" text NOT NULL,
 	"description" text,
 	"materiality" "materiality" NOT NULL,
 	"risk_id" uuid,
 	"remediation" text,
+	"remediation_owner_user_id" uuid,
+	"remediation_due_date" date,
 	"valuation_implication" text,
 	"document_implication" text,
 	"cp_implication" text,
+	"condition_id" uuid,
+	"status_reason" text,
 	"status" "finding_status" DEFAULT 'open' NOT NULL,
 	"classification" "classification" DEFAULT 'strictly_confidential' NOT NULL,
 	"is_demo" boolean DEFAULT false NOT NULL,
@@ -1877,7 +2015,8 @@ CREATE TABLE "diligence_finding" (
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
-	CONSTRAINT "diligence_finding_pid_uq" UNIQUE("project_id","id")
+	CONSTRAINT "diligence_finding_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "diligence_finding_material_owner_ck" CHECK ("diligence_finding"."materiality" not in ('high', 'critical') or "diligence_finding"."remediation_owner_user_id" is not null)
 );
 --> statement-breakpoint
 CREATE TABLE "diligence_request" (
@@ -1887,16 +2026,23 @@ CREATE TABLE "diligence_request" (
 	"partner_id" uuid,
 	"room_id" uuid,
 	"number" integer NOT NULL,
+	"origin" varchar(16) DEFAULT 'internal' NOT NULL,
 	"question" text NOT NULL,
 	"domain" varchar(32) NOT NULL,
 	"requester_label" text,
 	"assignee_user_id" uuid,
 	"due_date" date,
 	"answer_draft" text,
+	"drafted_by" uuid,
 	"evidence_document_ids" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"reviewer_user_id" uuid,
+	"submitted_for_review_by" uuid,
+	"submitted_for_review_at" timestamp with time zone,
 	"release_status" "dd_release_status" DEFAULT 'draft' NOT NULL,
 	"release_approved_by" uuid,
+	"release_approved_at" timestamp with time zone,
+	"review_note" text,
+	"released_by" uuid,
 	"released_answer" text,
 	"released_version" integer,
 	"released_at" timestamp with time zone,
@@ -1906,7 +2052,8 @@ CREATE TABLE "diligence_request" (
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
-	CONSTRAINT "diligence_request_pid_uq" UNIQUE("project_id","id")
+	CONSTRAINT "diligence_request_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "diligence_request_origin_ck" CHECK ("diligence_request"."origin" in ('internal', 'partner'))
 );
 --> statement-breakpoint
 CREATE TABLE "funds_flow_item" (
@@ -1914,18 +2061,29 @@ CREATE TABLE "funds_flow_item" (
 	"org_id" uuid NOT NULL,
 	"project_id" uuid NOT NULL,
 	"closing_id" uuid NOT NULL,
+	"code" varchar(32),
 	"description" text NOT NULL,
 	"payer" text NOT NULL,
 	"payee" text NOT NULL,
 	"amount" numeric(20, 4),
 	"currency" varchar(3),
 	"unit_scale" integer,
+	"value_date" date,
 	"status" "funds_flow_status" DEFAULT 'planned' NOT NULL,
 	"confirmed_by" uuid,
+	"confirmed_at" timestamp with time zone,
+	"settlement_reference" text,
+	"settlement_reported_by" uuid,
+	"settlement_reported_at" timestamp with time zone,
+	"status_note" text,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
-	"version" integer DEFAULT 1 NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "funds_flow_item_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "funds_flow_scale_ck" CHECK ("funds_flow_item"."unit_scale" is null or "funds_flow_item"."unit_scale" in (1, 1000, 1000000)),
+	CONSTRAINT "funds_flow_money_ck" CHECK (("funds_flow_item"."amount" is null) = ("funds_flow_item"."currency" is null) and ("funds_flow_item"."amount" is null) = ("funds_flow_item"."unit_scale" is null))
 );
 --> statement-breakpoint
 CREATE TABLE "negotiation_issue" (
@@ -1939,7 +2097,11 @@ CREATE TABLE "negotiation_issue" (
 	"positions" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"alternatives" text,
 	"required_approval" text,
+	"requires_approval" boolean DEFAULT false NOT NULL,
+	"decision_id" uuid,
+	"document_id" uuid,
 	"document_ref" text,
+	"resolution" text,
 	"status" "negotiation_issue_status" DEFAULT 'open' NOT NULL,
 	"classification" "classification" DEFAULT 'strictly_confidential' NOT NULL,
 	"is_demo" boolean DEFAULT false NOT NULL,
@@ -1947,7 +2109,8 @@ CREATE TABLE "negotiation_issue" (
 	"created_by" uuid,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
-	CONSTRAINT "negotiation_issue_pid_uq" UNIQUE("project_id","id")
+	CONSTRAINT "negotiation_issue_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "negotiation_issue_approval_link_ck" CHECK (not "negotiation_issue"."requires_approval" or "negotiation_issue"."decision_id" is not null)
 );
 --> statement-breakpoint
 CREATE TABLE "partner" (
@@ -1956,19 +2119,23 @@ CREATE TABLE "partner" (
 	"project_id" uuid NOT NULL,
 	"code" varchar(32) NOT NULL,
 	"name" text NOT NULL,
+	"description" text,
 	"legal_entity_id" uuid,
 	"stage" "partner_stage" DEFAULT 'identified' NOT NULL,
+	"stage_changed_at" timestamp with time zone,
 	"shortlisted" boolean DEFAULT false NOT NULL,
-	"nda_status" "nda_status" DEFAULT 'none' NOT NULL,
-	"nda_executed_on" date,
+	"outreach_request_id" uuid,
 	"outreach_approved_by" uuid,
 	"outreach_approved_at" timestamp with time zone,
+	"nda_status" "nda_status" DEFAULT 'none' NOT NULL,
+	"nda_executed_on" date,
+	"nda_document_id" uuid,
+	"nda_request_id" uuid,
+	"nda_recorded_by" uuid,
+	"nda_recorded_at" timestamp with time zone,
 	"materials_access_approved_by" uuid,
 	"materials_access_approved_at" timestamp with time zone,
-	"criteria_scores" jsonb DEFAULT '[]'::jsonb NOT NULL,
-	"conflict_disclosures" text,
-	"proposal_summary" text,
-	"facts_vs_judgment_note" text,
+	"withdrawn_reason" text,
 	"classification" "classification" DEFAULT 'strictly_confidential' NOT NULL,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -1978,16 +2145,108 @@ CREATE TABLE "partner" (
 	CONSTRAINT "partner_pid_uq" UNIQUE("project_id","id")
 );
 --> statement-breakpoint
+CREATE TABLE "partner_assessment_entry" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"partner_id" uuid NOT NULL,
+	"proposal_id" uuid,
+	"criterion_key" varchar(32),
+	"basis" varchar(16) NOT NULL,
+	"statement" text NOT NULL,
+	"score" numeric(5, 2),
+	"source_reference" text,
+	"document_id" uuid,
+	"is_demo" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	CONSTRAINT "partner_assessment_basis_ck" CHECK ("partner_assessment_entry"."basis" in ('fact', 'judgement')),
+	CONSTRAINT "partner_assessment_score_ck" CHECK ("partner_assessment_entry"."score" is null or ("partner_assessment_entry"."score" >= 0 and "partner_assessment_entry"."score" <= 5)),
+	CONSTRAINT "partner_assessment_fact_source_ck" CHECK ("partner_assessment_entry"."basis" <> 'fact' or "partner_assessment_entry"."source_reference" is not null or "partner_assessment_entry"."document_id" is not null)
+);
+--> statement-breakpoint
+CREATE TABLE "partner_conflict" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"partner_id" uuid NOT NULL,
+	"declarant_user_id" uuid,
+	"description" text NOT NULL,
+	"mitigation" text,
+	"status" varchar(16) DEFAULT 'open' NOT NULL,
+	"is_demo" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "partner_conflict_status_ck" CHECK ("partner_conflict"."status" in ('open', 'mitigated', 'cleared'))
+);
+--> statement-breakpoint
+CREATE TABLE "partner_contact" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"partner_id" uuid NOT NULL,
+	"user_id" uuid NOT NULL,
+	"note" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	"revoked_at" timestamp with time zone,
+	"revoked_by" uuid,
+	CONSTRAINT "partner_contact_pid_uq" UNIQUE("project_id","id")
+);
+--> statement-breakpoint
+CREATE TABLE "partner_criteria_set" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"criteria" jsonb NOT NULL,
+	"note" text,
+	"is_demo" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_by" uuid,
+	"version" integer DEFAULT 1 NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "partner_proposal" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"partner_id" uuid NOT NULL,
+	"code" varchar(32) NOT NULL,
+	"title" text NOT NULL,
+	"received_on" date,
+	"scope" text,
+	"terms_summary" text,
+	"document_id" uuid,
+	"supersedes_proposal_id" uuid,
+	"classification" "classification" DEFAULT 'strictly_confidential' NOT NULL,
+	"is_demo" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_by" uuid,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "partner_proposal_pid_uq" UNIQUE("project_id","id")
+);
+--> statement-breakpoint
 CREATE TABLE "partner_room" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"org_id" uuid NOT NULL,
 	"project_id" uuid NOT NULL,
 	"partner_id" uuid,
 	"name" text NOT NULL,
+	"description" text,
 	"is_clean_team" boolean DEFAULT false NOT NULL,
 	"classification" "classification" DEFAULT 'strictly_confidential' NOT NULL,
+	"locked_at" timestamp with time zone,
+	"locked_by" uuid,
+	"lock_reason" text,
+	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_by" uuid,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	CONSTRAINT "partner_room_pid_uq" UNIQUE("project_id","id")
 );
@@ -1999,12 +2258,19 @@ CREATE TABLE "post_close_obligation" (
 	"code" varchar(32) NOT NULL,
 	"kind" "post_close_kind" NOT NULL,
 	"title" text NOT NULL,
+	"description" text,
+	"responsible_party" text,
 	"owner_user_id" uuid,
 	"due_date" date,
 	"status" "post_close_status" DEFAULT 'open' NOT NULL,
 	"evidence_note" text,
+	"completion_reported_by" uuid,
+	"completion_reported_at" timestamp with time zone,
 	"verified_by" uuid,
 	"verified_at" timestamp with time zone,
+	"overdue_since" date,
+	"escalation_id" uuid,
+	"status_note" text,
 	"closing_id" uuid,
 	"is_demo" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -2012,6 +2278,67 @@ CREATE TABLE "post_close_obligation" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
 	CONSTRAINT "post_close_obligation_pid_uq" UNIQUE("project_id","id")
+);
+--> statement-breakpoint
+CREATE TABLE "program_closure" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"status" varchar(16) DEFAULT 'requested' NOT NULL,
+	"handover_note" text NOT NULL,
+	"g7_assessment_id" uuid,
+	"approval_request_id" uuid,
+	"requested_by" uuid NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"confirmed_by" uuid,
+	"confirmed_at" timestamp with time zone,
+	"status_note" text,
+	"is_demo" boolean DEFAULT false NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "program_closure_status_ck" CHECK ("program_closure"."status" in ('requested', 'confirmed', 'rejected'))
+);
+--> statement-breakpoint
+CREATE TABLE "room_access_event" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"room_id" uuid NOT NULL,
+	"kind" varchar(32) NOT NULL,
+	"actor_user_id" uuid,
+	"subject_user_id" uuid,
+	"grant_id" uuid,
+	"disclosure_id" uuid,
+	"diligence_request_id" uuid,
+	"document_version_id" uuid,
+	"note" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "room_access_event_kind_ck" CHECK ("room_access_event"."kind" in ('grant', 'grant_revoked', 'disclosure_requested', 'disclosure_released', 'disclosure_rejected', 'disclosure_revoked', 'dd_answer_released', 'download', 'room_locked', 'room_unlocked'))
+);
+--> statement-breakpoint
+CREATE TABLE "room_disclosure" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"project_id" uuid NOT NULL,
+	"room_id" uuid,
+	"document_id" uuid NOT NULL,
+	"document_version_id" uuid NOT NULL,
+	"diligence_request_id" uuid,
+	"status" varchar(16) DEFAULT 'requested' NOT NULL,
+	"request_note" text,
+	"requested_by" uuid NOT NULL,
+	"released_by" uuid,
+	"released_at" timestamp with time zone,
+	"rejected_by" uuid,
+	"revoked_by" uuid,
+	"revoked_at" timestamp with time zone,
+	"status_reason" text,
+	"is_demo" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"version" integer DEFAULT 1 NOT NULL,
+	CONSTRAINT "room_disclosure_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "room_disclosure_status_ck" CHECK ("room_disclosure"."status" in ('requested', 'released', 'rejected', 'revoked'))
 );
 --> statement-breakpoint
 CREATE TABLE "room_grant" (
@@ -2023,11 +2350,16 @@ CREATE TABLE "room_grant" (
 	"access_level" varchar(16) DEFAULT 'read' NOT NULL,
 	"role" "role_key",
 	"reason" text NOT NULL,
+	"attestation_ref" text,
 	"granted_by" uuid NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"expires_at" timestamp with time zone,
 	"revoked_at" timestamp with time zone,
-	"revoked_by" uuid
+	"revoked_by" uuid,
+	"revoke_reason" text,
+	CONSTRAINT "room_grant_pid_uq" UNIQUE("project_id","id"),
+	CONSTRAINT "room_grant_access_level_ck" CHECK ("room_grant"."access_level" in ('read', 'contribute', 'manage')),
+	CONSTRAINT "room_grant_role_ck" CHECK ("room_grant"."role" is null or "room_grant"."role" in ('clean_team', 'external_partner_limited'))
 );
 --> statement-breakpoint
 CREATE TABLE "document" (
@@ -2712,21 +3044,42 @@ ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_ws_fk" FOREIGN KEY ("proje
 ALTER TABLE "tsa_service" ADD CONSTRAINT "tsa_service_agreement_fk" FOREIGN KEY ("project_id","agreement_id") REFERENCES "public"."agreement"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "benefit" ADD CONSTRAINT "benefit_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "benefit" ADD CONSTRAINT "benefit_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "benefit" ADD CONSTRAINT "benefit_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "budget_line" ADD CONSTRAINT "budget_line_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "budget_line" ADD CONSTRAINT "budget_line_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "budget_line" ADD CONSTRAINT "budget_line_tsa_fk" FOREIGN KEY ("project_id","tsa_service_id") REFERENCES "public"."tsa_service"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "budget_line" ADD CONSTRAINT "budget_line_decision_fk" FOREIGN KEY ("project_id","approval_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_model" ADD CONSTRAINT "financial_model_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "financial_model_version" ADD CONSTRAINT "financial_model_version_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_model_version" ADD CONSTRAINT "financial_model_version_model_fk" FOREIGN KEY ("project_id","model_id") REFERENCES "public"."financial_model"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "financial_model_version" ADD CONSTRAINT "financial_model_doc_fk" FOREIGN KEY ("project_id","source_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_model_version" ADD CONSTRAINT "financial_model_docver_fk" FOREIGN KEY ("project_id","source_document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_model_version" ADD CONSTRAINT "financial_model_import_fk" FOREIGN KEY ("project_id","import_batch_id") REFERENCES "public"."import_batch"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_model_version" ADD CONSTRAINT "financial_model_based_on_fk" FOREIGN KEY ("project_id","based_on_version_id") REFERENCES "public"."financial_model_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_model_version" ADD CONSTRAINT "financial_model_superseded_fk" FOREIGN KEY ("project_id","superseded_by_id") REFERENCES "public"."financial_model_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_model_version" ADD CONSTRAINT "financial_model_request_fk" FOREIGN KEY ("project_id","approval_request_id") REFERENCES "public"."approval_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_model_version" ADD CONSTRAINT "financial_model_decision_fk" FOREIGN KEY ("project_id","approval_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_doc_fk" FOREIGN KEY ("project_id","source_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_docver_fk" FOREIGN KEY ("project_id","source_document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_import_fk" FOREIGN KEY ("project_id","import_batch_id") REFERENCES "public"."import_batch"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_tsa_fk" FOREIGN KEY ("project_id","tsa_service_id") REFERENCES "public"."tsa_service"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_request_fk" FOREIGN KEY ("project_id","approval_request_id") REFERENCES "public"."approval_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_decision_fk" FOREIGN KEY ("project_id","approval_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "financial_snapshot" ADD CONSTRAINT "financial_snapshot_ws_fk" FOREIGN KEY ("project_id","workstream_id") REFERENCES "public"."workstream"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "intercompany_reconciliation" ADD CONSTRAINT "intercompany_reconciliation_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "intercompany_reconciliation" ADD CONSTRAINT "intercompany_reconciliation_snapshot_fk" FOREIGN KEY ("project_id","financial_snapshot_id") REFERENCES "public"."financial_snapshot"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "kpi" ADD CONSTRAINT "kpi_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "kpi" ADD CONSTRAINT "kpi_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "kpi" ADD CONSTRAINT "kpi_benefit_fk" FOREIGN KEY ("project_id","benefit_id") REFERENCES "public"."benefit"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "kpi_observation" ADD CONSTRAINT "kpi_observation_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "kpi_observation" ADD CONSTRAINT "kpi_observation_kpi_fk" FOREIGN KEY ("project_id","kpi_id") REFERENCES "public"."kpi"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing" ADD CONSTRAINT "closing_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing" ADD CONSTRAINT "closing_decision_fk" FOREIGN KEY ("project_id","confirmation_decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing" ADD CONSTRAINT "closing_partner_fk" FOREIGN KEY ("project_id","partner_id") REFERENCES "public"."partner"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "closing" ADD CONSTRAINT "closing_signing_fk" FOREIGN KEY ("project_id","signing_id") REFERENCES "public"."closing"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "closing" ADD CONSTRAINT "closing_confirmation_request_fk" FOREIGN KEY ("project_id","confirmation_request_id") REFERENCES "public"."approval_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "closing" ADD CONSTRAINT "closing_executed_document_fk" FOREIGN KEY ("project_id","executed_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_waiver_fk" FOREIGN KEY ("project_id","waiver_id") REFERENCES "public"."waiver"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2734,12 +3087,19 @@ ALTER TABLE "closing_condition" ADD CONSTRAINT "closing_condition_closing_fk" FO
 ALTER TABLE "closing_deliverable" ADD CONSTRAINT "closing_deliverable_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_deliverable" ADD CONSTRAINT "closing_deliverable_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_deliverable" ADD CONSTRAINT "closing_deliverable_doc_fk" FOREIGN KEY ("project_id","document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "closing_deliverable" ADD CONSTRAINT "closing_deliverable_version_fk" FOREIGN KEY ("project_id","executed_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "closing_deliverable" ADD CONSTRAINT "closing_deliverable_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "closing_deliverable" ADD CONSTRAINT "closing_deliverable_closing_fk" FOREIGN KEY ("project_id","closing_id") REFERENCES "public"."closing"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "deal_scenario" ADD CONSTRAINT "deal_scenario_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "deal_scenario" ADD CONSTRAINT "deal_scenario_partner_fk" FOREIGN KEY ("project_id","partner_id") REFERENCES "public"."partner"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "deal_scenario_version" ADD CONSTRAINT "deal_scenario_version_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "deal_scenario_version" ADD CONSTRAINT "deal_scenario_version_scenario_fk" FOREIGN KEY ("project_id","scenario_id") REFERENCES "public"."deal_scenario"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "diligence_finding" ADD CONSTRAINT "diligence_finding_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "diligence_finding" ADD CONSTRAINT "diligence_finding_risk_fk" FOREIGN KEY ("project_id","risk_id") REFERENCES "public"."risk"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "diligence_finding" ADD CONSTRAINT "diligence_finding_partner_fk" FOREIGN KEY ("project_id","partner_id") REFERENCES "public"."partner"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "diligence_finding" ADD CONSTRAINT "diligence_finding_room_fk" FOREIGN KEY ("project_id","room_id") REFERENCES "public"."partner_room"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "diligence_finding" ADD CONSTRAINT "diligence_finding_request_fk" FOREIGN KEY ("project_id","diligence_request_id") REFERENCES "public"."diligence_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "diligence_finding" ADD CONSTRAINT "diligence_finding_condition_fk" FOREIGN KEY ("project_id","condition_id") REFERENCES "public"."closing_condition"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "diligence_request" ADD CONSTRAINT "diligence_request_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "diligence_request" ADD CONSTRAINT "diligence_request_assignee_user_id_app_user_id_fk" FOREIGN KEY ("assignee_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "diligence_request" ADD CONSTRAINT "diligence_request_reviewer_user_id_app_user_id_fk" FOREIGN KEY ("reviewer_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2750,13 +3110,46 @@ ALTER TABLE "funds_flow_item" ADD CONSTRAINT "funds_flow_closing_fk" FOREIGN KEY
 ALTER TABLE "negotiation_issue" ADD CONSTRAINT "negotiation_issue_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "negotiation_issue" ADD CONSTRAINT "negotiation_issue_partner_fk" FOREIGN KEY ("project_id","partner_id") REFERENCES "public"."partner"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "negotiation_issue" ADD CONSTRAINT "negotiation_issue_agreement_fk" FOREIGN KEY ("project_id","agreement_id") REFERENCES "public"."agreement"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "negotiation_issue" ADD CONSTRAINT "negotiation_issue_decision_fk" FOREIGN KEY ("project_id","decision_id") REFERENCES "public"."decision"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "negotiation_issue" ADD CONSTRAINT "negotiation_issue_document_fk" FOREIGN KEY ("project_id","document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "partner" ADD CONSTRAINT "partner_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "partner" ADD CONSTRAINT "partner_legal_entity_id_legal_entity_id_fk" FOREIGN KEY ("legal_entity_id") REFERENCES "public"."legal_entity"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner" ADD CONSTRAINT "partner_nda_document_fk" FOREIGN KEY ("project_id","nda_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner" ADD CONSTRAINT "partner_outreach_request_fk" FOREIGN KEY ("project_id","outreach_request_id") REFERENCES "public"."approval_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner" ADD CONSTRAINT "partner_nda_request_fk" FOREIGN KEY ("project_id","nda_request_id") REFERENCES "public"."approval_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_assessment_entry" ADD CONSTRAINT "partner_assessment_entry_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_assessment_entry" ADD CONSTRAINT "partner_assessment_partner_fk" FOREIGN KEY ("project_id","partner_id") REFERENCES "public"."partner"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_assessment_entry" ADD CONSTRAINT "partner_assessment_proposal_fk" FOREIGN KEY ("project_id","proposal_id") REFERENCES "public"."partner_proposal"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_assessment_entry" ADD CONSTRAINT "partner_assessment_document_fk" FOREIGN KEY ("project_id","document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_conflict" ADD CONSTRAINT "partner_conflict_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_conflict" ADD CONSTRAINT "partner_conflict_partner_fk" FOREIGN KEY ("project_id","partner_id") REFERENCES "public"."partner"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_contact" ADD CONSTRAINT "partner_contact_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_contact" ADD CONSTRAINT "partner_contact_partner_fk" FOREIGN KEY ("project_id","partner_id") REFERENCES "public"."partner"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_criteria_set" ADD CONSTRAINT "partner_criteria_set_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_proposal" ADD CONSTRAINT "partner_proposal_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_proposal" ADD CONSTRAINT "partner_proposal_partner_fk" FOREIGN KEY ("project_id","partner_id") REFERENCES "public"."partner"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_proposal" ADD CONSTRAINT "partner_proposal_document_fk" FOREIGN KEY ("project_id","document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "partner_proposal" ADD CONSTRAINT "partner_proposal_supersedes_fk" FOREIGN KEY ("project_id","supersedes_proposal_id") REFERENCES "public"."partner_proposal"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "partner_room" ADD CONSTRAINT "partner_room_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "partner_room" ADD CONSTRAINT "partner_room_partner_fk" FOREIGN KEY ("project_id","partner_id") REFERENCES "public"."partner"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "post_close_obligation" ADD CONSTRAINT "post_close_obligation_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "post_close_obligation" ADD CONSTRAINT "post_close_obligation_owner_user_id_app_user_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "post_close_obligation" ADD CONSTRAINT "post_close_obligation_closing_fk" FOREIGN KEY ("project_id","closing_id") REFERENCES "public"."closing"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "post_close_obligation" ADD CONSTRAINT "post_close_obligation_escalation_fk" FOREIGN KEY ("project_id","escalation_id") REFERENCES "public"."escalation"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "program_closure" ADD CONSTRAINT "program_closure_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "program_closure" ADD CONSTRAINT "program_closure_g7_fk" FOREIGN KEY ("project_id","g7_assessment_id") REFERENCES "public"."gate_assessment"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "program_closure" ADD CONSTRAINT "program_closure_request_fk" FOREIGN KEY ("project_id","approval_request_id") REFERENCES "public"."approval_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "room_access_event" ADD CONSTRAINT "room_access_event_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "room_access_event" ADD CONSTRAINT "room_access_event_room_fk" FOREIGN KEY ("project_id","room_id") REFERENCES "public"."partner_room"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "room_access_event" ADD CONSTRAINT "room_access_event_grant_fk" FOREIGN KEY ("project_id","grant_id") REFERENCES "public"."room_grant"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "room_access_event" ADD CONSTRAINT "room_access_event_disclosure_fk" FOREIGN KEY ("project_id","disclosure_id") REFERENCES "public"."room_disclosure"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "room_access_event" ADD CONSTRAINT "room_access_event_dd_request_fk" FOREIGN KEY ("project_id","diligence_request_id") REFERENCES "public"."diligence_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "room_access_event" ADD CONSTRAINT "room_access_event_version_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "room_disclosure" ADD CONSTRAINT "room_disclosure_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "room_disclosure" ADD CONSTRAINT "room_disclosure_room_fk" FOREIGN KEY ("project_id","room_id") REFERENCES "public"."partner_room"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "room_disclosure" ADD CONSTRAINT "room_disclosure_document_fk" FOREIGN KEY ("project_id","document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "room_disclosure" ADD CONSTRAINT "room_disclosure_version_fk" FOREIGN KEY ("project_id","document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "room_disclosure" ADD CONSTRAINT "room_disclosure_dd_request_fk" FOREIGN KEY ("project_id","diligence_request_id") REFERENCES "public"."diligence_request"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "room_grant" ADD CONSTRAINT "room_grant_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "room_grant" ADD CONSTRAINT "room_grant_user_id_app_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "room_grant" ADD CONSTRAINT "room_grant_room_fk" FOREIGN KEY ("project_id","room_id") REFERENCES "public"."partner_room"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -2866,18 +3259,34 @@ CREATE UNIQUE INDEX "tsa_service_code_uq" ON "tsa_service" USING btree ("project
 CREATE INDEX "tsa_service_status_idx" ON "tsa_service" USING btree ("project_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "benefit_code_uq" ON "benefit" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "budget_line_code_uq" ON "budget_line" USING btree ("project_id","code");--> statement-breakpoint
-CREATE UNIQUE INDEX "financial_model_uq" ON "financial_model_version" USING btree ("project_id","kind","version_label","model_case");--> statement-breakpoint
+CREATE UNIQUE INDEX "budget_line_tsa_uq" ON "budget_line" USING btree ("project_id","tsa_service_id") WHERE "budget_line"."tsa_service_id" is not null;--> statement-breakpoint
+CREATE UNIQUE INDEX "financial_model_code_uq" ON "financial_model" USING btree ("project_id","code");--> statement-breakpoint
+CREATE UNIQUE INDEX "financial_model_version_uq" ON "financial_model_version" USING btree ("project_id","model_id","model_case","version_no");--> statement-breakpoint
 CREATE UNIQUE INDEX "financial_snapshot_line_uq" ON "financial_snapshot" USING btree ("project_id","kind","line_ref","period");--> statement-breakpoint
+CREATE UNIQUE INDEX "financial_snapshot_tsa_uq" ON "financial_snapshot" USING btree ("project_id","kind","tsa_service_id","period") WHERE "financial_snapshot"."tsa_service_id" is not null;--> statement-breakpoint
+CREATE INDEX "financial_snapshot_period_idx" ON "financial_snapshot" USING btree ("project_id","kind","period");--> statement-breakpoint
 CREATE UNIQUE INDEX "intercompany_reconciliation_code_uq" ON "intercompany_reconciliation" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "kpi_key_uq" ON "kpi" USING btree ("project_id","key");--> statement-breakpoint
 CREATE INDEX "kpi_observation_idx" ON "kpi_observation" USING btree ("kpi_id","period");--> statement-breakpoint
 CREATE UNIQUE INDEX "closing_seq_uq" ON "closing" USING btree ("project_id","kind","sequence");--> statement-breakpoint
+CREATE UNIQUE INDEX "closing_code_uq" ON "closing" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "closing_condition_ref_uq" ON "closing_condition" USING btree ("project_id","reference");--> statement-breakpoint
+CREATE UNIQUE INDEX "closing_deliverable_code_uq" ON "closing_deliverable" USING btree ("project_id","code");--> statement-breakpoint
+CREATE UNIQUE INDEX "deal_scenario_code_uq" ON "deal_scenario" USING btree ("project_id","code");--> statement-breakpoint
+CREATE UNIQUE INDEX "deal_scenario_version_uq" ON "deal_scenario_version" USING btree ("scenario_id","version_no");--> statement-breakpoint
 CREATE UNIQUE INDEX "diligence_finding_code_uq" ON "diligence_finding" USING btree ("project_id","code");--> statement-breakpoint
-CREATE UNIQUE INDEX "diligence_request_number_uq" ON "diligence_request" USING btree ("project_id","partner_id","number");--> statement-breakpoint
+CREATE UNIQUE INDEX "diligence_request_number_uq" ON "diligence_request" USING btree ("project_id","room_id","number");--> statement-breakpoint
+CREATE UNIQUE INDEX "funds_flow_item_code_uq" ON "funds_flow_item" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "negotiation_issue_code_uq" ON "negotiation_issue" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "partner_code_uq" ON "partner" USING btree ("project_id","code");--> statement-breakpoint
+CREATE INDEX "partner_assessment_partner_idx" ON "partner_assessment_entry" USING btree ("project_id","partner_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "partner_contact_active_uq" ON "partner_contact" USING btree ("project_id","user_id") WHERE "partner_contact"."revoked_at" is null;--> statement-breakpoint
+CREATE UNIQUE INDEX "partner_criteria_set_project_uq" ON "partner_criteria_set" USING btree ("project_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "partner_proposal_code_uq" ON "partner_proposal" USING btree ("project_id","code");--> statement-breakpoint
 CREATE UNIQUE INDEX "post_close_obligation_code_uq" ON "post_close_obligation" USING btree ("project_id","code");--> statement-breakpoint
+CREATE UNIQUE INDEX "program_closure_project_uq" ON "program_closure" USING btree ("project_id");--> statement-breakpoint
+CREATE INDEX "room_access_event_room_idx" ON "room_access_event" USING btree ("project_id","room_id","created_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "room_disclosure_live_uq" ON "room_disclosure" USING btree ("room_id","document_version_id") WHERE "room_disclosure"."status" in ('requested', 'released');--> statement-breakpoint
 CREATE INDEX "room_grant_user_idx" ON "room_grant" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "document_project_idx" ON "document" USING btree ("project_id","kind");--> statement-breakpoint
 CREATE INDEX "document_chunk_tsv_idx" ON "document_chunk" USING gin ("tsv");--> statement-breakpoint
