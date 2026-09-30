@@ -136,7 +136,7 @@ function OverdueBadge() {
  * cockpit shows separately (spec §9: a green average must not conceal a red item).
  */
 export function OverallHealthTile() {
-  const { t, formatNumber, formatDate } = useI18n();
+  const { t, locale, formatNumber, formatDate } = useI18n();
   const { projectId, project, can } = useProjectContext();
   const allowed = can('planning.plan.read');
   const prog = useProgress(projectId, allowed);
@@ -185,9 +185,13 @@ export function OverallHealthTile() {
               <dd className="font-medium">{d.baseline ? t('project.cockpit.health.baselineVersion', { version: d.baseline.versionNo }) : t('project.cockpit.health.noBaseline')}</dd>
             </div>
           </dl>
-          <p className="text-xs text-muted" lang="en" dir="ltr">
-            {d.project.aggregate.explanation}
-          </p>
+          {/* The server's explanation is an English-only sentence (no message codes yet); its facts are the translated
+              rows above, so the Arabic cockpit does not repeat it untranslated. */}
+          {locale === 'en' ? (
+            <p className="text-xs text-muted" lang="en" dir="ltr" data-testid="overall-health-explanation">
+              {d.project.aggregate.explanation}
+            </p>
+          ) : null}
           <Link href={healthHref} className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline" data-testid="overall-health-link">
             {t('project.cockpit.health.open')}
             <ChevronRight aria-hidden="true" className="size-4 rtl:rotate-180" />

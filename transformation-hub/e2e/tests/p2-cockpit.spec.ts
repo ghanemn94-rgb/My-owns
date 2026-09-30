@@ -179,6 +179,7 @@ test.describe('P2 DC Executive Cockpit — REQ-UX-005 / AT-06', () => {
 
       // Overall health = the server's worst-of delivery status, not an average of the dimensions.
       await expect(page.getByTestId('overall-health')).toHaveAttribute('data-rag', progress.project.rag.effective);
+      await expect(page.getByTestId('overall-health-explanation')).toBeVisible();
       // Next gate from the live gate evaluation; delay impact with the schedule-based forecast label.
       await expect(page.getByTestId('next-gate')).toHaveAttribute('data-gate-key', next!.key);
       await expect(page.getByTestId('next-gate-blocker-count')).toContainText(String(next!.blockers.length));
@@ -270,6 +271,9 @@ test.describe('P2 DC Executive Cockpit — REQ-UX-005 / AT-06', () => {
       await expect(page.getByRole('heading', { level: 3, name: 'الصحة العامة' })).toBeVisible();
       await expect(page.getByTestId('dimension-cards').locator('[data-dimension]')).toHaveCount(4);
       await expect(page.getByTestId('top-decision')).toHaveCount(top.length);
+      // The English-only server sentence is not shown untranslated; its facts are the translated rows.
+      await expect(page.getByTestId('overall-health')).toBeVisible();
+      await expect(page.getByTestId('overall-health-explanation')).toHaveCount(0);
       // English record titles keep their own direction inside the Arabic UI.
       const firstTitle = page.getByTestId('top-decision').first().getByTestId('top-decision-title');
       await expect(firstTitle).toHaveText(top[0]!.title);
