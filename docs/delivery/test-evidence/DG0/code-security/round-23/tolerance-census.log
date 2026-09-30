@@ -1,0 +1,12 @@
+rounds: 23 absent source_commit rounds: [18]
+CLOSED_VERIFIED by verifying round: {"7":47,"8":4,"9":2,"10":2,"11":3,"12":3,"13":7,"14":2,"15":7,"16":2,"17":1,"19":5,"20":4,"21":5,"22":10}
+
+# git cat-file -t 450c756f679a911b4c736e856fc9dd5e9b2c89a8 (main repo)
+fatal: git cat-file: could not get object info
+exit=128
+# grep commitPresent/cat-file tolerance sites in tools/gates/lib/rules.mjs
+397:      } else if (!commitPresent(repo, head)) {
+602:function commitPresent(repo, sha) {
+731:    else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
+733:      if (commitPresent(repo, round.source_commit) && !isAncestor(repo, f.fix_revision, round.source_commit))
+910:      present = false;

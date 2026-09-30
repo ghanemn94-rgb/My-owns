@@ -1,0 +1,108 @@
+# qa-verifier round 23: independent D-039 negative suite + QA23-P1 residual probe; QA_REPO_ROOT=--no-local clone $TMPDIR/nl @ 78954a6229fcf052a29fc5600434bc3498f633e7 (candidate e6df2e1e, source 6438e20); node v22.22.2; git version 2.43.0; 2026-09-30T13:08:54Z
+# note: an earlier run failed only QA23-N7 because the test itself passed --shallow-exclude=HEAD~2 (git needs a ref name, so git refused the clone before the validator ran); fixed to a tag. All results below are from the final file.
+$ QA_REPO_ROOT=$TMPDIR/nl node --test docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r23.test.mjs
+TAP version 13
+#   QA23-G0 errors (0): []
+#   QA23-N1 all-zero errors (1): ["finding F-DG0-201 (High): fix 0000000000 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA23-N1 well-formed-absent errors (1): ["finding F-DG0-201 (High): fix efefefefef is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA23-N1 result: {"all-zero":"REJECTED","well-formed-absent":"REJECTED"}
+#   QA23-N2 errors (2): ["finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000023: started from cdcdcdcdcd, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","finding F-DG0-201 (High): fix efefefefef is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA23-N3 missing errors (3): ["write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000029/meta.json has a M event in 738fffbce7 (review evidence is append-only)","write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000029/meta.json was committed with 2 different contents (review evidence is append-only)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000029: head_commit_at_start undefined is not a 40-hex commit id"]
+#   QA23-N3 null errors (3): ["write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000035/meta.json has a M event in 5e1f41f874 (review evidence is append-only)","write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000035/meta.json was committed with 2 different contents (review evidence is append-only)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000035: head_commit_at_start null is not a 40-hex commit id"]
+#   QA23-N3 unknown errors (3): ["write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000041/meta.json has a M event in 32a3ea5383 (review evidence is append-only)","write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000041/meta.json was committed with 2 different contents (review evidence is append-only)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000041: head_commit_at_start \\"unknown\\" is not a 40-hex commit id"]
+#   QA23-N3 absent-40hex errors (3): ["write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000047/meta.json has a M event in 906e4d27ae (review evidence is append-only)","write-once: docs/delivery/runs/DG0/DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000047/meta.json was committed with 2 different contents (review evidence is append-only)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000047: started from cdcdcdcdcd, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)"]
+#   QA23-N3 result: {"missing":"REJECTED","null":"REJECTED","unknown":"REJECTED","absent-40hex":"REJECTED"}
+#   QA23-N4 off-branch errors (1): ["finding F-DG0-201 (High): fix ab6a5be0c7 is not in the gate candidate"]
+#   QA23-N4 control (fix in the gate candidate) errors (0): []
+#   QA23-N4 note: with round-3 source_commit absent, only the gate-ancestry check applies (by design, D-039); result=ACCEPTED
+#   QA23-N5 requirement errors (2): ["review rounds: DG0/round-10 exists but is not recorded in stages.json","docs/delivery/reviews/DG0/round-10/qa-verifier.findings.json: finding F-DG0-201 requirement (\\"REQ-DLV-002\\") differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/qa-verifier.findings.json (\\"REQ-DLV-001\\"); a later round cannot reclassify a finding"]
+#   QA23-N5 title errors (2): ["review rounds: DG0/round-10 exists but is not recorded in stages.json","docs/delivery/reviews/DG0/round-10/qa-verifier.findings.json: finding F-DG0-201 title (\\"a softer title\\") differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/qa-verifier.findings.json (\\"probe finding\\"); a later round cannot reclassify a finding"]
+#   QA23-N5 severity-upgrade errors (2): ["review rounds: DG0/round-10 exists but is not recorded in stages.json","docs/delivery/reviews/DG0/round-10/qa-verifier.findings.json: finding F-DG0-201 severity (\\"Critical\\") differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/qa-verifier.findings.json (\\"High\\"); a later round cannot reclassify a finding"]
+#   QA23-N5 mandatory-flip errors (2): ["review rounds: DG0/round-10 exists but is not recorded in stages.json","docs/delivery/reviews/DG0/round-10/qa-verifier.findings.json: finding F-DG0-201 mandatory_violation (true) differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/qa-verifier.findings.json (false); a later round cannot reclassify a finding"]
+#   QA23-N5 numeric-order errors (5): ["review rounds: DG0/round-10 exists but is not recorded in stages.json","review rounds: DG0/round-9 exists but is not recorded in stages.json","docs/delivery/reviews/DG0/round-10/qa-verifier.findings.json: finding F-DG0-290 severity (\\"Low\\") differs from its first raising sidecar docs/delivery/reviews/DG0/round-9/qa-verifier.findings.json (\\"High\\"); a later round cannot reclassify a finding","finding F-DG0-290: severity in findings.json (\\"Low\\") differs from the reviewer's (\\"High\\")","finding F-DG0-290 (Low): unresolved (OPEN)"]
+#   QA23-N5 result: {"requirement":"REJECTED","title":"REJECTED","severity-upgrade":"REJECTED","mandatory-flip":"REJECTED","numeric-order":"REJECTED (round-9 is first)"}
+#   QA23-N6 errors (1): ["review rounds: DG0/round-10 exists but is not recorded in stages.json"]
+#   QA23-N7 depth-3 (shallow=true) errors (8): ["gate DG0: the repository is a shallow clone, so ancestry, write-once and history-tolerance checks are unreliable; validate the gate against the complete history (git fetch --unshallow, or clone with fetch-depth: 0 as CI does) (D-038, F-DG0-160)","candidate: gate source_commit 700b5f7f26 is not a commit object in this repository (absent)","review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): invocation DG0-T-DG0-REV-R2-domain-reviewer-20260928T133000Z-00000091: started from 223ea3b259, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","review code-security-reviewer (docs/delivery/reviews/DG0/round-2/code-security-reviewer.json): invocation DG0-T-DG0-REV-R2-code-security-reviewer-20260928T133000Z-00000092: started from 223ea3b259, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000093: started from 223ea3b259, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","review release-auditor (docs/delivery/reviews/DG0/round-2/release-auditor.json): invocation DG0-T-DG0-REV-R2-release-auditor-20260928T133000Z-00000094: started from 223ea3b259, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000093: started from 223ea3b259, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","finding F-DG0-201 (High): fix 700b5f7f26 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA23-N7 shallow-exclude (shallow=true) errors (8): ["gate DG0: the repository is a shallow clone, so ancestry, write-once and history-tolerance checks are unreliable; validate the gate against the complete history (git fetch --unshallow, or clone with fetch-depth: 0 as CI does) (D-038, F-DG0-160)","candidate: gate source_commit 700b5f7f26 is not a commit object in this repository (absent)","review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): invocation DG0-T-DG0-REV-R2-domain-reviewer-20260928T133000Z-00000091: started from 223ea3b259, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","review code-security-reviewer (docs/delivery/reviews/DG0/round-2/code-security-reviewer.json): invocation DG0-T-DG0-REV-R2-code-security-reviewer-20260928T133000Z-00000092: started from 223ea3b259, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000093: started from 223ea3b259, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","review release-auditor (docs/delivery/reviews/DG0/round-2/release-auditor.json): invocation DG0-T-DG0-REV-R2-release-auditor-20260928T133000Z-00000094: started from 223ea3b259, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000093: started from 223ea3b259, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","finding F-DG0-201 (High): fix 700b5f7f26 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA23-N7 complete-no-local (shallow=false) errors (0): []
+#   QA23-N7 result: {"depth-3":"shallow:REFUSED","shallow-exclude":"shallow:REFUSED","complete-no-local":"complete:ACCEPTED"}
+#   QA23-N8 errors (1): ["review rounds: DG0 round 3 manifest docs/delivery/candidates/DG0/4b720a45fcee0f37.manifest.json does not hash to sha256:4b720a45fcee0f370f6663a1e018674c5269bae9a3897c0246558face79ad0b7"]
+#   QA23-N9 errors (1): ["review rounds: DG0 round 3 manifest docs/delivery/candidates/DG0/4b720a45fcee0f37.manifest.json does not describe its source_commit 27eff304fa (recomputes to sha256:96c1e05362e98cd2c0964789ac72d48d165bc2cc7aa062ef382f098970efadb7)"]
+#   QA23-P1 errors (0): []
+#   QA23-P1 result: ACCEPTED (fix 868dd7e68f is in the gate candidate but not in the verifying run's head 4356123998; round-3 source_commit self-declared absent)
+# Subtest: QA23-G0 control: the independent fixture validates with zero errors
+ok 1 - QA23-G0 control: the independent fixture validates with zero errors
+  ---
+  duration_ms: 284.189693
+  type: 'test'
+  ...
+# Subtest: QA23-N1 F-DG0-246: a genuine run in a self-declared absent round cannot close with an all-zero or absent fix
+ok 2 - QA23-N1 F-DG0-246: a genuine run in a self-declared absent round cannot close with an all-zero or absent fix
+  ---
+  duration_ms: 683.579514
+  type: 'test'
+  ...
+# Subtest: QA23-N2 the former D-038 tolerance shape (source_commit AND head absent, absent fix) is now rejected on head and fix
+ok 3 - QA23-N2 the former D-038 tolerance shape (source_commit AND head absent, absent fix) is now rejected on head and fix
+  ---
+  duration_ms: 343.753018
+  type: 'test'
+  ...
+# Subtest: QA23-N3 F-DG0-164: a non-gate verifying run's head_commit_at_start missing/null/'unknown'/absent is rejected
+ok 4 - QA23-N3 F-DG0-164: a non-gate verifying run's head_commit_at_start missing/null/'unknown'/absent is rejected
+  ---
+  duration_ms: 2198.746267
+  type: 'test'
+  ...
+# Subtest: QA23-N4 a PRESENT fix in a self-declared absent round must still be in the gate candidate
+ok 5 - QA23-N4 a PRESENT fix in a self-declared absent round must still be in the gate candidate
+  ---
+  duration_ms: 793.303109
+  type: 'test'
+  ...
+# Subtest: QA23-N5 F-DG0-165: other immutable fields and numeric round order
+ok 6 - QA23-N5 F-DG0-165: other immutable fields and numeric round order
+  ---
+  duration_ms: 1692.943508
+  type: 'test'
+  ...
+# Subtest: QA23-N6 F-DG0-165 control: an identical later re-raise produces no drift error
+ok 7 - QA23-N6 F-DG0-165 control: an identical later re-raise produces no drift error
+  ---
+  duration_ms: 318.209107
+  type: 'test'
+  ...
+# Subtest: QA23-N7 F-DG0-248: --depth=3 and --shallow-exclude clones are refused; a complete --no-local clone is not
+ok 8 - QA23-N7 F-DG0-248: --depth=3 and --shallow-exclude clones are refused; a complete --no-local clone is not
+  ---
+  duration_ms: 815.446588
+  type: 'test'
+  ...
+# Subtest: QA23-N8 findManifest: an absent-source_commit round manifest whose entries do not hash to its candidate_id is rejected
+ok 9 - QA23-N8 findManifest: an absent-source_commit round manifest whose entries do not hash to its candidate_id is rejected
+  ---
+  duration_ms: 376.261583
+  type: 'test'
+  ...
+# Subtest: QA23-N9 findManifest: a round manifest naming a PRESENT source_commit it does not describe is rejected
+ok 10 - QA23-N9 findManifest: a round manifest naming a PRESENT source_commit it does not describe is rejected
+  ---
+  duration_ms: 398.771964
+  type: 'test'
+  ...
+# Subtest: QA23-P1 probe: fix not contained in the verifying run's head, in a self-declared absent round
+ok 11 - QA23-P1 probe: fix not contained in the verifying run's head, in a self-declared absent round
+  ---
+  duration_ms: 587.005318
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8602.515704
+exit=0

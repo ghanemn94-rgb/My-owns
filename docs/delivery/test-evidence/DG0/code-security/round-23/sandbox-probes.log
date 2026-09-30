@@ -1,0 +1,39 @@
+# residual 7/8 probes (NON-MUTATING: no /proc/sys value is written), run from this agent's Bash shell
+uid=0(root) gid=0(root) groups=0(root)
+/proc/sys/vm/swappiness writable-by-DAC(test -w)=yes
+/proc/sys/kernel/shmmax writable-by-DAC(test -w)=yes
+/proc/sys/net/ipv4/ip_forward writable-by-DAC(test -w)=yes
+/proc/sys/kernel/panic writable-by-DAC(test -w)=yes
+62 54 0:22 / /proc ro,nosuid,nodev,relatime - proc proc rw
+63 62 0:22 / /proc ro,nosuid,nodev,relatime - proc proc rw
+64 63 0:22 / /proc rw,nosuid,nodev,relatime - proc proc rw
+520 64 0:54 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw
+own pidns: pid:[4026532324]  pid1 pidns: 
+own ipcns: ipc:[4026532265]  pid1 ipcns: 
+visible pids: 5
+CapEff:	000001ffffffffff
+NoNewPrivs:	1
+Seccomp:	2
+Seccomp_filters:	1
+signal-0 to peer pid 1 (/proc/self/fd/3 /bin/bash -c export TMPDIR=/var/tmp/mth-run.
+echo "# residual 7/8 probes (NON-MUTATING: no /proc/sys valu
+for p in /proc/sys/vm/swappiness /proc/sys/kernel/shmmax /pr
+grep -E " /proc | /proc/sys " /proc/self/mountinfo | head -5
+echo "own pidns: $(readlink /proc/self/ns/pid)  pid1 pidns: 
+echo "own ipcns: $(readlink /proc/self/ns/ipc)  pid1 ipcns: 
+echo "visible pids: $(ls /proc | grep -c '"'"'^[0-9]*$'"'"')
+grep -E "^(CapEff|NoNewPrivs|Seccomp)" /proc/self/status
+peer=$(for d in /proc/[0-9]*; do p=${d#/proc/}; [ "$p" != "$
+echo "signal-0 to peer pid $peer ($(tr '"'"'\0'"'"' '"'"' '"
+ls /proc/$peer/root/ >/dev/null 2>&1; echo "ls /proc/$peer/r
+echo "# write attempts to protected repo paths from the shel
+for t in /home/user/My-owns/tools/gates/x /home/user/My-owns
+} > $E/sandbox-probes.log 2>&1; cat $E/sandbox-probes.log' &):
+kill -0 exit=0
+ls /proc/1/root exit=2
+# write attempts to protected repo paths from the shell (expected: Read-only file system)
+/home/user/My-owns/tools/gates/x: /bin/bash: line 26: /home/user/My-owns/tools/gates/x: Read-only file system
+/home/user/My-owns/.git/x: /bin/bash: line 26: /home/user/My-owns/.git/x: Read-only file system
+/home/user/My-owns/docs/delivery/reviews/DG0/round-23/qa-verifier.json: /bin/bash: line 26: /home/user/My-owns/docs/delivery/reviews/DG0/round-23/qa-verifier.json: No such file or directory
+/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/x: /bin/bash: line 26: /home/user/My-owns/docs/delivery/test-evidence/DG0/qa/x: Read-only file system
+/home/user/My-owns/.claude/agents/x: /bin/bash: line 26: /home/user/My-owns/.claude/agents/x: Read-only file system

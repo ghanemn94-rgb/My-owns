@@ -1,0 +1,10 @@
+# qa-verifier round-23 live guard probe, 2026-09-30T13:06:58Z, run DG0-T-DG0-REV-QA-R23-qa-verifier-20260930T125800Z-df8564c0, repo HEAD 78954a6 at start (a6cf38e at probe time: domain run evidence, metadata-only)
+# 1) Write tool -> /home/user/My-owns/docs/source/QA-PROBE.txt
+#    result: PreToolUse:Write hook error: ... BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)
+# 2) shell: echo probe > docs/source/QA-PROBE.txt                                   -> Read-only file system, exit 1
+# 3) shell: echo probe > tools/gates/QA-PROBE.txt                                   -> Read-only file system, exit 1
+# 4) shell: echo probe > docs/delivery/test-evidence/DG0/domain/QA-PROBE.txt        -> Read-only file system, exit 1 (another reviewer's evidence)
+# 5) shell: echo probe > docs/delivery/reviews/DG0/round-22/QA-PROBE.txt            -> Read-only file system, exit 1 (write-once earlier round)
+# 6) shell: echo probe > .git/QA-PROBE                                              -> Read-only file system, exit 1
+# post-check: ls of all five paths -> No such file or directory
+# note: 'git status' in the staged view lists round-23 domain-reviewer.* as deleted (committed in a6cf38e, hidden from this run's staging copy by design); not opened.

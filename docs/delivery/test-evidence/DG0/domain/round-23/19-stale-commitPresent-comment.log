@@ -1,0 +1,20 @@
+$ sed -n 596,601p tools/gates/lib/rules.mjs  (clone at 6438e20)
+
+// Whether a commit object is present in this repository. A commit referenced in write-once metadata (a fix_revision,
+// a run's head_commit_at_start, a round's source_commit) can be pruned by a later legitimate history correction -- this
+// branch's pre-round-12 history was truncated in an earlier session, and round 18 was rewritten by the D-034 write-once
+// repair. Provenance checks that need such a commit tolerate its genuine absence (D-035 for findManifest; D-037 for
+// checkClosure and checkInvocation), while every check whose commit IS present still runs (D-037, F-DG0-242).
+$ grep -n "commitPresent" tools/gates/lib/rules.mjs
+397:      } else if (!commitPresent(repo, head)) {
+602:function commitPresent(repo, sha) {
+731:    else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
+733:      if (commitPresent(repo, round.source_commit) && !isAncestor(repo, f.fix_revision, round.source_commit))
+$ sed -n 723,729p (checkClosure D-039 comment)
+    // Strict, with no absent-commit escape (D-039, F-DG0-164/246). Gate validation runs on a COMPLETE clone
+    // (validateGate refuses a shallow one, F-DG0-160), so every real fix commit is present; the earlier "the verifying
+    // round is absent" tolerance was forgeable (round.source_commit is orchestrator-written metadata that findManifest
+    // tolerates) and, once every closure is re-verified against a retained candidate, unnecessary. A CLOSED_VERIFIED
+    // fix must be a full 40-hex commit that is PRESENT and an ancestor of both the verifying round's candidate (when its
+    // source_commit resolves -- findManifest still tolerates a superseded round's write-once manifest, D-035) and the
+    // gate candidate. So an all-zero, typo'd or otherwise absent fix is always rejected, whatever the round metadata says.

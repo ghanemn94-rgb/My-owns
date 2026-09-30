@@ -1,0 +1,130 @@
+# round-22 QA suite re-run, unchanged, against candidate e6df2e1e (QA_REPO_ROOT=$TMPDIR/nl @ 78954a6229fcf052a29fc5600434bc3498f633e7); 2026-09-30T13:04:13Z
+# expectation: QA22-N7 (the F-DG0-246 probe) now PASSES; QA22-N6 asserted the D-038 tolerance and must now FAIL by design (D-039 removed it); QA22-N5's regex names the removed D-038 message, so its all-zero variant may be re-labelled
+TAP version 13
+#   QA22-N1 shallow errors (8): ["gate DG0: the repository is a shallow clone, so ancestry, write-once and history-tolerance checks are unreliable; validate the gate against the complete history (git fetch --unshallow, or clone with fetch-depth: 0 as CI does) (D-038, F-DG0-160)","candidate: gate source_commit e7e92a9435 is not a commit object in this repository (absent)","review domain-reviewer (docs/delivery/reviews/DG0/round-2/domain-reviewer.json): invocation DG0-T-DG0-REV-R2-domain-reviewer-20260928T133000Z-00000002: started from d111853a8b, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","review code-security-reviewer (docs/delivery/reviews/DG0/round-2/code-security-reviewer.json): invocation DG0-T-DG0-REV-R2-code-security-reviewer-20260928T133000Z-00000003: started from d111853a8b, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","review qa-verifier (docs/delivery/reviews/DG0/round-2/qa-verifier.json): invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000004: started from d111853a8b, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","review release-auditor (docs/delivery/reviews/DG0/round-2/release-auditor.json): invocation DG0-T-DG0-REV-R2-release-auditor-20260928T133000Z-00000005: started from d111853a8b, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","finding F-DG0-201 (Medium, mandatory) verification: invocation DG0-T-DG0-REV-R2-qa-verifier-20260928T133000Z-00000004: started from d111853a8b, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","finding F-DG0-201 (Medium, mandatory): fix e7e92a9435 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA22-N1 full errors (0): []
+#   QA22-N1 unshallowed errors (0): []
+#   QA22-N2 listed round-1, role without a record, OPEN finding errors (1): ["finding F-DG0-290 raised in docs/delivery/reviews/DG0/round-1/domain-reviewer.findings.json is missing from findings.json (dropped)"]
+#   QA22-N2 unlisted round-7 directory, CLOSED finding errors (2): ["review rounds: DG0/round-7 exists but is not recorded in stages.json","finding F-DG0-290 raised in docs/delivery/reviews/DG0/round-7/code-security-reviewer.findings.json is missing from findings.json (dropped)"]
+#   QA22-N3 result: {"uppercase/domain-reviewer":"REJECTED","uppercase/code-security-reviewer":"REJECTED","uppercase/qa-verifier":"REJECTED","uppercase/release-auditor":"REJECTED","trailing-newline/domain-reviewer":"REJECTED","trailing-newline/code-security-reviewer":"REJECTED","trailing-newline/qa-verifier":"REJECTED","trailing-newline/release-auditor":"REJECTED","41-hex/domain-reviewer":"REJECTED","41-hex/code-security-reviewer":"REJECTED","41-hex/qa-verifier":"REJECTED","41-hex/release-auditor":"REJECTED","abbrev-12 of the REAL head/domain-reviewer":"REJECTED","abbrev-12 of the REAL head/code-security-reviewer":"REJECTED","abbrev-12 of the REAL head/qa-verifier":"REJECTED","abbrev-12 of the REAL head/release-auditor":"REJECTED"}
+#   QA22-N4 head="unknown" errors (1): ["finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000101: head_commit_at_start \\"unknown\\" is not a 40-hex commit id"]
+#   QA22-N4 head="" errors (1): ["finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000107: head_commit_at_start \\"\\" is not a 40-hex commit id"]
+#   QA22-N5 uppercase-real errors (1): ["finding F-DG0-201 (High): CLOSED_VERIFIED needs a full fix_revision commit id"]
+#   QA22-N5 abbrev-12-real errors (1): ["finding F-DG0-201 (High): CLOSED_VERIFIED needs a full fix_revision commit id"]
+#   QA22-N5 all-zero errors (1): ["finding F-DG0-201 (High): fix 0000000000 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA22-N5 result: {"uppercase-real":"REJECTED","abbrev-12-real":"REJECTED","all-zero":"ACCEPTED"}
+#   QA22-N6 errors (2): ["finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000128: started from cdcdcdcdcd, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)","finding F-DG0-201 (High): fix efefefefef is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA22-N7 errors (1): ["finding F-DG0-201 (High): fix 0000000000 is not a commit present in this repository (a complete clone is required, F-DG0-160)"]
+#   QA22-N7 result: REJECTED (a present verifier head that contains the round manifest proves the round's source_commit was reachable at run time, so an absent source_commit here is not a pruned round; the fix-absent tolerance should not apply)
+#   QA22-N8 status=3 sandbox.json=written traceback=false copied_back=["docs/delivery/reviews/DG0/round-2/qa-verifier.findings.json"] discarded=["docs/delivery/reviews/DG0/round-2/qa-verifier.json: already present in the real tree; write-once (not copied)"]
+#   QA22-N9 result: {"top.constructor":"REJECTED","checks_run[0].constructor":"REJECTED","invocation_reference.constructor":"REJECTED","top.toString":"REJECTED","checks_run[0].toString":"REJECTED","invocation_reference.toString":"REJECTED","top.hasOwnProperty":"REJECTED","checks_run[0].hasOwnProperty":"REJECTED","invocation_reference.hasOwnProperty":"REJECTED","top.__proto__":"REJECTED","checks_run[0].__proto__":"REJECTED","invocation_reference.__proto__":"REJECTED","top.valueOf":"REJECTED","checks_run[0].valueOf":"REJECTED","invocation_reference.valueOf":"REJECTED","top.isPrototypeOf":"REJECTED","checks_run[0].isPrototypeOf":"REJECTED","invocation_reference.isPrototypeOf":"REJECTED"}
+#   QA22-N9 schema closed at top level: true
+# Subtest: QA22-N1 F-DG0-160: a shallow clone of a valid fixture is refused; a complete --no-local clone of it is accepted
+ok 1 - QA22-N1 F-DG0-160: a shallow clone of a valid fixture is refused; a complete --no-local clone of it is accepted
+  ---
+  duration_ms: 901.324704
+  type: 'test'
+  ...
+# Subtest: QA22-N2 F-DG0-158: a finding imported from a record-less sidecar and later deleted from findings.json is 'dropped'
+ok 2 - QA22-N2 F-DG0-158: a finding imported from a record-less sidecar and later deleted from findings.json is 'dropped'
+  ---
+  duration_ms: 737.43703
+  type: 'test'
+  ...
+# Subtest: QA22-N3 F-DG0-159: gate-round head_commit_at_start that is not exactly lowercase 40-hex is rejected (all four roles)
+ok 3 - QA22-N3 F-DG0-159: gate-round head_commit_at_start that is not exactly lowercase 40-hex is rejected (all four roles)
+  ---
+  duration_ms: 5436.692722
+  type: 'test'
+  ...
+# Subtest: QA22-N4 F-DG0-159: a malformed head is rejected even in a round whose source_commit is absent
+ok 4 - QA22-N4 F-DG0-159: a malformed head is rejected even in a round whose source_commit is absent
+  ---
+  duration_ms: 873.911057
+  type: 'test'
+  ...
+# Subtest: QA22-N5 F-DG0-245: malformed or absent fix_revision on a gate-round closure is rejected
+not ok 5 - QA22-N5 F-DG0-245: malformed or absent fix_revision on a gate-round closure is rejected
+  ---
+  duration_ms: 1058.400562
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs:168:1'
+  failureType: 'testCodeFailure'
+  error: '{"uppercase-real":"REJECTED","abbrev-12-real":"REJECTED","all-zero":"ACCEPTED"}'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs:178:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA22-N6 control: a genuinely superseded round (source_commit and run head both absent) with a well-formed absent fix is accepted
+not ok 6 - QA22-N6 control: a genuinely superseded round (source_commit and run head both absent) with a well-formed absent fix is accepted
+  ---
+  duration_ms: 443.71493
+  type: 'test'
+  location: '/home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs:182:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    the D-038 scoped tolerance must still accept the round-18 shape
+    + actual - expected
+    
+    + [
+    +   'finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000128: started from cdcdcdcdcd, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)',
+    +   'finding F-DG0-201 (High): fix efefefefef is not a commit present in this repository (a complete clone is required, F-DG0-160)'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'finding F-DG0-201 (High) verification: invocation DG0-T-DG0-REV-R3-qa-verifier-20260928T133000Z-00000128: started from cdcdcdcdcd, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)'
+    1: 'finding F-DG0-201 (High): fix efefefefef is not a commit present in this repository (a complete clone is required, F-DG0-160)'
+  operator: 'deepStrictEqual'
+  stack: |-
+    file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs:187:10
+    withF (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs:68:72)
+    TestContext.<anonymous> (file:///home/user/My-owns/docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r22.test.mjs:182:144)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: QA22-N7 PROBE: a genuine run (present head containing the manifest) in a self-declared 'absent' round cannot close with an all-zero fix
+ok 7 - QA22-N7 PROBE: a genuine run (present head containing the manifest) in a self-declared 'absent' round cannot close with an all-zero fix
+  ---
+  duration_ms: 466.783332
+  type: 'test'
+  ...
+# Subtest: QA22-N8 F-DG0-238 (= F-DG0-150): the round-17 same-role collision is a clean discard in finish()
+ok 8 - QA22-N8 F-DG0-238 (= F-DG0-150): the round-17 same-role collision is a clean discard in finish()
+  ---
+  duration_ms: 209.747067
+  type: 'test'
+  ...
+# Subtest: QA22-N9 F-DG0-163: the real review schema rejects Object.prototype-named extra keys in a real review record
+ok 9 - QA22-N9 F-DG0-163: the real review schema rejects Object.prototype-named extra keys in a real review record
+  ---
+  duration_ms: 7.332317
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 7
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10267.681099
+exit=1

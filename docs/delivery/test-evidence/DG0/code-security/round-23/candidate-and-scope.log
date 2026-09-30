@@ -1,0 +1,34 @@
+# git rev-parse HEAD; candidate; shallow
+a6cf38e3cab2d35eddcccf3970a500caf8b893f5
+false
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:e6df2e1ebccbd87f01fa80a17ddd0f89ca469658e2511d0e9bff47b319da51c5","files":91}
+# post-freeze commits touch only excluded metadata:
+docs/delivery/assignments/DG0/round-23/audit.md
+docs/delivery/assignments/DG0/round-23/review-code-security-reviewer.md
+docs/delivery/assignments/DG0/round-23/review-common.md
+docs/delivery/assignments/DG0/round-23/review-domain-reviewer.md
+docs/delivery/assignments/DG0/round-23/review-qa-verifier.md
+docs/delivery/candidates/DG0/e6df2e1ebccbd87f.manifest.json
+docs/delivery/reviews/DG0/round-23/domain-reviewer.findings.json
+docs/delivery/reviews/DG0/round-23/domain-reviewer.json
+docs/delivery/reviews/DG0/round-23/domain-reviewer.verifications.json
+docs/delivery/runs/DG0/DG0-T-DG0-REV-DOM-R23-domain-reviewer-20260930T125751Z-7ea95fea/meta.json
+docs/delivery/runs/DG0/DG0-T-DG0-REV-DOM-R23-domain-reviewer-20260930T125751Z-7ea95fea/result.json
+docs/delivery/runs/DG0/DG0-T-DG0-REV-DOM-R23-domain-reviewer-20260930T125751Z-7ea95fea/sandbox.json
+docs/delivery/runs/DG0/DG0-T-DG0-REV-DOM-R23-domain-reviewer-20260930T125751Z-7ea95fea/settings.json
+docs/delivery/runs/DG0/DG0-T-DG0-REV-DOM-R23-domain-reviewer-20260930T125751Z-7ea95fea/stderr.log
+docs/delivery/runs/DG0/DG0-T-DG0-REV-DOM-R23-domain-reviewer-20260930T125751Z-7ea95fea/transcript.jsonl.gz
+docs/delivery/stages.json
+# delta since round-22 baseline outside rules.mjs/validator.test.mjs/decisions.md in reviewed scope (expect empty):
+tools/gates/lib/rules.mjs
+tools/gates/tests/validator.test.mjs
+# D-039 rules.mjs diff stat:
+ tools/gates/lib/rules.mjs            | 67 +++++++++++++++++++-----------------
+ tools/gates/tests/validator.test.mjs | 63 ++++++++++++++++++++++++++-------
+ 2 files changed, 86 insertions(+), 44 deletions(-)
+# stale comment check rules.mjs:597-601
+// Whether a commit object is present in this repository. A commit referenced in write-once metadata (a fix_revision,
+// a run's head_commit_at_start, a round's source_commit) can be pruned by a later legitimate history correction -- this
+// branch's pre-round-12 history was truncated in an earlier session, and round 18 was rewritten by the D-034 write-once
+// repair. Provenance checks that need such a commit tolerate its genuine absence (D-035 for findManifest; D-037 for
+// checkClosure and checkInvocation), while every check whose commit IS present still runs (D-037, F-DG0-242).

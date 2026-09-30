@@ -1,0 +1,10 @@
+# tolerance census in tools/gates/lib/rules.mjs @ 78954a6229fcf052a29fc5600434bc3498f633e7 (candidate source 6438e20)
+$ grep -n "commitPresent\|present = false\|roundAbsent\|roundSourceCommit" tools/gates/lib/rules.mjs
+397:      } else if (!commitPresent(repo, head)) {
+602:function commitPresent(repo, sha) {
+731:    else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
+733:      if (commitPresent(repo, round.source_commit) && !isAncestor(repo, f.fix_revision, round.source_commit))
+910:      present = false;
+exit=0
+$ grep -rn "roundAbsent\|roundSourceCommit" tools/ (should be empty)
+exit=1

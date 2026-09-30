@@ -1,0 +1,29 @@
+$ node --test --test-name-pattern="D-039" tools/gates/tests/validator.test.mjs
+# Subtest: D-039 / F-DG0-164/246: checkClosure requires a present fix_revision -- no absent-round escape
+ok 1 - D-039 / F-DG0-164/246: checkClosure requires a present fix_revision -- no absent-round escape
+# Subtest: D-039 / F-DG0-164: checkInvocation requires a present head_commit_at_start that contains the manifest -- no absent-round escape
+ok 2 - D-039 / F-DG0-164: checkInvocation requires a present head_commit_at_start that contains the manifest -- no absent-round escape
+# Subtest: D-039 / F-DG0-165: a later-round findings sidecar cannot reclassify a finding's immutable fields
+ok 3 - D-039 / F-DG0-165: a later-round findings sidecar cannot reclassify a finding's immutable fields
+# Subtest: D-039 / F-DG0-248: validateGate refuses a shallow clone
+ok 4 - D-039 / F-DG0-248: validateGate refuses a shallow clone
+# tests 4
+# pass 4
+# fail 0
+exit=0
+
+$ grep absence tolerance census in rules.mjs
+390:      // Strict, with no absent-commit escape (D-039, F-DG0-164): gate validation runs on a COMPLETE clone (F-DG0-160),
+398:        bad(`started from ${head.slice(0, 10)}, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)`);
+600:// repair. Provenance checks that need such a commit tolerate its genuine absence (D-035 for findManifest; D-037 for
+611:// The git object type of a sha ("commit", "tag", "tree", "blob"), or null if the object is absent. Used to require a
+665:        // import-findings never imported their verifications; tolerate it. A sidecar whose record FILE exists but is
+723:    // Strict, with no absent-commit escape (D-039, F-DG0-164/246). Gate validation runs on a COMPLETE clone
+725:    // round is absent" tolerance was forgeable (round.source_commit is orchestrator-written metadata that findManifest
+726:    // tolerates) and, once every closure is re-verified against a retained candidate, unnecessary. A CLOSED_VERIFIED
+728:    // source_commit resolves -- findManifest still tolerates a superseded round's write-once manifest, D-035) and the
+729:    // gate candidate. So an all-zero, typo'd or otherwise absent fix is always rejected, whatever the round metadata says.
+904:    // retained gate.source_commit (checkCandidate). So a genuinely MISSING source_commit is tolerated here; every other
+939:  //       an off-branch commit is absent from every fresh clone, and a tag is not a commit at all. `merge-base
+944:    errors.push(`candidate: gate source_commit ${String(gate.source_commit).slice(0, 10)} is not a commit object in this repository (${gscType || "absent"})`);
+988:      /* file absent or unparsable in that commit */

@@ -1,0 +1,34 @@
+# orphan absence + real-repo shallow refusal; 2026-09-30T13:08:23Z
+$ git -C <origin> cat-file -t 450c756f679a911b4c736e856fc9dd5e9b2c89a8
+fatal: git cat-file: could not get object info
+exit=128
+$ git -C <origin> rev-parse --verify -q cb76260^{commit}
+exit=1
+$ git -C <nl> cat-file -t 450c756f679a911b4c736e856fc9dd5e9b2c89a8
+fatal: git cat-file: could not get object info
+exit=128
+$ git -C <nl> rev-parse --verify -q cb76260^{commit}
+exit=1
+$ git -C <loc> cat-file -t 450c756f679a911b4c736e856fc9dd5e9b2c89a8
+fatal: git cat-file: could not get object info
+exit=128
+$ git -C <loc> rev-parse --verify -q cb76260^{commit}
+exit=1
+$ grep -c 450c756|cb76260 in docs/delivery/findings.json
+23
+$ git -C $TMPDIR/sh rev-parse --is-shallow-repository -> true
+$ (cd $TMPDIR/sh && node -e 'validateGate(.)' ) | grep shallow
+errors: 2
+gate DG0: the repository is a shallow clone, so ancestry, write-once and history-tolerance checks are unreliable; validate the gate against the complete history (git fetch --unshallow, or clone with fetch-depth: 0 as CI does) (D-038, F-DG0-160)
+$ same on complete --no-local clone $TMPDIR/nl
+errors: 1 shallow errors: 0
+# where findings.json mentions 450c756/cb76260 (field path -> findings)
+.evidence[] ['F-DG0-013']
+.expected ['F-DG0-013', 'F-DG0-161', 'F-DG0-247']
+.fix_summary ['F-DG0-150', 'F-DG0-151', 'F-DG0-160', 'F-DG0-161']
+.history[].note ['F-DG0-150', 'F-DG0-151', 'F-DG0-239']
+.reproduction ['F-DG0-013', 'F-DG0-161', 'F-DG0-164', 'F-DG0-239', 'F-DG0-246', 'F-DG0-247']
+.title ['F-DG0-013', 'F-DG0-247']
+.verification.note ['F-DG0-150', 'F-DG0-160', 'F-DG0-161', 'F-DG0-244']
+# structured commit fields (fix_revision / verification.invocation_reference) naming them: []
+['docs/delivery/test-evidence/DG0/domain/round-22/15c-orphan-450c756-clone-modes.log']

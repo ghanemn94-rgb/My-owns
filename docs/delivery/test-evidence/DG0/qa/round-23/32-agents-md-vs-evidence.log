@@ -1,0 +1,26 @@
+# agents.md claims vs raw evidence, 2026-09-30T13:07:06Z, clone HEAD 78954a6
+$ git diff --stat 480cd3f 6438e20 -- docs/delivery/agents.md .claude/agents tools/agents
+(empty = unchanged since round 22)
+$ ls .claude/agents/*.md | wc -l
+10
+$ grep -h "^name:\|^model:" .claude/agents/*.md | sort | uniq -c
+     10 model: inherit
+      1 name: backend-workflow-engineer
+      1 name: code-security-reviewer
+      1 name: devops-engineer
+      1 name: domain-reviewer
+      1 name: frontend-ux-engineer
+      1 name: kpi-benefits-engineer
+      1 name: qa-verifier
+      1 name: release-auditor
+      1 name: solution-architect
+      1 name: transformation-analyst
+$ round-23 reviewer run dirs (this round, live) with session id and model
+DG0-T-DG0-REV-DOM-R23-domain-reviewer-20260930T125751Z-7ea95fea
+DG0-T-DG0-REV-QA-R23-qa-verifier-20260930T125800Z-df8564c0
+DG0-T-DG0-REV-SEC-R23-code-security-reviewer-20260930T125756Z-cde0a516
+$ grep -n "orchestrator.s model\|--model" docs/delivery/agents.md | head
+36:claude -p --agent <agent> --model <orchestrator model> --permission-mode auto \
+64:4. `model: inherit` in a separate CLI process resolved to the CLI default (`claude-sonnet-5`), not the orchestrator's model. The runner passes `--model` explicitly, set to the orchestrator's model (`claude-opus-5-5`), so each agent reall
+90:Result: 10/10 definitions load and run as separate invocations, with 10 distinct session IDs, all on the orchestrator's model. Out-of-scope writes were blocked 10/10, in-scope writes succeeded 10/10, and no probe file exists under `docs/
+this run meta (partial, written at start): not yet written
