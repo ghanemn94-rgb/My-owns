@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 29,
+  "candidate_id": "sha256:84130c624e877424eed6deb91d086249bc1330bda34ff109b0183102533751bd",
+  "source_commit": "1e4c0226fc50dc6cc928ce4f16cbf7507afed1ac",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-SEC-R29-code-security-reviewer-20260930T152357Z-44f7f3d7",
+    "session_id": "44f7f3d7-5840-4af2-bdcf-858ca3bc37d9"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer) authored no implementation in the reviewed scope: tools/gates, tools/agents, tools/source, .github/workflows and .claude/agents. Its implementers are transformation-analyst and delivery-orchestrator. I formed this verdict before reading any other round-29 reviewer record. None was visible to me, because the round-29 reviews directory didn't exist in my view. I read only my own earlier records and evidence, plus qa's committed round-20 dry-run classifier script. I executed that script as a tool; I did not use it as a conclusion."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-29/review-code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-001",
+    "REQ-DLV-002",
+    "REQ-DLV-003",
+    "REQ-DLV-004",
+    "REQ-DLV-006",
+    "REQ-DLV-007",
+    "REQ-DLV-013",
+    "REQ-DLV-015",
+    "REQ-DLV-016",
+    "REQ-DLV-017",
+    "REQ-DLV-019",
+    "REQ-DLV-020",
+    "REQ-DLV-022",
+    "REQ-DLV-023",
+    "REQ-DLV-026",
+    "REQ-DLV-029",
+    "REQ-DLV-032",
+    "REQ-S20-024",
+    "REQ-S20-025"
+  ],
+  "checks_run": [
+    {
+      "id": "C1-candidate-scope",
+      "procedure": "Confirm the frozen candidate and that the repository is a complete clone. Check that the only candidate paths changed in the round delta (331407e..1e4c022) are rules.mjs, validator.test.mjs and decisions.md, and that no candidate path changed after the freeze (1e4c022..HEAD ffa3fae, a metadata-only freeze commit).",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG0; node tools/gates/candidate.mjs --stage DG0 --ref 1e4c022; git diff --name-only (intersected with the manifest entries); sha256sum of the assignment",
+      "environment": "node v22.22.2; /home/user/My-owns (complete clone); agent process sandbox plus Bash sandbox",
+      "expected": "The working-tree and --ref candidate are both sha256:84130c62...; the clone is not shallow; the round-delta candidate paths are decisions.md, rules.mjs and validator.test.mjs; no candidate path changed after the freeze; the assignment sha256 is 741035ca...",
+      "actual": "As expected. Both IDs are sha256:84130c624e877424... (91 files) and is-shallow=false. The manifest's source is 1e4c022 (a commit object), frozen at 15:19:05Z. HEAD ffa3fae is a descendant that changes 7 paths, none of them candidate paths. The assignment sha256 matches.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/candidate-and-scope.log"
+      ]
+    },
+    {
+      "id": "C2-node-tests",
+      "procedure": "Run the gate and agent node test suites in a disposable --no-local clone at the candidate commit.",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+      "environment": "$TMPDIR/r29: git clone --no-local, checkout 1e4c022; node v22.22.2",
+      "expected": "Every test passes, including 'D-045 / F-DG0-171 / F-DG0-251' and 'D-044 / F-DG0-251'.",
+      "actual": "tests 105, pass 105, fail 0. The D-044/F-DG0-251 test is ok 98 and the D-045 test is ok 99. D-042/F-DG0-169 (ok 100) and the shallow-clone refusal (ok 103) also pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-013",
+        "REQ-DLV-016",
+        "REQ-DLV-023",
+        "REQ-S20-024",
+        "REQ-S20-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/node-tests.log"
+      ]
+    },
+    {
+      "id": "C3-python-unittests",
+      "procedure": "Run the Python unit tests for the agent settings and run metadata.",
+      "command": "python3 -m unittest discover -v -s tools/agents/tests -p 'test_*.py'",
+      "environment": "$TMPDIR/r29 --no-local clone at 1e4c022; Python 3",
+      "expected": "All 22 pass.",
+      "actual": "Ran 22 tests: OK.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-007",
+        "REQ-DLV-026"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/python-unittest.log"
+      ]
+    },
+    {
+      "id": "C4-F-DG0-171-reproduce-baseline",
+      "procedure": "Reproduce F-DG0-171 on the round-28 baseline. Probe SEC29-1 is a consistent forge: annotate-tag the freeze commit, then write the tag object id as the round manifest's source_commit and in every review_rounds entry. Call checkReviewRounds and filter out only the fixture's write-once artefact, which is logged separately. SEC29-2 does a stages-only tag, then runs validateGate in current and historical mode.",
+      "command": "bash docs/delivery/test-evidence/DG0/code-security/round-29/run-sec29-repro.sh /home/user/My-owns 331407e baseline",
+      "environment": "disposable git clone --no-local in $TMPDIR, checkout 331407e (rules.mjs sha256 5ac51289...); node v22.22.2",
+      "expected": "At baseline, the consistent tag forge is accepted, which is the defect.",
+      "actual": "Reproduced. SEC29-1 gives 0 rule-relevant errors from checkReviewRounds; the only error is the filtered write-once artefact. There is no manifest mismatch and no recompute error, because manifestFromRef peels the tag. SEC29-2 at baseline raises only the pre-existing manifest-mismatch error and no object-type error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro-baseline.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/run-sec29-repro.sh"
+      ]
+    },
+    {
+      "id": "C5-F-DG0-171-fixed-candidate",
+      "procedure": "Run the same probes on the candidate, plus the following. SEC29-3: tree and blob object ids as a round source_commit. SEC29-4: a nested tag, and an absent 40-hex id (which must not trip the type rule). SEC29-5: an absent round source_commit, where the closure must still be rejected by anchor 1. SEC29-6: non-hex values ('HEAD', '--batch-check', 'main', a short sha), which must be rejected by the schema.",
+      "command": "bash docs/delivery/test-evidence/DG0/code-security/round-29/run-sec29-repro.sh /home/user/My-owns 1e4c022 candidate",
+      "environment": "disposable git clone --no-local in $TMPDIR, checkout 1e4c022 (rules.mjs sha256 da6136d6...); node v22.22.2",
+      "expected": "The tag, tree, blob and nested-tag forms are rejected as 'is a <type> object, not a commit', in both current and historical mode. The absent case is tolerated by the type rule but its closures are rejected by anchor 1. Non-hex values are rejected by the schema.",
+      "actual": "6/6 pass. SEC29-1: both rounds are rejected with 'is a tag object, not a commit'. SEC29-2: the object-type error appears in current and historical mode. SEC29-3: the tree and blob ids are rejected with their own types. SEC29-4: the nested tag is rejected; the absent id gives 0 type-rule hits. SEC29-5: the closure is rejected with 'is not present; a closure must be verified against a retained candidate'. SEC29-6: all four values give a schema pattern error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro.tests.mjs.txt"
+      ]
+    },
+    {
+      "id": "C6-objtype-census",
+      "procedure": "Real-repository census in a --no-local clone at HEAD, which includes the round-29 freeze. Report the git object type of every fix_revision, every run head_commit_at_start, every review round source_commit and the stage candidate. Then run the three-anchor closure census against the gate candidate 1e4c022.",
+      "command": "node --input-type=module < docs/delivery/test-evidence/DG0/code-security/round-29/objtype-census.mjs.txt",
+      "environment": "disposable git clone --no-local of /home/user/My-owns at ffa3fae, shallow=false; node v22.22.2",
+      "expected": "Every present id is a commit object; round 18 and its 3 run heads are the only absent ids (the D-034/D-035 orphan); 0 closures fail any anchor.",
+      "actual": "fix_revision: 120 of 120 are commits. head_commit_at_start: 103 are commits and 3 are absent (all round-18 runs). Review round source_commit: 28 are commits and 1 is absent (round 18). The stage candidate is a commit. Of 118 CLOSED_VERIFIED closures, 0 fail anchor 1, 0 fail anchor 2 and 0 fail anchor 3.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/objtype-census.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/objtype-census.mjs.txt"
+      ]
+    },
+    {
+      "id": "C7-real-repo-gate-dryrun",
+      "procedure": "Draft a probe APPROVED gate on the real round-29 candidate in a --no-local clone, run validateGate in current mode, and classify every error with qa's committed round-20 classifier, used as a tool only.",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs /home/user/My-owns",
+      "environment": "the classifier's own --no-local clone in $TMPDIR at ffa3fae; node v22.22.2",
+      "expected": "0 in every history bucket (pruned, record-less, dropped) and no 'is a ... object, not a commit' error. The remaining errors are those only the round-29 records, the auditor or the probe itself can clear.",
+      "actual": "55 errors in total, and 0 in every history bucket. The 8 unfinished-round errors come from state REVIEWING and the missing round-29 records. Of the 47 others: 38 are 'reviewer did not check REQ' (19 x 2), which the round-29 records clear. 6 are F-DG0-147/149 awaiting the auditor's acceptance. 2 are F-DG0-171/251 FIXED_PENDING_VERIFICATION, which this round's verifications clear. 1 is the probe gate's own final_gate_ids stub. There is no object-type error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/real-repo-gate-dryrun.log"
+      ]
+    },
+    {
+      "id": "C8-fix-revision",
+      "procedure": "Check F-DG0-171's fix_revision: its object type, its ancestry relative to the round-28 freeze and the round-29 candidate, its content, and that its tooling equals the frozen candidate's.",
+      "command": "git cat-file -t 83721ced; git merge-base --is-ancestor 83721ced 1e4c022; git merge-base --is-ancestor 331407e 83721ced; git grep rscType 83721ced -- tools/gates/lib/rules.mjs; git diff --stat 83721ced 1e4c022 -- tools/gates",
+      "environment": "/home/user/My-owns (complete clone)",
+      "expected": "A commit object that comes after the round-28 freeze, is contained in the round-29 candidate, and carries the objectType check.",
+      "actual": "It is a commit. It descends from 331407e and is an ancestor of 1e4c022. rules.mjs:785-787 contains the check, and the tools/gates diff to 1e4c022 is empty.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/fix-revision-check.log"
+      ]
+    },
+    {
+      "id": "C9-source-review-delta",
+      "procedure": "Read the full D-045 diff and the surrounding helpers: checkReviewRounds, checkClosure, findManifest, checkCandidate, objectType, commitPresent and isAncestor. Also search for any other commit-id field the gate decision depends on.",
+      "command": "git diff 331407e..1e4c022 -- tools/gates/lib/rules.mjs tools/gates/tests/validator.test.mjs docs/delivery/decisions.md; sed -n 595,830p and 905,995p tools/gates/lib/rules.mjs; grep for source_commit|head_commit|fix_revision in tools/gates",
+      "environment": "/home/user/My-owns at the frozen candidate content",
+      "expected": "The check fires only for a present non-commit object, runs in both modes, and no gate-relevant commit-id field is left untyped.",
+      "actual": "It is correct. objectType is called on a schema-validated 40-hex value, returns null for an absent object (the D-035 path is preserved), and the check sits in checkReviewRounds, which validateGate calls in both modes. The gate depends on four commit-id fields, and all four are now type-checked: the gate source_commit (rules.mjs:977), fix_revision (744), head_commit_at_start (checkInvocation ~400) and the round source_commit (785). Two other commit fields exist but are informational, and no rule depends on them. The first is each review record's own source_commit: it is only format-checked, and in the census all 78 genuine records equal their round's frozen commit (record-source-commit-census.log). The second is stages.json candidate.source_commit, which the enforced candidate_id -> manifest -> gate.source_commit chain makes redundant. Neither is a finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/record-source-commit-census.log"
+      ]
+    },
+    {
+      "id": "C10-prefreeze",
+      "procedure": "Run the pre-freeze gate script in a fresh --no-local clone at the candidate commit.",
+      "command": "bash tools/gates/prefreeze.sh DG0",
+      "environment": "$TMPDIR/pf29: git clone --no-local, checkout 1e4c022, shallow=false; nested bubblewrap inside the agent sandbox",
+      "expected": "Every step passes and the working-tree candidate equals HEAD, sha256:84130c62...",
+      "actual": "11 of 11 steps PASS, including the sandboxed source extraction, gate, guard, runner and register tests, pipeline, analysis checks, and working-tree candidate == HEAD (sha256:84130c62...). exit=0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-020",
+        "REQ-DLV-023",
+        "REQ-DLV-032"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/prefreeze.log"
+      ]
+    },
+    {
+      "id": "C11-validator-cli-determinism",
+      "procedure": "Check the validator CLI's exit codes in each mode, and that the candidate hash is deterministic (two working-tree computations, two --ref computations, and one after touching every mtime).",
+      "command": "node tools/gates/validate.mjs --register DG0 | --pipeline | --reconcile | --stage DG0 [--historical] | --stage DG9; node tools/gates/candidate.mjs --stage DG0 [--ref 1e4c022] x5",
+      "environment": "$TMPDIR/r29 --no-local clone at ffa3fae; node v22.22.2",
+      "expected": "register, pipeline and reconcile exit 0. The --stage runs exit 1 while the gate record is absent, and an unknown stage exits 1. All 5 IDs equal the manifest's ID.",
+      "actual": "As expected. All 5 computations give sha256:84130c62..., identical to the manifest's candidate_id.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-022",
+        "REQ-DLV-029"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/validator-and-determinism.log"
+      ]
+    },
+    {
+      "id": "C12-csv-json-robustness",
+      "procedure": "Probe the CSV parser with BOM, quoted-newline, CRLF, unterminated-quote, stray-quote and extra-column inputs. Run --register against a corrupted register, and checkFindings against a truncated findings.json, both in a disposable clone.",
+      "command": "node -e parseCsv(cases); node tools/gates/validate.mjs --register DG0 (corrupted); checkFindings (truncated findings.json)",
+      "environment": "$TMPDIR/r29 --no-local clone at ffa3fae; the clone was restored afterwards",
+      "expected": "Malformed input throws or fails closed with a clear error; the parser and schema code is unchanged since round 28.",
+      "actual": "BOM, quoted newlines and CRLF parse correctly. Unterminated quotes, stray quotes and extra columns throw. The corrupted register makes --register exit 1. A truncated findings.json gives 'invalid JSON'. The pipeline PASS in that state is expected, because the pipeline reads no findings while no stage is APPROVED. The csv, schema, candidate and import code is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/csv-json-robustness.log"
+      ]
+    },
+    {
+      "id": "C13-secrets-ci",
+      "procedure": "Review the CI workflow (least privilege, pinned actions, full-history checkout) and scan tracked files for secrets, key files and public CDN references. Confirm the .claude/settings.json allow list.",
+      "command": "grep in .github/workflows/delivery-gates.yml; git ls-files | secret-pattern grep; .claude/settings.json permissions.allow",
+      "environment": "$TMPDIR/r29 --no-local clone at 1e4c022",
+      "expected": "contents: read only; no pull_request_target and no secrets; actions pinned by SHA; fetch-depth 0; no secrets, no key files, no CDNs; the allow list is only Bash(bwrap:*).",
+      "actual": "As expected. .github, .claude and tools/agents are identical to round 28.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-023"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/secrets-ci-scan.log"
+      ]
+    },
+    {
+      "id": "C14-sandbox-writeguard-live",
+      "procedure": "Run non-destructive live probes from this agent's own shell. Section A attempts 24 writes to protected and other-role paths and 3 append-opens on protected files. Section B checks that my own evidence area and TMPDIR are writable. Section C (residual 7) only opens /proc/sys entries O_WRONLY and closes them; nothing is written. Section D (residual 8) checks PID/IPC namespace visibility and cross-run scratch.",
+      "command": "bash docs/delivery/test-evidence/DG0/code-security/round-29/sandbox-probes.sh .",
+      "environment": "this run's agent process sandbox (MTH_PROCESS_SANDBOX=1) and the nested Bash sandbox; uid 0; NoNewPrivs 1; Seccomp 2",
+      "expected": "Every protected and other-role write is refused. Top-level scratch lands on the throwaway tmpfs skeleton, as designed (D-030) and discarded. Residuals 7 and 8 are exactly as disclosed in threat-model.md.",
+      "actual": "All protected, other-role, .git, /tmp and /var/tmp writes are refused with 'Read-only file system' or 'No such file or directory', and every append-open is refused. The two top-level probe files were writable on the throwaway skeleton and removed; they are absent afterwards, as in round 28, and this is the documented design. The /proc/sys entries can be opened for writing: residual 7, exactly as disclosed, and F-DG0-149 is an accepted observation. Residual 8: 6 PIDs are visible, the IPC namespace is private, and no other run's scratch is visible. Neither residual is larger than disclosed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-007"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/sandbox-probes.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/sandbox-probes.sh"
+      ]
+    },
+    {
+      "id": "C15-requirements",
+      "procedure": "For each of the 19 DG0-final requirements, check the register row: status IMPLEMENTED, final_gate DG0, every evidence file present, and every quoted test title passing in my own node and Python logs. Map each row to the code or config that implements it.",
+      "command": "python3 docs/delivery/test-evidence/DG0/code-security/round-29/requirements-check.py.txt",
+      "environment": "/home/user/My-owns at ffa3fae (the candidate's register); my round-29 node-tests.log and python-unittest.log",
+      "expected": "The 19 rows equal the register's final_gate=DG0 set, and there are 0 problems (status, missing evidence or failed titles).",
+      "actual": "The assignment list equals the register set (19 rows). All rows are IMPLEMENTED with final_gate DG0, no evidence file is missing and no quoted title failed; PROBLEMS=0. The unmatched strings are apostrophe or prose artefacts of the regex, or pre-freeze step names that passed in C10. The pre-freeze check_test_refs step validates all 84 quoted citations independently.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-001",
+        "REQ-DLV-002",
+        "REQ-DLV-003",
+        "REQ-DLV-004",
+        "REQ-DLV-006",
+        "REQ-DLV-007",
+        "REQ-DLV-013",
+        "REQ-DLV-015",
+        "REQ-DLV-016",
+        "REQ-DLV-017",
+        "REQ-DLV-019",
+        "REQ-DLV-020",
+        "REQ-DLV-022",
+        "REQ-DLV-023",
+        "REQ-DLV-026",
+        "REQ-DLV-029",
+        "REQ-DLV-032",
+        "REQ-S20-024",
+        "REQ-S20-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/requirements-check.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/requirements-check.py.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/code-security/round-29/candidate-and-scope.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/node-tests.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/python-unittest.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro-baseline.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro-candidate.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro.tests.mjs.txt",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/run-sec29-repro.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/objtype-census.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/objtype-census.mjs.txt",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/real-repo-gate-dryrun.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/fix-revision-check.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/record-source-commit-census.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/prefreeze.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/validator-and-determinism.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/csv-json-robustness.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/secrets-ci-scan.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/sandbox-probes.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/sandbox-probes.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/requirements-check.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-29/requirements-check.py.txt"
+  ],
+  "reviewed_at": "2026-09-30T15:31:30Z",
+  "summary": "PASS, with no new findings. F-DG0-171 is CLOSED_VERIFIED: reproduced on 331407e (a consistent annotated-tag forge of a round source_commit was accepted by checkReviewRounds) and shown fixed on 1e4c022 (tag, nested-tag, tree and blob objects are rejected in both modes, and the absent case is still tolerated with its closures rejected by anchor 1). With this fix, all four commit-id fields the gate depends on are type-checked. The census shows every present id is a commit object, and the dry-run shows 0 history errors and no object-type error. The gate and agent suites pass 105/105, the Python tests pass 22/22 and the pre-freeze passes 11/11. Candidate hashing is deterministic, CI and secrets are clean, and residuals 7 and 8 are exactly as disclosed. All 19 DG0-final requirements are IMPLEMENTED with their evidence present."
+}

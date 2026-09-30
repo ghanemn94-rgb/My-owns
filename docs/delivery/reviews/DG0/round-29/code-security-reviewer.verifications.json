@@ -1,0 +1,18 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-171",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Reproduced, then shown fixed, in disposable --no-local clones.\n\nReproduction on the round-28 baseline 331407e (SEC29-1): a consistent forge in which the round manifest and both review_rounds entries name an annotated-tag object of the freeze commit gives checkReviewRounds 0 rule-relevant errors. The only error is the fixture's own write-once artefact. There is no manifest mismatch and no recompute error, because manifestFromRef peels the tag. So the baseline accepted the tag.\n\nFix, on candidate 1e4c022: checkReviewRounds (rules.mjs:785-787) computes objectType(r.source_commit) and rejects the object when it is present but not a commit. The same forge now yields 'round 1/2 source_commit ... is a tag object, not a commit'. Tree and blob ids are rejected with their own type (SEC29-3), and so is a nested tag (SEC29-4). The stages-only tag is rejected in both current and historical mode (SEC29-2).\n\nThe absent case is still tolerated: a 40-hex id that doesn't resolve does not trip the type rule (SEC29-4 and the unit test). A closure verified in such a round is still rejected by the unconditional anchor 1 (SEC29-5, F-DG0-169 standing). SEC29-6 shows the stages schema pins the round source_commit to 40-hex, so objectType is never handed a ref name or an option string.\n\nThe new unit tests 'D-045 / F-DG0-171 / F-DG0-251' and 'D-044 / F-DG0-251' pass, and the full suite passes 105/105.\n\nNo genuine record regressed. In the census, all 28 present round source_commits, all 120 fix_revisions and all 103 present run heads are commit objects. Round 18 and its 3 run heads are the known absent D-034/D-035 orphan, and all 118 closures pass the three anchors. The real-repo dry-run shows no object-type error and 0 in every history bucket.\n\nfix_revision 83721ced is a commit object, is a descendant of the round-28 freeze and an ancestor of 1e4c022, and contains the check.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro-baseline.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro-candidate.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/sec29-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/objtype-census.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/fix-revision-check.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-29/node-tests.log"
+      ]
+    }
+  ]
+}
