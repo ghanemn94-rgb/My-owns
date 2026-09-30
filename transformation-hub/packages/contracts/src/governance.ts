@@ -175,6 +175,14 @@ export const AuthorityMatrixVersionDto = z.object({
   approvedBy: Uuid.nullable(),
   approvedAt: z.string().nullable(),
   approvalReference: z.string().nullable(),
+  /** Approval record (documents module) of a non-demo matrix (DOM-P2-12). */
+  approvalDocumentId: Uuid.nullable(),
+  /** Second person who verified the approval evidence; a non-demo matrix is in force only after this verification. */
+  approvalVerifiedBy: Uuid.nullable(),
+  approvalVerifiedAt: z.string().nullable(),
+  approvalVerificationNote: z.string().nullable(),
+  /** An approval is recorded on this draft and awaits verification of its evidence by a second person. */
+  pendingVerification: z.boolean(),
   createdBy: Uuid.nullable(),
   createdAt: z.string(),
 });
@@ -294,7 +302,15 @@ export const DecisionSummaryDto = z.object({
   updatedAt: z.string(),
 });
 
-export const RecusalDto = z.object({ userId: Uuid, displayName: z.string().nullable(), reason: z.string(), declaredAt: z.string() });
+export const RecusalDto = z.object({
+  userId: Uuid,
+  displayName: z.string().nullable(),
+  reason: z.string(),
+  declaredAt: z.string(),
+  /** Who recorded the recusal; `onBehalf` when recorded by someone other than the member (DOM-P2-06). */
+  recordedBy: Uuid.nullable(),
+  onBehalf: z.boolean(),
+});
 
 export const DecisionDetailDto = DecisionSummaryDto.extend({
   issue: z.string().nullable(),
@@ -310,6 +326,8 @@ export const DecisionDetailDto = DecisionSummaryDto.extend({
   authorityReason: z.string().nullable(),
   recommendationRecordedBy: Uuid.nullable(),
   externalAuthorityReference: z.string().nullable(),
+  /** Verified evidence link (documents module) of the external authority's decision (DOM-P2-12). */
+  externalEvidenceLinkId: Uuid.nullable(),
   decidedViaCirculation: z.boolean(),
   outcomeRecordedAt: z.string().nullable(),
   outcomeRecordedBy: Uuid.nullable(),
@@ -595,13 +613,27 @@ export const governanceRoutes = registerRoutes({
     id: 'governance.approveAuthorityMatrixVersion',
     method: 'POST',
     path: `${P}/committees/:committeeId/authority-matrix-versions/:versionId/approve`,
-    summary: 'Approve a draft matrix (not by its drafter; demo policies only in demo projects); supersedes the previous one',
+    summary:
+      'Approve a draft matrix (not by its drafter; demo policies only in demo projects). A non-demo matrix needs the approval record as a document and comes into force (supersedes the previous one) only when a second person verifies it',
     tags,
     access: 'governance.authority_matrix.approve',
     command: true,
     params: MatrixParams,
-    body: z.object({ approvalReference: RequiredText(300), effectiveFrom: IsoDate.optional(), note: Text(2000).optional() }),
-    response: z.object({ id: Uuid, status: z.enum(AUTHORITY_MATRIX_STATUSES), effectiveFrom: z.string(), supersededIds: z.array(Uuid) }),
+    body: z.object({ approvalReference: RequiredText(300), approvalDocumentId: Uuid.optional(), effectiveFrom: IsoDate.optional(), note: Text(2000).optional() }),
+    response: z.object({ id: Uuid, status: z.enum(AUTHORITY_MATRIX_STATUSES), effectiveFrom: z.string(), supersededIds: z.array(Uuid), pendingVerification: z.boolean() }),
+  }),
+  verifyAuthorityMatrixApproval: defineRoute({
+    id: 'governance.verifyAuthorityMatrixApproval',
+    method: 'POST',
+    path: `${P}/committees/:committeeId/authority-matrix-versions/:versionId/verify-approval`,
+    summary:
+      'Verify (accept) or reject the approval evidence of a non-demo matrix — by a second person: not the drafter, not the approver, not the uploader of the approval document. Accept brings the matrix into force',
+    tags,
+    access: 'documents.evidence.verify',
+    command: true,
+    params: MatrixParams,
+    body: z.object({ decision: z.enum(['accept', 'reject']), note: Text(2000).optional() }),
+    response: z.object({ id: Uuid, status: z.enum(AUTHORITY_MATRIX_STATUSES), supersededIds: z.array(Uuid), approvalVerifiedBy: Uuid.nullable() }),
   }),
 
   // ---- Meetings --------------------------------------------------------------------------------------------
@@ -696,7 +728,7 @@ export const governanceRoutes = registerRoutes({
     id: 'governance.recordAttendance',
     method: 'POST',
     path: `${P}/meetings/:meetingId/attendance`,
-    summary: 'Record attendance of active members (corrections only while the session is open)',
+    summary: 'Record attendance of active members (only while the session is open; frozen while votes of an open round exist at the meeting)',
     tags,
     access: 'governance.meeting.manage',
     command: true,
@@ -932,7 +964,8 @@ export const governanceRoutes = registerRoutes({
     id: 'governance.declareRecusal',
     method: 'POST',
     path: `${P}/decisions/:decisionId/recusals`,
-    summary: 'Record a recusal (own: conflict.declare; on behalf: meeting.manage). Recused members neither vote nor count to quorum',
+    summary:
+      'Record a recusal (own: conflict.declare; on behalf: meeting.manage, reason required). Refused once the member voted in the current round (restart the round instead). Recused members neither vote nor count to quorum',
     tags,
     access: 'governance.decision.read',
     command: true,
@@ -990,7 +1023,8 @@ export const governanceRoutes = registerRoutes({
     id: 'governance.recordExternalApproval',
     method: 'POST',
     path: `${P}/decisions/:decisionId/record-external-approval`,
-    summary: 'Record the external authority decision on a recommendation (reference required; not by the recommendation recorder)',
+    summary:
+      'Record the external authority decision on a recommendation (reference and a verified evidence link on the decision required; not by the recommendation recorder, not by the evidence verifier)',
     tags,
     access: 'governance.decision.record_external_approval',
     command: true,
@@ -998,6 +1032,8 @@ export const governanceRoutes = registerRoutes({
     body: z.object({
       expectedVersion: ExpectedVersion,
       externalReference: Text(500).optional(),
+      /** Evidence link (documents module) on this decision, verified by a second person (DOM-P2-12). */
+      evidenceLinkId: Uuid.optional(),
       outcome: z.enum(['approved', 'rejected']).default('approved'),
       note: Text(2000).optional(),
     }),

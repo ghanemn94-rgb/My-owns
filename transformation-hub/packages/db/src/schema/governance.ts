@@ -32,7 +32,7 @@ import { project, program } from './portfolio';
 import { appUser } from './identity';
 import { issue } from './planning';
 import { reportSnapshot } from './reporting';
-import { document } from './documents';
+import { document, evidenceLink } from './documents';
 
 /** Program committee (distinct from NewCo board / JV board via `kind`). Anchored to a project for isolation. */
 export const committee = pgTable(
@@ -125,12 +125,22 @@ export const authorityMatrixVersion = pgTable(
     approvedBy: uuid('approved_by'),
     approvedAt: ts('approved_at'),
     approvalReference: text('approval_reference'),
+    /**
+     * Approval record of a non-demo matrix: a document of the documents module (DOM-P2-12). The matrix comes into force
+     * (status `approved`) only when a second person verifies the approval evidence; until then an approval recorded on a
+     * `draft` version is pending verification.
+     */
+    approvalDocumentId: uuid('approval_document_id'),
+    approvalVerifiedBy: uuid('approval_verified_by'),
+    approvalVerifiedAt: ts('approval_verified_at'),
+    approvalVerificationNote: text('approval_verification_note'),
     createdAt: createdAt(),
     createdBy: createdBy(),
   },
   (t) => [
     unique('authority_matrix_pid_uq').on(t.projectId, t.id),
     projectFk('authority_matrix_committee_fk', t.projectId, t.committeeId, (): FkTarget => committee),
+    projectFk('authority_matrix_approval_document_fk', t.projectId, t.approvalDocumentId, (): FkTarget => document),
     uniqueIndex('authority_matrix_version_uq').on(t.committeeId, t.versionNo),
   ],
 );
@@ -202,6 +212,8 @@ export const decision = pgTable(
     authorityReason: text('authority_reason'),
     escalatedTo: text('escalated_to'),
     externalAuthorityReference: text('external_authority_reference'),
+    /** Verified evidence link (documents module) of the external authority's decision (DOM-P2-12). */
+    externalEvidenceLinkId: uuid('external_evidence_link_id'),
     meetingId: uuid('meeting_id'),
     decidedViaCirculation: boolean('decided_via_circulation').notNull().default(false),
     outcomeRecordedAt: ts('outcome_recorded_at'),
@@ -228,6 +240,7 @@ export const decision = pgTable(
     projectFk('decision_committee_fk', t.projectId, t.committeeId, (): FkTarget => committee),
     projectFk('decision_meeting_fk', t.projectId, t.meetingId, (): FkTarget => meeting),
     projectFk('decision_superseded_fk', t.projectId, t.supersededByDecisionId, { projectId: t.projectId, id: t.id }),
+    projectFk('decision_external_evidence_fk', t.projectId, t.externalEvidenceLinkId, (): FkTarget => evidenceLink),
     index('decision_status_idx').on(t.projectId, t.status),
   ],
 );

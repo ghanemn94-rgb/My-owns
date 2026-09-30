@@ -53,13 +53,27 @@ export interface QuorumInput {
 }
 
 export interface QuorumResult {
+  /**
+   * Appointed voting members on the date: active voting seats held by a named person. Vacant seats ("Role — To be
+   * confirmed") are not appointed and are not counted. This is the denominator of `minFractionPresent`
+   * (authority-matrix.md §2.1 and §3 step 4; committee-charter-draft.md §10).
+   */
+  appointedVoting?: number;
+  /** Appointed voting members who may count toward quorum for THIS item (appointed − recused − requester). */
   eligibleVoting: number;
+  /** Eligible members recorded present (for a circulation: eligible members who responded). */
   presentVoting: number;
   required: number;
   met: boolean;
   explanation: string;
 }
 
+/**
+ * Quorum per agenda item (authority-matrix.md §3 step 4): the eligible members present — voting members present, minus
+ * members recused from the item, minus the requester when self-approval is prohibited — must be at least
+ * `minVotingMembersPresent` AND at least `minFractionPresent` of the APPOINTED voting members (DOM-P2-13: the fraction is
+ * taken over all appointed voting members, not over the members left after recusals, so recusals never lower the bar).
+ */
 export function computeQuorum(input: QuorumInput): QuorumResult {
   const { policy } = input;
   const recused = new Set(input.recusedUserIds);
@@ -67,20 +81,22 @@ export function computeQuorum(input: QuorumInput): QuorumResult {
   // cannot make up the quorum for it.
   if (policy.selfApprovalProhibited && input.requesterUserId) recused.add(input.requesterUserId);
   const present = new Set(input.presentUserIds);
-  const voting = input.members.filter((m) => m.voting && m.userId && isMemberActiveOn(m, input.onDate));
-  const eligible = policy.recusedMembersExcludedFromQuorum ? voting.filter((m) => !recused.has(m.userId!)) : voting;
+  const appointed = input.members.filter((m) => m.voting && m.userId && isMemberActiveOn(m, input.onDate));
+  const eligible = policy.recusedMembersExcludedFromQuorum ? appointed.filter((m) => !recused.has(m.userId!)) : appointed;
   const presentVoting = eligible.filter((m) => present.has(m.userId!)).length;
-  const byFraction = Math.ceil(eligible.length * policy.quorum.minFractionPresent - 1e-9);
+  const byFraction = Math.ceil(appointed.length * policy.quorum.minFractionPresent - 1e-9);
   const required = Math.max(policy.quorum.minVotingMembersPresent, byFraction);
   const met = eligible.length > 0 && presentVoting >= required;
+  const basis = `required ${required}: at least ${policy.quorum.minVotingMembersPresent} and ${policy.quorum.minFractionPresent * 100}% of ${appointed.length} appointed voting members`;
   return {
+    appointedVoting: appointed.length,
     eligibleVoting: eligible.length,
     presentVoting,
     required,
     met,
     explanation: met
-      ? `Quorum met: ${presentVoting} of ${eligible.length} eligible voting members present (required ${required}).`
-      : `Quorum NOT met: ${presentVoting} of ${eligible.length} eligible voting members present (required ${required}).`,
+      ? `Quorum met: ${presentVoting} of ${eligible.length} eligible voting members present (${basis}).`
+      : `Quorum NOT met: ${presentVoting} of ${eligible.length} eligible voting members present (${basis}).`,
   };
 }
 
@@ -108,6 +124,10 @@ export function assertMayVote(input: VoteEligibilityInput): MemberSnapshot {
 }
 
 export interface TallyInput {
+  /**
+   * The ELIGIBLE votes of the current round only: votes of members who are recused or who requested the item must not
+   * be passed (the API refuses to record an outcome when such a vote exists — see `assertTallyIntegrity`).
+   */
   votes: { userId: string; choice: VoteChoice }[];
   chairUserId: string | null;
   quorumMet: boolean;
@@ -121,34 +141,107 @@ export interface TallyResult {
   approve: number;
   reject: number;
   abstain: number;
+  /** Eligible votes cast (approve + reject + abstain): the threshold denominator (authority-matrix.md §3 step 5). */
+  eligibleVotes?: number;
   explanation: string;
 }
 
+/**
+ * Vote tally — the DOCUMENTED rule of this build (authority-matrix.md §3 steps 5–6; committee-charter-draft.md §11–12;
+ * DOM-P2-02, DOM-P2-13). The rule awaits confirmation by Mobily's governance owner (docs/assumptions-and-open-questions.md
+ * A-35 / Q-35):
+ *  - eligible votes = approve + reject + abstain votes cast in the round by eligible members (members present who do not
+ *    vote are not counted); ABSTENTIONS COUNT AS NOT APPROVING;
+ *  - `simple_majority`: approved when approve > half of the eligible votes (approve × 2 > eligible votes);
+ *  - `two_thirds`: approved when approve × 3 ≥ eligible votes × 2;
+ *  - tie (simple majority only): approve votes equal non-approve (reject + abstain) votes. `chair_casting_vote` → the side
+ *    the chair voted for in the round prevails, only when the chair cast an eligible, non-abstaining vote (the chair has no
+ *    second vote); otherwise, and under `escalate`, the item is recorded as tied and escalated — no approval;
+ *  - no approve and no reject vote at all (nothing cast, or abstentions only) → no outcome can be recorded.
+ */
 export function tallyVotes(input: TallyInput): TallyResult {
   const approve = input.votes.filter((v) => v.choice === 'approve').length;
   const reject = input.votes.filter((v) => v.choice === 'reject').length;
   const abstain = input.votes.filter((v) => v.choice === 'abstain').length;
-  const base = { approve, reject, abstain };
+  const eligibleVotes = approve + reject + abstain;
+  const nonApprove = reject + abstain;
+  const base = { approve, reject, abstain, eligibleVotes };
   if (!input.quorumMet) return { ...base, outcome: 'no_quorum', explanation: 'Quorum not met — no valid outcome can be recorded.' };
-  const cast = approve + reject;
-  if (cast === 0) return { ...base, outcome: 'insufficient_votes', explanation: 'No approve/reject votes cast.' };
-  if (input.policy.approvalThreshold.type === 'two_thirds') {
-    if (approve * 3 >= cast * 2) return { ...base, outcome: 'approve', explanation: `Two-thirds threshold reached (${approve}/${cast}).` };
-    return { ...base, outcome: 'reject', explanation: `Two-thirds threshold not reached (${approve}/${cast}).` };
+  if (approve + reject === 0) {
+    return { ...base, outcome: 'insufficient_votes', explanation: abstain > 0 ? `No approve or reject votes cast (${abstain} abstention(s) only).` : 'No votes cast in this round.' };
   }
-  if (approve > reject) return { ...base, outcome: 'approve', explanation: `Simple majority (${approve} to ${reject}).` };
-  if (reject > approve) return { ...base, outcome: 'reject', explanation: `Majority against (${reject} to ${approve}).` };
+  const counts = `${approve} approve, ${reject} reject, ${abstain} abstain of ${eligibleVotes} eligible votes; abstentions count as not approving`;
+  if (input.policy.approvalThreshold.type === 'two_thirds') {
+    if (approve * 3 >= eligibleVotes * 2) return { ...base, outcome: 'approve', explanation: `Two-thirds threshold reached (${counts}).` };
+    return { ...base, outcome: 'reject', explanation: `Two-thirds threshold not reached (${counts}).` };
+  }
+  if (approve * 2 > eligibleVotes) return { ...base, outcome: 'approve', explanation: `Simple majority of eligible votes (${counts}).` };
+  if (approve * 2 < eligibleVotes) return { ...base, outcome: 'reject', explanation: `No majority of eligible votes (${counts}).` };
+  // Tie: approve === non-approve.
   if (input.policy.tieRule === 'chair_casting_vote' && input.chairUserId) {
     const chairVote = input.votes.find((v) => v.userId === input.chairUserId);
     if (chairVote && chairVote.choice !== 'abstain') {
       return {
         ...base,
         outcome: chairVote.choice === 'approve' ? 'approve' : 'reject',
-        explanation: `Tie resolved by chair casting vote (${chairVote.choice}).`,
+        explanation: `Tie (${approve} approve to ${nonApprove} not approving) resolved by the chair's casting vote: the side the chair voted for (${chairVote.choice}) prevails (${counts}).`,
       };
     }
+    return { ...base, outcome: 'tie_escalate', explanation: `Tie (${approve} approve to ${nonApprove} not approving); the chair did not cast an eligible approve/reject vote — escalated (${counts}).` };
   }
-  return { ...base, outcome: 'tie_escalate', explanation: 'Tie — escalated per policy.' };
+  return { ...base, outcome: 'tie_escalate', explanation: `Tie (${approve} approve to ${nonApprove} not approving) — escalated per policy (${counts}).` };
+}
+
+/**
+ * Tally integrity (DOM-P2-06): votes are immutable and every vote cast in the current round must count. A vote of a member
+ * who is recused from the item (or of its requester) in the current round means the round's votes and the eligibility
+ * records disagree — the outcome is refused; the round has to be restarted (defer → resume) instead of silently dropping
+ * a cast vote.
+ */
+export function assertTallyIntegrity(input: { votes: { userId: string }[]; recusedUserIds: string[]; requesterUserId: string | null; round: number }): void {
+  const recused = new Set(input.recusedUserIds);
+  const bad = input.votes.filter((v) => recused.has(v.userId) || (input.requesterUserId !== null && v.userId === input.requesterUserId));
+  if (bad.length > 0) {
+    throw ruleViolation(
+      'governance.outcome.vote_integrity',
+      `${bad.length} vote(s) of round ${input.round} were cast by members who are recused from the item or requested it — cast votes are never discarded; defer and resume the decision to open a new voting round`,
+      { round: input.round, votes: bad.length },
+    );
+  }
+}
+
+/**
+ * Recusal guard (DOM-P2-06, committee-charter-draft.md §14): a recusal can no longer be recorded for a member who has
+ * already voted in the current round (it would silently discard a cast vote and change the outcome); the conflict must be
+ * handled by opening a new round (defer → resume) before the member votes again. A recusal recorded on behalf of another
+ * member needs a reason (it is audited with the recorder).
+ */
+export function assertRecusalAllowed(input: { targetUserId: string; recordedByUserId: string; reason: string | null | undefined; votedInCurrentRound: boolean; round: number }): void {
+  if (input.votedInCurrentRound) {
+    throw ruleViolation(
+      'governance.recusal.after_vote',
+      `The member has already voted in round ${input.round}; a recusal recorded now would discard a cast vote. Defer and resume the decision to open a new voting round, then record the recusal before the member votes`,
+      { round: input.round },
+    );
+  }
+  if (input.targetUserId !== input.recordedByUserId && !input.reason?.trim()) {
+    throw ruleViolation('governance.recusal.reason_required', 'A recusal recorded on behalf of another member requires a reason');
+  }
+}
+
+/**
+ * Attendance freeze (DOM-P2-20): once votes have been cast in the current round of a decision tabled at the meeting (and
+ * its outcome is not yet recorded), attendance — the basis of that decision's quorum — can no longer change. Record the
+ * outcome first, or restart the voting round (defer → resume) to correct attendance.
+ */
+export function assertAttendanceChangeable(openVoting: { code: string; round: number }[]): void {
+  if (openVoting.length > 0) {
+    throw ruleViolation(
+      'governance.attendance.frozen_voting_open',
+      `Attendance is frozen while voting is open on ${openVoting.map((d) => `${d.code} (round ${d.round})`).join(', ')} — record the outcome, or defer and resume the decision to open a new round, before changing attendance`,
+      { decisions: openVoting },
+    );
+  }
 }
 
 export interface AuthorityCheckInput {
@@ -193,6 +286,216 @@ export function checkAuthority(input: AuthorityCheckInput): AuthorityCheckResult
     }
   }
   return { outcome: 'within_mandate', escalateTo: null, reason: 'Within delegated authority.' };
+}
+
+// =============================================================================================================
+// Delegated authority for individual approvals of change control (DOM-P2-03; authority-matrix.md §3, §4.2, §5)
+// =============================================================================================================
+
+/** Authority-matrix decision types that govern change control (authority-matrix.md §4.2). */
+export const CHANGE_CONTROL_DECISION_TYPES = { baseline: 'baseline_approval', changeRequest: 'change_request_budget' } as const;
+
+/** Decision states that are FINAL approvals (within the committee mandate, or recorded from the external authority). */
+export const FINAL_APPROVED_DECISION_STATES = ['approved', 'implementation_pending', 'implemented_verified'] as const;
+
+export type ApprovalAmount =
+  /** The monetary impact, in decimal string + ISO 4217 currency + unit scale. */
+  | { kind: 'amount'; money: { amount: string; currency: string; unitScale: number } }
+  /** No monetary impact (explicitly none recorded). */
+  | { kind: 'none' }
+  /** A monetary impact exists but is not quantified (free text only) or cannot be compared (mixed currencies/units). */
+  | { kind: 'unquantified'; reason: string };
+
+export interface GoverningMatrix {
+  policy: AuthorityPolicy;
+  /** `approved_matrix`: the approved, in-force matrix of the project's steering committee; `demo_sandbox_policy`: the
+   * labelled DEMO policy, used only in a demo project that has no approved matrix. */
+  source: 'approved_matrix' | 'demo_sandbox_policy';
+  matrixVersionId: string | null;
+  committeeId: string | null;
+}
+
+export interface LinkedDecisionSnapshot {
+  id: string;
+  code: string;
+  status: string;
+  authorityOutcome: 'within_mandate' | 'pending_external_authority' | 'not_assessed';
+  decisionTypeKey: string | null;
+  amount: { amount: string; currency: string; unitScale: number } | null;
+  externalAuthorityReference: string | null;
+}
+
+export interface DelegatedApprovalInput {
+  decisionTypeKey: string;
+  /** Null when no usable matrix exists (and the project is not a demo project). */
+  matrix: GoverningMatrix | null;
+  /** Why no matrix is usable (shown in the refusal). */
+  matrixUnusableReason?: string;
+  amount: ApprovalAmount;
+  /** A governance decision offered as the basis of the approval (already loaded inside the project). */
+  decision: LinkedDecisionSnapshot | null;
+}
+
+export interface DelegatedApprovalResult {
+  withinAuthority: boolean;
+  /** `delegated_authority`: within the matrix limits for the decision type; `governance_decision`: backed by a final
+   * decision of the matching type that covers the amount. */
+  basis: 'delegated_authority' | 'governance_decision' | null;
+  /** Refusal code when not within authority (HTTP 422). */
+  code: string | null;
+  reason: string;
+  decisionTypeKey: string;
+  escalateTo: string | null;
+  matrixSource: GoverningMatrix['source'] | null;
+  matrixVersionId: string | null;
+  decisionId: string | null;
+}
+
+const moneyGte = (a: { amount: string; unitScale: number }, b: { amount: string; unitScale: number }) =>
+  new Decimal(a.amount).mul(a.unitScale).gte(new Decimal(b.amount).mul(b.unitScale));
+
+/**
+ * Evaluates whether an individual approval of a baseline or change request is within delegated authority (DOM-P2-03).
+ *
+ * 1. With a linked governance decision: the decision must be FINAL (approved within the committee mandate, or approved by
+ *    the external authority and recorded), of the matching decision type, and — when the change has a monetary impact —
+ *    carry an amount in the same currency that covers it. It is then the basis of the approval (the out-of-authority
+ *    route: the committee decides or recommends, the authorized body approves).
+ * 2. Without a decision: an approved, in-force authority matrix is required (outside the demo sandbox); the decision type
+ *    must be within the committee's delegation and the monetary impact within `maxAmount` (same currency; decimal
+ *    arithmetic). An unquantified monetary impact is never assumed to be within a limit.
+ * The caller passes `withinAuthority` explicitly to the policy check and refuses (422, audited) with `code` otherwise.
+ */
+export function evaluateDelegatedApproval(input: DelegatedApprovalInput): DelegatedApprovalResult {
+  const base = {
+    decisionTypeKey: input.decisionTypeKey,
+    matrixSource: input.matrix?.source ?? null,
+    matrixVersionId: input.matrix?.matrixVersionId ?? null,
+  };
+  const refuse = (code: string, reason: string, escalateTo: string | null = null, decisionId: string | null = null): DelegatedApprovalResult => ({
+    ...base,
+    withinAuthority: false,
+    basis: null,
+    code,
+    reason,
+    escalateTo,
+    decisionId,
+  });
+  const d = input.decision;
+  if (d) {
+    if (!(FINAL_APPROVED_DECISION_STATES as readonly string[]).includes(d.status)) {
+      return refuse('change_control.decision_not_final', `Decision ${d.code} is ${d.status}: only a final approval (within the committee mandate, or recorded from the external authority) can back this approval`, null, d.id);
+    }
+    if (d.authorityOutcome === 'pending_external_authority' && !d.externalAuthorityReference) {
+      return refuse('change_control.decision_not_final', `Decision ${d.code} is a recommendation without a recorded external approval`, null, d.id);
+    }
+    if (d.decisionTypeKey !== input.decisionTypeKey) {
+      return refuse('change_control.decision_type_mismatch', `Decision ${d.code} is of type "${d.decisionTypeKey ?? 'none'}"; this approval needs a decision of type "${input.decisionTypeKey}"`, null, d.id);
+    }
+    if (input.amount.kind === 'unquantified') {
+      return refuse('change_control.amount_unquantified', `${input.amount.reason} — record the monetary impact as an amount with currency and unit (0 when none) before approval`, null, d.id);
+    }
+    if (input.amount.kind === 'amount' && Number(input.amount.money.amount) !== 0) {
+      const m = input.amount.money;
+      if (!d.amount) return refuse('change_control.decision_amount_missing', `Decision ${d.code} carries no amount; it cannot cover a monetary impact of ${m.amount} ${m.currency} (unit ${m.unitScale})`, null, d.id);
+      if (d.amount.currency !== m.currency) {
+        return refuse('change_control.decision_amount_currency', `Decision ${d.code} is in ${d.amount.currency}; the change is in ${m.currency} — no conversion basis is applied`, null, d.id);
+      }
+      if (!moneyGte(d.amount, m)) {
+        return refuse('change_control.decision_amount_insufficient', `Decision ${d.code} covers ${d.amount.amount} ${d.amount.currency} (unit ${d.amount.unitScale}); the change is ${m.amount} ${m.currency} (unit ${m.unitScale})`, null, d.id);
+      }
+    }
+    return { ...base, withinAuthority: true, basis: 'governance_decision', code: null, reason: `Backed by the final governance decision ${d.code}.`, escalateTo: null, decisionId: d.id };
+  }
+  if (!input.matrix) {
+    return refuse(
+      'change_control.no_usable_matrix',
+      `${input.matrixUnusableReason ?? 'No approved authority matrix is in force for this project'} — approval authority is not active (spec §4.1); approve through a final governance decision once a matrix is approved`,
+    );
+  }
+  const t = input.matrix.policy.decisionTypes.find((x) => x.key === input.decisionTypeKey);
+  if (input.amount.kind === 'unquantified' && t && t.withinCommitteeAuthority && t.maxAmount !== null) {
+    return refuse('change_control.amount_unquantified', `${input.amount.reason} — the delegated limit for "${t.key}" cannot be checked; record the monetary impact as an amount with currency and unit (0 when none), or link a final governance decision`, t.escalateTo);
+  }
+  const amount =
+    input.amount.kind === 'amount'
+      ? input.amount.money
+      : // No monetary impact (or an unquantified one where no limit applies): zero in the limit's own currency and unit.
+        t
+        ? { amount: '0', currency: t.currency, unitScale: t.unitScale }
+        : null;
+  const a = checkAuthority({ policy: input.matrix.policy, decisionTypeKey: input.decisionTypeKey, amount });
+  if (a.outcome !== 'within_mandate') {
+    return refuse(
+      'change_control.outside_delegated_authority',
+      `${a.reason} Outside delegated authority — route it to a committee decision of type "${input.decisionTypeKey}" (escalated to ${a.escalateTo ?? 'the authorized body'} when above the committee's limit) and approve with that final decision`,
+      a.escalateTo,
+    );
+  }
+  return {
+    ...base,
+    withinAuthority: true,
+    basis: 'delegated_authority',
+    code: null,
+    reason: `${a.reason} (${input.matrix.source === 'demo_sandbox_policy' ? 'DEMO sandbox policy — synthetic, not a real delegation' : 'approved authority matrix in force'}).`,
+    escalateTo: null,
+    decisionId: null,
+  };
+}
+
+/**
+ * Monetary impact of a baseline for the `baseline_approval` limit: the total of the approved budget lines frozen in the
+ * snapshot. Lines in different currencies or unit scales are not added up without a conversion basis (AT-29) — the total
+ * is then "unquantified" and cannot be compared with a limit.
+ */
+export function baselineBudgetAmount(lines: { approvedAmount: string | null; currency: string; unitScale: number }[]): ApprovalAmount {
+  const withAmount = lines.filter((l) => l.approvedAmount !== null && l.approvedAmount !== undefined);
+  if (withAmount.length === 0) return { kind: 'none' };
+  const cur = new Set(withAmount.map((l) => l.currency));
+  const scales = new Set(withAmount.map((l) => l.unitScale));
+  if (cur.size > 1 || scales.size > 1) return { kind: 'unquantified', reason: 'The baseline budget spans several currencies or unit scales and has no conversion basis' };
+  const total = withAmount.reduce((s, l) => s.add(new Decimal(l.approvedAmount!)), new Decimal(0));
+  return { kind: 'amount', money: { amount: total.toFixed(4), currency: withAmount[0]!.currency, unitScale: withAmount[0]!.unitScale } };
+}
+
+/**
+ * Authority-matrix approval (DOM-P2-12, authority-matrix.md §1.2): loading a real (non-demo) matrix requires the approval
+ * record as a document of the documents module, and the matrix comes into force only after a second person — not its
+ * drafter, not its approver, not the uploader of the document — verifies the approval evidence. The DEMO policy (demo
+ * projects only) is synthetic by definition: it has no approving authority to evidence and takes effect on approval.
+ */
+export function matrixApprovalPlan(input: { isDemoPolicy: boolean; approvalDocumentId: string | null | undefined }): { requiresVerification: boolean } {
+  if (input.isDemoPolicy) return { requiresVerification: false };
+  if (!input.approvalDocumentId) {
+    throw ruleViolation(
+      'governance.authority_matrix.evidence_required',
+      'Approving a (non-demo) authority matrix requires the approval record as a document (approved delegation / board resolution) — upload it in the documents module and pass approvalDocumentId',
+    );
+  }
+  return { requiresVerification: true };
+}
+
+/**
+ * Evidence of an external authority's decision (DOM-P2-12, authority-matrix.md §1.2, decision-workflow.md transition 9):
+ * an ACTIVE evidence link on the decision itself that a second person verified (documents module verification), and the
+ * verifier is not the person recording the external decision.
+ */
+export function assertExternalApprovalEvidence(input: {
+  decisionId: string;
+  recorderUserId: string;
+  link: { targetType: string; targetId: string; status: string; reviewedBy: string | null } | null;
+}): void {
+  const l = input.link;
+  if (!l) {
+    throw ruleViolation('governance.external.evidence_required', 'Recording an external authority decision requires a verified evidence link on the decision (e.g. the board resolution) — link it in the documents module and have a second person verify it');
+  }
+  if (l.targetType !== 'decision' || l.targetId !== input.decisionId) {
+    throw ruleViolation('governance.external.evidence_other_target', 'The evidence link belongs to another record');
+  }
+  if (l.status !== 'active') throw ruleViolation('governance.external.evidence_not_active', `The evidence link is ${l.status}`);
+  if (!l.reviewedBy) {
+    throw ruleViolation('governance.external.evidence_unverified', 'The evidence link has not been verified — a second person must verify it (documents module) before the external decision is recorded');
+  }
 }
 
 /**
