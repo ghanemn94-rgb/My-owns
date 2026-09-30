@@ -724,17 +724,20 @@ export class GatesService implements OnModuleInit {
   }
 
   async approveWaiver(ctx: RequestContext, projectId: string, waiverId: string, body: { expectedVersion: number; note?: string }) {
+    await this.lockProjectGates(projectId);
     const w = await this.waivers.approve(ctx, projectId, waiverId, body, 'gate_criterion');
     return this.waiverDto(w, await this.loader.bundle(projectId));
   }
 
   async rejectWaiver(ctx: RequestContext, projectId: string, waiverId: string, body: { expectedVersion: number; note: string }) {
+    await this.lockProjectGates(projectId);
     const w = await this.waivers.reject(ctx, projectId, waiverId, body, 'gate_criterion');
     return this.waiverDto(w, await this.loader.bundle(projectId));
   }
 
   /** Applies an approved waiver to the current cycle's criterion assessment (called inside the approval transaction). */
   private async applyApprovedWaiver(ctx: RequestContext, projectId: string, w: WaiverRecord) {
+    await this.lockProjectGates(projectId);
     const b = await this.loader.bundle(projectId);
     const crit = b.criteria.find((c) => c.id === w.targetId);
     if (!crit) throw notFound();
@@ -765,6 +768,7 @@ export class GatesService implements OnModuleInit {
    *    reported blocked by `refreshEvaluations`).
    */
   async processEvidenceConflicts(projectId: string): Promise<{ markedConflicting: string[]; returnedForReview: string[]; flaggedGates: string[] }> {
+    await this.lockProjectGates(projectId);
     const b = await this.loader.bundle(projectId);
     const marked: string[] = [];
     const returned: string[] = [];
@@ -925,6 +929,7 @@ export class GatesService implements OnModuleInit {
    * was ready becomes blocked. Decided cycles are never touched here.
    */
   async refreshEvaluations(projectId: string): Promise<{ b: GateBundle; evaluations: Map<string, GateEvaluation> }> {
+    await this.lockProjectGates(projectId);
     const b = await this.loader.bundle(projectId);
     const evaluations = new Map<string, GateEvaluation>();
     for (const g of b.gates) {
@@ -960,9 +965,22 @@ export class GatesService implements OnModuleInit {
 
   private async loadGate(projectId: string, gateId: string) {
     await loadInProject(this.db, schema.gateDefinition, projectId, gateId);
+    await this.lockProjectGates(projectId);
     const b = await this.loader.bundle(projectId);
     const gate = b.gate(gateId);
     return { b, gate, cur: b.current(gate.id) };
+  }
+
+  /**
+   * One writer of a project's gate state at a time (transaction-scoped advisory lock, re-entrant within the transaction).
+   * Every gate command, the evaluation refresh, the waiver application and the worker's evidence-conflict job take it
+   * BEFORE they read the bundle and before their first gate_assessment / criterion_assessment write. Without it a command
+   * (which updates its own cycle row, then refreshes the evaluation cache of every gate in order) and the worker's refresh
+   * locked the same rows in opposite orders — PostgreSQL "deadlock detected", 409 `db.serialization_failure` — and the
+   * bundle read before the wait could be stale. Reads do not take it.
+   */
+  private async lockProjectGates(projectId: string) {
+    await this.db.tx().execute(sql`select pg_advisory_xact_lock(hashtextextended(${'hub_gates:' + projectId}, 0))`);
   }
 
   private async loadCriterion(projectId: string, gateId: string, criterionId: string) {

@@ -168,6 +168,13 @@ human principal at execution time and returns `null` when access was revoked (AT
   permission allowlist), `forUser(userId, projectId)` for anything user-facing (returns null if access was revoked → skip
   and record). Long jobs call `queue.extendLease(job, ms)`. External deliveries go through `DeliveryService`.
 - Denied/rejected mutations are audited automatically by the problem filter; do not swallow domain errors.
+- **One writer of a project's gate state at a time:** every gate command, the gate evaluation refresh, the gate waiver
+  application and the gates worker job take the transaction-scoped advisory lock `hub_gates:<projectId>`
+  (`GatesService.lockProjectGates`) BEFORE they read the gate bundle and before their first `gate_assessment` /
+  `criterion_assessment` write. A command writes its own cycle row and then refreshes every gate's cached evaluation in
+  gate order; without the lock it and the worker's refresh could lock the same rows in opposite orders (PostgreSQL
+  "deadlock detected" → 409 `db.serialization_failure`). A new gate write path must take the lock first; reads do not.
+  Regression: `apps/api/test/gates/gate-lock-order.spec.ts`.
 - **Workstream-scoped reach:** when a list or count is structured by workstream, filter it with
   `policy.reachSql(ctx, '<permission>', projectId, table.workstreamId)` — a workstream-only role (e.g. a lead without a
   project role) sees only its workstreams; `policy.permissionReach(...)` tells you whether the grant is project-wide.
