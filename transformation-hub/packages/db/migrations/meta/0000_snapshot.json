@@ -1,5 +1,5 @@
 {
-  "id": "f37b2bc1-0a79-442d-a38d-14541c8b8cee",
+  "id": "ba7ac7a1-d57e-4356-9cc2-501ffe74de5a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -6350,6 +6350,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "approval_document_version_id": {
+          "name": "approval_document_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "approval_verified_by": {
           "name": "approval_verified_by",
           "type": "uuid",
@@ -6441,6 +6447,21 @@
           "columnsFrom": [
             "project_id",
             "approval_document_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "authority_matrix_approval_version_fk": {
+          "name": "authority_matrix_approval_version_fk",
+          "tableFrom": "authority_matrix_version",
+          "tableTo": "document_version",
+          "columnsFrom": [
+            "project_id",
+            "approval_document_version_id"
           ],
           "columnsTo": [
             "project_id",

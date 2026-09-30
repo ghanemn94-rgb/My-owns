@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, loginAs, owner, Client } from '../helpers';
 import { auditCount, createProject, grant, task, workstreams } from './fixtures';
+import { approvedNonDemoMatrix } from '../governance/gov-fixtures';
 
 /**
  * AT-16 — concurrent baseline/approval changes: no lost updates; a conflicting request must reload and review.
@@ -23,6 +24,13 @@ beforeAll(async () => {
   // Two independent people with baseline-approval authority in this project.
   await grant(admin, pid, sponsor, 'sponsor');
   await grant(admin, pid, chair, 'sponsor');
+  // DOM-P2-03: baseline and change-request approvals act on the project's approved authority matrix (non-demo project):
+  // committee + non-demo matrix approved with its approval document and verified by a second person (DOM-P2-12).
+  const secretary = await loginAs('secretary');
+  const legal = await loginAs('legal');
+  await grant(admin, pid, secretary, 'secretary_cpmo');
+  await grant(admin, pid, legal, 'legal_restricted');
+  await approvedNonDemoMatrix(pid, { secretary, sponsor, legal });
   const ws = await workstreams(pm, pid);
   ws1 = ws.get('WS01')!.id;
   t1 = await task(pm, pid, ws1, 'AT-16 dated task', { durationDays: 5, plannedStart: '2026-10-04', plannedFinish: '2026-10-08' });
@@ -118,7 +126,10 @@ describe('AT-16 — concurrent baseline approvals and stale versions [REQ-PLN-00
     const early = await sponsor.post(`/api/v1/projects/${pid}/change-requests/${cr.body.id}/approve`, { expectedVersion: 3 });
     expect(early.status).toBe(422);
     expect(early.body.code).toBe('change_request.impacts_missing');
-    await pm.post(`/api/v1/projects/${pid}/change-requests/${cr.body.id}/assess`, { expectedVersion: 3, impacts: { time: '+5 working days on WS01 (test)', cost: 'None (test)' } }).expect(201);
+    // The budget impact is quantified (DOM-P2-03: "0" = none) so the delegated limit can be checked at approval.
+    await pm
+      .post(`/api/v1/projects/${pid}/change-requests/${cr.body.id}/assess`, { expectedVersion: 3, impacts: { time: '+5 working days on WS01 (test)', cost: 'None (test)' }, costImpact: { amount: '0.0000', currency: 'SAR', unitScale: 1 } })
+      .expect(201);
     // The PM (who holds the sponsor role in this project) cannot approve their own request.
     const self = await pm.post(`/api/v1/projects/${pid}/change-requests/${cr.body.id}/approve`, { expectedVersion: 4 });
     expect(self.status).toBe(403);

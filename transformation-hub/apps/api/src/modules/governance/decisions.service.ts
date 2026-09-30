@@ -13,7 +13,9 @@ import {
   assertApprovalAllowed,
   assertImplementationStartable,
   assertImplementationVerifiable,
+  assertExternalApprovalEvidence,
   assertMayVote,
+  assertTallyIntegrity,
   assertVotesUnderMatrix,
   checkAuthority,
   circulationResponders,
@@ -61,8 +63,6 @@ export interface PaperInput {
   gateKey?: string | null;
 }
 
-/** Decision states after which the paper is closed for recusals and votes. */
-const CLOSED_STATES: DecisionStatus[] = ['approved', 'rejected', 'superseded', 'implementation_pending', 'implemented_verified', 'recommended'];
 const DECIDED_STATES: DecisionStatus[] = ['approved', 'implementation_pending', 'implemented_verified'];
 
 /** Decision papers and their lifecycle (spec §4.2; AT-04, AT-05, AT-16). Every state change is an explicit command. */
@@ -141,6 +141,7 @@ export class DecisionsService {
       authorityReason: d.authorityReason,
       recommendationRecordedBy: d.recommendationRecordedBy,
       externalAuthorityReference: d.externalAuthorityReference,
+      externalEvidenceLinkId: d.externalEvidenceLinkId,
       decidedViaCirculation: d.decidedViaCirculation,
       outcomeRecordedAt: iso(d.outcomeRecordedAt),
       outcomeRecordedBy: d.outcomeRecordedBy,
@@ -152,7 +153,14 @@ export class DecisionsService {
       implementationVerifiedBy: d.implementationVerifiedBy,
       implementationVerifiedAt: iso(d.implementationVerifiedAt),
       missingFields: d.status === 'draft' ? missingDecisionPaperFields(d) : [],
-      recusals: recusals.map((r) => ({ userId: r.userId, displayName: names.get(r.userId) ?? null, reason: r.reason, declaredAt: r.declaredAt.toISOString() })),
+      recusals: recusals.map((r) => ({
+        userId: r.userId,
+        displayName: names.get(r.userId) ?? null,
+        reason: r.reason,
+        declaredAt: r.declaredAt.toISOString(),
+        recordedBy: r.recordedBy,
+        onBehalf: !!r.recordedBy && r.recordedBy !== r.userId,
+      })),
       allowedCommands: allowedCommands(DECISION_MACHINE, d.status as DecisionStatus),
     };
   }
@@ -254,20 +262,31 @@ export class DecisionsService {
     return this.applyTransition(ctx, d, 'return_to_draft', to, body.expectedVersion, extra, body.note);
   }
 
+  /**
+   * Recusal (committee-charter-draft.md §14). DOM-P2-06: refused once the member voted in the current round (a recusal
+   * must never discard a cast vote — restart the round instead); on behalf of another member only with
+   * `governance.meeting.manage` and a reason; the recorder is stored, audited and shown in the tally snapshot.
+   */
   async declareRecusal(ctx: RequestContext, projectId: string, decisionId: string, body: { userId?: string; reason: string }) {
     const d = await this.sup.decision(ctx, projectId, decisionId);
     const self = ctx.principal.userId!;
     const target = body.userId ?? self;
     if (target === self) this.policy.assert(ctx, 'governance.conflict.declare', { projectId, classification: d.classification });
     else this.policy.assert(ctx, 'governance.meeting.manage', { projectId, classification: d.classification });
-    if (CLOSED_STATES.includes(d.status as DecisionStatus)) throw ruleViolation('governance.recusal.decision_closed', `Recusals are closed for a ${d.status} decision`);
     const recorded = await this.sup.insertRecusal(ctx, d, target, body.reason, d.meetingId);
     if (!recorded) throw conflict('governance.recusal.duplicate', 'This member is already recused from the decision');
     await this.db
       .tx()
       .insert(schema.conflictDeclaration)
       .values({ id: newId(), orgId: ctx.principal.orgId, projectId, committeeId: d.committeeId, meetingId: d.meetingId, decisionId: d.id, userId: target, declaration: 'recused', description: body.reason, recordedBy: self });
-    await this.audit.record({ action: 'governance.decision.recusal', entityType: 'decision', entityId: d.id, projectId, after: { userId: target, recordedBy: self }, reason: body.reason });
+    await this.audit.record({
+      action: 'governance.decision.recusal',
+      entityType: 'decision',
+      entityId: d.id,
+      projectId,
+      after: { userId: target, recordedBy: self, onBehalf: target !== self, round: d.voteRound },
+      reason: body.reason,
+    });
     return { ok: true as const };
   }
 
@@ -409,12 +428,14 @@ export class DecisionsService {
     const votes = await tx.select().from(schema.vote).where(and(eq(schema.vote.decisionId, d.id), eq(schema.vote.round, d.voteRound)));
     assertVotesUnderMatrix(votes, mx.row.id);
     const members = this.sup.memberSnapshots(await this.sup.memberships(d.committeeId));
-    const recused = await this.sup.recusedUserIds(d.id);
+    const recusals = await this.sup.recusals(d.id);
+    const recused = recusals.map((r) => r.userId);
     const present = m.isCirculation ? circulationResponders(votes, d.voteRound) : presentUserIds(await this.sup.attendance(m.id));
+    // Tally integrity (DOM-P2-06, DOM-P2-20): every vote cast in the round counts — a vote of a recused member, of the
+    // requester, or (in a meeting) of a member no longer recorded present refuses the outcome instead of being dropped.
+    assertTallyIntegrity({ votes, recusedUserIds: recused, requesterUserId: d.requesterUserId, round: d.voteRound, ...(m.isCirculation ? {} : { presentUserIds: present }) });
     const quorum = computeQuorum({ members, presentUserIds: present, recusedUserIds: recused, onDate, policy: mx.policy, requesterUserId: d.requesterUserId });
-    // Votes of members recused after voting are disregarded (vote rows themselves stay immutable).
-    const counted = votes.filter((v) => !recused.includes(v.userId) && v.userId !== d.requesterUserId);
-    const tally = tallyVotes({ votes: counted.map((v) => ({ userId: v.userId, choice: v.choice })), chairUserId: this.sup.chairOn(members, onDate), quorumMet: quorum.met, policy: mx.policy });
+    const tally = tallyVotes({ votes: votes.map((v) => ({ userId: v.userId, choice: v.choice })), chairUserId: this.sup.chairOn(members, onDate), quorumMet: quorum.met, policy: mx.policy });
     const amount = amountOf(d);
     const authority = checkAuthority({ policy: mx.policy, decisionTypeKey: d.decisionTypeKey ?? '', amount });
     const plan = planDecisionOutcome({ tally, authority, quorum });
@@ -428,7 +449,9 @@ export class DecisionsService {
       quorum,
       tally,
       authority,
-      disregardedVotes: votes.length - counted.length,
+      // Cast votes are never disregarded any more (DOM-P2-06); kept at 0 for readers of older snapshots.
+      disregardedVotes: 0,
+      recusals: recusals.map((r) => ({ userId: r.userId, recordedBy: r.recordedBy, onBehalf: !!r.recordedBy && r.recordedBy !== r.userId })),
       recordedAt: new Date().toISOString(),
       recordedBy: ctx.principal.userId,
     };
@@ -499,7 +522,17 @@ export class DecisionsService {
     };
   }
 
-  async recordExternalApproval(ctx: RequestContext, projectId: string, decisionId: string, body: { expectedVersion: number; externalReference?: string; outcome: 'approved' | 'rejected'; note?: string }) {
+  /**
+   * Transition 9 (decision-workflow.md): the external authority's decision on a recommendation. DOM-P2-12: it rests on an
+   * ACTIVE evidence link on this decision (documents module) that a second person verified; the recorder is neither the
+   * recorder of the recommendation nor the verifier of the evidence.
+   */
+  async recordExternalApproval(
+    ctx: RequestContext,
+    projectId: string,
+    decisionId: string,
+    body: { expectedVersion: number; externalReference?: string; evidenceLinkId?: string; outcome: 'approved' | 'rejected'; note?: string },
+  ) {
     const d = await loadInProject(this.db, schema.decision, projectId, decisionId);
     this.policy.assert(ctx, 'governance.decision.record_external_approval', { projectId, classification: d.classification, requesterUserId: d.requesterUserId });
     const p = await this.sup.project(projectId);
@@ -518,9 +551,14 @@ export class DecisionsService {
       recorderUserId: ctx.principal.userId!,
       recommendationRecordedBy: d.recommendationRecordedBy,
     });
-    const r = await this.applyTransition(ctx, d, command, to, body.expectedVersion, { externalAuthorityReference: body.externalReference!.trim() }, body.note, {
+    const link = body.evidenceLinkId ? await loadInProject(this.db, schema.evidenceLink, projectId, body.evidenceLinkId) : null;
+    assertExternalApprovalEvidence({ decisionId: d.id, recorderUserId: ctx.principal.userId!, link });
+    // Separation of duties: the verifier of the evidence cannot also record the decision it evidences (403).
+    this.policy.assert(ctx, 'governance.decision.record_external_approval', { projectId, classification: d.classification, requesterUserId: link!.reviewedBy });
+    const r = await this.applyTransition(ctx, d, command, to, body.expectedVersion, { externalAuthorityReference: body.externalReference!.trim(), externalEvidenceLinkId: link!.id }, body.note, {
       externalReference: body.externalReference,
       externalOutcome: body.outcome,
+      evidenceVerifiedBy: link!.reviewedBy,
     });
     // Close the escalation(s) that routed the recommendation to the external authority.
     const open = await this.db

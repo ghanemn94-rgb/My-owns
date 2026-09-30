@@ -10,6 +10,7 @@ import {
   MEETING_MACHINE,
   MEETING_STATUSES,
   MeetingCommand,
+  assertAttendanceChangeable,
   clearanceAllows,
   CLASSIFICATIONS,
   computeQuorum,
@@ -235,12 +236,18 @@ export class MeetingsService {
     return { id: m.id, version: row['version'] as number };
   }
 
+  /**
+   * Attendance (quorum basis). DOM-P2-20: frozen while voting is open on a decision tabled at the meeting (current-round
+   * votes, no outcome yet) — quorum and the tally are evaluated on the attendance the votes were cast under; a correction
+   * needs the outcome recorded first, or the round restarted (defer → resume).
+   */
   async recordAttendance(ctx: RequestContext, projectId: string, meetingId: string, body: { entries: { membershipId: string; status: AttendanceStatus }[] }) {
     const { meeting: m, committee: c } = await this.sup.meeting(ctx, projectId, meetingId, 'governance.meeting.manage');
     if (m.isCirculation) throw ruleViolation('governance.attendance.circulation', 'Circulations have responses, not attendance');
     if (m.status !== 'agenda_published' && m.status !== 'in_session') {
       throw ruleViolation('governance.attendance.closed', `Attendance can be recorded only before or during the session (current: ${m.status})`);
     }
+    assertAttendanceChangeable(await this.sup.openVotingAtMeeting(projectId, m.id));
     const p = await this.sup.project(projectId);
     const onDate = this.sup.localDateOf(m.scheduledAt, p);
     const tx = this.db.tx();
@@ -286,7 +293,8 @@ export class MeetingsService {
     if (body.declaration === 'recused' && !decision) throw ruleViolation('governance.conflict.decision_required', 'A recusal must name the decision (agenda item) concerned');
     let recusalRecorded = false;
     if (body.declaration === 'recused' && decision) {
-      recusalRecorded = await this.sup.insertRecusal(ctx, decision, target, body.description?.trim() || 'Recused (conflict of interest declared)', m.id);
+      // DOM-P2-06 guards apply here too (not after the member's vote in the round; a reason when recorded on behalf).
+      recusalRecorded = await this.sup.insertRecusal(ctx, decision, target, body.description, m.id);
     }
     const id = newId();
     await this.db
@@ -312,7 +320,14 @@ export class MeetingsService {
       after: { userId: target, decisionId: decision?.id ?? null, declaration: body.declaration, recusalRecorded },
     });
     if (decision && recusalRecorded) {
-      await this.audit.record({ action: 'governance.decision.recusal', entityType: 'decision', entityId: decision.id, projectId, after: { userId: target, via: 'meeting_declaration', meetingId: m.id } });
+      await this.audit.record({
+        action: 'governance.decision.recusal',
+        entityType: 'decision',
+        entityId: decision.id,
+        projectId,
+        after: { userId: target, recordedBy: self, onBehalf: target !== self, round: decision.voteRound, via: 'meeting_declaration', meetingId: m.id },
+        reason: body.description ?? null,
+      });
     }
     return { id, recusalRecorded };
   }

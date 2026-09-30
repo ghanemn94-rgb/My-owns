@@ -2,6 +2,7 @@ import { expect } from 'vitest';
 import { addCalendarDays, localDate } from '@hub/domain';
 import { Client, loginAs, owner } from '../helpers';
 import { DEMO_AUTHORITY_POLICY } from '../../src/modules/governance/demo-policy';
+import { createWithVersion, login as docLogin } from '../documents/doc-helpers';
 
 export { DEMO_AUTHORITY_POLICY };
 
@@ -56,6 +57,30 @@ export async function setupCommittee(pid: string, a: Actors, opts: { name?: stri
   return { id: c.id, memberships, matrixId };
 }
 
+/**
+ * The governing authority of a NON-demo project (DOM-P2-03, DOM-P2-12): an active steering committee and a non-demo matrix
+ * (synthetic test values — the DEMO values with `isDemoPolicy: false`) approved by the sponsor with an approval DOCUMENT
+ * (uploaded by the PM) and verified by a second person (Legal). The secretary drafts. The personas need, in the project:
+ * secretary_cpmo (secretary), sponsor (sponsor), a documents.evidence.verify role (legal), project_manager (pm).
+ */
+export async function approvedNonDemoMatrix(pid: string, a: Pick<Actors, 'secretary' | 'sponsor' | 'legal'>, opts: { policy?: Record<string, unknown> } = {}) {
+  const c = (await a.secretary.post(`${P(pid)}/committees`, { kind: 'program_steering', name: uniq('Steering committee (test, non-demo)'), charter: { purpose: 'Integration test committee (synthetic)' } }).expect(201)).body;
+  const v = (await a.sponsor.post(`${P(pid)}/committees/${c.id}/charter/approve`, { expectedVersion: c.version, approvalReference: 'TEST (synthetic)' }).expect(201)).body.version;
+  await a.secretary.post(`${P(pid)}/committees/${c.id}/activate`, { expectedVersion: v }).expect(201);
+  const policy = opts.policy ?? { ...DEMO_AUTHORITY_POLICY, isDemoPolicy: false };
+  const m = (await a.secretary.post(`${P(pid)}/committees/${c.id}/authority-matrix-versions`, { policy, effectiveFrom: '2026-01-01' }).expect(201)).body;
+  const pmDoc = await docLogin('pm');
+  const doc = await createWithVersion(pmDoc, pid, { title: 'Approved delegation of authority (synthetic test record)', classification: 'internal' }, { bytes: Buffer.from('Synthetic delegation record for an integration test - not a real approval.'), name: 'delegation-test.txt' });
+  expect(doc.upload.status, JSON.stringify(doc.upload.body)).toBe(201);
+  const ap = await a.sponsor.post(`${P(pid)}/committees/${c.id}/authority-matrix-versions/${m.id}/approve`, { approvalReference: 'TEST-DELEGATION-REF (synthetic test value)', approvalDocumentId: doc.id });
+  expect(ap.status, JSON.stringify(ap.body)).toBe(201);
+  expect(ap.body).toMatchObject({ status: 'draft', pendingVerification: true });
+  const vf = await a.legal.post(`${P(pid)}/committees/${c.id}/authority-matrix-versions/${m.id}/verify-approval`, { decision: 'accept', note: 'Approval record checked against the loaded values (test)' });
+  expect(vf.status, JSON.stringify(vf.body)).toBe(201);
+  expect(vf.body.status).toBe('approved');
+  return { committeeId: c.id as string, matrixId: m.id as string, documentId: doc.id };
+}
+
 export function paper(committeeId: string, over: Record<string, unknown> = {}) {
   return {
     committeeId,
@@ -73,6 +98,18 @@ export function paper(committeeId: string, over: Record<string, unknown> = {}) {
     requiredAuthority: 'Steering committee (DEMO matrix)',
     ...over,
   };
+}
+
+/**
+ * Evidence of an external authority decision (DOM-P2-12): a note link on the decision through the documents API, verified
+ * (accepted) by a second person. Returns the evidence link id to pass as `evidenceLinkId` when recording the decision.
+ */
+export async function verifiedDecisionEvidence(pid: string, linker: Client, verifier: Client, decisionId: string, note = 'Synthetic record of the external authority decision (test)'): Promise<string> {
+  const l = await linker.post(`${P(pid)}/evidence`, { targetType: 'decision', targetId: decisionId, note, purpose: 'External authority decision (test)' });
+  expect(l.status, JSON.stringify(l.body)).toBe(201);
+  const v = await verifier.post(`${P(pid)}/evidence/${l.body.id}/verify`, { expectedVersion: 1, decision: 'accept', note: 'Checked against the synthetic reference (test)' });
+  expect(v.status, JSON.stringify(v.body)).toBe(201);
+  return l.body.id as string;
 }
 
 export async function decisionVersion(c: Client, pid: string, id: string): Promise<number> {

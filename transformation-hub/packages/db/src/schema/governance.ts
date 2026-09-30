@@ -32,7 +32,7 @@ import { project, program } from './portfolio';
 import { appUser } from './identity';
 import { issue } from './planning';
 import { reportSnapshot } from './reporting';
-import { document, evidenceLink } from './documents';
+import { document, documentVersion, evidenceLink } from './documents';
 
 /** Program committee (distinct from NewCo board / JV board via `kind`). Anchored to a project for isolation. */
 export const committee = pgTable(
@@ -131,6 +131,8 @@ export const authorityMatrixVersion = pgTable(
      * `draft` version is pending verification.
      */
     approvalDocumentId: uuid('approval_document_id'),
+    /** The document version the approver relied on (the verifier checks this version, not a later upload). */
+    approvalDocumentVersionId: uuid('approval_document_version_id'),
     approvalVerifiedBy: uuid('approval_verified_by'),
     approvalVerifiedAt: ts('approval_verified_at'),
     approvalVerificationNote: text('approval_verification_note'),
@@ -141,6 +143,7 @@ export const authorityMatrixVersion = pgTable(
     unique('authority_matrix_pid_uq').on(t.projectId, t.id),
     projectFk('authority_matrix_committee_fk', t.projectId, t.committeeId, (): FkTarget => committee),
     projectFk('authority_matrix_approval_document_fk', t.projectId, t.approvalDocumentId, (): FkTarget => document),
+    projectFk('authority_matrix_approval_version_fk', t.projectId, t.approvalDocumentVersionId, (): FkTarget => documentVersion),
     uniqueIndex('authority_matrix_version_uq').on(t.committeeId, t.versionNo),
   ],
 );

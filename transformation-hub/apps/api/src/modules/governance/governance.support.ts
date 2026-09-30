@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
   AuthorityPolicy,
@@ -7,6 +7,7 @@ import {
   CommitteeMemberRole,
   MatrixState,
   MemberSnapshot,
+  assertRecusalAllowed,
   isMemberActiveOn,
   localDate,
   matrixUsable,
@@ -43,6 +44,9 @@ export interface MatrixInForce {
 }
 
 export const iso = (d: Date | null | undefined): string | null => (d ? d.toISOString() : null);
+
+/** Decision states after which the paper is closed for recusals and votes. */
+export const RECUSAL_CLOSED_STATES: string[] = ['approved', 'rejected', 'superseded', 'implementation_pending', 'implemented_verified', 'recommended'];
 
 /** Decision amount as a money DTO (decimal string + currency + unit scale), or null when no amount applies. */
 export function amountOf(d: DecisionRow): { amount: string; currency: string; unitScale: number } | null {

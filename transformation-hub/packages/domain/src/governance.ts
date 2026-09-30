@@ -149,7 +149,7 @@ export interface TallyResult {
 /**
  * Vote tally — the DOCUMENTED rule of this build (authority-matrix.md §3 steps 5–6; committee-charter-draft.md §11–12;
  * DOM-P2-02, DOM-P2-13). The rule awaits confirmation by Mobily's governance owner (docs/assumptions-and-open-questions.md
- * A-35 / Q-35):
+ * A-40 / Q-40; casting vote A-41 / Q-41):
  *  - eligible votes = approve + reject + abstain votes cast in the round by eligible members (members present who do not
  *    vote are not counted); ABSTENTIONS COUNT AS NOT APPROVING;
  *  - `simple_majority`: approved when approve > half of the eligible votes (approve × 2 > eligible votes);
@@ -198,7 +198,14 @@ export function tallyVotes(input: TallyInput): TallyResult {
  * records disagree — the outcome is refused; the round has to be restarted (defer → resume) instead of silently dropping
  * a cast vote.
  */
-export function assertTallyIntegrity(input: { votes: { userId: string }[]; recusedUserIds: string[]; requesterUserId: string | null; round: number }): void {
+export function assertTallyIntegrity(input: {
+  votes: { userId: string }[];
+  recusedUserIds: string[];
+  requesterUserId: string | null;
+  round: number;
+  /** Meeting votes only (DOM-P2-20): members recorded present. Omit for a circulation (responders are the attendance). */
+  presentUserIds?: string[];
+}): void {
   const recused = new Set(input.recusedUserIds);
   const bad = input.votes.filter((v) => recused.has(v.userId) || (input.requesterUserId !== null && v.userId === input.requesterUserId));
   if (bad.length > 0) {
@@ -207,6 +214,17 @@ export function assertTallyIntegrity(input: { votes: { userId: string }[]; recus
       `${bad.length} vote(s) of round ${input.round} were cast by members who are recused from the item or requested it — cast votes are never discarded; defer and resume the decision to open a new voting round`,
       { round: input.round, votes: bad.length },
     );
+  }
+  if (input.presentUserIds) {
+    const present = new Set(input.presentUserIds);
+    const absent = input.votes.filter((v) => !present.has(v.userId));
+    if (absent.length > 0) {
+      throw ruleViolation(
+        'governance.outcome.vote_integrity',
+        `${absent.length} vote(s) of round ${input.round} were cast by members no longer recorded present — the attendance behind the votes changed; defer and resume the decision to open a new voting round`,
+        { round: input.round, votes: absent.length },
+      );
+    }
   }
 }
 

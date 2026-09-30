@@ -90,7 +90,7 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
   });
 
   // -------------------------------------------------------------------------------------------------------------
-  it('DEFECT DOM-P2-02 (domain): abstentions must count as "not approving" (authority-matrix.md §3 steps 5–6)', () => {
+  it('DOM-P2-02 (domain): abstentions must count as "not approving" (authority-matrix.md §3 steps 5–6)', () => {
     const oneApproveFourAbstain = tallyVotes({
       votes: [
         { userId: 'u1', choice: 'approve' },
@@ -121,7 +121,7 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
     expect(twoThirds.outcome).not.toBe('approve');
   });
 
-  it('DEFECT DOM-P2-02 (API): one approve and four abstentions must not approve a decision', async () => {
+  it('DOM-P2-02 (API): one approve and four abstentions must not approve a decision', async () => {
     const x = await tabledDecision(pA, a as unknown as Actors, a.pm, govA.committeeId, govA.meetingId);
     const v = await decisionVersion(a.chair, pA, x.id);
     expect((await vote(pA, a.chair, x.id, 'approve', v)).status).toBe(201);
@@ -132,7 +132,7 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
   });
 
   // -------------------------------------------------------------------------------------------------------------
-  it('DEFECT DOM-P2-03a: a baseline cannot be approved in a (non-demo) project where no authority matrix has been approved', async () => {
+  it('DOM-P2-03a: a baseline cannot be approved in a (non-demo) project where no authority matrix has been approved', async () => {
     const ws1 = wsD.get('WS01')!.id;
     await task(pm, pD, ws1, 'DOM-P2-03 probe dated task (synthetic)', { durationDays: 5, plannedStart: '2026-10-04', plannedFinish: '2026-10-08' });
     const proposed = await pm.post(`/api/v1/projects/${pD}/baselines`, { note: 'DOM-P2-03 probe' });
@@ -145,7 +145,7 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
     expect(r.status, `baseline approved without any approved authority matrix: ${JSON.stringify(r.body)}`).toBe(422);
   });
 
-  it('DEFECT DOM-P2-03b: a change request whose cost impact exceeds the DEMO committee limit cannot be approved by one person without a governance decision', async () => {
+  it('DOM-P2-03b: a change request whose cost impact exceeds the DEMO committee limit cannot be approved by one person without a governance decision', async () => {
     const cr = await a.pm.post(`/api/v1/projects/${pA}/change-requests`, {
       title: 'DOM-P2-03 probe — add a shared cooling asset (synthetic)',
       rationale: 'Probe of authority limits (synthetic)',
@@ -202,7 +202,7 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
   });
 
   // -------------------------------------------------------------------------------------------------------------
-  it('DEFECT DOM-P2-06: the secretariat must not be able to turn a rejected vote into an approval by recusing voters after they voted', async () => {
+  it('DOM-P2-06: the secretariat must not be able to turn a rejected vote into an approval by recusing voters after they voted', async () => {
     const x = await tabledDecision(pA, a as unknown as Actors, a.pm, govA.committeeId, govA.meetingId);
     const v = await decisionVersion(a.chair, pA, x.id);
     for (const k of ['chair', 'sponsor'] as const) expect((await vote(pA, a[k], x.id, 'approve', v)).status).toBe(201);

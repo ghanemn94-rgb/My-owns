@@ -832,6 +832,7 @@ CREATE TABLE "authority_matrix_version" (
 	"approved_at" timestamp with time zone,
 	"approval_reference" text,
 	"approval_document_id" uuid,
+	"approval_document_version_id" uuid,
 	"approval_verified_by" uuid,
 	"approval_verified_at" timestamp with time zone,
 	"approval_verification_note" text,
@@ -2598,6 +2599,7 @@ ALTER TABLE "attendance" ADD CONSTRAINT "attendance_membership_fk" FOREIGN KEY (
 ALTER TABLE "authority_matrix_version" ADD CONSTRAINT "authority_matrix_version_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "authority_matrix_version" ADD CONSTRAINT "authority_matrix_committee_fk" FOREIGN KEY ("project_id","committee_id") REFERENCES "public"."committee"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "authority_matrix_version" ADD CONSTRAINT "authority_matrix_approval_document_fk" FOREIGN KEY ("project_id","approval_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "authority_matrix_version" ADD CONSTRAINT "authority_matrix_approval_version_fk" FOREIGN KEY ("project_id","approval_document_version_id") REFERENCES "public"."document_version"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee" ADD CONSTRAINT "committee_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee" ADD CONSTRAINT "committee_program_id_program_id_fk" FOREIGN KEY ("program_id") REFERENCES "public"."program"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "committee" ADD CONSTRAINT "committee_charter_doc_fk" FOREIGN KEY ("project_id","charter_document_id") REFERENCES "public"."document"("project_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

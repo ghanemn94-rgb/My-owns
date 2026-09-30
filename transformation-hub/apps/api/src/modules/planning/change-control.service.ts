@@ -15,6 +15,15 @@ import {
   notFound,
   clearanceAllows,
   Classification,
+  AuthorityPolicy,
+  ApprovalAmount,
+  CHANGE_CONTROL_DECISION_TYPES,
+  DelegatedApprovalResult,
+  GoverningMatrix,
+  LinkedDecisionSnapshot,
+  baselineBudgetAmount,
+  evaluateDelegatedApproval,
+  matrixUsable,
 } from '@hub/domain';
 import type { z } from 'zod';
 import type { ChangeRequestListQuery, CreateChangeRequestBody, UpdateChangeRequestBody, ImpactsSchema } from '@hub/contracts';
@@ -26,6 +35,8 @@ import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { PlanningSupport, ProjectInfo } from './planning-support';
 import { ScheduleService } from './schedule.service';
+import { DEMO_AUTHORITY_POLICY } from '../governance/demo-policy';
+import { amountOf } from '../governance/governance.support';
 import { likeContains } from '../../platform/helpers';
 
 type Impacts = z.infer<typeof ImpactsSchema>;
@@ -156,6 +167,7 @@ export class ChangeControlService {
       status: b.status as BaselineStatus,
       snapshotHash: b.snapshotHash,
       changeRequestId: b.changeRequestId,
+      decisionId: b.decisionId,
       proposedBy: b.proposedBy,
       proposedByName: b.proposedBy ? (names.get(b.proposedBy) ?? null) : null,
       approvedBy: b.approvedBy,
@@ -325,22 +337,33 @@ export class ChangeControlService {
     return { id, versionNo, status: status as string, snapshotHash, version: 1 };
   }
 
-  /** AT-16: row lock + expectedVersion → the second of two concurrent approvals gets 409 and must reload. */
-  async approveBaseline(ctx: RequestContext, projectId: string, baselineId: string, body: { expectedVersion: number; note?: string }) {
+  /**
+   * AT-16: row lock + expectedVersion → the second of two concurrent approvals gets 409 and must reload.
+   * DOM-P2-03: role → state → separation of duties → delegated authority. The approver acts within the `baseline_approval`
+   * delegation of the approved authority matrix (budget total within its limit, if any); otherwise — or when no approved
+   * matrix is in force outside the demo sandbox — only on a final governance decision of type `baseline_approval`.
+   */
+  async approveBaseline(ctx: RequestContext, projectId: string, baselineId: string, body: { expectedVersion: number; note?: string; decisionId?: string }) {
     const p = await this.s.project(ctx, projectId);
     const b = await this.s.lockInProject(schema.baselineVersion, projectId, baselineId);
-    // authority (I-R3, explicit): the approving role's grant; the delegation matrix has no baseline / change-request decision
-    // types, so no amount limit applies here (access-matrix §2.4 — reported as a residual).
-    this.s.assert(ctx, 'planning.baseline.approve', p, { requesterUserId: b.proposedBy, withinAuthority: true });
+    this.s.policy.assertGranted(ctx, 'planning.baseline.approve', { projectId: p.id, classification: p.classification });
     this.s.assertVersion(b, body.expectedVersion, 'baseline');
     const to = transition('baseline', BASELINE_MACHINE, b.status as BaselineStatus, 'approve');
+    const frozen = b.snapshot as unknown as BaselineSnapshot;
+    const auth = await this.evaluateAuthority(ctx, p, CHANGE_CONTROL_DECISION_TYPES.baseline, baselineBudgetAmount(frozen.budgetLines ?? []), body.decisionId, { kind: 'baseline', selfId: b.id });
+    this.assertDelegatedApproval(ctx, 'planning.baseline.approve', p, b.proposedBy, auth);
     const previous = await this.s.currentBaselineRow(projectId);
     if (previous) {
       transition('baseline', BASELINE_MACHINE, previous.status as BaselineStatus, 'supersede');
       await updateVersioned(this.s.db, schema.baselineVersion, { id: previous.id, projectId, expectedVersion: previous.version }, { status: 'superseded', supersededAt: new Date() });
       await this.audit.record({ action: 'planning.baseline.supersede', entityType: 'baseline_version', entityId: previous.id, projectId, before: { status: 'approved' }, after: { status: 'superseded', supersededBy: baselineId } });
     }
-    const row = await updateVersioned(this.s.db, schema.baselineVersion, { id: baselineId, projectId, expectedVersion: body.expectedVersion }, { status: to, approvedBy: ctx.principal.userId, approvedAt: new Date(), decisionNote: body.note ?? null });
+    const row = await updateVersioned(
+      this.s.db,
+      schema.baselineVersion,
+      { id: baselineId, projectId, expectedVersion: body.expectedVersion },
+      { status: to, approvedBy: ctx.principal.userId, approvedAt: new Date(), decisionNote: body.note ?? null, decisionId: auth.decisionId },
+    );
     // The approver approved the frozen weights too: mark them approved where unchanged since the snapshot and not set by the approver.
     const snap = b.snapshot as unknown as BaselineSnapshot;
     let weightsApproved = 0;
@@ -361,17 +384,27 @@ export class ChangeControlService {
         .returning({ id: schema.deliverable.id });
       weightsApproved += r.length;
     }
-    await this.audit.record({ action: 'planning.baseline.approve', entityType: 'baseline_version', entityId: baselineId, projectId, before: { status: b.status }, after: { status: to, versionNo: b.versionNo, snapshotHash: b.snapshotHash, supersedes: previous?.id ?? null, weightsApproved }, reason: body.note ?? null });
-    await this.versions.snapshot({ projectId, entityType: 'baseline_version', entityId: baselineId, versionNo: row['version'] as number, snapshot: { status: to, snapshotHash: b.snapshotHash, approvedBy: ctx.principal.userId }, reason: 'approved' });
+    await this.audit.record({
+      action: 'planning.baseline.approve',
+      entityType: 'baseline_version',
+      entityId: baselineId,
+      projectId,
+      before: { status: b.status },
+      after: { status: to, versionNo: b.versionNo, snapshotHash: b.snapshotHash, supersedes: previous?.id ?? null, weightsApproved, authority: authorityAudit(auth) },
+      reason: body.note ?? null,
+    });
+    await this.versions.snapshot({ projectId, entityType: 'baseline_version', entityId: baselineId, versionNo: row['version'] as number, snapshot: { status: to, snapshotHash: b.snapshotHash, approvedBy: ctx.principal.userId, decisionId: auth.decisionId }, reason: 'approved' });
     // Other modules react (carve-out: perimeter items' baseline membership; gates: dimension recompute).
-    await this.outbox.emit({ type: 'baseline.approved', projectId, aggregateType: 'baseline_version', aggregateId: baselineId, payload: { versionNo: b.versionNo, supersedes: previous?.id ?? null, changeRequestId: b.changeRequestId }, dedupeKey: `baseline-approved:${baselineId}` });
+    await this.outbox.emit({ type: 'baseline.approved', projectId, aggregateType: 'baseline_version', aggregateId: baselineId, payload: { versionNo: b.versionNo, supersedes: previous?.id ?? null, changeRequestId: b.changeRequestId, decisionId: auth.decisionId }, dedupeKey: `baseline-approved:${baselineId}` });
     return { id: baselineId, status: to as string, version: row['version'] as number };
   }
 
   async rejectBaseline(ctx: RequestContext, projectId: string, baselineId: string, body: { expectedVersion: number; reason: string }) {
     const p = await this.s.project(ctx, projectId);
     const b = await this.s.lockInProject(schema.baselineVersion, projectId, baselineId);
-    this.s.assert(ctx, 'planning.baseline.approve', p, { requesterUserId: b.proposedBy, withinAuthority: true }); // see approveBaseline
+    // authority (explicit, I-R3): declining a proposal keeps the approved plan unchanged — the delegation matrix limits
+    // approvals, not rejections (authority-matrix.md §3), so the approving role's grant is the authority here.
+    this.s.assert(ctx, 'planning.baseline.approve', p, { requesterUserId: b.proposedBy, withinAuthority: true });
     this.s.assertVersion(b, body.expectedVersion, 'baseline');
     const to = transition('baseline', BASELINE_MACHINE, b.status as BaselineStatus, 'reject');
     const row = await updateVersioned(this.s.db, schema.baselineVersion, { id: baselineId, projectId, expectedVersion: body.expectedVersion }, { status: to, rejectedBy: ctx.principal.userId, rejectedAt: new Date(), decisionNote: body.reason });
@@ -399,6 +432,7 @@ export class ChangeControlService {
       rationale: c.rationale,
       alternatives: c.alternatives ?? [],
       impacts: (c.impacts ?? {}) as Impacts,
+      costImpact: costImpactOf(c),
       status: c.status as ChangeRequestStatus,
       subjectType: c.subjectType,
       subjectId: c.subjectId,
@@ -473,6 +507,7 @@ export class ChangeControlService {
       rationale: body.rationale,
       alternatives: body.alternatives ?? [],
       impacts,
+      ...costImpactValues(body.costImpact ?? null),
       status: 'draft',
       subjectType: body.subjectType ?? null,
       subjectId: body.subjectId ?? null,
@@ -542,6 +577,7 @@ export class ChangeControlService {
     if (body.rationale !== undefined) u.rationale = body.rationale;
     if (body.alternatives !== undefined) u.alternatives = body.alternatives;
     if (body.impacts !== undefined) u.impacts = pickImpacts(body.impacts);
+    if (body.costImpact !== undefined) Object.assign(u, costImpactValues(body.costImpact));
     if (body.proposedChange !== undefined) u.proposedChange = body.proposedChange;
     if (body.rebaseline !== undefined) u.rebaseline = body.rebaseline;
     if (Object.keys(u).length === 0) throw invalid('planning.no_changes', 'No changes supplied');
@@ -562,7 +598,7 @@ export class ChangeControlService {
     projectId: string,
     id: string,
     command: 'submit' | 'start_review' | 'approve' | 'reject' | 'withdraw' | 'mark_implemented',
-    body: { expectedVersion: number; note?: string; reason?: string },
+    body: { expectedVersion: number; note?: string; reason?: string; decisionId?: string },
   ) {
     const p = await this.s.project(ctx, projectId);
     const c = await this.s.lockInProject(schema.changeRequest, projectId, id);
@@ -583,9 +619,15 @@ export class ChangeControlService {
         extra.reviewedBy = ctx.principal.userId;
         break;
       case 'approve':
+        // Role now; state, separation of duties and delegated authority below (DOM-P2-03).
+        this.s.policy.assertGranted(ctx, 'planning.change_request.approve', { projectId: p.id, classification: p.classification });
+        extra.decidedBy = ctx.principal.userId;
+        extra.decidedAt = new Date();
+        extra.decisionNote = body.reason ?? body.note ?? null;
+        break;
       case 'reject':
-        // Separation of duties: the approver cannot be the requester (not_self).
-        // authority: explicit role authority (see approveBaseline) — I-R3.
+        // Separation of duties: the approver cannot be the requester (not_self). authority (explicit, I-R3): declining a
+        // change keeps the baseline unchanged — the delegation matrix limits approvals, not rejections.
         this.s.assert(ctx, 'planning.change_request.approve', p, { requesterUserId: c.requestedBy, withinAuthority: true });
         extra.decidedBy = ctx.principal.userId;
         extra.decidedAt = new Date();
@@ -597,11 +639,15 @@ export class ChangeControlService {
     }
     this.s.assertVersion(c, body.expectedVersion, 'change request');
     const to = transition('change_request', CHANGE_REQUEST_MACHINE, c.status as ChangeRequestStatus, command);
+    let auth: DelegatedApprovalResult | null = null;
     if (command === 'approve') {
       const impacts = (c.impacts ?? {}) as Impacts;
-      if (!Object.values(impacts).some((v) => typeof v === 'string' && v.trim().length > 0)) {
+      if (!Object.values(impacts).some((v) => typeof v === 'string' && v.trim().length > 0) && !costImpactOf(c)) {
         throw ruleViolation('change_request.impacts_missing', 'Record the impact assessment (time, cost, scope, readiness, transaction…) before approval');
       }
+      auth = await this.evaluateAuthority(ctx, p, CHANGE_CONTROL_DECISION_TYPES.changeRequest, crAmount(c), body.decisionId, { kind: 'change_request', selfId: c.id });
+      this.assertDelegatedApproval(ctx, 'planning.change_request.approve', p, c.requestedBy, auth);
+      extra.decisionId = auth.decisionId ?? c.decisionId;
     }
     if (command === 'mark_implemented' && c.rebaseline) {
       const [bl] = await this.tx
@@ -611,25 +657,169 @@ export class ChangeControlService {
       if (!bl) throw ruleViolation('change_request.rebaseline_missing', 'This change requires a re-baseline: propose and approve the new baseline (linked to this request) first');
     }
     const row = await updateVersioned(this.s.db, schema.changeRequest, { id, projectId, expectedVersion: body.expectedVersion }, { ...extra, status: to });
-    await this.audit.record({ action: `planning.change_request.${command}`, entityType: 'change_request', entityId: id, projectId, before: { status: c.status }, after: { status: to }, reason: body.reason ?? body.note ?? null });
+    await this.audit.record({
+      action: `planning.change_request.${command}`,
+      entityType: 'change_request',
+      entityId: id,
+      projectId,
+      before: { status: c.status },
+      after: { status: to, ...(auth ? { costImpact: costImpactOf(c), authority: authorityAudit(auth) } : {}) },
+      reason: body.reason ?? body.note ?? null,
+    });
     if (command === 'submit') await this.outbox.emit({ type: 'approval.pending', projectId, aggregateType: 'change_request', aggregateId: id, payload: { kind: 'change_request_review' } });
     if (command === 'approve' || command === 'reject') {
-      await this.outbox.emit({ type: 'change_request.decided', projectId, aggregateType: 'change_request', aggregateId: id, payload: { status: to, subjectType: c.subjectType, subjectId: c.subjectId, rebaseline: c.rebaseline } });
+      await this.outbox.emit({
+        type: 'change_request.decided',
+        projectId,
+        aggregateType: 'change_request',
+        aggregateId: id,
+        payload: { status: to, subjectType: c.subjectType, subjectId: c.subjectId, rebaseline: c.rebaseline, decisionId: auth?.decisionId ?? null },
+      });
     }
     return { id, status: to as string, version: row['version'] as number };
   }
 
-  async assessChangeRequest(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; impacts: Impacts; note?: string }) {
+  async assessChangeRequest(
+    ctx: RequestContext,
+    projectId: string,
+    id: string,
+    body: { expectedVersion: number; impacts: Impacts; costImpact?: { amount: string; currency: string; unitScale: number } | null; note?: string },
+  ) {
     const p = await this.s.project(ctx, projectId);
     const c = await this.s.lockInProject(schema.changeRequest, projectId, id);
     this.s.assert(ctx, 'planning.change_request.assess', p);
     this.s.assertVersion(c, body.expectedVersion, 'change request');
     if (c.status !== 'under_review') throw ruleViolation('change_request.not_under_review', 'Impacts are assessed while the request is under review');
     const merged = { ...((c.impacts ?? {}) as Impacts), ...pickImpacts(body.impacts) };
-    const row = await updateVersioned(this.s.db, schema.changeRequest, { id, projectId, expectedVersion: body.expectedVersion }, { impacts: merged, reviewedBy: ctx.principal.userId });
-    await this.audit.record({ action: 'planning.change_request.assess', entityType: 'change_request', entityId: id, projectId, before: { impacts: c.impacts }, after: { impacts: merged }, reason: body.note ?? null });
+    // The budget impact as money (DOM-P2-03): compared with the delegated limit at approval.
+    const cost = body.costImpact !== undefined ? costImpactValues(body.costImpact) : {};
+    const row = await updateVersioned(this.s.db, schema.changeRequest, { id, projectId, expectedVersion: body.expectedVersion }, { impacts: merged, ...cost, reviewedBy: ctx.principal.userId });
+    await this.audit.record({
+      action: 'planning.change_request.assess',
+      entityType: 'change_request',
+      entityId: id,
+      projectId,
+      before: { impacts: c.impacts, costImpact: costImpactOf(c) },
+      after: { impacts: merged, costImpact: body.costImpact !== undefined ? body.costImpact : costImpactOf(c) },
+      reason: body.note ?? null,
+    });
     return { id, status: c.status as string, version: row['version'] as number };
   }
+
+  // =========================================================================================================
+  // Delegated authority of change control (DOM-P2-03; authority-matrix.md §1.3, §3, §4.2)
+
+  /**
+   * The authority matrix governing change control in the project: the approved, in-force matrix of an ACTIVE program
+   * steering committee (the most recently approved one if several exist). Only in a demo project WITHOUT any approved
+   * matrix is the labelled DEMO policy used (sandbox, synthetic). Otherwise none → approvals need a final decision.
+   */
+  private async governingMatrix(p: ProjectInfo): Promise<{ matrix: GoverningMatrix | null; reason: string }> {
+    const M = schema.authorityMatrixVersion;
+    const C = schema.committee;
+    const rows = await this.tx
+      .select({ m: M, committeeId: C.id })
+      .from(M)
+      .innerJoin(C, and(eq(C.id, M.committeeId), eq(C.projectId, M.projectId)))
+      .where(and(eq(M.projectId, p.id), eq(M.status, 'approved'), eq(C.kind, 'program_steering'), eq(C.status, 'active')))
+      .orderBy(desc(M.approvedAt), desc(M.versionNo));
+    const today = this.s.today(p);
+    let reason = 'No approved authority matrix of an active steering committee exists for this project';
+    for (const r of rows) {
+      const u = matrixUsable({ status: r.m.status, isDemoPolicy: r.m.isDemoPolicy, effectiveFrom: r.m.effectiveFrom, effectiveTo: r.m.effectiveTo }, today, p.isDemo);
+      if (u.usable) return { matrix: { policy: r.m.policy as unknown as AuthorityPolicy, source: 'approved_matrix', matrixVersionId: r.m.id, committeeId: r.committeeId }, reason: u.reason };
+      reason = u.reason;
+    }
+    if (rows.length === 0 && p.isDemo) return { matrix: { policy: DEMO_AUTHORITY_POLICY, source: 'demo_sandbox_policy', matrixVersionId: null, committeeId: null }, reason: 'DEMO sandbox policy (synthetic)' };
+    return { matrix: null, reason };
+  }
+
+  /** Loads the governing matrix and the offered decision (same project, visible, not used by another approval) and evaluates. */
+  private async evaluateAuthority(
+    ctx: RequestContext,
+    p: ProjectInfo,
+    decisionTypeKey: string,
+    amount: ApprovalAmount,
+    decisionId: string | undefined,
+    subject: { kind: 'baseline' | 'change_request'; selfId: string },
+  ): Promise<DelegatedApprovalResult> {
+    let decision: LinkedDecisionSnapshot | null = null;
+    if (decisionId) {
+      const d = await loadInProject(this.s.db, schema.decision, p.id, decisionId);
+      if (!this.s.policy.canSee(ctx, { projectId: p.id, classification: d.classification as Classification })) throw notFound();
+      // One decision backs one approval (a baseline version, or a change request).
+      const used =
+        subject.kind === 'baseline'
+          ? await this.tx
+              .select({ id: schema.baselineVersion.id })
+              .from(schema.baselineVersion)
+              .where(and(eq(schema.baselineVersion.projectId, p.id), eq(schema.baselineVersion.decisionId, d.id), inArray(schema.baselineVersion.status, ['approved', 'superseded'])))
+              .limit(1)
+          : await this.tx
+              .select({ id: schema.changeRequest.id })
+              .from(schema.changeRequest)
+              .where(and(eq(schema.changeRequest.projectId, p.id), eq(schema.changeRequest.decisionId, d.id), inArray(schema.changeRequest.status, ['approved', 'implemented'])))
+              .limit(1);
+      if (used[0] && used[0].id !== subject.selfId) throw ruleViolation('change_control.decision_already_used', `Decision ${d.code} already backs another approval`);
+      decision = {
+        id: d.id,
+        code: d.code,
+        status: d.status,
+        authorityOutcome: d.authorityOutcome as LinkedDecisionSnapshot['authorityOutcome'],
+        decisionTypeKey: d.decisionTypeKey,
+        amount: amountOf(d),
+        externalAuthorityReference: d.externalAuthorityReference,
+      };
+    }
+    const g = decision ? { matrix: null, reason: '' } : await this.governingMatrix(p);
+    return evaluateDelegatedApproval({ decisionTypeKey, matrix: g.matrix, matrixUnusableReason: g.reason, amount, decision });
+  }
+
+  /**
+   * After the role and state checks: separation of duties first (the requester is refused whatever the amount — 403), then
+   * delegated authority (422 with the rule code, audited by the problem filter), then the policy assertion with the
+   * EVALUATED `withinAuthority` (I-R3: never a missing or assumed value).
+   */
+  private assertDelegatedApproval(ctx: RequestContext, permission: string, p: ProjectInfo, requesterUserId: string | null, auth: DelegatedApprovalResult) {
+    if (!this.s.can(ctx, permission, p, { requesterUserId, withinAuthority: true })) this.s.assert(ctx, permission, p, { requesterUserId, withinAuthority: auth.withinAuthority });
+    if (!auth.withinAuthority) {
+      throw ruleViolation(auth.code ?? 'change_control.outside_delegated_authority', auth.reason, {
+        decisionTypeKey: auth.decisionTypeKey,
+        escalateTo: auth.escalateTo,
+        matrixSource: auth.matrixSource,
+        matrixVersionId: auth.matrixVersionId,
+        decisionId: auth.decisionId,
+      });
+    }
+    this.s.assert(ctx, permission, p, { requesterUserId, withinAuthority: auth.withinAuthority });
+  }
+}
+
+/** Budget impact of a change request as money, or null when not quantified. */
+function costImpactOf(c: ChangeRequest): { amount: string; currency: string; unitScale: 1 | 1000 | 1000000 } | null {
+  return c.costImpactAmount !== null && c.costImpactCurrency && c.costImpactUnitScale
+    ? { amount: String(c.costImpactAmount), currency: c.costImpactCurrency, unitScale: Number(c.costImpactUnitScale) as 1 | 1000 | 1000000 }
+    : null;
+}
+
+function costImpactValues(m: { amount: string; currency: string; unitScale: number } | null) {
+  return { costImpactAmount: m?.amount ?? null, costImpactCurrency: m?.currency ?? null, costImpactUnitScale: m?.unitScale ?? null };
+}
+
+/**
+ * Monetary impact of a change request for the `change_request_budget` limit (DOM-P2-03): the quantified cost impact; a
+ * cost impact stated only in text is "unquantified" and never assumed to be within a limit; no cost impact = none.
+ */
+function crAmount(c: ChangeRequest): ApprovalAmount {
+  const m = costImpactOf(c);
+  if (m) return { kind: 'amount', money: m };
+  const text = ((c.impacts ?? {}) as Impacts).cost;
+  if (typeof text === 'string' && text.trim().length > 0) return { kind: 'unquantified', reason: 'The cost impact of this change request is stated as text only (impacts.cost) and has no amount' };
+  return { kind: 'none' };
+}
+
+function authorityAudit(a: DelegatedApprovalResult) {
+  return { basis: a.basis, decisionTypeKey: a.decisionTypeKey, matrixSource: a.matrixSource, matrixVersionId: a.matrixVersionId, decisionId: a.decisionId, reason: a.reason };
 }
 
 function pickImpacts(i: Impacts): Impacts {

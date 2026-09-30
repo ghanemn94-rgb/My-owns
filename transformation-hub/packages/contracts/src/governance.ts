@@ -177,6 +177,7 @@ export const AuthorityMatrixVersionDto = z.object({
   approvalReference: z.string().nullable(),
   /** Approval record (documents module) of a non-demo matrix (DOM-P2-12). */
   approvalDocumentId: Uuid.nullable(),
+  approvalDocumentVersionId: Uuid.nullable(),
   /** Second person who verified the approval evidence; a non-demo matrix is in force only after this verification. */
   approvalVerifiedBy: Uuid.nullable(),
   approvalVerifiedAt: z.string().nullable(),

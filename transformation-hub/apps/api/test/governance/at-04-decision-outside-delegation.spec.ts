@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, Client, DC, loginAs, owner, projectIdByCode } from '../helpers';
-import { Actors, P, TestCommittee, actors, auditCount, decisionRow, decisionVersion, openMeeting, setupCommittee, tabledDecision, vote } from './gov-fixtures';
+import { Actors, P, TestCommittee, actors, auditCount, decisionRow, decisionVersion, openMeeting, setupCommittee, tabledDecision, verifiedDecisionEvidence, vote } from './gov-fixtures';
 
 let pid: string;
 let a: Actors;
@@ -113,8 +113,10 @@ describe('AT-04 — committee recommends a decision outside its delegation [REQ-
   });
 
   it('decision-workflow row 9: the chair (not the secretary who recorded the recommendation) records the external approval → Approved; the escalation is resolved', async () => {
+    // DOM-P2-12: the external decision rests on a verified evidence link on the decision (PM links, Legal verifies).
+    const evidenceLinkId = await verifiedDecisionEvidence(pid, a.pm, a.legal, reserved.id);
     const v = await decisionVersion(a.chair, pid, reserved.id);
-    const r = await a.chair.post(`${P(pid)}/decisions/${reserved.id}/record-external-approval`, { expectedVersion: v, externalReference: 'DEMO-BOARD-RESOLUTION-001 (synthetic)', note: 'Synthetic external decision' });
+    const r = await a.chair.post(`${P(pid)}/decisions/${reserved.id}/record-external-approval`, { expectedVersion: v, externalReference: 'DEMO-BOARD-RESOLUTION-001 (synthetic)', evidenceLinkId, note: 'Synthetic external decision' });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
     expect(r.body.status).toBe('approved');
     const row = await decisionRow(reserved.id);
