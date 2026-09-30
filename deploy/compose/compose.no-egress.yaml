@@ -1,0 +1,22 @@
+# No-outbound-internet variant (ADR-0011 §4, REQ-S19-019, §19 item 7). Use it ON TOP of compose.yaml:
+#
+#   docker compose -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml \
+#     --profile test-idp up -d --wait
+#
+# The single project network becomes `internal: true`: containers reach each other (db, api, worker, keycloak) but
+# have NO route off the host network, so any hidden runtime dependency on the internet (CDN, telemetry, update
+# check, builder-hosted service) fails. Published ports do not work on an internal-only network, so they are reset;
+# the smoke service runs inside the network and also asserts that egress is really blocked
+# (MTH_SMOKE_EXPECT_NO_EGRESS=1: a TCP connect to a public address and a public DNS lookup must both fail).
+networks:
+  default:
+    internal: true
+
+services:
+  api:
+    ports: !reset []
+  keycloak:
+    ports: !reset []
+  smoke:
+    environment:
+      MTH_SMOKE_EXPECT_NO_EGRESS: "1"

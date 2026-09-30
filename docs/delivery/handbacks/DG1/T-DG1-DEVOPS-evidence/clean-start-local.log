@@ -1,0 +1,168 @@
+
+==> environment facts
+  date (UTC):  2026-09-30T23:22:51Z
+  host:        Linux 6.18.44-fc-v50 x86_64; 4 vCPU; 15 GiB RAM
+  node:        v22.22.2;  pnpm: 10.33.0
+  postgres:    postgres (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+  repo HEAD:   4cd9224dcbfe7cec686d68e5c2d9d0633a374791  (worktree overlay: 1)
+  lockfile:    sha256 3c94b7717ef0e2123e20eb952b4b09577625cf35abba8f1bdafd3b43346c8306
+<== ok (0.30 s)
+
+==> 1. fresh clone of the repository
+  overlaid uncommitted files: 52
+<== ok (2.14 s)
+
+==> 2. install dependencies from the frozen lockfile (lifecycle scripts disabled; pnpm 10 default)
+  pnpm install --frozen-lockfile --store-dir /var/tmp/mth-run.VDpDkW/claude-0/img/store/v10 --offline
+ WARN  Failed to create bin at /var/tmp/mth-run.VDpDkW/claude-0/cs1/src/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.VDpDkW/claude-0/cs1/src/apps/worker/node_modules/@mth/db/dist/cli.js'
+ WARN  Failed to create bin at /var/tmp/mth-run.VDpDkW/claude-0/cs1/src/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.VDpDkW/claude-0/cs1/src/apps/api/node_modules/@mth/db/dist/cli.js'
+Done in 1.1s using pnpm v10.33.0
+<== ok (1.17 s)
+
+==> 3. build (pnpm -r build)
+  build log: /var/tmp/mth-run.VDpDkW/claude-0/cs1/build.log
+<== ok (14.06 s)
+
+==> 4. assemble the image runtime tree (same script as the Dockerfile)
+collect-notices: 129 shipped packages, 126 files, 3 without a licence file -> /var/tmp/mth-run.VDpDkW/claude-0/cs1/app/licenses
+Scope: all 8 workspace projects
+Lockfile is up to date, resolution step is skipped
+Packages: -242
+--------------------------------------------------------------------------------
+
+devDependencies:
+- @apidevtools/swagger-parser 10.1.1
+- @axe-core/playwright 4.10.2
+- @playwright/test 1.56.1
+- @types/node 22.18.0
+- eslint 10.1.0
+- eslint-plugin-react-hooks 7.1.1
+- openapi-types 12.1.3
+- prettier 3.8.1
+- typescript 6.0.2
+- typescript-eslint 8.71.0
+- vitest 3.2.4
+
+Done in 978ms using pnpm v10.33.0
+virtual store: 129 package directories, all in the shipped set (129 runtime+bundled)
+assemble-runtime: OK 129 packages, 100M -> /var/tmp/mth-run.VDpDkW/claude-0/cs1/app
+<== ok (1.87 s)
+
+==> 5. disposable PostgreSQL cluster (password auth on TCP) + roles/database via deploy/compose/db-init
+PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+CREATE ROLE
+CREATE ROLE
+CREATE DATABASE
+REVOKE
+GRANT
+ALTER DATABASE
+mth: roles mth_owner, mth_app and database mth created
+<== ok (0.75 s)
+
+==> A1. mth db status on the empty database reports pending (exit 3)
+pending  0001_identity_access.sql
+pending  0002_transformation.sql
+pending  0003_audit_event.sql
+pending  0004_outbox_jobs.sql
+pending  0005_seed_roles_permissions.sql
+pending  0006_pgboss_schema_v25.sql
+mth-db status: 6 pending
+  mth db status: exit 3 (expected 3)
+<== ok (0.20 s)
+
+==> A2. mth migrate (fresh database), then again (idempotent)
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applied 6 migration(s)
+mth-db migrate: database is up to date
+applied  0001_identity_access.sql
+applied  0002_transformation.sql
+applied  0003_audit_event.sql
+applied  0004_outbox_jobs.sql
+applied  0005_seed_roles_permissions.sql
+applied  0006_pgboss_schema_v25.sql
+mth-db status: up to date (6 applied)
+  mth db status: exit 0 (expected 0)
+<== ok (0.66 s)
+
+==> A3. production refusals: seed-dev not in the image; AUTH_MODE=dev refused with NODE_ENV=production
+mth: seed-dev is not available in the production image
+  mth db seed-dev: exit 64 (expected 64)
+Invalid configuration:
+  - AUTH_MODE=dev is refused when NODE_ENV=production
+  mth api with AUTH_MODE=dev: exit 78 (expected 78)
+<== ok (0.33 s)
+
+==> A4. start api + worker (production, OIDC) and wait for readiness
+  /healthz: {"status":"ok"}
+  /readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+<== ok (0.68 s)
+
+==> A5. production surface: SPA served, dev login absent (404), IdP outage -> login redirects with an error, no crash
+  GET / -> 200 text/html
+  POST /api/v1/auth/dev-login -> 404
+  GET /api/v1/auth/login -> 302 http://127.0.0.1:3100/login?error=idp_unavailable
+  GET /api/v1/me (no session) -> 401
+<== ok (0.07 s)
+
+==> A6. first organization + administrator via mth db bootstrap; a second bootstrap is refused
+  "organizationId": "01a0f4a1-1a67-7188-a5a5-128617c36303",
+  "adminUserId": "01a0f4a1-1a67-7188-a5a5-1b182d185da9",
+  "systemUserId": "01a0f4a1-1a67-7188-a5a5-1769c69600a2",
+  "assignmentIds": [
+    "01a0f4a1-1a72-76cf-8b2a-af4dbf914587",
+    "01a0f4a1-1a75-77d8-a0cd-4bf07722e97f"
+  ]
+}
+mth-db: refusing to bootstrap: an organization already exists
+  second bootstrap: exit 1 (expected 1)
+<== ok (0.47 s)
+
+  phase A api/worker stopped (graceful SIGTERM)
+
+==> B1. second fresh database: migrate, then SYNTHETIC dev users (seed-dev from the source tree; never in the image)
+mth-db migrate: applied 6 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+<== ok (0.49 s)
+
+==> B2. start api + worker (AUTH_MODE=dev) from the runtime tree
+<== ok (0.71 s)
+
+==> B3. first-case journey (deploy/scripts/smoke.mjs, dev mode)
+mth smoke: mode=dev api=http://127.0.0.1:3100 app=http://localhost:3100 run=C44A616E (all users and data SYNTHETIC)
+PASS  GET /healthz returns 200 {status: ok} (49 ms): HTTP 200 {"status":"ok"}
+PASS  GET /readyz returns 200 ready (database + migrations) (13 ms): HTTP 200 {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+PASS  no outbound internet: public TCP connect and public DNS lookup both fail (12 ms): tcp 1.1.1.1:443: error ENETUNREACH; dns registry.npmjs.org: error EAI_AGAIN
+PASS  technical admin signs in (dev) (44 ms): dev.admin -> user 01920000-0000-7000-9000-000000000201, roles [ADM_ACCESS,ADM_TECH]
+PASS  technical admin holds no business role (0 ms)
+PASS  admin creates a business unit (201 + ETag) (18 ms): business unit 01a0f4a1-249e-70db-9660-4d4cdea56d15
+PASS  transformation-office user signs in (dev) (15 ms): dev.office -> user 01920000-0000-7000-9000-000000000202, roles [TO]
+PASS  office creates a transformation (201 + ETag, Idempotency-Key) (21 ms): transformation 01a0f4a1-24be-73e1-9953-749db5cf0524 code TR-0001
+PASS  office reads it back: detail, list and audit trail (31 ms): audit actions [transformation.create]
+PASS  technical admin cannot see the business record: list excludes it, detail is 404 (10 ms): list 200 with 0 visible, detail 404
+PASS  both users sign out (16 ms)
+{"smoke":"PASS","mode":"dev","run":"C44A616E","steps":11,"passed":11,"totalMs":234,"transformationId":"01a0f4a1-24be-73e1-9953-749db5cf0524"}
+<== ok (0.29 s)
+
+==> B4. the worker relays and consumes transformation.created (outbox published, ledger row written)
+outbox | transformation.created | transformation.created:01a0f4a1-24be-73e1-9953-749db5cf0524 | t
+ledger | starter_automation.v1 | transformation.created:01a0f4a1-24be-73e1-9953-749db5cf0524 | done
+<== ok (1.70 s)
+
+==> B5. record counts (database mth_dev)
+organization 1
+business_unit 4
+app_user 6
+scoped_assignment 5
+transformation 1
+audit_event 22
+outbox_event 1
+processed_message 1
+schema_migration 6
+<== ok (0.04 s)
+
+CLEAN START: PASS (total 27.0 s; work dir /var/tmp/mth-run.VDpDkW/claude-0/cs1; log docs/delivery/handbacks/DG1/T-DG1-DEVOPS-evidence/clean-start-local.log)

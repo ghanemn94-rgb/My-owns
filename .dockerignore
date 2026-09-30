@@ -1,0 +1,53 @@
+# Build context filter for deploy/docker/Dockerfile (context = repository root). ADR-0011, T-DG1-DEVOPS.
+# Keeps the context small and reproducible, and keeps anything secret, local or unrelated out of every image layer.
+
+# Version control and editor/agent state
+.git
+.github
+.idea
+.vscode
+.claude
+**/.claude
+.mcp.json
+CLAUDE.md
+CLAUDE.local.md
+.gitmodules
+.bash_profile
+.bashrc
+.profile
+.zprofile
+.zshrc
+.gitconfig
+.ripgreprc
+
+# Installed and built artefacts: the image installs from the lockfile and builds from source itself
+**/node_modules
+**/dist
+**/coverage
+**/*.tsbuildinfo
+test-results
+playwright-report
+blob-report
+apps/web/e2e/screenshots
+
+# Local configuration and secrets (never baked into an image; runtime configuration only)
+.env
+.env.*
+!.env.example
+**/.env
+deploy/compose/.env
+**/*.pem
+**/*.key
+**/*secret*
+!packages/config/src/**
+
+# Local evidence storage (filesystem adapter in development)
+var
+
+# Not part of the product: delivery process, gate tooling, sources, unrelated user project
+docs/delivery
+docs/source
+tools
+trading_agent
+**/__pycache__
+**/*.py[cod]

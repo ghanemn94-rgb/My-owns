@@ -1,0 +1,33 @@
+# 2026-09-30T23:23:37Z node v22.22.2; PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); built workspace = disposable clone of HEAD 4cd9224; smoke.mjs sha256 daf8ff8384d323c1
+mth-db migrate: applied 6 migration(s)
+  "bootstrapped": true,
+  "adminUserId": "01a0f4a1-77ef-721d-9ebe-b52a313263fa",
+mth smoke: mode=oidc api=http://127.0.0.1:3200 app=http://localhost:3200 run=208E84A8 (all users and data SYNTHETIC)
+PASS  GET /healthz returns 200 {status: ok} (1050 ms): HTTP 200 {"status":"ok"}
+PASS  GET /readyz returns 200 ready (database + migrations) (15 ms): HTTP 200 {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+PASS  IdP discovery document reachable on the internal network (7 ms): issuer http://127.0.0.1:18080/realms/mth-test
+PASS  technical admin signs in (oidc) (101 ms): smoke.admin -> user 01a0f4a1-77ef-721d-9ebe-b52a313263fa, roles [ADM_TECH,ADM_ACCESS]
+PASS  technical admin holds no business role (0 ms)
+PASS  admin creates a business unit (201 + ETag) (17 ms): business unit 01a0f4a1-7cc7-7708-89b1-94189473ca0f
+PASS  transformation-office user signs in (oidc) (36 ms): smoke.office -> user 01a0f4a1-7ce3-76b9-a93a-7c200a6b0c77, roles []
+PASS  new OIDC user starts with no roles; creating a transformation is refused (403/404) (14 ms): HTTP 404 (ADR-0006: no read on the target gives 404, read without the action gives 403)
+PASS  admin grants TO at organization scope (201, audited) (12 ms): assignment 01a0f4a1-7d08-72c9-a569-a4d4a2a8c304
+PASS  office user signs in again and now holds TO (27 ms)
+PASS  office creates a transformation (201 + ETag, Idempotency-Key) (20 ms): transformation 01a0f4a1-7d31-712a-919e-325bf3aaf507 code TR-0001
+PASS  office reads it back: detail, list and audit trail (24 ms): audit actions [transformation.create]
+PASS  technical admin cannot see the business record: list excludes it, detail is 404 (10 ms): list 200 with 0 visible, detail 404
+PASS  both users sign out (16 ms)
+{"smoke":"PASS","mode":"oidc","run":"208E84A8","steps":14,"passed":14,"totalMs":1351,"transformationId":"01a0f4a1-7d31-712a-919e-325bf3aaf507"}
+worker ledger rows: 1
+user_identity http://127.0.0.1:18080/realms/mth-test 5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0001
+user_identity http://127.0.0.1:18080/realms/mth-test 5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0002
+audit app_user.create 3
+audit authorization.denied 1
+audit business_unit.create 1
+audit organization.create 1
+audit scoped_assignment.create 3
+audit session.create 3
+audit session.revoke 2
+audit transformation.create 1
+audit transformation.starter_automation_requested 1
+exit=0

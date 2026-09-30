@@ -1,0 +1,23 @@
+$ date -u; id -u; ls -ld /run; docker version
+Wed Sep 30 23:14:56 UTC 2026
+0
+drwxr-xr-x 13 root root 4096 Sep 29 07:30 /run
+Client: Docker Engine - Community
+ Version:           29.3.1
+ API version:       1.54
+ Go version:        go1.25.8
+ Git commit:        c2be9cc
+ Built:             Wed Mar 25 16:13:43 2026
+ OS/Arch:           linux/amd64
+ Context:           default
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+
+$ bash deploy/scripts/ensure-docker.sh
+BLOCKED: /run is read-only here (sandboxed shell); dockerd cannot create its socket
+exit=3
+$ bash deploy/scripts/build-image.sh
+BLOCKED: no Docker daemon reachable (docker info failed)
+exit=3
+$ bash deploy/scripts/verify-stack.sh
+BLOCKED: no Docker daemon reachable (docker info failed)
+exit=3

@@ -1,0 +1,100 @@
+{
+  "realm": "mth-test",
+  "displayName": "MTH TEST realm (synthetic users only)",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "defaultSignatureAlgorithm": "RS256",
+  "attributes": {
+    "mth.notice": "TEST IdP for the Mobily Transformation Hub (ADR-0005). Every user is SYNTHETIC; no real people, no real credentials. Secrets are injected at start from environment placeholders and are never stored in this file. Production uses Mobily's corporate IdP."
+  },
+  "clients": [
+    {
+      "clientId": "mth-hub",
+      "name": "Mobily Transformation Hub (test)",
+      "description": "Confidential backend-for-frontend client: authorization code + PKCE S256 (ADR-0005)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${MTH_TEST_OIDC_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "redirectUris": ["${MTH_APP_BASE_URL}/api/v1/auth/callback"],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "${MTH_APP_BASE_URL}/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "id": "5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0001",
+      "username": "smoke.admin",
+      "email": "smoke.admin@example.invalid",
+      "emailVerified": true,
+      "firstName": "Synthetic",
+      "lastName": "Access Admin",
+      "enabled": true,
+      "attributes": { "mth.synthetic": ["true"] },
+      "credentials": [{ "type": "password", "value": "${MTH_TEST_USER_PASSWORD}", "temporary": false }]
+    },
+    {
+      "id": "5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0002",
+      "username": "smoke.office",
+      "email": "smoke.office@example.invalid",
+      "emailVerified": true,
+      "firstName": "Synthetic",
+      "lastName": "Transformation Office",
+      "enabled": true,
+      "attributes": { "mth.synthetic": ["true"] },
+      "credentials": [{ "type": "password", "value": "${MTH_TEST_USER_PASSWORD}", "temporary": false }]
+    },
+    {
+      "id": "5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0003",
+      "username": "test.lead",
+      "email": "test.lead@example.invalid",
+      "emailVerified": true,
+      "firstName": "Synthetic",
+      "lastName": "Transformation Lead",
+      "enabled": true,
+      "attributes": { "mth.synthetic": ["true"] },
+      "credentials": [{ "type": "password", "value": "${MTH_TEST_USER_PASSWORD}", "temporary": false }]
+    },
+    {
+      "id": "5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0004",
+      "username": "test.sponsor",
+      "email": "test.sponsor@example.invalid",
+      "emailVerified": true,
+      "firstName": "Synthetic",
+      "lastName": "Sponsor",
+      "enabled": true,
+      "attributes": { "mth.synthetic": ["true"] },
+      "credentials": [{ "type": "password", "value": "${MTH_TEST_USER_PASSWORD}", "temporary": false }]
+    },
+    {
+      "id": "5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0005",
+      "username": "test.unverified",
+      "email": "test.unverified@example.invalid",
+      "emailVerified": false,
+      "firstName": "Synthetic",
+      "lastName": "Unverified Email",
+      "enabled": true,
+      "attributes": { "mth.synthetic": ["true"] },
+      "credentials": [{ "type": "password", "value": "${MTH_TEST_USER_PASSWORD}", "temporary": false }]
+    }
+  ]
+}

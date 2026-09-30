@@ -1,0 +1,199 @@
+# Mobily Transformation Hub: Compose stack for REPRODUCIBLE INSTALL AND TEST (ADR-0011, REQ-S16-008, REQ-S19-010).
+#
+# NOT a high-availability production deployment: one PostgreSQL instance on one host, no replication, no failover,
+# no backup schedule, no TLS termination for the app. It proves the package starts cleanly from documented commands;
+# production topology on Mobily IT's platform is a P7 item. See docs/operations/clean-start.md.
+#
+# Services:  db -> migrate (one-shot) -> api (+ SPA) and worker        (default)
+#            keycloak: TEST IdP with realm mth-test (SYNTHETIC users)  (profile: test-idp)
+#            smoke: in-network smoke test (login, create, read)        (profile: smoke)
+# Variant:   compose.no-egress.yaml marks the network `internal: true` (no route to the internet).
+#
+# Prerequisites (from the repository root):
+#   deploy/scripts/init-secrets.sh        random local secrets OUTSIDE the repo; writes deploy/compose/.env
+#   deploy/scripts/build-image.sh         builds mth-app:local (or set MTH_APP_IMAGE to IT's registry image)
+# Start:
+#   docker compose -f deploy/compose/compose.yaml up -d --wait
+#   docker compose -f deploy/compose/compose.yaml --profile test-idp up -d --wait
+#
+# Images are pinned by digest through deploy/images.lock.json (`node deploy/scripts/pin-images.mjs --check`).
+# Secrets are files mounted at /run/secrets and read through <NAME>_FILE; no secret value appears in this file,
+# in `docker inspect` environment output, or in the repository.
+name: mth
+
+x-app: &app
+  image: ${MTH_APP_IMAGE:-mth-app:local}
+  # A locally built image must never be "pulled" from a public registry by accident.
+  pull_policy: ${MTH_APP_PULL_POLICY:-never}
+  read_only: true
+  tmpfs: ["/tmp"]
+  cap_drop: ["ALL"]
+  security_opt: ["no-new-privileges:true"]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_superuser_password
+      POSTGRES_DB: postgres
+    secrets: [pg_superuser_password, mth_owner_db_password, mth_app_db_password]
+    volumes:
+      # PostgreSQL 18 images keep PGDATA under /var/lib/postgresql/18/docker; mount the parent (upgrade-friendly).
+      - pgdata:/var/lib/postgresql
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # TCP (not the socket): during first-start initialization the server listens on the socket only, so this turns
+      # healthy only after db-init has created the roles and the `mth` database.
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-p", "5432", "-U", "postgres", "-d", "mth"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  migrate:
+    <<: *app
+    command: ["migrate"]
+    restart: "no"
+    environment:
+      NODE_ENV: production
+      DATABASE_OWNER_URL_FILE: /run/secrets/database_owner_url
+      DEFAULT_TIMEZONE: ${MTH_DEFAULT_TIMEZONE:-Asia/Riyadh}
+      DEFAULT_CURRENCY: ${MTH_DEFAULT_CURRENCY:-SAR}
+    secrets: [database_owner_url]
+    depends_on:
+      db: { condition: service_healthy }
+
+  api:
+    <<: *app
+    command: ["api"]
+    environment:
+      NODE_ENV: production
+      AUTH_MODE: oidc
+      APP_BASE_URL: ${MTH_APP_BASE_URL:-http://localhost:3000}
+      PORT: "3000"
+      DATABASE_URL_FILE: /run/secrets/database_url
+      OIDC_ISSUER_URL: ${MTH_OIDC_ISSUER_URL:-https://keycloak:8443/realms/mth-test}
+      OIDC_CLIENT_ID: ${MTH_OIDC_CLIENT_ID:-mth-hub}
+      OIDC_CLIENT_SECRET_FILE: /run/secrets/oidc_client_secret
+      # Trust anchor for the TEST IdP's throwaway CA only. With a corporate IdP whose certificate chains to a CA the
+      # base image already trusts, point this at IT's CA bundle or leave the default (a missing file is ignored).
+      NODE_EXTRA_CA_CERTS: ${MTH_EXTRA_CA_CERTS_FILE:-/run/secrets/test_idp_ca}
+      EVIDENCE_STORAGE_DRIVER: filesystem
+      EVIDENCE_STORAGE_PATH: /var/lib/mth/evidence
+      DEFAULT_TIMEZONE: ${MTH_DEFAULT_TIMEZONE:-Asia/Riyadh}
+      DEFAULT_CURRENCY: ${MTH_DEFAULT_CURRENCY:-SAR}
+      LOG_LEVEL: ${MTH_LOG_LEVEL:-info}
+      TRUST_PROXY: ${MTH_TRUST_PROXY:-}
+    secrets: [database_url, oidc_client_secret, test_idp_ca]
+    volumes: ["evidence:/var/lib/mth/evidence"]
+    ports: ["${MTH_API_BIND:-127.0.0.1}:${MTH_API_PORT:-3000}:3000"]
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      # /readyz = database reachable AND every shipped migration applied with the same checksum (REQ-S19-010).
+      test: ["CMD", "/usr/local/bin/mth", "health", "/readyz"]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 20s
+
+  worker:
+    <<: *app
+    command: ["worker"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL_FILE: /run/secrets/database_url
+      EVIDENCE_STORAGE_DRIVER: filesystem
+      EVIDENCE_STORAGE_PATH: /var/lib/mth/evidence
+      DEFAULT_TIMEZONE: ${MTH_DEFAULT_TIMEZONE:-Asia/Riyadh}
+      LOG_LEVEL: ${MTH_LOG_LEVEL:-info}
+    secrets: [database_url]
+    volumes: ["evidence:/var/lib/mth/evidence"]
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    # The worker has no HTTP endpoint in P1; liveness is the process itself (restart: unless-stopped) and its
+    # structured logs. A worker health probe is a recorded follow-up (docs/operations/health-readiness.md).
+
+  keycloak:
+    profiles: ["test-idp"]
+    image: quay.io/keycloak/keycloak:26.4
+    restart: unless-stopped
+    # Secrets are read from files at start and exported only into Keycloak's own process; the realm file references
+    # them as ${...} placeholders, so the repository holds no credential.
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -eu
+        export MTH_TEST_OIDC_CLIENT_SECRET="$$(cat /run/secrets/oidc_client_secret)"
+        export MTH_TEST_USER_PASSWORD="$$(cat /run/secrets/test_idp_user_password)"
+        export KC_BOOTSTRAP_ADMIN_PASSWORD="$$(cat /run/secrets/test_idp_admin_password)"
+        exec /opt/keycloak/bin/kc.sh start-dev --import-realm
+    environment:
+      KC_HOSTNAME: https://keycloak:8443
+      KC_HTTP_ENABLED: "false"
+      KC_HTTPS_PORT: "8443"
+      KC_HTTPS_CERTIFICATE_FILE: /run/secrets/test_idp_cert
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /run/secrets/test_idp_key
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: mth-test-admin
+      MTH_APP_BASE_URL: ${MTH_APP_BASE_URL:-http://localhost:3000}
+    secrets: [oidc_client_secret, test_idp_user_password, test_idp_admin_password, test_idp_cert, test_idp_key]
+    volumes:
+      - ../keycloak/realm-mth-test.json:/opt/keycloak/data/import/realm-mth-test.json:ro
+    ports: ["${MTH_TEST_IDP_BIND:-127.0.0.1}:${MTH_TEST_IDP_PORT:-8443}:8443"]
+    healthcheck:
+      # The image has no curl; bash's /dev/tcp proves the HTTPS listener is up. The smoke test additionally waits for
+      # the realm's discovery document before it signs in.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8443"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+      start_period: 20s
+
+  smoke:
+    <<: *app
+    profiles: ["smoke"]
+    restart: "no"
+    entrypoint: ["node", "/smoke/smoke.mjs"]
+    command: []
+    environment:
+      MTH_SMOKE_API_URL: http://api:3000
+      APP_BASE_URL: ${MTH_APP_BASE_URL:-http://localhost:3000}
+      MTH_SMOKE_AUTH: oidc
+      MTH_SMOKE_ISSUER_URL: ${MTH_OIDC_ISSUER_URL:-https://keycloak:8443/realms/mth-test}
+      MTH_SMOKE_ADMIN_USER: smoke.admin
+      MTH_SMOKE_OFFICE_USER: smoke.office
+      MTH_SMOKE_PASSWORD_FILE: /run/secrets/test_idp_user_password
+      MTH_SMOKE_EXPECT_NO_EGRESS: ${MTH_SMOKE_EXPECT_NO_EGRESS:-0}
+      NODE_EXTRA_CA_CERTS: /run/secrets/test_idp_ca
+    secrets: [test_idp_user_password, test_idp_ca]
+    volumes: ["../scripts/smoke.mjs:/smoke/smoke.mjs:ro"]
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  pgdata:
+  evidence:
+
+secrets:
+  pg_superuser_password: { file: "${MTH_SECRETS_DIR:?run deploy/scripts/init-secrets.sh first}/pg_superuser_password" }
+  mth_owner_db_password: { file: "${MTH_SECRETS_DIR:?run deploy/scripts/init-secrets.sh first}/mth_owner_db_password" }
+  mth_app_db_password: { file: "${MTH_SECRETS_DIR:?run deploy/scripts/init-secrets.sh first}/mth_app_db_password" }
+  database_url: { file: "${MTH_SECRETS_DIR:?run deploy/scripts/init-secrets.sh first}/database_url" }
+  database_owner_url: { file: "${MTH_SECRETS_DIR:?run deploy/scripts/init-secrets.sh first}/database_owner_url" }
+  oidc_client_secret: { file: "${MTH_SECRETS_DIR:?run deploy/scripts/init-secrets.sh first}/oidc_client_secret" }
+  test_idp_user_password:
+    { file: "${MTH_SECRETS_DIR:?run deploy/scripts/init-secrets.sh first}/test_idp_user_password" }
+  test_idp_admin_password:
+    { file: "${MTH_SECRETS_DIR:?run deploy/scripts/init-secrets.sh first}/test_idp_admin_password" }
+  test_idp_ca: { file: "${MTH_SECRETS_DIR:?run deploy/scripts/init-secrets.sh first}/test-idp-ca.pem" }
+  test_idp_cert: { file: "${MTH_SECRETS_DIR:?run deploy/scripts/init-secrets.sh first}/test-idp.crt" }
+  test_idp_key: { file: "${MTH_SECRETS_DIR:?run deploy/scripts/init-secrets.sh first}/test-idp.key" }

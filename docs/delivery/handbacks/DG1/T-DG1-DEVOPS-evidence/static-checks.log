@@ -1,0 +1,169 @@
+# Static checks (T-DG1-DEVOPS), 2026-09-30T23:24:06Z, node v22.22.2, docker CLI 29.3.1, HEAD 4cd9224dcbfe7cec686d68e5c2d9d0633a374791 + uncommitted T-DG1-DEVOPS files
+
+$ sha256sum docs/architecture/ci/ci.yml deploy/ci/ci.yml .github/workflows/delivery-gates.yml .env.example licenses/sbom.cdx.json licenses/inventory.csv deploy/keycloak/realm-mth-test.json deploy/docker/Dockerfile deploy/compose/compose.yaml deploy/compose/compose.no-egress.yaml
+06e883df8aafd8d78520d51495c74576d289fb65f15e7c45a440c84d6250b14e  docs/architecture/ci/ci.yml
+dec5d460f97591ba4acf07db591ec37c31952494389bc675dd7cb6200c0b1378  deploy/ci/ci.yml
+cc3b44479157a626a99de1dabda11e9ea8a31b0591ba4ec2c19404da244ce5aa  .github/workflows/delivery-gates.yml
+cd4ce82a665ca3d67efdec548ad21605b131160b4b2f39bd7b562a3eda022dff  .env.example
+5dfcd6ef7aa6d83b27a2149833a07dcf48f26ea3460cf931d7f8e95c6a7dedbb  licenses/sbom.cdx.json
+71dd4553a7ba15cab59fdc6bcf4a144c25127bd91ddf230ea79148cc4bb5afb5  licenses/inventory.csv
+eb081208cf3199ab950299a797764a7c182d451f456baaded229d59353349702  deploy/keycloak/realm-mth-test.json
+ecd521af04fd73ecff2ce2bf9706f4bdb24b66ab50e3835b98c745578f870c91  deploy/docker/Dockerfile
+4d3526ab9362218f31b62ca83e7e1e5c51b4916bc0cfb0e97f6fd996aa63206f  deploy/compose/compose.yaml
+7cf6a1d41fbd462845e1a1cd3639b72079db2af4387b1f940f14e2cf771d8f8e  deploy/compose/compose.no-egress.yaml
+exit=0
+
+$ git diff --stat HEAD -- .github/workflows/delivery-gates.yml   (empty = delivery-gates.yml unchanged)
+exit=0
+
+$ diff docs/architecture/ci/ci.yml deploy/ci/ci.yml  (verbatim template + additions)
+105c105,109
+<       - run: pnpm e2e
+---
+>       - name: Start the e2e stack (fresh DB, migrate, SYNTHETIC dev users, API on :3000 with NODE_ENV=test AUTH_MODE=dev)
+>         run: node deploy/scripts/ci-e2e-stack.mjs
+>       # --workers=1: the chromium-en and chromium-ar projects sign in as the SAME synthetic users and persist per-user
+>       # preferences (language), so parallel workers race (reproduced: 1 failed with 2 workers, 16 passed with 1).
+>       - run: pnpm e2e --workers=1
+111a116,162
+> 
+>   # devops-engineer (T-DG1-DEVOPS, ADR-0011/ADR-0013): packaging checks, the one application image, and the Compose
+>   # clean-start / test-IdP login / no-egress smoke. Depends on delivery-gates through integration and e2e.
+>   images:
+>     needs: [integration, e2e]
+>     runs-on: ubuntu-24.04
+>     env:
+>       MTH_APP_IMAGE: mth-app:ci-${{ github.sha }}
+>     steps:
+>       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+>       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+>         with:
+>           node-version: "24"
+>       - run: corepack enable
+>       - run: pnpm install --frozen-lockfile
+>       - name: CI structure (every product job needs delivery-gates; actions pinned by SHA)
+>         run: node deploy/scripts/check-ci-needs.mjs
+>       - name: .env.example equals the ENV_VARS catalogue (names only, no values)
+>         run: node deploy/scripts/generate-env-example.mjs --check
+>       - name: SBOM and licence inventory match the lockfile
+>         run: node licenses/generate-sbom.mjs --check
+>       - name: Container images pinned by digest (deploy/images.lock.json)
+>         run: node deploy/scripts/pin-images.mjs --check
+>       - name: Build the application image (non-root; api | worker | migrate)
+>         run: deploy/scripts/build-image.sh --tag "$MTH_APP_IMAGE"
+>       - name: Compose clean start, Keycloak test-IdP login smoke, no-egress smoke
+>         run: deploy/scripts/verify-stack.sh --skip-build --evidence-dir stack-evidence
+>       - if: always()
+>         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 - same pin as e2e; re-verify
+>         with:
+>           name: stack-evidence
+>           path: stack-evidence/
+>           retention-days: 14
+>       # Push only from protected branches, and only when Mobily IT's registry is configured (repository variable
+>       # MTH_REGISTRY, secrets MTH_REGISTRY_USER / MTH_REGISTRY_PASSWORD). Nothing is pushed to a public registry.
+>       - name: Push to IT's registry (protected branches only)
+>         if: github.event_name == 'push' && github.ref_protected && vars.MTH_REGISTRY != ''
+>         env:
+>           REGISTRY: ${{ vars.MTH_REGISTRY }}
+>           REGISTRY_USER: ${{ secrets.MTH_REGISTRY_USER }}
+>           REGISTRY_PASSWORD: ${{ secrets.MTH_REGISTRY_PASSWORD }}
+>           SHA: ${{ github.sha }}
+>         run: |
+>           printf '%s' "$REGISTRY_PASSWORD" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin
+>           docker tag "$MTH_APP_IMAGE" "$REGISTRY/mth-app:$SHA"
+>           docker push "$REGISTRY/mth-app:$SHA"
+>           docker logout "$REGISTRY"
+exit=1 (1 = files differ, expected)
+
+$ node deploy/scripts/check-ci-needs.mjs docs/architecture/ci/ci.yml
+OK: docs/architecture/ci/ci.yml: 4 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+exit=0
+
+$ node deploy/scripts/check-ci-needs.mjs deploy/ci/ci.yml
+OK: deploy/ci/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+exit=0
+
+# negative test A: the images job with its needs line deleted
+$ node deploy/scripts/check-ci-needs.mjs deploy/ci/.neg-no-needs.yml
+FAIL: job "images" does not depend on delivery-gates
+exit=1
+
+# negative test B: an action referenced by tag instead of a commit SHA
+$ node deploy/scripts/check-ci-needs.mjs deploy/ci/.neg-unpinned.yml
+FAIL: delivery-gates: action not pinned to a commit SHA: actions/checkout@v4
+FAIL: verify: action not pinned to a commit SHA: actions/checkout@v4
+FAIL: integration: action not pinned to a commit SHA: actions/checkout@v4
+FAIL: e2e: action not pinned to a commit SHA: actions/checkout@v4
+FAIL: images: action not pinned to a commit SHA: actions/checkout@v4
+exit=1
+
+$ node deploy/scripts/generate-env-example.mjs --check
+OK: .env.example lists exactly the 21 ENV_VARS names, none with a value
+exit=0
+
+$ node licenses/generate-sbom.mjs --check
+OK: packages=422 runtime=112 bundled=17 development=293 containers=4 shipped-without-licence-id=0 lockfile-sha256=3c94b7717ef0e2123e20eb952b4b09577625cf35abba8f1bdafd3b43346c8306
+exit=0
+
+$ node deploy/scripts/pin-images.mjs --check
+FAIL: node-runtime (node:24-bookworm-slim): NOT PINNED (no digest in deploy/images.lock.json)
+FAIL: deploy/docker/Dockerfile: node:24-bookworm-slim has no digest
+FAIL: postgres (postgres:18): NOT PINNED (no digest in deploy/images.lock.json)
+FAIL: deploy/compose/compose.yaml: postgres:18 has no digest
+FAIL: deploy/ci/ci.yml: postgres:18 has no digest
+FAIL: deploy/ci/ci.yml: postgres:18 has no digest
+FAIL: keycloak (quay.io/keycloak/keycloak:26.4): NOT PINNED (no digest in deploy/images.lock.json)
+FAIL: deploy/compose/compose.yaml: quay.io/keycloak/keycloak:26.4 has no digest
+FAIL: playwright (mcr.microsoft.com/playwright:v1.56.1-noble): NOT PINNED (no digest in deploy/images.lock.json)
+FAIL: deploy/ci/ci.yml: mcr.microsoft.com/playwright:v1.56.1-noble has no digest
+10 problem(s). Pin with: node deploy/scripts/pin-images.mjs --resolve && node deploy/scripts/pin-images.mjs --apply
+exit=1
+
+$ MTH_SECRETS_DIR=<scratch> docker compose -f deploy/compose/compose.yaml [-f deploy/compose/compose.no-egress.yaml] --profile test-idp --profile smoke config --quiet
+base exit=0
+no-egress exit=0
+services (default): db migrate api worker 
+services (--profile test-idp): db migrate api keycloak worker 
+no-egress: networks.default.internal = True
+no-egress: api ports = [] keycloak ports = []
+api: image=mth-app:local read_only=True cap_drop=['ALL'] user_env_NODE_ENV=production AUTH_MODE=oidc healthcheck=yes
+db: image=postgres:18 read_only=None cap_drop=None user_env_NODE_ENV=None AUTH_MODE=None healthcheck=yes
+keycloak: image=quay.io/keycloak/keycloak:26.4 read_only=None cap_drop=None user_env_NODE_ENV=None AUTH_MODE=None healthcheck=yes
+migrate: image=mth-app:local read_only=True cap_drop=['ALL'] user_env_NODE_ENV=production AUTH_MODE=None healthcheck=no
+smoke: image=mth-app:local read_only=True cap_drop=['ALL'] user_env_NODE_ENV=None AUTH_MODE=None healthcheck=no
+worker: image=mth-app:local read_only=True cap_drop=['ALL'] user_env_NODE_ENV=production AUTH_MODE=None healthcheck=no
+
+$ (no MTH_SECRETS_DIR) docker compose -f deploy/compose/compose.yaml --env-file /dev/null config --quiet   (must refuse)
+error while interpolating secrets.pg_superuser_password.file: required variable MTH_SECRETS_DIR is missing a value: run deploy/scripts/init-secrets.sh first
+exit=1
+
+$ secret-value leak scan of the rendered Compose model (throwaway secrets)
+leaks=0
+
+$ grep for credential-like values in owned files
+deploy/compose/db-init/10-mth-roles.sh:15:CREATE ROLE mth_owner LOGIN PASSWORD :'owner_pw';
+deploy/compose/db-init/10-mth-roles.sh:16:CREATE ROLE mth_app LOGIN PASSWORD :'app_pw';
+
+$ python3 -c import json;r=json.load(open('deploy/keycloak/realm-mth-test.json'));print('realm',r['realm'],'users',[u['username'] for u in r['users']],'emails',sorted({u['email'].split('@')[1] for u in r['users']}),'secrets',[c['secret'] for c in r['clients']],'passwords',sorted({cr['value'] for u in r['users'] for cr in u['credentials']}))
+realm mth-test users ['smoke.admin', 'smoke.office', 'test.lead', 'test.sponsor', 'test.unverified'] emails ['example.invalid'] secrets ['${MTH_TEST_OIDC_CLIENT_SECRET}'] passwords ['${MTH_TEST_USER_PASSWORD}']
+exit=0
+
+$ sh -n / bash -n on shell scripts
+syntax ok
+
+$ npx prettier --check deploy licenses && npx eslint --max-warnings=0 deploy licenses
+Checking formatting...
+All matched files use Prettier code style!
+prettier exit=0
+eslint exit=0
+
+$ pnpm -s check:no-cdn
+PASS no-cdn: scanned apps, packages
+exit=0

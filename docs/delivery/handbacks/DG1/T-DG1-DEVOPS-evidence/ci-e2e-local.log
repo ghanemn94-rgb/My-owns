@@ -1,0 +1,111 @@
+# CI e2e path, simulated locally (T-DG1-DEVOPS). Disposable clone of HEAD 4cd9224 + deploy/scripts/ci-e2e-stack.mjs;
+# PostgreSQL 16.13 disposable cluster (superuser mth_ci_admin, trust, 127.0.0.1:54350) standing in for the CI postgres:18 service;
+# PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers (chromium-1194). Run 1: pnpm e2e (2 workers). Run 2: pnpm e2e --workers=1.
+
+## run 1: pnpm e2e
+
+> mobily-transformation-hub@0.1.0 e2e /var/tmp/mth-run.VDpDkW/claude-0/e2e/src
+> playwright test
+
+
+Running 16 tests using 2 workers
+
+  ✓   2 [chromium-ar] › apps/web/e2e/journeys.spec.ts:108:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.5s)
+  ✓   1 [chromium-en] › apps/web/e2e/journeys.spec.ts:108:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (1.6s)
+  ✓   4 [chromium-en] › apps/web/e2e/journeys.spec.ts:130:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.7s)
+  ✓   5 [chromium-en] › apps/web/e2e/journeys.spec.ts:157:1 › create a modular transformation with an entry phase (2.9s)
+  ✘   3 [chromium-ar] › apps/web/e2e/journeys.spec.ts:130:1 › shell: navigation, language persistence and My Work (Transformation Office) (6.6s)
+  -   7 [chromium-ar] › apps/web/e2e/journeys.spec.ts:157:1 › create a modular transformation with an entry phase
+  -   8 [chromium-ar] › apps/web/e2e/journeys.spec.ts:190:1 › list: sort, filter chips, column selection and pagination controls
+  -   9 [chromium-ar] › apps/web/e2e/journeys.spec.ts:222:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply
+  -  10 [chromium-ar] › apps/web/e2e/journeys.spec.ts:254:1 › archive with a mandatory reason makes the record read-only
+  -  11 [chromium-ar] › apps/web/e2e/journeys.spec.ts:275:1 › administration screens (access + technical administrator)
+  -  12 [chromium-ar] › apps/web/e2e/journeys.spec.ts:311:1 › a user without roles sees no Administration and no business records
+  ✓   6 [chromium-en] › apps/web/e2e/journeys.spec.ts:190:1 › list: sort, filter chips, column selection and pagination controls (2.6s)
+  ✓  13 [chromium-en] › apps/web/e2e/journeys.spec.ts:222:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.8s)
+  ✓  14 [chromium-en] › apps/web/e2e/journeys.spec.ts:254:1 › archive with a mandatory reason makes the record read-only (2.0s)
+  ✓  15 [chromium-en] › apps/web/e2e/journeys.spec.ts:275:1 › administration screens (access + technical administrator) (4.1s)
+  ✓  16 [chromium-en] › apps/web/e2e/journeys.spec.ts:311:1 › a user without roles sees no Administration and no business records (1.5s)
+
+
+  1) [chromium-ar] › apps/web/e2e/journeys.spec.ts:130:1 › shell: navigation, language persistence and My Work (Transformation Office) 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator:  locator('html')
+    Expected: "ar"
+    Received: "en"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 5000ms
+      - waiting for locator('html')
+        9 × locator resolved to <html lang="en" dir="ltr">…</html>
+          - unexpected value "en"
+
+
+      144 |   // The language survives a reload (persisted to the profile and to localStorage).
+      145 |   await page.reload();
+    > 146 |   await expect(page.locator("html")).toHaveAttribute("lang", lang);
+          |                                      ^
+      147 |   // Keyboard: the skip link is the first focusable element and moves focus to <main>.
+      148 |   await page.keyboard.press("Tab");
+      149 |   await expect(page.getByRole("link", { name: tr(lang, "common.a11y.skipToContent") })).toBeFocused();
+        at /var/tmp/mth-run.VDpDkW/claude-0/e2e/src/apps/web/e2e/journeys.spec.ts:146:38
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-journeys-shel-fc4a0-Work-Transformation-Office--chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-journeys-shel-fc4a0-Work-Transformation-Office--chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-journeys-shel-fc4a0-Work-Transformation-Office--chromium-ar/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/apps-web-e2e-journeys-shel-fc4a0-Work-Transformation-Office--chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-ar] › apps/web/e2e/journeys.spec.ts:130:1 › shell: navigation, language persistence and My Work (Transformation Office) 
+  6 did not run
+  9 passed (19.6s)
+
+To open last HTML report run:
+
+  pnpm exec playwright show-report
+
+ ELIFECYCLE  Command failed with exit code 1.
+
+## run 2: pnpm e2e --workers=1
+
+> mobily-transformation-hub@0.1.0 e2e /var/tmp/mth-run.VDpDkW/claude-0/e2e/src
+> playwright test --workers=1
+
+
+Running 16 tests using 1 worker
+
+  ✓   1 [chromium-en] › apps/web/e2e/journeys.spec.ts:108:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (959ms)
+  ✓   2 [chromium-en] › apps/web/e2e/journeys.spec.ts:130:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.4s)
+  ✓   3 [chromium-en] › apps/web/e2e/journeys.spec.ts:157:1 › create a modular transformation with an entry phase (2.2s)
+  ✓   4 [chromium-en] › apps/web/e2e/journeys.spec.ts:190:1 › list: sort, filter chips, column selection and pagination controls (2.4s)
+  ✓   5 [chromium-en] › apps/web/e2e/journeys.spec.ts:222:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.7s)
+  ✓   6 [chromium-en] › apps/web/e2e/journeys.spec.ts:254:1 › archive with a mandatory reason makes the record read-only (2.0s)
+  ✓   7 [chromium-en] › apps/web/e2e/journeys.spec.ts:275:1 › administration screens (access + technical administrator) (4.0s)
+  ✓   8 [chromium-en] › apps/web/e2e/journeys.spec.ts:311:1 › a user without roles sees no Administration and no business records (1.5s)
+  ✓   9 [chromium-ar] › apps/web/e2e/journeys.spec.ts:108:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (926ms)
+  ✓  10 [chromium-ar] › apps/web/e2e/journeys.spec.ts:130:1 › shell: navigation, language persistence and My Work (Transformation Office) (1.3s)
+  ✓  11 [chromium-ar] › apps/web/e2e/journeys.spec.ts:157:1 › create a modular transformation with an entry phase (2.2s)
+  ✓  12 [chromium-ar] › apps/web/e2e/journeys.spec.ts:190:1 › list: sort, filter chips, column selection and pagination controls (2.3s)
+  ✓  13 [chromium-ar] › apps/web/e2e/journeys.spec.ts:222:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply (1.7s)
+  ✓  14 [chromium-ar] › apps/web/e2e/journeys.spec.ts:254:1 › archive with a mandatory reason makes the record read-only (1.8s)
+  ✓  15 [chromium-ar] › apps/web/e2e/journeys.spec.ts:275:1 › administration screens (access + technical administrator) (3.9s)
+  ✓  16 [chromium-ar] › apps/web/e2e/journeys.spec.ts:311:1 › a user without roles sees no Administration and no business records (1.4s)
+
+  16 passed (34.0s)
+
+To open last HTML report run:
+
+  pnpm exec playwright show-report
+
