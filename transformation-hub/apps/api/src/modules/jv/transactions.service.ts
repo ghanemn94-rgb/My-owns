@@ -750,11 +750,11 @@ export class TransactionsService implements OnModuleInit {
     for (const c of rows) {
       const a = assessCpLongStop({ status: c.status, longStopDate: c.longStopDate, activeEvidence: ev.get(c.id)?.active ?? 0, today, warnDays: CP_LONG_STOP_WARN_DAYS });
       if (a.action === 'none') continue;
+      if (c.closingId) {
+        const e = await loadInProject(this.s.db, schema.closing, projectId, c.closingId);
+        if (FROZEN_EVENT_STATUSES.includes(e.status)) continue; // a confirmed / aborted closing's CP set is frozen
+      }
       if (a.action === 'mark_lapsed') {
-        if (c.closingId) {
-          const e = await loadInProject(this.s.db, schema.closing, projectId, c.closingId);
-          if (FROZEN_EVENT_STATUSES.includes(e.status)) continue; // a confirmed / aborted closing's CP set is frozen
-        }
         await this.applyCp(ctx, c, 'mark_lapsed', c.version, { statusNote: `Long-stop date ${c.longStopDate} passed without an approved extension (${a.daysPast} day(s), project timezone)` }, `Long-stop date ${c.longStopDate} passed`);
         out.markedLapsed++;
       }

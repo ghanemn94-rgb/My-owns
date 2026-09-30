@@ -447,6 +447,16 @@ test.describe('P4 JV & Diligence', () => {
       let sv = (await post(pmApi, `${base}/transaction-events/${signing.id}/transition`, { expectedVersion: 1, command: 'start_preparation' })).version;
       sv = (await post(pmApi, `${base}/transaction-events/${signing.id}/transition`, { expectedVersion: sv, command: 'mark_ready' })).version;
       sv = (await post(pmApi, `${base}/transaction-events/${signing.id}/request-confirmation`, { expectedVersion: sv, decisionId: signingDecision, executedDocumentId: executed })).version;
+      // DOM-P4-02: the signing screen states that G5 is approved — the server re-checks it inside the recording.
+      const signer = await asPersona(browser, P.sponsor);
+      try {
+        await signer.page.goto(`/projects/${pid}/jv/closing/signings/${signing.id}`);
+        await expect(signer.page.getByTestId('signing-gate-state')).toHaveAttribute('data-passed', 'true');
+        await expect(signer.page.getByTestId('signing-gate')).toContainText('Gate G5 (JV Signing Readiness) is approved');
+        expect(signer.problems(), signer.problems().join('\n')).toEqual([]);
+      } finally {
+        await signer.close();
+      }
       const rec = await post(sponsorApi, `${base}/signings/${signing.id}/record`, { expectedVersion: sv });
       expect(rec.status).toBe('confirmed');
       const closing = await post(pmApi, `${base}/closings`, { signingId: signing.id, name: `E2E closing ${STAMP} (synthetic)` });
@@ -526,6 +536,8 @@ test.describe('P4 JV & Diligence', () => {
       await expect(page.getByTestId('cp-not-waivable')).toContainText('NOT waivable');
       await expect(page.getByTestId('cmd-waiver')).toHaveCount(0);
       await expect(page.getByTestId('waivers-table')).toContainText('this condition is not waivable');
+      // DOM-P4-03: only Legal determines blocking status / waivability (the PM is not offered it) …
+      await expect(page.getByTestId('cmd-determine')).toHaveCount(0);
 
       // Bypassing the UI: the request is refused and logged; the condition stays unmet.
       const res = await api.post(`${base}/closing-conditions/${nonWaivable.id}/waivers`, {
@@ -550,6 +562,19 @@ test.describe('P4 JV & Diligence', () => {
       await expect(sp.getByTestId('cp-not-waivable')).toContainText('غير قابل للتنازل');
       await shot(sp, 'jv-ar-cp-non-waivable.png');
       await useLocale(sp, baseURL!, 'en');
+      // … and a Legal determination never releases the blocking status of a blocking CP (the box is locked).
+      const legal = await asPersona(browser, P.legal);
+      try {
+        await legal.page.goto(`/projects/${pid}/jv/closing/conditions/${nonWaivable.id}`);
+        await legal.page.getByTestId('cmd-determine').click();
+        await expect(dialog(legal.page).getByTestId('determine-blocking')).toBeChecked();
+        await expect(dialog(legal.page).getByTestId('determine-blocking')).toBeDisabled();
+        await expect(dialog(legal.page)).toContainText('A blocking condition is never released by a determination');
+        await dialog(legal.page).getByRole('button', { name: 'Cancel' }).click();
+        expect(legal.problems(), legal.problems().join('\n')).toEqual([]);
+      } finally {
+        await legal.close();
+      }
       expect(pm.problems(), pm.problems().join('\n')).toEqual([]);
       expect(sponsor.problems(), sponsor.problems().join('\n')).toEqual([]);
     } finally {

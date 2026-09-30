@@ -3098,7 +3098,7 @@ Foreign keys:
 
 ### `diligence_request`
 
-RLS: enabled (hub_project_isolation) · Triggers: hub_dd_request_room_cascade, hub_same_project_evidence_document_ids, hub_scope_immutable
+RLS: enabled (hub_project_isolation) · Triggers: hub_dd_request_room_cascade, hub_same_project_evidence_document_ids, hub_same_project_evidence_version_ids, hub_scope_immutable
 
 | Column | Type | Null | Default |
 |---|---|---|---|
@@ -3117,6 +3117,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_dd_request_room_cascade, h
 | `answer_draft` | text | yes |  |
 | `drafted_by` | uuid | yes |  |
 | `evidence_document_ids` | jsonb | no | `'[]'::jsonb` |
+| `evidence_version_ids` | jsonb | no | `'[]'::jsonb` |
 | `reviewer_user_id` | uuid | yes |  |
 | `submitted_for_review_by` | uuid | yes |  |
 | `submitted_for_review_at` | timestamp with time zone | yes |  |
@@ -3265,6 +3266,9 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_jv_event_link_guard, hub_s
 | `waivability_determined_at` | timestamp with time zone | yes |  |
 | `valid_to` | date | yes |  |
 | `long_stop_date` | date | yes |  |
+| `long_stop_extension_decision_id` | uuid | yes |  |
+| `long_stop_extended_by` | uuid | yes |  |
+| `long_stop_extended_at` | timestamp with time zone | yes |  |
 | `status` | enum condition_status | no | `'open'::condition_status` |
 | `evidence_submitted_by` | uuid | yes |  |
 | `evidence_submitted_at` | timestamp with time zone | yes |  |
@@ -3282,12 +3286,14 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_jv_event_link_guard, hub_s
 Foreign keys:
 
 - `closing_condition_closing_fk`: (project_id,closing_id) → `closing`(project_id,id) — composite project-scoped FK
+- `closing_condition_extension_decision_fk`: (project_id,long_stop_extension_decision_id) → `decision`(project_id,id) — composite project-scoped FK
 - `closing_condition_owner_user_id_app_user_id_fk`: (owner_user_id) → `app_user`(id)
 - `closing_condition_project_id_project_id_fk`: (project_id) → `project`(id)
 - `closing_condition_waiver_fk`: (project_id,waiver_id) → `waiver`(project_id,id) — composite project-scoped FK
 - `hub_opfk_closing_condition`: (org_id,project_id) → `project`(org_id,id)
 - `hub_ufk_closing_condition_created_by`: (org_id,created_by) → `app_user`(org_id,id)
 - `hub_ufk_closing_condition_evidence_submitted_by`: (org_id,evidence_submitted_by) → `app_user`(org_id,id)
+- `hub_ufk_closing_condition_long_stop_extended_by`: (org_id,long_stop_extended_by) → `app_user`(org_id,id)
 - `hub_ufk_closing_condition_owner_user_id`: (org_id,owner_user_id) → `app_user`(org_id,id)
 - `hub_ufk_closing_condition_verified_by`: (org_id,verified_by) → `app_user`(org_id,id)
 - `hub_ufk_closing_condition_waivability_determined_by`: (org_id,waivability_determined_by) → `app_user`(org_id,id)
