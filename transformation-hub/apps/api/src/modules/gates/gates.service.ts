@@ -14,6 +14,7 @@ import {
   assertGateDecisionAllowed,
   assertGateEndorsedForSubmission,
   assertGateReviewable,
+  assertGateRolesComplete,
   assertGateReviewOutcomeAllowed,
   gateCriteriaComplete,
   gateReviewPending,
@@ -188,6 +189,8 @@ export class GatesService implements OnModuleInit {
     const { b, gate, cur } = await this.loadGate(projectId, gateId);
     this.assertGateOwner(ctx, projectId, b.project.classification, gate);
     const to = transition('gate_assessment', GATE_ASSESSMENT_MACHINE, cur.status, 'start_assessment');
+    // REQ-LCY-010: no cycle for a gate whose owner, reviewer and approver roles are not all present, distinct and able to act.
+    assertGateRolesComplete(gate, (role) => POLICY_MATRIX.roles[role as RoleKey]?.permissions ?? []);
     await updateVersioned(this.db, schema.gateAssessment, { id: cur.id, projectId, expectedVersion: body.expectedVersion }, { status: to, startedBy: ctx.principal.userId, startedAt: new Date() });
     await this.audit.record({
       action: 'gates.assessment.start',

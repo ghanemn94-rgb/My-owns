@@ -86,6 +86,21 @@ describe('DOM-P2-16 — gate owner role on the owner commands [REQ-LCY-010]', ()
     expect((await gateByKey(p.pm, projectId, 'G1')).assessment.decisionId).toBe(d.id);
   });
 
+  it('a gate whose approver role cannot decide (or that has no distinct reviewer) cannot be assessed: 422, nothing started (REQ-LCY-010 AT)', async () => {
+    const g6 = await gateByKey(p.pm, projectId, 'G6');
+    // A gate definition the API never produces (owner pool): the approver role holds no gates.assessment.decide.
+    await owner().query(`update gate_definition set approver_role = 'contributor' where id = $1`, [g6.id]);
+    const noApprover = await p.techLead.post(url(g6.id, 'start'), { expectedVersion: g6.assessment.version });
+    expect(noApprover.status).toBe(422);
+    expect(noApprover.body.code).toBe('gates.definition.roles_incomplete');
+    await owner().query(`update gate_definition set approver_role = 'committee_chair', reviewer_role = 'committee_chair' where id = $1`, [g6.id]);
+    const sameRole = await p.techLead.post(url(g6.id, 'start'), { expectedVersion: g6.assessment.version });
+    expect(sameRole.status).toBe(422);
+    expect(sameRole.body.detail).toMatch(/must be distinct/);
+    expect((await row(g6.assessment.id)).status).toBe('not_started');
+    await owner().query(`update gate_definition set reviewer_role = 'legal_restricted' where id = $1`, [g6.id]);
+  });
+
   it('an AI / service identity can neither start nor review a gate (human only)', async () => {
     const app = await getApp();
     const ctx = await app.get(JobContextFactory).forService({ org_id: orgId, project_id: projectId, id: 'dom-p2-16-test' }, 'svc-ai-pm', ['gates.gate.read', 'gates.assessment.submit', 'gates.assessment.review']);

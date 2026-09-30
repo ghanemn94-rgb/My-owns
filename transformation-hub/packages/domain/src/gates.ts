@@ -563,6 +563,31 @@ export function planReopen(prev: { id: string; cycle: number; status: string }, 
 //    reviewer whose endorsement it relies on.
 //  - APPROVER: the gate's `approverRole` decides; never the submitter nor the gate reviewer.
 
+/**
+ * REQ-LCY-010 "Each gate has … owner, reviewer, approver" (AT: a gate without an approver cannot be assessed; security rule:
+ * owner, reviewer and approver distinct): the three roles are present, distinct, and hold their gate permissions under the
+ * policy matrix. Checked when a cycle is started (422 `gates.definition.roles_incomplete`), so a misconfigured gate
+ * definition fails closed instead of producing a cycle nobody can review or decide.
+ */
+export function assertGateRolesComplete(
+  gate: { key: string; ownerRole: string | null | undefined; reviewerRole: string | null | undefined; approverRole: string | null | undefined },
+  permissionsOfRole: (role: string) => readonly string[],
+): void {
+  const needs = [
+    ['owner', gate.ownerRole, 'gates.assessment.submit'],
+    ['reviewer', gate.reviewerRole, 'gates.assessment.review'],
+    ['approver', gate.approverRole, 'gates.assessment.decide'],
+  ] as const;
+  const problems: string[] = [];
+  for (const [what, role, permission] of needs) {
+    if (!role) problems.push(`no ${what} role`);
+    else if (!permissionsOfRole(role).includes(permission)) problems.push(`${what} role ${role} does not hold ${permission}`);
+  }
+  const present = needs.map(([, role]) => role).filter((r): r is string => !!r);
+  if (new Set(present).size < present.length) problems.push('owner, reviewer and approver roles must be distinct');
+  if (problems.length) throw ruleViolation('gates.definition.roles_incomplete', `Gate ${gate.key} cannot be assessed: ${problems.join('; ')}`, { problems });
+}
+
 /** The gate reviewer may review a cycle only while it is under assessment. */
 export const GATE_REVIEWABLE_STATUSES: readonly GateAssessmentStatus[] = ['in_assessment'];
 

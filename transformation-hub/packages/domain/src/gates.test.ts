@@ -21,6 +21,7 @@ import {
   assertGateReviewable,
   assertGateEndorsedForSubmission,
   assertGateReviewOutcomeAllowed,
+  assertGateRolesComplete,
   gateCriteriaComplete,
   gateReviewBasis,
   gateReviewPending,
@@ -291,6 +292,22 @@ describe('DOM-P2-16 — gate owner, gate reviewer and approver roles [REQ-LCY-01
     ]);
     expect(dc.get('G0')!.reviewerRole).toBe('project_manager');
     expect(dc.get('G1')!.reviewerRole).toBe('project_manager');
+  });
+
+  it('UT (REQ-LCY-010 AT): a gate without an approver — or with roles that are not distinct or lack their permission — cannot be assessed', () => {
+    const perms = (r: string) => POLICY_MATRIX.roles[r as RoleKey]?.permissions ?? [];
+    const g0 = { key: 'G0', ownerRole: 'secretary_cpmo', reviewerRole: 'project_manager', approverRole: 'sponsor' };
+    expect(() => assertGateRolesComplete(g0, perms)).not.toThrow();
+    for (const t of templates) for (const g of t.gates) expect(() => assertGateRolesComplete(g, perms), g.key).not.toThrow();
+    const refused = (over: Partial<typeof g0>, problem: RegExp) =>
+      expect(() => assertGateRolesComplete({ ...g0, ...over } as typeof g0, perms)).toThrow(
+        expect.objectContaining({ kind: 'rule_violation', code: 'gates.definition.roles_incomplete', message: expect.stringMatching(problem) }),
+      );
+    refused({ approverRole: null as never }, /no approver role/);
+    refused({ approverRole: 'contributor' }, /approver role contributor does not hold gates\.assessment\.decide/);
+    refused({ reviewerRole: 'sponsor' }, /must be distinct/); // reviewer = approver
+    refused({ ownerRole: 'project_manager' }, /must be distinct/); // owner = reviewer
+    refused({ ownerRole: 'auditor' }, /owner role auditor does not hold gates\.assessment\.submit/);
   });
 
   it('owner commands carry own_workstream (gate owner role or the project manager); the gate review carries not_self', () => {

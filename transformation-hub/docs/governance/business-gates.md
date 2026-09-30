@@ -61,6 +61,25 @@ timestamps), and exceptions (waivers, not-applicable determinations, observation
 `not_started` → `in_assessment` → `ready_for_decision` → `passed` | `not_passed` | `deferred` ·
 `recommended_pending_external_authority` (when the gate decision is outside delegation) · `reopened`.
 
+### 2.4 Gate roles: owner, reviewer, approver (as implemented — DOM-P2-16, REQ-LCY-010)
+
+Each gate names three **different** roles (template `ownerRole`, `reviewerRole`, `approverRole`; a cycle cannot start
+when one is missing, when two coincide or when a role lacks its gate permission — 422 `gates.definition.roles_incomplete`).
+
+| Step | Who | Server rule |
+|---|---|---|
+| Start the cycle, link the backing decision, submit it for decision (mark ready), send it back to assessment | The gate's **owner role** — or the **project manager** (access-matrix §2.4 `own_workstream`, `gates.assessment.submit` with `ownerRoles: [ownerRole]`). A `workstream_lead` owner acts through the workstream it leads. | Anyone else holding `gates.assessment.submit` → 403 `gates.not_gate_owner` (e.g. a workstream lead can submit G1, not the legal-owned G2). The person who starts the cycle is recorded (`started_by`). |
+| **Gate-level review**: endorse or return the owner's assessment, with a note (`POST …/assessment/review`) | The gate's **reviewer role** (`gates.assessment.review` + designated role; otherwise 403 `gates.not_designated_gate_reviewer`), never the person who started the cycle (`not_self`; unknown starter → 403 `policy.sod_subject_unknown`) | Only while the cycle is `in_assessment` (422 `gates.review.invalid_state`). An **endorsement** needs every criterion satisfied (no criterion / evidence-conflict blocker; prerequisites aside — 422 `gates.review.criteria_incomplete`); a **return** sends the cycle back for rework. Recorded on the cycle (`reviewed_by/at`, outcome, note, and the fingerprint of the criterion state reviewed); audited `gates.assessment.review_endorse` / `review_return`. |
+| Submit for decision (mark ready) | Owner (as above) | The evaluation must be ready (422 `gates.assessment.not_ready`) **and** the cycle must carry an **endorsement recorded after its last criterion change** — any later change of evidence (added, verified, rejected, conflicting, superseded), criterion status (including the not-applicable steps and working notes), waiver or applicability makes it stale: 422 `gates.assessment.review_required` / `review_returned` / `review_stale`. The submitter is never the endorsing reviewer (403 `gates.assessment.reviewer_cannot_submit`). |
+| Decide | The gate's **approver role** (authority) | `not_self` against the **submitter and the gate reviewer** of the cycle (403); the decision snapshot records the review relied upon. |
+
+DC template: owners `secretary_cpmo` (G0), `workstream_lead` (G1, G4, G5, G6), `legal_restricted` (G2), `project_manager`
+(G3, G7); reviewers `project_manager` (G0, G1), `functional_approver` (G2, G3, G4), `finance_restricted` (G5),
+`legal_restricted` (G6), `secretary_cpmo` (G7). Because the PM reviews G0 and G1, the PM may act as their owner (override)
+only when another PM reviews: a PM who started or submits a cycle is never its reviewer. My Work offers `gate_review` to the
+designated reviewer role once every criterion of a cycle in assessment is satisfied and its current state has not been
+reviewed (never to the person who started it).
+
 ## 3. Gates G0–G7 (البوابات)
 
 Prerequisite graph (only genuinely sequential dependencies):
@@ -280,6 +299,10 @@ flowchart LR
    types (`approved_document`, `board_resolution`, `regulatory_record`); that would be a template/criterion parameter.
 10. **Gate RAG** is computed from criteria and blockers, shown separately from the average of workstream RAGs, so a green
    average never hides a red gate or CP (spec §9 measurement rule 3).
+11. **Owner, reviewer and approver are three people [server] (DOM-P2-16).** The owner role (or the project manager) runs
+   the cycle; the gate's reviewer role endorses the assessment before it can be submitted, and a criterion change after
+   the endorsement requires a fresh one; the approver decides. The reviewer never started the cycle and never submits it;
+   the approver is neither the submitter nor the reviewer (§2.4).
 
 ## 5. Day-1 readiness and go/no-go (جاهزية اليوم الأول)
 
