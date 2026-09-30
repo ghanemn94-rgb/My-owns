@@ -5,7 +5,7 @@ import { MessageSquareReply, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { carveoutRoutes as C, CONSENT_KINDS } from '@hub/contracts';
 import { CONSENT_STATUSES, type ConsentStatus } from '@hub/domain';
-import { EM_DASH, useI18n } from '@/i18n/provider';
+import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { ck, itemHref, localToday, useRefreshCarveout, type Consent } from '@/lib/carveout';
 import { useProjectContext } from '@/lib/project-context';
@@ -23,6 +23,8 @@ import { FormDialog } from '../planning/dialogs';
 import { PersonText } from './bits';
 
 type ConsentKind = (typeof CONSENT_KINDS)[number];
+/** `other` is a reserved plural key in the catalogue, so that label lives under `otherKind`. */
+const consentKindLabel = (t: (k: MessageKey) => string, k: ConsentKind) => t(`carveout.consents.kinds.${k === 'other' ? 'otherKind' : k}`);
 type Response = 'requested' | 'granted' | 'conditional' | 'refused' | 'not_required';
 /** Responses the state machine allows from each status (the server re-checks; "not required" needs a specialist). */
 const NEXT: Record<ConsentStatus, Response[]> = {
@@ -49,7 +51,7 @@ export function ConsentsRegister({ perimeterItemId }: { perimeterItemId?: string
   const columns: Column<Consent>[] = [
     { key: 'code', header: t('carveout.consents.code'), isRowHeader: true, cell: (c) => <span className="font-medium" dir="ltr">{c.code}</span> },
     { key: 'cp', header: t('carveout.consents.counterparty'), cell: (c) => <span dir="auto">{c.counterparty}</span> },
-    { key: 'kind', header: t('carveout.consents.kind'), cell: (c) => (CONSENT_KINDS.includes(c.kind as ConsentKind) ? t(`carveout.consents.kinds.${c.kind as ConsentKind}`) : c.kind) },
+    { key: 'kind', header: t('carveout.consents.kind'), cell: (c) => (CONSENT_KINDS.includes(c.kind as ConsentKind) ? consentKindLabel(t, c.kind as ConsentKind) : c.kind) },
     ...(perimeterItemId ? [] : [{ key: 'item', header: t('carveout.common.item'), cell: (c: Consent) => (c.perimeterItem ? <CodeLink href={itemHref(projectId, c.perimeterItem.id)} code={c.perimeterItem.code} /> : <span dir="ltr">{c.agreement?.code ?? EM_DASH}</span>) }]),
     { key: 'status', header: t('carveout.common.status'), cell: (c) => <StatusBadge enumName="consentStatuses" value={c.status} /> },
     { key: 'due', header: t('carveout.consents.due'), cell: (c) => <DateText value={c.dueDate} overdue={c.overdue} /> },
@@ -159,7 +161,7 @@ function CreateConsentDialog({ open, onClose, perimeterItemId }: { open: boolean
         <SelectField label={t('carveout.consents.kind')} required value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as ConsentKind })}>
           {CONSENT_KINDS.map((k) => (
             <option key={k} value={k}>
-              {t(`carveout.consents.kinds.${k}`)}
+              {consentKindLabel(t, k)}
             </option>
           ))}
         </SelectField>

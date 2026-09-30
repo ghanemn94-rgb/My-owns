@@ -13,7 +13,7 @@ import { SelectField, TextAreaField, TextField } from '../Field';
 import { StatusBadge } from '../StatusBadge';
 import { useToast } from '../Toast';
 import { UserPicker, type PickedUser } from '../UserPicker';
-import { btn, cx, hint } from '../ui';
+import { btn, hint } from '../ui';
 import { DateText, Section } from '../planning/bits';
 import { FormDialog } from '../planning/dialogs';
 import { TransferView } from './bits';
@@ -520,26 +520,27 @@ export function EditItemDialog({ item, open, onClose }: { item: Item; open: bool
       disabled={!f.name.trim()}
       onReload={() => void refresh()}
       onSubmit={async () => {
-        await api(C.updatePerimeterItem, {
-          params: { projectId, itemId: item.id },
-          body: {
-            expectedVersion: item.version,
-            name: f.name.trim(),
-            description: nn(f.description),
-            ownerUserId: owner?.id ?? null,
-            legalOwner: nn(f.legalOwner),
-            operator: nn(f.operator),
-            economicBeneficiary: nn(f.economicBeneficiary),
-            transferMechanism: nn(f.transferMechanism),
-            plannedEffectiveDate: f.plannedEffectiveDate || null,
-            economicPlannedEffectiveDate: f.economicPlannedEffectiveDate || null,
-            dependencies: nn(f.dependencies),
-            risks: nn(f.risks),
-            resolutionPath: nn(f.resolutionPath),
-            targetGateKey: nn(f.targetGateKey),
-            consentRequired: f.consentRequired,
-          },
-        });
+        // Only changed fields are sent (an unchanged save is not a new version).
+        const body: Record<string, unknown> = {};
+        const put = (k: string, next: unknown, prev: unknown) => {
+          if (next !== prev) body[k] = next;
+        };
+        put('name', f.name.trim(), item.name);
+        put('description', nn(f.description), item.description);
+        put('ownerUserId', owner?.id ?? null, item.owner?.userId ?? null);
+        put('legalOwner', nn(f.legalOwner), item.legalOwner);
+        put('operator', nn(f.operator), item.operator);
+        put('economicBeneficiary', nn(f.economicBeneficiary), item.economicBeneficiary);
+        put('transferMechanism', nn(f.transferMechanism), item.transferMechanism);
+        put('plannedEffectiveDate', f.plannedEffectiveDate || null, item.legalDates.planned);
+        put('economicPlannedEffectiveDate', f.economicPlannedEffectiveDate || null, item.economicDates.planned);
+        put('dependencies', nn(f.dependencies), item.dependencies);
+        put('risks', nn(f.risks), item.risks);
+        put('resolutionPath', nn(f.resolutionPath), item.resolutionPath);
+        put('targetGateKey', nn(f.targetGateKey), item.targetGateKey);
+        put('consentRequired', f.consentRequired, item.consentRequired);
+        if (Object.keys(body).length === 0) return onClose();
+        await api(C.updatePerimeterItem, { params: { projectId, itemId: item.id }, body: { expectedVersion: item.version, ...body } });
         await refresh();
         toast.show('success', t('carveout.common.saved'));
         onClose();

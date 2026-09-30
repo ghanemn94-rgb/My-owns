@@ -2,10 +2,11 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ClipboardCheck, Pencil, Plus } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { carveoutRoutes as C, governanceRoutes as G } from '@hub/contracts';
 import type { PerimeterItemType } from '@hub/domain';
-import { EM_DASH, useI18n } from '@/i18n/provider';
+import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
 import { api, isApiError } from '@/lib/api';
 import { ck, itemHref, useRefreshCarveout, type Day1Positions, type PerimeterVersion, type Reconciliation, type Site, type TransferRecord } from '@/lib/carveout';
 import { useProjectContext } from '@/lib/project-context';
@@ -331,7 +332,7 @@ function ProposeVersionDialog({ open, onClose }: { open: boolean; onClose: () =>
         try {
           const v = await api(C.setupPerimeterStep, { params: { projectId }, body: note ? { note } : {} });
           await refresh();
-          toast.show('success', t('carveout.versions.proposed', { version: v.versionNo }));
+          toast.show('success', t('carveout.versions.proposedToast', { version: v.versionNo }));
           onClose();
         } catch (e) {
           const b = isApiError(e) ? (e.details?.blockers as { code: string; issue: string }[] | undefined) : undefined;
@@ -415,8 +416,8 @@ export function SitesPanel() {
     { key: 'code', header: t('carveout.sites.code'), isRowHeader: true, sortValue: (s) => s.code, cell: (s) => <span dir="ltr" className="font-medium">{s.code}</span> },
     { key: 'name', header: t('carveout.sites.name'), sortValue: (s) => s.name, cell: (s) => <span dir="auto">{s.name}</span> },
     { key: 'city', header: t('carveout.sites.city'), cell: (s) => <span dir="auto">{s.city ?? EM_DASH}</span> },
-    { key: 'kind', header: t('carveout.sites.kind'), cell: (s) => (SITE_KINDS.includes(s.kind as SiteKind) ? t(`carveout.sites.kinds.${s.kind as SiteKind}`) : s.kind) },
-    { key: 'items', header: '', cell: (s) => <a className={btn.link} href={`/projects/${projectId}/perimeter?tab=register&siteId=${s.id}`}>{t('carveout.sites.items')}</a> },
+    { key: 'kind', header: t('carveout.sites.kind'), cell: (s) => (SITE_KINDS.includes(s.kind as SiteKind) ? siteKindLabel(t, s.kind as SiteKind) : s.kind) },
+    { key: 'items', header: '', cell: (s) => <Link className={btn.link} href={perimeterHref(projectId, `tab=register&siteId=${s.id}`)}>{t('carveout.sites.items')}</Link> },
     { key: 'demo', header: '', cell: (s) => (s.isDemo ? <DemoBadge /> : null) },
     {
       key: 'edit',
@@ -448,6 +449,8 @@ export function SitesPanel() {
 
 const SITE_KINDS = ['data_center', 'technical_room', 'office', 'warehouse', 'land', 'other'] as const;
 type SiteKind = (typeof SITE_KINDS)[number];
+/** `other` is a reserved plural key in the catalogue, so that label lives under `otherKind`. */
+const siteKindLabel = (t: (k: MessageKey) => string, k: SiteKind) => t(`carveout.sites.kinds.${k === 'other' ? 'otherKind' : k}`);
 
 function SiteDialog({ site, onClose }: { site: Site | 'new' | null; onClose: () => void }) {
   const { t } = useI18n();
@@ -482,7 +485,7 @@ function SiteDialog({ site, onClose }: { site: Site | 'new' | null; onClose: () 
         <SelectField label={t('carveout.sites.kind')} required value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as SiteKind })}>
           {SITE_KINDS.map((k) => (
             <option key={k} value={k}>
-              {t(`carveout.sites.kinds.${k}`)}
+              {siteKindLabel(t, k)}
             </option>
           ))}
         </SelectField>

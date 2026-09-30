@@ -27,23 +27,27 @@ import { PersonText, TransferView } from './bits';
 
 const PAGE = 20;
 
-export function PerimeterRegister() {
+/** Initial filters come from the URL (reconciliation metrics and the sites tab deep-link into the register). */
+export function PerimeterRegister({ initial = {} }: { initial?: { type?: string; disposition?: string; siteId?: string } }) {
   const { t, tStatus, locale } = useI18n();
   const { projectId, can } = useProjectContext();
   const ws = useWorkstreams(projectId);
+  const sites = useQuery({ queryKey: ck.sites(projectId), queryFn: ({ signal }) => api(C.listSites, { params: { projectId }, signal }) });
   const [q, setQ] = useState('');
-  const [type, setType] = useState('');
-  const [disposition, setDisposition] = useState('');
+  const [type, setType] = useState((PERIMETER_ITEM_TYPES as readonly string[]).includes(initial.type ?? '') ? initial.type! : '');
+  const [disposition, setDisposition] = useState((PERIMETER_DISPOSITIONS as readonly string[]).includes(initial.disposition ?? '') ? initial.disposition! : '');
+  const [siteId, setSiteId] = useState(initial.siteId ?? '');
   const [wsId, setWsId] = useState('');
   const [page, setPage] = useState(1);
   const [create, setCreate] = useState(false);
-  useEffect(() => setPage(1), [q, type, disposition, wsId]);
+  useEffect(() => setPage(1), [q, type, disposition, siteId, wsId]);
   const query = {
     page,
     pageSize: PAGE,
     q: q || undefined,
     type: (type || undefined) as PerimeterItemType | undefined,
     disposition: (disposition || undefined) as PerimeterDisposition | undefined,
+    siteId: siteId || undefined,
     workstreamId: wsId || undefined,
   };
   const list = useQuery({ queryKey: ck.items(projectId, query), queryFn: ({ signal }) => api(C.listPerimeterItems, { params: { projectId }, query, signal }), placeholderData: keepPreviousData });
@@ -95,6 +99,14 @@ export function PerimeterRegister() {
             </option>
           ))}
         </FilterSelect>
+        <FilterSelect label={t('carveout.item.site')} value={siteId} onChange={setSiteId} className="w-full sm:w-44" testId="filter-site">
+          <option value="">{t('carveout.common.all')}</option>
+          {sites.data?.items.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.code} — {s.name}
+            </option>
+          ))}
+        </FilterSelect>
         <FilterSelect label={t('carveout.common.workstream')} value={wsId} onChange={setWsId} className="w-full sm:w-52">
           <option value="">{t('carveout.common.all')}</option>
           {ws.data?.items.map((w) => (
@@ -138,7 +150,7 @@ function CreateItemDialog({ open, onClose }: { open: boolean; onClose: () => voi
   const ws = useWorkstreams(projectId, open);
   const sites = useQuery({ queryKey: ck.sites(projectId), enabled: open, queryFn: ({ signal }) => api(C.listSites, { params: { projectId }, signal }) });
   const canEntities = can('newco.register.read');
-  const entities = useQuery({ queryKey: [...ck.newco(projectId), 'entities'], enabled: open && canEntities, queryFn: ({ signal }) => api(N.listLegalEntities, { params: { projectId }, signal }) });
+  const entities = useQuery({ queryKey: ck.entities(projectId), enabled: open && canEntities, queryFn: ({ signal }) => api(N.listLegalEntities, { params: { projectId }, signal }) });
   const blank = { type: 'asset' as PerimeterItemType, name: '', description: '', disposition: 'pending' as PerimeterDisposition, siteId: '', workstreamId: '', currentEntityId: '', targetEntityId: '', legalOwner: '', operator: '', economicBeneficiary: '', transferMechanism: '', plannedEffectiveDate: '', economicPlannedEffectiveDate: '', consentRequired: false, justification: '', resolutionPath: '', targetGateKey: '' };
   const [f, setF] = useState(blank);
   const [owner, setOwner] = useState<PickedUser | null>(null);
