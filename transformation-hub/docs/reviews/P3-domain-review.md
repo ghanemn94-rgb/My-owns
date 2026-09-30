@@ -44,6 +44,9 @@ $ (packages/domain) npx vitest run
       Tests  424 passed (424)
 $ (apps/api) pnpm run lint        # tsc --noEmit (including this review's probe files) + module boundaries
 module boundary check passed: 43 cross-module imports, 19 module edges, acyclic, only published surfaces
+$ GITLEAKS=<gitleaks 8.30.1 binary> bash scripts/ops/secret-scan.sh tree        # after committing this review
+tree: 1078 committed files at HEAD c00748c
+SECRET SCAN (tree): PASS
 ```
 
 ### 1.3 This review's probes
@@ -130,8 +133,22 @@ carveout.approvePerimeterVersion|rejected|perimeter.version.decision_already_use
 
 ### 1.5 Full API suite at `5bf274b` with this review's probes
 
-Final full run with the corrected probes: **not yet completed** (the container was restarted twice while suites ran; the
-result is added in the next commit of this review branch).
+```
+$ (apps/api) TEST_DATABASE_URL=postgres://hub_app:…@127.0.0.1:5432/hub_test_p3dom \
+  TEST_DATABASE_MIGRATION_URL=postgres://hub_owner:…@127.0.0.1:5432/hub_test_p3dom pnpm test --reporter=verbose
+ Test Files  1 failed | 105 passed (106)
+      Tests  1 failed | 860 passed | 14 expected fail (875)
+   Duration  1053.35s
+ × test/reviews/p2-qa-final-race.spec.ts > QA-P2-01 re-check … > both kinds of use are accepted on one G1 decision …   (known, below)
+```
+
+The 14 expected failures are this review's 12 DEFECT probes and the open P2 Lows DOM-P2F-02 / -04. The P3 acceptance specs all
+passed in this run: `carveout/at-06-incorporation-separate` (7), `at-07-perimeter-change-control` (9),
+`at-08-day1-contract-position` (8), `carveout-rules` (10), `carveout-isolation` (4), `setup-wizard` (4),
+`gates/at-06-status-dimensions` (6), `readiness/at-09-readiness-go-no-go` (13), `at-10-tsa-expiry` (11),
+`p2f-decision-reliance` (5), `readiness-isolation` (7), `readiness-waiver-n02` (7), `readiness-demo-seed` (3), all
+without failure. `p1/p1-closure-empty-db.spec.ts` ran on `hub_test_p3dom_boot` (3/3).
+The two isolation specs broken by the first version of the DOM-P3-10 probe (next paragraph) pass (27/27).
 
 An earlier full run with the probes (same command, `hub_test_p3dom`) gave `Test Files 3 failed | 103 passed (106)`,
 `Tests 3 failed | 858 passed | 14 expected fail (875)`: the known failure below plus two isolation tests that the DOM-P3-10 probe
@@ -140,8 +157,9 @@ itself broke — it had left `pm.b` (the Project-B persona of AT-03) with roles 
 [ 'DEMO-TRANSFORM' ]`; `planning/acceptance-and-access.spec.ts` My Work totals). The probe now revokes its grants in `finally`
 (verified: both memberships `revoked_at` set after the run) and the suite was run again (result above).
 
-A first full run started before the probes existed was killed with the container's session process (out of memory, five agents
-running suites at once — lead's message); it had reported only the known failure below before it stopped. It is not counted.
+Two other full runs were killed when the container ran out of memory (several agents running suites at once — lead's
+messages): one before the probes existed (it had reported only the known failure below) and one rerun after the DOM-P3-10
+correction. Neither is counted; the run above is the complete one.
 
 **Known pre-existing failure at `5bf274b` (lead-confirmed, recorded as such):** `reviews/p2-qa-final-race.spec.ts` › "both kinds
 of use are accepted on one G1 decision …" fails with `perimeter 422:perimeter.version.decision_no_subject`. That P2 QA probe was
