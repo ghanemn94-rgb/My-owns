@@ -2,44 +2,99 @@
 
 > Resumption: read this file, then `git log --oneline -15`, then follow "Next action". See CLAUDE.md → Resumption procedure.
 
-## Current state — 2026-09-29
+## Current state — 2026-09-30
 
 - **Branch:** `claude/mobily-transformation-hub` (repository `My-owns`, project directory `transformation-hub/`).
-- **Checkpoint revision:** `38f947c` (plus the status-document refresh committed right after it).
-- **Phases:** P0 PASS · P1 gate open (fixes done; re-reviews and traceability disposition running) · P2 merged
-  (backend + UI + e2e), reviews running · P3 backends merged, UI in progress · P5 AI backend merged · P4/P6/P7/P8 not started.
-- **Verified at `38f947c`:** API integration 437/437 (50 files, own test database, demo seed through the services),
-  domain 233/233, root `pnpm lint` (all packages + i18n parity, 2746 keys per language). E2E 24/24 last executed at
-  `30f58a2` (`docs/test-evidence/e2e-p1-p2-run.txt`).
+- **Checkpoint revision:** `d508929` (plus the documentation refresh committed right after it).
+- **Phases:**
+  - P0 PASS.
+  - P1: security re-review PASS with conditions (all SEC-P1R / I-R items fixed). The QA re-review is running; the gate
+    report is still to be written.
+  - P2: the domain review FAILed with 5 High findings. All High and Medium findings are fixed and merged (`3e2a29d`,
+    `c1338f7`). DOM-P2-16 (Low) is open; DOM-P2-08/11 are re-phased to P6. Web follow-ups are in progress; the QA review
+    is still to run.
+  - P3: backends and web screens merged; reviews not run.
+  - P4: finance and JV/DD backends merged; web screens in progress; reviews not run.
+  - P5: AI backend merged (mock provider only); web UI planned.
+  - P6–P8: not started.
+- **Verified at `c1338f7`** (PostgreSQL 16, own test database):
+  - API integration suite: 691/691 tests in 78 files.
+  - Unit tests: domain 348/348, contracts 100/100.
+  - Root `pnpm lint`: pass (i18n parity at 3835 keys per language, 42 server message codes; hard-coded string check).
+  - `apply_status.py --check`: OK (102 entries).
+  - Secret scan (gitleaks 8.30.1, local, `d508929`): tree PASS, history PASS.
+- **CI:**
+  - Run 16 (`4f05318`) was fully green.
+  - Runs 20–24 were red only on the secret-scan job (synthetic config-test values). Fixed in `d508929`; a green run is
+    still to be confirmed.
+  - In run 23 (`a471265`), every other job passed, including Playwright e2e and the Compose stack.
 
-## Done
-- P0: specification copy, 11 agent definitions, ADRs, requirements register (394 REQs, AT-01..AT-30 traced), PRD, backlog,
-  governance and security design docs, glossary, DC and general templates, source register, assumptions/open questions,
-  ERD + data dictionary. Gate report `docs/phases/P0-gate-report.json`.
-- P1: platform (RLS context per transaction, sessions + CSRF, RBAC+ABAC, audit hash chain, outbox, job queue/worker,
-  problem+json, contract check, OpenAPI), identity (demo + OIDC), portfolio, web foundation. P1 security review
-  (12 findings) fixed in `ec36f7a`; P1 QA review findings QA-P1-02/04/05/06/07/08/10/12 fixed (`9992571`, `38f947c`).
-- P2: governance, planning, gates, documents — backend, web screens and e2e merged.
-- P3: carve-out/NewCo and readiness/TSA backends merged (`744c9d8`, `214129a`); lead follow-ups in `38f947c`
-  (regulatory register Legal-only per REQ-AGR-004, readiness.changed event, new evidence targets, append-only records).
-- P5: AI runtime backend merged (mock provider only; Off by default).
-- DevOps: Dockerfiles, Compose, Helm, private-mode configs, backup/restore scripts, CI workflow.
+## Done since the last checkpoint
 
-## In progress (parallel agents)
-- P1 traceability disposition of every P1 `must` (QA-P1-03) → `docs/phases/P1-must-disposition.md`.
-- Accessibility (axe) checks in e2e + fixes (REQ-ARC-008).
-- Sort allow-list (QA-P1-13) and bilingual server strings (QA-P1-14).
-- P3 web screens: perimeter/transfers, NewCo/regulatory, agreements/consents; readiness/Day-1/TSA.
-- Reviews: P1 security re-review; P2 domain review.
+- P1 security re-review fixes merged (`7751b98`):
+  - policy conditions fail closed (I-R3);
+  - role → state → separation-of-duties order;
+  - JIT off;
+  - CASE-based record visibility;
+  - production configuration hardening;
+  - S3-compatible storage adapter (SigV4, contract tests against a fake S3 server and botocore vectors).
+- QA-P1-02/03/08/10/11/13/14:
+  - fresh-checkout build;
+  - sort allow-list with ICU collation;
+  - bilingual server data (`<field>Ar` / `<field>I18n`);
+  - hard-coded string check;
+  - axe a11y spec in CI;
+  - must-disposition of all 82 P1 musts.
+- P1 closure tests (23 tests, 7 defects fixed). The worker waits for the organization instead of crash-looping.
+- P2 domain-review fixes:
+  - DOM-P2-01: gate approvals backed only by typed, final decisions of the authorized body.
+  - DOM-P2-02/13: vote tally and quorum rules.
+  - DOM-P2-03: baseline and change-request approvals checked against the in-force matrix, with structured `costImpact`.
+  - DOM-P2-04/05/07/09/10/15/19/21.
+  - DOM-P2-06/20: round integrity.
+  - DOM-P2-12: evidence for external approvals and matrix approvals.
+  - DOM-P2-17/18: cross-project dependencies and prerequisites (API).
+- Lead follow-ups to the P2 fixes:
+  - policy grants: `planning.deliverable.accept` for sponsor and chair; `gates.assessment.submit` for the gate-owner roles;
+  - organization-bound FK and same-project triggers for the new dependency tables;
+  - `record_dependency` in the activity feed;
+  - the perimeter-version approval follows the G1 gate-approval rule.
+- P4 backends:
+  - finance: snapshots, budget, models, benefits, KPIs, reconciliations;
+  - JV/DD: partners, rooms, scenarios, DD requests and findings, closings, CPs, post-close obligations.
+  - Both are adapted to the fail-closed policy, with JV record visibility.
+- Data dictionary and ERD regenerated (120 tables, 115 with RLS).
 
-## Known failures / risks
-- CI: runs 3–5 red on the web egress scan, API image build and e2e job; fixes pushed in `38f947c` — a green run is still
-  to be confirmed.
-- The reference image and Excel workbook are not available here (image extraction NOT performed).
-- No Docker daemon here: images are built only in CI; Helm install NOT EXECUTED.
-- pgvector not installed: retrieval uses PostgreSQL full-text search (ADR-0008).
+## In progress (parallel agents, worktree branches)
+
+- P4 Finance & Value web screens.
+- P4 JV & Diligence web screens (the NewCo UI hides edit actions when `ownedByThisProject = false`).
+- P2 web follow-ups:
+  - the external-approval dialog must send `evidenceLinkId` (this dialog currently fails with 422);
+  - matrix approval document and verification;
+  - `costImpact` and a decision picker;
+  - cross-project dependencies and prerequisites screens.
+- P1 QA re-review → `docs/reviews/P1-qa-rereview.md`.
+
+## Known failures and risks
+
+- **Web regression until the P2 web follow-ups merge:** recording an external authority approval from the UI returns 422
+  (the API now requires a verified evidence link).
+- **Secret-scan allow-list:** the entries extended in `d508929` need a security reviewer's confirmation (allow-list
+  policy in `scripts/ops/gitleaks.toml`).
+- **DOM-P2-16** (gate owner and reviewer roles enforced, gate-level review step) is not implemented. The policy
+  prerequisite is granted; the design is in `docs/reviews/P2-domain-review.md`.
+- **Environment limits:**
+  - The reference image and Excel workbook are not available here (image extraction NOT performed).
+  - There is no Docker daemon here: images are built only in CI, and Helm install is NOT EXECUTED.
+  - pgvector is not installed: retrieval uses PostgreSQL full-text search (ADR-0008).
 
 ## Next action
-Confirm a green CI run → merge the running agents' branches (regenerate the migration if schemas changed, rerun all
-tests) → P1 QA re-review → write `docs/phases/P1-gate-report.json` → P2 QA review + gate → P3 reviews + gate → P4
-(finance, JV/DD/CPs) → AI UI → P6 → P7 → P8.
+
+1. Confirm a green CI run on `d508929` or later.
+2. Merge the P4 UI branches and the P2 web follow-ups. Before each push: regenerate the migration if schemas changed,
+   run the full API suite and `pnpm lint`, and run the local secret scan (history + tree).
+3. Act on the P1 QA re-review → write `docs/phases/P1-gate-report.json`.
+4. P2: DOM-P2-16, then the QA review and the P2 gate.
+5. P3 reviews and gate. P4 reviews (domain, security, QA) and gate.
+6. AI UI (P5 reviews) → P6 → P7 → P8.

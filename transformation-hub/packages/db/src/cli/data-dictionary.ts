@@ -11,30 +11,37 @@ const MODULES: Record<string, string[]> = {
   'Identity & access': ['organization', 'app_user', 'session', 'org_role_assignment', 'role_policy', 'project_membership'],
   'Portfolio & configuration': [
     'portfolio', 'program', 'project_template', 'project_template_version', 'project', 'project_template_migration',
-    'legal_entity', 'project_entity', 'site', 'workstream', 'calendar_holiday',
+    'legal_entity', 'project_entity', 'site', 'workstream', 'calendar_holiday', 'program_closure',
   ],
   Planning: [
     'task', 'milestone', 'deliverable', 'dependency', 'cross_project_dependency', 'raci_assignment', 'baseline_version',
-    'change_request', 'risk', 'issue', 'assumption', 'raid_dependency', 'status_update', 'rag_override',
+    'change_request', 'risk', 'issue', 'assumption', 'raid_dependency', 'status_update', 'rag_override', 'record_dependency',
   ],
   Governance: [
     'committee', 'committee_membership', 'authority_matrix_version', 'meeting', 'agenda_item', 'attendance', 'recusal',
-    'decision', 'vote', 'action_item', 'escalation', 'approval_request', 'approval_record',
+    'decision', 'vote', 'action_item', 'escalation', 'approval_request', 'approval_record', 'conflict_declaration',
   ],
   Gates: ['gate_definition', 'gate_criterion', 'gate_assessment', 'criterion_assessment', 'waiver', 'status_dimension'],
   'Carve-out, NewCo, readiness & TSA': [
     'perimeter_item', 'transfer_record', 'agreement', 'consent', 'regulatory_requirement', 'tsa_service', 'readiness_check',
-    'readiness_test_run', 'cutover_plan',
+    'readiness_test_run', 'cutover_plan', 'agreement_version', 'perimeter_version', 'perimeter_category_review',
+    'perimeter_impact_assessment', 'cutover_decision_record', 'operating_model_definition',
   ],
-  Finance: ['financial_snapshot', 'budget_line', 'financial_model_version', 'benefit', 'kpi', 'kpi_observation'],
+  Finance: [
+    'financial_snapshot', 'budget_line', 'financial_model', 'financial_model_version', 'benefit', 'kpi', 'kpi_observation',
+    'intercompany_reconciliation',
+  ],
   'JV & diligence': [
     'partner', 'partner_room', 'room_grant', 'deal_scenario', 'negotiation_issue', 'diligence_request', 'diligence_finding',
-    'closing', 'closing_condition', 'closing_deliverable', 'funds_flow_item', 'post_close_obligation',
+    'closing', 'closing_condition', 'closing_deliverable', 'funds_flow_item', 'post_close_obligation', 'partner_criteria_set',
+    'partner_assessment_entry', 'partner_conflict', 'partner_contact', 'partner_proposal', 'deal_scenario_version',
+    'room_disclosure', 'room_access_event',
   ],
   'Documents & sources': ['document', 'document_version', 'evidence_link', 'source_record', 'source_claim', 'document_chunk'],
   'Reporting & imports': ['report_snapshot', 'report_export', 'import_batch', 'import_row'],
   'Platform, jobs & audit': [
     'notification', 'integration_connection', 'outbox_event', 'job', 'scheduled_job', 'delivery_record', 'audit_event', 'record_version',
+    'audit_checkpoint',
   ],
   'AI runtime': ['ai_project_settings', 'ai_run', 'ai_proposal', 'ai_action_approval', 'ai_derived_artifact'],
 };
