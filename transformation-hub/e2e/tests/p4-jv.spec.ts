@@ -195,8 +195,10 @@ async function ensureG5Approved(baseURL: string, pid: string): Promise<string> {
         for (const c of g.criteria.filter((x) => x.mandatory && x.assessment.status !== 'met')) {
           const reviewer = GATE_ROLE_PERSONA[c.reviewerRole];
           expect(reviewer, `a demo persona holds reviewer role ${c.reviewerRole}`).toBeTruthy();
-          const adder = c.reviewerRole === 'project_manager' ? P.contributor : P.pm;
-          if (c.evidence.active === 0) await post(await as(adder), `${base}/evidence`, { targetType: 'gate_criterion', targetId: c.id, note: `E2E synthetic evidence for ${c.key}` });
+          // SEC-P2-05: evidence is linked by the criterion's owner role or the PM; on PM-reviewed criteria, by the owner role.
+          const adder = c.reviewerRole === 'project_manager' ? GATE_ROLE_PERSONA[c.ownerRole] : P.pm;
+          expect(adder, `a demo persona holds owner role ${c.ownerRole} of ${c.key}`).toBeTruthy();
+          if (c.evidence.active === 0) await post(await as(adder!), `${base}/evidence`, { targetType: 'gate_criterion', targetId: c.id, note: `E2E synthetic evidence for ${c.key}` });
           await post(await as(reviewer!), `${base}/gates/${g.id}/criteria/${c.id}/review`, { expectedVersion: c.assessment.version, outcome: 'met', note: 'E2E review (synthetic)' });
         }
         g = await gate(key);
