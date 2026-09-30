@@ -70,6 +70,9 @@ export class ActionsService {
     const where = and(
       eq(a.projectId, projectId),
       this.policy.visibilitySql(ctx, projectId, {}),
+      // Workstream-only grants do not cover project-level governance records (access-matrix §2.2 strict rule): lists show
+      // only what the detail would open (SEC-P2-08 shape, residual of the §2.2 change).
+      this.policy.grantSql(ctx, 'governance.decision.read', projectId, {}),
       or(sql`${a.decisionId} is null`, this.policy.visibilitySql(ctx, projectId, { classification: d.classification })),
       q.status ? eq(a.status, q.status) : undefined,
       q.decisionId ? eq(a.decisionId, q.decisionId) : undefined,
@@ -213,6 +216,9 @@ export class ActionsService {
     const where = and(
       eq(e.projectId, projectId),
       this.policy.visibilitySql(ctx, projectId, {}),
+      // Workstream-only grants do not cover project-level governance records (access-matrix §2.2 strict rule): lists show
+      // only what the detail would open (SEC-P2-08 shape, residual of the §2.2 change).
+      this.policy.grantSql(ctx, 'governance.decision.read', projectId, {}),
       // Escalations about a decision are visible only to readers cleared for that decision.
       or(sql`${e.sourceType} <> 'decision'`, this.policy.visibilitySql(ctx, projectId, { classification: d.classification })),
       q.status ? eq(e.status, q.status) : undefined,
