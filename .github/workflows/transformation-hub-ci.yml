@@ -291,6 +291,16 @@ jobs:
           mkdir -p "$RUNNER_TEMP/compose-smoke"
           docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env ps -a > "$RUNNER_TEMP/compose-smoke/ps.txt" 2>&1 || true
           docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env logs --no-color --timestamps > "$RUNNER_TEMP/compose-smoke/logs.txt" 2>&1 || true
+      - name: On failure, print container state, health-probe output and recent logs
+        if: failure()
+        run: |
+          C="docker compose -f deploy/compose/compose.dev.yml --env-file deploy/compose/.env"
+          $C ps -a || true
+          for id in $($C ps -aq); do
+            echo "== $(docker inspect --format '{{.Name}} status={{.State.Status}} exit={{.State.ExitCode}} restarts={{.RestartCount}}' "$id")"
+            docker inspect --format '{{if .State.Health}}{{range .State.Health.Log}}probe exit={{.ExitCode}} {{.Output}}{{end}}{{end}}' "$id" | tail -n 20 || true
+          done
+          for s in migrate api worker web; do echo "== logs: $s"; $C logs --no-color --tail 80 "$s" || true; done
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: compose-smoke, path: "${{ runner.temp }}/compose-smoke", if-no-files-found: warn }
