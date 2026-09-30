@@ -231,7 +231,8 @@ export const PARTNER_MACHINE: Machine<PartnerStage, PartnerCommand> = {
   record_nda_executed: { from: ['approved_for_contact'], to: 'nda', description: 'NDA executed (grants no document access by itself)' },
   open_materials_access: { from: ['nda'], to: 'materials_access', description: 'Materials access approved (explicit room grants still required)' },
   start_dd: { from: ['materials_access'], to: 'dd', description: 'Due diligence started' },
-  record_proposal: { from: ['dd', 'materials_access'], to: 'proposal', description: 'Proposal received' },
+  // REQ-JV-003: stages are never skipped (a proposal is recorded after due diligence has started).
+  record_proposal: { from: ['dd'], to: 'proposal', description: 'Proposal received' },
   start_negotiation: { from: ['proposal'], to: 'negotiation', description: 'Negotiation' },
   move_to_signing: { from: ['negotiation'], to: 'signing', description: 'Signing preparation' },
   move_to_closing: { from: ['signing'], to: 'closing', description: 'Signed — closing preparation' },

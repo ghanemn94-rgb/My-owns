@@ -18,3 +18,4 @@ export * from './templates';
 export * from './policy';
 export * from './documents';
 export * from './readiness';
+export * from './jv';
