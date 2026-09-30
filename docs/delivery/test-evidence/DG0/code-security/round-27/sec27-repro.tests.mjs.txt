@@ -1,0 +1,113 @@
+// code-security-reviewer, DG0 round 27 (T-DG0-REV-SEC-R27): standing closure controls, re-proved on the D-043 candidate.
+// Appended AFTER ../round-24/sec24-repro.tests.mjs.txt, ../round-25/sec25-repro.tests.mjs.txt and
+// ../round-26/sec26-repro.tests.mjs.txt to a DISPOSABLE copy of tools/gates/tests/validator.test.mjs (it reuses the
+// fixture helpers and the SEC24/SEC25 helpers). See run-sec27-repro.sh. D-043 is comment-only, so every SEC24-SEC27 test
+// must report the same result on the round-26 baseline (7edacdc) and the round-27 candidate (49b5ad7).
+
+const sec27Report = (label, errs) => console.log(`${label} errors: ${errs.length}${errs.length ? "\n  " + errs.join("\n  ") : ""}`);
+const sec27Expect = (label, errs, re) => {
+  sec27Report(label, errs);
+  assert.ok(errs.some((e) => re.test(e)), `${label}: expected an error matching ${re}`);
+};
+
+test("SEC27-0 baseline: the stock fixture (fix committed before the freeze, verified in a retained round) passes with 0 errors", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  sec27Report("SEC27-0", errs);
+  assert.deepEqual(errs, []);
+});
+
+test("SEC27-1 fix_revision ABSENT (key deleted), EMPTY, ALL-ZERO, SHORT -> every variant rejected", () => {
+  for (const [label, mut, re] of [
+    ["SEC27-1a deleted", (f) => { delete f.fix_revision; }, /F-DG0-101.*CLOSED_VERIFIED needs a full fix_revision commit id/],
+    ["SEC27-1b empty", (f) => (f.fix_revision = ""), /F-DG0-101.*CLOSED_VERIFIED needs a full fix_revision commit id/],
+    ["SEC27-1c all-zero", (f) => (f.fix_revision = "0".repeat(40)), /F-DG0-101.*fix 0000000000 is not a commit present in this repository/],
+    ["SEC27-1d short", (f) => (f.fix_revision = f.fix_revision.slice(0, 12)), /F-DG0-101.*CLOSED_VERIFIED needs a full fix_revision commit id/],
+  ]) {
+    const { repo } = buildValidRepo();
+    edit(repo, "docs/delivery/findings.json", (d) => mut(d.findings[0]));
+    approveAndCommit(repo);
+    sec27Expect(label, validateGate(repo, "DG0"), re);
+  }
+});
+
+test("SEC27-2 the VERIFYING run's head_commit_at_start ABSENT (key deleted) or ALL-ZERO -> rejected (anchor 2 cannot be skipped)", () => {
+  for (const [label, mut, re] of [
+    ["SEC27-2a deleted", (m) => { delete m.head_commit_at_start; }, /F-DG0-101.*verification: invocation .*head_commit_at_start undefined is not a 40-hex commit id/],
+    ["SEC27-2b all-zero", (m) => (m.head_commit_at_start = "0".repeat(40)), /F-DG0-101.*verification: invocation .*absent from this repository/],
+  ]) {
+    const { repo, records } = buildValidRepo();
+    const run = get(repo, records["code-security-reviewer"]).invocation_reference.run_id; // the run that verified F-DG0-101
+    edit(repo, `docs/delivery/runs/DG0/${run}/meta.json`, mut);
+    approveAndCommit(repo);
+    sec27Expect(label, validateGate(repo, "DG0"), re);
+  }
+});
+
+test("SEC27-3 F-DG0-169: closure verified in a round whose source_commit is absent -> rejected (anchor 1 unconditional)", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  edit(repo, "docs/delivery/stages.json", (d) => { d.stages[0].review_rounds[1].source_commit = "b".repeat(40); });
+  sec27Expect("SEC27-3", validateGate(repo, "DG0"), /F-DG0-101.*verified in round-2, whose frozen candidate source_commit bbbbbbbbbb is not present; a closure must be verified against a retained candidate \(F-DG0-169\)/);
+});
+
+test("SEC27-4 F-DG0-168 (anchor 1): GENUINE round, candidate-scope fix committed AFTER the freeze and BEFORE the verifier ran -> rejected", () => {
+  // Reuses my round-25 SEC25-1 construction via the SEC24/25 helpers (sec24FixAndFreeze3 etc. are not needed here):
+  // a real commit on top of the frozen round-2 source that the verifying run's head also contains.
+  const { repo, records, head } = buildValidRepo();
+  put(repo, "src/app.txt", "deliverable v2 (post-freeze fix)\n");
+  sh(repo, "add", "-A");
+  sh(repo, "commit", "-q", "-m", "post-freeze fix");
+  const fix = sh(repo, "rev-parse", "HEAD");
+  const run = get(repo, records["code-security-reviewer"]).invocation_reference.run_id;
+  edit(repo, `docs/delivery/runs/DG0/${run}/meta.json`, (m) => (m.head_commit_at_start = fix)); // the run saw the fix
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = fix));
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  sec27Expect("SEC27-4", errs, new RegExp(`F-DG0-101.*fix ${fix.slice(0, 10)} is not in the verified round-2 candidate \\(${head.slice(0, 10)}\\)`));
+});
+
+test("SEC27-5 immutable-field lock (F-DG0-165): findings.json downgrade of severity/mandatory_violation, and a later-round sidecar downgrade -> both rejected", () => {
+  const { repo } = buildValidRepo();
+  edit(repo, "docs/delivery/findings.json", (d) => { d.findings[0].severity = "Low"; d.findings[0].mandatory_violation = false; });
+  approveAndCommit(repo);
+  sec27Expect("SEC27-5a findings.json", validateGate(repo, "DG0"), /finding F-DG0-101: severity in findings.json \("Low"\) differs from the reviewer's \("High"\)/);
+  const { repo: r2 } = buildValidRepo();
+  approveAndCommit(r2);
+  const f = get(r2, "docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json").findings[0];
+  put(r2, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json", { findings: [{ ...f, severity: "Medium", mandatory_violation: false }] });
+  sec27Expect("SEC27-5b later sidecar", validateGate(r2, "DG0"), /F-DG0-101 severity \("Medium"\) differs from its first raising sidecar/);
+});
+
+test("SEC27-6 shallow refusal (F-DG0-160): a --depth=1 clone of an otherwise valid approved fixture is refused; the complete clone passes", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  const d = mkdtempSync(join(tmpdir(), "sec27-shallow-"));
+  fixtures.push(d);
+  rmSync(d, { recursive: true, force: true });
+  execFileSync("git", ["clone", "-q", "--depth=1", `file://${repo}`, d], { stdio: "ignore" });
+  const errs = validateGate(d, "DG0");
+  sec27Expect("SEC27-6 shallow", errs, /gate DG0: the repository is a shallow clone/);
+  const full = validateGate(repo, "DG0");
+  sec27Report("SEC27-6 complete", full);
+  assert.deepEqual(full, []);
+});
+
+test("SEC27-7 the three anchors are independent: fix present and in round + run head, but NOT in the gate candidate -> rejected by anchor 3 alone", () => {
+  // Build a side branch commit that is an ancestor of neither... then re-point only what anchor 3 checks: the gate candidate.
+  // Construction: make the round-2 source_commit and the verifying head a LATER commit that contains the fix, while the
+  // gate.source_commit stays at the original frozen head (which does not contain the fix).
+  const { repo, records } = buildValidRepo();
+  sh(repo, "commit", "--allow-empty", "-q", "-m", "fix on top of the gate candidate");
+  const fix = sh(repo, "rev-parse", "HEAD");
+  const run = get(repo, records["code-security-reviewer"]).invocation_reference.run_id;
+  edit(repo, `docs/delivery/runs/DG0/${run}/meta.json`, (m) => (m.head_commit_at_start = fix));
+  edit(repo, "docs/delivery/stages.json", (d) => { d.stages[0].review_rounds[1].source_commit = fix; });
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = fix));
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  sec27Expect("SEC27-7", errs, /F-DG0-101.*is not in the gate candidate/);
+  assert.ok(!errs.some((e) => /F-DG0-101.*is not in the verified round-2 candidate/.test(e)), "anchor 1 is satisfied in this construction");
+  assert.ok(!errs.some((e) => /F-DG0-101.*not in the verifying run's starting history/.test(e)), "anchor 2 is satisfied in this construction");
+});

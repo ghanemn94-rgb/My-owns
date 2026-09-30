@@ -1,0 +1,17 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-170",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified against the round-27 candidate sha256:9420948b... (source 49b5ad7). F-DG0-170 (Low, non-mandatory, documentation only): at the round-26 baseline 7edacdc the commitPresent() header comment (rules.mjs:597-605) still described anchor 1 as conditional ('the verifying round's frozen source_commit (when it resolves; this findManifest tolerance covers the one case it may not)'), contradicting the checkClosure block comment and the code, which since D-042 enforce anchor 1 unconditionally. D-043 (fix_revision db5afe8, this round's delta) rewrote that header so it states no closure policy ('This helper only answers presence -- it states no policy, so there is nothing here to drift'), pointing to findManifest and checkClosure. REPRODUCED, THEN SHOWN FIXED: git show 7edacdc:rules.mjs shows the stale 'when it resolves' wording; git show 49b5ad7:rules.mjs shows it removed (stale-comment.log). The change is COMMENT-ONLY: git diff -U0 7edacdc..49b5ad7 -- rules.mjs has 0 non-comment changed lines, rules.mjs with all full-line // comments stripped is byte-identical (sha256 352604df...) at both commits, and node --check passes (d043-comment-only.log). The closure model is now documented in EXACTLY ONE place (checkClosure, rules.mjs:721-737), matching the code (anchor 1 unconditional at :741-744); no remaining comment describes the anchor model inconsistently with the code (closure-comment-consistency.log). Because behaviour is unchanged, the standing closure controls still hold: the SEC24-SEC27 reproductions produce an IDENTICAL pass/fail set on 7edacdc and 49b5ad7, covering absent-source-round rejection (F-DG0-169), post-freeze fix by anchor 1 (F-DG0-168), forged-absent-round fix by anchor 2 (F-DG0-166/249), absent/all-zero/short fix_revision and head_commit_at_start, the immutable-field lock (F-DG0-165), shallow refusal (F-DG0-160) and anchor independence (sec27-repro.log). ANCHORS for this closure: fix db5afe8 is present and an ancestor of the round-27 candidate/gate source_commit 49b5ad7 (anchors 1 & 3) and of this verifying run's head (anchor 2). I am the reporter (code-security-reviewer); the owner is delivery-orchestrator, so this is not an author self-close.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-27/stale-comment.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-27/d043-comment-only.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-27/closure-comment-consistency.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-27/sec27-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-27/node-tests.log"
+      ]
+    }
+  ]
+}

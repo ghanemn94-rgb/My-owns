@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 27,
+  "candidate_id": "sha256:9420948b55a5131e5c0e61385071b6615b1d001bac9f7023c2e512e1e5ac8128",
+  "source_commit": "49b5ad790443409ec2248097727cd61fd34f42f4",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-SEC-R27-code-security-reviewer-20260930T142646Z-03314056",
+    "session_id": "03314056-0eee-4f47-bdb0-7437f85d0439"
+  },
+  "implementation_author": ["transformation-analyst", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer) authored no implementation in the reviewed scope (tools/gates, tools/agents, tools/source, .github/workflows, .claude/agents). The scope's implementers are transformation-analyst and delivery-orchestrator. I formed this verdict before reading any other round-27 reviewer record; the only intervening commit I observed was the domain-reviewer's auto-committed run evidence directory, whose record content I did not read."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-27/review-code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-003", "REQ-DLV-004", "REQ-DLV-006", "REQ-DLV-007",
+    "REQ-DLV-013", "REQ-DLV-015", "REQ-DLV-016", "REQ-DLV-017", "REQ-DLV-019", "REQ-DLV-020",
+    "REQ-DLV-022", "REQ-DLV-023", "REQ-DLV-026", "REQ-DLV-029", "REQ-DLV-032",
+    "REQ-S20-024", "REQ-S20-025"
+  ],
+  "checks_run": [
+    {
+      "id": "C1-candidate-scope",
+      "procedure": "Confirm the frozen candidate: git rev-parse HEAD, node candidate.mjs --stage DG0 (working tree and --ref 49b5ad7), --is-shallow-repository, and that the only candidate-relevant path changed in the D-043 delta (7edacdc..49b5ad7) is rules.mjs+decisions.md, with no candidate path changed after the freeze (49b5ad7..HEAD).",
+      "command": "node tools/gates/candidate.mjs --stage DG0; node tools/gates/candidate.mjs --stage DG0 --ref 49b5ad7; git rev-parse --is-shallow-repository; selectPaths(git diff --name-only ...)",
+      "environment": "node v22, repository at HEAD (complete clone, non-shallow)",
+      "expected": "Working-tree and --ref candidate both = sha256:9420948b...; non-shallow; frozen manifest source_commit 49b5ad7 frozen_at 2026-09-30T14:25:06Z; candidate paths changed in the delta = [decisions.md, rules.mjs]; candidate paths changed after freeze = [].",
+      "actual": "Both candidate ids = sha256:9420948b55a5131e...; is-shallow=false; manifest matches; delta candidate paths = [decisions.md, rules.mjs]; post-freeze candidate paths = []. HEAD advanced to a concurrent metadata-only auto-commit (domain-reviewer run evidence); candidate at HEAD still = frozen id.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-27/candidate-and-scope.log"]
+    },
+    {
+      "id": "C2-d043-comment-only",
+      "procedure": "Prove the D-043 change to rules.mjs is comment-only: every changed line in git diff 7edacdc..49b5ad7 -- rules.mjs is a full-line // comment (0 non-comment changes); rules.mjs with all full-line // comments stripped is byte-identical at both commits; node --check parses; no other file under tools/, .github/, .claude/ changed.",
+      "command": "git diff -U0 7edacdc..49b5ad7 -- tools/gates/lib/rules.mjs | grep '^[-+]' | grep -Ev '^[-+][[:space:]]*//'; diff of comment-stripped sha256 at both commits; node --check tools/gates/lib/rules.mjs",
+      "environment": "node v22, git",
+      "expected": "0 changed non-comment lines; comment-stripped sha256 identical at 7edacdc and 49b5ad7; node --check exit 0; only rules.mjs changed under tools/.",
+      "actual": "count=0 non-comment changed lines; comment-stripped sha256 = 352604df... at BOTH commits; node --check exit 0; git diff --stat under tools/ shows only rules.mjs (3 insertions, 8 deletions, all comment). Behaviour is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-27/d043-comment-only.log"]
+    },
+    {
+      "id": "C3-closure-comment-consistency",
+      "procedure": "Census of every anchor/closure comment in rules.mjs. Confirm the commitPresent() header now states no closure policy (points to findManifest/checkClosure), the closure model is documented in exactly one place (checkClosure) matching the code (anchor 1 unconditional at rules.mjs:741-744), and no comment contradicts the code.",
+      "command": "grep -nEi 'anchor|closure|conditional|when it resolves|absence toleran|THREE|skipped' tools/gates/lib/rules.mjs",
+      "environment": "grep, repository at HEAD",
+      "expected": "commitPresent header: presence only, no policy; checkClosure comment (721-737) matches code; the only absence tolerance documented at findManifest (D-035); no contradiction.",
+      "actual": "commitPresent header (598-600) states 'answers presence... states no policy'. checkClosure (721-737) documents the three anchors, anchor 1 'NOT conditional', matching code lines 741-744 (unconditional). findManifest (897-928) documents the single D-035 content-preserving tolerance. No comment describes anchor 1 as conditional/skipped.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-27/closure-comment-consistency.log", "docs/delivery/test-evidence/DG0/code-security/round-27/stale-comment.log"]
+    },
+    {
+      "id": "C4-self-tests",
+      "procedure": "Run the committed gate and agent self-tests, the runner Python tests and the source-extraction check in a fresh --no-local clone at 49b5ad7 (CI object set).",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs; python3 -m unittest discover -s tools/agents/tests -p 'test_*.py'; tools/source/check_extraction.sh",
+      "environment": "disposable --no-local clone under $TMPDIR at 49b5ad7, node v22, python 3.11",
+      "expected": "node tests all pass; python 22/22 OK; extraction reproducible (docx sha256 2584a3...548ad2, 165 playbook + 423 master-prompt blocks).",
+      "actual": "node: 102 pass, 0 fail (tests 102); python: Ran 22 tests OK; extraction PASS (docx sha256 2584a35282804e...548ad2; 165 + 423 blocks). Includes the 9 A24/A25 named validator tests and the committed D-042/F-DG0-169 test.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-27/node-tests.log", "docs/delivery/test-evidence/DG0/code-security/round-27/python-and-extraction.log"]
+    },
+    {
+      "id": "C5-standing-closure-controls",
+      "procedure": "Re-prove the standing closure controls (SEC24-SEC27) on the frozen candidate and the round-26 baseline in disposable --no-local clones: absent-source-round rejection (F-DG0-169), post-freeze fix by anchor 1 (F-DG0-168), forged-absent-round fix by anchor 2 (F-DG0-166/249), absent/all-zero/short fix_revision and head_commit_at_start rejected, immutable-field lock (F-DG0-165), shallow refusal (F-DG0-160), anchor independence.",
+      "command": "bash docs/delivery/test-evidence/DG0/code-security/round-27/run-sec27-repro.sh /home/user/My-owns <49b5ad7|7edacdc>",
+      "environment": "disposable --no-local clones under $TMPDIR (SEC fragments appended to a throwaway copy of validator.test.mjs), node v22",
+      "expected": "Identical pass/fail set on both commits (D-043 is comment-only). All SEC24/25/26/27 tests as designed: SEC24-2 fails on both commits by design (superseded since D-042; its replacement SEC26-2 passes); every other test passes.",
+      "actual": "Pass/fail set on 49b5ad7 and 7edacdc: IDENTICAL. SEC27-0..7 all pass; anchor 1 (SEC27-3/4), anchor 2 (SEC27-2), anchor 3 (SEC27-7), fix_revision guards (SEC27-1), immutable-field lock (SEC27-5), shallow refusal (SEC27-6) all fire as expected. SEC24-2 fails on both commits by design, matching my round-26 result.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-27/sec27-repro.log", "docs/delivery/test-evidence/DG0/code-security/round-27/sec27-repro.tests.mjs.txt", "docs/delivery/test-evidence/DG0/code-security/round-27/run-sec27-repro.sh"]
+    },
+    {
+      "id": "C6-closure-census-and-dry-run",
+      "procedure": "Real-repo census of the three-anchor closure rule over every CLOSED_VERIFIED finding, and the QA round-20 real-repo gate-blocker dry run on the round-27 candidate: classify residual validateGate errors.",
+      "command": "node closure-census.mjs.txt (GATE=49b5ad7); node docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs /home/user/My-owns",
+      "environment": "disposable --no-local clones under $TMPDIR, node v22",
+      "expected": "Census: 0 anchor-1/2/3 failures, 0 anchor-1 skips (round 18 is the only absent-source round and has no verifying run); 0 verifying-run head content drift. Dry run: all residual errors are UNFINISHED-ROUND (records not yet written) or the known F-DG0-147/149 accepted-observation bookkeeping; 0 PRUNED/DROPPED/RECORD-LESS closure errors.",
+      "actual": "Census over 116 CLOSED_VERIFIED closures: anchor1 fail 0, anchor1 skipped 0, anchor2 fail 0, anchor3 fail 0; absent-source rounds = [18] (no verifying run); head-content drift 0. Dry run: 54 errors = 8 UNFINISHED-ROUND + 46 OTHER, all UNFINISHED-ROUND (missing round-27 records / REVIEWING state), the F-DG0-147/149 accepted-observation mirroring (awaiting the auditor), and F-DG0-170 unresolved (this run closes it). 0 pruned/dropped/record-less/head-mismatch closure errors.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-27/closure-census.log", "docs/delivery/test-evidence/DG0/code-security/round-27/closure-census.mjs.txt", "docs/delivery/test-evidence/DG0/code-security/round-27/real-repo-gate-dryrun.log"]
+    },
+    {
+      "id": "C7-prefreeze",
+      "procedure": "Run tools/gates/prefreeze.sh DG0 in a fresh --no-local clone (all candidate-code checks sandboxed via sandbox-run.sh).",
+      "command": "tools/gates/prefreeze.sh DG0",
+      "environment": "disposable --no-local clone under $TMPDIR, bubblewrap 0.9.0, node v22, python 3.11",
+      "expected": "Every check PASS, ending with working-tree candidate equals HEAD (sha256:9420948b...).",
+      "actual": "All PASS: source extraction, gate+guard tests, runner+settings tests, register rules, register==merge, pipeline state (active DG0 REVIEWING), 4 analysis checks, and working-tree candidate == HEAD (sha256:9420948b...).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-27/prefreeze.log"]
+    },
+    {
+      "id": "C8-write-guard-and-sandbox-residuals",
+      "procedure": "Live probes from this code-security run's own Bash shell (process sandbox D-030 + Bash sandbox D-025 + Landlock D-033): attempt writes to protected/other-role paths; confirm own evidence area writable; assess residual 7 (uid-0-writable /proc/sys, incl. core_pattern) and residual 8 (host PID namespace) against threat-model.md.",
+      "command": "append/open probes over tools/gates, tools/agents, .claude, .github, docs/source, reviews/other roles, gates, runs, requirements.csv, .git, rules.mjs; python O_WRONLY open of /proc/sys entries (nothing written)",
+      "environment": "this run's confined process sandbox (uid 0 in a nested userns, NoNewPrivs=1, Seccomp active), MTH_PROCESS_SANDBOX=1",
+      "expected": "Every protected/other-role path refused (Read-only file system / No such file or directory); own evidence area writable; /proc/sys openability matches disclosed residual 7 exactly (host-tunable only), no repository/gate/other-run path writable.",
+      "actual": "All 18 protected/other-role write attempts refused; own round-27 evidence area writable. /proc/sys entries (swappiness, shmmax, ip_forward, drop_caches, panic, core_pattern, file-max, hostname) open for write as uid 0 -- exactly disclosed residual 7 / F-DG0-149 (ACCEPTED_OBSERVATION); NOTHING was written. Not larger than disclosed: no protected repository path, reviewer artefact, gate record or other run's scratch became writable.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-27/sandbox-probes.log"]
+    },
+    {
+      "id": "C9-secrets-ci-determinism",
+      "procedure": "Scan in-scope tooling for secrets, public CDNs and builder-hosted deps; check CI least privilege (permissions, action pinning, .claude auto-allow); confirm candidate-hash determinism.",
+      "command": "grep for secret/CDN patterns; inspect .github/workflows/delivery-gates.yml + .claude/settings.json; candidate.mjs x3 + --ref + independent-clone recompute",
+      "environment": "node v22, python 3.11, repository + disposable clone",
+      "expected": "No secrets; no runtime CDN/builder-hosted deps; CI permissions contents:read, actions pinned to full SHAs, .claude auto-allows only Bash(bwrap:*); candidate id identical across all recomputations.",
+      "actual": "No secret matches; only URLs are a JSON-schema id and the OOXML XML namespace (not runtime deps). CI: permissions contents:read; checkout/setup-node pinned to 40-hex SHAs. .claude/settings.json allow = [Bash(bwrap:*)] only; per-role settings carry only the guard hook. Candidate id = sha256:9420948b... identical x3, at --ref 49b5ad7, and in an independent --no-local clone; manifest self-hashes (91 entries, mth-candidate-v2).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-27/secrets-ci-scan.log", "docs/delivery/test-evidence/DG0/code-security/round-27/candidate-determinism.log"]
+    },
+    {
+      "id": "C10-requirements",
+      "procedure": "Verify all 19 DG0-final requirements are IMPLEMENTED with existing evidence and the assigned set matches the register's final_gate=DG0 set; spot-check the security-central rows (007/013/016/022/023/026/S20-024/S20-025) against the implementing code and the A24/A25 acceptance tests.",
+      "command": "parse requirements.csv; check status/evidence existence; map A24/A25 to validator.test.mjs named tests",
+      "environment": "python 3.11, node v22",
+      "expected": "19 rows final_gate=DG0, all IMPLEMENTED, all evidence files present, assigned set == register set; A24 (9 validator tests incl. missing-reviewer/provenance/checks/blocking-findings/incomplete-requirements/pipeline) and A25 (source change / tampered manifest / stale candidate) present and passing.",
+      "actual": "19 rows final_gate=DG0, all IMPLEMENTED, 0 missing evidence files, assigned set == register set. A24/A25 map to 9 named tests in validator.test.mjs, all among the 102 passing. Each security-central requirement is backed by the code it cites (guard-write.mjs/agent_settings.py for 007; rules.mjs/run_meta.py for 013/026; validate.mjs+rules.mjs for 016; candidate.mjs for 022; validate.mjs+CI for 023/S20-024; candidate.mjs for S20-025).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-27/requirements-check.log", "docs/delivery/test-evidence/DG0/code-security/round-27/requirements-code-spotcheck.log"]
+    },
+    {
+      "id": "C11-verify-F-DG0-170",
+      "procedure": "Verify my own round-26 finding F-DG0-170 (Low): reproduce the stale commitPresent() header comment at 7edacdc, then show it removed at 49b5ad7; confirm the recorded fix_revision db5afe8 is present and an ancestor of the round-27 candidate and gate source_commit (anchors 1/3) and of this verifying run's head (anchor 2).",
+      "command": "git show 7edacdc:...rules.mjs | sed -n 597,605p; git show 49b5ad7:...; git merge-base --is-ancestor db5afe8 49b5ad7 / HEAD",
+      "environment": "git, repository at HEAD",
+      "expected": "Stale 'when it resolves' wording present at 7edacdc, absent at 49b5ad7; closure model documented once (checkClosure) matching code; fix db5afe8 present and ancestor of all three anchors.",
+      "actual": "At 7edacdc the header says the fix must be an ancestor of three anchors '...the verifying round's frozen source_commit (when it resolves...)'; at 49b5ad7 the header only 'answers presence -- it states no policy'. Closure model documented once in checkClosure, matching unconditional-anchor-1 code. Fix db5afe8 is a commit, ancestor of 49b5ad7 (anchor 1 & 3 = YES) and of HEAD (anchor 2 = YES); db5afe8 touches only rules.mjs comment + decisions.md + stages.json (metadata).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG0/code-security/round-27/stale-comment.log", "docs/delivery/test-evidence/DG0/code-security/round-27/d043-comment-only.log"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/code-security/round-27/candidate-and-scope.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/d043-comment-only.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/closure-comment-consistency.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/stale-comment.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/node-tests.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/python-and-extraction.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/sec27-repro.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/sec27-repro.tests.mjs.txt",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/run-sec27-repro.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/closure-census.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/closure-census.mjs.txt",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/real-repo-gate-dryrun.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/prefreeze.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/sandbox-probes.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/secrets-ci-scan.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/candidate-determinism.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/requirements-check.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-27/requirements-code-spotcheck.log"
+  ],
+  "reviewed_at": "2026-09-30T14:40:00Z",
+  "summary": "PASS. The round-27 candidate differs from the round-26 baseline only by a comment-only change to tools/gates/lib/rules.mjs (D-043, F-DG0-170) and the D-043 decisions.md entry; the post-freeze commit is metadata only. Mechanically proven comment-only (0 non-comment changed lines; rules.mjs with comments stripped is byte-identical at both commits; node --check parses). The closure model is now documented in exactly one place (checkClosure), matching the code (anchor 1 unconditional); the commitPresent() header states no policy; no comment contradicts the code. All standing closure controls (SEC24-27) reproduce with an IDENTICAL pass/fail set on both commits. node 102/102, python 22/22, extraction and prefreeze all pass; write confinement holds; residual 7 (/proc/sys incl. core_pattern) is confirmed exactly as disclosed (F-DG0-149, ACCEPTED_OBSERVATION), not larger; no secrets/CDNs; CI least-privileged; candidate hash deterministic. All 19 DG0-final requirements are IMPLEMENTED with existing evidence. I verify my own F-DG0-170 as CLOSED_VERIFIED. No new Critical/High/Medium/Low findings; no unresolved mandatory violations."
+}
