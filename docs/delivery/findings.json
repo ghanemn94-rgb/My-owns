@@ -5125,7 +5125,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-15/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T23:50:00Z",
@@ -5136,10 +5136,32 @@
           "at": "2026-09-29T06:12:43Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef"
+        },
+        {
+          "at": "2026-09-30T09:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 19: PASS"
         }
       ],
       "fix_revision": "fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef",
-      "fix_summary": "D-029: same working-tree stub rule as F-DG0-146 (only untracked + zero-length + mode 0444 regular files are skipped; empty writable, non-empty read-only and tracked files still count). The runner also pre-creates docs/delivery/gates and docs/delivery/test-evidence/<stage>/{domain,code-security,qa,audit} before any agent starts, so no stub can occupy the auditor's gate directory or a reviewer's evidence directory. Tests: the validator test above and the runner test 'F-DG0-236: the runner pre-creates the stage's evidence directories and the gate-record directory'."
+      "fix_summary": "D-029: same working-tree stub rule as F-DG0-146 (only untracked + zero-length + mode 0444 regular files are skipped; empty writable, non-empty read-only and tracked files still count). The runner also pre-creates docs/delivery/gates and docs/delivery/test-evidence/<stage>/{domain,code-security,qa,audit} before any agent starts, so no stub can occupy the auditor's gate directory or a reviewer's evidence directory. Tests: the validator test above and the runner test 'F-DG0-236: the runner pre-creates the stage's evidence directories and the gate-record directory'.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R19-qa-verifier-20260930T092007Z-f29d73ab",
+          "session_id": "f29d73ab-4ac9-4ecf-9deb-bd30fc4d7d0b"
+        },
+        "at": "2026-09-30T09:42:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-19/10-f236-live-stub-repro.log",
+          "tools/gates/lib/candidate.mjs#isSandboxStub",
+          "tools/agents/run-agent.sh#L71",
+          "tools/gates/tests/validator.test.mjs#F-DG0-146/F-DG0-236"
+        ],
+        "note": "Reproduced live with real bubblewrap mount stubs in disposable clones (bwrap --ro-bind /dev/null over two non-existent paths, observed from outside the bwrap). Seen from outside, each stub is a 'regular empty file size=0 mode=444'. Pre-fix (bb062dc = fe722c8^): the working-tree candidate flips from b7f60ed3 (87 files) to 79a7b26c (89 files) while the stub exists. Candidate 0a65201: it stays 6720ad2c (91 files). isSandboxStub skips only untracked, zero-length, unwritable regular files, so real empty files still count (validator test 'F-DG0-146/F-DG0-236'). run-agent.sh pre-creates docs/delivery/gates and the per-stage evidence directories; docs/delivery/gates is a directory in the shared tree. During this round the shared tree held the other runs' stubs, and `candidate.mjs --stage DG0` still printed 6720ad2c/91. Fix complete."
+      }
     },
     {
       "id": "F-DG0-237",
@@ -5161,7 +5183,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-15/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-28T23:50:00Z",
@@ -5172,10 +5194,30 @@
           "at": "2026-09-29T06:12:43Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef"
+        },
+        {
+          "at": "2026-09-30T09:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 19: PASS"
         }
       ],
       "fix_revision": "fe722c8b513801f1fe6a86dd1a0eff4d9d9891ef",
-      "fix_summary": "D-029: threat-model.md now states that a confined role's shell can create a new file or directory at any path that does not exist yet and is not on its deny list (repository root, new top-level directories such as src/ or docs/architecture/, new entries under docs/delivery/), that such files cannot change committed, protected or other agents' content, and that they are detected via meta.json outputs and git status (review auto-commits take only the run directory and tool-authored files)."
+      "fix_summary": "D-029: threat-model.md now states that a confined role's shell can create a new file or directory at any path that does not exist yet and is not on its deny list (repository root, new top-level directories such as src/ or docs/architecture/, new entries under docs/delivery/), that such files cannot change committed, protected or other agents' content, and that they are detected via meta.json outputs and git status (review auto-commits take only the run directory and tool-authored files).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R19-qa-verifier-20260930T092007Z-f29d73ab",
+          "session_id": "f29d73ab-4ac9-4ecf-9deb-bd30fc4d7d0b"
+        },
+        "at": "2026-09-30T09:42:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-19/11-f237-f239-live-probes.log",
+          "docs/delivery/threat-model.md#L43"
+        ],
+        "note": "threat-model.md row 'New untracked files' now applies to implementers only. It states that for confined roles a new top-level path lands in the process sandbox's throwaway tmpfs, and every other new path outside the role's areas has a read-only parent (D-030). Live in this run: mkdir under docs/architecture, tests/unit, docs/delivery/__pycache__, docs/source, another reviewer's evidence dir and reviews/round-19 all fail with 'Read-only file system'. New top-level paths (src/, __pycache__/) can be created, which matches the stated tmpfs behaviour. The round-15 finding was that the text understated the scope; the corrected text matches the observed behaviour. Fix complete."
+      }
     },
     {
       "id": "F-DG0-147",
@@ -5212,22 +5254,26 @@
           "at": "2026-09-29T16:36:00Z",
           "status": "ACCEPTED_OBSERVATION",
           "note": "verified by code-security-reviewer round 18: PASS"
+        },
+        {
+          "at": "2026-09-30T09:28:18Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by code-security-reviewer round 19: PASS"
         }
       ],
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R18-code-security-reviewer-20260929T162345Z-2b492b0f",
-          "session_id": "2b492b0f-6e27-4726-8623-9ceef8f0057e"
+          "run_id": "DG0-T-DG0-REV-SEC-R19-code-security-reviewer-20260930T092002Z-d6ea66b3",
+          "session_id": "d6ea66b3-26b4-46bf-873c-e06eb6bef5d1"
         },
-        "at": "2026-09-29T16:36:00Z",
+        "at": "2026-09-30T09:28:18Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-18/05-r17-repro-old-vs-new.log",
-          "tools/agents/agent_sandbox.py#L56-L69"
+          "docs/delivery/test-evidence/DG0/code-security/round-19/02-test-suites.log"
         ],
-        "note": "Still reproduces unchanged (case E: a new own-role file in an earlier round is copied back, exit 0). I still judge it Low, non-mandatory and fail-closed for gate integrity, because a record in an earlier round must reconstruct from that round's own run transcript. Re-accepted as an observation; pinning the accept pattern to the current round remains the recommended hardening."
+        "note": "Re-accepted as an observation. The copy-back accept pattern is still round-unpinned (agent_sandbox.py:68, rules.mjs:365), but it remains fail-closed for gate integrity: only new own-role files are copied, existing files are write-once discards (F-DG0-150 fix, agent_sandbox.py:283), and checkReviewRounds flags round directories not recorded in stages.json. F-DG0-150/151 remain fixed and the --unshare-ipc of D-031/F-DG0-148 still holds."
       }
     },
     {
@@ -5321,23 +5367,26 @@
           "at": "2026-09-29T16:36:00Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 18: FAIL"
+        },
+        {
+          "at": "2026-09-30T09:28:18Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 19: FAIL"
         }
       ],
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG0-T-DG0-REV-SEC-R18-code-security-reviewer-20260929T162345Z-2b492b0f",
-          "session_id": "2b492b0f-6e27-4726-8623-9ceef8f0057e"
+          "run_id": "DG0-T-DG0-REV-SEC-R19-code-security-reviewer-20260930T092002Z-d6ea66b3",
+          "session_id": "d6ea66b3-26b4-46bf-873c-e06eb6bef5d1"
         },
-        "at": "2026-09-29T16:36:00Z",
+        "at": "2026-09-30T09:28:18Z",
         "result": "FAIL",
         "evidence": [
-          "docs/delivery/test-evidence/DG0/code-security/round-18/03-proc-peer-root-repro.log",
-          "tools/agents/agent_sandbox.py#L147-L149",
-          "docs/delivery/threat-model.md#disclosed-residuals"
+          "docs/delivery/test-evidence/DG0/code-security/round-19/05-residual7-readonly.log"
         ],
-        "note": "Assessed without writing any /proc/sys entry. The residual as scoped (a uid-0 file-tool write to a /proc/sys tunable) is confirmed as described: host /proc is bound read-write with no /proc/sys submount (agent_sandbox.py:148); the CLI runs as uid 0 with CapEff = CAP_SETFCAP only and NoNewPrivs 1 (Read of /proc/self/status); `test -w /proc/sys/kernel/core_pattern` reports writable at the process-sandbox layer (mode-bit read only, 03-proc-peer-root-repro.log); and the guard fails closed on paths that resolve through /proc, /sys or /dev. However, I cannot confirm that the residual is no larger than disclosed. The same read-write host procfs plus the shared PID namespace exposes /proc/<peer-pid>/root and /cwd, through which another concurrent run's evidence, private TMPDIR, staged review record and session directory become writable (F-DG0-152, reproduced in a disposable fixture). That contradicts the residual's statement that no reviewer artefact or another run's scratch becomes writable. It stays OPEN until F-DG0-152 is fixed, or the residual is re-scoped and re-assessed."
+        "note": "Not accepted as an observation this round. The read-only assessment (no /proc/sys write) shows that the residual it restates is described with the wrong scope: the process sandbox creates only an IPC namespace and binds the host procfs, so the reachable tunables are host-global, not 'of its own run', and the 'cross-run /proc/<peer>/sys amplification' that D-033 is said to close does not exist as a separate path. The shell-layer 'read-only /proc/sys' claim is also not supported by that layer's mount flags. D-033 does correctly close the cross-run /proc/<peer>/root|cwd path (F-DG0-152). See F-DG0-154. I would re-assess acceptance once residual 7 states its real scope and the user re-confirms, or a narrower control is adopted."
       }
     },
     {
@@ -5473,7 +5522,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-29T16:35:00Z",
@@ -5484,10 +5533,31 @@
           "at": "2026-09-30T08:08:04Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1a99d13"
+        },
+        {
+          "at": "2026-09-30T09:28:18Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 19: PASS"
         }
       ],
       "fix_revision": "1a99d13",
-      "fix_summary": "D-033: each run enters its own scope-only Landlock domain (landlock_exec.py, after setpriv, before claude execs; handled_access_fs=0, handled_access_net=0, scoped=SIGNAL+ABSTRACT_UNIX_SOCKET, ABI7). Sibling domains cannot ptrace each other, so cross-run /proc/<peer>/root|cwd access and signals are refused; own areas and nested bwrap still work; fail-closed if Landlock is unavailable. Test: process-sandbox.test.mjs F-DG0-152 with a positive control; validator requires the per-run landlock evidence."
+      "fix_summary": "D-033: each run enters its own scope-only Landlock domain (landlock_exec.py, after setpriv, before claude execs; handled_access_fs=0, handled_access_net=0, scoped=SIGNAL+ABSTRACT_UNIX_SOCKET, ABI7). Sibling domains cannot ptrace each other, so cross-run /proc/<peer>/root|cwd access and signals are refused; own areas and nested bwrap still work; fail-closed if Landlock is unavailable. Test: process-sandbox.test.mjs F-DG0-152 with a positive control; validator requires the per-run landlock evidence.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R19-code-security-reviewer-20260930T092002Z-d6ea66b3",
+          "session_id": "d6ea66b3-26b4-46bf-873c-e06eb6bef5d1"
+        },
+        "at": "2026-09-30T09:28:18Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/code-security/round-19/02-test-suites.log",
+          "docs/delivery/test-evidence/DG0/code-security/round-19/05-residual7-readonly.log",
+          "tools/agents/landlock_exec.py"
+        ],
+        "note": "Verified independently in a fresh clone of 0a652018. The F-DG0-152 case in tools/agents/tests/process-sandbox.test.mjs ran fully and was not skipped. Its positive control (the real agent_sandbox.py args with landlock_exec stripped, i.e. the pre-fix D-030 design) reproduced the original failure: viaProcRoot/viaProcCwd/viaProcRootTmp WROTE and the signal was allowed. With the per-run Landlock domain all three were refused and the signal was refused, while ownEvidence and ownTmp were WROTE and nested bwrap with a fresh --proc still worked. Live check on this run: ls /proc/1/root is refused. Code review of landlock_exec.py: fail-closed (prctl or ruleset errors raise before execv; a 24-byte attr with scoped set gives E2BIG/EINVAL on ABI<6), single-threaded before execv, inherited by descendants. The validator requires the landlock block (rules.mjs:371-377, tamper tests). The sandbox.json landlock block is written statically by finish(), but claude cannot exec unless restrict_self succeeded, so the block cannot misstate a run that produced a transcript."
+      }
     },
     {
       "id": "F-DG0-153",
@@ -5506,7 +5576,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-29T16:35:00Z",
@@ -5517,10 +5587,29 @@
           "at": "2026-09-30T08:08:04Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1a99d13"
+        },
+        {
+          "at": "2026-09-30T09:28:18Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 19: PASS"
         }
       ],
       "fix_revision": "1a99d13",
-      "fix_summary": "Fixed threat-model.md Mechanically-prevented row 1 wording: shared host PID namespace, private IPC namespace (--unshare-ipc), host-bind procfs; consistent with residual 8 and sandbox.json."
+      "fix_summary": "Fixed threat-model.md Mechanically-prevented row 1 wording: shared host PID namespace, private IPC namespace (--unshare-ipc), host-bind procfs; consistent with residual 8 and sandbox.json.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-SEC-R19-code-security-reviewer-20260930T092002Z-d6ea66b3",
+          "session_id": "d6ea66b3-26b4-46bf-873c-e06eb6bef5d1"
+        },
+        "at": "2026-09-30T09:28:18Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/threat-model.md#mechanically-prevented"
+        ],
+        "note": "threat-model.md:27 ('Mechanically prevented' row 1) now says the sandbox 'shares the host PID namespace (creating none of its own) while creating its own IPC namespace (--unshare-ipc)', consistent with agent_sandbox.py:154, sandbox.json unshare:[ipc] and residual 8."
+      }
     },
     {
       "id": "F-DG0-239",
@@ -5542,7 +5631,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG0/round-18/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-09-29T17:00:00Z",
@@ -5553,10 +5642,141 @@
           "at": "2026-09-30T08:08:04Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 38ffd1d"
+        },
+        {
+          "at": "2026-09-30T09:42:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 19: PASS"
         }
       ],
       "fix_revision": "38ffd1d",
-      "fix_summary": "Fixed docs/delivery/agents.md Process-sandbox line: shared host PID namespace, private IPC, host-bind rw procfs, plus the per-run Landlock domain (D-033); matches the code and sandbox.json."
+      "fix_summary": "Fixed docs/delivery/agents.md Process-sandbox line: shared host PID namespace, private IPC, host-bind rw procfs, plus the per-run Landlock domain (D-033); matches the code and sandbox.json.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG0-T-DG0-REV-QA-R19-qa-verifier-20260930T092007Z-f29d73ab",
+          "session_id": "f29d73ab-4ac9-4ecf-9deb-bd30fc4d7d0b"
+        },
+        "at": "2026-09-30T09:42:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG0/qa/round-19/32-agents-md-vs-evidence.log",
+          "docs/delivery/test-evidence/DG0/qa/round-19/11-f237-f239-live-probes.log",
+          "docs/delivery/agents.md#L114",
+          "tools/agents/agent_sandbox.py#bwrap_args"
+        ],
+        "note": "docs/delivery/agents.md line 114 now reads: IPC namespace private (--unshare-ipc), PID namespace shared with the host, host procfs bound read-write, plus a per-run Landlock domain (D-033). This matches agent_sandbox.py (bwrap args '--unshare-ipc', '--bind /proc /proc', no --unshare-pid; the sandbox.json record has unshare ['ipc'], procfs 'host-bind' and the landlock block), and threat-model residuals 7 and 8. Fix complete."
+      }
+    },
+    {
+      "id": "F-DG0-154",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Threat-model residual 7 misstates its own scope: the /proc/sys tunables a file tool can reach are HOST-GLOBAL, not 'of its own run', and the claim that /proc/sys is read-only for the agent's shell is not supported by the shell layer's mount flags. The residual the user accepted (D-030 option A) is therefore larger than disclosed.",
+      "reproduction": "Read-only assessment; no /proc/sys write was performed, as the assignment requires. (1) tools/agents/agent_sandbox.py:154-155 creates only an IPC namespace (--unshare-ipc) and binds the host procfs read-write (--bind /proc /proc). There is no user, net, UTS or PID namespace, so apart from the IPC-namespaced entries every /proc/sys entry the process-sandbox layer sees is the host kernel's single global tunable. docs/delivery/threat-model.md:60 (residual 7) instead says a file tool could write 'a /proc/sys entry of its own run'. It also says D-033 closed a 'cross-run amplification (reaching another run's /proc/<peer>/sys through /proc/<peer>/root)', but every run binds the same host /proc, so there is no per-run /proc/sys whose reach D-033 could have narrowed. The own-run framing, and the conclusion drawn from it ('availability / host-tunable risk, not repository or gate integrity'), rest on a per-run scope that does not exist. (2) threat-model.md:60 and agent_sandbox.py:149-150 say /proc/sys is 'read-only ... for the agent's shell (the Claude Code Bash sandbox's user namespace)'. In this run's own shell layer, /proc/self/mountinfo shows the topmost /proc mount as 'rw,nosuid,nodev,noexec' and the UTS namespace as the initial one (uts:[4026531838]), and access(2) reports /proc/sys/kernel/hostname writable. Any refusal there would have to come from user-namespace ownership checks, not from a read-only mount. The document does not establish that, and it cannot be confirmed without a write. Evidence: docs/delivery/test-evidence/DG0/code-security/round-19/05-residual7-readonly.log.",
+      "expected": "Residual 7 accurately states that the reachable /proc/sys tunables are host-global (shared with the host and every concurrent run, except the IPC-namespaced entries), states what protects the shell layer (and shows it, for example by the operator running a controlled test), and bases its integrity conclusion on that real scope. The user re-confirms option A on the corrected text, or a narrower control is adopted.",
+      "actual": "Residual 7 describes an 'own-run' scope and a closed 'cross-run /proc/<peer>/sys amplification' that do not match the mount and namespace configuration, and asserts a read-only shell /proc/sys that the shell layer's mount flags do not show. The acceptance of F-DG0-149 as an observation is premised on this text.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-19/05-residual7-readonly.log",
+        "tools/agents/agent_sandbox.py#L154-L155",
+        "docs/delivery/threat-model.md#residual-7"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-19/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T09:28:18Z",
+          "status": "OPEN",
+          "note": "Raised in round 19 by code-security-reviewer. Proposal: correct residual 7 (host-global scope; remove the '/proc/<peer>/sys amplification' claim; state and demonstrate the actual shell-layer protection), have the user re-decide D-030 option A on the corrected text, and spike a narrower control for the process-sandbox layer (for example a user namespace that does not map to host uid 0 for the claude process, or restricting file-tool writes to the role's areas at the kernel level) that keeps the reviewers' nested bwrap working."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-155",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-035's tolerance of a missing manifest source_commit is not limited to superseded rounds: it also applies to the gate's own round, and checkCandidate in current mode never checks gate.source_commit, so a non-existent gate source_commit passes current-mode validation",
+      "reproduction": "tools/gates/lib/rules.mjs:808-822 (findManifest) suppresses the recompute error whenever `git cat-file -e <source_commit>^{commit}` fails, for every round, including the round whose candidate is the gate candidate. The code comment and D-035 describe it as a 'superseded (non-gate) review round' tolerance. checkCandidate (rules.mjs:828-857) recomputes from the working tree in current mode and only compares manifest.source_commit with gate.source_commit (line 842), never checking that the commit exists. Reproduction in a disposable clone at 3ffb28c (docs/delivery/test-evidence/DG0/code-security/round-19/r19-d035-gate-round-repro.mjs, log 01-d035-gate-round-repro.log): with the round-19 (gate) manifest's source_commit set to ffff…ffff, findManifest returns 0 errors (A1) and checkCandidate(mode=current) returns 0 errors (B). Only checkCandidate(mode=historical) rejects it (C). A reachable but wrong commit is still rejected (A2). In a stage whose findings carry no fix_revision, nothing in current mode catches it; the rules.mjs:646 ancestry check does so only indirectly.",
+      "expected": "The missing-commit tolerance applies only to rounds whose candidate is not the gate candidate (r.candidate_id !== gate/stage.candidate.candidate_id). Current-mode gate validation requires gate.source_commit to exist and be an ancestor of HEAD.",
+      "actual": "A gate record whose traceability commit does not exist passes current-mode validation. Content identity is unaffected: the working-tree recompute still binds the candidate, and historical mode, which CLAUDE.md requires before the next stage, rejects it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-19/r19-d035-gate-round-repro.mjs",
+        "docs/delivery/test-evidence/DG0/code-security/round-19/01-d035-gate-round-repro.log",
+        "tools/gates/lib/rules.mjs#L808-L822"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-19/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T09:28:18Z",
+          "status": "OPEN",
+          "note": "Raised in round 19 by code-security-reviewer. D-035 itself, for superseded rounds, is judged an acceptable loosening of a redundant check; only its extension to the gate round is flagged. Low: content identity is preserved, and historical mode catches it."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-156",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The candidate's project .claude/settings.json auto-allows `git push`, `git filter-branch`, `git update-ref` and `git branch`, and every agent run loads project settings, so these history-rewriting commands bypass the permission classifier for all project agents (contained by the sandbox; observation)",
+      "reproduction": ".claude/settings.json (commit 5a49719, 'Expand permissions in settings.json for Git commands') adds Bash(git filter-branch:*), Bash(git branch:*), Bash(git push:*) and Bash(git update-ref:*) to permissions.allow. tools/agents/run-agent.sh:184 starts every agent with --setting-sources project, so the rules apply to reviewers and implementers too. They remain contained: .git is on COMMON_DENY (agent_settings.py:34, read-only for every role), allowUnsandboxedCommands is false, and the agent shell has no network. Evidence: docs/delivery/test-evidence/DG0/code-security/round-19/06-settings-allow-rules.log.",
+      "expected": "Allow rules needed only by the orchestrator (the D-034 history repair) live in the user's local settings (.claude/settings.local.json), which agent runs do not load, or are removed once the repair is done.",
+      "actual": "The rules are in project settings and part of the candidate. Defence in depth is weaker (the classifier no longer screens these commands for agents), but no write becomes possible.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-19/06-settings-allow-rules.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-19/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T09:28:18Z",
+          "status": "OPEN",
+          "note": "Raised in round 19. Low and non-mandatory; the reporter would accept it as an observation (kernel-level containment holds), but recommends moving the rules to local settings."
+        }
+      ]
+    },
+    {
+      "id": "F-DG0-240",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-023",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "D-035's pruned-source_commit tolerance also covers the gate's own round. In current mode (the mode the gate is validated in before approval), validateGate now accepts an APPROVED gate record whose source_commit, and its gate-round manifest's source_commit, name a commit that does not exist. Before D-035 this was rejected. D-035 says the gate candidate is still recomputed from the retained gate.source_commit, but that is true only in --historical mode",
+      "reproduction": "Independent test QA19-P4 in docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r19.test.mjs. It builds a disposable fixture: a complete four-record DG0 gate, decision APPROVED, with one Low finding accepted as an observation (so no fix_revision check applies). Every source_commit pointer (gate record, frozen manifest, stages.json candidate and rounds, review records) is set to 5a1e...5a1e (40 hex chars, not an object in the repository). The committed content is unchanged, so the working tree still hashes to the candidate_id. Run with QA_REPO_ROOT=<clone>. (1) Candidate 0a65201: validateGate(repo,'DG0') in current mode returns 0 errors. The control with the real commit also returns 0 errors. --historical returns 'candidate: cannot recompute from 5a1e...'. (2) Same test at 695ab30, the commit before D-035 (28f99e3): current mode returns 2 errors ('review rounds: DG0 round 1/2 manifest ... cannot recompute from its source_commit'), and the test passes. The r9 regression case QA5-N57 ('a round whose manifest names a source_commit that does not exist is rejected') now fails for the same reason: 'validator accepted an invalid gate (no errors)'. Cause: findManifest (tools/gates/lib/rules.mjs) tolerates a missing source_commit for every round, the gate's candidate round included. In current mode checkCandidate recomputes from the working tree (manifestFromWorkingTree), never from gate.source_commit, so no current-mode check is left that the gate's commit exists.",
+      "expected": "D-035 describes this as a loosening 'on non-gate rounds only' and says the gate candidate is 'recomputed independently from the retained gate.source_commit'. Current-mode gate validation should therefore still reject a gate (and its own round) whose source_commit does not exist, or does not describe the candidate. Suggested fix: apply the D-035 tolerance only to rounds whose candidate_id differs from the gate's / stage.candidate's candidate_id. Or have checkCandidate in current mode also require that gate.source_commit exists (git cat-file -e <sha>^{commit}) and that manifestFromRef(gate.source_commit) hashes to gate.candidate_id. Add QA19-P4 (or an equivalent) as a regression test. Correct the D-035 wording to cover both modes.",
+      "actual": "An APPROVED DG0 gate record with an untraceable, fabricated commit pointer passes `validate.mjs --stage DG0` (current mode) with exit 0. Detection comes later, through `--pipeline` (historical mode for every approved gate, run in CI and before the next stage). By then the gate record and its evidence are covered by approval immutability, so the fix would need a history rewrite. Integrity of the approved content itself is not weakened: the working tree still has to hash to the candidate_id, and the reviews bind to that candidate_id. So this is not Critical/High, and not a mandatory violation. It is a material defect in the approval-time check (REQ-DLV-023 'candidate match'), introduced by this candidate, and it contradicts the decision record's stated scope. Medium. For non-gate, superseded rounds, I agree the D-035 tolerance is acceptable (QA19-P2 shows a reachable but mismatched commit is still rejected).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/qa/tests/dg0-gate-negative-r19.test.mjs#QA19-P4",
+        "docs/delivery/test-evidence/DG0/qa/round-19/12-qa19-new-cases.log#QA19-P4",
+        "docs/delivery/test-evidence/DG0/qa/round-19/13-qa19-d035-before-after.log",
+        "tools/gates/lib/rules.mjs#findManifest",
+        "tools/gates/lib/rules.mjs#checkCandidate",
+        "docs/delivery/decisions.md#D-035"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG0/round-19/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T09:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in the DG0 round-19 QA review of candidate 6720ad2c (0a65201). Medium, not mandatory."
+        }
+      ]
     }
   ]
 }
