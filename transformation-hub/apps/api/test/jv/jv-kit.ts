@@ -1,8 +1,11 @@
 import { expect } from 'vitest';
+import request from 'supertest';
 import { demoEmail } from '../../src/cli/seed-demo';
-import { owner } from '../helpers';
-import { createWithVersion, getBinary, login, DocClient } from '../documents/doc-helpers';
-import { setupGovernance, setupProject, gateDecision, Gov, Personas } from '../gates/gate-test-kit';
+import { getApp, owner } from '../helpers';
+import { TEST_ENV } from '../test-env';
+import { createWithVersion, getBinary, DocClient } from '../documents/doc-helpers';
+import { gateDecision, Gov, Personas } from '../gates/gate-test-kit';
+import { setupCommittee, openMeeting, Actors } from '../governance/gov-fixtures';
 import { localDate, addCalendarDays } from '@hub/domain';
 
 /**
@@ -39,12 +42,88 @@ export interface JvProject {
   gov: Gov;
 }
 
+/**
+ * Log a persona in with ONE public request (POST /auth/demo-login). The user id is resolved with the owner pool instead
+ * of GET /auth/demo-users, so a spec that needs a dozen personas stays well inside the public rate limit (60/min).
+ */
+export async function login(persona: string): Promise<DocClient> {
+  const r = await owner().query<{ id: string }>(`select u.id from app_user u join organization o on o.id = u.org_id where u.email = $1 and o.slug = $2`, [
+    demoEmail(persona),
+    TEST_ENV.HUB_ORG_SLUG,
+  ]);
+  const userId = r.rows[0]?.id;
+  if (!userId) throw new Error(`persona ${persona} not found`);
+  const app = await getApp();
+  const agent = request.agent(app.getHttpServer());
+  const res = await agent.post('/api/v1/auth/demo-login').send({ userId }).expect(201);
+  const csrf = res.body.csrfToken as string;
+  return {
+    persona,
+    userId,
+    agent,
+    csrf,
+    get: (path) => agent.get(path),
+    post: (path, body = {}) => agent.post(path).set('x-csrf-token', csrf).send(body as object),
+    patch: (path, body = {}) => agent.patch(path).set('x-csrf-token', csrf).send(body as object),
+    upload: (path, bytes, filename, fileType) => {
+      let q = agent.post(path).set('x-csrf-token', csrf).set('content-type', 'application/octet-stream');
+      if (filename !== null) q = q.set('x-filename', encodeURIComponent(filename));
+      if (fileType) q = q.set('x-file-type', fileType);
+      return q.send(bytes);
+    },
+  };
+}
+
+/** Project roles of the personas in a JV test project (as in the gates kit, plus the second secretariat member). */
+const ROLE_GRANTS: [string, string[]][] = [
+  ['sponsor', ['sponsor']],
+  ['chair', ['committee_chair']],
+  ['secretary', ['secretary_cpmo']],
+  ['legal', ['legal_restricted', 'functional_approver']],
+  ['finance', ['finance_restricted', 'functional_approver']],
+  ['approver', ['functional_approver']],
+  ['contributor', ['contributor']],
+  ['ops.lead', ['secretary_cpmo']],
+];
+
+/**
+ * A fresh DC project (portfolio API) with the persona roles and a real governance set-up (active committee, approved DEMO
+ * authority matrix, open meeting with quorum) — the same shape as gate-test-kit's setupProject + setupGovernance, but each
+ * persona logs in exactly once (the gates kit logs most personas in several times, which exceeds the public rate limit
+ * when a spec adds its own external / clean-team logins).
+ */
 export async function setupJvProject(code: string): Promise<JvProject> {
-  const { projectId, orgId, p: gp } = await setupProject(code);
-  const gov = await setupGovernance(projectId, gp);
+  const admin = await login('portfolio.admin');
+  const templates = (await admin.get('/api/v1/templates').expect(200)).body.items as { id: string; templateKey: string }[];
+  const dc = templates.find((t) => t.templateKey === 'dc-carveout')!;
   const p = {} as JvPersonas;
   for (const k of ['pm', 'sponsor', 'legal', 'finance', 'approver', 'contributor', 'chair', 'secretary'] as const) p[k] = await login(k);
-  return { projectId, orgId, p, gp, gov };
+  const techLead = await login('tech.lead');
+  const opsLead = await login('ops.lead');
+  const byKey: Record<string, DocClient> = { ...p, 'tech.lead': techLead, 'ops.lead': opsLead };
+  const created = await admin
+    .post('/api/v1/projects', {
+      templateVersionId: dc.id,
+      code,
+      name: `${code} — JV test project`,
+      projectManagerUserId: p.pm.userId,
+      newco: { mode: 'new', name: `${code} NewCo (test entity)`, incorporationStatus: 'unconfirmed' },
+    })
+    .expect(201);
+  const projectId = created.body.id as string;
+  // Synthetic data only: flag the project as demo (owner pool — no API sets this) so the DEMO authority matrix applies.
+  await owner().query('update project set is_demo = true where id = $1', [projectId]);
+  for (const [persona, roles] of ROLE_GRANTS) {
+    for (const role of roles) await admin.post(`/api/v1/projects/${projectId}/members`, { userId: byKey[persona]!.userId, role, reason: 'jv test' }).expect(201);
+  }
+  const ws = (await p.pm.get(`/api/v1/projects/${projectId}/workstreams`).expect(200)).body.items as { id: string }[];
+  await admin.post(`/api/v1/projects/${projectId}/members`, { userId: techLead.userId, role: 'workstream_lead', workstreamId: ws[0]!.id, reason: 'jv test (workstream lead)' }).expect(201);
+  const org = await owner().query<{ org_id: string }>('select org_id from project where id = $1', [projectId]);
+  const gp = { ...p, techLead } as Personas;
+  const tc = await setupCommittee(projectId, gp as unknown as Actors);
+  const meeting = await openMeeting(projectId, gp as unknown as Actors, tc, ['chair', 'sponsor', 'secretary', 'finance', 'legal', 'approver']);
+  const gov: Gov = { committeeId: tc.id, meetingId: meeting.id, secretary2: opsLead };
+  return { projectId, orgId: org.rows[0]!.org_id, p, gp, gov };
 }
 
 /**

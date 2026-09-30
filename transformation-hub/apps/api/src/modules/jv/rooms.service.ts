@@ -335,7 +335,8 @@ export class RoomsService {
     );
     const tx = this.s.db.tx();
     const [{ total }] = (await tx.select({ total: count() }).from(d).where(where)) as [{ total: number }];
-    const order = orderBySort(q.sort, { title: d.title, kind: d.kind }, d.id, [asc(d.title), asc(d.id)]);
+    // Fixed order (a room-scoped list: an unknown room is 404, so it declares no sort keys).
+    const order = [sql`${d.title} collate "und-x-icu" asc`, asc(d.id)];
     const rows = await tx
       .select({ d, v: schema.documentVersion })
       .from(d)
@@ -353,6 +354,8 @@ export class RoomsService {
         .orderBy(desc(schema.roomDisclosure.createdAt), desc(schema.roomDisclosure.id));
       for (const x of ds) if (!latest.has(x.documentId)) latest.set(x.documentId, x);
     }
+    // Opening the VDR index is an audited read (jv.room.read, auditRead).
+    await this.s.audit.record({ action: 'jv.room.read', entityType: 'partner_room', entityId: roomId, projectId, after: { view: 'index', page: q.page } });
     return pageOf(
       rows.map(({ d: doc, v }) => {
         const disc = latest.get(doc.id);
@@ -384,7 +387,7 @@ export class RoomsService {
     const tx = this.s.db.tx();
     const base = tx.select({ total: count() }).from(x).innerJoin(d, and(eq(d.id, x.documentId), eq(d.projectId, x.projectId)));
     const [{ total }] = (await base.where(where)) as [{ total: number }];
-    const order = orderBySort(q.sort, { requestedAt: x.createdAt, releasedAt: x.releasedAt }, x.id, [desc(x.createdAt), desc(x.id)]);
+    const order = [desc(x.createdAt), desc(x.id)];
     const rows = await tx
       .select({ x, title: d.title, versionNo: schema.documentVersion.versionNo, filename: schema.documentVersion.filename })
       .from(x)

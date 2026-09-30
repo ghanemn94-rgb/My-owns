@@ -3,6 +3,9 @@ import { schema } from '@hub/db';
 import { addCalendarDays, localDate } from '@hub/domain';
 import type { ModuleSeed } from '../../cli/seed-modules';
 import { DbService } from '../../platform/db.service';
+import { JobQueue } from '../../platform/jobs/job-queue.service';
+import { StatusDimensionsService } from '../gates/status-dimensions.service';
+import { RECOMPUTE_DIMENSIONS_JOB } from '../gates/gates.service';
 import { DocumentsService } from '../documents/documents.service';
 import { EvidenceService } from '../documents/evidence.service';
 import { PartnersService } from './partners.service';
@@ -151,6 +154,11 @@ export const jvSeed: ModuleSeed = {
     await asUser('legal', (ctx) => tx.determineWaivability(ctx, pid, waivable.id, { expectedVersion: 1, blocking: true, waivable: true, waiverAuthorityRole: 'sponsor', basis: 'DEMO — synthetic determination: waivable by the sponsor.' }));
     await asUser('finance', (ctx) => tx.createFlow(ctx, pid, closing.id, { description: 'DEMO — Consideration at closing (amount TBD; record-only)', payer: 'Demo Partner Alpha (fictional)', payee: 'Mobily (party label, demo)' }));
     await asUser('pm', (ctx) => post.create(ctx, pid, { kind: 'condition_subsequent', title: 'DEMO — Post-closing registration filing (synthetic)', ownerUserId: pmId, dueDate: addCalendarDays(today, 150), closingId: closing.id }));
-    log(`jv demo scenario: partners ${alpha.code}/${beta.code}, rooms ${room.id}/${ctRoom.id}, signing ${signing.code}, closing ${closing.code} blocked by DEMO-CP-01`);
+    // The event/CP commands above queued status-dimension recomputes (cp.changed): recompute synchronously now (as the
+    // gates / readiness seeds do) so the JV transaction dimension reflects the demo signing/closing — and a re-run, which
+    // returns early above, changes nothing — then cancel the redundant queued recomputes.
+    await asUser('pm', (ctx) => app.get(StatusDimensionsService).recompute(ctx, pid));
+    const cancelled = await app.get(JobQueue).cancelQueued(pid, [RECOMPUTE_DIMENSIONS_JOB]);
+    log(`jv demo scenario: partners ${alpha.code}/${beta.code}, rooms ${room.id}/${ctRoom.id}, signing ${signing.code}, closing ${closing.code} blocked by DEMO-CP-01; dimensions recomputed (${cancelled} queued recompute job(s) cancelled)`);
   },
 };

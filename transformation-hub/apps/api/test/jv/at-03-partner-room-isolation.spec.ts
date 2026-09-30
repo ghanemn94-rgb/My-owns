@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { PoolClient } from 'pg';
-import { closeApp, closePools, owner, runtimePool } from '../helpers';
+import { closeApp, closePools, loginAs, owner, runtimePool } from '../helpers';
 import { P, auditRows, doc, getBinary, grant, in30, ok, partnerAt, room, setupJvProject, syntheticUser, DocClient, JvProject } from './jv-kit';
 
 /**
@@ -90,6 +90,15 @@ describe('AT-03 — partner A vs partner B isolation [AT-03, REQ-JV-001, REQ-ENT
     expect(q.status).toBe(404);
     const dd = (await extB.get(`${P(pid)}/partner-access/rooms/${roomB}/dd-requests`).expect(200)).body;
     expect(dd.items).toEqual([]);
+  });
+
+  it('a Project-B user gets 404 for every JV record of this project (no title, no count)', async () => {
+    const pmB = await loginAs('pm.b');
+    for (const path of ['/partners', `/partners/${A}`, '/partner-rooms', `/partner-rooms/${roomA}`, `/partner-access/rooms/${roomA}/disclosures`, '/diligence-requests', '/closings', '/deal-scenarios']) {
+      const r = await pmB.get(`${P(pid)}${path}`);
+      expect(r.status, path).toBe(404);
+      expect(JSON.stringify(r.body)).not.toMatch(/Partner A|Room A/);
+    }
   });
 
   it('external accounts have no internal projection: registers, documents, search and AI are refused', async () => {
