@@ -68,7 +68,7 @@ describe('SEC-P34-01 — a readiness sign-off by the person who linked the check
     version = t.body.version;
   }, 120_000);
 
-  it.fails('DEFECT SEC-P34-01: whoever recorded the evidence of a check cannot sign it off (403)', async () => {
+  it('SEC-P34-01 (fixed, regression): whoever recorded the evidence of a check cannot sign it off (403)', async () => {
     const r = await p.techLead.post(`${G(projectId)}/readiness-checks/${checkId}/sign-off`, { expectedVersion: version, outcome: 'passed', note: 'Signed on my own evidence (probe)' });
     console.log(`SEC-P34-01 observed: sign-off by the evidence linker → ${r.status} ${JSON.stringify(r.body)}`);
     expect(r.status).toBe(403);
@@ -227,7 +227,7 @@ describe('SEC-P34-07 — consents above the caller’s clearance are shown insid
     expect(JSON.stringify(own.consents)).toContain(counterparty);
   });
 
-  it.fails('DEFECT SEC-P34-07: the perimeter item detail and the Day-1 positions never show a consent the caller cannot read', async () => {
+  it('SEC-P34-07 (fixed, regression): the perimeter item detail and the Day-1 positions never show a consent the caller cannot read', async () => {
     const item = (await p.pm.get(`${G(projectId)}/perimeter-items/${itemId}`).expect(200)).body;
     const day1 = (await p.pm.get(`${G(projectId)}/perimeter/day1-contract-positions`).expect(200)).body;
     console.log(`SEC-P34-07 observed: consents on the item shown to the PM → ${JSON.stringify(item.consents)}; in day-1 positions: ${JSON.stringify(day1).includes(counterparty)}`);

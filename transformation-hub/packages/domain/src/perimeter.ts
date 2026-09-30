@@ -107,6 +107,8 @@ export interface TransferCommandInput {
   aspect: TransferAspect;
   /** Current status of THIS aspect. */
   current: TransferStatus;
+  /** Current status of the OTHER aspect (DOM-P3-05: an in-scope item never has both aspects "not applicable"). */
+  otherAspect: TransferStatus;
   disposition: PerimeterDisposition;
   itemType: PerimeterItemType;
   /** Mechanism that will apply after the command (from the command or the item). */
@@ -176,6 +178,16 @@ export function assertTransferCommand(i: TransferCommandInput): TransferStatus {
     case 'block':
     case 'mark_not_applicable':
       if (blank(i.note)) throw ruleViolation('transfer.reason_required', `${i.command === 'block' ? 'Blocking' : 'Marking not applicable'} requires a reason`);
+      // DOM-P3-05: an Included / Shared item always transfers on at least one aspect. An item with neither a legal nor an
+      // economic transfer is not in the transferring scope: it is reclassified (Excluded) through `classify` — under change
+      // control once a baseline is approved (AT-07) — never taken out of the transfer by two "not applicable" marks.
+      if (i.command === 'mark_not_applicable' && isInScope(i.disposition) && i.otherAspect === 'not_applicable') {
+        throw ruleViolation(
+          'transfer.not_applicable_in_scope',
+          `The ${i.aspect === 'legal' ? 'economic' : 'legal'} transfer of this ${i.disposition} item is already "not applicable": an item that does not transfer at all is reclassified (Excluded) through the scope change, not marked not applicable`,
+          { disposition: i.disposition, aspect: i.aspect },
+        );
+      }
       break;
     default:
       break;

@@ -92,6 +92,11 @@ export class CarveoutController {
     return this.transfers.record(ctx, i.params.projectId, i.body);
   }
 
+  @ApiRoute(R.determineTransferNotApplicable)
+  determineTransferNotApplicable(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.determineTransferNotApplicable>) {
+    return this.transfers.determineNotApplicable(ctx, i.params.projectId, i.params.itemId, i.body);
+  }
+
   @ApiRoute(R.verifyTransfer)
   verifyTransfer(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.verifyTransfer>) {
     return this.transfers.verify(ctx, i.params.projectId, i.params.transferId, i.body);

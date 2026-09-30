@@ -30,7 +30,7 @@ const perimeterHref = (pid: string, q: string) => `/projects/${pid}/perimeter?${
 // Reconciliation (REQ-PER-003, REQ-PER-006)
 
 type Issue = Reconciliation['findings'][number]['issue'];
-const ISSUES = ['no_transfer_plan', 'no_evidence', 'pending_disposition', 'consent_outstanding', 'pending_without_resolution', 'day1_position_incomplete', 'change_request_pending'] as const;
+const ISSUES = ['no_transfer_plan', 'no_evidence', 'pending_disposition', 'consent_outstanding', 'transfer_not_applicable', 'pending_without_resolution', 'day1_position_incomplete', 'change_request_pending'] as const;
 const CATEGORY_TONE: Record<Reconciliation['categories'][number]['status'], Tone> = { items_registered: 'success', reviewed_none_in_perimeter: 'info', unassessed: 'danger' };
 
 export function ReconciliationPanel() {

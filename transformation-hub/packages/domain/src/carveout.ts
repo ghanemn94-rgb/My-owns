@@ -136,7 +136,8 @@ export function computeStatusDimensions(input: DimensionInput): DimensionState[]
     const k = 'perimeter_transfer' as const;
     if (inScope.length === 0) return dimension(k, 'perimeter_not_defined', [m('dimension.perimeter.not_defined')], counts);
     if (blocked > 0) return dimension(k, 'blocked', [m('dimension.perimeter.blocked', { blocked })], counts);
-    if (verified + naCount === inScope.length && pending === 0) return dimension(k, 'transferred_verified', [m('dimension.perimeter.verified')], counts);
+    // DOM-P3-05: an in-scope item whose transfer is "not applicable" never counts as transferred / verified.
+    if (verified === inScope.length && pending === 0) return dimension(k, 'transferred_verified', [m('dimension.perimeter.verified')], counts);
     if (verified > 0 || (counts['transferred_pending_evidence'] ?? 0) > 0 || (counts['in_progress'] ?? 0) > 0) {
       return dimension(k, 'in_progress', [m('dimension.perimeter.in_progress', { verified, inScope: inScope.length, pending })], counts);
     }
@@ -227,7 +228,7 @@ export interface PerimeterReconItem {
 export interface ReconFinding {
   itemId: string;
   code: string;
-  issue: 'no_transfer_plan' | 'no_evidence' | 'pending_disposition' | 'consent_outstanding';
+  issue: 'no_transfer_plan' | 'no_evidence' | 'pending_disposition' | 'consent_outstanding' | 'transfer_not_applicable';
   message: string;
 }
 
@@ -244,6 +245,19 @@ export function reconcilePerimeter(items: PerimeterReconItem[]): ReconFinding[] 
     const combined = combinedTransferStatus(legal, economic);
     if (combined !== 'not_applicable' && (!it.transferMechanism || !it.plannedEffectiveDate)) {
       out.push({ itemId: it.id, code: it.code, issue: 'no_transfer_plan', message: 'No transfer mechanism and/or planned effective date' });
+    }
+    // DOM-P3-05: an in-scope item with a "not applicable" aspect is reported — it never reads as transferred on that aspect;
+    // with both aspects not applicable nothing transfers at all (reclassify it through the scope change).
+    if (legal === 'not_applicable' || economic === 'not_applicable') {
+      const both = legal === 'not_applicable' && economic === 'not_applicable';
+      out.push({
+        itemId: it.id,
+        code: it.code,
+        issue: 'transfer_not_applicable',
+        message: both
+          ? 'Included / shared item with neither a legal nor an economic transfer — reclassify it through the scope change or plan the transfer'
+          : `${legal === 'not_applicable' ? 'Legal' : 'Economic'} transfer determined not applicable — the item transfers on the other aspect only`,
+      });
     }
     const reported = (s: TransferStatus) => s === 'transferred_pending_evidence' || s === 'transferred_verified';
     if ((reported(legal) || reported(economic)) && it.evidenceCount === 0) {

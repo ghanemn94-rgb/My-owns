@@ -40,7 +40,7 @@ describe('P3 domain review — an INCLUDED item marked "transfer not applicable"
     expect(d.carveOutComplete).toBe(false);
   });
 
-  defect('DEFECT DOM-P3-05a: marking both aspects of the only INCLUDED item "not applicable" shows the perimeter as "transferred_verified — all in-scope items transferred with verified evidence"', async () => {
+  it('DOM-P3-05a: marking both aspects of the only INCLUDED item "not applicable" shows the perimeter as "transferred_verified — all in-scope items transferred with verified evidence" (fixed, regression)', async () => {
     const [it0] = (await p.pm.get(`${base(pid)}/perimeter-items`).expect(200)).body.items as { id: string; version: number; disposition: string }[];
     expect(it0!.disposition).toBe('included');
     const legal = await markNotApplicable(it0!.id, 'legal', it0!.version);
@@ -60,7 +60,7 @@ describe('P3 domain review — an INCLUDED item marked "transfer not applicable"
     ).not.toBe('transferred_verified');
   });
 
-  defect('DEFECT DOM-P3-05b: after the baseline is approved, "not applicable" on both aspects takes an in-scope item out of the transfer without a change request (AT-07)', async () => {
+  it('DOM-P3-05b: after the baseline is approved, "not applicable" on both aspects takes an in-scope item out of the transfer without a change request (AT-07) (fixed, regression)', async () => {
     const ws = await workstreamId(p.pm, pid, 'WS06');
     const x = await createItem(p.pm, pid, { type: 'data', name: 'Probe DCIM data set (synthetic)', disposition: 'included', workstreamId: ws, ownerUserId: p.pm.userId });
     expect(x.applied).toBe(true);

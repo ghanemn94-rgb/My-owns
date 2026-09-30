@@ -121,6 +121,13 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'perimeter.version.decision_other_subject': 'carveout.versions.refusal.decisionOtherSubject',
   // DOM-P2F-08: a G1 paper must be raised for the perimeter version it approves
   'perimeter.version.decision_no_subject': 'carveout.versions.refusal.decisionNoSubject',
+  // "Transfer not applicable" on an in-scope item (DOM-P3-05), consent need (DOM-P3-15), legal reviewer (DOM-P3-17)
+  'transfer.not_applicable_specialist': 'carveout.transfer.refusal.notApplicableSpecialist',
+  'transfer.not_applicable_in_scope': 'carveout.transfer.refusal.notApplicableInScope',
+  'transfer.not_applicable_after_baseline': 'carveout.transfer.refusal.notApplicableAfterBaseline',
+  'transfer.not_applicable_not_in_scope': 'carveout.transfer.refusal.notApplicableNotInScope',
+  'perimeter.consent_required_by_class': 'carveout.item.refusal.consentRequiredByClass',
+  'agreement.legal_reviewer_not_legal': 'carveout.agreements.refusal.legalReviewerNotLegal',
   // Readiness decisions on the decision-use registry and the external-evidence re-check (DOM-P2F-09)
   'tsa.approve.decision_already_used': 'readiness.refusal.codes.tsa_approve_decision_already_used',
   'tsa.approve.decision_evidence_invalid': 'readiness.refusal.codes.tsa_approve_decision_evidence_invalid',
