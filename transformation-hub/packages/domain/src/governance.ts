@@ -661,12 +661,17 @@ export function assertVotingComplete(input: { outstanding: string[]; closedByCha
  * DOM-P2R-01: the chair of the decision's committee (the chair seat holder on the meeting date) closes voting for the
  * current round with a reason. Role (the command's permission) → state → the actor is the chair → reason.
  */
-export function assertVotingClosable(input: { status: string; actorUserId: string | null; chairUserId: string | null; closedRound: number | null; round: number; reason: string | null | undefined; tabled: boolean }): void {
+export function assertVotingClosable(input: { status: string; actorUserId: string | null; chairUserId: string | null; closedRound: number | null; round: number; reason: string | null | undefined; tabled: boolean; chairRecused?: boolean }): void {
   if (input.status !== 'under_review') throw ruleViolation('governance.voting.not_open', `Voting can be closed only while the decision is under review (current: ${input.status})`);
   if (!input.tabled) throw ruleViolation('governance.vote.not_tabled', 'The decision is not tabled at a meeting or circulated');
   if (input.closedRound === input.round) throw ruleViolation('governance.voting.already_closed', `Voting on round ${input.round} is already closed`, { round: input.round });
   if (!input.chairUserId) throw forbidden('governance.voting.no_chair', 'The committee has no chair appointed on the meeting date, so nobody can close voting');
   if (!input.actorUserId || input.actorUserId !== input.chairUserId) throw forbidden('governance.voting.not_chair', "Only the committee's chair closes voting");
+  // DOM-P2F-01: a chair recused from the item takes no part in it — closing its vote included. Until the governance owner
+  // designates who closes in that case (Q-40), nobody can: the outcome waits for every present eligible member's vote.
+  if (input.chairRecused) {
+    throw forbidden('governance.voting.chair_recused', 'The chair is recused from this item and cannot close its voting; the outcome waits for every present eligible member (Q-40)');
+  }
   if (!input.reason?.trim()) throw ruleViolation('governance.voting.reason_required', 'Closing voting requires a reason (recorded in the audit trail and the tally snapshot)');
 }
 

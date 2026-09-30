@@ -221,7 +221,7 @@ export class GovernanceSupport {
     });
     const closed = d.votingClosedRound === d.voteRound;
     const deadlinePassed = m.isCirculation && !!m.responseDeadline && this.today(p) > m.responseDeadline;
-    return { onDate, members, outstanding, closed, deadlinePassed, complete: outstanding.length === 0 || closed || deadlinePassed, chairUserId: this.chairOn(members, onDate) };
+    return { onDate, members, outstanding, closed, deadlinePassed, complete: outstanding.length === 0 || closed || deadlinePassed, chairUserId: this.chairOn(members, onDate), recusedUserIds: recused };
   }
 
   /**

@@ -66,6 +66,7 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   },
   'governance.voting.not_chair': 'governance.refusal.codes.voting_not_chair',
   'governance.voting.no_chair': 'governance.refusal.codes.voting_no_chair',
+  'governance.voting.chair_recused': 'governance.refusal.codes.voting_chair_recused',
   'governance.voting.already_closed': 'governance.refusal.codes.voting_already_closed',
   'governance.voting.not_open': 'governance.refusal.codes.voting_not_open',
   'governance.voting.reason_required': 'governance.refusal.codes.voting_reason_required',

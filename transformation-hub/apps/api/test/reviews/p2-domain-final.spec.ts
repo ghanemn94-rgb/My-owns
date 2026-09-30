@@ -215,7 +215,7 @@ describe('P2 domain final review — DOM-P2R-04 external-approval evidence at ev
 // ---------------------------------------------------------------------------------------------------------------
 
 describe('P2 domain final review — DOM-P2R-01 vote closing and GOV-015 declarations [REQ-GOV-015, REQ-GOV-016; proposed rules Q-40, A-49, A-50]', () => {
-  defect('DEFECT DOM-P2F-01: a chair RECUSED from the item closes voting on it after one approve vote — approved 1 to 0', async () => {
+  it('DOM-P2F-01 (fixed, regression): a chair RECUSED from the item cannot close voting on it (403 governance.voting.chair_recused)', async () => {
     const d = await tabledDecision(pid, A(), p.pm, gov.committeeId, gov.meetingId, { title: uniq('Recused chair (probe)') });
     const rec = await p.chair.post(`${P(pid)}/decisions/${d.id}/recusals`, { reason: 'Conflict: related party (synthetic)' });
     expect(rec.status, JSON.stringify(rec.body)).toBe(201);
@@ -234,18 +234,21 @@ describe('P2 domain final review — DOM-P2R-01 vote closing and GOV-015 declara
     // conflicted member takes no part in the item): a member recused from the item — the chair included — cannot close the
     // vote on it (and decide who is counted). Proposed voting-closure rule A-49 / Q-40 gives this step to the chair.
     expect(close.status, `recused chair closed the vote; outcome ${JSON.stringify(outcome)}`).not.toBe(201);
+    expect(close.body.code).toBe('governance.voting.chair_recused');
   });
 
-  defect('DEFECT DOM-P2F-03 (concurrency): a vote whose request passed the "voting open" check lands after the chair closed voting', async () => {
+  // Fix (lead): votes and "close voting" lock the decision row, so they serialize — the close waits for an in-flight vote
+  // (the reviewer's second acceptable outcome: "or the close waits for it — never both committed"). The original probe
+  // awaited the close while still holding the vote-table lock, which under the fix is a wait-for cycle through the test's
+  // own lock; the choreography is adapted (both requests started, then the lock released) and the requirement unchanged.
+  it('DOM-P2F-03 (fixed, regression, concurrency): a vote in flight and "close voting" never both commit with the vote missing from the close record', async () => {
     const d = await tabledDecision(pid, A(), p.pm, gov.committeeId, gov.meetingId, { title: uniq('Close vs vote race (probe)') });
-    // Finance declares "no conflict" first (own declaration, so the vote request writes nothing before the vote row).
     expect((await p.finance.post(`${P(pid)}/meetings/${gov.meetingId}/conflicts`, { decisionId: d.id, declaration: 'no_conflict' })).status).toBe(201);
     const v = await decisionVersion(p.chair, pid, d.id);
     expect((await vote(pid, p.chair, d.id, 'approve', v)).status).toBe(201);
-    // Deterministic interleaving: hold the vote table so Finance's vote request stops at its INSERT (after its checks).
     const lock = await owner().connect();
     let financeVote: Promise<{ status: number; body: Record<string, unknown> }>;
-    let close: { status: number; body: Record<string, unknown> };
+    let closeP: Promise<{ status: number; body: Record<string, unknown> }>;
     try {
       await lock.query('begin');
       await lock.query('lock table vote in exclusive mode');
@@ -256,19 +259,21 @@ describe('P2 domain final review — DOM-P2R-01 vote closing and GOV-015 declara
         waiting = (await owner().query(`select count(*)::int n from pg_locks where relation = 'vote'::regclass and not granted`)).rows[0].n;
       }
       expect(waiting, 'the vote request is waiting at its INSERT').toBeGreaterThan(0);
-      close = (await p.chair.post(`${P(pid)}/decisions/${d.id}/close-voting`, { expectedVersion: v, reason: 'Closing (race probe, synthetic)' })) as unknown as typeof close;
+      closeP = p.chair.post(`${P(pid)}/decisions/${d.id}/close-voting`, { expectedVersion: v, reason: 'Closing (race probe, synthetic)' }).then((r) => r as unknown as { status: number; body: Record<string, unknown> });
+      await new Promise((res) => setTimeout(res, 300)); // the close request reaches the decision-row lock
     } finally {
       await lock.query('commit');
       lock.release();
     }
-    expect(close.status, JSON.stringify(close.body)).toBe(201);
-    const fv = await financeVote!;
-    const out = await p.secretary.post(`${P(pid)}/decisions/${d.id}/record-outcome`, { expectedVersion: await decisionVersion(p.chair, pid, d.id) });
+    const [fv, close] = await Promise.all([financeVote!, closeP!]);
     const closeAudit = (await owner().query(`select after from audit_event where entity_id = $1 and action = 'governance.decision.close_voting'`, [d.id])).rows[0]?.after;
-    const votes = (await owner().query(`select user_id from vote where decision_id = $1 and round = 1`, [d.id])).rows.map((r) => r.user_id);
-    // Required (authority-matrix.md §3 step 5 (b), proposed rule A-49: "no further vote is accepted in that round",
-    // 422 governance.vote.voting_closed): the vote is refused, or the close waits for it — never both committed.
-    expect(fv.status, `vote ${fv.status}; close audit notVoted ${JSON.stringify(closeAudit)}; round-1 votes ${JSON.stringify(votes)}; outcome ${out.status} ${JSON.stringify(out.body)}`).toBe(422);
+    const votes = (await owner().query(`select user_id from vote where decision_id = $1 and round = 1`, [d.id])).rows.map((r) => r.user_id as string);
+    const financeCounted = votes.includes(p.finance.userId);
+    const financeListedNotVoted = JSON.stringify(closeAudit ?? {}).includes(p.finance.userId);
+    // Required: never "vote committed AND the close recorded the voter as not voted" (an inconsistent tally).
+    expect(fv.status === 201 && close.status === 201 && financeCounted && financeListedNotVoted, `vote ${fv.status} close ${close.status} counted ${financeCounted} listedNotVoted ${financeListedNotVoted}`).toBe(false);
+    // And the vote is either refused (422) or counted before the close.
+    expect([201, 422]).toContain(fv.status);
   });
 
   it('OBSERVATION DOM-P2F-07: a "no conflict" declaration given at one meeting still counts when the item is voted again at a later meeting (new round)', async () => {

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, asc, count, desc, eq, ilike, inArray, or } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import {
   Classification,
@@ -394,8 +394,18 @@ export class DecisionsService {
   // ---------------------------------------------------------------------------------------------------------
   // Voting & circulation
 
+  /**
+   * DOM-P2F-03: votes and "close voting" serialize on the decision row, so a vote can never commit after the chair closed
+   * the round (the check reads the state under the same lock the close takes).
+   */
+  private async lockDecisionRow(projectId: string, decisionId: string): Promise<DecisionRow> {
+    await loadInProject(this.db, schema.decision, projectId, decisionId); // 404 outside the project / scope
+    await this.db.tx().execute(sql`select id from decision where id = ${decisionId} and project_id = ${projectId} for update`);
+    return (await loadInProject(this.db, schema.decision, projectId, decisionId)) as DecisionRow;
+  }
+
   async castVote(ctx: RequestContext, projectId: string, decisionId: string, body: { expectedVersion: number; choice: VoteChoice; comment?: string; conflictDeclaration?: 'no_conflict' }) {
-    const d = await loadInProject(this.db, schema.decision, projectId, decisionId);
+    const d = await this.lockDecisionRow(projectId, decisionId);
     // RBAC + classification + separation of duties (the requester may not vote on their own decision).
     this.policy.assert(ctx, 'governance.decision.vote', { projectId, classification: d.classification, requesterUserId: d.requesterUserId });
     assertVersion(d, body.expectedVersion, 'decision paper');
@@ -668,14 +678,14 @@ export class DecisionsService {
    * no vote is accepted in the round afterwards. A new round (resume / return) reopens voting.
    */
   async closeVoting(ctx: RequestContext, projectId: string, decisionId: string, body: { expectedVersion: number; reason: string }) {
-    const d = await loadInProject(this.db, schema.decision, projectId, decisionId);
+    const d = await this.lockDecisionRow(projectId, decisionId);
     // authority (explicit, I-R3): a procedural step of the committee's chair — no delegated amount applies.
     this.policy.assert(ctx, 'governance.decision.record_outcome', { projectId, classification: d.classification, requesterUserId: d.requesterUserId, withinAuthority: true });
     assertVersion(d, body.expectedVersion, 'decision');
     const m = d.meetingId ? await loadInProject(this.db, schema.meeting, projectId, d.meetingId) : null;
     const p = await this.sup.project(projectId);
     const s = m ? await this.sup.votingState(d, m, p) : null;
-    assertVotingClosable({ status: d.status, actorUserId: ctx.principal.userId, chairUserId: s?.chairUserId ?? null, closedRound: d.votingClosedRound, round: d.voteRound, reason: body.reason, tabled: !!m });
+    assertVotingClosable({ status: d.status, actorUserId: ctx.principal.userId, chairUserId: s?.chairUserId ?? null, closedRound: d.votingClosedRound, round: d.voteRound, reason: body.reason, tabled: !!m, chairRecused: !!s?.chairUserId && s.recusedUserIds.includes(s.chairUserId) });
     if (m && m.status !== 'in_session' && !(!m.isCirculation && ['held', 'minutes_draft'].includes(m.status))) {
       throw ruleViolation('governance.outcome.meeting_state', `Cannot close voting for a meeting in status ${m.status}`);
     }

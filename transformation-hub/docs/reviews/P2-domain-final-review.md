@@ -504,3 +504,15 @@ confirm (Assessment pending — governance owner)?
 **Next action for the implementers:** fix DOM-P2F-01 and DOM-P2F-03 (governance; small). In P3, fix DOM-P2F-09 and move readiness
 onto the shared mechanism. Turn this review's `it.fails` probes into plain tests (drop `.fails` and `DEFECT`) as each defect is
 fixed, without weakening them.
+
+---
+
+## Fix status (lead, after this review)
+
+| Finding | Status | Evidence |
+|---|---|---|
+| DOM-P2F-01 (Medium) | **Fixed.** A chair who is recused from the item cannot close its voting. The refusal is 403 `governance.voting.chair_recused`, raised by domain `assertVotingClosable`. Until the governance owner designates someone else (Q-40), the outcome waits until every present eligible member has voted. The refusal is translated in en and ar. | The probe is renamed "DOM-P2F-01 (fixed, regression)". The assertion is unchanged, plus a check of the refusal code. |
+| DOM-P2F-03 (Low) | **Fixed.** `castVote` and `closeVoting` both lock the decision row (`SELECT … FOR UPDATE`), so they serialize: a close waits for an in-flight vote and its record includes that vote. | The probe is renamed "(fixed, regression)". The original probe awaited the close while holding the vote-table lock, which under the fix is a wait-for cycle through the test's own lock. So the steps changed: both requests are started, then the lock is released. The requirement is unchanged: never "vote committed" together with "close lists the voter as not voted". |
+| DOM-P2F-09 (High, P3) and DOM-P2F-08 (Low, P3) | Assigned to the P4/P3 decision-reuse fix (registry kinds for TSA terms, TSA extension and the cutover go decision). | REQ-TSA-005 is lowered to Implemented until then. |
+| DOM-P2F-02, -04, -05, -06, -07, -10; DOM-P2R-06, -08 | Open Low items. They are carried in the P2 gate report with owners and target phases. | — |
+
