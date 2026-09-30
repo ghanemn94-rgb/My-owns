@@ -129,19 +129,56 @@ describe('Evidence target read permissions (SEC-P1R-04) [REQ-SEC]', () => {
   });
 });
 
+const review = {
+  verificationSourceId: null as string | null,
+  claimSourceId: 'src-image',
+  reviewerUserId: 'verifier',
+  extractorUserId: 'extractor',
+  previousReviewerUserId: null as string | null,
+};
+
 describe('Source claims (AT-01) [REQ-SRC]', () => {
+  it('AT-01 invariant (DOM-P2-04): a historical claim never reaches "confirmed" by status hopping — whatever the path', () => {
+    // Every intermediate status a reviewer could move a historical claim to first: confirming from there is still refused
+    // without verification evidence, because the ORIGIN (historical_unverified) is kept.
+    for (const current of ['historical_unverified', 'proposed', 'assumed', 'unknown', 'conflicting'] as const) {
+      expect(() => assertClaimReview({ ...review, current, origin: 'historical_unverified', next: 'confirmed', confirmedValue: 'done' }), current).toThrow(
+        expect.objectContaining({ code: 'claims.historical_cannot_be_confirmed' }),
+      );
+    }
+    // Moving it to another non-confirmed status is allowed (reclassification is not a current value).
+    expect(() => assertClaimReview({ ...review, current: 'historical_unverified', origin: 'historical_unverified', next: 'proposed', confirmedValue: null })).not.toThrow();
+  });
+  it('AT-01 (DOM-P2-04): a historical claim is confirmed only with a DIFFERENT verifying source, by a verifier who is neither the extractor nor the previous reviewer', () => {
+    const h = { ...review, current: 'proposed' as const, origin: 'historical_unverified' as const, next: 'confirmed' as const, confirmedValue: 'done' };
+    expect(() => assertClaimReview({ ...h, verificationSourceId: 'src-image' })).toThrow(expect.objectContaining({ code: 'claims.verification_source_same' }));
+    expect(() => assertClaimReview({ ...h, verificationSourceId: 'src-minutes', reviewerUserId: 'extractor' })).toThrow(expect.objectContaining({ code: 'claims.verifier_is_extractor', kind: 'forbidden' }));
+    expect(() => assertClaimReview({ ...h, verificationSourceId: 'src-minutes', previousReviewerUserId: 'verifier' })).toThrow(
+      expect.objectContaining({ code: 'claims.verifier_is_previous_reviewer', kind: 'forbidden' }),
+    );
+    expect(() => assertClaimReview({ ...h, verificationSourceId: 'src-minutes', previousReviewerUserId: 'someone-else' })).not.toThrow();
+    // Direct confirmation of a still-historical claim follows the same rule.
+    expect(() => assertClaimReview({ ...h, current: 'historical_unverified', verificationSourceId: 'src-minutes' })).not.toThrow();
+    // Non-historical claims keep the ordinary rule (not_self against the extractor is the policy's job).
+    expect(() => assertClaimReview({ ...review, current: 'proposed', origin: 'proposed', next: 'confirmed', confirmedValue: '2027-01-31' })).not.toThrow();
+  });
+  it('AT-01 (DOM-P2-04): a confirmed claim of historical origin is applicable only with its verifying source recorded', () => {
+    const base = { targetType: 'task', field: 'status', appliedToRecord: false, hasPendingProposal: false, verificationStatus: 'confirmed' as const, originStatus: 'historical_unverified' as const };
+    expect(claimApplicability({ ...base, verificationSourceId: null })).toMatchObject({ applicable: false, code: 'claims.historical_not_applicable' });
+    expect(claimApplicability({ ...base, verificationSourceId: 'src-minutes' }).applicable).toBe(true);
+  });
   it('historical-unverified claims are never applicable and cannot be confirmed', () => {
-    expect(claimApplicability({ verificationStatus: 'historical_unverified', targetType: 'task', field: 'status', appliedToRecord: false, hasPendingProposal: false })).toMatchObject({ applicable: false, code: 'claims.historical_not_applicable' });
-    expect(() => assertClaimReview('historical_unverified', 'confirmed', 'Completed')).toThrow(/historical/);
-    expect(() => assertClaimReview('historical_unverified', 'conflicting', null)).not.toThrow();
+    expect(claimApplicability({ verificationStatus: 'historical_unverified', originStatus: 'historical_unverified', verificationSourceId: null, targetType: 'task', field: 'status', appliedToRecord: false, hasPendingProposal: false })).toMatchObject({ applicable: false, code: 'claims.historical_not_applicable' });
+    expect(() => assertClaimReview({ ...review, current: 'historical_unverified', origin: 'historical_unverified', next: 'confirmed', confirmedValue: 'Completed' })).toThrow(/historical/);
+    expect(() => assertClaimReview({ ...review, current: 'historical_unverified', origin: 'historical_unverified', next: 'conflicting', confirmedValue: null })).not.toThrow();
   });
   it('only confirmed, mapped, not-yet-proposed claims are applicable', () => {
-    const base = { targetType: 'task', field: 'status', appliedToRecord: false, hasPendingProposal: false };
+    const base = { targetType: 'task', field: 'status', appliedToRecord: false, hasPendingProposal: false, originStatus: 'proposed' as const, verificationSourceId: null };
     expect(claimApplicability({ ...base, verificationStatus: 'proposed' }).applicable).toBe(false);
     expect(claimApplicability({ ...base, verificationStatus: 'confirmed' }).applicable).toBe(true);
     expect(claimApplicability({ ...base, verificationStatus: 'confirmed', hasPendingProposal: true }).code).toBe('claims.proposal_pending');
     expect(claimApplicability({ ...base, verificationStatus: 'confirmed', targetType: null }).code).toBe('claims.no_target');
-    expect(() => assertClaimReview('proposed', 'confirmed', '')).toThrow(/confirmed value/);
+    expect(() => assertClaimReview({ ...review, current: 'proposed', origin: 'proposed', next: 'confirmed', confirmedValue: '' })).toThrow(/confirmed value/);
   });
   it('claim targets are limited to an allowlist of fields', () => {
     expect(() => assertClaimTargetField('task', 'status')).not.toThrow();

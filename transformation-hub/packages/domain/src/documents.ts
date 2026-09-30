@@ -7,7 +7,7 @@
  *  - Evidence: conflict marking (AT-14).
  *  - Retention / legal hold / disposal (AT-27).
  */
-import { ruleViolation } from './errors';
+import { forbidden, ruleViolation } from './errors';
 import type { VerificationStatus } from './enums';
 import { matrixUsable, type MatrixState } from './governance';
 
@@ -366,15 +366,51 @@ export function assertClaimTargetField(targetType: string | null | undefined, fi
   if (!fields.includes(field)) throw ruleViolation('claims.field_unsupported', `Field "${field}" of ${targetType} cannot be compared (allowed: ${fields.join(', ')})`);
 }
 
+/** Whether a claim is historical: it entered (or still is) `historical_unverified`, whatever its later review status. */
+export const isHistoricalClaim = (c: { current: VerificationStatus; origin: VerificationStatus }) => c.current === 'historical_unverified' || c.origin === 'historical_unverified';
+
 /**
- * Review of a claim (not_self is enforced by the policy). Historical-unverified claims describe a past report; they
- * can never become the confirmed CURRENT value — a current value needs a new source (e.g. approved minutes).
+ * Review of a claim (not_self against the extractor is also enforced by the policy). Historical-unverified claims describe
+ * a past report (spec §2, AT-01): they never become the confirmed CURRENT value by a status change alone — neither
+ * directly nor by hopping through another status (DOM-P2-04). A claim of historical origin is confirmed only
+ *  - with verification evidence: a DIFFERENT, newer source of the project (e.g. approved minutes) that the verifier cites
+ *    (`verificationSourceId`), and
+ *  - by a verifier who is neither the extractor nor the reviewer of the claim's previous review step.
+ * All inputs are required (fail closed).
  */
-export function assertClaimReview(current: VerificationStatus, next: VerificationStatus, confirmedValue: string | null | undefined) {
-  if (current === 'historical_unverified' && next === 'confirmed') {
-    throw ruleViolation('claims.historical_cannot_be_confirmed', 'A historical-unverified claim cannot be confirmed as the current value — record the current value from a new, authoritative source');
+export function assertClaimReview(input: {
+  current: VerificationStatus;
+  /** Status the claim entered with (source_claim.origin_status). */
+  origin: VerificationStatus;
+  next: VerificationStatus;
+  confirmedValue: string | null | undefined;
+  /** Source cited as verification evidence (null when none). */
+  verificationSourceId: string | null;
+  /** Source the claim was extracted from. */
+  claimSourceId: string;
+  reviewerUserId: string;
+  extractorUserId: string | null;
+  /** Reviewer of the previous review step (source_claim.reviewer_user_id), null when never reviewed. */
+  previousReviewerUserId: string | null;
+}) {
+  if (input.next === 'confirmed' && isHistoricalClaim(input)) {
+    if (!input.verificationSourceId) {
+      throw ruleViolation(
+        'claims.historical_cannot_be_confirmed',
+        'A historical-unverified claim cannot be confirmed as the current value by a status change — cite verification evidence from a newer, authoritative source (verificationSourceId)',
+      );
+    }
+    if (input.verificationSourceId === input.claimSourceId) {
+      throw ruleViolation('claims.verification_source_same', 'The verifying source must be a different, newer source than the one the historical claim was extracted from');
+    }
+    if (input.extractorUserId && input.reviewerUserId === input.extractorUserId) {
+      throw forbidden('claims.verifier_is_extractor', 'Separation of duties: the extractor of a historical claim cannot verify it');
+    }
+    if (input.previousReviewerUserId && input.reviewerUserId === input.previousReviewerUserId) {
+      throw forbidden('claims.verifier_is_previous_reviewer', 'Separation of duties: the reviewer of the previous step cannot also verify a historical claim as confirmed');
+    }
   }
-  if (next === 'confirmed' && !(confirmedValue && confirmedValue.trim())) {
+  if (input.next === 'confirmed' && !(input.confirmedValue && input.confirmedValue.trim())) {
     throw ruleViolation('claims.confirmed_value_required', 'Confirming a claim requires the confirmed value');
   }
 }
@@ -386,8 +422,17 @@ export interface ClaimApplyCheck {
 }
 
 /** Whether a claim may be turned into a proposed change (never an automatic update — AT-01). */
-export function claimApplicability(c: { verificationStatus: VerificationStatus; targetType: string | null; field: string | null; appliedToRecord: boolean; hasPendingProposal: boolean }): ClaimApplyCheck {
-  if (c.verificationStatus === 'historical_unverified') {
+export function claimApplicability(c: {
+  verificationStatus: VerificationStatus;
+  /** Status the claim entered with — a confirmed claim of historical origin needs its verifying source (DOM-P2-04). */
+  originStatus: VerificationStatus;
+  verificationSourceId: string | null;
+  targetType: string | null;
+  field: string | null;
+  appliedToRecord: boolean;
+  hasPendingProposal: boolean;
+}): ClaimApplyCheck {
+  if (c.verificationStatus === 'historical_unverified' || (c.originStatus === 'historical_unverified' && !c.verificationSourceId)) {
     return { applicable: false, code: 'claims.historical_not_applicable', reason: 'Historical-unverified values are kept as source-reported values only and are never applied as current status' };
   }
   if (c.verificationStatus !== 'confirmed') {

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { schema } from '@hub/db';
-import { evaluateGate, waiverIsEffective, CriterionState, GateEvaluation, GateAssessmentStatus, notFound } from '@hub/domain';
+import { evaluateGate, waiverIsEffective, CriterionState, CriterionEvidenceLink, GateEvaluation, GateAssessmentStatus, ReassessmentReason, notFound } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { Clock } from '../../platform/clock';
 
@@ -18,18 +18,25 @@ export interface EvidenceCounts {
   conflictingLinkIds: string[];
   /** Users who added the active evidence (the "evidence owners" — a reviewer must be someone else). */
   submitters: string[];
+  /** Active links independently verified in the documents module (accepted by a verifier who neither linked nor uploaded them). */
+  verified: number;
+  /** Ids of the active links (recorded in the decision snapshot as the evidence relied upon — DOM-P2-05). */
+  activeLinkIds: string[];
+  /** Every link of the criterion with its status and timestamps (evidence-change reassessment). */
+  links: CriterionEvidenceLink[];
 }
 
-/** Stored reassessment flags on a decided cycle's `evaluation` JSON (AT-14). */
+/** Stored reassessment flags on a decided cycle's `evaluation` JSON (AT-14, DOM-P2-05). */
 export interface ReassessmentFlags {
   needsReassessment: boolean;
   requestedAt: string | null;
-  criteria: { criterionId: string; key: string; evidenceLinkIds: string[] }[];
+  /** `reason`: conflicting evidence, evidence rejected as defective, or superseded evidence relied upon at the decision. */
+  criteria: { criterionId: string; key: string; evidenceLinkIds: string[]; reason: ReassessmentReason }[];
   escalationId: string | null;
   upstreamGateKeys: string[];
 }
 
-export const NO_EVIDENCE: EvidenceCounts = { active: 0, conflicting: 0, conflictingLinkIds: [], submitters: [] };
+export const NO_EVIDENCE: EvidenceCounts = { active: 0, conflicting: 0, conflictingLinkIds: [], submitters: [], verified: 0, activeLinkIds: [], links: [] };
 
 /**
  * Everything needed to evaluate a project's gates in a handful of queries (runs inside the caller's transaction and
@@ -148,7 +155,8 @@ export function reassessmentOf(a: AssessmentRow): ReassessmentFlags {
   return {
     needsReassessment: r?.needsReassessment === true,
     requestedAt: r?.reassessment?.requestedAt ?? null,
-    criteria: r?.reassessment?.criteria ?? [],
+    // Flags written before DOM-P2-05 carry no reason: they were all raised for conflicting evidence.
+    criteria: (r?.reassessment?.criteria ?? []).map((c) => ({ criterionId: c.criterionId, key: c.key, evidenceLinkIds: c.evidenceLinkIds ?? [], reason: c.reason ?? 'evidence_conflict' })),
     escalationId: r?.reassessment?.escalationId ?? null,
     upstreamGateKeys: r?.reassessment?.upstreamGateKeys ?? [],
   };
@@ -185,18 +193,26 @@ export class GateLoader {
           .from(schema.criterionAssessment)
           .where(and(eq(schema.criterionAssessment.projectId, projectId), inArray(schema.criterionAssessment.assessmentId, ids)))
       : [];
-    const ev = await tx.execute<{ target_id: string; active: number; conflicting: number; conflicting_ids: string[] | null; submitters: string[] | null }>(sql`
-      select target_id::text as target_id,
-             count(*) filter (where status = 'active')::int as active,
-             count(*) filter (where status = 'conflicting')::int as conflicting,
-             array_agg(id::text) filter (where status = 'conflicting') as conflicting_ids,
-             array_agg(distinct added_by::text) filter (where status = 'active') as submitters
+    const ev = await tx.execute<{ id: string; target_id: string; status: CriterionEvidenceLink['status']; added_by: string; reviewed_by: string | null; created_at: Date | string; reviewed_at: Date | string | null }>(sql`
+      select id::text as id, target_id::text as target_id, status, added_by::text as added_by, reviewed_by::text as reviewed_by, created_at, reviewed_at
         from evidence_link
        where project_id = ${projectId} and target_type = 'gate_criterion'
-       group by target_id`);
+       order by created_at, id`);
     const evidence = new Map<string, EvidenceCounts>();
+    const ms = (v: Date | string | null) => (v === null ? null : new Date(v).getTime());
     for (const r of ev.rows) {
-      evidence.set(r.target_id, { active: r.active, conflicting: r.conflicting, conflictingLinkIds: r.conflicting_ids ?? [], submitters: r.submitters ?? [] });
+      const e = evidence.get(r.target_id) ?? { ...NO_EVIDENCE, conflictingLinkIds: [], submitters: [], activeLinkIds: [], links: [] };
+      e.links.push({ id: r.id, status: r.status, createdAtMs: ms(r.created_at)!, reviewedAtMs: ms(r.reviewed_at) });
+      if (r.status === 'active') {
+        e.active++;
+        e.activeLinkIds.push(r.id);
+        if (!e.submitters.includes(r.added_by)) e.submitters.push(r.added_by);
+        if (r.reviewed_by) e.verified++;
+      } else if (r.status === 'conflicting') {
+        e.conflicting++;
+        e.conflictingLinkIds.push(r.id);
+      }
+      evidence.set(r.target_id, e);
     }
     const waivers = await tx
       .select()

@@ -16,6 +16,7 @@ import {
   calculateRag,
   aggregateRag,
   effectiveRag,
+  capOverrideAtOpenBlockers,
   deliverableProgressItem,
   latestDate,
   updateFreshnessDate,
@@ -214,7 +215,11 @@ export class HealthService {
     const agg = aggregateRag(items);
     const projCalc: RagResult = { status: agg.status, explanation: agg.explanation, slipDays: null };
     const pov = overrides.get(`project:${p.id}`) ?? null;
-    const peff = effectiveRag(projCalc, pov ? { overrideStatus: pov.overrideStatus as RagStatus, reason: pov.reason, expiresOn: pov.expiresOn, reviewerUserId: pov.reviewerUserId, approved: pov.approved } : null, today);
+    // DOM-P2-10: the project override is capped at red while a red critical item (open blocker, critical milestone) is open.
+    const peff = capOverrideAtOpenBlockers(
+      effectiveRag(projCalc, pov ? { overrideStatus: pov.overrideStatus as RagStatus, reason: pov.reason, expiresOn: pov.expiresOn, reviewerUserId: pov.reviewerUserId, approved: pov.approved } : null, today),
+      agg.redCritical.length,
+    );
     const pf = freshness('project');
     const dataQualityIssues: { id: string; label: string; issue: string }[] = [];
     for (const w of out) if (['unknown', 'stale', 'not_updated'].includes(w.rag.calculated.status)) dataQualityIssues.push({ id: w.id, label: `${w.code} ${w.name}`, issue: w.rag.calculated.explanation });

@@ -63,7 +63,8 @@ export const DEMO_AUTHORITY_POLICY: AuthorityPolicy & { decisionTypes: (Authorit
       "currency": "SAR",
       "unitScale": 1,
       "withinCommitteeAuthority": true,
-      "escalateTo": "Not applicable — within committee authority (demo)"
+      "escalateTo": "Not applicable — within committee authority (demo)",
+      "gateKeys": ["G1", "G2", "G3", "G4", "G7"]
     },
     {
       "key": "day1_go_no_go",
@@ -147,7 +148,8 @@ export const DEMO_AUTHORITY_POLICY: AuthorityPolicy & { decisionTypes: (Authorit
       "currency": "SAR",
       "unitScale": 1,
       "withinCommitteeAuthority": false,
-      "escalateTo": "Board of Directors — to be confirmed"
+      "escalateTo": "Board of Directors — to be confirmed",
+      "gateKeys": ["G5"]
     },
     {
       "key": "jv_closing_confirmation",
@@ -159,7 +161,8 @@ export const DEMO_AUTHORITY_POLICY: AuthorityPolicy & { decisionTypes: (Authorit
       "currency": "SAR",
       "unitScale": 1,
       "withinCommitteeAuthority": false,
-      "escalateTo": "Board of Directors — to be confirmed"
+      "escalateTo": "Board of Directors — to be confirmed",
+      "gateKeys": ["G6"]
     },
     {
       "key": "opening_balance_sheet",
@@ -172,6 +175,19 @@ export const DEMO_AUTHORITY_POLICY: AuthorityPolicy & { decisionTypes: (Authorit
       "unitScale": 1,
       "withinCommitteeAuthority": false,
       "escalateTo": "NewCo board / authorized finance approver — to be confirmed"
+    },
+    {
+      "key": "gate_decision_mandate",
+      "name": {
+        "en": "Approve passage of gate G0 (mandate and governance)",
+        "ar": "اعتماد اجتياز البوابة صفر (التفويض والحوكمة)"
+      },
+      "maxAmount": null,
+      "currency": "SAR",
+      "unitScale": 1,
+      "withinCommitteeAuthority": false,
+      "escalateTo": "Delegating authority — to be confirmed",
+      "gateKeys": ["G0"]
     },
     {
       "key": "charter_amendment",

@@ -114,6 +114,8 @@ export class SourcesService {
       confirmedValue: c.confirmedValue,
       confidence: c.confidence,
       verificationStatus: c.verificationStatus,
+      originStatus: c.originStatus,
+      verificationSourceId: c.verificationSourceId,
       reviewerUserId: c.reviewerUserId,
       reviewedAt: c.reviewedAt?.toISOString() ?? null,
       conflictWithClaimId: c.conflictWithClaimId,
@@ -307,7 +309,7 @@ export class SourcesService {
       const prev =
         (c.targetId ? previous.find((p) => p.targetType === c.targetType && p.targetId === c.targetId && p.field === c.field) : undefined) ??
         previous.find((p) => p.subject.trim().toLowerCase() === c.subject.trim().toLowerCase());
-      const chk = claimApplicability({ verificationStatus: c.verificationStatus as VerificationStatus, targetType: c.targetType, field: c.field, appliedToRecord: c.appliedToRecord, hasPendingProposal: pending.has(c.id) });
+      const chk = claimApplicability({ verificationStatus: c.verificationStatus as VerificationStatus, originStatus: c.originStatus as VerificationStatus, verificationSourceId: c.verificationSourceId, targetType: c.targetType, field: c.field, appliedToRecord: c.appliedToRecord, hasPendingProposal: pending.has(c.id) });
       rows.push({
         claimId: c.id,
         subject: c.subject,
@@ -357,6 +359,8 @@ export class SourcesService {
         sourceReportedValue: body.sourceReportedValue ?? null,
         confidence: body.confidence ?? null,
         verificationStatus: body.verificationStatus,
+        // Immutable origin: a historical claim stays historical whatever its later review status (DOM-P2-04).
+        originStatus: body.verificationStatus,
         isDemo: s.isDemo,
         createdBy: ctx.principal.userId,
       });
@@ -389,18 +393,56 @@ export class SourcesService {
     return { id: claimId, version: row['version'] as number };
   }
 
-  async reviewClaim(ctx: RequestContext, projectId: string, claimId: string, body: { expectedVersion: number; verificationStatus: VerificationStatus; confirmedValue?: string; conflictWithClaimId?: string; note?: string }) {
+  /**
+   * Review of a claim (not the extractor — policy not_self). DOM-P2-04 / AT-01: a claim of historical origin is confirmed
+   * only with verification evidence from a DIFFERENT source of the project (`verificationSourceId`, e.g. approved minutes)
+   * by a verifier who is neither the extractor nor the reviewer of its previous step — never by hopping statuses.
+   * DOM-P2-19 / AT-14 / REQ-SRC-007: a claim reviewed as conflicting with another claim flags BOTH claims (the counterpart
+   * keeps its extracted, source-reported and confirmed values; its pending "apply" proposal is invalidated).
+   */
+  async reviewClaim(
+    ctx: RequestContext,
+    projectId: string,
+    claimId: string,
+    body: { expectedVersion: number; verificationStatus: VerificationStatus; confirmedValue?: string; conflictWithClaimId?: string; verificationSourceId?: string; note?: string },
+  ) {
     const c0 = await loadInProject(this.db, schema.sourceClaim, projectId, claimId);
     const { claim } = await this.loadClaim(ctx, projectId, claimId, 'documents.claim.verify', c0.createdBy ?? undefined);
     assertVersion(claim, body.expectedVersion, 'claim');
-    assertClaimReview(claim.verificationStatus as VerificationStatus, body.verificationStatus, body.confirmedValue);
+    let verificationSourceId: string | null = null;
+    if (body.verificationSourceId) {
+      if (body.verificationStatus !== 'confirmed') {
+        throw ruleViolation('claims.verification_source_unexpected', 'A verifying source is recorded only when a claim is confirmed');
+      }
+      // A source of this project the verifier can read (404 otherwise — never trust a submitted id).
+      verificationSourceId = (await this.loadSource(ctx, projectId, body.verificationSourceId)).id;
+    }
+    assertClaimReview({
+      current: claim.verificationStatus as VerificationStatus,
+      origin: claim.originStatus as VerificationStatus,
+      next: body.verificationStatus,
+      confirmedValue: body.confirmedValue,
+      verificationSourceId,
+      claimSourceId: claim.sourceId,
+      reviewerUserId: ctx.principal.userId!,
+      extractorUserId: claim.createdBy,
+      previousReviewerUserId: claim.reviewerUserId,
+    });
+    let counterpart: ClaimRow | null = null;
     if (body.conflictWithClaimId) {
       if (body.conflictWithClaimId === claimId) throw ruleViolation('claims.conflict_with_self', 'A claim cannot conflict with itself');
-      await this.loadClaim(ctx, projectId, body.conflictWithClaimId, 'documents.document.read');
+      if (body.verificationStatus === 'conflicting') {
+        // The counterpart is re-classified too: same verify permission, and not by its own extractor (not_self).
+        const other = await loadInProject(this.db, schema.sourceClaim, projectId, body.conflictWithClaimId);
+        counterpart = (await this.loadClaim(ctx, projectId, other.id, 'documents.claim.verify', other.createdBy ?? undefined)).claim;
+      } else {
+        await this.loadClaim(ctx, projectId, body.conflictWithClaimId, 'documents.document.read');
+      }
     }
     const values = {
       verificationStatus: body.verificationStatus,
       confirmedValue: body.verificationStatus === 'confirmed' ? body.confirmedValue!.trim() : null,
+      verificationSourceId: body.verificationStatus === 'confirmed' ? verificationSourceId : null,
       reviewerUserId: ctx.principal.userId,
       reviewedAt: new Date(),
       conflictWithClaimId: body.verificationStatus === 'conflicting' ? (body.conflictWithClaimId ?? claim.conflictWithClaimId) : claim.conflictWithClaimId,
@@ -411,12 +453,50 @@ export class SourcesService {
       entityType: 'source_claim',
       entityId: claimId,
       projectId,
-      before: { verificationStatus: claim.verificationStatus, confirmedValue: claim.confirmedValue },
-      after: { verificationStatus: values.verificationStatus, confirmedValue: values.confirmedValue, conflictWithClaimId: values.conflictWithClaimId },
+      before: { verificationStatus: claim.verificationStatus, confirmedValue: claim.confirmedValue, originStatus: claim.originStatus },
+      after: { verificationStatus: values.verificationStatus, confirmedValue: values.confirmedValue, conflictWithClaimId: values.conflictWithClaimId, verificationSourceId: values.verificationSourceId },
       reason: body.note ?? null,
     });
     await this.outbox.emit({ type: 'source.updated', projectId, aggregateType: 'source_record', aggregateId: claim.sourceId, payload: { sourceId: claim.sourceId, claimId, change: 'claim_reviewed', verificationStatus: values.verificationStatus } });
+    if (values.verificationStatus !== 'confirmed') await this.invalidateProposals(ctx, projectId, claim, `Claim is now ${values.verificationStatus}`);
+    if (counterpart) await this.flagCounterpart(ctx, projectId, counterpart, claimId, body.note ?? null);
     return { id: claimId, verificationStatus: values.verificationStatus, version: row['version'] as number };
+  }
+
+  /** DOM-P2-19: the other side of a claim conflict becomes conflicting too; what it said and any confirmed value are kept. */
+  private async flagCounterpart(ctx: RequestContext, projectId: string, other: ClaimRow, claimId: string, note: string | null) {
+    const already = other.verificationStatus === 'conflicting' && !!other.conflictWithClaimId;
+    if (already) return;
+    await updateVersioned(this.db, schema.sourceClaim, { id: other.id, projectId, expectedVersion: other.version }, {
+      verificationStatus: 'conflicting',
+      conflictWithClaimId: other.conflictWithClaimId ?? claimId,
+      reviewerUserId: ctx.principal.userId,
+      reviewedAt: new Date(),
+    });
+    await this.audit.record({
+      action: 'documents.claim.conflict',
+      entityType: 'source_claim',
+      entityId: other.id,
+      projectId,
+      before: { verificationStatus: other.verificationStatus, conflictWithClaimId: other.conflictWithClaimId },
+      after: { verificationStatus: 'conflicting', conflictWithClaimId: other.conflictWithClaimId ?? claimId, confirmedValuePreserved: other.confirmedValue },
+      reason: note ?? `Flagged as conflicting with claim ${claimId}`,
+    });
+    await this.outbox.emit({ type: 'source.updated', projectId, aggregateType: 'source_record', aggregateId: other.sourceId, payload: { sourceId: other.sourceId, claimId: other.id, change: 'claim_conflict', verificationStatus: 'conflicting' } });
+    await this.invalidateProposals(ctx, projectId, other, `Claim conflicts with claim ${claimId}`);
+  }
+
+  /** A pending "apply" proposal of a claim that is no longer confirmed is invalidated (a fresh proposal is needed). */
+  private async invalidateProposals(ctx: RequestContext, projectId: string, claim: ClaimRow, reason: string) {
+    const pending = await this.pendingProposals(projectId, [claim.id]);
+    const id = pending.get(claim.id);
+    if (!id) return;
+    await this.db
+      .tx()
+      .update(schema.approvalRequest)
+      .set({ status: 'invalidated', updatedAt: new Date(), version: sql`${schema.approvalRequest.version} + 1` })
+      .where(and(eq(schema.approvalRequest.id, id), eq(schema.approvalRequest.projectId, projectId), eq(schema.approvalRequest.status, 'pending')));
+    await this.audit.record({ action: 'documents.claim.invalidate_proposal', entityType: 'approval_request', entityId: id, projectId, before: { status: 'pending' }, after: { status: 'invalidated', claimId: claim.id }, reason });
   }
 
   /**
@@ -427,7 +507,7 @@ export class SourcesService {
     const { claim } = await this.loadClaim(ctx, projectId, claimId, 'documents.source.manage');
     assertVersion(claim, body.expectedVersion, 'claim');
     const pending = await this.pendingProposals(projectId, [claimId]);
-    const chk = claimApplicability({ verificationStatus: claim.verificationStatus as VerificationStatus, targetType: claim.targetType, field: claim.field, appliedToRecord: claim.appliedToRecord, hasPendingProposal: pending.has(claimId) });
+    const chk = claimApplicability({ verificationStatus: claim.verificationStatus as VerificationStatus, originStatus: claim.originStatus as VerificationStatus, verificationSourceId: claim.verificationSourceId, targetType: claim.targetType, field: claim.field, appliedToRecord: claim.appliedToRecord, hasPendingProposal: pending.has(claimId) });
     if (!chk.applicable) {
       await this.audit.recordDetached(ctx, { action: 'documents.claim.propose_change', entityType: 'source_claim', entityId: claimId, projectId, outcome: 'rejected', reason: `${chk.code}: ${chk.reason}` });
       throw ruleViolation(chk.code, chk.reason);

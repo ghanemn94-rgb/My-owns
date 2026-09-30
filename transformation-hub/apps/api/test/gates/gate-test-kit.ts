@@ -175,7 +175,7 @@ export async function setupGovernance(projectId: string, p: Personas): Promise<G
 
 /** Gate passage decision types of the DEMO authority matrix: G0/G5/G6 are reserved matters (recommendation only). */
 const GATE_DECISION_TYPE: Record<string, string> = {
-  G0: 'charter_amendment',
+  G0: 'gate_decision_mandate',
   G5: 'jv_signing_authorization',
   G6: 'jv_closing_confirmation',
 };

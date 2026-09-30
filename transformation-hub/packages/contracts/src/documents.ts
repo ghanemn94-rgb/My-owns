@@ -170,6 +170,10 @@ export const ClaimDto = z.object({
   /** 0–1 decimal string (null = not assessed). */
   confidence: z.string().nullable(),
   verificationStatus: VerificationStatusSchema,
+  /** Status the claim entered with (immutable; `historical_unverified` claims keep that origin — DOM-P2-04). */
+  originStatus: VerificationStatusSchema,
+  /** Newer source cited when a claim of historical origin was confirmed (null otherwise). */
+  verificationSourceId: Uuid.nullable(),
   reviewerUserId: Uuid.nullable(),
   reviewedAt: z.string().nullable(),
   conflictWithClaimId: Uuid.nullable(),
@@ -610,7 +614,7 @@ export const documentsRoutes = registerRoutes({
     id: 'documents.reviewClaim',
     method: 'POST',
     path: '/api/v1/projects/:projectId/claims/:claimId/review',
-    summary: 'Set a claim verification status (not the claim author). Historical-unverified claims cannot be confirmed',
+    summary: 'Set a claim verification status (not the claim author). A historical claim is confirmed only with a verifying newer source, by someone other than its extractor and previous reviewer',
     tags: T,
     access: 'documents.claim.verify',
     command: true,
@@ -619,7 +623,10 @@ export const documentsRoutes = registerRoutes({
       expectedVersion: ExpectedVersion,
       verificationStatus: VerificationStatusSchema,
       confirmedValue: Text(4000).optional(),
+      /** With `conflicting`: the other claim is flagged conflicting too (AT-14, DOM-P2-19). */
       conflictWithClaimId: Uuid.optional(),
+      /** Required to confirm a claim of historical origin: a different, newer source of the project (DOM-P2-04). */
+      verificationSourceId: Uuid.optional(),
       note: Text(2000).optional(),
     }),
     response: z.object({ id: Uuid, verificationStatus: VerificationStatusSchema, version: z.number().int() }),

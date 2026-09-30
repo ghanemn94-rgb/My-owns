@@ -67,6 +67,7 @@
 | `requiredRecommenders` | Functions that must review before the committee votes (e.g. Finance, Legal) |
 | `escalateTo` | The body that decides when the item is outside delegation or above the limit |
 | `quorumOverride`, `thresholdOverride` | Optional stricter rules for this decision type |
+| `gateKeys` | Business gates whose passage this decision type may approve (e.g. `["G1","G2","G3","G4","G7"]`). A type without `gateKeys` approves **no** gate (fail closed). See §3 step 10 (DOM-P2-01). |
 
 ## 3. Server-side evaluation (التقييم على الخادم)
 
@@ -112,6 +113,15 @@ For every approval command the server evaluates, in one transaction, and logs th
     handled by restarting the round (defer → resume). If the votes and the eligibility records disagree anyway (a vote of a
     recused member, of the requester, or of a member no longer recorded present), the outcome is refused
     (`422 governance.outcome.vote_integrity`) — votes are never silently dropped.
+11. **Gate approvals (DOM-P2-01, AT-04, REQ-GOV-022/023).** A gate decision (`gates.assessment.decide`) is backed only by a
+    committee decision that (a) was raised for that gate (`gateKey` = the gate; a decision without a gate key backs no
+    gate), (b) is final — approved within the mandate, or a recommendation approved by the authorized body with its
+    reference recorded, (c) is of a decision type that the deciding committee's approved matrix (the version recorded with
+    the committee outcome) assigns to that gate through `gateKeys`, and (d) was decided by the body holding that
+    authority: a type reserved to a higher authority (`withinCommitteeAuthority = false`) backs the gate only through the
+    recorded external approval. Linking a decision that fails (a) or (c) to a gate cycle is refused
+    (`gates.decision.not_for_gate`); deciding on one is refused (`gates.decide.decision_not_for_gate` /
+    `gates.decide.decision_not_final`). A committee without an approved matrix cannot back any gate.
 
 ### 3.1 Individual approvals under delegated authority — baselines and change requests (P2 fix DOM-P2-03)
 
@@ -168,16 +178,17 @@ the basis in the audit event (`after.authority`):
 | `baseline_approval` | Approve baseline and rebaseline | — | Yes | Not applicable — within committee authority (demo) |
 | `change_request_budget` | Approve a change request with budget impact | 1,000,000 DEMO-SAR | Yes, up to limit | Delegating authority — to be confirmed |
 | `separation_spend_commitment` | Approve a separation spend commitment | 5,000,000 DEMO-SAR | Yes, up to limit | Delegating authority — to be confirmed |
-| `gate_decision_operational` | Approve passage of gates G1–G4 and G7 | — | Yes | Not applicable — within committee authority (demo) |
+| `gate_decision_operational` | Approve passage of gates G1–G4 and G7 (`gateKeys` G1, G2, G3, G4, G7) | — | Yes | Not applicable — within committee authority (demo) |
 | `day1_go_no_go` | Day-1 go/no-go decision | — | Yes | Not applicable — within committee authority (demo) |
 | `tsa_approval_or_extension` | Approve a TSA or a TSA extension | 2,000,000 DEMO-SAR | Yes, up to limit | Delegating authority — to be confirmed |
 | `partner_outreach_and_access` | Approve partner outreach and materials access | — | Yes | Not applicable — within committee authority (demo) |
 | `criterion_waiver` | Approve a waiver of a waivable gate criterion | — | Yes | Not applicable — within committee authority (demo) |
 | `preferred_partner_selection` | Select the preferred partner | — | No | Board of Directors — to be confirmed |
 | `valuation_and_ownership_terms` | Approve valuation and ownership terms | — | No | Board of Directors — to be confirmed |
-| `jv_signing_authorization` | Authorize JV signing (G5) | — | No | Board of Directors — to be confirmed |
-| `jv_closing_confirmation` | Confirm a JV closing (G6) | — | No | Board of Directors — to be confirmed |
+| `jv_signing_authorization` | Authorize JV signing (`gateKeys` G5) | — | No | Board of Directors — to be confirmed |
+| `jv_closing_confirmation` | Confirm a JV closing (`gateKeys` G6) | — | No | Board of Directors — to be confirmed |
 | `opening_balance_sheet` | Approve the opening balance sheet | — | No | NewCo board / authorized finance approver — to be confirmed |
+| `gate_decision_mandate` | Approve passage of gate G0 — the committee cannot approve its own mandate (`gateKeys` G0) | — | No | Delegating authority — to be confirmed |
 | `charter_amendment` | Amend the committee charter or delegation | — | No | Delegating authority — to be confirmed |
 
 ### 4.3 Machine-readable Demo policy
@@ -192,16 +203,17 @@ the basis in the audit event (`after.authority`):
     { "key": "baseline_approval", "name": { "en": "Approve baseline and rebaseline", "ar": "اعتماد خط الأساس وإعادة خط الأساس" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": true, "escalateTo": "Not applicable — within committee authority (demo)" },
     { "key": "change_request_budget", "name": { "en": "Approve a change request with budget impact", "ar": "اعتماد طلب تغيير له أثر على الميزانية" }, "maxAmount": "1000000.0000", "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": true, "escalateTo": "Delegating authority — to be confirmed" },
     { "key": "separation_spend_commitment", "name": { "en": "Approve a separation spend commitment", "ar": "اعتماد التزام إنفاق على الفصل" }, "maxAmount": "5000000.0000", "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": true, "escalateTo": "Delegating authority — to be confirmed" },
-    { "key": "gate_decision_operational", "name": { "en": "Approve passage of gates G1–G4 and G7", "ar": "اعتماد اجتياز البوابات من الأولى إلى الرابعة والسابعة" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": true, "escalateTo": "Not applicable — within committee authority (demo)" },
+    { "key": "gate_decision_operational", "name": { "en": "Approve passage of gates G1–G4 and G7", "ar": "اعتماد اجتياز البوابات من الأولى إلى الرابعة والسابعة" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": true, "escalateTo": "Not applicable — within committee authority (demo)", "gateKeys": ["G1", "G2", "G3", "G4", "G7"] },
     { "key": "day1_go_no_go", "name": { "en": "Day-1 go/no-go decision", "ar": "قرار المضي أو عدمه لليوم الأول" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": true, "escalateTo": "Not applicable — within committee authority (demo)" },
     { "key": "tsa_approval_or_extension", "name": { "en": "Approve a TSA or a TSA extension", "ar": "اعتماد اتفاقية خدمات انتقالية أو تمديدها" }, "maxAmount": "2000000.0000", "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": true, "escalateTo": "Delegating authority — to be confirmed" },
     { "key": "partner_outreach_and_access", "name": { "en": "Approve partner outreach and materials access", "ar": "اعتماد التواصل مع الشريك ومنحه الوصول إلى المواد" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": true, "escalateTo": "Not applicable — within committee authority (demo)" },
     { "key": "criterion_waiver", "name": { "en": "Approve a waiver of a waivable gate criterion", "ar": "اعتماد الإعفاء من معيار بوابة قابل للإعفاء" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": true, "escalateTo": "Not applicable — within committee authority (demo)" },
     { "key": "preferred_partner_selection", "name": { "en": "Select the preferred partner", "ar": "اختيار الشريك المفضل" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": false, "escalateTo": "Board of Directors — to be confirmed" },
     { "key": "valuation_and_ownership_terms", "name": { "en": "Approve valuation and ownership terms", "ar": "اعتماد التقييم وشروط الملكية" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": false, "escalateTo": "Board of Directors — to be confirmed" },
-    { "key": "jv_signing_authorization", "name": { "en": "Authorize JV signing", "ar": "تفويض توقيع المشروع المشترك" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": false, "escalateTo": "Board of Directors — to be confirmed" },
-    { "key": "jv_closing_confirmation", "name": { "en": "Confirm a JV closing", "ar": "تأكيد إتمام المشروع المشترك" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": false, "escalateTo": "Board of Directors — to be confirmed" },
+    { "key": "jv_signing_authorization", "name": { "en": "Authorize JV signing", "ar": "تفويض توقيع المشروع المشترك" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": false, "escalateTo": "Board of Directors — to be confirmed", "gateKeys": ["G5"] },
+    { "key": "jv_closing_confirmation", "name": { "en": "Confirm a JV closing", "ar": "تأكيد إتمام المشروع المشترك" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": false, "escalateTo": "Board of Directors — to be confirmed", "gateKeys": ["G6"] },
     { "key": "opening_balance_sheet", "name": { "en": "Approve the opening balance sheet", "ar": "اعتماد الميزانية الافتتاحية" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": false, "escalateTo": "NewCo board / authorized finance approver — to be confirmed" },
+    { "key": "gate_decision_mandate", "name": { "en": "Approve passage of gate G0 (mandate and governance)", "ar": "اعتماد اجتياز البوابة صفر (التفويض والحوكمة)" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": false, "escalateTo": "Delegating authority — to be confirmed", "gateKeys": ["G0"] },
     { "key": "charter_amendment", "name": { "en": "Amend the committee charter or delegation", "ar": "تعديل ميثاق اللجنة أو تفويضها" }, "maxAmount": null, "currency": "SAR", "unitScale": 1, "withinCommitteeAuthority": false, "escalateTo": "Delegating authority — to be confirmed" }
   ],
   "selfApprovalProhibited": true,

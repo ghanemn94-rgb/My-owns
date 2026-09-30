@@ -181,8 +181,15 @@ export const sourceClaim = pgTable(
     confirmedValue: text('confirmed_value'),
     confidence: numeric('confidence', { precision: 4, scale: 3 }),
     verificationStatus: verificationStatus('verification_status').notNull().default('unknown'),
+    /**
+     * Status the claim entered with (immutable). A claim that entered as `historical_unverified` keeps that origin whatever
+     * its later review status, so it can be confirmed only with verification from a newer source (DOM-P2-04, AT-01).
+     */
+    originStatus: verificationStatus('origin_status').notNull().default('unknown'),
     reviewerUserId: uuid('reviewer_user_id'),
     reviewedAt: ts('reviewed_at'),
+    /** The newer source (e.g. approved minutes) that verified a confirmed value of a historical claim (DOM-P2-04). */
+    verificationSourceId: uuid('verification_source_id'),
     conflictWithClaimId: uuid('conflict_with_claim_id'),
     appliedToRecord: boolean('applied_to_record').notNull().default(false),
     appliedBy: uuid('applied_by'),
@@ -196,6 +203,7 @@ export const sourceClaim = pgTable(
     projectFk('source_claim_conflict_fk', t.projectId, t.conflictWithClaimId, { projectId: t.projectId, id: t.id }),
     unique('source_claim_pid_uq').on(t.projectId, t.id),
     projectFk('source_claim_source_fk', t.projectId, t.sourceId, (): FkTarget => sourceRecord),
+    projectFk('source_claim_verification_source_fk', t.projectId, t.verificationSourceId, (): FkTarget => sourceRecord),
     index('source_claim_target_idx').on(t.projectId, t.targetType, t.targetId),
   ],
 );

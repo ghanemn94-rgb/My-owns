@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
+  assertDesignatedApprover,
+  assertPrerequisitesSatisfied,
+  prerequisiteSatisfied,
   RAID_MACHINE,
   riskScore,
   riskRating,
@@ -133,5 +136,45 @@ describe('delay impact on top of an existing forecast slip [REQ-PLN-024]', () =>
     ];
     const r = delayImpact(nodes, [{ predecessorId: 'A', successorId: 'M', type: 'FS' as const, lagDays: 0 }], '2026-10-04', 'A', 3);
     expect(r.projectSlipWorkingDays).toBe(0);
+  });
+});
+
+describe('DOM-P2-07 — the designated approver role accepts a task or its deliverable [REQ-PLN-011]', () => {
+  it('only a holder of the designated approver role; no designated role = the acceptance permission decides', () => {
+    expect(() => assertDesignatedApprover({ subject: 'task WS01-A01', approverRole: 'sponsor', actorRoles: ['functional_approver', 'workstream_lead'] })).toThrow(
+      expect.objectContaining({ kind: 'forbidden', code: 'planning.acceptance.not_approver_role' }),
+    );
+    expect(() => assertDesignatedApprover({ subject: 'task WS01-A01', approverRole: 'functional_approver', actorRoles: ['functional_approver'] })).not.toThrow();
+    expect(() => assertDesignatedApprover({ subject: 'task WS01-A01', approverRole: null, actorRoles: [] })).not.toThrow();
+  });
+});
+
+describe('DOM-P2-18 — non-schedule prerequisites: decisions, gates, agreements, approvals, evidence [REQ-PLN-006]', () => {
+  it('a task is blocked by a pending agreement dependency until the agreement is signed or effective', () => {
+    const pending = { type: 'agreement' as const, stage: 'negotiating' as const };
+    expect(prerequisiteSatisfied(pending)).toBe(false);
+    expect(() => assertPrerequisitesSatisfied('Task WS03-A01', [pending])).toThrow(expect.objectContaining({ code: 'planning.prerequisite_pending', details: { pending: 1, types: ['agreement'] } }));
+    for (const stage of ['signed', 'effective'] as const) expect(prerequisiteSatisfied({ type: 'agreement', stage })).toBe(true);
+    for (const stage of ['identified', 'drafting', 'agreed_in_principle', 'terminated', 'expired'] as const) expect(prerequisiteSatisfied({ type: 'agreement', stage })).toBe(false);
+    expect(() => assertPrerequisitesSatisfied('Task WS03-A01', [{ type: 'agreement', stage: 'signed' }])).not.toThrow();
+  });
+  it('a decision counts only when final — a recommendation pending the external authority does not', () => {
+    const d = { type: 'decision' as const, externalAuthorityReference: null };
+    expect(prerequisiteSatisfied({ ...d, status: 'approved', authorityOutcome: 'within_mandate' })).toBe(true);
+    expect(prerequisiteSatisfied({ ...d, status: 'recommended', authorityOutcome: 'pending_external_authority' })).toBe(false);
+    expect(prerequisiteSatisfied({ ...d, status: 'approved', authorityOutcome: 'pending_external_authority' })).toBe(false);
+    expect(prerequisiteSatisfied({ ...d, status: 'approved', authorityOutcome: 'pending_external_authority', externalAuthorityReference: 'DEMO-REF' })).toBe(true);
+    expect(prerequisiteSatisfied({ ...d, status: 'under_review', authorityOutcome: 'not_assessed' })).toBe(false);
+  });
+  it('gates, approval requests and evidence', () => {
+    expect(prerequisiteSatisfied({ type: 'gate', status: 'approved', needsReassessment: false })).toBe(true);
+    expect(prerequisiteSatisfied({ type: 'gate', status: 'approved_with_exceptions', needsReassessment: false })).toBe(true);
+    expect(prerequisiteSatisfied({ type: 'gate', status: 'approved', needsReassessment: true })).toBe(false);
+    expect(prerequisiteSatisfied({ type: 'gate', status: 'ready_for_decision', needsReassessment: false })).toBe(false);
+    expect(prerequisiteSatisfied({ type: 'approval_request', status: 'approved' })).toBe(true);
+    expect(prerequisiteSatisfied({ type: 'approval_request', status: 'pending' })).toBe(false);
+    expect(prerequisiteSatisfied({ type: 'evidence_link', status: 'active', verified: true })).toBe(true);
+    expect(prerequisiteSatisfied({ type: 'evidence_link', status: 'active', verified: false })).toBe(false);
+    expect(prerequisiteSatisfied({ type: 'evidence_link', status: 'rejected', verified: true })).toBe(false);
   });
 });

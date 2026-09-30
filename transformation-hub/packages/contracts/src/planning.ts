@@ -12,6 +12,7 @@ import {
   RAG_STATUSES,
   ROLE_KEYS,
   VERIFICATION_STATUSES,
+  PREREQUISITE_TYPES,
 } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
 import { Uuid, IsoDate, PageQuery, NoSort, SortParam, paged, Text, RequiredText, ProjectParams, ExpectedVersion, MoneySchema, Ok } from './common';
@@ -366,6 +367,75 @@ export const CreateDependencyBody = z.object({
   /** Only FS is supported; SS/FF/SF are rejected with 422 until each is tested (spec §9). */
   type: z.enum(DEPENDENCY_TYPES).default('FS'),
   lagDays: z.number().int().min(-60).max(365).default(0),
+  note: Text(1000).optional(),
+});
+
+// Cross-project dependencies (spec §5, REQ-ENT-010, DOM-P2-17) — visible only to readers of BOTH projects' items.
+const CrossProjectItemRef = z.object({
+  type: z.enum(SCHEDULE_NODE_TYPES),
+  id: Uuid,
+  code: z.string(),
+  title: z.string(),
+  titleAr: z.string().nullable(),
+  status: z.string(),
+  /** Actual / forecast / planned finish (task) or date (milestone). */
+  finish: z.string().nullable(),
+});
+export const CrossProjectDependencyDto = z.object({
+  id: Uuid,
+  /** Relative to the project in the path: `outgoing` = it depends on another project; `incoming` = another project depends on it. */
+  direction: z.enum(['outgoing', 'incoming']),
+  projectId: Uuid,
+  projectCode: z.string(),
+  otherProjectId: Uuid,
+  otherProjectCode: z.string(),
+  /** Dependent item (null = the dependent project as a whole). */
+  local: CrossProjectItemRef.nullable(),
+  /** The item depended upon, in the other project. */
+  other: CrossProjectItemRef,
+  description: z.string(),
+  neededBy: z.string().nullable(),
+  status: z.enum(RAID_STATUSES),
+  /** Schedule-based: the depended-upon item finishes after `neededBy` (or is undated and overdue) — never a probability. */
+  atRisk: z.boolean(),
+  closedReason: z.string().nullable(),
+  createdAt: z.string(),
+  version: z.number().int(),
+});
+export const CrossProjectDependencyListQuery = PageQuery.extend({ status: z.enum(RAID_STATUSES).optional(), sort: SortParam(['neededBy', 'createdAt']) });
+export const CreateCrossProjectDependencyBody = z
+  .object({
+    otherProjectId: Uuid,
+    otherItemType: z.enum(SCHEDULE_NODE_TYPES),
+    otherItemId: Uuid,
+    localItemType: z.enum(SCHEDULE_NODE_TYPES).optional(),
+    localItemId: Uuid.optional(),
+    description: RequiredText(2000),
+    neededBy: IsoDate.optional(),
+  })
+  .strict();
+
+// Non-schedule prerequisites (spec §9, REQ-PLN-006, DOM-P2-18)
+export const PrerequisiteDto = z.object({
+  id: Uuid,
+  successorType: z.enum(SCHEDULE_NODE_TYPES),
+  successorId: Uuid,
+  successorCode: z.string(),
+  successorTitle: z.string(),
+  predecessorType: z.enum(PREREQUISITE_TYPES),
+  predecessorId: Uuid,
+  /** Code / key and title of the prerequisite record (shown only to callers who can see that record). */
+  predecessorLabel: z.string(),
+  /** Decision final, gate approved (not under reassessment), agreement signed/effective, approval approved, evidence verified. */
+  satisfied: z.boolean(),
+  note: z.string().nullable(),
+  createdAt: z.string(),
+});
+export const CreatePrerequisiteBody = z.object({
+  successorType: z.enum(SCHEDULE_NODE_TYPES),
+  successorId: Uuid,
+  predecessorType: z.enum(PREREQUISITE_TYPES),
+  predecessorId: Uuid,
   note: Text(1000).optional(),
 });
 
@@ -860,6 +930,13 @@ export const MY_WORK_TYPES = [
   'baseline_approval',
   'action_item',
   'decision_vote',
+  // DOM-P2-09: governance, gate and documents approvals (same policy checks as the commands)
+  'gate_decision',
+  'gate_criterion_review',
+  'waiver_approval',
+  'evidence_verification',
+  'action_closure_verification',
+  'minutes_approval',
 ] as const;
 
 export const MyWorkItemDto = z.object({
@@ -1003,6 +1080,50 @@ export const planningRoutes = registerRoutes({
   }),
   createDependency: defineRoute({ id: 'planning.createDependency', method: 'POST', path: p('/dependencies'), summary: 'Create an FS dependency (cycle-checked; same project only)', tags: T, access: 'planning.dependency.manage', params: ProjectParams, body: CreateDependencyBody, response: Created }),
   removeDependency: defineRoute({ id: 'planning.removeDependency', method: 'POST', path: p('/dependencies/:dependencyId/remove'), summary: 'Remove a dependency', tags: T, access: 'planning.dependency.manage', command: true, params: idP('dependencyId'), body: z.object({ reason: Text(1000).optional() }), response: Ok }),
+  listCrossProjectDependencies: defineRoute({
+    id: 'planning.listCrossProjectDependencies',
+    method: 'GET',
+    path: p('/cross-project-dependencies'),
+    summary: 'Dependencies on / from other projects — only those whose both ends the caller can read (minimum disclosure)',
+    tags: T,
+    access: 'planning.plan.read',
+    params: ProjectParams,
+    query: CrossProjectDependencyListQuery,
+    response: paged(CrossProjectDependencyDto),
+  }),
+  createCrossProjectDependency: defineRoute({
+    id: 'planning.createCrossProjectDependency',
+    method: 'POST',
+    path: p('/cross-project-dependencies'),
+    summary: "Record a dependency on another project's task / milestone (the caller must be able to read it)",
+    tags: T,
+    access: 'planning.dependency.manage',
+    params: ProjectParams,
+    body: CreateCrossProjectDependencyBody,
+    response: Created,
+  }),
+  closeCrossProjectDependency: cmd(
+    'planning.closeCrossProjectDependency',
+    p('/cross-project-dependencies/:dependencyId/close'),
+    'Close a cross-project dependency (reason required)',
+    'planning.dependency.manage',
+    idP('dependencyId'),
+    z.object({ expectedVersion: ExpectedVersion, reason: RequiredText(1000) }),
+    VersionResult,
+  ),
+  listPrerequisites: defineRoute({
+    id: 'planning.listPrerequisites',
+    method: 'GET',
+    path: p('/prerequisites'),
+    summary: 'Non-schedule prerequisites (decisions, gates, agreements, approvals, evidence) of tasks / milestones',
+    tags: T,
+    access: 'planning.plan.read',
+    params: ProjectParams,
+    query: z.object({ successorType: z.enum(SCHEDULE_NODE_TYPES).optional(), successorId: Uuid.optional(), sort: NoSort }),
+    response: z.object({ items: z.array(PrerequisiteDto) }),
+  }),
+  createPrerequisite: defineRoute({ id: 'planning.createPrerequisite', method: 'POST', path: p('/prerequisites'), summary: 'Make a task / milestone wait for a decision, gate, agreement, approval or verified evidence', tags: T, access: 'planning.dependency.manage', params: ProjectParams, body: CreatePrerequisiteBody, response: Created }),
+  removePrerequisite: defineRoute({ id: 'planning.removePrerequisite', method: 'POST', path: p('/prerequisites/:prerequisiteId/remove'), summary: 'Remove a prerequisite', tags: T, access: 'planning.dependency.manage', command: true, params: idP('prerequisiteId'), body: z.object({ reason: Text(1000).optional() }), response: Ok }),
   getSchedule: defineRoute({ id: 'planning.getSchedule', method: 'GET', path: p('/schedule'), summary: 'Schedule-based forecast: critical path and float (FS only; incomplete when data is missing)', tags: T, access: 'planning.plan.read', params: ProjectParams, query: ScheduleQuery, response: ScheduleDto }),
   delayImpact: defineRoute({ id: 'planning.delayImpact', method: 'POST', path: p('/schedule/delay-impact'), summary: 'What-if: calendar-based impact of delaying one activity (AT-15; no probabilities)', tags: T, access: 'planning.plan.read', params: ProjectParams, body: DelayImpactBody, response: DelayImpactDto }),
   listHolidays: defineRoute({ id: 'planning.listHolidays', method: 'GET', path: p('/calendar/holidays'), summary: 'Project calendar holidays', tags: T, access: 'planning.plan.read', params: ProjectParams, response: z.object({ timezone: z.string(), workingDays: z.array(z.number().int()), items: z.array(HolidayDto) }) }),

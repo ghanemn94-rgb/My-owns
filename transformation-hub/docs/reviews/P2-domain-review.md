@@ -617,3 +617,100 @@ $ python3 scripts/requirements/apply_status.py --check   # OK (102 entries)
   `documents.evidence.verify`; a dedicated permission (e.g. `governance.authority_matrix.verify_approval` for Legal /
   Corporate Secretary) is suggested (Q-44).
 - `apps/web` / e2e not run here: **NOT EXECUTED** (Playwright).
+
+---
+
+## Fix status (implementation, 2026-09-30) — gates, documents and planning findings
+
+| Item | Value |
+|---|---|
+| Implementer | backend-data-engineer (implementation mode, separate context; not the author of this review) |
+| Branch | `worktree-agent-a3eb13e67ee309a34`, started from `claude/mobily-transformation-hub` `4f05318` + this review (`640dc99`), with the lead branch merged in before the final runs (P1 security re-review fixes `7751b98`, then P4 finance / JV up to `b6e8d45`; migration conflicts resolved by regenerating the single migration) |
+| Findings in scope | DOM-P2-01, -04, -05, -07, -09, -10, -15, -16, -19, -21; feature gaps DOM-P2-17, -18 |
+| Not in scope | DOM-P2-02, -03, -06, -12, -13, -20 (governance / authority agent, working in parallel) |
+| Re-phased, not done here | DOM-P2-08 → P6 configuration module (per-project RAG thresholds, approved change, snapshot in frozen updates); DOM-P2-11 → P6 notifications (scoped inbox API/UI, outbox delivery, suppression after revocation, AT-19) |
+
+The reviewer's text above is unchanged. No probe was weakened. The seven probes of this finding set now pass and were
+renamed `DEFECT DOM-P2-nn …` → `DOM-P2-nn …` (DOM-P2-01a, -01b, -04, -05, -07, -09, -10). The five remaining
+`DEFECT` probes (DOM-P2-02 domain, DOM-P2-02 API, DOM-P2-03a, DOM-P2-03b, DOM-P2-06) belong to the governance agent and
+still fail at this revision, as expected.
+
+### Per finding
+
+| Finding | Status | What changed | Evidence (executed) |
+|---|---|---|---|
+| **DOM-P2-01** (High) | **Fixed** | A gate approval is backed only by a decision that (a) was raised for this gate (a decision without a gate key backs no gate), (b) is final, (c) is of a decision type that the **deciding committee's approved authority matrix assigns to this gate** — new optional `gateKeys` on matrix decision-type rows; the matrix is the version recorded with the committee outcome (tally snapshot), otherwise the committee's approved version; a type without `gateKeys`, an unknown type or a committee without an approved matrix fail closed — and (d) was decided by the body holding the authority (a reserved type counts only through the recorded external approval). `link-decision` refuses a decision that can never back the gate (`gates.decision.not_for_gate`); `decide` refuses with `gates.decide.decision_not_for_gate` / `gates.decide.decision_not_final`. Six new blocker codes (`gate.blocker.decision_no_gate`, `…_no_matrix`, `…_type_missing`, `…_type_unknown`, `…_type_not_for_gate`, `…_body_not_authorized`) with `messageI18n`, en + ar web translations. The decision snapshot records `decisionTypeKey`, `gateKey`, `committeeId`, `matrixVersionId`. DEMO matrix: G1–G4/G7 → `gate_decision_operational`, G5 → `jv_signing_authorization`, G6 → `jv_closing_confirmation`, and a new reserved `gate_decision_mandate` → G0 ("the committee cannot approve its own mandate"); the demo seed's G0 decision now uses it instead of `charter_amendment`. authority-matrix.md §2.2, §3 step 10, §4.2, §4.3 (machine-readable policy regenerated from `demo-policy.ts`); business-gates.md §4 rule 1. | probes DOM-P2-01a/b; `apps/api/test/gates/p2-gate-authority-reassessment.spec.ts` (link refused for no-gate / wrong-type decisions, committee without matrix refused, G0 passes on the reserved type after the external approval with the snapshot recorded); `packages/domain/src/gates.test.ts` "DOM-P2-01 …" (5), `messages.test.ts` (every new code exercised) |
+| **DOM-P2-05** (High) | **Fixed** | The decision snapshot records, per criterion, the evidence links relied upon (`activeEvidenceLinkIds`). The evidence job (`evidence.changed` → `gates.evidence_conflicts`) now flags an **approved** cycle (never modified) when relied-upon evidence became conflicting, was **rejected as defective** or was **superseded** (`decidedCriterionReassessment`; cycles decided before this change fall back to "required evidence with no active link left"): reassessment flags with the reason (`ReassessmentFlagDto.criteria[].reason`), one escalation, notifications to the reopen authorities, `gate.blocked` (`evidence_change_on_decided_gate` + reasons), downstream approved gates flagged for review, audit `gates.assessment.flag_reassessment`, and a status-dimension recompute: a flagged G4 approval no longer counts as standalone acceptance (`dimension.readiness.standalone_reassessment`, en + ar). On an **undecided** cycle, a criterion accepted as met whose accepted evidence is later rejected as defective returns to `unmet` (audit `gates.criterion.evidence_defective`; a ready gate is reported blocked). The gate RAG is red while flagged (unchanged rule). business-gates.md §4 rule 6. | probe DOM-P2-05; spec "superseding evidence relied upon by the approved G0 flags the gate (REQ-DAT-014) …" and "… returns to unmet …"; domain "DOM-P2-05 …" (4) and `messages.test.ts` (flagged G4 dimension) |
+| **DOM-P2-04** (Medium) | **Fixed** | `source_claim.origin_status` (status the claim entered with, immutable) and `source_claim.verification_source_id` (composite FK to `source_record`). A claim of historical origin — whatever its current status — is confirmed only with `verificationSourceId`: a **different** source of the project that the verifier can read (404 otherwise; the claim's own source → 422 `claims.verification_source_same`), by a verifier who is neither the extractor (`claims.verifier_is_extractor`) nor the reviewer of the previous step (`claims.verifier_is_previous_reviewer`, 403). Without it: 422 `claims.historical_cannot_be_confirmed`, for the direct step and for every hop (proposed, assumed, unknown, conflicting). `propose-change` accepts a confirmed claim of historical origin only with its verifying source; nothing is ever applied automatically (AT-01). Claim DTO exposes `originStatus`, `verificationSourceId`. | probe DOM-P2-04; `apps/api/test/documents/at-01-claim-verification.spec.ts` (4); domain `documents.test.ts` "AT-01 invariant (DOM-P2-04) …" (3) |
+| **DOM-P2-07** (Medium) | **Fixed** (policy gap reported) | Accepting or returning a task needs the task's designated `approverRole` (project roles + roles on the task's workstream) on top of `planning.deliverable.accept` and not_self (`planning.acceptance.not_approver_role`, 403, audited as denied); a deliverable produced by a task carries that task's approver role; `approverRole` cannot change while the task awaits acceptance (`task.approver_role_locked`); My Work offers task / deliverable acceptance only to that role. **Policy gap:** `planning.deliverable.accept` is held only by `workstream_lead` and `functional_approver`, but the DC template designates `sponsor` (5 activities) and `committee_chair` (39 activities) as approver roles; those tasks cannot be accepted by anyone until the policy grants `planning.deliverable.accept` to `sponsor` and `committee_chair` (policy JSON not edited here — lead decision). | probe DOM-P2-07; `apps/api/test/planning/approver-role-and-my-work.spec.ts` (3); domain `planning.test.ts` "DOM-P2-07 …" |
+| **DOM-P2-09** (Medium) | **Fixed** | My Work adds `gate_decision` (the gate's approver role, not the submitter), `gate_criterion_review` (designated reviewer; evidence submitted or a pending not-applicable proposal; never the evidence owner / proposer), `waiver_approval` (current waiver authority role of the target, not the requester, target visible), `evidence_verification` (active unverified or conflicting links; not the linker nor the version uploader; document and target visible via `RecordVisibility`), `action_closure_verification` (not the reporter) and `minutes_approval` (not the drafter). Every item uses the same policy inputs as its command (fail-closed requester / authority). Web inbox: status enums and en + ar labels for the six types. | probe DOM-P2-09; gates spec "DOM-P2-09 …" (2); planning spec "DOM-P2-09 …" (3) |
+| **DOM-P2-10** (Low) | **Fixed** | A project-level override is **capped at red** while a red critical item (open blocker, missed / overdue critical milestone) exists (`capOverrideAtOpenBlockers`): the approved override stays on record and applies again once the blockers are cleared (until it expires); the explanation says why it is not applied. Creating and approving the override are unchanged (the probe requires them to succeed). Workstream-level overrides are unchanged: the project aggregate already lists a blocked workstream as red critical ("does not hide the blocker"). | probe DOM-P2-10; domain `rules.test.ts` "DOM-P2-10 …" |
+| **DOM-P2-15** (Low) | **Fixed** | Waivability is determined only by the criterion's **designated specialist** — its reviewer role when that role holds `gates.criterion.set_waivability`, otherwise `functional_approver` (403 `gates.waivability.not_designated_specialist`) — and only while the cycle is `not_started` / `in_assessment` / `reopened` (422 `gates.assessment.not_editable`); the record version names the determining role. `gate_criterion.applicability` is now set from the recorded determination: `not_applicable` when a not-applicable proposal is approved, `applicable` when it is rejected (versioned, audit `gates.criterion.set_applicability`). business-gates.md §2.1. | gates spec "DOM-P2-15 …" (2); domain "DOM-P2-15 …" (2) |
+| **DOM-P2-16** (Low) | **Not fixed — blocked** | Enforcing the gate owner and reviewer roles needs changes outside this assignment: (1) policy — `gates.assessment.submit` is held only by `project_manager`, while the DC template's gate owners are `secretary_cpmo` (G0), `workstream_lead` (G1, G4, G5, G6), `legal_restricted` (G2) and `project_manager` (G3, G7), so "the owner submits" is impossible without granting `gates.assessment.submit` to those roles; and G0/G1 have `project_manager` as gate reviewer, the same role that submits today; (2) UI — a gate-level review is a new user action (the web scope of this assignment is limited to i18n and My Work), and requiring it without a button would break the gate journey. Design for re-phasing: grant the submit permission to the owner roles; `start` / `mark-ready` / `back` / `link-decision` require the gate's `ownerRole` (designated, like criterion reviewers); new command `POST …/gates/:gateId/assessment/review {expectedVersion, outcome: endorse \| return, note}` by the gate's `reviewerRole` (`gates.assessment.review`, not_self vs the owner-submitter), recorded on the cycle (`reviewed_by/at`, outcome, note); `mark-ready` requires an endorsement recorded after the cycle's last criterion change; `decide` stays not_self vs the submitter and additionally vs the gate reviewer; My Work item `gate_review`; the gate test kit and E2E fixture add the review step. | — |
+| **DOM-P2-19** (Low) | **Fixed** | Reviewing a claim as conflicting with another claim flags **both**: the counterpart becomes `conflicting` with the back-reference, keeps its extracted, source-reported and confirmed values, and its pending "apply" proposal is invalidated (`approval_request.status = invalidated`); separation of duties also applies to the counterpart (its own extractor cannot flag it — 403, nothing changes); audit `documents.claim.conflict`, `source.updated`. A claim that stops being confirmed has its pending proposal invalidated too. | documents spec "AT-14 …" (2) |
+| **DOM-P2-21** (Low) | **Documented; made consequential** | business-gates.md §4 rule 9 states precisely where documents-module verification is decisive and where it is advisory: for gate criteria (and task / deliverable acceptance) the designated reviewer / approver — never the evidence owner — is the checker, so a positive verification is advisory for acceptance; a **rejection** (defective evidence) is decisive: the link stops counting at once, an accepted criterion of an undecided cycle returns to `unmet`, and an approved gate is flagged for controlled reassessment (DOM-P2-05). Unverified evidence now appears in the verifiers' My Work (DOM-P2-09), and an evidence prerequisite (DOM-P2-18) is satisfied only by **verified** evidence. A per-criterion "verification required before acceptance" parameter for `approved_document` / `board_resolution` / `regulatory_record` remains a possible template extension. | business-gates.md §4 rule 9; tests of DOM-P2-05 and DOM-P2-18 |
+| **DOM-P2-17** (Medium, feature gap) | **Implemented (API)** | `cross_project_dependency` extended (dependent item, depended-upon task / milestone of another project, close reason/by/at, version) and routes `GET/POST /projects/:projectId/cross-project-dependencies`, `POST …/:dependencyId/close`. Minimum disclosure: a dependency — and anything about the other project's item — is listed, counted and addressable **only for users who can read both ends** (project membership, classification, workstream reach of `planning.plan.read`); everyone else gets nothing (not counted; 404). The other end is validated inside its own project (never a submitted id trusted); audited in the dependent project only; `atRisk` is schedule-based (item finish after `neededBy`). The Integrated-Plan UI for it is not part of this change. | `apps/api/test/planning/cross-project-and-prerequisites.spec.ts` "DOM-P2-17 …" (5) |
+| **DOM-P2-18** (Medium, feature gap) | **Implemented (API)** | New `record_dependency` (non-schedule prerequisite of a task / milestone: `decision`, `gate`, `agreement`, `approval_request`, `evidence_link` of the same project) and routes `GET/POST /projects/:projectId/prerequisites`, `POST …/:prerequisiteId/remove`. Satisfied = decision final (never a recommendation), gate approved and not under reassessment, agreement signed / effective, approval approved, evidence active and verified. An unsatisfied prerequisite blocks **starting** the task and **reporting the milestone achieved** (422 `planning.prerequisite_pending`, count only — "task blocked by pending agreement dependency"). Lists show only prerequisites whose record the caller can see; the rule counts all. They are not CPM nodes (the schedule still computes on tasks / milestones only). UI not part of this change. | spec "DOM-P2-18 …" (3); domain `planning.test.ts` "DOM-P2-18 …" (3) |
+
+### Existing tests changed, and why (the review shows they encoded the defect)
+
+- `packages/domain/src/gates.test.ts`: the `assertGateDecisionAllowed` cases backed G1 with a decision **without a gate key** (the
+  DOM-P2-01b bypass) and passed no authority. They now use a decision raised for G1 of the operational type with the DEMO
+  authority; every assertion is kept.
+- `packages/domain/src/documents.test.ts`: `assertClaimReview` / `claimApplicability` take the new explicit inputs
+  (origin, verifying source, reviewers); the same assertions are kept and invariant tests added.
+- `packages/domain/src/messages.test.ts`: exercises the new blocker / dimension codes (the test requires every code).
+- `apps/api/test/gates/gate-test-kit.ts`: the G0 passage decision type `charter_amendment` (stand-in named by the review)
+  is replaced by `gate_decision_mandate`.
+- `e2e/tests/p2-gates.spec.ts` (d): it linked the demo's JV-signing recommendation — a decision raised for **no** gate — to
+  G1, exactly the DOM-P2-01b bypass. It now links a G1 decision of the operational type that is still under review and
+  expects "only an approved decision can back a gate approval". **NOT EXECUTED** (E2E needs the running stack).
+- No API integration assertion was weakened; every pre-existing API test passes unchanged.
+
+### Changes needed outside this assignment (proposed to the lead)
+
+1. **Policy matrix** (`policy-matrix.json` / access-matrix.md — not edited): grant `planning.deliverable.accept` to
+   `sponsor` and `committee_chair` (DOM-P2-07; otherwise tasks designating them cannot be accepted); for DOM-P2-16 grant
+   `gates.assessment.submit` to `secretary_cpmo`, `workstream_lead`, `legal_restricted`.
+2. **post-migrate.sql**: `ALTER TABLE cross_project_dependency ADD CONSTRAINT cross_project_dependency_other_org_fk
+   FOREIGN KEY (org_id, other_project_id) REFERENCES project (org_id, id);` (same-organization guard for the other end;
+   the service already requires membership of both projects), and register `('record_dependency', 'successor_type',
+   'successor_id', 'successor')` in the same-project trigger list (predecessors are validated by the service; a DB guard
+   for them needs `hub_target_table` entries for `gate` → `gate_definition`, `agreement`, `approval_request`,
+   `evidence_link`).
+3. **RecordVisibility** (`apps/api/src/platform/record-visibility.ts`): rules for `cross_project_dependency` (both ends)
+   and `record_dependency` (successor + predecessor) if these audit entries should appear in activity feeds for
+   non-auditors (today they are auditor-only, which is the safe default).
+4. **Carve-out** (`perimeter-versions.service.ts`, not in this assignment) still backs a perimeter-version approval with
+   `gateDecisionIssue` (finality only, no gate-key / decision-type check); switching it to `gateApprovalDecisionIssue` with
+   the committee's matrix authority closes the same bypass there.
+
+### Residuals
+
+- DOM-P2-07: changing `approverRole` of a **baselined** task only through change control is not enforced (only while the
+  task awaits acceptance); DOM-P2-09: agenda screening, external-authority recording and claim reviews are not yet My Work
+  item types; DOM-P2-17 / -18: API only (no web screens), no CPM integration of prerequisites, no notification when the
+  other project's item slips.
+
+### Commands and real results (implementer's own databases `hub_test_gatefix`, `hub_test_gatefix_boot`)
+
+```
+$ HUB_DATABASES="hub_test_gatefix hub_test_gatefix_boot" bash scripts/dev/pg-init-roles.sh
+roles hub_owner/hub_app and databases ready: hub_test_gatefix hub_test_gatefix_boot
+$ pnpm build:packages                                               # OK
+$ pnpm --filter @hub/domain --filter @hub/contracts run test
+packages/domain test:     Test Files  16 passed (16)      Tests  328 passed (328)
+packages/contracts test:  Test Files  2 passed (2)        Tests  100 passed (100)
+$ TEST_DATABASE_URL=postgres://hub_app:…@127.0.0.1:5432/hub_test_gatefix \
+  TEST_DATABASE_MIGRATION_URL=postgres://hub_owner:…@127.0.0.1:5432/hub_test_gatefix pnpm --filter @hub/api test
+ Test Files  1 failed | 76 passed (77)
+      Tests  5 failed | 664 passed (669)     Duration 452.85s      (merged tree, final run)
+   -> the only failures are the governance agent's five DEFECT probes in test/reviews/p2-domain.spec.ts:
+      DOM-P2-02 (domain), DOM-P2-02 (API), DOM-P2-03a, DOM-P2-03b, DOM-P2-06
+$ pnpm lint     # tsc in every package + web i18n check (42 server message codes) + hard-coded-string check: passed
+$ python3 scripts/requirements/apply_status.py --check      # status-evidence.yaml OK (102 entries)
+$ node apps/api/dist/cli/openapi.js …      # 353 operations (incl. the 6 new DOM-P2-17/-18 routes)
+```
+
+NOT EXECUTED: Playwright E2E (`pnpm test:e2e`, needs the running stack and a production web build) — including the
+updated `p2-gates.spec.ts` (d).

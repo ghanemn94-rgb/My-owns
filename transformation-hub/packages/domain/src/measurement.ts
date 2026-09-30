@@ -145,3 +145,18 @@ export function effectiveRag(calculated: RagResult, override: RagOverride | null
     explanation: active ? `Manual override (${override!.reason}) until ${override!.expiresOn}; calculated: ${calculated.status}.` : calculated.explanation,
   };
 }
+
+/**
+ * Rules 3 + 6 (DOM-P2-10, REQ-PLN-018): a manual override never displays a status better than RED while a red critical
+ * item exists (an open blocker, a missed / overdue critical milestone — `openCriticalRed`). The approved override stays on
+ * record (and applies again once the blockers are cleared, until it expires), but it is not applied meanwhile.
+ */
+export function capOverrideAtOpenBlockers(eff: ReturnType<typeof effectiveRag>, openCriticalRed: number): ReturnType<typeof effectiveRag> {
+  if (!eff.overridden || openCriticalRed <= 0 || eff.effective === 'red') return eff;
+  return {
+    ...eff,
+    effective: 'red',
+    overridden: false,
+    explanation: `Manual override to ${eff.effective} is not applied while ${openCriticalRed} red critical item(s) (open blocker / critical milestone) exist — an override cannot conceal them; calculated: ${eff.calculated}.`,
+  };
+}

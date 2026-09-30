@@ -76,6 +76,16 @@ export class PlanningSupport {
     return { timezone: p.timezone, workingDays: p.workingDays, holidays: rows.map((r) => r.date).sort() };
   }
 
+  /**
+   * Roles the actor holds for a record: project-wide roles plus the workstream-scoped roles granted on the record's
+   * workstream (designated approver checks — DOM-P2-07).
+   */
+  rolesFor(ctx: RequestContext, projectId: string, workstreamId: string | null): string[] {
+    const s = ctx.principal.projects.get(projectId);
+    if (!s) return [];
+    return [...new Set<string>([...s.roles, ...s.workstreamRoles.filter((w) => !!workstreamId && w.workstreamId === workstreamId).map((w) => w.role)])];
+  }
+
   /** RBAC + ABAC with the project's classification. */
   /** Approval order role → state → separation of duties (PolicyService.assertApproval, I-R3). */
   assertApproval(ctx: RequestContext, permission: string, p: ProjectInfo, attrs: ActAttrs, stateCheck: () => void) {

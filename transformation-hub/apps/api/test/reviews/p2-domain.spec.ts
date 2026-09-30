@@ -62,7 +62,7 @@ const ensureG0Approved = async () => {
 
 describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]', () => {
   // -------------------------------------------------------------------------------------------------------------
-  it('DEFECT DOM-P2-01a: G0 (committee cannot approve its own mandate) must not pass on a committee decision of the operational gate type (G1–G4/G7)', async () => {
+  it('DOM-P2-01a: G0 (committee cannot approve its own mandate) must not pass on a committee decision of the operational gate type (G1–G4/G7)', async () => {
     const d = await gateDecision(pA, a, govA, 'G0', { decisionTypeKey: 'gate_decision_operational' });
     // The committee approved it "within mandate" because the drafter chose the operational gate decision type.
     expect(d.status).toBe('approved');
@@ -72,7 +72,7 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
     expect(r.status, `gate approved on a mismatched decision type: ${JSON.stringify(r.body)}`).toBe(422);
   });
 
-  it('DEFECT DOM-P2-01b: a gate must not pass on an unrelated approved decision that carries no gate key (e.g. a baseline approval)', async () => {
+  it('DOM-P2-01b: a gate must not pass on an unrelated approved decision that carries no gate key (e.g. a baseline approval)', async () => {
     await ensureG0Approved();
     await makeReady(a, pA, 'G1');
     const x = await tabledDecision(pA, a as unknown as Actors, a.pm, govA.committeeId, govA.meetingId, {
@@ -161,7 +161,7 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
   });
 
   // -------------------------------------------------------------------------------------------------------------
-  it('DEFECT DOM-P2-04: a historical-unverified claim must never end up "confirmed" (not even via an intermediate status)', async () => {
+  it('DOM-P2-04: a historical-unverified claim must never end up "confirmed" (not even via an intermediate status)', async () => {
     const t = await task(pm, pD, wsD.get('WS02')!.id, 'DOM-P2-04 probe task (synthetic)', { durationDays: 3 });
     const src = await pm.post(`/api/v1/projects/${pD}/sources`, { sourceType: 'excel', filename: 'probe-tracker.xlsx', extractionStatus: 'partial', classification: 'internal' });
     expect(src.status, JSON.stringify(src.body)).toBe(201);
@@ -184,7 +184,7 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
   });
 
   // -------------------------------------------------------------------------------------------------------------
-  it('DEFECT DOM-P2-05: evidence relied upon by an APPROVED gate that is rejected as defective must flag the gate for controlled reassessment', async () => {
+  it('DOM-P2-05: evidence relied upon by an APPROVED gate that is rejected as defective must flag the gate for controlled reassessment', async () => {
     await ensureG0Approved();
     const g0 = await gateByKey(a.pm, pA, 'G0');
     const cr = crit(g0, 'G0-C01');
@@ -216,7 +216,7 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
   });
 
   // -------------------------------------------------------------------------------------------------------------
-  it("DEFECT DOM-P2-07: a task whose approver role is 'sponsor' must not be accepted by a functional approver", async () => {
+  it("DOM-P2-07: a task whose approver role is 'sponsor' must not be accepted by a functional approver", async () => {
     const t = await task(pm, pD, wsD.get('WS01')!.id, 'DOM-P2-07 probe — sponsor-approved deliverable (synthetic)', { approverRole: 'sponsor', requiresAcceptance: true, durationDays: 2 });
     await pm.post(`/api/v1/projects/${pD}/tasks/${t}/start`, { expectedVersion: 1 }).expect(201);
     await pm.post(`/api/v1/projects/${pD}/tasks/${t}/submit-for-acceptance`, { expectedVersion: 2 }).expect(201);
@@ -227,7 +227,7 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
   });
 
   // -------------------------------------------------------------------------------------------------------------
-  it("DEFECT DOM-P2-09: a pending waiver approval appears in the waiver authority's My Work", async () => {
+  it("DOM-P2-09: a pending waiver approval appears in the waiver authority's My Work", async () => {
     const g3 = await gateByKey(a.pm, pA, 'G3');
     const cr = crit(g3, 'G3-C08'); // waivable in the template (committee_chair)
     const w = await a.legal.post(`/api/v1/projects/${pA}/gates/${g3.id}/criteria/${cr.id}/waivers`, { basis: 'Probe basis (synthetic)', impact: 'Probe impact (synthetic)' });
@@ -238,7 +238,7 @@ describe('P2 domain review — defect probes [docs/reviews/P2-domain-review.md]'
   });
 
   // -------------------------------------------------------------------------------------------------------------
-  it('DEFECT DOM-P2-10: a project-level manual override must not display Green while an open blocker exists', async () => {
+  it('DOM-P2-10: a project-level manual override must not display Green while an open blocker exists', async () => {
     const today = riyadhToday();
     const t = await task(pm, pD, wsD.get('WS03')!.id, 'DOM-P2-10 probe blocked task (synthetic)', { durationDays: 2 });
     await pm.post(`/api/v1/projects/${pD}/tasks/${t}/start`, { expectedVersion: 1 }).expect(201);

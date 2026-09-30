@@ -1,5 +1,5 @@
 {
-  "id": "36f33340-3edd-4ea2-a4ad-35ae9b624cba",
+  "id": "347b8a8e-5598-40a9-9355-d6ff1cd3ca8e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -3060,6 +3060,32 @@
           "primaryKey": false,
           "notNull": true
         },
+        "local_item_type": {
+          "name": "local_item_type",
+          "type": "schedule_node_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "local_item_id": {
+          "name": "local_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_item_type": {
+          "name": "other_item_type",
+          "type": "schedule_node_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "other_item_id": {
+          "name": "other_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "description": {
           "name": "description",
           "type": "text",
@@ -3080,6 +3106,24 @@
           "notNull": true,
           "default": "'open'"
         },
+        "closed_reason": {
+          "name": "closed_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "closed_by": {
+          "name": "closed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "closed_at": {
+          "name": "closed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -3093,6 +3137,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
         "version": {
           "name": "version",
           "type": "integer",
@@ -3101,7 +3152,23 @@
           "default": 1
         }
       },
-      "indexes": {},
+      "indexes": {
+        "cross_project_dependency_other_idx": {
+          "name": "cross_project_dependency_other_idx",
+          "columns": [
+            {
+              "expression": "other_project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "cross_project_dependency_project_id_project_id_fk": {
           "name": "cross_project_dependency_project_id_project_id_fk",
@@ -3131,9 +3198,27 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "cross_project_dependency_pid_uq": {
+          "name": "cross_project_dependency_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "cross_project_dependency_other_chk": {
+          "name": "cross_project_dependency_other_chk",
+          "value": "\"cross_project_dependency\".\"other_project_id\" <> \"cross_project_dependency\".\"project_id\""
+        },
+        "cross_project_dependency_local_chk": {
+          "name": "cross_project_dependency_local_chk",
+          "value": "(\"cross_project_dependency\".\"local_item_type\" is null) = (\"cross_project_dependency\".\"local_item_id\" is null)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.deliverable": {
@@ -4531,6 +4616,165 @@
       },
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.record_dependency": {
+      "name": "record_dependency",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "successor_type": {
+          "name": "successor_type",
+          "type": "schedule_node_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "successor_id": {
+          "name": "successor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "predecessor_type": {
+          "name": "predecessor_type",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "predecessor_id": {
+          "name": "predecessor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "record_dependency_uq": {
+          "name": "record_dependency_uq",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "successor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "predecessor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "record_dependency_successor_idx": {
+          "name": "record_dependency_successor_idx",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "successor_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "successor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "record_dependency_project_id_project_id_fk": {
+          "name": "record_dependency_project_id_project_id_fk",
+          "tableFrom": "record_dependency",
+          "tableTo": "project",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "record_dependency_pid_uq": {
+          "name": "record_dependency_pid_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "record_dependency_type_chk": {
+          "name": "record_dependency_type_chk",
+          "value": "\"record_dependency\".\"predecessor_type\" in ('decision', 'gate', 'agreement', 'approval_request', 'evidence_link')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.risk": {
@@ -21403,6 +21647,14 @@
           "notNull": true,
           "default": "'unknown'"
         },
+        "origin_status": {
+          "name": "origin_status",
+          "type": "verification_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unknown'"
+        },
         "reviewer_user_id": {
           "name": "reviewer_user_id",
           "type": "uuid",
@@ -21412,6 +21664,12 @@
         "reviewed_at": {
           "name": "reviewed_at",
           "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "verification_source_id": {
+          "name": "verification_source_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -21533,6 +21791,21 @@
           "columnsFrom": [
             "project_id",
             "source_id"
+          ],
+          "columnsTo": [
+            "project_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "source_claim_verification_source_fk": {
+          "name": "source_claim_verification_source_fk",
+          "tableFrom": "source_claim",
+          "tableTo": "source_record",
+          "columnsFrom": [
+            "project_id",
+            "verification_source_id"
           ],
           "columnsTo": [
             "project_id",

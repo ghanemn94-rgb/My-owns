@@ -1,4 +1,4 @@
-import { ruleViolation } from './errors';
+import { forbidden, ruleViolation } from './errors';
 import { formatMessage, serverMessage, type ServerMessage } from './messages';
 import type { CriterionStatus, GateAssessmentStatus, DecisionStatus, DecisionAuthorityOutcome } from './enums';
 
@@ -56,6 +56,13 @@ export const GATE_MESSAGES_EN: Readonly<Record<string, string>> = {
   'gate.blocker.decision_not_approved': 'The linked decision is {status}; only an approved decision can back a gate approval',
   'gate.blocker.decision_external_unrecorded': 'The linked decision is outside the committee delegation and no approval by the authorized body is recorded',
   'gate.blocker.decision_no_authority': 'The linked decision has no authority assessment (within mandate / external authority)',
+  // DOM-P2-01: the decision must be of a type the approved authority matrix assigns to THIS gate.
+  'gate.blocker.decision_no_gate': 'The linked decision was not raised for a gate; only a decision raised for gate {gate} can back it',
+  'gate.blocker.decision_no_matrix': 'The deciding committee has no approved authority matrix, so its decision cannot back gate {gate}',
+  'gate.blocker.decision_type_missing': 'The linked decision has no decision type; the approved authority matrix must assign its type to gate {gate}',
+  'gate.blocker.decision_type_unknown': 'Decision type {decisionType} is not in the approved authority matrix of the deciding committee',
+  'gate.blocker.decision_type_not_for_gate': 'The approved authority matrix does not assign decision type {decisionType} to gate {gate}',
+  'gate.blocker.decision_body_not_authorized': 'Decision type {decisionType} is reserved to a higher authority; the committee approval alone cannot back gate {gate}',
 };
 
 function blocker(kind: GateBlocker['kind'], ref: string, code: string, params: Record<string, string | number> = {}): GateBlocker {
@@ -178,7 +185,59 @@ export interface GateDecisionBacking {
   externalAuthorityReference?: string | null;
   /** Gate the decision was raised for (decision.gate_key), when set. */
   gateKey?: string | null;
+  /** Decision type key (decision.decision_type_key). Required by `gateApprovalDecisionIssue`. */
+  decisionTypeKey?: string | null;
 }
+
+/**
+ * A decision type row of an approved authority matrix, as far as gate approvals are concerned (authority-matrix.md §2.2,
+ * DOM-P2-01): the gates whose passage this type may approve (`gateKeys`) and whether the committee may give the final
+ * approval itself (`withinCommitteeAuthority = false` → reserved to `escalateTo`; the committee only recommends).
+ */
+export interface GateAuthorityDecisionType {
+  key: string;
+  gateKeys: readonly string[];
+  withinCommitteeAuthority: boolean;
+}
+
+/**
+ * The authority under which a decision can back a gate: the approved matrix version of the DECIDING committee (the version
+ * recorded with the committee outcome, or — before an outcome — the committee's approved matrix) and the decision's type in
+ * it. Always passed explicitly; a missing matrix or type fails closed.
+ */
+export interface GateDecisionAuthority {
+  matrixVersionId: string | null;
+  decisionType: GateAuthorityDecisionType | null;
+}
+
+/**
+ * Looks the decision type up in an approved authority matrix policy. A type row without `gateKeys` approves no gate
+ * (fail closed — matrices approved before gate assignments existed must be amended to back gates).
+ */
+export function gateAuthorityOf(
+  matrix: { id: string; policy: { decisionTypes?: readonly { key: string; gateKeys?: readonly string[] | null; withinCommitteeAuthority: boolean }[] } } | null,
+  decisionTypeKey: string | null | undefined,
+): GateDecisionAuthority {
+  if (!matrix) return { matrixVersionId: null, decisionType: null };
+  const t = decisionTypeKey ? (matrix.policy.decisionTypes ?? []).find((x) => x.key === decisionTypeKey) : undefined;
+  return {
+    matrixVersionId: matrix.id,
+    decisionType: t ? { key: t.key, gateKeys: [...(t.gateKeys ?? [])], withinCommitteeAuthority: t.withinCommitteeAuthority === true } : null,
+  };
+}
+
+/** Blocker codes meaning "this decision can never back this gate" (as opposed to "not final yet"). */
+export const GATE_DECISION_NOT_FOR_GATE_CODES: readonly string[] = [
+  'gate.blocker.decision_no_gate',
+  'gate.blocker.decision_other_gate',
+  'gate.blocker.decision_no_matrix',
+  'gate.blocker.decision_type_missing',
+  'gate.blocker.decision_type_unknown',
+  'gate.blocker.decision_type_not_for_gate',
+  'gate.blocker.decision_body_not_authorized',
+];
+
+export const isNotForGateBlocker = (b: GateBlocker | null): boolean => !!b && GATE_DECISION_NOT_FOR_GATE_CODES.includes(b.messageI18n[0]?.code ?? '');
 
 /**
  * AT-04: a gate approval must be backed by a FINAL governance decision. A decision that is only `recommended` (outside the
@@ -202,6 +261,55 @@ export function gateDecisionIssue(d: GateDecisionBacking | null, gateKey: string
     : blocker('decision', d.id, 'gate.blocker.decision_no_authority');
 }
 
+/**
+ * DOM-P2-01 (spec §4.2 "approval interfaces enforcing delegated authority", AT-04, REQ-GOV-003/022/023): the decision that
+ * backs a GATE approval must
+ *  1. have been raised for this gate (`gateKey` = the gate; a decision without a gate key backs no gate);
+ *  2. be final (`gateDecisionIssue`: approved within the mandate, or a recommendation approved by the authorized body);
+ *  3. be of a decision type that the deciding committee's approved authority matrix assigns to this gate (`gateKeys`) —
+ *     e.g. the operational gate type (G1–G4, G7) can never back G0 ("the committee cannot approve its own mandate");
+ *  4. have been decided by the body holding that authority: a type reserved to a higher authority
+ *     (`withinCommitteeAuthority = false`) backs the gate only through the recorded external approval, never through a
+ *     committee approval "within mandate".
+ * Returns null when the decision can back the gate approval, otherwise the blocker (checked in this order).
+ */
+export function gateApprovalDecisionIssue(d: GateDecisionBacking | null, gateKey: string, authority: GateDecisionAuthority | null): GateBlocker | null {
+  if (!d) return blocker('decision', gateKey, 'gate.blocker.no_decision', { gate: gateKey });
+  const key = gateKeyIssue(d, gateKey);
+  if (key) return key;
+  const finality = gateDecisionIssue(d, gateKey);
+  if (finality) return finality;
+  const type = gateDecisionTypeIssue(d, gateKey, authority);
+  if (type) return type;
+  const t = authority!.decisionType!;
+  if (!t.withinCommitteeAuthority && d.authorityOutcome !== 'pending_external_authority') {
+    return blocker('decision', d.id, 'gate.blocker.decision_body_not_authorized', { decisionType: t.key, gate: gateKey });
+  }
+  return null;
+}
+
+function gateKeyIssue(d: GateDecisionBacking, gateKey: string): GateBlocker | null {
+  if (!d.gateKey) return blocker('decision', d.id, 'gate.blocker.decision_no_gate', { gate: gateKey });
+  if (d.gateKey !== gateKey) return blocker('decision', d.id, 'gate.blocker.decision_other_gate', { decisionGate: d.gateKey, gate: gateKey });
+  return null;
+}
+
+/**
+ * The part of `gateApprovalDecisionIssue` that does not depend on the decision's progress: gate key, approved matrix of the
+ * deciding committee, and a decision type that matrix assigns to this gate. Used when LINKING a decision to a gate cycle, so
+ * a decision that can never back the gate is refused up front.
+ */
+export function gateDecisionTypeIssue(d: GateDecisionBacking, gateKey: string, authority: GateDecisionAuthority | null): GateBlocker | null {
+  const key = gateKeyIssue(d, gateKey);
+  if (key) return key;
+  if (!authority?.matrixVersionId) return blocker('decision', d.id, 'gate.blocker.decision_no_matrix', { gate: gateKey });
+  if (!d.decisionTypeKey) return blocker('decision', d.id, 'gate.blocker.decision_type_missing', { gate: gateKey });
+  const t = authority.decisionType;
+  if (!t || t.key !== d.decisionTypeKey) return blocker('decision', d.id, 'gate.blocker.decision_type_unknown', { decisionType: d.decisionTypeKey });
+  if (!t.gateKeys.includes(gateKey)) return blocker('decision', d.id, 'gate.blocker.decision_type_not_for_gate', { decisionType: t.key, gate: gateKey });
+  return null;
+}
+
 export type GateDecisionOutcome = 'approve' | 'approve_with_exceptions' | 'reject';
 
 /**
@@ -213,6 +321,8 @@ export function assertGateDecisionAllowed(input: {
   outcome: GateDecisionOutcome;
   evaluation: GateEvaluation;
   decision: GateDecisionBacking | null;
+  /** Authority of the deciding committee for this decision (DOM-P2-01) — always passed explicitly (null fails closed). */
+  authority: GateDecisionAuthority | null;
   /** Decisions that already backed an earlier cycle of the same gate (a reopened gate needs a fresh decision). */
   decisionIdsUsedByPriorCycles: string[];
   note: string;
@@ -224,12 +334,14 @@ export function assertGateDecisionAllowed(input: {
   if (!input.evaluation.ready) {
     throw ruleViolation('gates.decide.not_ready', `Gate ${input.gateKey} is not ready at decision time`, { blockers: input.evaluation.blockers });
   }
-  const issue = gateDecisionIssue(input.decision, input.gateKey);
+  const issue = gateApprovalDecisionIssue(input.decision, input.gateKey, input.authority);
   if (issue) {
-    throw ruleViolation('gates.decide.decision_not_final', issue.message, {
+    throw ruleViolation(isNotForGateBlocker(issue) ? 'gates.decide.decision_not_for_gate' : 'gates.decide.decision_not_final', issue.message, {
       decisionId: input.decision?.id ?? null,
       decisionStatus: input.decision?.status ?? null,
       authorityOutcome: input.decision?.authorityOutcome ?? null,
+      decisionTypeKey: input.decision?.decisionTypeKey ?? null,
+      messageI18n: issue.messageI18n,
     });
   }
   if (input.decision && input.decisionIdsUsedByPriorCycles.includes(input.decision.id)) {
@@ -281,6 +393,93 @@ export function carryForwardCriteria(
     else if (opts.resetCriterionIds.has(p.criterionId) || p.status === 'conflicting') status = 'unmet';
     return { criterionId: p.criterionId, status, waiverId: status === 'waived' ? p.waiverId : null, carriedFrom: p.status };
   });
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Evidence changes → controlled reassessment (spec §3 "If approved evidence is found defective, reopen the assessment
+// through a controlled process", §14, AT-14, REQ-LCY-015, REQ-DAT-014; DOM-P2-05)
+
+export const REASSESSMENT_REASONS = ['evidence_conflict', 'evidence_defective', 'evidence_superseded'] as const;
+export type ReassessmentReason = (typeof REASSESSMENT_REASONS)[number];
+
+/** Criterion states whose evidence was relied upon (a change of that evidence invalidates them). */
+export const EVIDENCE_RELIANT_CRITERION_STATUSES: readonly CriterionStatus[] = ['met', 'evidence_submitted'];
+
+export interface CriterionEvidenceLink {
+  id: string;
+  status: 'active' | 'conflicting' | 'rejected' | 'superseded';
+  /** Epoch ms the link was added. */
+  createdAtMs: number;
+  /** Epoch ms of the last verification decision (accept / reject), null when never verified. */
+  reviewedAtMs: number | null;
+}
+
+/**
+ * Why a criterion of a DECIDED, approved cycle needs a controlled reassessment — or null. The decided cycle itself is never
+ * modified; the caller flags it (reassessment flags, escalation, notifications, outbox) and downstream approved gates.
+ *  - conflicting evidence → `evidence_conflict` (AT-14);
+ *  - a link relied upon at the decision (`reliedLinkIds`, recorded in the decision snapshot) is now rejected — found
+ *    defective by verification → `evidence_defective`; now superseded → `evidence_superseded` (REQ-DAT-014);
+ *  - cycles decided before relied-upon link ids were recorded (`reliedLinkIds = null`): required evidence with no active
+ *    link left → `evidence_defective` when a link was rejected, otherwise `evidence_superseded`.
+ * Only criteria that relied on evidence (met / evidence_submitted in the decided cycle) are concerned.
+ */
+export function decidedCriterionReassessment(c: {
+  status: CriterionStatus;
+  evidenceRequired: boolean;
+  reliedLinkIds: readonly string[] | null;
+  links: readonly CriterionEvidenceLink[];
+}): { reason: ReassessmentReason; linkIds: string[] } | null {
+  if (!EVIDENCE_RELIANT_CRITERION_STATUSES.includes(c.status)) return null;
+  const conflicting = c.links.filter((l) => l.status === 'conflicting');
+  if (conflicting.length) return { reason: 'evidence_conflict', linkIds: conflicting.map((l) => l.id) };
+  if (c.reliedLinkIds) {
+    const relied = c.links.filter((l) => c.reliedLinkIds!.includes(l.id));
+    const rejected = relied.filter((l) => l.status === 'rejected');
+    if (rejected.length) return { reason: 'evidence_defective', linkIds: rejected.map((l) => l.id) };
+    const superseded = relied.filter((l) => l.status === 'superseded');
+    if (superseded.length) return { reason: 'evidence_superseded', linkIds: superseded.map((l) => l.id) };
+    return null;
+  }
+  if (c.evidenceRequired && !c.links.some((l) => l.status === 'active')) {
+    const rejected = c.links.filter((l) => l.status === 'rejected');
+    if (rejected.length) return { reason: 'evidence_defective', linkIds: rejected.map((l) => l.id) };
+    const superseded = c.links.filter((l) => l.status === 'superseded');
+    return { reason: 'evidence_superseded', linkIds: superseded.map((l) => l.id) };
+  }
+  return null;
+}
+
+/**
+ * On an UNDECIDED cycle: a criterion the designated reviewer accepted as met, whose accepted evidence was afterwards
+ * rejected as defective, must be re-reviewed. Returns the ids of the links that existed when the criterion was accepted
+ * and were rejected after it (empty = nothing to do).
+ */
+export function evidenceRejectedSinceAcceptance(c: { status: CriterionStatus; assessedAtMs: number | null; links: readonly CriterionEvidenceLink[] }): string[] {
+  if (c.status !== 'met' || c.assessedAtMs === null) return [];
+  const at = c.assessedAtMs;
+  return c.links.filter((l) => l.status === 'rejected' && l.createdAtMs <= at && l.reviewedAtMs !== null && l.reviewedAtMs >= at).map((l) => l.id);
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Specialist determinations (spec §3 "Authorized specialists determine waivability and waiver authority", REQ-LCY-005;
+// DOM-P2-15)
+
+/**
+ * The specialist role designated to determine a criterion's waivability: the criterion's reviewer role when that role is a
+ * waivability specialist (holds `gates.criterion.set_waivability`), otherwise the functional approver (the platform's
+ * generic functional specialist). Only that role may make the determination.
+ */
+export function designatedWaivabilityRole(reviewerRole: string, specialistRoles: readonly string[]): string {
+  return specialistRoles.includes(reviewerRole) ? reviewerRole : 'functional_approver';
+}
+
+/** Waivability is determined by the designated specialist only, and only while the gate cycle is being assessed. */
+export function assertWaivabilityDeterminer(input: { criterionKey: string; designatedRole: string; actorRoles: readonly string[]; gateKey: string; gateStatus: GateAssessmentStatus }): void {
+  if (!input.actorRoles.includes(input.designatedRole)) {
+    throw forbidden('gates.waivability.not_designated_specialist', `Only the designated specialist role (${input.designatedRole}) may determine the waivability of ${input.criterionKey}`);
+  }
+  assertCriterionEditable(input.gateKey, input.gateStatus);
 }
 
 /** Whether a role may approve waivers at all (waiver authority must be a role holding the approve permission). */

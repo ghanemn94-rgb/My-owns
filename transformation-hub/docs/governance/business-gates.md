@@ -47,9 +47,9 @@ timestamps), and exceptions (waivers, not-applicable determinations, observation
 |---|---|
 | `mandatory` | Must be **Met** (evidence accepted and criterion approved), **Waived** (only if waivable), or determined **Not applicable** by an authorized specialist, for the gate to pass |
 | `blocking` | An unmet blocking criterion is an active blocker: it forces the gate RAG to red regardless of task progress, appears in the cockpit's top blockers, and prevents the gate from being submitted for decision. Every blocking criterion is also mandatory |
-| `waivable` | Default `false`. Only authorized specialists determine waivability; where `true`, `waiverAuthorityRole` names who may approve and `waivabilityBasis` records that the flag is a proposal to be confirmed |
+| `waivable` | Default `false`. Only authorized specialists determine waivability; where `true`, `waiverAuthorityRole` names who may approve and `waivabilityBasis` records that the flag is a proposal to be confirmed. **As implemented (DOM-P2-15):** the determination is made only by the criterion's designated specialist — its reviewer role when that role holds `gates.criterion.set_waivability`, otherwise the functional approver — and only while the gate cycle is being assessed (never on a gate that is ready for decision or decided) |
 | `evidenceRequired`, `evidenceType` | The kind of evidence needed (approved document, signed agreement, regulatory record, committee decision, test report, reconciliation, sign-off, register extract, board resolution) |
-| `applicability` | Always `proposed` in the template; set to `applicable` or `not_applicable` only by an authorized owner with a recorded basis |
+| `applicability` | Always `proposed` in the template; set to `applicable` or `not_applicable` only by an authorized owner with a recorded basis. **As implemented (DOM-P2-15):** set by the criterion reviewer's recorded not-applicable determination — `not_applicable` when a proposal is approved, `applicable` when it is rejected (versioned and audited) |
 
 ### 2.2 Criterion states
 
@@ -240,7 +240,11 @@ flowchart LR
    - no blocking criterion is unmet;
    - the decision is recorded by the approver role under the active authority matrix, with quorum, recusal and
      self-approval checks (`decision-workflow.md`); outside delegation → `recommended_pending_external_authority` and
-     the gate stays blocked (AT-04).
+     the gate stays blocked (AT-04);
+   - **the backing governance decision was raised for this gate and is of a decision type that the deciding committee's
+     approved authority matrix assigns to this gate** (`gateKeys`, authority-matrix.md §3 step 10); a type reserved to a
+     higher authority counts only with the authorized body's recorded approval. G0 has its own reserved type
+     (`gate_decision_mandate` in the DEMO matrix): the committee cannot approve its own mandate (DOM-P2-01).
 2. **Non-waivable criteria cannot be waived [server].** A waiver request on a criterion with `waivable = false` is
    rejected and logged; the criterion stays unmet (AT-13). An exception never overrides a non-waivable condition.
 3. **Waivers record basis, approval and impact.** A waiver needs: the criterion, the reason and basis, the specialist
@@ -253,13 +257,28 @@ flowchart LR
 6. **Controlled reopen on defective evidence [server].** If evidence relied upon is found defective or conflicts with
    newer evidence, an authorized user reopens the criterion with a reason. A new assessment version is created; the
    previous status, evidence and decision remain in history. Downstream gates that relied on it are flagged for
-   review, not silently reverted (AT-14).
+   review, not silently reverted (AT-14). **As implemented (DOM-P2-05, REQ-DAT-014):** the decision snapshot records the
+   evidence links each criterion relied upon. When one of them later becomes conflicting, is **rejected as defective**
+   in evidence verification, or is **superseded**, the approved cycle (never modified) is flagged for controlled
+   reassessment with the reason, an escalation, notifications to the reopen authorities and a `gate.blocked` event;
+   downstream approved gates are flagged for review, the gate RAG turns red and a flagged G4 approval no longer counts as
+   standalone acceptance in the status dimensions. On a cycle not yet decided, a criterion accepted as met whose accepted
+   evidence is later rejected as defective returns to `unmet` for a fresh review (audited).
 7. **Evidence conflicts** between sources are flagged as `conflicting` and must be resolved before the criterion can be
    `met` again.
 8. **Parallel preparation.** Gates control approvals, not the start of preparatory work. Activities may start before
    their gate passes where authorized; actions that need specific approvals (e.g. partner outreach, materials access)
    require those approvals regardless of gate status.
-9. **Gate RAG** is computed from criteria and blockers, shown separately from the average of workstream RAGs, so a green
+9. **Evidence verification (DOM-P2-21) — where it is decisive and where it is advisory.** For gate criteria the checker
+   is the criterion's **designated reviewer**, who is never the evidence owner (`not_self`): a criterion becomes `met`
+   only through that review, whatever the documents module's verification says. The documents module's separate
+   evidence verification (`documents.evidence.verify`, never by the linker or the uploader) is therefore **advisory for
+   accepting** a criterion, but **decisive when it rejects**: a rejected (defective) link stops counting as active
+   evidence at once, returns an accepted criterion of an undecided cycle to `unmet`, and flags an approved gate for
+   controlled reassessment (rule 6). The same holds for task / deliverable acceptance (the acceptor, holding the
+   designated approver role, is the checker). A future matrix may require prior verification for specific evidence
+   types (`approved_document`, `board_resolution`, `regulatory_record`); that would be a template/criterion parameter.
+10. **Gate RAG** is computed from criteria and blockers, shown separately from the average of workstream RAGs, so a green
    average never hides a red gate or CP (spec §9 measurement rule 3).
 
 ## 5. Day-1 readiness and go/no-go (جاهزية اليوم الأول)

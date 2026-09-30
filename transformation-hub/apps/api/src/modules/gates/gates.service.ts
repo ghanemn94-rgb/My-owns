@@ -14,7 +14,13 @@ import {
   assertGateDecisionAllowed,
   assertNotApplicableAllowed,
   assertWaivabilityDetermination,
-  gateDecisionIssue,
+  assertWaivabilityDeterminer,
+  designatedWaivabilityRole,
+  decidedCriterionReassessment,
+  evidenceRejectedSinceAcceptance,
+  gateApprovalDecisionIssue,
+  gateAuthorityOf,
+  gateDecisionTypeIssue,
   gateRag,
   forbidden,
   notFound,
@@ -22,7 +28,9 @@ import {
   CriterionStatus,
   GateBlocker,
   GateEvaluation,
+  GateDecisionAuthority,
   GateDecisionBacking,
+  ReassessmentReason,
   RoleKey,
   type I18nText,
   type ProjectTemplateDefinition,
@@ -58,8 +66,12 @@ export const EVIDENCE_CONFLICTS_JOB = 'gates.evidence_conflicts';
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
 const evalFields = (e: GateEvaluation) => ({ ready: e.ready, hasWaivers: e.hasWaivers, blockers: e.blockers, counts: e.counts });
 
-/** Criterion states whose evidence was relied upon (conflicting evidence invalidates them). */
-const RELIES_ON_EVIDENCE: CriterionStatus[] = ['met', 'evidence_submitted'];
+/** English wording of a reassessment reason in escalations and notifications (stored text; the flag carries the code). */
+const REASSESSMENT_WHAT: Record<ReassessmentReason, string> = {
+  evidence_conflict: 'is now conflicting',
+  evidence_defective: 'was rejected as defective',
+  evidence_superseded: 'was superseded',
+};
 
 /**
  * Business gates G0–G7 (spec §3; REQ-LCY-*): live evaluation, assessment lifecycle, criterion assessment, controlled
@@ -115,8 +127,9 @@ export class GatesService implements OnModuleInit {
     const b = await this.loader.bundle(projectId);
     this.policy.assert(ctx, 'gates.gate.read', { projectId, classification: b.project.classification });
     const decisions = await this.decisionsFor(projectId, b.assessments.filter((a) => a.isCurrent).map((a) => a.decisionId), []);
+    const authorities = await this.authoritiesFor(projectId, [...decisions.values()]);
     const purposes = await this.templatePurposes(b.project);
-    return { items: b.gates.map((g) => this.summary(ctx, b, g, decisions, purposes)) };
+    return { items: b.gates.map((g) => this.summary(ctx, b, g, decisions, authorities, purposes)) };
   }
 
   async getGate(ctx: RequestContext, projectId: string, gateId: string) {
@@ -125,7 +138,8 @@ export class GatesService implements OnModuleInit {
     this.policy.assert(ctx, 'gates.gate.read', { projectId, classification: b.project.classification });
     const cycles = b.cycles(gate.id);
     const decisions = await this.decisionsFor(projectId, cycles.map((a) => a.decisionId), [gate.key]);
-    const summary = this.summary(ctx, b, gate, decisions, await this.templatePurposes(b.project));
+    const authorities = await this.authoritiesFor(projectId, [...decisions.values()]);
+    const summary = this.summary(ctx, b, gate, decisions, authorities, await this.templatePurposes(b.project));
     const cur = b.current(gate.id);
     const crits = b.criteriaOf(gate.id);
     const critIds = new Set(crits.map((c) => c.id));
@@ -135,7 +149,7 @@ export class GatesService implements OnModuleInit {
       ...summary,
       criteria: crits.map((c) => this.criterionDto(b, c, cur, shown.get(c.id) ?? { active: 0, conflicting: 0 })),
       waivers: b.waivers.filter((w) => critIds.has(w.targetId)).map((w) => this.waiverDto(w, b)),
-      decisions: [...decisions.values()].filter((d) => this.canSeeDecision(ctx, projectId, d)).map((d) => this.decisionDto(d, gate.key)),
+      decisions: [...decisions.values()].filter((d) => this.canSeeDecision(ctx, projectId, d)).map((d) => this.decisionDto(d, gate.key, authorities.get(d.id) ?? null)),
       cycles: cycles.map((a) => ({
         ...this.assessmentDto(a),
         criteria: crits.map((c) => {
@@ -200,7 +214,10 @@ export class GatesService implements OnModuleInit {
     this.commandAssert(ctx, 'gates.assessment.submit', { projectId, classification: b.project.classification });
     if (DECIDED_GATE_STATUSES.includes(cur.status)) throw ruleViolation('gates.assessment.decided', `Gate ${gate.key} cycle ${cur.cycle} is already decided`);
     const d = await this.loadDecision(ctx, projectId, body.decisionId);
-    if (d.gateKey && d.gateKey !== gate.key) throw ruleViolation('gates.decision.other_gate', `Decision ${d.code} was raised for gate ${d.gateKey}`);
+    // DOM-P2-01: a decision that can never back this gate (no / other gate key, no approved matrix of the deciding
+    // committee, or a decision type that matrix does not assign to this gate) is refused up front.
+    const typeIssue = gateDecisionTypeIssue(this.backing(d), gate.key, (await this.authoritiesFor(projectId, [d])).get(d.id) ?? null);
+    if (typeIssue) throw ruleViolation('gates.decision.not_for_gate', typeIssue.message, { decisionId: d.id, decisionTypeKey: d.decisionTypeKey, messageI18n: typeIssue.messageI18n });
     await updateVersioned(this.db, schema.gateAssessment, { id: cur.id, projectId, expectedVersion: body.expectedVersion }, { decisionId: d.id });
     await this.audit.record({ action: 'gates.assessment.link_decision', entityType: 'gate_assessment', entityId: cur.id, projectId, before: { decisionId: cur.decisionId }, after: { decisionId: d.id, decisionStatus: d.status, authorityOutcome: d.authorityOutcome, gateKey: gate.key } });
     return this.assessmentResult(projectId, gate.id);
@@ -232,7 +249,8 @@ export class GatesService implements OnModuleInit {
       .cycles(gate.id)
       .filter((a) => a.id !== cur.id && a.decisionId && a.status !== 'rejected')
       .map((a) => a.decisionId!);
-    assertGateDecisionAllowed({ gateKey: gate.key, outcome: body.outcome, evaluation: ev, decision: d ? this.backing(d) : null, decisionIdsUsedByPriorCycles: priorDecisionIds, note: body.note });
+    const authority = d ? ((await this.authoritiesFor(projectId, [d])).get(d.id) ?? null) : null;
+    assertGateDecisionAllowed({ gateKey: gate.key, outcome: body.outcome, evaluation: ev, decision: d ? this.backing(d) : null, authority, decisionIdsUsedByPriorCycles: priorDecisionIds, note: body.note });
     const now = new Date();
     const atDecision = {
       at: now.toISOString(),
@@ -241,10 +259,14 @@ export class GatesService implements OnModuleInit {
       criteria: b.criteriaOf(gate.id).map((c) => {
         const ca = b.ca(cur.id, c.id);
         const e = b.evidenceOf(c.id);
-        return { criterionId: c.id, key: c.key, status: ca?.status ?? 'unmet', activeEvidence: e.active, conflictingEvidence: e.conflicting, waiverId: ca?.waiverId ?? null };
+        // activeEvidenceLinkIds = the evidence relied upon by this decision (a later rejection / supersession of one of
+        // these links flags the approved cycle for controlled reassessment — DOM-P2-05).
+        return { criterionId: c.id, key: c.key, status: ca?.status ?? 'unmet', activeEvidence: e.active, activeEvidenceLinkIds: e.activeLinkIds, verifiedEvidence: e.verified, conflictingEvidence: e.conflicting, waiverId: ca?.waiverId ?? null };
       }),
       prerequisites: b.prerequisites(gate),
-      decision: d ? { id: d.id, code: d.code, status: d.status, authorityOutcome: d.authorityOutcome, externalAuthorityReference: d.externalAuthorityReference } : null,
+      decision: d
+        ? { id: d.id, code: d.code, status: d.status, authorityOutcome: d.authorityOutcome, externalAuthorityReference: d.externalAuthorityReference, decisionTypeKey: d.decisionTypeKey, gateKey: d.gateKey, committeeId: d.committeeId, matrixVersionId: authority?.matrixVersionId ?? null }
+        : null,
     };
     await updateVersioned(this.db, schema.gateAssessment, { id: cur.id, projectId, expectedVersion: body.expectedVersion }, {
       status: to,
@@ -260,7 +282,7 @@ export class GatesService implements OnModuleInit {
       entityId: cur.id,
       projectId,
       before: { status: cur.status },
-      after: { status: to, gateKey: gate.key, cycle: cur.cycle, decisionId: d?.id ?? null, decisionStatus: d?.status ?? null, authorityOutcome: d?.authorityOutcome ?? null },
+      after: { status: to, gateKey: gate.key, cycle: cur.cycle, decisionId: d?.id ?? null, decisionStatus: d?.status ?? null, authorityOutcome: d?.authorityOutcome ?? null, decisionTypeKey: d?.decisionTypeKey ?? null, matrixVersionId: authority?.matrixVersionId ?? null },
       reason: body.note,
     });
     await this.enqueueRecompute(ctx, projectId, `decide:${cur.id}:${to}`);
@@ -456,7 +478,7 @@ export class GatesService implements OnModuleInit {
         proposerUserId: ca0.naProposedBy ?? '',
         basis: ca0.naBasis ?? '',
       });
-      return this.writeCriterion(
+      const r = await this.writeCriterion(
         ctx,
         projectId,
         gate,
@@ -467,8 +489,40 @@ export class GatesService implements OnModuleInit {
         'gates.criterion.approve_not_applicable',
         body.note,
       );
+      await this.setApplicability(ctx, projectId, crit, 'not_applicable', ca0.naBasis ?? '');
+      return r;
     }
-    return this.writeCriterion(ctx, projectId, gate, crit, ca0, body.expectedVersion, { status: 'unmet', ...this.clearNa(), note: body.note ?? ca0.note }, 'gates.criterion.reject_not_applicable', body.note);
+    const r = await this.writeCriterion(ctx, projectId, gate, crit, ca0, body.expectedVersion, { status: 'unmet', ...this.clearNa(), note: body.note ?? ca0.note }, 'gates.criterion.reject_not_applicable', body.note);
+    await this.setApplicability(ctx, projectId, crit, 'applicable', body.note ?? `Not-applicable proposal rejected by the ${crit.reviewerRole} reviewer`);
+    return r;
+  }
+
+  /**
+   * DOM-P2-15 / REQ-LCY-005 (business-gates.md §2.1): the criterion's applicability (template value `proposed`) is set only
+   * by the designated reviewer's recorded determination — `not_applicable` when a not-applicable proposal is approved,
+   * `applicable` when it is rejected. Versioned (record_version) and audited.
+   */
+  private async setApplicability(ctx: RequestContext, projectId: string, crit: CriterionRow, value: 'applicable' | 'not_applicable', basis: string) {
+    const [cur] = await this.db.tx().select({ applicability: schema.gateCriterion.applicability, version: schema.gateCriterion.version }).from(schema.gateCriterion).where(and(eq(schema.gateCriterion.id, crit.id), eq(schema.gateCriterion.projectId, projectId)));
+    if (!cur || cur.applicability === value) return;
+    const row = await updateVersioned(this.db, schema.gateCriterion, { id: crit.id, projectId, expectedVersion: cur.version }, { applicability: value });
+    await this.versions.snapshot({
+      projectId,
+      entityType: 'gate_criterion',
+      entityId: crit.id,
+      versionNo: row['version'] as number,
+      snapshot: { key: crit.key, applicability: value, previous: cur.applicability, basis, determinedBy: ctx.principal.userId, determinedRole: crit.reviewerRole },
+      reason: 'applicability determination',
+    });
+    await this.audit.record({
+      action: 'gates.criterion.set_applicability',
+      entityType: 'gate_criterion',
+      entityId: crit.id,
+      projectId,
+      before: { applicability: cur.applicability },
+      after: { applicability: value, criterionKey: crit.key, determinedRole: crit.reviewerRole },
+      reason: basis || null,
+    });
   }
 
   async updateCriterionNote(ctx: RequestContext, projectId: string, gateId: string, criterionId: string, body: { expectedVersion: number; note: string }) {
@@ -489,8 +543,13 @@ export class GatesService implements OnModuleInit {
     criterionId: string,
     body: { expectedVersion: number; waivable: boolean; waiverAuthorityRole?: RoleKey | null; waivabilityBasis: string },
   ) {
-    const { b, crit } = await this.loadCriterion(projectId, gateId, criterionId);
+    const { b, gate, crit, cur } = await this.loadCriterion(projectId, gateId, criterionId);
     this.commandAssert(ctx, 'gates.criterion.set_waivability', { projectId, classification: b.project.classification });
+    // DOM-P2-15: only the criterion's designated specialist, and only while the cycle is being assessed (never on a gate
+    // that is ready for decision or decided — its criteria are frozen).
+    const specialists = (Object.keys(POLICY_MATRIX.roles) as RoleKey[]).filter((r) => POLICY_MATRIX.roles[r].permissions.includes('gates.criterion.set_waivability'));
+    const designatedRole = designatedWaivabilityRole(crit.reviewerRole, specialists);
+    assertWaivabilityDeterminer({ criterionKey: crit.key, designatedRole, actorRoles: this.allRolesOf(ctx, projectId), gateKey: gate.key, gateStatus: cur.status });
     const role = body.waivable ? (body.waiverAuthorityRole ?? null) : null;
     assertWaivabilityDetermination({
       waivable: body.waivable,
@@ -511,7 +570,7 @@ export class GatesService implements OnModuleInit {
       entityType: 'gate_criterion',
       entityId: crit.id,
       versionNo: version,
-      snapshot: { key: crit.key, waivable: body.waivable, waiverAuthorityRole: role, waivabilityBasis: body.waivabilityBasis, determinedBy: ctx.principal.userId },
+      snapshot: { key: crit.key, waivable: body.waivable, waiverAuthorityRole: role, waivabilityBasis: body.waivabilityBasis, determinedBy: ctx.principal.userId, determinedRole: designatedRole },
       reason: 'waivability determination',
     });
     await this.audit.record({
@@ -520,7 +579,7 @@ export class GatesService implements OnModuleInit {
       entityId: crit.id,
       projectId,
       before,
-      after: { waivable: body.waivable, waiverAuthorityRole: role, waivabilityBasis: body.waivabilityBasis, criterionKey: crit.key },
+      after: { waivable: body.waivable, waiverAuthorityRole: role, waivabilityBasis: body.waivabilityBasis, criterionKey: crit.key, determinedRole: designatedRole },
       reason: body.waivabilityBasis,
     });
     await this.refreshEvaluations(projectId);
@@ -565,25 +624,47 @@ export class GatesService implements OnModuleInit {
   }
 
   // ---------------------------------------------------------------------------------------------------------
-  // Evidence conflicts → controlled reassessment (AT-14) — runs in the worker under a service principal
+  // Evidence changes → controlled reassessment (AT-14, DOM-P2-05) — runs in the worker under a service principal
 
-  async processEvidenceConflicts(projectId: string): Promise<{ markedConflicting: string[]; flaggedGates: string[] }> {
+  /**
+   * Reacts to `evidence.changed` (conflict, verification rejected as defective, supersession):
+   *  - DECIDED approved cycle: never modified (status, decision, criterion rows). A criterion that relied on evidence which
+   *    is now conflicting, rejected as defective or superseded (the links recorded in the decision snapshot) flags the
+   *    cycle for controlled reassessment — flags + escalation + notifications + `gate.blocked` + downstream approved gates
+   *    flagged for review + status dimensions recomputed. Idempotent per criterion.
+   *  - UNDECIDED cycle: a criterion with conflicting evidence becomes `conflicting`; a criterion accepted as met whose
+   *    accepted evidence was later rejected as defective returns to `unmet` for a fresh review (audited; a ready gate is
+   *    reported blocked by `refreshEvaluations`).
+   */
+  async processEvidenceConflicts(projectId: string): Promise<{ markedConflicting: string[]; returnedForReview: string[]; flaggedGates: string[] }> {
     const b = await this.loader.bundle(projectId);
     const marked: string[] = [];
+    const returned: string[] = [];
     const flagged: string[] = [];
     for (const gate of b.gates) {
       const cur = b.current(gate.id);
-      const conflictingCrits = b.criteriaOf(gate.id).filter((c) => b.evidenceOf(c.id).conflicting > 0);
-      if (!conflictingCrits.length || cur.status === 'rejected') continue;
+      if (cur.status === 'rejected') continue;
+      const crits = b.criteriaOf(gate.id);
       if (APPROVED_GATE_STATUSES.includes(cur.status)) {
-        // Decided cycle: NEVER modified (status, decision, criterion rows). Flag it and request a controlled reopen.
-        const relied = conflictingCrits.filter((c) => RELIES_ON_EVIDENCE.includes(b.ca(cur.id, c.id)?.status ?? 'unmet'));
+        const relied = this.reliedLinkIds(cur);
+        const found = crits
+          .map((c) => ({
+            c,
+            r: decidedCriterionReassessment({
+              status: b.ca(cur.id, c.id)?.status ?? 'unmet',
+              evidenceRequired: c.evidenceRequired,
+              reliedLinkIds: relied.get(c.id) ?? null,
+              links: b.evidenceOf(c.id).links,
+            }),
+          }))
+          .filter((x): x is { c: CriterionRow; r: { reason: ReassessmentReason; linkIds: string[] } } => x.r !== null);
+        if (!found.length) continue;
         const flags = reassessmentOf(await this.readAssessment(cur.id));
-        const fresh = relied.filter((c) => !flags.criteria.some((x) => x.criterionId === c.id));
+        const fresh = found.filter((x) => !flags.criteria.some((f) => f.criterionId === x.c.id));
         if (!fresh.length) continue;
         flags.needsReassessment = true;
         flags.requestedAt ??= new Date().toISOString();
-        flags.criteria.push(...fresh.map((c) => ({ criterionId: c.id, key: c.key, evidenceLinkIds: b.evidenceOf(c.id).conflictingLinkIds })));
+        flags.criteria.push(...fresh.map((x) => ({ criterionId: x.c.id, key: x.c.key, evidenceLinkIds: x.r.linkIds, reason: x.r.reason })));
         flags.escalationId ??= await this.raiseReassessmentEscalation(b, gate, cur, fresh);
         await this.writeFlags(cur.id, flags);
         await this.audit.record({
@@ -591,8 +672,8 @@ export class GatesService implements OnModuleInit {
           entityType: 'gate_assessment',
           entityId: cur.id,
           projectId,
-          after: { gateKey: gate.key, status: cur.status, needsReassessment: true, criteria: fresh.map((c) => c.key), escalationId: flags.escalationId },
-          reason: 'Evidence relied upon by the approved gate is conflicting — controlled reassessment requested',
+          after: { gateKey: gate.key, status: cur.status, needsReassessment: true, criteria: fresh.map((x) => ({ key: x.c.key, reason: x.r.reason, evidenceLinkIds: x.r.linkIds })), escalationId: flags.escalationId },
+          reason: `Evidence relied upon by the approved gate changed (${[...new Set(fresh.map((x) => x.r.reason))].join(', ')}) — controlled reassessment requested`,
         });
         await this.notifyReopenAuthorities(b, gate, cur, fresh);
         await this.outbox.emit({
@@ -600,7 +681,14 @@ export class GatesService implements OnModuleInit {
           projectId,
           aggregateType: 'gate_assessment',
           aggregateId: cur.id,
-          payload: { gateId: gate.id, gateKey: gate.key, reason: 'evidence_conflict_on_decided_gate', needsReassessment: true, criteria: fresh.map((c) => c.key) },
+          payload: {
+            gateId: gate.id,
+            gateKey: gate.key,
+            reason: fresh.every((x) => x.r.reason === 'evidence_conflict') ? 'evidence_conflict_on_decided_gate' : 'evidence_change_on_decided_gate',
+            needsReassessment: true,
+            criteria: fresh.map((x) => x.c.key),
+            reasons: fresh.map((x) => ({ criterion: x.c.key, reason: x.r.reason })),
+          },
         });
         for (const dg of b.downstreamOf(gate.key)) {
           const dcur = await this.readAssessment(b.current(dg.id).id);
@@ -611,30 +699,75 @@ export class GatesService implements OnModuleInit {
           await this.writeFlags(dcur.id, df);
           await this.audit.record({ action: 'gates.assessment.flag_upstream_review', entityType: 'gate_assessment', entityId: dcur.id, projectId, after: { gateKey: dg.key, upstreamGateKey: gate.key }, reason: `Upstream gate ${gate.key} approval is under reassessment` });
         }
+        // A flagged approval (e.g. G4 standalone acceptance) no longer counts in the status dimensions.
+        await this.queue.enqueue({
+          kind: RECOMPUTE_DIMENSIONS_JOB,
+          orgId: b.project.orgId,
+          projectId,
+          payload: { reason: 'reassessment' },
+          idempotencyKey: `${RECOMPUTE_DIMENSIONS_JOB}:reassessment:${cur.id}:${flags.criteria.length}`,
+          requestedBy: null,
+        });
         flagged.push(gate.key);
         continue;
       }
-      for (const c of conflictingCrits) {
-        const ca = await this.ensureCa(null, b, cur, c);
-        if (!(['met', 'evidence_submitted', 'unmet'] as CriterionStatus[]).includes(ca.status)) continue;
+      for (const c of crits) {
+        const ev = b.evidenceOf(c.id);
+        if (ev.conflicting > 0) {
+          const ca = await this.ensureCa(null, b, cur, c);
+          if (!(['met', 'evidence_submitted', 'unmet'] as CriterionStatus[]).includes(ca.status)) continue;
+          await this.db
+            .tx()
+            .update(schema.criterionAssessment)
+            .set({ status: 'conflicting', note: 'Evidence conflict detected — the criterion must be reassessed once the conflict is resolved', updatedAt: new Date(), version: sql`${schema.criterionAssessment.version} + 1` })
+            .where(and(eq(schema.criterionAssessment.id, ca.id), eq(schema.criterionAssessment.projectId, projectId)));
+          await this.audit.record({
+            action: 'gates.criterion.mark_conflicting',
+            entityType: 'criterion_assessment',
+            entityId: ca.id,
+            projectId,
+            before: { status: ca.status },
+            after: { status: 'conflicting', criterionKey: c.key, evidenceLinkIds: ev.conflictingLinkIds },
+          });
+          marked.push(c.key);
+          continue;
+        }
+        const ca = b.ca(cur.id, c.id);
+        if (!ca) continue;
+        const defective = evidenceRejectedSinceAcceptance({ status: ca.status, assessedAtMs: ca.assessedAt ? ca.assessedAt.getTime() : null, links: ev.links });
+        if (!defective.length) continue;
         await this.db
           .tx()
           .update(schema.criterionAssessment)
-          .set({ status: 'conflicting', note: 'Evidence conflict detected — the criterion must be reassessed once the conflict is resolved', updatedAt: new Date(), version: sql`${schema.criterionAssessment.version} + 1` })
+          .set({ status: 'unmet', note: 'Evidence relied upon when the criterion was accepted was rejected as defective — a fresh review is required', updatedAt: new Date(), version: sql`${schema.criterionAssessment.version} + 1` })
           .where(and(eq(schema.criterionAssessment.id, ca.id), eq(schema.criterionAssessment.projectId, projectId)));
         await this.audit.record({
-          action: 'gates.criterion.mark_conflicting',
+          action: 'gates.criterion.evidence_defective',
           entityType: 'criterion_assessment',
           entityId: ca.id,
           projectId,
-          before: { status: ca.status },
-          after: { status: 'conflicting', criterionKey: c.key, evidenceLinkIds: b.evidenceOf(c.id).conflictingLinkIds },
+          before: { status: ca.status, assessedBy: ca.assessedBy },
+          after: { status: 'unmet', criterionKey: c.key, gateKey: gate.key, rejectedEvidenceLinkIds: defective },
+          reason: 'Evidence accepted for the criterion was rejected as defective in verification',
         });
-        marked.push(c.key);
+        returned.push(c.key);
       }
     }
     await this.refreshEvaluations(projectId);
-    return { markedConflicting: marked, flaggedGates: flagged };
+    return { markedConflicting: marked, returnedForReview: returned, flaggedGates: flagged };
+  }
+
+  /**
+   * Evidence links relied upon by each criterion when the cycle was decided (decision snapshot, DOM-P2-05). A criterion is
+   * absent when the snapshot predates the recorded link ids (the rule then falls back to "no active evidence left").
+   */
+  private reliedLinkIds(a: AssessmentRow): Map<string, string[]> {
+    const snap = (a.evaluation as { atDecision?: { criteria?: { criterionId: string; activeEvidenceLinkIds?: unknown }[] } } | null)?.atDecision;
+    const out = new Map<string, string[]>();
+    for (const c of snap?.criteria ?? []) {
+      if (Array.isArray(c.activeEvidenceLinkIds)) out.set(c.criterionId, c.activeEvidenceLinkIds.filter((x): x is string => typeof x === 'string'));
+    }
+    return out;
   }
 
   /**
@@ -701,6 +834,13 @@ export class GatesService implements OnModuleInit {
   private rolesOf(ctx: RequestContext, projectId: string): RoleKey[] {
     const s = ctx.principal.projects.get(projectId);
     return s ? [...s.roles] : [];
+  }
+
+  /** Project roles plus every workstream-scoped role the actor holds in the project. */
+  private allRolesOf(ctx: RequestContext, projectId: string): RoleKey[] {
+    const s = ctx.principal.projects.get(projectId);
+    if (!s) return [];
+    return [...new Set<RoleKey>([...s.roles, ...s.workstreamRoles.map((w) => w.role)])];
   }
 
   /**
@@ -826,10 +966,11 @@ export class GatesService implements OnModuleInit {
       .where(eq(schema.gateAssessment.id, assessmentId));
   }
 
-  private async raiseReassessmentEscalation(b: GateBundle, gate: GateRow, cur: AssessmentRow, crits: CriterionRow[]): Promise<string> {
+  private async raiseReassessmentEscalation(b: GateBundle, gate: GateRow, cur: AssessmentRow, found: { c: CriterionRow; r: { reason: ReassessmentReason } }[]): Promise<string> {
     const id = newId();
     const code = await nextCode(this.db, schema.escalation, b.project.id, 'ESC');
-    const keys = crits.map((c) => c.key).join(', ');
+    const keys = found.map((x) => x.c.key).join(', ');
+    const what = found.map((x) => `${x.c.key} ${REASSESSMENT_WHAT[x.r.reason]}`).join('; ');
     await this.db
       .tx()
       .insert(schema.escalation)
@@ -841,10 +982,10 @@ export class GatesService implements OnModuleInit {
         title: `Controlled reassessment requested — gate ${gate.key} (${gate.name})`,
         sourceType: 'gate_assessment',
         sourceId: cur.id,
-        requestedAction: `Evidence relied upon for ${keys} is now conflicting. Decide whether to reopen gate ${gate.key} through the controlled reopen; the approved cycle ${cur.cycle} and its decision remain preserved.`,
+        requestedAction: `Evidence relied upon by the approval changed: ${what}. Decide whether to reopen gate ${gate.key} through the controlled reopen; the approved cycle ${cur.cycle} and its decision remain preserved.`,
         options: [
           { title: `Reopen gate ${gate.key} (new assessment cycle)`, impact: 'Gate returns to assessment; downstream gates flagged for review' },
-          { title: 'Resolve the evidence conflict and record that the approval stands', impact: 'Requires a documented resolution of the conflicting evidence' },
+          { title: 'Resolve the evidence issue and record that the approval stands', impact: 'Requires a documented resolution of the conflicting, defective or superseded evidence' },
         ],
         status: 'open',
         isSystemGenerated: true,
@@ -855,7 +996,7 @@ export class GatesService implements OnModuleInit {
   }
 
   /** In-app notifications to holders of `gates.assessment.reopen` in the project (deduplicated per cycle + criterion). */
-  private async notifyReopenAuthorities(b: GateBundle, gate: GateRow, cur: AssessmentRow, crits: CriterionRow[]) {
+  private async notifyReopenAuthorities(b: GateBundle, gate: GateRow, cur: AssessmentRow, found: { c: CriterionRow; r: { reason: ReassessmentReason } }[]) {
     const roles = (Object.keys(POLICY_MATRIX.roles) as RoleKey[]).filter((r) => POLICY_MATRIX.roles[r].permissions.includes('gates.assessment.reopen'));
     const members = await this.db
       .tx()
@@ -869,7 +1010,8 @@ export class GatesService implements OnModuleInit {
           or(isNull(schema.projectMembership.validTo), gt(schema.projectMembership.validTo, new Date())),
         ),
       );
-    const keys = crits.map((c) => c.key);
+    const keys = found.map((x) => x.c.key);
+    const what = found.map((x) => `${x.c.key} ${REASSESSMENT_WHAT[x.r.reason]}`).join('; ');
     for (const m of members) {
       await this.db
         .tx()
@@ -881,7 +1023,7 @@ export class GatesService implements OnModuleInit {
           userId: m.userId,
           kind: 'gate.reassessment_requested',
           title: `Gate ${gate.key}: controlled reassessment requested`,
-          body: `Evidence relied upon for ${keys.join(', ')} is conflicting. The approval of cycle ${cur.cycle} is preserved; decide whether to reopen.`,
+          body: `Evidence relied upon by the approval changed: ${what}. The approval of cycle ${cur.cycle} is preserved; decide whether to reopen.`,
           link: `/projects/${b.project.id}/gates/${gate.id}`,
           dedupeKey: `gate-reassess:${cur.id}:${keys.join(',')}`.slice(0, 200),
           sourceType: 'gate_assessment',
@@ -898,7 +1040,38 @@ export class GatesService implements OnModuleInit {
   }
 
   private backing(d: DecisionRow): GateDecisionBacking {
-    return { id: d.id, status: d.status, authorityOutcome: d.authorityOutcome, externalAuthorityReference: d.externalAuthorityReference, gateKey: d.gateKey };
+    return { id: d.id, status: d.status, authorityOutcome: d.authorityOutcome, externalAuthorityReference: d.externalAuthorityReference, gateKey: d.gateKey, decisionTypeKey: d.decisionTypeKey };
+  }
+
+  /**
+   * DOM-P2-01: the approved authority matrix of each decision's DECIDING committee — the version recorded with the committee
+   * outcome (tally snapshot), or, before an outcome, the committee's latest approved version — and the decision's type in
+   * it. A committee without an approved matrix yields `matrixVersionId: null` (the decision cannot back a gate).
+   */
+  private async authoritiesFor(projectId: string, decisions: DecisionRow[]): Promise<Map<string, GateDecisionAuthority>> {
+    const out = new Map<string, GateDecisionAuthority>();
+    if (!decisions.length) return out;
+    const recorded = (d: DecisionRow) => {
+      const id = (d.tallySnapshot as { matrixVersionId?: unknown } | null)?.matrixVersionId;
+      return typeof id === 'string' ? id : null;
+    };
+    const ids = [...new Set(decisions.map(recorded).filter((x): x is string => !!x))];
+    const committees = [...new Set(decisions.map((d) => d.committeeId))];
+    const M = schema.authorityMatrixVersion;
+    const rows = await this.db
+      .tx()
+      .select({ id: M.id, committeeId: M.committeeId, status: M.status, versionNo: M.versionNo, policy: M.policy })
+      .from(M)
+      .where(and(eq(M.projectId, projectId), or(...(ids.length ? [inArray(M.id, ids)] : []), and(inArray(M.committeeId, committees), eq(M.status, 'approved')))));
+    for (const d of decisions) {
+      const rid = recorded(d);
+      // The outcome's matrix (approved at the time; possibly superseded since) — never a draft, never another committee's.
+      const m = rid
+        ? rows.find((r) => r.id === rid && r.committeeId === d.committeeId && r.status !== 'draft')
+        : rows.filter((r) => r.committeeId === d.committeeId && r.status === 'approved').sort((a, b) => b.versionNo - a.versionNo)[0];
+      out.set(d.id, gateAuthorityOf(m ? { id: m.id, policy: m.policy as { decisionTypes?: { key: string; gateKeys?: string[]; withinCommitteeAuthority: boolean }[] } } : null, d.decisionTypeKey));
+    }
+    return out;
   }
 
   /** Decisions linked to cycles or raised for the given gates (all rows; visibility is applied when rendering). */
@@ -931,7 +1104,7 @@ export class GatesService implements OnModuleInit {
     return new Map((def?.gates ?? []).map((g) => [g.key, g.purpose]));
   }
 
-  private summary(ctx: RequestContext, b: GateBundle, g: GateRow, decisions: Map<string, DecisionRow>, purposes: Map<string, I18nText>) {
+  private summary(ctx: RequestContext, b: GateBundle, g: GateRow, decisions: Map<string, DecisionRow>, authorities: Map<string, GateDecisionAuthority>, purposes: Map<string, I18nText>) {
     const cur = b.current(g.id);
     const evaluation = b.evaluate(g);
     const flags = reassessmentOf(cur);
@@ -939,7 +1112,7 @@ export class GatesService implements OnModuleInit {
     const blockers: GateBlocker[] = [...evaluation.blockers];
     if (!DECIDED_GATE_STATUSES.includes(cur.status) && (cur.decisionId || cur.status === 'ready_for_decision')) {
       // The blocker exposes only the decision's status (never its title) so it is safe for every gate reader.
-      const issue = gateDecisionIssue(d ? this.backing(d) : null, g.key);
+      const issue = gateApprovalDecisionIssue(d ? this.backing(d) : null, g.key, d ? (authorities.get(d.id) ?? null) : null);
       if (issue) blockers.push(issue);
     }
     return {
@@ -959,7 +1132,7 @@ export class GatesService implements OnModuleInit {
       assessment: this.assessmentDto(cur),
       evaluation,
       prerequisites: b.prerequisites(g),
-      decision: d && this.canSeeDecision(ctx, b.project.id, d) ? this.decisionDto(d, g.key) : null,
+      decision: d && this.canSeeDecision(ctx, b.project.id, d) ? this.decisionDto(d, g.key, authorities.get(d.id) ?? null) : null,
       blockers,
       // Ready on criteria but not backed by a final decision → not green (the gate is still blocked, AT-04).
       rag: ((r) => (r === 'green' && blockers.some((b) => b.kind === 'decision') ? 'amber' : r))(gateRag(cur.status, evaluation, flags.needsReassessment)),
@@ -987,7 +1160,7 @@ export class GatesService implements OnModuleInit {
     };
   }
 
-  private decisionDto(d: DecisionRow, gateKey: string) {
+  private decisionDto(d: DecisionRow, gateKey: string, authority: GateDecisionAuthority | null) {
     return {
       id: d.id,
       code: d.code,
@@ -996,7 +1169,10 @@ export class GatesService implements OnModuleInit {
       authorityOutcome: d.authorityOutcome,
       gateKey: d.gateKey,
       isDemo: d.isDemo,
-      ...((issue) => ({ blocker: issue?.message ?? null, blockerI18n: issue?.messageI18n ?? [] }))(gateDecisionIssue(this.backing(d), gateKey)),
+      // A decision that can never back this gate says so first (DOM-P2-01); otherwise its current blocker, if any.
+      ...((issue) => ({ blocker: issue?.message ?? null, blockerI18n: issue?.messageI18n ?? [] }))(
+        gateDecisionTypeIssue(this.backing(d), gateKey, authority) ?? gateApprovalDecisionIssue(this.backing(d), gateKey, authority),
+      ),
     };
   }
 

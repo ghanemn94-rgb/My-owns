@@ -190,19 +190,69 @@ export const dependency = pgTable(
   ],
 );
 
-/** Cross-project dependency: exposes only minimal information across the boundary (spec §5). */
-export const crossProjectDependency = pgTable('cross_project_dependency', {
-  id: pk(),
-  orgId: orgIdCol(),
-  projectId: projectIdCol().references(() => project.id), // the dependent project (owner of this row)
-  otherProjectId: uuid('other_project_id').notNull().references(() => project.id),
-  description: text('description').notNull(),
-  neededBy: date('needed_by', { mode: 'string' }),
-  status: raidStatus('status').notNull().default('open'),
-  createdAt: createdAt(),
-  createdBy: createdBy(),
-  version: versionCol(),
-});
+/**
+ * Cross-project dependency (spec §5, REQ-ENT-010, DOM-P2-17): owned by the DEPENDENT project (`project_id`) and pointing at
+ * a task / milestone of another project of the same organization. Only users who can read BOTH ends see it (service rule;
+ * RLS on `project_id` is the defense in depth). The other end is polymorphic across projects and validated by the service.
+ */
+export const crossProjectDependency = pgTable(
+  'cross_project_dependency',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id), // the dependent project (owner of this row)
+    otherProjectId: uuid('other_project_id').notNull().references(() => project.id),
+    /** The dependent item in this project (null = the project as a whole). */
+    localItemType: scheduleNodeType('local_item_type'),
+    localItemId: uuid('local_item_id'),
+    /** The item of the other project this project depends on. */
+    otherItemType: scheduleNodeType('other_item_type').notNull(),
+    otherItemId: uuid('other_item_id').notNull(),
+    description: text('description').notNull(),
+    neededBy: date('needed_by', { mode: 'string' }),
+    status: raidStatus('status').notNull().default('open'),
+    closedReason: text('closed_reason'),
+    closedBy: uuid('closed_by'),
+    closedAt: ts('closed_at'),
+    createdAt: createdAt(),
+    createdBy: createdBy(),
+    updatedAt: updatedAt(),
+    version: versionCol(),
+  },
+  (t) => [
+    unique('cross_project_dependency_pid_uq').on(t.projectId, t.id),
+    index('cross_project_dependency_other_idx').on(t.otherProjectId),
+    check('cross_project_dependency_other_chk', sql`${t.otherProjectId} <> ${t.projectId}`),
+    check('cross_project_dependency_local_chk', sql`(${t.localItemType} is null) = (${t.localItemId} is null)`),
+  ],
+);
+
+/**
+ * Non-schedule prerequisite of a task / milestone (spec §9 "dependency graph … linking approvals, agreements, evidence,
+ * decisions, and gates"; REQ-PLN-006; DOM-P2-18): `predecessor_type` ∈ decision | gate (gate definition) | agreement |
+ * approval_request | evidence_link, all records of the SAME project (validated by the service with loadInProject).
+ */
+export const recordDependency = pgTable(
+  'record_dependency',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    successorType: scheduleNodeType('successor_type').notNull(),
+    successorId: uuid('successor_id').notNull(),
+    predecessorType: varchar('predecessor_type', { length: 32 }).notNull(),
+    predecessorId: uuid('predecessor_id').notNull(),
+    note: text('note'),
+    createdAt: createdAt(),
+    createdBy: createdBy(),
+  },
+  (t) => [
+    unique('record_dependency_pid_uq').on(t.projectId, t.id),
+    uniqueIndex('record_dependency_uq').on(t.projectId, t.successorId, t.predecessorId),
+    index('record_dependency_successor_idx').on(t.projectId, t.successorType, t.successorId),
+    check('record_dependency_type_chk', sql`${t.predecessorType} in ('decision', 'gate', 'agreement', 'approval_request', 'evidence_link')`),
+  ],
+);
 
 export const raciAssignment = pgTable(
   'raci_assignment',
