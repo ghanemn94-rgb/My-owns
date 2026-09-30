@@ -54,8 +54,21 @@ $ (same env) pnpm --filter @hub/api exec vitest run test/reviews/p2-domain.spec.
       Tests  12 failed (12)        <- all 12 are DEFECT probes that fail at the defect assertion (reproductions, §4)
 
 $ (same env) pnpm --filter @hub/api test        # full suite including the probe file
-API_RESULT_PENDING
+ Test Files  2 failed | 56 passed (58)
+      Tests  12 failed | 493 passed | 3 skipped (508)
+   Duration  244.03s
+   -> the 12 failures are exactly the DEFECT probes of test/reviews/p2-domain.spec.ts;
+   -> the other failed file, test/p1/p1-closure-empty-db.spec.ts (3 skipped), failed in setup on an environment
+      precondition: "Cannot create the throwaway database hub_test_domrev_boot: hub_owner lacks CREATEDB …".
+
+$ HUB_DATABASES="hub_test_domrev hub_test_domrev_boot" bash scripts/dev/pg-init-roles.sh
+$ (same env) pnpm --filter @hub/api exec vitest run test/p1/p1-closure-empty-db.spec.ts
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
 ```
+
+Net result at `4f05318`: every pre-existing API test passes (493, plus 3 after provisioning the boot database). The only
+failures are this review's 12 defect probes.
 
 Each probe first creates a synthetic project and runs the legitimate setup through the real API. All setup steps passed.
 Each of the 12 probes failed only on its final assertion, which is the rule the specification requires. The assertion
