@@ -387,26 +387,21 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
     if (binding.notBefore && !(meta.started_at >= binding.notBefore)) bad(`started ${meta.started_at}, before the candidate froze at ${binding.notBefore}`);
     if (binding.manifestPath) {
       // The run must have started from a commit that already contained the frozen manifest it reviewed (F-DG0-212).
-      // The absent-commit tolerance is tightly scoped (D-038, F-DG0-159/245/160): it applies ONLY when
-      //   (a) head_commit_at_start is a well-formed 40-hex id -- never a missing, null, 'unknown' (run-agent.sh's
-      //       git-rev-parse fallback), 'HEAD' or otherwise malformed value, all of which are hard errors; AND
-      //   (b) the run's own review ROUND is itself absent from this repository (its source_commit does not resolve),
-      //       i.e. a genuinely superseded round beyond the shallow boundary or orphaned by the D-034 rewrite -- never a
-      //       retained round, and never the gate round (whose source_commit checkCandidate requires present, F-DG0-241).
-      // Any other absent head is a real error, exactly as before D-037.
+      // Strict, with no absent-commit escape (D-039, F-DG0-164): gate validation runs on a COMPLETE clone (F-DG0-160),
+      // so head_commit_at_start must be a well-formed 40-hex id (never missing, null, 'unknown' -- run-agent.sh's
+      // rev-parse fallback -- or 'HEAD'), PRESENT in the repository, and actually contain the manifest. A present head
+      // that contains the round manifest is itself proof the round's source_commit was reachable when the run started.
       const head = meta.head_commit_at_start;
-      const wellFormed = typeof head === "string" && /^[0-9a-f]{40}$/.test(head);
-      const roundAbsent = binding.roundSourceCommit && !commitPresent(repo, binding.roundSourceCommit);
-      if (!wellFormed) {
+      if (typeof head !== "string" || !/^[0-9a-f]{40}$/.test(head)) {
         bad(`head_commit_at_start ${JSON.stringify(head)} is not a 40-hex commit id`);
-      } else if (commitPresent(repo, head)) {
+      } else if (!commitPresent(repo, head)) {
+        bad(`started from ${head.slice(0, 10)}, a commit absent from this repository (gate validation requires a complete clone, F-DG0-160)`);
+      } else {
         try {
           execFileSync("git", ["-C", repo, "cat-file", "-e", `${head}:${binding.manifestPath}`], { stdio: "ignore" });
         } catch {
           bad(`started from ${head.slice(0, 10)}, which does not contain ${binding.manifestPath}`);
         }
-      } else if (!roundAbsent) {
-        bad(`started from ${head.slice(0, 10)}, a commit absent from this repository, but its review round is retained (source_commit ${String(binding.roundSourceCommit).slice(0, 10)} is present); a complete clone is required (F-DG0-160)`);
       }
     }
     for (const rel of binding.outputs || []) {
@@ -459,7 +454,6 @@ export function checkReview(repo, rel, { stage, role, candidate, extraOutputs = 
     assignment: rec.assignment,
     notBefore: stage.candidate.frozen_at,
     manifestPath: manifestPathFor(stage.id, candidate),
-    roundSourceCommit: stage.candidate.source_commit, // the gate round: always present (F-DG0-241), so never tolerated
     outputs: [rel, ...(repoFile(repo, sidecar) ? [sidecar] : []), ...(extraOutputs || [])],
   });
   return rec;
@@ -492,7 +486,20 @@ export function collectRaisedFindings(repo, stageId, errors) {
           if (f.stage_id !== stageId) errors.push(`${rel}: finding ${f.id} is labelled ${f.stage_id} but was raised in ${stageId}`);
           if (!String(f.id).startsWith(`F-${stageId}-`)) errors.push(`${rel}: finding id ${f.id} does not belong to ${stageId}`);
           if (f.reported_by !== sidecar[1]) errors.push(`${rel}: finding ${f.id} reported_by ${f.reported_by} but the sidecar belongs to ${sidecar[1]}`);
-          raised.set(f.id, { finding: f, round, file: rel }); // later rounds supersede earlier versions
+          // A finding's classification is fixed by the sidecar that first raised it. Rounds are processed in ascending
+          // order, so the FIRST version seen is the earliest. A later-round sidecar (which, outside the gate round, is not
+          // bound to any run) must NOT be able to change an immutable field -- e.g. silently downgrade severity or
+          // mandatory_violation; any drift is an error, and the earliest version is kept for the findings.json check
+          // (D-039, F-DG0-165).
+          const prev = raised.get(f.id);
+          if (prev) {
+            for (const k of IMMUTABLE_FINDING_FIELDS) {
+              if (JSON.stringify(prev.finding[k]) !== JSON.stringify(f[k]))
+                errors.push(`${rel}: finding ${f.id} ${k} (${JSON.stringify(f[k])}) differs from its first raising sidecar ${prev.file} (${JSON.stringify(prev.finding[k])}); a later round cannot reclassify a finding`);
+            }
+          } else {
+            raised.set(f.id, { finding: f, round, file: rel });
+          }
         }
       } else if (/^[a-z-]+\.json$/.test(file) && REVIEW_ROLES.includes(file.slice(0, -5))) {
         const rec = readJson(repo, rel, errors, "review record");
@@ -564,7 +571,7 @@ export function checkFindings(repo, stage, reviewRecords, gate, errors) {
         const round = roundEntry(stage, e.roundDir);
         checkInvocation(repo, stage.id, e.record.invocation_reference, e.role, errors, `${where} acceptance by ${e.role}`, {
           assignment: e.record.assignment, notBefore: round && round.frozen_at, outputs: [e.recordPath, e.sidecar],
-          manifestPath: round && manifestPathFor(stage.id, round.candidate_id), roundSourceCommit: round && round.source_commit,
+          manifestPath: round && manifestPathFor(stage.id, round.candidate_id),
         });
       }
       const roles = accepting.map((e) => e.role).sort();
@@ -710,27 +717,23 @@ function checkClosure(repo, stage, gate, f, v, where, errors) {
     assignment: v.record.assignment,
     notBefore: round.frozen_at,
     manifestPath: manifestPathFor(stage.id, round.candidate_id),
-    roundSourceCommit: round.source_commit,
     outputs: [v.recordPath, v.sidecar],
   });
   if (f.status === "CLOSED_VERIFIED") {
+    // Strict, with no absent-commit escape (D-039, F-DG0-164/246). Gate validation runs on a COMPLETE clone
+    // (validateGate refuses a shallow one, F-DG0-160), so every real fix commit is present; the earlier "the verifying
+    // round is absent" tolerance was forgeable (round.source_commit is orchestrator-written metadata that findManifest
+    // tolerates) and, once every closure is re-verified against a retained candidate, unnecessary. A CLOSED_VERIFIED
+    // fix must be a full 40-hex commit that is PRESENT and an ancestor of both the verifying round's candidate (when its
+    // source_commit resolves -- findManifest still tolerates a superseded round's write-once manifest, D-035) and the
+    // gate candidate. So an all-zero, typo'd or otherwise absent fix is always rejected, whatever the round metadata says.
     if (!f.fix_revision || !/^[0-9a-f]{40}$/.test(f.fix_revision)) errors.push(`${where}: CLOSED_VERIFIED needs a full fix_revision commit id`);
+    else if (!commitPresent(repo, f.fix_revision)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit present in this repository (a complete clone is required, F-DG0-160)`);
     else {
-      // The fix_revision is well-formed 40-hex here. The absent-commit tolerance is scoped exactly like checkInvocation
-      // (D-038, F-DG0-245/160): an absent fix_revision is tolerated ONLY when the verifying ROUND is itself absent from
-      // this repository (its source_commit does not resolve) -- a genuinely superseded round beyond the shallow boundary
-      // or orphaned by the D-034 rewrite. In a retained round, and always in the gate round (source_commit present per
-      // F-DG0-241), the fix must be present and an ancestor of the candidate; re-point it at a retained commit that
-      // contains the fix if the recorded one was orphaned, as F-DG0-150/151 were.
-      const roundAbsent = !commitPresent(repo, round.source_commit);
-      if (!commitPresent(repo, f.fix_revision)) {
-        if (!roundAbsent) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not a commit in this repository, but ${v.roundDir} is retained (source_commit ${round.source_commit.slice(0, 10)} is present) -- re-point it at a retained commit that contains the fix`);
-      } else {
-        if (commitPresent(repo, round.source_commit) && !isAncestor(repo, f.fix_revision, round.source_commit))
-          errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verified ${v.roundDir} candidate (${round.source_commit.slice(0, 10)})`);
-        if (gate && commitPresent(repo, gate.source_commit) && !isAncestor(repo, f.fix_revision, gate.source_commit))
-          errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the gate candidate`);
-      }
+      if (commitPresent(repo, round.source_commit) && !isAncestor(repo, f.fix_revision, round.source_commit))
+        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verified ${v.roundDir} candidate (${round.source_commit.slice(0, 10)})`);
+      if (gate && !isAncestor(repo, f.fix_revision, gate.source_commit))
+        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the gate candidate`);
     }
   }
 }

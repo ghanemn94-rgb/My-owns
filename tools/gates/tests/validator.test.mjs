@@ -1102,41 +1102,80 @@ test("D-037 / F-DG0-241: a gate source_commit that exists but is OFF this branch
     `an annotated tag that peels to the frozen commit must be rejected as a non-commit object; got: ${errs2.join(" | ")}`);
 });
 
-test("D-038 / F-DG0-245: checkClosure's absent-fix tolerance is scoped -- a retained round still requires the fix present", () => {
+test("D-039 / F-DG0-164/246: checkClosure requires a present fix_revision -- no absent-round escape", () => {
   const { repo } = buildValidRepo();
   approveAndCommit(repo);
   assert.deepEqual(validateGate(repo, "DG0"), [], "the baseline gate must pass");
-  // A fix_revision that IS present but is NOT an ancestor of the verified round's candidate is still caught.
+  // A fix_revision that IS present but is NOT an ancestor of the verified round's candidate is caught.
   sh(repo, "commit", "--allow-empty", "-q", "-m", "a later empty commit");
   const newer = sh(repo, "rev-parse", "HEAD"); // a real commit, descendant of head, so not an ancestor of it
   edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = newer));
   expectError(validateGate(repo, "DG0"), /fix .* is not in the verified round-2 candidate/);
-  // An ABSENT fix_revision in a RETAINED round (round-2's source_commit is present) is now REJECTED. Before D-038 the
-  // blanket commitPresent() skip wrongly accepted it, including in the gate round (F-DG0-245).
+  // An ABSENT fix_revision is ALWAYS rejected now, even if the verifying round's source_commit is (forged) absent -- the
+  // D-038 "round absent" escape is gone (F-DG0-164/246). Make round 2 look absent AND the fix absent: still rejected.
   edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = "0".repeat(40)));
-  expectError(validateGate(repo, "DG0"), /is not a commit in this repository, but round-2 is retained/);
+  edit(repo, "docs/delivery/stages.json", (d) => { d.stages[0].review_rounds[1].source_commit = "a".repeat(40); });
+  const mpath = get(repo, "docs/delivery/gates/DG0.json").manifest_path;
+  edit(repo, mpath, (m) => (m.source_commit = "a".repeat(40))); // findManifest tolerates this; the closure must not
+  expectError(validateGate(repo, "DG0"), /fix .* is not a commit present in this repository/);
   // A non-hex / short id is still rejected outright.
   edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = "1a99d13"));
   expectError(validateGate(repo, "DG0"), /CLOSED_VERIFIED needs a full fix_revision commit id/);
-  // (The tolerance direction -- an absent fix in a genuinely pruned round whose own source_commit is also absent -- is
-  //  exercised by the real repository's round-18 orphan in docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs.)
 });
 
-test("D-038 / F-DG0-159: checkInvocation rejects a missing/malformed head_commit_at_start and an absent head in a retained round", () => {
+test("D-039 / F-DG0-164: checkInvocation requires a present head_commit_at_start that contains the manifest -- no absent-round escape", () => {
   const { repo, records } = buildValidRepo();
   approveAndCommit(repo);
   assert.deepEqual(validateGate(repo, "DG0"), [], "the baseline gate must pass");
-  const rec = get(repo, records["domain-reviewer"]); // a gate-round (retained) review record
+  const rec = get(repo, records["domain-reviewer"]); // a gate-round review record
   const metaRel = `docs/delivery/runs/DG0/${rec.invocation_reference.run_id}/meta.json`;
-  // A non-hex head (the runner's 'unknown' fallback, a symbolic 'HEAD', any junk) is a hard error, not "pruned".
+  // A non-hex head (the runner's 'unknown' fallback, a symbolic 'HEAD', any junk) is a hard error.
   edit(repo, metaRel, (m) => (m.head_commit_at_start = "unknown"));
   expectError(validateGate(repo, "DG0"), /head_commit_at_start .* is not a 40-hex commit id/);
   // A missing field is a hard error.
   edit(repo, metaRel, (m) => { delete m.head_commit_at_start; });
   expectError(validateGate(repo, "DG0"), /head_commit_at_start .* is not a 40-hex commit id/);
-  // A well-formed but ABSENT head in a RETAINED round (the gate round) is rejected: only a genuinely pruned round tolerates it.
+  // A well-formed but ABSENT head is rejected outright now (no absent-round escape, F-DG0-164).
   edit(repo, metaRel, (m) => (m.head_commit_at_start = "0".repeat(40)));
-  expectError(validateGate(repo, "DG0"), /absent from this repository, but its review round is retained/);
+  expectError(validateGate(repo, "DG0"), /absent from this repository \(gate validation requires a complete clone/);
+});
+
+test("D-039 / F-DG0-165: a later-round findings sidecar cannot reclassify a finding's immutable fields", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  // F-DG0-101 was raised High (mandatory) in round-1 code-security.findings.json. A round-2 sidecar re-raising it as Low
+  // must be rejected as immutable-field drift, not silently supersede the earlier classification.
+  put(repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json", {
+    findings: [{ id: "F-DG0-101", stage_id: "DG0", requirement: "REQ-DLV-001", severity: "Low", mandatory_violation: false,
+      title: "validator accepted a missing reviewer", reproduction: "delete a review", expected: "fail", actual: "pass",
+      evidence: [], reported_by: "code-security-reviewer", reported_in: "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json",
+      owner: "delivery-orchestrator", status: "OPEN", history: [] }],
+  });
+  const errs = validateGate(repo, "DG0");
+  assert.ok(errs.some((e) => /finding F-DG0-101 severity .* differs from its first raising sidecar/.test(e)),
+    `a later-round downgrade of severity must be rejected; got: ${errs.join(" | ")}`);
+  assert.ok(errs.some((e) => /mandatory_violation .* differs from its first raising sidecar/.test(e)),
+    `a later-round downgrade of mandatory_violation must be rejected; got: ${errs.join(" | ")}`);
+});
+
+test("D-039 / F-DG0-248: validateGate refuses a shallow clone", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  assert.deepEqual(validateGate(repo, "DG0"), [], "the complete repository passes");
+  // A shallow clone (CI without fetch-depth:0, or a --depth fetch) is refused: history checks are unreliable on it.
+  const shallowDir = mkdtempSync(join(tmpdir(), "gate-shallow-"));
+  fixtures.push(shallowDir);
+  rmSync(shallowDir, { recursive: true, force: true });
+  execFileSync("git", ["clone", "--depth=1", `file://${repo}`, shallowDir], { stdio: "ignore" });
+  assert.equal(sh(shallowDir, "rev-parse", "--is-shallow-repository"), "true", "the clone must be shallow");
+  assert.ok(validateGate(shallowDir, "DG0").some((e) => /the repository is a shallow clone/.test(e)),
+    "a shallow clone must be refused");
+  // A complete clone of the same repo is accepted.
+  const fullDir = mkdtempSync(join(tmpdir(), "gate-full-"));
+  fixtures.push(fullDir);
+  rmSync(fullDir, { recursive: true, force: true });
+  execFileSync("git", ["clone", `file://${repo}`, fullDir], { stdio: "ignore" });
+  assert.ok(!validateGate(fullDir, "DG0").some((e) => /shallow clone/.test(e)), "a complete clone must not be refused");
 });
 
 test("D-038 / F-DG0-158: every finding a sidecar raises must be in findings.json; the record-less drop exemption is withdrawn", () => {
