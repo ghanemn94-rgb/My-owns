@@ -1,0 +1,16 @@
+# D-034 history soundness (fresh clone at 3ffb28c + host repo backup ref)
+$ checkWriteOnce(DG0)
+errors 0 []
+$ git ls-tree HEAD docs/delivery/reviews/DG0/round-17/ | grep qa-verifier
+100644 blob 862693f98291e551faf3ca52e3f7c1810100e53b	docs/delivery/reviews/DG0/round-17/qa-verifier.findings.json
+100644 blob 276e32c201e2bad974818daf6731664124ecbbac	docs/delivery/reviews/DG0/round-17/qa-verifier.verifications.json
+$ first commit adding the restored file
+e9a00fd 2026-09-29 11:45:45 +0000 run: DG0-T-DG0-REV-QA-R17-qa-verifier-20260929T111544Z-a1c9d0c1 (review evidence, auto-committed by run-agent.sh)
+$ delete events under reviews/runs/candidates (expect none):
+0
+$ pairwise diff backup/pre-writeonce-repair-565ab3f (89 commits) vs rewritten ee4ddd7^ (89 commits): any change other than the two restored adds, or subject mismatch
+pairs=89 unexpected=0
+$ git diff --name-status backup-tip ee4ddd7^
+A	docs/delivery/reviews/DG0/round-17/qa-verifier.findings.json
+A	docs/delivery/reviews/DG0/round-17/qa-verifier.verifications.json
+exit=0

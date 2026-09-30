@@ -1,0 +1,35 @@
+# F-DG0-237 live new-path probe in qa-verifier R19 run (git-ignored probe names; removed if created); 2026-09-30T09:24:05Z
+$ mkdir -p docs/architecture/__pycache__ && touch docs/architecture/__pycache__/qa19.pyc
+mkdir: cannot create directory ‘docs/architecture’: Read-only file system
+  -> refused
+$ mkdir -p src/__pycache__ && touch src/__pycache__/qa19.pyc
+  -> CREATED (removing)
+$ mkdir -p tests/unit/__pycache__ && touch tests/unit/__pycache__/qa19.pyc
+mkdir: cannot create directory ‘tests/unit’: Read-only file system
+  -> refused
+$ mkdir -p docs/delivery/__pycache__ && touch docs/delivery/__pycache__/qa19.pyc
+mkdir: cannot create directory ‘docs/delivery/__pycache__’: Read-only file system
+  -> refused
+$ mkdir -p __pycache__ && touch __pycache__/qa19.pyc
+  -> CREATED (removing)
+$ mkdir -p docs/source/__pycache__ && touch docs/source/__pycache__/qa19.pyc
+mkdir: cannot create directory ‘docs/source/__pycache__’: Read-only file system
+  -> refused
+$ mkdir -p docs/delivery/reviews/DG0/round-19 && touch docs/delivery/reviews/DG0/round-19/qa19.pyc
+mkdir: cannot create directory ‘docs/delivery/reviews/DG0/round-19’: Read-only file system
+  -> refused
+$ mkdir -p docs/delivery/test-evidence/DG0/domain/__pycache__ && touch docs/delivery/test-evidence/DG0/domain/__pycache__/qa19.pyc
+mkdir: cannot create directory ‘docs/delivery/test-evidence/DG0/domain/__pycache__’: Read-only file system
+  -> refused
+$ mkdir -p tests/qa/__pycache__ && touch tests/qa/__pycache__/qa19.pyc
+  -> CREATED (removing)
+$ mkdir -p docs/delivery/test-evidence/DG0/qa/__pycache__ && touch docs/delivery/test-evidence/DG0/qa/__pycache__/qa19.pyc
+  -> CREATED (removing)
+
+# process status
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+NoNewPrivs:	1
+Seccomp:	2
+# F-DG0-239: agents.md line
+114:- **Process:** only `CAP_SETFCAP` is kept and `no_new_privs` is set. The IPC namespace is private (`--unshare-ipc`), but the PID namespace is shared with the host and the host procfs is bound read-write, so a reviewer's own nested bubblewrap can mount a fresh procfs (D-030). To keep that sharing from becoming a cross-run path, each run also enters its own scope-only Landlock domain (D-033, F-DG0-152). The network is shared, because the CLI needs the API.

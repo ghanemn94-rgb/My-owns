@@ -1,0 +1,76 @@
+## RAG from trajectory not task completion: 2 rows -> ['REQ-PB-063', 'REQ-S07-007']
+    REQ-PB-063 DG4 … 60;M0245;M0247;M0248;M0249;M0250;M0251;M0252;M0159 Template 10 — RAG logic T10 Outcomes RAG (target trajectory, not activity completion);Value RAG (validated benefit gap);Portfolio RAG (milestone + outcome risk);Dependencies RAG (decision date / critical path);People & adop
+    REQ-S07-007 DG4 … REQ-S07-007 USER Compute RAG from the approved expected trajectory with configurable thresholds and never from project task completion M0160 §7 KPI engine and change propagation  Approved trajectory;Expected-to-date;Amber threshold;Red threshold RAG = evaluation of actual 
+## separate delivery/adoption/value/closure statuses: 1 rows -> ['REQ-S03-003']
+    REQ-S03-003 DG4 … REQ-S03-003 USER Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses M0092 §3 Business model and navigation  Delivery status;Adoption status;Validated value status;Transformation closure status 
+## forecast never validated: 2 rows -> ['REQ-S08-001', 'REQ-S20-010']
+    REQ-S08-001 DG4 … ence submitted -> Finance queue Benefits and Finance > Benefit; /api/v1/benefits/{id}/values A10: a forecast amount never appears in the validated total; a rejected measurement is retained and shown as rejected P4 DG4 SPECIFIED  Lifecycle steps: REQ-PB-074.
+    REQ-S20-010 DG4 … ery/test-evidence/ A10: A shared benefit rolls up once; 110% allocation is rejected; unvalidated or forecast value cannot appear as validated actual P3;P4 DG4 SPECIFIED  
+## Finance validates, BO accountable: 0 rows -> []
+   NO HITS
+## shared benefit counted once / allocation <=100% / unallocated shown: 1 rows -> ['REQ-S08-013']
+    REQ-S08-013 DG4 … REQ-S08-013 USER Reject allocations over 100% and show any share below 100% as unallocated M0173 §8 Benefits and financial validation  Allocation % per contributor The server sums allocations per benefit; above 100% is rejected; below 100% 
+## no double counting: 2 rows -> ['REQ-PB-058', 'REQ-DLV-036']
+    REQ-PB-058 DG4 … REQ-PB-058 SOURCE Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link B0088;M0173 No double counting T14 Benefit I
+    REQ-DLV-036 DG4 … execution and value; reviewers verify the KPI-to-benefit-to-dashboard scenario, Finance validation, double-counting prevention, recurrence and escalation, adoption/BAU acceptance and ownership continuity DG4 candidate backend-workflow-engineer;kpi-benefits-engin
+## gates explicit approval tied to evidence snapshot: 9 rows -> ['REQ-PB-015', 'REQ-DLV-037', 'REQ-S04-002', 'REQ-S04-012', 'REQ-S04-014', 'REQ-S07-016', 'REQ-S12-009', 'REQ-S13-007', 'REQ-S16-024']
+    REQ-PB-015 DG4 … tion;Evidence required;Submission;Approver;Decision;Rationale Owner assembles evidence, submits the gate; approver records decision against the evidence snapshot; gates are never inferred from task completion Gate approval record tied to evidence snapshot TL;SP;TO submit:TL; approve:SP (or configured approver); view:scoped; ADM cannot approve Valid gate submission -> route evidence snapshot to approver
+    REQ-DLV-037 DG5 … 8 §21 Ordered implementation stages and release behavior  REQ-PB and S-area requirements with final gate DG5 Implementers build configuration, automation and outputs; reviewers verify admin changes without code edits, draft/publish/migration/reapproval, durable rule retries, report snapshots, bilingual export inspection and all starter automations DG5 candidate backend-workflow-engineer;frontend-ux-engineer;kpi-benefits-engineer write:de
+## DG0-DG7 vs G1-G6 separate: 4 rows -> ['REQ-PB-021', 'REQ-DLV-002', 'REQ-S04-008', 'REQ-S21-001']
+    REQ-PB-021 DG4 … tions (§4 M0125, §21 M0412): submission is blocked while mandatory evidence is missing, and product G6 never implies engineering gate DG7. Interpretations: none.
+    REQ-DLV-002 DG0 … 3;A28: gate records validate only with stage_id DG0-DG7; CLAUDE.md and agent-protocol.md state that G6 never implies DG7 and that no agent grants a business, Finance or IT approval P0 DG0 IMPLEMENTED CLAUDE.md;docs/delivery/agent-protocol.md;tools/gates/schemas/gate.sch
+exit=0
+=== follow-up rows (full text) ===
+REQ-PB-013 SOURCE DG4 Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role
+  PROC: Only users holding FIN on the transformation can mark a baseline, benefit formula or realized value as validated; others can submit for validation
+  ACC: A10;A12: a Business Owner calling the validate endpoint receives 403; a Finance user succeeds and the audit event records validator identity
+
+REQ-PB-077 SOURCE DG5 Label the Realize phase as aligned with PMI BRM logic without claiming PMI standard status
+  PROC: The Realize phase guidance shows the note that it aligns with PMI Benefits Realization Management logic
+  ACC: A01: Realize guidance shows 'aligns with PMI Benefits Realization Management logic' and no 'certified'/'official' wording
+
+REQ-S08-013 USER DG4 Reject allocations over 100% and show any share below 100% as unallocated
+  PROC: The server sums allocations per benefit; above 100% is rejected; below 100% shows the remaining share as unallocated
+  ACC: A10: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated
+
+REQ-S03-003 USER DG4 Keep initiative delivery, business adoption, validated value and transformation closure as separate statuses
+  PROC: Each status has its own state machine and owner; none is derived from another; views show all four side by side
+  ACC: A11: setting delivery to Complete leaves adoption, validated value and closure unchanged; the API rejects a closure request while validated value is pending unless a transition decision exists
+
+REQ-S07-007 USER DG4 Compute RAG from the approved expected trajectory with configurable thresholds and never from project task completion
+  PROC: RAG = evaluation of actual versus expected-to-date by polarity using configured thresholds; task completion is not an input
+  ACC: A04;A05: with all tasks complete and actual below the red threshold the KPI is Red; changing the threshold version recomputes RAG
+
+REQ-PB-063 SOURCE DG4 Apply the area-specific T10 RAG logic
+  PROC: Each area computes status by its own rule; outcome RAG never uses task completion; missing data shows Unknown/Stale
+  ACC: A04;A05: an outcome whose tasks are 100% complete but KPI is below trajectory is Red/Amber, not Green; a KPI with no actual shows Unknown
+
+REQ-PB-015 SOURCE DG4 Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required
+  PROC: Owner assembles evidence, submits the gate; approver records decision against the evidence snapshot; gates are never inferred from task completion
+  ACC: A08: submission with missing mandatory evidence is rejected; approval by a non-approver returns 403; approval of a stale submission version is rejected
+
+ONCE: REQ-PB-058 Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link
+FIN/BO candidate: REQ-PB-067 Implement Template 12 RACI with the six seeded deliverables and R/A/C/I values including A/R
+ONCE: REQ-S05-005 Classify business-case investment (capex, opex, internal FTE, vendor cost, opportunity cost) and benefits (revenue, cost reduction, cost avoidance, working capital, strategic/non-financial) so no item is treated twice
+FIN/BO candidate: REQ-S08-003 Record for each benefit a unique ID, type, accountable business owner, Finance validator where applicable, baseline/counterfactual, formula, driver units, target, timing, one-off/recurring classification, currency, measurement source, evidence, confidence, assumptions, contribution links and financial-statement mapping or agreed non-financial KPI
+ONCE: REQ-S20-010 Deliver and pass the executable acceptance test A10 Benefit integrity
+=== REQ-PB-013 full ===
+  req_id : REQ-PB-013
+  class : SOURCE
+  title : Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role
+  source_ref : B0018;B0084;M0174;M0211;M0188;M0234;M0330
+  source_heading : Minimum governance roles; Transformation Business Case
+  template_id : 
+  input_fields : Baseline validation status;Benefit logic validation status;Realized value validation status;Validator;Validation date
+  procedure : Only users holding FIN on the transformation can mark a baseline, benefit formula or realized value as validated; others can submit for validation
+  output : Validation decisions with validator identity
+  owner_roles : FIN;BO
+  permissions : submit:BO,WL,KDS; validate:FIN only; view:scoped
+  automation : Benefit evidence submitted -> route to Finance validation queue
+  screen_api : Benefits and Finance > Validation queue; POST /api/v1/validations
+  acceptance : A10;A12: a Business Owner calling the validate endpoint receives 403; a Finance user succeeds and the audit event records validator identity
+  increments : P2;P3;P4
+  final_gate : DG4
+  status : SPECIFIED
+  evidence : 
+  notes : Playbook (B0018, B0084): Finance / Value Office validates the baseline, benefit logic and value realization, early and not after delivery. Master-prompt additions (§8 M0174; §10 M0188, M0211; §12 M0234; §16 M0330): validation is exclusive to FIN and enforced on the server (403 for anyone else), routed through a validation queue, and audited with the validator's identity. Interpretations: none.

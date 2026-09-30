@@ -146,10 +146,11 @@ def bwrap_args(p):
     # PID namespace. It DOES create its own IPC namespace (--unshare-ipc, F-DG0-148): the IPC namespace has no bearing
     # on procfs "full visibility", so unsharing it closes the SysV-IPC / POSIX-message-queue cross-run vector of
     # threat-model residual 8 at no cost to the nested bwrap. Still disclosed: the agent shares the host PID namespace
-    # and sees a read-write host /proc. /proc/sys kernel tunables are read-only for the agent's SHELL (the Claude Code
-    # Bash sandbox's user namespace, as in round 15) and inside the reviewer's own fresh-procfs sandboxes (userns
-    # default), where candidate code runs; a file-tool write to a uid-0-writable /proc/sys entry is a disclosed residual
-    # (residual 7; an availability / host-tunable risk, not repository or gate integrity), which code-security assesses
+    # and sees a read-write host /proc. A file-tool write to a uid-0-writable /proc/sys entry is a disclosed residual
+    # (residual 7): /proc/sys is HOST-GLOBAL kernel state, so such a write changes a tunable for the whole host, not just
+    # this run -- an availability / host-tunable risk, not repository or gate-record integrity (D-036; the earlier claim
+    # that /proc/sys is read-only for the agent's SHELL is withdrawn as unverified). Candidate code that runs inside the
+    # reviewer's own fresh-procfs sandboxes does see /proc/sys read-only there (userns default). code-security assesses
     # (option A, chosen by the user 2026-09-29).
     a = ["--die-with-parent", "--new-session", "--unshare-ipc", "--setenv", "MTH_PROCESS_SANDBOX", "1",
          "--ro-bind", "/", "/", "--dev", "/dev", "--bind", "/proc", "/proc",

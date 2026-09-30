@@ -1,0 +1,32 @@
+# D-035 before/after: QA19-P1..P4 run against the candidate (0a65201) and against 695ab30 (the commit before D-035 28f99e3). 2026-09-30T09:35:23Z
+# Note on QA19-P3: its printed label says 'treated as missing', but the cause is different: git ls-tree accepts a tree id, so the recompute simply succeeds from the tree (same result on both commits). It's harmless; no finding.
+=== QA_REPO_ROOT=$TMPDIR/r19/cand (0a652018bdf4975f83e580796d0775141a3dae9a)
+  QA19-P1 current errors (2): ["finding F-DG0-201 (Medium, mandatory): fix 5a1e5a1e5a is not in the verified round-2 candidate (5a1e5a1e5a)","finding F-DG0-201 (Medium, mandatory): fix 5a1e5a1e5a is not in the gate candidate"]
+  QA19-P1 historical errors (4): ["stages.json: DG0 state VERIFYING not in APPROVED","candidate: cannot recompute from 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e (Command failed: git -C /var/tmp/mth-run.QyP3LT/claude-0/qa5-dg0-JX4f1H ls-tree -r -z --full-tree 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e)","finding F-DG0-201 (Medium, mandatory): fix 5a1e5a1e5a is not in the verified round-2 candidate (5a1e5a1e5a)","finding F-DG0-201 (Medium, mandatory): fix 5a1e5a1e5a is not in the gate candidate"]
+  QA19-P4 control (accept fixture, real commit) errors (0): []
+  QA19-P4 current errors (0): []
+  QA19-P4 historical errors (2): ["stages.json: DG0 state VERIFYING not in APPROVED","candidate: cannot recompute from 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e (Command failed: git -C /var/tmp/mth-run.QyP3LT/claude-0/qa5-dg0-Ubr0IU ls-tree -r -z --full-tree 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e)"]
+  QA19-P2 errors (1): ["qa19-p2 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json does not describe its source_commit 8e1e2676b2 (recomputes to sha256:3abb3da7e4f8f7c8825c4d341ab107c80748f34cf3f43ad0bcfbe2feddb5100e)"]
+  QA19-P3 (tree id as source_commit) errors (0): []
+  QA19-P3 result: TOLERATED (an existing non-commit object is treated as 'missing')
+✔ QA19-P1 D-035 at gate level: a gate naming a source_commit that does not exist is rejected (494.262882ms)
+✖ QA19-P4 D-035 at gate level, no fix_revision to trip over: accepted-observation fixture whose gate source_commit does not exist (720.619269ms)
+✔ QA19-P2 D-035: a present-but-different source_commit in a round manifest is still rejected (150.615663ms)
+✔ QA19-P3 D-035 probe: a round manifest source_commit that is an existing non-commit object (a tree id) (135.772146ms)
+✖ failing tests:
+✖ QA19-P4 D-035 at gate level, no fix_revision to trip over: accepted-observation fixture whose gate source_commit does not exist (720.619269ms)
+exit=1
+=== QA_REPO_ROOT=$TMPDIR/r19/pre035 (695ab30cd4dd5f13f638b1ab2ef89eafcf271a39)
+  QA19-P1 current errors (4): ["review rounds: DG0 round 1 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json: cannot recompute from its source_commit (Command failed: git -C /var/tmp/mth-run.QyP3LT/claude-0/qa5-dg0-C4xzLw ls-tree -r -z --full-tree 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e)","review rounds: DG0 round 2 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json: cannot recompute from its source_commit (Command failed: git -C /var/tmp/mth-run.QyP3LT/claude-0/qa5-dg0-C4xzLw ls-tree -r -z --full-tree 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e)","finding F-DG0-201 (Medium, mandatory): fix 5a1e5a1e5a is not in the verified round-2 candidate (5a1e5a1e5a)","
+  QA19-P1 historical errors (6): ["stages.json: DG0 state VERIFYING not in APPROVED","candidate: cannot recompute from 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e (Command failed: git -C /var/tmp/mth-run.QyP3LT/claude-0/qa5-dg0-kcNejy ls-tree -r -z --full-tree 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e)","review rounds: DG0 round 1 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json: cannot recompute from its source_commit (Command failed: git -C /var/tmp/mth-run.QyP3LT/claude-0/qa5-dg0-kcNejy ls-tree -r -z --full-tree 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e)","review rounds: DG0 round 2 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json: cannot recompute from 
+  QA19-P4 control (accept fixture, real commit) errors (0): []
+  QA19-P4 current errors (2): ["review rounds: DG0 round 1 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json: cannot recompute from its source_commit (Command failed: git -C /var/tmp/mth-run.QyP3LT/claude-0/qa5-dg0-uli3U6 ls-tree -r -z --full-tree 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e)","review rounds: DG0 round 2 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json: cannot recompute from its source_commit (Command failed: git -C /var/tmp/mth-run.QyP3LT/claude-0/qa5-dg0-uli3U6 ls-tree -r -z --full-tree 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e)"]
+  QA19-P4 historical errors (4): ["stages.json: DG0 state VERIFYING not in APPROVED","candidate: cannot recompute from 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e (Command failed: git -C /var/tmp/mth-run.QyP3LT/claude-0/qa5-dg0-3EJcwz ls-tree -r -z --full-tree 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e)","review rounds: DG0 round 1 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json: cannot recompute from its source_commit (Command failed: git -C /var/tmp/mth-run.QyP3LT/claude-0/qa5-dg0-3EJcwz ls-tree -r -z --full-tree 5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e5a1e)","review rounds: DG0 round 2 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json: cannot recompute from 
+  QA19-P2 errors (1): ["qa19-p2 manifest docs/delivery/candidates/DG0/96c1e05362e98cd2.manifest.json does not describe its source_commit 425e95e5ec (recomputes to sha256:3abb3da7e4f8f7c8825c4d341ab107c80748f34cf3f43ad0bcfbe2feddb5100e)"]
+  QA19-P3 (tree id as source_commit) errors (0): []
+  QA19-P3 result: TOLERATED (an existing non-commit object is treated as 'missing')
+✔ QA19-P1 D-035 at gate level: a gate naming a source_commit that does not exist is rejected (554.47245ms)
+✔ QA19-P4 D-035 at gate level, no fix_revision to trip over: accepted-observation fixture whose gate source_commit does not exist (744.070589ms)
+✔ QA19-P2 D-035: a present-but-different source_commit in a round manifest is still rejected (176.007356ms)
+✔ QA19-P3 D-035 probe: a round manifest source_commit that is an existing non-commit object (a tree id) (150.565816ms)
+exit=0

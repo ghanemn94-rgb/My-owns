@@ -1,0 +1,348 @@
+sample size 80
+ids M0002 M0004 M0007 M0005 M0010 M0012 M0028 M0016 M0029 M0032 M0047 M0036 M0037 M0058 M0059 M0061 M0074 M0073 M0078 M0076 M0085 M0087 M0111 M0112 M0101 M0104 M0116 M0123 M0141 M0138 M0128 M0132 M0155 M0152 M0157 M0158 M0166 M0174 M0178 M0179 M0208 M0210 M0195 M0194 M0215 M0218 M0223 M0220 M0228 M0242 M0246 M0255 M0271 M0259 M0256 M0275 M0273 M0293 M0300 M0299 M0315 M0324 M0328 M0319 M0334 M0335 M0346 M0344 M0355 M0366 M0356 M0374 M0375 M0394 M0389 M0381 M0403 M0419 M0401 M0416
+
+## M0002 preamble para | Version 2.0 · English edition · 28 September 2026
+  -> NON-REQUIREMENT  | Version and date stamp of the master prompt.
+
+## M0004 preamble para | The source playbook is version 1.0, September 2026. Platform architecture and the multi-agent delivery protocol below are implementation requirements added to operationalize it. The exact previously supplied Mobily blue is unverified; #0078FF remains a provisional configurable token pending the official asset/color.
+  -> REQUIREMENT REQ-DLV-001;REQ-S15-002;REQ-S15-006 | 
+      REQ-DLV-001 ENGINEERING DG0 Execute the English master prompt v2.0 against playbook v1.0 and record that the platform and delivery protocol are implementation | cites yes
+      REQ-S15-002 USER DG1 Seed the provisional design tokens brand.primary #0078FF, brand.deep #003B73, surface.page #F5F8FC, surface.card #FFFFFF, text.pri | cites yes
+      REQ-S15-006 USER DG1 Use a clearly provisional text wordmark when no official Mobily logo is supplied, never an invented logo | cites yes
+
+## M0007 0 para | There are two different gate systems. DG0–DG7 are software delivery gates for your engineering team. G1–G6 are business transformation approvals inside the product. Keep their records, authority and meanings separate. An engineering agent cannot grant a real business, Finance or IT production approval.
+  -> REQUIREMENT REQ-DLV-002 | 
+      REQ-DLV-002 ENGINEERING DG0 Keep engineering delivery gates DG0-DG7 separate from product business approvals G1-G6 in records, authority and meaning | cites yes
+
+## M0005 0 heading | 0 Mandatory Claude Code execution and review protocol
+  -> CONTEXT  | Section heading for §0; substance covered by REQ-DLV-001..031.
+
+## M0010 0.1 para | Use project subagent definitions in .claude/agents/, with supported YAML frontmatter and explicit role instructions. Set model: inherit unless the user has selected another model. Confirm each definition loads and actually runs. If a reload is required, checkpoint precisely and explain the required action. Verify current official Claude Code documentation before using version-sensitive fields or commands.
+  -> REQUIREMENT REQ-DLV-004 | 
+      REQ-DLV-004 ENGINEERING DG0 Define the ten project agents in .claude/agents with supported frontmatter, role instructions, handback contracts and verified loa | cites yes
+
+## M0012 0.1 para | Only the orchestrator delegates or creates agents under this project’s operating policy. Give implementation agents scoped write access and reviewers read-only access to implementation sources. QA may create tests and evidence in assigned paths. A reviewer with shell access must run checks only in a disposable test environment and must not modify the candidate source. Do not weaken existing permission controls to ena
+  -> REQUIREMENT REQ-DLV-007;REQ-DLV-042 | 
+      REQ-DLV-007 ENGINEERING DG0 Enforce scoped write access: implementers are limited to their scope, each reviewer writes only its own review records and evidenc | cites yes
+      REQ-DLV-042 ENGINEERING DG1 Install dependencies only inside an OS sandbox: the orchestrator's install step runs under bubblewrap with network limited to the  | cites yes
+
+## M0028 0.2 para | The three mandatory specialist reviewers for every stage, including planning and architecture, are domain-reviewer, code-security-reviewer and qa-verifier. release-auditor verifies their evidence and the gate conditions before approval. Early-stage checks evaluate the actual specifications, contracts, agent setup and feasibility; they must not claim that future runtime features have already passed tests.
+  -> REQUIREMENT REQ-DLV-010 | 
+      REQ-DLV-010 ENGINEERING DG7 Run the three mandatory independent specialist reviews (domain, code-security, QA) and the release audit at every stage, against t | cites yes
+
+## M0016 0.2 table-row | |Agent name               |Responsibility                                                                                                     |Required handback                                                         |Independence rule                                                                 |
+  -> CONTEXT  | Table header row of the agent roster; rows covered by REQ-DLV-004/005.
+
+## M0029 0.3 heading | 0.3 Assignment contract and independent review
+  -> CONTEXT  | Subsection heading §0.3; covered by REQ-DLV-010..013.
+
+## M0032 0.3 para | Reviewers independently inspect the same frozen candidate before reading each other’s conclusions. Give them the requirements, code/artifacts, relevant history and acceptance criteria, not a leading instruction to approve. They must inspect implementation/evidence directly and exercise applicable workflows; an implementer’s summary is insufficient evidence. The code reviewer performs a direct diff/source review. QA i
+  -> REQUIREMENT REQ-DLV-010 | 
+      REQ-DLV-010 ENGINEERING DG7 Run the three mandatory independent specialist reviews (domain, code-security, QA) and the release audit at every stage, against t | cites yes
+
+## M0047 0.4 bullet | • All three independent reviewer verdicts are PASS on the same final candidate and the release-auditor records PASS.
+  -> REQUIREMENT REQ-DLV-010;REQ-DLV-016 | 
+      REQ-DLV-010 ENGINEERING DG7 Run the three mandatory independent specialist reviews (domain, code-security, QA) and the release audit at every stage, against t | cites yes
+      REQ-DLV-016 ENGINEERING DG0 Mechanically apply the gate pass conditions: assigned requirements complete, three PASS reviews plus auditor PASS on one candidate | cites yes
+
+## M0036 0.4 numbered | 1. Plan: freeze stage scope, requirement IDs, dependencies, outputs and acceptance criteria.
+  -> REQUIREMENT REQ-DLV-014 | 
+      REQ-DLV-014 ENGINEERING DG7 Run the eight-step gate loop for every stage: plan, implement, integrate and freeze, review (rendered Arabic and English screens f | cites yes
+
+## M0037 0.4 numbered | 2. Implement: assign scoped tasks, build complete vertical behavior and run developer checks.
+  -> REQUIREMENT REQ-DLV-014 | 
+      REQ-DLV-014 ENGINEERING DG7 Run the eight-step gate loop for every stage: plan, implement, integrate and freeze, review (rendered Arabic and English screens f | cites yes
+
+## M0058 0.5 bullet | • docs/delivery/requirements.csv: source-to-feature-to-test coverage, stage ownership and status.
+  -> REQUIREMENT REQ-DLV-020 | 
+      REQ-DLV-020 ENGINEERING DG0 Maintain the requirement register (source heading/template, requirement ID, input fields, procedure, output, owner, permissions, a | cites yes
+
+## M0059 0.5 bullet | • docs/delivery/stages.json: stage state, dependencies, candidate identity and gate evidence references.
+  -> REQUIREMENT REQ-DLV-019 | 
+      REQ-DLV-019 ENGINEERING DG0 Maintain the durable delivery records: CLAUDE.md, stages.json, decisions.md, findings.json, progress.md and test-evidence with sec | cites yes
+
+## M0061 0.5 bullet | • docs/delivery/findings.json: all findings and their repair/verification history.
+  -> REQUIREMENT REQ-DLV-019 | 
+      REQ-DLV-019 ENGINEERING DG0 Maintain the durable delivery records: CLAUDE.md, stages.json, decisions.md, findings.json, progress.md and test-evidence with sec | cites yes
+
+## M0074 0.6 para | Neither the number of agents nor their agreement guarantees correctness. The quality mechanism is independent inspection, executed tests, traceability, repair and reproducible evidence. Preserve this distinction in status and final delivery.
+  -> REQUIREMENT REQ-DLV-031 | 
+      REQ-DLV-031 ENGINEERING DG7 State in every status report and in final delivery that agent count or agreement does not guarantee correctness; quality rests on  | cites yes
+
+## M0073 0.6 para | If the session or budget ends, save the latest candidate, stage state, unfinished agent tasks, findings and exact next steps. On resumption, reconcile the repository and durable records, check whether earlier reviews still match the current candidate, and recreate unavailable agent sessions as needed. Never treat a remembered verbal approval as sufficient. Product data and delivery evidence must not depend on transie
+  -> REQUIREMENT REQ-DLV-024;REQ-DLV-029;REQ-DLV-030 | 
+      REQ-DLV-024 ENGINEERING DG7 Before implementation in P1-P7, validate the preceding approved gate (--historical), and on resumption reconcile recorded gate sta | cites yes
+      REQ-DLV-029 ENGINEERING DG0 Keep a durable checkpoint (latest candidate, stage state, unfinished tasks, findings, exact next steps) and a reconcile command, s | cites yes
+      REQ-DLV-030 ENGINEERING DG7 On resumption reconcile repository and durable records, reject reviews that no longer match the candidate, recreate unavailable ag | cites yes
+
+## M0078 1 para | The attached Business_Transformation_Playbook(2).docx is the authoritative methodology source. Convert its entire operating system into connected, editable, executable workflows: input → procedure → validation → approval where required → output → performance and benefits monitoring → correction → sustainment.
+  -> REQUIREMENT REQ-S01-003 | 
+      REQ-S01-003 USER DG5 Convert the playbook operating system into connected executable workflows from input through procedure, validation, approval, outp | cites yes
+
+## M0076 1 para | Build a complete, working, enterprise Business Transformation management platform for Mobily. Act as a senior product architect, transformation operating model designer, UX designer and full-stack engineer. Deliver executable software, its complete source code, a persistent database, documentation and a tested self-hosting package.
+  -> REQUIREMENT REQ-S01-001 | 
+      REQ-S01-001 USER DG7 Deliver a complete working enterprise transformation platform with source code, persistent database, documentation and a tested se | cites yes
+
+## M0085 2 bullet | • Source requirement — grounded in the attached playbook.
+  -> REQUIREMENT REQ-DLV-020 | 
+      REQ-DLV-020 ENGINEERING DG0 Maintain the requirement register (source heading/template, requirement ID, input fields, procedure, output, owner, permissions, a | cites yes
+
+## M0087 2 bullet | • Engineering extension — added to make the platform reliable, usable or deployable.
+  -> REQUIREMENT REQ-DLV-020 | 
+      REQ-DLV-020 ENGINEERING DG0 Maintain the requirement register (source heading/template, requirement ID, input fields, procedure, output, owner, permissions, a | cites yes
+
+## M0111 3 bullet | • Evidence and Reports: native deliverables, attachments, snapshots and generated packs.
+  -> REQUIREMENT REQ-S03-007 | 
+      REQ-S03-007 USER DG5 Provide the fourteen primary navigation areas: My Work, Executive Overview, Transformations, Playbook and Procedures, Strategy and | cites yes
+
+## M0112 3 bullet | • BAU and Improvement: handovers, controls, lessons and improvement backlog.
+  -> REQUIREMENT REQ-S03-007 | 
+      REQ-S03-007 USER DG5 Provide the fourteen primary navigation areas: My Work, Executive Overview, Transformations, Playbook and Procedures, Strategy and | cites yes
+
+## M0101 3 bullet | • Executive Overview: outcomes, value, critical initiatives, adoption, blockers and decisions.
+  -> REQUIREMENT REQ-S03-007;REQ-S03-009 | 
+      REQ-S03-007 USER DG5 Provide the fourteen primary navigation areas: My Work, Executive Overview, Transformations, Playbook and Procedures, Strategy and | cites yes
+      REQ-S03-009 USER DG4 Provide Executive Overview with outcomes, value, critical initiatives, adoption, blockers and decisions | cites yes
+
+## M0104 3 bullet | • Strategy and KPIs: outcome trees, definitions, targets, actuals and performance reviews.
+  -> REQUIREMENT REQ-S03-007 | 
+      REQ-S03-007 USER DG5 Provide the fourteen primary navigation areas: My Work, Executive Overview, Transformations, Playbook and Procedures, Strategy and | cites yes
+
+## M0116 4 para | Each phase needs guided inputs, procedural steps, required evidence, named owners, completion rules, outputs and a review queue. Gates are explicit approval records tied to a versioned evidence snapshot; they must not be inferred solely from task completion.
+  -> REQUIREMENT REQ-PB-015;REQ-S04-001;REQ-S04-002;REQ-PB-014 | 
+      REQ-PB-015 SOURCE DG4 Model the six stage gates G1-G6 as explicit approval records with decision question and evidence required | cites yes
+      REQ-S04-001 USER DG4 Give every phase guided inputs, procedural steps, required evidence, named owners, completion rules, outputs and a review queue | cites yes
+      REQ-S04-002 USER DG4 Make gates explicit approval records tied to a versioned, immutable evidence snapshot, never inferred from task completion | cites yes
+      REQ-PB-014 SOURCE DG4 Model the six phases with name, purpose, key outputs and phase objective | cites yes
+
+## M0123 4 table-row | |6 Realize — G6 Sustain         |Measure and validate benefits; correct gaps; transfer ownership and controls; establish sustained monitoring and improvement                                                                                                                                                  |Benefit evidence, accepted BAU handover, ownership, controls and continuous-improvement backlog. Decision: value is 
+  -> REQUIREMENT REQ-PB-021;REQ-S04-008 | 
+      REQ-PB-021 SOURCE DG4 G6 Sustain: require benefits evidence, ownership transfer, controls and continuous improvement backlog as gate evidence | cites yes
+      REQ-S04-008 USER DG4 Run the Realize phase procedure and G6 Sustain decision | cites yes
+
+## M0141 5 table-row | |T13|Stakeholder and Adoption Plan     |Stakeholder/group, impact H/M/L, current stance Support/Neutral/Resist, required behavior, intervention, owner, adoption KPI                                                                                                           |
+  -> REQUIREMENT REQ-PB-070 | 
+      REQ-PB-070 SOURCE DG4 Implement Template 13 Stakeholder & Adoption Plan as a native register | cites yes
+
+## M0138 5 table-row | |T10|Executive Transformation Dashboard|Outcomes; value; portfolio; dependencies; decisions; people/adoption, with the source-specific RAG logic described below                                                                                                               |
+  -> REQUIREMENT REQ-PB-062;REQ-PB-063 | 
+      REQ-PB-062 SOURCE DG4 Implement Template 10 Executive Transformation Dashboard with its six source areas | cites yes
+      REQ-PB-063 SOURCE DG4 Apply the area-specific T10 RAG logic | cites yes
+
+## M0128 5 table-row | |ID |Source template                   |Minimum fields or content                                                                                                                                                                                                              |
+  -> CONTEXT  | Table header row (ID / Source template / Minimum fields or content); data rows M0129-M0144 map to the REQ-PB template rows.
+
+## M0132 5 table-row | |T04|Design Decision Log               |ID, decision required, options, recommendation, decision owner, due date, status                                                                                                                                                       |
+  -> REQUIREMENT REQ-PB-043 | 
+      REQ-PB-043 SOURCE DG2 Implement Template 4 Design Decision Log as a native register | cites yes
+
+## M0155 6 para | Publishing a configuration follows Draft → Preview/Test → Review where configured → Publish. Show a side-by-side diff, affected records and compatibility checks. Keep published versions immutable. Existing transformations remain pinned to their methodology and form versions until a deliberate migration is approved. Migration must explain default mappings, new required fields, invalidated calculations and necessary re
+  -> REQUIREMENT REQ-S06-007;REQ-S06-008;REQ-S06-009;REQ-PB-093 | 
+      REQ-S06-007 USER DG5 Publish configuration through Draft, Preview/Test, Review where configured and Publish, with side-by-side diff, affected records,  | cites yes
+      REQ-S06-008 USER DG5 Pin existing transformations to their methodology and form versions until a deliberate, approved migration explains mappings, new  | cites yes
+      REQ-S06-009 USER DG5 Roll back configuration by restoring a prior version through an audited change that does not erase later business transactions | cites yes
+      REQ-PB-093 SOURCE DG5 Let methodology administrators configure the default T06 weight set and scoring rubrics in Playbook Studio as versioned configurat | cites yes
+
+## M0152 6 para | The playbook must be both readable and executable. A procedure definition must contain purpose, trigger, scope, prerequisites, inputs and input schema, ordered/conditional/parallel steps, responsible roles, SLA, validation rules, approval path, escalation path, expected outputs, completion conditions, exceptions and version/effective date.
+  -> REQUIREMENT REQ-S06-001 | 
+      REQ-S06-001 USER DG5 Define procedures with purpose, trigger, scope, prerequisites, inputs and input schema, ordered/conditional/parallel steps, respon | cites yes
+
+## M0157 7 heading | 7 KPI engine and change propagation
+  -> CONTEXT  | Section heading '7 KPI engine and change propagation'; covered by REQ-S07-001..REQ-S07-017.
+
+## M0158 7 para | Provide a KPI dictionary with name, description, business purpose, owner, steward, unit, frequency, polarity, numerator/denominator, calculation, baseline and baseline date, target and target date, phased trajectory, source, aggregation rule, data-quality rule, reporting period, approval policy and leading/lagging classification.
+  -> REQUIREMENT REQ-S07-001 | 
+      REQ-S07-001 USER DG4 Provide a KPI dictionary with name, description, business purpose, owner, steward, unit, frequency, polarity, numerator/denominato | cites yes
+
+## M0166 8 para | Implement the source benefits lifecycle: Identify → Plan → Enable → Measure → Correct → Sustain. Track planned, forecast, measured, submitted-for-validation, validated, rejected and sustained values separately. A delivered capability is an enabler, not proof of realized value.
+  -> REQUIREMENT REQ-PB-074;REQ-S08-001;REQ-S08-002;REQ-PB-075 | 
+      REQ-PB-074 SOURCE DG4 Implement the six-step benefits lifecycle Identify, Plan, Enable, Measure, Correct, Sustain | cites yes
+      REQ-S08-001 USER DG4 Track planned, forecast, measured, submitted-for-validation, validated, rejected and sustained benefit values separately | cites yes
+      REQ-S08-002 USER DG4 Treat a delivered capability as an enabler, not proof of realized value | cites yes
+      REQ-PB-075 SOURCE DG4 Implement Template 14 Benefits Register as a native register | cites yes
+
+## M0174 8 para | Finance validation must include baseline, attribution/counterfactual, calculation, evidence, measurement period and assumptions. Measure-only submissions do not increase the validated total until approved. Corrections create amendments/reversals linked to the original record. Support base/upside/downside scenarios without mixing scenarios into reported actuals. Any optional NPV, ROI or payback metric requires explici
+  -> REQUIREMENT REQ-PB-013;REQ-S08-015;REQ-S08-016;REQ-S08-017;REQ-S08-018;REQ-S08-019;REQ-PB-027;REQ-PB-075 | 
+      REQ-PB-013 SOURCE DG4 Restrict Finance / Value Office validation of baseline, benefit logic and value realization to the Finance role | cites yes
+      REQ-S08-015 USER DG4 Include baseline, attribution/counterfactual, calculation, evidence, measurement period and assumptions in Finance validation | cites yes
+      REQ-S08-016 USER DG4 Keep measure-only submissions out of the validated total until approved | cites yes
+      REQ-S08-017 USER DG4 Record corrections as amendments or reversals linked to the original record | cites yes
+
+## M0178 9 para | Seed these source roadmap waves as overlapping planning horizons, not rigid deadlines:
+  -> REQUIREMENT REQ-PB-050 | 
+      REQ-PB-050 SOURCE DG3 Implement Template 7 Wave Roadmap with the four seeded source waves | cites yes
+
+## M0179 9 table-row | |Wave           |Purpose                               |Typical horizon|Entry                  |Exit evidence                               |
+  -> CONTEXT  | Table header row of the wave table (Wave / Purpose / Typical horizon / Entry / Exit evidence); data rows M0180-M0183 map to REQ-PB-050.
+
+## M0208 10 table-row | |Initiative Delivery|I      |C                  |A             |R              |C      |C        |
+  -> REQUIREMENT REQ-PB-067 | 
+      REQ-PB-067 SOURCE DG4 Implement Template 12 RACI with the six seeded deliverables and R/A/C/I values including A/R | cites yes
+
+## M0210 10 table-row | |BAU Handover       |I      |C                  |A/R           |R              |C      |C        |
+  -> REQUIREMENT REQ-PB-067 | 
+      REQ-PB-067 SOURCE DG4 Implement Template 12 RACI with the six seeded deliverables and R/A/C/I values including A/R | cites yes
+
+## M0195 10 table-row | |Value Review         |Monthly                    |Realized benefits vs plan; Finance validation, forecast and corrective action              |
+  -> REQUIREMENT REQ-PB-060;REQ-PB-061 | 
+      REQ-PB-060 SOURCE DG4 Seed the five transformation operating system layers with cadence, purpose, participants and outputs | cites yes
+      REQ-PB-061 SOURCE DG4 Produce each forum's source outputs as native meeting records | cites yes
+
+## M0194 10 table-row | |Rapid Response/Sprint|Daily or 2–3 times per week|High-priority cross-functional issue; test, evidence and recommendation                    |
+  -> REQUIREMENT REQ-PB-060;REQ-PB-061 | 
+      REQ-PB-060 SOURCE DG4 Seed the five transformation operating system layers with cadence, purpose, participants and outputs | cites yes
+      REQ-PB-061 SOURCE DG4 Produce each forum's source outputs as native meeting records | cites yes
+
+## M0215 11 para | Implement stakeholder groups, influence/impact, stance, required behavior, intervention plans, champions, communication/training actions and evidence of proficiency. Provide short native feedback/assessment forms so observations can be collected and reviewed in the platform.
+  -> REQUIREMENT REQ-PB-070;REQ-S11-001;REQ-S11-002 | 
+      REQ-PB-070 SOURCE DG4 Implement Template 13 Stakeholder & Adoption Plan as a native register | cites yes
+      REQ-S11-001 USER DG4 Implement stakeholder groups with influence/impact, stance, required behavior, intervention plans, champions, communication/traini | cites yes
+      REQ-S11-002 USER DG4 Provide short native feedback and assessment forms so observations are collected and reviewed in the platform | cites yes
+
+## M0218 11 para | A transformation cannot be marked successful solely because initiatives are complete. Show delivery complete, value validation pending, and BAU accepted as separate states. For benefits with a longer realization period, allow a documented transition decision with residual benefit ownership and scheduled monitoring; do not label forecast future value as already sustained.
+  -> REQUIREMENT REQ-PB-009;REQ-S11-006;REQ-S11-007 | 
+      REQ-PB-009 SOURCE DG4 Apply 'Benefits before closure': an initiative is complete only when value is realized and sustained, not when delivered | cites yes
+      REQ-S11-006 USER DG4 Show delivery complete, value validation pending and BAU accepted as separate states so success is never inferred from initiative  | cites yes
+      REQ-S11-007 USER DG4 Allow a documented transition decision for long-realization benefits with residual benefit ownership and scheduled monitoring, nev | cites yes
+
+## M0223 12 table-row | |Trigger                                     |Required action                                                                                         |
+  -> CONTEXT  | Table header row (Trigger / Required action); data rows M0224-M0239 are covered by REQ-S12-004..006, REQ-S12-009..012, REQ-S12-014..016, REQ-S12-018..
+
+## M0220 12 heading | 12 Automation engine
+  -> CONTEXT  | Section heading '12 Automation engine'; covered by REQ-S12-001..006, REQ-S12-009..012, REQ-S12-014..016 and REQ-S12-018..026 (former REQ-S12-007, -008
+
+## M0228 12 table-row | |Mandatory gate evidence is missing          |Display missing requirements and block unauthorized submission                                          |
+  -> REQUIREMENT REQ-S04-012;REQ-PB-016 | 
+      REQ-S04-012 USER DG4 Block gate submission when mandatory evidence is missing unless a specifically authorized exception is recorded | cites yes
+      REQ-PB-016 SOURCE DG2 G1 Case for Change: require diagnostic, baseline, root causes and value pools as gate evidence | cites yes
+
+## M0242 12 para | Automatic preparation, routing, calculation and reminders are mandatory. Human business judgment, investment decisions, gate approvals and Finance attestations remain accountable human actions within the platform.
+  -> REQUIREMENT REQ-S12-026 | 
+      REQ-S12-026 USER DG5 Keep human business judgment, investment decisions, gate approvals and Finance attestations as accountable human actions while pre | cites yes
+
+## M0246 13 table-row | |Area               |Required presentation                                       |Status basis                                    |
+  -> CONTEXT  | Table header row (Area / Required presentation / Status basis); data rows M0247-M0252 map to REQ-PB-062/063/064.
+
+## M0255 13 para | Provide a secure evidence repository with record linkage, evidence type, source, owner, observation period, upload date, version, checksum and review status. Support native evidence notes and common documents/images, with file-type/size controls and safe preview/download. A filename or inaccessible external link is not verified evidence. Preserve evidence access after ownership transfer and apply the same authorizati
+  -> REQUIREMENT REQ-S13-010;REQ-S13-011;REQ-S13-012;REQ-S13-013 | 
+      REQ-S13-010 USER DG5 Provide a secure evidence repository with record linkage, evidence type, source, owner, observation period, upload date, version,  | cites yes
+      REQ-S13-011 ENGINEERING DG6 Support native evidence notes and common documents/images with file-type and size controls and safe preview/download | cites yes
+      REQ-S13-012 USER DG2 Treat a filename or inaccessible external link as unverified evidence | cites yes
+      REQ-S13-013 ENGINEERING DG6 Preserve evidence access after ownership transfer and apply the parent record's authorization to downloads and previews | cites yes
+
+## M0271 14 numbered | 9. Are decision rights explicit?
+  -> REQUIREMENT REQ-PB-091 | 
+      REQ-PB-091 SOURCE DG5 Implement the 25-question Transformation Health Check with score and top 3 actions | cites yes
+
+## M0259 14 bullet | • Days 31–60 Define and design: agree North Star/outcomes, KPI tree, TOM, design decisions, initiatives and sized benefits. Outputs: North Star, KPI tree, TOM, initiative backlog and initial business case.
+  -> REQUIREMENT REQ-PB-086 | 
+      REQ-PB-086 SOURCE DG5 Seed the 90-day launch plan as scheduled tasks relative to a start date | cites yes
+
+## M0256 14 heading | 14 Launch plan and health check
+  -> CONTEXT  | Section heading §14; covered by REQ-PB-086/087/091/092 and REQ-S14-001..004.
+
+## M0275 14 numbered | 13. Are benefits quantified without double counting?
+  -> REQUIREMENT REQ-PB-091 | 
+      REQ-PB-091 SOURCE DG5 Implement the 25-question Transformation Health Check with score and top 3 actions | cites yes
+
+## M0273 14 numbered | 11. Can every initiative be traced to a TOM gap?
+  -> REQUIREMENT REQ-PB-091 | 
+      REQ-PB-091 SOURCE DG5 Implement the 25-question Transformation Health Check with score and top 3 actions | cites yes
+
+## M0293 15 table-row | |brand.primary |#0078FF      |Primary accents and selected elements         |
+  -> REQUIREMENT REQ-S15-002 | 
+      REQ-S15-002 USER DG1 Seed the provisional design tokens brand.primary #0078FF, brand.deep #003B73, surface.page #F5F8FC, surface.card #FFFFFF, text.pri | cites yes
+
+## M0300 15 para | Validate contrast for every text/background combination. Derive an accessible action-button shade rather than assuming the provisional bright blue works with small white text. Status colors must be separate semantic tokens and always accompanied by labels/icons. Avoid using blue to imply a favorable business status.
+  -> REQUIREMENT REQ-S15-003 | 
+      REQ-S15-003 USER DG6 Validate contrast for every text/background token pair, derive an accessible action-button shade, and use separate semantic status | cites yes
+
+## M0299 15 table-row | |border.default|#DCE5EF      |Dividers and field boundaries                 |
+  -> REQUIREMENT REQ-S15-002 | 
+      REQ-S15-002 USER DG1 Seed the provisional design tokens brand.primary #0078FF, brand.deep #003B73, surface.page #F5F8FC, surface.card #FFFFFF, text.pri | cites yes
+
+## M0315 16 para | Use typed relational tables for core entities and validated metadata/JSON structures for extensible custom fields and versioned forms. Avoid a single unvalidated JSON blob as the entire database.
+  -> REQUIREMENT REQ-S16-010 | 
+      REQ-S16-010 ENGINEERING DG5 Use typed relational tables for core entities and validated metadata/JSON structures for extensible custom fields and versioned fo | cites yes
+
+## M0324 16 bullet | • Risk, Assumption, Issue, Action, Decision, ChangeRequest and Approval.
+  -> REQUIREMENT REQ-S16-018 | 
+      REQ-S16-018 ENGINEERING DG4 Implement the RAID, decisions and approvals entity group: Risk, Assumption, Issue, Action, Decision, ChangeRequest, Approval | cites yes
+
+## M0328 16 bullet | • FormSchemaVersion, AutomationRuleVersion, Job, Notification, IntegrationRun, ReportSnapshot and AuditEvent.
+  -> REQUIREMENT REQ-S16-022 | 
+      REQ-S16-022 ENGINEERING DG6 Implement the configuration, automation, integration, reporting and audit entity group: FormSchemaVersion, AutomationRuleVersion,  | cites yes
+
+## M0319 16 bullet | • DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome and StrategicGuardrail.
+  -> REQUIREMENT REQ-S16-013 | 
+      REQ-S16-013 ENGINEERING DG2 Implement the diagnosis and direction entity group: DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail | cites yes
+
+## M0334 17 para | Provide a connector framework with configured credentials, field mappings, source IDs, cadence, last success, reconciliation, errors and retry history. Imports must stage and validate data before commitment, detect duplicate source/period records, show row-level errors and preserve source lineage. Support approved CSV/XLSX imports, documented APIs/webhooks and optional adapters for corporate data sources when access 
+  -> REQUIREMENT REQ-S17-001;REQ-S17-002;REQ-S17-003 | 
+      REQ-S17-001 ENGINEERING DG6 Provide a connector framework recording credentials, field mappings, source IDs, cadence, last success, reconciliation, errors and | cites yes
+      REQ-S17-002 ENGINEERING DG6 Stage and validate imports before commit, detect duplicate source/period records, show row-level errors and preserve source lineag | cites yes
+      REQ-S17-003 ENGINEERING DG6 Support approved CSV/XLSX imports, documented APIs and webhooks, and optional adapters for corporate data sources when access is s | cites yes
+
+## M0335 17 para | Build working local test adapters and contract tests. List enterprise endpoints and credentials that IT must supply. Do not claim a live integration exists until it has been authenticated and tested. Core workflows must work with native forms and controlled imports while a connector is unavailable. Downstream operational write actions need explicit permission, idempotency and confirmed results.
+  -> REQUIREMENT REQ-S17-004;REQ-S17-005;REQ-S17-006 | 
+      REQ-S17-004 ENGINEERING DG7 Build working local test adapters and contract tests, list the enterprise endpoints and credentials IT must supply, and never clai | cites yes
+      REQ-S17-005 ENGINEERING DG6 Keep core workflows working with native forms and controlled imports while a connector is unavailable, and show an actionable erro | cites yes
+      REQ-S17-006 ENGINEERING DG6 Require explicit permission, idempotency and confirmed results for downstream operational write actions | cites yes
+
+## M0346 18 bullet | • Benefits: incremental roaming revenue, margin improvement, complaint reduction, digital adoption and avoided care cost, with distinct financial classifications.
+  -> REQUIREMENT REQ-PB-088 | 
+      REQ-PB-088 SOURCE DG5 Seed the International Roaming worked example as clearly synthetic demo data | cites yes
+
+## M0344 18 bullet | • TOM focus: product/pricing, digital journey, partner management, network/service assurance, data/personalization, care and governance.
+  -> REQUIREMENT REQ-PB-088 | 
+      REQ-PB-088 SOURCE DG5 Seed the International Roaming worked example as clearly synthetic demo data | cites yes
+
+## M0355 19 numbered | 4. Versioned API/OpenAPI specification, authentication setup and connector contracts.
+  -> REQUIREMENT REQ-S19-006;REQ-S19-007 | 
+      REQ-S19-006 ENGINEERING DG1 Deliver the P1 API contract: a versioned OpenAPI specification with authentication described | cites yes
+      REQ-S19-007 USER DG7 Include the final versioned API/OpenAPI specification, authentication setup and connector contracts (handover item 4) | cites yes
+
+## M0366 19 para | Do not make any required runtime service depend on a builder-hosted database, proprietary workflow service, external storage URL, public CDN, original workspace identifier or personal API key. If the build environment imposes such a dependency, isolate it behind an adapter and demonstrate the portable implementation before claiming handover completion.
+  -> REQUIREMENT REQ-S19-019 | 
+      REQ-S19-019 USER DG7 Make no required runtime service depend on a builder-hosted database, proprietary workflow service, external storage URL, public C | cites yes
+
+## M0356 19 numbered | 5. Workflow, methodology, forms, branding and automation configuration export/import with schema versions.
+  -> REQUIREMENT REQ-S19-008 | 
+      REQ-S19-008 USER DG7 Export and import workflow, methodology, form, branding and automation configuration with schema versions (handover item 5) | cites yes
+
+## M0374 20 table-row | |A05|Calculation correctness       |Automated tests cover higher/lower/band measures, stale/missing values, zero denominator, percentage points, periods and currency/decimal precision                                                                                                                                                    |
+  -> REQUIREMENT REQ-S20-005 | 
+      REQ-S20-005 ENGINEERING DG4 Deliver and pass the executable acceptance test A05 Calculation correctness | cites yes
+
+## M0375 20 table-row | |A06|Configuration change          |Admin adds a field, changes a form rule and updates a workflow using the UI; a new published version works without application-code changes                                                                                                                                                            |
+  -> REQUIREMENT REQ-S20-006 | 
+      REQ-S20-006 USER DG5 Deliver and pass the executable acceptance test A06 Configuration change | cites yes
+
+## M0394 20 table-row | |A25|Candidate integrity           |A source/test/configuration change invalidates mismatched approval; review metadata does not recursively invalidate its own candidate                                                                                                                                                                  |
+  -> REQUIREMENT REQ-S20-025 | 
+      REQ-S20-025 ENGINEERING DG0 Deliver and pass the executable acceptance test A25 Candidate integrity | cites yes
+
+## M0389 20 table-row | |A20|UX and branding               |Arabic RTL/English LTR, keyboard flows and mobile review work; changing the primary brand token updates screens and output templates                                                                                                                                                                   |
+  -> REQUIREMENT REQ-S20-020 | 
+      REQ-S20-020 USER DG6 Deliver and pass the executable acceptance test A20 UX and branding | cites yes
+
+## M0381 20 table-row | |A12|Permissions                   |Cross-transformation unauthorized reads/writes, exports, search results, evidence URLs and AI retrieval are denied                                                                                                                                                                                     |
+  -> REQUIREMENT REQ-S20-012 | 
+      REQ-S20-012 ENGINEERING DG6 Deliver and pass the executable acceptance test A12 Permissions | cites yes
+
+## M0403 21 table-row | |P0 Discovery and execution setup — DG0       |transformation-analyst; orchestrator                                                          |Full source extraction, field/template inventory, glossary, requirement IDs, user journeys, stage plan, agent definitions, gate schema/validator and assumptions                                 |All source items accounted for; ten definitions validated and required stage agents 
+  -> REQUIREMENT REQ-DLV-032 | 
+      REQ-DLV-032 ENGINEERING DG0 Deliver the P0 outputs and evidence: full source extraction, field/template inventory, glossary, requirement IDs, user journeys, s | cites yes
+
+## M0419 21 bullet | • Claude Code subagents — project definitions, supported configuration and actual delegation.
+  -> NON-REQUIREMENT  | Reference-list entry (Claude Code subagents documentation); not a requirement.
+
+## M0401 21 para | Use these eight software delivery stages in order. Each ends with the full DG review/repair/verification protocol in section 0. Reviewers are mandatory at every stage, even when a specific row highlights a specialist concern. Do not implement a later stage before the preceding gate is approved; read-only dependency discovery is allowed. Requirements span multiple stages where needed, but the requirement register must
+  -> REQUIREMENT REQ-DLV-010;REQ-DLV-014;REQ-DLV-040 | 
+      REQ-DLV-010 ENGINEERING DG7 Run the three mandatory independent specialist reviews (domain, code-security, QA) and the release audit at every stage, against t | cites yes
+      REQ-DLV-014 ENGINEERING DG7 Run the eight-step gate loop for every stage: plan, implement, integrate and freeze, review (rendered Arabic and English screens f | cites yes
+      REQ-DLV-040 ENGINEERING DG7 Implement stages P0-P7 in order and start a stage only after the preceding gate is APPROVED (read-only discovery excepted); the re | cites yes
+
+## M0416 21 para | The completion standard is: users can operate the playbook from inputs to sustained outcomes inside the platform; administrators can evolve its methodology without routine code edits; IT can independently deploy and maintain the entire system; and each software delivery stage has reproducible independent review and test evidence.
+  -> REQUIREMENT REQ-S21-004 | 
+      REQ-S21-004 USER DG7 Meet the completion standard: users operate the playbook from inputs to sustained outcomes in the platform, administrators evolve  | cites yes

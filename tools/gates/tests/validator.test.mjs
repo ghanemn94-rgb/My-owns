@@ -1059,3 +1059,90 @@ test("D-036: a gate whose source_commit does not exist is rejected in current mo
   assert.ok(errs.some((e) => /gate source_commit .* is not a commit/.test(e)),
     `current-mode validation must reject a missing gate source_commit; got: ${errs.join(" | ")}`);
 });
+
+test("D-037 / F-DG0-241: a gate source_commit that exists but is OFF this branch is rejected (D-036 only checked resolvability)", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  // A real commit object that is not reachable from HEAD: detach, add an empty child of HEAD, return to the branch.
+  const branchHead = sh(repo, "rev-parse", "HEAD");
+  sh(repo, "checkout", "-q", "--detach");
+  sh(repo, "commit", "--allow-empty", "-q", "-m", "off-branch commit");
+  const off = sh(repo, "rev-parse", "HEAD");
+  sh(repo, "checkout", "-q", "main");
+  assert.equal(sh(repo, "rev-parse", "HEAD"), branchHead, "branch head must be unchanged");
+  // `off` resolves (git cat-file -e succeeds), so the old D-036 check would have accepted it; it is not an ancestor of HEAD.
+  assert.doesNotThrow(() => sh(repo, "cat-file", "-e", `${off}^{commit}`), "the off-branch commit must exist as an object");
+  const mpath = get(repo, "docs/delivery/gates/DG0.json").manifest_path;
+  edit(repo, "docs/delivery/gates/DG0.json", (g) => (g.source_commit = off));
+  edit(repo, mpath, (m) => (m.source_commit = off));
+  edit(repo, "docs/delivery/stages.json", (d) => {
+    d.stages[0].candidate.source_commit = off;
+    for (const r of d.stages[0].review_rounds) r.source_commit = off;
+  });
+  const errs = validateGate(repo, "DG0"); // current mode
+  assert.ok(errs.some((e) => /gate source_commit .* is not a commit reachable on this branch/.test(e)),
+    `an off-branch (unreachable) gate source_commit must be rejected; got: ${errs.join(" | ")}`);
+
+  // QA20-S8: an annotated tag object that PEELS to the real frozen commit is also rejected -- it is a `tag` object, not
+  // a commit, and `merge-base --is-ancestor` would otherwise accept it because it peels the tag before testing ancestry.
+  const realCommit = get(repo, "docs/delivery/stages.json").stages[0].candidate.source_commit;
+  sh(repo, "tag", "-a", "frozen-tag", "-m", "annotated", realCommit);
+  const tagObj = sh(repo, "rev-parse", "frozen-tag"); // the tag object id, which peels to realCommit
+  assert.equal(sh(repo, "cat-file", "-t", tagObj), "tag", "must be an annotated tag object");
+  assert.equal(sh(repo, "rev-parse", `${tagObj}^{commit}`), realCommit, "the tag must peel to the frozen commit");
+  edit(repo, "docs/delivery/gates/DG0.json", (g) => (g.source_commit = tagObj));
+  edit(repo, mpath, (m) => (m.source_commit = tagObj));
+  edit(repo, "docs/delivery/stages.json", (d) => {
+    d.stages[0].candidate.source_commit = tagObj;
+    for (const r of d.stages[0].review_rounds) r.source_commit = tagObj;
+  });
+  const errs2 = validateGate(repo, "DG0");
+  assert.ok(errs2.some((e) => /gate source_commit .* is not a commit object in this repository \(tag\)/.test(e)),
+    `an annotated tag that peels to the frozen commit must be rejected as a non-commit object; got: ${errs2.join(" | ")}`);
+});
+
+test("D-037 / F-DG0-242: checkClosure tolerates a pruned fix_revision but still catches a reachable fix that is not in the candidate", () => {
+  const { repo, head } = buildValidRepo();
+  approveAndCommit(repo);
+  assert.deepEqual(validateGate(repo, "DG0"), [], "the baseline gate must pass");
+  // A fix_revision that IS present but is NOT an ancestor of the verified round's candidate is still caught.
+  sh(repo, "commit", "--allow-empty", "-q", "-m", "a later empty commit");
+  const newer = sh(repo, "rev-parse", "HEAD"); // a real commit, descendant of `head`, so not an ancestor of it
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = newer));
+  let errs = validateGate(repo, "DG0");
+  expectError(errs, /fix .* is not in the verified round-2 candidate/);
+  // A genuinely MISSING (pruned) fix_revision is tolerated -- as findManifest tolerates a pruned source_commit (D-035).
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = "0".repeat(40)));
+  errs = validateGate(repo, "DG0");
+  assert.ok(!errs.some((e) => /is not in the verified round-2 candidate|is not in the gate candidate/.test(e)),
+    `a pruned fix_revision must be tolerated; got: ${errs.join(" | ")}`);
+  // Still fail-closed against a non-hex / short id.
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = "1a99d13"));
+  errs = validateGate(repo, "DG0");
+  expectError(errs, /CLOSED_VERIFIED needs a full fix_revision commit id/);
+});
+
+test("D-037 / F-DG0-243: a review sidecar whose verdict record was never written (interrupted run) is tolerated, but only while no record file exists", () => {
+  const { repo } = buildValidRepo();
+  approveAndCommit(repo);
+  const r1 = "docs/delivery/reviews/DG0/round-1";
+  // Round 1 records only code-security-reviewer. An interrupted domain-reviewer run left a verifications and a findings
+  // sidecar but no domain-reviewer.json record, and stages.json never listed it -- exactly the rounds-17/18 situation.
+  put(repo, `${r1}/domain-reviewer.verifications.json`, {
+    verifications: [{ finding_id: "F-DG0-101", result: "PASS", status_after: "CLOSED_VERIFIED", note: "n", evidence: [] }],
+  });
+  put(repo, `${r1}/domain-reviewer.findings.json`, {
+    findings: [{ id: "F-DG0-999", stage_id: "DG0", reported_by: "domain-reviewer", severity: "Low", mandatory_violation: false,
+      title: "an interrupted run's unimported finding", reproduction: "x", expected: "x", actual: "x", evidence: [],
+      reported_in: `${r1}/domain-reviewer.findings.json`, owner: "delivery-orchestrator", status: "OPEN", history: [] }],
+  });
+  let errs = validateGate(repo, "DG0");
+  assert.ok(!errs.some((e) => /record for round-1 is not listed in stages.json review_rounds/.test(e)),
+    `a record-less verifications sidecar must be tolerated; got: ${errs.join(" | ")}`);
+  assert.ok(!errs.some((e) => /F-DG0-999/.test(e)),
+    `a record-less findings sidecar must not be reported as dropped; got: ${errs.join(" | ")}`);
+  // Once a record FILE exists for that role in the round (still unlisted in review_rounds), the inconsistency is real again.
+  put(repo, `${r1}/domain-reviewer.json`, {});
+  errs = validateGate(repo, "DG0");
+  expectError(errs, /domain-reviewer's record for round-1 is not listed in stages.json review_rounds/);
+});

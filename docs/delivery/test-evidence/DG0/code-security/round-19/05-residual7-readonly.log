@@ -1,0 +1,22 @@
+# Residual 7 / F-DG0-149: READ-ONLY assessment (no /proc/sys write performed, per assignment)
+$ grep -n unshare/proc binds tools/agents/agent_sandbox.py
+154:    a = ["--die-with-parent", "--new-session", "--unshare-ipc", "--setenv", "MTH_PROCESS_SANDBOX", "1",
+155:         "--ro-bind", "/", "/", "--dev", "/dev", "--bind", "/proc", "/proc",
+# => only an IPC namespace is created; no user/net/uts/pid namespace; host procfs bound rw. /proc/sys kernel tunables (other than the IPC-namespaced ones) are therefore HOST-GLOBAL, not per-run.
+$ own shell layer: awk mountinfo /proc entries (mount opts, fs, super opts)
+/proc ro,nosuid,nodev,relatime proc 
+/proc ro,nosuid,nodev,relatime proc 
+/proc rw,nosuid,nodev,relatime proc 
+/proc rw,nosuid,nodev,noexec,relatime proc 
+$ readlink /proc/self/ns/{uts,user,pid}
+uts:[4026531838]
+user:[4026532322]
+pid:[4026532324]
+$ test -w /proc/sys/kernel/hostname (access(2), mode bits only; NOT a write)
+true
+# => the topmost /proc mount in the agent SHELL layer is rw and the UTS namespace is the initial one (4026531838). Whether a write is refused there depends on user-namespace ownership checks that could only be confirmed by attempting a write, which the assignment forbids => BLOCKED (not verified), and threat-model.md:60's 'read-only for the agent's shell' is not supported by the mount flags.
+$ live Landlock probe of this run (read-only): ls /proc/1/root
+refused
+$ guard: pseudo-fs block
+141:const PSEUDO = ["/proc", "/sys", "/dev"];
+exit=0

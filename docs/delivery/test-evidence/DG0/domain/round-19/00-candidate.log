@@ -1,0 +1,28 @@
+$ git rev-parse HEAD
+3ffb28c28be747191220d95c1220b3143f7888d3
+$ node tools/gates/candidate.mjs --stage DG0 (main working tree)
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:6720ad2c5ea1d5bddb27a430536d27a962ded8224a373db101891e81d652922a","files":91}
+$ git diff --name-only 0a65201..HEAD  (post-freeze, all D-005 metadata)
+docs/delivery/assignments/DG0/round-19/audit.md
+docs/delivery/assignments/DG0/round-19/review-code-security-reviewer.md
+docs/delivery/assignments/DG0/round-19/review-common.md
+docs/delivery/assignments/DG0/round-19/review-domain-reviewer.md
+docs/delivery/assignments/DG0/round-19/review-qa-verifier.md
+docs/delivery/candidates/DG0/6720ad2c5ea1d5bd.manifest.json
+docs/delivery/stages.json
+$ fresh clone @0a652018: candidate.mjs
+0a652018bdf4975f83e580796d0775141a3dae9a
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:6720ad2c5ea1d5bddb27a430536d27a962ded8224a373db101891e81d652922a","files":91}
+$ candidate-scope files changed since round-18 baseline 701870e (excluding D-005 metadata):
+.claude/settings.json
+docs/delivery/agents.md
+docs/delivery/decisions.md
+docs/delivery/threat-model.md
+tools/agents/agent_sandbox.py
+tools/agents/landlock_exec.py
+tools/agents/tests/process-sandbox.test.mjs
+tools/gates/import-findings.mjs
+tools/gates/lib/rules.mjs
+tools/gates/tests/validator.test.mjs
+$ domain artefacts changed since 701870e (docs/source docs/analysis requirements.csv requirements-spec.md):
+(none above = unchanged)

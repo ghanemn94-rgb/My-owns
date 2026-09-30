@@ -387,10 +387,15 @@ export function checkInvocation(repo, stageId, ref, role, errors, label, binding
     if (binding.notBefore && !(meta.started_at >= binding.notBefore)) bad(`started ${meta.started_at}, before the candidate froze at ${binding.notBefore}`);
     if (binding.manifestPath) {
       // The run must have started from a commit that already contained the frozen manifest it reviewed (F-DG0-212).
-      try {
-        execFileSync("git", ["-C", repo, "cat-file", "-e", `${meta.head_commit_at_start}:${binding.manifestPath}`], { stdio: "ignore" });
-      } catch {
-        bad(`started from ${String(meta.head_commit_at_start).slice(0, 10)}, which does not contain ${binding.manifestPath}`);
+      // A superseded round's head_commit_at_start can be pruned by a later legitimate history correction (the
+      // pre-round-12 truncation, the D-034 rewrite); tolerate a genuinely MISSING commit -- as findManifest/checkClosure
+      // do -- but still fail when the commit IS present and lacks the manifest (D-037, F-DG0-242).
+      if (commitPresent(repo, meta.head_commit_at_start)) {
+        try {
+          execFileSync("git", ["-C", repo, "cat-file", "-e", `${meta.head_commit_at_start}:${binding.manifestPath}`], { stdio: "ignore" });
+        } catch {
+          bad(`started from ${String(meta.head_commit_at_start).slice(0, 10)}, which does not contain ${binding.manifestPath}`);
+        }
       }
     }
     for (const rel of binding.outputs || []) {
@@ -461,6 +466,10 @@ export function collectRaisedFindings(repo, stageId, errors) {
       const rel = `docs/delivery/reviews/${stageId}/${round}/${file}`;
       const sidecar = file.match(/^(.+)\.findings\.json$/);
       if (sidecar) {
+        // A findings sidecar from an interrupted run whose verdict record was never written is kept by D-034 as honest
+        // evidence but was never imported into findings.json; skip it so its findings are not reported as "dropped"
+        // (D-037, F-DG0-243). A sidecar whose record file exists on disk is processed normally.
+        if (!existsSync(join(dir, round, `${sidecar[1]}.json`))) continue;
         const data = readJson(repo, rel, errors, "findings sidecar");
         for (const f of (data && data.findings) || []) {
           if (f.stage_id !== stageId) errors.push(`${rel}: finding ${f.id} is labelled ${f.stage_id} but was raised in ${stageId}`);
@@ -557,6 +566,30 @@ function roundEntry(stage, roundDir) {
   return stage.review_rounds.find((r) => `round-${r.round}` === roundDir);
 }
 
+// Whether a commit object is present in this repository. A commit referenced in write-once metadata (a fix_revision,
+// a run's head_commit_at_start, a round's source_commit) can be pruned by a later legitimate history correction -- this
+// branch's pre-round-12 history was truncated in an earlier session, and round 18 was rewritten by the D-034 write-once
+// repair. Provenance checks that need such a commit tolerate its genuine absence (D-035 for findManifest; D-037 for
+// checkClosure and checkInvocation), while every check whose commit IS present still runs (D-037, F-DG0-242).
+function commitPresent(repo, sha) {
+  try {
+    execFileSync("git", ["-C", repo, "cat-file", "-e", `${sha}^{commit}`], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// The git object type of a sha ("commit", "tag", "tree", "blob"), or null if the object is absent. Used to require a
+// gate's source_commit to be a commit object itself, not an annotated tag that merely peels to one (D-037, F-DG0-241).
+function objectType(repo, sha) {
+  try {
+    return execFileSync("git", ["-C", repo, "cat-file", "-t", String(sha)], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+  } catch {
+    return null;
+  }
+}
+
 function isAncestor(repo, maybeAncestor, commit) {
   try {
     execFileSync("git", ["-C", repo, "merge-base", "--is-ancestor", maybeAncestor, commit], { stdio: "ignore" });
@@ -584,7 +617,14 @@ export function collectVerifications(repo, stage, errors) {
       const rel = `docs/delivery/reviews/${stage.id}/${round}/${file}`;
       const entryForRound = roundEntry(stage, round);
       const recRel = entryForRound && entryForRound.records[role];
+      const recFileOnDisk = existsSync(join(dir, round, `${role}.json`));
       if (!recRel || recRel !== `docs/delivery/reviews/${stage.id}/${round}/${role}.json`) {
+        // A verifications sidecar with no record listed in review_rounds AND no record file on disk is from an
+        // interrupted run whose verdict record was never written (the account session limit hit rounds 17-18). D-034
+        // keeps such sidecars as honest evidence -- deleting committed review files would violate write-once -- and
+        // import-findings never imported their verifications; tolerate it. A sidecar whose record FILE exists but is
+        // unlisted is still a real inconsistency (D-037, F-DG0-243).
+        if (!recFileOnDisk) continue;
         errors.push(`${rel}: ${role}'s record for ${round} is not listed in stages.json review_rounds`);
         continue;
       }
@@ -642,8 +682,14 @@ function checkClosure(repo, stage, gate, f, v, where, errors) {
   if (f.status === "CLOSED_VERIFIED") {
     if (!f.fix_revision || !/^[0-9a-f]{40}$/.test(f.fix_revision)) errors.push(`${where}: CLOSED_VERIFIED needs a full fix_revision commit id`);
     else {
-      if (!isAncestor(repo, f.fix_revision, round.source_commit)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verified ${v.roundDir} candidate (${round.source_commit.slice(0, 10)})`);
-      if (gate && !isAncestor(repo, f.fix_revision, gate.source_commit)) errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the gate candidate`);
+      // isAncestor needs both commits present. A superseded round's fix_revision or source_commit can be pruned by a
+      // later legitimate history correction (the pre-round-12 truncation, the D-034 rewrite); tolerate a genuinely
+      // MISSING commit -- exactly as findManifest does -- but still verify ancestry whenever both are present, so a
+      // reachable fix that is not in the candidate is still caught (D-037, F-DG0-242).
+      if (commitPresent(repo, f.fix_revision) && commitPresent(repo, round.source_commit) && !isAncestor(repo, f.fix_revision, round.source_commit))
+        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the verified ${v.roundDir} candidate (${round.source_commit.slice(0, 10)})`);
+      if (gate && commitPresent(repo, f.fix_revision) && commitPresent(repo, gate.source_commit) && !isAncestor(repo, f.fix_revision, gate.source_commit))
+        errors.push(`${where}: fix ${f.fix_revision.slice(0, 10)} is not in the gate candidate`);
     }
   }
 }
@@ -840,16 +886,20 @@ export function checkCandidate(repo, stage, gate, mode, errors) {
   }
   if (manifestHash !== manifest.candidate_id) errors.push("candidate manifest: entries do not hash to its candidate_id (tampered)");
   if (manifest.source_commit !== gate.source_commit) errors.push("candidate manifest: source_commit differs from the gate record");
-  // The gate's source_commit must be a real commit in this repository, in EVERY mode. Current-mode validation recomputes
-  // the candidate from the working tree (below), so without this check a gate whose source_commit does not exist would
-  // pass current-mode validation -- and the D-035 tolerance in findManifest (which is meant for superseded rounds only)
-  // would let the gate ROUND's manifest pass too. Requiring the commit here keeps D-035 non-gate in effect and closes
-  // that hole in both modes (F-DG0-240, F-DG0-155; decision D-036). --historical additionally recomputes from it below.
-  try {
-    execFileSync("git", ["-C", repo, "cat-file", "-e", `${gate.source_commit}^{commit}`], { stdio: "ignore" });
-  } catch {
-    errors.push(`candidate: gate source_commit ${String(gate.source_commit).slice(0, 10)} is not a commit in this repository`);
-  }
+  // The gate's source_commit must be a real commit object that is reachable on this branch, in EVERY mode. Current-mode
+  // validation recomputes the candidate from the working tree (below), so without this check a gate whose source_commit
+  // does not exist would pass current-mode validation -- and the D-035 tolerance in findManifest (meant for superseded
+  // rounds only) would let the gate ROUND's manifest pass too. Two escapes must be closed (D-036 closed only the first):
+  //   (1) a missing commit -- caught by the object-type check (cat-file -t fails) and D-036.
+  //   (2) an off-branch commit, or an annotated tag object that peels to the frozen commit -- both resolve locally but
+  //       an off-branch commit is absent from every fresh clone, and a tag is not a commit at all. `merge-base
+  //       --is-ancestor` PEELS a tag, so it alone would accept the tag; requiring the object type to be exactly `commit`
+  //       AND an ancestor of HEAD rejects both (D-037, F-DG0-241; QA20-S7 off-branch, QA20-S8 annotated tag).
+  const gscType = objectType(repo, gate.source_commit);
+  if (gscType !== "commit")
+    errors.push(`candidate: gate source_commit ${String(gate.source_commit).slice(0, 10)} is not a commit object in this repository (${gscType || "absent"})`);
+  else if (!isAncestor(repo, gate.source_commit, "HEAD"))
+    errors.push(`candidate: gate source_commit ${String(gate.source_commit).slice(0, 10)} is not a commit reachable on this branch`);
   if (JSON.stringify(manifest.spec) !== JSON.stringify(stage.candidate_spec)) errors.push("candidate manifest: spec differs from the stage's candidate_spec");
   for (const e of specPolicyErrors(manifest.spec)) errors.push(`candidate manifest: spec ${e}`);
   if (stage.candidate.candidate_id !== gate.candidate_id) errors.push(`stages.json: ${stage.id} candidate ${stage.candidate.candidate_id} != gate ${gate.candidate_id}`);

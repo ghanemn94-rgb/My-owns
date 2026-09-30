@@ -1,0 +1,12 @@
+# qa-verifier DG0 r20: is the D-036 unit test a real regression test? 2026-09-30T10:10:08Z
+# Env: disposable clone $TMPDIR/c20 at a23c4d4; node v22.22.2
+$ git show 0a652018bdf4975f83e580796d0775141a3dae9a:tools/gates/lib/rules.mjs > tools/gates/lib/rules.mjs   (pre-D-036 validator)
+$ node --test --test-name-pattern="D-036" tools/gates/tests/validator.test.mjs
+not ok 1 - D-036: a gate whose source_commit does not exist is rejected in current mode too (F-DG0-240/155)
+  error: "current-mode validation must reject a missing gate source_commit; got: ... (no 'gate source_commit ... is not a commit' line)"
+# pass 0 / fail 1  -> exit 1 (expected: the test detects the pre-fix behaviour)
+$ git checkout -- tools/gates/lib/rules.mjs   (candidate validator)
+$ node --test --test-name-pattern="D-036" tools/gates/tests/validator.test.mjs
+ok 1 - D-036: a gate whose source_commit does not exist is rejected in current mode too (F-DG0-240/155)
+# pass 1 / fail 0  -> exit 0
+$ git status --short   -> (clean)

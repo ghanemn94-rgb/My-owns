@@ -1,0 +1,16 @@
+# .claude/settings.json allow rules (candidate) and whether they reach agent runs
+5a49719 ghanemn94-rgb Expand permissions in settings.json for Git commands
+{
+  "permissions": {
+    "allow": ["Bash(bwrap:*)", "Bash(git filter-branch:*)", "Bash(git branch:*)", "Bash(git push:*)", "Bash(git update-ref:*)"]
+
+  }
+}
+$ run-agent.sh: agents load project settings
+121:# User and local settings are not loaded (--setting-sources project), but a change is still a tamper signal.
+184:    --session-id "$SESSION_ID" --settings "$SETTINGS" --setting-sources project \
+$ agent_settings.py: Bash sandbox controls that contain them
+34:    ".git", ".claude", ".mcp.json", "CLAUDE.md", "CLAUDE.local.md", ".gitignore", ".gitattributes", ".github",
+137:        "allowUnsandboxedCommands": False,
+# => git push / filter-branch / update-ref / branch are auto-approved (no classifier) in every agent run; still contained: .git is on COMMON_DENY (read-only), the shell has no network, no unsandboxed escape.
+exit=0

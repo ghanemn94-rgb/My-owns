@@ -1,0 +1,51 @@
+M0403 |P0 Discovery and execution setup — DG0 |transformation-analyst; orchestrator|Full source extraction, field/template inventory, glossary, requirement IDs, user journeys, stage plan, agent definitions, gate schema/validator and assumptions
+M0404 |P1 Architecture and working foundation — DG1 |solution-architect; frontend-ux-engineer; backend-workflow-engineer; devops-engineer|Architecture decisions, ERD/API contracts, repo/build/CI, database migrations, authentication/scoped access, bilingual shell, design tokens, persisted transformation creation and audit bas
+M0405 |P2 Diagnose define and design — DG2|transformation-analyst; frontend-ux-engineer; backend-workflow-engineer; kpi-benefits-engineer|Charter, diagnostic, baseline, value pools, outcome/KPI definitions, TOM canvas/gaps, capabilities/journeys, design decisions, T01–T04 and business gates G1–G3 
+M0406 |P3 Mobilization and portfolio — DG3|backend-workflow-engineer; frontend-ux-engineer; kpi-benefits-engineer|Initiative cards, business cases, formula foundations, prioritization, waves, resources, funding, dependencies, T05–T09 and business gate G4
+M0407 |P4 Execution value and sustainment — DG4 |backend-workflow-engineer; kpi-benefits-engineer; frontend-ux-engineer|Full KPI/benefit engines, T10–T16, forums/decisions/RACI/RAID, adoption, corrective actions, core scheduled jobs, BAU handover, continuous improvement and G5–G6
+M0408 |P5 Configuration automation and outputs — DG5|backend-workflow-engineer; frontend-ux-engineer; kpi-benefits-engineer|Complete Playbook Studio, native procedure/form builders, version migration, full rule builder, report/export formats, 90-day launch plan, 25-question health check and source-grounded demo
+M0409 |P6 Integration and system hardening — DG6|devops-engineer; backend-workflow-engineer; frontend-ux-engineer|Controlled imports, connector contracts/test adapters, identity/storage integration, optional AI adapter, security/performance/accessibility refinements and operational monitoring 
+M0410 |P7 Independent transfer and release — DG7|devops-engineer; orchestrator |Complete source/archive, clean deployment, migrated data/files/configuration, restore drill, guides, traceability and final IT handover 
+
+-- template rows: template_id -> final_gate
+  T01 REQ-PB-026 DG2 OK Implement Template 1 Current-State Diagnostic as a native register
+  T02 REQ-PB-034 DG2 OK Implement Template 2 Outcome & KPI Tree as a native register
+  T03 REQ-PB-039 DG2 OK Implement Template 3 TOM Gap Matrix as a native register
+  T04 REQ-PB-043 DG2 OK Implement Template 4 Design Decision Log as a native register
+  T05 REQ-PB-045 DG3 OK Implement Template 5 Initiative Card as a native record
+  T06 REQ-PB-047 DG3 OK Implement Template 6 Prioritization Scorecard as a native register
+  T07 REQ-PB-050 DG3 OK Implement Template 7 Wave Roadmap with the four seeded source waves
+  T08 REQ-PB-051 DG3 OK Implement Template 8 Dependency Map as a native register
+  T09 REQ-PB-056 DG3 OK Implement Template 9 Benefit Formula as a native register
+  T10 REQ-PB-062 DG4 OK Implement Template 10 Executive Transformation Dashboard with its six source are
+  T11 REQ-PB-065 DG4 OK Implement Template 11 Decision Rights Matrix with the four seeded source rows
+  T12 REQ-PB-067 DG4 OK Implement Template 12 RACI with the six seeded deliverables and R/A/C/I values i
+  T13 REQ-PB-070 DG4 OK Implement Template 13 Stakeholder & Adoption Plan as a native register
+  T14 REQ-PB-075 DG4 OK Implement Template 14 Benefits Register as a native register
+  T15 REQ-PB-079 DG4 OK Implement Template 15 RAID as a native register
+  T16 REQ-PB-081 DG4 OK Implement Template 16 Executive Decision Log as a native register
+-- G1..G6
+  REQ-PB-016 DG2 OK
+  REQ-PB-017 DG2 OK
+  REQ-PB-018 DG2 OK
+  REQ-PB-019 DG3 OK
+  REQ-PB-020 DG4 OK
+  REQ-PB-021 DG4 OK
+-- keyword staging checks
+  /Playbook Studio/ -> [('REQ-PB-093', 'DG5'), ('REQ-DLV-037', 'DG5'), ('REQ-S06-004', 'DG5')]
+  /health[- ]check/ -> [('REQ-PB-091', 'DG5'), ('REQ-PB-092', 'DG5'), ('REQ-DLV-037', 'DG5'), ('REQ-S02-001', 'DG5'), ('REQ-S14-001', 'DG5'), ('REQ-S14-002', 'DG5'), ('REQ-S14-003', 'DG5'), ('REQ-S19-010', 'DG7')]
+  /roaming|demo data|synthetic/ -> [('REQ-PB-088', 'DG5'), ('REQ-PB-090', 'DG5'), ('REQ-S02-001', 'DG5'), ('REQ-S18-001', 'DG5'), ('REQ-S19-001', 'DG7')]
+  /handover package|IT handover/ -> [('REQ-DLV-039', 'DG7'), ('REQ-S02-003', 'DG7')]
+  /invalid weight|weights? (do not|don.t) (sum|total)|100% rule/ -> []
+-- final_gate distribution Counter({'DG4': 137, 'DG5': 78, 'DG7': 54, 'DG6': 48, 'DG2': 32, 'DG3': 32, 'DG0': 19, 'DG1': 12})
+-- rows lacking acceptance or with vague acceptance: []
+BAD []
+exit=0
+REQ-PB-049 DG3 P3 | Adjust T06 weights per transformation, including risk/compliance replacing part of the weighting, with a 100% total check and versioned weight sets 
+   ACC: A01;A05;A07: saving weights totalling 95% (or 105%) is rejected with a validation error; a risk/compliance criterion at 10% with strategic fit reduced to 15% is accepted as weight-set version 2 and rescoring uses it; scores computed under version 1 keep their version-1 reference; the REQ-S09-005 ran
+REQ-PB-086 DG5 P5 | Seed the 90-day launch plan as scheduled tasks relative to a start date 
+   ACC: A16: with start date 2026-10-01 the Days 31-60 tasks fall between 2026-11-01 and 2026-11-30; all actions of B0134 appear
+REQ-PB-087 DG5 P5 | Run the Day-90 leadership test 
+   ACC: A16: all six questions render verbatim; unanswered questions mark the test incomplete
+REQ-S19-010 DG7 P1;P6;P7 | Provide a reproducible local/clean-VM startup command, health checks and readiness verification, with prerequisite image/package preparation documented for restricted networks (handover item 7) 
+   ACC: A18;A22: on a clean VM the documented command reaches ready state, and the readiness endpoint reports database, storage and worker status

@@ -1,0 +1,39 @@
+# cmd: node docs/delivery/test-evidence/DG0/code-security/round-20/r20-d036-repro.mjs $TMPDIR/dg0-sec  (disposable clone at ce6d9b6 = freeze metadata commit on top of a23c4d4; stages.json candidate = ef3ec3f2)
+B0 checkCandidate CURRENT, real source_commit (control): 0 error(s) []
+B1 checkCandidate CURRENT, gate+manifest source_commit NON-EXISTENT: 1 error(s) [
+  'candidate: gate source_commit ffffffffff is not a commit in this repository'
+]
+C1 checkCandidate HISTORICAL, NON-EXISTENT: 2 error(s) [
+  'candidate: gate source_commit ffffffffff is not a commit in this repository',
+  'candidate: cannot recompute from ffffffffffffffffffffffffffffffffffffffff (Command failed: git -C /var/tmp/mth-run.RfKeQ3/claude-0/dg0-sec ls-tree -r -z --full-tree fffff'
+]
+B2 findManifest, reachable but WRONG source_commit (e8361b88eb): 1 error(s) [
+  'B2 manifest docs/delivery/candidates/DG0/ef3ec3f205ffdac3.manifest.json does not describe its source_commit e8361b88eb (recomputes to sha256:21f142b863c445f69e437385c4118'
+]
+B3 checkCandidate CURRENT, source_commit="--batch" (schema pattern ^[0-9a-f]{40}$ also rejects): 1 error(s) [
+  'candidate: gate source_commit --batch is not a commit in this repository'
+]
+B3 checkCandidate CURRENT, source_commit="HEAD" (schema pattern ^[0-9a-f]{40}$ also rejects): 0 error(s) []
+B3 checkCandidate CURRENT, source_commit="HEAD~1" (schema pattern ^[0-9a-f]{40}$ also rejects): 0 error(s) []
+--- D-035 tolerance on existing rounds (manifest per round; commit present?) ---
+round 1 cid dea5e75a8c5f commit 26642c72e7 present=false findManifest errors=0
+round 2 cid d47b51caa83c commit 83860be3ea present=false findManifest errors=0
+round 3 cid 31fd0843977d commit 540b3c69a0 present=false findManifest errors=0
+round 4 cid 0be571eaa844 commit 53f5d176df present=false findManifest errors=0
+round 5 cid 4a8b14fd0501 commit d141d303ad present=false findManifest errors=0
+round 6 cid c13a4f8e93ca commit a059b55a70 present=false findManifest errors=0
+round 7 cid dee0316dce95 commit e11b5f08df present=false findManifest errors=0
+round 8 cid 90ad52714297 commit d6626258cf present=false findManifest errors=0
+round 9 cid fc0bd2a2f201 commit cbc755d035 present=false findManifest errors=0
+round 10 cid 1e959f250e6f commit 85a0efac57 present=false findManifest errors=0
+round 11 cid 1a73d6f01580 commit 7e99163db5 present=false findManifest errors=0
+round 12 cid 21f142b863c4 commit 7f09967ad3 present=false findManifest errors=0
+round 13 cid c3364ac2f1c2 commit 6c61f2e1aa present=true findManifest errors=0
+round 14 cid a25db7366526 commit 1e64eb02ca present=true findManifest errors=0
+round 15 cid b7f60ed34dd7 commit 7fab49c5c6 present=true findManifest errors=0
+round 16 cid 3013023aa21d commit 4fd56d4d70 present=true findManifest errors=0
+round 17 cid 34b06b8a8245 commit f84eed411d present=true findManifest errors=0
+round 18 cid 21efe44b6a46 commit 450c756f67 present=true findManifest errors=0
+round 19 cid 6720ad2c5ea1 commit 0a652018bd present=true findManifest errors=0
+round 20 cid ef3ec3f205ff commit a23c4d411c present=true findManifest errors=0
+exit=0

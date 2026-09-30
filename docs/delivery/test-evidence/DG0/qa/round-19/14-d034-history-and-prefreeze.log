@@ -1,0 +1,24 @@
+# fresh clone of HEAD 06214cc70ec2107a6fad8c89cb560ff2e04dffbb; 2026-09-30T09:35:37Z
+$ checkWriteOnce(DG0)
+0 []
+$ git ls-tree HEAD docs/delivery/reviews/DG0/round-17/
+100644 blob 68a5c8c83d47fc0e25a8cf0ea3a5ddd3a18645b5	docs/delivery/reviews/DG0/round-17/code-security-reviewer.findings.json
+100644 blob e8bf2202b0131bb7b9d9c44541d5d78611806586	docs/delivery/reviews/DG0/round-17/code-security-reviewer.json
+100644 blob dc4bc3e69577e59703edb4183ffadd01860ba89f	docs/delivery/reviews/DG0/round-17/code-security-reviewer.verifications.json
+100644 blob 6b36dc7ba8f4e650b403bcc3c40a8002c78168f6	docs/delivery/reviews/DG0/round-17/domain-reviewer.json
+100644 blob 862693f98291e551faf3ca52e3f7c1810100e53b	docs/delivery/reviews/DG0/round-17/qa-verifier.findings.json
+100644 blob 276e32c201e2bad974818daf6731664124ecbbac	docs/delivery/reviews/DG0/round-17/qa-verifier.verifications.json
+$ git rev-list --count HEAD; earliest
+96
+e8361b8 DG0 round 12: record reviewer evidence and the orphaned domain run
+$ git log --diff-filter=DMT --format=@%h -- docs/delivery/reviews docs/delivery/runs docs/delivery/candidates (non-A events)
+(end)
+$ node tools/gates/validate.mjs --reconcile (HEAD clone)
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:6720ad2c5ea1d5bddb27a430536d27a962ded8224a373db101891e81d652922a
+working tree:     sha256:6720ad2c5ea1d5bddb27a430536d27a962ded8224a373db101891e81d652922a (matches)
+round 1 domain-reviewer: FAIL (STALE for current content)
+round 19 code-security-reviewer: FAIL (current)
+round 19 qa-verifier: missing (STALE for current content)
+PASS reconcile (structure)
+exit=0

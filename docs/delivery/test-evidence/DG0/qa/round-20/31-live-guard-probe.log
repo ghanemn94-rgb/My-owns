@@ -1,0 +1,15 @@
+# qa-verifier DG0 r20 live guard probe, 2026-09-30T10:05:16Z, run DG0-T-DG0-REV-QA-R20-qa-verifier-20260930T095036Z-21c1a794
+1) Write tool -> docs/source/QA-PROBE.txt: refused by PreToolUse hook:
+   'BLOCKED by write guard: qa-verifier may not write 'docs/source/QA-PROBE.txt' (protected path)'
+2) shell: $ echo probe > docs/source/QA-PROBE.txt
+/bin/bash: line 1: docs/source/QA-PROBE.txt: Read-only file system
+   exit=1
+   shell error: /bin/bash: line 1: docs/source/QA-PROBE.txt: Read-only file system
+3) $ touch tools/gates/QA-PROBE; exit=1
+4) $ touch docs/delivery/test-evidence/DG0/domain/QA-PROBE; exit=1
+5) $ touch docs/delivery/reviews/DG0/round-19/QA-PROBE; exit=1
+6) $ ls docs/source/QA-PROBE.txt tools/gates/QA-PROBE
+ls: cannot access 'docs/source/QA-PROBE.txt': No such file or directory
+ls: cannot access 'tools/gates/QA-PROBE': No such file or directory
+$ git status --porcelain docs/source tools/gates
+(empty = nothing written)

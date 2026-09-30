@@ -1,0 +1,741 @@
+# qa-verifier DG0 round 20 -- step 1 required commands. Env: disposable git clone of /home/user/My-owns at candidate commit a23c4d411cd4185e56a3f12cf7c1973f7964440b under $TMPDIR (agent shell sandbox, no network), node v22.22.2, Linux 6.18.44-fc-v50
+=== $ bash tools/source/check_extraction.sh (cwd=clone@a23c4d4, 2026-09-30T09:51:50Z)
+PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)
+=== exit=0
+=== $ node --test tools/gates/tests/sandbox.test.mjs tools/gates/tests/validator.test.mjs (cwd=clone@a23c4d4, 2026-09-30T09:51:50Z)
+TAP version 13
+# Subtest: sandbox-run: requires bubblewrap (a missing sandbox is a failure, not a pass)
+ok 1 - sandbox-run: requires bubblewrap (a missing sandbox is a failure, not a pass)
+  ---
+  duration_ms: 0.856175
+  type: 'test'
+  ...
+# Subtest: F-DG0-229: ignored or untracked files in the working tree never reach the sandboxed clone
+ok 2 - F-DG0-229: ignored or untracked files in the working tree never reach the sandboxed clone
+  ---
+  duration_ms: 82.637774
+  type: 'test'
+  ...
+# Subtest: F-DG0-140: inside the sandbox the source repository is read-only, there is no network, and cwd is not on sys.path
+ok 3 - F-DG0-140: inside the sandbox the source repository is read-only, there is no network, and cwd is not on sys.path
+  ---
+  duration_ms: 110.998944
+  type: 'test'
+  ...
+# Subtest: sandbox-run: the command's exit status is returned
+ok 4 - sandbox-run: the command's exit status is returned
+  ---
+  duration_ms: 76.984626
+  type: 'test'
+  ...
+# Subtest: D-030: candidate code runs with /proc/sys read-only (kernel tunables cannot be changed)
+ok 5 - D-030: candidate code runs with /proc/sys read-only (kernel tunables cannot be changed)
+  ---
+  duration_ms: 75.701614
+  type: 'test'
+  ...
+# Subtest: F-DG0-141: the clone, checkout and command run inside the sandbox, in a work area no other process can see
+ok 6 - F-DG0-141: the clone, checkout and command run inside the sandbox, in a work area no other process can see
+  ---
+  duration_ms: 3070.355525
+  type: 'test'
+  ...
+# Subtest: a fully evidenced DG0 gate passes in current and historical mode
+ok 7 - a fully evidenced DG0 gate passes in current and historical mode
+  ---
+  duration_ms: 852.077042
+  type: 'test'
+  ...
+# Subtest: A24: a missing specialist reviewer fails the gate
+ok 8 - A24: a missing specialist reviewer fails the gate
+  ---
+  duration_ms: 88.191227
+  type: 'test'
+  ...
+# Subtest: A23: a reviewer who authored the scope, or who is an owner, is rejected
+ok 9 - A23: a reviewer who authored the scope, or who is an owner, is rejected
+  ---
+  duration_ms: 566.841612
+  type: 'test'
+  ...
+# Subtest: A23: reviewers sharing one invocation are not independent
+ok 10 - A23: reviewers sharing one invocation are not independent
+  ---
+  duration_ms: 185.140426
+  type: 'test'
+  ...
+# Subtest: A24 / F-DG0-102: fabricated or incomplete provenance is rejected
+ok 11 - A24 / F-DG0-102: fabricated or incomplete provenance is rejected
+  ---
+  duration_ms: 766.518194
+  type: 'test'
+  ...
+# Subtest: F-DG0-201: a review bound to an unrelated run of the same role is rejected
+ok 12 - F-DG0-201: a review bound to an unrelated run of the same role is rejected
+  ---
+  duration_ms: 374.183697
+  type: 'test'
+  ...
+# Subtest: A24: failed or BLOCKED checks and non-PASS verdicts fail the gate
+ok 13 - A24: failed or BLOCKED checks and non-PASS verdicts fail the gate
+  ---
+  duration_ms: 654.990032
+  type: 'test'
+  ...
+# Subtest: A24: unresolved blocking findings fail the gate; owners cannot verify their own fix
+ok 14 - A24: unresolved blocking findings fail the gate; owners cannot verify their own fix
+  ---
+  duration_ms: 367.779318
+  type: 'test'
+  ...
+# Subtest: F-DG0-101: findings cannot escape by relabelling, dropping or downgrading
+ok 15 - F-DG0-101: findings cannot escape by relabelling, dropping or downgrading
+  ---
+  duration_ms: 948.739506
+  type: 'test'
+  ...
+# Subtest: A24 / F-DG0-106 / F-DG0-202: incomplete requirements, placeholder evidence and coverage gaps fail
+ok 16 - A24 / F-DG0-106 / F-DG0-202: incomplete requirements, placeholder evidence and coverage gaps fail
+  ---
+  duration_ms: 1904.136628
+  type: 'test'
+  ...
+# Subtest: A25: a source change invalidates the approval; review metadata does not
+ok 17 - A25: a source change invalidates the approval; review metadata does not
+  ---
+  duration_ms: 709.150796
+  type: 'test'
+  ...
+# Subtest: A25 / F-DG0-103: symlinks are part of the candidate identity; submodules are refused
+ok 18 - A25 / F-DG0-103: symlinks are part of the candidate identity; submodules are refused
+  ---
+  duration_ms: 92.995725
+  type: 'test'
+  ...
+# Subtest: F-DG0-104: the manifest spec must equal the stage spec and the approved policy
+ok 19 - F-DG0-104: the manifest spec must equal the stage spec and the approved policy
+  ---
+  duration_ms: 449.277787
+  type: 'test'
+  ...
+# Subtest: A25: a tampered manifest or a stale review candidate is detected
+ok 20 - A25: a tampered manifest or a stale review candidate is detected
+  ---
+  duration_ms: 377.722053
+  type: 'test'
+  ...
+# Subtest: F-DG0-102: approval records are immutable after approval (historical mode)
+ok 21 - F-DG0-102: approval records are immutable after approval (historical mode)
+  ---
+  duration_ms: 1343.95232
+  type: 'test'
+  ...
+# Subtest: the gate record must be written by the audited release-auditor invocation
+ok 22 - the gate record must be written by the audited release-auditor invocation
+  ---
+  duration_ms: 186.179684
+  type: 'test'
+  ...
+# Subtest: A24: the pipeline cannot advance past a gate that is not APPROVED
+ok 23 - A24: the pipeline cannot advance past a gate that is not APPROVED
+  ---
+  duration_ms: 626.947903
+  type: 'test'
+  ...
+# Subtest: illegal stage transitions are rejected
+ok 24 - illegal stage transitions are rejected
+  ---
+  duration_ms: 83.872294
+  type: 'test'
+  ...
+# Subtest: an APPROVED gate with a BLOCKED decision or blocking conditions fails
+ok 25 - an APPROVED gate with a BLOCKED decision or blocking conditions fails
+  ---
+  duration_ms: 187.393923
+  type: 'test'
+  ...
+# Subtest: F-DG0-107: the CSV parser rejects text after a closing quote and ragged rows
+ok 26 - F-DG0-107: the CSV parser rejects text after a closing quote and ragged rows
+  ---
+  duration_ms: 0.393061
+  type: 'test'
+  ...
+# Subtest: F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification sidecar and bound run
+ok 27 - F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification sidecar and bound run
+  ---
+  duration_ms: 1148.652895
+  type: 'test'
+  ...
+# Subtest: F-DG0-101 residual: deleting an earlier review round is detected
+ok 28 - F-DG0-101 residual: deleting an earlier review round is detected
+  ---
+  duration_ms: 578.261878
+  type: 'test'
+  ...
+# Subtest: F-DG0-205: evidence that is a symlink to a file outside the repository is rejected
+ok 29 - F-DG0-205: evidence that is a symlink to a file outside the repository is rejected
+  ---
+  duration_ms: 196.42943
+  type: 'test'
+  ...
+# Subtest: F-DG0-112 / F-DG0-206: file mode and entry type are part of the candidate identity
+ok 30 - F-DG0-112 / F-DG0-206: file mode and entry type are part of the candidate identity
+  ---
+  duration_ms: 49.308306
+  type: 'test'
+  ...
+# Subtest: F-DG0-115: reviewer artefacts cannot be edited after the run, committed or not
+ok 31 - F-DG0-115: reviewer artefacts cannot be edited after the run, committed or not
+  ---
+  duration_ms: 806.233551
+  type: 'test'
+  ...
+# Subtest: F-DG0-208: round metadata must match the committed manifest of its candidate
+ok 32 - F-DG0-208: round metadata must match the committed manifest of its candidate
+  ---
+  duration_ms: 181.976108
+  type: 'test'
+  ...
+# Subtest: F-DG0-102 residual: a verifying record must be the round's listed, schema-valid record
+ok 33 - F-DG0-102 residual: a verifying record must be the round's listed, schema-valid record
+  ---
+  duration_ms: 343.227599
+  type: 'test'
+  ...
+# Subtest: F-DG0-117: observations are accepted only through specialist and auditor sidecars
+ok 34 - F-DG0-117: observations are accepted only through specialist and auditor sidecars
+  ---
+  duration_ms: 355.627086
+  type: 'test'
+  ...
+# Subtest: F-DG0-116: with core.fileMode=false tracked modes come from the index
+ok 35 - F-DG0-116: with core.fileMode=false tracked modes come from the index
+  ---
+  duration_ms: 39.527906
+  type: 'test'
+  ...
+# Subtest: F-DG0-115 residual: an evil merge cannot rewrite committed evidence
+ok 36 - F-DG0-115 residual: an evil merge cannot rewrite committed evidence
+  ---
+  duration_ms: 256.843961
+  type: 'test'
+  ...
+# Subtest: F-DG0-118: skip-worktree / assume-unchanged cannot hide edited evidence
+ok 37 - F-DG0-118: skip-worktree / assume-unchanged cannot hide edited evidence
+  ---
+  duration_ms: 235.909078
+  type: 'test'
+  ...
+# Subtest: F-DG0-119: only content replayed from the run's own successful Write/Edit calls is bound
+ok 38 - F-DG0-119: only content replayed from the run's own successful Write/Edit calls is bound
+  ---
+  duration_ms: 204.114402
+  type: 'test'
+  ...
+# Subtest: F-DG0-121 / F-DG0-211: the gate file must be what the auditor run wrote
+ok 39 - F-DG0-121 / F-DG0-211: the gate file must be what the auditor run wrote
+  ---
+  duration_ms: 217.580329
+  type: 'test'
+  ...
+# Subtest: F-DG0-212: a round manifest must describe its source commit; runs start from a commit containing it
+ok 40 - F-DG0-212: a round manifest must describe its source commit; runs start from a commit containing it
+  ---
+  duration_ms: 429.515923
+  type: 'test'
+  ...
+# Subtest: F-DG0-115 residual: a back-dated side branch merged in cannot replace committed evidence
+ok 41 - F-DG0-115 residual: a back-dated side branch merged in cannot replace committed evidence
+  ---
+  duration_ms: 270.53576
+  type: 'test'
+  ...
+# Subtest: F-DG0-115 defence in depth: meta.tool_authored cannot vouch for content the transcript never wrote
+ok 42 - F-DG0-115 defence in depth: meta.tool_authored cannot vouch for content the transcript never wrote
+  ---
+  duration_ms: 197.736114
+  type: 'test'
+  ...
+# Subtest: D-022: only a CLI-replayed prompt binds a transcript to its run; the same text in a tool result does not
+ok 43 - D-022: only a CLI-replayed prompt binds a transcript to its run; the same text in a tool result does not
+  ---
+  duration_ms: 210.484043
+  type: 'test'
+  ...
+# Subtest: F-DG0-132: an empty or newline-only transcript fails every transcript check
+ok 44 - F-DG0-132: an empty or newline-only transcript fails every transcript check
+  ---
+  duration_ms: 411.415253
+  type: 'test'
+  ...
+# Subtest: F-DG0-133: the assignment named in the replayed prompt must be the one recorded in meta
+ok 45 - F-DG0-133: the assignment named in the replayed prompt must be the one recorded in meta
+  ---
+  duration_ms: 202.943851
+  type: 'test'
+  ...
+# Subtest: F-DG0-223: a genuine prompt binds when the checkout path contains spaces
+ok 46 - F-DG0-223: a genuine prompt binds when the checkout path contains spaces
+  ---
+  duration_ms: 210.634603
+  type: 'test'
+  ...
+# Subtest: F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters
+ok 47 - F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters
+  ---
+  duration_ms: 73.661537
+  type: 'test'
+  ...
+# Subtest: D-024: a run that changed configuration outside the candidate is rejected
+ok 48 - D-024: a run that changed configuration outside the candidate is rejected
+  ---
+  duration_ms: 205.827821
+  type: 'test'
+  ...
+# Subtest: D-025: gate records must come from Bash-sandboxed runs
+ok 49 - D-025: gate records must come from Bash-sandboxed runs
+  ---
+  duration_ms: 394.23719
+  type: 'test'
+  ...
+# Subtest: F-DG0-145/D-030: gate records must come from runs whose whole agent process was confined to the role's own areas
+ok 50 - F-DG0-145/D-030: gate records must come from runs whose whole agent process was confined to the role's own areas
+  ---
+  duration_ms: 2538.628847
+  type: 'test'
+  ...
+# Subtest: F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory
+ok 51 - F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory
+  ---
+  duration_ms: 187.685902
+  type: 'test'
+  ...
+# Subtest: F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the replayed prompt)
+ok 52 - F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the replayed prompt)
+  ---
+  duration_ms: 655.180822
+  type: 'test'
+  ...
+# Subtest: F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does
+ok 53 - F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does
+  ---
+  duration_ms: 166.64016
+  type: 'test'
+  ...
+# Subtest: D-035: findManifest tolerates a pruned (missing) source_commit but still enforces entries self-consistency
+ok 54 - D-035: findManifest tolerates a pruned (missing) source_commit but still enforces entries self-consistency
+  ---
+  duration_ms: 167.8362
+  type: 'test'
+  ...
+# Subtest: D-036: a gate whose source_commit does not exist is rejected in current mode too (F-DG0-240/155)
+ok 55 - D-036: a gate whose source_commit does not exist is rejected in current mode too (F-DG0-240/155)
+  ---
+  duration_ms: 142.503056
+  type: 'test'
+  ...
+1..55
+# tests 55
+# suites 0
+# pass 55
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 23800.008286
+=== exit=0
+=== $ node --test tools/agents/tests/guard.test.mjs tools/agents/tests/process-sandbox.test.mjs tools/agents/tests/runner.test.mjs (cwd=clone@a23c4d4, 2026-09-30T09:52:14Z)
+TAP version 13
+# Subtest: reviewers may write only review records and evidence
+ok 1 - reviewers may write only review records and evidence
+  ---
+  duration_ms: 72.906635
+  type: 'test'
+  ...
+# Subtest: qa-verifier may add tests under tests/qa and e2e but not product code
+ok 2 - qa-verifier may add tests under tests/qa and e2e but not product code
+  ---
+  duration_ms: 14.102049
+  type: 'test'
+  ...
+# Subtest: implementers cannot edit gate rules, agent definitions, sources or gate records
+ok 3 - implementers cannot edit gate rules, agent definitions, sources or gate records
+  ---
+  duration_ms: 217.99302
+  type: 'test'
+  ...
+# Subtest: release-auditor writes gate decisions but not implementation
+ok 4 - release-auditor writes gate decisions but not implementation
+  ---
+  duration_ms: 6.036423
+  type: 'test'
+  ...
+# Subtest: transformation-analyst is limited to analysis outputs and the register
+ok 5 - transformation-analyst is limited to analysis outputs and the register
+  ---
+  duration_ms: 12.299644
+  type: 'test'
+  ...
+# Subtest: unknown roles are denied and scratch space outside a repo is allowed
+ok 6 - unknown roles are denied and scratch space outside a repo is allowed
+  ---
+  duration_ms: 6.004007
+  type: 'test'
+  ...
+# Subtest: the hook entry point blocks with exit code 2 and allows with 0
+ok 7 - the hook entry point blocks with exit code 2 and allows with 0
+  ---
+  duration_ms: 327.327976
+  type: 'test'
+  ...
+# Subtest: implementers cannot write reviewer test evidence
+ok 8 - implementers cannot write reviewer test evidence
+  ---
+  duration_ms: 15.630337
+  type: 'test'
+  ...
+# Subtest: F-DG0-105: Claude configuration surfaces and the unrelated project are protected from implementers
+ok 9 - F-DG0-105: Claude configuration surfaces and the unrelated project are protected from implementers
+  ---
+  duration_ms: 219.811255
+  type: 'test'
+  ...
+# Subtest: F-DG0-105: writes through a symlink into a protected path are blocked
+ok 10 - F-DG0-105: writes through a symlink into a protected path are blocked
+  ---
+  duration_ms: 32.662613
+  type: 'test'
+  ...
+# Subtest: F-DG0-105: protected-path matching is case-insensitive
+ok 11 - F-DG0-105: protected-path matching is case-insensitive
+  ---
+  duration_ms: 19.414917
+  type: 'test'
+  ...
+# Subtest: F-DG0-111: a planted nested .git cannot move the guarded root; .git paths are never writable
+ok 12 - F-DG0-111: a planted nested .git cannot move the guarded root; .git paths are never writable
+  ---
+  duration_ms: 72.831647
+  type: 'test'
+  ...
+# Subtest: the production guard root is this repository
+ok 13 - the production guard root is this repository
+  ---
+  duration_ms: 57.844641
+  type: 'test'
+  ...
+# Subtest: F-DG0-134: the repository's worktrees are guarded too, from any working directory
+ok 14 - F-DG0-134: the repository's worktrees are guarded too, from any working directory
+  ---
+  duration_ms: 499.914512
+  type: 'test'
+  ...
+# Subtest: F-DG0-134: every role's hook command takes the guard from MTH_GUARD_ROOT and fails closed without it
+ok 15 - F-DG0-134: every role's hook command takes the guard from MTH_GUARD_ROOT and fails closed without it
+  ---
+  duration_ms: 58.344253
+  type: 'test'
+  ...
+# Subtest: F-DG0-135: the guard fails closed when the guarded roots cannot be determined
+ok 16 - F-DG0-135: the guard fails closed when the guarded roots cannot be determined
+  ---
+  duration_ms: 88.617419
+  type: 'test'
+  ...
+# Subtest: F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable
+ok 17 - F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable
+  ---
+  duration_ms: 371.92685
+  type: 'test'
+  ...
+# Subtest: F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory
+ok 18 - F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory
+  ---
+  duration_ms: 365.091617
+  type: 'test'
+  ...
+# Subtest: F-DG0-144: a reviewer may not write another reviewer's record, sidecars or evidence
+ok 19 - F-DG0-144: a reviewer may not write another reviewer's record, sidecars or evidence
+  ---
+  duration_ms: 312.8964
+  type: 'test'
+  ...
+# Subtest: F-DG0-144: only the run's own private temporary directory is scratch, never the shared /tmp
+ok 20 - F-DG0-144: only the run's own private temporary directory is scratch, never the shared /tmp
+  ---
+  duration_ms: 50.361808
+  type: 'test'
+  ...
+# Subtest: F-DG0-143: writes that resolve through /proc, /sys or /dev, or whose real path cannot be determined, are blocked
+ok 21 - F-DG0-143: writes that resolve through /proc, /sys or /dev, or whose real path cannot be determined, are blocked
+  ---
+  duration_ms: 39.979277
+  type: 'test'
+  ...
+# Subtest: F-DG0-145: a confined reviewer's whole process writes only its own evidence and its own new review files
+ok 22 - F-DG0-145: a confined reviewer's whole process writes only its own evidence and its own new review files
+  ---
+  duration_ms: 328.14269
+  type: 'test'
+  ...
+# Subtest: F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope
+ok 23 - F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope
+  ---
+  duration_ms: 74649.733863
+  type: 'test'
+  ...
+# without the process sandbox: 32 of 68 allowed writes landed in /var/tmp/mth-run.4TiUSl/claude-0/psbx-quOiI4/repo/tools/gates/tests
+# code-security-reviewer -> /var/tmp/mth-run.4TiUSl/claude-0/psbx-quOiI4/var-tmp/mth-run.dfCKGf/clone/tests: 71 allowed by the hook, 38 of them refused by the kernel, 0 landed
+# code-security-reviewer -> /var/tmp/mth-run.4TiUSl/claude-0/psbx-quOiI4/repo/docs/delivery/test-evidence/DG0/qa: 69 allowed by the hook, 43 of them refused by the kernel, 0 landed
+# qa-verifier -> /var/tmp/mth-run.4TiUSl/claude-0/psbx-quOiI4/repo/tools/gates/tests: 71 allowed by the hook, 41 of them refused by the kernel, 0 landed
+# backend-workflow-engineer -> /var/tmp/mth-run.4TiUSl/claude-0/psbx-quOiI4/repo/tools/gates/tests: 78 allowed by the hook, 56 of them refused by the kernel, 0 landed
+# backend-workflow-engineer -> /var/tmp/mth-run.4TiUSl/claude-0/psbx-quOiI4/repo/.git/hooks: 79 allowed by the hook, 71 of them refused by the kernel, 0 landed
+# Subtest: D-030: only CAP_SETFCAP remains, and neither the process nor a nested user namespace can unlock the read-only binds
+ok 24 - D-030: only CAP_SETFCAP remains, and neither the process nor a nested user namespace can unlock the read-only binds
+  ---
+  duration_ms: 168.250626
+  type: 'test'
+  ...
+# Subtest: D-030: implementers write product paths; existing protected paths stay read-only
+ok 25 - D-030: implementers write product paths; existing protected paths stay read-only
+  ---
+  duration_ms: 187.07471
+  type: 'test'
+  ...
+# Subtest: D-030: the analyst's register is replaced atomically in staging and copied back, unless it changed concurrently
+ok 26 - D-030: the analyst's register is replaced atomically in staging and copied back, unless it changed concurrently
+  ---
+  duration_ms: 381.340333
+  type: 'test'
+  ...
+# Subtest: D-030: the auditor's gate record for its own stage is copied back; another stage's is not
+ok 27 - D-030: the auditor's gate record for its own stage is copied back; another stage's is not
+  ---
+  duration_ms: 206.680662
+  type: 'test'
+  ...
+# Subtest: D-030: the process sandbox binds the host procfs and creates no PID namespace (so nested bwrap works)
+ok 28 - D-030: the process sandbox binds the host procfs and creates no PID namespace (so nested bwrap works)
+  ---
+  duration_ms: 205.739868
+  type: 'test'
+  ...
+# Subtest: F-DG0-145 (round 16): a file another run commits to the real dir between prepare and finish is not a false discard
+ok 29 - F-DG0-145 (round 16): a file another run commits to the real dir between prepare and finish is not a false discard
+  ---
+  duration_ms: 168.207999
+  type: 'test'
+  ...
+# Subtest: F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash
+ok 30 - F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash
+  ---
+  duration_ms: 174.813958
+  type: 'test'
+  ...
+# Subtest: F-DG0-152: a per-run Landlock domain stops a run reaching or signalling another run via /proc/<peer>/root|cwd (D-033)
+ok 31 - F-DG0-152: a per-run Landlock domain stops a run reaching or signalling another run via /proc/<peer>/root|cwd (D-033)
+  ---
+  duration_ms: 359.522961
+  type: 'test'
+  ...
+# without Landlock: {"viaProcRoot":"WROTE","viaProcCwd":"WROTE","viaProcRootTmp":"WROTE","ownEvidence":"WROTE","ownTmp":"WROTE","signal":"allowed","nested":"works"}
+# with Landlock: {"viaProcRoot":"refused","viaProcCwd":"refused","viaProcRootTmp":"refused","ownEvidence":"WROTE","ownTmp":"WROTE","signal":"refused","nested":"works"}
+# Subtest: F-DG0-140: modules planted in the repository root are never imported by the runner's helpers
+ok 32 - F-DG0-140: modules planted in the repository root are never imported by the runner's helpers
+  ---
+  duration_ms: 1730.476347
+  type: 'test'
+  ...
+# Subtest: D-026: zero-length untracked sandbox stubs are not reported as configuration changes
+ok 33 - D-026: zero-length untracked sandbox stubs are not reported as configuration changes
+  ---
+  duration_ms: 1941.834786
+  type: 'test'
+  ...
+# Subtest: D-026: configuration with content, a symlink, or a truncated tracked file is still reported (exit 71, no auto-commit)
+ok 34 - D-026: configuration with content, a symlink, or a truncated tracked file is still reported (exit 71, no auto-commit)
+  ---
+  duration_ms: 1925.762199
+  type: 'test'
+  ...
+# Subtest: F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed
+ok 35 - F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed
+  ---
+  duration_ms: 1953.026506
+  type: 'test'
+  ...
+# Subtest: F-DG0-144: every run gets its own private TMPDIR, exported to the agent and removed when the run ends
+ok 36 - F-DG0-144: every run gets its own private TMPDIR, exported to the agent and removed when the run ends
+  ---
+  duration_ms: 3957.239792
+  type: 'test'
+  ...
+# Subtest: F-DG0-236: the runner pre-creates the stage's evidence directories and the gate-record directory
+ok 37 - F-DG0-236: the runner pre-creates the stage's evidence directories and the gate-record directory
+  ---
+  duration_ms: 2076.260762
+  type: 'test'
+  ...
+# Subtest: F-DG0-145: the runner runs the whole agent inside the process sandbox and records it
+ok 38 - F-DG0-145: the runner runs the whole agent inside the process sandbox and records it
+  ---
+  duration_ms: 2057.349967
+  type: 'test'
+  ...
+# Subtest: D-030: a review run whose staging copy holds another role's file exits 73 and commits nothing
+ok 39 - D-030: a review run whose staging copy holds another role's file exits 73 and commits nothing
+  ---
+  duration_ms: 1897.691908
+  type: 'test'
+  ...
+1..39
+# tests 39
+# suites 0
+# pass 39
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 76935.055849
+=== exit=0
+=== $ node tools/gates/validate.mjs --register DG0 (cwd=clone@a23c4d4, 2026-09-30T09:53:31Z)
+PASS register rules at DG0
+=== exit=0
+=== $ node tools/gates/validate.mjs --pipeline (cwd=clone@a23c4d4, 2026-09-30T09:53:31Z)
+PASS pipeline (active stage: DG0 REVIEWING)
+=== exit=0
+=== $ node tools/gates/validate.mjs --reconcile (cwd=clone@a23c4d4, 2026-09-30T09:53:31Z)
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:6720ad2c5ea1d5bddb27a430536d27a962ded8224a373db101891e81d652922a
+working tree:     sha256:ef3ec3f205ffdac3609c6f100cfb9900afb72f0e5bb381fbc5409eb1a8a8ddaf (differs: 5 changed, 0 added, 0 removed)
+round 1 domain-reviewer: FAIL (STALE for current content)
+round 1 code-security-reviewer: BLOCKED (STALE for current content)
+round 1 qa-verifier: FAIL (STALE for current content)
+round 2 domain-reviewer: PASS (STALE for current content)
+round 2 code-security-reviewer: FAIL (STALE for current content)
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: PASS (STALE for current content)
+round 3 code-security-reviewer: FAIL (STALE for current content)
+round 3 qa-verifier: PASS (STALE for current content)
+round 4 domain-reviewer: PASS (STALE for current content)
+round 4 code-security-reviewer: FAIL (STALE for current content)
+round 4 qa-verifier: PASS (STALE for current content)
+round 5 domain-reviewer: FAIL (STALE for current content)
+round 6 domain-reviewer: FAIL (STALE for current content)
+round 6 code-security-reviewer: FAIL (STALE for current content)
+round 6 qa-verifier: FAIL (STALE for current content)
+round 7 domain-reviewer: PASS (STALE for current content)
+round 7 code-security-reviewer: FAIL (STALE for current content)
+round 7 qa-verifier: PASS (STALE for current content)
+round 8 domain-reviewer: PASS (STALE for current content)
+round 8 code-security-reviewer: PASS (STALE for current content)
+round 8 qa-verifier: PASS (STALE for current content)
+round 9 domain-reviewer: PASS (STALE for current content)
+round 9 code-security-reviewer: FAIL (STALE for current content)
+round 9 qa-verifier: PASS (STALE for current content)
+round 10 domain-reviewer: PASS (STALE for current content)
+round 10 code-security-reviewer: FAIL (STALE for current content)
+round 10 qa-verifier: PASS (STALE for current content)
+round 11 domain-reviewer: PASS (STALE for current content)
+round 11 code-security-reviewer: FAIL (STALE for current content)
+round 11 qa-verifier: FAIL (STALE for current content)
+round 12 code-security-reviewer: FAIL (STALE for current content)
+round 12 qa-verifier: FAIL (STALE for current content)
+round 13 domain-reviewer: PASS (STALE for current content)
+round 13 code-security-reviewer: FAIL (STALE for current content)
+round 13 qa-verifier: FAIL (STALE for current content)
+round 14 domain-reviewer: PASS (STALE for current content)
+round 14 code-security-reviewer: FAIL (STALE for current content)
+round 14 qa-verifier: PASS (STALE for current content)
+round 15 domain-reviewer: PASS (STALE for current content)
+round 15 code-security-reviewer: FAIL (STALE for current content)
+round 15 qa-verifier: PASS (STALE for current content)
+round 16 domain-reviewer: PASS (STALE for current content)
+round 16 code-security-reviewer: PASS (STALE for current content)
+round 17 domain-reviewer: PASS (STALE for current content)
+round 17 code-security-reviewer: BLOCKED (STALE for current content)
+round 18 domain-reviewer: PASS (STALE for current content)
+round 18 code-security-reviewer: FAIL (STALE for current content)
+round 19 domain-reviewer: PASS (STALE for current content)
+round 19 code-security-reviewer: FAIL (STALE for current content)
+round 19 qa-verifier: FAIL (STALE for current content)
+PASS reconcile (structure)
+=== exit=0
+=== $ node tools/gates/candidate.mjs --stage DG0 (cwd=clone@a23c4d4, 2026-09-30T09:53:31Z)
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:ef3ec3f205ffdac3609c6f100cfb9900afb72f0e5bb381fbc5409eb1a8a8ddaf","files":91}
+=== exit=0
+=== reconcile + candidate + pipeline at HEAD ce6d9b6 (metadata-only freeze commit), fresh clone
+$ node tools/gates/validate.mjs --reconcile
+active stage: DG0 (REVIEWING)
+frozen candidate: sha256:ef3ec3f205ffdac3609c6f100cfb9900afb72f0e5bb381fbc5409eb1a8a8ddaf
+working tree:     sha256:ef3ec3f205ffdac3609c6f100cfb9900afb72f0e5bb381fbc5409eb1a8a8ddaf (matches)
+round 1 domain-reviewer: FAIL (STALE for current content)
+round 1 code-security-reviewer: BLOCKED (STALE for current content)
+round 1 qa-verifier: FAIL (STALE for current content)
+round 2 domain-reviewer: PASS (STALE for current content)
+round 2 code-security-reviewer: FAIL (STALE for current content)
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: PASS (STALE for current content)
+round 3 code-security-reviewer: FAIL (STALE for current content)
+round 3 qa-verifier: PASS (STALE for current content)
+round 4 domain-reviewer: PASS (STALE for current content)
+round 4 code-security-reviewer: FAIL (STALE for current content)
+round 4 qa-verifier: PASS (STALE for current content)
+round 5 domain-reviewer: FAIL (STALE for current content)
+round 6 domain-reviewer: FAIL (STALE for current content)
+round 6 code-security-reviewer: FAIL (STALE for current content)
+round 6 qa-verifier: FAIL (STALE for current content)
+round 7 domain-reviewer: PASS (STALE for current content)
+round 7 code-security-reviewer: FAIL (STALE for current content)
+round 7 qa-verifier: PASS (STALE for current content)
+round 8 domain-reviewer: PASS (STALE for current content)
+round 8 code-security-reviewer: PASS (STALE for current content)
+round 8 qa-verifier: PASS (STALE for current content)
+round 9 domain-reviewer: PASS (STALE for current content)
+round 9 code-security-reviewer: FAIL (STALE for current content)
+round 9 qa-verifier: PASS (STALE for current content)
+round 10 domain-reviewer: PASS (STALE for current content)
+round 10 code-security-reviewer: FAIL (STALE for current content)
+round 10 qa-verifier: PASS (STALE for current content)
+round 11 domain-reviewer: PASS (STALE for current content)
+round 11 code-security-reviewer: FAIL (STALE for current content)
+round 11 qa-verifier: FAIL (STALE for current content)
+round 12 code-security-reviewer: FAIL (STALE for current content)
+round 12 qa-verifier: FAIL (STALE for current content)
+round 13 domain-reviewer: PASS (STALE for current content)
+round 13 code-security-reviewer: FAIL (STALE for current content)
+round 13 qa-verifier: FAIL (STALE for current content)
+round 14 domain-reviewer: PASS (STALE for current content)
+round 14 code-security-reviewer: FAIL (STALE for current content)
+round 14 qa-verifier: PASS (STALE for current content)
+round 15 domain-reviewer: PASS (STALE for current content)
+round 15 code-security-reviewer: FAIL (STALE for current content)
+round 15 qa-verifier: PASS (STALE for current content)
+round 16 domain-reviewer: PASS (STALE for current content)
+round 16 code-security-reviewer: PASS (STALE for current content)
+round 17 domain-reviewer: PASS (STALE for current content)
+round 17 code-security-reviewer: BLOCKED (STALE for current content)
+round 18 domain-reviewer: PASS (STALE for current content)
+round 18 code-security-reviewer: FAIL (STALE for current content)
+round 19 domain-reviewer: PASS (STALE for current content)
+round 19 code-security-reviewer: FAIL (STALE for current content)
+round 19 qa-verifier: FAIL (STALE for current content)
+round 20 domain-reviewer: missing (STALE for current content)
+round 20 code-security-reviewer: missing (STALE for current content)
+round 20 qa-verifier: missing (STALE for current content)
+PASS reconcile (structure)
+exit=0
+$ node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG0 REVIEWING)
+exit=0
+$ node tools/gates/candidate.mjs --stage DG0
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:ef3ec3f205ffdac3609c6f100cfb9900afb72f0e5bb381fbc5409eb1a8a8ddaf","files":91}
+exit=0
+$ git diff --name-only a23c4d4 ce6d9b6
+docs/delivery/assignments/DG0/round-20/audit.md
+docs/delivery/assignments/DG0/round-20/review-code-security-reviewer.md
+docs/delivery/assignments/DG0/round-20/review-common.md
+docs/delivery/assignments/DG0/round-20/review-domain-reviewer.md
+docs/delivery/assignments/DG0/round-20/review-qa-verifier.md
+docs/delivery/candidates/DG0/ef3ec3f205ffdac3.manifest.json
+docs/delivery/stages.json

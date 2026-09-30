@@ -1,0 +1,79 @@
+TAP version 13
+# Subtest: F-DG0-145: a confined reviewer's whole process writes only its own evidence and its own new review files
+ok 1 - F-DG0-145: a confined reviewer's whole process writes only its own evidence and its own new review files
+  ---
+  duration_ms: 247.16744
+  type: 'test'
+  ...
+# Subtest: F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope
+ok 2 - F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope
+  ---
+  duration_ms: 51096.682242
+  type: 'test'
+  ...
+# without the process sandbox: 37 of 83 allowed writes landed in /var/tmp/mth-run.QyP3LT/claude-0/psbx-CZ6f4D/repo/tools/gates/tests
+# code-security-reviewer -> /var/tmp/mth-run.QyP3LT/claude-0/psbx-CZ6f4D/var-tmp/mth-run.ST01Sz/clone/tests: 63 allowed by the hook, 48 of them refused by the kernel, 0 landed
+# code-security-reviewer -> /var/tmp/mth-run.QyP3LT/claude-0/psbx-CZ6f4D/repo/docs/delivery/test-evidence/DG0/qa: 74 allowed by the hook, 59 of them refused by the kernel, 0 landed
+# qa-verifier -> /var/tmp/mth-run.QyP3LT/claude-0/psbx-CZ6f4D/repo/tools/gates/tests: 77 allowed by the hook, 55 of them refused by the kernel, 0 landed
+# backend-workflow-engineer -> /var/tmp/mth-run.QyP3LT/claude-0/psbx-CZ6f4D/repo/tools/gates/tests: 80 allowed by the hook, 71 of them refused by the kernel, 0 landed
+# backend-workflow-engineer -> /var/tmp/mth-run.QyP3LT/claude-0/psbx-CZ6f4D/repo/.git/hooks: 74 allowed by the hook, 64 of them refused by the kernel, 0 landed
+# Subtest: D-030: only CAP_SETFCAP remains, and neither the process nor a nested user namespace can unlock the read-only binds
+ok 3 - D-030: only CAP_SETFCAP remains, and neither the process nor a nested user namespace can unlock the read-only binds
+  ---
+  duration_ms: 171.073548
+  type: 'test'
+  ...
+# Subtest: D-030: implementers write product paths; existing protected paths stay read-only
+ok 4 - D-030: implementers write product paths; existing protected paths stay read-only
+  ---
+  duration_ms: 191.039627
+  type: 'test'
+  ...
+# Subtest: D-030: the analyst's register is replaced atomically in staging and copied back, unless it changed concurrently
+ok 5 - D-030: the analyst's register is replaced atomically in staging and copied back, unless it changed concurrently
+  ---
+  duration_ms: 392.660803
+  type: 'test'
+  ...
+# Subtest: D-030: the auditor's gate record for its own stage is copied back; another stage's is not
+ok 6 - D-030: the auditor's gate record for its own stage is copied back; another stage's is not
+  ---
+  duration_ms: 210.970686
+  type: 'test'
+  ...
+# Subtest: D-030: the process sandbox binds the host procfs and creates no PID namespace (so nested bwrap works)
+ok 7 - D-030: the process sandbox binds the host procfs and creates no PID namespace (so nested bwrap works)
+  ---
+  duration_ms: 187.451578
+  type: 'test'
+  ...
+# Subtest: F-DG0-145 (round 16): a file another run commits to the real dir between prepare and finish is not a false discard
+ok 8 - F-DG0-145 (round 16): a file another run commits to the real dir between prepare and finish is not a false discard
+  ---
+  duration_ms: 163.673555
+  type: 'test'
+  ...
+# Subtest: F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash
+ok 9 - F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash
+  ---
+  duration_ms: 167.485642
+  type: 'test'
+  ...
+# Subtest: F-DG0-152: a per-run Landlock domain stops a run reaching or signalling another run via /proc/<peer>/root|cwd (D-033)
+ok 10 - F-DG0-152: a per-run Landlock domain stops a run reaching or signalling another run via /proc/<peer>/root|cwd (D-033)
+  ---
+  duration_ms: 386.151922
+  type: 'test'
+  ...
+# without Landlock: {"viaProcRoot":"WROTE","viaProcCwd":"WROTE","viaProcRootTmp":"WROTE","ownEvidence":"WROTE","ownTmp":"WROTE","signal":"allowed","nested":"works"}
+# with Landlock: {"viaProcRoot":"refused","viaProcCwd":"refused","viaProcRootTmp":"refused","ownEvidence":"WROTE","ownTmp":"WROTE","signal":"refused","nested":"works"}
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 53314.622478
+exit=0

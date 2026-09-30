@@ -1,0 +1,50 @@
+# agents.md claims vs raw evidence (candidate clone 0a65201), 2026-09-30T09:37:19Z
+$ grep -n -iE 'load|distinct|model|PID|IPC|Landlock|procfs' docs/delivery/agents.md
+63:3. **Frontmatter `hooks` did not execute in `--agent` main-session mode.** An out-of-scope write succeeded in smoke tests 1 and 2. The same hook supplied through `--settings` **does** execute and blocks with exit code 2 (smoke test 3 and the load checks below). The frontmatter hooks are kept for future native subagent use, but the runner always applies `--settings`.
+64:4. `model: inherit` in a separate CLI process resolved to the CLI default (`claude-sonnet-5`), not the orchestrator's model. The runner passes `--model` explicitly, set to the orchestrator's model (`claude-opus-5-5`), so each agent really inherits it. Claude Code also invokes `claude-haiku-4-5` internally for auxiliary tasks; it is listed under models used.
+65:5. Without `--session-id`, a nested run reported the parent session's ID. A fresh UUID per run gives every invocation a distinct, stable reference.
+90:Result: 10/10 definitions load and run as separate invocations, with 10 distinct session IDs, all on the orchestrator's model. Out-of-scope writes were blocked 10/10, in-scope writes succeeded 10/10, and no probe file exists under `docs/source/`. The in-scope probe files are under `docs/delivery/handbacks/DG0/agent-load/` and `docs/delivery/test-evidence/DG0/agent-load/`.
+114:- **Process:** only `CAP_SETFCAP` is kept and `no_new_privs` is set. The IPC namespace is private (`--unshare-ipc`), but the PID namespace is shared with the host and the host procfs is bound read-write, so a reviewer's own nested bubblewrap can mount a fresh procfs (D-030). To keep that sharing from becoming a cross-run path, each run also enters its own scope-only Landlock domain (D-033, F-D
+
+$ ls .claude/agents | wc -l
+10
+$ landlock_exec.py key constants
+11:scope-only Landlock domain: handled_access_fs = 0 and handled_access_net = 0 (so NO filesystem or network access is
+13:scoped = LANDLOCK_SCOPE_SIGNAL | LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET (Landlock ABI >= 6). Two things follow:
+18:  - LANDLOCK_SCOPE_SIGNAL refuses a signal sent to a process outside the sender's domain, so a run cannot signal another
+19:    run (this also narrows threat-model residual 8). LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET refuses connecting to an abstract
+27:Fail-closed: if Landlock is unavailable (kernel/ABI too old) or any step fails, this raises and `claude` never execs, so
+36:# uapi/linux/landlock.h. The scope bits exist since Landlock ABI 6; this kernel reports ABI 7 (round-18 spike log).
+37:LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET = 1 << 0
+38:LANDLOCK_SCOPE_SIGNAL = 1 << 1
+45:def restrict_self():
+52:        raise OSError(err, "prctl(PR_SET_NO_NEW_PRIVS): " + os.strerror(err))
+53:    # struct landlock_ruleset_attr { __u64 handled_access_fs; __u64 handled_access_net; __u64 scoped; } (ABI 6+).
+54:    attr = (ctypes.c_uint64 * 3)(0, 0, LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET | LANDLOCK_SCOPE_SIGNAL)
+58:        raise OSError(err, "landlock_create_ruleset (a scope-only domain needs Landlock ABI >= 6): " + os.strerror(err))
+62:            raise OSError(err, "landlock_restrict_self: " + os.strerror(err))
+67:def main(argv):
+69:        raise SystemExit("usage: landlock_exec.py -- CMD [ARG...]")
+$ agent_sandbox.py: unshare / landlock record
+24:    into its own user namespace. no_new_privs is set. The sandbox binds the host's real procfs (read-write) and does
+26:    procfs (D-030; threat-model residual 8). It DOES create its own IPC namespace (--unshare-ipc, D-031, F-DG0-148).
+29:    Landlock domain (landlock_exec.py, applied after setpriv, before claude execs; D-033, F-DG0-152). Sibling domains
+132:            "python": os.path.realpath(sys.executable), "landlock_exec": os.path.join(HERE, "landlock_exec.py"),
+137:    # The host's real procfs is bound in (read-write; the CLI needs a working /proc, e.g. /proc/self). It is NOT a
+138:    # fresh --proc mount and it carries no read-only submount over /proc/sys, because either would make the procfs
+139:    # "not fully visible" to the kernel, which then forbids a fresh procfs mount deeper in the stack. A reviewer's own
+141:    # sandbox and must be able to mount its own fresh procfs; verified inside a real reviewer's shell (D-030).
+146:    # PID namespace. It DOES create its own IPC namespace (--unshare-ipc, F-DG0-148): the IPC namespace has no bearing
+147:    # on procfs "full visibility", so unsharing it closes the SysV-IPC / POSIX-message-queue cross-run vector of
+150:    # Bash sandbox's user namespace, as in round 15) and inside the reviewer's own fresh-procfs sandboxes (userns
+154:    a = ["--die-with-parent", "--new-session", "--unshare-ipc", "--setenv", "MTH_PROCESS_SANDBOX", "1",
+155:         "--ro-bind", "/", "/", "--dev", "/dev", "--bind", "/proc", "/proc",
+192:          "--", p["python"], "-I", "-B", p["landlock_exec"], "--"]
+293:               "read_only_root": True, "private_tmp": ["/tmp", "/var/tmp"], "procfs": "host-bind", "run_tmp": p["run_tmp"],
+299:               "capabilities": ["CAP_SETFCAP"], "no_new_privs": True, "unshare": ["ipc"],
+302:               # landlock_exec.py after setpriv, before claude execs; fail-closed if Landlock is unavailable.
+303:               "landlock": {"scoped": ["SIGNAL", "ABSTRACT_UNIX_SOCKET"], "handled_access_fs": 0,
+304:                            "handled_access_net": 0, "per_run_domain": True},
+$ run-agent.sh landlock_exec wiring
+$ kernel landlock ABI (this host)
+ABI 7

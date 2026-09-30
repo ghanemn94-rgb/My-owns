@@ -1,0 +1,40 @@
+problems 4
+  ('REQ-PB-042', 'notes lack Interpretations label')
+  ('REQ-PB-058', 'notes lack Playbook() provenance')
+  ('REQ-PB-058', 'notes lack Interpretations label')
+  ('REQ-PB-069', 'notes lack Interpretations label')
+
+ REQ-PB-091 Implement the 25-question Transformation Health Check with score and top 3 actions 
+  PROC: Assessor answers all 25 questions; score out of 25 is calculated; three top actions are required; reassessments tracked 
+  NOTES: Playbook (B0149, B0150, B0161): the 25 questions (checkboxes), 'Score: __ / 25' and 'Top 3 actions'. Master-prompt additions (§14 M0262, M0288): Yes=1/No=0 scoring (REQ-S14-001) and incomplete-assessment handling (REQ-S14-002), both implementation assumption D-010 (M0262); the top three improvement actions are required and reassessments are tracked over time (M0288). Interpretations: the requirement for three actions is enforced by rejecting submission of an assessment with fewer than three.
+
+ REQ-PB-092 Interpret the health-check score with the four source bands 
+  PROC: Completed assessments show the band text matching the score 
+  NOTES: Playbook (B0151, B0152): the four score bands and their text. Master-prompt additions: none; §14 M0288 restates the four bands (its top-three-actions and reassessment clause is covered by REQ-PB-091). Interpretations: none.
+
+ REQ-PB-093 Let methodology administrators configure the default T06 weight set and scoring rubrics in Playbook Studio as versioned configuration 
+  PROC: A methodology admin edits the default weight set and the 1-5 rubric descriptors in a Studio draft; publishing applies the 100% rule and creates an immutable version, which becomes the starting weight set and rubric of transformations created afterwards; existing transformations keep their pinned weight set and rubric until a deliberate migration 
+  NOTES: Playbook (B0077): weights are adjusted to the transformation context. Master-prompt additions (§9 M0176; §6 M0154, M0155): scoring rubrics and approved weights are configurable and versioned, administered in Playbook Studio with draft, publish and version pinning; the source weights 25/25/20/15/15 are seeded (M0176, REQ-PB-048). Interpretations: that seed is the initial Studio default for new transformations, and ADM configures defaults only, never approving a transformation's weights (permissions-matrix.md §5 rule 2). AN-05: split from REQ-PB-049 (finding F-DG0-001).
+
+ REQ-PB-048 Apply T06 default weights 25/25/20/15/15 with a 1-5 scale and a calculated weighted score 
+  PROC: Weighted score = sum(score x weight) on the 1-5 scale; scores outside 1-5 rejected; missing score marks the row incomplete 
+  NOTES: Playbook (B0076): the weights 25/25/20/15/15, the 1-5 scale and a calculated weighted score. Master-prompt additions (§9 M0176): weighted score = sum(score × weight), giving a 1-5 result, and a missing score means incomplete, not zero. Interpretations: none.
+exit=0
+
+== REQ-PB-042 B0063;M0147 | Support the TOM canvas workshop and convert unresolved items into design decisions with owners
+ IN: Workshop date;Duration (90-120 minutes);Business owner participants;Agenda;Contributions;Unresolved items;Resulting design decision or action;Owner
+ PROC: Facilitator publishes an agenda and runs a workshop session with business owners, capturing contributions per dimension; each unresolved item is converted in one action into a T04 design decision with owner (source) or an owned action (extension)
+ ACC: A01: converting an unresolved item creates a T04 row linked to the workshop with owner set; an item without an owner cannot be converted; converting an item to an action creates an owned action linked to the workshop; the workshop cannot be closed while unresolved items remain unconverted
+ NOTES: Source-grounded core (cited B blocks). AN-04 consolidation: absorbs former REQ-S05-004 (Run the facilitated 90-120-minute TOM workshop mode with agenda, captured contributions and conversion of unresolved items into decisions or actions); its anchors M0147 and acceptance are carried here. The agenda, per-dimension contribution capture, conversion into actions and the no-close-with-unconverted-items rule are master prompt §5 additions (M0147), not playbook content; the 90-120-minute workshop with business owners and conversion into design decisions with owners is source (B0063).
+
+== REQ-PB-058 B0088;M0173 | Prevent double counting: each benefit has a unique owner, baseline, formula and financial-statement or non-financial KPI link
+ IN: Benefit ID;Owner;Baseline;Formula;Financial statement line or non-financial KPI;Parent benefit;Shared-benefit group;Contribution allocation
+ PROC: System rejects a benefit without a single owner, baseline, formula and a financial statement line or agreed non-financial KPI; initiatives link to canonical benefits via allocations, parent/child relationships and shared-benefit groups; portfolio totals sum canonical benefits, not links, so a shared benefit rolls up once
+ ACC: A10: a benefit with two owners is rejected; a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the portfolio total
+ NOTES: Shared-benefit allocation rules detailed in master prompt §8. AN-04 consolidation: absorbs former REQ-S08-012 (Prevent double counting through a canonical benefit register, parent/child relationships, shared-benefit groups and contribution allocations so portfolio aggregation counts a shared benefit once); its anchors M0173 and acceptance are carried here. The canonical benefit register, parent/child relationships, shared-benefit groups and contribution allocations are the master prompt §8 mechanism (M0173); the unique owner, baseline, formula and statement/KPI link is source (B0088). Allocation limits: REQ-S08-013; overlap warnings: REQ-S08-014.
+
+== REQ-PB-069 B0105;M0216 | Manage adoption as an outcome with measurable leading indicators, separate from delivery
+ IN: Adoption outcome;Adoption KPI;Adoption trajectory;Adoption actual;Intervention;Owner
+ PROC: Adoption has its own outcome, KPIs and status distinct from initiative delivery status; adoption KPIs use trajectories, and a gap beyond threshold creates one intervention with owner
+ ACC: A11: an initiative with delivery Complete and adoption below trajectory shows adoption at risk and triggers an intervention; an adoption actual below trajectory creates exactly one intervention
+ NOTES: Source-grounded core (cited B blocks). AN-04 consolidation: absorbs former REQ-S11-003 (Track adoption actuals against adoption trajectories and create corrective interventions when gaps appear); its anchors M0216 and acceptance are carried here. Trajectory-based adoption tracking and the exactly-one-intervention rule are master prompt §11 additions (M0216); adoption as an outcome with leading indicators, separate from delivery, is source (B0105). Indicators: REQ-PB-071/072.
