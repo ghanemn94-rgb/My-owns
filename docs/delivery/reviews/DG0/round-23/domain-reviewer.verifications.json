@@ -1,0 +1,18 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-013",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "First I reproduced the original condition's premise, then showed it fixed. In the main repository `git cat-file -t 450c756f679a911b4c736e856fc9dd5e9b2c89a8` now fails (exit 128), `cb76260` is not a valid object, and `git fsck --unreachable --no-reflogs` lists 0 unreachable commits. A --no-local clone and a plain local-path clone (the mode that exposed the round-22 discrepancy) both report 450c756 absent (exit 128). qa's real-repo dry-run (--no-local) and my unchanged round-22 local-clone variant give output that is byte-identical except for commit hashes: 0 in every PRUNED, RECORD-LESS and DROPPED bucket, and all remaining errors are round-23 records not yet written, pending verifications, auditor acceptances and the draft gate. D-038's wording is corrected in decisions.md ('absent from transport (--no-local, CI fetch-depth: 0)' plus an explicit correction note), and D-039 accurately describes the unreachable-object cause and the gc. The fix commit 7180d97 is an ancestor of the round-23 candidate commit 6438e20. The gate outcome no longer depends on clone mode.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/15c-orphan-450c756-clone-modes.log",
+        "docs/delivery/test-evidence/DG0/domain/round-23/15-real-repo-dry-run.log",
+        "docs/delivery/test-evidence/DG0/domain/round-23/15b-real-repo-dry-run-local-clone.log",
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-dry-run-local-clone.mjs",
+        "docs/delivery/test-evidence/DG0/domain/round-23/16-d039-doc-diff.log",
+        "docs/delivery/test-evidence/DG0/domain/round-23/17-own-findings.log"
+      ]
+    }
+  ]
+}

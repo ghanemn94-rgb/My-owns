@@ -1,0 +1,327 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 23,
+  "candidate_id": "sha256:e6df2e1ebccbd87f01fa80a17ddd0f89ca469658e2511d0e9bff47b319da51c5",
+  "source_commit": "6438e20c076359ff5eda879f1e31ff6fbda0b57f",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-DOM-R23-domain-reviewer-20260930T125751Z-7ea95fea",
+    "session_id": "7ea95fea-ab09-43a1-8971-77624ebfba97"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am domain-reviewer. I authored nothing in the reviewed scope: the sources, analysis, register, agent definitions, gate or agent tooling, and delivery docs. My only writes are this round-23 record, its findings and verifications sidecars, and my own evidence under docs/delivery/test-evidence/DG0/domain/round-23/. I formed this verdict without reading any other round-23 review record; none existed in my view. The only earlier review material I read was my own round-22 domain record, findings and scripts, which I reused, plus the round-22 qa verifications sidecar, read only as a format example for verification entries."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-23/review-domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-003", "REQ-PB-004", "REQ-PB-005", "REQ-PB-006", "REQ-PB-007", "REQ-PB-008", "REQ-PB-009", "REQ-PB-010",
+    "REQ-PB-011", "REQ-PB-012", "REQ-PB-013", "REQ-PB-014", "REQ-PB-015", "REQ-PB-016", "REQ-PB-017", "REQ-PB-018", "REQ-PB-019", "REQ-PB-020",
+    "REQ-PB-021", "REQ-PB-022", "REQ-PB-023", "REQ-PB-024", "REQ-PB-025", "REQ-PB-026", "REQ-PB-027", "REQ-PB-028", "REQ-PB-029", "REQ-PB-030",
+    "REQ-PB-031", "REQ-PB-032", "REQ-PB-033", "REQ-PB-034", "REQ-PB-035", "REQ-PB-036", "REQ-PB-037", "REQ-PB-038", "REQ-PB-039", "REQ-PB-040",
+    "REQ-PB-041", "REQ-PB-042", "REQ-PB-043", "REQ-PB-044", "REQ-PB-045", "REQ-PB-046", "REQ-PB-047", "REQ-PB-048", "REQ-PB-049", "REQ-PB-050",
+    "REQ-PB-051", "REQ-PB-052", "REQ-PB-053", "REQ-PB-054", "REQ-PB-055", "REQ-PB-056", "REQ-PB-057", "REQ-PB-058", "REQ-PB-059", "REQ-PB-060",
+    "REQ-PB-061", "REQ-PB-062", "REQ-PB-063", "REQ-PB-064", "REQ-PB-065", "REQ-PB-066", "REQ-PB-067", "REQ-PB-068", "REQ-PB-069", "REQ-PB-070",
+    "REQ-PB-071", "REQ-PB-072", "REQ-PB-073", "REQ-PB-074", "REQ-PB-075", "REQ-PB-076", "REQ-PB-077", "REQ-PB-078", "REQ-PB-079", "REQ-PB-080",
+    "REQ-PB-081", "REQ-PB-082", "REQ-PB-083", "REQ-PB-084", "REQ-PB-085", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090",
+    "REQ-PB-091", "REQ-PB-092", "REQ-PB-093",
+    "REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-020", "REQ-DLV-032"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM23-00-candidate",
+      "procedure": "Confirm the frozen candidate. Record the main HEAD and that the repository is not shallow. Recompute the candidate ID in the main tree. Check that no manifest file differs between the frozen commit 6438e20 and HEAD 78954a6. Make a fresh `git clone --no-local` at 6438e20 and recompute the ID there.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG0; git diff --stat 6438e20 78954a6 -- <manifest paths>; git clone -q --no-local /home/user/My-owns $TMPDIR/review-dom23 && git checkout 6438e20 && node tools/gates/candidate.mjs --stage DG0",
+      "environment": "Main repository (HEAD 78954a6, a metadata-only freeze commit) and a fresh --no-local clone at 6438e20 in $TMPDIR; node v22.22.2",
+      "expected": "Both trees print sha256:e6df2e1e…51c5, with no manifest-file diff and no shallow repository",
+      "actual": "Main HEAD is 78954a6 (the metadata commit 'freeze round-23 candidate'). There is no diff in manifest files from 6438e20, shallow=false, and the candidate is sha256:e6df2e1ebccbd87f01fa80a17ddd0f89ca469658e2511d0e9bff47b319da51c5 (91 files). The clone HEAD is 6438e20, shallow=false, with the same candidate ID.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/00-candidate.log",
+        "docs/delivery/candidates/DG0/e6df2e1ebccbd87f.manifest.json"
+      ]
+    },
+    {
+      "id": "DOM23-01-scope-diff",
+      "procedure": "Establish what changed in my scope since the round-22 candidate baseline 480cd3f: diff the sources, analysis, register, requirements-spec, CLAUDE.md, agent definitions, protocol and delivery docs, and the gate, agent and source tooling.",
+      "command": "git diff --stat 480cd3ff2b1048439bafebf0bf40151a11d84ea7 6438e20c076359ff5eda879f1e31ff6fbda0b57f -- docs/source docs/analysis docs/delivery/requirements.csv docs/delivery/requirements-spec.md CLAUDE.md .claude/agents docs/delivery/agent-protocol.md docs/delivery/environment.md docs/delivery/threat-model.md docs/delivery/decisions.md tools/gates tools/agents tools/source",
+      "environment": "Main repository",
+      "expected": "Only tools/gates/lib/rules.mjs, tools/gates/tests/validator.test.mjs and docs/delivery/decisions.md (D-039), as the common assignment states",
+      "actual": "Exactly those three files: decisions.md (+2/-1), rules.mjs and validator.test.mjs. No source, analysis, register, glossary, journey, permissions or agent file changed, so the P0 specification content is byte-identical to round 22. I still re-ran every domain check below against this candidate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/01-scope-diff.log"
+      ]
+    },
+    {
+      "id": "DOM23-02-extraction-fidelity",
+      "procedure": "Assignment item 1, by independent means. Unzip the docx in Python and take every w:p paragraph and every w:tc table cell from word/document.xml and word/footer1.xml. Normalise them, check each for presence in playbook.md, and run an in-order token diff of the whole body.",
+      "command": "cd $TMPDIR/review-dom23 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-extraction.py",
+      "environment": "Fresh --no-local clone at 6438e20; Python 3 standard library only",
+      "expected": "0 missing paragraphs, 0 missing table cells, 0 docx tokens unmatched in order",
+      "actual": "Parts: document.xml and footer1.xml. 1002 paragraphs with 0 missing, 885 table cells with 0 missing, 3581 docx tokens with 0 unmatched in order.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-extraction.py",
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-extraction.out"
+      ]
+    },
+    {
+      "id": "DOM23-03-extraction-reproducible",
+      "procedure": "Run the shipped reproducibility check, which re-extracts the playbook and master prompt and compares the result with the committed files.",
+      "command": "cd $TMPDIR/review-dom23 && bash tools/source/check_extraction.sh",
+      "environment": "Fresh --no-local clone at 6438e20",
+      "expected": "PASS with docx SHA-256 2584a352…548ad2, 165 playbook blocks and 423 master-prompt blocks",
+      "actual": "PASS source extraction reproducible (docx sha256 2584a35282804e639a697478eae75a55a43cfb8c551345dfc7636b9b34548ad2; 165 playbook blocks; 423 master-prompt blocks)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-032"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/02-check-extraction.log"
+      ]
+    },
+    {
+      "id": "DOM23-04-coverage",
+      "procedure": "Assignment item 2. The source-coverage rows must equal B0001–B0165. Every REQUIREMENT block must map to existing rows that cite it back. Every REQ-PB row must be SOURCE and SPECIFIED and cite at least one B block. Check the class distribution. The substance of the 36 CONTEXT and NON-REQUIREMENT blocks was reviewed block by block in round 22 against the same, byte-identical coverage file (DOM23-01).",
+      "command": "cd $TMPDIR/review-dom23 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-coverage.py",
+      "environment": "Fresh --no-local clone at 6438e20",
+      "expected": "165 = 165, 0 problems, 93 REQ-PB rows all SOURCE/SPECIFIED with B refs",
+      "actual": "165 coverage rows equal to the block IDs. Dispositions: REQUIREMENT 129, CONTEXT 29, NON-REQUIREMENT 7. Problems: []. REQ-PB: 93 rows, all SOURCE, all SPECIFIED, 0 without a B ref, 0 unreciprocated citations. Classes overall: USER 188, ENGINEERING 131, SOURCE 93. The output is byte-identical to round 22.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-coverage.py",
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-coverage.out"
+      ]
+    },
+    {
+      "id": "DOM23-05-template-columns-verbatim",
+      "procedure": "Assignment item 3 (columns). For each 'Template N —' table in playbook.md, check that every column header appears verbatim in the field-inventory section and in the input_fields of the mapped register rows. For vertical tables (T05, T10), check the first-column labels instead.",
+      "command": "cd $TMPDIR/review-dom23 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-template-columns.py",
+      "environment": "Fresh --no-local clone at 6438e20",
+      "expected": "All T01–T16 columns present; vertical-table labels present",
+      "actual": "T01–T04 and T06–T16: 0 missing in the inventory and 0 missing in the register. The script exits 1 only because T05 is a vertical form whose header row is the layout header 'Field | Fill-in'. All 14 T05 field labels (Initiative name … Required decisions) are present, and only the layout header 'Field' is absent. The T10 area labels (Outcomes, Value, Portfolio, Dependencies, Decisions, People & adoption) are all present. The output is byte-identical to round 22.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-template-columns.py",
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-template-columns.out"
+      ]
+    },
+    {
+      "id": "DOM23-06-template-values",
+      "procedure": "Assignment item 3 (value lists). Check every non-placeholder cell of every template table, split on ' / ', against the inventory section plus the mapped register rows. The lists covered include H/M/L, Support/Neutral/Resist, Decision/Tech/Data/Vendor, Risk/Assumption/Issue/Dependency, A/R, the 25/25/20/15/15 weights, wave horizons, entry and exit, T11 SLAs and T10 RAG logic.",
+      "command": "cd $TMPDIR/review-dom23 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-template-values.py",
+      "environment": "Fresh --no-local clone at 6438e20",
+      "expected": "Every value-list cell present; at most example row identifiers absent",
+      "actual": "182 cells checked, 6 absent from the direct lookup: D-03 (T04), Initiative B/D/E (T08), B03 (T14) and DEC-02 (T16). These are example row identifiers, not value lists or rules, and the example IDs appear in field-inventory.md (07b grep). All value lists are present.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-template-values.py",
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-template-values.out"
+      ]
+    },
+    {
+      "id": "DOM23-07-first-class-deliverables",
+      "procedure": "Assignment item 4. For the blocks behind each first-class deliverable, check the source items against the register and analysis. The deliverables are the charter's 14 fields, the thesis, the 5 scope checks, the outcome hierarchy, the 10 TOM dimensions and canvas, the 90–120-minute workshop, the business case's 10 sections, the OS layers, the benefits lifecycle, the 7 adoption indicators, the 90-day plan, the Day-90 test, the 25 questions and 4 bands, the roaming example, the modes, the 6 phases with G1–G6, and the roles. Then grep each non-verbatim item's substance.",
+      "command": "cd $TMPDIR/review-dom23 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-deliverables.py; grep -Ei '<paraphrase patterns>' docs/delivery/requirements.csv docs/analysis/*.md",
+      "environment": "Fresh --no-local clone at 6438e20",
+      "expected": "Every item present verbatim or in substance",
+      "actual": "332 items. Non-verbatim items are layout or sentence scaffolds, and each is present in substance. Thesis 'If we change …' is in the charter row. The 10 TOM canvas prompt cells appear verbatim as 'CUSTOMER & VALUE (Segments / needs / promise / experience principles)' etc. The workshop appears as 'Duration (90-120 minutes)'. Business case: 'lighter initiative cases underneath'. Health check: 'Score (/ 25);Top 3 actions'. Champions are in the adoption rows. Modes: End-to-End and Modular. 'A project portfolio is not a TOM' (B0059). North Star 'Make international roaming effortless, trusted and economically accretive.' is in the A01 acceptance. Charter 16/16, scope checks 6/6, TOM dims 22/22, OS layers 30/30, lifecycle 21/21, 90-day 17/17, Day-90 6/6, roaming 39/39, phases/gates 46/46: all verbatim.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-deliverables.py",
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-deliverables.out",
+        "docs/delivery/test-evidence/DG0/domain/round-23/07b-deliverables-paraphrase-grep.log"
+      ]
+    },
+    {
+      "id": "DOM23-08-provenance-no-invented",
+      "procedure": "Assignment items 5 and 6. For all 93 SOURCE rows, check that the notes separate the playbook part, the master-prompt additions and the interpretations. Check that no USER/ENGINEERING row lacks an M citation. Scan the analysis and register for 'official PMI', 'PMI standard', 'certified' and 'official Mobily' claims that lack a negation or provisional qualifier. Check the #0078FF provisional wording in CLAUDE.md and agent-protocol.md.",
+      "command": "cd $TMPDIR/review-dom23 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-provenance-logic.py; grep -n 0078FF CLAUDE.md docs/delivery/agent-protocol.md",
+      "environment": "Fresh --no-local clone at 6438e20",
+      "expected": "No invented SOURCE substance and no unqualified official-PMI or Mobily claim",
+      "actual": "USER/ENGINEERING rows citing no M block: []. SOURCE rows citing no B block: []. Three consolidation rows (REQ-PB-042/058/069) use 'Source-grounded core' or 'AN-04 consolidation' notes instead of the Playbook/MP/Interpretation labels, but they correctly name the absorbed master-prompt rows. The shipped check_pb_provenance.py reports 0 problems (prefreeze). All 5 honesty hits are negations ('Nothing here claims official PMI status', 'the automated scan for claims of official PMI status'). #0078FF is labelled provisional in both files. The output is identical to round 22.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-provenance-logic.py",
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-provenance-logic.out",
+        "docs/delivery/test-evidence/DG0/domain/round-23/13b-dlv-rows.log"
+      ]
+    },
+    {
+      "id": "DOM23-09-operating-logic",
+      "procedure": "Assignment item 7. Read in full the rows that carry each rule: RAG from trajectory, never from task completion; separate delivery, adoption, validated-value and closure states; forecast never counted as validated; Finance validates while the Business Owner stays accountable; a shared benefit counted once, with allocation ≤100% and the unallocated part shown; gates as evidence-snapshot approvals; DG0–DG7 kept separate from G1–G6.",
+      "command": "cd $TMPDIR/review-dom23 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-provenance-logic.py",
+      "environment": "Fresh --no-local clone at 6438e20",
+      "expected": "Each rule specified with a concrete, testable acceptance",
+      "actual": "REQ-PB-063 and REQ-S07-007: all tasks complete with the KPI below trajectory gives Red/Amber, and missing data gives Unknown. REQ-S04-002: completing every task leaves the gate Draft, and the snapshot is immutable. REQ-PB-009 and REQ-S03-003: four independent statuses, and closure returns 409 while validation is pending. REQ-S08-001 and REQ-S13-008: forecast never in the validated total, with provisional labels. REQ-PB-013: a BO calling validate gets 403. REQ-PB-058: a 10M SAR shared benefit appears once. Permissions §5: FIN-exclusive validation, ADM has no approval or validation rights, and automation never approves. DLV-002: gate records only DG0–DG7, and G6 never implies DG7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-provenance-logic.out",
+        "docs/delivery/test-evidence/DG0/domain/round-23/12-glossary-journeys-permissions.log"
+      ]
+    },
+    {
+      "id": "DOM23-10-master-prompt-sample",
+      "procedure": "Assignment item 8. Parse master-prompt.anchored.md into its blocks and check the IDs against master-prompt-coverage.csv and the reciprocal register citations. Draw a seeded random sample (seed 23, a new sample; the only change to my round-22 script is the seed) stratified across the preamble, §0–§21 and table rows. Read each block's text against its disposition or rationale and the mapped rows.",
+      "command": "cd $TMPDIR/review-dom23 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-master-prompt-sample.py",
+      "environment": "Fresh --no-local clone at 6438e20",
+      "expected": "423 = 423, 0 structural problems, and a sample of ≥60 blocks with sensible mappings",
+      "actual": "423 blocks, same IDs, 0 structural problems. The sample has 92 blocks: M0001 M0003 M0004 M0005 M0019 M0021 M0024 M0029 M0033 M0039 M0044 M0050 M0053 M0059 M0074 M0075 M0078 M0080 M0083 M0085 M0089 M0091 M0107 M0111 M0114 M0115 M0120 M0121 M0127 M0132 M0135 M0137 M0144 M0152 M0155 M0156 M0159 M0161 M0162 M0169 M0170 M0174 M0176 M0182 M0184 M0191 M0192 M0201 M0204 M0208 M0215 M0217 M0218 M0225 M0230 M0237 M0241 M0246 M0251 M0252 M0258 M0261 M0262 M0263 M0283 M0293 M0297 M0298 M0308 M0315 M0323 M0331 M0335 M0336 M0337 M0342 M0345 M0346 M0352 M0356 M0358 M0373 M0374 M0377 M0382 M0388 M0394 M0398 M0404 M0417 M0418 M0423. All map sensibly. The table rows (§0.2 agents, §4 phase and gate rows, §5 T04/T07/T09/T16, §9 waves, §10 forums, T11, RACI, §12 automations, §13 T10, §14 questions, §15 tokens, §20 A-tests, §21 stages) map to their specific rows. The non-requirements are the title, headings, header rows and reference entries, each with a covering pointer. M0127→REQ-PB-029 is a secondary citation (the charter is a §5 native form, also cited from M0146).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-master-prompt-sample.py",
+        "docs/delivery/test-evidence/DG0/domain/round-23/10-master-prompt-sample.txt"
+      ]
+    },
+    {
+      "id": "DOM23-11-staging",
+      "procedure": "Assignment item 9. Compare each template row's final_gate with §21 M0405–M0407: T01–T04 and G1–G3 at DG2, T05–T09 and G4 at DG3, T10–T16 and G5–G6 at DG4. Check that every deviation is justified by its increments.",
+      "command": "cd $TMPDIR/review-dom23 && python3 docs/delivery/test-evidence/DG0/domain/round-23/r23-staging.py",
+      "environment": "Fresh --no-local clone at 6438e20",
+      "expected": "final_gate and increments follow §21, and deviations are justified",
+      "actual": "Every template row matches §21 except two justified later gates. REQ-PB-032 (outcome hierarchy including initiative contribution) is at DG3 with increments P2;P3, because initiatives arrive in P3. REQ-PB-093 (Playbook Studio weight configuration) is at DG5 with increment P5, because Studio is P5. Acceptances are concrete, such as API 403/409, 'Red', the '10 million SAR once' case and A-test references. The output is byte-identical to round 22.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-staging.py",
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-staging.out"
+      ]
+    },
+    {
+      "id": "DOM23-12-glossary-journeys-permissions",
+      "procedure": "Assignment item 10. Read sampled glossary English/Arabic pairs (methodology structure, roles, Realize, launch and reference), the user-journey headings with J5 Finance validation, J6 committee workflow and J7 BAU handover in full, and permissions-matrix §5 (separation of duties) and §7 (flagged assumptions).",
+      "command": "sed -n '28,66p;160,191p' docs/analysis/glossary.md; grep -n '^#' docs/analysis/user-journeys.md; sed -n 151,193p docs/analysis/user-journeys.md; sed -n 123,153p docs/analysis/permissions-matrix.md",
+      "environment": "Fresh --no-local clone at 6438e20",
+      "expected": "Sensible Arabic terms; journeys cover every phase and gate, modular entry, KPI update, Finance validation, committee, BAU handover and admin publishing; permissions respect the source roles, T11, the RACI, and admin ≠ approver",
+      "actual": "The Arabic terms are sensible and consistent, for example التحوّل, بوابة المرحلة, الراعي التنفيذي, المالك التشغيلي للأعمال, سجل المنافع and فحص سلامة التحوّل. The stage-gate entry states that G1–G6 are not DG0–DG7, and the PMI BRM entry says 'aligns with', not an official claim. Journeys J1–J8 cover My Work, all six phases with G1–G6, modular entry, the KPI update, Finance validation, the committee workflow, the BAU handover and administrator publishing. J5 has FIN only, never the submitter, and shared benefits counted once with allocations ≤100%. J7 has acceptance by the named receiving BO. Permissions §5: requester ≠ approver, ADM has no approval or validation rights, validation is FIN-exclusive while the BO stays accountable, and automation never approves. The gate-approver default (SP) and the T11 mappings are flagged as assumptions in §7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/12-glossary-journeys-permissions.log",
+        "docs/analysis/glossary.md",
+        "docs/analysis/user-journeys.md",
+        "docs/analysis/permissions-matrix.md"
+      ]
+    },
+    {
+      "id": "DOM23-13-dlv-rows",
+      "procedure": "Check REQ-DLV-001/002/020/032: status, final gate, the substance of the acceptance, and that every evidence entry exists. Corroborate against D-001/D-002, CLAUDE.md and agent-protocol.md, and against DOM23-02/03/04.",
+      "command": "python3 (inline) read requirements.csv rows + os.path.isfile on each evidence entry; grep D-001/D-002 decisions.md; grep 'G6 never implies' CLAUDE.md agent-protocol.md",
+      "environment": "Main tree (candidate content, identical to 6438e20 for these files)",
+      "expected": "All four rows IMPLEMENTED at DG0, all evidence existing, acceptance substance true",
+      "actual": "All four rows are ENGINEERING, IMPLEMENTED and final DG0, and all evidence entries exist (4, 3, 7 and 28 entries, 0 missing). D-001 records the playbook SHA-256 and D-002 the English edition, executed. CLAUDE.md says 'Product gate G6 never implies DG7', and agent-protocol says no agent grants business, Finance or IT approval. The register validates (prefreeze), and every B and M block has one coverage row (DOM23-04/10). The P0 outputs exist: extraction, inventory, glossary, IDs, journeys, stage plan, agent definitions, validator and decisions.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-001", "REQ-DLV-002", "REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/13b-dlv-rows.log",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "id": "DOM23-14-prefreeze",
+      "procedure": "Run tools/gates/prefreeze.sh DG0 in a fresh --no-local clone, as the round-23 common assignment requires. It covers extraction, the gate validator and guard tests, runner tests, register rules, register merge, pipeline state, the analysis checks and candidate equality.",
+      "command": "cd $TMPDIR/review-dom23 && bash tools/gates/prefreeze.sh DG0",
+      "environment": "Fresh --no-local clone at 6438e20 (the stages.json there is at FIXING, before the freeze commit)",
+      "expected": "All steps PASS, exit 0",
+      "actual": "11/11 PASS: extraction; gate validator and guard tests; runner tests; register rules DG0; register equals the merge of parts; pipeline; check_acceptance_map; check_counts; check_pb_provenance (93 rows, 0 problems); check_test_refs (0 problems); working-tree candidate equals HEAD (e6df2e1e…). Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-020", "REQ-DLV-032"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/13-prefreeze.log"
+      ]
+    },
+    {
+      "id": "DOM23-15-f013-reverify",
+      "procedure": "Re-verify my round-22 F-DG0-013. Check that 450c756 and cb76260 are absent in the main repository and that there are no unreachable commits. Check that 450c756 is absent in both a --no-local and a plain local-path clone. Run qa's real-repo dry-run (--no-local) and my unchanged local-clone variant, and diff the outputs with hashes stripped. Check that the F-DG0-013 fix_revision is an ancestor of the candidate.",
+      "command": "git cat-file -t 450c756f679a911b4c736e856fc9dd5e9b2c89a8; git cat-file -t cb76260; git fsck --unreachable --no-reflogs | grep commit; git -C <clone> cat-file -e 450c756…^{commit} (both clone modes); node docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs /home/user/My-owns; node docs/delivery/test-evidence/DG0/domain/round-23/r23-dry-run-local-clone.mjs /home/user/My-owns; git merge-base --is-ancestor 7180d97 6438e20",
+      "environment": "Main repository (HEAD 78954a6, 207 commits) plus --no-local and local-path clones in $TMPDIR",
+      "expected": "The orphan is absent everywhere, and the dry-run is identical across clone modes with 0 PRUNED, RECORD-LESS or DROPPED errors",
+      "actual": "cat-file exits 128 for both objects, and there are 0 unreachable commits. 450c756 is absent (exit 128) in both clone modes. Both dry-runs report PRUNED 0/0/0, RECORD-LESS 0 and DROPPED 0, and their outputs are identical once hashes are stripped. The 8 unfinished-round errors and the 51 OTHER errors are round-23 records not yet written, the six FIXED_PENDING_VERIFICATION findings, the F-DG0-147/149 auditor acceptances, requirement coverage pending the round-23 records, and the draft gate's final_gate_ids. Fix 7180d97 is an ancestor of 6438e20 (exit 0). F-DG0-013 is CLOSED_VERIFIED in my verifications sidecar.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/15c-orphan-450c756-clone-modes.log",
+        "docs/delivery/test-evidence/DG0/domain/round-23/15-real-repo-dry-run.log",
+        "docs/delivery/test-evidence/DG0/domain/round-23/15b-real-repo-dry-run-local-clone.log",
+        "docs/delivery/test-evidence/DG0/domain/round-23/r23-dry-run-local-clone.mjs",
+        "docs/delivery/test-evidence/DG0/domain/round-23/17-own-findings.log"
+      ]
+    },
+    {
+      "id": "DOM23-16-d039-doc-claims",
+      "procedure": "As the assignment requires, confirm that the D-039 edit to decisions.md does not misstate any business, operating-logic or source-provenance claim, and that the D-038 correction and the gc description are accurate. Cross-check D-039's strictness claims against the code and the named unit tests (delivery tooling, corroboration only), and look for any other document that still describes the removed tolerance.",
+      "command": "git diff --word-diff=plain 480cd3f 6438e20 -- docs/delivery/decisions.md; node --test --test-name-pattern=D-039 tools/gates/tests/validator.test.mjs; grep -n commitPresent tools/gates/lib/rules.mjs; grep -niE 'absent|tolerat|D-037' docs/delivery/threat-model.md docs/delivery/agents.md docs/delivery/agent-protocol.md CLAUDE.md",
+      "environment": "Main repository and the --no-local clone at 6438e20",
+      "expected": "D-039 is engineering-only and accurate, with no business or provenance misstatement",
+      "actual": "D-039 is purely delivery tooling. It makes no business, operating-logic, G1–G6 or source-provenance claim. The D-038 phrase 'uniformly absent in every clone' is replaced by 'absent from transport (--no-local, CI fetch-depth: 0)' with an explicit correction note on the unreachable object and the gc, which matches DOM23-15. One small imprecision: D-039 says the validator outcome was 'identical either way'. In my round 22 it was not identical before the round-22 import, and it became identical once F-DG0-150/151 were re-verified in round 22, which D-039 states as the reason. That is not material. The 4 D-039 unit tests pass (164/246, 164, 165, 248). The code is strict: checkInvocation and checkClosure reject absent heads and fixes, and the round-ancestry test is skipped only when the round's source_commit is absent, with the gate-ancestry test still applied, as D-039 states. No other document still describes the tolerance. The stale commitPresent() header comment (rules.mjs 596-600) still describes the removed D-037 tolerance, so I raised F-DG0-014 (Low, non-mandatory).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/16-d039-doc-diff.log",
+        "docs/delivery/test-evidence/DG0/domain/round-23/18-d039-tests.log",
+        "docs/delivery/test-evidence/DG0/domain/round-23/19-stale-commitPresent-comment.log",
+        "docs/delivery/decisions.md#D-039"
+      ]
+    },
+    {
+      "id": "DOM23-17-own-findings",
+      "procedure": "List my own earlier findings (reported_by domain-reviewer) in findings.json with their status and fix_revision, to decide which need re-verification this round.",
+      "command": "python3 (inline) filter docs/delivery/findings.json by reported_by == domain-reviewer; git merge-base --is-ancestor <fix> 6438e20",
+      "environment": "Main tree at 78954a6",
+      "expected": "Only F-DG0-013 pending my verification",
+      "actual": "F-DG0-001..012 are CLOSED_VERIFIED. F-DG0-013 is FIXED_PENDING_VERIFICATION at 7180d97, which is an ancestor of the candidate, and it is verified in DOM23-15. New this round: F-DG0-014 (Low, OPEN).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/17-own-findings.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG0-014"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/domain/round-23/00-candidate.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/01-scope-diff.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/02-check-extraction.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/r23-extraction.out",
+    "docs/delivery/test-evidence/DG0/domain/round-23/r23-coverage.out",
+    "docs/delivery/test-evidence/DG0/domain/round-23/r23-template-columns.out",
+    "docs/delivery/test-evidence/DG0/domain/round-23/r23-template-values.out",
+    "docs/delivery/test-evidence/DG0/domain/round-23/r23-deliverables.out",
+    "docs/delivery/test-evidence/DG0/domain/round-23/07b-deliverables-paraphrase-grep.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/r23-provenance-logic.out",
+    "docs/delivery/test-evidence/DG0/domain/round-23/10-master-prompt-sample.txt",
+    "docs/delivery/test-evidence/DG0/domain/round-23/r23-staging.out",
+    "docs/delivery/test-evidence/DG0/domain/round-23/12-glossary-journeys-permissions.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/13-prefreeze.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/13b-dlv-rows.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/15-real-repo-dry-run.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/15b-real-repo-dry-run-local-clone.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/15c-orphan-450c756-clone-modes.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/16-d039-doc-diff.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/17-own-findings.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/18-d039-tests.log",
+    "docs/delivery/test-evidence/DG0/domain/round-23/19-stale-commitPresent-comment.log"
+  ],
+  "reviewed_at": "2026-09-30T13:03:31Z",
+  "summary": "PASS. The P0 specification (sources, analysis, register) is byte-identical to round 22, and every domain check re-run against candidate e6df2e1e passes: extraction fidelity (0 missing paragraphs and cells), coverage (165/165, 93 SOURCE rows grounded), T01–T16 columns and value lists, first-class deliverables, provenance honesty, operating-logic semantics, a 92-block master-prompt sample (seed 23), staging, glossary, journeys and permissions, the DLV rows and prefreeze (11/11). D-039 makes no business or provenance misstatement. F-DG0-013 is CLOSED_VERIFIED: the orphan is pruned, and the gate dry-run is identical across clone modes. New: F-DG0-014 (Low, non-mandatory), a stale code comment in rules.mjs that still describes the removed D-037 tolerance."
+}

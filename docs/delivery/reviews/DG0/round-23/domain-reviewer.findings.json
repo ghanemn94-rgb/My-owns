@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG0-014",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The commitPresent() header comment in tools/gates/lib/rules.mjs still says checkClosure and checkInvocation tolerate an absent commit (D-037), which D-039 removed",
+      "reproduction": "In a --no-local clone at 6438e20, `sed -n 596,601p tools/gates/lib/rules.mjs` reads: 'Provenance checks that need such a commit tolerate its genuine absence (D-035 for findManifest; D-037 for checkClosure and checkInvocation), while every check whose commit IS present still runs'. `grep -n commitPresent tools/gates/lib/rules.mjs` shows its only callers are checkInvocation (line 397), which rejects an absent head, and checkClosure (lines 731 and 733). Line 731 rejects an absent fix. Line 733 skips only the round-ancestry test when the round's source_commit is absent, and the gate-ancestry test still runs. The in-function comments at lines 390 and 723-729 and decisions.md D-039 correctly say there is no absent-commit escape (19-stale-commitPresent-comment.log).",
+      "expected": "After D-039, the header comment should say that the only absence tolerance is findManifest's content-preserving one (D-035), plus the skipped round-ancestry test when a round's source_commit is absent. It should not describe checkClosure/checkInvocation as tolerating an absent fix or head.",
+      "actual": "The comment describes the removed D-037 behaviour. Behaviour is correct and strict (the unit tests 'D-039 / F-DG0-164/246' and 'D-039 / F-DG0-164' pass, see 18-d039-tests.log). The inaccuracy is in a code comment only and makes no business, operating-logic or source-provenance claim. It could mislead a future maintainer or reviewer about what the validator tolerates, the same class of wording issue as F-DG0-013. I would accept it as a Low observation or as a one-line comment fix in the next stage.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/domain/round-23/19-stale-commitPresent-comment.log",
+        "docs/delivery/test-evidence/DG0/domain/round-23/18-d039-tests.log",
+        "tools/gates/lib/rules.mjs",
+        "docs/delivery/decisions.md#D-039"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-23/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T13:03:31Z",
+          "status": "OPEN",
+          "note": "raised by domain-reviewer in DG0 round 23 (Low, non-mandatory; comment-only inaccuracy, behaviour correct; acceptable as an observation)"
+        }
+      ]
+    }
+  ]
+}
