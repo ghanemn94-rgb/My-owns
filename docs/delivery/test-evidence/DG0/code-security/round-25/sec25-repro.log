@@ -1,0 +1,113 @@
+######## commit 6db3b8388699b767032b4f92547ceb79edf74519
+# clone: --no-local, shallow=false, HEAD=6db3b8388699b767032b4f92547ceb79edf74519
+SEC24-1 fix-in-verifier-head: genuine=false forged=false
+SEC24-1 genuine round 2 errors: 1
+  finding F-DG0-101 (High, mandatory): fix f0aa79a141 is not in the verifying run's starting history (5ef50da97d); it was not in the candidate the reviewer saw
+SEC24-1 forged round 2 errors: 1
+  finding F-DG0-101 (High, mandatory): fix 4e8d38d8dd is not in the verifying run's starting history (c2b514ef23); it was not in the candidate the reviewer saw
+SEC24-1 run-head rejection: genuine=true forged=true
+SEC24-2 errors: 0
+SEC24-3 rejected? {"zeros":true,"absent":true,"typo":true,"short":true,"upper":true}
+SEC24-4 rejected? {"unknown":true,"HEAD":true,"missing":true,"null":true,"zeros":true,"absent-40hex":true,"UPPERHEX":true,"short":true}
+SEC24-5 (a) downgrade errors: 4
+  docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json: finding F-DG0-101 severity ("Low") differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json ("High"); a later round cannot reclassify a finding
+  docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json: finding F-DG0-101 mandatory_violation (false) differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json (true); a later round cannot reclassify a finding
+  finding F-DG0-101: severity in findings.json ("Low") differs from the reviewer's ("High")
+  finding F-DG0-101: mandatory_violation in findings.json (false) differs from the reviewer's (true)
+SEC24-5 (c) identical re-listing errors: 0
+SEC24-6 fix in round-2 frozen candidate (source_commit ffcf164c43): false; verifier head content hashes to round-2 candidate: false
+SEC24-6 errors: 0
+SEC25-1 fix in round-2 frozen candidate: false; anchors fired: {"a1":false,"a2":false,"a3":false}
+SEC25-1 errors: 0
+SEC25-2 anchors fired: {"a1":false,"a2":true,"a3":false}
+SEC25-2 errors: 1
+  finding F-DG0-101 (High, mandatory): fix c6929fb88e is not in the verifying run's starting history (a91d065947); it was not in the candidate the reviewer saw
+SEC25-3 fix committed after the round-2 freeze commit: true; verifier head content == round-2 candidate: false; anchors fired: {"a1":false,"a2":false,"a3":false}
+SEC25-3 errors: 0
+SEC25-4 errors: 0
+✔ SEC24-1 F-DG0-166/249: the round-23 forge (superseded round, absent source_commit, genuine verifier run, fix committed AFTER the run started) -- genuine and forged (790.796931ms)
+✔ SEC24-2 control: forged superseded round with a REAL fix (in the verifier's head and the gate candidate) passes -- no regression; findManifest D-035 tolerance only (313.153673ms)
+✔ SEC24-3 F-DG0-164/246 still hold: absent / typo'd / short / uppercase fix_revision rejected (forged round) (1686.230071ms)
+✔ SEC24-4 F-DG0-164 still holds: the verifying run's head_commit_at_start missing/unknown/HEAD/null/zeros/absent/UPPER/short is rejected (2582.333144ms)
+✔ SEC24-5 F-DG0-165 still holds: later-round severity/mandatory downgrade rejected; identical re-listing accepted (641.086983ms)
+✔ SEC24-6 new probe (GENUINE round, no forged metadata): a candidate-scope fix committed AFTER the round-2 freeze but BEFORE the verifier's run started (391.999785ms)
+✖ SEC25-1 F-DG0-168 (my round-24 SEC24-6): GENUINE round 2, candidate-scope fix committed AFTER the freeze and BEFORE the verifier's run started (401.571833ms)
+✔ SEC25-2 F-DG0-166/249 (round-23 forge): superseded round, ABSENT source_commit, fix committed AFTER the verifier's run started (358.433734ms)
+✔ SEC25-3 NEW PROBE (the two combined): superseded round with a self-declared ABSENT source_commit, fix committed AFTER that round's freeze but BEFORE the verifier's run started (376.827023ms)
+✔ SEC25-4 control: genuine round, fix committed BEFORE the freeze (the stock fixture) -- 0 errors, no regression (296.086976ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 9
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8500.526003
+✖ failing tests:
+test at tools/gates/tests/sec25.test.mjs:1446:1
+✖ SEC25-1 F-DG0-168 (my round-24 SEC24-6): GENUINE round 2, candidate-scope fix committed AFTER the freeze and BEFORE the verifier's run started (401.571833ms)
+  AssertionError [ERR_ASSERTION]: anchor 1 must reject a post-freeze fix in a genuine round
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.Wz0T1n/claude-0/sec25-repro.p9jnzC/c/tools/gates/tests/sec25.test.mjs:1460:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1047:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+      at Test.postRun (node:internal/test_runner/test:1173:19)
+      at Test.run (node:internal/test_runner/test:1101:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:744:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit=1
+######## commit 2386a0fbd0795f3f09ec2802112e84fae2d616f9
+# clone: --no-local, shallow=false, HEAD=2386a0fbd0795f3f09ec2802112e84fae2d616f9
+SEC24-1 fix-in-verifier-head: genuine=false forged=false
+SEC24-1 genuine round 2 errors: 2
+  finding F-DG0-101 (High, mandatory): fix 282643f441 is not in the verified round-2 candidate (8935421286)
+  finding F-DG0-101 (High, mandatory): fix 282643f441 is not in the verifying run's starting history (ec449b0511); it was not in the candidate the reviewer saw
+SEC24-1 forged round 2 errors: 1
+  finding F-DG0-101 (High, mandatory): fix 8f363769a8 is not in the verifying run's starting history (866cc49ce2); it was not in the candidate the reviewer saw
+SEC24-1 run-head rejection: genuine=true forged=true
+SEC24-2 errors: 0
+SEC24-3 rejected? {"zeros":true,"absent":true,"typo":true,"short":true,"upper":true}
+SEC24-4 rejected? {"unknown":true,"HEAD":true,"missing":true,"null":true,"zeros":true,"absent-40hex":true,"UPPERHEX":true,"short":true}
+SEC24-5 (a) downgrade errors: 4
+  docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json: finding F-DG0-101 severity ("Low") differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json ("High"); a later round cannot reclassify a finding
+  docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json: finding F-DG0-101 mandatory_violation (false) differs from its first raising sidecar docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json (true); a later round cannot reclassify a finding
+  finding F-DG0-101: severity in findings.json ("Low") differs from the reviewer's ("High")
+  finding F-DG0-101: mandatory_violation in findings.json (false) differs from the reviewer's (true)
+SEC24-5 (c) identical re-listing errors: 0
+SEC24-6 fix in round-2 frozen candidate (source_commit 8b1cbd9d4f): false; verifier head content hashes to round-2 candidate: false
+SEC24-6 errors: 1
+  finding F-DG0-101 (High, mandatory): fix 802e3211d3 is not in the verified round-2 candidate (8b1cbd9d4f)
+SEC25-1 fix in round-2 frozen candidate: false; anchors fired: {"a1":true,"a2":false,"a3":false}
+SEC25-1 errors: 1
+  finding F-DG0-101 (High, mandatory): fix 866c2a54a4 is not in the verified round-2 candidate (fa32d705d4)
+SEC25-2 anchors fired: {"a1":false,"a2":true,"a3":false}
+SEC25-2 errors: 1
+  finding F-DG0-101 (High, mandatory): fix e4816e62aa is not in the verifying run's starting history (912f1fab8d); it was not in the candidate the reviewer saw
+SEC25-3 fix committed after the round-2 freeze commit: true; verifier head content == round-2 candidate: false; anchors fired: {"a1":false,"a2":false,"a3":false}
+SEC25-3 errors: 0
+SEC25-4 errors: 0
+✔ SEC24-1 F-DG0-166/249: the round-23 forge (superseded round, absent source_commit, genuine verifier run, fix committed AFTER the run started) -- genuine and forged (883.494676ms)
+✔ SEC24-2 control: forged superseded round with a REAL fix (in the verifier's head and the gate candidate) passes -- no regression; findManifest D-035 tolerance only (364.643999ms)
+✔ SEC24-3 F-DG0-164/246 still hold: absent / typo'd / short / uppercase fix_revision rejected (forged round) (1631.257728ms)
+✔ SEC24-4 F-DG0-164 still holds: the verifying run's head_commit_at_start missing/unknown/HEAD/null/zeros/absent/UPPER/short is rejected (2640.817497ms)
+✔ SEC24-5 F-DG0-165 still holds: later-round severity/mandatory downgrade rejected; identical re-listing accepted (662.202951ms)
+✔ SEC24-6 new probe (GENUINE round, no forged metadata): a candidate-scope fix committed AFTER the round-2 freeze but BEFORE the verifier's run started (403.00192ms)
+✔ SEC25-1 F-DG0-168 (my round-24 SEC24-6): GENUINE round 2, candidate-scope fix committed AFTER the freeze and BEFORE the verifier's run started (368.870539ms)
+✔ SEC25-2 F-DG0-166/249 (round-23 forge): superseded round, ABSENT source_commit, fix committed AFTER the verifier's run started (371.274788ms)
+✔ SEC25-3 NEW PROBE (the two combined): superseded round with a self-declared ABSENT source_commit, fix committed AFTER that round's freeze but BEFORE the verifier's run started (393.703641ms)
+✔ SEC25-4 control: genuine round, fix committed BEFORE the freeze (the stock fixture) -- 0 errors, no regression (318.039969ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8697.633943
+exit=0

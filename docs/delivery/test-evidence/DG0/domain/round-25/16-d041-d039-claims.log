@@ -1,0 +1,18 @@
+## round-24 verdicts & findings (claims in D-041)
+code-security-reviewer.json code-security-reviewer PASS ["F-DG0-168"]
+domain-reviewer.json domain-reviewer PASS []
+qa-verifier.json qa-verifier PASS []
+code-security-reviewer.verifications.json F-DG0-166:CLOSED_VERIFIED F-DG0-167:CLOSED_VERIFIED
+domain-reviewer.verifications.json F-DG0-014:CLOSED_VERIFIED
+qa-verifier.verifications.json F-DG0-249:CLOSED_VERIFIED
+code-security-reviewer.findings.json F-DG0-168:Low:false
+## gate record present?
+ls: cannot access 'docs/delivery/gates/': No such file or directory
+## D-039 row
+| D-039 | 2026-09-30 | delivery-orchestrator | **Round-22 repairs: the absent-commit tolerance is REMOVED (it was forgeable and, on the complete history, unnecessary); immutable-field drift, the dangling orphan and the shallow test are closed (F-DG0-164/246 Med, 013/165/247/248 Low).** Round 22 verified the D-038 fixes CLOSED_VERIFIED (F-DG0-150/151 re-verified against the current candidate; 158/159/160/161/162/163; 238; 245), and the new findings converge on *dropping* the tolerance machinery rather than scoping it further.<br>• **F-DG0-164 (Med, code-security) + F-DG0-246 (Med, qa): drop the checkClosure/checkInvocation absent-commit tolerance.** D-038 keyed the tolerance on "the verifying round's `source_commit` is absent", but that is **orchestrator-written metadata** — `checkReviewRounds` only requires it to equal the round's committed manifest `source_commit`, and `findManifest` tolerates a manifest whose `source_commit` does not exist — so a forged superseded round (a schema-valid manifest + stages entry naming a non-existent `source_commit`, no run evidence forged) re-opened the escape and closed a High finding with an **all-zero `fix_revision`**, skipping the gate-candidate ancestry check. And it was **unnecessary**: after round 22 every closure is re-verified against a retained candidate, and `validateGate` already refuses a shallow clone (F-DG0-160), so on the complete history every real fix commit and verifier head is present. **Fix:** `checkClosure` now requires a CLOSED_VERIFIED `fix_revision` to be a full 40-hex commit that is **present** and an ancestor of the verifying round's candidate (when its `source_commit` resolves) **and** the gate candidate — an absent/all-zero/typo'd fix is always rejected. `checkInvocation` requires `head_commit_at_start` to be well-formed 40-hex, **present**, and to contain the manifest. The only remaining absence tolerance is `findManifest`'s (D-035), which is **content-preserving** (the manifest's entries must still hash to its `candidate_id`) and covers only round 18's write-once orphan manifest. Tests: validator.test.mjs "D-039 / F-DG0-164/246" and "D-039 / F-DG0-164" (a forged-absent round no longer excuses an absent fix or head).<br>• **F-DG0-165 (Low, code-security): immutable fields are fixed by the first raising sidecar.** `collectRaisedFindings` kept only the latest sidecar version, and a non-gate-round findings sidecar is bound to no run, so an added later-round sidecar could silently downgr
+## D-039 gc claim: objects 450c756, cb76260
+main repo: git cat-file -t 450c756 -> fatal: Not a valid object name 450c756
+no-local clone: git cat-file -t 450c756 -> fatal: Not a valid object name 450c756
+main repo: git cat-file -t cb76260 -> fatal: Not a valid object name cb76260
+no-local clone: git cat-file -t cb76260 -> fatal: Not a valid object name cb76260
+## D-041 domain-term scan (PMI|Mobily|G1-G6|business approval|Finance|validated value): 0 hits

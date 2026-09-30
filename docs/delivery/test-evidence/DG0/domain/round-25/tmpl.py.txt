@@ -1,0 +1,27 @@
+import re,csv
+pb=open('docs/source/playbook.md',encoding='utf-8').read()
+reg=open('docs/delivery/requirements.csv',encoding='utf-8').read()
+fi=open('docs/analysis/field-inventory.md',encoding='utf-8').read()
+spec=open('docs/delivery/requirements-spec.md',encoding='utf-8').read()
+def n(s): return re.sub(r'\s+',' ',s.replace('—','-').replace('–','-')).lower()
+R,F=n(reg),n(fi)
+# template header rows: find tables following "Template N"
+tm=re.findall(r'Template (\d+) — ([^<]+?) <!-- (B\d+) -->\s+<!-- (B\d+) table -->\s+(\|[^\n]+)',pb)
+tot=0;miss=[]
+for num,name,_,tb,hdr in tm:
+    cols=[c.strip() for c in hdr.strip('|').split('|')]
+    for c in cols:
+        tot+=1
+        if n(c) not in R or n(c) not in F: miss.append(('T%02d'%int(num),c,'reg' if n(c) in R else 'NOTreg','fi' if n(c) in F else 'NOTfi'))
+    print('T%02d'%int(num),name.strip(),len(cols),'cols')
+# charter
+ch=re.search(r'B0035 table -->\n(.*?)\n\n',pb,re.S).group(1)
+chf=[l.split('|')[1].strip() for l in ch.splitlines()[2:]]
+for c in chf:
+    tot+=1
+    if n(c) not in R or n(c) not in F: miss.append(('CHARTER',c,n(c) in R,n(c) in F))
+print('charter fields',len(chf))
+print('checked',tot,'missing',miss)
+vals=['H / M / L','Support / Neutral / Resist','Decision / Tech / Data / Vendor','Risk','Assumption','Issue','Dependency','25%','20%','15%','0-6 weeks','1-3 months','3-9 months','6-18 months','Sponsor + charter','Prioritized initiatives','Evidence + capacity','Stable solution','Approved case, owners, stage gates','Measured pilot results','Adoption + KPI movement','Benefits sustained, ownership transferred','5 working days','Next SteerCo / urgent route','10 working days','Per release plan','RAG based on target trajectory, not activity completion','RAG based on validated benefit gap','RAG by milestone + outcome risk','RAG by decision date / critical path','Red if executive decision overdue','RAG vs adoption curve','A/R','Comms / training / involvement / incentive','Revenue / cost / avoided cost / capital efficiency','Δ attach × customers × ARPU','Volume × Δ unit cost']
+for v in vals:
+    print(('OK  ' if n(v) in R or n(v).replace(' / ','/') in R else 'MISS'),'reg' ,('fi' if n(v) in F or n(v).replace(' / ','/') in F else '--'),v)

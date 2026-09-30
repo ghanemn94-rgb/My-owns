@@ -1,0 +1,21 @@
+# agents.md claims vs raw evidence, 2026-09-30T14:00:17Z, repo HEAD 7f7995a
+$ git diff --stat 6db3b83 2386a0f -- docs/delivery/agents.md .claude/agents tools/agents
+(empty = unchanged since the round-24 candidate)
+$ ls .claude/agents | wc -l; ls .claude/agents
+10
+backend-workflow-engineer.md code-security-reviewer.md devops-engineer.md domain-reviewer.md frontend-ux-engineer.md kpi-benefits-engineer.md qa-verifier.md release-auditor.md solution-architect.md transformation-analyst.md 
+$ grep -o 'model: [a-z0-9-]*' .claude/agents/*.md | sort | uniq -c
+     10 model: inherit
+$ round-25 run directories (distinct session ids, model):
+DG0-T-DG0-REV-DOM-R25-domain-reviewer-20260930T134847Z-a352bf60  files=meta.json,result.json,sandbox.json,settings.json,stderr.log,transcript.jsonl.gz,
+DG0-T-DG0-REV-QA-R25-qa-verifier-20260930T134856Z-1ec46e02  files=settings.json,stderr.log,transcript.jsonl,
+DG0-T-DG0-REV-SEC-R25-code-security-reviewer-20260930T134851Z-0325bb77  files=meta.json,result.json,sandbox.json,settings.json,stderr.log,transcript.jsonl.gz,
+$ grep -n -i 'model' docs/delivery/agents.md | head
+36:claude -p --agent <agent> --model <orchestrator model> --permission-mode auto \
+48:The validator does not trust `tool_authored` alone. It replays the hash-bound transcript itself and compares the result with the file (D-021). The runner snapshots the tree before and after the run. For review roles, the runner auto-commits the run directory and the reviewer's tool-authored files, and fails with exit 70 if that commit fails (D-021). It records `docs/delivery/runs/<DGx>/<run-id>/meta.json` (role, the run's `outputs` (path → SHA-256) and `written_by_tools`, stage, task, session ID, model, assignment path and SHA-256, start commit, start and finish times, exit code, turns, models used, classifier-outage resumes, and the SHA-256 of `result.json` and `transcript.jsonl.gz`), `result.json` (the final message) and `transcript.jsonl.gz` (the full stream transcript). Run IDs include the session prefix, and directories are never reused (F-DG0-108). The arguments are validated. If a run stops only because the permission classifier returned no verdict repeatedly, the runner resumes the same session up to 6 times (D-019). The `invocation_reference` used in review records is `{kind, run_id, session_id}`. The validator refuses any review, audit or finding verification unless all of these hold for its run:
+64:4. `model: inherit` in a separate CLI process resolved to the CLI default (`claude-sonnet-5`), not the orchestrator's model. The runner passes `--model` explicitly, set to the orchestrator's model (`claude-opus-5-5`), so each agent really inherits it. Claude Code also invokes `claude-haiku-4-5` internally for auxiliary tasks; it is listed under models used.
+77:| Agent | Run ID | Session ID (invocation reference) | Models used | Out-of-scope write | In-scope write | Tools reported |
+90:Result: 10/10 definitions load and run as separate invocations, with 10 distinct session IDs, all on the orchestrator's model. Out-of-scope writes were blocked 10/10, in-scope writes succeeded 10/10, and no probe file exists under `docs/source/`. The in-scope probe files are under `docs/delivery/handbacks/DG0/agent-load/` and `docs/delivery/test-evidence/DG0/agent-load/`.
+117:The scope of the controls is in `docs/delivery/threat-model.md`.
+{'role': 'domain-reviewer', 'model_requested': 'claude-opus-5-5', 'head_commit_at_start': 'e84c39334101d558fc80c08e7301fc63b54766c5', 'result_session_id': 'a352bf60-b7c2-4906-b2a5-e68ad644f5fb', 'models_used': ['claude-haiku-4-5-20251001', 'claude-opus-5-5']}
+{'role': 'code-security-reviewer', 'model_requested': 'claude-opus-5-5', 'head_commit_at_start': 'e84c39334101d558fc80c08e7301fc63b54766c5', 'result_session_id': '0325bb77-f26b-4752-9766-47feab7425df', 'models_used': ['claude-haiku-4-5-20251001', 'claude-opus-5-5']}

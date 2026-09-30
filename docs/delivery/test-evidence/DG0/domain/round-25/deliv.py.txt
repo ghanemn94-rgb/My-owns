@@ -1,0 +1,32 @@
+import re,glob,json
+pb=open('docs/source/playbook.md',encoding='utf-8').read()
+corpus=''
+for f in ['docs/delivery/requirements.csv','docs/delivery/requirements-spec.md']+glob.glob('docs/analysis/**/*.md',recursive=True)+glob.glob('docs/analysis/**/*.csv',recursive=True):
+    if 'source-coverage' in f: continue
+    corpus+=open(f,encoding='utf-8').read()+'\n'
+def n(s): 
+    s=s.replace('—','-').replace('–','-').replace('“','"').replace('”','"').replace('’',"'").replace('☐','')
+    s=re.sub(r'<br>',' ',s); s=re.sub(r'[*`|\\]','',s)
+    return re.sub(r'\s+',' ',s).strip().lower()
+C=n(corpus); Cns=re.sub(r'[^a-z0-9%]','',C)
+blocks={}
+for m in re.finditer(r'<!-- (B\d{4}) table -->\n((?:\|[^\n]*\n)+)',pb): blocks[m[1]]=m[2]
+for m in re.finditer(r'^(.+?) <!-- (B\d{4}) -->$',pb,re.M): blocks.setdefault(m[2],m[1])
+tables=['B0009','B0016','B0018','B0021','B0023','B0024','B0032','B0037','B0048','B0051','B0056','B0059','B0062','B0070','B0085','B0088','B0093','B0102','B0116','B0121','B0124','B0131','B0134','B0145','B0147','B0150','B0152','B0156']
+items=['B0004','B0008','B0011','B0012','B0013','B0014','B0015','B0027','B0039','B0040','B0041','B0042','B0043','B0046','B0054','B0063','B0068','B0077','B0084','B0091','B0105','B0109','B0110','B0111','B0112','B0113','B0114','B0115','B0119','B0136','B0137','B0138','B0139','B0140','B0141','B0144','B0158','B0159','B0160','B0161','B0162']
+tot=0; miss=[]
+for b in tables:
+    for line in blocks[b].splitlines():
+        if re.match(r'^\|[-|]+\|$',line): continue
+        for cell in line.strip('|').split('|'):
+            for part in re.split(r'<br>',cell):
+                p=n(part)
+                if not p or p.startswith('[write') or len(p)<3: continue
+                tot+=1
+                k=re.sub(r'[^a-z0-9%]','',p)
+                if k not in Cns: miss.append((b,part.strip()[:120]))
+for b in items:
+    tot+=1; k=re.sub(r'[^a-z0-9%]','',n(blocks[b]))
+    if k not in Cns: miss.append((b,blocks[b][:120]))
+print('cells/items checked:',tot,'not found verbatim:',len(miss))
+for m in miss: print('  ',m)

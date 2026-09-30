@@ -1,0 +1,19 @@
+# env: /home/user/My-owns, node v22.22.2, git 2.43.0, HEAD e84c393, 2026-09-30T13:49:46Z
+$ sha256sum docs/delivery/assignments/DG0/round-25/review-qa-verifier.md; git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG0; git diff --stat 2386a0fbd0795f3f09ec2802112e84fae2d616f9..HEAD; git diff --stat 6db3b8388699b767032b4f92547ceb79edf74519..2386a0fbd0795f3f09ec2802112e84fae2d616f9 -- $(python3 -c "import json;print(' '.join(e['path'] for e in json.load(open('docs/delivery/candidates/DG0/b77a1c6303fe7be1.manifest.json'))['entries']))")
+dae45e5027e3ecb84aaee0a040a83493afcaa1d1ea52fe44b204cf5dbfc4e29e  docs/delivery/assignments/DG0/round-25/review-qa-verifier.md
+e84c39334101d558fc80c08e7301fc63b54766c5
+false
+{"stage":"DG0","source":"working-tree","candidate_id":"sha256:b77a1c6303fe7be11fbdc858c2810329e947871d788d29b8f000cbd6dbfdcbab","files":91}
+ docs/delivery/assignments/DG0/round-25/audit.md    |  33 ++
+ .../DG0/round-25/review-code-security-reviewer.md  |  22 +
+ .../assignments/DG0/round-25/review-common.md      |  42 ++
+ .../DG0/round-25/review-domain-reviewer.md         |  24 ++
+ .../assignments/DG0/round-25/review-qa-verifier.md |  21 +
+ .../candidates/DG0/b77a1c6303fe7be1.manifest.json  | 473 +++++++++++++++++++++
+ docs/delivery/stages.json                          |  27 +-
+ 7 files changed, 637 insertions(+), 5 deletions(-)
+ docs/delivery/decisions.md           |  1 +
+ tools/gates/lib/rules.mjs            | 25 ++++++++++++++++---------
+ tools/gates/tests/validator.test.mjs |  9 +++++++--
+ 3 files changed, 24 insertions(+), 11 deletions(-)
+exit=0

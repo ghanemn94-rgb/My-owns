@@ -1,0 +1,16 @@
+## mutation test: delete D-041 anchor 1 (round.source_commit ancestry) from checkClosure in a disposable clone
+anchor-1 lines removed: 2
+ tools/gates/lib/rules.mjs | 2 --
+ 1 file changed, 2 deletions(-)
+$ node --test --test-name-pattern="F-DG0-110 / F-DG0-204" tools/gates/tests/validator.test.mjs  (MUTANT)
+not ok 1 - F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification sidecar and bound run
+    expected an error matching /is not in the verified round-2 candidate/, got:
+  expected: true
+# pass 0
+# fail 1
+exit=1 (expected non-zero: the test must detect the missing anchor)
+$ same test on the UNMUTATED candidate
+ok 1 - F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification sidecar and bound run
+# pass 1
+# fail 0
+exit=0

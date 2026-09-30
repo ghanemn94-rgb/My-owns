@@ -1,0 +1,26 @@
+import re,sys,html,unicodedata
+x=open(sys.argv[1],encoding='utf-8').read()
+# paragraph texts
+paras=re.findall(r'<w:p[ >].*?</w:p>',x,flags=re.S)
+def norm(s):
+    s=html.unescape(s); s=unicodedata.normalize('NFKC',s)
+    s=s.replace('’',"'").replace('‘',"'").replace('“','"').replace('”','"')
+    return re.sub(r'\s+',' ',s).strip()
+texts=[]
+for p in paras:
+    t=''.join(re.findall(r'<w:t(?:\s[^>]*)?>([^<]*)</w:t>',p))
+    t=norm(t)
+    if t: texts.append(t)
+md=open(sys.argv[2],encoding='utf-8').read()
+mdn=norm(re.sub(r'[*_`#|>\\]','',re.sub(r"<br>"," ",re.sub(r"<a id=\"[^\"]*\"></a>","",md))))
+mdn_nospace=re.sub(r'\s','',mdn)
+miss=[]
+for t in texts:
+    tt=re.sub(r'[*_`#|>\\]','',t)
+    if re.sub(r'\s','',tt) not in mdn_nospace: miss.append(t)
+print("docx paragraphs with text:",len(texts))
+print("docx total chars:",sum(len(t) for t in texts))
+print("missing from playbook.md:",len(miss))
+for m in miss[:20]: print("  MISSING:",m[:160])
+tables=len(re.findall(r'<w:tbl>',x)); rows=len(re.findall(r'<w:tr[ >]',x))
+print("tables:",tables,"rows:",rows)

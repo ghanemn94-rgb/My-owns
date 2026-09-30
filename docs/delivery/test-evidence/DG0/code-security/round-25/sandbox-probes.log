@@ -1,0 +1,52 @@
+# id: uid=0(root) gid=0(root) groups=0(root)
+# CapEff/CapBnd/NoNewPrivs/Seccomp (this Bash tool's nested sandbox; caps are within its user namespace):
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+NoNewPrivs:	1
+Seccomp:	2
+# residual 7 (non-destructive): writability of /proc/sys entries via access(2) -- NO write performed
+/proc/sys/vm/swappiness mode=644 owner=root test-w=yes
+/proc/sys/kernel/shmmax mode=644 owner=root test-w=yes
+/proc/sys/net/ipv4/ip_forward mode=644 owner=root test-w=yes
+/proc/sys/vm/drop_caches mode=200 owner=root test-w=yes
+/proc/sys/kernel/panic mode=644 owner=root test-w=yes
+# /proc mounts:
+/ /proc ro,nosuid,nodev,relatime proc 
+/ /proc ro,nosuid,nodev,relatime proc 
+/ /proc rw,nosuid,nodev,relatime proc 
+/ /proc rw,nosuid,nodev,noexec,relatime proc 
+# residual 8: host PID visibility
+visible pids: 5
+# cross-run /proc/<pid>/root reach
+pid 1: /proc/self/fd/3 /bin/bash -c export TMPDIR=/var/tmp/mth-run.
+echo "# id: $(id)"; echo "# CapEff/CapBnd/NoNewPrivs/Seccomp
+echo "# residual 7 (non-destructive): writability of /proc/s
+for p in /proc/sys/vm/swappiness /proc/sys/kernel/shmmax /pr
+echo "# /proc mounts:"; grep '"'"' /proc '"'"' /proc/self/mo
+echo "# residual 8: host PID visibility"; echo "visible pids
+echo "# cross-run /proc/<pid>/root reach"; for d in /proc/[0
+echo "# write confinement (shell) -- each must fail"
+for t in tools/gates tools/agents docs/delivery/reviews/DG0/
+echo "# own evidence dir writable:"; ( : > $E/.w && rm -f $E
+} > $E/sandbox-probes.log 2>&1; cat $E/sandbox-probes.log' & -> ls: cannot access '/proc/1/root/': Permission denied
+# write confinement (shell) -- each must fail
+tools/gates/zz-probe-sec25: /bin/bash: line 19: tools/gates/zz-probe-sec25: Read-only file system
+
+tools/agents/zz-probe-sec25: /bin/bash: line 19: tools/agents/zz-probe-sec25: Read-only file system
+
+docs/delivery/reviews/DG0/round-25/zz-probe-sec25: /bin/bash: line 19: docs/delivery/reviews/DG0/round-25/zz-probe-sec25: No such file or directory
+
+docs/delivery/test-evidence/DG0/qa/zz-probe-sec25: /bin/bash: line 19: docs/delivery/test-evidence/DG0/qa/zz-probe-sec25: Read-only file system
+
+docs/delivery/test-evidence/DG0/audit/zz-probe-sec25: /bin/bash: line 19: docs/delivery/test-evidence/DG0/audit/zz-probe-sec25: Read-only file system
+
+.git/zz-probe-sec25: /bin/bash: line 19: .git/zz-probe-sec25: Read-only file system
+
+.claude/zz-probe-sec25: /bin/bash: line 19: .claude/zz-probe-sec25: Read-only file system
+
+docs/source/zz-probe-sec25: /bin/bash: line 19: docs/source/zz-probe-sec25: Read-only file system
+
+docs/delivery/zz-probe-sec25: /bin/bash: line 19: docs/delivery/zz-probe-sec25: Read-only file system
+
+# own evidence dir writable:
+yes
