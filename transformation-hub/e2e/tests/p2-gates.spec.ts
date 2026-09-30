@@ -13,6 +13,7 @@ const P = {
   legal: 'Demo Legal Member',
   chair: 'Demo Committee Chair',
   contributor: 'Demo Contributor',
+  secretary: 'Demo Secretary / CPMO',
 } as const;
 /** Demo persona holding each designated reviewer role in DEMO-DC (only that role may accept a criterion). */
 const REVIEWER: Record<string, string> = {
@@ -161,7 +162,7 @@ test.describe('P2 business gates', () => {
     expect(problems(), problems().join('\n')).toEqual([]);
   });
 
-  test('(d) a gate cannot be approved with a recommendation pending external authority (AT-04)', async ({ page, baseURL }) => {
+  test('(d) a gate cannot be approved on a decision that is not final (AT-04, DOM-P2-01)', async ({ page, baseURL }) => {
     const problems = watchConsole(page);
     // Fixture: make G1 ready for decision through the API. Evidence is linked by the PM (by the contributor on
     // PM-designated criteria), each criterion is accepted by its designated reviewer, and the PM submits.
@@ -183,19 +184,39 @@ test.describe('P2 business gates', () => {
       g1 = await gateByKey(pm, pid, 'G1');
       await post(pm, `/api/v1/projects/${pid}/gates/${g1.id}/assessment/mark-ready`, { expectedVersion: g1.assessment.version });
     }
-    const decisions = await (await pm.get(`/api/v1/projects/${pid}/decisions?status=recommended`)).json();
-    const recommended = (decisions.items as { id: string; code: string }[])[0]!;
-    expect(recommended, 'demo seed has a recommendation pending external authority').toBeTruthy();
+    // DOM-P2-01: only a decision RAISED FOR G1, of a type the approved (DEMO) authority matrix assigns to G1, can back it —
+    // the demo's JV-signing recommendation (raised for no gate) can no longer be linked. Fixture: a G1 passage decision of
+    // the operational gate type, submitted and under committee review (not final yet).
+    const committees = await (await pm.get(`/api/v1/projects/${pid}/committees?kind=program_steering&status=active`)).json();
+    const committeeId = (committees.items as { id: string }[])[0]!.id;
+    const draft = await post(pm, `/api/v1/projects/${pid}/decisions`, {
+      committeeId,
+      title: 'E2E — Approve passage of gate G1 (synthetic)',
+      decisionTypeKey: 'gate_decision_operational',
+      gateKey: 'G1',
+      issue: 'E2E synthetic: G1 criteria are evidenced; passage needs a committee decision.',
+      whyNow: 'E2E synthetic: needed to conclude G1.',
+      alternatives: [{ title: 'Approve passage' }, { title: 'Defer', summary: 'Delays the synthetic plan' }],
+      recommendation: 'Approve passage of G1 (synthetic).',
+      impacts: { financial: 'None identified', operational: 'None identified', schedule: 'None identified' },
+      risks: 'None identified',
+      dependencies: 'None identified',
+      latestSafeDate: new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10),
+      requiredAuthority: 'Steering committee (DEMO matrix, synthetic)',
+    });
+    const submitted = await post(pm, `/api/v1/projects/${pid}/decisions/${draft.id}/submit`, { expectedVersion: draft.version });
+    await post(await as(P.secretary), `/api/v1/projects/${pid}/decisions/${draft.id}/start-review`, { expectedVersion: submitted.version });
+    const pending = { id: draft.id as string, code: draft.code as string };
     for (const s of sessions.values()) await s.dispose();
 
-    // The PM links the committee recommendation to G1.
+    // The PM links the (not yet final) G1 decision to G1.
     await loginAs(page, P.pm);
     await page.goto(`/projects/${pid}/gates/${g1.id}`);
     await expect(page.getByTestId('gate-title')).toContainText('G1');
     await page.getByTestId('gate-action-link').click();
     let dlg = page.getByRole('dialog');
-    await dlg.getByTestId('decision-select').selectOption(recommended.id);
-    await expect(dlg.getByTestId('chosen-decision')).toContainText('Recommended');
+    await dlg.getByTestId('decision-select').selectOption(pending.id);
+    await expect(dlg.getByTestId('chosen-decision')).toContainText('Under review');
     await dlg.getByRole('button', { name: 'Link decision' }).click();
     await expect(dlg).toBeHidden();
     await expect(page.getByTestId('linked-decision')).toContainText('Not a final authorized decision');
@@ -207,9 +228,9 @@ test.describe('P2 business gates', () => {
     await page.getByTestId('gate-action-decide').click();
     dlg = page.getByRole('dialog');
     await dlg.getByTestId('decide-outcome').selectOption('approve');
-    await dlg.getByRole('textbox', { name: /Decision note/ }).fill('E2E: attempt to approve on a recommendation');
+    await dlg.getByRole('textbox', { name: /Decision note/ }).fill('E2E: attempt to approve on a decision still under review');
     await dlg.getByRole('button', { name: 'Record decision' }).click();
-    await expect(dlg.getByRole('alert')).toContainText('pending the external authority');
+    await expect(dlg.getByRole('alert')).toContainText('only an approved decision can back a gate approval');
     await page.screenshot({ path: join(SHOTS, 'gates-en-decision-blocked.png'), fullPage: false });
     await dlg.getByRole('button', { name: 'Cancel' }).click();
     await expect(page.locator('[data-status="ready_for_decision"]').first()).toBeVisible();
