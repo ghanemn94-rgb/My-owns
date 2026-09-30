@@ -1,0 +1,209 @@
+// code-security-reviewer, DG0 round 24 (T-DG0-REV-SEC-R24) reproduction tests for the D-040 change.
+// This fragment is APPENDED to a disposable copy of tools/gates/tests/validator.test.mjs (it reuses that file's fixture
+// helpers: buildValidRepo, makeRun, bindOutputs, edit, put, get, sh, editGate, approveAndCommit, ...).
+// See run-sec24-repro.sh. It never runs in the candidate tree. It is run against BOTH the round-23 baseline (6438e20)
+// and the round-24 candidate (6db3b83) so each behaviour change is shown before/after.
+
+const SEC24_FAKE = "deadbeef".repeat(5); // a well-formed 40-hex id that no commit has
+
+/** Forges round 2 as a "superseded" round: its own manifest (entries self-consistent) names a non-existent source_commit. */
+function sec24ForgeRound2(repo, cid) {
+  const m1 = get(repo, `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`);
+  const entries2 = m1.entries.map((e, i) => (i === 0 ? { ...e, sha256: "1".repeat(64) } : e));
+  const cid2 = candidateId(entries2);
+  const mp2 = `docs/delivery/candidates/DG0/${cid2.slice(7, 23)}.manifest.json`;
+  put(repo, mp2, { ...m1, candidate_id: cid2, source_commit: SEC24_FAKE, entries: entries2 });
+  sh(repo, "add", "--", mp2);
+  sh(repo, "commit", "-q", "-m", "freeze forged round 2 (manifest only)");
+  const round2Head = sh(repo, "rev-parse", "HEAD");
+  for (const role of ROLES) {
+    const rel = `docs/delivery/reviews/DG0/round-2/${role}.json`;
+    edit(repo, rel, (r) => { r.candidate_id = cid2; r.source_commit = SEC24_FAKE; });
+    const ref = get(repo, rel).invocation_reference;
+    edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (mm) => (mm.head_commit_at_start = round2Head));
+    const outs = [rel];
+    if (role === "code-security-reviewer") outs.push("docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json");
+    bindOutputs(repo, ref, outs);
+  }
+  edit(repo, "docs/delivery/stages.json", (d) => {
+    const r2 = d.stages[0].review_rounds.find((r) => r.round === 2);
+    r2.candidate_id = cid2;
+    r2.source_commit = SEC24_FAKE;
+  });
+  return { cid2, round2Head };
+}
+
+/** Adds round 3 as the gate round on candidate `gcid` (manifest `gmp`), its runs starting from `runHead`. */
+function sec24GateRound3(repo, gcid, gsrc, gmp, runHead) {
+  const rec3 = {};
+  for (const role of ROLES) {
+    const assignment = `docs/delivery/assignments/DG0/round-3/${role}.md`;
+    put(repo, assignment, `assignment for ${role} round 3\n`);
+    const rel = `docs/delivery/reviews/DG0/round-3/${role}.json`;
+    const r2 = get(repo, `docs/delivery/reviews/DG0/round-2/${role}.json`);
+    const ref = makeRun(repo, role, { assignment, task: "T-REV-R3" });
+    edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (mm) => (mm.head_commit_at_start = runHead));
+    put(repo, rel, { ...r2, round: 3, candidate_id: gcid, source_commit: gsrc, assignment, invocation_reference: ref });
+    bindOutputs(repo, ref, [rel]);
+    rec3[role] = rel;
+  }
+  edit(repo, "docs/delivery/stages.json", (d) => {
+    d.stages[0].candidate = { candidate_id: gcid, source_commit: gsrc, frozen_at: T_FREEZE, manifest_path: gmp };
+    d.stages[0].review_rounds.push({ round: 3, candidate_id: gcid, frozen_at: T_FREEZE, source_commit: gsrc,
+      records: Object.fromEntries(REQUIRED.map((r) => [r, rec3[r]])) });
+  });
+  editGate(repo, (g) => {
+    g.candidate_id = gcid; g.source_commit = gsrc; g.manifest_path = gmp;
+    g.reviews = Object.fromEntries(REQUIRED.map((r) => [r, rec3[r]]));
+    g.release_audit = rec3["release-auditor"];
+    g.invocation_reference = get(repo, rec3["release-auditor"]).invocation_reference;
+  });
+  bindOutputs(repo, get(repo, rec3["release-auditor"]).invocation_reference, ["docs/delivery/gates/DG0.json"]);
+}
+
+/** Commits a content change (the "fix") and freezes round 3 on it; returns { fix, cid3, mp3, r3head }. */
+function sec24FixAndFreeze3(repo) {
+  put(repo, "src/app.txt", "deliverable v2 (the fix)\n");
+  sh(repo, "add", "--", "src/app.txt");
+  sh(repo, "commit", "-q", "-m", "the fix");
+  const fix = sh(repo, "rev-parse", "HEAD");
+  const spec = get(repo, "docs/delivery/stages.json").stages[0].candidate_spec;
+  const entries3 = manifestFromRef(repo, fix, spec);
+  const cid3 = candidateId(entries3);
+  const mp3 = `docs/delivery/candidates/DG0/${cid3.slice(7, 23)}.manifest.json`;
+  put(repo, mp3, { stage_id: "DG0", candidate_id: cid3, hash_algorithm: "mth-candidate-v2", source_commit: fix, frozen_at: T_FREEZE, spec, entries: entries3 });
+  sh(repo, "add", "--", mp3);
+  sh(repo, "commit", "-q", "-m", "freeze round 3");
+  return { fix, cid3, mp3, r3head: sh(repo, "rev-parse", "HEAD") };
+}
+
+const sec24Report = (label, errs) => console.log(`${label} errors: ${errs.length}${errs.length ? "\n  " + errs.join("\n  ") : ""}`);
+
+test("SEC24-1 F-DG0-166/249: the round-23 forge (superseded round, absent source_commit, genuine verifier run, fix committed AFTER the run started) -- genuine and forged", () => {
+  const build = (forge) => {
+    const { repo, cid } = buildValidRepo();
+    if (forge) sec24ForgeRound2(repo, cid);
+    const { fix, cid3, mp3, r3head } = sec24FixAndFreeze3(repo);
+    sec24GateRound3(repo, cid3, fix, mp3, r3head);
+    edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = fix));
+    approveAndCommit(repo);
+    const vh = get(repo, `docs/delivery/runs/DG0/${get(repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json").invocation_reference.run_id}/meta.json`).head_commit_at_start;
+    let inHead = true;
+    try { sh(repo, "merge-base", "--is-ancestor", fix, vh); } catch { inHead = false; }
+    return { errs: validateGate(repo, "DG0"), inHead };
+  };
+  const genuine = build(false);
+  const forged = build(true);
+  console.log(`SEC24-1 fix-in-verifier-head: genuine=${genuine.inHead} forged=${forged.inHead}`);
+  sec24Report("SEC24-1 genuine round 2", genuine.errs);
+  sec24Report("SEC24-1 forged round 2", forged.errs);
+  const rx = /F-DG0-101.*is not in the verifying run's starting history/;
+  console.log(`SEC24-1 run-head rejection: genuine=${genuine.errs.some((e) => rx.test(e))} forged=${forged.errs.some((e) => rx.test(e))}`);
+  assert.equal(forged.inHead, false);
+  assert.ok(forged.errs.some((e) => rx.test(e)), "the forged superseded round must now be rejected via the verifying run's head");
+  assert.ok(genuine.errs.some((e) => rx.test(e)), "the genuine round must also be rejected via the run head");
+});
+
+test("SEC24-2 control: forged superseded round with a REAL fix (in the verifier's head and the gate candidate) passes -- no regression; findManifest D-035 tolerance only", () => {
+  const { repo, cid, head } = buildValidRepo();
+  const mp = `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`;
+  const f = sec24ForgeRound2(repo, cid);
+  sec24GateRound3(repo, cid, head, mp, f.round2Head);
+  approveAndCommit(repo);
+  const errs = validateGate(repo, "DG0");
+  sec24Report("SEC24-2", errs);
+  assert.deepEqual(errs, []);
+});
+
+test("SEC24-3 F-DG0-164/246 still hold: absent / typo'd / short / uppercase fix_revision rejected (forged round)", () => {
+  const out = {};
+  for (const [label, mk] of [["zeros", () => "0".repeat(40)], ["absent", () => SEC24_FAKE], ["typo", (h) => h.slice(0, 39) + (h[39] === "0" ? "1" : "0")], ["short", (h) => h.slice(0, 7)], ["upper", (h) => h.toUpperCase()]]) {
+    const { repo, cid, head } = buildValidRepo();
+    const mp = `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`;
+    const f = sec24ForgeRound2(repo, cid);
+    sec24GateRound3(repo, cid, head, mp, f.round2Head);
+    edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = mk(head)));
+    approveAndCommit(repo);
+    const errs = validateGate(repo, "DG0");
+    out[label] = errs.some((e) => /F-DG0-101.*(is not a commit present in this repository|needs a full fix_revision commit id)/.test(e));
+  }
+  console.log(`SEC24-3 rejected? ${JSON.stringify(out)}`);
+  assert.ok(Object.values(out).every(Boolean));
+});
+
+test("SEC24-4 F-DG0-164 still holds: the verifying run's head_commit_at_start missing/unknown/HEAD/null/zeros/absent/UPPER/short is rejected", () => {
+  const out = {};
+  for (const [label, v] of [["unknown", "unknown"], ["HEAD", "HEAD"], ["missing", undefined], ["null", null], ["zeros", "0".repeat(40)],
+    ["absent-40hex", SEC24_FAKE], ["UPPERHEX", "A".repeat(40)], ["short", "abc1234"]]) {
+    const { repo, cid, head } = buildValidRepo();
+    const mp = `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`;
+    const f = sec24ForgeRound2(repo, cid);
+    sec24GateRound3(repo, cid, head, mp, f.round2Head);
+    const ref = get(repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.json").invocation_reference;
+    edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (m) => { if (v === undefined) delete m.head_commit_at_start; else m.head_commit_at_start = v; });
+    approveAndCommit(repo);
+    const errs = validateGate(repo, "DG0");
+    out[label] = errs.some((e) => /F-DG0-101.*verification: invocation .*(is not a 40-hex commit id|absent from this repository)/.test(e));
+  }
+  console.log(`SEC24-4 rejected? ${JSON.stringify(out)}`);
+  assert.ok(Object.values(out).every(Boolean));
+});
+
+test("SEC24-5 F-DG0-165 still holds: later-round severity/mandatory downgrade rejected; identical re-listing accepted", () => {
+  const { repo, cid, head } = buildValidRepo();
+  const mp = `docs/delivery/candidates/DG0/${cid.slice(7, 23)}.manifest.json`;
+  sec24GateRound3(repo, cid, head, mp, freezeCommit);
+  const orig = get(repo, "docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json").findings[0];
+  put(repo, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json", { findings: [{ ...orig, severity: "Low", mandatory_violation: false }] });
+  edit(repo, "docs/delivery/findings.json", (d) => { d.findings[0].severity = "Low"; d.findings[0].mandatory_violation = false; });
+  approveAndCommit(repo);
+  const a = validateGate(repo, "DG0");
+  const { repo: r3, cid: c3, head: h3 } = buildValidRepo();
+  sec24GateRound3(r3, c3, h3, `docs/delivery/candidates/DG0/${c3.slice(7, 23)}.manifest.json`, freezeCommit);
+  const o3 = get(r3, "docs/delivery/reviews/DG0/round-1/code-security-reviewer.findings.json").findings[0];
+  put(r3, "docs/delivery/reviews/DG0/round-2/code-security-reviewer.findings.json", { findings: [o3] });
+  approveAndCommit(r3);
+  const c = validateGate(r3, "DG0");
+  sec24Report("SEC24-5 (a) downgrade", a);
+  sec24Report("SEC24-5 (c) identical re-listing", c);
+  assert.ok(a.some((e) => /F-DG0-101 severity .* differs from its first raising sidecar/.test(e)));
+  assert.ok(a.some((e) => /F-DG0-101 mandatory_violation .* differs from its first raising sidecar/.test(e)));
+  assert.deepEqual(c, []);
+});
+
+test("SEC24-6 new probe (GENUINE round, no forged metadata): a candidate-scope fix committed AFTER the round-2 freeze but BEFORE the verifier's run started", () => {
+  // Round 2 is genuine: its source_commit is present and is the frozen candidate (content v1). The orchestrator then
+  // commits a content change (v2) and the round-2 runs start from a head that contains it (so the checkout the reviewer
+  // saw no longer hashes to the round-2 candidate). The round-2 code-security run verifies F-DG0-101 with fix = v2.
+  const { repo } = buildValidRepo();
+  put(repo, "src/app.txt", "deliverable v2 (post-freeze change)\n");
+  sh(repo, "add", "--", "src/app.txt");
+  sh(repo, "commit", "-q", "-m", "post-freeze candidate-scope change (the fix)");
+  const fix = sh(repo, "rev-parse", "HEAD");
+  for (const role of ROLES) {
+    const rel = `docs/delivery/reviews/DG0/round-2/${role}.json`;
+    const ref = get(repo, rel).invocation_reference;
+    edit(repo, `docs/delivery/runs/DG0/${ref.run_id}/meta.json`, (mm) => (mm.head_commit_at_start = fix));
+    const outs = [rel];
+    if (role === "code-security-reviewer") outs.push("docs/delivery/reviews/DG0/round-2/code-security-reviewer.verifications.json");
+    bindOutputs(repo, ref, outs);
+  }
+  const spec = get(repo, "docs/delivery/stages.json").stages[0].candidate_spec;
+  const entries3 = manifestFromRef(repo, fix, spec);
+  const cid3 = candidateId(entries3);
+  const mp3 = `docs/delivery/candidates/DG0/${cid3.slice(7, 23)}.manifest.json`;
+  put(repo, mp3, { stage_id: "DG0", candidate_id: cid3, hash_algorithm: "mth-candidate-v2", source_commit: fix, frozen_at: T_FREEZE, spec, entries: entries3 });
+  sh(repo, "add", "--", mp3);
+  sh(repo, "commit", "-q", "-m", "freeze round 3");
+  sec24GateRound3(repo, cid3, fix, mp3, sh(repo, "rev-parse", "HEAD"));
+  edit(repo, "docs/delivery/findings.json", (d) => (d.findings[0].fix_revision = fix));
+  approveAndCommit(repo);
+  const r2 = get(repo, "docs/delivery/stages.json").stages[0].review_rounds.find((r) => r.round === 2);
+  const headCid = candidateId(manifestFromRef(repo, fix, spec));
+  let inRound = true;
+  try { sh(repo, "merge-base", "--is-ancestor", fix, r2.source_commit); } catch { inRound = false; }
+  const errs = validateGate(repo, "DG0");
+  console.log(`SEC24-6 fix in round-2 frozen candidate (source_commit ${r2.source_commit.slice(0, 10)}): ${inRound}; verifier head content hashes to round-2 candidate: ${headCid === r2.candidate_id}`);
+  sec24Report("SEC24-6", errs);
+  // OBSERVED, not asserted: recorded in the log for comparison between the baseline and the candidate.
+});

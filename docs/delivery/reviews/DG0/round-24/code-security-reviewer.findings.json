@@ -1,0 +1,33 @@
+{
+  "findings": [
+    {
+      "id": "F-DG0-168",
+      "stage_id": "DG0",
+      "requirement": "REQ-DLV-016",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-040 replaced the round-candidate ancestry check instead of adding to it. In a GENUINE round (no forged metadata), a candidate-scope fix committed after the round froze but before the verifier's run started now closes a finding even though it is not in the frozen candidate the verifier reviewed. Round 23's validator rejected this",
+      "reproduction": "tools/gates/lib/rules.mjs:737-739 (at 6db3b83) now checks only isAncestor(fix_revision, verifyingRun.head_commit_at_start). The earlier `commitPresent(round.source_commit) && !isAncestor(fix, round.source_commit)` check was removed, not kept alongside. checkInvocation (:388-405) requires the head to be present, 40-hex and to contain the round manifest. Nothing requires the head's candidate CONTENT to equal the round candidate, i.e. that only metadata was committed between the freeze and the run start. SEC24-6 in docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.tests.mjs.txt (run by run-sec24-repro.sh on --no-local clones; log sec24-repro.log) uses the stock fixture. Round 2 is genuine (its source_commit is present). A content change to src/app.txt is committed after the round-2 freeze, the round-2 runs start from that commit, the round-2 code-security run verifies F-DG0-101 (High, mandatory) with fix_revision = that commit, and round 3 is the gate round on a candidate containing it. Probe output: 'fix in round-2 frozen candidate: false; verifier head content hashes to round-2 candidate: false'. At 6438e20 (round-23 baseline): 1 error, 'fix … is not in the verified round-2 candidate'. At 6db3b83 (this candidate): 0 errors.",
+      "expected": "A CLOSED_VERIFIED closure stays bound to the frozen candidate the verifying round reviewed, as well as to the run head. Either (a) keep the D-040 run-head check AND restore `if (commitPresent(round.source_commit) && !isAncestor(fix, round.source_commit)) error`, or preferably (b) in checkInvocation, when binding.manifestPath is given, require candidateId(manifestFromRef(head, manifest.spec)) to equal the round's candidate_id. That means only metadata-only commits between the freeze and the run start. It binds the run head's content to the reviewed candidate and makes the run-head ancestry check equivalent to 'in the reviewed candidate'. The real-repo census (closure-census.log, --no-local clone) shows all 61 computable review-run heads already hash to their round candidate. The 2 non-computable runs are round 18's D-034-orphaned heads, and neither is a verifying or gate run. Option (b) therefore breaks no genuine record. Also correct the checkClosure error text 'it was not in the candidate the reviewer saw' (:739), which the head check does not establish without (b). Add a fixture test like SEC24-6.",
+      "actual": "With genuine round metadata, a fix absent from the verified round's frozen candidate (but committed before the verifier's run started) passes validateGate with 0 errors. The round-23 validator reported the error. The effect is a verification attributed to a candidate that did not contain the fix. The fix must still be an ancestor of the gate candidate (:740-741), which all three reviewers review at the gate, and a reviewer following the protocol would see a candidate-ID mismatch at the start of the run. So this is a mis-attribution, not an unreviewed fix in the gate. Real-repo census: 0 of 110 closures depend on it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/run-sec24-repro.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/closure-census.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/closure-census.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG0/round-24/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-09-30T13:32:51Z",
+          "status": "OPEN",
+          "note": "Raised in round 24 (code-security-reviewer)."
+        }
+      ]
+    }
+  ]
+}

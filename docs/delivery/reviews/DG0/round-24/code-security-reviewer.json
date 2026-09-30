@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG0",
+  "round": 24,
+  "candidate_id": "sha256:f0f3a93a1fcf33e58b1d553e39205cc8bc1764407189b69904d2d58e976f351a",
+  "source_commit": "6db3b8388699b767032b4f92547ceb79edf74519",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG0-T-DG0-REV-SEC-R24-code-security-reviewer-20260930T132356Z-9132b6ee",
+    "session_id": "9132b6ee-8c97-4166-b54f-2b919d75285b"
+  },
+  "implementation_author": [
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer) authored nothing in tools/gates, tools/agents, tools/source, .github or .claude/agents, nor any other part of the DG0 candidate. My only writes are this record, its findings/verifications sidecars and narrative, and evidence under docs/delivery/test-evidence/DG0/code-security/round-24/. I formed this verdict without reading any other round-24 review record. During my run the domain-reviewer's round-24 files were auto-committed (372a379); I saw only their directory names in a git diff --name-only listing, not their content. I read earlier-round evidence only: my own round-23 files and QA's earlier real-repo-gate-blockers.mjs harness, which I executed."
+  },
+  "assignment": "docs/delivery/assignments/DG0/round-24/review-code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-001",
+    "REQ-DLV-002",
+    "REQ-DLV-003",
+    "REQ-DLV-004",
+    "REQ-DLV-006",
+    "REQ-DLV-007",
+    "REQ-DLV-013",
+    "REQ-DLV-015",
+    "REQ-DLV-016",
+    "REQ-DLV-017",
+    "REQ-DLV-019",
+    "REQ-DLV-020",
+    "REQ-DLV-022",
+    "REQ-DLV-023",
+    "REQ-DLV-026",
+    "REQ-DLV-029",
+    "REQ-DLV-032",
+    "REQ-S20-024",
+    "REQ-S20-025"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC24-C01",
+      "procedure": "Confirm the frozen candidate: the recomputed candidate ID, a complete (non-shallow) clone, commits after 6db3b83 touching only excluded metadata, and the candidate-scope delta since the round-23 baseline.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG0 [--ref 6db3b83|HEAD]; git diff --name-only 6db3b83..HEAD; git diff --stat 6438e20..6db3b83 -- tools .claude .github CLAUDE.md docs/delivery/{decisions,agent-protocol,threat-model,agents}.md docs/source docs/analysis",
+      "environment": "main repository /home/user/My-owns (agent shell sandbox); git 2.43.0; node v22.22.2",
+      "expected": "candidate sha256:f0f3a93a…351a from the working tree, 6db3b83 and HEAD; not shallow; post-freeze diffs only under excluded paths; delta = rules.mjs + validator.test.mjs + decisions.md",
+      "actual": "HEAD at start was 79fb0f8 (the freeze and assignments commit; later 372a379, the domain reviewer's auto-commit, whose files are all under reviews/ and runs/). Not shallow. The candidate is sha256:f0f3a93a1fcf33e58b1d553e39205cc8bc1764407189b69904d2d58e976f351a (91 files) from the working tree, --ref 6db3b83 and --ref HEAD, equal to the manifest. Post-freeze files are only assignments/round-24, the candidate manifest and stages.json. The delta is tools/gates/lib/rules.mjs, tools/gates/tests/validator.test.mjs and docs/delivery/decisions.md. tools/agents, tools/source, .claude and .github are byte-unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/candidate-and-scope.log"
+      ]
+    },
+    {
+      "id": "SEC24-C02",
+      "procedure": "Direct source review of the D-040 delta and the full closure, invocation and manifest paths: checkInvocation (rules.mjs:268-427), checkReview (:430-460), collectRaisedFindings/checkFindings (:464-590), collectVerifications/checkClosure (:650-744), checkReviewRounds (:750-774), findManifest/checkCandidate (:889-972), validateGate/validatePipeline (:1023-1118).",
+      "command": "git diff 6438e20..6db3b83 -- tools/gates/lib/rules.mjs tools/gates/tests/validator.test.mjs; read tools/gates/lib/rules.mjs",
+      "environment": "main repository, read-only",
+      "expected": "A CLOSED_VERIFIED fix is bound to the verifying run's head_commit_at_start (present, 40-hex, contains the manifest) and to the gate candidate, with no dependence on round.source_commit. The head-absent paths cannot skip silently. findManifest is the only absence tolerance.",
+      "actual": "Confirmed. :737 reads meta.json for the verifying record's own run_id (checkInvocation enforces meta.run_id == ref.run_id). :738 skips only when the head is malformed or absent, and checkInvocation (:394-405, binding.manifestPath set at :722) already errors in each such case. round.source_commit is no longer referenced in checkClosure. findManifest's `present` tolerance (:913-919) is the only absence site and runs after the entries-hash check (:895-899). The replacement removed the round-candidate ancestry check even for PRESENT rounds, and nothing binds the run head's content to the round candidate. See SEC24-C03 and F-DG0-168 (Low).",
+      "exit_status": null,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/candidate-and-scope.log"
+      ]
+    },
+    {
+      "id": "SEC24-C03",
+      "procedure": "Reproduction suite SEC24-1..6 appended to a disposable copy of validator.test.mjs and run on --no-local clones of the candidate (6db3b83) and the round-23 baseline (6438e20). SEC24-1: my round-23 forge (superseded round with a non-existent source_commit, genuine verifier run, fix committed after the run started, present in the gate candidate), genuine and forged. SEC24-2: control, forged round with a real fix. SEC24-3: absent/typo/short/uppercase fix. SEC24-4: malformed or absent verifier heads. SEC24-5: F-DG0-165 immutable-field lock. SEC24-6: genuine round, fix committed between freeze and run start.",
+      "command": "bash docs/delivery/test-evidence/DG0/code-security/round-24/run-sec24-repro.sh /home/user/My-owns <6db3b83|6438e20>",
+      "environment": "disposable git clone --no-local under the run's $TMPDIR (not shallow), node v22.22.2 --test; removed afterwards",
+      "expected": "At 6db3b83: SEC24-1 forged rejected as 'not in the verifying run's starting history'; SEC24-2 0 errors; SEC24-3/4/5 rejected as before. At 6438e20: SEC24-1 forged accepted (the original bug).",
+      "actual": "6db3b83: 6/6 pass. SEC24-1 genuine and forged both give 'fix … is not in the verifying run's starting history'. SEC24-2 gives 0 errors. SEC24-3 rejects all 5 fix variants. SEC24-4 rejects all 8 head variants. SEC24-5 reports the downgrade with 4 errors and identical re-listing with 0. SEC24-6 (observed): 0 errors. 6438e20: SEC24-1 forged gives 0 errors (assertion fails as expected: the bug before the fix), and SEC24-6 gives 1 error 'not in the verified round-2 candidate'. So D-040 closes F-DG0-166/249 and weakens the genuine-round case (F-DG0-168, Low).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/run-sec24-repro.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.log"
+      ]
+    },
+    {
+      "id": "SEC24-C04",
+      "procedure": "Real-repo closure census. For every CLOSED_VERIFIED finding: is fix_revision an ancestor of the verifying run's head_commit_at_start, of the gate candidate 6db3b83, and (when present) of the verifying round's source_commit? For every review run: does its head's candidate content hash to its round candidate?",
+      "command": "node census.mjs (copy of closure-census.mjs.txt) in a --no-local clone at HEAD",
+      "environment": "disposable git clone --no-local (not shallow) at 79fb0f8; node v22.22.2",
+      "expected": "0 closures fail the D-040 binding (no genuine regression)",
+      "actual": "110 closures checked. 0 are not in the run head or gate, and 0 are in the head but not in the round candidate. Review runs: 63. 61 of their heads hash to their round candidate and 0 differ. 2 are not computable: round 18's D-034-orphaned heads, neither a verifying nor a gate run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/closure-census.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/closure-census.log"
+      ]
+    },
+    {
+      "id": "SEC24-C05",
+      "procedure": "Real-repo validator CLI in all modes on a complete clone.",
+      "command": "node tools/gates/validate.mjs --stage DG0 | --register DG0 | --pipeline | --reconcile",
+      "environment": "disposable git clone --no-local at 79fb0f8 (not shallow); node v22.22.2",
+      "expected": "--stage DG0 fails only because the gate is not decided yet (exit 1); register, pipeline and reconcile PASS (exit 0)",
+      "actual": "--stage DG0: FAIL, 1 problem 'file not found (docs/delivery/gates/DG0.json)', exit 1, the correct pre-gate state. --register DG0 PASS, --pipeline PASS (DG0 REVIEWING), --reconcile PASS (working tree matches f0f3a93a…).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/real-repo-dryrun.log"
+      ]
+    },
+    {
+      "id": "SEC24-C06",
+      "procedure": "Synthetic-gate dry run of validateGate over the real history (an earlier-round QA harness that adds a provisional gate record in a --no-local clone), inspected for closure, head and dropped-finding errors.",
+      "command": "node docs/delivery/test-evidence/DG0/qa/tests/real-repo-gate-blockers.mjs /home/user/My-owns",
+      "environment": "the harness's own disposable --no-local clone at 79fb0f8; node v22.22.2",
+      "expected": "no 'starting history', gate-candidate, absent-fix, head, record-less or dropped errors; only errors that finishing round 24 clears",
+      "actual": "57 errors. 8 are for the unfinished round (round-24 records absent). The other 49 are pre-gate state: F-DG0-147/149 awaiting the auditor, F-DG0-014/166/167/249 FIXED_PENDING_VERIFICATION, the 19 requirements not yet checked by round-24 records, and the synthetic gate's final_gate_ids. There are 0 fix-ancestry, 0 head, 0 record-less and 0 dropped errors, and no 'starting history' error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/real-repo-gate-dryrun.log"
+      ]
+    },
+    {
+      "id": "SEC24-C07",
+      "procedure": "Gate validator and agent tooling self-tests.",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+      "environment": "main repository working tree at 79fb0f8 (candidate content), agent shell sandbox; node v22.22.2",
+      "expected": "all pass, including 'D-039/D-040 / F-DG0-164/166/246/249' and 'F-DG0-110 / F-DG0-204'",
+      "actual": "tests 101, pass 101, fail 0. The D-040 tests (#66, #96) and D-039 tests (#97-99) pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/node-tests.log"
+      ]
+    },
+    {
+      "id": "SEC24-C08",
+      "procedure": "Runner metadata and settings Python tests.",
+      "command": "python3 -B -m unittest discover -s tools/agents/tests -p 'test_*.py'",
+      "environment": "disposable --no-local clone at 79fb0f8; Python 3.11.15",
+      "expected": "OK",
+      "actual": "Ran 22 tests, OK",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/python-tests.log"
+      ]
+    },
+    {
+      "id": "SEC24-C09",
+      "procedure": "Orchestrator pre-freeze in a fresh --no-local clone (sandboxed checks through sandbox-run.sh).",
+      "command": "tools/gates/prefreeze.sh DG0",
+      "environment": "fresh git clone --no-local at 79fb0f8 under $TMPDIR; bubblewrap nested in the agent sandbox",
+      "expected": "every check PASS, exit 0",
+      "actual": "11 of 11 checks PASS: extraction reproducible (docx sha256 2584a352…548ad2, 165 and 423 blocks), validator and guard tests, runner tests, register rules, register equals the merge, pipeline, 4 analysis checks, and working-tree candidate equals HEAD (f0f3a93a…). Exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/prefreeze.log"
+      ]
+    },
+    {
+      "id": "SEC24-C10",
+      "procedure": "Candidate hash determinism across two independent clones, locales, umasks and core.fileMode.",
+      "command": "LC_ALL=C umask 022 node tools/gates/candidate.mjs --stage DG0 (clone 1); LC_ALL=tr_TR.UTF-8 umask 077 core.fileMode=false node tools/gates/candidate.mjs --stage DG0 [--ref 6db3b83] (clone 2)",
+      "environment": "two disposable --no-local clones checked out at 6db3b83",
+      "expected": "sha256:f0f3a93a…351a in every case",
+      "actual": "sha256:f0f3a93a1fcf33e58b1d553e39205cc8bc1764407189b69904d2d58e976f351a (91 files) in all three computations",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/candidate-determinism.log"
+      ]
+    },
+    {
+      "id": "SEC24-C11",
+      "procedure": "Secrets, public-CDN and auto-allow scan of the candidate. Common token and private-key patterns over the 91 candidate paths at 6db3b83; CDN hosts in tools/.claude/.github/CLAUDE.md; the .claude/settings.json allow list.",
+      "command": "git grep -nIE '<token/key patterns>' 6db3b83 -- . ':!trading_agent' ':!docs/delivery/{runs,test-evidence,reviews}'; git grep CDN hosts; node -e print settings.permissions",
+      "environment": "main repository, read-only",
+      "expected": "no matches; allow list exactly [\"Bash(bwrap:*)\"]",
+      "actual": "No secret matches (git grep exit 1) and no CDN matches (exit 1). The allow list is {\"allow\":[\"Bash(bwrap:*)\"]}.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/secrets-scan.log"
+      ]
+    },
+    {
+      "id": "SEC24-C12",
+      "procedure": "CI least privilege and gate enforcement review of .github/workflows/delivery-gates.yml (unchanged since round 23).",
+      "command": "read .github/workflows/delivery-gates.yml",
+      "environment": "main repository, read-only (CI itself not executed: no network or GitHub runner available)",
+      "expected": "permissions contents: read; actions pinned by SHA; fetch-depth 0; validator self-tests, guard and runner tests, pipeline and reconcile run; a failing step fails the job",
+      "actual": "Confirmed: top-level `permissions: contents: read`; actions/checkout and setup-node pinned to full SHAs; fetch-depth: 0, so the shallow-clone refusal (F-DG0-160) is not triggered; bubblewrap installed and smoke-tested; extraction, gate tests, guard tests, runner tests, --pipeline and --reconcile are all run. Observation (unchanged, not a finding): checkout persists the read-only GITHUB_TOKEN by default. That token is read-only.",
+      "exit_status": null,
+      "result": "PASS",
+      "evidence": [
+        ".github/workflows/delivery-gates.yml"
+      ]
+    },
+    {
+      "id": "SEC24-C13",
+      "procedure": "Process and shell sandbox probes, non-destructive. Capabilities and no_new_privs; writability of /proc/sys entries via access(2) without writing any host-global tunable; host PID visibility; foreign /proc/<pid>/root reach; shell writes to protected paths and to another reviewer's evidence; own evidence dir writable.",
+      "command": "grep Cap/NoNewPrivs /proc/self/status; stat + test -w /proc/sys/{vm/swappiness,kernel/shmmax,net/ipv4/ip_forward,vm/drop_caches,kernel/panic,kernel/hostname}; ls /proc/<pid>/root; : > tools/gates/zz-probe etc.",
+      "environment": "this run's agent shell (Claude Code Bash sandbox nested in the D-030 process sandbox), uid 0",
+      "expected": "protected paths and other reviewers' evidence read-only; residuals 7 and 8 no larger than threat-model.md states",
+      "actual": "NoNewPrivs 1, Seccomp 2; the full CapEff is held in the CLI's nested user namespace (as documented). The six /proc/sys entries pass access(W_OK) (mode 644/200, root). This is residual 7 exactly as disclosed (host-global kernel tunables, not repository integrity; F-DG0-149). I deliberately did not write, because a write would change the host. Residual 8: 5 PIDs visible in my nested Bash sandbox, and /proc/1/root gives Permission denied. Writes to tools/gates, .git, .claude, docs/source and docs/delivery/test-evidence/DG0/qa are refused with 'Read-only file system'. My own evidence dir is writable. No new residual.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/sandbox-probes.log"
+      ]
+    },
+    {
+      "id": "SEC24-C14",
+      "procedure": "Write-guard, runner, sandbox and extraction tooling (tools/agents/**, tools/source/**, .claude/agents/*.md) against their round-23 state: confirm byte-unchanged and re-run their test suites (guard.test, runner.test, process-sandbox.test, test_run_meta, test_agent_settings, check_extraction).",
+      "command": "git diff --stat 6438e20..6db3b83 -- .github .claude tools/agents tools/source; test suites via SEC24-C07/C08/C09",
+      "environment": "main repository + disposable clones",
+      "expected": "no change since my round-23 full-file review (PASS); all their tests pass",
+      "actual": "Empty diff for all four trees. Guard, runner and process-sandbox tests pass within 101/101; the Python tests pass 22/22; extraction is reproducible under the pre-freeze. My round-23 assessment of these files stands with no new input.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/candidate-and-scope.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/node-tests.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/python-tests.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/prefreeze.log"
+      ]
+    },
+    {
+      "id": "SEC24-C15",
+      "procedure": "The 19 DG0-final requirements. Each register row is IMPLEMENTED at final_gate DG0 and every evidence path exists. Each was checked against the implementing code and config above: 001/003/019/029 environment, decisions, stages and progress records plus the pipeline/reconcile CLI; 002 the DG/G separation in CLAUDE.md, the protocol and the gate schema; 004/006/007/026 the agent definitions, runner, guard, write-scopes, run evidence and their tests; 013/015/016/017 checkInvocation/checkReview, the state machine, validateGate, the findings rules and import; 020 checkRegister and the merge; 022/S20-025 candidate hashing (C10); 023/S20-024 the validator, CI and prefreeze (C05, C09, C12); 032 extraction and analysis outputs (C09).",
+      "command": "python3 -I -B req.py (register rows + evidence existence); code review per SEC24-C02/C12/C14",
+      "environment": "main repository at 79fb0f8",
+      "expected": "19 rows IMPLEMENTED, final_gate DG0, 0 missing evidence files, implementing code verified",
+      "actual": "19 of 19 rows are IMPLEMENTED at DG0 with 0 missing evidence files. The implementing code behaves as the rows state (checks C02-C14). REQ-DLV-016's closure rule has one Low residual (F-DG0-168) that does not stop the requirement's pass conditions from being mechanically applied.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-001",
+        "REQ-DLV-002",
+        "REQ-DLV-003",
+        "REQ-DLV-004",
+        "REQ-DLV-006",
+        "REQ-DLV-007",
+        "REQ-DLV-013",
+        "REQ-DLV-015",
+        "REQ-DLV-016",
+        "REQ-DLV-017",
+        "REQ-DLV-019",
+        "REQ-DLV-020",
+        "REQ-DLV-022",
+        "REQ-DLV-023",
+        "REQ-DLV-026",
+        "REQ-DLV-029",
+        "REQ-DLV-032",
+        "REQ-S20-024",
+        "REQ-S20-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/requirements-check.log"
+      ]
+    },
+    {
+      "id": "SEC24-C16",
+      "procedure": "Re-verify my round-23 findings F-DG0-166 (run-head binding) and F-DG0-167 (commitPresent/findManifest comments) independently: reproduce on the baseline, then show them fixed on the candidate.",
+      "command": "see SEC24-C03 (SEC24-1 on 6438e20 vs 6db3b83) and candidate-and-scope.log (comment text at 6db3b83)",
+      "environment": "disposable --no-local clones; main repository",
+      "expected": "F-DG0-166 reproduced at 6438e20 and fixed at 6db3b83; comments describe the strict model",
+      "actual": "F-DG0-166: forged SEC24-1 gives 0 errors at 6438e20 and is rejected at 6db3b83. F-DG0-167: the comments at :597-604 and :904-912 state that findManifest is the only, content-preserving tolerance and that checkClosure/checkInvocation are strict. Both are CLOSED_VERIFIED in my verifications sidecar.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/candidate-and-scope.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG0-168"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG0/code-security/round-24/candidate-and-scope.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.tests.mjs.txt",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/run-sec24-repro.sh",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/closure-census.mjs.txt",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/closure-census.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/real-repo-dryrun.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/real-repo-gate-dryrun.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/node-tests.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/python-tests.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/prefreeze.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/candidate-determinism.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/secrets-scan.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/sandbox-probes.log",
+    "docs/delivery/test-evidence/DG0/code-security/round-24/requirements-check.log",
+    ".github/workflows/delivery-gates.yml"
+  ],
+  "reviewed_at": "2026-09-30T13:32:51Z",
+  "summary": "PASS with one Low observation. D-040 closes F-DG0-166/249: a CLOSED_VERIFIED fix must now be an ancestor of the verifying run's real head_commit_at_start and of the gate candidate, and my round-23 forge is rejected. The comments now describe the strict model (F-DG0-014/167). All 110 real closures satisfy the new binding, and the F-DG0-164/165/246 protections still hold. New F-DG0-168 (Low, non-mandatory): D-040 replaced the round-candidate ancestry check instead of adding to it, so in a genuine round a fix committed between the freeze and the verifier's run start now closes a finding (round 23 rejected this). The fix must still be in the reviewed gate candidate, so the effect is limited to mis-attribution. All tests, the pre-freeze, determinism, secrets and sandbox probes pass.",
+  "narrative": "docs/delivery/reviews/DG0/round-24/code-security-reviewer.md"
+}

@@ -1,0 +1,28 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG0-166",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified against the round-24 candidate f0f3a93a… (source 6db3b83). Fix 81f036d is an ancestor of 6db3b83. checkClosure (rules.mjs:737-739) now reads the verifying run's meta.json (same run_id as the verifying record's invocation_reference) and rejects a CLOSED_VERIFIED fix_revision that is not an ancestor of its head_commit_at_start. round.source_commit is no longer used for the round-side check. The guard at :738 skips only when the head is malformed or absent, and checkInvocation (:388-405, binding.manifestPath set at :722) already records an error in each such case, so there is no escape (SEC24-4: unknown/HEAD/missing/null/zeros/absent-40hex/UPPERHEX/short all rejected). I reran my round-23 forge (SEC24-1, run on --no-local clones of both commits): a superseded round 2 whose manifest and stages entry name 'deadbeef'x5, a genuine verifier run, and a fix committed after the run started that is present in the gate candidate. At 6db3b83 this gives 'fix … is not in the verifying run's starting history' for both the forged and the genuine variant. At 6438e20 the forged variant gave 0 errors, which is the original bug reproduced. No regression: the forged round with a real fix still passes (SEC24-2, 0 errors; the findManifest D-035 tolerance only). The real-repo census on a --no-local clone shows all 110 CLOSED_VERIFIED fixes are ancestors of their verifying run's head and of the gate candidate, and the synthetic-gate dry run reports no starting-history, gate-candidate or absent-fix error. Unit tests 'D-039/D-040 / F-DG0-164/166/246/249' and 'F-DG0-110 / F-DG0-204' pass (101/101). D-040 replaced the round-candidate check rather than adding to it, which weakens a genuine-round case. That residual is raised separately as F-DG0-168 (Low) and does not reopen this finding, whose forged-metadata bypass is closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.tests.mjs.txt",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/run-sec24-repro.sh",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/closure-census.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/real-repo-gate-dryrun.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/node-tests.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG0-167",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified against the round-24 candidate (source 6db3b83). Fix 81f036d (the commitPresent comment) is an ancestor of 6db3b83. The findManifest comment was also corrected in 6db3b83 itself. The commitPresent() header (rules.mjs:597-604) now says gate validation runs on a complete clone, that the ONLY absence tolerance is findManifest's content-preserving one (D-035), that checkClosure and checkInvocation are strict (D-039/D-040), and that the fix must be an ancestor of the verifying run's head and the gate candidate. The findManifest comment (:904-912) describes the same model and states that a reachable commit whose content does not match is still an error. Code census: the only tolerance site is findManifest's `present` flag (:913-919), which is reached only after the entries hash to candidate_id (:895-899). commitPresent is used at :397 (hard error), :735 (hard error) and :738 (after checkInvocation's hard error). The comments match the behaviour. The phrase 'skips the round-side check only via the run's real head' (:603-604) is awkward but not wrong.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG0/code-security/round-24/candidate-and-scope.log",
+        "docs/delivery/test-evidence/DG0/code-security/round-24/sec24-repro.log"
+      ]
+    }
+  ]
+}
