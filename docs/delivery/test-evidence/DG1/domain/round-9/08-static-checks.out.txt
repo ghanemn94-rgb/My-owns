@@ -1,0 +1,35 @@
+clone HEAD: 273d21f78b8ee4369ed7e864d5a1fe76cc4e3de1
+== pnpm run check:no-cdn
+
+> mobily-transformation-hub@0.1.0 check:no-cdn /var/tmp/mth-run.OwJfTi/claude-0/review-dom-r9
+> node scripts/check-no-cdn.mjs
+
+PASS no-cdn: scanned apps, packages
+exit=0
+== pnpm run openapi:lint
+
+> mobily-transformation-hub@0.1.0 openapi:lint /var/tmp/mth-run.OwJfTi/claude-0/review-dom-r9
+> node scripts/openapi-lint.mjs docs/api/openapi.yaml
+
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit=0
+== pnpm -r typecheck
+packages/db typecheck$ tsc -p tsconfig.json
+packages/db typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json
+apps/worker typecheck$ tsc -p tsconfig.json
+apps/worker typecheck: Done
+apps/api typecheck: Done
+exit=0
+== pnpm run lint
+
+> mobily-transformation-hub@0.1.0 lint /var/tmp/mth-run.OwJfTi/claude-0/review-dom-r9
+> eslint . --max-warnings=0
+
+exit=0
+== npx prettier --check apps/api/src/architecture.testkit.ts apps/api/src/architecture.test.ts
+Checking formatting...
+All matched files use Prettier code style!
+exit=0
+== git diff 11bc4c4 273d21f on docs/api apps/web/src/i18n packages/db/migrations docs/architecture (expect empty)
+exit=0

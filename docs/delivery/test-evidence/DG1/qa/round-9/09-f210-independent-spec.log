@@ -1,0 +1,25 @@
+$ cp docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-lead-create-edit-archive-no-reload.spec.ts e2e/ && PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 e2e/support/qa-stack.sh npx playwright test e2e/dg1-r4-lead-create-edit-archive-no-reload.spec.ts --workers=1 --reporter=list
+clone HEAD: 273d21f78b8ee4369ed7e864d5a1fe76cc4e3de1
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 2 tests using 1 worker
+
+[chromium-en] id=01a0f7cd-4457-755a-a215-a148c0353f2c /me reads after 201=1 added grants=[{"type":"transformation","id":"01a0f7cd-4457-755a-a215-a148c0353f2c"}] documentLoads after form=0
+  ✓  1 [chromium-en] › e2e/dg1-r4-lead-create-edit-archive-no-reload.spec.ts:37:1 › BU Lead: create -> Edit (save) -> Archive without a reload; refreshed /me adds only the new record's grant (2.3s)
+[chromium-ar] id=01a0f7cd-516b-759b-8a3c-bdc08efd11ba /me reads after 201=1 added grants=[{"type":"transformation","id":"01a0f7cd-516b-759b-8a3c-bdc08efd11ba"}] documentLoads after form=0
+  ✓  2 [chromium-ar] › e2e/dg1-r4-lead-create-edit-archive-no-reload.spec.ts:37:1 › BU Lead: create -> Edit (save) -> Archive without a reload; refreshed /me adds only the new record's grant (2.3s)
+
+  2 passed (7.3s)
+exit=0

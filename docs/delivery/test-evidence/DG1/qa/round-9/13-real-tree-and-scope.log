@@ -1,0 +1,55 @@
+# Real module tree (apps/api/src/modules/**): node: specifiers and process.<member> uses actually present, vs the D-055 allow-lists
+clone HEAD: 273d21f78b8ee4369ed7e864d5a1fe76cc4e3de1
+$ grep -rhoE "from \"node:[a-z_/]+\"|import\(\"node:[a-z_/]+\"\)|require\(\"node:[a-z_/]+\"\)" apps/api/src/modules | sort | uniq -c
+      5 from "node:crypto"
+      1 from "node:fs"
+      3 from "node:path"
+      1 from "node:url"
+$ grep -rhoE "\bprocess\??\.[A-Za-z_$]+" apps/api/src/modules | sort | uniq -c
+# node: specifiers used across all apps/api/src (incl. composition root, not in lint scope)
+      1 from "node:child_process"
+      7 from "node:crypto"
+      5 from "node:fs"
+      1 from "node:fs/promises"
+      1 from "node:http"
+      2 from "node:inspector"
+      1 from "node:inspector/promises"
+      2 from "node:module"
+      1 from "node:net"
+      1 from "node:os"
+      6 from "node:path"
+      4 from "node:process"
+      2 from "node:sqlite"
+      2 from "node:test"
+      4 from "node:url"
+      1 from "node:util"
+      2 from "node:vm"
+      1 from "node:wasi"
+      1 from "node:worker_threads"
+$ git diff --name-only 3bde225 273d21f -- apps packages tests e2e scripts deploy docs/api
+apps/api/src/architecture.test.ts
+apps/api/src/architecture.testkit.ts
+$ git diff --name-only 3bde225 273d21f
+apps/api/src/architecture.test.ts
+apps/api/src/architecture.testkit.ts
+docs/delivery/assignments/DG1/round-9/T-DG1-BE10.md
+docs/delivery/decisions.md
+docs/delivery/findings.json
+docs/delivery/handbacks/DG1/round-9/T-DG1-BE10-backend-workflow-engineer.md
+docs/delivery/runs/DG1/DG1-T-DG1-BE10-backend-workflow-engineer-20261001T135207Z-3d677af8/meta.json
+docs/delivery/runs/DG1/DG1-T-DG1-BE10-backend-workflow-engineer-20261001T135207Z-3d677af8/result.json
+docs/delivery/runs/DG1/DG1-T-DG1-BE10-backend-workflow-engineer-20261001T135207Z-3d677af8/sandbox.json
+docs/delivery/runs/DG1/DG1-T-DG1-BE10-backend-workflow-engineer-20261001T135207Z-3d677af8/settings.json
+docs/delivery/runs/DG1/DG1-T-DG1-BE10-backend-workflow-engineer-20261001T135207Z-3d677af8/stderr.log
+docs/delivery/runs/DG1/DG1-T-DG1-BE10-backend-workflow-engineer-20261001T135207Z-3d677af8/transcript.jsonl.gz
+$ grep testkit exclusion in apps/api/tsconfig.build.json
+10:  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.testkit.ts"]
+$ ls apps/api/dist | grep -c testkit (built output must not contain the testkit)
+0
+# Where do the loader built-in strings above come from?
+$ grep -rlE "from \"node:(child_process|http|inspector|module|net|process|sqlite|test|vm|wasi|worker_threads)" apps/api/src
+apps/api/src/architecture.test.ts
+apps/api/src/architecture.testkit.ts
+$ grep -rnE "^import .*from \"node:(<loader set>)" apps/api/src   # real top-level imports: expect none
+grep-exit=1 (1 = none found)
+# conclusion: they are planted self-check source strings / comments only; module source uses only node:crypto, fs, path, url (all allow-listed) and no process.<member> at all -> no legitimate import is wrongly denied

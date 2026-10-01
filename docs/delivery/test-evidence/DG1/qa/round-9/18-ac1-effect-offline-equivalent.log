@@ -1,0 +1,20 @@
+clone HEAD: 273d21f78b8ee4369ed7e864d5a1fe76cc4e3de1
+# (1) cause of the suite AC-1 (effect) FAIL: the suite's exact fixture through the unchanged frozen wrapper (needs registry metadata)
+# cmd: npm_config_store_dir=$TMPDIR/store/v10 tools/deps/install-sandbox.sh --root $TMPDIR/ac1net create
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ ERR_PNPM_META_FETCH_FAIL  GET https://registry.npmjs.org/is-number: request to https://registry.npmjs.org/is-number failed, reason: connect ECONNREFUSED 127.0.0.1:3128
+This error happened while installing a direct dependency of /var/tmp/mth-run.3WRmp5/claude-0/mth-ws.UcIH2E
+wrapper exit=1
+
+# (2) AC-1 (effect) offline equivalent: same package.json + fixture-only .npmrc offline=true + pnpm-lock.yaml pinning is-number@7.0.0 (sha512-41Cifkg6...). Wrapper unchanged; no network.
+# cmd: npm_config_store_dir=$TMPDIR/store/v10 tools/deps/install-sandbox.sh --root $TMPDIR/ac1off create ; test -d $TMPDIR/ac1off/node_modules/is-number
+Progress: resolved 1, reused 1, downloaded 0, added 1, done
+
+dependencies:
++ is-number 7.0.0
+
+Done in 491ms using pnpm v10.33.0
+wrapper exit=0
+PASS  AC-1 (effect, offline equivalent) create populated node_modules/is-number (7.0.0)
+lockfile sha256 prefix before/after: 88818e6e51b71df8 / 88818e6e51b71df8

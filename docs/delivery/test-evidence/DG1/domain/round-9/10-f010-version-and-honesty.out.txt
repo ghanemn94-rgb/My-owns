@@ -1,0 +1,45 @@
+repo HEAD: 07f1a54055aaa42c372d3f73c1cbf0ddc2478a08 (candidate tree == 273d21f for these paths)
+== testkit header: every mention of a Node version / exhaustive / closed-as-found (expect: only the factual 'targets Node 24, floor 22.18+' line, no exhaustiveness claim)
+14:// F-DG1-124 - BLANKET BAN of the dynamic-code-loading primitives in module source. F-DG1-117 and F-DG1-121 matched
+42:// version the lint runs on (production targets Node 24, the supported floor is Node 22.18+): a new built-in or
+78:/** F-DG1-124: dynamic-code primitives, banned in every syntactic form (rule 1), by the kind of bypass they give. */
+== version facts the header cites
+.nvmrc: 24
+10:    "node": ">=22.18.0 <25",
+24:ARG NODE_IMAGE=node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea
+20:   - **Target runtime:** the **Node.js 24 LTS** line in every container image. devops-engineer pins the image by digest.
+22:   - **Supported floor:** Node **22.18.0 or later** (`engines.node: ">=22.18.0 <25"`).
+61:- Code must stay within Node 22.18 APIs until the floor is raised; raising it needs an ADR update.
+69:| Node.js (floor/sandbox) | ≥22.18.0; sandbox v22.22.2 | MIT | end of life 2027-04-30 | `node --version` [V-LOCAL 2026-09-30]; end-of-life date [UNVERIFIED] |
+== D-055 row (is it framed as superseding D-053/D-054, version-independent?)
+superseding the "closed as found / exhaustive for the pinned Node" framing of D-053/D-054.
+version-independent.
+version-independent** (fixes F-DG1-010's root cause: no per-Node enumeration/sweep) and closes the whole loader/exec class at once (fixes F-DG1-129/213 and prevents further adjacent-route findings).
+== Node runtimes available in this sandbox (Node 24 absence noted; the default-deny check does not need a per-version sweep)
+/opt/node20
+/opt/node21
+/opt/node22
+v22.22.2
+== honesty: official PMI / Mobily / certified claims in product UI catalogues and web src (expect only negations/provisional)
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:120:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provision
+apps/web/src/i18n/en/common.json:123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It
+apps/web/src/i18n/ar/common.json:120:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وB
+== design tokens provenance
+== methodBody (en) full
+123:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+== provenance in design tokens package
+== tokens.json provisional markers
+2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token
+3:  "provisional": true,
+5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+9:      "provisional": true
+11:    "surface.page": { "value": "#F5F8FC", "purpose": "Page background", "provisional": true },
+12:    "surface.card": { "value": "#FFFFFF", "purpose": "Content surfaces", "provisional": true },
+== API branding provenance
+apps/api/src/modules/admin/branding.ts:17: * Maps the token source to the contract shape. Fails safe: provenance is "official" only when the source says the
+apps/api/src/modules/admin/branding.ts:29:  return brandingTokens.parse({ provenance: provisional ? "provisional" : "official", tokens });
+packages/shared/src/schemas/branding.ts:2:// operation getBrandingTokens); keep both in lockstep. `provenance` stays "provisional" while the seeded §15 tokens
+packages/shared/src/schemas/branding.ts:18:  provenance: brandingProvenance,
+(live: section C2 of 07-live-scenario.out.txt confirms provenance=provisional over HTTP)

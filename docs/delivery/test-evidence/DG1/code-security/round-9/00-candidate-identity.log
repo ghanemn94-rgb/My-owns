@@ -1,0 +1,24 @@
+$ git rev-parse HEAD
+39cfc4e4932a9692fe1d082522245171e04f1e8d
+$ node tools/gates/candidate.mjs --stage DG1   (main checkout)
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:05915c32b3f5c5b2a9e14324a70fbf5cd16e76a48bc3235d6cc30b290591babd","files":390}
+$ (clone /var/tmp/mth-run.tjC1R8/claude-0/review-sec) git rev-parse HEAD; is-shallow; candidate.mjs
+07f1a54055aaa42c372d3f73c1cbf0ddc2478a08
+false
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:05915c32b3f5c5b2a9e14324a70fbf5cd16e76a48bc3235d6cc30b290591babd","files":390}
+$ git diff --stat 273d21f..07f1a54   (freeze commit: candidate-excluded metadata only)
+ docs/delivery/assignments/DG1/round-9/audit.md     |   23 +
+ .../DG1/round-9/review-code-security-reviewer.md   |   13 +
+ .../assignments/DG1/round-9/review-common.md       |   18 +
+ .../DG1/round-9/review-domain-reviewer.md          |   12 +
+ .../assignments/DG1/round-9/review-qa-verifier.md  |   15 +
+ .../candidates/DG1/05915c32b3f5c5b2.manifest.json  | 1968 ++++++++++++++++++++
+ docs/delivery/stages.json                          |   20 +-
+ 7 files changed, 2065 insertions(+), 4 deletions(-)
+$ git diff --stat 3bde225..273d21f -- apps packages tools deploy scripts e2e tests   (source delta since round-8 import)
+ apps/api/src/architecture.test.ts    | 158 +++++++++++++++++++++++++++++++----
+ apps/api/src/architecture.testkit.ts | 104 ++++++++++-------------
+ 2 files changed, 184 insertions(+), 78 deletions(-)
+$ (clone) git checkout 273d21f78b8ee4369ed7e864d5a1fe76cc4e3de1 && node tools/gates/candidate.mjs --stage DG1
+273d21f78b8ee4369ed7e864d5a1fe76cc4e3de1
+{"stage":"DG1","source":"working-tree","candidate_id":"sha256:05915c32b3f5c5b2a9e14324a70fbf5cd16e76a48bc3235d6cc30b290591babd","files":390}

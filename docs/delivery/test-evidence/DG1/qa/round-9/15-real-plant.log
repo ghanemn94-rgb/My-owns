@@ -1,0 +1,22 @@
+# Real-tree plant: a real module file using the F-DG1-129 / F-DG1-213 routes must turn the module-tree check red
+$ printf '%s' 'export function x() { process.kill(process.pid, "SIGUSR1"); }' > apps/api/src/modules/transformations/zz-qa-planted.ts && pnpm vitest run --project unit-node apps/api/src/architecture.test.ts -t 'every import respects'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+[31m+   "modules/transformations/zz-qa-planted.ts: non-allow-listed process.kill member (line 1) bypasses the module-interface check",[39m
+[31m+   "modules/transformations/zz-qa-planted.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check",[39m
+      Tests  1 failed | 100 skipped (101)
+exit=1
+$ printf '%s' 'export function x() { process._debugProcess(process.pid); }' > apps/api/src/modules/transformations/zz-qa-planted.ts && pnpm vitest run --project unit-node apps/api/src/architecture.test.ts -t 'every import respects'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+[31m+   "modules/transformations/zz-qa-planted.ts: non-allow-listed process._debugProcess member (line 1) bypasses the module-interface check",[39m
+[31m+   "modules/transformations/zz-qa-planted.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check",[39m
+      Tests  1 failed | 100 skipped (101)
+exit=1
+$ printf '%s' 'import { Session } from "node:inspector";
+export const s = Session;' > apps/api/src/modules/transformations/zz-qa-planted.ts && pnpm vitest run --project unit-node apps/api/src/architecture.test.ts -t 'every import respects'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+[31m+   "modules/transformations/zz-qa-planted.ts: imports non-allow-listed node built-in node:inspector",[39m
+      Tests  1 failed | 100 skipped (101)
+exit=1
+$ rm apps/api/src/modules/transformations/zz-qa-planted.ts && pnpm vitest run --project unit-node apps/api/src/architecture.test.ts   # restored
+      Tests  101 passed (101)
+exit=0

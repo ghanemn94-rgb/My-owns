@@ -1,0 +1,8 @@
+# why AC-1 (effect) and a real-repo install are BLOCKED here: the sandbox has no registry access (is-number@7.0.0 is not in the local store)
+$ npm_config_store_dir=$TMPDIR/store/v10 tools/deps/install-sandbox.sh --root $TMPDIR/ac1p create   # package.json depends on is-number 7.0.0, as in the test's AC-1
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET https://registry.npmjs.org/is-number error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ ERR_PNPM_META_FETCH_FAIL  GET https://registry.npmjs.org/is-number: request to https://registry.npmjs.org/is-number failed, reason: connect ECONNREFUSED 127.0.0.1:3128
+
+This error happened while installing a direct dependency of /var/tmp/mth-run.tjC1R8/claude-0/mth-ws.OElgfu
+exit=1

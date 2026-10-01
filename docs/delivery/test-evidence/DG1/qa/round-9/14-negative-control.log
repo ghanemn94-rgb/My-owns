@@ -1,0 +1,105 @@
+# Negative control: pre-fix testkit (round-8 candidate 3bde225) + frozen round-9 architecture.test.ts -> the default-deny self-checks must FAIL
+$ git show 3bde225:apps/api/src/architecture.testkit.ts > apps/api/src/architecture.testkit.ts && pnpm vitest run --project unit-node apps/api/src/architecture.test.ts
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > D2 node:module itself is a violation 9ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M8 node:vm is a violation 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P12 process.binding is a violation (round-4 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P13 node:inspector (in-process evaluation) is a violation (round-4 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P14 node:child_process is a violation (round-4 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X6 node:process default import .dlopen is a violation (round-4 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X7 node:process default import .binding is a violation (round-4 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X8 node:process named import dlopen is a violation (round-4 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A1 node:sqlite loadExtension is a violation (round-4 lint: 'missed') 13ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > R1 node:test in-process run is a violation (round-4 lint: 'missed') 3ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > R2 process.execve is a violation (round-4 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD1 process.kill(self, SIGUSR1) starts the inspector (F-DG1-129 N1) is a violation (default-deny; round-8 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD2 process._debugProcess(self) (F-DG1-129 N2 / F-DG1-213 D2) is a violation (default-deny; round-8 lint: 'missed') 3ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD3 process._kill is a violation (default-deny; round-8 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD4 F-DG1-213 D1 full route as module source is a violation (default-deny; round-8 lint: 'missed') 3ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD5 process.execve is a violation (default-deny; round-8 lint: 'caught') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD6 process.binding is a violation (default-deny; round-8 lint: 'caught') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD7 process.dlopen is a violation (default-deny; round-8 lint: 'caught') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD8 process.abort is a violation (default-deny; round-8 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD9 optional-chained process?.kill is a violation (default-deny; round-8 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD10 node:inspector is a violation (default-deny; round-8 lint: 'caught') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD11 node:inspector/promises is a violation (default-deny; round-8 lint: 'caught') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD12 node:sqlite is a violation (default-deny; round-8 lint: 'caught') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD13 node:test is a violation (default-deny; round-8 lint: 'caught') 3ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD14 node:vm is a violation (default-deny; round-8 lint: 'caught') 1ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD15 node:worker_threads is a violation (default-deny; round-8 lint: 'caught') 11ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD16 node:wasi is a violation (default-deny; round-8 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD17 node:v8 is a violation (default-deny; round-8 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD18 node:http is a violation (default-deny; round-8 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD19 node:net is a violation (default-deny; round-8 lint: 'missed') 3ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD20 a built-in a later Node version might add is a violation (default-deny; round-8 lint: 'missed') 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > scanSource reports what it saw (paths resolve relative to the planted file) 3ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 32 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > D2 node:module itself is a violation
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M8 node:vm is a violation
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P12 process.binding is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P13 node:inspector (in-process evaluation) is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P14 node:child_process is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X6 node:process default import .dlopen is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X7 node:process default import .binding is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X8 node:process named import dlopen is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A1 node:sqlite loadExtension is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > R1 node:test in-process run is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > R2 process.execve is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD1 process.kill(self, SIGUSR1) starts the inspector (F-DG1-129 N1) is a violation (default-deny; round-8 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD2 process._debugProcess(self) (F-DG1-129 N2 / F-DG1-213 D2) is a violation (default-deny; round-8 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD3 process._kill is a violation (default-deny; round-8 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD4 F-DG1-213 D1 full route as module source is a violation (default-deny; round-8 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD5 process.execve is a violation (default-deny; round-8 lint: 'caught')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD6 process.binding is a violation (default-deny; round-8 lint: 'caught')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD7 process.dlopen is a violation (default-deny; round-8 lint: 'caught')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD8 process.abort is a violation (default-deny; round-8 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD9 optional-chained process?.kill is a violation (default-deny; round-8 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD10 node:inspector is a violation (default-deny; round-8 lint: 'caught')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD12 node:sqlite is a violation (default-deny; round-8 lint: 'caught')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD13 node:test is a violation (default-deny; round-8 lint: 'caught')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD14 node:vm is a violation (default-deny; round-8 lint: 'caught')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD15 node:worker_threads is a violation (default-deny; round-8 lint: 'caught')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD11 node:inspector/promises is a violation (default-deny; round-8 lint: 'caught')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD16 node:wasi is a violation (default-deny; round-8 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD17 node:v8 is a violation (default-deny; round-8 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD18 node:http is a violation (default-deny; round-8 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD19 node:net is a violation (default-deny; round-8 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD20 a built-in a later Node version might add is a violation (default-deny; round-8 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > scanSource reports what it saw (paths resolve relative to the planted file)
+      Tests  32 failed | 69 passed (101)
+exit=1
+$ git checkout -- apps/api/src/architecture.testkit.ts && pnpm vitest run --project unit-node apps/api/src/architecture.test.ts   # restored
+      Tests  101 passed (101)
+exit=0
+
+# Negative control 2 (message-format-independent): QA r9 probe P2/P3 (asserts only "some violation") against the PRE-FIX testkit
+$ git show 3bde225:apps/api/src/architecture.testkit.ts > apps/api/src/architecture.testkit.ts && cp <qa tests>/dg1-r9-default-deny-probe.test.ts apps/api/src/ && pnpm vitest run --project unit-node apps/api/src/dg1-r9-default-deny-probe.test.ts -t "P2|P3"
+P2 process member names: [33m120[39m missed: ["__defineGetter__","__defineSetter__","__tinypool_state__","_channel","_debugEnd","_debugProcess","_disconnect","_events","_eventsCount","_exiting","_fatalException","_getActiveHandles","_getActiveRequests","_handleQueue","_kill","_maxListeners","_pendingMessage","_preload_modules","_rawDebug","_send","_startProfilerIdleNotifier","_stopProfilerIdleNotifier","_tickCallback","abort","addListener","allowedNodeEnvironmentFlags","arch","argv0","assert","availableMemory","channel","chdir","config","connected","constrainedMemory","cpuUsage","cwd","debugPort","disconnect","domain","emit","emitWarning","eventNames","execArgv","execPath","exitCode","features","finalization","getActiveResourcesInfo","getMaxListeners","getegid","geteuid","getgid","getgroups","getuid","hasOwnProperty","hasUncaughtExceptionCaptureCallback","hrtime","initgroups","isPrototypeOf","kill","listenerCount","listeners","loadEnvFile","memoryUsage","moduleLoadList","nextTick","off","on","openStdin","pid","platform","ppid","prependListener","prependOnceListener","propertyIsEnumerable","rawListeners","reallyExit","ref","release","removeAllListeners","removeListener","report","resourceUsage","send","setMaxListeners","setSourceMapsEnabled","setUncaughtExceptionCaptureCallback","setegid","seteuid","setgid","setgroups","setuid","sourceMapsEnabled","stderr","stdin","stdout","threadCpuUsage","title","toLocaleString","toString","umask","unref","uptime","valueOf","version","versions"]
+ × |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P2 default-deny of process.<member> (every member of the running process object) > flags every non-safe member of process (120 names) and no safe one 246ms
+ × |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P2 default-deny of process.<member> (every member of the running process object) > members a later Node might add are denied by default 4ms
+ × |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R1 process.kill(pid,'SIGUSR1'): flagged 2ms
+ × |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R2 process._debugProcess(pid): flagged 2ms
+ × |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R3 process._kill: flagged 2ms
+ × |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R4 optional chain process?.kill: flagged 3ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R5 process.kill.call: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R6 Function.prototype.apply route: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R7 destructured: flagged 3ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R8 indexed: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R9 passed to Reflect.get: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R10 aliased: flagged 1ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R11 globalThis.process: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R12 import default node:process: flagged 5ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R13 import named node:process: flagged 10ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R14 require node:inspector: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R15 dynamic import node:child_process: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R16 export-from node:vm: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R17 type-only import node:worker_threads: flagged 2ms
+ × |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R18 import type node:v8: flagged 2ms
+ × |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R19 node:wasi: flagged 2ms
+ × |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R20 node:net (network I/O in module source): flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R21 process.getBuiltinModule: flagged 1ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R22 process.execve: flagged 2ms
+ × |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R23 process.on (not in safe set): flagged 3ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  10 failed | 15 passed | 9 skipped (34)
+exit=1
+$ git checkout -- apps/api/src/architecture.testkit.ts; rm probe   # restored

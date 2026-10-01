@@ -1,0 +1,144 @@
+$ cp docs/delivery/test-evidence/DG1/qa/tests/dg1-r9-default-deny-probe.test.ts apps/api/src/ && pnpm vitest run --project unit-node apps/api/src/dg1-r9-default-deny-probe.test.ts --reporter=verbose
+clone HEAD: 273d21f78b8ee4369ed7e864d5a1fe76cc4e3de1; node v22.22.2
+
+ RUN  v3.2.4 /var/tmp/mth-run.3WRmp5/claude-0/review-qa
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P1 default-deny of node: built-ins (every built-in of the running Node) > enumerates 72 built-ins on Node v22.22.2
+node v22.22.2 built-ins: [33m72[39m
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P1 default-deny of node: built-ins (every built-in of the running Node) > every non-safe built-in is denied (bareAllowed + fileViolations), every safe one is allowed
+P1 missed (allowed but not safe): []
+P1 wrongly denied (safe): []
+
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P1 default-deny of node: built-ins (every built-in of the running Node) > enumerates 72 built-ins on Node v22.22.2 3ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P1 default-deny of node: built-ins (every built-in of the running Node) > every non-safe built-in is denied (bareAllowed + fileViolations), every safe one is allowed 170ms
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P2 default-deny of process.<member> (every member of the running process object) > flags every non-safe member of process (120 names) and no safe one
+P2 process member names: [33m120[39m missed: []
+P2 wrongly flagged (safe): []
+
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P1 default-deny of node: built-ins (every built-in of the running Node) > bare (unprefixed) built-in names are not dependencies and are denied 9ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P2 default-deny of process.<member> (every member of the running process object) > flags every non-safe member of process (120 names) and no safe one 153ms
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R1 process.kill(pid,'SIGUSR1'): flagged
+R1 process.kill(pid,'SIGUSR1') violations = ["modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.kill member (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R2 process._debugProcess(pid): flagged
+R2 process._debugProcess(pid) violations = ["modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process._debugProcess member (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R3 process._kill: flagged
+R3 process._kill violations = ["modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process._kill member (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R4 optional chain process?.kill: flagged
+R4 optional chain process?.kill violations = ["modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.kill member (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R5 process.kill.call: flagged
+R5 process.kill.call violations = ["modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.kill member (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: process used as a value (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R6 Function.prototype.apply route: flagged
+R6 Function.prototype.apply route violations = ["modules/transformations/zz-qa-r9-planted.ts: reflection via Reflect (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.kill member (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: process used as a value (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R7 destructured: flagged
+R7 destructured violations = ["modules/transformations/zz-qa-r9-planted.ts: process used as a value (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R8 indexed: flagged
+R8 indexed violations = ["modules/transformations/zz-qa-r9-planted.ts: computed member of process (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R9 passed to Reflect.get: flagged
+R9 passed to Reflect.get violations = ["modules/transformations/zz-qa-r9-planted.ts: reflection via Reflect (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: process used as a value (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R10 aliased: flagged
+R10 aliased violations = ["modules/transformations/zz-qa-r9-planted.ts: process used as a value (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R11 globalThis.process: flagged
+R11 globalThis.process violations = ["modules/transformations/zz-qa-r9-planted.ts: globalThis.process (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R12 import default node:process: flagged
+R12 import default node:process violations = ["modules/transformations/zz-qa-r9-planted.ts: imports non-allow-listed node built-in node:process"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R13 import named node:process: flagged
+R13 import named node:process violations = ["modules/transformations/zz-qa-r9-planted.ts: imports non-allow-listed node built-in node:process"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R14 require node:inspector: flagged
+R14 require node:inspector violations = ["modules/transformations/zz-qa-r9-planted.ts: module loader via require (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: imports non-allow-listed node built-in node:inspector"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R15 dynamic import node:child_process: flagged
+R15 dynamic import node:child_process violations = ["modules/transformations/zz-qa-r9-planted.ts: imports non-allow-listed node built-in node:child_process"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R16 export-from node:vm: flagged
+R16 export-from node:vm violations = ["modules/transformations/zz-qa-r9-planted.ts: imports non-allow-listed node built-in node:vm"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R17 type-only import node:worker_threads: flagged
+R17 type-only import node:worker_threads violations = ["modules/transformations/zz-qa-r9-planted.ts: imports non-allow-listed node built-in node:worker_threads"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R18 import type node:v8: flagged
+R18 import type node:v8 violations = ["modules/transformations/zz-qa-r9-planted.ts: imports non-allow-listed node built-in node:v8"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R19 node:wasi: flagged
+R19 node:wasi violations = ["modules/transformations/zz-qa-r9-planted.ts: imports non-allow-listed node built-in node:wasi"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R20 node:net (network I/O in module source): flagged
+R20 node:net (network I/O in module source) violations = ["modules/transformations/zz-qa-r9-planted.ts: imports non-allow-listed node built-in node:net"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R21 process.getBuiltinModule: flagged
+R21 process.getBuiltinModule violations = ["modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.getBuiltinModule member (line 1) bypasses the module-interface check","modules/transformations/zz-qa-r9-planted.ts: module loader via .getBuiltinModule() (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R22 process.execve: flagged
+R22 process.execve violations = ["modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.execve member (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R23 process.on (not in safe set): flagged
+R23 process.on (not in safe set) violations = ["modules/transformations/zz-qa-r9-planted.ts: non-allow-listed process.on member (line 1) bypasses the module-interface check"]
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P4 positive controls: legitimate module code stays clean > C1 node:crypto: clean
+C1 node:crypto violations = []
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P4 positive controls: legitimate module code stays clean > C2 node:fs + node:path: clean
+C2 node:fs + node:path violations = []
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P4 positive controls: legitimate module code stays clean > C3 node:fs/promises: clean
+C3 node:fs/promises violations = []
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P4 positive controls: legitimate module code stays clean > C4 node:os / node:url / node:util: clean
+C4 node:os / node:url / node:util violations = []
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P4 positive controls: legitimate module code stays clean > C5 process.env read: clean
+C5 process.env read violations = []
+
+stdout | apps/api/src/dg1-r9-default-deny-probe.test.ts > P4 positive controls: legitimate module code stays clean > C6 process.exit / once / argv: clean
+C6 process.exit / once / argv violations = []
+
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P2 default-deny of process.<member> (every member of the running process object) > members a later Node might add are denied by default 7ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R1 process.kill(pid,'SIGUSR1'): flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R2 process._debugProcess(pid): flagged 1ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R3 process._kill: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R4 optional chain process?.kill: flagged 14ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R5 process.kill.call: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R6 Function.prototype.apply route: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R7 destructured: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R8 indexed: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R9 passed to Reflect.get: flagged 1ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R10 aliased: flagged 1ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R11 globalThis.process: flagged 1ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R12 import default node:process: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R13 import named node:process: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R14 require node:inspector: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R15 dynamic import node:child_process: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R16 export-from node:vm: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R17 type-only import node:worker_threads: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R18 import type node:v8: flagged 1ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R19 node:wasi: flagged 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R20 node:net (network I/O in module source): flagged 1ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R21 process.getBuiltinModule: flagged 1ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R22 process.execve: flagged 1ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P3 F-DG1-129 / F-DG1-213 routes and evasion spellings are flagged > R23 process.on (not in safe set): flagged 3ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P4 positive controls: legitimate module code stays clean > C1 node:crypto: clean 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P4 positive controls: legitimate module code stays clean > C2 node:fs + node:path: clean 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P4 positive controls: legitimate module code stays clean > C3 node:fs/promises: clean 1ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P4 positive controls: legitimate module code stays clean > C4 node:os / node:url / node:util: clean 8ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P4 positive controls: legitimate module code stays clean > C5 process.env read: clean 2ms
+ ✓ |unit-node| apps/api/src/dg1-r9-default-deny-probe.test.ts > P4 positive controls: legitimate module code stays clean > C6 process.exit / once / argv: clean 2ms
+
+ Test Files  1 passed (1)
+      Tests  34 passed (34)
+   Start at  14:11:33
+   Duration  1.23s (transform 100ms, setup 0ms, collect 533ms, tests 413ms, environment 0ms, prepare 64ms)
+
+exit=0

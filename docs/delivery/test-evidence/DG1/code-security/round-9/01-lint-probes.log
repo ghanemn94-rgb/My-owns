@@ -1,0 +1,70 @@
+
+ RUN  v3.2.4 /var/tmp/mth-run.tjC1R8/claude-0/review-sec
+
+stdout | apps/api/src/zz-r9-probe.test.ts > MUST_DENY: every route is a violation
+DENY  OK    process.kill SIGUSR1 -> 2 violation(s): modules/transformations/zz-planted.ts: non-allow-listed process.kill member (line 1) bypasses the module-interface check | modules/transformations/zz-planted.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check
+DENY  OK    process._debugProcess -> 2 violation(s): modules/transformations/zz-planted.ts: non-allow-listed process._debugProcess member (line 1) bypasses the module-interface check | modules/transformations/zz-planted.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check
+DENY  OK    process.getBuiltinModule node:vm -> 2 violation(s): modules/transformations/zz-planted.ts: non-allow-listed process.getBuiltinModule member (line 1) bypasses the module-interface check | modules/transformations/zz-planted.ts: module loader via .getBuiltinModule() (line 1) bypasses the module-interface check
+DENY  OK    node:inspector Session -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:inspector
+DENY  OK    node:net -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:net
+DENY  OK    node:http -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:http
+DENY  OK    node:sqlite -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:sqlite
+DENY  OK    node:test -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:test
+DENY  OK    node:vm -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:vm
+DENY  OK    node:worker_threads -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:worker_threads
+DENY  OK    process.execve -> 1 violation(s): modules/transformations/zz-planted.ts: non-allow-listed process.execve member (line 1) bypasses the module-interface check
+DENY  OK    (process as any).binding('fs') -> 1 violation(s): modules/transformations/zz-planted.ts: non-allow-listed process.binding member (line 1) bypasses the module-interface check
+DENY  OK    node:process import -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:process
+DENY  OK    node:module -> 2 violation(s): modules/transformations/zz-planted.ts: module loader via createRequire (line 1) bypasses the module-interface check | modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:module
+DENY  OK    node:child_process -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:child_process
+DENY  OK    node:v8 -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:v8
+DENY  OK    node:wasi -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:wasi
+DENY  OK    node:tls -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:tls
+DENY  OK    node:async_hooks -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:async_hooks
+DENY  OK    dynamic import('node:vm') -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:vm
+DENY  OK    type-only import node:vm -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:vm
+DENY  OK    export * from node:vm -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:vm
+DENY  OK    node:fs/../vm path trick -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:fs/../vm
+DENY  OK    node:crypto/../vm -> 1 violation(s): modules/transformations/zz-planted.ts: imports non-allow-listed node built-in node:crypto/../vm
+DENY  OK    uppercase NODE:vm -> 1 violation(s): modules/transformations/zz-planted.ts: imports package NODE:vm
+DENY  OK    bare 'fs' (no node: prefix) -> 1 violation(s): modules/transformations/zz-planted.ts: imports package fs
+DENY  OK    bare 'vm' -> 1 violation(s): modules/transformations/zz-planted.ts: imports package vm
+DENY  OK    process.dlopen -> 1 violation(s): modules/transformations/zz-planted.ts: non-allow-listed process.dlopen member (line 1) bypasses the module-interface check
+DENY  OK    process.abort -> 1 violation(s): modules/transformations/zz-planted.ts: non-allow-listed process.abort member (line 1) bypasses the module-interface check
+DENY  OK    process._linkedBinding -> 1 violation(s): modules/transformations/zz-planted.ts: non-allow-listed process._linkedBinding member (line 1) bypasses the module-interface check
+DENY  OK    process.mainModule -> 2 violation(s): modules/transformations/zz-planted.ts: non-allow-listed process.mainModule member (line 1) bypasses the module-interface check | modules/transformations/zz-planted.ts: module loader via .mainModule (aliased) (line 1) bypasses the module-interface check
+DENY  OK    process.on (not allow-listed) -> 1 violation(s): modules/transformations/zz-planted.ts: non-allow-listed process.on member (line 1) bypasses the module-interface check
+DENY  OK    process?.kill optional chain -> 2 violation(s): modules/transformations/zz-planted.ts: non-allow-listed process.kill member (line 1) bypasses the module-interface check | modules/transformations/zz-planted.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check
+DENY  OK    globalThis.process -> 1 violation(s): modules/transformations/zz-planted.ts: globalThis.process (line 1) bypasses the module-interface check
+DENY  OK    aliased process -> 1 violation(s): modules/transformations/zz-planted.ts: process used as a value (line 1) bypasses the module-interface check
+DENY  OK    destructured process -> 1 violation(s): modules/transformations/zz-planted.ts: process used as a value (line 1) bypasses the module-interface check
+DENY  OK    process['kill'] -> 1 violation(s): modules/transformations/zz-planted.ts: computed member of process (line 1) bypasses the module-interface check
+
+stdout | apps/api/src/zz-r9-probe.test.ts > MUST_ALLOW: positive controls produce no violation
+ALLOW OK    node:crypto randomUUID -> 0 violations
+ALLOW OK    node:fs -> 0 violations
+ALLOW OK    node:fs/promises -> 0 violations
+ALLOW OK    node:path -> 0 violations
+ALLOW OK    node:url -> 0 violations
+ALLOW OK    node:util -> 0 violations
+ALLOW OK    node:os -> 0 violations
+ALLOW OK    process.env -> 0 violations
+ALLOW OK    process.exit(0) -> 0 violations
+ALLOW OK    process.argv -> 0 violations
+ALLOW OK    process.once -> 0 violations
+
+stdout | apps/api/src/zz-r9-probe.test.ts > ALLOWED_MEMBER_ROUTES (observation): native-load members of allow-listed built-ins
+MEMBER PASSES-LINT crypto.setEngine(<.so path>) - dlopen of a shared object -> 0 violations
+MEMBER PASSES-LINT crypto namespace .setEngine -> 0 violations
+
+stdout | apps/api/src/zz-r9-probe.test.ts > real module tree has zero violations
+REAL-TREE modules=13 violations=0 []
+
+ ✓ |unit-node| apps/api/src/zz-r9-probe.test.ts (4 tests) 772ms
+   ✓ real module tree has zero violations  513ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  14:05:50
+   Duration  1.66s (transform 91ms, setup 0ms, collect 561ms, tests 772ms, environment 0ms, prepare 56ms)
+

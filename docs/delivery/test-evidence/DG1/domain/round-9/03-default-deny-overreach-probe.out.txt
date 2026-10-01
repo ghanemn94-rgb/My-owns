@@ -1,0 +1,45 @@
+clone HEAD: 273d21f78b8ee4369ed7e864d5a1fe76cc4e3de1
+
+ RUN  v3.2.4 /var/tmp/mth-run.OwJfTi/claude-0/review-dom-r9
+
+ ✓ |unit-node| apps/api/src/zz-dom-r9-probe.test.ts > DG1 r9 domain probe: default-deny over-reach > real module tree: zero violations in every module 694ms
+stdout | apps/api/src/zz-dom-r9-probe.test.ts > DG1 r9 domain probe: default-deny over-reach > inventory: every node: specifier and process member used in module source is allow-listed
+node: specifiers in src/modules/**: [["node:crypto",5],["node:path",3],["node:fs",1],["node:url",1]]
+process.<member> in src/modules/**: []
+
+stdout | apps/api/src/zz-dom-r9-probe.test.ts > DG1 r9 domain probe: default-deny over-reach > positive controls: ordinary module code stays clean
+ALLOW? "import { randomUUID, createHash } from \"node:crypto\"; export const id " -> []
+ALLOW? "import { readFile } from \"node:fs/promises\"; export const r = readFile" -> []
+ALLOW? "import { fileURLToPath } from \"node:url\"; import { join } from \"node:p" -> []
+ALLOW? "import { inspect } from \"node:util\"; import { EOL } from \"node:os\"; ex" -> []
+ALLOW? "export const tz = process.env.TZ ?? \"Asia/Riyadh\";" -> []
+ALLOW? "export const a = process.argv.slice(2); process.once(\"SIGTERM\", () => " -> []
+ALLOW? "import { Decimal } from \"decimal.js\"; export const d = new Decimal(\"1." -> []
+
+stdout | apps/api/src/zz-dom-r9-probe.test.ts > DG1 r9 domain probe: default-deny over-reach > negative controls: loader / debugger / exec / native / network routes are denied
+DENY? "process.kill(process.pid, \"SIGUSR1\");" -> [33m2[39m ["modules/transformations/zz-probe.ts: non-allow-listed process.kill member (line 1) bypasses the module-interface check","modules/transformations/zz-probe.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check"]
+DENY? "process._debugProcess(process.pid);" -> [33m2[39m ["modules/transformations/zz-probe.ts: non-allow-listed process._debugProcess member (line 1) bypasses the module-interface check","modules/transformations/zz-probe.ts: non-allow-listed process.pid member (line 1) bypasses the module-interface check"]
+DENY? "process.getBuiltinModule(\"vm\");" -> [33m2[39m ["modules/transformations/zz-probe.ts: non-allow-listed process.getBuiltinModule member (line 1) bypasses the module-interface check","modules/transformations/zz-probe.ts: module loader via .getBuiltinModule() (line 1) bypasses the module-interface check"]
+DENY? "process.execve(\"/bin/sh\", []);" -> [33m1[39m ["modules/transformations/zz-probe.ts: non-allow-listed process.execve member (line 1) bypasses the module-interface check"]
+DENY? "process.dlopen({ exports: {} }, \"x.node\");" -> [33m1[39m ["modules/transformations/zz-probe.ts: non-allow-listed process.dlopen member (line 1) bypasses the module-interface check"]
+DENY? "import \"node:inspector\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:inspector"]
+DENY? "import \"node:inspector/promises\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:inspector/promises"]
+DENY? "import \"node:wasi\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:wasi"]
+DENY? "import \"node:v8\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:v8"]
+DENY? "import \"node:net\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:net"]
+DENY? "import \"node:http\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:http"]
+DENY? "import \"node:test/reporters\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:test/reporters"]
+DENY? "import \"node:sqlite\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:sqlite"]
+DENY? "import \"node:some-future-builtin\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports non-allow-listed node built-in node:some-future-builtin"]
+DENY? "import \"fs\";" -> [33m1[39m ["modules/transformations/zz-probe.ts: imports package fs"]
+
+ ✓ |unit-node| apps/api/src/zz-dom-r9-probe.test.ts > DG1 r9 domain probe: default-deny over-reach > inventory: every node: specifier and process member used in module source is allow-listed 61ms
+ ✓ |unit-node| apps/api/src/zz-dom-r9-probe.test.ts > DG1 r9 domain probe: default-deny over-reach > positive controls: ordinary module code stays clean 11ms
+ ✓ |unit-node| apps/api/src/zz-dom-r9-probe.test.ts > DG1 r9 domain probe: default-deny over-reach > negative controls: loader / debugger / exec / native / network routes are denied 20ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  14:06:16
+   Duration  1.77s (transform 103ms, setup 0ms, collect 619ms, tests 788ms, environment 0ms, prepare 70ms)
+
+exit=0

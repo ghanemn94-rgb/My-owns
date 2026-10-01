@@ -1,0 +1,89 @@
+// DG1 round-9 code-security probe (disposable clone only). Plants snippets into a transformations module file path.
+import { join } from "node:path";
+import { expect, it } from "vitest";
+import { MODULES_DIR, fileViolations, moduleViolations } from "./architecture.testkit.ts";
+import { API_MODULES } from "./modules.ts";
+
+const F = join(MODULES_DIR, "transformations", "zz-planted.ts");
+const v = (src: string) => fileViolations("transformations", F, src);
+
+const MUST_DENY: Record<string, string> = {
+  "process.kill SIGUSR1": `export const f = () => process.kill(process.pid, "SIGUSR1");`,
+  "process._debugProcess": `export const f = () => (process as any)._debugProcess(process.pid);`,
+  "process.getBuiltinModule node:vm": `export const f = () => (process as any).getBuiltinModule("node:vm");`,
+  "node:inspector Session": `import { Session } from "node:inspector"; export const s = new Session();`,
+  "node:net": `import net from "node:net"; export const n = net;`,
+  "node:http": `import http from "node:http"; export const h = http;`,
+  "node:sqlite": `import { DatabaseSync } from "node:sqlite"; export const d = DatabaseSync;`,
+  "node:test": `import { run } from "node:test"; export const r = run;`,
+  "node:vm": `import vm from "node:vm"; export const x = vm;`,
+  "node:worker_threads": `import { Worker } from "node:worker_threads"; export const w = Worker;`,
+  "process.execve": `export const f = () => (process as any).execve("/bin/sh", ["sh"]);`,
+  "(process as any).binding('fs')": `export const f = () => (process as any).binding("fs");`,
+  // extra adversarial probes
+  "node:process import": `import p from "node:process"; export const x = p;`,
+  "node:module": `import { createRequire as cr } from "node:module"; export const x = cr;`,
+  "node:child_process": `import cp from "node:child_process"; export const x = cp;`,
+  "node:v8": `import v8 from "node:v8"; export const x = v8;`,
+  "node:wasi": `import { WASI } from "node:wasi"; export const x = WASI;`,
+  "node:tls": `import tls from "node:tls"; export const x = tls;`,
+  "node:async_hooks": `import ah from "node:async_hooks"; export const x = ah;`,
+  "dynamic import('node:vm')": `export const f = () => import("node:vm");`,
+  "type-only import node:vm": `import type { Script } from "node:vm"; export type S = Script;`,
+  "export * from node:vm": `export * from "node:vm";`,
+  "node:fs/../vm path trick": `import x from "node:fs/../vm"; export const y = x;`,
+  "node:crypto/../vm": `import x from "node:crypto/../vm"; export const y = x;`,
+  "uppercase NODE:vm": `import x from "NODE:vm"; export const y = x;`,
+  "bare 'fs' (no node: prefix)": `import fs from "fs"; export const y = fs;`,
+  "bare 'vm'": `import vm from "vm"; export const y = vm;`,
+  "process.dlopen": `export const f = () => (process as any).dlopen({}, "/x.so");`,
+  "process.abort": `export const f = () => process.abort();`,
+  "process._linkedBinding": `export const f = () => (process as any)._linkedBinding("x");`,
+  "process.mainModule": `export const f = () => (process as any).mainModule;`,
+  "process.on (not allow-listed)": `process.on("exit", () => {});`,
+  "process?.kill optional chain": `export const f = () => process?.kill(process.pid, "SIGUSR1");`,
+  "globalThis.process": `export const f = () => globalThis.process;`,
+  "aliased process": `const p = process; export const f = () => p.kill(1);`,
+  "destructured process": `const { kill } = process; export const f = kill;`,
+  "process['kill']": `export const f = () => process["kill"](1, "SIGUSR1");`,
+};
+const MUST_ALLOW: Record<string, string> = {
+  "node:crypto randomUUID": `import { randomUUID } from "node:crypto"; export const id = randomUUID();`,
+  "node:fs": `import { readFileSync } from "node:fs"; export const r = readFileSync;`,
+  "node:fs/promises": `import { readFile } from "node:fs/promises"; export const r = readFile;`,
+  "node:path": `import { join } from "node:path"; export const j = join("a", "b");`,
+  "node:url": `import { fileURLToPath } from "node:url"; export const u = fileURLToPath;`,
+  "node:util": `import { inspect } from "node:util"; export const i = inspect;`,
+  "node:os": `import { tmpdir } from "node:os"; export const t = tmpdir;`,
+  "process.env": `export const e = process.env.FOO;`,
+  "process.exit(0)": `export const f = () => process.exit(0);`,
+  "process.argv": `export const a = process.argv;`,
+  "process.once": `process.once("SIGTERM", () => {});`,
+};
+// Allowed-module members that reach native code (reported as observations, expected to PASS the lint = residual).
+const ALLOWED_MEMBER_ROUTES: Record<string, string> = {
+  "crypto.setEngine(<.so path>) - dlopen of a shared object": `import { setEngine } from "node:crypto"; export const f = (p: string) => setEngine(p);`,
+  "crypto namespace .setEngine": `import * as c from "node:crypto"; export const f = (p: string) => c.setEngine(p);`,
+};
+
+it("MUST_DENY: every route is a violation", () => {
+  const rows = Object.entries(MUST_DENY).map(([k, s]) => ({ k, n: v(s).length, msgs: v(s) }));
+  for (const r of rows) console.log(`DENY  ${r.n > 0 ? "OK   " : "FAIL "} ${r.k} -> ${r.n} violation(s): ${r.msgs.join(" | ")}`);
+  expect(rows.filter((r) => r.n === 0).map((r) => r.k)).toEqual([]);
+});
+it("MUST_ALLOW: positive controls produce no violation", () => {
+  const rows = Object.entries(MUST_ALLOW).map(([k, s]) => ({ k, msgs: v(s) }));
+  for (const r of rows) console.log(`ALLOW ${r.msgs.length === 0 ? "OK   " : "FAIL "} ${r.k} -> ${r.msgs.join(" | ") || "0 violations"}`);
+  expect(rows.filter((r) => r.msgs.length > 0).map((r) => r.k)).toEqual([]);
+});
+it("ALLOWED_MEMBER_ROUTES (observation): native-load members of allow-listed built-ins", () => {
+  for (const [k, s] of Object.entries(ALLOWED_MEMBER_ROUTES)) {
+    const m = v(s);
+    console.log(`MEMBER ${m.length === 0 ? "PASSES-LINT" : "DENIED     "} ${k} -> ${m.join(" | ") || "0 violations"}`);
+  }
+});
+it("real module tree has zero violations", () => {
+  const all = Object.keys(API_MODULES).flatMap((m) => moduleViolations(m as never));
+  console.log(`REAL-TREE modules=${Object.keys(API_MODULES).length} violations=${all.length}`, all);
+  expect(all).toEqual([]);
+});
