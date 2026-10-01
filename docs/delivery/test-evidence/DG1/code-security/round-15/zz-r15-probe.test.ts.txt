@@ -1,0 +1,98 @@
+// DG1 round-15 code-security re-proof probe for F-DG1-217 (lint declaration-file safety).
+// Synthetic inputs only. Copied (as apps/api/src/zz-r15-probe.test.ts) into a DISPOSABLE clone at the frozen
+// candidate commit f27b5a6f and run there with vitest; never placed in the candidate tree.
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join } from "node:path";
+import ts from "typescript";
+import { describe, expect, it } from "vitest";
+import { fileViolations, MODULES_DIR, walk } from "./architecture.testkit.ts";
+
+const at = (name: string) => join(MODULES_DIR, "transformations", name);
+const deepType = `import type { Actor } from "../access/policy.ts";\nexport declare const a: Actor;`;
+const deepMsg = (name: string) => `modules/transformations/${name}: imports ../access/policy.ts; only access/index.ts is public`;
+const broken = "export declare const x: = ;";
+
+/** Run a lint call, reporting either its result or the thrown message (so the probe records behaviour, not just pass/fail). */
+function attempt(f: () => string[]): { threw: false; v: string[] } | { threw: true; msg: string } {
+  try {
+    return { threw: false, v: f() };
+  } catch (e) {
+    return { threw: true, msg: String((e as Error).message).split("\n")[0]! };
+  }
+}
+
+describe("R15 probe: F-DG1-217 assigned cases", () => {
+  for (const name of ["zz.d.ts", "zz.d.mts", "zz.d.cts"]) {
+    it(`${name}: clean declaration returns [] without throwing`, () => {
+      const r = attempt(() => fileViolations("transformations", at(name), "export declare const x: number;"));
+      console.log(`[probe] ${name} clean ->`, JSON.stringify(r));
+      expect(r).toEqual({ threw: false, v: [] });
+    });
+    it(`${name}: deep cross-module TYPE import still flagged`, () => {
+      const r = attempt(() => fileViolations("transformations", at(name), deepType));
+      console.log(`[probe] ${name} deepType ->`, JSON.stringify(r));
+      expect(r).toEqual({ threw: false, v: [deepMsg(name)] });
+    });
+    it(`${name}: syntax error -> named unparseable source diagnostic, no throw`, () => {
+      const r = attempt(() => fileViolations("transformations", at(name), broken));
+      console.log(`[probe] ${name} broken ->`, JSON.stringify(r));
+      expect(r.threw).toBe(false);
+      if (!r.threw) {
+        expect(r.v.join("\n")).toMatch(/unparseable source: .* \(line 1\) bypasses the module-interface check/);
+        expect(r.v.join("\n")).not.toMatch(/Debug Failure/);
+      }
+    });
+    it(`${name}: evasion rules still apply inside a declaration file (computed require)`, () => {
+      const src = `declare const k: string;\nexport declare const m: typeof import("node:child_process");\nrequire(k);`;
+      const r = attempt(() => fileViolations("transformations", at(name), src));
+      console.log(`[probe] ${name} evasion ->`, JSON.stringify(r));
+      expect(r.threw).toBe(false);
+      if (!r.threw) expect(r.v.join("\n")).toMatch(/node:child_process|computed|require/);
+    });
+  }
+});
+
+describe("R15 probe: nothing is emitted / written by the declaration path", () => {
+  it("a lint pass over planted .d.ts/.d.mts/.d.cts in a temp dir writes no new file anywhere in that dir", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mth-r15-dts-"));
+    try {
+      for (const n of ["a.d.ts", "b.d.mts", "c.d.cts"]) writeFileSync(join(dir, n), deepType);
+      const before = readdirSync(dir).sort();
+      const files = walk(dir);
+      const v = files.flatMap((f) =>
+        fileViolations("transformations", join(MODULES_DIR, "transformations", basename(f)), deepType),
+      );
+      console.log("[probe] walked:", files.map((f) => basename(f)), "violations:", v);
+      expect(files.map((f) => basename(f)).sort()).toEqual(["a.d.ts", "b.d.mts", "c.d.cts"]);
+      expect(v).toHaveLength(3);
+      expect(readdirSync(dir).sort()).toEqual(before);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("R15 probe: residual declaration-file names (TypeScript isDeclarationFileName vs the fix's regex)", () => {
+  // TypeScript (allowArbitraryExtensions) treats `<x>.d.<ext>.ts` as a declaration file too.
+  const names = ["zz.d.css.ts", "zz.d.json.ts", "zz.D.TS", "zz.d.tsx", "zz.d.ts.ts"];
+  for (const name of names) {
+    it(`${name}: record behaviour (isDeclarationFileName=${ts.isDeclarationFileName(name)})`, () => {
+      const clean = attempt(() => fileViolations("transformations", at(name), "export declare const x: number;"));
+      const deep = attempt(() => fileViolations("transformations", at(name), deepType));
+      console.log(`[probe-residual] ${name} isDecl=${ts.isDeclarationFileName(name)} clean ->`, JSON.stringify(clean));
+      console.log(`[probe-residual] ${name} isDecl=${ts.isDeclarationFileName(name)} deep  ->`, JSON.stringify(deep));
+      // Recording only; the walk() CODE_FILE regex decides whether such a file is ever linted.
+      expect(true).toBe(true);
+    });
+  }
+  it("walk() picks up which of these names", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mth-r15-res-"));
+    try {
+      for (const n of names) writeFileSync(join(dir, n), "export declare const x: number;");
+      console.log("[probe-residual] walk() returned:", walk(dir).map((f) => basename(f)).sort());
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

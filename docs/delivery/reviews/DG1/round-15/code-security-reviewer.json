@@ -1,0 +1,496 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 15,
+  "candidate_id": "sha256:76d8b3049d22d414a4c036bd3dd1af6e0c3609baedb096e2d2ecf4180bf07846",
+  "source_commit": "f27b5a6f80f2b1146bc8f3de35d284991e4213f8",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-SEC-R15-code-security-reviewer-20261001T173655Z-32298593",
+    "session_id": "32298593-229f-4db0-b347-da10bb8d4923"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "frontend-ux-engineer",
+    "backend-workflow-engineer",
+    "devops-engineer",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer, session 32298593) authored none of the DG1 implementation, and not the round-15 repair 22f3054 (F-DG1-136 + F-DG1-217, T-DG1-BE16, backend-workflow-engineer). cc6fbe3 and f27b5a6 are orchestrator metadata. I raised F-DG1-136 in round 14 and verify it as its originating reviewer. F-DG1-217 was raised by qa-verifier, and I verify it as a qualified non-author, as my assignment directs. At start the real-repo HEAD was c7edc14, not the freeze commit f27b5a6f. c7edc14 is a direct child of f27b5a6f and adds only candidate-excluded metadata: round-15 assignments, the 76d8b304 manifest and stages.json. The recomputed candidate ID is 76d8b304...7846 in the real repo and in a full (not shallow) disposable clone checked out at f27b5a6f (00-candidate-identity.log). Candidate identity is the content hash, and the commit is a traceability pointer (CLAUDE.md), so I proceeded, as in rounds 11-14. During my run HEAD advanced to 5d5e8a2, the runner's auto-commit of the domain reviewer's round-15 run. I checked only its directory NAMES, and the ID is still 76d8b304 (50-cleanup.log). I formed this verdict before, and without, reading any other reviewer's round-15 record. I did not open any of them."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-15/review-code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S16-001",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R15-00",
+      "procedure": "Candidate identity: HEAD vs freeze commit, recomputed candidate ID in the real repo and in a full disposable clone at f27b5a6f; source diff since the round-14 candidate (985d0fa)",
+      "command": "git rev-parse HEAD; git log --oneline f27b5a6f..HEAD; node tools/gates/candidate.mjs --stage DG1 (real repo and clone); git diff --stat 985d0fa..f27b5a6f -- apps packages tools deploy tests scripts .github licenses vitest.config.ts package.json pnpm-lock.yaml",
+      "environment": "real repo (read-only) and disposable clone $TMPDIR/review-r15 @f27b5a6f, node v24.21.0 (default) / v22.22.2",
+      "expected": "candidate_id sha256:76d8b304...7846 in both; HEAD differs only by candidate-excluded metadata; source change limited to the two findings' fix",
+      "actual": "Real repo HEAD c7edc14 = f27b5a6f + assignments/manifest/stages.json only. The ID is 76d8b3049d22...7846 (391 files) in both, and the clone is not shallow. The source diff 985d0fa..f27b5a6f is apps/api/src/architecture.testkit.ts (+35/-5), architecture.test.ts (+38) and vitest.config.ts (+3) only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/00-candidate-identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-01",
+      "procedure": "F-DG1-217 re-proof: fileViolations on zz.d.ts/.d.mts/.d.cts (clean, deep cross-module type import, syntax error, evasion), plus a planted temp-dir walk with no-write check; residual probe of TypeScript's other declaration names",
+      "command": "cp zz-r15-probe.test.ts.txt apps/api/src/zz-r15-probe.test.ts; npx vitest run apps/api/src/zz-r15-probe.test.ts (Node 22 and Node 24); probe removed afterwards",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2 and v24.21.0, typescript 6.0.2, vitest 3.2.4",
+      "expected": "no throw; clean = []; deep type import flagged with the access/index.ts message; syntax error = named 'unparseable source' diagnostic; nothing written",
+      "actual": "All 3 extensions: clean gives [] (no throw). Deep type import gives 'imports ../access/policy.ts; only access/index.ts is public'. Broken source gives 'unparseable source: Type expected. (line 1)' + 'Expression expected.' and no 'Debug Failure'. Computed require and node:child_process are flagged. Temp dir: 3 walked, 3 violations, directory listing unchanged. 19/19 on both Node versions. Residual: zz.d.css.ts, zz.d.json.ts and zz.d.ts.ts (ts.isDeclarationFileName = true, collected by walk()) still throw 'Debug Failure. Output generation failed', so F-DG1-137 is raised (Low, non-mandatory).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003",
+        "REQ-S16-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/zz-r15-probe.test.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/01-F-DG1-217-reproof-probe-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/01b-F-DG1-217-reproof-probe-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-02",
+      "procedure": "Residual end to end: plant apps/api/src/modules/transformations/zz-r15.d.css.ts in the clone and run architecture.test.ts; after the build, confirm tsc emits nothing for it",
+      "command": "npx vitest run apps/api/src/architecture.test.ts; cd apps/api && npx tsc -p tsconfig.build.json --outDir $TMPDIR/dts-out; find ... -name 'zz-r15*'",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2; planted file removed afterwards (clone git status clean)",
+      "expected": "observe whether the residual fails open or closed, and whether it can ship runtime code",
+      "actual": "architecture.test 'every import respects ...' fails with 'Debug Failure. Output generation failed', exit 1, so it fails closed. tsc build exit 0 with no zz-r15* output (38 .js emitted), so no runtime code ships. Supports the F-DG1-137 Low/non-mandatory rating.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/02-planted-d-css-ts-architecture.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/03-dts-emit-after-build.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-04",
+      "procedure": "architecture.test.ts verbose on the real module tree (zero moduleViolations) on Node 22 and 24",
+      "command": "npx vitest run apps/api/src/architecture.test.ts --reporter=verbose",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2 and v24.21.0",
+      "expected": "130/130, including the two new F-DG1-217 self-checks and 'every import respects ...' (moduleViolations = [])",
+      "actual": "Tests 130 passed (130), exit 0 on both. The F-DG1-217 self-checks pass, and 'every import respects dependsOn, public surfaces and allowed packages' passes (asserts flatMap(moduleViolations) toEqual []). The real tree has 0 declaration files.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/04-architecture-verbose-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/04-architecture-verbose-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-10a",
+      "procedure": "Workspace build",
+      "command": "pnpm -r build",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2, pnpm 10.33.0, offline frozen install from a copy of the local store",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-033"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/10-pnpm_-r_build.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-10b",
+      "procedure": "Typecheck all workspace projects",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0 (7 of 8 projects, all Done)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/10-pnpm_-r_typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-10c",
+      "procedure": "Lint",
+      "command": "pnpm lint",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/10-pnpm_lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-10d",
+      "procedure": "OpenAPI contract lint",
+      "command": "pnpm openapi:lint",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/10-pnpm_openapi_lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-10e",
+      "procedure": "No public CDN / builder-hosted dependency check",
+      "command": "pnpm check:no-cdn",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/10-pnpm_check_no-cdn.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-10f",
+      "procedure": "Formatting check",
+      "command": "pnpm format:check",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/10-pnpm_format_check.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-11a",
+      "procedure": "Unit suite on Node 22",
+      "command": "pnpm test",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2",
+      "expected": "all files and tests pass, exit 0",
+      "actual": "Test Files 21 passed (21), Tests 323 passed (323), exit 0 (321 in round 14 + the 2 new F-DG1-217 self-checks)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/11-node22-pnpm_test.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-11b",
+      "procedure": "Unit suite on Node 24",
+      "command": "PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test",
+      "environment": "disposable clone @f27b5a6f, node v24.21.0",
+      "expected": "all files and tests pass, exit 0",
+      "actual": "Test Files 21 passed (21), Tests 323 passed (323), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/11-node24-pnpm_test.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-20a",
+      "procedure": "Integration suite on a disposable PostgreSQL cluster, run 1 (F-DG1-009 repeatability)",
+      "command": "QA_PG_PORT=5491 tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2, PostgreSQL 16.13 disposable cluster on 127.0.0.1:5491",
+      "expected": "19/19 files, 200/200 tests, exit 0, no hook timeout",
+      "actual": "Test Files 19 passed (19), Tests 200 passed (200), exit 0, 33 s; access-derived-race.test.ts 784 ms; no 'Hook timed out'",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-004",
+        "REQ-S16-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/20-integration-run1-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-20b",
+      "procedure": "Integration suite on a disposable PostgreSQL cluster, run 2 (F-DG1-009 repeatability)",
+      "command": "QA_PG_PORT=5491 tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2, PostgreSQL 16.13 disposable cluster on 127.0.0.1:5491 (fresh cluster)",
+      "expected": "19/19 files, 200/200 tests, exit 0",
+      "actual": "Test Files 19 passed (19), Tests 200 passed (200), exit 0, 32 s; access-derived-race.test.ts 843 ms",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-004",
+        "REQ-S16-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/20-integration-run2-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-20c",
+      "procedure": "Integration suite on a disposable PostgreSQL cluster, Node 24 run",
+      "command": "PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH QA_PG_PORT=5491 tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "disposable clone @f27b5a6f, node v24.21.0, PostgreSQL 16.13 disposable cluster on 127.0.0.1:5491",
+      "expected": "19/19 files, 200/200 tests, exit 0",
+      "actual": "Test Files 19 passed (19), Tests 200 passed (200), exit 0, 31 s; access-derived-race.test.ts 691 ms",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-004",
+        "REQ-S16-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/20-integration-run3-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-21",
+      "procedure": "F-DG1-136 effect probe: an integration-project afterAll taking 12 s, with the frozen config and with hookTimeout removed (control)",
+      "command": "QA_PG_PORT=5491 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/zz-r15-hook-probe.test.ts (then with the hookTimeout line deleted from the clone's vitest.config.ts)",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2, PostgreSQL 16.13 disposable cluster; probe and config change reverted (clone git status clean)",
+      "expected": "frozen config: pass; control: 'Hook timed out in 10000ms'",
+      "actual": "frozen config: 1/1 file passed, exit 0; control: 'Error: Hook timed out in 10000ms.', Test Files 1 failed, exit 1. So hookTimeout: 30_000 is in force for the integration project.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/21-F-DG1-136-hooktimeout-probe.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-30",
+      "procedure": "Gate and agent tooling tests",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2",
+      "expected": "all pass, exit 0",
+      "actual": "tests 105, pass 105, fail 0, exit 0 (same count as round 14)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/30-gates-agents-tests.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-31",
+      "procedure": "Deploy script tests",
+      "command": "node --test deploy/scripts/tests/*.test.mjs",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2",
+      "expected": "all pass, exit 0",
+      "actual": "tests 59, pass 59, fail 0, exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025",
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/31-deploy-scripts-tests.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-32",
+      "procedure": "Install-sandbox acceptance suite AC-1..AC-10 (sandbox properties)",
+      "command": "npm_config_store_dir=$TMPDIR/pnpm-store/v10 bash tools/deps/tests/install-sandbox.test.sh",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2, bubblewrap, no network",
+      "expected": "every sandbox-property case passes; only the registry-dependent AC-1 effect case may not run",
+      "actual": "13 passed, 1 failed. The PASS cases cover AC-1 (/etc read-only), AC-2 x2, AC-3 x2, AC-4, AC-5, AC-6 x2, AC-7, AC-8, AC-9 and AC-10. The single FAIL is 'AC-1 (effect) create did not populate node_modules', which needs the public registry (unreachable, see SEC-R15-32c). The script exits 1 for that reason alone, same as round 14. The sandbox properties themselves all pass.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/32-install-sandbox-suite.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-32c",
+      "procedure": "AC-1 effect (create with registry) and real-repo online install: confirm the registry is unreachable",
+      "command": "curl -sS -m 15 -o /dev/null -w '%{http_code}' https://registry.npmjs.org/is-number",
+      "environment": "sandbox without network",
+      "expected": "registry reachable, so create populates node_modules",
+      "actual": "curl: (7) Failed to connect to localhost port 3128; 000; exit 7. No registry in this environment, so the check is BLOCKED (not passed).",
+      "exit_status": 7,
+      "result": "BLOCKED",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/32c-ac1-registry-BLOCKED.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-32d",
+      "procedure": "Sandboxed frozen install from the offline store into a second clone (stands in for the real-repo install)",
+      "command": "npm_config_store_dir=$TMPDIR/pnpm-store/v10 tools/deps/install-sandbox.sh --root $TMPDIR/rv frozen",
+      "environment": "second disposable clone @f27b5a6f, node v22.22.2, bubblewrap, offline store copy",
+      "expected": "exit 0, node_modules populated, lockfile unchanged",
+      "actual": "exit 0, 'Done in 3.1s using pnpm v10.33.0', 11 top-level node_modules entries, git status clean",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-042"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/32d-frozen-install-offline.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-33",
+      "procedure": "SBOM consistency check",
+      "command": "node licenses/generate-sbom.mjs --check",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2",
+      "expected": "OK, exit 0",
+      "actual": "OK: packages=422 runtime=112 bundled=17 development=293 containers=4 shipped-without-licence-id=0; exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-033"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/33-sbom-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-34",
+      "procedure": "Previous gate still validates historically",
+      "command": "node tools/gates/validate.mjs --stage DG0 --historical",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2",
+      "expected": "PASS, exit 0",
+      "actual": "PASS gate DG0 (historical); exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/34-dg0-historical.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-35",
+      "procedure": "The three ci.yml copies are byte-identical; delivery-gates job ordering",
+      "command": "sha256sum + cmp .github/workflows/ci.yml deploy/ci/ci.yml docs/architecture/ci/ci.yml; node deploy/scripts/check-ci-needs.mjs",
+      "environment": "disposable clone @f27b5a6f, node v22.22.2",
+      "expected": "identical hashes, cmp exit 0, check-ci-needs OK",
+      "actual": "All three are 8b5b1106...76ce, cmp exit 0. check-ci-needs: OK, 5 jobs, every job downstream of delivery-gates. No change in .github/deploy/docs/architecture/ci since round 14.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/35-ci-yml-identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-40",
+      "procedure": "Assigned requirements: register row status, final_gate and every evidence path exists as a regular file",
+      "command": "python3 (csv.DictReader over docs/delivery/requirements.csv; os.path.isfile per ';'-separated evidence entry)",
+      "environment": "disposable clone @f27b5a6f",
+      "expected": "all 8 IMPLEMENTED/VERIFIED, final_gate DG1, no missing evidence",
+      "actual": "All 8 IMPLEMENTED, final_gate=DG1, missing=[] (evidence counts 4/21/4/8/13/11/16/5); requirements.csv unchanged since round 14; RESULT PASS",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025",
+        "REQ-DLV-033",
+        "REQ-DLV-042",
+        "REQ-S16-001",
+        "REQ-S16-003",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/40-requirements.log"
+      ]
+    },
+    {
+      "id": "SEC-R15-50",
+      "procedure": "Cleanup: disposable clones/store removed, no PostgreSQL left, no source change in the real repo, candidate ID unchanged at end",
+      "command": "rm -rf <literal $TMPDIR paths>; ps/ss; git status --short -- <source paths>; node tools/gates/candidate.mjs --stage DG1",
+      "environment": "real repo + run scratch",
+      "expected": "nothing left running, no source change, same candidate ID",
+      "actual": "clones and store removed; no postgres process; port 5491 free; no source change; HEAD 5d5e8a2 (domain reviewer auto-commit, review/run/evidence directories only); candidate ID still 76d8b304...7846",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/50-cleanup.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG1-137"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/code-security/round-15/00-candidate-identity.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/zz-r15-probe.test.ts.txt",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/01-F-DG1-217-reproof-probe-node22.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/01b-F-DG1-217-reproof-probe-node24.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/02-planted-d-css-ts-architecture.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/03-dts-emit-after-build.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/04-architecture-verbose-node22.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/04-architecture-verbose-node24.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/10-pnpm_-r_build.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/10-pnpm_-r_typecheck.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/10-pnpm_lint.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/10-pnpm_openapi_lint.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/10-pnpm_check_no-cdn.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/10-pnpm_format_check.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/11-node22-pnpm_test.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/11-node24-pnpm_test.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/20-integration-run1-node22.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/20-integration-run2-node22.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/20-integration-run3-node24.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/21-F-DG1-136-hooktimeout-probe.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/30-gates-agents-tests.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/31-deploy-scripts-tests.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/32-install-sandbox-suite.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/32c-ac1-registry-BLOCKED.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/32d-frozen-install-offline.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/33-sbom-check.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/34-dg0-historical.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/35-ci-yml-identity.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/40-requirements.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-15/50-cleanup.log",
+    "docs/delivery/reviews/DG1/round-15/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG1/round-15/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG1/round-15/code-security-reviewer.md"
+  ],
+  "reviewed_at": "2026-10-01T17:49:11Z",
+  "summary": "PASS on candidate 76d8b304...7846 (freeze f27b5a6f). F-DG1-136 is CLOSED_VERIFIED: hookTimeout 30_000 is in force, proved by a 12 s afterAll probe and a control that times out, and 3 full integration runs pass 200/200 with no hook timeout. F-DG1-217 is CLOSED_VERIFIED for .d.ts/.d.mts/.d.cts: no throw, type imports still boundary-checked, named 'unparseable source' diagnostics, nothing emitted, architecture 130/130 and the real tree has zero violations. New F-DG1-137 (Low, non-mandatory): TypeScript's arbitrary-extension declaration names (x.d.css.ts) still crash the lint with 'Debug Failure'. It fails closed and ships nothing. All required checks pass on Node 22 (unit and integration also on 24). The AC-1 effect and the online real-repo install are BLOCKED (no registry). The 8 requirements are complete with existing evidence. No Critical/High or mandatory violation is open.",
+  "narrative": "docs/delivery/reviews/DG1/round-15/code-security-reviewer.md"
+}

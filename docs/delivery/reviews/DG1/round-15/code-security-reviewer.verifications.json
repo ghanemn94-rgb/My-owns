@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "verifications": [
+    {
+      "finding_id": "F-DG1-136",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by the originating reviewer on candidate sha256:76d8b304...7846. The freeze commit is f27b5a6f, and the ID is identical in the real repo and in a full disposable clone (00-candidate-identity.log). The fix is in 22f3054: vitest.config.ts:52 sets hookTimeout: 30_000 inside the integration project's test block, next to testTimeout: 30_000 (:49). That is project-wide, so it covers all 6 files with the afterAll + dropScratchDatabase pattern, not only access-derived-race.test.ts. The setting takes effect (21-F-DG1-136-hooktimeout-probe.log): a throwaway integration-project file whose afterAll takes 12 s passes with the frozen config (exit 0). The control, the same file with the hookTimeout line removed from the clone's config, fails 'Hook timed out in 10000ms' (exit 1), and the config was restored afterwards. Full integration suite on a disposable PostgreSQL 16.13 cluster (127.0.0.1:5491): run 1 Node 22 19/19 files, 200/200 tests, exit 0, 33 s; run 2 Node 22 200/200, exit 0, 32 s; run 3 Node 24.21.0 200/200, exit 0, 31 s. access-derived-race.test.ts took 784/843/691 ms, and no 'Hook timed out' appears in any run (20-*.log). Fix confirmed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/00-candidate-identity.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/21-F-DG1-136-hooktimeout-probe.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/20-integration-run1-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/20-integration-run2-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/20-integration-run3-node24.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-217",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by a qualified non-author (code-security-reviewer; the finding was raised by qa-verifier, and I did not author the repair 22f3054) on candidate sha256:76d8b304...7846 at f27b5a6f. Code: apps/api/src/architecture.testkit.ts:445 DECLARATION_FILE = /\\.d\\.[cm]?ts$/. :455 declarationSyntaxErrors() builds a one-file ts.createProgram with noLib, noResolve and types:[], and a host that serves only that file: readFile/fileExists/getSourceFile return nothing else, and writeFile is a no-op. It returns getSyntacticDiagnostics(sf), so there is no emit, no type check, no disk read beyond the in-memory source and no execution. :477-484 syntaxErrors() routes declaration names there and everything else through transpileModule as before. scanSource still runs on every file, so declaration files stay boundary-checked. Re-proof in a disposable clone (zz-r15-probe.test.ts.txt; 01- Node 22 and 01b- Node 24 logs, 19/19). For each of zz.d.ts, zz.d.mts and zz.d.cts: 'export declare const x: number;' gives [] without throwing (previously 'Debug Failure'). A deep type import of ../access/policy.ts gives ['modules/transformations/<name>: imports ../access/policy.ts; only access/index.ts is public']. 'export declare const x: = ;' gives named 'unparseable source: Type expected. (line 1) ...' and 'Expression expected.' diagnostics, with no throw and no 'Debug Failure'. Computed require() and a node:child_process type import are still flagged. A temp directory with a.d.ts/b.d.mts/c.d.cts is walked, gives 3 violations and no new file is written. architecture.test.ts passes 130/130 on Node 22 and 24, including 'every import respects dependsOn...', which asserts moduleViolations(...) = [] over the real tree (04- logs). The reported scope (.d.ts/.d.mts/.d.cts, and zz.test.d.ts, which matches .d.ts) is fixed. A residual of the same class remains for TypeScript's arbitrary-extension declaration names (<x>.d.<ext>.ts). It fails closed and is raised separately as F-DG1-137 (Low, non-mandatory).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-15/zz-r15-probe.test.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/01-F-DG1-217-reproof-probe-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/01b-F-DG1-217-reproof-probe-node24.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/04-architecture-verbose-node22.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-15/04-architecture-verbose-node24.log"
+      ]
+    }
+  ]
+}
