@@ -412,17 +412,17 @@ export type ReportKind = (typeof REPORT_KINDS)[number];
 export const EXPORT_FORMATS = ['pdf', 'xlsx', 'docx', 'pptx', 'csv', 'json'] as const;
 export type ExportFormat = (typeof EXPORT_FORMATS)[number];
 
-export const IMPORT_STATUSES = [
-  'uploaded',
-  'mapped',
-  'validated',
-  'approved',
-  'applied',
-  'rolled_back',
-  'rejected',
-  'failed',
-] as const;
+/**
+ * Import batch lifecycle (P6 imports, REQ-INT-001..003): uploaded → parsed (spreadsheets: choose the mapping) → validated
+ * (preview) → submitted → applied (second person) → rolled back; or rejected / cancelled; `failed` = the file was refused by
+ * the parser (malformed, over a limit, timed out); `quarantined` = the file was held for security review, never parsed.
+ */
+export const IMPORT_STATUSES = ['uploaded', 'parsed', 'validated', 'submitted', 'applied', 'rolled_back', 'rejected', 'cancelled', 'failed', 'quarantined'] as const;
+export type ImportStatus = (typeof IMPORT_STATUSES)[number];
+/** Row plan: create a draft / proposed record, propose a change (claim) to an existing record, propose a change request
+ *  for a governed record (conflict), skip (duplicate / unchanged), error (not imported). */
 export const IMPORT_ROW_ACTIONS = ['create', 'update', 'skip', 'conflict', 'error'] as const;
+export type ImportRowAction = (typeof IMPORT_ROW_ACTIONS)[number];
 
 export const INTEGRATION_KINDS = [
   'oidc',
@@ -439,6 +439,8 @@ export const INTEGRATION_KINDS = [
   'itsm',
   'dcim',
   'siem',
+  /** Signed inbound webhooks (P6 integrations, REQ-INT-009). */
+  'webhook',
 ] as const;
 export const INTEGRATION_DIRECTIONS = ['read', 'write', 'send'] as const;
 /** Honest connection states — `verified` only after a real connectivity check (spec §17). */
@@ -496,5 +498,9 @@ export const OUTBOX_EVENT_TYPES = [
   'legal_entity.changed',
   /** REQ-GOV-012: an agenda request was screened (ids + outcome only); the requester notification consumes it in P6. */
   'agenda_request.screened',
+  /** P6 imports: a batch was applied, rejected or rolled back (ids + outcome only) — the uploader's notification. */
+  'import.decided',
+  /** P6 integrations: a connector failed (check / delivery dead-lettered) — the platform administrators' alert. */
+  'integration.alert',
 ] as const;
 export type OutboxEventType = (typeof OUTBOX_EVENT_TYPES)[number];

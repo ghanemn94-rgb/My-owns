@@ -165,6 +165,8 @@ BEGIN
     EXECUTE 'REVOKE UPDATE, DELETE ON audit_event, vote, record_version, approval_record, transfer_record, readiness_test_run, report_snapshot FROM hub_app';
     -- P3 history tables: decision records of cutover GO/NO-GO, agreement versions, perimeter impact assessments
     EXECUTE 'REVOKE UPDATE, DELETE ON cutover_decision_record, agreement_version, perimeter_impact_assessment FROM hub_app';
+    -- P6 integrations: connector execution logs are append-only (REQ-INT-006)
+    EXECUTE 'REVOKE UPDATE, DELETE ON integration_execution_log FROM hub_app';
     -- Documents are soft-deleted only; grant/membership history is revoked, never hard-deleted (ARCH-15c)
     EXECUTE 'REVOKE DELETE ON document, document_version, organization, project, org_role_assignment, project_membership, room_grant, recusal, conflict_declaration, attendance FROM hub_app';
     EXECUTE 'REVOKE UPDATE ON recusal, conflict_declaration FROM hub_app';
@@ -192,7 +194,7 @@ $$;
 DO $append$
 DECLARE t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['audit_event', 'vote', 'record_version', 'approval_record', 'transfer_record', 'readiness_test_run', 'report_snapshot', 'recusal', 'conflict_declaration', 'audit_checkpoint', 'cutover_decision_record', 'agreement_version', 'perimeter_impact_assessment', 'decision_use']
+  FOREACH t IN ARRAY ARRAY['audit_event', 'vote', 'record_version', 'approval_record', 'transfer_record', 'readiness_test_run', 'report_snapshot', 'recusal', 'conflict_declaration', 'audit_checkpoint', 'cutover_decision_record', 'agreement_version', 'perimeter_impact_assessment', 'decision_use', 'integration_execution_log']
   LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS hub_append_only ON %I', t);
     EXECUTE format('CREATE TRIGGER hub_append_only BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION hub_reject_mutation()', t);
@@ -529,7 +531,6 @@ BEGIN
       ('decision_use', 'subject_type', 'subject_id', 'subject'),
       ('source_claim', 'target_type', 'target_id', 'target'),
       ('escalation', 'source_type', 'source_id', 'source'),
-      ('import_row', 'target_type', 'target_id', 'target'),
       ('ai_proposal', 'target_type', 'target_id', 'target'),
       ('dependency', 'predecessor_type', 'predecessor_id', 'predecessor'),
       ('dependency', 'successor_type', 'successor_id', 'successor'),
@@ -548,6 +549,9 @@ BEGIN
   END LOOP;
 END
 $poly$;
+-- P6 imports: import rows no longer carry a polymorphic target (records produced by a batch are listed in import_output,
+-- created in the batch's own project in the same transaction); drop the guard a previous schema installed.
+DROP TRIGGER IF EXISTS hub_same_project_target ON import_row;
 
 -- 10b. Prerequisite predecessors and cross-project "other items" (SEC-P2-04, defence in depth behind the services'
 -- loadInProject checks). Both run as the invoker, so RLS applies: a row outside the caller's projects is indistinguishable

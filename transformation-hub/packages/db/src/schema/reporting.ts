@@ -17,10 +17,11 @@ import {
   exportFormat,
   importStatus,
   importRowAction,
+  isDemo,
 } from './_common';
 import { project } from './portfolio';
 import { baselineVersion } from './planning';
-import { sourceRecord, documentVersion } from './documents';
+import { sourceRecord, document, documentVersion } from './documents';
 
 /**
  * Access metadata of one section of a report snapshot (ADR-0011 amendment, REQ-RPT-017): which read permission(s) the
@@ -154,36 +155,109 @@ export const biAccessGrant = pgTable(
   ],
 );
 
+/** One mapped-and-validated cell of an import row as stored for the preview (values only — formulas are never evaluated). */
+export interface ImportCellJson {
+  v: string | number | boolean | null;
+  f?: string;
+  e?: true;
+  d?: true;
+}
+/** A server-computed explanation (code + parameters) — translated by the web (`imports.messages.<code>`). */
+export interface ImportMessageJson {
+  code: string;
+  params: Record<string, string | number>;
+}
+
+/**
+ * Import batch (spec §17, REQ-INT-001..005, REQ-INT-015, REQ-SRC-009). The uploaded file is preserved as a document
+ * version + a source-register entry with its SHA-256 (or held in the quarantine area when the pre-scan flags it). Status
+ * changes only through the import commands (parse job → map → submit → approve (second person) → rollback). The approval
+ * binds to `preview_hash` — the row plan the uploader submitted.
+ */
 export const importBatch = pgTable(
   'import_batch',
   {
     id: pk(),
     orgId: orgIdCol(),
     projectId: projectIdCol().references(() => project.id),
-    kind: varchar('kind', { length: 32 }).notNull(), // wbs | perimeter | raid | kpi | ...
-    sourceId: uuid('source_id'),
+    code: varchar('code', { length: 32 }).notNull(),
+    /** risk | task | decision | source_claims | document_claims (IMPORT_TARGETS). */
+    kind: varchar('kind', { length: 32 }).notNull(),
+    fileType: varchar('file_type', { length: 16 }).notNull(),
+    filename: text('filename').notNull(),
+    sha256: varchar('sha256', { length: 64 }).notNull(),
+    sizeBytes: bigint('size_bytes', { mode: 'number' }).notNull(),
+    classification: classification('classification').notNull(),
+    documentId: uuid('document_id'),
     documentVersionId: uuid('document_version_id'),
-    filename: text('filename'),
+    sourceId: uuid('source_id'),
+    /** Quarantine-area object key when the import pre-scan held the file (never parsed, never served). */
+    quarantineKey: text('quarantine_key'),
     status: importStatus('status').notNull().default('uploaded'),
+    failureCode: varchar('failure_code', { length: 64 }),
+    failureDetail: text('failure_detail'),
+    /** Sheets found by the parser: name, rows, columns (spreadsheets) — the uploader picks one. */
+    sheets: jsonb('sheets').$type<{ name: string; rows: number; columns: number }[]>().notNull().default([]),
     sheet: text('sheet'),
     headerRow: integer('header_row'),
+    headers: jsonb('headers').$type<string[]>().notNull().default([]),
     mapping: jsonb('mapping').$type<Record<string, string>>(),
-    summary: jsonb('summary').$type<Record<string, number>>(),
-    errors: jsonb('errors').$type<{ row: number; message: string }[]>().notNull().default([]),
+    summary: jsonb('summary').$type<Record<string, number>>().notNull().default({}),
+    /** File-level findings (formula cells, external links, data connections, hyperlinks, extraction not configured …). */
+    findings: jsonb('findings').$type<ImportMessageJson[]>().notNull().default([]),
+    /** Hash of the validated row plan; the approval is refused when the re-validated plan differs (409). */
+    previewHash: varchar('preview_hash', { length: 64 }),
+    submittedAt: ts('submitted_at'),
     approvedBy: uuid('approved_by'),
     approvedAt: ts('approved_at'),
     appliedAt: ts('applied_at'),
+    rejectedBy: uuid('rejected_by'),
+    rejectedAt: ts('rejected_at'),
+    decisionNote: text('decision_note'),
+    rolledBackBy: uuid('rolled_back_by'),
     rolledBackAt: ts('rolled_back_at'),
+    rollbackReason: text('rollback_reason'),
+    isDemo: isDemo(),
     createdAt: createdAt(),
-    createdBy: createdBy(),
+    /** The uploader — never the approver (imports.batch.approve is not_self). */
+    createdBy: createdBy().notNull(),
     updatedAt: updatedAt(),
     version: versionCol(),
   },
   (t) => [
     projectFk('import_batch_source_fk', t.projectId, t.sourceId, (): FkTarget => sourceRecord),
-    projectFk('import_batch_docver_fk', t.projectId, t.documentVersionId, (): FkTarget => documentVersion),unique('import_batch_pid_uq').on(t.projectId, t.id)],
+    projectFk('import_batch_document_fk', t.projectId, t.documentId, (): FkTarget => document),
+    projectFk('import_batch_docver_fk', t.projectId, t.documentVersionId, (): FkTarget => documentVersion),
+    unique('import_batch_pid_uq').on(t.projectId, t.id),
+    uniqueIndex('import_batch_code_uq').on(t.projectId, t.code),
+    index('import_batch_status_idx').on(t.projectId, t.status, t.createdAt),
+    check('import_batch_kind_ck', sql`${t.kind} in ('risk', 'task', 'decision', 'source_claims', 'document_claims')`),
+    check('import_batch_file_type_ck', sql`${t.fileType} in ('xlsx', 'csv', 'docx', 'pdf', 'png', 'jpeg')`),
+    check('import_batch_approval_ck', sql`${t.status} not in ('applied', 'rolled_back') or (${t.approvedBy} is not null and ${t.approvedAt} is not null and ${t.appliedAt} is not null)`),
+    check('import_batch_not_self_ck', sql`${t.approvedBy} is null or ${t.approvedBy} <> ${t.createdBy}`),
+  ],
 );
 
+/** Parsed sheet of a batch (values only; formula text kept for display, never evaluated). Written by the parse job. */
+export const importSheet = pgTable(
+  'import_sheet',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    batchId: uuid('batch_id').notNull(),
+    sheetNo: integer('sheet_no').notNull(),
+    name: text('name').notNull(),
+    rows: jsonb('rows').$type<(ImportCellJson | null)[][]>().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [projectFk('import_sheet_batch_fk', t.projectId, t.batchId, (): FkTarget => importBatch), uniqueIndex('import_sheet_uq').on(t.batchId, t.sheetNo)],
+);
+
+/**
+ * One row of the preview / comparison (REQ-SRC-009): the mapped cells, the checked values, the planned action, the
+ * matching record (duplicate detection) with its field differences, and the item-by-item decision of the approver.
+ */
 export const importRow = pgTable(
   'import_row',
   {
@@ -192,14 +266,55 @@ export const importRow = pgTable(
     projectId: projectIdCol().references(() => project.id),
     batchId: uuid('batch_id').notNull(),
     rowNo: integer('row_no').notNull(),
-    raw: jsonb('raw').$type<Record<string, unknown>>().notNull(),
-    normalized: jsonb('normalized').$type<Record<string, unknown>>(),
+    raw: jsonb('raw').$type<Record<string, ImportCellJson | null>>().notNull(),
+    normalized: jsonb('normalized').$type<Record<string, string | number | null>>().notNull().default({}),
     action: importRowAction('action').notNull(),
-    message: text('message'),
-    targetType: varchar('target_type', { length: 32 }),
-    targetId: uuid('target_id'),
-    before: jsonb('before').$type<Record<string, unknown>>(),
-    after: jsonb('after').$type<Record<string, unknown>>(),
+    errors: jsonb('errors').$type<ImportMessageJson[]>().notNull().default([]),
+    warnings: jsonb('warnings').$type<ImportMessageJson[]>().notNull().default([]),
+    notes: jsonb('notes').$type<ImportMessageJson[]>().notNull().default([]),
+    formulaFields: jsonb('formula_fields').$type<string[]>().notNull().default([]),
+    /** Existing record this row matches (duplicate detection): type, id and code. */
+    matchType: varchar('match_type', { length: 32 }),
+    matchId: uuid('match_id'),
+    matchCode: varchar('match_code', { length: 64 }),
+    /** Why the matching record is governed (committee_decision, approved_baseline) — changes become change requests. */
+    governedReason: varchar('governed_reason', { length: 32 }),
+    diff: jsonb('diff').$type<{ field: string; from: string | number | null; to: string | number | null }[]>().notNull().default([]),
+    duplicateOfRow: integer('duplicate_of_row'),
+    /** Approver's item-by-item decision at approval: accepted | declined (null before / for rows that were not applicable). */
+    decision: varchar('decision', { length: 16 }),
   },
-  (t) => [projectFk('import_row_batch_fk', t.projectId, t.batchId, (): FkTarget => importBatch), uniqueIndex('import_row_uq').on(t.batchId, t.rowNo)],
+  (t) => [
+    projectFk('import_row_batch_fk', t.projectId, t.batchId, (): FkTarget => importBatch),
+    uniqueIndex('import_row_uq').on(t.batchId, t.rowNo),
+    check('import_row_decision_ck', sql`${t.decision} is null or ${t.decision} in ('accepted', 'declined')`),
+  ],
+);
+
+/**
+ * A record produced by an applied batch (REQ-INT-002 / -003): which row produced it, the record and its version right
+ * after the import — rollback removes it only while it is unchanged since (no FK to the record on purpose: a rollback
+ * deletes the record and this row keeps the history). Records are created in the batch's own project, in the same
+ * transaction.
+ */
+export const importOutput = pgTable(
+  'import_output',
+  {
+    id: pk(),
+    orgId: orgIdCol(),
+    projectId: projectIdCol().references(() => project.id),
+    batchId: uuid('batch_id').notNull(),
+    rowNo: integer('row_no').notNull(),
+    recordType: varchar('record_type', { length: 32 }).notNull(),
+    recordId: uuid('record_id').notNull(),
+    recordCode: varchar('record_code', { length: 64 }),
+    createdVersion: integer('created_version').notNull(),
+    rolledBackAt: ts('rolled_back_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    projectFk('import_output_batch_fk', t.projectId, t.batchId, (): FkTarget => importBatch),
+    index('import_output_batch_idx').on(t.batchId),
+    check('import_output_type_ck', sql`${t.recordType} in ('risk', 'task', 'source_claim', 'change_request')`),
+  ],
 );

@@ -39,6 +39,12 @@ export const notification = pgTable(
     sourceType: varchar('source_type', { length: 32 }),
     sourceId: uuid('source_id'),
     aiProposalId: uuid('ai_proposal_id'),
+    /**
+     * P6 notifications module (REQ-PLT-008, C-33): message code + parameters (record codes, enum values, numbers — never
+     * titles or content). The web translates `notifications.messages.<code>`; `title` keeps the English rendering.
+     */
+    messageCode: varchar('message_code', { length: 96 }),
+    messageParams: jsonb('message_params').$type<Record<string, string | number>>(),
     readAt: ts('read_at'),
     createdAt: createdAt(),
   },
@@ -53,9 +59,13 @@ export const notification = pgTable(
  * Integration connection. Secrets are never stored here — only the *name* of a secret in the secret store.
  * Status is `verified` only after a real connectivity check (spec §17).
  */
-export const integrationConnection = pgTable('integration_connection', {
+export const integrationConnection = pgTable(
+  'integration_connection',
+  {
   id: pk(),
   orgId: orgIdCol().references(() => organization.id),
+  /** Adapter of the registry (packages/domain/src/integrations.ts INTEGRATION_ADAPTERS) — one connection per adapter. */
+  adapterKey: varchar('adapter_key', { length: 64 }).notNull(),
   kind: integrationKind('kind').notNull(),
   name: text('name').notNull(),
   direction: integrationDirection('direction').notNull(),
@@ -67,11 +77,67 @@ export const integrationConnection = pgTable('integration_connection', {
   approvedDestinations: jsonb('approved_destinations').$type<string[]>().notNull().default([]),
   lastCheckedAt: ts('last_checked_at'),
   lastCheckResult: text('last_check_result'),
+  lastCheckCode: varchar('last_check_code', { length: 64 }),
   createdAt: createdAt(),
   createdBy: createdBy(),
   updatedAt: updatedAt(),
   version: versionCol(),
-});
+  },
+  (t) => [uniqueIndex('integration_connection_adapter_uq').on(t.orgId, t.adapterKey)],
+);
+
+/**
+ * Execution log of a connector (REQ-INT-006): every configuration, connectivity check, refusal, delivery and
+ * reconciliation — operation, outcome and a code; never secrets or payload content. Append-only by convention.
+ */
+export const integrationExecutionLog = pgTable(
+  'integration_execution_log',
+  {
+    id: pk(),
+    orgId: orgIdCol().references(() => organization.id),
+    adapterKey: varchar('adapter_key', { length: 64 }).notNull(),
+    /** configure | test | enable | disable | send | receive | process | retry | reconcile | alert */
+    operation: varchar('operation', { length: 24 }).notNull(),
+    /** success | refused | failed */
+    outcome: varchar('outcome', { length: 16 }).notNull(),
+    code: varchar('code', { length: 64 }),
+    detail: text('detail'),
+    actorUserId: uuid('actor_user_id'),
+    correlationId: varchar('correlation_id', { length: 64 }),
+    createdAt: createdAt(),
+  },
+  (t) => [index('integration_execution_log_idx').on(t.orgId, t.adapterKey, t.createdAt)],
+);
+
+/**
+ * Inbound webhook deliveries (REQ-INT-009/010, C-39). The sender's delivery id is the replay nonce and the idempotency
+ * key: a second receipt of the same id is acknowledged and never processed again. Processing runs in the worker with
+ * retries and back-off; deliveries whose processing died are marked failed by reconciliation and raise an alert.
+ */
+export const webhookDelivery = pgTable(
+  'webhook_delivery',
+  {
+    id: pk(),
+    orgId: orgIdCol().references(() => organization.id),
+    adapterKey: varchar('adapter_key', { length: 64 }).notNull(),
+    deliveryId: varchar('delivery_id', { length: 128 }).notNull(),
+    eventType: varchar('event_type', { length: 64 }).notNull(),
+    payloadHash: varchar('payload_hash', { length: 64 }).notNull(),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull().default({}),
+    senderTimestamp: ts('sender_timestamp').notNull(),
+    /** received → processed | ignored | failed */
+    status: varchar('status', { length: 16 }).notNull().default('received'),
+    attempts: integer('attempts').notNull().default(0),
+    lastError: text('last_error'),
+    duplicateCount: integer('duplicate_count').notNull().default(0),
+    receivedAt: createdAt(),
+    processedAt: ts('processed_at'),
+  },
+  (t) => [
+    uniqueIndex('webhook_delivery_nonce_uq').on(t.orgId, t.adapterKey, t.deliveryId),
+    index('webhook_delivery_status_idx').on(t.orgId, t.adapterKey, t.status, t.receivedAt),
+  ],
+);
 
 /** Transactional outbox: written in the same transaction as the business change. */
 export const outboxEvent = pgTable(
