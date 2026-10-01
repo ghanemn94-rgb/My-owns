@@ -1,7 +1,7 @@
 // Create a transformation (REQ-PB-003): business unit, name, mode (End-to-End or Modular) and, for Modular, the
 // entry phase and optional standalone deliverable. Validated with the shared `transformationCreate` schema; the
 // Idempotency-Key is generated once per form so a retried submission never creates a duplicate.
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { PHASES, STANDALONE_DELIVERABLE_TYPES } from "@mth/shared";
 import { transformationCreate } from "@mth/shared/schemas";
 import { useState } from "react";
@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { ApiError, api, newIdempotencyKey } from "../../api/client.ts";
-import { useAllUsers } from "../../api/queries.ts";
+import { keys, useAllUsers } from "../../api/queries.ts";
 import type { Transformation } from "../../api/types.ts";
 import { localName, useLocale } from "../../app/locale.ts";
 import { ancestryOf, canAnywhere, canOn } from "../../auth/permissions.ts";
@@ -57,6 +57,29 @@ export function toCreatePayload(v: CreateFormValues): Record<string, string> {
   put("timezone", v.timezone);
   put("currency", v.currency.toUpperCase());
   return out;
+}
+
+/** How long a create waits for the refreshed GET /me before navigating anyway (the refetch keeps running). */
+export const ME_REFRESH_TIMEOUT_MS = 5_000;
+
+/**
+ * Re-reads GET /me (effective permissions) after a mutation that may change the caller's grants (F-DG1-210).
+ * Resolves when the refetch settles or after `timeoutMs`, whichever comes first; it never rejects.
+ */
+export async function refreshEffectivePermissions(
+  queryClient: QueryClient,
+  timeoutMs: number = ME_REFRESH_TIMEOUT_MS,
+): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, timeoutMs);
+  });
+  const refetch = queryClient.invalidateQueries({ queryKey: keys.me, refetchType: "all" }).catch(() => undefined);
+  try {
+    await Promise.race([refetch, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function TransformationCreatePage() {
@@ -117,6 +140,12 @@ export function TransformationCreatePage() {
       // The detail page reads the record back from the server rather than from this response, so what it shows is
       // exactly what the creator may see; if a 403/404 comes back, it explains instead of showing "Not found".
       await queryClient.invalidateQueries({ queryKey: ["transformations"] });
+      // F-DG1-210: creating a record can grant the creator a derived transformation-scope assignment (F-DG1-106), so
+      // the cached GET /me effective permissions are now stale. Refetch them BEFORE navigating, so the detail page
+      // offers the Edit/Archive controls and the audit trail the server now allows, without a manual reload. This
+      // only refreshes the server's own answer (never grants anything on the client); a failed or slow refetch
+      // never blocks the navigation, and the server re-checks every request anyway.
+      await refreshEffectivePermissions(queryClient);
       const state: CreatedNavigationState = { created: { id: created.id, code: created.code, name: created.name } };
       void navigate(`/transformations/${created.id}`, { state });
     } catch (e) {
