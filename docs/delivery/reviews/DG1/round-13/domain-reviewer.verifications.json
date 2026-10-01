@@ -1,0 +1,16 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-216",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by domain-reviewer, a non-author. qa-verifier raised the finding in round 12, and delivery-orchestrator wrote the fix in commit 85af2e6, an ancestor of the freeze commit 08cbd12 in candidate sha256:00f1498cd5e9a166db501452f699a3270ffca82455593fe9c0ab84a83e01c80b. That ID recomputes identically in the repository and in a full disposable clone. Every element of the finding's 'expected' is met. (1) The stale sentence 'reaching it by namespace enumeration is residual (a)' is present once at the round-12 freeze 987ae02 and absent (count 0) at 08cbd12. (2) Both D-055 mentions now record the route as closed by rule 5. One reads '…nor, by itself, the runtime-enumeration reach of such a member (F-DG1-132/215) — that route is closed by rule 5 (named-imports-only for node:crypto, F-DG1-133)'. The other reads '…since rule 5 (F-DG1-132/133), unreachable by namespace enumeration — a module may import node:crypto through named imports only, so its namespace/default binding never becomes an enumerable value'. (3) D-055's residual list keeps only '(a) runtime data-flow', which matches the testkit header ('(a) runtime DATA FLOW over PLAIN OBJECTS…'; 'is CLOSED by rule 5' at lines 26/67). The decision record no longer contradicts the lint it documents. A candidate-wide git grep for 'residual (a)' outside delivery metadata finds only architecture.test.ts:544, an accurate historical note about the round-11 lint ('pinned then as residual (a)'). The lint the decision documents behaves as stated: architecture.test.ts passes 127/127 on Node 22.22.2 and 24.21.0.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/11-f216-d055-wording.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/03-architecture-verbose-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/03-architecture-verbose-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/00-candidate-and-diff.out.txt"
+      ]
+    }
+  ]
+}

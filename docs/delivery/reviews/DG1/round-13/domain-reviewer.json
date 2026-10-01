@@ -1,0 +1,352 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 13,
+  "candidate_id": "sha256:00f1498cd5e9a166db501452f699a3270ffca82455593fe9c0ab84a83e01c80b",
+  "source_commit": "08cbd12f00c5c0561f9718900e71c9baf3d8e0c1",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-DOM-R13-domain-reviewer-20261001T163248Z-3bdf7c9f",
+    "session_id": "3bdf7c9f-6872-44f6-ae8d-6c78cb85fb4b"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (domain-reviewer) authored no implementation in the DG1 candidate. The round-13 repairs were written by backend-workflow-engineer (F-DG1-134, T-DG1-BE14, commit e71f3d0) and delivery-orchestrator (F-DG1-216, the D-055 text, commit 85af2e6). F-DG1-216 was raised by qa-verifier and F-DG1-134 by code-security-reviewer, not by me. I formed this verdict before reading any other reviewer's round-13 record; I read none of them."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-13/review-domain-reviewer.md (sha256 84920bea25936a9ab176ab797d17226c12e721e5f86f89e55801c8b43eec6034) with review-common.md",
+  "requirements_checked": [
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006",
+    "REQ-S16-003",
+    "REQ-PB-001",
+    "REQ-PB-003",
+    "REQ-PB-012",
+    "REQ-PB-014",
+    "REQ-PB-029",
+    "REQ-S15-001",
+    "REQ-S15-003",
+    "REQ-S15-004",
+    "REQ-S15-007",
+    "REQ-S15-008",
+    "REQ-S15-010",
+    "REQ-S15-011",
+    "REQ-S15-012",
+    "REQ-S15-013",
+    "REQ-S16-005",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-008",
+    "REQ-S16-009",
+    "REQ-S16-010",
+    "REQ-S16-011",
+    "REQ-S16-012",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-030",
+    "REQ-S16-031",
+    "REQ-S16-032"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R13-01-candidate",
+      "procedure": "Confirm the frozen candidate. Check HEAD, that the repository is not shallow, and the recomputed candidate ID, both in the repository and in a full disposable clone checked out at the freeze commit 08cbd12. Check that HEAD (ed2160d) differs from the freeze commit only by candidate-excluded metadata.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG1; git diff --stat 08cbd12 HEAD; git clone . $TMPDIR/rev && git checkout 08cbd12 && node tools/gates/candidate.mjs --stage DG1",
+      "environment": "repo /home/user/My-owns at ed2160d; disposable clone $TMPDIR/rev at 08cbd12; Node v22.22.2",
+      "expected": "candidate_id sha256:00f1498c…c80b (391 files) in the repo and in the clone; not shallow; HEAD = freeze commit + candidate-excluded metadata only",
+      "actual": "HEAD ed2160d758c0…; not shallow. Both computations give sha256:00f1498cd5e9a166db501452f699a3270ffca82455593fe9c0ab84a83e01c80b with 391 files. 08cbd12..HEAD touches only the round-13 assignments, the candidate manifest and stages.json, all excluded from the candidate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/00-candidate-and-diff.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R13-02-change-scope",
+      "procedure": "Confirm that the round-13 repair changed no product or runtime behaviour, API contract, data model, ADR or i18n string. Diff the round-12 freeze 987ae02 against the round-13 freeze 08cbd12, first in full, then restricted to the product, runtime, contract and source paths. Read the full testkit and test diff.",
+      "command": "git diff --stat 987ae02 08cbd12; git diff --stat 987ae02 08cbd12 -- packages/ apps/web apps/worker docs/api docs/architecture docs/source apps/api/src/modules apps/api/src/server.ts apps/api/src/main.ts apps/api/src/modules.ts apps/api/migrations; git diff --stat 987ae02 08cbd12 -- docs/ ':!docs/delivery' apps/web packages; git diff 987ae02 08cbd12 -- apps/api/src/architecture.testkit.ts apps/api/src/architecture.test.ts",
+      "environment": "repo /home/user/My-owns (read-only git)",
+      "expected": "Only apps/api/src/architecture.testkit.ts and architecture.test.ts (both test-only) plus delivery records (decisions.md D-055) change. Product, contract, ADR, OpenAPI, i18n and source diffs are empty.",
+      "actual": "The code diff is confined to architecture.testkit.ts (+CODE_FILE/TEST_FILE regexes, walk() matches /\\.[cm]?[jt]sx?$/, scriptKindOf parses .tsx/.jsx as TSX, isTest uses TEST_FILE, header note) and architecture.test.ts (+5 F-DG1-134 self-checks). Everything else is decisions.md, findings.json and other delivery metadata. Both restricted diffs are empty. The built apps/api/dist contains no testkit, test or probe files (07-build.out.txt).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/00-candidate-and-diff.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/07-build.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R13-03-F-DG1-216-d055",
+      "procedure": "Verify F-DG1-216. Read D-055 at the freeze commit and pull out every mention of rule 5, residual (a) and enumeration. Count the stale sentence at the round-12 freeze and at the round-13 freeze. Grep the candidate (metadata excluded) for 'residual (a)'. Compare with the testkit header's own statements.",
+      "command": "git show 08cbd12:docs/delivery/decisions.md | grep -c 'reaching it by namespace enumeration is residual (a)'; same at 987ae02; git show 08cbd12:docs/delivery/decisions.md | sed -n 7p | grep -oE '.{0,80}(rule 5|residual \\(a\\)|enumerat)[^|]{0,160}'; git grep -nE 'residual \\(a\\)' 08cbd12 -- . ':!docs/delivery/reviews' ':!docs/delivery/test-evidence' ':!docs/delivery/runs' ':!docs/delivery/findings.json' ':!docs/delivery/assignments' ':!docs/delivery/handbacks'; git show 08cbd12:apps/api/src/architecture.testkit.ts | grep -nE 'closed by rule 5|CLOSED by rule 5|Residual limits'",
+      "environment": "repo /home/user/My-owns (read-only git)",
+      "expected": "The stale sentence is present at 987ae02 (count 1) and absent at 08cbd12 (count 0). Both D-055 mentions say the node:crypto enumeration route is closed by rule 5 (named imports only), consistent with testkit lines 26 and 67. No remaining candidate text calls that route residual (a).",
+      "actual": "Count 1 at 987ae02 and 0 at 08cbd12. D-055 now says: '…nor, by itself, the runtime-enumeration reach of such a member (F-DG1-132/215) — that route is closed by rule 5 (named-imports-only for node:crypto, F-DG1-133)' and '…since rule 5 (F-DG1-132/133), unreachable by namespace enumeration — a module may import node:crypto through named imports only…'. D-055's residual list keeps only '(a) runtime data-flow', which matches the testkit header ('(a) runtime DATA FLOW over PLAIN OBJECTS…'; 'is CLOSED by rule 5'). The remaining 'residual (a)' hits are architecture.test.ts:544, an accurate historical note ('pinned then as residual (a)' about the round-11 lint), and stages.json (metadata). The decision record no longer contradicts the lint.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/11-f216-d055-wording.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R13-04-unit-node22-node24",
+      "procedure": "Run the full unit suite (unit-node and unit-web projects) on Node 22 and on Node 24 in the disposable clone.",
+      "command": "PATH=<node bin>:$PATH node node_modules/vitest/vitest.mjs run --project unit-node --project unit-web  (for /opt/node22/bin and /opt/nvm/versions/node/v24.21.0/bin)",
+      "environment": "disposable clone $TMPDIR/rev at 08cbd12; Node v22.22.2 and v24.21.0; node_modules copied from the workspace (pnpm-lock.yaml identical; pnpm install --offline is unavailable because the store is read-only)",
+      "expected": "All green on both runtimes",
+      "actual": "Node 22: 21 files, 320/320 passed, exit 0. Node 24: 21 files, 320/320 passed, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-003",
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/01-unit-full-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/01-unit-full-node24.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R13-05-architecture-verbose",
+      "procedure": "Run architecture.test.ts verbosely on both runtimes. Check that the five new F-DG1-134 self-checks and the real-module-tree check are green, alongside the existing rule 1–5 cases.",
+      "command": "PATH=<node bin>:$PATH node node_modules/vitest/vitest.mjs run --project unit-node apps/api/src/architecture.test.ts --reporter=verbose",
+      "environment": "disposable clone at 08cbd12; Node v22.22.2 and v24.21.0",
+      "expected": "All pass on both runtimes, including the F-DG1-134 cases",
+      "actual": "127/127 passed on both runtimes, exit 0. All five F-DG1-134 cases pass: walk() collects every .[cm]?[jt]sx? file and nothing else; a planted non-.ts module file is linted end to end; zz-planted.mts gives the rule-5 and deep-import violations; JSX is parsed as TSX; *.test.<ext> is a test.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003",
+        "REQ-S16-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/03-architecture-verbose-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/03-architecture-verbose-node24.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R13-06-walk-scope-probe",
+      "procedure": "Check independently that the F-DG1-134 fix does not change the verdict on the real module tree and does close the evasion, using a reviewer-authored probe. P1: inventory of the real module tree by extension, via readdir rather than walk(). P2: walk() equals the .ts/.tsx inventory. P3: moduleViolations is [] for all 13 declared modules. P4: plant .mts/.cts/.mjs/.cjs/.js/.jsx files in the REAL modules/transformations directory of the clone; each must be flagged (rule 5 + deep import), and removal must restore []. P5: non-code files are ignored. P6: declaration files (.d.ts/.d.mts). Control: run the same probe against the round-12 testkit (987ae02).",
+      "command": "cp 02-walk-scope-probe.test.ts apps/api/src/zz-dom-r13-probe.test.ts; PATH=<node bin>:$PATH node node_modules/vitest/vitest.mjs run --project unit-node apps/api/src/zz-dom-r13-probe.test.ts --reporter=verbose; rm the probe; control: git show 987ae02:apps/api/src/architecture.testkit.ts > zz-old.testkit.ts and the same probe pointed at it (Node 22)",
+      "environment": "disposable clone at 08cbd12; Node v22.22.2 and v24.21.0",
+      "expected": "Real tree: 41 .ts files, 0 others, walk() unchanged, 13/13 modules with zero violations. Every planted code extension is flagged with the fix and missed by the round-12 lint. Non-code files are ignored.",
+      "actual": "13/13 probe tests pass on both runtimes. Inventory {\".ts\":41}; walk() returns the same 41 files; modules platform…admin (13) all []. Each of .mts/.cts/.mjs/.cjs/.js/.jsx gives 2 violations (node:crypto namespace binding plus 'only access/index.ts is public'), and [] after removal. .json/.md/.sql/.mts.map are ignored. Control against the round-12 testkit: all six P4 cases FAIL (0 violations, the original evasion reproduces), while P1–P3 and P5 pass. Observation (P6, not a finding): a declaration file (.d.ts or .d.mts) makes moduleViolations throw ('Debug Failure. Output generation failed' from ts.transpileModule in syntaxErrors). The lint fails CLOSED (the architecture suite would go red) and does not pass the file silently. For .d.ts this is identical on the round-12 lint, so it is pre-existing; for .d.mts the round-12 lint skipped the file silently, so the fix makes it fail closed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/02-walk-scope-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/domain/round-13/02-walk-scope-probe-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/02-walk-scope-probe-node24.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/02b-walk-probe-against-round12-testkit.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R13-07-integration-x2",
+      "procedure": "Run the full integration project against a fresh throwaway PostgreSQL 16 cluster, once on Node 22 and once on Node 24. This covers the closure rule (422/G6), scoped access (TO inherit, TL at BU, revocation, BU-scoped creator), identity, cursor pagination and binding, the OpenAPI contract coverage (33 operations), migrations, audit and idempotency.",
+      "command": "PATH=<node bin>:$PATH bash 04-integration-run.sh <port>  (54421 on node22, 54422 on node24)",
+      "environment": "disposable clone at 08cbd12; PostgreSQL 16.13 under $TMPDIR (initdb, private port, removed afterwards); Node v22.22.2 and v24.21.0",
+      "expected": "Green on both runtimes; closure refused with 422 invalid-transition and nothing written; no leftover databases",
+      "actual": "Node 22: 19 files, 200/200, exit 0. Node 24: 19 files, 200/200, exit 0. Green on both: 'closure is not a status edit (F-DG1-001)' (active->closed and on_hold->closed refused 422, record, version and audit unchanged; no path from draft); the access-scope suites (404 cross-scope reads, 403 readable-but-not-permitted, F-DG1-106 BU-scoped creator, revocation on the next request); cursor pagination and cursor-reuse refusal (400). Leftover databases: only postgres/template0/template1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-S16-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/04-integration-run.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-13/04-integration-run1-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/04-integration-run2-node24.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R13-08-live-shell-ar-en",
+      "procedure": "Build the candidate, start a disposable stack (throwaway PostgreSQL, migrate and seed-dev with SYNTHETIC users, the API serving the built web on a private port) and run the live scenario. A: closure refused 422/G6, nothing written. B: BU-scoped TL creator. C: branding tokens provisional. D: rendered shell, edit and detail screens in ar (RTL) and en (LTR), with no 'closed' option, the G6 hint, Unknown for missing data, no CDN request and bundled fonts. E/F: localized derived-assignment audit. G: marked fallback. H: UI create without reload. I: cursor pagination over six sorts, binding and tamper refusal, scoped list. J: identity cookie and session handling, OIDC 404 in dev mode. Inspect the screenshots visually.",
+      "command": "pnpm -r build; PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH bash 07-live-stack.sh <evidence dir>",
+      "environment": "disposable clone at 08cbd12; Node v24.21.0 (production target, ADR-0001); PostgreSQL 16.13 on private port 54834; API on port 3448; Playwright Chromium (/opt/pw-browsers); SYNTHETIC dev users, AUTH_MODE=dev",
+      "expected": "Every scenario check PASS; screens render ar RTL and en LTR with the provisional wordmark, Unknown states, no 'closed' status option and the G6 hint",
+      "actual": "Build exit 0. readyz: database ok, migrations ok. 108 PASS, 0 FAIL, exit 0. I inspected the screenshots myself. ar-02-edit-no-closed shows dir=rtl, the 'مؤقت' provisional wordmark, status options نشط/معلّق only and a hint naming البوابة 6 - الاستدامة. en-03-detail-audit shows LTR, the 'Provisional' badge, Unknown chips with the 'never shown as zero or as on track' note, 'Planned' nav markers for undelivered areas, and a localized audit trail with no raw keys.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-002",
+        "REQ-S16-001",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/07-build.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/07-live-stack.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-13/07-live-scenario.mjs",
+        "docs/delivery/test-evidence/DG1/domain/round-13/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/screens/ar-02-edit-no-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-13/screens/en-03-detail-audit.png",
+        "docs/delivery/test-evidence/DG1/domain/round-13/screens/ar-06-lead-ui-create-no-reload.png",
+        "docs/delivery/test-evidence/DG1/domain/round-13/screens/en-06-lead-ui-create-no-reload.png"
+      ]
+    },
+    {
+      "id": "DOM-R13-09-static-invariants",
+      "procedure": "Run the static checks (no-CDN, OpenAPI lint, typecheck, lint, format) and grep the unchanged invariants: provisional brand provenance; official/certified/PMI wording in the i18n catalogues (expect only negations); DG0–DG7 references in UI strings (expect none).",
+      "command": "pnpm -s check:no-cdn; pnpm -s openapi:lint; pnpm -s typecheck; pnpm -s lint; pnpm -s format:check; grep -rn provenance packages/shared/src packages/design-tokens/src; grep -rniE 'official|certified|رسمي|معتمد' apps/web/src/i18n; grep -rnE 'DG[0-7]' apps/web/src/i18n; grep -rniE '\\bPMI\\b' apps/web/src/i18n",
+      "environment": "disposable clone at 08cbd12; Node v22.22.2",
+      "expected": "All five checks exit 0. Provenance is 'provisional'. Official/certified/PMI wording appears only as negations. No DG references in the UI catalogues.",
+      "actual": "no-cdn PASS; openapi:lint PASS (OpenAPI 3.1.1, 33 operations); typecheck, lint and format exit 0. Branding schema provenance stays 'provisional'. Official/certified/PMI hits are all negations in en and ar ('no official logo', 'not verified Mobily brand values', 'inspired by PMI… not an official PMI standard… not certified'). The only DG-pattern hits are comments in glossary.test.ts (a test file, not a UI string); the six en/ar catalogues contain none.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S19-006",
+        "REQ-S16-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/08-static-checks.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R13-10-register",
+      "procedure": "Check the register and findings read-only. The assigned and all DG1-final rows must be IMPLEMENTED with existing evidence files. REQ-PB/§15/§16 rows that have a P1 increment but are not DG1-final must not be over-claimed. Review finding statuses and any open Critical/High/mandatory findings.",
+      "command": "python3 docs/delivery/test-evidence/DG1/domain/round-13/09-register-rows.py",
+      "environment": "repo /home/user/My-owns at ed2160d (read-only); Python 3",
+      "expected": "Register unchanged 987ae02..HEAD. The 12 DG1-final rows are IMPLEMENTED with 0 missing evidence. The 29 non-final P1-increment rows are SPECIFIED, not claimed. No open Critical/High/mandatory DG1 findings. Only F-DG1-134/216 are non-closed (FIXED_PENDING_VERIFICATION).",
+      "actual": "Register unchanged in both diffs. The 8 assigned rows and all 12 DG1-final rows (incl. REQ-S16-003, REQ-DLV-025/033/042) are IMPLEMENTED with 0 missing evidence files. The 29 non-final P1-increment REQ-PB/§15/§16 rows are SPECIFIED with no evidence claimed, so nothing is over-claimed. The prior closures F-DG1-001…133 listed in the assignment are all CLOSED_VERIFIED. Open Critical/High/mandatory: []. Non-closed: F-DG1-134 and F-DG1-216, both Low and FIXED_PENDING_VERIFICATION.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-S16-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/09-register-rows.py",
+        "docs/delivery/test-evidence/DG1/domain/round-13/09-register-rows.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R13-11-prior-closures-hold",
+      "procedure": "Re-confirm that the round-11/12 domain closures hold on the round-13 candidate, using checks 02 and 04–10. F-DG1-001: closure 422/G6. F-DG1-002/105/131/011/132/133: lint, decisions and header (architecture 127/127, probe, D-055 text). F-DG1-003: glossary terms (unit-web glossary test; live D5/D6). F-DG1-004/210: BU-scoped creator and UI create without reload. F-DG1-005/008: localized derived audit. F-DG1-006/207: OpenAPI contract (lint plus integration contract coverage). F-DG1-007/009: register evidence and integration determinism (2 of 2 green runs).",
+      "command": "see checks DOM-R13-02, 04, 05, 06, 07, 08, 09 and 10",
+      "environment": "as in the referenced checks",
+      "expected": "Every closure still holds",
+      "actual": "All hold. Closure is refused 422 citing G6 at the API (integration and live A3–A6) and absent from the edit UI (D3/D4, ar and en). The lint and decisions are consistent (D-055 now matches rule 5). The glossary test is green and live D5/D6 pass. Live B and H pass with the TL created through the UI. E/F audit entries are localized with no raw keys. OpenAPI lint shows 33 operations, contract coverage is green, and the register is unchanged. Integration was green on 2 of 2 runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-003",
+        "REQ-S19-004",
+        "REQ-S19-006",
+        "REQ-S16-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/07-live-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/04-integration-run1-node22.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-13/03-architecture-verbose-node24.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R13-12-source-fidelity",
+      "procedure": "Check the candidate's closure rule against the playbook: B0014 'Benefits before closure', the G6 - Sustain row, and health-check question 22 (BAU ownership before closure). Check that the API refusal and the UI hint name G6 as a PRODUCT gate, distinct from DG0–DG7. Confirm the source documents are unchanged (docx SHA-256 matches CLAUDE.md).",
+      "command": "grep -nE 'G6 - Sustain|Benefits before closure|BAU ownership defined before closure' docs/source/playbook.md; grep -n G6 apps/api/src/modules/transformations/routes.ts apps/web/src/i18n/*/transformations.json; grep -n -A8 TRANSFORMATION_STATUS_TRANSITIONS packages/shared/src/constants.ts; sha256sum docs/source/*; git diff --stat 987ae02 08cbd12 -- docs/source",
+      "environment": "repo /home/user/My-owns (read-only)",
+      "expected": "The playbook anchors are present. routes.ts refuses closure citing G6 (Sustain) and states that it is a product gate unrelated to DG0–DG7. The UI hint names G6. The sources are unchanged, and the docx hash starts 2584a352 and ends 548ad2.",
+      "actual": "playbook.md:52 B0014 'Benefits before closure', :104 'G6 - Sustain | Is value embedded in BAU?', :719 Q22 'Is BAU ownership defined before closure?'. routes.ts:61-65 and :299 hold the G6 refusal and the line 'This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.' The en hint names 'G6 (Sustain) business approval… available in a later release', so it is not claimed as delivered. The shared transition map still lists closed as a target, but the route refuses it, as in round 12 (the governed close lands with G6 in P2+/P4). The docx SHA-256 is 2584a35282804e…34548ad2, and the docs/source diff is empty.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-001",
+        "REQ-S19-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/10-source-fidelity.out.txt"
+      ]
+    },
+    {
+      "id": "DOM-R13-13-cleanup",
+      "procedure": "Check that no PostgreSQL or API process is left running, remove the disposable clone, and confirm that the candidate tree's tracked files are unchanged and the candidate ID is the same.",
+      "command": "pgrep -af 'postgres -D|apps/api/dist/main.js'; rm -rf $TMPDIR/rev; git status --short --untracked-files=no; node tools/gates/candidate.mjs --stage DG1",
+      "environment": "repo /home/user/My-owns; $TMPDIR",
+      "expected": "No leftover processes, the clone removed, no tracked changes, candidate ID unchanged",
+      "actual": "pgrep found nothing (exit 1), the clone was removed, and the clone's tracked tree was clean before removal (the probe was deleted). The candidate tree has no tracked changes. candidate.mjs again gives sha256:00f1498cd5e9a166…c80b with 391 files.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-13/50-cleanup.out.txt"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/domain/round-13/00-candidate-and-diff.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/01-unit-full-node22.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/01-unit-full-node24.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/02-walk-scope-probe.test.ts",
+    "docs/delivery/test-evidence/DG1/domain/round-13/02-walk-scope-probe-node22.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/02-walk-scope-probe-node24.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/02b-walk-probe-against-round12-testkit.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/03-architecture-verbose-node22.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/03-architecture-verbose-node24.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/04-integration-run.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-13/04-integration-run1-node22.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/04-integration-run2-node24.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/07-build.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/07-live-stack.sh",
+    "docs/delivery/test-evidence/DG1/domain/round-13/07-live-scenario.mjs",
+    "docs/delivery/test-evidence/DG1/domain/round-13/07-live-scenario.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/08-static-checks.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/09-register-rows.py",
+    "docs/delivery/test-evidence/DG1/domain/round-13/09-register-rows.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/10-source-fidelity.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/11-f216-d055-wording.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/50-cleanup.out.txt",
+    "docs/delivery/test-evidence/DG1/domain/round-13/screens/ar-02-edit-no-closed.png",
+    "docs/delivery/test-evidence/DG1/domain/round-13/screens/en-03-detail-audit.png"
+  ],
+  "reviewed_at": "2026-10-01T16:40:25Z",
+  "summary": "PASS on candidate sha256:00f1498c…c80b (freeze 08cbd12). F-DG1-216 verified and CLOSED_VERIFIED: D-055 now says the node:crypto enumeration route is closed by rule 5, consistent with the testkit. The F-DG1-134 fix leaves the real module tree's verdict unchanged (41 .ts files, 0 others, all 13 modules with zero violations) and closes the extension evasion: planted .mts/.cts/.mjs/.cjs/.js/.jsx files are flagged, whereas the round-12 lint misses them. The round-13 code diff is test-only (testkit and test). Product, contract, data model, ADR and i18n diffs are empty. Unit tests 320/320 and architecture tests 127/127 on Node 22 and 24, integration 200/200 on both, live scenario 108/108 with ar/en screens inspected, static checks green, register consistent. No new findings and no open Critical/High/mandatory finding. One observation, not raised as a finding: declaration files make the lint throw, so it fails closed; this was pre-existing for .d.ts."
+}
