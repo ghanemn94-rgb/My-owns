@@ -8210,7 +8210,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T06:36:40Z",
@@ -8226,10 +8226,15 @@
           "at": "2026-10-01T08:26:50Z",
           "status": "OPEN",
           "note": "verified by code-security-reviewer round 2: FAIL"
+        },
+        {
+          "at": "2026-10-01T08:59:34Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 5cf99d6"
         }
       ],
-      "fix_revision": "c433078",
-      "fix_summary": "Hardened tools/deps/install-sandbox.sh: --clearenv with only PATH/HOME/XDG/PNPM/registry+proxy-TLS vars (orchestrator secrets no longer cross in); control paths (.git/.claude/.github/tools/*/docs/*) re-bound read-only over the writable tree; --cap-drop ALL. AC-5/AC-6 added; 10/10 acceptance pass.",
+      "fix_revision": "5cf99d6",
+      "fix_summary": "Installer redesigned (D-051): the real repo is bound --ro-bind and never writable inside the sandbox; create/frozen run pnpm in a disposable source copy and only node_modules (+ create lockfile) is copied back. Acceptance 12/12.",
       "verification": {
         "by_role": "code-security-reviewer",
         "invocation_reference": {
@@ -9137,14 +9142,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T08:26:50Z",
           "status": "OPEN",
           "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+        },
+        {
+          "at": "2026-10-01T08:59:35Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 5cf99d6"
         }
-      ]
+      ],
+      "fix_revision": "5cf99d6",
+      "fix_summary": "Control-path escape closed: repo read-only in the sandbox, so parent-rename of a protected subtree, appending to the installer, and delivery-record writes are all refused and the real repo is unchanged (AC-7). D-051."
     },
     {
       "id": "F-DG1-114",
@@ -9163,14 +9175,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T08:26:50Z",
           "status": "OPEN",
           "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+        },
+        {
+          "at": "2026-10-01T08:59:35Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 5cf99d6"
         }
-      ]
+      ],
+      "fix_revision": "5cf99d6",
+      "fix_summary": "Agent-config surfaces (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) can no longer be created inside the installer sandbox — the repo is read-only (AC-8). D-051."
     },
     {
       "id": "F-DG1-115",
