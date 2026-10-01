@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-132",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint: the F-DG1-130 ban on crypto.setEngine is name-based, so enumerating the allow-listed node:crypto namespace reaches setEngine with 0 violations. Example: `new Map(Object.entries(nodeCrypto)).get([\"set\", \"Engine\"].join(\"\"))`, which is the dictionary idiom rule 2 itself recommends. The native shared object still loads at runtime. The testkit header claim that rule 1 bans crypto.setEngine 'in every form' is therefore false.",
+      "reproduction": "Candidate sha256:18fee161…8807 (freeze commit 265af7e, HEAD 241a377), disposable full clone, Node v22.22.2 / OpenSSL 3.5.5, gcc. (1) Static: architecture.testkit.ts:101 adds `setEngine` to BANNED_PRIMITIVES, and rule 1 (visit, ~:304-309) matches identifiers and string literals whose text equals a banned name. Rule 2 flags only element-access keys that are not static. Nothing flags an allow-listed module namespace (`import * as c from \"node:crypto\"`) being used as a VALUE, e.g. passed to Object.entries/Object.values. Rule 3's 'used as a value' check (:338-353) applies only to process/globalThis/global/module. I planted each of these through fileViolations('transformations', <MODULES_DIR>/transformations/zz-planted.ts, src): B1 `import * as c from \"node:crypto\"; for (const [k, v] of Object.entries(c)) if (k.startsWith(\"setE\")) (v as (p: string) => void)(\"/x.so\");`, B2 `const m = new Map(Object.entries(c)); (m.get([\"set\", \"Engine\"].join(\"\")) as (p: string) => void)(\"/x.so\");` and B3 `(Object.values(c)[42] as (p: string) => void)(\"/x.so\");`. Each gives n=0 (01-lint-probes.log, 'BYPASS-PASSES-LINT'). (2) End to end (02-enum-e2e.log): a real module file src/modules/transformations/zz-enum.ts using the B2 form gives moduleViolations('transformations') = [] (0). Called at runtime with a gcc-built shared object whose ELF constructor writes a marker file (eng.c.txt), the constructor ran ('NATIVE-CONSTRUCTOR-RAN', marker present), and only then did setEngine throw ERR_CRYPTO_ENGINE_UNKNOWN.",
+      "expected": "Per F-DG1-130 and the testkit header (architecture.testkit.ts:23-24, :51 'which rule 1 now bans in every form'; architecture.test.ts:15 'rule 1, every form'), module source cannot reach crypto.setEngine through any static form the lint can see, or the header names the remaining route as a residual. A targeted fix would make an allow-listed module that exposes a banned member (node:crypto) importable only through named imports, or flag its namespace/default binding when used other than as `ns.member` (the same shape as rule 3's 'process used as a value'). The alternative is to state value-level enumeration of an allow-listed namespace explicitly as residual (a). A blanket ban on Object.entries is not viable, because module source uses `new Map(Object.entries(x)).get(name)` legitimately, e.g. identity/routes.ts:35 and access/rules.ts:55.",
+      "actual": "Enumerating the namespace reaches the setEngine function value without any banned name or non-literal computed key appearing in the source, so the lint reports 0 violations and the native constructor runs. Every SPELLED form is caught: named, aliased, namespace, default, destructured, unicode-escaped, escaped-string, template, re-export, optional-chain and dynamic-literal-import (14/14 in 01-lint-probes.log). The header's member audit is otherwise correct (03-member-audit.log). Severity is Low and non-mandatory, consistent with F-DG1-130 and the same class (F-DG1-125/127/129): the lint is static defence-in-depth over human-reviewed code in a read-only source tree, not a runtime security boundary, and the testkit header says so.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-10/01-lint-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/02-enum-e2e.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/zz-r10-probe.test.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/zz-enum.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/zz-r10-enum-e2e.test.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/eng.c.txt",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-10/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T14:44:39Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 10 while re-proving F-DG1-130. It is a new syntactic route (value-level enumeration of an allow-listed namespace), not one of the three forms F-DG1-130 reported, which are all now caught. The proposed ID is the next free number in the code-security 1xx range; the orchestrator may renumber. An ACCEPTED_OBSERVATION would be reasonable once the header and D-055 stop claiming 'every form' and either close the namespace-as-value route for node:crypto or name it under residual (a)."
+        }
+      ]
+    }
+  ]
+}

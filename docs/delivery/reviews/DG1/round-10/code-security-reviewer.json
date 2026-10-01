@@ -1,0 +1,348 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 10,
+  "candidate_id": "sha256:18fee1617d617cfd719aeaebe3c37904bd116c47eaafb5be52e7bd779c6e8807",
+  "source_commit": "265af7e65a6a66f1dabcc678d9bf1adb1415f601",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-SEC-R10-code-security-reviewer-20261001T143212Z-d1279204",
+    "session_id": "d1279204-4bcc-4239-910d-1b3397a1a5ca"
+  },
+  "implementation_author": [
+    "delivery-orchestrator",
+    "backend-workflow-engineer",
+    "devops-engineer",
+    "frontend-ux-engineer"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (code-security-reviewer, session d1279204) authored none of the DG1 implementation or the round-10 repair. backend-workflow-engineer made it in 74c9e4a (T-DG1-BE11). I reported F-DG1-130 in round 9 and verify it here as its originating reviewer, as the assignment directs. At start the real-repo HEAD was 241a377, one commit past the freeze commit 265af7e. That commit adds only candidate-excluded metadata: the round-10 assignments, the manifest and stages.json. The recomputed ID is 18fee161 at both commits, in the real repo and in a full disposable clone. During my run HEAD advanced to ff83817, the runner's auto-commit of the domain reviewer's round-10 run. It changes only reviews/DG1/round-10/domain-reviewer.* and runs/, and the ID stays 18fee161 (00-candidate-identity.log). I formed this verdict before, and without, reading any other reviewer's round-10 record. I did not open the domain-reviewer files."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-10/review-code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S16-001",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R10-00-candidate-identity",
+      "procedure": "Confirm HEAD. Check that freeze..HEAD is metadata only and that the source delta since the round-9 candidate (273d21f) is only the module lint and its test. Recompute the candidate ID in the real repo and in a full disposable clone at the freeze commit and at HEAD.",
+      "command": "git rev-parse HEAD; git log --oneline 265af7e^..HEAD; git diff --stat 265af7e HEAD; git diff --stat 273d21f 265af7e -- apps packages tools deploy scripts e2e tests; node tools/gates/candidate.mjs --stage DG1 (real repo; clone @265af7e and @241a377)",
+      "environment": "real repo (read-only) @241a377, later ff83817; disposable clone $TMPDIR/review-r10, not shallow; node v22.22.2",
+      "expected": "candidate_id sha256:18fee161…8807 everywhere; freeze..HEAD metadata only; source delta = architecture.testkit.ts + architecture.test.ts",
+      "actual": "HEAD 241a377 descends from 265af7e. freeze..HEAD = 7 metadata files (assignments, manifest, stages.json). The source delta 273d21f..265af7e is 2 files (architecture.testkit.ts, architecture.test.ts; +61/-3). The ID is 18fee1617d617cfd…8807 (390 files) in the real repo, in the clone at 265af7e and at 241a377, and after HEAD advanced to ff83817 (another reviewer's run auto-commit). Informational: stages.json candidate.frozen_at (14:30:22Z) differs from the round-10 review_rounds frozen_at (13:52:40Z). This is metadata, not candidate content.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/00-candidate-identity.log"]
+    },
+    {
+      "id": "SEC-R10-01-f130-negative-controls",
+      "procedure": "Re-prove F-DG1-130. Plant the three assigned forms into a transformations module file via fileViolations('transformations', <MODULES_DIR>/transformations/zz-planted.ts, src): the named import, the namespace form, and the string key (crypto as any)[\"setEngine\"]. Add 11 adversarial spellings (aliased import, destructured alias, default member, unicode-escaped identifier, escaped string key, template key, re-export, renamed re-export, optional chain, dynamic literal import, bare string literal) and 3 constructed keys.",
+      "command": "npx vitest run --project unit-node apps/api/src/zz-r10-probe.test.ts (clone only; source saved as zz-r10-probe.test.ts.txt)",
+      "environment": "disposable clone @241a377, node v22.22.2, vitest 3.2.4",
+      "expected": "each setEngine spelling is a 'native loader … setEngine' violation; constructed keys are rule-2 violations",
+      "actual": "A1/A2/A3 (assigned) and X1-X11 are all violations: 'native loader via setEngine', '.setEngine()', '[\"setEngine\"]', 'a destructured setEngine', 'the \"setEngine\" key as a value'. Y1-Y3 are 'computed member with a non-literal key'. The probe test passed 24/24.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-10/01-lint-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/zz-r10-probe.test.ts.txt"
+      ]
+    },
+    {
+      "id": "SEC-R10-02-f130-positive-controls-real-tree",
+      "procedure": "Positive controls: `import { randomUUID, createHash } from \"node:crypto\"` with createHash(\"sha256\"), `import * as c from \"node:crypto\"` with c.randomUUID(), and getFips must be allowed. The real module tree must have 0 moduleViolations.",
+      "command": "same probe test (ALLOW block and the REAL-TREE test)",
+      "environment": "disposable clone @241a377, node v22.22.2",
+      "expected": "0 violations for P1-P3; 13 modules, 0 violations",
+      "actual": "P1/P2/P3 n=0. REAL-TREE modules=13 violations=0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-001", "REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/01-lint-probes.log"]
+    },
+    {
+      "id": "SEC-R10-03-independent-member-audit",
+      "procedure": "Independently enumerate the own properties of node:{crypto, fs, fs/promises, os, path, url, util} and the namespaces fs.promises, path.posix/win32, util.types, crypto.webcrypto/subtle, crypto.constants and os.constants. Name-match them for loader/exec/native/debug terms and review each match and the full lists by hand. Check behaviourally that crypto.setFips does not dlopen a caller-supplied path, with setEngine as the control.",
+      "command": "node member-audit.mjs (saved as member-audit.mjs.txt); R10_MARKER=… node -e 'crypto.setFips(<eng.so>)'; control: crypto.setEngine(<eng.so>)",
+      "environment": "$TMPDIR scratch, node v22.22.2 / OpenSSL 3.5.5, gcc; OPENSSL_CONF/OPENSSL_MODULES unset",
+      "expected": "setEngine is the only native/loader/exec member, matching the header's audit",
+      "actual": "503 members enumerated. Name matches: crypto getFips/setEngine/setFips; fs ftruncate/link/open*/opendir/readlink/symlink/truncate/unlink; os.loadavg; util callbackify/debug/debuglog/getCallSite(s)/inspect; util.types isModuleNamespaceObject/isNativeError; subtle.importKey; crypto.constants ENGINE_METHOD_* (numbers); os.constants.dlopen (RTLD_* numbers). Only setEngine loads code. setFips(<.so path>) ran no constructor (marker absent) and only toggles FIPS mode. setEngine(<.so>) ran the constructor (marker present). The audit agrees with the header (architecture.testkit.ts:46-57). No missed member.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-10/03-member-audit.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/member-audit.mjs.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/eng.c.txt"
+      ]
+    },
+    {
+      "id": "SEC-R10-04-namespace-enumeration-route",
+      "procedure": "Adversarial check of the 'rule 1 now bans setEngine in every form' claim. Reach setEngine through value-level enumeration of the allowed namespace (no banned name, no non-literal key): Object.entries loop, new Map(Object.entries(c)).get(joined), Object.values(c)[N]. Then run end to end with a real module file and a gcc-built constructor .so.",
+      "command": "same probe test (BYPASS block); R10_MARKER=… R10_SO=… npx vitest run --project unit-node apps/api/src/zz-r10-enum-e2e.test.ts with src/modules/transformations/zz-enum.ts planted (clone only)",
+      "environment": "disposable clone @241a377, node v22.22.2 / OpenSSL 3.5.5, gcc",
+      "expected": "every route to setEngine that is visible in module source is a violation, or the header names it as a residual",
+      "actual": "B1/B2/B3: n=0 (BYPASS-PASSES-LINT). End to end: moduleViolations('transformations') = [] with zz-enum.ts present. At runtime the .so ELF constructor ran (NATIVE-CONSTRUCTOR-RAN; marker file present) before setEngine threw ERR_CRYPTO_ENGINE_UNKNOWN. Raised as F-DG1-132 (Low, non-mandatory).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-10/01-lint-probes.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/02-enum-e2e.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/zz-enum.ts.txt",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/zz-r10-enum-e2e.test.ts.txt"
+      ]
+    },
+    {
+      "id": "SEC-R10-05-node24-runtime",
+      "procedure": "Repeat the member audit and the setEngine probe on Node 24 (production target)",
+      "environment": "this sandbox: only /opt/node20, node21 and node22 are present; no network",
+      "expected": "the audit result holds on Node 24",
+      "actual": "Not run: no Node 24 runtime is available and none can be fetched. The header itself records that the audit must be re-run when the Node floor or target changes.",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "requirements": ["REQ-S16-003"]
+    },
+    {
+      "id": "SEC-R10-10-typecheck",
+      "procedure": "Workspace typecheck",
+      "command": "pnpm -r typecheck",
+      "environment": "disposable clone @241a377 (probe files removed), node v22.22.2, pnpm 10.33.0, offline frozen install from a scratch copy of the local store",
+      "expected": "exit 0",
+      "actual": "7 of 8 workspace projects typecheck: Done; EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_-r_typecheck.log"]
+    },
+    {
+      "id": "SEC-R10-11-build",
+      "procedure": "Workspace build",
+      "command": "pnpm -r build",
+      "environment": "disposable clone @241a377, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_-r_build.log"]
+    },
+    {
+      "id": "SEC-R10-12-lint",
+      "procedure": "ESLint, zero warnings",
+      "command": "pnpm lint",
+      "environment": "disposable clone @241a377, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_lint.log"]
+    },
+    {
+      "id": "SEC-R10-13-openapi-lint",
+      "procedure": "OpenAPI document validation",
+      "command": "pnpm openapi:lint",
+      "environment": "disposable clone @241a377, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-006"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_openapi_lint.log"]
+    },
+    {
+      "id": "SEC-R10-14-no-cdn",
+      "procedure": "Portability: no public CDN references",
+      "command": "pnpm check:no-cdn",
+      "environment": "disposable clone @241a377, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_check_no-cdn.log"]
+    },
+    {
+      "id": "SEC-R10-15-format",
+      "procedure": "Prettier check",
+      "command": "pnpm format:check",
+      "environment": "disposable clone @241a377, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_format_check.log"]
+    },
+    {
+      "id": "SEC-R10-16-unit",
+      "procedure": "Unit suites (unit-node and unit-web), plus architecture.test.ts on its own",
+      "command": "pnpm test; npx vitest run --project unit-node apps/api/src/architecture.test.ts",
+      "environment": "disposable clone @241a377 (probe files removed first), node v22.22.2",
+      "expected": "all pass; architecture ~105/105",
+      "actual": "pnpm test: 21 files, 298/298 passed, EXIT=0. architecture.test.ts: 105/105 passed, EXIT=0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-001", "REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_test.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/11-architecture-test.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-20-integration-twice",
+      "procedure": "Integration suite on a disposable PostgreSQL cluster, run twice (F-DG1-009)",
+      "command": "QA_PG_PORT=5491 tests/qa/support/with-pg.sh pnpm test:integration (x2)",
+      "environment": "disposable clone @241a377, PostgreSQL 16.13 disposable cluster on port 5491 in $TMPDIR, node v22.22.2",
+      "expected": "both runs pass on a fresh database",
+      "actual": "run 1: 19 files, 200/200, EXIT=0. run 2: 19 files, 200/200, EXIT=0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-004", "REQ-S19-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-10/20-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/20-integration-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-30-gates-agents-tests",
+      "procedure": "Gate tooling and agent tooling tests",
+      "command": "node --test tools/gates/tests/*.test.mjs tools/agents/tests/*.test.mjs",
+      "environment": "disposable clone @241a377, node v22.22.2",
+      "expected": "0 failures",
+      "actual": "pass 105, fail 0, EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/30-gates-agents-tests.log"]
+    },
+    {
+      "id": "SEC-R10-31-deploy-scripts-tests",
+      "procedure": "Deploy script tests",
+      "command": "node --test deploy/scripts/tests/*.test.mjs",
+      "environment": "disposable clone @241a377, node v22.22.2",
+      "expected": "0 failures",
+      "actual": "pass 59, fail 0, EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/31-deploy-scripts-tests.log"]
+    },
+    {
+      "id": "SEC-R10-32-install-sandbox",
+      "procedure": "Install-sandbox acceptance suite AC-1..AC-10",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 bash tools/deps/tests/install-sandbox.test.sh; npm_config_store_dir=$TMPDIR/store/v10 tools/deps/install-sandbox.sh --root $TMPDIR/ac1p create",
+      "environment": "disposable clone @241a377, bubblewrap, scratch copy of the local pnpm store, no registry network",
+      "expected": "AC-1..AC-10 pass; AC-1 effect needs is-number@7.0.0 from the registry",
+      "actual": "13 passed, 1 failed. AC-1 (read-only /etc), AC-2 (both), AC-3 (both), AC-4, AC-5, AC-6 (both), AC-7, AC-8, AC-9 and AC-10 PASS. AC-1 (effect) FAIL, so the suite exits 1, only because is-number cannot be fetched: ERR_PNPM_META_FETCH_FAIL, ECONNREFUSED 127.0.0.1:3128 (32c log). AC-1 effect and a real-repo registry install are BLOCKED on the environment, not failed on the code. install-sandbox code is unchanged since round 9.",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-10/32-install-sandbox-suite.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-10/32c-ac1-registry-BLOCKED.log"
+      ]
+    },
+    {
+      "id": "SEC-R10-33-sbom",
+      "procedure": "SBOM up-to-date check",
+      "command": "node licenses/generate-sbom.mjs --check",
+      "environment": "disposable clone @241a377, node v22.22.2",
+      "expected": "exit 0",
+      "actual": "OK: packages=422 runtime=112 bundled=17 development=293 containers=4 shipped-without-licence-id=0; EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/33-sbom-check.log"]
+    },
+    {
+      "id": "SEC-R10-34-dg0-historical",
+      "procedure": "Validate the previous approved gate",
+      "command": "node tools/gates/validate.mjs --stage DG0 --historical",
+      "environment": "disposable clone @241a377, node v22.22.2",
+      "expected": "PASS",
+      "actual": "PASS gate DG0 (historical); EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/34-dg0-historical.log"]
+    },
+    {
+      "id": "SEC-R10-35-ci-yml-identity",
+      "procedure": "The three ci.yml copies are byte-identical, and every product job reaches delivery-gates",
+      "command": "git ls-files | grep ci.yml | xargs sha256sum; node deploy/scripts/check-ci-needs.mjs .github/workflows/ci.yml",
+      "environment": "disposable clone @241a377",
+      "expected": "one distinct hash; check-ci-needs OK",
+      "actual": ".github/workflows/ci.yml, deploy/ci/ci.yml and docs/architecture/ci/ci.yml are all 8b5b1106…76ce (1 distinct). check-ci-needs: OK, 5 jobs, delivery-gates first, verify<-delivery-gates, integration/e2e<-verify, images<-integration,e2e; EXIT=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/35-ci-yml-identity.log"]
+    },
+    {
+      "id": "SEC-R10-40-requirements",
+      "procedure": "For each of the 8 assigned requirements, check register status and final_gate, and that every listed evidence path exists as a regular file. Re-check behaviour against this round's checks: 025 → SEC-R10-30/31/35; 033 → 00/11/33; 042 → 32; S16-001/003 → 01/02/03/16; S16-004/S19-004 → 20; S19-006 → 13.",
+      "command": "node script over docs/delivery/requirements.csv (output in log)",
+      "environment": "real repo (read-only), node v22.22.2",
+      "expected": "all IMPLEMENTED, final_gate DG1, 0 missing evidence",
+      "actual": "All 8 are IMPLEMENTED with final_gate DG1. Evidence counts: 4/21/4/8/13/11/16/5, missing 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025", "REQ-DLV-033", "REQ-DLV-042", "REQ-S16-001", "REQ-S16-003", "REQ-S16-004", "REQ-S19-004", "REQ-S19-006"],
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/40-requirement-evidence-exists.log"]
+    },
+    {
+      "id": "SEC-R10-50-cleanup",
+      "procedure": "Remove the disposable clone, store copy, probe .so, scratch projects and test fixtures. Confirm that the real repo's tracked tree was not modified by this run and that the candidate ID is unchanged.",
+      "command": "rm -rf $TMPDIR/{review-r10,store,eng,ac1p,guard-*,cfg-*,marker-*,scratch-*}; git status --short --untracked-files=no; node tools/gates/candidate.mjs --stage DG1",
+      "environment": "real repo (read-only) and $TMPDIR",
+      "expected": "no tracked modification by this run; ID unchanged",
+      "actual": "Removed. git status shows only ' D reviews/DG1/round-10/domain-reviewer.*', which is the sandbox's visibility rule for another reviewer's records (the auto-commit ff83817), not a change by this run. The ID is still 18fee161…8807.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/code-security/round-10/50-cleanup.log"]
+    }
+  ],
+  "findings": ["F-DG1-132"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/code-security/round-10/00-candidate-identity.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/01-lint-probes.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/02-enum-e2e.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/03-member-audit.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/zz-r10-probe.test.ts.txt",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/zz-enum.ts.txt",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/zz-r10-enum-e2e.test.ts.txt",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/eng.c.txt",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/member-audit.mjs.txt",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_-r_typecheck.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_-r_build.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_lint.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_openapi_lint.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_check_no-cdn.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_format_check.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/10-pnpm_test.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/11-architecture-test.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/20-integration-run1.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/20-integration-run2.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/30-gates-agents-tests.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/31-deploy-scripts-tests.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/32-install-sandbox-suite.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/32c-ac1-registry-BLOCKED.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/33-sbom-check.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/34-dg0-historical.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/35-ci-yml-identity.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/40-requirement-evidence-exists.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-10/50-cleanup.log"
+  ],
+  "reviewed_at": "2026-10-01T14:44:39Z",
+  "summary": "PASS on candidate 18fee161. F-DG1-130 is verified: crypto.setEngine is a 'native loader' violation in all three assigned forms and in 11 further spellings. node:crypto with randomUUID/createHash stays allowed, architecture.test.ts passes 105/105, and the real tree has 0 violations. My independent member audit of the 7 allow-listed built-ins (503 members, Node 22.22.2) agrees with the header. New finding F-DG1-132 (Low, non-mandatory): enumerating the allowed namespace (new Map(Object.entries(c)).get(\"set\"+\"Engine\" via join)) still reaches setEngine with 0 lint violations, and the native constructor runs end to end. The header's 'every form' claim is overstated. All required checks pass (integration 200/200 twice). Node 24 and AC-1 effect are BLOCKED on the environment. No Critical/High/mandatory finding is open."
+}
