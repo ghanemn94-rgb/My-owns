@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-147",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The Playwright e2e specs (apps/web/e2e/**, playwright.config.ts) are outside every typecheck target, so the changed journeys.spec.ts is never type-checked by any gate or CI step",
+      "reproduction": "apps/web/tsconfig.json:14 has \"include\": [\"src\", \"test\", \"vite.config.ts\", \"vitest.config.ts\"]. There is no root tsconfig.json (only tsconfig.base.json) and no apps/web/e2e/tsconfig*.json, so `pnpm -r typecheck` (which runs `tsc -p tsconfig.json` per package) never compiles apps/web/e2e/journeys.spec.ts or playwright.config.ts. Playwright transpiles specs without type-checking, and ESLint (which does cover the file) does not report type errors. Failure scenario: a spec change such as passing a wrong type to a helper (e.g. `expectShellReadyForKeyboard(page, nav, lang)` with arguments swapped, or calling a non-existent Locator method on a branch not reached in a given run) passes typecheck, lint and the CI typecheck job, and is only caught (or not) at e2e run time. The reviewer type-checked the round-3 change with a disposable tsconfig outside the candidate (ES2023 + DOM lib, types node): it passes (exit 0), so this is a coverage gap, not a current defect. Evidence: docs/delivery/test-evidence/DG1/code-security/round-3/e2e-spec-typecheck.log.",
+      "expected": "The e2e specs and playwright.config.ts are type-checked by `pnpm -r typecheck` and so by CI, e.g. through an apps/web/e2e/tsconfig.json (lib ES2023 + DOM, types node) referenced from apps/web's typecheck script or from a root typecheck step.",
+      "actual": "No typecheck target includes apps/web/e2e/**. A type error in the e2e specs passes every static gate check. The current spec type-checks cleanly when the reviewer checks it ad hoc.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-3/e2e-spec-typecheck.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-3/typecheck.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-3/diff-scope-scan.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-3/code-security-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T22:36:54Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG1 round 3 (T-DG1-REV-SEC-R3). Pre-existing coverage gap noticed while reviewing the test-only F-DG1-232 change, not a regression. Proposed ID in the code-security range; the orchestrator may renumber."
+        }
+      ]
+    }
+  ]
+}
