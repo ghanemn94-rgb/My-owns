@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-001",
+      "stage_id": "DG1",
+      "requirement": "REQ-S03-003",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "P1 lets a transformation be closed (terminal, irreversible) by a plain status edit, with no G6 approval, no validated value and no reason",
+      "reproduction": "Disposable stack (e2e/support/qa-stack.sh, candidate 85e5bbd, SYNTHETIC dev users). As dev.office (TO): POST /api/v1/transformations {mode:end_to_end}; PATCH status draft->active (If-Match \"1\") -> 200; PATCH status active->closed (If-Match \"2\") -> 200, status=closed, currentPhase still 'diagnose'; PATCH closed->active -> 422 invalid_transition. The UI edit form (en/ar) offers 'Closed'/'مغلقة' next to Active. Source: packages/shared/src/constants.ts TRANSFORMATION_STATUS_TRANSITIONS {active:[on_hold,closed], on_hold:[active,closed], closed:[]}; apps/web/src/i18n/*/transformations.json form.statusHint.",
+      "expected": "Playbook B0014 'Benefits before closure' and M0092 (delivery, adoption, validated value and transformation closure are separate statuses). The register specifies the control: REQ-S03-003 'close-transformation: TL after G6 approval' and 'the API rejects a closure request while validated value is pending'; REQ-PB-009 'closure requires validated benefits and sustainment owner'. Until G6 and the benefit register exist (P2/P4), P1 must not offer transformation closure at all (or must block it), so no record can be shown as Closed without the governed evidence.",
+      "actual": "Any holder of transformation.update (TL at transformation scope, TO) closes a transformation from phase 1 Diagnose with no gate, no benefits, no Finance validation and no reason (audit reason=null). Closure is terminal: it cannot be reopened, so the record shows 'Closed' with phase Diagnose and Unknown value permanently. This pre-empts the specified closure control and contradicts a mandatory source principle.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/02-closure-db-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/02-closure-db-scenario.sh",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/en-03-edit-active-status-options.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/ar-04-detail-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/en-04-detail-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/00-static-checks.txt"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:31:26Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 1. Suggested repair: remove 'closed' from the P1 transition table (and the UI options/hint), keep 'closed' as a reserved status value, and add a test that active->closed and on_hold->closed are rejected until the G6/benefits closure rule lands (REQ-S03-003, DG4). Frontend strings need the matching change (frontend-ux-engineer)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-002",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "DG1-final rows REQ-S16-003 and REQ-S16-004 are marked IMPLEMENTED although their own recorded acceptance criteria are not met",
+      "reproduction": "docs/delivery/requirements.csv. REQ-S16-003 acceptance: 'A12: the six modules exist with separate test suites'. apps/api/src/modules/ has no workflows/, kpi/ or reporting/ directory (architecture.test.ts only requires index.ts for P1_MODULES), and the row's own note says these suites 'land in those stages'. REQ-S16-004 acceptance: 'A18;A19: a restore of the PostgreSQL backup alone recovers records, configuration, snapshots and job state'; its note says 'The A19 restore drill is not demonstrated at DG1; REQ-S19-012/REQ-S20-019 (DG7) own it. Reporting snapshots do not exist yet (P5).' Both rows: status IMPLEMENTED, final_gate DG1.",
+      "expected": "A row is IMPLEMENTED only when its acceptance holds. My D-047 judgement: the DG1 module architecture (all boundaries declared in modules.ts, an enforced dependency-lint, and 8 P1-active modules implemented and tested) is a faithful P1 increment of M0308, and deferring workflows to P2+, kpi/formulas to P4 and reporting to P5 is correct. But M0308 asks for the modules themselves, and the register's acceptance asks for their suites. The honest classification is either (a) move REQ-S16-003's final_gate to DG5 (P1 increment = architecture) or (b) record a decision that amends the acceptance text to the P1 scope and cites the later rows that build the modules. REQ-S16-004 is the same case: amend its acceptance to the P1-verifiable part (all state in PostgreSQL through migrations) by a recorded decision that points the restore criterion to REQ-S19-012/REQ-S20-019, or move its final gate.",
+      "actual": "Both rows claim completion at DG1 while their acceptance text is not satisfied; D-047 covers REQ-S16-003 only as a reviewer question, and nothing covers REQ-S16-004's deferred restore criterion.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/decisions.md",
+        "apps/api/src/modules.ts",
+        "apps/api/src/architecture.test.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:31:26Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 1 (D-047 assessment). No code change needed; register/decision reconciliation only."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-003",
+      "stage_id": "DG1",
+      "requirement": "REQ-PB-003",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Arabic UI domain terms deviate from the approved DG0 glossary and conflate Transformation with Initiative",
+      "reproduction": "apps/web/src/i18n/ar/transformations.json and nav.json, admin.json, problems.json, common.json; screenshots ar-04/ar-05. Compare with docs/analysis/glossary.md (DG0).",
+      "expected": "The glossary gives Transformation = 'التحوّل' and Initiative = 'مبادرة'. It gives Modular mode = 'النمط الجزئي المرن' and explicitly notes that 'معياري' reads as standard/normative. It gives Phase 5 Transform = 'التحويل والتنفيذ'. The source keeps transformation and initiative as distinct levels with separate statuses (M0092), so the Arabic UI, where Arabic is the default locale, must not label a transformation as an initiative.",
+      "actual": "Transformation is rendered as 'مبادرة التحول' / 'مبادرات التحول' ('transformation initiative(s)') throughout the list, detail, create, admin scope and error strings, so it collides with the Initiatives area ('المبادرات وخرائط الطريق'). Modular is 'معياري'. Phase 5 is 'التحول', the same word as Transformation. The About text calls the playbook 'دليل التحول المؤسسي', where the glossary has 'دليل تحوّل الأعمال'.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/ar-05-create-form.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/ar-04-detail-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/ar-02-about.png",
+        "docs/analysis/glossary.md",
+        "apps/web/src/i18n/ar/transformations.json"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:31:26Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 1. Align the ar catalogues with docs/analysis/glossary.md (Arabic-language owner confirmation still pending per the glossary)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-004",
+      "stage_id": "DG1",
+      "requirement": "REQ-S10-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A Transformation Lead with a business-unit grant can create a transformation but is immediately shown 'Not found' for it",
+      "reproduction": "Disposable stack; dev.lead (TL at business_unit SYN-RETAIL, non-inheriting per ADR-0006). POST /api/v1/transformations in SYN-RETAIL -> 201; GET/PATCH /api/v1/transformations/{id} -> 404; the UI detail page after create shows 'Not found' / 'غير موجود'.",
+      "expected": "The scoping itself is correct: access comes only from scoped assignments, and naming the lead does not grant access. But the real user outcome should not be a dead end. Either the create flow explains before and after creation that the creator will need a transformation-scope assignment (and routes the request to an access administrator), or the seed/default TL grant is placed where the TL can follow up on what they create.",
+      "actual": "The creator lands on a generic 'record does not exist, or your role assignments do not allow you to see it' page for the record they just created.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/en-06-tl-after-create.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/ar-06-tl-after-create.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:31:26Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 1 as a Low observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-005",
+      "stage_id": "DG1",
+      "requirement": "REQ-S15-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The audit-trail 'Changes' column shows raw field keys and enum codes, not localized labels, in both Arabic and English",
+      "reproduction": "Transformation detail page > Audit trail (en/ar). For example 'closed ← active :status', 'end_to_end ← ∅ :mode', 'diagnose ← ∅ :current_phase', 'business_unit_id' shown as a raw UUID.",
+      "expected": "M0302: key workflows support both languages. Technical identifiers may stay readable, but domain values that have catalogue labels (status, mode, phase, field names) should be shown with them.",
+      "actual": "Raw snake_case keys and enum codes appear inside the Arabic RTL layout and in the English layout.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/ar-04-detail-closed.png",
+        "docs/delivery/test-evidence/DG1/domain/round-1/screenshots/en-04-detail-closed.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:31:26Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 1 as a Low observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-006",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-006",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register text inaccuracies: stale operation count, 409-vs-422 transition contract, untested worker-stop criterion",
+      "reproduction": "requirements.csv: REQ-S19-006 note says 'openapi:lint PASS (OpenAPI 3.1.1, 32 operations)', but pnpm openapi:lint reports 33 operations (getBrandingTokens was added). REQ-S16-023 acceptance says 'an illegal status transition returns 409', but ADR/data-dictionary and the implementation return 422 invalid_transition (observed). REQ-S16-001 note says no test stops a running worker and then probes the API.",
+      "expected": "Register evidence notes match the candidate. One contract for illegal transitions (pick 409 or 422 and align the register with the ADR). An automated check for the REQ-S16-001 acceptance 'stopping the worker does not stop the API'. I verified this manually: the worker ran, exited 0 on SIGTERM, and /readyz then returned 200.",
+      "actual": "Three small inconsistencies between the register and the candidate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-1/00-static-checks.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/01-runtime-scenario.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-1/02-closure-db-scenario.out.txt",
+        "docs/delivery/requirements.csv"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T06:31:26Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 1 as a Low observation."
+        }
+      ]
+    }
+  ]
+}
