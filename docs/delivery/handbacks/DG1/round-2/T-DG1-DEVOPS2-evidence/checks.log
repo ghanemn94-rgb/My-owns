@@ -1,0 +1,38 @@
+# 2026-10-01T07:25:52Z worktree /home/user/mth-wt-devops at HEAD 868ebb6 + uncommitted T-DG1-DEVOPS2 changes
+$ pnpm lint
+> eslint . --max-warnings=0
+
+exit 0
+$ pnpm openapi:lint
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations
+exit 0
+$ pnpm format:check
+[error] EACCES: permission denied, open '/home/user/mth-wt-devops/CLAUDE.local.md'
+All matched files use Prettier code style!
+ ELIFECYCLE  Command failed with exit code 2.
+exit 2  <- ENVIRONMENT: sandbox denies reading untracked host files (CLAUDE.local.md, .bashrc, …) in the worktree root; not a style finding
+$ prettier --check --ignore-unknown <all tracked + new non-ignored files, excluding those unreadable host files and trading_agent/>  (3131 paths)
+All matched files use Prettier code style!
+exit 0
+$ node deploy/scripts/generate-env-example.mjs --check
+OK: .env.example lists exactly the 21 ENV_VARS names, none with a value
+exit 0
+$ node licenses/generate-sbom.mjs --check   (after regeneration; before it: STALE, exit 1)
+OK: packages=422 runtime=112 bundled=17 development=293 containers=4 shipped-without-licence-id=0 lockfile-sha256=f199a0e18472519b24d9eaf840ead45e42192d74187e22b6b03e9e8005708dd5
+exit 0
+$ YAML parse (yaml 2.8.1 parseDocument)
+deploy/ci/ci.yml: errors 0, warnings 0
+deploy/compose/compose.yaml: errors 0, warnings 0
+deploy/compose/compose.no-egress.yaml: errors 0, warnings 2
+exit 0
+$ bash -n deploy/scripts/assemble-runtime.sh deploy/scripts/ci-install-deps.sh
+exit 0
+$ node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs
+# tests 31
+# pass 31
+# fail 0
+exit 0
+$ diff -q deploy/ci/ci.yml .github/workflows/ci.yml   (staged vs installed: differs until the orchestrator installs it)
+Files deploy/ci/ci.yml and .github/workflows/ci.yml differ
+exit 1
+BLOCKED: actionlint and shellcheck are not installed in this environment (`which` finds neither); GitHub Actions semantics were not executed on a GitHub runner.

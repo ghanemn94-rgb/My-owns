@@ -9,8 +9,12 @@
 #  2. prune the workspace IN PLACE to production dependencies from the same frozen lockfile, OFFLINE
 #     (`pnpm install --frozen-lockfile --prod --offline`): nothing is resolved or downloaded, so the result is exactly
 #     the lockfile's production closure. This MODIFIES <workspace>/node_modules: use a disposable copy;
-#  3. copy only what api/worker/migrate need; dev seeds, sources, tests and build tooling are not copied;
-#  4. verify the layout (fails loudly).
+#  3. copy only what api/worker/migrate need; dev seeds, sources, tests and build tooling are not copied. The workspace
+#     packages copied are DERIVED from the `workspace:` production dependencies of apps/api, apps/worker and
+#     packages/db (transitively), never a hand-kept list (F-DG1-202: a hand-kept list silently omitted
+#     @mth/design-tokens when apps/api started importing it);
+#  4. verify the layout AND module resolution (fails loudly): every production dependency of every shipped workspace
+#     package must resolve from the assembled tree, and every shipped workspace package's entry module must import.
 # Why not `pnpm deploy`: in pnpm 10 its lockfile-faithful mode needs inject-workspace-packages=true, and `--legacy`
 # re-resolves versions without the lockfile (needs the network; not reproducible).
 set -euo pipefail
@@ -36,12 +40,67 @@ cp "$WS/licenses/sbom.cdx.json" "$WS/licenses/inventory.csv" "$OUT/licenses/"
 (cd "$WS" && CI=true pnpm install --frozen-lockfile --prod --offline --config.modules-cache-max-age=0 "${STORE[@]}")
 
 # 3) runtime tree
+#    Runtime workspace closure: output lines "pkg <dir>" (one per shipped workspace package) and "file <dir>/<path>"
+#    (export targets outside dist/, e.g. @mth/design-tokens' "./tokens.json" -> ./src/tokens.json).
+RUNTIME_ROOTS="apps/api apps/worker packages/db"
+CLOSURE="$(node - "$WS" $RUNTIME_ROOTS <<'JS'
+const fs = require("node:fs");
+const path = require("node:path");
+const [ws, ...roots] = process.argv.slice(2);
+const byName = new Map();
+for (const group of ["apps", "packages"]) {
+  for (const d of fs.readdirSync(path.join(ws, group))) {
+    const pj = path.join(ws, group, d, "package.json");
+    if (fs.existsSync(pj)) byName.set(JSON.parse(fs.readFileSync(pj, "utf8")).name, `${group}/${d}`);
+  }
+}
+const read = (dir) => JSON.parse(fs.readFileSync(path.join(ws, dir, "package.json"), "utf8"));
+const seen = new Set();
+const queue = [...roots];
+while (queue.length) {
+  const dir = queue.shift();
+  if (seen.has(dir)) continue;
+  seen.add(dir);
+  for (const [name, spec] of Object.entries(read(dir).dependencies ?? {})) {
+    if (!String(spec).startsWith("workspace:")) continue;
+    const dep = byName.get(name);
+    if (!dep) { console.error(`assemble-runtime: ${dir} depends on unknown workspace package ${name}`); process.exit(1); }
+    queue.push(dep);
+  }
+}
+// String targets of the "exports" map, skipping the source-only and type-only conditions.
+const targets = (e, key) =>
+  key === "@mth/source" || key === "types" ? [] :
+  typeof e === "string" ? [e] : e && typeof e === "object" ? Object.entries(e).flatMap(([k, v]) => targets(v, k)) : [];
+for (const dir of [...seen].sort()) {
+  console.log(`pkg ${dir}`);
+  for (const t of new Set(targets(read(dir).exports ?? {}))) {
+    const rel = path.posix.normalize(t);
+    if (rel.startsWith("dist/")) continue;
+    if (!fs.existsSync(path.join(ws, dir, rel))) { console.error(`assemble-runtime: ${dir} exports missing ${t}`); process.exit(1); }
+    console.log(`file ${dir}/${rel}`);
+  }
+}
+JS
+)"
 mkdir -p "$OUT/apps" "$OUT/packages"
 cp -a "$WS/package.json" "$WS/node_modules" "$OUT/"
-for p in apps/api apps/worker packages/config packages/db packages/shared; do
-  mkdir -p "$OUT/$p"
-  cp -a "$WS/$p/package.json" "$WS/$p/dist" "$WS/$p/node_modules" "$OUT/$p/"
-done
+SHIPPED=()
+while read -r kind p; do
+  case "$kind" in
+    pkg)
+      SHIPPED+=("$p")
+      [ -d "$WS/$p/dist" ] || { echo "assemble-runtime: $WS/$p/dist missing: run 'pnpm -r build' first" >&2; exit 65; }
+      mkdir -p "$OUT/$p"
+      cp -a "$WS/$p/package.json" "$WS/$p/dist" "$OUT/$p/"
+      # a package without production dependencies (e.g. @mth/design-tokens) has no node_modules after the prune
+      if [ -d "$WS/$p/node_modules" ]; then cp -a "$WS/$p/node_modules" "$OUT/$p/"; fi ;;
+    file)
+      mkdir -p "$OUT/$(dirname "$p")"
+      cp -a "$WS/$p" "$OUT/$p" ;;
+  esac
+done <<<"$CLOSURE"
+echo "runtime workspace packages: ${SHIPPED[*]}"
 cp -a "$WS/packages/db/migrations" "$OUT/packages/db/"
 mkdir -p "$OUT/apps/web"
 cp -a "$WS/apps/web/dist" "$OUT/apps/web/"
@@ -74,6 +133,23 @@ for (const d of fs.readdirSync(store)) {
 if (extra.length) { console.error(`not in the shipped set: ${extra.join(", ")}`); process.exit(1); }
 console.log(`virtual store: ${n} package directories, all in the shipped set (${shipped.size} runtime+bundled)`);
 JS
-(cd "$OUT/apps/api" && node -e 'import("@mth/db").then(()=>{})') || { echo "layout check failed: @mth/db does not resolve" >&2; exit 1; }
-(cd "$OUT/apps/worker" && node -e 'import("pg-boss").then(()=>{})') || { echo "layout check failed: pg-boss does not resolve" >&2; exit 1; }
+# Module resolution (F-DG1-202): from each shipped workspace package, every production dependency resolves to an
+# existing file (import.meta.resolve runs the full ESM resolver, so a dangling workspace symlink fails), and the
+# package's own entry module imports (loads its whole static import graph; entry modules only export, start nothing).
+for p in "${SHIPPED[@]}"; do
+  (cd "$OUT/$p" && node --input-type=module - <<'JS') || { echo "layout check failed: $p does not resolve its runtime dependencies" >&2; exit 1; }
+import { readFileSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+const pj = JSON.parse(readFileSync("package.json", "utf8"));
+const parent = pathToFileURL(`${process.cwd()}/package.json`).href;
+const bad = [];
+for (const name of Object.keys(pj.dependencies ?? {})) {
+  try { import.meta.resolve(name, parent); } catch (e) { bad.push(`${name} (${e.code ?? e.message})`); }
+}
+if (bad.length) { console.error(`${pj.name}: unresolved: ${bad.join(", ")}`); process.exit(1); }
+const entry = pj.exports?.["."]?.default ?? pj.main;
+if (entry) await import(pathToFileURL(`${process.cwd()}/${entry}`).href);
+console.log(`resolve: ${pj.name}: ${Object.keys(pj.dependencies ?? {}).length} dependencies resolve${entry ? `; ${entry} imports` : ""}`);
+JS
+done
 echo "assemble-runtime: OK $(find "$OUT/node_modules/.pnpm" -mindepth 1 -maxdepth 1 -type d ! -name node_modules | wc -l) packages, $(du -sh "$OUT" | cut -f1) -> $OUT"

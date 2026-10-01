@@ -1,0 +1,90 @@
+# F-DG1-107: the round-1 bypasses, old vs new checker (mutations of deploy/ci/ci.yml; $S = run scratch)
+N4 verify: if: always() | old checker (HEAD 868ebb6): exit 0: OK: neg/N4.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it
+N4 verify: if: always() | new checker       : exit 1: FAIL: job "verify": job-level if: "always()" uses a status function, so it can run after delivery-gates failed
+N5 images: if: ${{ !cancelled() }} | old checker (HEAD 868ebb6): exit 0: OK: neg/N5.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it
+N5 images: if: ${{ !cancelled() }} | new checker       : exit 1: FAIL: job "images": job-level if: "${{ !cancelled() }}" uses a status function, so it can run after delivery-gates failed
+N6 integration: if: failure() | old checker (HEAD 868ebb6): exit 0: OK: neg/N6.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it
+N6 integration: if: failure() | new checker       : exit 1: FAIL: job "integration": job-level if: "failure()" uses a status function, so it can run after delivery-gates failed
+N12 validate step `|| true` | old checker (HEAD 868ebb6): exit 0: OK: neg/N12.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it
+N12 validate step `|| true` | new checker       : exit 1: FAIL: delivery-gates does not run exactly "node tools/gates/validate.mjs --pipeline"
+
+# $ node deploy/scripts/check-ci-needs.mjs deploy/ci/ci.yml
+OK: deploy/ci/ci.yml: 5 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e
+exit 0
+
+# $ node deploy/scripts/check-ci-needs.mjs   (default = the CURRENTLY INSTALLED .github/workflows/ci.yml, i.e. before the orchestrator installs the staged copy: correctly FAILS on F-DG1-104)
+FAIL: verify: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install --frozen-lockfile
+FAIL: verify: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm format:check
+FAIL: verify: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm lint
+FAIL: verify: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm typecheck
+FAIL: verify: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm build
+FAIL: verify: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm test
+FAIL: verify: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm openapi:lint
+FAIL: verify: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm check:no-cdn
+FAIL: integration: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install --frozen-lockfile
+FAIL: integration: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm -r build
+FAIL: integration: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm test:integration
+FAIL: e2e: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install --frozen-lockfile
+FAIL: e2e: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm -r build
+FAIL: e2e: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm e2e --workers=1
+FAIL: images: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install --frozen-lockfile
+exit 1
+
+# $ node --test --test-reporter=spec deploy/scripts/tests/check-ci-needs.test.mjs
+  P0 deploy/ci/ci.yml as committed: exit 0
+  P1 images: if: success() && github.event_name == 'push' (implicit-success semantics kept): exit 0
+  P2 integration: if: github.event_name != 'schedule' (no status function): exit 0
+  P3 step-level if: always() inside a gated product job (upload-artifact): exit 0
+  N1 verify: needs removed: exit 1: FAIL: job "verify" does not depend on delivery-gates
+  N2 rogue job without needs: exit 1: FAIL: job "rogue" does not depend on delivery-gates
+  N3 unknown need: exit 1: FAIL: images needs unknown job "nope"
+  N4 verify: if: always(): exit 1: FAIL: job "verify": job-level if: "always()" uses a status function, so it can run after delivery-gates failed
+  N5 images: if: ${{ !cancelled() }}: exit 1: FAIL: job "images": job-level if: "${{ !cancelled() }}" uses a status function, so it can run after delivery-gates failed
+  N6 integration: if: failure(): exit 1: FAIL: job "integration": job-level if: "failure()" uses a status function, so it can run after delivery-gates failed
+  N7 e2e: if: ${{ always() && github.ref == 'refs/heads/main' }}: exit 1: FAIL: job "e2e": job-level if: "${{ always() && github.ref == 'refs/heads/main' }}" uses a status function, so it can run after delivery-gates failed
+  N8 verify: if: Always ( ) (case/whitespace): exit 1: FAIL: job "verify": job-level if: "Always ( )" uses a status function, so it can run after delivery-gates failed
+  N9 integration: if: success() || failure(): exit 1: FAIL: job "integration": job-level if: "success() || failure()" uses a status function, so it can run after delivery-gates failed
+  N10 delivery-gates: continue-on-error: true: exit 1: FAIL: delivery-gates: job must not set continue-on-error (a failed gate would count as success)
+  N11 validate step: continue-on-error: true: exit 1: FAIL: delivery-gates: validate step must not set continue-on-error
+  N12 validate step: `|| true`: exit 1: FAIL: delivery-gates does not run exactly "node tools/gates/validate.mjs --pipeline"
+  N13 validate step: if: false: exit 1: FAIL: delivery-gates: validate step must not have an if: ("false")
+  N14 verify: plain pnpm install --frozen-lockfile instead of ci-install-deps.sh: exit 1: FAIL: verify: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install --frozen-lockfile
+  N15 integration: ci-install-deps.sh step removed (pnpm used without any install): exit 1: FAIL: integration: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm -r build
+  N16 images: extra `npm ci` step: exit 1: FAIL: images: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): npm ci
+  N17 e2e: corepack enable && pnpm install: exit 1: FAIL: e2e: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install
+  N18 verify: fallback `ci-install-deps.sh || pnpm install`: exit 1: FAIL: verify: the sandboxed install must be the whole command, exactly deploy/scripts/ci-install-deps.sh: deploy/scripts/ci-install-deps.sh || pnpm install
+✔ POSITIVE P0 deploy/ci/ci.yml as committed (124.021007ms)
+✔ POSITIVE P1 images: if: success() && github.event_name == 'push' (implicit-success semantics kept) (106.578058ms)
+✔ POSITIVE P2 integration: if: github.event_name != 'schedule' (no status function) (105.264393ms)
+✔ POSITIVE P3 step-level if: always() inside a gated product job (upload-artifact) (104.045607ms)
+✔ NEGATIVE N1 verify: needs removed (101.744541ms)
+✔ NEGATIVE N2 rogue job without needs (107.284103ms)
+✔ NEGATIVE N3 unknown need (103.1062ms)
+✔ NEGATIVE N4 verify: if: always() (106.140171ms)
+✔ NEGATIVE N5 images: if: ${{ !cancelled() }} (120.365205ms)
+✔ NEGATIVE N6 integration: if: failure() (103.556991ms)
+✔ NEGATIVE N7 e2e: if: ${{ always() && github.ref == 'refs/heads/main' }} (86.619734ms)
+✔ NEGATIVE N8 verify: if: Always ( ) (case/whitespace) (100.769468ms)
+✔ NEGATIVE N9 integration: if: success() || failure() (98.77555ms)
+✔ NEGATIVE N10 delivery-gates: continue-on-error: true (99.060497ms)
+✔ NEGATIVE N11 validate step: continue-on-error: true (97.810189ms)
+✔ NEGATIVE N12 validate step: `|| true` (98.627794ms)
+✔ NEGATIVE N13 validate step: if: false (96.570901ms)
+✔ NEGATIVE N14 verify: plain pnpm install --frozen-lockfile instead of ci-install-deps.sh (92.283522ms)
+✔ NEGATIVE N15 integration: ci-install-deps.sh step removed (pnpm used without any install) (82.014099ms)
+✔ NEGATIVE N16 images: extra `npm ci` step (103.422942ms)
+✔ NEGATIVE N17 e2e: corepack enable && pnpm install (96.805301ms)
+✔ NEGATIVE N18 verify: fallback `ci-install-deps.sh || pnpm install` (100.934198ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2369.653421
+exit 0
