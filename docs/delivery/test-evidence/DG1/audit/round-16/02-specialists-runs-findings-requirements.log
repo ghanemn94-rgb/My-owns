@@ -1,0 +1,60 @@
+# DG1 round-16 release-auditor: specialist records, run provenance, findings, requirements
+## specialist records (round 16)
+domain-reviewer verdict=PASS candidate=sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c source=13418b8db10aa045c466a1c9d2d06dc03f92cedd run=DG1-T-DG1-REV-DOM-R16-domain-reviewer-20261001T181001Z-c1704dc0 session=c1704dc0-941b-4b5a-bce5-bb969ff14e5b authored_scope=false assignment="docs/delivery/assignments/DG1/round-16/review-domain-reviewer.md (sha256 6004a35224deff5a94ce1a4b7ea36611d6e1245d979f536587cd5af1ede19a92) with review-common.md" findings=[]
+code-security-reviewer verdict=PASS candidate=sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c source=13418b8db10aa045c466a1c9d2d06dc03f92cedd run=DG1-T-DG1-REV-SEC-R16-code-security-reviewer-20261001T181001Z-8a789466 session=8a789466-2699-4d35-915a-36639645ad54 authored_scope=false assignment="docs/delivery/assignments/DG1/round-16/review-code-security-reviewer.md" findings=["F-DG1-137","F-DG1-218"]
+   NON-PASS CHECK: SEC-R16-32c BLOCKED exit 7 | AC-1 effect (create with registry) and the real-repo online install: confirm the registry is unreachable
+qa-verifier verdict=PASS candidate=sha256:56f3eb885c6cf3db406e280d232e48ebcefddad173107a744bb9b8ca74fc2b4c source=13418b8db10aa045c466a1c9d2d06dc03f92cedd run=DG1-T-DG1-REV-QA-R16-qa-verifier-20261001T181001Z-87c1983c session=87c1983c-ff8e-41b5-825f-12520b512d52 authored_scope=false assignment="docs/delivery/assignments/DG1/round-16/review-qa-verifier.md" findings=[]
+## run provenance (meta.json, sandbox.json, transcript hash)
+DG1-T-DG1-BE17-backend-workflow-engineer-20261001T175821Z-9d9b2060 role=backend-workflow-engineer task=T-DG1-BE17 exit=0 subtype=success is_error=false session=9d9b2060-d40c-4c13-a9e8-6b585344e29a bash_sandbox=true sandbox_sha_match=true transcript_sha_match=true start=2026-10-01T17:58:21Z end=2026-10-01T18:04:36Z
+DG1-T-DG1-REV-DOM-R16-domain-reviewer-20261001T181001Z-c1704dc0 role=domain-reviewer task=T-DG1-REV-DOM-R16 exit=0 subtype=success is_error=false session=c1704dc0-941b-4b5a-bce5-bb969ff14e5b bash_sandbox=true sandbox_sha_match=true transcript_sha_match=true start=2026-10-01T18:10:01Z end=2026-10-01T18:17:47Z
+DG1-T-DG1-REV-QA-R16-qa-verifier-20261001T181001Z-87c1983c role=qa-verifier task=T-DG1-REV-QA-R16 exit=0 subtype=success is_error=false session=87c1983c-ff8e-41b5-825f-12520b512d52 bash_sandbox=true sandbox_sha_match=true transcript_sha_match=true start=2026-10-01T18:10:01Z end=2026-10-01T18:24:20Z
+DG1-T-DG1-REV-SEC-R16-code-security-reviewer-20261001T181001Z-8a789466 role=code-security-reviewer task=T-DG1-REV-SEC-R16 exit=0 subtype=success is_error=false session=8a789466-2699-4d35-915a-36639645ad54 bash_sandbox=true sandbox_sha_match=true transcript_sha_match=true start=2026-10-01T18:10:01Z end=2026-10-01T18:24:12Z
+## fix commit
+f7d9707234ddef3bba6ef9ebd6a90f9d9f1c3cb4 DG1 r16: fix F-DG1-137/218 — declaration-file branch follows TS classification (public SourceFile.isDeclarationFile), covering allowArbitraryExtensions *.d.<ext>.ts
+ apps/api/src/architecture.test.ts                  |  53 +++++
+ apps/api/src/architecture.testkit.ts               |  30 ++-
+ .../T-DG1-BE17-backend-workflow-engineer.md        | 263 +++++++++++++++++++++
+ .../meta.json                                      |  50 ++++
+ .../result.json                                    |   3 +
+ .../sandbox.json                                   |  59 +++++
+ .../settings.json                                  |  48 ++++
+ .../stderr.log                                     |   1 +
+ .../transcript.jsonl.gz                            | Bin 0 -> 75148 bytes
+ 9 files changed, 499 insertions(+), 8 deletions(-)
+## findings.json status census
+{"CLOSED_VERIFIED":186,"ACCEPTED_OBSERVATION":3}
+  F-DG0-147 ACCEPTED_OBSERVATION Low mandatory=false
+  F-DG0-149 ACCEPTED_OBSERVATION Low mandatory=false
+  F-DG0-015 ACCEPTED_OBSERVATION Low mandatory=false
+  F-DG1-137 CLOSED_VERIFIED verification.by=qa-verifier candidate=56f3eb88
+  F-DG1-218 CLOSED_VERIFIED verification.by=qa-verifier candidate=56f3eb88
+## round-16 verifications sidecars
+docs/delivery/reviews/DG1/round-16/code-security-reviewer.verifications.json F-DG1-137 PASS CLOSED_VERIFIED
+docs/delivery/reviews/DG1/round-16/code-security-reviewer.verifications.json F-DG1-218 PASS CLOSED_VERIFIED
+docs/delivery/reviews/DG1/round-16/domain-reviewer.verifications.json F-DG1-137 PASS CLOSED_VERIFIED
+docs/delivery/reviews/DG1/round-16/domain-reviewer.verifications.json F-DG1-218 PASS CLOSED_VERIFIED
+docs/delivery/reviews/DG1/round-16/qa-verifier.verifications.json F-DG1-218 PASS CLOSED_VERIFIED
+docs/delivery/reviews/DG1/round-16/qa-verifier.verifications.json F-DG1-137 PASS CLOSED_VERIFIED
+## DG1-final requirements
+count=12
+REQ-DLV-025 IMPLEMENTED qa=true domain=false code-security=true evidence=4 missing=0
+REQ-DLV-033 IMPLEMENTED qa=true domain=false code-security=true evidence=21 missing=0
+REQ-DLV-042 IMPLEMENTED qa=true domain=false code-security=true evidence=4 missing=0
+REQ-S15-002 IMPLEMENTED qa=true domain=true code-security=false evidence=5 missing=0
+REQ-S15-005 IMPLEMENTED qa=true domain=true code-security=false evidence=7 missing=0
+REQ-S15-006 IMPLEMENTED qa=true domain=true code-security=false evidence=4 missing=0
+REQ-S16-001 IMPLEMENTED qa=true domain=true code-security=true evidence=8 missing=0
+REQ-S16-002 IMPLEMENTED qa=true domain=true code-security=false evidence=5 missing=0
+REQ-S16-003 IMPLEMENTED qa=true domain=true code-security=true evidence=13 missing=0
+REQ-S16-004 IMPLEMENTED qa=true domain=true code-security=true evidence=11 missing=0
+REQ-S19-004 IMPLEMENTED qa=true domain=true code-security=true evidence=16 missing=0
+REQ-S19-006 IMPLEMENTED qa=true domain=true code-security=true evidence=5 missing=0
+## decisions D-048..D-055 present
+D-048 rows=1
+D-049 rows=1
+D-050 rows=1
+D-051 rows=1
+D-052 rows=1
+D-053 rows=1
+D-054 rows=1
+D-055 rows=1

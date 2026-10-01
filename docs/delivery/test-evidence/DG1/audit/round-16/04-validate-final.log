@@ -1,0 +1,213 @@
+$ node tools/gates/validate.mjs --stage DG1   (live repo, after writing the BLOCKED gate + audit record)
+FAIL gate DG1 (current) (210 problems)
+  - gate DG1: decision is BLOCKED
+  - gate DG1: blocking conditions recorded: Rule 4: code-security-reviewer round-16 check SEC-R16-32c (installer AC-1 effect with the registry, plus the real-repo online install, REQ-DLV-042) has result BLOCKED, exit 7, because the reviewer sandbox has no registry. The validator also rejects it ('check SEC-R16-32c is BLOCKED'). The orchestrator-run 14/14 log and earlier offline equivalents are context, not a substitute: the auditor cannot waive a BLOCKED check. Resolution needs one of: an independent reviewer verification of the effect, or a recorded decision that removes it from the gate-round specialist's checks, in a record the validator accepts.; Round-16 domain-reviewer record: `assignment` is an annotated string ('docs/delivery/assignments/DG1/round-16/review-domain-reviewer.md (sha256 6004a352…) with review-common.md'), not a repository path. The validator reports 'assignment file not found' and an invocation/assignment mismatch.; Round-16 code-security-reviewer record lists findings [F-DG1-137, F-DG1-218], but docs/delivery/reviews/DG1/round-16/code-security-reviewer.findings.json is missing. The validator reports 'record lists findings but its .findings.json sidecar is missing'.; Closure provenance of mandatory findings: the round-2 code-security-reviewer record fails the review schema (54 errors: missing environment/expected/actual/exit_status; free-text result values), so its verifications sidecar is invalid. F-DG1-103 and F-DG1-104 (Medium, mandatory), F-DG1-109, F-DG1-111 and F-DG1-206 are therefore 'CLOSED_VERIFIED but no reviewer verifications sidecar verifies it'. Zero unresolved mandatory violations cannot be established mechanically.; D-018 findings mirror diverges from the reviewer sidecars for about 25 findings (F-DG1-005, 008, 119, 122, 125-137, 213, 215, 216, 217, 218). findings.json `verification` is qa-verifier's, while the validator's latest sidecar entry is another role's ('verification by qa-verifier, sidecar by …', 'evidence differs', 'not the verifying reviewer's own run'). F-DG1-215 is CLOSED_VERIFIED in findings.json but ACCEPTED_OBSERVATION in the latest code-security sidecar (round 11).; About 40 CLOSED_VERIFIED DG1 findings lack a full 40-hex fix_revision commit id, including mandatory F-DG1-001, 101, 102, 105, 113, 115, 118, 201, 202 and 208.; Verification invocation provenance: the domain-reviewer runs of rounds 3, 10, 11 and 13 and the round-3 code-security run cite annotated assignment strings that the validator cannot resolve. The round-12 code-security run (verifying F-DG1-132/133) started at 16:01:09Z, before that candidate froze at 16:02:40Z.; Review-round metadata: in stages.json, rounds 7-15 have frozen_at/source_commit values that differ from their committed manifests. The round-4 domain-reviewer record lists findings without a .findings.json sidecar.; Net: node tools/gates/validate.mjs --stage DG1 reports errors that do not concern this in-flight release-auditor run (201 of 202 in the dry run). Per the assignment, any such error makes the decision BLOCKED.
+  - review domain-reviewer (docs/delivery/reviews/DG1/round-16/domain-reviewer.json): assignment file not found: docs/delivery/assignments/DG1/round-16/review-domain-reviewer.md (sha256 6004a35224deff5a94ce1a4b7ea36611d6e1245d979f536587cd5af1ede19a92) with review-common.md
+  - review domain-reviewer (docs/delivery/reviews/DG1/round-16/domain-reviewer.json): invocation DG1-T-DG1-REV-DOM-R16-domain-reviewer-20261001T181001Z-c1704dc0: ran assignment docs/delivery/assignments/DG1/round-16/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-16/review-domain-reviewer.md (sha256 6004a35224deff5a94ce1a4b7ea36611d6e1245d979f536587cd5af1ede19a92) with review-common.md
+  - review code-security-reviewer (docs/delivery/reviews/DG1/round-16/code-security-reviewer.json): check SEC-R16-32c is BLOCKED
+  - review release-auditor (docs/delivery/reviews/DG1/round-16/release-auditor.json): verdict is BLOCKED
+  - review release-auditor (docs/delivery/reviews/DG1/round-16/release-auditor.json): check AUD16-3-specialist-records-and-provenance is FAIL
+  - review release-auditor (docs/delivery/reviews/DG1/round-16/release-auditor.json): check AUD16-4-required-checks-ran-and-passed is FAIL
+  - review release-auditor (docs/delivery/reviews/DG1/round-16/release-auditor.json): check AUD16-6-findings-closure-provenance-validator is FAIL
+  - review release-auditor (docs/delivery/reviews/DG1/round-16/release-auditor.json) invocation: file not found (docs/delivery/runs/DG1/DG1-T-DG1-AUDIT-R16-release-auditor-20261001T183443Z-4a21e619/meta.json)
+  - gate DG1: test 'Specialist checks all PASS in the gate round (rule: anything BLOCKED fails the gate)' is FAIL
+  - gate DG1: test 'Gate validator dry run with a draft gate record (disposable clone): only this run's own errors allowed' is FAIL
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[0]: missing required property 'environment'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[0]: missing required property 'expected'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[0]: missing required property 'actual'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[0]: missing required property 'exit_status'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[1]: missing required property 'environment'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[1]: missing required property 'expected'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[1]: missing required property 'actual'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[1]: missing required property 'exit_status'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[1].result: 'PASS 210/210' not in [PASS, FAIL, BLOCKED]
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[2]: missing required property 'environment'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[2]: missing required property 'expected'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[2]: missing required property 'actual'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[2]: missing required property 'exit_status'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[2].result: 'PASS 105/105' not in [PASS, FAIL, BLOCKED]
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[3]: missing required property 'environment'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[3]: missing required property 'expected'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[3]: missing required property 'actual'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[3]: missing required property 'exit_status'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[3].result: 'PASS 31/31' not in [PASS, FAIL, BLOCKED]
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[4]: missing required property 'environment'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[4]: missing required property 'expected'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[4]: missing required property 'actual'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[4]: missing required property 'exit_status'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[4].result: '10/10; but control-path bypass found (F-DG1-113)' not in [PASS, FAIL, BLOCKED]
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[5]: missing required property 'environment'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[5]: missing required property 'expected'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[5]: missing required property 'actual'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[5]: missing required property 'exit_status'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[5].result: 'PASS 193/193 each' not in [PASS, FAIL, BLOCKED]
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[6]: missing required property 'environment'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[6]: missing required property 'expected'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[6]: missing required property 'actual'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[6]: missing required property 'exit_status'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[6].result: 'PASS (all refused)' not in [PASS, FAIL, BLOCKED]
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[7]: missing required property 'environment'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[7]: missing required property 'expected'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[7]: missing required property 'actual'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[7]: missing required property 'exit_status'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[7].result: 'FAIL: write-skew (F-DG1-115)' not in [PASS, FAIL, BLOCKED]
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[8]: missing required property 'environment'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[8]: missing required property 'expected'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[8]: missing required property 'actual'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[8]: missing required property 'exit_status'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[8].result: '4 further vectors accepted (F-DG1-116)' not in [PASS, FAIL, BLOCKED]
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[9]: missing required property 'environment'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[9]: missing required property 'expected'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[9]: missing required property 'actual'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[9]: missing required property 'exit_status'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[9].result: 'FAIL: keycloak unpinned (D-049) (F-DG1-108/203)' not in [PASS, FAIL, BLOCKED]
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[10]: missing required property 'environment'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[10]: missing required property 'expected'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[10]: missing required property 'actual'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[10]: missing required property 'exit_status'
+  - review rounds: DG1 round 2 code-security-reviewer: $.checks_run[10].result: 'PASS (tools/deps added to deny list strengthens it)' not in [PASS, FAIL, BLOCKED]
+  - review rounds: DG1 round 4 domain-reviewer: record lists findings but its .findings.json sidecar is missing
+  - review rounds: DG1 round 7 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG1 round 8 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG1 round 9 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG1 round 10 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG1 round 11 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG1 round 12 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG1 round 13 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG1 round 14 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG1 round 15 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG1 round 16 code-security-reviewer: record lists findings but its .findings.json sidecar is missing
+  - docs/delivery/reviews/DG1/round-2/code-security-reviewer.verifications.json: its record docs/delivery/reviews/DG1/round-2/code-security-reviewer.json is not a valid review record ($.checks_run[0]: missing required property 'environment')
+  - finding F-DG1-001 (Medium, mandatory) verification: invocation DG1-T-DG1-REV-DOM-R3-domain-reviewer-20261001T093018Z-ce6050eb: ran assignment docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md (sha256 d3b86e7a36fe4c1c85f1eba2e58648c4b92feb9826c415e886ff721bbb88d73d) with review-common.md (sha256 29aa76d5df2d053fe57c25c44323c258293408c6ecab7d7413f33bafb8dd6f5f)
+  - finding F-DG1-001 (Medium, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-002 (Medium) verification: invocation DG1-T-DG1-REV-DOM-R3-domain-reviewer-20261001T093018Z-ce6050eb: ran assignment docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md (sha256 d3b86e7a36fe4c1c85f1eba2e58648c4b92feb9826c415e886ff721bbb88d73d) with review-common.md (sha256 29aa76d5df2d053fe57c25c44323c258293408c6ecab7d7413f33bafb8dd6f5f)
+  - finding F-DG1-002 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-003 (Medium) verification: invocation DG1-T-DG1-REV-DOM-R3-domain-reviewer-20261001T093018Z-ce6050eb: ran assignment docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md (sha256 d3b86e7a36fe4c1c85f1eba2e58648c4b92feb9826c415e886ff721bbb88d73d) with review-common.md (sha256 29aa76d5df2d053fe57c25c44323c258293408c6ecab7d7413f33bafb8dd6f5f)
+  - finding F-DG1-003 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-004 (Low) verification: invocation DG1-T-DG1-REV-DOM-R3-domain-reviewer-20261001T093018Z-ce6050eb: ran assignment docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md (sha256 d3b86e7a36fe4c1c85f1eba2e58648c4b92feb9826c415e886ff721bbb88d73d) with review-common.md (sha256 29aa76d5df2d053fe57c25c44323c258293408c6ecab7d7413f33bafb8dd6f5f)
+  - finding F-DG1-004 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-005 (Low): findings.json verification by qa-verifier, sidecar by domain-reviewer
+  - finding F-DG1-005 (Low): verification invocation is not the verifying reviewer's own run for round-3
+  - finding F-DG1-005 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-005 (Low) verification: invocation DG1-T-DG1-REV-DOM-R3-domain-reviewer-20261001T093018Z-ce6050eb: ran assignment docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md (sha256 d3b86e7a36fe4c1c85f1eba2e58648c4b92feb9826c415e886ff721bbb88d73d) with review-common.md (sha256 29aa76d5df2d053fe57c25c44323c258293408c6ecab7d7413f33bafb8dd6f5f)
+  - finding F-DG1-005 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-006 (Low) verification: invocation DG1-T-DG1-REV-DOM-R3-domain-reviewer-20261001T093018Z-ce6050eb: ran assignment docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md (sha256 d3b86e7a36fe4c1c85f1eba2e58648c4b92feb9826c415e886ff721bbb88d73d) with review-common.md (sha256 29aa76d5df2d053fe57c25c44323c258293408c6ecab7d7413f33bafb8dd6f5f)
+  - finding F-DG1-006 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-101 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-102 (High, mandatory) verification: invocation DG1-T-DG1-REV-SEC-R3-code-security-reviewer-20261001T093018Z-d0594282: ran assignment docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md (sha256 e73f5cc8457abcdeac2cce91928dd8c4c8311fd3441364203709e5bbff03b115)
+  - finding F-DG1-102 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-103 (Medium, mandatory): CLOSED_VERIFIED but no reviewer verifications sidecar verifies it
+  - finding F-DG1-104 (Medium, mandatory): CLOSED_VERIFIED but no reviewer verifications sidecar verifies it
+  - finding F-DG1-105 (Medium, mandatory) verification: invocation DG1-T-DG1-REV-DOM-R3-domain-reviewer-20261001T093018Z-ce6050eb: ran assignment docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md (sha256 d3b86e7a36fe4c1c85f1eba2e58648c4b92feb9826c415e886ff721bbb88d73d) with review-common.md (sha256 29aa76d5df2d053fe57c25c44323c258293408c6ecab7d7413f33bafb8dd6f5f)
+  - finding F-DG1-105 (Medium, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-106 (Medium) verification: invocation DG1-T-DG1-REV-SEC-R3-code-security-reviewer-20261001T093018Z-d0594282: ran assignment docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md (sha256 e73f5cc8457abcdeac2cce91928dd8c4c8311fd3441364203709e5bbff03b115)
+  - finding F-DG1-106 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-107 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-108 (Medium) verification: invocation DG1-T-DG1-REV-SEC-R3-code-security-reviewer-20261001T093018Z-d0594282: ran assignment docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md (sha256 e73f5cc8457abcdeac2cce91928dd8c4c8311fd3441364203709e5bbff03b115)
+  - finding F-DG1-108 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-109 (Low): CLOSED_VERIFIED but no reviewer verifications sidecar verifies it
+  - finding F-DG1-110 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-111 (Low): CLOSED_VERIFIED but no reviewer verifications sidecar verifies it
+  - finding F-DG1-112 (Low) verification: invocation DG1-T-DG1-REV-SEC-R3-code-security-reviewer-20261001T093018Z-d0594282: ran assignment docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md (sha256 e73f5cc8457abcdeac2cce91928dd8c4c8311fd3441364203709e5bbff03b115)
+  - finding F-DG1-112 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-201 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-202 (High, mandatory) verification: invocation DG1-T-DG1-REV-SEC-R3-code-security-reviewer-20261001T093018Z-d0594282: ran assignment docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md (sha256 e73f5cc8457abcdeac2cce91928dd8c4c8311fd3441364203709e5bbff03b115)
+  - finding F-DG1-202 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-203 (Medium) verification: invocation DG1-T-DG1-REV-SEC-R3-code-security-reviewer-20261001T093018Z-d0594282: ran assignment docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md (sha256 e73f5cc8457abcdeac2cce91928dd8c4c8311fd3441364203709e5bbff03b115)
+  - finding F-DG1-203 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-204 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-205 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-206 (Low): CLOSED_VERIFIED but no reviewer verifications sidecar verifies it
+  - finding F-DG1-207 (Low) verification: invocation DG1-T-DG1-REV-DOM-R3-domain-reviewer-20261001T093018Z-ce6050eb: ran assignment docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md (sha256 d3b86e7a36fe4c1c85f1eba2e58648c4b92feb9826c415e886ff721bbb88d73d) with review-common.md (sha256 29aa76d5df2d053fe57c25c44323c258293408c6ecab7d7413f33bafb8dd6f5f)
+  - finding F-DG1-207 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-007 (Low) verification: invocation DG1-T-DG1-REV-DOM-R3-domain-reviewer-20261001T093018Z-ce6050eb: ran assignment docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md (sha256 d3b86e7a36fe4c1c85f1eba2e58648c4b92feb9826c415e886ff721bbb88d73d) with review-common.md (sha256 29aa76d5df2d053fe57c25c44323c258293408c6ecab7d7413f33bafb8dd6f5f)
+  - finding F-DG1-007 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-008 (Low): findings.json verification by qa-verifier, sidecar by domain-reviewer
+  - finding F-DG1-008 (Low): verification invocation is not the verifying reviewer's own run for round-3
+  - finding F-DG1-008 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-008 (Low) verification: invocation DG1-T-DG1-REV-DOM-R3-domain-reviewer-20261001T093018Z-ce6050eb: ran assignment docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-domain-reviewer.md (sha256 d3b86e7a36fe4c1c85f1eba2e58648c4b92feb9826c415e886ff721bbb88d73d) with review-common.md (sha256 29aa76d5df2d053fe57c25c44323c258293408c6ecab7d7413f33bafb8dd6f5f)
+  - finding F-DG1-008 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-113 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-114 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-115 (Medium, mandatory) verification: invocation DG1-T-DG1-REV-SEC-R3-code-security-reviewer-20261001T093018Z-d0594282: ran assignment docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md (sha256 e73f5cc8457abcdeac2cce91928dd8c4c8311fd3441364203709e5bbff03b115)
+  - finding F-DG1-115 (Medium, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-116 (Low) verification: invocation DG1-T-DG1-REV-SEC-R3-code-security-reviewer-20261001T093018Z-d0594282: ran assignment docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md (sha256 e73f5cc8457abcdeac2cce91928dd8c4c8311fd3441364203709e5bbff03b115)
+  - finding F-DG1-116 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-117 (Low) verification: invocation DG1-T-DG1-REV-SEC-R3-code-security-reviewer-20261001T093018Z-d0594282: ran assignment docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md, record cites docs/delivery/assignments/DG1/round-3/review-code-security-reviewer.md (sha256 e73f5cc8457abcdeac2cce91928dd8c4c8311fd3441364203709e5bbff03b115)
+  - finding F-DG1-117 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-208 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-209 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-009 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-118 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-119 (Medium): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-119 (Medium): verification invocation is not the verifying reviewer's own run for round-4
+  - finding F-DG1-119 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-119 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-120 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-121 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-210 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-122 (Medium): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-122 (Medium): verification invocation is not the verifying reviewer's own run for round-5
+  - finding F-DG1-122 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-122 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-123 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-124 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-211 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG1-125 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-125 (Low): verification invocation is not the verifying reviewer's own run for round-6
+  - finding F-DG1-125 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-126 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-126 (Low): verification invocation is not the verifying reviewer's own run for round-6
+  - finding F-DG1-126 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-127 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-127 (Low): verification invocation is not the verifying reviewer's own run for round-7
+  - finding F-DG1-127 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-128 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-128 (Low): verification invocation is not the verifying reviewer's own run for round-8
+  - finding F-DG1-128 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-129 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-129 (Low): verification invocation is not the verifying reviewer's own run for round-9
+  - finding F-DG1-129 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-213 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-213 (Low): verification invocation is not the verifying reviewer's own run for round-9
+  - finding F-DG1-213 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-130 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-130 (Low): verification invocation is not the verifying reviewer's own run for round-10
+  - finding F-DG1-130 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-131 (Low) verification: invocation DG1-T-DG1-REV-DOM-R10-domain-reviewer-20261001T143212Z-e2a85e66: ran assignment docs/delivery/assignments/DG1/round-10/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-10/review-domain-reviewer.md (sha256 c21f48bab9f3b7366dc14d47a842539292280c347c83b5f0b1dbef56abf84ca3) with review-common.md
+  - finding F-DG1-011 (Low) verification: invocation DG1-T-DG1-REV-DOM-R11-domain-reviewer-20261001T151913Z-8e429fc0: ran assignment docs/delivery/assignments/DG1/round-11/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-11/review-domain-reviewer.md (sha256 635e22bd46c3594501bffd91fa73b6b85641ccd90e158c5b9d1a02b71009ee3b) with review-common.md
+  - finding F-DG1-132 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-132 (Low): verification invocation is not the verifying reviewer's own run for round-12
+  - finding F-DG1-132 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-132 (Low) verification: invocation DG1-T-DG1-REV-SEC-R12-code-security-reviewer-20261001T160109Z-400a7bd7: started 2026-10-01T16:01:09Z, before the candidate froze at 2026-10-01T16:02:40Z
+  - finding F-DG1-215 (Low): findings.json status CLOSED_VERIFIED differs from the reviewer's status_after ACCEPTED_OBSERVATION
+  - finding F-DG1-215 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-215 (Low): verification invocation is not the verifying reviewer's own run for round-11
+  - finding F-DG1-215 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-133 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-133 (Low): verification invocation is not the verifying reviewer's own run for round-12
+  - finding F-DG1-133 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-133 (Low) verification: invocation DG1-T-DG1-REV-SEC-R12-code-security-reviewer-20261001T160109Z-400a7bd7: started 2026-10-01T16:01:09Z, before the candidate froze at 2026-10-01T16:02:40Z
+  - finding F-DG1-134 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-134 (Low): verification invocation is not the verifying reviewer's own run for round-13
+  - finding F-DG1-134 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-216 (Low): findings.json verification by qa-verifier, sidecar by domain-reviewer
+  - finding F-DG1-216 (Low): verification invocation is not the verifying reviewer's own run for round-13
+  - finding F-DG1-216 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-216 (Low) verification: invocation DG1-T-DG1-REV-DOM-R13-domain-reviewer-20261001T163248Z-3bdf7c9f: ran assignment docs/delivery/assignments/DG1/round-13/review-domain-reviewer.md, record cites docs/delivery/assignments/DG1/round-13/review-domain-reviewer.md (sha256 84920bea25936a9ab176ab797d17226c12e721e5f86f89e55801c8b43eec6034) with review-common.md
+  - finding F-DG1-135 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-135 (Low): verification invocation is not the verifying reviewer's own run for round-14
+  - finding F-DG1-135 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-136 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-136 (Low): verification invocation is not the verifying reviewer's own run for round-15
+  - finding F-DG1-136 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-217 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-217 (Low): verification invocation is not the verifying reviewer's own run for round-15
+  - finding F-DG1-217 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-137 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-137 (Low): verification invocation is not the verifying reviewer's own run for round-16
+  - finding F-DG1-137 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG1-218 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG1-218 (Low): verification invocation is not the verifying reviewer's own run for round-16
+  - finding F-DG1-218 (Low): findings.json verification evidence differs from the sidecar
+exit=1
