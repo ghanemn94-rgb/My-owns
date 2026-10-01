@@ -2252,6 +2252,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_scope_immutable
 | `residual_risks` | text | yes |  |
 | `is_enduring_arrangement` | boolean | no | `false` |
 | `status` | enum tsa_status | no | `'proposed'::tsa_status` |
+| `pre_breach_status` | enum tsa_status | yes |  |
 | `escalation_id` | uuid | yes |  |
 | `approval_decision_id` | uuid | yes |  |
 | `extension_decision_id` | uuid | yes |  |
@@ -2547,7 +2548,7 @@ RLS: enabled (hub_project_isolation) · Triggers: hub_append_only, hub_scope_imm
 | `kind` | character varying | no |  |
 | `from_status` | enum cutover_status | yes |  |
 | `to_status` | enum cutover_status | yes |  |
-| `actor_user_id` | uuid | no |  |
+| `actor_user_id` | uuid | yes |  |
 | `rationale` | text | yes |  |
 | `go_decision_id` | uuid | yes |  |
 | `evaluation` | jsonb | yes |  |

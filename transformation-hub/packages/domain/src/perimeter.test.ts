@@ -27,6 +27,7 @@ const transfer = (o: Partial<TransferCommandInput>): TransferCommandInput => ({
   command: 'plan',
   aspect: 'legal',
   current: 'not_started',
+  otherAspect: 'not_started',
   disposition: 'included',
   itemType: 'asset',
   mechanism: 'Asset transfer agreement (proposed)',

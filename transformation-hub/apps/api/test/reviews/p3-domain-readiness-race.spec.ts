@@ -11,7 +11,10 @@ import { P, check, clearCheck, completePlan, createCheck, decisionOfType, drainW
  * test of a blocker is recorded and commits. Then the lock is released. `DEFECT` is declared with `it.fails` while open;
  * `P3D_PROBE_PLAIN=1` runs it as a plain test. All data is synthetic.
  */
+// Implementer (fix of the P3 domain review): the DEFECT probe of this file is fixed and renamed `… (fixed, regression)` — a
+// plain `it`, assertion unchanged. The alias stays so that P3D_PROBE_PLAIN=1 keeps working for any probe added later.
 const defect = process.env['P3D_PROBE_PLAIN'] ? it : it.fails;
+void defect;
 
 let projectId: string;
 let p: Personas;
@@ -31,7 +34,7 @@ type R = { status: number; body: Record<string, unknown> };
 const settleWithin = <T>(pr: Promise<T>, ms: number): Promise<T | 'pending'> => Promise.race([pr, new Promise<'pending'>((res) => setTimeout(() => res('pending'), ms))]);
 
 describe('P3 domain review — GO decided while a blocker test fails concurrently [AT-09, AT-16, REQ-RDY-004]', () => {
-  defect('DEFECT DOM-P3-03 (concurrency): a GO whose evaluation read the blocker as passed commits after a FAILED test of that blocker committed', async () => {
+  it('DOM-P3-03 (concurrency): a GO whose evaluation read the blocker as passed commits after a FAILED test of that blocker committed (fixed, regression)', async () => {
     const siteId = await insertSite(projectId, 'S-P3D-R');
     const planId = await completePlan(p.pm, projectId, { siteId, accountableUserId: p.pm.userId, title: 'Race transition (synthetic)' });
     const checkId = await createCheck(p.pm, projectId, {

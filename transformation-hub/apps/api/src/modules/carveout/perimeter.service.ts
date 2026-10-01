@@ -14,6 +14,7 @@ import {
   TRANSFER_MACHINE,
   TransferStatus,
   allowedCommands,
+  assertTransferCommand,
   changeRequestImpacts,
   combinedTransferStatus,
   conflict,
@@ -55,6 +56,8 @@ type Narrative = z.infer<typeof ImpactNarrative>;
 const PI = schema.perimeterItem;
 const READ = 'carveout.register.read';
 const MANAGE = 'carveout.perimeter.manage';
+/** Specialist transferability classes that need a counterparty consent / novation (AT-08). */
+const CLASSES_REQUIRING_CONSENT: readonly ContractTransferClass[] = ['consent_required', 'novation_required'];
 
 /** Scope attributes of an item (bound to change requests). */
 const scopeOf = (i: Pick<Item, 'disposition' | 'siteId' | 'currentEntityId' | 'targetEntityId'>): PerimeterScope => ({
@@ -208,12 +211,22 @@ export class PerimeterService {
     });
   }
 
-  async consentsOf(projectId: string, itemIds: string[]) {
+  /**
+   * SEC-P34-07: consents shown with a perimeter item / Day-1 position — only those the CALLER may read in the consent
+   * register (project-wide `carveout.register.read`, consent classification ≤ clearance), filtered in SQL. Rules (Day-1
+   * position, transfer guards, reconciliation) keep using `consentsOf`, which sees every consent.
+   */
+  async visibleConsentsOf(ctx: RequestContext, projectId: string, itemIds: string[]) {
+    if (itemIds.length === 0 || !this.s.policy.permissionReach(ctx, READ, projectId).all) return new Map<string, { id: string; code: string; kind: string; counterparty: string; status: ConsentStatus; dueDate: string | null }[]>();
+    return this.consentsOf(projectId, itemIds, this.s.policy.visibilitySql(ctx, projectId, { classification: schema.consent.classification }));
+  }
+
+  async consentsOf(projectId: string, itemIds: string[], visible?: SQL) {
     if (itemIds.length === 0) return new Map<string, { id: string; code: string; kind: string; counterparty: string; status: ConsentStatus; dueDate: string | null }[]>();
     const rows = await this.tx
       .select({ id: schema.consent.id, code: schema.consent.code, kind: schema.consent.kind, counterparty: schema.consent.counterparty, status: schema.consent.status, dueDate: schema.consent.dueDate, itemId: schema.consent.perimeterItemId })
       .from(schema.consent)
-      .where(and(eq(schema.consent.projectId, projectId), inArray(schema.consent.perimeterItemId, itemIds)))
+      .where(and(eq(schema.consent.projectId, projectId), inArray(schema.consent.perimeterItemId, itemIds), visible))
       .orderBy(asc(schema.consent.code));
     const m = new Map<string, { id: string; code: string; kind: string; counterparty: string; status: ConsentStatus; dueDate: string | null }[]>();
     for (const r of rows) {
@@ -260,7 +273,9 @@ export class PerimeterService {
 
   private async detail(ctx: RequestContext, p: CarveoutProject, item: Item) {
     const [summary] = await this.summaries(p.id, [item]);
+    // The Day-1 rule sees every consent; the list shown is filtered by the caller's register read (SEC-P34-07).
     const consents = (await this.consentsOf(p.id, [item.id])).get(item.id) ?? [];
+    const shownConsents = (await this.visibleConsentsOf(ctx, p.id, [item.id])).get(item.id) ?? [];
     const names = await this.s.userNames([item.ownerUserId, item.transferClassAssessedBy, item.serviceAccountableUserId, item.billingAccountableUserId, item.slaAccountableUserId]);
     const ents = await this.s.entityNames([item.currentEntityId, item.targetEntityId]);
     let agreement: { id: string; code: string } | null = null;
@@ -298,7 +313,7 @@ export class PerimeterService {
       acceptanceEvidenceNote: item.acceptanceEvidenceNote,
       transferClassAssessment: { assessedBy: this.s.person(names, item.transferClassAssessedBy), assessedAt: iso(item.transferClassAssessedAt), basis: item.transferClassBasis },
       day1: this.day1Dto(item, consents.map((c) => c.status), names),
-      consents,
+      consents: shownConsents,
       transfers,
       evidence: { item: ev.get(item.id) ?? { active: 0, conflicting: 0 }, transfer: evT.get(item.id) ?? { active: 0, conflicting: 0 } },
       history: hist.map((h) => ({ versionNo: h.versionNo, reason: h.reason, changedByName: h.changedBy ? (histNames.get(h.changedBy) ?? null) : null, changedAt: h.changedAt.toISOString() })),
@@ -513,6 +528,51 @@ export class PerimeterService {
     return { cr, impactId: impact.id };
   }
 
+  /** The item is frozen into the approved planning baseline or the approved perimeter version (AT-07). */
+  async inApprovedBaseline(projectId: string, itemId: string): Promise<boolean> {
+    const scope = await this.s.baselineScope(projectId);
+    return !!scope.planning?.itemIds.has(itemId) || !!scope.perimeterVersion?.itemIds.has(itemId);
+  }
+
+  /**
+   * DOM-P3-05 / AT-07: after baseline approval, declaring that an aspect of an in-baseline Included / Shared item does not
+   * transfer changes the transferring scope — raised as a change request (impact assessment recorded), the item held
+   * unchanged until the approved request is applied (`applyChange`, kind `transfer_not_applicable`).
+   */
+  async raiseTransferNotApplicableChange(ctx: RequestContext, p: CarveoutProject, item: Item, aspect: 'legal' | 'economic', fromStatus: TransferStatus, note: string) {
+    const scope = scopeOf(item);
+    const entries = derivePerimeterImpacts(
+      await this.impactInput(ctx, p, item, { kind: 'reclassify', itemCode: item.code, itemType: item.type as PerimeterItemType, fromDisposition: scope.disposition, toDisposition: scope.disposition, scopeAttributesChanged: true }),
+    );
+    const summary = `Declare the ${aspect} transfer of perimeter item ${item.code} (${item.disposition}) not applicable after baseline approval.`;
+    const cr = await this.changeControl.createChangeRequestFor(ctx, {
+      projectId: p.id,
+      subjectType: 'perimeter_item',
+      subjectId: item.id,
+      title: `Transfer not applicable (${aspect}) ${item.code} after baseline`,
+      rationale: note,
+      impacts: changeRequestImpacts(entries, `${summary} ${note}`.trim()),
+      proposedChange: { kind: 'transfer_not_applicable', perimeterItemId: item.id, itemCode: item.code, aspect, fromStatus, note, scope },
+      rebaseline: false,
+      submit: true,
+    });
+    await this.recordImpact(ctx, p, item.id, entries, undefined, 'change_request', cr.id);
+    const row = await updateVersioned(this.s.db, PI, { id: item.id, projectId: p.id, expectedVersion: item.version }, { pendingChangeRequestId: cr.id });
+    const itemVersion = row['version'] as number;
+    await this.versions.snapshot({ projectId: p.id, entityType: 'perimeter_item', entityId: item.id, versionNo: itemVersion, snapshot: row, reason: `Change requested (${cr.code}): ${aspect} transfer not applicable — ${note}` });
+    await this.audit.record({
+      action: 'carveout.transfer.not_applicable_requested',
+      entityType: 'perimeter_item',
+      entityId: item.id,
+      projectId: p.id,
+      before: { aspect, status: fromStatus },
+      after: { aspect, requested: 'not_applicable', changeRequestId: cr.id, applied: false },
+      reason: note,
+    });
+    await this.outbox.emit({ type: 'perimeter.changed', projectId: p.id, aggregateType: 'perimeter_item', aggregateId: item.id, payload: { change: 'change_requested', changeRequestId: cr.id } });
+    return { itemVersion, changeRequest: { id: cr.id, code: cr.code, status: cr.status as string } };
+  }
+
   // =========================================================================================================
   // Commands
 
@@ -629,6 +689,10 @@ export class PerimeterService {
       }
     }
     if (body.classification) this.s.assertClassificationAllowed(ctx, body.classification);
+    // DOM-P3-15: a consent need set by the specialist transferability class is not undone by a descriptive edit.
+    if (body.consentRequired === false && CLASSES_REQUIRING_CONSENT.includes(item.transferClass as ContractTransferClass)) {
+      throw ruleViolation('perimeter.consent_required_by_class', `The specialist classified this contract "${item.transferClass}": the consent need follows that class (re-assess the transferability to change it)`, { transferClass: item.transferClass });
+    }
     // Moving the item to another workstream requires the grant in the target workstream too.
     if (body.workstreamId !== undefined && body.workstreamId !== item.workstreamId) {
       this.s.policy.assert(ctx, MANAGE, { projectId, classification: (body.classification ?? item.classification) as Classification, workstreamId: body.workstreamId, ownerUserIds: [item.ownerUserId, item.createdBy] });
@@ -684,10 +748,41 @@ export class PerimeterService {
     if (item.pendingChangeRequestId !== body.changeRequestId) throw ruleViolation('perimeter.change_request_mismatch', 'This change request is not the open change of the item');
     const cr = await this.changeControl.getChangeRequest(ctx, projectId, body.changeRequestId);
     if (cr.subjectType !== 'perimeter_item' || cr.subjectId !== item.id) throw ruleViolation('perimeter.change_request_mismatch', 'The change request refers to another record');
-    const proposed = (cr.proposedChange ?? {}) as { from?: PerimeterScope; to?: PerimeterScope };
+    const proposed = (cr.proposedChange ?? {}) as { kind?: string; from?: PerimeterScope; to?: PerimeterScope; aspect?: 'legal' | 'economic'; fromStatus?: TransferStatus; note?: string; scope?: PerimeterScope };
     let outcome: 'applied' | 'closed_without_change';
     const u: Partial<typeof schema.perimeterItem.$inferInsert> = { pendingChangeRequestId: null };
-    if (cr.status === 'approved' || cr.status === 'implemented') {
+    let transferNa: { aspect: 'legal' | 'economic'; from: TransferStatus; note: string } | null = null;
+    if ((cr.status === 'approved' || cr.status === 'implemented') && proposed.kind === 'transfer_not_applicable') {
+      // DOM-P3-05: the approved change declares one aspect "not applicable" — bound to the aspect's status and the item's
+      // scope when it was raised; the transfer rules are applied again (never both aspects).
+      const aspect = proposed.aspect;
+      if ((aspect !== 'legal' && aspect !== 'economic') || !proposed.fromStatus || !proposed.scope) throw ruleViolation('perimeter.change_request_payload', 'The change request carries no transfer change');
+      const col = aspect === 'legal' ? 'transferStatus' : 'economicTransferStatus';
+      const other = (aspect === 'legal' ? item.economicTransferStatus : item.transferStatus) as TransferStatus;
+      if (item[col] !== proposed.fromStatus || !sameScope(scopeOf(item), proposed.scope)) throw conflict('perimeter.change_request_stale', 'The item changed since the change request was raised — raise a new request');
+      assertTransferCommand({
+        command: 'mark_not_applicable',
+        aspect,
+        current: item[col] as TransferStatus,
+        otherAspect: other,
+        disposition: item.disposition as PerimeterDisposition,
+        itemType: item.type as PerimeterItemType,
+        mechanism: item.transferMechanism,
+        effectiveDate: null,
+        note: proposed.note ?? cr.rationale ?? null,
+        activeEvidence: 0,
+        conflictingEvidence: 0,
+        actorUserId: ctx.principal.userId!,
+        reportedBy: null,
+        transferClass: item.transferClass as ContractTransferClass,
+        transferClassAssessed: !!item.transferClassAssessedBy,
+        consentGranted: false,
+        today: this.s.today(p),
+      });
+      u[col] = 'not_applicable';
+      transferNa = { aspect, from: item[col] as TransferStatus, note: `${cr.code}: ${proposed.note ?? cr.rationale ?? ''}`.slice(0, 2000) };
+      outcome = 'applied';
+    } else if (cr.status === 'approved' || cr.status === 'implemented') {
       if (!proposed.from || !proposed.to) throw ruleViolation('perimeter.change_request_payload', 'The change request carries no perimeter change');
       // The approval is bound to the scope it was raised against: a concurrent scope change invalidates it.
       if (!sameScope(scopeOf(item), proposed.from)) throw conflict('perimeter.change_request_stale', 'The item scope changed since the change request was raised — raise a new request');
@@ -701,6 +796,25 @@ export class PerimeterService {
     }
     const row = await updateVersioned(this.s.db, PI, { id: itemId, projectId, expectedVersion: body.expectedVersion }, u);
     const version = row['version'] as number;
+    if (transferNa) {
+      // The applied change is also a transfer record of that aspect (append-only transfer history).
+      await this.tx.insert(schema.transferRecord).values({
+        id: newId(),
+        orgId: p.orgId,
+        projectId,
+        perimeterItemId: itemId,
+        aspect: transferNa.aspect,
+        command: 'mark_not_applicable',
+        fromStatus: transferNa.from,
+        toStatus: 'not_applicable',
+        mechanism: item.transferMechanism,
+        effectiveDate: null,
+        note: transferNa.note,
+        evidenceCount: 0,
+        reviewsRecordId: null,
+        recordedBy: ctx.principal.userId!,
+      });
+    }
     await this.versions.snapshot({ projectId, entityType: 'perimeter_item', entityId: itemId, versionNo: version, snapshot: row, reason: `${outcome === 'applied' ? 'Applied' : 'Closed without change'}: ${cr.code}` });
     await this.audit.record({ action: 'carveout.perimeter.apply_change', entityType: 'perimeter_item', entityId: itemId, projectId, before: { ...scopeOf(item), pendingChangeRequestId: item.pendingChangeRequestId }, after: { ...scopeOf(row as unknown as Item), outcome, changeRequestId: cr.id, changeRequestStatus: cr.status }, reason: body.note ?? null });
     await this.outbox.emit({ type: 'perimeter.changed', projectId, aggregateType: 'perimeter_item', aggregateId: itemId, payload: { change: outcome, changeRequestId: cr.id } });
@@ -832,7 +946,8 @@ export class PerimeterService {
           economicTransferStatus: it.economicTransferStatus as TransferStatus,
           transferMechanism: it.transferMechanism,
           plannedEffectiveDate: it.plannedEffectiveDate,
-          consentRequired: it.consentRequired,
+          // DOM-P3-15: the specialist class also says whether a consent is needed (never undone by the descriptive flag).
+          consentRequired: it.consentRequired || CLASSES_REQUIRING_CONSENT.includes(it.transferClass as ContractTransferClass),
           consentGranted: day1.consentGranted,
           evidenceCount: evidence.get(it.id)?.active ?? 0,
           hasInterimArrangement: !!it.interimArrangement?.trim(),
@@ -875,6 +990,8 @@ export class PerimeterService {
     this.s.assertRead(ctx, READ, { projectId, classification: p.classification });
     const items = (await this.visibleItems(ctx, projectId)).filter((i) => isContractLike(i.type as PerimeterItemType) && isInScope(i.disposition as PerimeterDisposition));
     const consents = await this.consentsOf(projectId, items.map((i) => i.id));
+    // SEC-P34-07: the position is computed on every consent; only consents the caller may read are listed.
+    const shown = await this.visibleConsentsOf(ctx, projectId, items.map((i) => i.id));
     const names = await this.s.userNames(items.flatMap((i) => [i.serviceAccountableUserId, i.billingAccountableUserId, i.slaAccountableUserId]));
     const out = items.map((i) => {
       const cs = consents.get(i.id) ?? [];
@@ -886,7 +1003,7 @@ export class PerimeterService {
         disposition: i.disposition as PerimeterDisposition,
         transferClass: i.transferClass as ContractTransferClass,
         classAssessed: !!i.transferClassAssessedBy && i.transferClass !== 'unknown',
-        consents: cs,
+        consents: shown.get(i.id) ?? [],
         position: this.day1Dto(i, cs.map((c) => c.status), names),
       };
     });

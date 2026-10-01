@@ -69,8 +69,10 @@ export function assertAssignedSpecialist(what: string, checkCode: string, signof
 
 /**
  * Specialist sign-off (REQ-RDY-001): by the assigned specialist role only, never by the record owner or by whoever
- * recorded its latest status/evidence (access-matrix §2.4). A "passed" sign-off needs active, non-conflicting evidence
- * and a latest test run that did not fail; "not applicable" needs a documented basis.
+ * recorded its latest status/evidence (access-matrix §2.4, §5.1). `selfUserIds` carries the owner, the creator, the
+ * recorder of the latest test run AND every person who linked the check's current (active / conflicting) evidence
+ * (DOM-P3-10 / SEC-P34-01). A "passed" sign-off needs active, non-conflicting evidence and a latest test run that did not
+ * fail; "not applicable" needs a documented basis.
  */
 export function assertReadinessSignoffAllowed(i: {
   checkCode: string;
@@ -103,9 +105,20 @@ export function assertReadinessSignoffAllowed(i: {
   }
 }
 
+/** States in which a readiness check is cleared (a waived one only with an effective waiver — checked by the caller). */
+export const READINESS_CLEARED_STATUSES: readonly ReadinessStatus[] = ['passed', 'not_applicable', 'waived'];
+
+/** Cutover-plan states in which the set of checks gating the plan is under decision or already decided (GO). */
+export const GO_DECIDED_PLAN_STATUSES: readonly CutoverStatus[] = ['ready_for_decision', 'approved_go'];
+
 /**
  * Specialist determination of a check's criticality and waivability (spec §3: "authorized specialists determine
  * waivability and waiver authority"). Waivable checks must name the waiver authority role; a basis is always recorded.
+ *
+ * DOM-P3-02 (spec §3 "an exception cannot override a non-waivable condition"; the rule adopted for CPs in DOM-P4-03): a
+ * determination never RELEASES an open gating check. Lowering `blocker` or `mandatory` is refused while the check has
+ * FAILED, and while it is not cleared and gates a plan that is under go/no-go decision or has a GO. Releasing such a check
+ * goes through the waiver register (waivable only; basis, impact, the specialist-set waiver authority, not the requester).
  */
 export function assertReadinessDetermination(i: {
   checkCode: string;
@@ -116,10 +129,25 @@ export function assertReadinessDetermination(i: {
   waivable: boolean;
   waiverAuthorityRole: RoleKey | null;
   basis: string;
+  /** Current status and criticality of the check, and the criticality the determination would set (all REQUIRED, N-01). */
+  status: ReadinessStatus;
+  current: { mandatory: boolean; blocker: boolean };
+  next: { mandatory: boolean; blocker: boolean };
+  /** The check gates a plan at ready_for_decision / approved_go. */
+  gatesDecidedPlan: boolean;
 }): void {
   assertAssignedSpecialist('determination', i.checkCode, i.signoffRole, i.actorRoles);
   if (i.creatorUserId && i.creatorUserId === i.actorUserId) {
     throw forbidden('readiness.determination.self', 'Separation of duties: the author of a readiness check cannot determine its criticality/waivability');
+  }
+  const lowers = (i.current.blocker === true && i.next.blocker !== true) || (i.current.mandatory === true && i.next.mandatory !== true);
+  const cleared = READINESS_CLEARED_STATUSES.includes(i.status);
+  if (lowers && (i.status === 'failed' || (!cleared && i.gatesDecidedPlan !== false))) {
+    throw ruleViolation(
+      'readiness.determination.release_not_allowed',
+      `${i.checkCode} is ${i.status === 'failed' ? 'a failed' : 'an open'} gating check${i.status === 'failed' ? '' : ' of a transition under go/no-go decision'}: a determination cannot release it — a waivable check is released only through the waiver register (basis, impact, waiver authority); a non-waivable one cannot be released`,
+      { status: i.status, gatesDecidedPlan: i.gatesDecidedPlan },
+    );
   }
   if (i.waivable && !i.waiverAuthorityRole) {
     throw ruleViolation('readiness.determination.authority_required', 'A waivable check must name the role that holds the waiver authority');
@@ -138,7 +166,9 @@ export type CutoverCommand = 'record_rehearsal' | 'submit_for_decision' | 'retur
 export const CUTOVER_MACHINE: Machine<CutoverStatus, CutoverCommand> = {
   record_rehearsal: { from: ['planning', 'rehearsal'], to: 'rehearsal', description: 'Rehearsal / testing recorded' },
   submit_for_decision: { from: ['planning', 'rehearsal'], to: 'ready_for_decision', description: 'Submitted for go/no-go (all §7.4 elements documented)' },
-  return_to_planning: { from: ['ready_for_decision', 'no_go', 'rolled_back'], to: 'planning', description: 'Back to planning (earlier decisions stay in the history)' },
+  // `approved_go` included (DOM-P3-04): a GO flagged because a gating check is open again is withdrawn for a new decision
+  // (the consumed go/no-go decision cannot back the new GO).
+  return_to_planning: { from: ['ready_for_decision', 'no_go', 'rolled_back', 'approved_go'], to: 'planning', description: 'Back to planning (earlier decisions stay in the history; a withdrawn GO needs a new decision)' },
   decide_go: { from: ['ready_for_decision'], to: 'approved_go', description: 'GO recorded — blockers and prerequisites re-evaluated on the server' },
   decide_no_go: { from: ['ready_for_decision'], to: 'no_go', description: 'NO-GO recorded' },
   record_execution: { from: ['approved_go'], to: 'executed', description: 'Transition executed in the approved operational systems (evidence recorded here; no device control)' },
@@ -198,6 +228,48 @@ export function readinessCheckAppliesToPlan(check: { cutoverPlanId: string | nul
   if (check.cutoverPlanId) return check.cutoverPlanId === plan.id;
   if (plan.siteId === null) return true;
   return check.siteId === plan.siteId;
+}
+
+export interface RebindPlan {
+  id: string;
+  code: string;
+  status: CutoverStatus;
+}
+
+/**
+ * DOM-P3-01: which transition(s) a check gates (`cutoverPlanId`, `siteId`) is a scope attribute, changed only through the
+ * re-binding command — never by a descriptive edit. A gating (mandatory / blocker) check that is not cleared:
+ *  - that has FAILED keeps gating the plan(s) it was raised for until it is cleared (passed, waived, not applicable);
+ *  - is never taken out of a plan that is under go/no-go decision or has a GO (`ready_for_decision`, `approved_go`).
+ * A reason is required; plans the check leaves / enters get an entry in their decision history.
+ */
+export function assertReadinessCheckRebind(i: { checkCode: string; status: ReadinessStatus; gating: boolean; cleared: boolean; leaving: readonly RebindPlan[]; reason: string | null | undefined }): void {
+  if (!i.reason?.trim()) throw ruleViolation('readiness.check.rebind_reason_required', 'Re-binding a readiness check to another transition requires a reason');
+  if (!i.gating || i.cleared) return;
+  if (i.status === 'failed') {
+    throw ruleViolation('readiness.check.rebind_failed', `${i.checkCode} failed: a failed gating check keeps gating the transition(s) it was raised for until it is cleared (passed, waived or not applicable)`, {
+      status: i.status,
+    });
+  }
+  const locked = i.leaving.filter((p) => GO_DECIDED_PLAN_STATUSES.includes(p.status));
+  if (locked.length) {
+    throw ruleViolation('readiness.check.rebind_plan_locked', `${i.checkCode} is open and gates ${locked.map((p) => `${p.code} (${p.status})`).join(', ')}, which is under go/no-go decision or has a GO — it cannot be taken out of that transition`, {
+      plans: locked.map((p) => ({ id: p.id, code: p.code, status: p.status })),
+    });
+  }
+}
+
+/**
+ * DOM-P3-04 (AT-09 "a failed test blocks go-live according to the blocker"): recording that a transition was executed is
+ * refused while a gating check of the plan is open again after the GO — until it is cleared / waived, or the GO is withdrawn
+ * (return to planning) and a new GO is decided on a new decision.
+ */
+export function assertExecutionAllowed(i: { planCode: string; blockers: readonly { id: string; title: string; status: ReadinessStatus; blocker: boolean }[] }): void {
+  if (i.blockers.length > 0) {
+    throw ruleViolation('readiness.execution_blocked', `The GO of ${i.planCode} is flagged: ${i.blockers.length} gating readiness check(s) are open again after the GO — clear or waive them, or withdraw the GO for a new decision`, {
+      blockers: i.blockers,
+    });
+  }
 }
 
 export interface GoEvaluation {
@@ -304,8 +376,59 @@ export function linkedDecisionIssueCode(d: LinkedDecision | null, allowedTypeKey
 // TSA commands (§7.3; REQ-TSA-001..006; AT-10)
 
 /** Commands executable through the generic transition endpoint; guarded commands have dedicated endpoints. */
-export const TSA_SIMPLE_COMMANDS = ['start_negotiation', 'activate', 'start_exit', 'record_breach', 'remedy_breach'] as const;
+export const TSA_SIMPLE_COMMANDS = ['start_negotiation', 'activate', 'start_exit', 'record_breach', 'remedy_breach', 'accelerate_exit'] as const;
 export type TsaSimpleCommand = (typeof TSA_SIMPLE_COMMANDS)[number];
+
+/** Statuses a breach can return to when remedied (DOM-P3-17). */
+const PRE_BREACH_STATUSES: readonly TsaStatus[] = ['active', 'extended', 'exit_in_progress'];
+
+/** DOM-P3-17: a remedied breach returns the TSA to the status it had when the breach was recorded (`active` if unknown). */
+export function statusAfterRemedy(preBreachStatus: TsaStatus | null | undefined): TsaStatus {
+  return preBreachStatus && PRE_BREACH_STATUSES.includes(preBreachStatus) ? preBreachStatus : 'active';
+}
+
+/**
+ * DOM-P3-17 (business-gates.md §6 "approved → active: service start date reached and service confirmed"): a TSA is activated
+ * only once its start date is reached (project timezone).
+ */
+export function assertTsaActivatable(t: { startDate: string | null; today: string }): void {
+  if (!t.startDate || t.startDate > t.today) {
+    throw ruleViolation('tsa.activate.not_started', t.startDate ? `The service starts on ${t.startDate}; it can be activated from that date` : 'The TSA has no start date', { startDate: t.startDate });
+  }
+}
+
+/** Whether a TSA's terms are approved (its descriptive terms are then part of the approval — DOM-P3-15). */
+export const TSA_TERMS_OPEN_STATUSES: readonly TsaStatus[] = ['proposed', 'negotiating'];
+
+/**
+ * DOM-P3-06: the terms of an extension request (end date, continuity plan) are bound to the decision they were linked to
+ * once that decision has left `draft` (the paper went to the committee with them): a different end date or continuity plan
+ * needs a NEW decision. Returns `same` when the request repeats the bound terms (idempotent), `free` when they may change.
+ */
+export function extensionTermsBinding(i: {
+  linkedDecisionId: string | null;
+  requestedDecisionId: string;
+  linkedDecisionStatus: DecisionStatus | null;
+  bound: { proposedEndDate: string | null; continuityPlan: string | null };
+  requested: { proposedEndDate: string; continuityPlan: string };
+}): 'free' | 'same' {
+  if (!i.linkedDecisionId || i.linkedDecisionId !== i.requestedDecisionId || !i.bound.proposedEndDate) return 'free';
+  const same = i.bound.proposedEndDate === i.requested.proposedEndDate && (i.bound.continuityPlan ?? '') === i.requested.continuityPlan;
+  if (same) return 'same';
+  if (i.linkedDecisionStatus === 'draft') return 'free';
+  throw ruleViolation(
+    'tsa.extension.terms_bound',
+    `The extension requested on this decision (end date ${i.bound.proposedEndDate}) is before the committee: a different end date or continuity plan needs a new decision`,
+    { boundEndDate: i.bound.proposedEndDate, requestedEndDate: i.requested.proposedEndDate },
+  );
+}
+
+/** DOM-P3-07: an extension ends after "today" (project timezone) — an expired TSA is never "extended" into the past. */
+export function assertExtensionEndDateAhead(proposedEndDate: string, today: string): void {
+  if (proposedEndDate <= today) {
+    throw ruleViolation('tsa.extension.end_date_past', `The new end date ${proposedEndDate} is not after today (${today}); an extension must extend the service`, { proposedEndDate, today });
+  }
+}
 
 /**
  * The continuity options attached to every TSA escalation (expiry or replacement failure). The server stores the
@@ -355,14 +478,15 @@ export function assertReplacementAcceptable(t: { status: TsaStatus; replacementS
   if (!filled(t.note)) throw ruleViolation('tsa.replacement.note_required', 'Record the acceptance basis');
 }
 
-/** An extension request states the new end date (after the current one) and the continuity plan. */
-export function assertExtensionRequestValid(t: { status: TsaStatus; currentEndDate: string | null; proposedEndDate: string; continuityPlan: string }): void {
+/** An extension request states the new end date (after the current one AND after today — DOM-P3-07) and the continuity plan. */
+export function assertExtensionRequestValid(t: { status: TsaStatus; currentEndDate: string | null; proposedEndDate: string; continuityPlan: string; today: string }): void {
   if (!TSA_MACHINE.record_extension.from.includes(t.status)) {
     throw ruleViolation('tsa.extension.invalid_state', `An extension cannot be requested while the TSA is ${t.status}`);
   }
   if (t.currentEndDate && t.proposedEndDate <= t.currentEndDate) {
     throw ruleViolation('tsa.extension.end_date_not_later', `The proposed end date must be after the current end date (${t.currentEndDate})`);
   }
+  assertExtensionEndDateAhead(t.proposedEndDate, t.today);
   if (!filled(t.continuityPlan)) throw ruleViolation('tsa.extension_requires_continuity_plan', 'An extension must reference the continuity plan');
 }
 

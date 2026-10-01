@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { and, count, eq, sql } from 'drizzle-orm';
+import { and, count, eq } from 'drizzle-orm';
 import { schema } from '@hub/db';
 import { assessTsaExpiry, uncoveredReadinessAreas } from '@hub/domain';
 import type { RequestContext } from '../../platform/context';
 import { ReadinessSupport } from './readiness.support';
-import { ReadinessChecksService } from './checks.service';
+import { ReadinessChecksService, waiverEffectiveFor } from './checks.service';
 import { TsaService, TSA_EXPIRY_WARN_DAYS } from './tsa.service';
 
 /**
@@ -25,13 +25,18 @@ export class ReadinessSummaryService {
     const tx = this.s.db.tx();
     const c = schema.readinessCheck;
     const byStatus = await tx.select({ status: c.status, n: count() }).from(c).where(this.checks.scopeSql(ctx, projectId)).groupBy(c.status);
-    const [blk] = await tx
-      .select({
-        open: sql<number>`count(*) filter (where ${c.blocker} and ${c.status} not in ('passed', 'not_applicable') and not (${c.status} = 'waived' and ${c.waivable}))::int`,
-        failed: sql<number>`count(*) filter (where ${c.blocker} and ${c.status} = 'failed')::int`,
-      })
+    // DOM-P3-16: the same rule as the GO evaluation — a waived blocker is cleared only while its waiver is effective
+    // (approved, unexpired, waivable check); a passed one only while its sign-off evidence is valid (DOM-P3-09).
+    const today = this.s.today(p);
+    const blockers = await tx
+      .select({ id: c.id, status: c.status, waivable: c.waivable, waiverId: c.waiverId, w: schema.waiver })
       .from(c)
-      .where(this.checks.scopeSql(ctx, projectId));
+      .leftJoin(schema.waiver, and(eq(schema.waiver.id, c.waiverId), eq(schema.waiver.projectId, c.projectId)))
+      .where(and(this.checks.scopeSql(ctx, projectId), eq(c.blocker, true)));
+    const evidenceValid = await this.s.signoffEvidenceValid(projectId, blockers.filter((b) => b.status === 'passed').map((b) => b.id));
+    const cleared = (b: (typeof blockers)[number]) =>
+      b.status === 'not_applicable' || (b.status === 'passed' && evidenceValid.get(b.id) === true) || (b.status === 'waived' && waiverEffectiveFor(b, b.w, today));
+    const blk = { open: blockers.filter((b) => !cleared(b)).length, failed: blockers.filter((b) => b.status === 'failed').length };
     const areas = await tx.selectDistinct({ area: c.area }).from(c).where(this.checks.scopeSql(ctx, projectId));
 
     const cp = schema.cutoverPlan;
@@ -46,7 +51,6 @@ export class ReadinessSummaryService {
       .select({ status: t.status, endDate: t.endDate, replacementAccepted: t.replacementAccepted, enduring: t.isEnduringArrangement })
       .from(t)
       .where(this.tsa.scopeSql(ctx, projectId));
-    const today = this.s.today(p);
     const tsaByStatus: Record<string, number> = {};
     let expiringSoon = 0;
     for (const x of tsas) {

@@ -92,6 +92,17 @@ export class CarveoutSupport {
     if (!r.rows[0]?.ok) throw invalid('carveout.user_not_member', `The selected ${field} is not an active member of this project`);
   }
 
+  /** The member holds one of `roles` in the project (active, unexpired membership; project- or workstream-scoped). */
+  async holdsRole(projectId: string, userId: string, roles: readonly string[]): Promise<boolean> {
+    const r = await this.db.tx().execute<{ ok: boolean }>(sql`
+      select exists (
+        select 1 from project_membership m
+         where m.project_id = ${projectId} and m.user_id = ${userId} and m.revoked_at is null
+           and (m.valid_to is null or m.valid_to > now()) and m.role in (${sql.join(roles.map((x) => sql`${x}`), sql`, `)})
+      ) as ok`);
+    return r.rows[0]?.ok === true;
+  }
+
   async userNames(ids: (string | null | undefined)[]): Promise<Map<string, string>> {
     const uniq = [...new Set(ids.filter((x): x is string => !!x))];
     if (uniq.length === 0) return new Map();
@@ -122,6 +133,20 @@ export class CarveoutSupport {
   /** Counters FOR DISPLAY: the evidence list's visibility (SEC-P1R-05). `evidenceCounts` above stays for rules. */
   visibleEvidenceCounts(ctx: RequestContext, projectId: string, targetType: string, ids: string[]): Promise<Map<string, { active: number; conflicting: number }>> {
     return visibleEvidenceCounts(this.db, this.policy, ctx, projectId, targetType, ids);
+  }
+
+  /**
+   * DOM-P3-10 / SEC-P34-01 (access-matrix §5.1): the people who linked the target's CURRENT evidence (active or conflicting
+   * links) — "self" for a verification that relies on that evidence.
+   */
+  async evidenceLinkers(projectId: string, targetType: string, targetId: string): Promise<string[]> {
+    const E = schema.evidenceLink;
+    const rows = await this.db
+      .tx()
+      .selectDistinct({ by: E.addedBy })
+      .from(E)
+      .where(and(eq(E.projectId, projectId), eq(E.targetType, targetType), eq(E.targetId, targetId), inArray(E.status, ['active', 'conflicting'])));
+    return rows.map((r) => r.by);
   }
 
 

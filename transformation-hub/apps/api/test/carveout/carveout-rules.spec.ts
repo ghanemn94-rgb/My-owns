@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { closeApp, closePools } from '../helpers';
+import { closeApp, closePools, loginAs, owner } from '../helpers';
+import { syntheticUser, DocClient } from '../jv/jv-kit';
 import { Personas, base, carveoutProject, createItem, grantWorkstreamLead, item, linkEvidence, ok, workstreamId } from './carveout-kit';
 
 /**
@@ -112,6 +113,21 @@ describe('Perimeter register rules [REQ-PER-001, REQ-PER-003, REQ-PER-006]', () 
 
 describe('Regulatory / external / internal approvals [REQ-AGR-004, REQ-AGR-005, REQ-AGR-007]', () => {
   let reqId: string;
+  // SEC-P34-05 (REQ-AGR-004): applicability, outcomes and conditions are recorded by Legal / regulatory roles only — and never
+  // by the registrant, the outcome recorder or the evidence linker (not_self). Two more synthetic Legal members stand in for
+  // the Legal team (the demo has a single Legal persona).
+  let legal2: DocClient;
+  let legal3: DocClient;
+  beforeAll(async () => {
+    const orgId = (await owner().query<{ org_id: string }>('select org_id from project where id = $1', [pid])).rows[0]!.org_id;
+    const admin = await loginAs('portfolio.admin');
+    legal2 = await syntheticUser(orgId, 'co-rules.legal2', 'internal', 'confidential');
+    legal3 = await syntheticUser(orgId, 'co-rules.legal3', 'internal', 'confidential');
+    for (const u of [legal2, legal3]) {
+      const g = await admin.post(`${base(pid)}/members`, { userId: u.userId, role: 'legal_restricted', reason: 'carve-out rules test (Legal team member, synthetic)' });
+      expect(g.status, JSON.stringify(g.body)).toBe(201);
+    }
+  });
   it("only Legal maintains the register; an entry from a source starts 'Assessment pending — specialist'", async () => {
     // REQ-AGR-004: edits to the regulatory register are for Legal / Regulatory roles only — not the PM or a workstream lead.
     expect((await p.pm.post(`${base(pid)}/regulatory-requirements`, { category: 'regulatory', authority: 'CST', title: 'PM entry (test)' })).status).toBe(403);
@@ -129,12 +145,14 @@ describe('Regulatory / external / internal approvals [REQ-AGR-004, REQ-AGR-005, 
     const sub = await p.legal.post(`${base(pid)}/regulatory-requirements/${reqId}/status`, { expectedVersion: s.version, command: 'submit', date: today() });
     expect(sub.status).toBe(422);
     expect(sub.body.code).toBe('newco.regulatory.applicability_not_assessed');
-    // the PM cannot assess (not a specialist); the registrant cannot assess its own entry; another verifier can
+    // the PM cannot assess (not a specialist); the registrant cannot assess its own entry; a non-legal functional approver
+    // cannot either (SEC-P34-05); another Legal member can
     expect((await p.pm.post(`${base(pid)}/regulatory-requirements/${reqId}/assess-applicability`, { expectedVersion: s.version, applicability: 'applicable', basis: 'x' })).status).toBe(403);
     expect((await p.legal.post(`${base(pid)}/regulatory-requirements/${reqId}/assess-applicability`, { expectedVersion: s.version, applicability: 'applicable', basis: 'self' })).status).toBe(403);
-    await ok(p.approver.post(`${base(pid)}/regulatory-requirements/${reqId}/assess-applicability`, { expectedVersion: s.version, applicability: 'applicable', basis: 'Specialist assessment (synthetic)' }));
+    expect((await p.approver.post(`${base(pid)}/regulatory-requirements/${reqId}/assess-applicability`, { expectedVersion: s.version, applicability: 'applicable', basis: 'not Legal' })).status).toBe(403);
+    await ok(legal2.post(`${base(pid)}/regulatory-requirements/${reqId}/assess-applicability`, { expectedVersion: s.version, applicability: 'applicable', basis: 'Specialist assessment (synthetic)' }));
     d = (await p.pm.get(`${base(pid)}/regulatory-requirements/${reqId}`).expect(200)).body;
-    expect(d.applicabilityAssessment.assessedBy.userId).toBe(p.approver.userId);
+    expect(d.applicabilityAssessment.assessedBy.userId).toBe(legal2.userId);
     await ok(p.legal.post(`${base(pid)}/regulatory-requirements/${reqId}/status`, { expectedVersion: d.version, command: 'submit', date: today() }));
   });
 
@@ -146,20 +164,23 @@ describe('Regulatory / external / internal approvals [REQ-AGR-004, REQ-AGR-005, 
   it('an outcome needs evidence; a conditional grant keeps conditions open until evidenced; expired validity is flagged', async () => {
     let d = (await p.pm.get(`${base(pid)}/regulatory-requirements/${reqId}`).expect(200)).body;
     expect((await p.pm.post(`${base(pid)}/regulatory-requirements/${reqId}/record-outcome`, { expectedVersion: d.version, command: 'record_grant', date: today() })).status).toBe(403);
-    // the registrant (Legal) does not record the authority's outcome on its own entry
+    // the registrant (Legal) does not record the authority's outcome on its own entry; nor does a non-legal approver
     expect((await p.legal.post(`${base(pid)}/regulatory-requirements/${reqId}/record-outcome`, { expectedVersion: d.version, command: 'record_grant', date: today() })).status).toBe(403);
-    const noEv = await p.approver.post(`${base(pid)}/regulatory-requirements/${reqId}/record-outcome`, { expectedVersion: d.version, command: 'record_grant', date: today() });
+    expect((await p.approver.post(`${base(pid)}/regulatory-requirements/${reqId}/record-outcome`, { expectedVersion: d.version, command: 'record_grant', date: today() })).status).toBe(403);
+    const noEv = await legal2.post(`${base(pid)}/regulatory-requirements/${reqId}/record-outcome`, { expectedVersion: d.version, command: 'record_grant', date: today() });
     expect(noEv.body.code).toBe('newco.regulatory.evidence_required');
     await linkEvidence(p.legal, pid, 'regulatory_requirement', reqId, 'Decision letter (synthetic)');
     const g = await ok<{ status: string; conditionsState: string; validityState: string; version: number }>(
-      p.approver.post(`${base(pid)}/regulatory-requirements/${reqId}/record-outcome`, { expectedVersion: d.version, command: 'record_grant_with_conditions', date: daysAgo(10), conditions: 'Quarterly reporting (synthetic)', validFrom: daysAgo(10), validTo: daysAgo(1) }),
+      legal2.post(`${base(pid)}/regulatory-requirements/${reqId}/record-outcome`, { expectedVersion: d.version, command: 'record_grant_with_conditions', date: daysAgo(10), conditions: 'Quarterly reporting (synthetic)', validFrom: daysAgo(10), validTo: daysAgo(1) }),
     );
     expect(g).toMatchObject({ status: 'granted_with_conditions', conditionsState: 'open', validityState: 'expired' });
     const expired = (await p.pm.get(`${base(pid)}/regulatory-requirements?validity=expired`).expect(200)).body;
     expect(expired.items.map((x: { id: string }) => x.id)).toContain(reqId);
-    // The recorder of the grant cannot confirm its conditions; another verifier can, with evidence.
-    expect((await p.approver.post(`${base(pid)}/regulatory-requirements/${reqId}/conditions-satisfied`, { expectedVersion: g.version, note: 'done' })).status).toBe(403);
-    const c = await ok<{ conditionsState: string }>(p.legal.post(`${base(pid)}/regulatory-requirements/${reqId}/conditions-satisfied`, { expectedVersion: g.version, note: 'Report filed (synthetic)' }));
+    // The recorder of the grant cannot confirm its conditions, nor can the person who linked the evidence (DOM-P3-10 /
+    // SEC-P34-01); another Legal verifier can, with evidence.
+    expect((await legal2.post(`${base(pid)}/regulatory-requirements/${reqId}/conditions-satisfied`, { expectedVersion: g.version, note: 'done' })).status).toBe(403);
+    expect((await p.legal.post(`${base(pid)}/regulatory-requirements/${reqId}/conditions-satisfied`, { expectedVersion: g.version, note: 'on my own evidence' })).status).toBe(403);
+    const c = await ok<{ conditionsState: string }>(legal3.post(`${base(pid)}/regulatory-requirements/${reqId}/conditions-satisfied`, { expectedVersion: g.version, note: 'Report filed (synthetic)' }));
     expect(c.conditionsState).toBe('satisfied');
     d = (await p.legal.get(`${base(pid)}/regulatory-requirements/${reqId}`).expect(200)).body;
     const m = await ok<{ status: string }>(p.legal.post(`${base(pid)}/regulatory-requirements/${reqId}/status`, { expectedVersion: d.version, command: 'mark_expired' }));

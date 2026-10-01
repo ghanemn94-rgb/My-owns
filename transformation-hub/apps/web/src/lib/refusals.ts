@@ -121,6 +121,13 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'perimeter.version.decision_other_subject': 'carveout.versions.refusal.decisionOtherSubject',
   // DOM-P2F-08: a G1 paper must be raised for the perimeter version it approves
   'perimeter.version.decision_no_subject': 'carveout.versions.refusal.decisionNoSubject',
+  // "Transfer not applicable" on an in-scope item (DOM-P3-05), consent need (DOM-P3-15), legal reviewer (DOM-P3-17)
+  'transfer.not_applicable_specialist': 'carveout.transfer.refusal.notApplicableSpecialist',
+  'transfer.not_applicable_in_scope': 'carveout.transfer.refusal.notApplicableInScope',
+  'transfer.not_applicable_after_baseline': 'carveout.transfer.refusal.notApplicableAfterBaseline',
+  'transfer.not_applicable_not_in_scope': 'carveout.transfer.refusal.notApplicableNotInScope',
+  'perimeter.consent_required_by_class': 'carveout.item.refusal.consentRequiredByClass',
+  'agreement.legal_reviewer_not_legal': 'carveout.agreements.refusal.legalReviewerNotLegal',
   // Readiness decisions on the decision-use registry and the external-evidence re-check (DOM-P2F-09)
   'tsa.approve.decision_already_used': 'readiness.refusal.codes.tsa_approve_decision_already_used',
   'tsa.approve.decision_evidence_invalid': 'readiness.refusal.codes.tsa_approve_decision_evidence_invalid',
@@ -131,6 +138,20 @@ export const REFUSAL_KEYS: Readonly<Record<string, Entry>> = {
   'readiness.go_no_go.decision_already_used': 'readiness.refusal.codes.go_decision_already_used',
   'readiness.go_no_go.decision_evidence_invalid': 'readiness.refusal.codes.go_decision_evidence_invalid',
   'readiness.go_no_go.decision_other_subject': 'readiness.refusal.codes.go_decision_other_subject',
+  // Day-1 blockers keep blocking go-live (P3 domain review: DOM-P3-01, -02, -04)
+  'readiness.check.rebind_failed': 'readiness.refusal.codes.rebind_failed',
+  'readiness.check.rebind_plan_locked': 'readiness.refusal.codes.rebind_plan_locked',
+  'readiness.check.rebind_reason_required': 'readiness.refusal.codes.rebind_reason_required',
+  'readiness.determination.release_not_allowed': 'readiness.refusal.codes.determination_release_not_allowed',
+  'readiness.execution_blocked': 'readiness.refusal.codes.execution_blocked',
+  // TSA extensions and guards (DOM-P3-06, -07, -13, -15, -17; SEC-P34-08)
+  'tsa.extension.terms_bound': 'readiness.refusal.codes.extension_terms_bound',
+  'tsa.extension.end_date_past': 'readiness.refusal.codes.extension_end_date_past',
+  'tsa.extension.decision_other_tsa': 'readiness.refusal.codes.tsa_decision_other_tsa',
+  'tsa.approve.decision_other_tsa': 'readiness.refusal.codes.tsa_decision_other_tsa',
+  'tsa.activate.not_started': 'readiness.refusal.codes.activate_not_started',
+  'tsa.enduring_locked': 'readiness.refusal.codes.enduring_locked',
+  'readiness.classification_above_clearance': 'readiness.refusal.codes.classification_above_clearance',
   'gates.decide.decision_evidence_invalid': 'gates.refusal.decisionEvidenceInvalid',
   'gates.assessment.review_stale': 'gates.refusal.reviewStale',
   'gates.decide.decision_reused': 'gates.refusal.decisionReused',

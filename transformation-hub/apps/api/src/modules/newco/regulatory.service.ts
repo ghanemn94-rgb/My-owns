@@ -265,18 +265,27 @@ export class RegulatoryService {
     return this.command(ctx, p, r, body);
   }
 
-  /** The authority's outcome is a verified fact: recorded by a verifier other than the registrant, with evidence. */
+  /**
+   * The authority's outcome is a verified fact: recorded by a Legal / regulatory verifier (SEC-P34-05, REQ-AGR-004) other than
+   * the registrant and other than whoever linked the evidence it is recorded on (access-matrix §5.1), with evidence.
+   */
   async recordOutcome(ctx: RequestContext, projectId: string, id: string, body: z.infer<typeof RequirementOutcomeBody>) {
     const p = await this.s.project(ctx, projectId);
     const r = await this.load(ctx, p, id);
     this.s.assertManage(ctx, p, 'newco.regulatory.verify', { classification: r.classification as Classification, requesterUserId: r.createdBy });
+    this.s.assertNotSelf(ctx, p, 'newco.regulatory.verify', r.classification as Classification, [r.createdBy, ...(await this.s.evidenceLinkers(projectId, 'regulatory_requirement', r.id))]);
     return this.command(ctx, p, r, body);
   }
 
+  /**
+   * Conditions satisfied — a verification on evidence (DOM-P3-10 / SEC-P34-01, access-matrix §5.1): not the person who recorded
+   * the conditional grant, nor anyone who linked the requirement's current evidence.
+   */
   async conditionsSatisfied(ctx: RequestContext, projectId: string, id: string, body: { expectedVersion: number; note: string }) {
     const p = await this.s.project(ctx, projectId);
     const r = await this.load(ctx, p, id);
     this.s.assertManage(ctx, p, 'newco.regulatory.verify', { classification: r.classification as Classification, requesterUserId: r.outcomeRecordedBy });
+    this.s.assertNotSelf(ctx, p, 'newco.regulatory.verify', r.classification as Classification, [r.outcomeRecordedBy, ...(await this.s.evidenceLinkers(projectId, 'regulatory_requirement', r.id))]);
     assertVersion(r, body.expectedVersion, 'regulatory requirement');
     const ev = await activeEvidenceCount(this.s.db, projectId, 'regulatory_requirement', id);
     const state = conditionsState({ status: r.status as RequirementStatus, conditions: r.conditions, conditionsSatisfiedAt: r.conditionsSatisfiedAt?.toISOString() ?? null });

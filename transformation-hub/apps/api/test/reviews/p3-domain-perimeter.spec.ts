@@ -11,7 +11,10 @@ import { Personas, approveBaseline, base, carveoutProject, createItem, item, lin
  * `DEFECT …` probes assert the REQUIRED behaviour and are declared with `it.fails` while the defect is open;
  * `P3D_PROBE_PLAIN=1` runs them as plain tests. `CONTROL …` are plain tests. All data is synthetic.
  */
+// Implementer (fix of the P3 domain review): every DEFECT probe of this file is fixed and renamed `… (fixed, regression)` —
+// a plain `it`, assertion unchanged. The alias stays so that P3D_PROBE_PLAIN=1 keeps working for any probe added later.
 const defect = process.env['P3D_PROBE_PLAIN'] ? it : it.fails;
+void defect;
 
 let pid: string;
 let p: Personas;
@@ -40,7 +43,7 @@ describe('P3 domain review — an INCLUDED item marked "transfer not applicable"
     expect(d.carveOutComplete).toBe(false);
   });
 
-  defect('DEFECT DOM-P3-05a: marking both aspects of the only INCLUDED item "not applicable" shows the perimeter as "transferred_verified — all in-scope items transferred with verified evidence"', async () => {
+  it('DOM-P3-05a: marking both aspects of the only INCLUDED item "not applicable" shows the perimeter as "transferred_verified — all in-scope items transferred with verified evidence" (fixed, regression)', async () => {
     const [it0] = (await p.pm.get(`${base(pid)}/perimeter-items`).expect(200)).body.items as { id: string; version: number; disposition: string }[];
     expect(it0!.disposition).toBe('included');
     const legal = await markNotApplicable(it0!.id, 'legal', it0!.version);
@@ -60,7 +63,7 @@ describe('P3 domain review — an INCLUDED item marked "transfer not applicable"
     ).not.toBe('transferred_verified');
   });
 
-  defect('DEFECT DOM-P3-05b: after the baseline is approved, "not applicable" on both aspects takes an in-scope item out of the transfer without a change request (AT-07)', async () => {
+  it('DOM-P3-05b: after the baseline is approved, "not applicable" on both aspects takes an in-scope item out of the transfer without a change request (AT-07) (fixed, regression)', async () => {
     const ws = await workstreamId(p.pm, pid, 'WS06');
     const x = await createItem(p.pm, pid, { type: 'data', name: 'Probe DCIM data set (synthetic)', disposition: 'included', workstreamId: ws, ownerUserId: p.pm.userId });
     expect(x.applied).toBe(true);
@@ -82,7 +85,7 @@ describe('P3 domain review — an INCLUDED item marked "transfer not applicable"
 });
 
 describe('P3 domain review — separation of duties on incorporation verification [REQ-SET-010, access-matrix §2.4]', () => {
-  defect('DEFECT DOM-P3-10b: Legal links the incorporation evidence, the PM records "incorporated", and the same Legal member verifies it on the evidence Legal recorded', async () => {
+  it('DOM-P3-10b: Legal links the incorporation evidence, the PM records "incorporated", and the same Legal member verifies it on the evidence Legal recorded (fixed, regression)', async () => {
     const created = await ok<{ id: string; version: number }>(p.pm.post(`${base(pid)}/legal-entities`, { name: 'Probe JV company (fictional entity)', kind: 'jv_company', role: 'jv_company' }));
     const link = await linkEvidence(p.legal, pid, 'legal_entity', created.id, 'Synthetic registration extract (probe) — linked by Legal');
     let e = (await p.pm.get(`${base(pid)}/legal-entities/${created.id}`).expect(200)).body;
@@ -96,7 +99,7 @@ describe('P3 domain review — separation of duties on incorporation verificatio
 });
 
 describe('P3 domain review — incorporation evidence found defective after verification [AT-06, AT-14, REQ-SET-010, REQ-LCY-007]', () => {
-  defect('DEFECT DOM-P3-08: the only incorporation evidence is rejected as defective — the dimension still says "Incorporation confirmed with verified evidence"', async () => {
+  it('DOM-P3-08: the only incorporation evidence is rejected as defective — the dimension still says "Incorporation confirmed with verified evidence" (fixed, regression)', async () => {
     const entityId = await newcoId(p.pm, pid);
     const link = await linkEvidence(p.pm, pid, 'legal_entity', entityId, 'Synthetic registration extract (probe)');
     let e = (await p.pm.get(`${base(pid)}/legal-entities/${entityId}`).expect(200)).body;

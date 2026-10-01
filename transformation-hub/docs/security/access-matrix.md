@@ -282,6 +282,17 @@ closed by a non-linker). `jv.cp.verify` also decides a checklist item's "not req
 (SEC-P34-10). While a decision paper is `draft` or `submitted` only its requester links evidence to it (SEC-P34-13), so
 the requester stays the only person who shaped the paper.
 
+**"The person who recorded the evidence" — P3 commands as implemented (DOM-P3-10 / SEC-P34-01, P3 part).** Every person who
+linked an active (or conflicting) evidence link of the record (`evidence_link.added_by`, read for the rule whatever the
+caller may see) is an additional `not_self` subject, checked one by one (a refusal is 403 and audited as denied):
+`readiness.check.signoff` (with the check's owner, creator and the recorder of its latest test —
+`apps/api/src/modules/readiness/checks.service.ts`), `newco.incorporation.verify` (with the status recorder —
+`newco/legal-entities.service.ts`), `newco.regulatory.verify` for the outcome (with the registrant) and for "conditions
+satisfied" (with the recorder of the outcome — `newco/regulatory.service.ts`), `carveout.transfer.verify` (with the reporter —
+`carveout/transfers.service.ts`). The specialist "transfer not applicable" determination on an in-scope item
+(`carveout.transfer.verify`, DOM-P3-05) is not by the item's owner or creator. `newco.regulatory.verify` is held by the
+Legal role only (REQ-AGR-004, SEC-P34-05): applicability determinations, outcomes and conditions are recorded by Legal.
+
 Quorum, majority, recusal and tie rules are computed **on the server** from committee membership at the vote timestamp. Historical votes are never recomputed when membership or delegation changes later (master prompt §4.2).
 
 ### 5.2 Special meanings of `authority`
@@ -313,7 +324,7 @@ Quorum, majority, recusal and tie rules are computed **on the server** from comm
 - AI usage: `retrieve` 18, `propose` 19, `none` 153.
 - Audited reads (`auditRead`): `jv.room.read`, `jv.disclosure.view`, `jv.disclosure.download`, `documents.document.download`, `reports.snapshot.export`, `audit.event.export`.
 - Project-level reads for workstream-scoped grants (`projectLevelRead`, §2.2.1, pending confirmation by Mobily data governance): `portfolio.project.read`, `gates.gate.read`, `documents.document.read`, `documents.document.download`.
-- Permissions per role: PLA 25, PFA 25, SPO 75, CHR 37, SEC 63, PM 97, WSL 54, CON 27, FAP 40, FIN 58, LEG 74, CLT 10, AUD 35, EXT 7.
+- Permissions per role: PLA 25, PFA 25, SPO 75, CHR 37, SEC 63, PM 97, WSL 54, CON 27, FAP 39, FIN 58, LEG 74, CLT 10, AUD 35, EXT 7.
 
 #### Identity & administration (`admin.*`, 11 permissions)
 
@@ -449,7 +460,7 @@ Gate roles (DOM-P2-16, REQ-LCY-010; business-gates.md §2.4). `gates.assessment.
 | `newco.incorporation.manage` | C | – |  |  |  |  |  | ● |  |  |  |  | ● |  |  |  |
 | `newco.incorporation.verify` | C,S | – |  |  |  |  |  |  |  |  |  |  | ● |  |  |  |
 | `newco.regulatory.manage` | C | – |  |  |  |  |  |  |  |  |  |  | ● |  |  |  |
-| `newco.regulatory.verify` | C,S | – |  |  |  |  |  |  |  |  | ● |  | ● |  |  |  |
+| `newco.regulatory.verify` | C,S | – |  |  |  |  |  |  |  |  |  |  | ● |  |  |  |
 
 #### Readiness, cutover & TSA (`readiness.*`, 7 permissions)
 
@@ -774,7 +785,7 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
     "newco.incorporation.manage": {"description": "Record incorporation steps and proposed status with evidence.", "conditions": ["classification"], "ai": "none"},
     "newco.incorporation.verify": {"description": "Verify incorporation status against evidence.", "conditions": ["classification", "not_self"], "ai": "none"},
     "newco.regulatory.manage": {"description": "Maintain regulatory requirements and approval register entries (draft).", "conditions": ["classification"], "ai": "none"},
-    "newco.regulatory.verify": {"description": "Record a specialist applicability assessment or a verified approval with validity.", "conditions": ["classification", "not_self"], "ai": "none"},
+    "newco.regulatory.verify": {"description": "Record a specialist applicability assessment or a verified approval with validity (Legal / regulatory roles only — REQ-AGR-004, SEC-P34-05).", "conditions": ["classification", "not_self"], "ai": "none"},
     "readiness.register.read": {"description": "View readiness checks, cutover plans, go/no-go history and the TSA register.", "conditions": ["classification"], "ai": "retrieve"},
     "readiness.check.manage": {"description": "Maintain site/workstream readiness checks and blockers.", "conditions": ["classification", "own_workstream"], "ai": "propose"},
     "readiness.check.signoff": {"description": "Specialist sign-off of a readiness check.", "conditions": ["classification", "not_self"], "ai": "none"},
@@ -918,7 +929,7 @@ If the lead rejects an extension, drop it here and move the equivalent rule into
     },
     "functional_approver": {
       "scopeTypes": ["project", "workstream"],
-      "permissions": ["admin.directory.search", "portfolio.project.read", "governance.committee.read", "governance.meeting.read", "governance.agenda_request.create", "governance.decision.read", "governance.decision.draft", "governance.decision.submit", "governance.conflict.declare", "governance.decision.vote", "governance.action.update", "planning.plan.read", "planning.deliverable.accept", "planning.change_request.assess", "gates.gate.read", "gates.criterion.set_waivability", "gates.assessment.review", "carveout.register.read", "carveout.transfer.verify", "newco.register.read", "newco.regulatory.verify", "readiness.register.read", "readiness.check.signoff", "readiness.tsa.approve_exit", "finance.record.read", "jv.room.read", "jv.dd_request.read", "jv.dd_answer.review", "jv.cp.verify", "documents.document.read", "documents.document.download", "documents.evidence.verify", "documents.claim.verify", "reports.report.generate", "reports.snapshot.read", "ai.assistant.use", "ai.briefing.subscribe", "ai.proposal.read", "notifications.inbox.read", "notifications.preferences.manage_own"],
+      "permissions": ["admin.directory.search", "portfolio.project.read", "governance.committee.read", "governance.meeting.read", "governance.agenda_request.create", "governance.decision.read", "governance.decision.draft", "governance.decision.submit", "governance.conflict.declare", "governance.decision.vote", "governance.action.update", "planning.plan.read", "planning.deliverable.accept", "planning.change_request.assess", "gates.gate.read", "gates.criterion.set_waivability", "gates.assessment.review", "carveout.register.read", "carveout.transfer.verify", "newco.register.read", "readiness.register.read", "readiness.check.signoff", "readiness.tsa.approve_exit", "finance.record.read", "jv.room.read", "jv.dd_request.read", "jv.dd_answer.review", "jv.cp.verify", "documents.document.read", "documents.document.download", "documents.evidence.verify", "documents.claim.verify", "reports.report.generate", "reports.snapshot.read", "ai.assistant.use", "ai.briefing.subscribe", "ai.proposal.read", "notifications.inbox.read", "notifications.preferences.manage_own"],
       "defaultClearance": "confidential"
     },
     "finance_restricted": {

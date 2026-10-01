@@ -68,7 +68,7 @@ describe('SEC-P34-01 — a readiness sign-off by the person who linked the check
     version = t.body.version;
   }, 120_000);
 
-  it.fails('DEFECT SEC-P34-01: whoever recorded the evidence of a check cannot sign it off (403)', async () => {
+  it('SEC-P34-01 (fixed, regression): whoever recorded the evidence of a check cannot sign it off (403)', async () => {
     const r = await p.techLead.post(`${G(projectId)}/readiness-checks/${checkId}/sign-off`, { expectedVersion: version, outcome: 'passed', note: 'Signed on my own evidence (probe)' });
     console.log(`SEC-P34-01 observed: sign-off by the evidence linker → ${r.status} ${JSON.stringify(r.body)}`);
     expect(r.status).toBe(403);
@@ -168,7 +168,7 @@ describe('SEC-P34-05 — regulatory register: a non-legal functional approver ma
     expect(roles.rows.map((x) => x.role)).toEqual(['functional_approver']); // no legal / regulatory role
   });
 
-  it.fails('DEFECT SEC-P34-05: only Legal / Regulatory roles record an applicability determination (the approver is refused, 403)', async () => {
+  it('SEC-P34-05 (fixed, regression): only Legal / Regulatory roles record an applicability determination (the approver is refused, 403)', async () => {
     const r = await p.approver.post(`${G(projectId)}/regulatory-requirements/${reqId}/assess-applicability`, { expectedVersion: version, applicability: 'not_applicable', basis: 'Determined by a non-legal functional approver (probe)' });
     console.log(`SEC-P34-05 observed: applicability by the functional approver → ${r.status} applicability=${r.body?.applicability ?? r.body?.code}`);
     expect(r.status).toBe(403);
@@ -199,7 +199,7 @@ describe('SEC-P34-06 — TSA charge shown by RBAC alone, outside the caller’s 
     expect((await p.techLead.get(`${G(projectId)}/budget-lines/${lineId}`)).status).toBe(404); // finance reach: its workstream only
   });
 
-  it.fails('DEFECT SEC-P34-06: the tech lead (finance.record.read on one workstream only) does not see the charge of a project-level TSA', async () => {
+  it('SEC-P34-06 (fixed, regression): the tech lead (finance.record.read on one workstream only) does not see the charge of a project-level TSA', async () => {
     const r = (await p.techLead.get(`${G(projectId)}/tsa-services/${tsaId}`).expect(200)).body;
     console.log(`SEC-P34-06 observed: charge shown to the tech lead → ${JSON.stringify({ charge: r.charge, chargeBasis: r.chargeBasis, chargeRedacted: r.chargeRedacted })}`);
     expect(r.charge).toBeNull();
@@ -227,7 +227,7 @@ describe('SEC-P34-07 — consents above the caller’s clearance are shown insid
     expect(JSON.stringify(own.consents)).toContain(counterparty);
   });
 
-  it.fails('DEFECT SEC-P34-07: the perimeter item detail and the Day-1 positions never show a consent the caller cannot read', async () => {
+  it('SEC-P34-07 (fixed, regression): the perimeter item detail and the Day-1 positions never show a consent the caller cannot read', async () => {
     const item = (await p.pm.get(`${G(projectId)}/perimeter-items/${itemId}`).expect(200)).body;
     const day1 = (await p.pm.get(`${G(projectId)}/perimeter/day1-contract-positions`).expect(200)).body;
     console.log(`SEC-P34-07 observed: consents on the item shown to the PM → ${JSON.stringify(item.consents)}; in day-1 positions: ${JSON.stringify(day1).includes(counterparty)}`);
@@ -251,7 +251,7 @@ describe('SEC-P34-08 — a TSA is relabelled above its editor’s clearance [acc
     expect([403, 404]).toContain(r.status);
   });
 
-  it.fails('DEFECT SEC-P34-08: PATCH may not raise the classification above the editor’s clearance (403, record unchanged)', async () => {
+  it('SEC-P34-08 (fixed, regression): PATCH may not raise the classification above the editor’s clearance (403, record unchanged)', async () => {
     const r = await p.pm.patch(`${G(projectId)}/tsa-services/${tsaId}`, { expectedVersion: 1, classification: 'strictly_confidential' });
     const row = (await owner().query(`select classification from tsa_service where id = $1`, [tsaId])).rows[0];
     console.log(`SEC-P34-08 observed: relabel by the PM (clearance confidential) → ${r.status}; stored classification ${row.classification}`);

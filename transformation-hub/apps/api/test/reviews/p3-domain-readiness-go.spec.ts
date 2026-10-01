@@ -28,7 +28,10 @@ import {
  * `P3D_PROBE_PLAIN=1` runs them as plain tests to show the failure message. `CONTROL …` / `OBSERVED …` are plain tests.
  * All data is synthetic.
  */
+// Implementer (fix of the P3 domain review): every DEFECT probe of this file is fixed and renamed `… (fixed, regression)` —
+// a plain `it`, assertion unchanged. The alias stays so that P3D_PROBE_PLAIN=1 keeps working for any probe added later.
 const defect = process.env['P3D_PROBE_PLAIN'] ? it : it.fails;
+void defect;
 
 let projectId: string;
 let p: Personas;
@@ -93,7 +96,7 @@ describe('P3 domain review — a failed Day-1 blocker must keep blocking the GO 
     expect((r.body.details.blockers as { id: string }[]).map((b) => b.id)).toContain(x.checkId);
   });
 
-  defect('DEFECT DOM-P3-01: a descriptive PATCH re-binds the FAILED blocker to another plan and the GO of the original plan is accepted', async () => {
+  it('DOM-P3-01: a descriptive PATCH re-binds the FAILED blocker to another plan and the GO of the original plan is accepted (fixed, regression)', async () => {
     const a = await planWithBlocker('S-P3D-1', 'Transition A');
     await failTest(a.checkId);
     const s = await linkAndSubmit(a.planId);
@@ -113,7 +116,7 @@ describe('P3 domain review — a failed Day-1 blocker must keep blocking the GO 
     expect(r.status, `PATCH ${patch.status} ${JSON.stringify(patch.body)}; check now ${JSON.stringify(row)}; GO ${r.status} ${JSON.stringify(r.body)}`).not.toBe(201);
   });
 
-  defect('DEFECT DOM-P3-02: the sign-off specialist alone re-determines a FAILED non-waivable blocker as non-blocking and the GO is accepted', async () => {
+  it('DOM-P3-02: the sign-off specialist alone re-determines a FAILED non-waivable blocker as non-blocking and the GO is accepted (fixed, regression)', async () => {
     const b = await planWithBlocker('S-P3D-2', 'Transition B');
     await failTest(b.checkId);
     const s = await linkAndSubmit(b.planId);
@@ -137,7 +140,7 @@ describe('P3 domain review — a failed Day-1 blocker must keep blocking the GO 
     expect(r.status, `determination ${det.status} ${JSON.stringify(det.body)}; GO ${r.status} ${JSON.stringify(r.body)}`).not.toBe(201);
   });
 
-  defect('DEFECT DOM-P3-04: after the GO, a blocker test fails — the go-live execution is still recorded; the GO is not flagged', async () => {
+  it('DOM-P3-04: after the GO, a blocker test fails — the go-live execution is still recorded; the GO is not flagged (fixed, regression)', async () => {
     const d = await planWithBlocker('S-P3D-4', 'Transition D');
     await clearCheck(p, projectId, d.checkId);
     const s = await linkAndSubmit(d.planId);
@@ -156,7 +159,7 @@ describe('P3 domain review — a failed Day-1 blocker must keep blocking the GO 
     expect(exec.status, `plan before execution: status ${v.status}, goEvaluation ${JSON.stringify(v.goEvaluation)}; execution ${exec.status} ${JSON.stringify(exec.body)}; history ${JSON.stringify(hist)}`).not.toBe(201);
   });
 
-  defect('DEFECT DOM-P3-09: the evidence the specialist signed off on is rejected as defective — the check stays "passed" and the GO is accepted', async () => {
+  it('DOM-P3-09: the evidence the specialist signed off on is rejected as defective — the check stays "passed" and the GO is accepted (fixed, regression)', async () => {
     const e = await planWithBlocker('S-P3D-9', 'Transition E');
     let c = await check(p.pm, projectId, e.checkId);
     const t = await p.pm.post(`${P(projectId)}/readiness-checks/${e.checkId}/test-runs`, { expectedVersion: c.version, result: 'passed', note: 'Test passed (synthetic)' });
@@ -181,7 +184,7 @@ describe('P3 domain review — a failed Day-1 blocker must keep blocking the GO 
 });
 
 describe('P3 domain review — separation of duties on the Day-1 sign-off [REQ-RDY-001, access-matrix §2.4]', () => {
-  defect('DEFECT DOM-P3-10: a second project manager who also holds the sign-off role links the evidence and then signs the check off on it (evidence recorder = sign-off)', async () => {
+  it('DOM-P3-10: a second project manager who also holds the sign-off role links the evidence and then signs the check off on it (evidence recorder = sign-off) (fixed, regression)', async () => {
     const ws = await workstreamId(p.pm, projectId, 'WS07');
     // workstream_lead cannot be granted at project scope (membership.scope_not_allowed) and a workstream-scoped lead has no
     // project-level documents.evidence.link, so the reachable combination is a (second) project manager who is also

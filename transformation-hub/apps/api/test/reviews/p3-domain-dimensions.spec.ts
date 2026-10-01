@@ -12,7 +12,10 @@ import { computeStatusDimensions, isCarveOutComplete, type DimensionInput } from
  * so the rule is exercised directly with the inputs `buildInput` produces. `DEFECT` is `it.fails` while open
  * (`P3D_PROBE_PLAIN=1` runs it plain); `OBSERVED` pins current behaviour. No database access.
  */
+// Implementer (fix of the P3 domain review): the DEFECT probe of this file is fixed and renamed `… (fixed, regression)` — a
+// plain `it`, assertion unchanged. The alias stays so that P3D_PROBE_PLAIN=1 keeps working for any probe added later.
 const defect = process.env['P3D_PROBE_PLAIN'] ? it : it.fails;
+void defect;
 
 const base: DimensionInput = {
   newcoIncorporation: { status: 'incorporated', evidenceVerified: true },
@@ -33,7 +36,7 @@ describe('P3 domain review — TSA problems after standalone acceptance [AT-10, 
     expect(d.explanationI18n.map((m) => m.code)).toContain('dimension.readiness.tsa_blocked');
   });
 
-  defect('DEFECT DOM-P3-11: once G4 is approved, an expired-unresolved TSA disappears from the dimension and the carve-out is shown COMPLETE', () => {
+  it('DOM-P3-11: once G4 is approved, an expired-unresolved TSA disappears from the dimension and the carve-out is shown COMPLETE (fixed, regression)', () => {
     const input: DimensionInput = { ...base, standaloneAccepted: true, tsas: [{ status: 'expired_unresolved', isEnduringArrangement: false }, { status: 'breached', isEnduringArrangement: false }] };
     const all = computeStatusDimensions(input);
     const d = all.find((x) => x.key === 'operational_readiness')!;
@@ -47,8 +50,11 @@ describe('P3 domain review — TSA problems after standalone acceptance [AT-10, 
   });
 });
 
+// Implementer (fix): the OBSERVED probe below pinned the reported behaviour; per the probe convention it was updated together
+// with the fix (template read and inputs unchanged; GO / perimeter-approval inputs added) and now pins the implemented rule —
+// see the "Fix status" of the review.
 describe('P3 domain review — dimension states vs business-gates.md §1 and the dc-carveout template [REQ-LCY-006, REQ-LCY-014]', () => {
-  it('OBSERVED DOM-P3-12: the computed states are not the documented state machines — a Day-1 GO, TSA exits and the approved perimeter never move a dimension', () => {
+  it('DOM-P3-12 (fixed): the computed states are the documented state machines — a Day-1 GO, TSA exits and the approved perimeter move a dimension', () => {
     const template = JSON.parse(readFileSync(join(__dirname, '..', '..', '..', '..', 'packages', 'db', 'seed', 'templates', 'dc-carveout.v1.json'), 'utf8')) as {
       statusDimensions: { key: string; states: { key: string }[] }[];
     };
@@ -63,24 +69,27 @@ describe('P3 domain review — dimension states vs business-gates.md §1 and the
       base, // every check passed — no Day-1 GO recorded anywhere in the input
       { ...base, standaloneAccepted: true, tsas: [{ status: 'active', isEnduringArrangement: false }] },
       { ...base, standaloneAccepted: true, tsas: [{ status: 'exit_accepted', isEnduringArrangement: false }] },
+      // Inputs the fix adds (DimensionInput now carries the GO / acceptance of each transition plan and the perimeter approval).
+      { ...base, perimeter: [{ disposition: 'included', transferStatus: 'not_started', economicTransferStatus: 'not_started' }], perimeterApproved: true },
+      { ...base, cutoverPlans: [{ status: 'approved_go', goFlagged: false }] },
+      { ...base, cutoverPlans: [{ status: 'accepted', goFlagged: false }] },
     ];
     const produced: Record<string, Set<string>> = {};
     for (const i of inputs) for (const d of computeStatusDimensions(i)) (produced[d.key] ??= new Set()).add(d.state);
     const undocumented = Object.fromEntries(Object.entries(produced).map(([k, s]) => [k, [...s].filter((x) => !documented[k]!.includes(x)).sort()]));
-    // Current behaviour: states the cockpit shows that business-gates.md §1 / the template do not define …
-    expect(undocumented['incorporation']).toEqual(['incorporated_unverified']);
-    expect(undocumented['perimeter_transfer']).toEqual(['blocked', 'in_progress', 'perimeter_not_defined']);
-    expect(undocumented['operational_readiness']).toEqual(['blocked', 'day1_ready', 'in_progress']);
-    // … and documented states the rule can never produce: DimensionInput carries no cutover / go-no-go, no perimeter-version
-    // approval and no TSA-exit signal ("What moves it: readiness sign-offs, go/no-go decision, post-transition acceptance,
-    // TSA exits" — business-gates.md §1).
-    expect(produced['operational_readiness']!.has('day1_go_approved')).toBe(false);
-    expect(produced['operational_readiness']!.has('operating_with_transitional_services')).toBe(false);
-    expect(produced['operational_readiness']!.has('transitional_services_exited')).toBe(false);
-    expect(produced['perimeter_transfer']!.has('perimeter_approved')).toBe(false);
-    // Every mandatory check passed but no GO decision exists: the dimension already reads "Day-1 ready".
-    expect(ops(base).state).toBe('day1_ready');
-    // G4 approved while a TSA is still active: "standalone_accepted", not "operating with transitional services".
+    // Implemented: every state the cockpit shows is defined by business-gates.md §1 / the template …
+    expect(undocumented['incorporation']).toEqual([]);
+    expect(undocumented['perimeter_transfer']).toEqual([]);
+    expect(undocumented['operational_readiness']).toEqual([]);
+    // … and the GO decision, the post-transition acceptance, the TSA exits and the perimeter approval move the dimensions.
+    expect(produced['operational_readiness']!.has('day1_go_approved')).toBe(true);
+    expect(produced['operational_readiness']!.has('operating_with_transitional_services')).toBe(true);
+    expect(produced['operational_readiness']!.has('transitional_services_exited')).toBe(true);
+    expect(produced['perimeter_transfer']!.has('perimeter_approved')).toBe(true);
+    // Every mandatory check passed but no GO decision exists: still in progress, never "Day-1 ready" without a GO.
+    expect(ops(base).state).toBe('readiness_in_progress');
+    // G4 approved while a TSA is still active: "standalone_accepted" — the terminal state needs the TSA exits.
     expect(ops({ ...base, standaloneAccepted: true, tsas: [{ status: 'active', isEnduringArrangement: false }] }).state).toBe('standalone_accepted');
+    expect(ops({ ...base, standaloneAccepted: true, tsas: [{ status: 'exit_accepted', isEnduringArrangement: false }] }).state).toBe('transitional_services_exited');
   });
 });

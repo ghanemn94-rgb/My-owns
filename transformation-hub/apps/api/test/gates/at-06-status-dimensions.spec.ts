@@ -23,6 +23,13 @@ beforeAll(async () => {
       where id = (select legal_entity_id from project_entity where project_id = $1 and role = 'newco')`,
     [projectId],
   );
+  // … with the active evidence that verification requires (DOM-P3-08: a verification without valid evidence reads
+  // "evidence pending").
+  await owner().query(
+    `insert into evidence_link (org_id, project_id, target_type, target_id, note, added_by)
+     select $1, $2, 'legal_entity', legal_entity_id, 'Synthetic registration extract (test)', $3 from project_entity where project_id = $2 and role = 'newco'`,
+    [orgId, projectId, p.pm.userId],
+  );
   // Perimeter: one item transfer in progress, one not started; one excluded item.
   await owner().query(
     `insert into perimeter_item (id, org_id, project_id, code, type, name, disposition, transfer_status, economic_transfer_status)
@@ -43,8 +50,8 @@ describe('AT-06 — independent status dimensions [REQ-LCY-006, REQ-LCY-007, REQ
     expect(r.status, JSON.stringify(r.body)).toBe(201);
     expect(state(r.body.items)).toEqual({
       incorporation: 'incorporated_verified',
-      perimeter_transfer: 'in_progress',
-      operational_readiness: 'in_progress',
+      perimeter_transfer: 'transfer_in_progress',
+      operational_readiness: 'readiness_in_progress',
       jv_transaction: 'not_started',
     });
     expect(r.body.carveOutComplete).toBe(false);
@@ -78,14 +85,15 @@ describe('AT-06 — independent status dimensions [REQ-LCY-006, REQ-LCY-007, REQ
     await owner().query(`insert into outbox_event (id, org_id, project_id, type, aggregate_type, payload) values (gen_random_uuid(), $1, $2, 'perimeter.changed', 'perimeter_item', '{}'::jsonb)`, [orgId, projectId]);
     await runWorker();
     let d = (await p.pm.get(`/api/v1/projects/${projectId}/status-dimensions`).expect(200)).body;
-    expect(state(d.items).perimeter_transfer).toBe('in_progress');
+    // One in-scope item fully transferred and verified, the other not (combined not started) → partially transferred.
+    expect(state(d.items).perimeter_transfer).toBe('partially_transferred');
 
     await owner().query(`update perimeter_item set economic_transfer_status = 'transferred_verified' where project_id = $1 and disposition = 'included'`, [projectId]);
     await owner().query(`insert into outbox_event (id, org_id, project_id, type, aggregate_type, payload) values (gen_random_uuid(), $1, $2, 'perimeter.changed', 'perimeter_item', '{}'::jsonb)`, [orgId, projectId]);
     await runWorker();
     d = (await p.pm.get(`/api/v1/projects/${projectId}/status-dimensions`).expect(200)).body;
     // Incorporation verified AND perimeter transferred — still not complete while operational readiness is pending.
-    expect(state(d.items)).toMatchObject({ incorporation: 'incorporated_verified', perimeter_transfer: 'transferred_verified', operational_readiness: 'in_progress' });
+    expect(state(d.items)).toMatchObject({ incorporation: 'incorporated_verified', perimeter_transfer: 'transferred_verified', operational_readiness: 'readiness_in_progress' });
     expect(d.carveOutComplete).toBe(false);
     const job = await owner().query(`select status, result from job where project_id = $1 and kind = 'gates.recompute_dimensions' order by created_at desc limit 1`, [projectId]);
     expect(job.rows[0].status).toBe('succeeded');

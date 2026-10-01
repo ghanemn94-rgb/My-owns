@@ -48,6 +48,11 @@ export class ReadinessController {
     return this.checks.update(ctx, i.params.projectId, i.params.checkId, i.body);
   }
 
+  @ApiRoute(R.rebindReadinessCheck)
+  rebindCheck(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.rebindReadinessCheck>) {
+    return this.checks.rebind(ctx, i.params.projectId, i.params.checkId, i.body);
+  }
+
   @ApiRoute(R.determineReadinessCheck)
   determine(@Ctx() ctx: RequestContext, @Input() i: RouteInput<typeof R.determineReadinessCheck>) {
     return this.checks.determine(ctx, i.params.projectId, i.params.checkId, i.body);

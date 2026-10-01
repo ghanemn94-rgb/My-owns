@@ -381,3 +381,32 @@ contains "secret" and is assigned from the JV fixture — the `generic-api-key` 
 in a later commit (no allow-list entry added). Commit `3bdb445` then quoted that line in this section (line 379 at that
 commit; reworded in the next commit), which the rule reports as a second fingerprint of the same false positive. The implementer's history rewrite of its unpushed commits was not permitted in its session;
 a squash merge of the fix branch (or a rewrite by the lead) removes the blob from the pushed history.
+
+Lead's note (2026-10-01): the fix branch was integrated as one squash commit, `d6cbec9`; the two commits with the false positive never entered the pushed history. `secret-scan.sh history` on the integration branch: PASS.
+
+---
+
+## 9. Fix status — P3-module findings: readiness, NewCo, carve-out, TSA (implementer, separate context)
+
+Written by the implementer (`backend-data-engineer`, implementation mode) in its own context; the reviewer's text above is
+unchanged. Scope of this section: SEC-P34-01 for the readiness sign-off, the NewCo incorporation verification and the
+regulatory outcome / conditions-satisfied (plus the transfer verification), SEC-P34-05, -06, -07, -08. The JV / finance /
+governance part of SEC-P34-01 and SEC-P34-02, -03, -04, -09, -10, -12, -13, -17 are fixed by another implementer, which records
+its own fix status (the two `DEFECT` probes SEC-P34-02 / -03 of `p34-sec-registers.spec.ts` are left to it and are still
+expected fails on this branch). Every fixed `DEFECT` probe is renamed "… (fixed, regression)" and is a plain `it` with its
+assertion unchanged; `CONTROL` probes are unchanged. Commits: `3e9c021`, `bae6077`, `d799aad`, `593c408` (and the
+documentation commit `a493f34`).
+
+| Finding | Status | Rule → file | Tests |
+|---|---|---|---|
+| **SEC-P34-01** (P3 part = DOM-P3-10) | **Fixed** | Every person who linked an active (or conflicting) evidence link of the record (`evidence_link.added_by`, read for the rule whatever the caller may see) is an additional `not_self` subject, checked one by one (403, audited as denied): readiness sign-off (with owner, creator, latest test recorder) → `apps/api/src/modules/readiness/{readiness.support.ts (evidenceLinkers), checks.service.ts (signOff)}`; incorporation verify → `apps/api/src/modules/newco/{newco.support.ts (evidenceLinkers, assertNotSelf), legal-entities.service.ts}`; regulatory outcome (with the registrant) and conditions satisfied (with the outcome recorder) → `newco/regulatory.service.ts`; transfer verify → `carveout/{carveout.support.ts, transfers.service.ts}`. access-matrix §5.1 note | `p34-sec-registers.spec.ts` "SEC-P34-01 (fixed, regression): whoever recorded the evidence of a check cannot sign it off (403)"; `p3-domain-readiness-go.spec.ts` "DOM-P3-10: … (fixed, regression)"; `p3-domain-perimeter.spec.ts` "DOM-P3-10b: … (fixed, regression)"; `carveout/p3-fixes-newco.spec.ts` "DOM-P3-10: whoever linked the incorporation evidence does not verify on it (403); the refusal is audited"; `carveout/p3-fixes-carveout.spec.ts` "a second PM who also holds a verifier role links the transfer evidence and is refused the verification (403)" |
+| **SEC-P34-05** | **Fixed** (REQ-AGR-004 as written) | `newco.regulatory.verify` is held by the Legal role only (`functional_approver` removed): applicability determinations, outcomes and conditions satisfied are Legal's → `packages/domain/src/policy/policy-matrix.json` (description "Legal / regulatory roles only — REQ-AGR-004, SEC-P34-05"), `docs/security/access-matrix.md` (JSON, §6 table, role counts; policy drift test green). The demo seed records no applicability determination (its single Legal persona is the registrant) → `newco/newco.seed.ts`. Open question Q-P3-SEC05 (a separate regulatory-affairs role, if any) | `p34-sec-registers.spec.ts` "SEC-P34-05 (fixed, regression): only Legal / Regulatory roles record an applicability determination (the approver is refused, 403)"; `carveout/carveout-rules.spec.ts` regulatory flow now uses two more synthetic Legal members (registrant ≠ assessor ≠ outcome recorder) |
+| **SEC-P34-07** | **Fixed** | Consents listed with a perimeter item (detail) and in the Day-1 contract positions are read with `visibilitySql(ctx, pid, { classification: consent.classification })` in SQL and only for callers with a project-wide `carveout.register.read` (`visibleConsentsOf`); the unfiltered list is used only for the Day-1 / reconciliation rules (statuses, no codes shown) → `apps/api/src/modules/carveout/perimeter.service.ts` (`visibleConsentsOf`, `consentsOf(…, visible)`, `detail`, `day1Positions`) | `p34-sec-registers.spec.ts` "SEC-P34-07 (fixed, regression): the perimeter item detail and the Day-1 positions never show a consent the caller cannot read" |
+| SEC-P34-06 | **Fixed** | The TSA charge and its basis are shown only when `finance.record.read` holds with the finance-domain clearance and the reach over the TSA's workstream (`canSeeCharge` = the finance module's rule); otherwise redacted → `apps/api/src/modules/readiness/tsa.service.ts` | `p34-sec-registers.spec.ts` "SEC-P34-06 (fixed, regression): the tech lead (finance.record.read on one workstream only) does not see the charge of a project-level TSA" |
+| SEC-P34-08 | **Fixed** | A TSA PATCH whose resulting classification exceeds the editor's clearance is 403 `readiness.classification_above_clearance` (record unchanged), as at creation → `tsa.service.ts` (`update`); refusal text en + ar. `readiness-isolation.spec.ts` now raises the classification with a cleared editor (as the review recommended) | `p34-sec-registers.spec.ts` "SEC-P34-08 (fixed, regression): PATCH may not raise the classification above the editor's clearance (403, record unchanged)"; `readiness/readiness-isolation.spec.ts` |
+
+Verification (implementer's branch at `46e75ab` + `5fd43ca`): `pnpm lint` / `pnpm typecheck` pass; full API suite 116 files,
+950 passed + 9 expected fail (none of them in this section's scope: SEC-P34-01 (CP), -02, -03, -04, -09, -12, -13, DOM-P2F-02,
+-04); Playwright full suite 315/316 (one navigation timeout in `p3-readiness.spec.ts`, passed on re-run, 3/3), with e2e
+`p3-carveout.spec.ts` (c) adapted to SEC-P34-05 (`5fd43ca`: the functional approver is not offered the assessment; a second
+Legal member makes it); secret scan (tree) PASS.

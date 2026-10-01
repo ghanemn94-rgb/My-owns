@@ -6,11 +6,10 @@ const DEMO = 'Demo';
 /**
  * NewCo demo scenario (idempotent; through the services). The demo NewCo's incorporation status is the one declared at
  * project creation ("incorporation in progress", proposed, unverified) — the seed never invents an incorporation or a
- * verification. Register entries are synthetic: an item referenced by the source summary stays
- * "Assessment pending — specialist"; only a fictional INTERNAL approval gets a (synthetic, labelled) applicability
- * assessment to show the flow. No approval is recorded as obtained. Register entries are maintained by Legal only
- * (REQ-AGR-004); the applicability assessment is recorded by a different verifier (the functional approver), never the
- * registrant.
+ * verification. Register entries are synthetic and every one stays "Assessment pending — specialist": register edits AND
+ * the applicability / outcome determinations are for Legal / regulatory roles only (REQ-AGR-004, SEC-P34-05) and never by
+ * the registrant — the demo has a single Legal persona (the registrant), so no determination is recorded. The fictional
+ * INTERNAL approval is only put in preparation. No approval is recorded as obtained.
  */
 export const newcoSeed: ModuleSeed = {
   name: 'newco',
@@ -53,8 +52,7 @@ export const newcoSeed: ModuleSeed = {
         gateKey: 'G2',
       }),
     );
-    await asUser('approver', (ctx) => reg.assessApplicability(ctx, pid, internal.id, { expectedVersion: 1, applicability: 'applicable', basis: `${DEMO}: synthetic assessment for the demo sandbox — not a real determination` }));
-    await asUser('legal', (ctx) => reg.progress(ctx, pid, internal.id, { expectedVersion: 2, command: 'start_preparation', note: `${DEMO}: preparation started` }));
-    log('newco: 3 demo register entries (source item pending specialist assessment; internal approval in preparation)');
+    await asUser('legal', (ctx) => reg.progress(ctx, pid, internal.id, { expectedVersion: 1, command: 'start_preparation', note: `${DEMO}: preparation started` }));
+    log('newco: 3 demo register entries (all pending specialist assessment; internal approval in preparation)');
   },
 };

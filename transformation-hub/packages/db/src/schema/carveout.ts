@@ -455,6 +455,8 @@ export const tsaService = pgTable(
     residualRisks: text('residual_risks'),
     isEnduringArrangement: boolean('is_enduring_arrangement').notNull().default(false),
     status: tsaStatus('status').notNull().default('proposed'),
+    /** Status the TSA had when the breach was recorded; `remedy_breach` returns to it (DOM-P3-17). */
+    preBreachStatus: tsaStatus('pre_breach_status'),
     escalationId: uuid('escalation_id'),
     /** Governance decision that approved the TSA terms (type tsa_approval_or_extension). */
     approvalDecisionId: uuid('approval_decision_id'),
@@ -557,11 +559,16 @@ export const cutoverDecisionRecord = pgTable(
     orgId: orgIdCol(),
     projectId: projectIdCol().references(() => project.id),
     cutoverPlanId: uuid('cutover_plan_id').notNull(),
-    /** submitted | returned_to_planning | rehearsal | go | no_go | go_blocked | executed | rolled_back | accepted */
+    /**
+     * submitted | returned_to_planning | rehearsal | go | no_go | go_blocked | executed | rolled_back | accepted |
+     * go_flagged (a gating check open again after the GO — DOM-P3-04) | execution_blocked | check_bound / check_unbound
+     * (re-binding of a check — DOM-P3-01)
+     */
     kind: varchar('kind', { length: 32 }).notNull(),
     fromStatus: cutoverStatus('from_status'),
     toStatus: cutoverStatus('to_status'),
-    actorUserId: uuid('actor_user_id').notNull(),
+    /** Null for entries recorded by the system (e.g. a GO flagged by the evidence reaction job — DOM-P3-09). */
+    actorUserId: uuid('actor_user_id'),
     rationale: text('rationale'),
     goDecisionId: uuid('go_decision_id'),
     /** Server evaluation at that moment: open blockers and missing prerequisites. */

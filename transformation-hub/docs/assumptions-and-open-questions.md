@@ -99,3 +99,28 @@ not Mobily determinations; each can be changed once the governance owner decides
 | Q-42 | Do vacant voting seats count in the quorum fraction? Do recused members stay in its denominator? | Corporate Governance | A-42 |
 | Q-43 | May an individual approver (sponsor / chair) approve a baseline or change request within the committee's delegation, or must each go to a committee vote? Are there schedule-impact limits? | Corporate Governance / PMO | A-43 |
 | Q-44 | Which function verifies the approval record of a delegation matrix and of external authority decisions? | Corporate Secretary / Legal | A-47 (any holder of `documents.evidence.verify`, with separation of duties) |
+
+## P3 domain / security review fixes — readiness, carve-out, NewCo, TSA (implementation 2026-10-01)
+
+Rules made explicit while fixing the P3 findings (`docs/reviews/P3-domain-review.md`, `docs/reviews/P3-P4-security-review.md`;
+`docs/governance/business-gates.md` §1, §5, §6). They are the current written rules of this build, not Mobily
+determinations; each can be changed once the named owner decides.
+
+| ID | Assumption | Where it applies | How to reverse |
+|---|---|---|---|
+| A-P3-02 | **A determination never releases an open readiness blocker (DOM-P3-02):** lowering `blocker` / `mandatory` is refused for a failed check and for an open check gating a plan under go/no-go decision or with a GO; release goes through the waiver register (waivable checks only) | `packages/domain/src/readiness.ts` `assertReadinessDetermination` | Q-P3-02: allow a second-person (Operations) re-determination instead of the waiver register |
+| A-P3-05 | **"Transfer not applicable" on an in-scope item (DOM-P3-05):** one aspect only (never both — an item that does not transfer is reclassified); before the item is in an approved baseline, a specialist determination with its basis by a holder of `carveout.transfer.verify` (Finance / Legal / functional approver) other than the item's owner or creator; afterwards a change request applied by `apply-change` | `apps/api/src/modules/carveout/transfers.service.ts`, `perimeter.service.ts`, `packages/domain/src/perimeter.ts` | Q-P3-05: restrict which aspect may be N/A (e.g. economic only) or which function determines it |
+| A-P3-12 | **Status-dimension vocabulary (DOM-P3-12):** the documented machines plus the exception state `blocked` (P0 decision D-15), `not_applicable` for incorporation, `perimeter_draft` before `not_started`, and the label "Partially transferred — other in-scope items pending" (the platform does not know whether interim arrangements cover the rest) | `packages/domain/src/carveout.ts` `computeStatusDimensions` / `DIMENSION_STATES`; template `dc-carveout.v1.json` | Q-P3-12: domain owner to approve the amended vocabulary or prescribe another |
+| A-P3-13 | **A TSA decision backs one TSA (DOM-P3-13, conservative option):** a `tsa_approval_or_extension` decision used for the terms or the extension of TSA A never backs a use for TSA B; it may still approve A's terms and one extension of A | `apps/api/src/modules/readiness/tsa.service.ts` (`assertSameTsa`) | Q-P3-13: allow a decision to cover several TSAs explicitly (paper naming the TSAs, `DECISION_SUBJECT_TYPES`) |
+| A-P3-17a | **Legal reviewer of an agreement (DOM-P3-17)** must hold the `legal_restricted` role in the project | `apps/api/src/modules/carveout/agreements.service.ts` (`LEGAL_REVIEWER_ROLES`) | Q-P3-17: add or change the roles that may review agreements |
+| A-P3-17b | **Accelerated TSA exit after a breach (DOM-P3-17):** `accelerate_exit` (`breached → exit_in_progress`) records the accelerating decision in its required note; no decision record is linked yet | `tsa.service.ts` `transitionSimple` | Q-P3-17: require a linked `tsa_approval_or_extension` decision (decision-use kind) |
+| A-P3-SEC05 | **Regulatory applicability, outcomes and conditions are recorded by the Legal role only (SEC-P34-05, REQ-AGR-004):** `newco.regulatory.verify` is no longer held by the functional approver; the demo seed records no applicability determination | `packages/domain/src/policy/policy-matrix.json`, `docs/security/access-matrix.md` | Q-P3-SEC05: a distinct regulatory-affairs role, if Mobily has one, would also hold it |
+
+| ID | Question | Owner (role) | Current handling |
+|---|---|---|---|
+| Q-P3-02 | May a failed or open Day-1 blocker be re-determined (non-blocking) by the Operations specialist with a second person, or only waived through the waiver register? | Operations / Day-1 readiness owner — Assessment pending | A-P3-02 |
+| Q-P3-05 | Which transfer aspects (legal / economic) may legitimately be "not applicable" for an item that stays Included / Shared, and which function determines it? | Legal / Finance — Assessment pending | A-P3-05 |
+| Q-P3-12 | Approve the amended status-dimension vocabulary (business-gates.md §1 rule 8) | Domain owner (carve-out programme) | A-P3-12 |
+| Q-P3-13 | May one `tsa_approval_or_extension` decision approve the terms of one TSA and the extension of another (the documented P2 rule), or does a decision back one TSA only? | Governance owner — Assessment pending | A-P3-13 (conservative option recommended by the P3 domain review) |
+| Q-P3-17 | Which roles may act as the legal reviewer of an agreement; must an accelerated TSA exit link the decision record? | Legal; governance owner | A-P3-17a, A-P3-17b |
+| Q-P3-SEC05 | Is there a regulatory-affairs role, separate from Legal, that records regulatory applicability and outcomes? | Legal / Regulatory Affairs | A-P3-SEC05 |
