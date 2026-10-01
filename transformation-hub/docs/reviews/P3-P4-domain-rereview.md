@@ -712,3 +712,83 @@ DOM-P2F-02 / DOM-P2F-04. Every former DOM-P3 / DOM-P4 / DOM-P34R probe passes as
 
   O1 / O2 go to the gate report as Info for the Operations owner.
 - **P4: PASS WITH CONDITIONS** — conditions as stated in the table at the top of §9.
+
+### 9.9 Fix status of the re-check (implementer, separate context)
+
+Written by the implementer (`backend-data-engineer`, implementation mode) in its own context, on the branch merged with
+`c4bf83b`. The reviewer's text above (§9 to §9.8) is unchanged. Commits:
+
+- `0f3395f`: the rule, the API fixtures, the renamed tests and the probes.
+- `5af7f08`: the e2e AT-10 flow.
+- `3ff29e5`: the requirement evidence and the module guide.
+- `1a6cea9`: the escalated path and every decision status.
+- `e3fbeaa`: the dialog hint (en + ar).
+- This note.
+
+| Finding | Status | Rule → file | Tests |
+|---|---|---|---|
+| **DOM-P34R2-01** (High) | **Fixed**, conservative reading. The governance owner should confirm (Q-P34R2-01, Q-P3-13). | Extension terms are bound to a decision for the first time only while its paper is before the committee: `draft`, `submitted` or `under_review` (`EXTENSION_TERMS_BINDABLE_STATUSES`). Every other status refuses a first request, with 422 `tsa.extension.terms_after_outcome`; the refusal is audited and nothing is bound. These are the statuses with an outcome (`recommended`, including pending an external authority; `approved`; `implementation_pending`; `implemented_verified`; `rejected`; `superseded`), plus `deferred`, which goes back to `under_review` when resumed. Terms bound before the outcome stay usable after it (same terms). DOM-P34R-04 is unchanged: `terms_bound`, `decision_other_tsa` and `terms_mismatch`; the decision row is read `FOR SHARE`; the registry check runs first. Files: `packages/domain/src/readiness.ts` (`extensionTermsBinding`), called from `apps/api/src/modules/readiness/tsa.service.ts` (`requestExtension`, not changed). Refusal text en + ar (`readiness.refusal.codes.extension_terms_after_outcome`, `apps/web/src/lib/refusals.ts`). Request-extension dialog hint (`tsaDetail.requestExtension.effect`): link a paper the committee has not decided yet. Docs: `docs/governance/business-gates.md` §6 rules 5–6, Q-P34R2-01 in `docs/assumptions-and-open-questions.md`, and `docs/architecture/module-guide.md` (reliance row and the "decision carries its terms" pattern). | `p34-domain-re2-tsa.spec.ts`: "DOM-P34R2-01a: … (fixed, regression)" and "DOM-P34R2-01b: … (fixed, regression)". New `readiness/p34r2-fixes-tsa.spec.ts`, 2 tests (see below). `readiness.test.ts`: "DOM-P34R2-01: terms are bound for the FIRST time only while the paper is before the committee (draft / submitted / under review)", run over every decision status. Renamed `p2f-decision-reliance` and `p3-fixes-tsa` DOM-P3-13 tests (see below). |
+
+**The lead's patch was kept as it is.** Two statuses were reviewed:
+
+- `deferred` has no committee outcome yet. Refusing it costs nothing: the paper is resumed to `under_review` before the committee decides it, and the request can be made then.
+- `recommended` is refused because the committee has decided. The external authority approves what the committee recommended, so terms bound afterwards were never before the committee.
+
+**Consequence for rule 6.** The decision that approved a TSA's own terms is final before any extension can be requested on it, so it no longer backs an extension of that TSA. Every extension needs its own paper. The alternative in §9.3 is not implemented: a terms decision that approves an extension option with a maximum end date. It stays with the governance owner (Q-P3-13, Q-P34R2-01).
+
+**Test refactor: fixtures only.** The assertions about each rule under test are unchanged. The real flow is: table the extension paper, request the extension on it, have the committee approve it, then record the extension.
+
+- `apps/api/test/readiness/readiness-kit.ts`: new `approveTabledDecision`. It completes the vote and outcome on a paper tabled with `decisionOfType(…, { vote: false })`.
+- `readiness/at-10-tsa-expiry.spec.ts`: the REQ-TSA-005 test.
+- `readiness/p3-fixes-tsa.spec.ts`: the remedied breach, DOM-P3-06 and DOM-P3-07.
+- `readiness/p2f-decision-reliance.spec.ts`: the extension of X.
+- `e2e/tests/p3-readiness.spec.ts`: `governanceDecision` is split into a create step and `approveDecision`. In AT-10, the drafted paper is linked in the UI as before, approved through the governance API, and the extension is then recorded in the UI.
+- Checked, with no change needed:
+  - `readiness/readiness-isolation.spec.ts`: a decision of another project gives 404 before the rule.
+  - `readiness/p34r-fixes-tsa.spec.ts`: it uses draft papers; its approved decisions only approve TSA terms.
+  - `reviews/p3-domain-tsa.spec.ts`: its requests are refused earlier by the reliance or date rules; the codes are unchanged.
+  - `reviews/p34-domain-re-tsa.spec.ts`: D1 is requested while under review.
+  - `reviews/p34-sec-re-fixes.spec.ts`: an unknown decision gives 404.
+
+**Renamed tests, because they asserted the former rule 6** ("the terms decision may authorize one extension"):
+
+- `readiness/p2f-decision-reliance.spec.ts`:
+  - Old title: "one decision authorizes one extension (kind tsa_extension): not a second TSA, not a further extension; the terms decision may authorize one extension".
+  - New title: "…; the terms decision, final before any extension was requested on it, authorizes none (DOM-P34R2-01)".
+  - Its last part now asserts 422 `tsa.extension.terms_after_outcome` for TSA Y on its own terms decision. The registry then holds only the `tsa_service` use.
+- `readiness/p3-fixes-tsa.spec.ts`:
+  - Old title: "DOM-P3-13 (conservative, governance owner to confirm): the decision that approved the terms of TSA A does not back an extension of TSA B — nor the reverse".
+  - New title: "DOM-P3-13 / DOM-P34R2-01 (conservative, governance owner to confirm): the decision that approved the terms of TSA A backs no extension — of TSA B, nor afterwards of A — and a decision used for an extension of A approves no other TSA's terms".
+  - A's own request on its terms decision is now 422 `terms_after_outcome`. A is extended on its own paper.
+  - The reverse part is unchanged: that paper does not approve C's terms (`tsa.approve.decision_other_tsa` or `tsa.approve.decision_already_used`, as before).
+- Both citations are updated in `docs/requirements/status-evidence.yaml` (REQ-TSA-005), and the DOM-P34R2-01 evidence is added there. No requirement status changed: REQ-TSA-005 stays Tested.
+
+**Probes.** The two `DEFECT DOM-P34R2-01a` / `-01b` probes in `p34-domain-re2-tsa.spec.ts` are renamed "… (fixed, regression)" and are now plain `it`. Their assertions are unchanged. The `defect` alias stays (with `void defect;`), so `P34DRE_PROBE_PLAIN=1` keeps working. Their request is now refused (422 `terms_after_outcome`), so the TSA keeps its end date.
+
+**New tests for the path §9.7 did not execute (pending external authority)** — `readiness/p34r2-fixes-tsa.spec.ts`. In both tests, the `tsa_approval_or_extension` paper is above the DEMO limit (2,500,000 SAR).
+
+1. The extension is requested on the paper while it is under review. The committee then records `recommended` / `pending_external_authority`, and record-extension is refused (422 `tsa.extension_requires_decision`). After the external approval, the TSA is extended to the bound date.
+2. The same kind of paper is first linked once the committee has recommended it, and again once it is approved externally. Both requests are refused (422 `terms_after_outcome`), both refusals are audited, nothing is bound, and the TSA is unchanged.
+
+**Verification** at `e3fbeaa`, on own databases `hub_test_p3fix*`:
+
+| Check | Result |
+|---|---|
+| `pnpm lint`, `pnpm typecheck`, e2e `tsc` | Pass |
+| i18n check | Pass |
+| `apply_status.py --check` | OK |
+| Domain unit tests | 23 files, 473/473 |
+| Touched specs while iterating (the nine readiness / reviews files) | 53/53 |
+| New `p34r2-fixes-tsa` | 2/2. The audit shows the refusals with `(recommended)` and `(approved)`. |
+| Full API suite | **137 files, 1058 passed + 2 expected fail** |
+| `P34DRE_PROBE_PLAIN=1` on the seven `p34-domain-re*-*` files | 20/20 |
+| Playwright `p3-readiness` on the implementer's own stack (production web build) | 3/3, including AT-10 with the new flow |
+| Secret scan (tree) | PASS |
+
+In the full suite, the two expected fails are the open P2 Lows DOM-P2F-02 and DOM-P2F-04. Every DOM-P34R2 probe passes as a plain test.
+
+**Not changed:**
+
+- The decision paper does not yet show the requested extension end date (governance paper form; §8 and the last bullet of §9.3). The rule does not need it, because the terms are bound to the decision before its outcome.
+- O1 and O2 stay Info for the Operations owner.
+- Item 3 of §9.8 is not done: the owner's answer on rule 6. It belongs to the governance owner. The questions are recorded (Q-P3-13, Q-P34R2-01) and the conservative reading is implemented until the owner answers.
