@@ -112,7 +112,7 @@ describe('REQ-INT-002 source preservation, approval by a second person, batch hi
     let b = await mapBatch(secretary, dc, { ...parsed, suggestedMapping: { title: 'Risk title', probability: 'Probability', impact: 'Impact', responseStrategy: 'Response strategy' } }, undefined, 'Risks');
     b = await submit(secretary, dc, b);
     expect(b.status).toBe('submitted');
-    expect((await owner().query(`select count(*)::int n from risk where project_id = $1 and title like 'Synthetic % risk %'`, [dc])).rows[0].n).toBe(0);
+    expect((await owner().query(`select count(*)::int n from risk where project_id = $1 and (title like 'Synthetic approved risk%' or title like 'Synthetic declined risk%')`, [dc])).rows[0].n).toBe(0);
 
     // Separation of duties: the uploader cannot approve (403, audited) — even through the API directly.
     const self = await secretary.post(IP(dc, `/${b.id}/approve`), { expectedVersion: b.version, acceptedRows: [2, 3] });
@@ -129,7 +129,7 @@ describe('REQ-INT-002 source preservation, approval by a second person, batch hi
       [2, 'risk'],
       [3, 'risk'],
     ]);
-    const created = (await owner().query(`select id, code, title, status, created_by from risk where project_id = $1 and title like 'Synthetic % risk %' order by title`, [dc])).rows;
+    const created = (await owner().query(`select id, code, title, status, created_by from risk where project_id = $1 and (title like 'Synthetic approved risk%' or title like 'Synthetic declined risk%') order by title`, [dc])).rows;
     expect(created.map((r) => r.title)).toEqual(['Synthetic approved risk one', 'Synthetic approved risk two']);
     expect(created.every((r) => r.created_by === secretary.userId && r.status === 'open')).toBe(true);
     const rows = await rowsOf(pm, dc, b.id);

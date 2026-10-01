@@ -1,6 +1,6 @@
 /**
  * Untrusted-file parser for imports (C-16, REQ-SEC-015, AT-25). ONE self-contained function: the sandbox runner passes its
- * source text to an isolated worker thread (`sandbox.ts`), so it must not reference anything outside its own body — no
+ * source text to an isolated child process (`sandbox.ts`), so it must not reference anything outside its own body — no
  * imports, no module-level helpers or constants (types are erased and therefore allowed). It receives `zlib` from the
  * worker and touches nothing else: no file system, no network, no environment, no evaluation of anything it reads.
  *

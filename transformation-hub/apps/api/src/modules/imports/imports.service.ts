@@ -97,7 +97,7 @@ export class ImportsService {
       scanner: up.scanner,
       ocr: 'not_configured' as const,
       pdfText: 'not_configured' as const,
-      parser: { isolation: 'worker_thread' as const, network: 'none' as const, formulas: 'never_evaluated' as const },
+      parser: { isolation: 'child_process' as const, permissionModel: true as const, osNetworkIsolation: 'not_configured' as const, formulas: 'never_evaluated' as const },
     };
   }
 

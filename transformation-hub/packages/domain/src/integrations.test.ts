@@ -102,6 +102,13 @@ describe('urlsIn — links found in imported text (stored inert, never fetched)'
     const found = urlsIn('see http://169.254.169.254/latest and https://example.com/a and \\\\fileserver\\share\\x.xlsx and file:///c:/x');
     expect(found.map((f) => f.host)).toEqual(['169.254.169.254', 'example.com', '', 'fileserver']);
   });
+  it('bracketed IPv6 (IPv4-mapped metadata address) is recognised as internal', () => {
+    const [u] = urlsIn('https://[::ffff:169.254.169.254]/latest');
+    expect(hostIsInternal(u!.host)).toBe(true);
+    const [v] = urlsIn('http://user@[fe80::1');
+    expect(v!.host).toBe('fe80::1');
+    expect(hostIsInternal(v!.host)).toBe(true);
+  });
 });
 
 describe('REQ-INT-006/007/008/013 adapter registry and honest status', () => {

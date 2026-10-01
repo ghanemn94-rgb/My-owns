@@ -183,12 +183,14 @@ export function checkOutboundUrl(raw: string, allowlist: readonly string[]): Out
 export function urlsIn(text: string): { url: string; host: string }[] {
   const out: { url: string; host: string }[] = [];
   const s = String(text ?? '');
-  for (const m of s.matchAll(/\b(?:https?|ftp|file|smb):\/\/[^\s"'<>)\]]*/gi)) {
+  for (const m of s.matchAll(/\b(?:https?|ftp|file|smb):\/\/[^\s"'<>)]*/gi)) {
     let host = '';
     try {
       host = new URL(m[0]).hostname.replace(/^\[|\]$/g, '');
     } catch {
-      host = m[0].replace(/^[a-z]+:\/\//i, '').split(/[/:?#]/)[0] ?? '';
+      const rest = m[0].replace(/^[a-z]+:\/\//i, '').replace(/^[^@/]*@/, '');
+      const end = rest.indexOf(']');
+      host = rest.startsWith('[') ? (rest.slice(1, end > 0 ? end : undefined).split(/[/?#]/)[0] ?? '') : (rest.split(/[/:?#]/)[0] ?? '');
     }
     out.push({ url: m[0].slice(0, 300), host });
   }

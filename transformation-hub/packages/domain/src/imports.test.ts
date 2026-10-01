@@ -11,6 +11,7 @@ import {
   governedReason,
   harmfulFormula,
   importTransition,
+  missingForCreate,
   normalizeKey,
   parseImportDate,
   rowIsBlank,
@@ -41,7 +42,12 @@ describe('REQ-INT-001 mapping and validation (values only)', () => {
     expect(ok.errors).toEqual([]);
     expect(ok.values).toMatchObject({ title: 'Vendor delay', probability: 3, impact: 4, dueDate: '2027-03-15', responseStrategy: 'mitigate' });
     const bad = checkImportRow('risk', { title: cell(''), probability: cell(7), impact: cell(2.5), dueDate: cell('31/02/2027'), responseStrategy: cell('ignore') });
-    expect(bad.errors.map((e) => e.code)).toEqual(['imports.row.required', 'imports.row.not_scale5', 'imports.row.not_scale5', 'imports.row.bad_date', 'imports.row.bad_enum']);
+    // A risk row may match an existing record by code: its other required fields are required only to CREATE one.
+    expect(bad.errors.map((e) => e.code)).toEqual(['imports.row.not_scale5', 'imports.row.not_scale5', 'imports.row.bad_date', 'imports.row.bad_enum']);
+    expect(missingForCreate('risk', bad.values)).toEqual(['title', 'probability', 'impact']);
+    // The match key of a task / decision row is always required.
+    expect(checkImportRow('task', { title: cell('x') }).errors.map((e) => e.code)).toEqual(['imports.row.required']);
+    expect(checkImportRow('source_claims', { subject: cell('s') }).errors).toEqual([{ code: 'imports.row.required', params: { field: 'value' } }]);
     const t = checkImportRow('task', { wbsCode: cell('WS1.2'), title: cell('Migrate'), plannedStart: cell(46100), plannedFinish: cell('2026-01-01') });
     expect(t.values['plannedStart']).toBe('2026-03-19');
     expect(t.errors.map((e) => e.code)).toEqual(['imports.row.date_order']);

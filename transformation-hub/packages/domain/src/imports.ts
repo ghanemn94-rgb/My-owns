@@ -179,6 +179,16 @@ export interface ImportFieldDef {
   values?: readonly string[];
   /** Header names recognised for automatic mapping (compared with normalizeKey), English and Arabic. */
   headers: readonly string[];
+  /** The key that matches an existing record (always required on a row); other required fields are required to CREATE. */
+  matchKey?: true;
+}
+
+/** Targets whose rows may match an existing record: their required fields (except the match key) are needed only to create. */
+const MATCHING_TARGETS: ReadonlySet<ImportTarget> = new Set(['risk', 'task', 'decision']);
+
+/** Required fields missing from a row that would create a new record. */
+export function missingForCreate(target: ImportTarget, values: Record<string, ImportValue>): string[] {
+  return IMPORT_TARGET_FIELDS[target].filter((f) => f.required && (values[f.key] === null || values[f.key] === undefined || values[f.key] === '')).map((f) => f.key);
 }
 
 const CODE = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,31}$/;
@@ -197,7 +207,7 @@ export const IMPORT_TARGET_FIELDS: Record<ImportTarget, readonly ImportFieldDef[
     { key: 'responseStrategy', type: 'enum', required: false, values: ['avoid', 'mitigate', 'transfer', 'accept'], headers: ['response strategy', 'strategy', 'response', 'استراتيجية الاستجابة'] },
   ],
   task: [
-    { key: 'wbsCode', type: 'code', required: true, headers: ['wbs', 'wbs code', 'code', 'task code', 'id', 'رمز هيكل العمل', 'الرمز'] },
+    { key: 'wbsCode', type: 'code', required: true, matchKey: true, headers: ['wbs', 'wbs code', 'code', 'task code', 'id', 'رمز هيكل العمل', 'الرمز'] },
     { key: 'title', type: 'text', required: true, max: 300, headers: ['title', 'task', 'activity', 'name', 'العنوان', 'المهمة', 'النشاط'] },
     { key: 'workstream', type: 'code', required: false, headers: ['workstream', 'workstream code', 'ws', 'مسار العمل'] },
     { key: 'plannedStart', type: 'date', required: false, headers: ['planned start', 'start', 'start date', 'تاريخ البدء', 'البداية'] },
@@ -207,7 +217,7 @@ export const IMPORT_TARGET_FIELDS: Record<ImportTarget, readonly ImportFieldDef[
     { key: 'reportedStatus', type: 'reported_status', required: false, max: 64, headers: ['status', 'reported status', 'state', 'الحالة'] },
   ],
   decision: [
-    { key: 'code', type: 'code', required: true, headers: ['code', 'decision code', 'decision', 'id', 'ref', 'الرمز', 'رمز القرار'] },
+    { key: 'code', type: 'code', required: true, matchKey: true, headers: ['code', 'decision code', 'decision', 'id', 'ref', 'الرمز', 'رمز القرار'] },
     { key: 'title', type: 'text', required: false, max: 300, headers: ['title', 'subject', 'name', 'العنوان', 'الموضوع'] },
     { key: 'reportedStatus', type: 'reported_status', required: false, max: 64, headers: ['status', 'outcome', 'reported status', 'الحالة', 'النتيجة'] },
   ],
@@ -301,7 +311,7 @@ export function checkImportRow(target: ImportTarget, cells: Record<string, Impor
     }
     const text = cellText(c);
     if (!text) {
-      if (f.required) errors.push(serverMessage('imports.row.required', { field: f.key }));
+      if (f.required && (!MATCHING_TARGETS.has(target) || f.matchKey)) errors.push(serverMessage('imports.row.required', { field: f.key }));
       values[f.key] = null;
       continue;
     }

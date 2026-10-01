@@ -8,6 +8,7 @@ import {
   checkImportRow,
   diffFields,
   governedReason,
+  missingForCreate,
   normalizeKey,
   rowIsBlank,
   serverMessage,
@@ -167,6 +168,15 @@ export class ImportPlanner {
     }
   }
 
+  /** A row that would CREATE a record needs every required field (a row matching a record needs only its key). */
+  private missing(r: PlanRow, target: ImportTarget): boolean {
+    const m = missingForCreate(target, r.values);
+    if (!m.length) return false;
+    r.action = 'error';
+    for (const field of m) r.errors.push(serverMessage('imports.row.required', { field }));
+    return true;
+  }
+
   private async workstreams(projectId: string) {
     const rows = await this.db.tx().select({ id: schema.workstream.id, code: schema.workstream.code }).from(schema.workstream).where(eq(schema.workstream.projectId, projectId));
     return new Map(rows.map((w) => [w.code.toLowerCase(), w.id]));
@@ -226,6 +236,7 @@ export class ImportPlanner {
         r.notes.push(serverMessage('imports.row.possible_duplicate', { code: same.code }));
         continue;
       }
+      if (this.missing(r, 'risk')) continue;
       r.action = 'create';
       r.notes.push(serverMessage('imports.row.create_risk'));
     }
@@ -289,6 +300,7 @@ export class ImportPlanner {
         r.errors.push(serverMessage('imports.row.bad_code', { field: 'wbsCode' }));
         continue;
       }
+      if (this.missing(r, 'task')) continue;
       if (!r.refs.workstreamId) {
         r.action = 'error';
         r.errors.push(serverMessage('imports.row.workstream_required'));

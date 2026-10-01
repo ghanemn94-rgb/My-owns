@@ -124,7 +124,8 @@ export const ImportPolicyDto = z.object({
   /** Honest status: no OCR engine / PDF text extractor is configured in this build. */
   ocr: z.literal('not_configured'),
   pdfText: z.literal('not_configured'),
-  parser: z.object({ isolation: z.literal('worker_thread'), network: z.literal('none'), formulas: z.literal('never_evaluated') }),
+  /** Parser isolation: a separate process (heap cap, timeout, Node permission model, empty environment); OS-level network isolation is a deployment control. */
+  parser: z.object({ isolation: z.literal('child_process'), permissionModel: z.literal(true), osNetworkIsolation: z.literal('not_configured'), formulas: z.literal('never_evaluated') }),
 });
 
 const ListQuery = PageQuery.extend({
