@@ -140,6 +140,44 @@ describe('REQ-RPT-001 / REQ-RPT-015 / REQ-RPT-016 report snapshots from real rec
   });
 });
 
+describe('REQ-RPT-005 Day-1, TSA exit and JV signing / closing / CP reports', () => {
+  type Tbl = { key: string; rows: Record<string, unknown>[] };
+  const tableOf = (d: { sections: Section[] }, section: string, key: string) => (sec(d, section)!.tables as unknown as Tbl[]).find((t) => t.key === key)!;
+
+  it('UT: TSA exit report shows Expired-unresolved separately — never counted as an exit, with its own table and figure', async () => {
+    const s = await generate(pm, dc, { kind: 'tsa_exit' });
+    const d = (await pm.get(RP(dc, `/report-snapshots/${s.id}`)).expect(200)).body;
+    const db = (await owner().query<{ code: string; status: string }>(`select code, status from tsa_service where project_id = $1 and classification in ('public', 'internal', 'confidential') order by code`, [dc])).rows;
+    const expired = db.filter((r) => r.status === 'expired_unresolved').map((r) => r.code);
+    expect(expired.length, 'the demo has an expired-unresolved TSA').toBeGreaterThan(0);
+    expect(tableOf(d, 'tsa', 'tsas_expired_unresolved').rows.map((r) => r.code)).toEqual(expired);
+    const others = tableOf(d, 'tsa', 'tsas').rows.map((r) => r.code);
+    for (const c of expired) expect(others).not.toContain(c);
+    expect(others.length).toBe(db.length - expired.length);
+    expect(fig(d, 'tsa', 'tsas_expired_unresolved')!.value).toBe(expired.length);
+    expect(fig(d, 'tsa', 'tsas_exit_accepted')!.value).toBe(db.filter((r) => r.status === 'exit_accepted').length);
+    expect((sec(d, 'tsa')!.notes as { code: string }[]).map((n) => n.code)).toContain('report.expired_unresolved_not_exit');
+  });
+
+  it('UT: CP report lists unverified blocking CPs — a verified or waived CP is not among them', async () => {
+    const s = await generate(pm, dc, { kind: 'jv_closing' });
+    const d = (await pm.get(RP(dc, `/report-snapshots/${s.id}`)).expect(200)).body;
+    const cps = (await owner().query<{ reference: string; blocking: boolean; status: string }>(`select reference, blocking, status from closing_condition where project_id = $1 and kind = 'condition_precedent' order by reference`, [dc])).rows;
+    const unverified = cps.filter((c) => c.blocking && !['verified', 'waived'].includes(c.status)).map((c) => c.reference);
+    expect(unverified.length, 'the demo has unverified blocking CPs').toBeGreaterThan(0);
+    expect(cps.some((c) => c.status === 'verified'), 'and a verified one').toBe(true);
+    expect(tableOf(d, 'closing', 'cps_blocking_unverified').rows.map((r) => r.reference)).toEqual(unverified);
+    expect(fig(d, 'closing', 'cps_blocking_unverified')!.value).toBe(unverified.length);
+    expect(fig(d, 'closing', 'cps_verified_or_waived')!.value).toBe(cps.filter((c) => ['verified', 'waived'].includes(c.status)).length);
+    expect(tableOf(d, 'closing', 'conditions').rows.length).toBe((await owner().query(`select 1 from closing_condition where project_id = $1`, [dc])).rowCount);
+    // Without the project-wide deal read (JV records have no workstream), the closing section is not generated at all.
+    const approver = await loginAs('approver'); // functional approver: generates reports, no deal read
+    const approverSnap = await approver.post(RP(dc, '/report-snapshots'), { kind: 'jv_closing' });
+    expect(approverSnap.status).toBe(201);
+    expect(((await approver.get(RP(dc, `/report-snapshots/${approverSnap.body.id}`)).expect(200)).body as { sections: Section[] }).sections.map((x) => x.key)).not.toContain('closing');
+  });
+});
+
 describe('REQ-RPT-017 / AT-03 / REQ-SEC-007 the viewer’s permissions are re-checked on every access', () => {
   it('IT: user removed from project cannot open earlier snapshot (404) and no longer lists it', async () => {
     const uid = await reportUser('removed', 'confidential', [{ role: 'project_manager' }]);

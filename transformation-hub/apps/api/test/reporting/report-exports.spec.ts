@@ -71,9 +71,13 @@ describe('REQ-RPT-007 / REQ-SEC-017 / AT-24 XLSX exports are genuine workbooks t
 });
 
 describe('REQ-RPT-017 / AT-19 / AT-03 / REQ-INT-011 exports: worker re-authorisation, requester-only download, no outbound channel', () => {
-  it('a file is downloadable only by its requester; another member gets 404 for the export and its download', async () => {
+  it('a file is downloadable only by its requester (every download audited with the actor and the checksum); another member gets 404 for the export and its download', async () => {
     const s = await generate(pm, dc, { kind: 'look_ahead' });
     const f = await exportFile(pm, dc, s.id, 'xlsx', 'en');
+    const pmId = (await owner().query<{ id: string }>(`select id from app_user where email = 'demo.pm@demo.invalid'`)).rows[0]!.id;
+    const downloads = (await owner().query<{ actor_user_id: string; after: { step: string; sha256: string } }>(`select actor_user_id, after from audit_event where entity_id = $1 and action = 'reports.snapshot.export' and after->>'step' = 'downloaded'`, [f.exportId])).rows;
+    expect(downloads.length).toBe(1);
+    expect(downloads[0]).toMatchObject({ actor_user_id: pmId, after: { step: 'downloaded', sha256: f.status.sha256 } });
     const sponsor = await loginAs('sponsor');
     await sponsor.get(RP(dc, `/report-exports/${f.exportId}`)).expect(404);
     await sponsor.get(RP(dc, `/report-exports/${f.exportId}/download`)).expect(404);
