@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { closeApp, closePools, DC, loginAs, projectIdByCode, type Client } from '../helpers';
+import { closeApp, closePools, DC, loginAs, owner, projectIdByCode, type Client } from '../helpers';
 import { exportFile, generate, loginUserId, reportUser, RP } from './report-kit';
 import { hasArabic, norm, readPdf, type PdfInfo } from './pdf';
+import { openOoxml, PRESENTATION_MAIN, WORD_MAIN, xmlText } from './ooxml';
 import { REPORT_LABELS } from '../../src/modules/reporting/render/labels';
 import { resolveChromium } from '../../src/modules/reporting/render/pdf.renderer';
 
@@ -12,9 +13,11 @@ const CHROMIUM = resolveChromium(process.env.HUB_CHROMIUM_PATH ?? null, false);
 
 let dc: string;
 let pm: Client;
+let secretary: Client;
 beforeAll(async () => {
   dc = await projectIdByCode(DC);
   pm = await loginAs('pm');
+  secretary = await loginAs('secretary');
 });
 afterAll(async () => {
   await closeApp();
@@ -103,4 +106,94 @@ describe('AT-24 / REQ-RPT-008 PDF reports with verified Arabic output (genuine P
     for (const code of finRefs) expect(control.latin).toContain(norm(code));
     expect(hasArabic(control, REPORT_LABELS.ar.meta.withheld)).toBe(false);
   });
+});
+
+/** All text of the parts whose name matches, in part order (OOXML keeps logical order: Arabic reads exactly). */
+function partsText(parts: Map<string, Buffer>, re: RegExp): string {
+  return [...parts.keys()]
+    .filter((n) => re.test(n))
+    .sort((a, b) => Number(a.match(/(\d+)\.xml$/)?.[1] ?? 0) - Number(b.match(/(\d+)\.xml$/)?.[1] ?? 0))
+    .map((n) => xmlText(parts.get(n)!.toString('utf8')))
+    .join('\n');
+}
+
+describe('AT-24 / REQ-RPT-009 basic PPTX committee pack (genuine presentation, right-to-left for Arabic, figures = snapshot)', () => {
+  for (const locale of ['en', 'ar'] as const) {
+    it(`${locale}: IT: PPTX validates as OOXML presentation; figures match snapshot`, async () => {
+      const s = await generate(secretary, dc, { kind: 'committee_pack' });
+      const snap = (await secretary.get(RP(dc, `/report-snapshots/${s.id}`)).expect(200)).body as Snap;
+      const f = await exportFile(secretary, dc, s.id, 'pptx', locale);
+      expect(f.headers['content-type']).toContain('presentationml.presentation');
+      expect(f.bytes.subarray(0, 2).toString('latin1')).toBe('PK');
+      expect(f.bytes.toString('latin1', 0, 400).toLowerCase()).not.toContain('<html');
+      const parts = openOoxml(f.bytes, PRESENTATION_MAIN);
+      const slides = [...parts.keys()].filter((n) => /^ppt\/slides\/slide\d+\.xml$/.test(n));
+      expect(slides.length).toBeGreaterThan(snap.sections.length);
+      const text = partsText(parts, /^ppt\/slides\/slide\d+\.xml$/);
+      const L = REPORT_LABELS[locale];
+      for (const sec of snap.sections) expect(text, `section ${sec.key}`).toContain(L.sections[sec.key]!);
+      for (const sec of snap.sections) for (const fig of sec.figures) if (fig.value !== null) expect(text).toContain(String(fig.value));
+      for (const r of snap.sections.find((x) => x.key === 'decisions')!.tables[0]!.rows) expect(text).toContain(String(r.code));
+      // Classification and Demo label on every slide: every slide uses the layout that carries the footer.
+      const footerLayouts = [...parts.keys()].filter((n) => /^ppt\/slideLayouts\/slideLayout\d+\.xml$/.test(n) && xmlText(parts.get(n)!.toString('utf8')).includes(L.meta.classification));
+      expect(footerLayouts.length).toBe(1);
+      expect(xmlText(parts.get(footerLayouts[0]!)!.toString('utf8'))).toContain(L.meta.demoBanner);
+      const layoutFile = footerLayouts[0]!.split('/').pop()!;
+      for (const n of slides) {
+        const rels = parts.get(n.replace('slides/', 'slides/_rels/') + '.rels')!.toString('utf8');
+        expect(rels, n).toContain(layoutFile);
+      }
+      const pres = parts.get('ppt/presentation.xml')!.toString('utf8');
+      const slideXml = slides.map((n) => parts.get(n)!.toString('utf8')).join('');
+      if (locale === 'ar') {
+        expect(pres).toMatch(/<p:presentation[^>]* rtl="1"/);
+        expect(slideXml).toMatch(/<a:pPr[^>]*rtl="1"/);
+        expect(slideXml).toContain('lang="ar-SA"');
+        expect(text).toContain('حزمة اللجنة');
+      } else {
+        expect(pres).not.toMatch(/<p:presentation[^>]* rtl="1"/);
+        expect(slideXml).not.toMatch(/rtl="1"/);
+      }
+    });
+  }
+});
+
+describe('AT-24 / REQ-RPT-010 DOCX minutes (genuine Word document, not renamed HTML; right-to-left for Arabic)', () => {
+  for (const locale of ['en', 'ar'] as const) {
+    it(`${locale}: IT: DOCX validates as OOXML document (not renamed HTML); minutes content = snapshot`, async () => {
+      const meeting = (await owner().query<{ id: string }>(`select m.id from meeting m join committee c on c.id = m.committee_id where m.project_id = $1 and m.minutes_text is not null and c.classification in ('internal','confidential') order by m.number limit 1`, [dc])).rows[0]!;
+      const s = await generate(secretary, dc, { kind: 'minutes', meetingId: meeting.id });
+      const snap = (await secretary.get(RP(dc, `/report-snapshots/${s.id}`)).expect(200)).body as Snap;
+      const f = await exportFile(secretary, dc, s.id, 'docx', locale);
+      expect(f.headers['content-type']).toContain('wordprocessingml.document');
+      expect(f.bytes.subarray(0, 2).toString('latin1')).toBe('PK');
+      expect(f.bytes.toString('latin1', 0, 400).toLowerCase()).not.toContain('<html');
+      const parts = openOoxml(f.bytes, WORD_MAIN);
+      const docXml = parts.get('word/document.xml')!.toString('utf8');
+      const text = xmlText(docXml);
+      const L = REPORT_LABELS[locale];
+      const meetingSec = snap.sections.find((x) => x.key === 'meeting')!;
+      const header = meetingSec.tables.find((t) => t.key === 'meeting_header')!.rows[0]!;
+      expect(text).toContain(String(header.title));
+      for (const a of meetingSec.tables.find((t) => t.key === 'attendance')!.rows) if (a.member) expect(text).toContain(String(a.member));
+      for (const a of meetingSec.tables.find((t) => t.key === 'agenda')!.rows) expect(text).toContain(String(a.title));
+      const minutes = String(meetingSec.tables.find((t) => t.key === 'minutes_text')!.rows[0]!.text ?? '');
+      for (const line of minutes.split(/\r?\n/).filter(Boolean)) expect(text).toContain(line.replace(/\s+/g, ' ').trim());
+      for (const r of snap.sections.find((x) => x.key === 'minutes_decisions')!.tables[0]!.rows) expect(text).toContain(String(r.code));
+      for (const sec of snap.sections) for (const fig of sec.figures) if (fig.value !== null) expect(text).toContain(String(fig.value));
+      expect(text).toContain(L.notes['report.internal_approval_label']!);
+      const footer = partsText(parts, /^word\/footer\d*\.xml$/);
+      expect(footer).toContain(L.meta.classification);
+      expect([...parts.keys()].filter((n) => /^word\/footer\d*\.xml$/.test(n)).map((n) => parts.get(n)!.toString('utf8')).join('')).toMatch(/PAGE/);
+      if (locale === 'ar') {
+        expect(docXml).toContain('<w:bidi/>');
+        expect(docXml).toContain('<w:rtl/>');
+        expect(docXml).toContain('<w:bidiVisual/>');
+        expect(text).toContain(L.sections.meeting!);
+      } else {
+        expect(docXml).not.toContain('<w:bidi/>');
+        expect(docXml).not.toContain('<w:bidiVisual/>');
+      }
+    });
+  }
 });

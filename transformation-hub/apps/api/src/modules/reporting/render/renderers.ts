@@ -5,6 +5,8 @@ import { APP_CONFIG, type AppConfig } from '../../../platform/config';
 import type { RenderDoc } from './document';
 import { renderXlsx, XLSX_MIME } from './xlsx.renderer';
 import { PDF_MIME, renderPdf, resolveChromium } from './pdf.renderer';
+import { PPTX_MIME, renderPptx } from './pptx.renderer';
+import { DOCX_MIME, renderDocx } from './docx.renderer';
 
 export interface RenderedFile {
   bytes: Buffer;
@@ -26,9 +28,8 @@ export class ReportRenderers {
 
   /** Null when the format can be rendered here; otherwise the honest reason (shown to the requester as a 422). */
   async unavailable(format: ReportExportFormat): Promise<string | null> {
-    if (format === 'xlsx') return null;
     if (format === 'pdf') return this.chromium() ? null : 'no headless Chromium configured (HUB_CHROMIUM_PATH, api-chromium image)';
-    return 'not implemented yet';
+    return null;
   }
 
   async render(format: ReportExportFormat, doc: RenderDoc): Promise<RenderedFile> {
@@ -40,6 +41,10 @@ export class ReportRenderers {
         if (!exe) throw ruleViolation('report.renderer_unavailable', 'No headless Chromium configured');
         return { bytes: await renderPdf(doc, exe), mime: PDF_MIME, ext: 'pdf' };
       }
+      case 'pptx':
+        return { bytes: await renderPptx(doc), mime: PPTX_MIME, ext: 'pptx' };
+      case 'docx':
+        return { bytes: await renderDocx(doc), mime: DOCX_MIME, ext: 'docx' };
       default:
         throw ruleViolation('report.renderer_unavailable', `No ${format} renderer`);
     }

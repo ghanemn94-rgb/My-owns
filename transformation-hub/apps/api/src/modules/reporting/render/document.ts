@@ -73,6 +73,19 @@ export interface RenderInput {
 const INTL: Record<ReportLocale, string> = { en: 'en-GB-u-ca-gregory-nu-latn', ar: 'ar-SA-u-ca-gregory-nu-latn' };
 export const EM_DASH = '—';
 
+/**
+ * Direction of a text by its first strong character (Unicode bidi rule P2): Arabic / Hebrew letters → right-to-left,
+ * Latin and other letters → left-to-right; no strong character → `fallback`. Office renderers give each paragraph the
+ * direction of its own text, so an English sentence in an Arabic document keeps its punctuation in place.
+ */
+export function textIsRtl(s: string, fallback: boolean): boolean {
+  for (const ch of s) {
+    if (/[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/.test(ch)) return true;
+    if (/\p{L}/u.test(ch)) return false;
+  }
+  return fallback;
+}
+
 export function fill(template: string, params: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => (params[k] !== undefined ? String(params[k]) : `{${k}}`));
 }
