@@ -1,8 +1,12 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
+import type { TransferStatus } from './enums';
 import { evaluateGate, assertWaiverAllowed, assertNotApplicableAllowed, planReopen, CriterionState } from './gates';
 import { weightedProgress, calculateRag, aggregateRag, effectiveRag, capOverrideAtOpenBlockers } from './measurement';
 import { sumMoney, parseMoney, detectValueBasisConfusion } from './money';
 import {
+  DIMENSION_STATES,
   computeStatusDimensions,
   isCarveOutComplete,
   reconcilePerimeter,
@@ -185,6 +189,70 @@ describe('AT-06 — independent status dimensions', () => {
       jv_transaction: 'not_started',
     });
     expect(isCarveOutComplete(dims)).toBe(false);
+  });
+});
+
+describe('DOM-P3-11 / DOM-P3-12 — the dimension machines of business-gates.md §1 and the template', () => {
+  const base = {
+    newcoIncorporation: { status: 'incorporated' as const, evidenceVerified: true },
+    perimeter: [{ disposition: 'included' as const, transferStatus: 'transferred_verified' as const, economicTransferStatus: 'transferred_verified' as const }],
+    readiness: [{ mandatory: true, blocker: true, status: 'passed' as const }],
+    standaloneAccepted: false,
+    closings: [],
+  };
+  const state = (i: Parameters<typeof computeStatusDimensions>[0], key: string) => computeStatusDimensions(i).find((d) => d.key === key)!.state;
+
+  it('never "Day-1 GO approved" without a GO of every transition plan; a flagged GO does not count; acceptance → operating with transitional services', () => {
+    expect(state(base, 'operational_readiness')).toBe('in_progress');
+    expect(state({ ...base, cutoverPlans: [{ status: 'approved_go', goFlagged: false }, { status: 'ready_for_decision', goFlagged: false }] }, 'operational_readiness')).toBe('in_progress');
+    expect(state({ ...base, cutoverPlans: [{ status: 'approved_go', goFlagged: false }, { status: 'executed', goFlagged: false }] }, 'operational_readiness')).toBe('day1_go_approved');
+    expect(state({ ...base, cutoverPlans: [{ status: 'approved_go', goFlagged: true }] }, 'operational_readiness')).toBe('in_progress');
+    expect(state({ ...base, cutoverPlans: [{ status: 'accepted', goFlagged: false }] }, 'operational_readiness')).toBe('operating_with_transitional_services');
+    expect(state({ ...base, readiness: [{ mandatory: true, blocker: true, status: 'failed' }], cutoverPlans: [{ status: 'approved_go', goFlagged: true }] }, 'operational_readiness')).toBe('blocked');
+  });
+
+  it('after G4: running TSAs keep "standalone accepted"; a TSA problem stays visible and the carve-out incomplete; all exited → terminal', () => {
+    const g4 = { ...base, standaloneAccepted: true };
+    const running = computeStatusDimensions({ ...g4, tsas: [{ status: 'active', isEnduringArrangement: false }] });
+    expect(running.find((d) => d.key === 'operational_readiness')!.state).toBe('standalone_accepted');
+    expect(isCarveOutComplete(running)).toBe(false);
+    const problem = computeStatusDimensions({ ...g4, tsas: [{ status: 'expired_unresolved', isEnduringArrangement: false }] });
+    expect(problem.find((d) => d.key === 'operational_readiness')!.explanationI18n.map((m) => m.code)).toContain('dimension.readiness.tsa_blocked');
+    expect(isCarveOutComplete(problem)).toBe(false);
+    const exited = computeStatusDimensions({ ...g4, tsas: [{ status: 'exit_accepted', isEnduringArrangement: false }, { status: 'active', isEnduringArrangement: true }] });
+    expect(exited.find((d) => d.key === 'operational_readiness')!.state).toBe('transitional_services_exited');
+    expect(isCarveOutComplete(exited)).toBe(true);
+  });
+
+  it('DOM-P3-15: an enduring arrangement counts as approved only once its terms are approved', () => {
+    const d = computeStatusDimensions({ ...base, tsas: [{ status: 'negotiating', isEnduringArrangement: true }] }).find((x) => x.key === 'operational_readiness')!;
+    expect(d.explanationI18n.find((m) => m.code === 'dimension.readiness.dependencies')!.params).toMatchObject({ enduring: 0 });
+  });
+
+  it('perimeter: draft → not started → approved → in progress → evidence pending → verified; blocked; N/A never counts as transferred', () => {
+    const inc = (transferStatus: TransferStatus, economicTransferStatus: TransferStatus = transferStatus) => [{ disposition: 'included' as const, transferStatus, economicTransferStatus }];
+    expect(state({ ...base, perimeter: [] }, 'perimeter_transfer')).toBe('perimeter_draft');
+    expect(state({ ...base, perimeter: inc('not_started') }, 'perimeter_transfer')).toBe('not_started');
+    expect(state({ ...base, perimeter: inc('planned'), perimeterApproved: true }, 'perimeter_transfer')).toBe('perimeter_approved');
+    expect(state({ ...base, perimeter: inc('in_progress'), perimeterApproved: true }, 'perimeter_transfer')).toBe('in_progress');
+    expect(state({ ...base, perimeter: inc('transferred_pending_evidence', 'transferred_verified') }, 'perimeter_transfer')).toBe('transferred_evidence_pending');
+    expect(state({ ...base, perimeter: inc('blocked') }, 'perimeter_transfer')).toBe('blocked');
+    expect(state({ ...base, perimeter: inc('not_applicable') }, 'perimeter_transfer')).not.toBe('transferred_verified');
+    const one = computeStatusDimensions({ ...base, perimeter: inc('transferred_verified', 'not_applicable') }).find((d) => d.key === 'perimeter_transfer')!;
+    expect(one.explanationI18n.map((m) => m.code)).toContain('dimension.perimeter.aspect_not_applicable');
+  });
+
+  it('incorporation: not started (no entity) → unconfirmed → in progress → evidence pending → verified; not applicable', () => {
+    expect(state({ ...base, newcoIncorporation: null }, 'incorporation')).toBe('not_started');
+    expect(state({ ...base, newcoIncorporation: { status: 'unconfirmed', evidenceVerified: false } }, 'incorporation')).toBe('unconfirmed');
+    expect(state({ ...base, newcoIncorporation: { status: 'incorporation_in_progress', evidenceVerified: false } }, 'incorporation')).toBe('in_progress');
+    expect(state({ ...base, newcoIncorporation: { status: 'incorporated', evidenceVerified: false } }, 'incorporation')).toBe('incorporated_evidence_pending');
+    expect(state({ ...base, newcoIncorporation: { status: 'not_applicable', evidenceVerified: false } }, 'incorporation')).toBe('not_applicable');
+  });
+
+  it('the dc-carveout template lists exactly the states the rule produces (DIMENSION_STATES)', () => {
+    const tpl = JSON.parse(readFileSync(join(__dirname, '..', '..', 'db', 'seed', 'templates', 'dc-carveout.v1.json'), 'utf8')) as { statusDimensions: { key: string; states: { key: string }[] }[] };
+    for (const d of tpl.statusDimensions) expect(d.states.map((s) => s.key), d.key).toEqual([...DIMENSION_STATES[d.key as keyof typeof DIMENSION_STATES]]);
   });
 });
 

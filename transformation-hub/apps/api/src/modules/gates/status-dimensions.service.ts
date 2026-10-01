@@ -4,6 +4,7 @@ import { schema } from '@hub/db';
 import {
   computeStatusDimensions,
   isCarveOutComplete,
+  readinessCheckAppliesToPlan,
   waiverIsEffective,
   APPROVED_GATE_STATUSES,
   SIGNING_GATE_KEY,
@@ -136,6 +137,19 @@ export class StatusDimensionsService {
       .from(schema.tsaService)
       .where(eq(schema.tsaService.projectId, projectId));
     const defs = await tx.select({ status: schema.operatingModelDefinition.status }).from(schema.operatingModelDefinition).where(eq(schema.operatingModelDefinition.projectId, projectId));
+    // DOM-P3-12: the approved perimeter version and the Day-1 GO / post-transition acceptance of the transition plans.
+    const [approvedVersion] = await tx
+      .select({ id: schema.perimeterVersion.id })
+      .from(schema.perimeterVersion)
+      .where(and(eq(schema.perimeterVersion.projectId, projectId), eq(schema.perimeterVersion.status, 'approved')))
+      .limit(1);
+    const plans = await tx.select({ id: schema.cutoverPlan.id, siteId: schema.cutoverPlan.siteId, status: schema.cutoverPlan.status }).from(schema.cutoverPlan).where(eq(schema.cutoverPlan.projectId, projectId));
+    const checkCleared = ({ r, w }: (typeof readiness)[number]) => r.status === 'passed' || r.status === 'not_applicable' || (r.status === 'waived' && r.waivable && waiverIsEffective(w, today));
+    const cutoverPlans = plans.map((plan) => ({
+      status: plan.status,
+      // A GO whose gating check is open again (DOM-P3-04) does not count as an approved Day-1 GO.
+      goFlagged: plan.status === 'approved_go' && readiness.some((x) => (x.r.mandatory || x.r.blocker) && readinessCheckAppliesToPlan(x.r, plan) && !checkCleared(x)),
+    }));
 
     const n = newco.rows[0];
     return {
@@ -155,6 +169,8 @@ export class StatusDimensionsService {
       signingGatePassed: g5.some((a) => APPROVED_GATE_STATUSES.includes(a.status) && (a.evaluation as { needsReassessment?: boolean } | null)?.needsReassessment !== true),
       tsas,
       independenceDefinitionApproved: defs.length ? defs.some((d) => d.status === 'approved') : undefined,
+      perimeterApproved: !!approvedVersion,
+      cutoverPlans,
     };
   }
 

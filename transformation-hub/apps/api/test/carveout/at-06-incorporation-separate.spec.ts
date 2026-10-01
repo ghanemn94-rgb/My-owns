@@ -54,7 +54,8 @@ describe('AT-06 — incorporation confirmed, carve-out not complete [AT-06, REQ-
       p.pm.post(`${base(pid)}/legal-entities/${entityId}/incorporation`, { expectedVersion: e.version, status: 'incorporated', evidenceNote: 'Registration extract linked (test)' }),
     );
     expect(r).toMatchObject({ status: 'incorporated', verification: 'proposed' });
-    expect(states(r.statusDimensions.items).incorporation).toBe('incorporated_unverified');
+    // DOM-P3-12: the documented state (business-gates.md §1 / template) — formerly `incorporated_unverified`.
+    expect(states(r.statusDimensions.items).incorporation).toBe('incorporated_evidence_pending');
     expect(r.statusDimensions.carveOutComplete).toBe(false);
   });
 

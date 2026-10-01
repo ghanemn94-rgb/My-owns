@@ -85,9 +85,11 @@ describe('QA-P1-14 — server messages', () => {
     expect(by['jv_transaction']!.explanationI18n).toEqual([{ code: 'dimension.jv.partially_closed', params: { confirmed: 1, closings: 2 } }]);
     expect(DIMENSION_NOT_YET_ASSESSED).toEqual([{ code: 'dimension.not_yet_assessed', params: {} }]);
     const flagged = Object.fromEntries(computeStatusDimensions(inputs[3]!).map((d) => [d.key, d]));
-    expect(flagged['operational_readiness']!.state).toBe('day1_ready');
+    // DOM-P3-12: every check passed but no Day-1 GO recorded → still in progress (never "Day-1 ready" without a GO).
+    expect(flagged['operational_readiness']!.state).toBe('in_progress');
     expect(flagged['operational_readiness']!.explanationI18n[0]).toEqual({ code: 'dimension.readiness.standalone_reassessment', params: {} });
-    expect(computeStatusDimensions({ ...inputs[3]!, standaloneUnderReassessment: false }).find((d) => d.key === 'operational_readiness')!.state).toBe('standalone_accepted');
+    // G4 approved (not flagged) and no transitional service left → the terminal state of the documented machine.
+    expect(computeStatusDimensions({ ...inputs[3]!, standaloneUnderReassessment: false }).find((d) => d.key === 'operational_readiness')!.state).toBe('transitional_services_exited');
   });
 
   it('gate blockers carry a code + params; the message is the rendered English template', () => {
