@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       postgres:
-        image: postgres:18 # devops-engineer: pin by digest (ADR-0003/ADR-0011)
+        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest (ADR-0003/ADR-0011)
         env:
           POSTGRES_USER: mth_ci_admin
           POSTGRES_PASSWORD: ci-only-not-a-secret
@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-24.04
     # CF-2 (ADR-0012): browsers come baked into the version-matched Playwright image; `playwright install` is never run.
     container:
-      image: mcr.microsoft.com/playwright:v1.56.1-noble # devops-engineer: pin by digest
+      image: mcr.microsoft.com/playwright:v1.56.1-noble@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a # devops-engineer: pin by digest
       # The sandboxed installer (bubblewrap) needs mount/pid namespaces inside this ephemeral CI container: as root it
       # uses CAP_SYS_ADMIN directly (no user namespace). Docker's default AppArmor/seccomp profiles and masked /proc
       # paths refuse those, so they are relaxed for THIS CI container only. Without them ci-install-deps.sh is BLOCKED.
@@ -114,7 +114,7 @@ jobs:
         --security-opt systempaths=unconfined
     services:
       postgres:
-        image: postgres:18 # devops-engineer: pin by digest
+        image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest
         env:
           POSTGRES_USER: mth_ci_admin
           POSTGRES_PASSWORD: ci-only-not-a-secret
