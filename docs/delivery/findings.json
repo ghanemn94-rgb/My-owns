@@ -10746,14 +10746,21 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-8/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T13:40:00Z",
           "status": "OPEN",
           "note": "Raised by domain-reviewer in DG1 round 8 while checking, as the assignment asked, that the D-054 exhaustive-enumeration claim is an honest description. It is not a new loader route. It is a mis-stated validation scope: the 'pinned' version is Node 24, not 22.x. Checked against the testkit residuals first. Residual (c) covers only future or later Node versions, not the current target runtime. Proposed id is the next free number in the domain 0xx range (F-DG1-001..009 are taken); the orchestrator may renumber."
+        },
+        {
+          "at": "2026-10-01T13:59:00Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 7525b11ecc55fbf443a61dfe6fe9eaa41ae355e2"
         }
-      ]
+      ],
+      "fix_revision": "7525b11ecc55fbf443a61dfe6fe9eaa41ae355e2",
+      "fix_summary": "Module lint flipped to default-deny allow-lists (SAFE_NODE_BUILTINS, SAFE_PROCESS_MEMBERS) in architecture.testkit.ts; every non-allow-listed node built-in and process member (incl. process.kill/_debugProcess, node:inspector) is denied by default, version-independently. architecture.test.ts 101/101 + full unit 294/294 green; orchestrator probe confirms the routes denied and legit imports allowed. D-055 (supersedes D-053/D-054's version-dependent framing)."
     },
     {
       "id": "F-DG1-129",
@@ -10777,14 +10784,21 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-8/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T13:43:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG1 round 8 while independently re-sweeping Node 22.22.2 builtinModules plus process.*, as the assignment asked, to validate D-054's exhaustiveness claim. The route was reproduced statically (lint: 0 violations) and at runtime (arbitrary evaluate and exec) in disposable directories. It is not a future/unknown built-in and not wasm, so it is outside residual (c) as now worded. The proposed id is the next free number in the code-security 1xx range; the orchestrator may renumber. An ACCEPTED_OBSERVATION would be reasonable only if the header and D-054 drop the 'exhaustive' claim or name this route."
+        },
+        {
+          "at": "2026-10-01T13:59:00Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 7525b11ecc55fbf443a61dfe6fe9eaa41ae355e2"
         }
-      ]
+      ],
+      "fix_revision": "7525b11ecc55fbf443a61dfe6fe9eaa41ae355e2",
+      "fix_summary": "Module lint flipped to default-deny allow-lists (SAFE_NODE_BUILTINS, SAFE_PROCESS_MEMBERS) in architecture.testkit.ts; every non-allow-listed node built-in and process member (incl. process.kill/_debugProcess, node:inspector) is denied by default, version-independently. architecture.test.ts 101/101 + full unit 294/294 green; orchestrator probe confirms the routes denied and legit imports allowed. D-055 (supersedes D-053/D-054's version-dependent framing)."
     },
     {
       "id": "F-DG1-213",
@@ -10807,14 +10821,21 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-8/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "FIXED_PENDING_VERIFICATION",
       "history": [
         {
           "at": "2026-10-01T13:44:48Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG1 round 8. As the common assignment requires, I first checked this adjacent route against the testkit header's stated and accepted residuals (a)-(c) and against the D-054 exhaustive-enumeration claim. It falls under none of them, because it uses methods that exist in today's pinned Node, not future or unknown ones. No earlier record mentions _debugProcess or SIGUSR1 (grep over docs/delivery reviews/findings/decisions). The proposed ID is the next free number in the qa 2xx range, and the orchestrator may renumber it. If the orchestrator and release-auditor prefer to accept it, an ACCEPTED_OBSERVATION is reasonable, provided the header and D-054 drop or qualify the word 'exhaustively' and name this route."
+        },
+        {
+          "at": "2026-10-01T13:59:00Z",
+          "status": "FIXED_PENDING_VERIFICATION",
+          "note": "fix at 7525b11ecc55fbf443a61dfe6fe9eaa41ae355e2"
         }
-      ]
+      ],
+      "fix_revision": "7525b11ecc55fbf443a61dfe6fe9eaa41ae355e2",
+      "fix_summary": "Module lint flipped to default-deny allow-lists (SAFE_NODE_BUILTINS, SAFE_PROCESS_MEMBERS) in architecture.testkit.ts; every non-allow-listed node built-in and process member (incl. process.kill/_debugProcess, node:inspector) is denied by default, version-independently. architecture.test.ts 101/101 + full unit 294/294 green; orchestrator probe confirms the routes denied and legit imports allowed. D-055 (supersedes D-053/D-054's version-dependent framing)."
     }
   ]
 }
