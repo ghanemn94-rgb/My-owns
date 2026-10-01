@@ -20,8 +20,11 @@ export type DetectionCategory = (typeof DETECTION_CATEGORIES)[number];
 
 const iso = (d: Date | string | null | undefined) => (d ? new Date(d).toISOString() : null);
 
-/** `<code> <title>` and its Arabic form when the record has an Arabic (template) title — bilingual data, module guide §2. */
-const labels = (code: string, title: string, titleAr?: string | null) => ({ label: `${code} ${title}`, labelAr: titleAr ? `${code} ${titleAr}` : null });
+/**
+ * `<code> <title>` and, only when the record has an Arabic (template) title, its Arabic form — bilingual data, module guide
+ * §2. A title typed by a person has no Arabic counterpart: no `labelAr` at all, and it is shown as entered.
+ */
+const labels = (code: string, title: string, titleAr?: string | null): { label: string; labelAr?: string } => (titleAr ? { label: `${code} ${title}`, labelAr: `${code} ${titleAr}` } : { label: `${code} ${title}` });
 
 /** Detail as codes + parameters and its English sentence (QA-P5-04). The web translates the codes; an Arabic run's model
  * context is rendered from the same codes in Arabic (AiToolsService). */
@@ -58,7 +61,7 @@ export class AiDetectionsService {
 
   /** Strip internal metadata for API output. */
   static toDto(d: DetectionFull): AiDetection {
-    return { code: d.code, severity: d.severity, entityType: d.entityType, entityId: d.entityId, label: d.label, labelAr: d.labelAr ?? null, detail: d.detail, detailI18n: d.detailI18n, gateKey: d.gateKey, dueDate: d.dueDate, citations: d.citations };
+    return { code: d.code, severity: d.severity, entityType: d.entityType, entityId: d.entityId, label: d.label, ...(d.labelAr ? { labelAr: d.labelAr } : {}), detail: d.detail, detailI18n: d.detailI18n, gateKey: d.gateKey, dueDate: d.dueDate, citations: d.citations };
   }
 
   async category(ctx: RequestContext, projectId: string, today: string, c: DetectionCategory): Promise<DetectionFull[] | null> {

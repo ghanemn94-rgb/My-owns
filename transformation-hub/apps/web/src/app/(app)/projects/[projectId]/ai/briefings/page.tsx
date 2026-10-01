@@ -186,12 +186,17 @@ function Detections() {
       sortValue: (d) => d.shownLabel,
       cell: (d) => {
         const href = citationHref(projectId, { type: d.entityType, id: d.entityId, label: d.label });
+        // A record without an Arabic title (typed by a person) is shown as entered (data-user-text) — QA-P5-04.
         return href ? (
           <Link className={btn.link} href={href} data-testid="detection-link">
-            <span dir="auto">{d.shownLabel}</span>
+            <span dir="auto" data-user-text={d.labelAr ? undefined : true}>
+              {d.shownLabel}
+            </span>
           </Link>
         ) : (
-          <UText value={d.shownLabel} />
+          <span data-user-text={d.labelAr ? undefined : true}>
+            <UText value={d.shownLabel} />
+          </span>
         );
       },
     },

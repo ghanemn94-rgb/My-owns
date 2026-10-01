@@ -6,7 +6,9 @@ import { aiPath, briefingProposal, demoUserId, drain, ensureFixtures, evalBody, 
  * Fixes of the independent P5 QA review (docs/reviews/P5-qa-review.md, "Fix status"):
  *  QA-P5-01 deduplication / cooldown of AI actions across runs (spec §12.4, AIT-27): creation, revision and execution;
  *  QA-P5-02 a subscriber reads the briefing runs delivered to them (self-scoped; never anyone else's run);
+ *  QA-P5-04 Arabic AI output uses the Arabic template titles and translated statuses; detections carry codes + parameters;
  *  QA-P5-05 the approver sees the recipient's and requester's names through the proposal DTO;
+ *  QA-P5-06 the Committee Hub escalation register carries the codes of the system-written TSA escalation texts;
  *  QA-P5-08 GET one proposal by id (same visibility as the list);
  *  QA-P5-10 an AI run without a policy version is rejected by the schema (REQ-AI-029).
  * The QA review's own probes (test/reviews/p5-qa-ai.spec.ts) are kept as regressions; these add the edges.
@@ -303,14 +305,14 @@ describe('QA-P5-04 — Arabic AI output uses the Arabic template titles and tran
     const d = run.output!.detections.find((x) => x.code === 'task_overdue' && x.entityId === f.overdueTaskId)!;
     expect(d).toBeTruthy();
     expect(d.label).toBe(`${tt.code} ${tt.title}`);
-    expect(d.labelAr).toBe(tt.title_ar ? `${tt.code} ${tt.title_ar}` : null);
+    expect(d.labelAr).toBe(tt.title_ar ? `${tt.code} ${tt.title_ar}` : undefined);
     expect(d.detailI18n![0]).toMatchObject({ code: 'ai.detection.task_overdue', params: { code: tt.code } });
   });
 
   it('GET detections: English detail + codes with the raw enum as a parameter (translated by the client), Arabic label for template records', async () => {
     const pm = await login('pm');
     const r = await pm.get(`${aiPath(f.dcId)}/detections`).expect(200);
-    const items = r.body.items as { code: string; label: string; labelAr: string | null; detail: string; detailI18n: { code: string; params: Record<string, string | number> }[]; entityType: string; entityId: string }[];
+    const items = r.body.items as { code: string; label: string; labelAr?: string; detail: string; detailI18n: { code: string; params: Record<string, string | number> }[]; entityType: string; entityId: string }[];
     expect(items.length).toBeGreaterThan(0);
     for (const d of items) {
       expect(d.detailI18n.length, d.code).toBeGreaterThan(0);
@@ -322,7 +324,10 @@ describe('QA-P5-04 — Arabic AI output uses the Arabic template titles and tran
     const owners = items.filter((d) => d.code === 'owner_missing' && d.entityType === 'task');
     expect(owners.length).toBeGreaterThan(0);
     const withAr = await owner().query<{ id: string }>(`select id from task where id = any($1::uuid[]) and title_ar is not null`, [owners.map((o) => o.entityId)]);
-    for (const o of owners) if (withAr.rows.some((x) => x.id === o.entityId)) expect(o.labelAr, o.label).toMatch(/[؀-ۿ]/);
+    for (const o of owners) {
+      if (withAr.rows.some((x) => x.id === o.entityId)) expect(o.labelAr, o.label).toMatch(/[؀-ۿ]/);
+      else expect(o, 'a title typed by a person carries no labelAr').not.toHaveProperty('labelAr');
+    }
   });
 });
 

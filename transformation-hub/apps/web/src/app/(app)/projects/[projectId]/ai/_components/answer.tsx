@@ -195,10 +195,14 @@ export function DetectionList({ items, limit }: { items: readonly AiDetection[];
               <span className="text-xs font-semibold text-muted">{t(`ai.detections.codes.${d.code}` as MessageKey)}</span>
               {href ? (
                 <Link className={cx(btn.link)} href={href}>
-                  <span dir="auto">{localize(d.label, d.labelAr)}</span>
+                  <span dir="auto" data-user-text={d.labelAr ? undefined : true}>
+                    {localize(d.label, d.labelAr)}
+                  </span>
                 </Link>
               ) : (
-                <UText value={localize(d.label, d.labelAr)} />
+                <span data-user-text={d.labelAr ? undefined : true}>
+                  <UText value={localize(d.label, d.labelAr)} />
+                </span>
               )}
               {d.dueDate ? <span className="text-xs text-muted">{t('ai.detections.due', { date: formatDate(d.dueDate) })}</span> : null}
             </li>

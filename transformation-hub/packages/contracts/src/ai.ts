@@ -19,7 +19,7 @@ export const AiCitationDto = z.object({
   version: z.number().int().nullable().optional(),
   location: z.string().nullable().optional(),
   label: z.string().nullable().optional(),
-  /** Arabic label when the record has an Arabic (template) title — bilingual data, module guide §2 (QA-P5-04). */
+  /** Arabic label, present only when the record has an Arabic (template) title — bilingual data, module guide §2 (QA-P5-04). */
   labelAr: z.string().nullable().optional(),
   isDemo: z.boolean().optional(),
 });
@@ -50,7 +50,7 @@ export const AiDetectionDto = z.object({
   entityId: z.string(),
   /** English / primary label (`<code> <title>`). */
   label: z.string(),
-  /** Arabic label when the record has an Arabic (template) title, else null (QA-P5-04). Absent in runs stored before. */
+  /** Arabic label, present only when the record has an Arabic (template) title (QA-P5-04); a title typed by a person has none. */
   labelAr: z.string().nullable().optional(),
   /** English sentence (kept for audit and the English AI context). */
   detail: z.string(),

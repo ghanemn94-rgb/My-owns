@@ -486,3 +486,97 @@ Expected after QA-P5-03 is fixed (its three DEFECT probes turn red and become re
 
 **approve() fix: VERIFIED** (UI, en + ar). **P4 C1: QA-P34-01c CONFIRMED, QA-P34-01h CONFIRMED, QA-P34-07 CONFIRMED.**
 **P3 QA verdict: PASS WITH CONDITIONS** (QA-P5-06).
+
+---
+
+## Fix status (implementer, 2026-10-01)
+
+Implementer: ai-runtime-engineer, worktree branch on top of `e51cc90` (the merge of this review). Commits: `c3c7e59`
+(QA-P5-03), `7172f91` (QA-P5-01, -02, -05, -08, -09, -10), `917f912` (QA-P5-04, -06), `050fef7` (requirement statuses),
+and the commit that adds this section (evaluation results). Probes follow §10: every fixed `DEFECT` is now
+"… (fixed, regression)", a plain test with its assertions unchanged unless stated below; changed set-ups and the few
+assertions that pinned the old behaviour are listed per finding.
+
+| Finding | Status | Rule → where | Regression / new tests |
+|---|---|---|---|
+| **QA-P5-03** (High) | **Fixed** | Every AI channel applies the PROJECT classification against the reader's CURRENT clearance, as the project / plan / task routes do (`policy.canSee` with `project.classification` → 404). `AiKnowledgeService.projectSql` / `projectVisible` / `assertProjectVisible` (`apps/api/src/modules/ai/ai-knowledge.service.ts`): inside every retrieval predicate (`vis`, `readable`), the citation re-check (`refVisibleSql`, `visibleCitationKeys`) and the run-input check (`inputsVisible`); first statement of every AI route (ask, briefings, runs, status, costs, tools, detections, proposals incl. approve / reject / revise, settings, emergency stop, artefacts); the proposals' reader SQL; worker paths with the current clearance — async ask and scheduled briefing (skipped `owner_access_revoked`, nothing delivered), execution (requester and approver re-checked; `requester_no_longer_authorized`), message recipient (`recipient_not_cleared_for_content`). A citation is never produced for a reader who would get 404 on it. | `p5-qa-ai.spec.ts` › "QA-P5-03 (fixed, regression) (ask)", "(briefing)", "(rules-only detections)", "(fixed, regression; formerly OBSERVED — it pinned the disclosure)"; `at-19-ai-revocation.spec.ts` › REV-EN-03 (below). |
+| **QA-P5-01** (Medium) | **Fixed** | Deduplication + cooldown across runs (§12.4, AIT-27). Every proposal carries `dedupe_key` (`aiDedupeKey`: a message = action + target + recipient, whichever run / schedule / delegating user and however worded; a draft / task / risk = action + target + delegating user; no target = identical payload). Project setting `actionCooldownHours` (0–168, default 24, 0 = off; settings API + UI field, audited). A twin of a pending proposal, or of one executed within the window, is refused at creation (`duplicate_within_cooldown`, audited `AI_ACTION_DEDUPLICATED`, listed in the run's refused tool calls), refused on revision (422 `ai.duplicate_within_cooldown`) and invalidated at execution phase 2 under a per-key advisory lock (`hub_ai_dedupe:<key>`; lock order autopilot → dedupe key → proposal row → approval) — under autopilot it is never delivered twice. Rejected / invalidated / cancelled twins do not count; retries stay exactly-once (AT-20). `ai-proposals.service.ts`, `packages/db/src/schema/ai.ts`, `packages/contracts/src/ai.ts`, `ai-settings.service.ts`, web settings page, `docs/ai/scheduling-policy.md`, AIT-27. | `p5-qa-ai.spec.ts` › "QA-P5-01 (fixed, regression): the owner receives the identical AI reminder … only once per cooldown window", "QA-P5-01 (fixed, regression; formerly OBSERVED — it pinned the duplicate)"; `p5-qa-fixes.spec.ts` › creation (DUP-07), cooldown 0, execution of a human-approved twin, autopilot twins (DUP-08), revision, settings. |
+| **QA-P5-02** (Medium) | **Fixed** | A user reads their OWN runs with `ai.run.read`, or with the permission that produced them — `ai.assistant.use` (questions) or `ai.briefing.subscribe` (the briefings delivered to them); service-enforced (`AiOpsService.assertOwnRunsReader`; contract `access: 'authenticated'` with the rule in the summary). Runs stay per user: another user's run is 404 for everyone; no other permission widened (the contributor still gets 403 on proposals). Runs tab and hooks follow (`apps/web/src/lib/ai.ts` `OWN_RUN_PERMISSIONS`). | `p5-qa-ai.spec.ts` › "QA-P5-02 (fixed, regression): a contributor who may subscribe to briefings can open the briefing delivered to them", "(fixed, regression; formerly OBSERVED — it pinned the 403)"; `qa-p5-ai-center.spec.ts` › "QA-P5-02 (fixed, regression) (UI)"; `p5-qa-fixes.spec.ts` › QA-P5-02. |
+| **QA-P5-04** (Medium) | **Fixed** | Module guide §2. Detections: `label` (English) + `labelAr` (Arabic template title), `detail` (English) + `detailI18n` (codes `ai.detection.*` + parameters; statuses / areas as enum values the web translates with `statuses.*`); citations carry `labelAr`. The web shows the label in the UI language and translates the codes (`ai.messages`, routed by `serverMessageKey`). An Arabic RUN's model context is rendered on the server from the same codes with `AI_DETECTION_MESSAGES_AR` and the Arabic status labels `AI_STATUS_AR` (`packages/domain/src/ai/detection-messages.ts`) — the Arabic answer, briefing and the reminder it proposes use `titleAr` and translated statuses; gate / criterion statuses, dimension states, partner stages and financial kinds too. `check-i18n.mjs` fails when those server texts differ from the Arabic catalogue. User-entered titles (decisions, actions, CPs, TSAs) are shown as entered. | `qa-p5-ai-center.spec.ts` › "QA-P5-04 (fixed, regression)"; `p5-qa-fixes.spec.ts` › QA-P5-04 (Arabic question, Arabic briefing + proposal title, detections DTO); `packages/domain/src/ai/detection-messages.test.ts`. |
+| **QA-P5-05** (Medium) | **Fixed** | The proposal DTO carries `people` (display names of the delegating user, the message recipient and the approvers of THAT proposal — no members list needed); list and detail pages use it. | `qa-p5-ai-center.spec.ts` › "QA-P5-05 (fixed, regression)"; `p5-qa-fixes.spec.ts` › QA-P5-05 / QA-P5-08. |
+| QA-P5-06 (Low) | **Fixed** (TSA texts) | The governance escalation DTO carries `requestedActionI18n` / `targetI18n` for system TSA escalations (`tsaEscalationI18n`, as the TSA page since QA-P34-01b); the register translates them and the three standard continuity options. Remainder (unchanged, carried): the TITLE of system escalations and the authority-routing escalations' texts are stored English without codes ("needs stored codes", P2 remainder). | `qa-p5-p34-recheck.spec.ts` › "QA-P5-06 (fixed, regression)"; `p5-qa-fixes.spec.ts` › QA-P5-06. |
+| QA-P5-07 (Low) | **Not fixed — carried** | Needs Arabic fields for the KPI formula, unit, frequency, source and thresholds in the finance schema and template (`dc-carveout.v1.json`) — a finance-module schema + template change outside this AI fix. Owner to be assigned by the lead (finance-engineer). `OBSERVED QA-P5-07` unchanged. | — |
+| QA-P5-08 (Info) | **Fixed** | `GET /api/v1/projects/:pid/ai/proposals/:id` (`ai.proposal.read` project-wide + the row's visibility, else 404); the web proposal page uses it instead of paging the list. | `p5-qa-fixes.spec.ts` › QA-P5-05 / QA-P5-08. |
+| QA-P5-09 (Info) | **Fixed** | `ai.errors.ai.approval_invalidated` (en / ar) says the proposal was invalidated and that the person it was prepared for can revise it for a fresh review. | `qa-p5-ai-center.spec.ts` › B-en / B-ar (they read the text from the catalogue). |
+| QA-P5-10 (Info) | **Fixed** | `ai_run.policy_version` NOT NULL (the single migration regenerated; data dictionary regenerated). Requirement statuses applied (below). | `p5-qa-fixes.spec.ts` › QA-P5-10. |
+
+**Assertions of earlier tests changed because they pinned the old behaviour** (each says so in the test):
+- `at-19-ai-revocation.spec.ts` › REV-EN-03 asserted QA-P5-03's behaviour ("clearance lowered after scheduling: the
+  briefing still runs …"). Now: lowered to the project's classification → the briefing runs without the higher content;
+  lowered BELOW it → the run is skipped (`owner_access_revoked`), output null, 0 notifications, `ai.briefing.skipped`
+  audited, and the project and `/ai/ask` answer 404.
+- `p5-qa-ai.spec.ts` › QA-P5-03 (ask): the probe expected the ask to run (201) without disclosure; the fix answers 404 like
+  the planning module (the review's recommendation) — the one assertion changed in a DEFECT. The briefing set-up records
+  the refusal instead of failing. The OBSERVED disclosure test now asserts nothing is cited.
+- `p5-sec-ai.spec.ts` › SEC-P5-01 CONTROL: the internal-cleared member's own ask is 404 (was 201).
+- `p5-sec-fixes.spec.ts` › SEC-P5-01 approval / execution cases: the recipient is refused by reclassifying the SOURCE above a
+  confidential recipient (content check) instead of lowering the recipient below the project (now a project-level refusal).
+- `ai-settings-ops.spec.ts` › "runs are per user …": the contributor's runs list was asserted 403; now 200 with their own
+  runs only, and the PM's run 404 (QA-P5-02). `e2e/p5-ai.spec.ts` › test 5 and `qa-p5-ai-center.spec.ts` › A-en / A-ar: the
+  contributor's Runs tab / page was asserted restricted; now it lists their own runs.
+
+**Probe set-ups adapted** (assertions unchanged): `p5-qa-ai.spec.ts` QA-P5-01 block — the earlier specs' proposals of the
+shared test database have their dedupe key cleared and the cooldown is set to 24 h explicitly (the AI fixtures turn it off
+so the older AI specs can prepare the same reminder run after run); `since` is taken from the database clock (the former
+1-second slack counted the previous section's worker delivery); the CONTROL now proves "two runs asked for the identical
+reminder" by the first executed proposal plus the second run's refused call naming it (a second proposal no longer exists).
+`qa-p5-ai-center.spec.ts` beforeAll needs two pending proposals for the same reminder: `resetDc` turns the project's cooldown
+off for that fixture (sponsor, settings API, with a reason) and restores 24 h on every other reset. Screenshot names of the
+fixed defects no longer start with `defect-`.
+
+### Requirement statuses (applied)
+
+§7's recommendation applied through `docs/requirements/status-evidence.yaml` (`apply_status.py --check` OK, applied):
+QA's 25 Tested / 17 Implemented / 3 Planned, with REQ-AI-006, -027, -028, -039 and REQ-SEC-021 (held at Implemented by
+QA-P5-03 / QA-P5-01) and REQ-AI-029 (QA-P5-10: the "AI run without policy version rejected" UT now exists) moved to
+**Tested** on the executed tests cited there → **31 Tested, 11 Implemented, 3 Planned** (REQ-AI-014, -015, -032).
+
+### Commands run and results (fix verification)
+
+Own databases `hub_test_p5fix` (API suite) and `hub_test_p5fix_e2e` (Playwright stack: schema dropped, migrated, demo seed;
+API + `dist/worker.js` + production web build). The full API suite and Playwright never ran at the same time.
+```
+$ pnpm lint                                    → exit 0 (module boundaries; web i18n check: 260 server message codes incl. the
+                                                 AI detections, 29 AI refusal codes; hard-coded string check)
+$ pnpm typecheck                               → exit 0
+$ (packages/domain) npx vitest run             → Test Files 24 passed (24); Tests 479 passed (479)
+$ (apps/api) HUB_AI_EVAL_OUT=<scratch>/ai-eval pnpm test   (full suite, once)
+  Test Files  144 passed (144)
+       Tests  1134 passed | 2 expected fail (1136)        Duration 1585.33 s   EXIT 0
+  (2 expected fails = the open probes DOM-P2F-02 / DOM-P2F-04 of p2-domain-final.spec.ts; every probe of this review is a
+   plain regression now)
+$ (apps/api) node test/ai/summarize-evals.mjs <scratch>/ai-eval
+  Total evaluation cases: 69; passed: 69; failed: 0   (DUP-07 / DUP-08 added; docs/ai/evaluation-results.md updated)
+$ (apps/api) after the last API change (labelAr omitted for titles typed by a person):
+  vitest test/ai test/reviews/p5-qa-ai.spec.ts test/reviews/p5-sec-ai.spec.ts → 13 files, 146 passed, EXIT 0
+$ (e2e) playwright test tests/p5-ai.spec.ts tests/qa-p5-ai-center.spec.ts tests/qa-p5-p34-recheck.spec.ts   (fresh stack)
+  26 passed (8.4 m)  — 0 failed, 0 skipped, 0 expected failures
+  A-en 0 problems; A-ar 51 problems, all classified (DATA-question 4, DATA-run-en 47), UNCLASSIFIED 0;
+  QA-P5-04: {"bilingualTasks":102,"askEnglish":[],"askRawStatus":[],"detectionsEnglish":[],"detectionsArabic":20};
+  QA-P5-05: shownRecipient "Recipient Demo Project Manager", shownRequester "Requested on behalf of Demo Project Manager";
+  QA-P5-06: shownEnglish [] (3 register rows); C-contributor: the notified run opens for the contributor;
+  B-en / B-ar: 409 text "… the proposal was invalidated. The person it was prepared for can revise it …" (QA-P5-09);
+  OBSERVED QA-P5-07 unchanged (7 English template KPI texts).
+$ (e2e) playwright test tests/a11y.spec.ts --grep "\] (ai-|committee-escalations)"   → 24 passed (12 screens × en / ar)
+$ GITLEAKS=… bash scripts/ops/secret-scan.sh tree      → PASS (no findings)
+```
+The first Playwright pass of the fix (before the last API change) failed A-ar with 4 unclassified detector findings: the
+title of the review's own fixture task (typed by a person, no Arabic) was reported as "the English half of a bilingual API
+field" because the AI DTOs then carried `labelAr: null`. Fixed as the module guide prescribes for text typed by a person: no
+`labelAr` at all when the record has no Arabic title, and such labels are marked `data-user-text` (shown as entered); the
+second pass above is the result.
+
+**Not verified / not done:** QA-P5-07 (carried, above); the system escalations' titles and the authority-routing
+escalations' texts in Arabic (carried P2 remainder); no real model was run (Simulated mock only; `openai_compatible` and
+`anthropic` stay Not configured); the full Playwright suite was not re-run (the three P5 specs and the AI / escalation a11y
+screens were).

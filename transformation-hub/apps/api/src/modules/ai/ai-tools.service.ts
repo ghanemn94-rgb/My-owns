@@ -153,7 +153,7 @@ export class AiToolsService {
         const gates = await this.knowledge.gateBlockers(ctx, st.projectId);
         if (gates === null) return { ...EMPTY, missing: [notAvailable('tool:get_gate_blockers', 'Gate information is not available in sources you are authorized to see.', 'معلومات البوابات غير متاحة في المصادر المصرح لك بالاطلاع عليها.')] };
         const items = gates.map((g): ContextItem => {
-          const ref = { type: 'gate_definition', id: g.gate_id, version: g.version, label: `${g.key} ${g.name}`, labelAr: g.name_ar ? `${g.key} ${g.name_ar}` : null };
+          const ref = { type: 'gate_definition', id: g.gate_id, version: g.version, label: `${g.key} ${g.name}`, ...(g.name_ar ? { labelAr: `${g.key} ${g.name_ar}` } : {}) };
           // QA-P5-04: statuses in the run's language (Arabic labels of the status catalogue in an Arabic run).
           const crit = g.criteria.map((c) => `${c.key} (${aiStatusLabel(st.locale, 'criterionStatuses', c.status)})`).join('; ');
           const gateStatus = aiStatusLabel(st.locale, 'gateAssessmentStatuses', g.status);
@@ -182,7 +182,8 @@ export class AiToolsService {
         if (!dims.length) return { ...EMPTY, missing: [notAvailable('status_dimensions', 'Status dimensions have not been computed for this project yet.', 'لم تُحسب أبعاد الحالة لهذا المشروع بعد.', 'project_manager')] };
         return {
           items: dims.map((d): ContextItem => {
-            const ref = { type: 'status_dimension', id: d.id, version: d.version, label: d.key };
+            // The label is the dimension key (the web builds the dimension link from it); labelAr names it in Arabic.
+            const ref = { type: 'status_dimension', id: d.id, version: d.version, label: d.key, labelAr: aiStatusLabel('ar', 'statusDimensionKeys', d.key) };
             // QA-P5-04: an Arabic run names the dimension and its state in Arabic; the stored explanation is English text (its
             // Arabic rendering lives on the dimension page the citation opens), so it is sent with English runs only.
             const text = st.locale === 'ar' ? aiStatusLabel('ar', 'dimensionStates', d.state) : `${d.state}${d.explanation ? ` — ${d.explanation}` : ''}`;

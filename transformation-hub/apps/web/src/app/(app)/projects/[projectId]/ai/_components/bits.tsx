@@ -185,7 +185,8 @@ export function CitationLinks({ citations, testId = 'citations' }: { citations: 
         const meta = [c.label ? typeName : null, c.version !== null && c.version !== undefined ? t('ai.common.versionShort', { version: formatNumber(c.version) }) : null, c.location ?? null].filter(Boolean).join(' · ');
         const body = (
           <>
-            <span dir="auto" className="font-medium">
+            {/* A source without an Arabic label (a document title, a record typed by a person) is shown as entered. */}
+            <span dir="auto" className="font-medium" data-user-text={c.label && !c.labelAr ? true : undefined}>
               {label}
             </span>
             <span className="text-xs text-muted">{meta}</span>

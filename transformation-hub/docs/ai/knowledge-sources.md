@@ -68,7 +68,8 @@ record's Arabic template title (`titleAr` / `nameAr`) when it has one, the detec
 `AI_DETECTION_MESSAGES_AR` and every status / area / stage through the Arabic status labels (`AI_STATUS_AR`) — so no
 English template title or raw enum value reaches an Arabic answer, briefing or proposal. User-entered titles (decisions,
 committee actions, CPs, TSAs) are shown as entered. The structured parts of the output follow the bilingual-data pattern:
-citations and detections carry `label` + `labelAr`, detections `detail` (English) + `detailI18n` (codes + parameters),
+citations and detections carry `label` + `labelAr` (only when the record has an Arabic title; a title typed by a
+person has none and is shown as entered), detections `detail` (English) + `detailI18n` (codes + parameters),
 which the screens render in the UI language (`ai.messages.ai.detection.*`, `statuses.*`). `check-i18n.mjs` keeps the
 server's Arabic context texts identical to the Arabic catalogue.
 
