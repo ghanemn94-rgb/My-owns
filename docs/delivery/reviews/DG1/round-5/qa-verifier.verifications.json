@@ -1,0 +1,56 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-211",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 3e142d6 is in candidate sha256:24eb3779...b08e (commit 5f83a33). REQ-DLV-042's evidence column cites docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log. That log now records the current suite: header 'current 13-case suite: AC-1..AC-9 ... Regenerated 2026-10-01T11:02:10Z for F-DG1-211', 13 PASS lines, 'install-sandbox acceptance: 13 passed, 0 failed', exit=0. Its 13 labels are identical, 1:1, to the 13 ok-labels in the candidate's tools/deps/tests/install-sandbox.test.sh. The suite's last change (f75b334, 11:00:38Z) precedes the log, and no tools/deps change follows 3e142d6, so the log reflects the frozen suite. Independently on this candidate (disposable clone, no registry network): 12 of 13 cases pass as written, and AC-1 (effect) passes in the offline equivalent (same fixture, lockfile pinned to the store's integrity, wrapper unchanged). The as-written AC-1 (effect) is BLOCKED here only on registry access (ECONNREFUSED), so the orchestrator's 13/13 is consistent with what I can reproduce. Observation, not a new finding: the row's notes column still holds the historical analyst remark 'DG1 analyst check (T-DG1-REG): acceptance suite 7/7'. It's a dated statement and does not affect the cited evidence; the analyst may refresh it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log",
+        "docs/delivery/requirements.csv",
+        "tools/deps/tests/install-sandbox.test.sh",
+        "docs/delivery/test-evidence/DG1/qa/round-5/09-install-sandbox-tests-planted.log",
+        "docs/delivery/test-evidence/DG1/qa/round-5/10-ac1-effect-offline-equivalent.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-122",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix f75b334 is in the candidate. Code: AC-8 now snapshots which of CLAUDE.local.md, .mcp.json, apps/api/CLAUDE.md and .vscode/tasks.json pre-exist, and removes a path only if the probe newly created it (and then also fails AC-8). The unconditional `rm -rf \"$ROOT/$p\"` over .vscode etc. is gone. The other host-side removals touch only test-specific probe names (.git/mth-ac5-probe, tools/gates/mth-ac5-probe, docs/delivery/mth-ac7-probe, and tools.mth-ac7 renamed back only if present). Behaviour: in a dedicated disposable clone of 5f83a33 I planted .vscode/settings.json, .vscode/tasks.json, CLAUDE.local.md, .mcp.json and apps/api/CLAUDE.md, hashed them and ran the suite (scratch store). Result: 12 passed + AC-1 (effect) BLOCKED on registry, AC-7 and AC-8 PASS, and all 5 files byte-identical afterwards (sha256sum -c exit 0). Negative control in the same clone: with the pre-fix script (f75b334^), the same run deleted all 5 planted files (sha256sum -c exit 1). So the check detects the defect, and the fix removes it. Installer suite count: 13/13 in the orchestrator's regenerated log. Here 12/13 run as written, and the 13th (AC-1 effect) passes in its offline equivalent; the as-written case is BLOCKED for lack of registry network, not failed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-5/09-install-sandbox-tests-planted.log",
+        "docs/delivery/test-evidence/DG1/qa/round-5/11-install-test-negative-control.log",
+        "docs/delivery/test-evidence/DG1/qa/round-5/10-ac1-effect-offline-equivalent.log",
+        "tools/deps/tests/install-sandbox.test.sh"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-009",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-confirmed on candidate sha256:24eb3779...b08e. The integration project ran 3 times, each on a FRESH PostgreSQL 16.13 cluster (port 5492): 19 files, 200/200, exit 0 every time. The PostgreSQL server logs of runs 1 and 2 were kept and contain no 57P01, no 'terminating connection' and no FATAL. The only 57P01 hit in the output is the scratch-drop test's own title ('a drop right after pool.end() raises no 57P01 ... 40 rounds, 8 clients'), and it passes. vitest.config.ts still pins the integration project to pool 'forks' with singleFork. A12 (14), A13 (5) and A14 (5) are green in all runs, including a12 'create is denied outside the caller's scope'.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-5/04-int-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-5/04-int-run1-pg.log",
+        "docs/delivery/test-evidence/DG1/qa/round-5/04-int-run2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-5/04-int-run2-pg.log",
+        "docs/delivery/test-evidence/DG1/qa/round-5/04-int-run3-verbose.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-210",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-confirmed on candidate sha256:24eb3779...b08e. Full e2e on a real stack (PG 5493, --workers=1, pre-installed Chromium 1194): 22/22. The journey 'a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210)' passes in chromium-en and chromium-ar. I read the test body: it sets a window marker before clicking Create and asserts it survives after Edit/Archive become visible and again after the audit-trail checks, so no document reload occurs, and it has no page.reload(). The three unit tests 'effective permissions refresh after create (F-DG1-210)' (EN, AR, and fail-safe when /me fails) also pass. Screenshots viewed: the AR page is RTL with تعديل/أرشفة and the localized derived-grant audit row; the EN page shows Edit/Archive and the audit trail. Axe: 15 pages per language, 0 violations.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-5/06-e2e-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-5/03-unit.log",
+        "docs/delivery/test-evidence/DG1/qa/round-5/screenshots/journeys/en/17a-lead-created-controls.png",
+        "docs/delivery/test-evidence/DG1/qa/round-5/screenshots/journeys/ar/17a-lead-created-controls.png",
+        "docs/delivery/test-evidence/DG1/qa/round-5/screenshots/journeys/en/axe-summary.json",
+        "docs/delivery/test-evidence/DG1/qa/round-5/screenshots/journeys/ar/axe-summary.json"
+      ]
+    }
+  ]
+}
