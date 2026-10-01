@@ -12,6 +12,7 @@ import {
   ruleViolation,
   transition,
   NO_HUMAN_REQUESTER,
+  tsaEscalationI18n,
 } from '@hub/domain';
 import { DbService } from '../../platform/db.service';
 import { PolicyService } from '../../platform/policy.service';
@@ -438,9 +439,12 @@ export class ActionsService {
       sourceType: e.sourceType,
       sourceId: e.sourceId,
       requestedAction: e.requestedAction,
+      // QA-P5-06: codes of the system-written texts (TSA escalations), translated by the register like the TSA page does.
+      requestedActionI18n: e.isSystemGenerated && e.sourceType === 'tsa_service' ? tsaEscalationI18n(e.requestedAction) : [],
       decisionDeadline: e.decisionDeadline,
       options: e.options,
       target: e.target,
+      targetI18n: e.isSystemGenerated && e.sourceType === 'tsa_service' ? tsaEscalationI18n(e.target) : [],
       raisedToCommitteeId: e.raisedToCommitteeId,
       status: e.status as EscalationStatus,
       resolutionDecisionId: e.resolutionDecisionId,

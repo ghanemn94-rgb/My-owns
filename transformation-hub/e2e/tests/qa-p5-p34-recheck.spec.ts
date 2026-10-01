@@ -282,7 +282,7 @@ test.describe('QA P5 — P4 C1 re-verification (QA-P34-01 c/h, QA-P34-07) and P3
         shownEnglish: [d.escalation.requestedAction, d.escalation.target].filter((x: string) => shown.includes(x)),
         registerRows: await s.page.getByTestId('escalations-table').locator('tbody tr').count(),
       };
-      await s.page.getByTestId('escalations-table').screenshot({ path: join(SHOTS, 'defect-qa-p5-06-ar-committee-escalations-english.png') });
+      await s.page.getByTestId('escalations-table').screenshot({ path: join(SHOTS, 'qa-p5-06-ar-committee-escalations.png') });
       console.log(`QA-P5-06: ${JSON.stringify(escalation)}`);
       expect(escalation.registerRows).toBeGreaterThan(0);
       expect(/[؀-ۿ]/.test(msg('ar', 'governance').escalations.columns.requestedAction)).toBe(true);
@@ -291,9 +291,8 @@ test.describe('QA P5 — P4 C1 re-verification (QA-P34-01 c/h, QA-P34-07) and P3
     }
   });
 
-  test('DEFECT QA-P5-06: the Arabic Committee Hub escalation register shows the TSA escalation\'s requested action and routing target in Arabic (as the Arabic TSA page does since QA-P34-01b)', async () => {
+  test('QA-P5-06 (fixed, regression): the Arabic Committee Hub escalation register shows the TSA escalation\'s requested action and routing target in Arabic (as the Arabic TSA page does since QA-P34-01b)', async () => {
     test.skip(!escalation, 'needs the CONTROL above');
-    test.fail(true, 'QA-P5-06: the register renders the stored English requestedAction / target (no I18n codes on the governance escalation DTO)');
     expect(escalation!.shownEnglish).toEqual([]);
   });
 });

@@ -346,6 +346,8 @@ export interface AiCitationRef {
   version?: number | null;
   location?: string | null;
   label?: string | null;
+  /** Arabic label when the record has an Arabic (template) title (QA-P5-04). */
+  labelAr?: string | null;
   isDemo?: boolean;
 }
 export const citationKey = (c: { type: string; id: string }) => `${c.type}:${c.id}`;
@@ -496,3 +498,6 @@ export function ungroundedNumbers(claim: string, sources: string[]): string[] {
 export function aclFingerprintInput(p: { userId: string; clearance: string; roomIds: string[]; roles: string[] }): string {
   return canonicalJson({ u: p.userId, c: p.clearance, r: [...new Set(p.roomIds)].sort(), p: [...new Set(p.roles)].sort() });
 }
+
+// Rules-only detections as codes + parameters and the Arabic context vocabulary of AI runs (QA-P5-04).
+export * from './ai/detection-messages';

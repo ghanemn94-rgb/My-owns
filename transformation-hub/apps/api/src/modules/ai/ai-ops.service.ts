@@ -213,7 +213,7 @@ export class AiOpsService {
     this.policy.assert(ctx, 'planning.plan.read', { projectId });
     const tz = await this.settings.projectTimezone(projectId);
     const today = this.clock.today(tz);
-    const r = await this.detections.compute(ctx, projectId, today, ctx.locale);
+    const r = await this.detections.compute(ctx, projectId, today);
     return { items: r.detections.map((d) => AiDetectionsService.toDto(d)), computedAt: this.clock.now().toISOString(), rulesOnly: true as const, today };
   }
 }

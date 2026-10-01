@@ -45,7 +45,7 @@ const approve = async (id: string) => {
   const r = await sec.post(`${aiPath(f.dcId)}/proposals/${id}/approve`, { expectedVersion: p.version });
   expect(r.status, JSON.stringify(r.body)).toBe(201);
 };
-const notes = async (proposalId: string) => (await owner().query(`select id from notification where ai_proposal_id = $1`, [proposalId])).rowCount;
+const notes = async (proposalId: string) => (await owner().query(`select id from notification where ai_proposal_id = $1`, [proposalId])).rowCount ?? 0;
 
 describe('QA-P5-01 — deduplication and cooldown of AI actions across runs (spec §12.4, AIT-27) [REQ-AI-028, REQ-AI-022]', () => {
   it('creation: the same reminder (action, target, recipient) is not prepared again while one awaits review, nor within the cooldown after its execution; it is refused and audited, and allowed again once the window has passed', evalBody(FILE, { id: 'DUP-07', category: 'duplicates', lang: 'n/a', provider: 'mock-benign', ait: ['AIT-27'] }, async () => {
@@ -248,5 +248,97 @@ describe('QA-P5-10 — an AI run without a policy version is rejected (REQ-AI-02
     ).rejects.toThrow(/policy_version/);
     const missing = await owner().query(`select count(*)::int as n from ai_run where policy_version is null or policy_version = ''`);
     expect(missing.rows[0].n).toBe(0);
+  });
+});
+
+describe('QA-P5-04 — Arabic AI output uses the Arabic template titles and translated statuses; detections carry codes + parameters [REQ-UX-001, REQ-UX-002, REQ-AI-004]', () => {
+  const RAW_STATUS = /(الحالة|status) (draft|not_started|in_progress|blocked|submitted_for_acceptance)/;
+
+  it('an Arabic question: claims name template tasks by their Arabic title with Arabic statuses; citations carry the Arabic label', async () => {
+    await setAi(f.dcId, { mode: 'advisory' });
+    const u = await fixtureUser('qa-p5-04-ar', 'confidential', [{ role: 'project_manager' }]);
+    await owner().query(`update app_user set locale = 'ar' where id = $1`, [u]);
+    const bilingual = (await owner().query<{ id: string; title: string; title_ar: string; code: string }>(`select id, title, title_ar, wbs_code as code from task where project_id = $1 and title_ar is not null and title_ar <> title`, [f.dcId])).rows;
+    expect(bilingual.length).toBeGreaterThan(10); // CONTROL: the template tasks carry an Arabic title
+    const c = await loginUserId(u);
+    const r = await c.post(`${aiPath(f.dcId)}/ask`, { question: 'ما المهام المتأخرة أو التي بلا مالك؟' });
+    expect(r.status, JSON.stringify(r.body)).toBe(201);
+    const out = r.body.output as { claims: { text: string; citations: { type: string; id: string; label?: string; labelAr?: string | null }[] }[] };
+    const texts = out.claims.map((x) => x.text);
+    expect(texts.length).toBeGreaterThan(0);
+    const english = bilingual.filter((t) => texts.some((x) => x.includes(t.title))).map((t) => t.title);
+    const arabic = bilingual.filter((t) => texts.some((x) => x.includes(t.title_ar)));
+    expect(english).toEqual([]);
+    expect(arabic.length).toBeGreaterThan(0);
+    expect(texts.filter((x) => RAW_STATUS.test(x))).toEqual([]);
+    const taskCitations = out.claims.flatMap((x) => x.citations).filter((x) => x.type === 'task');
+    expect(taskCitations.length).toBeGreaterThan(0);
+    for (const ci of taskCitations) {
+      const t = bilingual.find((b) => b.id === ci.id);
+      if (t) expect(ci).toMatchObject({ label: `${t.code} ${t.title}`, labelAr: `${t.code} ${t.title_ar}` });
+    }
+  });
+
+  it('an Arabic briefing: its claims and the reminder it prepares use the Arabic title; the stored detections keep the English label + labelAr and detailI18n', async () => {
+    await forgetEarlierProposals();
+    await setAi(f.dcId, { mode: 'assisted', action_cooldown_hours: 0 });
+    const u = await fixtureUser('qa-p5-04-ar-pm', 'confidential', [{ role: 'project_manager' }]);
+    await owner().query(`update app_user set locale = 'ar' where id = $1`, [u]);
+    const { contexts, db, runtime } = await serviceHandles();
+    const ctx = (await contexts.forUser(u, f.dcId))!;
+    const run = await db.run(ctx, () => runtime.runBriefingNow(ctx, f.dcId));
+    expect(run.status).toBe('succeeded');
+    expect(run.locale).toBe('ar');
+    const texts = run.output!.claims.map((x) => x.text);
+    expect(texts.filter((x) => RAW_STATUS.test(x))).toEqual([]);
+    const tt = (await owner().query<{ title: string; title_ar: string | null; code: string }>(`select title, title_ar, wbs_code as code from task where id = $1`, [f.overdueTaskId])).rows[0]!;
+    if (tt.title_ar) {
+      expect(texts.some((x) => x.includes(tt.title_ar!))).toBe(true);
+      expect(texts.some((x) => x.includes(tt.title))).toBe(false);
+      const pid = run.output!.proposals[0]?.id;
+      expect(pid).toBeTruthy();
+      const p = await proposalRow(pid!);
+      expect(p.payload.title).toBe(`طلب تحديث: ${tt.code} ${tt.title_ar}`.slice(0, 200));
+    }
+    const d = run.output!.detections.find((x) => x.code === 'task_overdue' && x.entityId === f.overdueTaskId)!;
+    expect(d).toBeTruthy();
+    expect(d.label).toBe(`${tt.code} ${tt.title}`);
+    expect(d.labelAr).toBe(tt.title_ar ? `${tt.code} ${tt.title_ar}` : null);
+    expect(d.detailI18n![0]).toMatchObject({ code: 'ai.detection.task_overdue', params: { code: tt.code } });
+  });
+
+  it('GET detections: English detail + codes with the raw enum as a parameter (translated by the client), Arabic label for template records', async () => {
+    const pm = await login('pm');
+    const r = await pm.get(`${aiPath(f.dcId)}/detections`).expect(200);
+    const items = r.body.items as { code: string; label: string; labelAr: string | null; detail: string; detailI18n: { code: string; params: Record<string, string | number> }[]; entityType: string; entityId: string }[];
+    expect(items.length).toBeGreaterThan(0);
+    for (const d of items) {
+      expect(d.detailI18n.length, d.code).toBeGreaterThan(0);
+      for (const msg of d.detailI18n) expect(msg.code.startsWith('ai.detection.'), msg.code).toBe(true);
+      expect(d.detail).not.toMatch(/[؀-ۿ]/); // the English sentence; the Arabic screen translates the codes
+    }
+    const overdue = items.find((d) => d.code === 'task_overdue' && d.entityId === f.overdueTaskId)!;
+    expect(String(overdue.detailI18n[0]!.params.status)).toMatch(/^(not_started|in_progress|blocked|submitted_for_acceptance)$/);
+    const owners = items.filter((d) => d.code === 'owner_missing' && d.entityType === 'task');
+    expect(owners.length).toBeGreaterThan(0);
+    const withAr = await owner().query<{ id: string }>(`select id from task where id = any($1::uuid[]) and title_ar is not null`, [owners.map((o) => o.entityId)]);
+    for (const o of owners) if (withAr.rows.some((x) => x.id === o.entityId)) expect(o.labelAr, o.label).toMatch(/[؀-ۿ]/);
+  });
+});
+
+describe('QA-P5-06 — the Committee Hub escalation register carries the codes of the system-written TSA escalation texts [REQ-UX-001, REQ-UX-002]', () => {
+  it('the register DTO gives the TSA escalation\'s requested action and routing target as tsa.* codes (as the TSA page); escalations whose text is not a known template carry none', async () => {
+    const pm = await login('pm');
+    const r = await pm.get(`/api/v1/projects/${f.dcId}/escalations?pageSize=100`).expect(200);
+    const items = r.body.items as { code: string; sourceType: string; isSystemGenerated: boolean; requestedAction: string; requestedActionI18n: { code: string; params: Record<string, string | number> }[]; target: string | null; targetI18n: { code: string }[] }[];
+    const tsa = items.find((e) => e.sourceType === 'tsa_service' && e.isSystemGenerated);
+    expect(tsa, 'the demo seed raises a TSA expiry escalation').toBeTruthy();
+    expect(tsa!.requestedActionI18n).toEqual([expect.objectContaining({ code: 'tsa.escalation.expired_unresolved' })]);
+    expect(tsa!.targetI18n.length).toBe(1);
+    expect(tsa!.targetI18n[0]!.code).toMatch(/^tsa\.routing\./);
+    for (const e of items.filter((x) => x.sourceType !== 'tsa_service')) {
+      expect(e.requestedActionI18n, e.code).toEqual([]);
+      expect(e.targetI18n, e.code).toEqual([]);
+    }
   });
 });

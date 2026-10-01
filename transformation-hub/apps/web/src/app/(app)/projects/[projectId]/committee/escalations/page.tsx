@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Megaphone } from 'lucide-react';
 import { useState } from 'react';
 import { governanceRoutes, ESCALATION_SOURCE_TYPES } from '@hub/contracts';
-import { ESCALATION_STATUSES } from '@hub/domain';
+import { ESCALATION_STATUSES, TSA_ESCALATION_OPTIONS, type TsaEscalationOptionKey } from '@hub/domain';
 import { DataTable, type Column } from '@/components/DataTable';
 import { DemoBadge } from '@/components/DemoBadge';
 import { SelectField } from '@/components/Field';
@@ -16,11 +16,14 @@ import { useToast } from '@/components/Toast';
 import { btn, cx } from '@/components/ui';
 import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
+import { useServerMessages } from '@/lib/i18n-data';
 import { useProjectContext } from '@/lib/project-context';
 import { RaiseEscalationDialog } from '../_components/dialogs';
 import { FilterBar, FilterSelect, GovCommandDialog, UText, gk, sourceKey, hubHref, useDecisionList, useGovRefresh, useUrlState, type Escalation } from '../_components/gov';
 
 const PAGE_SIZE = 20;
+/** Server-generated TSA escalation option titles → translation keys (anything else is shown as recorded) — QA-P5-06. */
+const STANDARD_OPTION: Partial<Record<string, TsaEscalationOptionKey>> = Object.fromEntries(TSA_ESCALATION_OPTIONS.map((o) => [o.title, o.key]));
 const FILTERS = ['q', 'status', 'unresolved', 'sourceType', 'sourceId'] as const;
 type Status = (typeof ESCALATION_STATUSES)[number];
 type Source = (typeof ESCALATION_SOURCE_TYPES)[number];
@@ -28,6 +31,7 @@ type Source = (typeof ESCALATION_SOURCE_TYPES)[number];
 export default function EscalationsPage() {
   const { t, tStatus, formatDate } = useI18n();
   const { projectId, can, me } = useProjectContext();
+  const serverText = useServerMessages();
   const refresh = useGovRefresh();
   const toast = useToast();
   const { values, page, set, clear, active } = useUrlState(FILTERS);
@@ -90,7 +94,12 @@ export default function EscalationsPage() {
         </span>
       ),
     },
-    { key: 'requested', header: t('governance.escalations.columns.requestedAction'), cell: (e) => <UText value={e.requestedAction} /> },
+    {
+      key: 'requested',
+      header: t('governance.escalations.columns.requestedAction'),
+      // QA-P5-06: system-written texts (TSA escalations) translated from their codes; anything else as entered.
+      cell: (e) => (e.requestedActionI18n.length ? <span data-testid="escalation-action">{serverText(e.requestedActionI18n, e.requestedAction)}</span> : <UText value={e.requestedAction} />),
+    },
     { key: 'deadline', header: t('governance.escalations.columns.deadline'), sortValue: (e) => e.decisionDeadline ?? '', cell: (e) => <span className="tabular">{formatDate(e.decisionDeadline)}</span> },
     {
       key: 'options',
@@ -98,25 +107,34 @@ export default function EscalationsPage() {
       cell: (e) =>
         e.options.length ? (
           <ol className="list-decimal space-y-0.5 ps-4 text-xs">
-            {e.options.map((o, i) => (
-              <li key={i}>
-                <span dir="auto" className="font-medium">
-                  {o.title}
-                </span>
-                {o.impact ? (
-                  <>
-                    {' — '}
-                    <span dir="auto">{o.impact}</span>
-                  </>
-                ) : null}
-              </li>
-            ))}
+            {e.options.map((o, i) => {
+              // The standard TSA continuity options are written by the server in English: shown translated (QA-P5-06).
+              const std = e.isSystemGenerated && e.sourceType === 'tsa_service' ? STANDARD_OPTION[o.title] : undefined;
+              const impact = std ? t(`readiness.tsaDetail.escalation.std.${std}.impact`) : o.impact;
+              return (
+                <li key={i}>
+                  <span dir="auto" className="font-medium">
+                    {std ? t(`readiness.tsaDetail.escalation.std.${std}.title`) : o.title}
+                  </span>
+                  {impact ? (
+                    <>
+                      {' — '}
+                      <span dir="auto">{impact}</span>
+                    </>
+                  ) : null}
+                </li>
+              );
+            })}
           </ol>
         ) : (
           <span className="text-muted">{EM_DASH}</span>
         ),
     },
-    { key: 'target', header: t('governance.escalations.columns.target'), cell: (e) => <UText value={e.target} /> },
+    {
+      key: 'target',
+      header: t('governance.escalations.columns.target'),
+      cell: (e) => (e.targetI18n.length ? <span data-testid="escalation-target">{serverText(e.targetI18n, e.target)}</span> : <UText value={e.target} />),
+    },
     {
       key: 'status',
       header: t('governance.escalations.columns.status'),

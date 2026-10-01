@@ -62,6 +62,16 @@ owning role, conflicts (conflicting evidence links, conflicting verification sta
 source, sources older than 90 days), warnings, withheld counts, refused tool calls, prepared requests, and a disclaimer
 ("Simulated" for the mock). The headline is composed deterministically by the runtime, not by the model.
 
+**Language (QA-P5-04, module guide §2).** A run has a language (the delegating user's): the model receives its context in
+that language and writes its claims in it. For an Arabic run the server renders each record's context from codes — the
+record's Arabic template title (`titleAr` / `nameAr`) when it has one, the detection sentence from
+`AI_DETECTION_MESSAGES_AR` and every status / area / stage through the Arabic status labels (`AI_STATUS_AR`) — so no
+English template title or raw enum value reaches an Arabic answer, briefing or proposal. User-entered titles (decisions,
+committee actions, CPs, TSAs) are shown as entered. The structured parts of the output follow the bilingual-data pattern:
+citations and detections carry `label` + `labelAr`, detections `detail` (English) + `detailI18n` (codes + parameters),
+which the screens render in the UI language (`ai.messages.ai.detection.*`, `statuses.*`). `check-i18n.mjs` keeps the
+server's Arabic context texts identical to the Arabic catalogue.
+
 ## Content of AI messages and drafts follows the recipient (SEC-P5-01, AIT-07, access-matrix §5.2)
 
 The model writes a message's title and body from the records the runtime gave it. Whatever an imported document instructs

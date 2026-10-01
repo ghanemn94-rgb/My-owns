@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { aiFlagOf, aiToolByName, citationKey, toolAllowedInMode, type AiMode, type Classification } from '@hub/domain';
+import { aiFlagOf, aiStatusLabel, aiToolByName, citationKey, renderAiMessages, toolAllowedInMode, type AiMode, type Classification } from '@hub/domain';
 import { AuditService } from '../../platform/audit.service';
 import { PolicyService } from '../../platform/policy.service';
 import type { RequestContext } from '../../platform/context';
@@ -112,9 +112,9 @@ export class AiToolsService {
 
     const category = TOOL_CATEGORY[name];
     if (category) {
-      const d = await this.detections.category(ctx, st.projectId, st.today, st.locale, category);
+      const d = await this.detections.category(ctx, st.projectId, st.today, category);
       if (d === null) return { ...EMPTY, missing: [notAvailable(`tool:${name}`, `Information for "${name}" is not available in sources you are authorized to see.`, `المعلومات الخاصة بـ «${name}» غير متاحة في المصادر المصرح لك بالاطلاع عليها.`)] };
-      return { items: d.map((x) => this.detectionItem(x, name)), missing: [], detections: d };
+      return { items: d.map((x) => this.detectionItem(x, name, st.locale)), missing: [], detections: d };
     }
 
     switch (name) {
@@ -153,8 +153,10 @@ export class AiToolsService {
         const gates = await this.knowledge.gateBlockers(ctx, st.projectId);
         if (gates === null) return { ...EMPTY, missing: [notAvailable('tool:get_gate_blockers', 'Gate information is not available in sources you are authorized to see.', 'معلومات البوابات غير متاحة في المصادر المصرح لك بالاطلاع عليها.')] };
         const items = gates.map((g): ContextItem => {
-          const ref = { type: 'gate_definition', id: g.gate_id, version: g.version, label: `${g.key} ${g.name}` };
-          const crit = g.criteria.map((c) => `${c.key} (${c.status})`).join('; ');
+          const ref = { type: 'gate_definition', id: g.gate_id, version: g.version, label: `${g.key} ${g.name}`, labelAr: g.name_ar ? `${g.key} ${g.name_ar}` : null };
+          // QA-P5-04: statuses in the run's language (Arabic labels of the status catalogue in an Arabic run).
+          const crit = g.criteria.map((c) => `${c.key} (${aiStatusLabel(st.locale, 'criterionStatuses', c.status)})`).join('; ');
+          const gateStatus = aiStatusLabel(st.locale, 'gateAssessmentStatuses', g.status);
           return {
             key: citationKey(ref),
             ref,
@@ -164,8 +166,8 @@ export class AiToolsService {
             roomId: null,
             title: `${g.key} ${st.locale === 'ar' && g.name_ar ? g.name_ar : g.name}`,
             text: L(
-              `Gate ${g.key} assessment status ${g.status}; ${g.blocking_unmet} mandatory blocking criteria not met${crit ? `: ${crit}` : ''}.`,
-              `حالة تقييم البوابة ${g.key}: ${g.status}؛ ${g.blocking_unmet} معيارًا إلزاميًا مانعًا غير مستوفى${crit ? `: ${crit}` : ''}.`,
+              `Gate ${g.key} assessment status ${gateStatus}; ${g.blocking_unmet} mandatory blocking criteria not met${crit ? `: ${crit}` : ''}.`,
+              `حالة تقييم البوابة ${g.key}: ${gateStatus}؛ ${g.blocking_unmet} معيارًا إلزاميًا مانعًا غير مستوفى${crit ? `: ${crit}` : ''}.`,
             ),
             facts: { gateKey: g.key, status: g.status, blockingUnmet: g.blocking_unmet },
             suspicious: false,
@@ -181,7 +183,10 @@ export class AiToolsService {
         return {
           items: dims.map((d): ContextItem => {
             const ref = { type: 'status_dimension', id: d.id, version: d.version, label: d.key };
-            return { key: citationKey(ref), ref, kind: 'record', tool: name, classification: 'internal', roomId: null, title: L(`Status dimension ${d.key}`, `بُعد الحالة ${d.key}`), text: `${d.state}${d.explanation ? ` — ${d.explanation}` : ''}`, facts: { state: d.state }, suspicious: false, sourceUpdatedAt: iso(d.computedAt) };
+            // QA-P5-04: an Arabic run names the dimension and its state in Arabic; the stored explanation is English text (its
+            // Arabic rendering lives on the dimension page the citation opens), so it is sent with English runs only.
+            const text = st.locale === 'ar' ? aiStatusLabel('ar', 'dimensionStates', d.state) : `${d.state}${d.explanation ? ` — ${d.explanation}` : ''}`;
+            return { key: citationKey(ref), ref, kind: 'record', tool: name, classification: 'internal', roomId: null, title: L(`Status dimension ${d.key}`, `بُعد الحالة: ${aiStatusLabel('ar', 'statusDimensionKeys', d.key)}`), text, facts: { state: d.state }, suspicious: false, sourceUpdatedAt: iso(d.computedAt) };
           }),
           missing: [],
           detections: [],
@@ -201,7 +206,7 @@ export class AiToolsService {
         return {
           items: confirmed.map((p): ContextItem => {
             const ref = { type: 'partner', id: p.id, version: p.version, label: `${p.code} ${p.name}`, isDemo: p.isDemo };
-            return { key: citationKey(ref), ref, kind: 'record', tool: name, classification: p.classification as Classification, roomId: null, title: `${p.code} ${p.name}${p.isDemo ? ' (Demo)' : ''}`, text: L(`Partner ${p.code} stage ${p.stage}; an approved deal scenario exists.`, `الشريك ${p.code} في مرحلة ${p.stage}؛ يوجد سيناريو صفقة معتمد.`), facts: { stage: p.stage }, suspicious: false, sourceUpdatedAt: iso(p.updatedAt) };
+            return { key: citationKey(ref), ref, kind: 'record', tool: name, classification: p.classification as Classification, roomId: null, title: `${p.code} ${p.name}${p.isDemo ? ' (Demo)' : ''}`, text: L(`Partner ${p.code} stage ${p.stage}; an approved deal scenario exists.`, `الشريك ${p.code} في مرحلة «${aiStatusLabel('ar', 'partnerStages', p.stage)}»؛ يوجد سيناريو صفقة معتمد.`), facts: { stage: p.stage }, suspicious: false, sourceUpdatedAt: iso(p.updatedAt) };
           }),
           missing: [],
           detections: [],
@@ -224,7 +229,7 @@ export class AiToolsService {
         }
         for (const f of r.figures) {
           const ref = { type: 'financial_snapshot', id: f.id, version: f.version, label: `${f.label} ${f.period}`, isDemo: f.isDemo };
-          items.push({ key: citationKey(ref), ref, kind: 'record', tool: name, classification: f.classification as Classification, roomId: null, title: ref.label, text: L(`Approved ${f.kind} figure ${f.label} (${f.period}): ${f.amount} ${f.currency} ×${f.unitScale}.`, `رقم ${f.kind} معتمد ${f.label} (${f.period}): ${f.amount} ${f.currency} ×${f.unitScale}.`), suspicious: false, sourceUpdatedAt: iso(f.approvedAt) });
+          items.push({ key: citationKey(ref), ref, kind: 'record', tool: name, classification: f.classification as Classification, roomId: null, title: ref.label, text: L(`Approved ${f.kind} figure ${f.label} (${f.period}): ${f.amount} ${f.currency} ×${f.unitScale}.`, `رقم معتمد (${aiStatusLabel('ar', 'financialKinds', f.kind)}) ${f.label} (${f.period}): ${f.amount} ${f.currency} ×${f.unitScale}.`), suspicious: false, sourceUpdatedAt: iso(f.approvedAt) });
         }
         return { items, missing: r.valuations.length ? [] : [missingVal], detections: [] };
       }
@@ -233,7 +238,11 @@ export class AiToolsService {
     }
   }
 
-  private detectionItem(d: DetectionFull, tool: string): ContextItem {
+  /**
+   * A detection as model context, in the run's language (QA-P5-04): the Arabic template title when the record has one, and
+   * the detail rendered from its codes with the Arabic status labels — never the English title or a raw enum value.
+   */
+  private detectionItem(d: DetectionFull, tool: string, locale: 'en' | 'ar'): ContextItem {
     const primary = d.citations.find((c) => c.type === 'computation') ?? d.citations[0]!;
     return {
       key: citationKey(primary),
@@ -245,8 +254,8 @@ export class AiToolsService {
       // (SEC-P5-03); the CP register is confidential; anything else fails closed.
       classification: d.meta.classification ?? RECORD_CLASSIFICATION[d.entityType] ?? 'strictly_confidential',
       roomId: null,
-      title: d.label,
-      text: d.detail,
+      title: locale === 'ar' && d.labelAr ? d.labelAr : d.label,
+      text: renderAiMessages(d.detailI18n, locale),
       facts: { detection: d.code, ownerUserId: d.meta.ownerUserId, gateKey: d.gateKey, dueDate: d.dueDate, severity: d.severity },
       suspicious: false,
       sourceUpdatedAt: d.meta.updatedAt,

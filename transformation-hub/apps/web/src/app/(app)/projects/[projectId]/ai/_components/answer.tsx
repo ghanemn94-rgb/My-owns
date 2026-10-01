@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { btn, cx } from '@/components/ui';
 import { useI18n, type MessageKey } from '@/i18n/provider';
+import { useLocalized } from '@/lib/i18n-data';
 import { aiHref, citationHref, type AiDetection, type AiRun } from '@/lib/ai';
 import { useProjectContext } from '@/lib/project-context';
 import { CitationLinks, Code, SimulatedNotice, UText } from './bits';
@@ -181,6 +182,7 @@ export function RunOutputView({ run, testId = 'run-output' }: { run: AiRun; test
 export function DetectionList({ items, limit }: { items: readonly AiDetection[]; limit?: number }) {
   const { t, formatDate, formatNumber } = useI18n();
   const { projectId } = useProjectContext();
+  const localize = useLocalized(); // QA-P5-04: Arabic template title when the record has one
   const shown = limit ? items.slice(0, limit) : items;
   return (
     <>
@@ -193,10 +195,10 @@ export function DetectionList({ items, limit }: { items: readonly AiDetection[];
               <span className="text-xs font-semibold text-muted">{t(`ai.detections.codes.${d.code}` as MessageKey)}</span>
               {href ? (
                 <Link className={cx(btn.link)} href={href}>
-                  <span dir="auto">{d.label}</span>
+                  <span dir="auto">{localize(d.label, d.labelAr)}</span>
                 </Link>
               ) : (
-                <UText value={d.label} />
+                <UText value={localize(d.label, d.labelAr)} />
               )}
               {d.dueDate ? <span className="text-xs text-muted">{t('ai.detections.due', { date: formatDate(d.dueDate) })}</span> : null}
             </li>

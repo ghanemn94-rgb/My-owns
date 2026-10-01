@@ -470,9 +470,16 @@ export const EscalationDto = z.object({
   sourceType: z.string(),
   sourceId: Uuid.nullable(),
   requestedAction: z.string(),
+  /**
+   * QA-P5-06: the requested action / routing target of a SYSTEM escalation as codes + parameters when the stored English
+   * text was rendered from a known template (the TSA escalation texts, `tsa.*`, as on the TSA page — QA-P34-01b); empty
+   * otherwise (text typed by a person is never parsed and is shown as entered).
+   */
+  requestedActionI18n: z.array(ServerMessageSchema),
   decisionDeadline: z.string().nullable(),
   options: z.array(z.object({ title: z.string(), impact: z.string().optional() })),
   target: z.string().nullable(),
+  targetI18n: z.array(ServerMessageSchema),
   raisedToCommitteeId: Uuid.nullable(),
   status: z.enum(ESCALATION_STATUSES),
   resolutionDecisionId: Uuid.nullable(),

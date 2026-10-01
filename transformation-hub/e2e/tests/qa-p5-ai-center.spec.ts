@@ -446,12 +446,12 @@ test.describe('QA P5 — AI PM Center in English and Arabic, approval invalidati
       await expect(result).toBeVisible({ timeout: 30_000 });
       await expect(result.getByTestId('simulated-badge').first()).toContainText(AI.ar.common.simulated);
       const askText = await result.innerText();
-      await shot(page, 'defect-qa-p5-04-ar-answer-english-titles.png');
+      await shot(page, 'qa-p5-04-ar-answer-titles.png');
       await page.goto(`/projects/${dc}/ai/briefings`);
       await expect(page.getByTestId('detections-table').locator('tbody tr').first()).toBeVisible();
       await settle(page);
       const detText = await page.getByTestId('detections-table').innerText();
-      await shot(page, 'defect-qa-p5-04-ar-detections-english-titles.png');
+      await shot(page, 'qa-p5-04-ar-detections-titles.png');
       arabicRun = {
         bilingualTasks: bilingual.length,
         askEnglish: bilingual.filter((t) => askText.includes(t.title)).map((t) => t.title),
@@ -467,9 +467,8 @@ test.describe('QA P5 — AI PM Center in English and Arabic, approval invalidati
     }
   });
 
-  test('DEFECT QA-P5-04: in Arabic, the AI answer and the rules-only detections show template tasks by their Arabic title with a translated status (not the English title or the raw status enum)', async () => {
+  test('QA-P5-04 (fixed, regression): in Arabic, the AI answer and the rules-only detections show template tasks by their Arabic title with a translated status (not the English title or the raw status enum)', async () => {
     test.skip(!arabicRun, 'needs the CONTROL above');
-    test.fail(true, 'QA-P5-04: claims, citation labels and detection labels carry the English task title and the raw status enum in an Arabic run');
     expect(arabicRun!.askEnglish).toEqual([]);
     expect(arabicRun!.askRawStatus).toEqual([]);
     expect(arabicRun!.detectionsEnglish).toEqual([]);

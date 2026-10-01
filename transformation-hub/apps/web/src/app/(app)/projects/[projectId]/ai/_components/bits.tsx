@@ -7,6 +7,7 @@ import { DemoBadge } from '@/components/DemoBadge';
 import { StatusBadge, type Tone } from '@/components/StatusBadge';
 import { btn, card, cx } from '@/components/ui';
 import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
+import { useLocalized } from '@/lib/i18n-data';
 import { isApiError } from '@/lib/api';
 import { citationHref, type AiCitation, type People } from '@/lib/ai';
 import { useProjectContext } from '@/lib/project-context';
@@ -172,6 +173,7 @@ export function Person({ id, people }: { id: string | null | undefined; people: 
 export function CitationLinks({ citations, testId = 'citations' }: { citations: readonly AiCitation[]; testId?: string }) {
   const { t, formatNumber } = useI18n();
   const { projectId } = useProjectContext();
+  const localize = useLocalized(); // QA-P5-04: Arabic template title when the record has one
   if (citations.length === 0) return <span className="text-sm text-muted">{t('ai.answer.noSources')}</span>;
   return (
     <ul className="flex flex-wrap gap-1.5" data-testid={testId} aria-label={t('ai.answer.sources')}>
@@ -179,7 +181,7 @@ export function CitationLinks({ citations, testId = 'citations' }: { citations: 
         const href = citationHref(projectId, c);
         const typeName = t(`ai.citationTypes.${c.type}` as MessageKey);
         // Without a server label the record type is the label (never an invented title).
-        const label = c.label ?? typeName;
+        const label = localize(c.label, c.labelAr) ?? typeName;
         const meta = [c.label ? typeName : null, c.version !== null && c.version !== undefined ? t('ai.common.versionShort', { version: formatNumber(c.version) }) : null, c.location ?? null].filter(Boolean).join(' · ');
         const body = (
           <>

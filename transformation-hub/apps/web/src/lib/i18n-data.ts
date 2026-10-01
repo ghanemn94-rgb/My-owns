@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import type { ServerMessageDto } from '@hub/contracts';
+import { AI_DETECTION_DATE_PARAMS, AI_DETECTION_ENUM_PARAMS } from '@hub/domain';
 import { INTL_LOCALE, type Locale } from '@/i18n/config';
 import { useI18n, type MessageKey, type StatusEnum } from '@/i18n/provider';
 
@@ -50,6 +51,8 @@ const ENUM_PARAMS: Readonly<Record<string, Readonly<Record<string, StatusEnum>>>
   'newco.history.incorporation_recorded': { status: 'incorporationStatuses' },
   'perimeter.transfer_note.scope_reset': { from: 'perimeterDispositions', to: 'perimeterDispositions' },
   'perimeter.transfer_note.scope_reset_cr': { from: 'perimeterDispositions', to: 'perimeterDispositions' },
+  // AI rules-only detections (QA-P5-04): the domain declares which parameters are statuses / areas.
+  ...(AI_DETECTION_ENUM_PARAMS as Readonly<Record<string, Readonly<Record<string, StatusEnum>>>>),
 };
 
 /**
@@ -75,6 +78,7 @@ const DATE_PARAMS: Readonly<Record<string, readonly string[]>> = {
   'plan.work.status_update_workstream': ['date'],
   'plan.work.status_update_project': ['date'],
   'tsa.escalation.expired_unresolved': ['endDate'],
+  ...(AI_DETECTION_DATE_PARAMS as Readonly<Record<string, readonly string[]>>),
 };
 
 /** Message parameters that carry a comma-separated list of weekday numbers (0 = Sunday): shown as weekday names. */
@@ -98,11 +102,13 @@ const ROUTED_PREFIXES: readonly (readonly [string, string])[] = [
   ['tsa.', 'readiness'],
   ['cutover.', 'readiness'],
   ['newco.', 'newco'],
+  ['ai.', 'ai'],
 ];
 
 /**
  * Catalogue of a server message code: `plan.*` → `planning.messages`, `authority.*` → `governance.messages`,
- * `perimeter.*` → `carveout.messages`, `tsa.*` / `cutover.*` → `readiness.messages`, `newco.*` → `newco.messages`, every
+ * `perimeter.*` → `carveout.messages`, `tsa.*` / `cutover.*` → `readiness.messages`, `newco.*` → `newco.messages`, `ai.*` →
+ * `ai.messages` (rules-only AI detections, QA-P5-04), every
  * other code (status dimensions, gate blockers, JV) → `gates.messages`. apps/web/scripts/check-i18n.mjs checks each
  * catalogue against the domain's English templates (PLANNING_MESSAGES_EN, AUTHORITY_MESSAGES_EN, PERIMETER_MESSAGES_EN,
  * READINESS_MESSAGES_EN, NEWCO_HISTORY_MESSAGES_EN, …).

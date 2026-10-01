@@ -18,7 +18,9 @@
  *     (READINESS_MESSAGES_EN, `readiness.messages.tsa.*` / `readiness.messages.cutover.*`) and legal-entity history reasons
  *     (NEWCO_HISTORY_MESSAGES_EN, `newco.messages.newco.*`);
  *  6. every AI refusal code raised in apps/api/src/modules/ai has `ai.errors.<code>` in en and ar, and every AI detection
- *     code / proposable action has its label;
+ *     code / proposable action has its label; QA-P5-04: the rules-only detection explanations (AI_DETECTION_MESSAGES_EN,
+ *     `ai.messages.ai.detection.*`) are checked as in 5, and the Arabic texts the server uses for the model context of an
+ *     Arabic AI run (AI_DETECTION_MESSAGES_AR, AI_STATUS_AR) must equal `ai.messages` / `statuses.<vocabulary>` in ar;
  *  7. every refusal code the gates module raises (apps/api/src/modules/gates, packages/domain/src/gates.ts) has a
  *     translated explanation in apps/web/src/lib/refusals.ts (QA-P2-04), whose keys are typed and checked by 1–3;
  *  8. every audit action written with a literal `action: '<module>.…'` in the governance and finance modules has its
@@ -105,6 +107,7 @@ const { JV_MESSAGES_EN } = jv;
 const { PERIMETER_MESSAGES_EN } = require('@hub/domain/dist/perimeter.js');
 const { READINESS_MESSAGES_EN } = require('@hub/domain/dist/readiness.js');
 const { NEWCO_HISTORY_MESSAGES_EN } = require('@hub/domain/dist/newco.js');
+const { AI_DETECTION_MESSAGES_EN, AI_DETECTION_MESSAGES_AR, AI_STATUS_AR, AI_DETECTION_ENUM_PARAMS } = require('@hub/domain/dist/ai/detection-messages.js');
 const serverCatalogues = {
   gates: { ...DIMENSION_MESSAGES_EN, ...GATE_MESSAGES_EN, ...JV_MESSAGES_EN },
   finance: FINANCE_MESSAGES_EN,
@@ -113,9 +116,10 @@ const serverCatalogues = {
   carveout: PERIMETER_MESSAGES_EN,
   readiness: READINESS_MESSAGES_EN,
   newco: NEWCO_HISTORY_MESSAGES_EN,
+  ai: AI_DETECTION_MESSAGES_EN,
 };
 // Code prefixes routed to a catalogue other than `gates` by useServerMessages (lib/i18n-data.ts serverMessageKey).
-const ROUTED_PREFIXES = { planning: ['plan.'], governance: ['authority.'], carveout: ['perimeter.'], readiness: ['tsa.', 'cutover.'], newco: ['newco.'] };
+const ROUTED_PREFIXES = { planning: ['plan.'], governance: ['authority.'], carveout: ['perimeter.'], readiness: ['tsa.', 'cutover.'], newco: ['newco.'], ai: ['ai.'] };
 const i18nDataSrc = readFileSync(join(here, '..', 'src', 'lib', 'i18n-data.ts'), 'utf8');
 for (const [ns, prefixes] of Object.entries(ROUTED_PREFIXES)) {
   for (const prefix of prefixes) if (!i18nDataSrc.includes(`['${prefix}', '${ns}']`)) errors.push(`lib/i18n-data.ts ROUTED_PREFIXES does not route "${prefix}" to ${ns}.messages`);
@@ -140,7 +144,27 @@ for (const [ns, serverCodes] of Object.entries(serverCatalogues)) {
   }
 }
 
-// 6. AI PM Center (`ai` namespace). The AI module emits no `<field>I18n` codes, but its refusals carry codes the screens
+// 6a. AI context texts (QA-P5-04): an Arabic AI run's model context is rendered on the server from the same codes; its
+//     Arabic templates and status labels must be the catalogue's own texts, so the context says what the screen says.
+{
+  const arAi = flatten(load('ar', 'ai').messages ?? {});
+  for (const [code, text] of Object.entries(AI_DETECTION_MESSAGES_AR)) {
+    if (arAi.get(code) !== text) errors.push(`ar ai.messages.${code} differs from the domain's AI_DETECTION_MESSAGES_AR (model context of Arabic runs)`);
+  }
+  for (const code of Object.keys(AI_DETECTION_MESSAGES_EN)) if (!(code in AI_DETECTION_MESSAGES_AR)) errors.push(`AI_DETECTION_MESSAGES_AR lacks ${code}`);
+  const arStatuses = load('ar', 'statuses');
+  for (const [vocabulary, labels] of Object.entries(AI_STATUS_AR)) {
+    const group = arStatuses[vocabulary];
+    if (!group) errors.push(`AI_STATUS_AR.${vocabulary} is not a statuses vocabulary`);
+    else {
+      for (const [value, label] of Object.entries(labels)) if (group[value] !== label) errors.push(`AI_STATUS_AR.${vocabulary}.${value} differs from ar statuses.${vocabulary}.${value}`);
+      for (const value of Object.keys(group)) if (!(value in labels)) errors.push(`AI_STATUS_AR.${vocabulary} lacks ${value} (ar statuses.${vocabulary})`);
+    }
+  }
+  for (const [code, params] of Object.entries(AI_DETECTION_ENUM_PARAMS)) for (const v of Object.values(params)) if (!(v in AI_STATUS_AR)) errors.push(`AI_DETECTION_ENUM_PARAMS.${code} uses ${v}, which AI_STATUS_AR does not carry`);
+}
+
+// 6. AI PM Center (`ai` namespace). Detection explanations are checked in 5 / 6a; the AI refusals carry codes the screens
 //    translate (`ai.errors.<code>`): every code raised with ruleViolation / conflict / forbidden in apps/api/src/modules/ai
 //    must have a translation in en and ar, so a new refusal never reaches an Arabic user as an English sentence. Likewise
 //    every rules-only detection code (contracts AI_DETECTION_CODES) and every proposable action (domain AI_PROPOSABLE_ACTIONS).
@@ -206,5 +230,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV, finance, planning, governance, carve-out, readiness, NewCo), ${aiCodes.size} AI refusal codes, ${gateCodes.size} gate refusal codes, ${auditActionCount} governance / finance history labels.`,
+  `i18n check passed: ${namespaces.length} namespaces, ${count} keys per language, ${enumValues} enum values translated in en and ar, ${serverCodeCount} server message codes (gates incl. JV, finance, planning, governance, carve-out, readiness, NewCo, AI detections), ${aiCodes.size} AI refusal codes, ${gateCodes.size} gate refusal codes, ${auditActionCount} governance / finance history labels.`,
 );

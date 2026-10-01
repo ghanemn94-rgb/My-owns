@@ -13,6 +13,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { useToast } from '@/components/Toast';
 import { btn, cx, input } from '@/components/ui';
 import { EM_DASH, useI18n, type MessageKey } from '@/i18n/provider';
+import { useLocalized, useServerMessages } from '@/lib/i18n-data';
 import { api } from '@/lib/api';
 import { BRIEFING_KINDS, citationHref, DETECTION_SEVERITIES, useAiRefresh, useBriefings, useDetections, type AiDetection, type BriefingSchedule } from '@/lib/ai';
 import { useProjectContext } from '@/lib/project-context';
@@ -164,28 +165,33 @@ function Detections() {
   const { t, formatDate, formatDateTime, formatNumber } = useI18n();
   const { projectId } = useProjectContext();
   const q = useDetections();
+  const localize = useLocalized();
+  const messages = useServerMessages();
   const [search, setSearch] = useState('');
   const [severity, setSeverity] = useState('');
   const [code, setCode] = useState('');
+  // QA-P5-04: the record in the UI language (Arabic template title when it exists) and the detail from its codes.
   const rows = useMemo(() => {
     const s = search.toLocaleLowerCase();
-    return (q.data?.items ?? []).map((d, i) => ({ ...d, rowIndex: i })).filter((d) => (!severity || d.severity === severity) && (!code || d.code === code) && (!s || d.label.toLocaleLowerCase().includes(s) || d.detail.toLocaleLowerCase().includes(s)));
-  }, [q.data, search, severity, code]);
+    return (q.data?.items ?? [])
+      .map((d, i) => ({ ...d, rowIndex: i, shownLabel: localize(d.label, d.labelAr), shownDetail: messages(d.detailI18n, d.detail) ?? d.detail }))
+      .filter((d) => (!severity || d.severity === severity) && (!code || d.code === code) && (!s || d.shownLabel.toLocaleLowerCase().includes(s) || d.shownDetail.toLocaleLowerCase().includes(s)));
+  }, [q.data, search, severity, code, localize, messages]);
 
-  const columns: Column<AiDetection & { rowIndex: number }>[] = [
+  const columns: Column<AiDetection & { rowIndex: number; shownLabel: string; shownDetail: string }>[] = [
     {
       key: 'record',
       header: t('ai.detections.record'),
       isRowHeader: true,
-      sortValue: (d) => d.label,
+      sortValue: (d) => d.shownLabel,
       cell: (d) => {
         const href = citationHref(projectId, { type: d.entityType, id: d.entityId, label: d.label });
         return href ? (
           <Link className={btn.link} href={href} data-testid="detection-link">
-            <span dir="auto">{d.label}</span>
+            <span dir="auto">{d.shownLabel}</span>
           </Link>
         ) : (
-          <UText value={d.label} />
+          <UText value={d.shownLabel} />
         );
       },
     },
@@ -196,7 +202,7 @@ function Detections() {
       sortValue: (d) => DETECTION_SEVERITIES.indexOf(d.severity),
       cell: (d) => <StatusBadge enumName="aiModes" value={d.severity} tone={d.severity === 'critical' ? 'danger' : d.severity === 'warning' ? 'warning' : 'info'} label={t(`ai.detections.severities.${d.severity}` as MessageKey)} />,
     },
-    { key: 'detail', header: t('ai.detections.detail'), cell: (d) => <UText value={d.detail} /> },
+    { key: 'detail', header: t('ai.detections.detail'), cell: (d) => <UText value={d.shownDetail} /> },
     { key: 'gate', header: t('ai.detections.gate'), sortValue: (d) => d.gateKey, cell: (d) => (d.gateKey ? <span dir="ltr">{d.gateKey}</span> : EM_DASH) },
     { key: 'due', header: t('ai.detections.dueDate'), sortValue: (d) => d.dueDate, cell: (d) => formatDate(d.dueDate) },
   ];

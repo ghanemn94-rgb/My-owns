@@ -247,7 +247,7 @@ export class AiKnowledgeService {
       .orderBy(asc(mdue))
       .limit(50);
     const pendingEvidence = await tx
-      .select({ id: schema.milestone.id, code: schema.milestone.code, title: schema.milestone.title, gateKey: schema.milestone.gateKey, version: schema.milestone.version, ownerUserId: schema.milestone.ownerUserId, updatedAt: schema.milestone.updatedAt })
+      .select({ id: schema.milestone.id, code: schema.milestone.code, title: schema.milestone.title, titleAr: schema.milestone.titleAr, gateKey: schema.milestone.gateKey, version: schema.milestone.version, ownerUserId: schema.milestone.ownerUserId, updatedAt: schema.milestone.updatedAt })
       .from(schema.milestone)
       .where(and(eq(schema.milestone.projectId, projectId), vis, reachM, eq(schema.milestone.status, 'achieved_pending_evidence')))
       .limit(50);
@@ -263,13 +263,13 @@ export class AiKnowledgeService {
     const where = and(eq(schema.task.projectId, projectId), vis, reachT, isNull(schema.task.accountableUserId), inArray(schema.task.status, ['draft', 'not_started', 'in_progress', 'blocked']));
     const [{ n }] = (await tx.select({ n: sql<number>`count(*)::int` }).from(schema.task).where(where)) as [{ n: number }];
     const tasks = await tx
-      .select({ id: schema.task.id, code: schema.task.wbsCode, title: schema.task.title, status: schema.task.status, gateKey: schema.task.gateKey, version: schema.task.version, updatedAt: schema.task.updatedAt })
+      .select({ id: schema.task.id, code: schema.task.wbsCode, title: schema.task.title, titleAr: schema.task.titleAr, status: schema.task.status, gateKey: schema.task.gateKey, version: schema.task.version, updatedAt: schema.task.updatedAt })
       .from(schema.task)
       .where(where)
       .orderBy(asc(schema.task.sortOrder))
       .limit(20);
     const milestones = await tx
-      .select({ id: schema.milestone.id, code: schema.milestone.code, title: schema.milestone.title, status: schema.milestone.status, gateKey: schema.milestone.gateKey, version: schema.milestone.version, updatedAt: schema.milestone.updatedAt })
+      .select({ id: schema.milestone.id, code: schema.milestone.code, title: schema.milestone.title, titleAr: schema.milestone.titleAr, status: schema.milestone.status, gateKey: schema.milestone.gateKey, version: schema.milestone.version, updatedAt: schema.milestone.updatedAt })
       .from(schema.milestone)
       .where(and(eq(schema.milestone.projectId, projectId), vis, reachM, isNull(schema.milestone.ownerUserId), inArray(schema.milestone.status, ['planned', 'at_risk'])))
       .limit(20);
@@ -281,8 +281,8 @@ export class AiKnowledgeService {
     const cutoff = addCalendarDays(today, -this.cfg.staleUpdateDays);
     const vis = this.vis(ctx, projectId, {});
     const reach = this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.workstream.id);
-    const r = await this.db.tx().execute<{ id: string; code: string; name: string; version: number; last_period: string | null; updated_at: Date }>(sql`
-      select workstream.id, workstream.code, workstream.name, workstream.version, workstream.updated_at,
+    const r = await this.db.tx().execute<{ id: string; code: string; name: string; name_ar: string | null; version: number; last_period: string | null; updated_at: Date }>(sql`
+      select workstream.id, workstream.code, workstream.name, workstream.name_ar, workstream.version, workstream.updated_at,
              (select max(status_update.period_end) from status_update
                where status_update.project_id = workstream.project_id and status_update.workstream_id = workstream.id
                  and status_update.status in ('submitted', 'accepted'))::text as last_period
@@ -444,7 +444,7 @@ export class AiKnowledgeService {
     const vis = this.vis(ctx, projectId, {});
     return this.db
       .tx()
-      .select({ id: schema.readinessCheck.id, code: schema.readinessCheck.code, title: schema.readinessCheck.title, area: schema.readinessCheck.area, status: schema.readinessCheck.status, blocker: schema.readinessCheck.blocker, dueDate: schema.readinessCheck.dueDate, version: schema.readinessCheck.version, updatedAt: schema.readinessCheck.updatedAt, isDemo: schema.readinessCheck.isDemo })
+      .select({ id: schema.readinessCheck.id, code: schema.readinessCheck.code, title: schema.readinessCheck.title, titleAr: schema.readinessCheck.titleAr, area: schema.readinessCheck.area, status: schema.readinessCheck.status, blocker: schema.readinessCheck.blocker, dueDate: schema.readinessCheck.dueDate, version: schema.readinessCheck.version, updatedAt: schema.readinessCheck.updatedAt, isDemo: schema.readinessCheck.isDemo })
       .from(schema.readinessCheck)
       .where(and(eq(schema.readinessCheck.projectId, projectId), vis, this.readable(ctx, projectId, 'readiness_check', schema.readinessCheck.id), sql`(${schema.readinessCheck.blocker} or ${schema.readinessCheck.mandatory})`, inArray(schema.readinessCheck.status, ['not_started', 'in_progress', 'failed'])))
       .orderBy(desc(schema.readinessCheck.blocker), asc(schema.readinessCheck.code))

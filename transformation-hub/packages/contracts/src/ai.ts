@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { AI_MODES, AI_PROVIDERS, AI_RUN_STATUSES, AI_PROPOSAL_STATUSES, AI_PROPOSABLE_ACTIONS, CLASSIFICATIONS } from '@hub/domain';
 import { defineRoute, registerRoutes } from './route';
-import { ProjectParams, idParams, Uuid, IsoDate, PageQuery, SortParam, paged, RequiredText, Text, ExpectedVersion, DecimalString, Currency } from './common';
+import { ProjectParams, idParams, Uuid, IsoDate, PageQuery, SortParam, paged, RequiredText, Text, ExpectedVersion, DecimalString, Currency, ServerMessageSchema } from './common';
 
 /**
  * Runtime AI project manager — contract routes (spec §12, §15, §16; AT-17…AT-22, AT-28).
@@ -19,6 +19,8 @@ export const AiCitationDto = z.object({
   version: z.number().int().nullable().optional(),
   location: z.string().nullable().optional(),
   label: z.string().nullable().optional(),
+  /** Arabic label when the record has an Arabic (template) title — bilingual data, module guide §2 (QA-P5-04). */
+  labelAr: z.string().nullable().optional(),
   isDemo: z.boolean().optional(),
 });
 export type AiCitation = z.infer<typeof AiCitationDto>;
@@ -46,8 +48,14 @@ export const AiDetectionDto = z.object({
   severity: z.enum(['info', 'warning', 'critical']),
   entityType: z.string(),
   entityId: z.string(),
+  /** English / primary label (`<code> <title>`). */
   label: z.string(),
+  /** Arabic label when the record has an Arabic (template) title, else null (QA-P5-04). Absent in runs stored before. */
+  labelAr: z.string().nullable().optional(),
+  /** English sentence (kept for audit and the English AI context). */
   detail: z.string(),
+  /** The same as codes + parameters (`ai.detection.*`; enum values translated by the client) — QA-P5-04. */
+  detailI18n: z.array(ServerMessageSchema).optional(),
   gateKey: z.string().nullable(),
   dueDate: z.string().nullable(),
   citations: z.array(AiCitationDto),

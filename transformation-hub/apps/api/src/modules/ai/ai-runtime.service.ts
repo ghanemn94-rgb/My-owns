@@ -616,6 +616,7 @@ export class AiRuntimeService {
     if (r.version !== undefined) out.version = r.version;
     if (r.location !== undefined) out.location = r.location;
     if (r.label !== undefined) out.label = r.label;
+    if (r.labelAr !== undefined) out.labelAr = r.labelAr;
     if (r.isDemo !== undefined) out.isDemo = r.isDemo;
     return out;
   }
