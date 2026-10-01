@@ -433,7 +433,9 @@ describe('§12.1 "citations open only for authorized users" — a project member
     const cited = (o: { claims?: { citations: { type: string; id: string }[] }[] } | null | undefined) => !!o?.claims?.some((cl) => cl.citations.some((x) => x.type === 'task' && x.id === f.overdueTaskId));
     const { contexts, db, runtime } = await serviceHandles();
     const ctx = (await contexts.forUser(u, f.dcId))!;
-    const b = await db.run(ctx, () => runtime.runBriefingNow(ctx, f.dcId));
+    // Set-up adjusted by the implementer for the QA-P5-03 fix: the briefing of a member who may not see the project is now
+    // refused (404, like the planning module) — recorded instead of failing the set-up.
+    const b = await db.run(ctx, () => runtime.runBriefingNow(ctx, f.dcId)).catch((e: { getStatus?: () => number; status?: number }) => ({ status: `refused ${e.getStatus?.() ?? e.status ?? 'error'}`, output: null }));
     const d = await c.get(`${aiPath(f.dcId)}/detections`);
     const pm = await login('pm');
     const pmAsk = await pm.post(`${aiPath(f.dcId)}/ask`, { question: q, locale: 'en' });
@@ -465,23 +467,25 @@ describe('§12.1 "citations open only for authorized users" — a project member
     expect(r!.provisioned).toMatchObject({ create: 201, clearance: 'internal', grant: 201 });
   });
 
-  it.fails('DEFECT QA-P5-03 (ask): the AI answer does not cite or disclose a task the member may not read in the planning module', async () => {
-    expect(r!.ask.status).toBe(201);
+  it('QA-P5-03 (fixed, regression) (ask): the AI answer does not cite or disclose a task the member may not read in the planning module', async () => {
+    // The fix answers 404 like the project / plan / task routes (the review's recommendation); the probe expected the ask to
+    // run (201) — the one assertion changed by the implementer, recorded in the review's Fix status.
+    expect(r!.ask.status).toBe(404);
     expect(r!.ask.taskCited).toBe(false);
     expect(r!.ask.titleShown).toBe(false);
   });
 
-  it.fails('DEFECT QA-P5-03 (briefing): the member\'s briefing does not cite or disclose the task', async () => {
+  it('QA-P5-03 (fixed, regression) (briefing): the member\'s briefing does not cite or disclose the task', async () => {
     expect(r!.briefing.taskCited).toBe(false);
     expect(r!.briefing.titleShown).toBe(false);
   });
 
-  it.fails('DEFECT QA-P5-03 (rules-only detections): GET …/ai/detections refuses the member like the planning module (404), or lists no record the member cannot read', async () => {
+  it('QA-P5-03 (fixed, regression) (rules-only detections): GET …/ai/detections refuses the member like the planning module (404), or lists no record the member cannot read', async () => {
     expect(r!.detections.status === 404 || !r!.detections.taskListed).toBe(true);
   });
 
-  it('OBSERVED QA-P5-03: the citation shown to the member does not open for them (GET task → 404)', async () => {
-    expect(r!.ask.taskCited || r!.briefing.taskCited).toBe(true);
+  it('QA-P5-03 (fixed, regression; formerly OBSERVED — it pinned the disclosure): nothing of the plan is cited for the member, and the task would not open for them (GET task → 404)', async () => {
+    expect(r!.ask.taskCited || r!.briefing.taskCited).toBe(false);
     expect(r!.citationOpen).toBe(404);
   });
 });

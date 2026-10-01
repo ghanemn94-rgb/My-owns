@@ -93,10 +93,15 @@ afterAll(async () => {
 // =====================================================================================================================
 describe('SEC-P5-01 (fix) — the message recipient is re-authorised for the CONTENT at approval, at execution and at revision [AT-17, AIT-07, access-matrix §5.2]', () => {
   const CANARY = 'P5FIXWREN';
+  const MEMO_A = 'P5FIXWRENA';
+  const MEMO_B = 'P5FIXWRENB';
   let memo: string;
-  let cleared: DocClient; // cleared confidential when the proposal is created; lowered before the approval
-  let cleared2: DocClient; // cleared confidential until after the approval; lowered before the execution
-  let low: DocClient; // cleared internal throughout
+  let memoA: string; // reclassified above the recipient between the proposal and the approval
+  let memoB: string; // reclassified above the recipient between the approval and the execution
+  let cleared: DocClient; // cleared at the project's classification (confidential)
+  let cleared2: DocClient;
+  let ctl: DocClient;
+  let low: DocClient; // cleared internal: below this confidential project (QA-P5-03)
   let pApprove: string;
   let pExecute: string;
   let approve: { status: number; code: string };
@@ -104,26 +109,35 @@ describe('SEC-P5-01 (fix) — the message recipient is re-authorised for the CON
   let versionBeforeRevise = 0;
   let created: { proposals: number; refused: { name: string; reason: string }[]; audit: { outcome: string; reason: string }[] };
 
+  const reclassifyRestricted = async (id: string) => {
+    const cur = (await j.p.secretary.get(`${P(pid)}/documents/${id}`).expect(200)).body;
+    await ok(await j.p.secretary.post(`${P(pid)}/documents/${id}/classify`, { expectedVersion: cur.version, classification: 'restricted', reason: 'P5 fix test: reclassified above the recipient (synthetic)' }));
+  };
+
   beforeAll(async () => {
     cleared = await member('p5fix.cleared', 'confidential');
     cleared2 = await member('p5fix.cleared2', 'confidential');
+    ctl = await member('p5fix.ctl', 'confidential');
     low = await member('p5fix.low', 'internal');
+    for (const id of [cleared.userId, cleared2.userId, ctl.userId]) await setClearance(id, 'confidential'); // idempotent fixture
     memo = (await doc(j.p.pm, pid, 'P5FIX confidential wren memo (synthetic)', { classification: 'confidential', kind: 'evidence', text: `Confidential memo ${CANARY}: the synthetic exclusivity terms remain under negotiation.` })).id;
+    memoA = (await doc(j.p.pm, pid, 'P5FIX wren memo A (synthetic)', { classification: 'confidential', kind: 'evidence', text: `Confidential memo ${MEMO_A}: the synthetic fee schedule remains under negotiation.` })).id;
+    memoB = (await doc(j.p.pm, pid, 'P5FIX wren memo B (synthetic)', { classification: 'confidential', kind: 'evidence', text: `Confidential memo ${MEMO_B}: the synthetic exit terms remain under negotiation.` })).id;
     await runWorker(); // documents index job
-    // (a) Approval: created while the recipient may read the memo; the recipient's clearance is lowered before the approval.
-    const a = await withScript(notifyWith(cleared.userId, CANARY), () => ask(j.p.pm, `What does the ${CANARY} memo say?`));
+    // (a) Approval: created while the recipient may read memo A; memo A is reclassified to restricted (above the recipient,
+    //     still readable by the approver) before the approval.
+    const a = await withScript(notifyWith(cleared.userId, MEMO_A), () => ask(j.p.pm, `What does the ${MEMO_A} memo say?`));
     pApprove = a.output.proposals[0].id;
-    await setClearance(cleared.userId, 'internal');
+    await reclassifyRestricted(memoA);
     const ra = await j.p.secretary.post(`${P(pid)}/ai/proposals/${pApprove}/approve`, { expectedVersion: (await proposalRow(pApprove)).version });
     approve = { status: ra.status, code: ra.body.code };
-    // (b) Execution: approved while the recipient may read the memo; lowered before the worker runs.
-    const b = await withScript(notifyWith(cleared2.userId, CANARY), () => ask(j.p.pm, `Summarise the ${CANARY} memo`));
+    // (b) Execution: approved while the recipient may read memo B; memo B is reclassified before the worker runs.
+    const b = await withScript(notifyWith(cleared2.userId, MEMO_B), () => ask(j.p.pm, `Summarise the ${MEMO_B} memo`));
     pExecute = b.output.proposals[0].id;
     await ok(await j.p.secretary.post(`${P(pid)}/ai/proposals/${pExecute}/approve`, { expectedVersion: (await proposalRow(pExecute)).version }));
-    await setClearance(cleared2.userId, 'internal');
+    await reclassifyRestricted(memoB);
     await runWorker();
-    // (c) Revision: the requester re-addresses a fresh proposal to a recipient who may not read the memo.
-    await setClearance(cleared.userId, 'confidential');
+    // (c) Revision: the requester re-addresses a fresh proposal to a member cleared below the project's classification.
     const c = await withScript(notifyWith(cleared.userId, CANARY), () => ask(j.p.pm, `Explain the ${CANARY} memo`));
     const pRevise = c.output.proposals[0].id as string;
     const row = await proposalRow(pRevise);
@@ -131,13 +145,12 @@ describe('SEC-P5-01 (fix) — the message recipient is re-authorised for the CON
     const rv = await j.p.pm.post(`${P(pid)}/ai/proposals/${pRevise}/revise`, { expectedVersion: row.version, payload: { ...row.payload, recipientUserId: low.userId } });
     revise = { status: rv.status, code: rv.body.code };
     expect((await proposalRow(pRevise)).version).toBe(versionBeforeRevise);
-    // (d) Creation: the model addresses the memo text to the member cleared internal — no proposal at all.
+    // (d) Creation: the model addresses the memo text to that member — no proposal at all.
     const d = await withScript(notifyWith(low.userId, CANARY), () => ask(j.p.pm, `What does the ${CANARY} memo say about the terms?`));
     created = { proposals: d.output.proposals.length, refused: d.output.refusedToolCalls, audit: await auditOf(d.id, 'DESTINATION_NOT_APPROVED') };
   }, 300_000);
 
-
-  it('creation: no proposal is created for a recipient who may not read a record the model saw; the run reports the refusal and the audit names the recipient (id only)', async () => {
+  it('creation: no proposal is created for a recipient who may not read the content (here a member cleared below the project\'s classification); the run reports the refusal and the audit names the recipient (id only)', async () => {
     expect(created.proposals).toBe(0);
     expect(created.refused).toEqual([expect.objectContaining({ name: 'propose_internal_notification', reason: expect.stringContaining('recipient_not_cleared_for_content') })]);
     expect(created.audit).toHaveLength(1);
@@ -147,6 +160,7 @@ describe('SEC-P5-01 (fix) — the message recipient is re-authorised for the CON
   });
 
   it('approval: a recipient who may no longer read a record the message was drafted from is refused BEFORE approval (422 ai.recipient_not_cleared); the proposal is invalidated and audited; nothing is approved or sent', async () => {
+    expect((await cleared.get(`${P(pid)}/documents/${memoA}`)).status).toBe(404); // CONTROL: the source is now above the recipient
     expect(approve).toEqual({ status: 422, code: 'ai.recipient_not_cleared' });
     expect(await proposalRow(pApprove)).toMatchObject({ status: 'invalidated', invalidated_reason: 'recipient_not_cleared_for_content' });
     expect((await owner().query(`select count(*)::int n from ai_action_approval where proposal_id = $1`, [pApprove])).rows[0].n).toBe(0);
@@ -156,7 +170,8 @@ describe('SEC-P5-01 (fix) — the message recipient is re-authorised for the CON
     expect(await notes(pApprove)).toHaveLength(0);
   });
 
-  it('execution: the worker re-checks the content for the recipient — an approved message whose recipient lost access to a source is invalidated and never sent', async () => {
+  it('execution: the worker re-checks the content for the recipient — an approved message whose source was reclassified above the recipient is invalidated and never sent', async () => {
+    expect((await cleared2.get(`${P(pid)}/documents/${memoB}`)).status).toBe(404); // CONTROL
     expect(await proposalRow(pExecute)).toMatchObject({ status: 'invalidated', invalidated_reason: 'recipient_not_cleared_for_content' });
     expect(await notes(pExecute)).toHaveLength(0);
     expect((await auditOf(pExecute, 'AI_APPROVAL_INVALIDATED')).some((r: { reason: string }) => r.reason.startsWith('recipient_not_cleared_for_content'))).toBe(true);
@@ -167,8 +182,8 @@ describe('SEC-P5-01 (fix) — the message recipient is re-authorised for the CON
     expect(revise).toEqual({ status: 422, code: 'ai.recipient_not_cleared' });
   });
 
-  it('CONTROL: a message drafted from NO record (empty run inputs) may still go to a member cleared internal; it carries the platform marker "AI-generated (Simulated)" (SEC-P5-I7)', async () => {
-    const empty = await withScript(() => ({ toolCalls: [{ name: 'propose_internal_notification', args: { recipientUserId: low.userId, title: 'Reminder (P5FIX control)', body: 'Please update the plan (synthetic).' } }] }), () => ask(j.p.pm, 'P5FIXNOOP overdue'));
+  it('CONTROL: a message drafted from NO record (empty run inputs) may still go to a member cleared at the project\'s classification; it carries the platform marker "AI-generated (Simulated)" (SEC-P5-I7)', async () => {
+    const empty = await withScript(() => ({ toolCalls: [{ name: 'propose_internal_notification', args: { recipientUserId: ctl.userId, title: 'Reminder (P5FIX control)', body: 'Please update the plan (synthetic).' } }] }), () => ask(j.p.pm, 'P5FIXNOOP overdue'));
     expect((await owner().query(`select evidence_snapshot->'items' as items from ai_run where id = $1`, [empty.id])).rows[0].items).toEqual([]);
     const id = empty.output.proposals[0].id as string;
     expect((await j.p.secretary.post(`${P(pid)}/ai/proposals/${id}/approve`, { expectedVersion: (await proposalRow(id)).version })).status).toBe(201);
@@ -176,7 +191,7 @@ describe('SEC-P5-01 (fix) — the message recipient is re-authorised for the CON
     expect((await proposalRow(id)).status).toBe('executed');
     const n = await notes(id);
     expect(n).toHaveLength(1);
-    expect(n[0]).toMatchObject({ user_id: low.userId, title: 'AI-generated (Simulated): Reminder (P5FIX control)' });
+    expect(n[0]).toMatchObject({ user_id: ctl.userId, title: 'AI-generated (Simulated): Reminder (P5FIX control)' });
   });
 });
 

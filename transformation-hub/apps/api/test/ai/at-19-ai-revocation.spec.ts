@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeApp, closePools, owner } from '../helpers';
-import { aiPath, auditCount, demoUserId, drain, ensureFixtures, evalBody, Fixtures, fixtureUser, login, loginUserId, serviceHandles, setAi } from './ai-fixtures';
+import { aiPath, auditCount, CANARY, demoUserId, drain, ensureFixtures, evalBody, Fixtures, fixtureUser, login, loginUserId, serviceHandles, setAi } from './ai-fixtures';
 
 let f: Fixtures;
 const FILE = __filename;
@@ -94,11 +94,14 @@ describe('AT-19 — access revoked after scheduling: the worker re-checks and ou
   );
 
   it(
-    'clearance lowered after scheduling: the briefing still runs but only with content the user can see NOW',
+    'clearance lowered after scheduling: the briefing runs only with content the user can see NOW, and not at all once the clearance is below the project classification (QA-P5-03)',
     evalBody(FILE, { id: 'REV-EN-03', category: 'revoked', lang: 'en', provider: 'mock-benign', ait: ['AIT-14', 'AIT-13'] }, async () => {
+      // (a) Lowered from strictly_confidential to confidential — still the project's classification (DEMO-DC): the briefing
+      //     runs, without anything above the NEW clearance.
       const u = await fixtureUser('rev-clearance', 'strictly_confidential', [{ role: 'contributor' }]);
+      await owner().query(`update app_user set clearance = 'strictly_confidential' where id = $1`, [u]); // idempotent fixture
       const sched = await subscribeAndMakeDue(u);
-      await owner().query(`update app_user set clearance = 'internal' where id = $1`, [u]);
+      await owner().query(`update app_user set clearance = 'confidential' where id = $1`, [u]);
       await fireNow(sched);
       await drain();
       const r = (await owner().query(`select status, output, evidence_snapshot from ai_run where trigger_ref like $1`, [`schedule:${sched}:%`])).rows[0];
@@ -106,10 +109,30 @@ describe('AT-19 — access revoked after scheduling: the worker re-checks and ou
       // Classified records (documents, decisions, partners) above the NEW clearance are not in the evidence any more.
       const items = r.evidence_snapshot.items as { type: string; classification: string }[];
       for (const i of items.filter((x) => ['document', 'decision', 'partner', 'financial_model_version', 'financial_snapshot'].includes(x.type))) {
-        expect(['public', 'internal']).toContain(i.classification);
+        expect(['public', 'internal', 'confidential']).toContain(i.classification);
       }
-      expect(items.some((i) => i.type === 'document' && i.classification === 'confidential')).toBe(false);
+      expect(items.some((i) => i.type === 'document' && ['restricted', 'strictly_confidential'].includes(i.classification))).toBe(false);
       expect(JSON.stringify(r.output)).not.toContain('Demo Partner Alpha');
+      expect(JSON.stringify(r.output)).not.toContain(CANARY.restricted);
+      // (b) Lowered to internal — BELOW the project's classification: the planning and portfolio modules refuse the user the
+      //     project (404), so the worker records the briefing as skipped and delivers nothing (QA-P5-03; this case asserted
+      //     the opposite before the P5 QA fixes).
+      expect((await owner().query(`select classification from project where id = $1`, [f.dcId])).rows[0].classification).toBe('confidential');
+      const low = await fixtureUser('rev-clearance-low', 'confidential', [{ role: 'contributor' }]);
+      await owner().query(`update app_user set clearance = 'confidential' where id = $1`, [low]); // idempotent fixture
+      const schedLow = await subscribeAndMakeDue(low);
+      await owner().query(`update app_user set clearance = 'internal' where id = $1`, [low]);
+      const since = new Date(Date.now() - 1000).toISOString();
+      await fireNow(schedLow);
+      await drain();
+      const rl = (await owner().query(`select status, error, output from ai_run where trigger_ref like $1`, [`schedule:${schedLow}:%`])).rows;
+      expect(rl).toHaveLength(1);
+      expect(rl[0]).toMatchObject({ status: 'skipped', error: 'owner_access_revoked', output: null });
+      expect((await owner().query(`select count(*)::int as n from notification where user_id = $1`, [low])).rows[0].n).toBe(0);
+      expect(await auditCount(f.dcId, 'ai.briefing.skipped', since)).toBeGreaterThanOrEqual(1);
+      const c = await loginUserId(low);
+      expect((await c.get(`/api/v1/projects/${f.dcId}`)).status).toBe(404);
+      expect((await c.post(`${aiPath(f.dcId)}/ask`, { question: 'What is overdue?' })).status).toBe(404);
     }),
   );
 

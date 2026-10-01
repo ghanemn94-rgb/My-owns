@@ -24,6 +24,7 @@ import type { RequestContext } from '../../platform/context';
 import { newId } from '../../platform/ids';
 import { AiConfig } from './ai-config';
 import { ProviderRegistry } from './providers/provider-registry';
+import { AiKnowledgeService } from './ai-knowledge.service';
 import { MOCK_MODELS } from './providers/mock.provider';
 import { ProviderStatus } from './providers/model-provider';
 
@@ -87,6 +88,7 @@ export class AiSettingsService {
     private readonly queue: JobQueue,
     private readonly cfg: AiConfig,
     private readonly providers: ProviderRegistry,
+    private readonly knowledge: AiKnowledgeService,
   ) {}
 
   /** Current settings (defaults when never configured). Runs in the current transaction (RLS applies). */
@@ -146,6 +148,7 @@ export class AiSettingsService {
   }
 
   async get(ctx: RequestContext, projectId: string) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.settings.manage', { projectId });
     const s = await this.load(projectId);
     return this.toDto(s, this.clock.today(await this.projectTimezone(projectId)));
@@ -153,6 +156,7 @@ export class AiSettingsService {
 
   // -------------------------------------------------------------------------------------------------------
   async update(ctx: RequestContext, projectId: string, body: RouteInput<typeof aiRoutes.updateSettings>['body']) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.settings.manage', { projectId });
     const cur = await this.load(projectId);
     if (cur.version !== body.expectedVersion) {
@@ -301,6 +305,7 @@ export class AiSettingsService {
 
   // -------------------------------------------------------------------------------------------------------
   async approveAutopilot(ctx: RequestContext, projectId: string, body: { expectedVersion: number; note?: string }) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     const cur = await this.load(projectId);
     const p = cur.autopilotPolicy as AutopilotPolicyStored | null;
     // not_self: the proposer of the policy may not approve it (access-matrix §5.1); a proposal without a known proposer
@@ -319,6 +324,7 @@ export class AiSettingsService {
   }
 
   async revokeAutopilot(ctx: RequestContext, projectId: string, body: { expectedVersion: number; reason: string }) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.settings.manage', { projectId });
     const cur = await this.load(projectId);
     if (cur.version !== body.expectedVersion) throw conflict('concurrency.version_mismatch', 'AI settings were changed by someone else — reload and review before retrying');
@@ -336,6 +342,7 @@ export class AiSettingsService {
    * cancels unsent AI deliveries; all history is preserved (rows are marked, never deleted).
    */
   async activateKillSwitch(ctx: RequestContext, projectId: string, reason: string) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.killswitch.activate', { projectId });
     const tx = this.db.tx();
     const cur = await this.load(projectId);
@@ -370,6 +377,7 @@ export class AiSettingsService {
   }
 
   async releaseKillSwitch(ctx: RequestContext, projectId: string, reason: string) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     const cur = await this.load(projectId);
     // not_self: the activator may not release their own emergency stop (activator unknown → fail closed, I-R3).
     if (!cur.killSwitch) {
@@ -400,6 +408,7 @@ export class AiSettingsService {
   // Briefing schedules (durable scheduled_job rows owned by the subscriber; delivered to the subscriber only — AIT-13)
 
   async listBriefings(ctx: RequestContext, projectId: string) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.briefing.subscribe', { projectId });
     const rows = await this.db
       .tx()
@@ -410,6 +419,7 @@ export class AiSettingsService {
   }
 
   async subscribeBriefing(ctx: RequestContext, projectId: string, body: { kind: 'daily' | 'weekly'; cron?: string; timezone?: string; enabled: boolean }) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.briefing.subscribe', { projectId });
     const s = await this.load(projectId);
     const cron = body.cron ?? (body.kind === 'daily' ? (s.briefingCron ?? DEFAULT_BRIEFING_CRON.daily) : DEFAULT_BRIEFING_CRON.weekly);

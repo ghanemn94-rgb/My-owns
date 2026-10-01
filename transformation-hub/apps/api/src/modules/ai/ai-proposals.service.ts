@@ -254,6 +254,9 @@ export class AiProposalsService {
     const rctx = await this.contexts.forUser(userId, projectId);
     const scope = rctx?.principal.projects.get(projectId);
     if (!rctx || !scope || !isFullScope(scope)) return { ok: false, reason: 'recipient_not_authorized' };
+    // QA-P5-03: a member cleared below the project's classification may read none of its content (the owning modules answer
+    // 404 for the project and every record) — not cleared for any message of this project.
+    if (!(await this.knowledge.projectVisible(rctx, projectId))) return { ok: false, reason: 'recipient_not_cleared_for_content' };
     if (targetType && targetId) {
       const visible = await this.knowledge.visibleCitationKeys(rctx, projectId, [{ type: targetType, id: targetId }]);
       if (!visible.has(`${targetType}:${targetId}`)) return { ok: false, reason: 'recipient_not_authorized' };
@@ -276,6 +279,7 @@ export class AiProposalsService {
   }
 
   async approve(ctx: RequestContext, projectId: string, proposalId: string, body: { expectedVersion: number; note?: string }) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     const p = await this.loadVisible(ctx, projectId, proposalId); // SEC-P34R-05: nobody approves what they may not see
     const perm = AI_ACTION_PERMISSION[p.actionType as AiProposableAction];
     if (!perm) throw ruleViolation('ai.not_executable', 'This proposal type is a prepared request and cannot be executed');
@@ -333,6 +337,7 @@ export class AiProposalsService {
   }
 
   async reject(ctx: RequestContext, projectId: string, proposalId: string, body: { expectedVersion: number; note: string }) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     const p = await this.loadVisible(ctx, projectId, proposalId); // SEC-P34R-05
     this.policy.assert(ctx, 'ai.proposal.reject', { projectId });
     if (p.version !== body.expectedVersion) throw conflict('concurrency.version_mismatch', 'The proposal was changed — reload and review');
@@ -356,6 +361,7 @@ export class AiProposalsService {
 
   /** Requester revises the payload → new hash, existing approvals invalidated, fresh review required (AT-18). */
   async revise(ctx: RequestContext, projectId: string, proposalId: string, body: { expectedVersion: number; payload: Record<string, unknown>; note?: string }) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     const p = await this.loadVisible(ctx, projectId, proposalId); // SEC-P34R-05
     this.policy.assert(ctx, 'ai.assistant.use', { projectId });
     const requester = await this.requesterOf(p);
@@ -462,6 +468,7 @@ export class AiProposalsService {
   // Reads
 
   async get(ctx: RequestContext, projectId: string, proposalId: string) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     const p = await this.loadVisible(ctx, projectId, proposalId);
     const [dto] = await this.toDtos(projectId, [p]);
     return dto!;
@@ -476,6 +483,7 @@ export class AiProposalsService {
   }
 
   async list(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; status?: string; sort?: RouteInput<typeof aiRoutes.listProposals>['query']['sort'] }) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.proposal.read', { projectId });
     const conds: SQL[] = [eq(schema.aiProposal.projectId, projectId), this.visibleSql(ctx, projectId)];
     if (q.status) conds.push(eq(schema.aiProposal.status, q.status as ProposalRow['status']));
@@ -526,7 +534,7 @@ export class AiProposalsService {
         (hub_pd.evidence_snapshot->'delegate'->>'clearance' in (${within(base)})
           and coalesce(hub_pd.evidence_snapshot->'delegate'->>'financeClearance', hub_pd.evidence_snapshot->'delegate'->>'clearance') in (${within(fin)}))
         or (hub_pd.evidence_snapshot->'delegate' is null and hub_pd.requested_by = ${me}::uuid))))`;
-    return and(target, inputs, draft)!;
+    return and(this.knowledge.projectSql(ctx, projectId), target, inputs, draft)!; // QA-P5-03: the project itself first
   }
 
   private async toDtos(projectId: string, rows: ProposalRow[]) {
@@ -619,11 +627,14 @@ export class AiProposalsService {
       }
       // Delegating user and approver re-authorised with CURRENT assignments (AT-19, AIT-18).
       const requesterCtx = requester ? await this.contexts.forUser(requester, projectId) : null;
-      if (!requesterCtx || !this.policy.canInProject(requesterCtx, perm, projectId) || !this.policy.canInProject(requesterCtx, 'ai.assistant.use', projectId)) return fail('requester_no_longer_authorized');
+      if (!requesterCtx || !this.policy.canInProject(requesterCtx, perm, projectId) || !this.policy.canInProject(requesterCtx, 'ai.assistant.use', projectId) || !(await this.knowledge.projectVisible(requesterCtx, projectId))) {
+        return fail('requester_no_longer_authorized'); // incl. the project's classification vs the CURRENT clearance (QA-P5-03)
+      }
       let approverCtx: RequestContext | null = null;
       if (approval) {
         approverCtx = await this.contexts.forUser(approval.approverUserId, projectId);
-        const approverOk = !!approverCtx && this.policy.canInProject(approverCtx, 'ai.proposal.approve', projectId) && this.policy.canInProject(approverCtx, perm, projectId) && approval.approverUserId !== requester;
+        const approverOk =
+          !!approverCtx && this.policy.canInProject(approverCtx, 'ai.proposal.approve', projectId) && this.policy.canInProject(approverCtx, perm, projectId) && approval.approverUserId !== requester && (await this.knowledge.projectVisible(approverCtx, projectId));
         const tv = await this.knowledge.targetVersion(projectId, p.targetType, p.targetId);
         const validity = isApprovalStillValid({
           approvedPayloadHash: approval.payloadHash,

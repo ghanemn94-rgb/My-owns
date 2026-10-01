@@ -448,7 +448,9 @@ describe('SEC-P5-01 — the recipient of an AI message is re-authorised for the 
   it('CONTROL: the recipient is a full project member who is refused the source (document 404; their own AI answer does not carry it); the model\'s tool call reached the runtime', async () => {
     expect((await low.get(`${P(pid)}/documents/${memo}`)).status).toBe(404);
     const own = await low.post(`${P(pid)}/ai/ask`, { question: `What does the ${CANARY} memo say?`, locale: 'en' });
-    expect(own.status).toBe(201);
+    // Since the P5 QA fix QA-P5-03 the member (cleared internal, below this confidential project) is refused the whole AI
+    // channel like the project itself (404); the probe expected their own answer to run (201) without the content.
+    expect(own.status).toBe(404);
     expect(JSON.stringify(own.body)).not.toContain('exclusivity fee terms');
     expect(auto.toolCalls).toContain('propose_internal_notification');
   });

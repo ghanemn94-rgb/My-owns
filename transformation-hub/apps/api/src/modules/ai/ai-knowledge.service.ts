@@ -4,10 +4,13 @@ import type { PgColumn } from 'drizzle-orm/pg-core';
 import { schema } from '@hub/db';
 import {
   addCalendarDays,
+  CLASSIFICATIONS,
+  clearanceAllows,
   delayImpact,
   EVIDENCE_TARGET_READ_PERMISSION,
   detectInstructionLikeContent,
   extractSearchTerms,
+  notFound,
   workingDaySlip,
   type Classification,
   type DelayImpact,
@@ -54,7 +57,51 @@ export class AiKnowledgeService {
    * finance reach (`FinanceSupport.visibleSql`); a valuation a project-wide finance grant.
    */
   private readable(ctx: RequestContext, projectId: string, type: string, id: PgColumn | SQL): SQL {
-    return new RecordVisibility(this.policy, ctx, projectId, { reach: true, readPermission: (t) => (EVIDENCE_TARGET_READ_PERMISSION as Record<string, string>)[t] }).exists(type, id);
+    const rec = new RecordVisibility(this.policy, ctx, projectId, { reach: true, readPermission: (t) => (EVIDENCE_TARGET_READ_PERMISSION as Record<string, string>)[t] }).exists(type, id);
+    return and(this.projectSql(ctx, projectId), rec)!;
+  }
+
+  /**
+   * QA-P5-03: record visibility inside the project AND the project itself visible to the reader — the same predicates the
+   * owning modules apply (`policy.visibilitySql` + the project's classification against the reader's clearance, as
+   * `PlanningSupport.readScope` / the portfolio list do).
+   */
+  private vis(ctx: RequestContext, projectId: string, cols: Parameters<PolicyService['visibilitySql']>[2]): SQL {
+    return and(this.policy.visibilitySql(ctx, projectId, cols), this.projectSql(ctx, projectId))!;
+  }
+
+  /**
+   * QA-P5-03 (SQL form): the reader may see the PROJECT — its classification within the reader's clearance (a service
+   * principal: always). A member cleared below the project's classification is refused the project, the plan and every
+   * record by the owning modules (404); the AI channel applies the same rule to every retrieval, citation and proposal.
+   */
+  projectSql(ctx: RequestContext, projectId: string): SQL {
+    if (ctx.principal.kind === 'service') return sql`true`;
+    const allowed = CLASSIFICATIONS.filter((c) => clearanceAllows(ctx.principal.clearance, c));
+    return sql`exists (select 1 from project hub_pj where hub_pj.id = ${projectId} and hub_pj.classification in (${sql.join(allowed.map((c) => sql`${c}`), sql`, `)}))`;
+  }
+
+  /** The project's classification (null when the project does not exist in the caller's RLS scope). */
+  async projectClassification(projectId: string): Promise<Classification | null> {
+    const [p] = await this.db.tx().select({ classification: schema.project.classification }).from(schema.project).where(eq(schema.project.id, projectId));
+    return (p?.classification as Classification | undefined) ?? null;
+  }
+
+  /**
+   * QA-P5-03: the reader may see the project — `policy.canSee` with the project's classification (full scope, clearance),
+   * exactly as the planning and portfolio modules. Every AI route, worker path and recipient check calls it.
+   */
+  async projectVisible(ctx: RequestContext, projectId: string): Promise<boolean> {
+    const classification = await this.projectClassification(projectId);
+    return !!classification && this.policy.canSee(ctx, { projectId, classification });
+  }
+
+  /**
+   * QA-P5-03 route gate: 404 (like an unknown id) when the caller may not see the project — called first by every AI route
+   * method, as the owning modules check the project before the record.
+   */
+  async assertProjectVisible(ctx: RequestContext, projectId: string): Promise<void> {
+    if (!(await this.projectVisible(ctx, projectId))) throw notFound();
   }
 
   /** A project-level register without a workstream: only a project-wide grant of its read permission covers it (§2.2). */
@@ -94,8 +141,8 @@ export class AiKnowledgeService {
       terms.map((t) => sql`plainto_tsquery('simple', ${t})`),
       sql` || `,
     );
-    const visChunk = this.policy.visibilitySql(ctx, projectId, { classification: schema.documentChunk.classification, room: schema.documentChunk.roomId });
-    const visDoc = this.policy.visibilitySql(ctx, projectId, { classification: schema.document.classification, room: schema.document.roomId });
+    const visChunk = this.vis(ctx, projectId, { classification: schema.documentChunk.classification, room: schema.documentChunk.roomId });
+    const visDoc = this.vis(ctx, projectId, { classification: schema.document.classification, room: schema.document.roomId });
     // The documents list's grant coverage (documents.service list): a workstream-scoped reader reaches room-less documents only.
     const grantDoc = this.policy.grantSql(ctx, 'documents.document.read', projectId, { room: schema.document.roomId });
     const r = await this.db.tx().execute<{
@@ -155,7 +202,7 @@ export class AiKnowledgeService {
   async overdueWork(ctx: RequestContext, projectId: string, today: string) {
     if (!this.can(ctx, 'planning.plan.read', projectId)) return null;
     const tx = this.db.tx();
-    const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const vis = this.vis(ctx, projectId, {});
     const reachT = this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.task.workstreamId);
     const reachM = this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.milestone.workstreamId);
     const due = sql<string>`coalesce(${schema.task.forecastFinish}, ${schema.task.plannedFinish})`;
@@ -210,7 +257,7 @@ export class AiKnowledgeService {
   async missingOwners(ctx: RequestContext, projectId: string) {
     if (!this.can(ctx, 'planning.plan.read', projectId)) return null;
     const tx = this.db.tx();
-    const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const vis = this.vis(ctx, projectId, {});
     const reachT = this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.task.workstreamId);
     const reachM = this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.milestone.workstreamId);
     const where = and(eq(schema.task.projectId, projectId), vis, reachT, isNull(schema.task.accountableUserId), inArray(schema.task.status, ['draft', 'not_started', 'in_progress', 'blocked']));
@@ -232,7 +279,7 @@ export class AiKnowledgeService {
   async staleUpdates(ctx: RequestContext, projectId: string, today: string) {
     if (!this.can(ctx, 'planning.plan.read', projectId)) return null;
     const cutoff = addCalendarDays(today, -this.cfg.staleUpdateDays);
-    const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const vis = this.vis(ctx, projectId, {});
     const reach = this.policy.reachSql(ctx, 'planning.plan.read', projectId, schema.workstream.id);
     const r = await this.db.tx().execute<{ id: string; code: string; name: string; version: number; last_period: string | null; updated_at: Date }>(sql`
       select workstream.id, workstream.code, workstream.name, workstream.version, workstream.updated_at,
@@ -249,7 +296,7 @@ export class AiKnowledgeService {
   async decisionsAwaiting(ctx: RequestContext, projectId: string, today: string) {
     if (!this.can(ctx, 'governance.decision.read', projectId)) return null;
     const tx = this.db.tx();
-    const vis = this.policy.visibilitySql(ctx, projectId, { classification: schema.decision.classification });
+    const vis = this.vis(ctx, projectId, { classification: schema.decision.classification });
     // Governance registers are project-level: the lists require a project-wide grant (decisions.service / actions.service).
     const grant = this.projectWide(ctx, 'governance.decision.read', projectId);
     const decisions = await tx
@@ -258,7 +305,7 @@ export class AiKnowledgeService {
       .where(and(eq(schema.decision.projectId, projectId), vis, grant, inArray(schema.decision.status, ['submitted', 'under_review', 'recommended', 'implementation_pending'])))
       .orderBy(asc(schema.decision.updatedAt))
       .limit(30);
-    const visProject = this.policy.visibilitySql(ctx, projectId, {});
+    const visProject = this.vis(ctx, projectId, {});
     // SEC-P5-03: an action inherits the classification of its decision, of that decision's committee and of its meeting's
     // committee for the provider ceiling (read here; combined — fail closed — by the detection, `derivedClassification`).
     const A = schema.actionItem;
@@ -302,7 +349,7 @@ export class AiKnowledgeService {
 
   async gateBlockers(ctx: RequestContext, projectId: string) {
     if (!this.can(ctx, 'gates.gate.read', projectId)) return null;
-    const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const vis = this.vis(ctx, projectId, {});
     const r = await this.db.tx().execute<{
       gate_id: string;
       key: string;
@@ -334,7 +381,7 @@ export class AiKnowledgeService {
 
   async closingConditions(ctx: RequestContext, projectId: string) {
     if (!this.can(ctx, 'jv.deal.read', projectId)) return null;
-    const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const vis = this.vis(ctx, projectId, {});
     const grant = this.projectWide(ctx, 'jv.deal.read', projectId); // JV registers carry no workstream (§2.2 strict rule)
     const evVis = evidenceLinkVisibleSql(this.policy, ctx, projectId); // counters = what the evidence list shows (SEC-P1R-05)
     const r = await this.db.tx().execute<{
@@ -373,7 +420,7 @@ export class AiKnowledgeService {
   async tsaExpiring(ctx: RequestContext, projectId: string, today: string) {
     if (!this.can(ctx, 'readiness.register.read', projectId)) return null;
     const until = addCalendarDays(today, this.cfg.tsaWindowDays);
-    const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const vis = this.vis(ctx, projectId, {});
     return this.db
       .tx()
       .select({ id: schema.tsaService.id, code: schema.tsaService.code, name: schema.tsaService.name, status: schema.tsaService.status, endDate: schema.tsaService.endDate, ownerUserId: schema.tsaService.ownerUserId, replacementAccepted: schema.tsaService.replacementAccepted, version: schema.tsaService.version, updatedAt: schema.tsaService.updatedAt, isDemo: schema.tsaService.isDemo, classification: schema.tsaService.classification })
@@ -394,7 +441,7 @@ export class AiKnowledgeService {
 
   async readinessBlockers(ctx: RequestContext, projectId: string) {
     if (!this.can(ctx, 'readiness.register.read', projectId)) return null;
-    const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const vis = this.vis(ctx, projectId, {});
     return this.db
       .tx()
       .select({ id: schema.readinessCheck.id, code: schema.readinessCheck.code, title: schema.readinessCheck.title, area: schema.readinessCheck.area, status: schema.readinessCheck.status, blocker: schema.readinessCheck.blocker, dueDate: schema.readinessCheck.dueDate, version: schema.readinessCheck.version, updatedAt: schema.readinessCheck.updatedAt, isDemo: schema.readinessCheck.isDemo })
@@ -406,7 +453,7 @@ export class AiKnowledgeService {
 
   async statusDimensions(ctx: RequestContext, projectId: string) {
     if (!this.can(ctx, 'portfolio.dashboard.read', projectId)) return null;
-    const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const vis = this.vis(ctx, projectId, {});
     return this.db
       .tx()
       .select({ id: schema.statusDimension.id, key: schema.statusDimension.key, state: schema.statusDimension.state, explanation: schema.statusDimension.explanation, computedAt: schema.statusDimension.computedAt, version: schema.statusDimension.version })
@@ -419,14 +466,14 @@ export class AiKnowledgeService {
     if (!this.can(ctx, 'jv.partner.read', projectId)) return null;
     const tx = this.db.tx();
     const grant = this.projectWide(ctx, 'jv.partner.read', projectId); // JV registers carry no workstream (§2.2 strict rule)
-    const visP = this.policy.visibilitySql(ctx, projectId, { classification: schema.partner.classification });
+    const visP = this.vis(ctx, projectId, { classification: schema.partner.classification });
     const demo: SQL = projectIsDemo ? sql`true` : eq(schema.partner.isDemo, false);
     const partners = await tx
       .select({ id: schema.partner.id, code: schema.partner.code, name: schema.partner.name, stage: schema.partner.stage, version: schema.partner.version, updatedAt: schema.partner.updatedAt, isDemo: schema.partner.isDemo, classification: schema.partner.classification })
       .from(schema.partner)
       .where(and(eq(schema.partner.projectId, projectId), visP, grant, demo))
       .limit(20);
-    const visS = this.policy.visibilitySql(ctx, projectId, { classification: schema.dealScenario.classification });
+    const visS = this.vis(ctx, projectId, { classification: schema.dealScenario.classification });
     const approvedScenarios = await tx
       .select({ id: schema.dealScenario.id, partnerId: schema.dealScenario.partnerId, name: schema.dealScenario.name, versionLabel: schema.dealScenario.versionLabel, version: schema.dealScenario.version, approvedAt: schema.dealScenario.approvedAt, isDemo: schema.dealScenario.isDemo })
       .from(schema.dealScenario)
@@ -502,7 +549,7 @@ export class AiKnowledgeService {
 
   async scheduleModel(ctx: RequestContext, projectId: string) {
     const tx = this.db.tx();
-    const vis = this.policy.visibilitySql(ctx, projectId, {});
+    const vis = this.vis(ctx, projectId, {});
     const tasks = await tx
       .select({ id: schema.task.id, title: schema.task.title, code: schema.task.wbsCode, durationDays: schema.task.durationDays, plannedStart: schema.task.plannedStart, actualStart: schema.task.actualStart, actualFinish: schema.task.actualFinish, forecastFinish: schema.task.forecastFinish, status: schema.task.status })
       .from(schema.task)
@@ -564,7 +611,7 @@ export class AiKnowledgeService {
     const raw = (c: string) => sql.raw(c) as unknown as PgColumn;
     const doc = this.can(ctx, 'documents.document.read', projectId)
       ? ifUuid(sql`exists (select 1 from document hub_rd where hub_rd.id = ${uuid} and hub_rd.project_id = ${projectId} and hub_rd.deleted_at is null
-          and ${this.policy.visibilitySql(ctx, projectId, { classification: raw('hub_rd.classification'), room: raw('hub_rd.room_id') })}
+          and ${this.vis(ctx, projectId, { classification: raw('hub_rd.classification'), room: raw('hub_rd.room_id') })}
           and ${this.policy.grantSql(ctx, 'documents.document.read', projectId, { room: raw('hub_rd.room_id') })})`)
       : no;
     const decisionWide = this.projectWide(ctx, 'governance.decision.read', projectId);
@@ -573,7 +620,7 @@ export class AiKnowledgeService {
     const computation = this.can(ctx, 'planning.plan.read', projectId)
       ? sql`(case when ${computationNode} is not null then ${this.readable(ctx, projectId, 'task', sql`(${computationNode})::uuid`)} else false end)`
       : no;
-    return sql`(case ${typeText}
+    return sql`(${this.projectSql(ctx, projectId)} and case ${typeText}
       when 'document' then ${doc}
       when 'task' then ${rec('task', 'planning.plan.read')}
       when 'milestone' then ${rec('milestone', 'planning.plan.read')}
@@ -602,6 +649,7 @@ export class AiKnowledgeService {
    * snapshot); an empty input set passes. One SQL statement in the current transaction.
    */
   async inputsVisible(reader: RequestContext, projectId: string, content: ContentInputs): Promise<boolean> {
+    if (!(await this.projectVisible(reader, projectId))) return false; // QA-P5-03: not even an empty input set
     let items: SQL;
     if ('refs' in content) {
       const refs = content.refs.map((r) => ({ type: String(r.type), id: String(r.id), sentToProvider: true }));
@@ -627,6 +675,8 @@ export class AiKnowledgeService {
    */
   async visibleCitationKeys(ctx: RequestContext, projectId: string, refs: { type: string; id: string }[]): Promise<Set<string>> {
     const out = new Set<string>();
+    // QA-P5-03: nothing of a project is visible to a reader who may not see the project (its classification).
+    if (refs.length && !(await this.projectVisible(ctx, projectId))) return out;
     const byType = new Map<string, string[]>();
     for (const r of refs) {
       if (r.type === 'computation') continue;
@@ -635,7 +685,7 @@ export class AiKnowledgeService {
     }
     const tx = this.db.tx();
     const add = (type: string, ids: { id: string }[]) => ids.forEach((x) => out.add(`${type}:${x.id}`));
-    const projectVis = this.policy.visibilitySql(ctx, projectId, {});
+    const projectVis = this.vis(ctx, projectId, {});
     for (const [type, ids] of byType) {
       switch (type) {
         case 'document':
@@ -650,7 +700,7 @@ export class AiKnowledgeService {
                   eq(schema.document.projectId, projectId),
                   inArray(schema.document.id, ids),
                   isNull(schema.document.deletedAt),
-                  this.policy.visibilitySql(ctx, projectId, { classification: schema.document.classification, room: schema.document.roomId }),
+                  this.vis(ctx, projectId, { classification: schema.document.classification, room: schema.document.roomId }),
                   this.policy.grantSql(ctx, 'documents.document.read', projectId, { room: schema.document.roomId }),
                 ),
               ),
@@ -667,7 +717,7 @@ export class AiKnowledgeService {
         }
         case 'decision':
           if (!this.can(ctx, 'governance.decision.read', projectId)) break;
-          add(type, await tx.select({ id: schema.decision.id }).from(schema.decision).where(and(eq(schema.decision.projectId, projectId), inArray(schema.decision.id, ids), this.policy.visibilitySql(ctx, projectId, { classification: schema.decision.classification }), this.projectWide(ctx, 'governance.decision.read', projectId))));
+          add(type, await tx.select({ id: schema.decision.id }).from(schema.decision).where(and(eq(schema.decision.projectId, projectId), inArray(schema.decision.id, ids), this.vis(ctx, projectId, { classification: schema.decision.classification }), this.projectWide(ctx, 'governance.decision.read', projectId))));
           break;
         case 'action_item':
         case 'approval_request': {
@@ -698,11 +748,11 @@ export class AiKnowledgeService {
           break;
         case 'partner':
           if (!this.can(ctx, 'jv.partner.read', projectId)) break;
-          add(type, await tx.select({ id: schema.partner.id }).from(schema.partner).where(and(eq(schema.partner.projectId, projectId), inArray(schema.partner.id, ids), this.policy.visibilitySql(ctx, projectId, { classification: schema.partner.classification }), this.projectWide(ctx, 'jv.partner.read', projectId))));
+          add(type, await tx.select({ id: schema.partner.id }).from(schema.partner).where(and(eq(schema.partner.projectId, projectId), inArray(schema.partner.id, ids), this.vis(ctx, projectId, { classification: schema.partner.classification }), this.projectWide(ctx, 'jv.partner.read', projectId))));
           break;
         case 'deal_scenario':
           if (!this.can(ctx, 'jv.partner.read', projectId)) break;
-          add(type, await tx.select({ id: schema.dealScenario.id }).from(schema.dealScenario).where(and(eq(schema.dealScenario.projectId, projectId), inArray(schema.dealScenario.id, ids), this.policy.visibilitySql(ctx, projectId, { classification: schema.dealScenario.classification }), this.projectWide(ctx, 'jv.partner.read', projectId))));
+          add(type, await tx.select({ id: schema.dealScenario.id }).from(schema.dealScenario).where(and(eq(schema.dealScenario.projectId, projectId), inArray(schema.dealScenario.id, ids), this.vis(ctx, projectId, { classification: schema.dealScenario.classification }), this.projectWide(ctx, 'jv.partner.read', projectId))));
           break;
         case 'financial_model_version':
           if (!this.can(ctx, 'finance.record.read', projectId)) break;

@@ -41,6 +41,7 @@ export class AiArtifactsService {
   }
 
   async listMine(ctx: RequestContext, projectId: string) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.assistant.use', { projectId });
     const fp = this.fingerprint(ctx, projectId);
     const rows = await this.db

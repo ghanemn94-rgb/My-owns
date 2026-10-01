@@ -39,6 +39,7 @@ export class AiOpsService {
 
   /** Runs are per user and never shared (AIT-08): only runs requested by / scheduled for the caller. */
   async listRuns(ctx: RequestContext, projectId: string, q: { page: number; pageSize: number; sort?: RouteInput<typeof aiRoutes.listRuns>['query']['sort'] }) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.run.read', { projectId });
     const where = and(eq(schema.aiRun.projectId, projectId), eq(schema.aiRun.requestedBy, ctx.principal.userId!));
     const [{ n }] = (await this.db.tx().select({ n: sql<number>`count(*)::int` }).from(schema.aiRun).where(where)) as [{ n: number }];
@@ -58,6 +59,7 @@ export class AiOpsService {
 
   /** One of MY runs; citations re-checked against my CURRENT access on every read (§12.1). Others → 404. */
   async getRun(ctx: RequestContext, projectId: string, runId: string) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.run.read', { projectId });
     const [r] = await this.db.tx().select().from(schema.aiRun).where(and(eq(schema.aiRun.id, runId), eq(schema.aiRun.projectId, projectId), eq(schema.aiRun.requestedBy, ctx.principal.userId!)));
     if (!r) throw notFound();
@@ -99,6 +101,7 @@ export class AiOpsService {
   }
 
   async status(ctx: RequestContext, projectId: string) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.run.read', { projectId });
     const s = await this.settings.load(projectId);
     const provider = this.providers.get(s.provider);
@@ -150,6 +153,7 @@ export class AiOpsService {
   }
 
   async costs(ctx: RequestContext, projectId: string) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.operations.read', { projectId });
     const s = await this.settings.load(projectId);
     const tz = await this.settings.projectTimezone(projectId);
@@ -166,7 +170,8 @@ export class AiOpsService {
     };
   }
 
-  tools(ctx: RequestContext, projectId: string) {
+  async tools(ctx: RequestContext, projectId: string) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.assistant.use', { projectId });
     return {
       items: AI_TOOLS.map((t) => ({
@@ -192,6 +197,7 @@ export class AiOpsService {
 
   /** Rules-only detections for the caller (works with AI Off / over budget / provider down — AT-21). */
   async detectionsFor(ctx: RequestContext, projectId: string) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'planning.plan.read', { projectId });
     const tz = await this.settings.projectTimezone(projectId);
     const today = this.clock.today(tz);

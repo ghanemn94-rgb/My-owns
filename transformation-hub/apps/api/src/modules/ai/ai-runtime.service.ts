@@ -118,6 +118,7 @@ export class AiRuntimeService {
   // Entry points
 
   async ask(ctx: RequestContext, projectId: string, body: { question: string; locale?: 'en' | 'ar'; async: boolean }) {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.assistant.use', { projectId });
     const s = await this.settings.load(projectId);
     if (s.mode === 'off' || s.provider === 'off') {
@@ -140,6 +141,7 @@ export class AiRuntimeService {
 
   /** Synchronous briefing for the calling user (demo seed / manual trigger). No notification. */
   async runBriefingNow(ctx: RequestContext, projectId: string, briefingKind: 'daily' | 'weekly' = 'daily', trigger = 'user') {
+    await this.knowledge.assertProjectVisible(ctx, projectId); // QA-P5-03: 404 when the project is not visible
     this.policy.assert(ctx, 'ai.briefing.subscribe', { projectId });
     const s = await this.settings.load(projectId);
     const locale: Locale = ctx.locale;
@@ -159,7 +161,8 @@ export class AiRuntimeService {
     if (!run || run.status !== 'queued') return { skipped: `run ${run?.status ?? 'missing'}` };
     const skip = (error: string) => this.db.run(svc, () => this.markSkipped(run.id, projectId, error));
     const userCtx = run.requestedBy ? await this.contexts.forUser(run.requestedBy, projectId, `job-${job.id}`) : null;
-    if (!userCtx || !this.policy.canInProject(userCtx, 'ai.assistant.use', projectId)) {
+    // Fresh authorisation, including the project's classification against the requester's CURRENT clearance (QA-P5-03).
+    if (!userCtx || !this.policy.canInProject(userCtx, 'ai.assistant.use', projectId) || !(await this.db.run(svc, () => this.knowledge.projectVisible(userCtx, projectId)))) {
       await skip('requester_access_revoked');
       return { status: 'skipped', reason: 'requester_access_revoked' };
     }
@@ -171,7 +174,7 @@ export class AiRuntimeService {
     await this.queue.extendLease(job, prep.timeoutMs + 60_000);
     const outcome = await this.callProvider(prep);
     const ctx2 = await this.contexts.forUser(run.requestedBy!, projectId, `job-${job.id}`);
-    if (!ctx2 || !this.policy.canInProject(ctx2, 'ai.assistant.use', projectId)) {
+    if (!ctx2 || !this.policy.canInProject(ctx2, 'ai.assistant.use', projectId) || !(await this.db.run(svc, () => this.knowledge.projectVisible(ctx2, projectId)))) {
       await skip('requester_access_revoked_during_run');
       return { status: 'skipped', reason: 'requester_access_revoked_during_run' };
     }
@@ -213,7 +216,9 @@ export class AiRuntimeService {
       return { status, reason: error };
     };
     if (!sched.enabled) return recordSkipped('schedule_disabled');
-    if (!userCtx || !this.policy.canInProject(userCtx, 'ai.briefing.subscribe', projectId)) return recordSkipped('owner_access_revoked');
+    // The owner's CURRENT access, including the project's classification against their clearance (QA-P5-03): a subscriber
+    // who may no longer see the project gets nothing — the run is recorded skipped.
+    if (!userCtx || !this.policy.canInProject(userCtx, 'ai.briefing.subscribe', projectId) || !(await this.db.run(svc, () => this.knowledge.projectVisible(userCtx, projectId)))) return recordSkipped('owner_access_revoked');
     if (s.mode === 'off' || s.provider === 'off') return recordSkipped('ai_off');
     if (s.killSwitch) return recordSkipped('kill_switch', 'cancelled');
     const locale: Locale = userCtx.locale;
@@ -224,7 +229,7 @@ export class AiRuntimeService {
     await this.queue.extendLease(job, prep.timeoutMs + 60_000);
     const outcome = await this.callProvider(prep);
     const ctx2 = await this.contexts.forUser(owner!, projectId, `job-${job.id}`);
-    if (!ctx2 || !this.policy.canInProject(ctx2, 'ai.briefing.subscribe', projectId)) {
+    if (!ctx2 || !this.policy.canInProject(ctx2, 'ai.briefing.subscribe', projectId) || !(await this.db.run(svc, () => this.knowledge.projectVisible(ctx2, projectId)))) {
       await this.db.run(svc, () => this.markSkipped(prep.runId, projectId, 'owner_access_revoked_during_run'));
       return { status: 'skipped', reason: 'owner_access_revoked_during_run' };
     }
