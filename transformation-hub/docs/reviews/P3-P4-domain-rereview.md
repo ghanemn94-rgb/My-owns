@@ -500,3 +500,215 @@ open P2 Lows DOM-P2F-02 / DOM-P2F-04 — every DOM-P34R probe now passes as a pl
 four `p34-domain-re-*` files 13/13; the -08 / -09 tests were run against the previous services first and failed there
 (201 instead of 403); Playwright on the implementer's own stack (production web build): `p3-carveout`, `p3-readiness`,
 `p4-jv` 11/11; secret scan (tree) PASS.
+
+---
+
+## 9. Re-check of the fixes (lead request)
+
+| Item | Value |
+|---|---|
+| Reviewer | carveout-domain-analyst (REVIEW mode, separate context) — the author of §1–§7, not of the fixes in §8 or of the security re-check fixes. |
+| Revision re-checked | `2ed5d55` on `claude/mobily-transformation-hub` (fetch + merge of `origin/claude/mobily-transformation-hub` → fast-forward from this review's commit `aea6b0c`, which is an ancestor). Frozen. It contains the DOM-P34R fixes (§8) and the security re-check fixes SEC-P34R-* (`0f484b4`, `52a6c8a`, `50ef3d9`, `b6d1415`, `73a81d2`). |
+| Added by this re-check | This section and three probe files: `apps/api/test/reviews/p34-domain-re2-tsa.spec.ts`, `p34-domain-re2-readiness.spec.ts`, `p34-domain-re2-perimeter.spec.ts`. No other file changed; §1–§8 above are unchanged. |
+| Date | 2026-10-01 |
+| **Verdict P3** | **FAIL** — one High open: **DOM-P34R2-01**, an equivalent path around the DOM-P34R-04 fix. A decision that was already final when the first extension terms were bound to it backs an extension to any date chosen after the vote. This includes the decision that approved the TSA's own terms, so the TSA manager alone can extend any approved TSA once. Every other DOM-P34R finding is fixed and verified, and "blockers prevent go-live" is now **met**. |
+| **Verdict P4** | **PASS WITH CONDITIONS** — DOM-P34R-07 (P4 part), -08 and -09 fixed and verified; the security re-check changes do not break the P4 domain rules checked. Conditions unchanged: documented Lows DOM-P4-13, DOM-P4-14 (funds-flow part), DOM-P4-15 and Info DOM-P34R-I1 with owners; Q-P34R-08 (Legal) is stated as a question. |
+
+### 9.1 Commands and real results
+
+Own databases only (`hub_test_p34dre`, `hub_test_p34dre_boot`, `hub_test_p34dre_probe`); no Docker, no e2e stack; another agent's
+test processes were running and were not touched.
+
+```
+$ merge of origin/claude/mobily-transformation-hub          → fast-forward to 2ed5d55 (aea6b0c is an ancestor)
+$ pnpm install --frozen-lockfile --offline; pnpm build:packages; (apps/api) npx tsc -p tsconfig.build.json   → exit 0, 0, 0
+$ (packages/domain) npx vitest run                         Test Files 22 passed (22)   Tests 461 passed (461)
+$ (apps/api) pnpm run lint                                  module boundary check passed: 43 cross-module imports, 19 module edges … (exit 0)
+```
+
+**This review's probes, plain mode** (`P34DRE_PROBE_PLAIN=1`; every former DEFECT probe is now a plain `it` named
+"… (fixed, regression)"):
+
+```
+$ P34DRE_PROBE_PLAIN=1 TEST_DATABASE_URL=…/hub_test_p34dre_probe … npx vitest run test/reviews/p34-domain-re-{readiness,dimension,tsa,perimeter}.spec.ts --reporter=verbose
+ ✓ CONTROL: a failed SITE blocker gates the plan of that site — the GO is refused (422 readiness.go_blocked)
+ ✓ DOM-P34R-01 … (fixed, regression)     ✓ DOM-P34R-02 … (fixed, regression)
+ ✓ CONTROL: request "to X" on decision D1 …; re-requesting "to Y" on D1 is refused (422 tsa.extension.terms_bound)
+ ✓ DOM-P34R-04 … (fixed, regression)
+ ✓ CONTROL: the only in-scope item transferred … → transferred_verified      ✓ DOM-P34R-06 … (fixed, regression)
+ ✓ DOM-P34R-05 … (fixed, regression)     ✓ DOM-P34R-05 (fixed): entering the scope resets the "not applicable" aspects …
+ ✓ CONTROL: one plan, its only blocker cleared, plan submitted …             ✓ DOM-P34R-03a … (fixed, regression)
+ ✓ CONTROL: an explicit recompute after the GO gives day1_go_approved        ✓ DOM-P34R-03b … (fixed, regression)
+ Test Files  4 passed (4)
+      Tests  13 passed (13)
+```
+
+Reason check — rejected / refused audit rows of that run (each probe passes for the intended reason):
+
+```
+$ psql …/hub_test_p34dre_probe -Atc "select p.code, a.action, a.outcome, left(a.reason,160) from audit_event a join project p … where p.code like 'P34R-%' and a.outcome <> 'success' …"
+P34R-GO |readiness.determineCheck  |rejected|readiness.determination.release_not_allowed: RC-003 is a failed gating check …   (CONTROL in DOM-P34R-02)
+P34R-GO |readiness.signOffCheck    |rejected|readiness.signoff.na_release_not_allowed: RC-003 is a failed gating check: a "not applicable" sign-off cannot release it …   (DOM-P34R-02)
+P34R-GO |readiness.decideGoNoGo    |rejected|cutover.invalid_transition: Cannot decide_go a cutover in state "rehearsal" …     (DOM-P34R-01, see note)
+P34R-TSA|readiness.requestExtension|rejected|tsa.extension.terms_bound: … (end date 2027-01-19) is before the committee …    (CONTROL)
+P34R-TSA|readiness.requestExtension|rejected|tsa.extension.terms_bound: … (end date 2027-01-19) is before the committee …    (DOM-P34R-04: back to D1 with Y)
+P34R-TSA|readiness.recordExtension |rejected|tsa.extension_requires_decision: … The linked decision is under_review …        (DOM-P34R-04: TSA left on D2)
+$ … where p.code='P34R-PER' and action like 'carveout.transfer.%' …
+P34R-PER|carveout.transfer.evidence_invalidated|The transfer evidence was rejected, superseded or contested after verification (active 0, contested 0) …|{"legal": "in_progress", "economic": "in_progress", …}   (DOM-P34R-06)
+```
+
+Note on DOM-P34R-01: the probe now passes because the contract refuses a plan PATCH carrying `siteId` (400, contract validation,
+so no audit row). The probe's GO then meets a plan that was never submitted (`cutover.invalid_transition`). The assertion still
+holds and is unchanged. This re-check's CONTROL (§9.2) and the implementer's `p34r-fixes-readiness` tests show the new site
+command refusing the move itself.
+
+**Weakening check** (`diff aea6b0c..2ed5d55` on the four probe files):
+- The DEFECT probes changed only by `defect(…)` → `it(…)`, the "(fixed, regression)" suffixes, a comment and `void defect;`.
+- The one OBSERVED probe (DOM-P34R-05) now asserts the implemented rule, with setup unchanged: both aspects `not_started`, `plan` allowed, two `scope_reset` records, and the "neither … nor" message gone.
+- No assertion of a DEFECT probe and no CONTROL changed. **Not weakened.**
+
+**Re-check probes** (equivalent paths, one or more per finding; plain mode):
+
+```
+$ P34DRE_PROBE_PLAIN=1 … npx vitest run test/reviews/p34-domain-re2-{tsa,readiness,perimeter}.spec.ts --reporter=verbose
+ ✓ VARIANT DOM-P34R-06: a second link is flagged as conflicting with the verified transfer's evidence — … no longer transferred_verified … both aspects to in_progress
+ ✓ VARIANT DOM-P34R-05: an item added after the baseline is held pending; the PM marks its legal transfer not applicable; … applied … aspect reset
+ ✓ CONTROL: the site command refuses to move a plan away from its FAILED site blocker (422 readiness.cutover.site_change_failed_check), the plan unchanged
+ ✓ OBSERVED DOM-P34R2-O1: after the PM records a passing test (failed → in_progress, never signed off), the site command moves the plan … the GO is accepted
+ ✓ OBSERVED DOM-P34R2-O2: after the PM records a passing test, the sign-off specialist determines the open blocker "not applicable" while its plan is in planning …
+ × DEFECT DOM-P34R2-01a: terms decision {"status":"approved","outcome_recorded_at":"2026-10-01 06:01:57.345+00"}; request 201; record 201 {"status":"extended"};
+     TSA extended end 2036-09-28; bound terms [{"end_date":"2036-09-28","bound_at":"2026-10-01 06:01:57.445728+00"}]: expected '2036-09-28' not to be '2036-09-28'
+ × DEFECT DOM-P34R2-01b: extension decision {"status":"approved","outcome_recorded_at":"2026-10-01 06:01:58.026+00"}; request 201; record 201 {"status":"extended"};
+     TSA extended end 2034-12-18; bound terms [{"end_date":"2034-12-18","bound_at":"2026-10-01 06:01:58.057232+00"}]: expected '2034-12-18' not to be '2034-12-18'
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 5 passed (7)
+```
+
+**Subset, default mode.** It covers the implementer's regression specs, the security re-check probes, the P3 / P4 acceptance
+specs and every probe file of this review:
+
+```
+$ TEST_DATABASE_URL=…/hub_test_p34dre_probe … npx vitest run <28 files> --reporter=verbose
+ Test Files  28 passed (28)
+      Tests  183 passed | 2 expected fail (185)          # the 2 expected fails: DEFECT DOM-P34R2-01a / -01b
+   Duration  259.71s
+```
+
+Per file (all passed):
+
+| Group | Files (tests) |
+|---|---|
+| Implementer regressions | `readiness/p34r-fixes-readiness` (7), `readiness/p34r-fixes-tsa` (3), `carveout/p34r-fixes-carveout` (3), `gates/p34r-cutover-dimension` (1), `finance/p34r-fixes-finance` (1), `jv/p4-domain-fixes` (15, incl. DOM-P34R-08) |
+| Security re-check probes | `reviews/p34-sec-re-fixes` (11), `reviews/p34-sec-re-jv-ai` (12), `reviews/p34-sec-re-registers` (12) |
+| P3 / P4 acceptance specs | `carveout/at-06-incorporation-separate` (7), `gates/at-06-status-dimensions` (6), `carveout/at-07-perimeter-change-control` (9), `carveout/at-08-day1-contract-position` (8), `readiness/at-09-readiness-go-no-go` (13), `readiness/at-10-tsa-expiry` (11), `jv/at-12-closing-blocked-cp` (5), `jv/at-13-cp-non-waivable` (5), `finance/finance-figures` (15) |
+| Earlier review probes | `reviews/p3-domain-readiness-go` (6), `reviews/p3-domain-tsa` (3), `reviews/p4-domain-jv` (12) |
+| This review's probes | `p34-domain-re-*` (13), `p34-domain-re2-*` (7, of which 2 expected fail) |
+
+**Full API suite** (once, at the end):
+
+```
+$ free -g                                                    → 9 GB free before the start
+$ (apps/api) TEST_DATABASE_URL=…/hub_test_p34dre TEST_DATABASE_MIGRATION_URL=…/hub_test_p34dre pnpm test --reporter=verbose
+ Test Files  135 passed (135)
+      Tests  1047 passed | 4 expected fail (1051)
+   Duration  1373.93s
+exit 0
+```
+
+The 4 expected failures are the two open DEFECT probes of this re-check (DOM-P34R2-01a, -01b) and the two open P2 Lows
+DOM-P2F-02 / DOM-P2F-04. Every former DOM-P3 / DOM-P4 / DOM-P34R probe passes as a plain test.
+`p1/p1-closure-empty-db.spec.ts` ran on `hub_test_p34dre_boot` and passed.
+
+### 9.2 Status of the re-review findings
+
+| Finding | Status | Evidence |
+|---|---|---|
+| DOM-P34R-01 (High) — plan site by PATCH | **FIXED (verified)** | `UpdateCutoverPlanBody` has no `siteId` (400). The new command `POST …/cutover-plans/:planId/site` takes a reason and the readiness lock, works only before the go/no-go, and refuses while a FAILED gating check would stop gating the plan. Re-check CONTROL: 422 `readiness.cutover.site_change_failed_check`, plan unchanged. A `site_changed` history entry names the checks leaving and entering; `readiness.changed` is emitted (`cutover.service.ts:345-388`, `readiness.ts:288-315`). The probe passes plain. Equivalent paths tried: (1) the site command on the failed check: refused. (2) The PM first records a passing test (`failed → in_progress`), then moves the plan: allowed with a reason and a history entry naming the check, and the GO is accepted (**OBSERVED DOM-P34R2-O1**, consistent with the documented rule for open checks of a plan in planning, §9.4). (3) A plan made project-wide (`siteId: null`) is gated by more checks, not fewer (`readinessCheckAppliesToPlan`). |
+| DOM-P34R-02 (Medium) — N/A of a failed blocker | **FIXED (verified)** | `readiness.signoff.na_release_not_allowed` for a FAILED gating check (status or latest test) and for an open check of a plan under decision / with a GO (audit row above). Variant: the PM records a passing test, then the specialist determines N/A while the plan is in planning; the GO is accepted (**OBSERVED DOM-P34R2-O2**: two people, basis recorded, before the plan is under decision; §9.4). |
+| DOM-P34R-03 (Medium) — GO does not move the dimension | **FIXED (verified)** | `CutoverService.apply` (every cutover state command) and the site command enqueue the recompute (`readiness.changed`, deduplicated per plan version). Probes 03a / 03b pass plain. `gates/p34r-cutover-dimension` passes: "GO → day1_go_approved; execution keeps it; acceptance → operating_with_transitional_services (worker drained, no explicit recompute)". |
+| DOM-P34R-04 (High) — terms binding released by a detour | **PARTIALLY FIXED** | The terms now belong to the decision (`tsa_extension_terms`, unique per decision). The D2 detour is refused (`terms_bound`, audit above), and `record-extension` applies only the bound terms (`terms_mismatch`). The probe passes plain. **But** a decision that is already final when terms are first bound gets whatever terms the TSA manager requests (`extensionTermsBinding` returns `new` for any status, `readiness.ts:475-476`) → **DOM-P34R2-01 (High)**. |
+| DOM-P34R-05 (Medium) — N/A carried into scope | **FIXED (verified)** | `scopeEntryTransferReset` runs on `classify` and on an applied change request (`perimeter.service.ts:737-780, 832, 861`). The probe passes plain. Re-check variant: N/A marked while an item added after the baseline is held `pending`, then its creation change request applied — the aspect is reset (`VARIANT DOM-P34R-05` passes). |
+| DOM-P34R-06 (Medium) — transfer evidence rejected | **FIXED (verified)** | The dimension fails closed at once (`status-dimensions.service.ts:112-125`), and the `svc-carveout` reaction returns verified aspects to `in_progress` (system entry, audited — audit row above). Re-check variant with CONTESTED evidence (a second link flagged as conflicting, AT-14): the dimension is not `transferred_verified` before the worker runs, and both aspects are `in_progress` after it (`VARIANT DOM-P34R-06` passes). TSA replacement-acceptance residual: the implementer's `p34r-fixes-tsa` test passes, and accepted exits with invalid evidence are not counted as exited (`status-dimensions.service.ts:148-159`); not independently probed. |
+| DOM-P34R-07 (Low) — documentation | **FIXED** | business-gates.md §5 rule 1 (lines 392-400) now says LEAVE is refused, ENTER into an `approved_go` plan flags the GO, and covers the plan side of the relation. §8.1 (line 559) describes the two-person "not required". The code flags the GO on a rebind into `approved_go` (`p34r-fixes-readiness` test passes). |
+| DOM-P34R-08 (Low) — non-blocking CP by the PM | **FIXED** | `createCp` refuses `blocking: false` without `jv.cp.set_waivability` (403 `jv.cp.non_blocking_requires_specialist`, `transactions.service.ts:764-768`). The CP PATCH body has no `blocking` field. The `p4-domain-fixes` test passes. Q-P34R-08 (Legal) is recorded as a question. |
+| DOM-P34R-09 (Low) — reconciliation editors | **FIXED** | A reviewer is excluded if they created or edited the reconciliation (record history `created` / `updated`, `reconciliations.service.ts:239-243`, `finance.ts:494-511`). The `p34r-fixes-finance` test passes. |
+| DOM-P34R-I1 (Info) | Unchanged | Governance owner (several signings per G5 cycle). |
+
+### 9.3 New finding of the re-check
+
+#### DOM-P34R2-01 — High — Extension terms first bound after the decision is final: any end date, on any approved TSA
+
+- **Where:**
+  - `packages/domain/src/readiness.ts:475-476` (`extensionTermsBinding`): with no bound terms it returns `new`, whatever the decision's status.
+  - `apps/api/src/modules/readiness/tsa.service.ts`: `requestExtension` writes the first `tsa_extension_terms` row; `recordExtension` applies it.
+  - business-gates.md §6 rule 5 ("written when the extension is first requested on it") and rule 6 ("the same decision may still approve the terms of A and one extension of A").
+- **Finding:** the binding protects the terms only if they were attached while the paper was before the committee. A decision
+  that became final with no terms attached gets its first terms afterwards, freely. Rule 6 lets the decision that approved a
+  TSA's own TERMS back one extension of that TSA, and that decision is always final before an extension can be requested. So
+  the TSA manager alone can extend any approved TSA once, to any future date, with no decision about an extension. An extension
+  paper approved before it was linked behaves the same way.
+- **Reproduction (executed):**
+  - `DEFECT DOM-P34R2-01a` (`p34-domain-re2-tsa.spec.ts`): the terms decision is approved (`outcome_recorded_at` 06:01:57.345). A request-extension on it to +3650 days → 201 (terms bound at 06:01:57.445, after the outcome). Record → 201 `extended`, end **2036-09-28**.
+  - `DEFECT DOM-P34R2-01b`: a `tsa_approval_or_extension` paper is voted and approved first, then linked → extended to **2034-12-18**.
+- **Spec / rule:**
+  - §7.3 "a replacement-service failure must trigger … an extension decision; never automatically extend the contract".
+  - AT-10 "extension/continuity options await approval".
+  - REQ-TSA-005 "extension requires an approved decision recorded against the TSA".
+  - business-gates.md §6 rule 5, whose heading reads "an extension decision is bound to the terms it approved"; here the decision approved no terms.
+  - Same effect as DOM-P3-06 / DOM-P34R-04 (High), and reachable by one person.
+- **Recommendation:**
+  - Bind extension terms only while the paper is still before the committee. Refuse the FIRST binding to a decision that already has an outcome (`approved`, `pending_external_authority`, …), with a dedicated code. A final decision then backs an extension only with the terms it carried when it was decided.
+  - Consequence for rule 6: a terms decision can never carry extension terms before it is final, so an extension would always need its own paper. That is the conservative reading.
+  - The governance owner may instead want a terms decision to approve an extension OPTION. In that case its maximum end date must be recorded with the terms approval and enforced at `record-extension` (extend Q-P3-13).
+  - Showing the requested end date on the paper (open since §8) remains useful.
+
+### 9.4 Observations (not counted as defects)
+
+- **DOM-P34R2-O1 (Info).** The "failed" rules key on the check's current status.
+  - The check manager can record a passing test (`record_pass` from `failed` → `in_progress`, no evidence, no sign-off) and then move the plan's site away from the check before the go/no-go.
+  - This is consistent with the documented rule that an OPEN check may leave a plan in planning / rehearsal with a reason.
+  - The move stays visible: the decision history names the check (`site_changed` "… no longer gating: RC-…"), the test runs (failed, then passed) stay in the append-only history, and the GO decider sees both.
+  - For the Operations owner (Q-P3-02): should a re-test claim without evidence be enough to take a previously failed blocker out of a transition's scope?
+- **DOM-P34R2-O2 (Info).** The same pattern applies to "not applicable". After a passing test, the sign-off specialist (a second
+  person, with a basis) may determine the open blocker not applicable while its plan is in planning (A-P3-02 / business-gates.md
+  §5 rule 3 allow it). The GO is then accepted.
+
+### 9.5 New behaviour and the security re-check changes
+
+| Behaviour | Assessment |
+|---|---|
+| Cutover plan site-change command | Sound: reason, readiness lock, only before the go/no-go, refused for a FAILED gating check, a history entry naming the checks leaving / entering, and a dimension recompute. The refusal names only checks within the caller's readiness reach (SEC-P34R-08), while the rule weighs every check. See O1. |
+| `tsa_extension_terms` | Closes the re-request and detour paths: unique per decision, `FOR SHARE` on the decision row, registry checked first, `terms_mismatch` at record. Gap: first binding after the outcome (DOM-P34R2-01). |
+| `svc-carveout` evidence reaction | Explicit allowlist (`carveout.register.read`, `carveout.transfer.manage`; access-matrix §9 line 704). It only applies `reject_evidence` to verified aspects, as a system entry that is audited, keeps record history and emits `perimeter.changed`. The dimension does not wait for it (fails closed at once). Verified with rejected (probe) and contested (variant) evidence. |
+| Non-blocking CPs Legal-only | Sound: 403 for the CP manager, and Legal still cannot release an existing blocking CP (DOM-P4-03 test). Q-P34R-08 stated as a question. |
+| Scope reset of N/A aspects | Sound on all three entry paths checked: classify before the baseline, an applied reclassification change request, and an applied creation change request of an item held pending. The reset is recorded (`scope_reset`) and never presented as a determination. |
+| SEC-P34R-03/-04/-09 single evidence "self" (`evidenceSelfIds`) | Stricter than before for the domain rules: linkers of active / conflicting evidence **plus** uploaders of the linked versions. No verification became easier. DOM-P3-10 / -10b regressions pass (`p3-domain-readiness-go`, subset). |
+| SEC-P34R-07 supersede / flag-conflict authorization | Adds only the target's write authorization. The `evidence.changed` emission is unchanged, so the readiness, NewCo, transfer and TSA reactions still fire (the DOM-P3-09 regression and the contested-evidence variant pass). |
+| SEC-P34R-01/-02/-08 404 before 403 on the new routes | Route-level; no domain rule changed. All domain probes and regressions pass. |
+
+### 9.6 Exit criteria, re-assessed at `2ed5d55`
+
+| Criterion | Result | Evidence |
+|---|---|---|
+| P3 — incorporation recorded while transfer / operations remain incomplete; states separate; never complete | **Met** | AT-06 specs pass (subset); the accuracy residuals of §2.1 are fixed (DOM-P34R-03, -06 and the contested variant). |
+| P3 — blockers prevent go-live (AT-09) | **Met** | DOM-P34R-01 / -02 fixed and verified; the five original paths stay closed (`p3-domain-readiness-go` 6/6); `at-09` 13/13. The remaining variants O1 / O2 are visible in the decision history and follow documented rules (owner question). |
+| P3 — perimeter-change impact (AT-07) | **Met** | `at-07` 9/9; scope reset on applied change requests. |
+| P3 — AT-10 extension awaits an approved decision | **Not met** | DOM-P34R2-01 (High). |
+| P4 — missing CP blocks closing; financial reconciliation | **Met** | `at-12` 5/5, `at-13` 5/5, `p4-domain-jv` 12/12, `p4-domain-fixes` 15/15, `finance-figures` 15/15, `p34r-fixes-finance` 1/1. |
+
+### 9.7 Not executed
+
+- Playwright (not requested). The web parts of the fixes (site dialog, CP form hint, history labels) were not reviewed.
+- The TSA replacement-acceptance reaction and the "accepted exit with invalid evidence" dimension rule were not independently
+  probed (the implementer's tests and `rules.test.ts` pass).
+- DOM-P34R2-01 with `pending_external_authority` decisions (same code path, not executed).
+
+### 9.8 Verdict of the re-check
+
+- **P3: FAIL** — open High DOM-P34R2-01. To pass:
+  1. Refuse the first binding of extension terms to a decision that already has an outcome (or the owner-approved alternative of §9.3).
+  2. Turn `DEFECT DOM-P34R2-01a` / `-01b` into regression tests with their assertions unchanged, and re-run them.
+  3. Record the owner's answer on rule 6 (Q-P3-13).
+
+  O1 / O2 go to the gate report as Info for the Operations owner.
+- **P4: PASS WITH CONDITIONS** — conditions as stated in the table at the top of §9.
