@@ -1,0 +1,350 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 14,
+  "candidate_id": "sha256:dd747fe1df62d876a74101caa826542b90d3eb36cedb1de14f299b0b6de8c559",
+  "source_commit": "985d0fa6d05e0b63f53ad67f641910dab34f50ca",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-QA-R14-qa-verifier-20261001T170044Z-34d396b6",
+    "session_id": "34d396b6-d7b9-4716-aea9-ff2f6fa95266"
+  },
+  "implementation_author": ["backend-workflow-engineer", "frontend-ux-engineer", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no implementation in the reviewed scope. backend-workflow-engineer (T-DG1-BE15, fix fbc9ba6) authored the F-DG1-135 change to architecture.testkit.ts and architecture.test.ts. The status update (985d0fa) and the freeze (6a3e3b2) are orchestrator commits. My only writes are QA evidence under docs/delivery/test-evidence/DG1/qa/ (round-14 logs and screenshots, plus one probe file, qa/tests/dg1-r14-test-classification-probe.test.ts) and this round's qa-verifier review files. All code ran in disposable clones under $TMPDIR, which I removed afterwards (50-cleanup.log). I formed this verdict before reading any other round-14 reviewer record, and I have not read any. During my run the runner auto-committed the domain-reviewer round-14 run (HEAD 6a3e3b2 -> 2c7d1c2). I saw only its directory names (00b-head-moved.log), and the candidate ID was unchanged. The earlier-round records I read, for procedure and format only, were my own round-13 qa-verifier record and sidecar, the round-13 code-security findings sidecar that defines F-DG1-135, and the F-DG1-009/135/210/214 statuses in findings.json."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-14/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "QA14-00-candidate",
+      "procedure": "Confirm the frozen candidate. Check that the diff from the freeze commit to HEAD is metadata-only, then recompute the candidate ID in the working repo and in a full disposable clone at the freeze commit (before the runs and again after all of them). Re-check after HEAD moved mid-run.",
+      "command": "git rev-parse HEAD; git diff --stat 985d0fa HEAD; node tools/gates/candidate.mjs --stage DG1; git clone /home/user/My-owns $TMPDIR/review-qa && git checkout 985d0fa && node tools/gates/candidate.mjs --stage DG1",
+      "environment": "Working repo /home/user/My-owns (HEAD 6a3e3b2, later 2c7d1c2); disposable non-shallow clone under $TMPDIR; Node v24.21.0 / v22.22.2",
+      "expected": "candidate_id sha256:dd747fe1…c8559 (391 files) in both places; HEAD adds only candidate-excluded metadata",
+      "actual": "HEAD 6a3e3b2 = 985d0fa plus 7 metadata files (round-14 assignments, the dd747fe1 manifest, stages.json). The recomputed ID is sha256:dd747fe1df62d876a74101caa826542b90d3eb36cedb1de14f299b0b6de8c559 (391 files) in the repo and in the clone (shallow=false), before and after all runs. HEAD later moved to 2c7d1c2 through one runner auto-commit of the domain-reviewer round-14 run (review/run/evidence directories only), and the ID is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-14/00-candidate.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/00b-head-moved.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/50-cleanup.log"
+      ]
+    },
+    {
+      "id": "QA14-01-install",
+      "procedure": "Offline frozen install in the disposable clone. The HOME pnpm store is read-only, so it was copied to $TMPDIR/store/v10 first (a first attempt against an empty scratch store failed with ERR_PNPM_NO_OFFLINE_TARBALL, as expected offline).",
+      "command": "cp -r /root/.local/share/pnpm/store/v10 $TMPDIR/store/ && pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/store/v10",
+      "environment": "disposable clone at 985d0fa; Node v22.22.2; pnpm 10.33.0; no network",
+      "expected": "exit 0, lockfile unchanged",
+      "actual": "371 packages linked from the store, 'Lockfile is up to date', exit 0 (mth-db bin warnings only, before the build)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-14/01-install.log"]
+    },
+    {
+      "id": "QA14-02-static",
+      "procedure": "Build and static checks: typecheck, build, lint, OpenAPI lint, no-CDN, format check, contrast.",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "disposable clone at 985d0fa; Node v22.22.2",
+      "expected": "all exit 0; OpenAPI 3.1.1 with 33 operations; contrast PASS",
+      "actual": "typecheck 0, build 0, lint 0 (max-warnings=0), openapi:lint 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations', check:no-cdn 0, format:check 0, contrast 'PASS: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented'",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-002", "REQ-S19-006", "REQ-S15-005", "REQ-S15-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-14/02-typecheck.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/02-build.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/02-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/02-openapi_lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/02-check_no-cdn.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/02-format_check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/02-contrast.log"
+      ]
+    },
+    {
+      "id": "QA14-03-unit-node22",
+      "procedure": "Unit suites (unit-node + unit-web) on Node 22, plus each project on its own.",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm test; npx vitest run --project unit-web; npx vitest run --project unit-node",
+      "environment": "disposable clone at 985d0fa; Node v22.22.2",
+      "expected": "321 passed; unit-web 110/110",
+      "actual": "21 files, 321/321, exit 0; unit-web 110/110, unit-node 211/211",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-14/03-unit-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/05-unit-web-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/05-unit-node-v22.22.2.log"
+      ]
+    },
+    {
+      "id": "QA14-04-unit-node24-F214",
+      "procedure": "Unit suites on Node 24 (re-confirms F-DG1-214: unit-web green on Node 24).",
+      "command": "PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test; npx vitest run --project unit-web; npx vitest run --project unit-node",
+      "environment": "disposable clone at 985d0fa; Node v24.21.0",
+      "expected": "321 passed; unit-web 110/110",
+      "actual": "21 files, 321/321, exit 0; unit-web 110/110, unit-node 211/211. F-DG1-214 still holds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-14/04-unit-node24.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/05-unit-web-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/05-unit-node-v24.21.0.log"
+      ]
+    },
+    {
+      "id": "QA14-06-F135-probe",
+      "procedure": "Independent F-DG1-135 probe: plant files into the REAL apps/api/src/modules/transformations directory and call the production moduleViolations(). Check that *.test.{mts,cts,js,jsx,mjs,cjs} files importing vitest / ../../modules.ts / architecture.testkit.ts are flagged as non-tests and still get rules 1-5; that *.test.ts/.test.tsx keep the exemption but still get the boundary rules; and that near-miss names are non-tests. Then run the candidate's architecture.test.ts in a separate invocation. A first attempt that ran both files in one vitest invocation raced (the probe planted and removed files while the real-tree test walked the same directory: ENOENT). That was a probe artefact, so the two are run separately.",
+      "command": "cp qa/tests/dg1-r14-test-classification-probe.test.ts apps/api/src/ && npx vitest run --project unit-node apps/api/src/dg1-r14-test-classification-probe.test.ts --reporter=verbose; npx vitest run --project unit-node apps/api/src/architecture.test.ts --reporter=verbose",
+      "environment": "disposable clone at 985d0fa; Node v22.22.2 and v24.21.0",
+      "expected": "probe all green; architecture.test.ts green incl. the F-DG1-135 self-checks; real tree 0 violations before and after",
+      "actual": "Probe 22/22 and architecture.test.ts 128/128 on both runtimes (both F-DG1-135 self-checks green). Every .test.{mts,cts,js,jsx,mjs,cjs} file is flagged ('imports package vitest', 'imports ../../modules.ts outside src/modules', 'imports …architecture.testkit.ts outside src/modules', plus process.kill and the crypto namespace). .test.ts/.test.tsx: 0 violations for the test-support imports, but a deep ../access/policy.ts import is flagged. Real tree: 0 violations, all test files .test.ts, nothing planted left.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r14-test-classification-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-14/06-r14-probe-and-architecture-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/06-r14-probe-and-architecture-v24.21.0.log"
+      ]
+    },
+    {
+      "id": "QA14-07-F135-build-vitest-alignment",
+      "procedure": "Check empirically that the lint test classification matches what the build emits and what vitest collects. Plant zz-qa-r14-a.test.ts, -b.test.tsx and -c.test.mts in a module, build @mth/api, list dist, and run vitest list; then remove them and rebuild.",
+      "command": "pnpm --filter @mth/api build; ls apps/api/dist/modules/transformations | grep zz-qa-r14; npx vitest list --project unit-node --filesOnly | grep zz-qa-r14",
+      "environment": "disposable clone at 985d0fa; Node v22.22.2",
+      "expected": ".test.mts is emitted and not collected (so it is correctly a non-test); .test.ts is collected and not emitted",
+      "actual": "dist contains only zz-qa-r14-c.test.mjs (+ .d.mts and maps); vitest collects only zz-qa-r14-a.test.ts; .test.tsx is neither emitted nor collected (its exemption is harmless). After cleanup and rebuild, 0 planted files in dist.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-14/07-build-vitest-alignment.log"]
+    },
+    {
+      "id": "QA14-08-F135-scope",
+      "procedure": "Confirm the F-DG1-135 fix is test-only: the product-tree diff from the r13 candidate to the r14 freeze, and the build exclusion of the testkit.",
+      "command": "git diff --stat 08cbd12 985d0fa -- . ':(exclude)docs/delivery'; git diff 08cbd12 985d0fa -- apps/api/src/architecture.testkit.ts | grep '^[-+]const'; find apps/api/dist -name 'architecture*'",
+      "environment": "disposable clone at 985d0fa",
+      "expected": "only architecture.testkit.ts / architecture.test.ts change; neither ships in dist",
+      "actual": "2 files changed (architecture.test.ts +23/-2, architecture.testkit.ts +9/-3); the code change is TEST_FILE /\\.test\\.[cm]?[jt]sx?$/ -> /\\.test\\.tsx?$/; tsconfig.build.json excludes src/**/*.testkit.ts; 0 architecture* files in dist. Unit, integration and e2e unaffected on both runtimes (QA14-03/04/10/12).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-14/08-f135-scope.log"]
+    },
+    {
+      "id": "QA14-09-declaration-file-observation",
+      "procedure": "Edge-case probing of the module lint's file handling with declaration-file names (found when a near-miss case used zz.test.d.mts). Call fileViolations() on *.d.ts/*.d.mts/*.d.cts names, and moduleViolations() with a planted .d.ts.",
+      "command": "node --experimental-strip-types (fileViolations / moduleViolations on zz.d.ts, zz.d.mts, zz.d.cts, zz.test.d.ts); probe OBSERVATION cases",
+      "environment": "disposable clone at 985d0fa; Node v22.22.2 and v24.21.0",
+      "expected": "a declaration file is skipped or yields named diagnostics",
+      "actual": "Every case throws 'Debug Failure. Output generation failed' from ts.transpileModule in syntaxErrors() (architecture.testkit.ts:450). A planted .d.ts makes moduleViolations() throw. This is fail-closed (the check crashes red), pre-existing since r5, and outside F-DG1-135. The real tree has no .d.ts, so no current check is affected. Raised as proposed Low, non-mandatory finding F-DG1-217.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r14-test-classification-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-14/06-r14-probe-and-architecture-v22.22.2.log"
+      ]
+    },
+    {
+      "id": "QA14-10-integration-F009",
+      "procedure": "Integration suite against a fresh disposable PostgreSQL cluster, three runs (Node 22 x2, Node 24 x1); check exit status, migrations, and server logs for 57P01 (F-DG1-009).",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash -c 'pnpm test:integration; ...'  (x3)",
+      "environment": "disposable clone at 985d0fa; PostgreSQL 16.13 (disposable cluster, port 5492, uid-mapped); Node v22.22.2 x2, v24.21.0 x1",
+      "expected": "deterministic exit 0 every run; 8 migrations applied to a fresh database; no 57P01 / 'terminating connection' in the server logs",
+      "actual": "Each run: 19 files, 200/200, exit 0; 'applied 8 migrations to a fresh database'. The server logs have 0 x 57P01 and 0 x 'terminating connection' (the only '57P01' text is the F-DG1-009 test title). A12 (14), A13 (5), A14 (5) and contract (9) are green in every run. F-DG1-009 still holds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-004", "REQ-S19-004", "REQ-S16-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-14/10-int-run1-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/10-int-run2-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/10-int-run3-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/10-int-run1-pg.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/10-int-run2-pg.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/10-int-run3-pg.log"
+      ]
+    },
+    {
+      "id": "QA14-11-migrations-audit-contract",
+      "procedure": "Apply migrations to a fresh database with the CLI and list schema_migration. Probe audit_event immutability as superuser, owner and app. Confirm getBrandingTokens is in the OpenAPI document and exercised by the contract test that asserts every operation is covered.",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash 11-audit-trigger-probe.sh; grep getBrandingTokens docs/api/openapi.yaml apps/api/test/integration/contract/contract.test.ts",
+      "environment": "disposable clone at 985d0fa; PostgreSQL 16.13 disposable cluster; Node v22.22.2",
+      "expected": "migrations 0001-0008 applied; UPDATE/DELETE/TRUNCATE on audit_event rejected for every role; getBrandingTokens covered",
+      "actual": "8 migrations 0001-0008 applied (migrate exit 0). The app INSERT succeeds. UPDATE, DELETE and TRUNCATE by superuser and owner are rejected ('audit_event is append-only: … is not allowed'), and the app DELETE gets 'permission denied'; 1 row before and after. getBrandingTokens is at openapi.yaml:535 and contract.test.ts:67/275; the contract test 'covers every operation' passes (QA14-10).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-004", "REQ-S19-006", "REQ-S16-004", "REQ-S15-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-14/11-audit-trigger-probe.sh",
+        "docs/delivery/test-evidence/DG1/qa/round-14/11-contract-and-audit-probe.log"
+      ]
+    },
+    {
+      "id": "QA14-12-e2e-F210",
+      "procedure": "Full Playwright journeys in EN and AR on the pre-installed Chromium with --workers=1 against a disposable stack (fresh PG on 5493, migrated and seeded with synthetic users), on Node 22 and Node 24. Includes the BU-Lead create -> Edit/Archive without reload journey (F-DG1-210), A20 bilingual shell and token CSS, and axe scans.",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 E2E_SCREENSHOT_DIR=$TMPDIR/shotsNN e2e/support/qa-stack.sh npx playwright test --workers=1 --reporter=list",
+      "environment": "disposable clone at 985d0fa; Chromium 1194 from /opt/pw-browsers; PostgreSQL 16.13 on 5493; Node v22.22.2 and v24.21.0",
+      "expected": "22/22 on both runtimes, incl. the F-DG1-210 journey in chromium-en and chromium-ar; axe 0 violations",
+      "actual": "22 passed, exit 0 on both runtimes. The F-DG1-210 journey is green in chromium-en and chromium-ar on both. Axe: 15 screens per locale, 0 violations. The AR screenshot shows RTL, Edit/Archive after creation, the audit trail, and Unknown (غير معروف) rather than zero. Node 24 reports journeys.spec.ts line numbers past EOF (e.g. :482 on a 443-line file) for identical test titles. That is a Playwright location-mapping artefact, also present in round 13; the tree is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S15-005", "REQ-S15-006", "REQ-S16-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-14/12-e2e-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/12-e2e-node24.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/screenshots/en/axe-summary.json",
+        "docs/delivery/test-evidence/DG1/qa/round-14/screenshots/ar/axe-summary.json",
+        "docs/delivery/test-evidence/DG1/qa/round-14/screenshots/ar/17a-lead-created-controls.png",
+        "docs/delivery/test-evidence/DG1/qa/round-14/screenshots/en/17a-lead-created-controls.png",
+        "docs/delivery/test-evidence/DG1/qa/round-14/screenshots/ar/01-sign-in.png",
+        "docs/delivery/test-evidence/DG1/qa/round-14/screenshots/en/01-sign-in.png"
+      ]
+    },
+    {
+      "id": "QA14-14-A18-clean-start",
+      "procedure": "A18 clean start: fresh checkout of the freeze commit, offline frozen install, build, migrate an empty DB, start, health/readiness, plus the negative case (an unmigrated DB is live but not ready).",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 QA_A18_PG_PORT=5494 QA_A18_PORT=3181 e2e/clean-start/a18-clean-start.sh --commit 985d0fa6d05e0b63f53ad67f641910dab34f50ca --install",
+      "environment": "disposable clone; Node v22.22.2; pnpm 10.33.0; PostgreSQL 16.13 on 5494",
+      "expected": "A18 CLEAN START: PASS, exit 0",
+      "actual": "A18 CLEAN START: PASS (commit 985d0fa; install step pnpm install --frozen-lockfile --offline; 38.6 s); 21 PASS lines, 0 FAIL; unmigrated /readyz 503 with /healthz 200",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S19-004", "REQ-S16-004"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-14/14-a18-clean-start.log"]
+    },
+    {
+      "id": "QA14-15-A20-token-propagation",
+      "procedure": "A20: change brand.deep in a second disposable clone, rebuild the web bundle, and assert the rendered CSS follows the changed token source (A20 bilingual + token specs).",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5495 e2e/support/a20-token-propagation.sh $TMPDIR/review-qa-a20",
+      "environment": "second disposable clone at 985d0fa (candidate ID re-checked); Node v22.22.2; Chromium; PG on 5495",
+      "expected": "A20 token propagation: PASS",
+      "actual": "2 passed; 'A20 token propagation: PASS (brand.deep rendered as #6B1D5C, original #003B73)', exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002", "REQ-S16-002"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-14/15-a20-token-propagation.log"]
+    },
+    {
+      "id": "QA14-16-A12-A13-A14",
+      "procedure": "Acceptance suites A12 (cross-scope), A13 (job idempotency) and A14 (concurrency), run inside the three integration runs.",
+      "command": "grep a1[234]- 10-int-run*.log",
+      "environment": "as QA14-10",
+      "expected": "A12 14/14, A13 5/5, A14 5/5 in every run",
+      "actual": "A12 14 tests, A13 5 tests, A14 5 tests, all green in all three runs (Node 22 x2, Node 24 x1)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003", "REQ-S19-006", "REQ-S16-001"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-14/16-a12-a13-a14-extract.log"]
+    },
+    {
+      "id": "QA14-17-REQ-DLV-042-installer",
+      "procedure": "REQ-DLV-042: check that tools/deps and the orchestrator-run installer acceptance log are unchanged since r13, then re-run the installer acceptance tests in this sandbox.",
+      "command": "git diff --stat 08cbd12 985d0fa -- tools/deps/ docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log; npm_config_store_dir=$TMPDIR/store/v10 bash tools/deps/tests/install-sandbox.test.sh",
+      "environment": "disposable clone at 985d0fa; bubblewrap; no registry network in the reviewer sandbox (D-025)",
+      "expected": "unchanged; orchestrator log 14/14; local re-run 13/14 with AC-1 (effect) BLOCKED by the missing network",
+      "actual": "No diff. The orchestrator log has 14 PASS, 0 FAIL. The local re-run has 13 PASS, and AC-1 (effect) cannot run here: the fixture fetch of is-number gets ECONNREFUSED through the proxy (17b). That sub-check is BLOCKED in this sandbox. The requirement rests on the orchestrator-run log, unchanged since r13.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-14/17-req-dlv-042-installer.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/17b-ac1-effect-BLOCKED.log"
+      ]
+    },
+    {
+      "id": "QA14-17b-AC1-effect",
+      "procedure": "Installer AC-1 (effect): create populates node_modules in the target tree. Needs a registry fetch.",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 timeout 120 tools/deps/install-sandbox.sh --root $TMPDIR/ac1p create",
+      "environment": "reviewer sandbox, no network",
+      "expected": "node_modules populated",
+      "actual": "ERR_PNPM_META_FETCH_FAIL: connect ECONNREFUSED 127.0.0.1:3128 (no registry network in the reviewer sandbox). Not runnable here; covered by the orchestrator-run acceptance log (AC-1 effect PASS).",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-14/17b-ac1-effect-BLOCKED.log"]
+    },
+    {
+      "id": "QA14-18-validators",
+      "procedure": "Delivery validators: register for DG1, pipeline, reconcile.",
+      "command": "node tools/gates/validate.mjs --register DG1; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --reconcile",
+      "environment": "working repo /home/user/My-owns (read-only use); Node v24.21.0",
+      "expected": "all three PASS, exit 0",
+      "actual": "'PASS register rules at DG1', 'PASS pipeline (active stage: DG1 REVIEWING)', 'PASS reconcile (structure)' (the working tree matches the frozen candidate; this round's qa record is 'missing' at run time, as expected); all exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-14/18-validate-register.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/18-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/18-validate-reconcile.log"
+      ]
+    },
+    {
+      "id": "QA14-19-requirements",
+      "procedure": "For each of the 12 DG1-final requirements, check register status/final_gate and that every evidence path exists. Also re-check CI needs (REQ-DLV-025), bundled fonts with no CDN (REQ-S15-005) and the provisional wordmark (REQ-S15-006).",
+      "command": "python3 (requirements.csv status/final_gate/evidence existence); node deploy/scripts/check-ci-needs.mjs; grep CDN hosts in apps/web/dist; ls woff in dist; grep provisional apps/web/src",
+      "environment": "working repo (register) + disposable clone at 985d0fa (CI/fonts/wordmark); Node v22.22.2",
+      "expected": "12/12 IMPLEMENTED, final_gate DG1, no missing evidence; CI check OK; fonts bundled; provisional wordmark",
+      "actual": "12/12 IMPLEMENTED with final_gate DG1 and 0 missing evidence paths. check-ci-needs: 'OK … first job delivery-gates runs validate.mjs --pipeline; every other job depends on it'. 0 CDN references in dist, 12 woff/woff2 assets, 7 'provisional' sources in apps/web/src. The AR/EN sign-in screenshots show the provisional (مؤقت) wordmark.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025", "REQ-DLV-033", "REQ-DLV-042", "REQ-S15-002", "REQ-S15-005", "REQ-S15-006", "REQ-S16-001", "REQ-S16-002", "REQ-S16-003", "REQ-S16-004", "REQ-S19-004", "REQ-S19-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-14/19-requirements-evidence.log",
+        "docs/delivery/test-evidence/DG1/qa/round-14/20-ci-needs-fonts-wordmark.log"
+      ]
+    },
+    {
+      "id": "QA14-50-cleanup",
+      "procedure": "Clean up: confirm the clone has no leftover planted files and recomputes the same candidate ID, then remove all disposable clones, the store copy, screenshots scratch and PG directories.",
+      "command": "git status --short; node tools/gates/candidate.mjs --stage DG1; rm -rf $TMPDIR/review-qa $TMPDIR/review-qa-a20 $TMPDIR/store ...",
+      "environment": "$TMPDIR",
+      "expected": "clean clone, same ID, 0 remaining dirs",
+      "actual": "git status empty; 0 zz- files; candidate sha256:dd747fe1…c8559; 0 remaining review/pg dirs",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-14/50-cleanup.log"]
+    }
+  ],
+  "findings": ["F-DG1-217"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/qa/round-14/00-candidate.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/00b-head-moved.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/03-unit-node22.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/04-unit-node24.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/06-r14-probe-and-architecture-v22.22.2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/06-r14-probe-and-architecture-v24.21.0.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/07-build-vitest-alignment.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/08-f135-scope.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/10-int-run1-v22.22.2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/11-contract-and-audit-probe.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/12-e2e-node22.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/12-e2e-node24.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/14-a18-clean-start.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/15-a20-token-propagation.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/18-validate-register.log",
+    "docs/delivery/test-evidence/DG1/qa/round-14/19-requirements-evidence.log",
+    "docs/delivery/test-evidence/DG1/qa/tests/dg1-r14-test-classification-probe.test.ts",
+    "docs/delivery/reviews/DG1/round-14/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG1/round-14/qa-verifier.findings.json"
+  ],
+  "reviewed_at": "2026-10-01T17:21:17Z",
+  "summary": "PASS. F-DG1-135 verified (CLOSED_VERIFIED): TEST_FILE is narrowed to *.test.ts/*.test.tsx, so a *.test.mts (and .cts/.js/.jsx/.mjs/.cjs) file is linted as a non-test with full rules. The fix is test-only and matches what the build emits and what vitest collects. No regression on Node 22 and 24: unit 321/321 (unit-web 110/110), integration 200/200 x3 with no 57P01, e2e 22/22 EN+AR incl. F-DG1-210, and A12/A13/A14/A18/A20 green. All 12 DG1-final requirements are complete with existing evidence. One new Low, non-mandatory finding (proposed F-DG1-217): the module lint crashes with an opaque compiler error on declaration-file names. It fails closed and predates this round. One installer sub-check (AC-1 effect) is BLOCKED here for lack of network and is covered by the orchestrator log."
+}
