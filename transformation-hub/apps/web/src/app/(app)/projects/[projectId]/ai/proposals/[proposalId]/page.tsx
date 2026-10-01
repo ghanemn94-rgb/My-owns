@@ -250,6 +250,8 @@ function ProposalDetail() {
           p.targetType ? t('ai.proposal.approveC2', { target: targetLabel ?? '', version: p.targetVersion === null ? EM_DASH : formatNumber(p.targetVersion) }) : t('ai.proposal.approveC2none'),
           t('ai.proposal.approveC3'),
           t('ai.proposal.approveC4'),
+          // SEC-P5-01: a message reaches its recipient only if they may read its target and every source the AI used.
+          ...(typeof (p.payload as Record<string, unknown>)['recipientUserId'] === 'string' ? [t('ai.proposal.approveC5')] : []),
         ]}
         basedOn={t('ai.proposal.boundTo', { version: formatNumber(p.version) })}
         errorContext="proposal"

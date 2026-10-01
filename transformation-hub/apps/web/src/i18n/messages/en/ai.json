@@ -65,8 +65,8 @@
     "killSwitch": "Emergency stop",
     "provider": "Provider",
     "health": "Health",
-    "lastRun": "Last run in this project",
-    "noRunYet": "No run yet",
+    "lastRun": "My last run in this project",
+    "noRunYet": "You have no run yet",
     "nextRun": "Next scheduled briefing",
     "noSchedule": "No briefing scheduled",
     "endpointsTitle": "Real model endpoints on this deployment",
@@ -343,6 +343,7 @@
     "approveC2none": "The proposal has no target record.",
     "approveC3": "The approval is single-use and valid for 24 hours. The worker executes it after re-checking the mode, the emergency stop and everyone's permissions.",
     "approveC4": "Messages are in-app only; e-mail, Teams and SMS stay disabled.",
+    "approveC5": "The recipient must be allowed to read the target and every source the AI used to draft this message. The server checks this now and again just before sending, and refuses otherwise.",
     "boundTo": "Bound to proposal version {version}. A different current version is refused by the server.",
     "approved": "Proposal approved — the worker will execute it.",
     "rejectTitle": "Reject this proposal",
@@ -369,7 +370,12 @@
     "target_version_changed": "the target record changed after the proposal was prepared",
     "proposal_rejected": "the proposal was rejected",
     "rejected": "rejected",
-    "expired": "the approval expired"
+    "expired": "the approval expired",
+    "recipient_not_cleared_for_content": "the recipient may not read every source the AI used to draft the message",
+    "recipient_not_authorized": "the recipient is not an authorized internal member of the project for this record",
+    "recipient_no_longer_authorized": "the recipient is no longer an authorized internal member of the project for this record",
+    "requester_not_cleared_for_content": "the person it was prepared for may no longer read its target or every source the AI used",
+    "requester_no_longer_authorized": "the person it was prepared for no longer holds the required permission"
   },
   "payload": {
     "recipient": "Recipient",
@@ -639,7 +645,8 @@
       "autopilot_policy_invalid": "The autopilot policy is not valid (allowed actions, daily limit or expiry).",
       "autopilot_policy_required": "Autopilot mode needs an approved, unexpired autopilot policy.",
       "no_proposed_policy": "There is no proposed autopilot policy to approve.",
-      "no_policy": "There is no autopilot policy."
+      "no_policy": "There is no autopilot policy.",
+      "recipient_not_cleared": "The recipient may not read every source the AI used to draft this message (or its target), so it cannot be sent to them. The proposal was invalidated; the person it was prepared for can revise it for another recipient."
     },
     "policy": {
       "sod_subject_unknown": "Separation of duties cannot be established because the requester is unknown, so nobody may approve this.",
