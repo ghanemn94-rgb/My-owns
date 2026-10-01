@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-213",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Module lint: the global process._debugProcess(process.pid) (or process.kill(process.pid, 'SIGUSR1')) activates the in-process inspector without importing node:inspector, and the Node globals fetch + WebSocket then evaluate an arbitrary code string via Runtime.evaluate. All of this passes with 0 violations, which contradicts the D-054 / testkit-header claim that the Node 22 loader/exec process.* methods are enumerated exhaustively.",
+      "reproduction": "Candidate sha256:e27eaf5f...44876 (freeze commit 11bc4c4, HEAD 6cb3813), disposable clone, Node v22.22.2. (1) Sweep (14-adjacent-sweep.log): the process function members on this Node include _debugProcess, _debugEnd and kill, and none of them is in PROCESS_LOADERS (binding, _linkedBinding, dlopen, execve). (2) Runtime (15-adjacent-debugprocess-runtime.log, script docs/delivery/test-evidence/DG1/qa/tests/dg1-r8-debugprocess-runtime-probe.mjs): process._debugProcess(process.pid) prints 'Debugger listening on ws://127.0.0.1:9229/...'. Then fetch('http://127.0.0.1:9229/json/list') and new WebSocket(webSocketDebuggerUrl) send Runtime.evaluate with the string 'globalThis.__qa = 6*7; process.versions.node'. The reply is {\"result\":{\"type\":\"string\",\"value\":\"22.22.2\"}}, globalThis.__qa reads 42 in the same process, and the exit code is 0. No module is imported. (3) Lint (16-adjacent-debugprocess-lint.log, probe docs/delivery/test-evidence/DG1/qa/tests/dg1-r8-debugprocess-lint-probe.test.ts) through the candidate's own fileViolations('transformations', .../zz-qa-planted.ts): D1, the full route as module source (_debugProcess + fetch + WebSocket + Runtime.evaluate of a parameter string), gives violations = []. D2 `process._debugProcess(process.pid);` gives []. D3 `process.kill(process.pid, \"SIGUSR1\");` gives []. No repository launch script, Dockerfile or NODE_OPTIONS sets --disable-sigusr1, which this Node supports.",
+      "expected": "The testkit header residual (c) and D-054 say that for the pinned Node 22 'the concrete loader/exec built-ins and process.* methods are now enumerated exhaustively', and that residual (c) is narrowed to future/unknown built-ins/methods of a later Node and WebAssembly/node:wasi. The inspector is already a banned loader built-in (`inspector`/`node:inspector`), and rule 1 bans code evaluation (eval/Function). So a module should not be able to reach inspector-based code evaluation through an existing Node 22 process.* method with 0 violations. Either close the route, for example by adding `_debugProcess` (and `_debugEnd`) to PROCESS_LOADERS, plus a rule-3 check or a runtime `--disable-sigusr1` for the `process.kill(<self>, 'SIGUSR1')` spelling, with self-checks. Or name it as a stated and accepted residual and remove the word 'exhaustively' from the header and D-054. The default-deny `node:`/process allow-list that the header already mentions would also close this class.",
+      "actual": "All three plants report 0 violations, and the route works at runtime on the pinned Node. It is not covered by any stated residual: (a) is third-party data flow, (b) is code generation followed by a literal own-module import, and (c) as amended by D-054 covers only future/unknown built-ins or methods and WebAssembly/wasi, while _debugProcess and kill exist in today's Node 22.22.2. Impact is limited, as with F-DG1-125/127/128. The lint is static defence-in-depth for the ADR-0002 module boundaries over human-reviewed code, explicitly not a runtime security boundary. No module uses _debugProcess, SIGUSR1, fetch to 127.0.0.1:9229 or WebSocket today. The route also opens a loopback debug port, which is visible. Hence Low, not mandatory and not blocking. It does not reopen F-DG1-128, whose two routes are verifiably closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-8/14-adjacent-sweep.log",
+        "docs/delivery/test-evidence/DG1/qa/round-8/15-adjacent-debugprocess-runtime.log",
+        "docs/delivery/test-evidence/DG1/qa/round-8/16-adjacent-debugprocess-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r8-debugprocess-runtime-probe.mjs",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r8-debugprocess-lint-probe.test.ts",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-8/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T13:44:48Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG1 round 8. As the common assignment requires, I first checked this adjacent route against the testkit header's stated and accepted residuals (a)-(c) and against the D-054 exhaustive-enumeration claim. It falls under none of them, because it uses methods that exist in today's pinned Node, not future or unknown ones. No earlier record mentions _debugProcess or SIGUSR1 (grep over docs/delivery reviews/findings/decisions). The proposed ID is the next free number in the qa 2xx range, and the orchestrator may renumber it. If the orchestrator and release-auditor prefer to accept it, an ACCEPTED_OBSERVATION is reasonable, provided the header and D-054 drop or qualify the word 'exhaustively' and name this route."
+        }
+      ]
+    }
+  ]
+}

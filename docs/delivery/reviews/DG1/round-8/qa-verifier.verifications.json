@@ -1,0 +1,23 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-128",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The fix (a8cb7b9) is in the frozen candidate sha256:e27eaf5fb5ada8640c4463b8e3c9d5f64e5aa629fa78b49cfd2861bdc7544876. Freeze commit 11bc4c4; HEAD 6cb3813 adds only candidate-excluded metadata (assignments, manifest, stages.json). The candidate ID recomputes identically in a full, non-shallow disposable clone (00-candidate.log). Code: LOADER_BUILTINS in apps/api/src/architecture.testkit.ts now contains 'test', so 'test' and 'node:test' are banned specifiers, and PROCESS_LOADERS contains 'execve' (rule 3). Self-check: the frozen architecture.test.ts passes 80/80 in verbose mode, including R1 'node:test in-process run', R2 'process.execve', P12, X6, X7, X8 and A1 (10-arch-verbose.log). Unit total 273/273 (03-unit.log). Negative control: with the pre-fix testkit from c36315b and the frozen test, exactly R1 and R2 fail (2 failed, 78 passed). Restoring the testkit gives 80/80 (12-f128-negative-control.log). The new self-checks therefore detect the defect. End-to-end plant: a real file apps/api/src/modules/access/zz-qa-planted.ts with `import { run } from \"node:test\"` turns the module-tree check red ('imports package node:test', 1 failed of 80). A second plant with `process.execve(\"/bin/sh\", [\"sh\"])` is reported as 'module loader via process.execve (line 1)'. With the plant removed, the result returns to 80/80 (13-f128-real-plant.log). My independent probe dg1-r8-test-execve-probe.test.ts passes 30/30 (11-f128-probe.log). The forms reported are: node:test named, bare 'test', namespace, default, require, dynamic import, re-export, export *, TS import-equals, side-effect and type-only. For process.execve: direct call, optional chain, as a value, globalThis.process.execve, global.process.execve, destructured, aliased, indexed, .bind and an `as any` cast. The regressions node:sqlite, node:process, node:vm, node:child_process, process.dlopen and process.getBuiltinModule are still caught. bareAllowed() rejects test and node:test. Benign node:crypto/node:path/process.env/process.exitCode and plain identifiers named execve/test stay clean. Scope: the round-7 to round-8 candidate manifests differ only in architecture.test.ts, architecture.testkit.ts and decisions.md (21a-f128-manifest-diff.log). The testkit is imported only by *.test.ts files and is excluded from the build by tsconfig.build.json (21-f128-scope.log). The change is test-only: unit 273/273, integration 200/200 in both runs, and e2e 22/22 are unaffected. F-DG1-009 holds (0 57P01 in both PG server logs) and F-DG1-210 holds (in-suite EN+AR plus my independent spec 2/2). This finding is closed. Separately, a different adjacent route (process._debugProcess / SIGUSR1 inspector activation) is raised as the new Low finding F-DG1-213. It contradicts the header's new 'exhaustively' wording but does not reopen the two routes this finding named.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-8/00-candidate.log",
+        "docs/delivery/test-evidence/DG1/qa/round-8/03-unit.log",
+        "docs/delivery/test-evidence/DG1/qa/round-8/10-arch-verbose.log",
+        "docs/delivery/test-evidence/DG1/qa/round-8/11-f128-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/round-8/12-f128-negative-control.log",
+        "docs/delivery/test-evidence/DG1/qa/round-8/13-f128-real-plant.log",
+        "docs/delivery/test-evidence/DG1/qa/round-8/21-f128-scope.log",
+        "docs/delivery/test-evidence/DG1/qa/round-8/21a-f128-manifest-diff.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r8-test-execve-probe.test.ts",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts"
+      ]
+    }
+  ]
+}
