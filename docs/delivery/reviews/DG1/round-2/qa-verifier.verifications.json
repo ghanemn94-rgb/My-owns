@@ -1,0 +1,59 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-201",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 86e4134 is in candidate sha256:991d3241... (f32c705). apps/api/test/integration/contract/contract.test.ts:275-288 exercises getBrandingTokens: anonymous 401; signed-in 200, validated against docs/api/openapi.yaml and the zod mirror, with provenance=provisional and #0078FF provisional. The coverage test (:290-300) asserts that no operation is missing, each has a success, every zod mirror is checked, and operations has length 33. The operations come from docs/api/openapi.yaml (apps/api/test/support/contract.ts:12), and the YAML has 33 operationIds. `pnpm test:integration` on two fresh PostgreSQL 16 clusters: contract.test.ts 9/9, total 17 files and 193/193, exit 0 both times. openapi:lint PASS with 33 operations. This is the round-1 red, now green.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/05-openapi-lint.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-101",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Same fix and evidence as F-DG1-201: the contract suite exercises getBrandingTokens, 33/33 operations are covered, and the integration suite exits 0 on the frozen candidate in 2/2 runs (193/193). REQ-S19-006 now cites the contract test and 33 operations. The secondary point, that the register's REQ-DLV-033/REQ-S19-004 evidence predates the contract, is only partly repaired. It is tracked separately as the Low, non-mandatory F-DG1-209, so this High can close on its substance.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run2.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-110",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Fix 86e4134 is in the candidate. The rollback test (apps/api/test/integration/transformations.test.ts:114-139) now asserts scope-locally: audit rows of the duplicate request's own requestId are [], the rows with code SYN-DUP-1 are only the first record, and the first record's audit actions are only transformation.create. There is no global auditCount() comparison. Worker tests stop pg-boss before env.close() (maintenance.test.ts:96 boss.stop in finally, :13 afterAll env.close; outbox.test.ts:28-30 and its per-test stops). Two full integration runs on separate fresh clusters: 193/193 each, no 'Unhandled', no 57P01 / 'terminating connection' in either log.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run2.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-004",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Real stack (qa-stack.sh, SYNTHETIC seed), independent spec dg1-r2-web-repairs.spec.ts, EN and AR. dev.lead (TL at business_unit SYN-RETAIL only) creates an end-to-end transformation in SYN-RETAIL. The browser lands on /transformations/{id}, the h1 shows the name, there is no 'Not found'/'غير موجود' and no createdNotVisible notice, and the page is still reachable after a reload. GET /api/v1/transformations/{id} returns 200 and the lead can edit it (status draft -> active saved). The derived assignment (F-DG1-106) is shown in the audit trail. A user without grants (dev.nobody) gets 404 for the same record, so no cross-scope leak. Screenshots: web-repairs/chromium-{en,ar}--01-lead-after-create.png. Not exercised end-to-end: the createdNotVisible explanation for a creator who truly cannot see the record (covered only by unit tests in transformations.test.tsx).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/17-web-repairs.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-web-repairs.spec.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-en--01-lead-after-create.png",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-ar--01-lead-after-create.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-005",
+      "result": "FAIL",
+      "status_after": "OPEN",
+      "note": "Partly fixed. The transformation's own audit events are now localized in AR and EN: the field labels status, mode, phase, code, name, time zone, currency and business unit, and the values draft/active, end-to-end and diagnose, with the business unit shown by name instead of a UUID. No raw snake_case keys appear for them. But on exactly the F-DG1-004 path (a BU-scoped lead creates a record), the same 'Changes' column also shows the derived-assignment event added by F-DG1-106 in this round. It renders unlocalized in both languages. The action column shows the raw code 'scoped_assignment.create', and the fields show raw camelCase keys (scope, userId, roleCode, effectiveTo, derivedFromAssignmentId), each marked 'field without a translation' / 'حقل بلا ترجمة'. The values are raw JSON ({\"id\":...,\"type\":\"transformation\"}), raw UUIDs and the role code 'TL', marked 'value without a translation'. This is the defect the finding describes (raw keys and codes inside the Arabic RTL and English layouts) for an event that every BU-lead-created record now carries. The marked fallback is honest, but it is not the localized label the fix promises for domain values. Expected: localized action, field and role labels (and a user/scope display) for scoped_assignment.* events shown in a transformation's audit trail, or the event filtered or summarized in human terms. Reproduction: 17-web-repairs.log, soft assertions at dg1-r2-web-repairs.spec.ts:132-138 fail in EN and AR while every other assertion passes. Screenshots: web-repairs/chromium-{ar,en}--03-audit-trail-localized.png.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/17-web-repairs.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-web-repairs.spec.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-ar--03-audit-trail-localized.png",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-en--03-audit-trail-localized.png"
+      ]
+    }
+  ]
+}

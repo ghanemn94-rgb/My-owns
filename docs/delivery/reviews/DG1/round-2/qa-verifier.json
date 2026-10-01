@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 2,
+  "candidate_id": "sha256:991d32417f16984e47da7bb0767bd2e432e2d88b9fb066513dd7fa1761fea8fc",
+  "source_commit": "f32c705898cf0a393ed87d7f45a570df9bc09a17",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-QA-R2-qa-verifier-20261001T080945Z-b6fb3406",
+    "session_id": "b6fb3406-a064-4617-9221-9ec42062e650"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored none of the round-2 repairs or the reviewed product implementation. qa-verifier did author the pre-freeze acceptance suites under tests/qa/** and e2e/** (A12, A13, A14, A18, A20), which are test assets in the candidate, not product code; they are re-run here as checks. In this round I wrote only evidence, two new test assets under docs/delivery/test-evidence/DG1/qa/tests/ (outside the candidate) and these review files. The verdict was formed before reading any other round-2 reviewer record (none was visible to this run)."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-2/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R2-00-candidate",
+      "procedure": "Confirm the frozen candidate: recompute the candidate ID and diff it against the manifest; check that HEAD descends from the source commit and differs only by freeze metadata; check that the clone is complete",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG1; node tools/gates/candidate.mjs --stage DG1 --diff; git diff --stat f32c705 HEAD",
+      "environment": "/home/user/My-owns, Node v22.22.2",
+      "expected": "candidate_id sha256:991d3241...a8fc, diff matches, not shallow",
+      "actual": "candidate_id sha256:991d32417f16984e47da7bb0767bd2e432e2d88b9fb066513dd7fa1761fea8fc, 388 files, --diff matches:true with no changes, shallow=false. HEAD is 18c1e61, the freeze commit directly on top of f32c705; it only adds docs/delivery/assignments/DG1/round-2/*, the candidate manifest and stages.json, all excluded metadata. All execution used a clone checked out at f32c705.",
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    {
+      "id": "QA-R2-01-install",
+      "procedure": "Frozen-lockfile offline install in a fresh clone (the lockfile must not change)",
+      "command": "pnpm install --frozen-lockfile --offline --store-dir $TMPDIR/pstore",
+      "environment": "Disposable clone at f32c705 under $TMPDIR; pnpm 10.33.0; no network. The local store /root/.local/share/pnpm/store/v10 is read-only in the sandbox (EROFS on project registration), so a scratch copy of it was used.",
+      "expected": "Lockfile up to date, nothing downloaded, exit 0, tree unchanged",
+      "actual": "'Lockfile is up to date, resolution step is skipped'; resolved 371, reused 371, downloaded 0; exit 0; git status clean. The mth-db bin warnings are expected before the build.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-2/01-install.log"]
+    },
+    {
+      "id": "QA-R2-02-static",
+      "procedure": "Typecheck, build, lint, OpenAPI lint, no-CDN scan, WCAG contrast",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "Disposable clone at f32c705, Node v22.22.2, pnpm 10.33.0",
+      "expected": "All exit 0; OpenAPI 33 operations",
+      "actual": "typecheck exit 0 (7 packages); build exit 0; eslint --max-warnings=0 exit 0; 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations'; 'PASS no-cdn: scanned apps, packages'; 'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented'",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-002", "REQ-S19-006", "REQ-S15-005", "REQ-S15-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/02-typecheck.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/03-build.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/04-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/05-openapi-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/06-no-cdn.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/07-contrast.log"
+      ]
+    },
+    {
+      "id": "QA-R2-02b-deps-verify",
+      "procedure": "Dependency pin verification (not an assigned check; recorded for completeness)",
+      "command": "pnpm deps:verify",
+      "environment": "Disposable clone; sandbox without network",
+      "expected": "Script needs 'npm view' against the registry",
+      "actual": "Hung on registry access for more than 9 minutes and was terminated. BLOCKED: no network in the reviewer sandbox.",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-2/07b-deps-verify.log"]
+    },
+    {
+      "id": "QA-R2-03-unit",
+      "procedure": "Unit suites (unit-node and unit-web), including the new workflows/kpi/reporting module scaffolds, auditChanges and the transition tests",
+      "command": "pnpm test",
+      "environment": "Disposable clone at f32c705",
+      "expected": "All pass; suites workflows.test.ts, kpi.test.ts, reporting.test.ts, auditChanges.test.ts and transitions tests present",
+      "actual": "Test Files 21 passed (21); Tests 210 passed (210); exit 0. Present: apps/api/src/modules/{workflows,kpi,reporting}/*.test.ts, transformations/transitions.test.ts, apps/web src/lib/auditChanges.test.ts (9), pages/transformations/transformations.test.tsx (14), i18n/glossary.test.ts (8)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003", "REQ-S16-001"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-2/08-unit.log"]
+    },
+    {
+      "id": "QA-R2-04-integration",
+      "procedure": "Integration project against a real disposable PostgreSQL 16, run twice on fresh clusters (F-DG1-110 stability). It includes migrate (0001-0008 on a fresh DB), protection (audit trigger), contract (33 ops including getBrandingTokens) and the QA A12/A13/A14 suites",
+      "command": "QA_PG_PORT=5452 tests/qa/support/with-pg.sh pnpm test:integration   (x2)",
+      "environment": "Disposable clone; PostgreSQL 16.13 run as uid 1000 via unshare, 127.0.0.1:5452, fsync=off; cluster deleted after each run",
+      "expected": "Both runs exit 0 with no unhandled errors",
+      "actual": "Run 1: 17 files, 193/193, exit 0. Run 2: 17 files, 193/193, exit 0. No 'Unhandled' / 57P01 in either log. contract.test.ts 9/9, migrate.test.ts 7/7, protection.test.ts 17/17, a12-cross-scope 14/14, a13-job-idempotency 5/5, a14-concurrency 5/5, oidc 19/19",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-006", "REQ-S19-004", "REQ-S16-004", "REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run2.log"
+      ]
+    },
+    {
+      "id": "QA-R2-05-schema-probe",
+      "procedure": "Independent psql probe of a fresh database migrated by the built CLI: 8 migrations, 0007 browser-binding column and CHECK, 0008 derived_from column, CHECKs, index and rule, audit_event UPDATE/DELETE rejected by the trigger (owner) and by privileges (app)",
+      "command": "QA_E2E_PG_PORT=5452 e2e/support/qa-stack.sh bash docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-schema-probe.sh",
+      "environment": "Disposable clone (built); fresh PostgreSQL 16 on port 5452; mth-db migrate + seed-dev (SYNTHETIC)",
+      "expected": "All probes PASS",
+      "actual": "applied 8 migration(s); schema_migration=8; browser_binding_hash bytea NOT NULL with a 32-byte CHECK; derived_from_assignment_id uuid NULL with 2 CHECKs and a partial index; a derived link at BU scope is rejected by scoped_assignment_derived_is_transformation; owner UPDATE/DELETE get 'audit_event is append-only: ... is not allowed'; mth_app gets 'permission denied'; audit rows unchanged (15). 'schema probe: PASS'. The first attempt failed on the probe's own URL encoding ('+role'); the probe was fixed and the product left untouched.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-004", "REQ-S16-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/19-schema-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-schema-probe.sh"
+      ]
+    },
+    {
+      "id": "QA-R2-06-e2e",
+      "procedure": "Real-stack e2e (root e2e/** and apps/web/e2e/**), single worker, pre-installed Chromium, EN and AR projects",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5452 e2e/support/qa-stack.sh npx playwright test e2e --workers=1   (+ re-run --project=chromium-ar)",
+      "environment": "Disposable clone (built); Playwright 1.56.1 with chromium-1194 from /opt/pw-browsers (no playwright install); API :3000 AUTH_MODE=dev, SYNTHETIC seed; PostgreSQL 16 on 5452",
+      "expected": "20/20 passed, exit 0",
+      "actual": "13 passed, 1 failed, 6 did not run, exit 1. [chromium-ar] journeys.spec.ts:138 strict-mode violation: /عملي/ matches 'عملي' and 'العمليات الاعتيادية والتحسين' (BAU label from glossary repair a5ff652). The AR re-run gives the same failure (deterministic). All EN journeys and the A20 specs pass. Diagnostic only, in the disposable copy: anchoring that one locator gives 20/20, so the product screens are fine but the required suite is red -> F-DG1-208.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-033", "REQ-S15-005"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/11-e2e.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/12-e2e-ar-rerun.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/13-e2e-diagnostic.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/13-e2e-diagnostic.patch",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/FAIL-ar-journeys-shell-strict-mode.png",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/journeys/ar/axe-summary.json"
+      ]
+    },
+    {
+      "id": "QA-R2-07-A12-A13-A14",
+      "procedure": "QA acceptance suites re-run on this candidate: A12 cross-scope returns 404 (no existence leak), A13 job idempotency, A14 optimistic concurrency (409 stale If-Match / 428 missing)",
+      "command": "(part of QA-R2-04) tests/qa/integration/a12-cross-scope.test.ts, a13-job-idempotency.test.ts, a14-concurrency.test.ts",
+      "environment": "As QA-R2-04",
+      "expected": "All pass in both runs",
+      "actual": "a12 14/14, a13 5/5, a14 5/5 in run 1 and in run 2",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run2.log"
+      ]
+    },
+    {
+      "id": "QA-R2-08-A20",
+      "procedure": "A20 bilingual shell (AR RTL default, EN LTR switch, persisted, switch back, CSP clean) and design tokens reaching the rendered CSS; plus token propagation: change brand.deep in a disposable copy, rebuild, assert the rendered value",
+      "command": "(in QA-R2-06) e2e/a20-bilingual-shell.spec.ts; QA_E2E_PG_PORT=5452 e2e/support/a20-token-propagation.sh $TMPDIR/review-qa brand.deep=#6B1D5C",
+      "environment": "Disposable clone; tokens.json changed and restored only in the copy",
+      "expected": "A20 specs pass EN+AR; brand.deep renders as #6B1D5C",
+      "actual": "A20 shell and tokens 4/4 in the e2e run; 'A20 token propagation: PASS (brand.deep rendered as #6B1D5C, original #003B73)', 2/2 EN+AR",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002", "REQ-S15-005", "REQ-S15-006", "REQ-S16-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/11-e2e.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/18-a20-token-propagation.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/ar/chromium-ar--02-shell.png",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/en/chromium-en--02-shell.png",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/a20-token/ar/chromium-ar--04-tokens-6B1D5C.png"
+      ]
+    },
+    {
+      "id": "QA-R2-09-A18",
+      "procedure": "A18 clean start from a fresh checkout with a real frozen offline install: build, status on an empty DB, migrate, idempotent re-migrate, API + worker in production configuration, /healthz, /readyz, SPA AR RTL, unmigrated DB not ready, restart",
+      "command": "npm_config_store_dir=$TMPDIR/pstore QA_A18_PG_PORT=5452 e2e/clean-start/a18-clean-start.sh --commit f32c705898cf0a393ed87d7f45a570df9bc09a17 --install",
+      "environment": "Fresh clone made by the script under $TMPDIR; PostgreSQL 16 on 5452; API on 3181",
+      "expected": "A18 CLEAN START: PASS",
+      "actual": "21 assertions PASS, including 'applied migrations recorded = migration files: 8', healthz 200 ok, readyz 200 ready/ok/ok, unmigrated readyz 503, dev login 404 in production, worker alive, readyz 200 after restart; 'A18 CLEAN START: PASS ... install step: pnpm install --frozen-lockfile --offline; total 23.2 s'",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S19-004", "REQ-S16-001", "REQ-DLV-042"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-2/16-a18-clean-start.log"]
+    },
+    {
+      "id": "QA-R2-10-web-repairs",
+      "procedure": "Independent real-stack spec for F-DG1-004 (BU-scoped lead create -> reachable detail), the F-DG1-001 web consistency (no 'closed' offered; API PATCH closed -> 422, record unchanged), F-DG1-005 (localized audit Changes) and a cross-scope 404 for dev.nobody, in EN and AR",
+      "command": "QA_E2E_PG_PORT=5452 e2e/support/qa-stack.sh npx playwright test e2e/qa-r2 --workers=1  (spec copied into the clone from docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-web-repairs.spec.ts)",
+      "environment": "Disposable clone (built), Chromium-1194, SYNTHETIC seed, PostgreSQL 16 on 5452",
+      "expected": "All assertions pass EN and AR",
+      "actual": "All hard assertions pass in EN and AR: create -> detail with no Not found, reload OK, API 200; status options draft:{draft,active} and active:{active,on_hold}, never closed; PATCH status=closed -> 422 with version unchanged; transformation fields and values localized; dev.nobody -> 404. The 3 soft assertions fail in EN and AR: the derived scoped_assignment.create event shows the raw action code and raw fields/values marked 'without a translation' -> F-DG1-005 stays OPEN.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/17-web-repairs.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-web-repairs.spec.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-en--01-lead-after-create.png",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-ar--01-lead-after-create.png",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-en--02-edit-active-status-options.png",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-ar--02-edit-active-status-options.png",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-ar--03-audit-trail-localized.png",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-en--03-audit-trail-localized.png"
+      ]
+    },
+    {
+      "id": "QA-R2-11-validator",
+      "procedure": "Gate validator register, pipeline and reconcile modes",
+      "command": "node tools/gates/validate.mjs --register DG1; --pipeline DG1; --reconcile DG1",
+      "environment": "/home/user/My-owns (candidate tree)",
+      "expected": "All exit 0",
+      "actual": "'PASS register rules at DG1' exit 0; 'PASS pipeline (active stage: DG1 REVIEWING)' exit 0; 'PASS reconcile (structure)' exit 0 (round-2 records are reported missing because they are being written now)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/14-validate-register.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/14-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/14-validate-reconcile.log"
+      ]
+    },
+    {
+      "id": "QA-R2-12-register-evidence",
+      "procedure": "For the 12 DG1 requirements: status, final gate and existence of every cited evidence file; content review against the round-2 run results",
+      "command": "node (CSV parse of docs/delivery/requirements.csv; fs.statSync per evidence path)",
+      "environment": "/home/user/My-owns",
+      "expected": "All 12 IMPLEMENTED at DG1, no missing evidence, and the evidence reflects the frozen candidate",
+      "actual": "All 12 rows are IMPLEMENTED with final_gate DG1 and 0 missing evidence files. Content: REQ-S19-004 and REQ-DLV-033 still cite the pre-repair 181-test integration log, and the REQ-S19-004 note says 'migrations 0001-0006' -> F-DG1-209 (Low). REQ-DLV-033 is not complete on this candidate while its bilingual e2e evidence is red (F-DG1-208). The other 10 are confirmed by this round's runs. REQ-DLV-025 and REQ-DLV-042 were checked statically and through the validator and A18/install only; a live CI run with a failing gate (A24) is not observable here, as the register already states.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-DLV-025", "REQ-DLV-033", "REQ-DLV-042", "REQ-S15-002", "REQ-S15-005", "REQ-S15-006",
+        "REQ-S16-001", "REQ-S16-002", "REQ-S16-003", "REQ-S16-004", "REQ-S19-004", "REQ-S19-006"
+      ],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-2/15-req-evidence-exists.log", "docs/delivery/requirements.csv"]
+    }
+  ],
+  "findings": ["F-DG1-208", "F-DG1-209", "F-DG1-005"],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/qa/round-2/README.md",
+    "docs/delivery/test-evidence/DG1/qa/round-2/11-e2e.log",
+    "docs/delivery/test-evidence/DG1/qa/round-2/17-web-repairs.log",
+    "docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log",
+    "docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-2/16-a18-clean-start.log",
+    "docs/delivery/test-evidence/DG1/qa/round-2/18-a20-token-propagation.log",
+    "docs/delivery/test-evidence/DG1/qa/round-2/19-schema-probe.log",
+    "docs/delivery/reviews/DG1/round-2/qa-verifier.findings.json",
+    "docs/delivery/reviews/DG1/round-2/qa-verifier.verifications.json"
+  ],
+  "reviewed_at": "2026-10-01T08:30:43Z",
+  "summary": "FAIL. Build, static checks, unit (210/210), integration (193/193 in 2/2 runs), the schema probe, A12/A13/A14/A18/A20 and the validators are green on candidate 991d3241. Verified and closed: F-DG1-201, F-DG1-101, F-DG1-110, F-DG1-004; the web no longer offers 'closed' and the API returns 422. Blocking: F-DG1-208 (High) - the required real-stack e2e suite is red in Arabic, because a locator is made ambiguous by the round-2 glossary label; 6 AR journeys never run (the product passes 20/20 once the locator is anchored, in a diagnostic copy). Still open: F-DG1-005 (the derived scoped_assignment.create event renders raw in the audit trail, AR and EN). New Low: F-DG1-209 (stale register evidence for REQ-S19-004/REQ-DLV-033). BLOCKED and out of scope: deps:verify (no registry access)."
+}

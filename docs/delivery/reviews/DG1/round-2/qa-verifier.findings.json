@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-208",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The required real-stack e2e suite is red on the frozen candidate: the Arabic journeys fail on a locator that the round-2 glossary repair made ambiguous, and 6 AR journeys never run",
+      "reproduction": "Disposable clone at f32c705 (candidate sha256:991d3241... recomputed), `pnpm install --frozen-lockfile --offline`, `pnpm -r build`, then `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5452 e2e/support/qa-stack.sh npx playwright test e2e --workers=1`. Result: 13 passed, 1 failed, 6 did not run, exit 1. Re-run with --project=chromium-ar: same failure (2/2, deterministic). Failing step: apps/web/e2e/journeys.spec.ts:138 `nav.getByRole('link', { name: new RegExp(escape(tr(lang, 'nav.areas.myWork.label'))) })`. In Arabic, myWork = 'عملي', and the BAU label introduced by the round-2 glossary repair a5ff652 (F-DG1-003, apps/web/src/i18n/ar/nav.json:70) is 'العمليات الاعتيادية والتحسين', which contains the substring 'عملي'. The unanchored regex resolves to 2 links, a Playwright strict-mode violation. The serial describe then skips the 6 remaining AR journeys (create, list, edit-409, archive, administration, no-roles). The FE2 handback states that the real-stack journeys were not run before the freeze (T-DG1-FE2 handback, line 200).",
+      "expected": "On the frozen candidate the required e2e suite (CI job 'e2e'; the 'images' job needs it) exits 0 in EN and AR, so the DG1 bilingual-screen acceptance of REQ-DLV-033 (A20: Arabic/English screens) is evidenced on this candidate.",
+      "actual": "e2e exits 1, and the Arabic create/list/edit/archive/admin journeys have no passing run on this candidate. Diagnostic only: anchoring that single locator (`new RegExp('^' + ...)`) in a disposable copy gives 20/20 passed, EN and AR. So the product screens behave correctly, and the defect is in the e2e spec, not the product. A red required suite still blocks the gate (same class as F-DG1-201).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/11-e2e.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/12-e2e-ar-rerun.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/13-e2e-diagnostic.patch",
+        "docs/delivery/test-evidence/DG1/qa/round-2/13-e2e-diagnostic.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/FAIL-ar-journeys-shell-strict-mode.png",
+        "apps/web/e2e/journeys.spec.ts",
+        "apps/web/src/i18n/ar/nav.json"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:30:43Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-2 QA verification; reproduced 2/2 on a disposable PostgreSQL stack."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-209",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-004",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register evidence for REQ-S19-004 and REQ-DLV-033 is still the pre-repair integration log, and the REQ-S19-004 note still says 'migrations 0001-0006'",
+      "reproduction": "docs/delivery/requirements.csv rows REQ-S19-004 and REQ-DLV-033 cite docs/delivery/test-evidence/DG1/qa/T-DG1-QA-authoring/02-pnpm-test-integration.log (committed 2026-09-30 23:54, 181 tests). That run predates getBrandingTokens (0b42847) and migrations 0007/0008. The REQ-S19-004 note reads 'migrations 0001-0006 apply to a fresh database (migrate.test.ts, 7 tests, in the QA integration log)'. F-DG1-101 named this stale evidence explicitly; the round-2 register repair (dfcf42c) updated REQ-S16-004 (0001-0008) and REQ-S19-006, but not these two rows.",
+      "expected": "IMPLEMENTED rows cite evidence produced on the candidate they are gated on, and the notes describe the frozen schema (8 migrations, 0001-0008), for example the round-2 integration logs.",
+      "actual": "Two rows rest on a 181-test log from before the repairs, and one note understates the migration set. The behaviour itself is correct on this candidate: 8/8 migrations apply to a fresh database (migrate.test.ts in two runs; A18; schema probe).",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/qa/T-DG1-QA-authoring/02-pnpm-test-integration.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/19-schema-probe.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:30:43Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-2 QA verification (residual of F-DG1-101's stale-evidence point)."
+        }
+      ]
+    }
+  ]
+}
