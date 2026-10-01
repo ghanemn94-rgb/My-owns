@@ -112,6 +112,7 @@ export function TimelineTab() {
         baselineFinish: n.baselineFinish,
         critical: complete ? n.critical : null,
         proposed: n.proposed,
+        status: n.status,
         href: nodeHref(projectId, n.type, n.id),
       }))
       .filter((r) => !datedOnly || !!r.finish)

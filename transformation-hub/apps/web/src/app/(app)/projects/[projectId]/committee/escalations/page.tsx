@@ -21,7 +21,7 @@ import { RaiseEscalationDialog } from '../_components/dialogs';
 import { FilterBar, FilterSelect, GovCommandDialog, UText, gk, sourceKey, hubHref, useDecisionList, useGovRefresh, useUrlState, type Escalation } from '../_components/gov';
 
 const PAGE_SIZE = 20;
-const FILTERS = ['q', 'status', 'sourceType', 'sourceId'] as const;
+const FILTERS = ['q', 'status', 'unresolved', 'sourceType', 'sourceId'] as const;
 type Status = (typeof ESCALATION_STATUSES)[number];
 type Source = (typeof ESCALATION_SOURCE_TYPES)[number];
 
@@ -42,6 +42,7 @@ export default function EscalationsPage() {
     pageSize: PAGE_SIZE,
     q: values.q || undefined,
     status: (values.status || undefined) as Status | undefined,
+    unresolved: values.unresolved === 'true' ? ('true' as const) : undefined,
     sourceType: (values.sourceType || undefined) as Source | undefined,
     sourceId: values.sourceId || undefined,
   };
@@ -174,6 +175,10 @@ export default function EscalationsPage() {
           onChange={(v) => set({ sourceType: v, sourceId: null })}
           options={ESCALATION_SOURCE_TYPES.map((s) => ({ value: s, label: t(sourceKey(s)) }))}
         />
+        <label className="flex min-h-10 items-center gap-2 self-end text-sm text-ink">
+          <input type="checkbox" checked={values.unresolved === 'true'} onChange={(e) => set({ unresolved: e.target.checked ? 'true' : null })} data-testid="filter-unresolved" />
+          {t('governance.escalations.unresolvedOnly')}
+        </label>
       </FilterBar>
       <DataTable
         className="relative"

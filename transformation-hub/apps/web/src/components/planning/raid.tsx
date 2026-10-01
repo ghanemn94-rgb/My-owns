@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { planningRoutes as P } from '@hub/contracts';
 import { CHANGE_REQUEST_STATUSES, RAID_STATUSES } from '@hub/domain';
@@ -82,12 +83,18 @@ export function RiskHeatMap({ workstreamId }: { workstreamId?: string }) {
   );
 }
 
+/** Open RAID items (open, monitoring or escalated) — what the "open risks" metrics count (REQ-UX-024). */
+export const RAID_OPEN_GROUP = 'open,monitoring,escalated';
+const raidStatusFromUrl = (v: string | null): string => (v === RAID_OPEN_GROUP || (v && (RAID_STATUSES as readonly string[]).includes(v)) ? v : '');
+
 export function RaidRegister({ kind, workstreamId: fixedWs }: { kind: RaidKindPath; workstreamId?: string }) {
   const { t, tStatus, locale } = useI18n();
   const { projectId, can } = useProjectContext();
   const ws = useWorkstreams(projectId);
+  const params = useSearchParams();
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState('');
+  // A metric opens the register pre-filtered (`?status=`): the list total then equals the metric's number.
+  const [status, setStatus] = useState(() => raidStatusFromUrl(params.get('status')));
   const [wsId, setWsId] = useState(fixedWs ?? '');
   const [overdue, setOverdue] = useState(false);
   const [mine, setMine] = useState(false);
@@ -129,8 +136,9 @@ export function RaidRegister({ kind, workstreamId: fixedWs }: { kind: RaidKindPa
     <div className="space-y-3" data-testid={`raid-${kind}`}>
       <div className="flex flex-wrap items-end gap-3">
         <SearchInput className="w-full sm:w-64" label={t('planning.raid.search')} value={q} onChange={setQ} />
-        <FilterSelect label={t('planning.common.status')} value={status} onChange={setStatus} className="w-full sm:w-44">
+        <FilterSelect label={t('planning.common.status')} value={status} onChange={setStatus} className="w-full sm:w-44" testId={`raid-filter-status-${kind}`}>
           <option value="">{t('planning.common.allStatuses')}</option>
+          <option value={RAID_OPEN_GROUP}>{t('planning.raid.statusOpenGroup')}</option>
           {RAID_STATUSES.map((s) => (
             <option key={s} value={s}>
               {tStatus('raidStatuses', s)}

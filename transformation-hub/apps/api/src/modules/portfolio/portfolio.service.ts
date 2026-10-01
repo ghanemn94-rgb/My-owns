@@ -252,8 +252,10 @@ export class PortfolioService {
       .where(eq(schema.projectEntity.projectId, projectId));
     const counts: Record<string, number> = {};
     if (this.policy.canInProject(ctx, 'planning.plan.read', projectId)) {
-      // Counts honour the permission's reach: workstream-scoped users count only their workstreams (ARCH-14).
-      const reach = (col: SQL) => this.policy.reachSql(ctx, 'planning.plan.read', projectId, col);
+      // Counts honour the permission's reach: workstream-scoped users count only their workstreams (ARCH-14). Same scope as
+      // the lists the cockpit metrics open (visibility + reach, planning scopeSql) so each count equals its list's total
+      // (REQ-UX-024).
+      const reach = (col: SQL) => sql`(${this.policy.visibilitySql(ctx, projectId, {})} and ${this.policy.reachSql(ctx, 'planning.plan.read', projectId, col)})`;
       const c = await tx.execute<{ workstreams: number; tasks: number; milestones: number; deliverables: number }>(sql`
         select (select count(*) from workstream where project_id = ${projectId} and ${reach(sql`id`)})::int as workstreams,
                (select count(*) from task where project_id = ${projectId} and ${reach(sql`workstream_id`)})::int as tasks,

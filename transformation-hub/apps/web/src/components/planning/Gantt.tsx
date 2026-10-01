@@ -18,6 +18,8 @@ export interface GanttRow {
   critical: boolean | null;
   /** Draft (not yet confirmed into the plan). */
   proposed: boolean;
+  /** Current status of the task / milestone (the same record the WBS table and the Kanban board show). */
+  status?: string;
   href: string;
 }
 
@@ -27,6 +29,12 @@ const HEAD = 40;
 const toMs = (d: string) => Date.parse(`${d}T00:00:00Z`);
 const iso = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
+/** Baseline variance of a row in calendar days: finish shown minus the approved baseline finish (null without both). */
+export function baselineVarianceDays(r: Pick<GanttRow, 'finish' | 'baselineFinish'>): number | null {
+  if (!r.finish || !r.baselineFinish) return null;
+  return Math.round((toMs(r.finish) - toMs(r.baselineFinish)) / DAY);
+}
+
 /**
  * Timeline (Gantt) in plain SVG — no charting dependency. Business dates are calendar days (UTC arithmetic, no time-zone
  * shift). In Arabic the time axis runs right-to-left (bars and labels are mirrored), matching the reading direction.
@@ -34,7 +42,7 @@ const iso = (ms: number) => new Date(ms).toISOString().slice(0, 10);
  * has a text title; the WBS table is the accessible equivalent.
  */
 export function Gantt({ rows, today, caption, testId }: { rows: GanttRow[]; today: string; caption: string; testId?: string }) {
-  const { t, dir, locale, formatDate } = useI18n();
+  const { t, tStatus, dir, locale, formatDate, formatNumber } = useI18n();
   const rtl = dir === 'rtl';
   const titleId = useId();
   const [zoom, setZoom] = useState<'auto' | 'week' | 'month'>('auto');
@@ -90,18 +98,40 @@ export function Gantt({ rows, today, caption, testId }: { rows: GanttRow[]; toda
           <li style={{ blockSize: HEAD }} className="flex items-end border-b border-line px-2 pb-1 text-xs font-semibold text-muted">
             {t('planning.gantt.activity')}
           </li>
-          {rows.map((r) => (
-            <li key={r.id} style={{ blockSize: ROW }} className="flex items-center border-b border-line/60 px-2">
-              <Link href={r.href} className="flex min-w-0 items-baseline gap-1.5 text-xs hover:text-primary" title={`${r.code} ${r.title}`}>
-                <span className="shrink-0 font-medium text-primary" dir="ltr">
-                  {r.code}
-                </span>
-                <span className="truncate text-ink" dir="auto">
-                  {r.title}
-                </span>
-              </Link>
-            </li>
-          ))}
+          {rows.map((r) => {
+            const variance = baselineVarianceDays(r);
+            return (
+              <li
+                key={r.id}
+                style={{ blockSize: ROW }}
+                className="flex items-center gap-1 border-b border-line/60 px-2"
+                data-testid="gantt-row"
+                data-code={r.code}
+                data-status={r.status}
+                data-critical={r.critical ? 'true' : 'false'}
+                data-baseline-variance={variance ?? undefined}
+              >
+                <Link href={r.href} className="flex min-w-0 flex-1 items-baseline gap-1.5 text-xs hover:text-primary" title={`${r.code} ${r.title}`}>
+                  <span className="shrink-0 font-medium text-primary" dir="ltr">
+                    {r.code}
+                  </span>
+                  <span className="truncate text-ink" dir="auto">
+                    {r.title}
+                  </span>
+                  {r.status ? <span className="sr-only">{tStatus(r.type === 'milestone' ? 'milestoneStatuses' : 'taskStatuses', r.status)}</span> : null}
+                </Link>
+                {variance !== null && variance !== 0 ? (
+                  <span
+                    className={cx('tabular shrink-0 rounded px-1 text-[0.65rem] font-semibold', variance > 0 ? 'bg-danger-soft text-danger' : 'bg-success-soft text-success')}
+                    data-testid="gantt-variance"
+                  >
+                    <span aria-hidden="true">{t(variance > 0 ? 'planning.gantt.varianceLateShort' : 'planning.gantt.varianceEarlyShort', { days: formatNumber(Math.abs(variance)) })}</span>
+                    <span className="sr-only">{t(variance > 0 ? 'planning.gantt.varianceLate' : 'planning.gantt.varianceEarly', { days: formatNumber(Math.abs(variance)) })}</span>
+                  </span>
+                ) : null}
+              </li>
+            );
+          })}
         </ol>
         <ScrollRegion label={caption} className="min-w-0 flex-1 overflow-x-auto" data-testid="gantt-scroll">
           <svg width={W} height={H} role="img" aria-labelledby={titleId} className="block" style={{ minInlineSize: W }}>
@@ -127,13 +157,16 @@ export function Gantt({ rows, today, caption, testId }: { rows: GanttRow[]; toda
             {rows.map((r, i) => {
               const y = HEAD + i * ROW;
               const mid = y + ROW / 2;
-              const tip = `${r.code} ${r.title}: ${r.start ? formatDate(r.start) : EM_DASH} – ${r.finish ? formatDate(r.finish) : EM_DASH}${r.critical ? ` · ${t('planning.gantt.critical')}` : ''}${r.proposed ? ` · ${t('planning.gantt.proposed')}` : ''}`;
+              const variance = baselineVarianceDays(r);
+              const statusText = r.status ? ` · ${tStatus(r.type === 'milestone' ? 'milestoneStatuses' : 'taskStatuses', r.status)}` : '';
+              const varianceText = variance ? ` · ${t(variance > 0 ? 'planning.gantt.varianceLate' : 'planning.gantt.varianceEarly', { days: formatNumber(Math.abs(variance)) })}` : '';
+              const tip = `${r.code} ${r.title}: ${r.start ? formatDate(r.start) : EM_DASH} – ${r.finish ? formatDate(r.finish) : EM_DASH}${statusText}${r.critical ? ` · ${t('planning.gantt.critical')}` : ''}${r.proposed ? ` · ${t('planning.gantt.proposed')}` : ''}${varianceText}`;
               const colour = r.critical ? 'var(--hub-danger)' : 'var(--hub-primary)';
               let shape = null;
               if (r.type === 'milestone' && r.finish) {
                 const cx0 = mx(x(r.finish, true));
                 shape = (
-                  <polygon points={`${cx0},${mid - 7} ${cx0 + 7},${mid} ${cx0},${mid + 7} ${cx0 - 7},${mid}`} fill={colour} data-node={r.id}>
+                  <polygon points={`${cx0},${mid - 7} ${cx0 + 7},${mid} ${cx0},${mid + 7} ${cx0 - 7},${mid}`} fill={colour} data-node={r.id} data-status={r.status} data-critical={r.critical ? 'true' : 'false'}>
                     <title>{tip}</title>
                   </polygon>
                 );
@@ -152,6 +185,7 @@ export function Gantt({ rows, today, caption, testId }: { rows: GanttRow[]; toda
                     stroke={r.proposed ? 'var(--hub-primary)' : 'none'}
                     strokeDasharray={r.proposed ? '3 2' : undefined}
                     data-node={r.id}
+                    data-status={r.status}
                     data-critical={r.critical ? 'true' : 'false'}
                   >
                     <title>{tip}</title>
@@ -208,6 +242,12 @@ export function Gantt({ rows, today, caption, testId }: { rows: GanttRow[]; toda
         <li className="inline-flex items-center gap-1.5">
           <span className="inline-block h-3 w-0 border-s-2 border-dashed border-warning" aria-hidden="true" />
           {t('planning.gantt.today')}
+        </li>
+        <li className="inline-flex items-center gap-1.5">
+          <span className="tabular rounded bg-danger-soft px-1 text-[0.65rem] font-semibold text-danger" aria-hidden="true">
+            {t('planning.gantt.varianceLateShort', { days: formatNumber(1) })}
+          </span>
+          {t('planning.gantt.varianceLegend')}
         </li>
       </ul>
     </div>

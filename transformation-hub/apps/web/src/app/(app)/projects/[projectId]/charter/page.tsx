@@ -21,6 +21,7 @@ import { EM_DASH, useI18n } from '@/i18n/provider';
 import { api } from '@/lib/api';
 import { useProjectContext, type ProjectDetail } from '@/lib/project-context';
 import { qk } from '@/lib/queries';
+import { ApprovedBaseline, CommitteeCharters } from './_components/GovernanceBaseline';
 
 type Entity = ProjectDetail['entities'][number];
 type Phase = ProjectDetail['phases'][number];
@@ -196,6 +197,18 @@ export default function CharterPage() {
             </dl>
           </section>
         )}
+
+        {/* REQ-UX-006: the committee charter version (with its approval state) and the approved baseline. */}
+        <section aria-labelledby="charter-governance">
+          <h2 id="charter-governance" className="mb-1 text-lg font-semibold">
+            {t('project.overview.governanceTitle')}
+          </h2>
+          <p className="mb-3 text-sm text-muted">{t('project.overview.governanceHint')}</p>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <CommitteeCharters />
+            <ApprovedBaseline />
+          </div>
+        </section>
 
         <section aria-labelledby="charter-phases">
           <h2 id="charter-phases" className="mb-3 text-lg font-semibold">

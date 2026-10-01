@@ -24,7 +24,7 @@ import { useLocalized } from '@/lib/i18n-data';
 const PAGE_SIZE = 12;
 
 /** A count the caller may not be allowed to see: null renders "—" (with an explanation), never 0. */
-function Count({ value }: { value: number | null }) {
+function Count({ value, href, metric }: { value: number | null; href?: string; metric?: string }) {
   const { t, formatNumber } = useI18n();
   if (value === null) {
     return (
@@ -34,8 +34,20 @@ function Count({ value }: { value: number | null }) {
       </span>
     );
   }
+  // REQ-UX-024: the count opens its contributing records — the list filtered so its total is this number.
+  if (href) {
+    return (
+      <Link href={href} className="tabular text-primary hover:underline" data-testid="portfolio-count" data-metric={metric} data-value={value}>
+        {formatNumber(value)}
+        <span className="sr-only"> — {t('common.actions.viewRecords')}</span>
+      </Link>
+    );
+  }
   return <span className="tabular">{formatNumber(value)}</span>;
 }
+
+const openRisksHref = (projectId: string) => `/projects/${projectId}/raid?tab=risks&status=open,monitoring,escalated`;
+const overdueActionsHref = (projectId: string) => `/projects/${projectId}/committee/actions?overdue=true`;
 
 function NextGate({ gate }: { gate: ProjectSummary['nextGate'] }) {
   const { t } = useI18n();
@@ -106,13 +118,13 @@ function ProjectCard({ p }: { p: ProjectSummary }) {
           <div>
             <dt className="text-muted">{t('portfolio.openRisks')}</dt>
             <dd className="font-semibold">
-              <Count value={p.openRisks} />
+              <Count value={p.openRisks} href={openRisksHref(p.id)} metric="openRisks" />
             </dd>
           </div>
           <div>
             <dt className="text-muted">{t('portfolio.overdueActions')}</dt>
             <dd className="font-semibold">
-              <Count value={p.overdueActions} />
+              <Count value={p.overdueActions} href={overdueActionsHref(p.id)} metric="overdueActions" />
             </dd>
           </div>
         </dl>
@@ -170,8 +182,8 @@ export default function PortfolioHomePage() {
     { key: 'roles', header: t('portfolio.myRoles'), cell: (p) => (p.myRoles.length ? formatList(p.myRoles.map((r) => tStatus('roleKeys', r))) : EM_DASH) },
     { key: 'dims', header: t('portfolio.dimensions'), cell: (p) => <DimensionList dimensions={p.dimensions} className="min-w-64" /> },
     { key: 'gate', header: t('portfolio.nextGate'), cell: (p) => <NextGate gate={p.nextGate} /> },
-    { key: 'risks', header: t('portfolio.openRisks'), sortValue: (p) => p.openRisks, cell: (p) => <Count value={p.openRisks} /> },
-    { key: 'actions', header: t('portfolio.overdueActions'), sortValue: (p) => p.overdueActions, cell: (p) => <Count value={p.overdueActions} /> },
+    { key: 'risks', header: t('portfolio.openRisks'), sortValue: (p) => p.openRisks, cell: (p) => <Count value={p.openRisks} href={openRisksHref(p.id)} metric="openRisks" /> },
+    { key: 'actions', header: t('portfolio.overdueActions'), sortValue: (p) => p.overdueActions, cell: (p) => <Count value={p.overdueActions} href={overdueActionsHref(p.id)} metric="overdueActions" /> },
   ];
 
   const data = projects.data;
