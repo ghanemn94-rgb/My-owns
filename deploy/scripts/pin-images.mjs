@@ -15,6 +15,14 @@
 //                                                  is NOT fabricated: its digest stays null and `blockedReason` records
 //                                                  the real error and time (an existing digest is kept, never nulled).
 //                                                  The lock is written even when some images fail; exit 1 if any failed.
+//   node deploy/scripts/pin-images.mjs --resolve --missing
+//                                                  Same, but ONLY for images whose digest is still null (e.g. the
+//                                                  test-only keycloak image, BLOCKED where quay.io is denied). Pinned
+//                                                  images are left untouched (not re-resolved, verifiedAt unchanged).
+//                                                  Used by the CI `images` job at runtime (F-DG1-108/F-DG1-203): on a
+//                                                  runner that reaches the registry it pins the image live, then
+//                                                  --apply and --check; where the registry is unreachable it exits 1
+//                                                  (BLOCKED) and the job fails. Nothing is ever fabricated.
 //   node deploy/scripts/pin-images.mjs --apply     rewrites every `usedIn` file: ref:tag[@sha256:...] -> ref:tag@digest
 //                                                  for every image WITH a digest; images without one are listed as
 //                                                  NOT APPLIED (and --check keeps failing on them).
@@ -95,11 +103,18 @@ function structureProblems() {
 }
 
 if (mode === "--resolve") {
-  const only = new Set(args);
+  const missingOnly = args.includes("--missing");
+  const only = new Set(args.filter((a) => a !== "--missing"));
   for (const id of only) if (!lock.images.some((i) => i.id === id)) throw new Error(`unknown image id ${id}`);
   let failed = 0;
+  let attempted = 0;
   for (const img of lock.images) {
     if (only.size && !only.has(img.id)) continue;
+    if (missingOnly && img.digest) {
+      console.log(`skip ${img.ref}:${img.tag}: already pinned ${img.digest} (--missing)`);
+      continue;
+    }
+    attempted++;
     const name = `${img.ref}:${img.tag}`;
     try {
       const out = execFileSync("docker", ["buildx", "imagetools", "inspect", name, "--format", "{{json .Manifest}}"], {
@@ -122,6 +137,10 @@ if (mode === "--resolve") {
         console.error(`BLOCKED ${name}: ${why} (digest stays null; recorded as blockedReason)`);
       }
     }
+  }
+  if (attempted === 0) {
+    console.log("nothing to resolve: every selected image already has a digest; deploy/images.lock.json unchanged");
+    process.exit(0);
   }
   writeFileSync(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
   if (failed) {
@@ -201,6 +220,6 @@ if (mode === "--resolve") {
   }
   console.log(`OK: ${lock.images.length} images pinned by digest and referenced consistently`);
 } else {
-  console.error("usage: node deploy/scripts/pin-images.mjs --check | --resolve [id...] | --apply");
+  console.error("usage: node deploy/scripts/pin-images.mjs --check | --resolve [--missing] [id...] | --apply");
   process.exit(64);
 }

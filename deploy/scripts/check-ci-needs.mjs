@@ -10,6 +10,12 @@
 //     failed gate count as success: `continue-on-error` on the delivery-gates job or its validate step, an `if:` on that
 //     step, and a validate command that is anything but exactly `node tools/gates/validate.mjs --pipeline`
 //     (e.g. `... || true`);
+//   - the gate's execution context cannot be altered (F-DG1-116): a workflow-level `defaults:` or `env:` block is
+//     rejected (it reaches the validate step: `defaults.run.shell`/`working-directory`, `NODE_OPTIONS`, PATH...); the
+//     delivery-gates job may only carry the keys in GATE_JOB_KEYS (no job `env:`, `defaults:`, `container:`,
+//     `services:`, `if:`, `strategy:`...); its steps may only be pinned actions/checkout + actions/setup-node (keys
+//     uses/with/name/id) and the validate step; and EVERY step anywhere that runs validate.mjs may only carry the keys
+//     name/id/run (no `env:` e.g. NODE_OPTIONS=--import=..., no `shell:` e.g. "true {0}", no `working-directory:`);
 //   - dependency installs go ONLY through deploy/scripts/ci-install-deps.sh (tools/deps/install-sandbox.sh frozen;
 //     REQ-DLV-042, F-DG1-104): any other install command (pnpm/npm/yarn install|i|ci|add, corepack) is a violation,
 //     except provisioning pnpm itself with `npm install --global --ignore-scripts pnpm@...`; a job that runs pnpm must
@@ -52,6 +58,48 @@ for (const s of validateSteps) {
 if (jobs[GATE]?.["continue-on-error"] !== undefined && jobs[GATE]["continue-on-error"] !== false)
   problems.push(`${GATE}: job must not set continue-on-error (a failed gate would count as success)`);
 if (jobs[GATE]?.needs) problems.push(`${GATE} must not depend on other jobs`);
+
+// F-DG1-116: nothing may change HOW the validate step executes. Allow-lists (fail-closed): any key not listed is a
+// violation, so new GitHub Actions keys are rejected until reviewed here.
+// - workflow-level `defaults:` (run.shell / run.working-directory) and `env:` (NODE_OPTIONS, PATH, ...) reach every
+//   step, including the gate's validate step;
+for (const k of ["defaults", "env"])
+  if (wf[k] !== undefined)
+    problems.push(
+      `workflow-level ${k}: is not allowed (it reaches the ${GATE} validate step): ${JSON.stringify(wf[k])}`,
+    );
+// - the gate job: no job-level env/defaults/container/services/if/strategy/outputs...;
+const GATE_JOB_KEYS = new Set(["name", "runs-on", "steps", "permissions", "timeout-minutes", "continue-on-error"]);
+for (const k of Object.keys(jobs[GATE] ?? {}))
+  if (!GATE_JOB_KEYS.has(k) && k !== "needs")
+    problems.push(`${GATE}: job key "${k}" is not allowed (it could change how the validate step runs)`);
+// - the gate job's steps: only checkout/setup-node actions and the validate step (no other run: step that could write
+//   $GITHUB_ENV / $GITHUB_PATH or tamper with tools/gates before validate runs);
+const GATE_ACTION = /^actions\/(checkout|setup-node)@[0-9a-f]{40}$/;
+const ACTION_STEP_KEYS = new Set(["uses", "with", "name", "id"]);
+const RUN_STEP_KEYS = new Set(["name", "id", "run", "if", "continue-on-error"]); // if / c-o-e reported separately below
+for (const [i, s] of gateSteps.entries()) {
+  const where = `${GATE} step ${i + 1}${s?.name ? ` (${JSON.stringify(s.name)})` : ""}`;
+  if (s?.uses !== undefined) {
+    if (!GATE_ACTION.test(String(s.uses)))
+      problems.push(`${where}: only pinned actions/checkout and actions/setup-node are allowed, got ${s.uses}`);
+    for (const k of Object.keys(s)) if (!ACTION_STEP_KEYS.has(k)) problems.push(`${where}: key "${k}" is not allowed`);
+  } else if (!/tools\/gates\/validate\.mjs/.test(String(s?.run ?? ""))) {
+    problems.push(`${where}: only the validate step may run commands in ${GATE}: ${JSON.stringify(s?.run ?? s)}`);
+  }
+}
+// - every step (any job) that runs validate.mjs: no env (NODE_OPTIONS=--import=...), shell ("true {0}"),
+//   working-directory (a decoy tools/gates/validate.mjs), or any other key.
+for (const j of names) {
+  for (const [i, s] of (jobs[j].steps ?? []).entries()) {
+    if (!/tools\/gates\/validate\.mjs/.test(String(s?.run ?? ""))) continue;
+    for (const k of Object.keys(s))
+      if (!RUN_STEP_KEYS.has(k))
+        problems.push(
+          `${j} step ${i + 1}: a validate.mjs step must not set ${k}: ${JSON.stringify(s[k])} (only name/id/run)`,
+        );
+  }
+}
 
 const needsOf = (j) => {
   const n = jobs[j]?.needs;

@@ -169,7 +169,7 @@ jobs:
           fi
       - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
         run: deploy/scripts/ci-install-deps.sh
-      - name: Deploy tooling self-tests (check-ci-needs negatives incl. status-function bypass; pin-images BLOCKED path)
+      - name: Deploy tooling self-tests (check-ci-needs negatives incl. status-function and gate-context bypasses; pin-images BLOCKED and --missing paths)
         run: node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs
       - name: CI structure (gated on delivery-gates success; sandboxed installs only; actions pinned by SHA)
         run: node deploy/scripts/check-ci-needs.mjs
@@ -177,6 +177,18 @@ jobs:
         run: node deploy/scripts/generate-env-example.mjs --check
       - name: SBOM and licence inventory match the lockfile
         run: node licenses/generate-sbom.mjs --check
+      # F-DG1-108/F-DG1-203, D-049: the committed lock records the TEST-ONLY keycloak image (Compose profile test-idp)
+      # as BLOCKED (null digest) because the build environment's egress policy denies quay.io. GitHub-hosted runners
+      # reach quay.io, so this step resolves ONLY images still missing a digest, live, and applies the digest to the
+      # workspace copy. Where the registry is unreachable it exits 1 (BLOCKED) and the job fails: no digest is ever
+      # fabricated and --check never passes on a null digest. The resolved lock is kept in the stack-evidence artifact
+      # so IT can review and commit the pin.
+      - name: Resolve and pin images still missing a digest (live registry lookup; test-only keycloak)
+        run: |
+          node deploy/scripts/pin-images.mjs --resolve --missing
+          node deploy/scripts/pin-images.mjs --apply
+          mkdir -p stack-evidence
+          cp deploy/images.lock.json stack-evidence/images.lock.ci-resolved.json
       - name: Container images pinned by digest (deploy/images.lock.json)
         run: node deploy/scripts/pin-images.mjs --check
       - name: Build the application image (non-root; api | worker | migrate)
