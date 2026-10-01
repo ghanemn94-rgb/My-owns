@@ -1,0 +1,146 @@
+{
+ "schema_version": 1,
+ "stage_id": "DG1",
+ "round": 2,
+ "candidate_id": "sha256:991d32417f16984e47da7bb0767bd2e432e2d88b9fb066513dd7fa1761fea8fc",
+ "source_commit": "f32c705898cf0a393ed87d7f45a570df9bc09a17",
+ "reviewer_role": "code-security-reviewer",
+ "invocation_reference": {
+  "kind": "claude-code-cli-session",
+  "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T080945Z-4ac2403e",
+  "session_id": "4ac2403e-ece3-4e34-8b7b-3d133ba1afa0"
+ },
+ "implementation_author": [
+  "solution-architect",
+  "backend-workflow-engineer",
+  "frontend-ux-engineer",
+  "devops-engineer",
+  "transformation-analyst",
+  "delivery-orchestrator"
+ ],
+ "independence_declaration": {
+  "reviewer_authored_reviewed_scope": false,
+  "statement": "I am code-security-reviewer, run T-DG1-REV-SEC-R2. I did not author any of the reviewed product code or the round-2 repairs."
+ },
+ "assignment": "docs/delivery/assignments/DG1/round-2/review-code-security-reviewer.md (sha256 977ea0ac2d186fc02637a9d9e9add81cd5de08b8244fad774ae2668754627b58)",
+ "requirements_checked": [
+  "REQ-DLV-025",
+  "REQ-DLV-033",
+  "REQ-DLV-042",
+  "REQ-S16-001",
+  "REQ-S16-003",
+  "REQ-S16-004",
+  "REQ-S19-004",
+  "REQ-S19-006"
+ ],
+ "checks_run": [
+  {
+   "id": "SEC-R2-static",
+   "procedure": "pnpm -r typecheck/build, lint, openapi:lint (33 ops), check:no-cdn",
+   "result": "PASS",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/01-typecheck.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/02-build.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/03-lint.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/04-openapi-lint.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/05-no-cdn.log"
+   ]
+  },
+  {
+   "id": "SEC-R2-unit",
+   "procedure": "pnpm test",
+   "result": "PASS 210/210",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/06-test.log"
+   ]
+  },
+  {
+   "id": "SEC-R2-gate-agent",
+   "procedure": "node --test tools/gates/tests + tools/agents/tests",
+   "result": "PASS 105/105",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/07-gates-agents-tests.log"
+   ]
+  },
+  {
+   "id": "SEC-R2-deploy",
+   "procedure": "node --test deploy/scripts/tests",
+   "result": "PASS 31/31",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/08-deploy-scripts-tests.log"
+   ]
+  },
+  {
+   "id": "SEC-R2-install-sandbox",
+   "procedure": "tools/deps/tests/install-sandbox.test.sh + escape repro",
+   "result": "10/10; but control-path bypass found (F-DG1-113)",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/10-install-sandbox-test.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/11-installer-escape.log"
+   ]
+  },
+  {
+   "id": "SEC-R2-integration",
+   "procedure": "integration suite x3 on fresh PostgreSQL 16 (port 5451)",
+   "result": "PASS 193/193 each",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/20-integration-run1.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/20-integration-run2.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/20-integration-run3.log"
+   ]
+  },
+  {
+   "id": "SEC-R2-oidc",
+   "procedure": "OIDC cross-browser CSRF repro (4 variants)",
+   "result": "PASS (all refused)",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/21-repro-oidc-r2.log"
+   ]
+  },
+  {
+   "id": "SEC-R2-derived-race",
+   "procedure": "derived-assignment revocation race repro x3",
+   "result": "FAIL: write-skew (F-DG1-115)",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/22-repro-derived-race-run1.log"
+   ]
+  },
+  {
+   "id": "SEC-R2-ci-needs",
+   "procedure": "check-ci-needs bypass probes",
+   "result": "4 further vectors accepted (F-DG1-116)",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/25-check-ci-needs-bypass.log"
+   ]
+  },
+  {
+   "id": "SEC-R2-pin-images",
+   "procedure": "pin-images --check on the committed lock",
+   "result": "FAIL: keycloak unpinned (D-049) (F-DG1-108/203)",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/26-pin-images-check.log"
+   ]
+  },
+  {
+   "id": "SEC-R2-dg0-controls",
+   "procedure": "validate.mjs --stage DG0 --historical; DG0 control delta review",
+   "result": "PASS (tools/deps added to deny list strengthens it)",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/32-dg0-historical-and-controls.log"
+   ]
+  }
+ ],
+ "findings": [
+  "F-DG1-113",
+  "F-DG1-114",
+  "F-DG1-115",
+  "F-DG1-116",
+  "F-DG1-117"
+ ],
+ "verdict": "FAIL",
+ "evidence_paths": [
+  "docs/delivery/test-evidence/DG1/code-security/round-2"
+ ],
+ "reviewed_at": "2026-10-01T08:26:50Z",
+ "summary": "FAIL. Transcribed by the orchestrator from the reviewer's result message and on-disk evidence because a safety classifier blocked the agent's own write of its record and sidecars (the findings describe exploit techniques); the run evidence (meta.json, transcript.jsonl.gz, process_sandbox_sha256) is intact under the run dir and the reproductions are committed. Verified CLOSED: F-DG1-101, 103, 104, 109, 111, 202, 206. Reopened: F-DG1-102 (control-path bypass -> F-DG1-113), F-DG1-108/203 (keycloak unpinned, D-049). New: F-DG1-113 (High, installer control-path bypass), F-DG1-114 (Medium, config-surface injection), F-DG1-115 (Medium, derived-assignment revocation write-skew), F-DG1-116 (Low, check-ci-needs vectors), F-DG1-117 (Low, module-lint obfuscated loaders). F-DG1-112 not independently re-verified this round."
+}

@@ -1,0 +1,299 @@
+# cwd: disposable clone @ f32c7058 (built), spec copied from docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-web-repairs.spec.ts (soft final assertions) into the clone's e2e/qa-r2/
+# cmd: QA_E2E_PG_PORT=5452 QA_EVIDENCE_DIR=<ev>/screenshots/web-repairs e2e/support/qa-stack.sh npx playwright test e2e/qa-r2 --workers=1
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 2 tests using 1 worker
+
+  ✘  1 [chromium-en] › e2e/qa-r2/dg1-r2-web-repairs.spec.ts:69:1 › BU-scoped lead: create -> reachable detail; no governed 'closed'; localized audit trail (2.9s)
+  ✘  2 [chromium-ar] › e2e/qa-r2/dg1-r2-web-repairs.spec.ts:69:1 › BU-scoped lead: create -> reachable detail; no governed 'closed'; localized audit trail (2.5s)
+
+
+  1) [chromium-en] › e2e/qa-r2/dg1-r2-web-repairs.spec.ts:69:1 › BU-scoped lead: create -> reachable detail; no governed 'closed'; localized audit trail 
+
+    Error: audit trail shows an untranslated field
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "field without a translation"
+    Received string:        "audit trail
+    audit trail
+    when	action	by	version	changes
+    1 oct 2026, 11:28	updated	synthetic transformation lead	1 → 2	
+    status: draft – not submitted → active
+    
+    1 oct 2026, 11:28	scoped_assignment.create	synthetic transformation lead	— → 1	
+    scope (field without a translation): none → {\"id\":\"01a0f694-4c0a-71fc-b651-b3b8929e7179\",\"type\":\"transformation\"} (value without a translation)
+    userid (field without a translation): none → 01920000-0000-7000-9000-000000000203 (value without a translation)
+    rolecode (field without a translation): none → tl (value without a translation)
+    effectiveto (field without a translation): none → none
+    derivedfromassignmentid (field without a translation): none → 01a0f694-3d77-70db-a9a0-f9e80779575c (value without a translation)
+    
+    1 oct 2026, 11:28	created	synthetic transformation lead	— → 1	
+    code: none → tr-0001
+    name: none → qa r2 synthetic en 1790843308292
+    mode: none → end-to-end
+    phase: none → diagnose
+    status: none → draft – not submitted
+    time zone: none → asia/riyadh
+    currency: none → sar
+    business unit: none → synthetic retail syn-retail
+    page 1 · 3 shown
+    previous
+    next"
+
+      130 |   await shot(page, info, "03-audit-trail-localized");
+      131 |   // Soft: recorded as a failure, but the remaining (negative) steps still run and produce evidence.
+    > 132 |   expect.soft(text, "audit trail shows an untranslated field").not.toContain(
+          |                                                                    ^
+      133 |     tr(lang, "transformations.audit.untranslatedField").toLowerCase(),
+      134 |   );
+      135 |   expect.soft(text, "audit trail shows an untranslated value").not.toContain(
+        at /var/tmp/mth-run.AbtQ93/claude-0/review-qa/e2e/qa-r2/dg1-r2-web-repairs.spec.ts:132:68
+
+    Error: audit trail shows an untranslated value
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "value without a translation"
+    Received string:        "audit trail
+    audit trail
+    when	action	by	version	changes
+    1 oct 2026, 11:28	updated	synthetic transformation lead	1 → 2	
+    status: draft – not submitted → active
+    
+    1 oct 2026, 11:28	scoped_assignment.create	synthetic transformation lead	— → 1	
+    scope (field without a translation): none → {\"id\":\"01a0f694-4c0a-71fc-b651-b3b8929e7179\",\"type\":\"transformation\"} (value without a translation)
+    userid (field without a translation): none → 01920000-0000-7000-9000-000000000203 (value without a translation)
+    rolecode (field without a translation): none → tl (value without a translation)
+    effectiveto (field without a translation): none → none
+    derivedfromassignmentid (field without a translation): none → 01a0f694-3d77-70db-a9a0-f9e80779575c (value without a translation)
+    
+    1 oct 2026, 11:28	created	synthetic transformation lead	— → 1	
+    code: none → tr-0001
+    name: none → qa r2 synthetic en 1790843308292
+    mode: none → end-to-end
+    phase: none → diagnose
+    status: none → draft – not submitted
+    time zone: none → asia/riyadh
+    currency: none → sar
+    business unit: none → synthetic retail syn-retail
+    page 1 · 3 shown
+    previous
+    next"
+
+      133 |     tr(lang, "transformations.audit.untranslatedField").toLowerCase(),
+      134 |   );
+    > 135 |   expect.soft(text, "audit trail shows an untranslated value").not.toContain(
+          |                                                                    ^
+      136 |     tr(lang, "transformations.audit.untranslatedValue").toLowerCase(),
+      137 |   );
+      138 |   expect.soft(text, "audit trail shows a raw action code").not.toContain("scoped_assignment.create");
+        at /var/tmp/mth-run.AbtQ93/claude-0/review-qa/e2e/qa-r2/dg1-r2-web-repairs.spec.ts:135:68
+
+    Error: audit trail shows a raw action code
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "scoped_assignment.create"
+    Received string:        "audit trail
+    audit trail
+    when	action	by	version	changes
+    1 oct 2026, 11:28	updated	synthetic transformation lead	1 → 2	
+    status: draft – not submitted → active
+    
+    1 oct 2026, 11:28	scoped_assignment.create	synthetic transformation lead	— → 1	
+    scope (field without a translation): none → {\"id\":\"01a0f694-4c0a-71fc-b651-b3b8929e7179\",\"type\":\"transformation\"} (value without a translation)
+    userid (field without a translation): none → 01920000-0000-7000-9000-000000000203 (value without a translation)
+    rolecode (field without a translation): none → tl (value without a translation)
+    effectiveto (field without a translation): none → none
+    derivedfromassignmentid (field without a translation): none → 01a0f694-3d77-70db-a9a0-f9e80779575c (value without a translation)
+    
+    1 oct 2026, 11:28	created	synthetic transformation lead	— → 1	
+    code: none → tr-0001
+    name: none → qa r2 synthetic en 1790843308292
+    mode: none → end-to-end
+    phase: none → diagnose
+    status: none → draft – not submitted
+    time zone: none → asia/riyadh
+    currency: none → sar
+    business unit: none → synthetic retail syn-retail
+    page 1 · 3 shown
+    previous
+    next"
+
+      136 |     tr(lang, "transformations.audit.untranslatedValue").toLowerCase(),
+      137 |   );
+    > 138 |   expect.soft(text, "audit trail shows a raw action code").not.toContain("scoped_assignment.create");
+          |                                                                ^
+      139 |
+      140 |   // ---- negative: a user without any grant cannot see the record (404, not leaked).
+      141 |   await page.getByRole("button", { name: tr(lang, "auth.signOut") }).click();
+        at /var/tmp/mth-run.AbtQ93/claude-0/review-qa/e2e/qa-r2/dg1-r2-web-repairs.spec.ts:138:64
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-qa-r2-dg1-r2-web-repai-16585-losed-localized-audit-trail-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-qa-r2-dg1-r2-web-repai-16585-losed-localized-audit-trail-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-qa-r2-dg1-r2-web-repai-16585-losed-localized-audit-trail-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-qa-r2-dg1-r2-web-repai-16585-losed-localized-audit-trail-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/qa-r2/dg1-r2-web-repairs.spec.ts:69:1 › BU-scoped lead: create -> reachable detail; no governed 'closed'; localized audit trail 
+
+    Error: audit trail shows an untranslated field
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "حقل بلا ترجمة"
+    Received string:        "سجل التدقيق
+    سجل التدقيق
+    الوقت	الإجراء	بواسطة	الإصدار	التغييرات
+    01‏/10‏/2026 11:28	تحديث	synthetic transformation lead	1 → 2	
+    الحالة: مسودة – لم تُقدَّم ← نشط
+    
+    01‏/10‏/2026 11:28	scoped_assignment.create	synthetic transformation lead	— → 1	
+    scope (حقل بلا ترجمة): لا يوجد ← {\"id\":\"01a0f694-5b40-744f-8cd1-4155bc384c74\",\"type\":\"transformation\"} (قيمة بلا ترجمة)
+    userid (حقل بلا ترجمة): لا يوجد ← 01920000-0000-7000-9000-000000000203 (قيمة بلا ترجمة)
+    rolecode (حقل بلا ترجمة): لا يوجد ← tl (قيمة بلا ترجمة)
+    effectiveto (حقل بلا ترجمة): لا يوجد ← لا يوجد
+    derivedfromassignmentid (حقل بلا ترجمة): لا يوجد ← 01a0f694-3d77-70db-a9a0-f9e80779575c (قيمة بلا ترجمة)
+    
+    01‏/10‏/2026 11:28	إنشاء	synthetic transformation lead	— → 1	
+    الرمز: لا يوجد ← tr-0002
+    الاسم: لا يوجد ← qa r2 synthetic ar 1790843312355
+    النمط: لا يوجد ← النمط الشامل (من البداية إلى النهاية)
+    المرحلة: لا يوجد ← التشخيص
+    الحالة: لا يوجد ← مسودة – لم تُقدَّم
+    المنطقة الزمنية: لا يوجد ← asia/riyadh
+    العملة: لا يوجد ← sar
+    وحدة العمل: لا يوجد ← التجزئة (اصطناعي) syn-retail
+    الصفحة 1 · المعروض 3
+    السابق
+    التالي"
+
+      130 |   await shot(page, info, "03-audit-trail-localized");
+      131 |   // Soft: recorded as a failure, but the remaining (negative) steps still run and produce evidence.
+    > 132 |   expect.soft(text, "audit trail shows an untranslated field").not.toContain(
+          |                                                                    ^
+      133 |     tr(lang, "transformations.audit.untranslatedField").toLowerCase(),
+      134 |   );
+      135 |   expect.soft(text, "audit trail shows an untranslated value").not.toContain(
+        at /var/tmp/mth-run.AbtQ93/claude-0/review-qa/e2e/qa-r2/dg1-r2-web-repairs.spec.ts:132:68
+
+    Error: audit trail shows an untranslated value
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "قيمة بلا ترجمة"
+    Received string:        "سجل التدقيق
+    سجل التدقيق
+    الوقت	الإجراء	بواسطة	الإصدار	التغييرات
+    01‏/10‏/2026 11:28	تحديث	synthetic transformation lead	1 → 2	
+    الحالة: مسودة – لم تُقدَّم ← نشط
+    
+    01‏/10‏/2026 11:28	scoped_assignment.create	synthetic transformation lead	— → 1	
+    scope (حقل بلا ترجمة): لا يوجد ← {\"id\":\"01a0f694-5b40-744f-8cd1-4155bc384c74\",\"type\":\"transformation\"} (قيمة بلا ترجمة)
+    userid (حقل بلا ترجمة): لا يوجد ← 01920000-0000-7000-9000-000000000203 (قيمة بلا ترجمة)
+    rolecode (حقل بلا ترجمة): لا يوجد ← tl (قيمة بلا ترجمة)
+    effectiveto (حقل بلا ترجمة): لا يوجد ← لا يوجد
+    derivedfromassignmentid (حقل بلا ترجمة): لا يوجد ← 01a0f694-3d77-70db-a9a0-f9e80779575c (قيمة بلا ترجمة)
+    
+    01‏/10‏/2026 11:28	إنشاء	synthetic transformation lead	— → 1	
+    الرمز: لا يوجد ← tr-0002
+    الاسم: لا يوجد ← qa r2 synthetic ar 1790843312355
+    النمط: لا يوجد ← النمط الشامل (من البداية إلى النهاية)
+    المرحلة: لا يوجد ← التشخيص
+    الحالة: لا يوجد ← مسودة – لم تُقدَّم
+    المنطقة الزمنية: لا يوجد ← asia/riyadh
+    العملة: لا يوجد ← sar
+    وحدة العمل: لا يوجد ← التجزئة (اصطناعي) syn-retail
+    الصفحة 1 · المعروض 3
+    السابق
+    التالي"
+
+      133 |     tr(lang, "transformations.audit.untranslatedField").toLowerCase(),
+      134 |   );
+    > 135 |   expect.soft(text, "audit trail shows an untranslated value").not.toContain(
+          |                                                                    ^
+      136 |     tr(lang, "transformations.audit.untranslatedValue").toLowerCase(),
+      137 |   );
+      138 |   expect.soft(text, "audit trail shows a raw action code").not.toContain("scoped_assignment.create");
+        at /var/tmp/mth-run.AbtQ93/claude-0/review-qa/e2e/qa-r2/dg1-r2-web-repairs.spec.ts:135:68
+
+    Error: audit trail shows a raw action code
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected substring: not "scoped_assignment.create"
+    Received string:        "سجل التدقيق
+    سجل التدقيق
+    الوقت	الإجراء	بواسطة	الإصدار	التغييرات
+    01‏/10‏/2026 11:28	تحديث	synthetic transformation lead	1 → 2	
+    الحالة: مسودة – لم تُقدَّم ← نشط
+    
+    01‏/10‏/2026 11:28	scoped_assignment.create	synthetic transformation lead	— → 1	
+    scope (حقل بلا ترجمة): لا يوجد ← {\"id\":\"01a0f694-5b40-744f-8cd1-4155bc384c74\",\"type\":\"transformation\"} (قيمة بلا ترجمة)
+    userid (حقل بلا ترجمة): لا يوجد ← 01920000-0000-7000-9000-000000000203 (قيمة بلا ترجمة)
+    rolecode (حقل بلا ترجمة): لا يوجد ← tl (قيمة بلا ترجمة)
+    effectiveto (حقل بلا ترجمة): لا يوجد ← لا يوجد
+    derivedfromassignmentid (حقل بلا ترجمة): لا يوجد ← 01a0f694-3d77-70db-a9a0-f9e80779575c (قيمة بلا ترجمة)
+    
+    01‏/10‏/2026 11:28	إنشاء	synthetic transformation lead	— → 1	
+    الرمز: لا يوجد ← tr-0002
+    الاسم: لا يوجد ← qa r2 synthetic ar 1790843312355
+    النمط: لا يوجد ← النمط الشامل (من البداية إلى النهاية)
+    المرحلة: لا يوجد ← التشخيص
+    الحالة: لا يوجد ← مسودة – لم تُقدَّم
+    المنطقة الزمنية: لا يوجد ← asia/riyadh
+    العملة: لا يوجد ← sar
+    وحدة العمل: لا يوجد ← التجزئة (اصطناعي) syn-retail
+    الصفحة 1 · المعروض 3
+    السابق
+    التالي"
+
+      136 |     tr(lang, "transformations.audit.untranslatedValue").toLowerCase(),
+      137 |   );
+    > 138 |   expect.soft(text, "audit trail shows a raw action code").not.toContain("scoped_assignment.create");
+          |                                                                ^
+      139 |
+      140 |   // ---- negative: a user without any grant cannot see the record (404, not leaked).
+      141 |   await page.getByRole("button", { name: tr(lang, "auth.signOut") }).click();
+        at /var/tmp/mth-run.AbtQ93/claude-0/review-qa/e2e/qa-r2/dg1-r2-web-repairs.spec.ts:138:64
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-qa-r2-dg1-r2-web-repai-16585-losed-localized-audit-trail-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-qa-r2-dg1-r2-web-repai-16585-losed-localized-audit-trail-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-qa-r2-dg1-r2-web-repai-16585-losed-localized-audit-trail-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-qa-r2-dg1-r2-web-repai-16585-losed-localized-audit-trail-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/qa-r2/dg1-r2-web-repairs.spec.ts:69:1 › BU-scoped lead: create -> reachable detail; no governed 'closed'; localized audit trail 
+    [chromium-ar] › e2e/qa-r2/dg1-r2-web-repairs.spec.ts:69:1 › BU-scoped lead: create -> reachable detail; no governed 'closed'; localized audit trail 
+---- api.log (tail)
+exit=1

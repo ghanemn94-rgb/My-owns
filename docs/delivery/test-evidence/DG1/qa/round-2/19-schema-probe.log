@@ -1,0 +1,32 @@
+# cwd: disposable clone @ f32c7058 (built); fresh PG16 cluster port 5452 migrated by packages/db/dist/cli.js migrate + seed-dev (synthetic)
+# cmd: QA_E2E_PG_PORT=5452 e2e/support/qa-stack.sh bash docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-schema-probe.sh
+# (an earlier attempt failed on the probe's own URL encoding; fixed in the probe, product untouched)
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+migration table: public.schema_migration
+PASS applied migrations: 8
+PASS 0007 column: bytea|NO
+PASS 0007 length check: 1
+PASS 0008 column: uuid|YES
+PASS 0008 checks: 2
+PASS 0008 index: 1
+PASS 0008 rule: derived only at transformation scope: rejected (ERROR:  new row for relation "scoped_assignment" violates check constraint "scoped_assignment_derived_is_transformation")
+audit_event rows after seed: 15
+PASS owner UPDATE audit_event: rejected (ERROR:  audit_event is append-only: UPDATE is not allowed)
+PASS owner DELETE audit_event: rejected (ERROR:  audit_event is append-only: DELETE is not allowed)
+PASS app UPDATE audit_event: rejected (ERROR:  permission denied for table audit_event)
+PASS app DELETE audit_event: rejected (ERROR:  permission denied for table audit_event)
+PASS audit rows unchanged: 15
+schema probe: PASS
+exit=0

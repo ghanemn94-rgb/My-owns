@@ -7793,7 +7793,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:31:26Z",
@@ -7804,10 +7804,37 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 86e4134"
+        },
+        {
+          "at": "2026-10-01T08:24:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "86e4134",
-      "fix_summary": "P1 refuses closing a transformation: any change to 'closed' returns 422 invalid-transition citing G6, nothing written. openapi prose + web options (FE3) aligned; G6/DG separation preserved."
+      "fix_summary": "P1 refuses closing a transformation: any change to 'closed' returns 422 invalid-transition citing G6, nothing written. openapi prose + web options (FE3) aligned; G6/DG separation preserved.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T080945Z-909ab92b",
+          "session_id": "909ab92b-e458-4c76-b673-5165d589f12f"
+        },
+        "at": "2026-10-01T08:24:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/domain/round-2/05-live-scenario.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-2/03-integration-full.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-2/02-unit-domain-focused.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-2/00-static-inspection.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-2/screens/ar-02-edit-no-closed.png",
+          "docs/delivery/test-evidence/DG1/domain/round-2/screens/en-02-edit-no-closed.png",
+          "apps/api/src/modules/transformations/routes.ts#GOVERNED_TARGET_STATUSES",
+          "apps/web/src/pages/transformations/TransformationEditPage.tsx#offeredStatusOptions",
+          "docs/api/openapi.yaml#L742"
+        ],
+        "note": "Re-verified at runtime on candidate 991d3241 (commit f32c705). On a disposable stack (PostgreSQL 16.13, AUTH_MODE=dev, SYNTHETIC seed) dev.office tried active->closed twice: once as a status-only edit and once mixed with a rename. Both returned 422 urn:mth:problem:invalid-transition with the detail 'Closure requires the G6 (Sustain) business approval with validated benefits, which is not available in this release.' The row stayed active|v2|original name, there was no new audit row (2 -> 2), and the database holds zero closed transformations. The integration suite 'closure is not a status edit' (active, on_hold and draft -> closed) passes against a real database, as does the unit test of isAllowedTransition. The create schema accepts no status field, so no other write path sets closed. Web: offeredStatusOptions removes the governed target, and the rendered select offers only active/on_hold in Arabic (نشط/معلّق) and English. The status hint names the G6 business approval ('البوابة 6 - الاستدامة' / 'G6 (Sustain)'). OpenAPI updateTransformation prose states that ->closed is governed by G6 (P2+) and refused with 422. The shared transition table still lists closed as a later-stage target, but the API overrides it through GOVERNED_TARGET_STATUSES, documented in the code. DG/G separation holds: workflows.PRODUCT_GATES = G1-G6 (no DG*); CLOSURE_GATE = G6; the workflows scaffold registers no route; no UI catalogue string contains DG0-DG7. No engineering path grants a G6 approval."
+      }
     },
     {
       "id": "F-DG1-002",
@@ -7828,7 +7855,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:31:26Z",
@@ -7839,10 +7866,33 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at dfcf42c"
+        },
+        {
+          "at": "2026-10-01T08:24:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "dfcf42c",
-      "fix_summary": "Register corrected: REQ-S16-003 cites D-048 with six real modules; REQ-S16-004 scoped to persistence architecture with A19 restore-drill owned by DG7 (decision D-050)."
+      "fix_summary": "Register corrected: REQ-S16-003 cites D-048 with six real modules; REQ-S16-004 scoped to persistence architecture with A19 restore-drill owned by DG7 (decision D-050).",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T080945Z-909ab92b",
+          "session_id": "909ab92b-e458-4c76-b673-5165d589f12f"
+        },
+        "at": "2026-10-01T08:24:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/requirements.csv",
+          "docs/delivery/decisions.md",
+          "apps/api/src/modules.ts",
+          "docs/delivery/test-evidence/DG1/domain/round-2/01-unit-full.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-2/05-live-scenario.out.txt"
+        ],
+        "note": "REQ-S16-003: the six section-16 modules now literally exist (D-048 builds them; it does not reinterpret the acceptance). workflows, kpi (formulas/KPI) and reporting each have index.ts plus their own *.test.ts, are in P1_MODULES and P1_SCAFFOLD_MODULES, and are mapped in SECTION16_MODULES. architecture.test.ts requires index.ts for every P1 module and catches planted bypass imports. Each scaffold registers no routes, and each states honestly that its behaviour lands in P2/P4/P5. I accept D-048 as a faithful P1 increment of M0308: building the full business behaviour early would be wrong, and the boundaries plus the enforced lint are what A12 tests. REQ-S16-004: the row now states that DG1 delivers the persistence architecture (all P1 state in PostgreSQL via migrations 0001-0008, which applied cleanly on a fresh cluster in my run), and D-050 assigns the A19 restore drill to the DG7 rows REQ-S19-012/REQ-S20-019. I accept D-050, because reporting snapshots do not exist yet and a restore drill is an operational handover test. The row's acceptance text still names A19, but the note discloses the split honestly, so the row no longer overclaims."
+      }
     },
     {
       "id": "F-DG1-003",
@@ -7864,7 +7914,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:31:26Z",
@@ -7875,10 +7925,33 @@
           "at": "2026-10-01T08:02:45Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 93c3461"
+        },
+        {
+          "at": "2026-10-01T08:24:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "93c3461",
-      "fix_summary": "Arabic domain terms aligned to the DG0 glossary; Transformation (التحوّل) and Initiative (مبادرة) are distinct across every screen; a test checks the catalogue against docs/analysis/glossary.md."
+      "fix_summary": "Arabic domain terms aligned to the DG0 glossary; Transformation (التحوّل) and Initiative (مبادرة) are distinct across every screen; a test checks the catalogue against docs/analysis/glossary.md.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T080945Z-909ab92b",
+          "session_id": "909ab92b-e458-4c76-b673-5165d589f12f"
+        },
+        "at": "2026-10-01T08:24:00Z",
+        "result": "PASS",
+        "evidence": [
+          "apps/web/src/i18n/glossary.test.ts",
+          "docs/delivery/test-evidence/DG1/domain/round-2/02-unit-domain-focused.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-2/05-live-scenario.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-2/screens/ar-03-detail-audit.png",
+          "docs/analysis/glossary.md"
+        ],
+        "note": "The AR catalogue matches docs/analysis/glossary.md. Transformation = التحوّل (shadda spelling consistent; no unshadded تحول remains). Initiative = مبادرة / scope label المبادرة, distinct from التحوّل. Modular = النمط الجزئي المرن (الدخول عند المرحلة المناسبة), and معياري appears nowhere. Phase 5 = التحويل والتنفيذ, which differs from the Transformation term. Executive Sponsor = الراعي التنفيذي and Transformation Lead = قائد التحوّل. No 'مبادرة/مبادرات التحوّل' conflation exists anywhere in the catalogue. glossary.test.ts parses the glossary tables directly, so drift on either side fails the test; it passed (8 tests). The rendered Arabic list, detail and edit screens on the live stack use التحوّل and show no conflation. The glossary itself still marks its Arabic terms as proposals pending a Mobily Arabic-language owner's review, which is honest."
+      }
     },
     {
       "id": "F-DG1-004",
@@ -7898,7 +7971,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:31:26Z",
@@ -7909,10 +7982,37 @@
           "at": "2026-10-01T08:02:45Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 93c3461"
+        },
+        {
+          "at": "2026-10-01T08:24:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-10-01T08:30:43Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "93c3461",
-      "fix_summary": "After create, the detail page loads from the server; a legitimate creator (BE F-DG1-106) no longer hits a dead 'Not found'; a true 403/404 shows a localized explanation."
+      "fix_summary": "After create, the detail page loads from the server; a legitimate creator (BE F-DG1-106) no longer hits a dead 'Not found'; a true 403/404 shows a localized explanation.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R2-qa-verifier-20261001T080945Z-b6fb3406",
+          "session_id": "b6fb3406-a064-4617-9221-9ec42062e650"
+        },
+        "at": "2026-10-01T08:30:43Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-2/17-web-repairs.log",
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-web-repairs.spec.ts",
+          "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-en--01-lead-after-create.png",
+          "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-ar--01-lead-after-create.png"
+        ],
+        "note": "Real stack (qa-stack.sh, SYNTHETIC seed), independent spec dg1-r2-web-repairs.spec.ts, EN and AR. dev.lead (TL at business_unit SYN-RETAIL only) creates an end-to-end transformation in SYN-RETAIL. The browser lands on /transformations/{id}, the h1 shows the name, there is no 'Not found'/'غير موجود' and no createdNotVisible notice, and the page is still reachable after a reload. GET /api/v1/transformations/{id} returns 200 and the lead can edit it (status draft -> active saved). The derived assignment (F-DG1-106) is shown in the audit trail. A user without grants (dev.nobody) gets 404 for the same record, so no cross-scope leak. Screenshots: web-repairs/chromium-{en,ar}--01-lead-after-create.png. Not exercised end-to-end: the createdNotVisible explanation for a creator who truly cannot see the record (covered only by unit tests in transformations.test.tsx)."
+      }
     },
     {
       "id": "F-DG1-005",
@@ -7931,7 +8031,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-10-01T06:31:26Z",
@@ -7942,10 +8042,37 @@
           "at": "2026-10-01T08:02:45Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 93c3461"
+        },
+        {
+          "at": "2026-10-01T08:24:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-10-01T08:30:43Z",
+          "status": "OPEN",
+          "note": "verified by qa-verifier round 2: FAIL"
         }
       ],
       "fix_revision": "93c3461",
-      "fix_summary": "Audit-trail 'Changes' column shows localized field/enum labels in AR and EN, with a safe marked fallback for untranslated keys."
+      "fix_summary": "Audit-trail 'Changes' column shows localized field/enum labels in AR and EN, with a safe marked fallback for untranslated keys.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R2-qa-verifier-20261001T080945Z-b6fb3406",
+          "session_id": "b6fb3406-a064-4617-9221-9ec42062e650"
+        },
+        "at": "2026-10-01T08:30:43Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-2/17-web-repairs.log",
+          "docs/delivery/test-evidence/DG1/qa/tests/dg1-r2-web-repairs.spec.ts",
+          "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-ar--03-audit-trail-localized.png",
+          "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/web-repairs/chromium-en--03-audit-trail-localized.png"
+        ],
+        "note": "Partly fixed. The transformation's own audit events are now localized in AR and EN: the field labels status, mode, phase, code, name, time zone, currency and business unit, and the values draft/active, end-to-end and diagnose, with the business unit shown by name instead of a UUID. No raw snake_case keys appear for them. But on exactly the F-DG1-004 path (a BU-scoped lead creates a record), the same 'Changes' column also shows the derived-assignment event added by F-DG1-106 in this round. It renders unlocalized in both languages. The action column shows the raw code 'scoped_assignment.create', and the fields show raw camelCase keys (scope, userId, roleCode, effectiveTo, derivedFromAssignmentId), each marked 'field without a translation' / 'حقل بلا ترجمة'. The values are raw JSON ({\"id\":...,\"type\":\"transformation\"}), raw UUIDs and the role code 'TL', marked 'value without a translation'. This is the defect the finding describes (raw keys and codes inside the Arabic RTL and English layouts) for an event that every BU-lead-created record now carries. The marked fallback is honest, but it is not the localized label the fix promises for domain values. Expected: localized action, field and role labels (and a user/scope display) for scoped_assignment.* events shown in a transformation's audit trail, or the event filtered or summarized in human terms. Reproduction: 17-web-repairs.log, soft assertions at dg1-r2-web-repairs.spec.ts:132-138 fail in EN and AR while every other assertion passes. Screenshots: web-repairs/chromium-{ar,en}--03-audit-trail-localized.png."
+      }
     },
     {
       "id": "F-DG1-006",
@@ -7966,7 +8093,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:31:26Z",
@@ -7977,10 +8104,31 @@
           "at": "2026-10-01T08:02:45Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at dfcf42c"
+        },
+        {
+          "at": "2026-10-01T08:24:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "dfcf42c",
-      "fix_summary": "Register text corrected: op count 33; 409-vs-422 fixed across rows (a rejected transition is 422 invalid-transition); worker-stop criterion described honestly (process separation + manual /readyz check)."
+      "fix_summary": "Register text corrected: op count 33; 409-vs-422 fixed across rows (a rejected transition is 422 invalid-transition); worker-stop criterion described honestly (process separation + manual /readyz check).",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T080945Z-909ab92b",
+          "session_id": "909ab92b-e458-4c76-b673-5165d589f12f"
+        },
+        "at": "2026-10-01T08:24:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/requirements.csv",
+          "docs/delivery/test-evidence/DG1/domain/round-2/04-static-checks.out.txt",
+          "docs/delivery/test-evidence/DG1/domain/round-2/00-static-inspection.out.txt"
+        ],
+        "note": "All three items named in the finding are corrected. (1) REQ-S19-006 now says 33 operations; pnpm openapi:lint in my run reports 'OpenAPI 3.1.1, 33 operations' and the file has 33 operationIds. (2) REQ-S16-023 acceptance now says an illegal transition returns 422 invalid-transition (ADR-0007), which matches the observed 422. (3) REQ-S16-001 states honestly that the worker-stop criterion rests on process separation and that no automated test covers it, citing my round-1 manual check. One residual 409 wording sits in a row the finding did not name (REQ-PB-009 notes), and a stale migration range sits in REQ-S19-004; both are raised separately as F-DG1-007 (Low), so they do not reopen this finding."
+      }
     },
     {
       "id": "F-DG1-101",
@@ -8002,7 +8150,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:36:40Z",
@@ -8013,10 +8161,35 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 86e4134"
+        },
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-10-01T08:30:43Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "86e4134",
-      "fix_summary": "Contract suite now exercises getBrandingTokens (200 signed-in validated vs openapi + zod mirror; 401 signed-out); all 33 operations covered; integration 193/193 on the merged tree."
+      "fix_summary": "Contract suite now exercises getBrandingTokens (200 signed-in validated vs openapi + zod mirror; 401 signed-out); all 33 operations covered; integration 193/193 on the merged tree.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R2-qa-verifier-20261001T080945Z-b6fb3406",
+          "session_id": "b6fb3406-a064-4617-9221-9ec42062e650"
+        },
+        "at": "2026-10-01T08:30:43Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log",
+          "docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run2.log"
+        ],
+        "note": "Same fix and evidence as F-DG1-201: the contract suite exercises getBrandingTokens, 33/33 operations are covered, and the integration suite exits 0 on the frozen candidate in 2/2 runs (193/193). REQ-S19-006 now cites the contract test and 33 operations. The secondary point, that the register's REQ-DLV-033/REQ-S19-004 evidence predates the contract, is only partly repaired. It is tracked separately as the Low, non-mandatory F-DG1-209, so this High can close on its substance."
+      }
     },
     {
       "id": "F-DG1-102",
@@ -8037,7 +8210,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-10-01T06:36:40Z",
@@ -8048,10 +8221,29 @@
           "at": "2026-10-01T08:02:43Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c433078"
+        },
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 2: FAIL"
         }
       ],
       "fix_revision": "c433078",
-      "fix_summary": "Hardened tools/deps/install-sandbox.sh: --clearenv with only PATH/HOME/XDG/PNPM/registry+proxy-TLS vars (orchestrator secrets no longer cross in); control paths (.git/.claude/.github/tools/*/docs/*) re-bound read-only over the writable tree; --cap-drop ALL. AC-5/AC-6 added; 10/10 acceptance pass."
+      "fix_summary": "Hardened tools/deps/install-sandbox.sh: --clearenv with only PATH/HOME/XDG/PNPM/registry+proxy-TLS vars (orchestrator secrets no longer cross in); control paths (.git/.claude/.github/tools/*/docs/*) re-bound read-only over the writable tree; --cap-drop ALL. AC-5/AC-6 added; 10/10 acceptance pass.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T080945Z-4ac2403e",
+          "session_id": "4ac2403e-ece3-4e34-8b7b-3d133ba1afa0"
+        },
+        "at": "2026-10-01T08:26:50Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/11-installer-escape.log"
+        ],
+        "note": "The hardening (clearenv, cap-drop, no secrets in env) holds, but the control-path read-only protection is bypassable (see F-DG1-113). Reopened."
+      }
     },
     {
       "id": "F-DG1-103",
@@ -8072,7 +8264,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:36:40Z",
@@ -8083,10 +8275,30 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 86e4134"
+        },
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "86e4134",
-      "fix_summary": "OIDC state bound to the initiating browser via a short-lived __Host-/HttpOnly/SameSite cookie (SHA-256 stored, migration 0007); a mismatched callback is refused+audited, state not consumed."
+      "fix_summary": "OIDC state bound to the initiating browser via a short-lived __Host-/HttpOnly/SameSite cookie (SHA-256 stored, migration 0007); a mismatched callback is refused+audited, state not consumed.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T080945Z-4ac2403e",
+          "session_id": "4ac2403e-ece3-4e34-8b7b-3d133ba1afa0"
+        },
+        "at": "2026-10-01T08:26:50Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/21-repro-oidc-r2.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/repro-oidc-login-csrf-r2.test.ts"
+        ],
+        "note": "OIDC login is browser-bound. Four cross-browser variants (callback in another browser, cookie swap, replay, forged cookie) all refused and audited; state not consumed."
+      }
     },
     {
       "id": "F-DG1-104",
@@ -8106,7 +8318,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:36:40Z",
@@ -8117,10 +8329,30 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 3eaab6c"
+        },
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "3eaab6c",
-      "fix_summary": "CI installs dependencies only through deploy/scripts/ci-install-deps.sh -> install-sandbox.sh frozen (BLOCKED/65 without bubblewrap, no pnpm fallback); installed workflow updated; all product jobs stay gated."
+      "fix_summary": "CI installs dependencies only through deploy/scripts/ci-install-deps.sh -> install-sandbox.sh frozen (BLOCKED/65 without bubblewrap, no pnpm fallback); installed workflow updated; all product jobs stay gated.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T080945Z-4ac2403e",
+          "session_id": "4ac2403e-ece3-4e34-8b7b-3d133ba1afa0"
+        },
+        "at": "2026-10-01T08:26:50Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/33-ci-install-blocked.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/08-deploy-scripts-tests.log"
+        ],
+        "note": "Every CI job installs through ci-install-deps.sh -> install-sandbox.sh frozen; the BLOCKED path exits 65 with no pnpm fallback."
+      }
     },
     {
       "id": "F-DG1-105",
@@ -8141,7 +8373,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:36:40Z",
@@ -8152,10 +8384,33 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 86e4134"
+        },
+        {
+          "at": "2026-10-01T08:24:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "86e4134",
-      "fix_summary": "workflows, kpi and reporting built as active P1 module scaffolds (public interface + register hook with no routes + own test suite); all six §16 modules now exist (D-048). Register corrected in dfcf42c."
+      "fix_summary": "workflows, kpi and reporting built as active P1 module scaffolds (public interface + register hook with no routes + own test suite); all six §16 modules now exist (D-048). Register corrected in dfcf42c.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T080945Z-909ab92b",
+          "session_id": "909ab92b-e458-4c76-b673-5165d589f12f"
+        },
+        "at": "2026-10-01T08:24:00Z",
+        "result": "PASS",
+        "evidence": [
+          "apps/api/src/modules/workflows/workflows.test.ts",
+          "apps/api/src/modules/kpi/kpi.test.ts",
+          "apps/api/src/modules/reporting/reporting.test.ts",
+          "apps/api/src/architecture.test.ts",
+          "docs/delivery/test-evidence/DG1/domain/round-2/01-unit-full.out.txt"
+        ],
+        "note": "apps/api/src/modules/{workflows,kpi,reporting}/ exist on the candidate, each with index.ts plus its own suite (workflows.test.ts, kpi.test.ts with 5 tests, reporting.test.ts with 4 tests). All three are listed in P1_MODULES (11 entries) and covered by architecture.test.ts (the acyclic graph and the six-area mapping). The full unit run had 21 files, 210/210 passed. The scaffolds carry no misleading behaviour. workflows names only G1-G6 product gates and says nothing can grant an approval. kpi exposes VALUE_FRESHNESS unknown/stale/current and computes nothing, so nothing can show zero or green. 'methodology' and 'evidence' stay reserved names. That is fine, because §16 does not list them among the six."
+      }
     },
     {
       "id": "F-DG1-106",
@@ -8244,7 +8499,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-10-01T06:36:40Z",
@@ -8255,10 +8510,29 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 3eaab6c"
+        },
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 2: FAIL"
         }
       ],
       "fix_revision": "3eaab6c",
-      "fix_summary": "Image digests pinned: node:24, postgres:18 (docker.io) and mcr playwright resolved+applied; quay.io/keycloak (test-only) BLOCKED by the environment egress policy, recorded honestly (D-049), never fabricated. SBOM regenerated; pin-images self-tests 31/31."
+      "fix_summary": "Image digests pinned: node:24, postgres:18 (docker.io) and mcr playwright resolved+applied; quay.io/keycloak (test-only) BLOCKED by the environment egress policy, recorded honestly (D-049), never fabricated. SBOM regenerated; pin-images self-tests 31/31.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T080945Z-4ac2403e",
+          "session_id": "4ac2403e-ece3-4e34-8b7b-3d133ba1afa0"
+        },
+        "at": "2026-10-01T08:26:50Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/26-pin-images-check.log"
+        ],
+        "note": "pin-images --check exits 1: the committed lock has keycloak unpinned (quay.io denied here, D-049). The CI images job cannot pass on this candidate. Reopened."
+      }
     },
     {
       "id": "F-DG1-109",
@@ -8277,7 +8551,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:36:40Z",
@@ -8288,10 +8562,30 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 86e4134"
+        },
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "86e4134",
-      "fix_summary": "Module dependency-lint now parses and rejects createRequire() and computed import()/require() specifiers; planted cases fail on the new lint, passed on the old."
+      "fix_summary": "Module dependency-lint now parses and rejects createRequire() and computed import()/require() specifiers; planted cases fail on the new lint, passed on the old.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T080945Z-4ac2403e",
+          "session_id": "4ac2403e-ece3-4e34-8b7b-3d133ba1afa0"
+        },
+        "at": "2026-10-01T08:26:50Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/24-plant-f109.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/plant-f109.sh"
+        ],
+        "note": "The module lint now catches createRequire and computed import()/require(); planted forms fail on the new lint and passed on the old (see F-DG1-117 for the remaining obfuscated-loader gap)."
+      }
     },
     {
       "id": "F-DG1-110",
@@ -8311,7 +8605,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:36:40Z",
@@ -8322,10 +8616,30 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 86e4134"
+        },
+        {
+          "at": "2026-10-01T08:30:43Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "86e4134",
-      "fix_summary": "Flaky integration tests fixed: rollback assertion counts only its own request's rows; worker tests close pg-boss before the DB drop. 193/193 stable across 3 fresh clusters."
+      "fix_summary": "Flaky integration tests fixed: rollback assertion counts only its own request's rows; worker tests close pg-boss before the DB drop. 193/193 stable across 3 fresh clusters.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R2-qa-verifier-20261001T080945Z-b6fb3406",
+          "session_id": "b6fb3406-a064-4617-9221-9ec42062e650"
+        },
+        "at": "2026-10-01T08:30:43Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log",
+          "docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run2.log"
+        ],
+        "note": "Fix 86e4134 is in the candidate. The rollback test (apps/api/test/integration/transformations.test.ts:114-139) now asserts scope-locally: audit rows of the duplicate request's own requestId are [], the rows with code SYN-DUP-1 are only the first record, and the first record's audit actions are only transformation.create. There is no global auditCount() comparison. Worker tests stop pg-boss before env.close() (maintenance.test.ts:96 boss.stop in finally, :13 afterAll env.close; outbox.test.ts:28-30 and its per-test stops). Two full integration runs on separate fresh clusters: 193/193 each, no 'Unhandled', no 57P01 / 'terminating connection' in either log."
+      }
     },
     {
       "id": "F-DG1-111",
@@ -8345,7 +8659,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:36:40Z",
@@ -8356,10 +8670,29 @@
           "at": "2026-10-01T08:02:43Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c433078"
+        },
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "c433078",
-      "fix_summary": "install-sandbox AC-2/AC-3 negative cases now assert their setup install SUCCEEDED first, so they cannot pass vacuously."
+      "fix_summary": "install-sandbox AC-2/AC-3 negative cases now assert their setup install SUCCEEDED first, so they cannot pass vacuously.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T080945Z-4ac2403e",
+          "session_id": "4ac2403e-ece3-4e34-8b7b-3d133ba1afa0"
+        },
+        "at": "2026-10-01T08:26:50Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/10-install-sandbox-test.log"
+        ],
+        "note": "install-sandbox.sh acceptance 10/10; with a read-only default store the setup failures now report FAIL instead of passing vacuously."
+      }
     },
     {
       "id": "F-DG1-112",
@@ -8413,7 +8746,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:46:01Z",
@@ -8424,10 +8757,31 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 86e4134"
+        },
+        {
+          "at": "2026-10-01T08:30:43Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "86e4134",
-      "fix_summary": "getBrandingTokens covered by the contract-coverage test; integration 'contract' suite 9/9 green on the frozen-candidate tree."
+      "fix_summary": "getBrandingTokens covered by the contract-coverage test; integration 'contract' suite 9/9 green on the frozen-candidate tree.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-QA-R2-qa-verifier-20261001T080945Z-b6fb3406",
+          "session_id": "b6fb3406-a064-4617-9221-9ec42062e650"
+        },
+        "at": "2026-10-01T08:30:43Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log",
+          "docs/delivery/test-evidence/DG1/qa/round-2/10-integration-run2.log",
+          "docs/delivery/test-evidence/DG1/qa/round-2/05-openapi-lint.log"
+        ],
+        "note": "Fix 86e4134 is in candidate sha256:991d3241... (f32c705). apps/api/test/integration/contract/contract.test.ts:275-288 exercises getBrandingTokens: anonymous 401; signed-in 200, validated against docs/api/openapi.yaml and the zod mirror, with provenance=provisional and #0078FF provisional. The coverage test (:290-300) asserts that no operation is missing, each has a success, every zod mirror is checked, and operations has length 33. The operations come from docs/api/openapi.yaml (apps/api/test/support/contract.ts:12), and the YAML has 33 operationIds. `pnpm test:integration` on two fresh PostgreSQL 16 clusters: contract.test.ts 9/9, total 17 files and 193/193, exit 0 both times. openapi:lint PASS with 33 operations. This is the round-1 red, now green."
+      }
     },
     {
       "id": "F-DG1-202",
@@ -8448,7 +8802,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:46:01Z",
@@ -8459,10 +8813,31 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at a2351c2"
+        },
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "a2351c2",
-      "fix_summary": "assemble-runtime.sh now computes each shipped package's runtime dependency closure, including @mth/design-tokens imported by apps/api; verifies every runtime dep resolves+imports. Clean start passes all phases."
+      "fix_summary": "assemble-runtime.sh now computes each shipped package's runtime dependency closure, including @mth/design-tokens imported by apps/api; verifies every runtime dep resolves+imports. Clean start passes all phases.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T080945Z-4ac2403e",
+          "session_id": "4ac2403e-ece3-4e34-8b7b-3d133ba1afa0"
+        },
+        "at": "2026-10-01T08:26:50Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/29-assemble-closure-f202.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/31-assembled-api-start.log",
+          "docs/delivery/test-evidence/DG1/code-security/round-2/28-assemble-runtime.log"
+        ],
+        "note": "assemble-runtime.sh includes @mth/design-tokens and verifies every shipped package's runtime dependency closure resolves and imports; the assembled API starts."
+      }
     },
     {
       "id": "F-DG1-203",
@@ -8481,7 +8856,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-10-01T06:46:01Z",
@@ -8492,10 +8867,29 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 3eaab6c"
+        },
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 2: FAIL"
         }
       ],
       "fix_revision": "3eaab6c",
-      "fix_summary": "Container images pinned by digest where reachable; pin-images --check stays honest (fails on the environment-BLOCKED keycloak, test-only, per D-049). Tooling + self-tests corrected."
+      "fix_summary": "Container images pinned by digest where reachable; pin-images --check stays honest (fails on the environment-BLOCKED keycloak, test-only, per D-049). Tooling + self-tests corrected.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T080945Z-4ac2403e",
+          "session_id": "4ac2403e-ece3-4e34-8b7b-3d133ba1afa0"
+        },
+        "at": "2026-10-01T08:26:50Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/26-pin-images-check.log"
+        ],
+        "note": "Container images are not fully pinned by digest on the candidate (keycloak null). Reopened."
+      }
     },
     {
       "id": "F-DG1-204",
@@ -8580,7 +8974,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:46:01Z",
@@ -8591,10 +8985,29 @@
           "at": "2026-10-01T08:02:44Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c433078"
+        },
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "c433078",
-      "fix_summary": "Same hermeticity fix as F-DG1-111: negative install-sandbox cases no longer pass vacuously on an unrelated install failure."
+      "fix_summary": "Same hermeticity fix as F-DG1-111: negative install-sandbox cases no longer pass vacuously on an unrelated install failure.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-SEC-R2-code-security-reviewer-20261001T080945Z-4ac2403e",
+          "session_id": "4ac2403e-ece3-4e34-8b7b-3d133ba1afa0"
+        },
+        "at": "2026-10-01T08:26:50Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/code-security/round-2/10-install-sandbox-test.log"
+        ],
+        "note": "Same as F-DG1-111: the negative acceptance cases no longer pass vacuously."
+      }
     },
     {
       "id": "F-DG1-207",
@@ -8614,7 +9027,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG1/round-1/qa-verifier.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-01T06:46:01Z",
@@ -8625,10 +9038,277 @@
           "at": "2026-10-01T08:02:45Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at dfcf42c"
+        },
+        {
+          "at": "2026-10-01T08:24:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "dfcf42c",
-      "fix_summary": "REQ-S19-006 note corrected to 33 operations and the real contract-test count (9/9, source cited); REQ-S16-003 literal six-modules acceptance now met by the built scaffolds (D-048), not a reinterpretation."
+      "fix_summary": "REQ-S19-006 note corrected to 33 operations and the real contract-test count (9/9, source cited); REQ-S16-003 literal six-modules acceptance now met by the built scaffolds (D-048), not a reinterpretation.",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG1-T-DG1-REV-DOM-R2-domain-reviewer-20261001T080945Z-909ab92b",
+          "session_id": "909ab92b-e458-4c76-b673-5165d589f12f"
+        },
+        "at": "2026-10-01T08:24:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG1/domain/round-2/03-integration-full.out.txt",
+          "docs/delivery/requirements.csv",
+          "apps/api/test/integration/contract/contract.test.ts"
+        ],
+        "note": "REQ-S19-006 notes cite 33 operations and a 9/9 contract suite. I confirmed both by running the suite myself: the integration project against PostgreSQL 16.13 passed 17 files and 193/193 tests. contract.test.ts has 9 tests, all passed, and asserts that operations has length 33 with every operation exercised. REQ-S16-003's literal acceptance (six modules with separate suites) is now met by the built scaffolds (D-048), not by a reinterpretation."
+      }
+    },
+    {
+      "id": "F-DG1-007",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-004",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register residuals after the round-2 reconciliation: REQ-PB-009 notes still say 'enforced as API 409'; REQ-S19-004 notes and evidence still describe migrations 0001-0006",
+      "reproduction": "Read docs/delivery/requirements.csv at candidate 991d3241 (commit f32c705). REQ-PB-009: acceptance says 'cannot be closed (API 422 invalid-transition)', but notes end 'Interpretations: the closure rule ... enforced as API 409.' REQ-S19-004 (DG1-final, IMPLEMENTED): notes say 'migrations 0001-0006 apply to a fresh database (migrate.test.ts, 7 tests, in the QA integration log)', and the evidence list cites only 0001 and 0006 plus a round-1 QA log. The candidate ships 0001-0008: 0007 adds oidc_login_state.browser_binding_hash and 0008 adds scoped_assignment.derived_from_assignment_id. My run applied all 8 to a fresh PostgreSQL 16.13 cluster ('applied 8 migration(s)'; migrate.test.ts and catalogue.test.ts pass). data-dictionary.md documents both new columns. erd.md's P1 mermaid entities omit them, which is acceptable because erd.md defers physical columns to the data dictionary.",
+      "expected": "One transition contract across the register: 422 invalid-transition per ADR-0007 and REQ-S16-023, which F-DG1-006 said was 'fixed across rows'. A DG1-final row's notes and evidence describe the frozen candidate (migrations 0001-0008, current evidence).",
+      "actual": "REQ-PB-009 contradicts itself (422 in acceptance, 409 in notes). REQ-S19-004's note and evidence predate migrations 0007/0008. The behaviour itself is correct, so this is documentation accuracy only.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/domain/round-2/00-static-inspection.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/03-integration-full.out.txt",
+        "docs/delivery/test-evidence/DG1/domain/round-2/05-live-scenario.out.txt"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:24:00Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 2 as a Low, non-mandatory register-accuracy observation."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-008",
+      "stage_id": "DG1",
+      "requirement": "REQ-S15-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The derived creator assignment (F-DG1-106) appears in the transformation audit trail with a raw action code and five untranslated fields (raw JSON and UUIDs) in Arabic and English",
+      "reproduction": "Disposable stack of f32c705 (PostgreSQL 16.13, AUTH_MODE=dev, SYNTHETIC seed, Chromium 1194). Sign in as dev.lead (TL at SYN-RETAIL), create a transformation, then open /transformations/<id> in ar and en. The first audit-trail row has Action 'scoped_assignment.create' (raw code; the transformation row next to it says Created/إنشاء). Its Changes are scope, userId, roleCode, effectiveTo and derivedFromAssignmentId, each marked 'field without a translation' / 'حقل بلا ترجمة'. Values include raw JSON {\"id\":\"…\",\"type\":\"transformation\"} and UUIDs marked 'value without a translation'. This happens for every BU-scoped TL creator, the exact path F-DG1-004/F-DG1-106 opened.",
+      "expected": "M0302 (both languages for key workflows) and the F-DG1-005 standard: audit entries that a normal workflow puts on a transformation's own trail show localized action and field labels, for example 'Access granted (carried over from business-unit assignment)', with role and user names rather than ids. The marked fallback is the safety net for unexpected keys, not the normal rendering of a routine event.",
+      "actual": "The fallback is safe and honestly marked, and nothing is hidden or misstated. But the first thing a lead sees on the audit trail of a newly created transformation is technical identifiers in both languages.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/domain/round-2/screens/en-04-lead-own-record.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/screens/ar-04-lead-own-record.png",
+        "docs/delivery/test-evidence/DG1/domain/round-2/05-live-scenario.out.txt"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:24:00Z",
+          "status": "OPEN",
+          "note": "Reported by domain-reviewer in DG1 round 2 as a Low, non-mandatory localization observation (interaction of F-DG1-106 with F-DG1-005)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-113",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "install-sandbox.sh control-path read-only protection is circumventable: the writable parent directories of the protected paths let dependency code replace a protected subtree, and config surfaces that do not yet exist are unprotected",
+      "reproduction": "In a disposable clone, the reviewer ran the committed probe (see evidence). Direct writes to the protected paths (.git, .claude, .github, tools/{gates,agents,deps}, docs/delivery, CLAUDE.md) are correctly refused. The gap: the installer binds the whole repo tree writable and re-binds only specific existing children read-only, so (1) a protected subtree can be moved aside and recreated because its PARENT directory is writable, and (2) protected config files that are absent from the tree are never bound, so they can be created. Full host-side demonstration in the evidence log.",
+      "expected": "Code running under the installer sandbox can write only node_modules and, in create mode, the lockfile; every other repo path, including the installer and the delivery/agent tooling, is immutable, and no new control/config file can be planted.",
+      "actual": "The installer itself, the gate/agent tooling and the delivery records can be altered on the host, and Claude/MCP/IDE config files can be planted, because the repo is writable and protection is applied only to specific existing children.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/11-installer-escape.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-installer-escape.sh",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/10-install-sandbox-test.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "OPEN",
+          "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-114",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-042",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The installer leaves configuration surfaces that the agent sandbox (D-025) denies to agents (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) creatable, because they do not exist in the tree and so are not re-bound read-only",
+      "reproduction": "Under the installer sandbox, creating those absent config files succeeds and the files persist on the host (see evidence). A subset of the F-DG1-113 root cause, tracked separately as the agent-config injection surface.",
+      "expected": "Configuration surfaces that influence later agent/CLI behaviour cannot be created by dependency code.",
+      "actual": "They can be created, giving dependency code an instruction-injection/persistence foothold for later agent runs.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/11-installer-escape.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/23-probe-f112-config.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "OPEN",
+          "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-115",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "The derived creator assignment (F-DG1-106) can outlive a concurrent revocation of its source BU grant (write-skew), so a Transformation Lead keeps record access after the grant is revoked",
+      "reproduction": "An integration reproduction (3/3, see evidence) interleaves a create and a revoke of the source BU grant under READ COMMITTED: the create reads the source as active and inserts the derived transformation-scope row while the revoke's cascade cannot yet see that row; both commit, leaving an active derived assignment whose source is revoked. The Lead's live session is ended by the revoke, but after signing in again the Lead can read the record.",
+      "expected": "Revoking the source BU grant revokes every assignment derived from it, with no window in which an overlapping create leaves an active derived assignment behind.",
+      "actual": "An overlapping create leaves an active derived transformation-scope assignment after the source is revoked; the Lead regains read access after re-login. Root cause: the derive step reads the source grant without locking it, so a concurrent revoke is not serialized against it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/22-repro-derived-race-run1.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/22-repro-derived-race-run2.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/22-repro-derived-race-run3.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/repro-derived-assignment-race.test.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "OPEN",
+          "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-116",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-025",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "check-ci-needs.mjs accepts four further ways to alter how the delivery-gates step runs: a NODE_OPTIONS env, working-directory, shell:, or workflow-level defaults",
+      "reproduction": "On modified workflows the checker still reports OK when the gate/validate step carries a NODE_OPTIONS env, a working-directory override, a shell: override, or when workflow-level defaults change how run steps execute (see evidence).",
+      "expected": "The gate step's invocation of validate.mjs cannot be weakened by env, working-directory, shell or defaults overrides; check-ci-needs flags any of them.",
+      "actual": "Four override vectors are accepted, so a workflow could weaken the gate while check-ci-needs still passes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/25-check-ci-needs-bypass.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "OPEN",
+          "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-117",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The module dependency-lint misses obfuscated module loaders (process.getBuiltinModule with a computed member, new Function)",
+      "reproduction": "A planted cross-module load via process.getBuiltinModule with a computed member, and via new Function, is not caught by architecture.test.ts (follow-on to F-DG1-109, which closed createRequire and computed import()).",
+      "expected": "The dependency-lint catches any cross-module import, including obfuscated dynamic loaders.",
+      "actual": "Those two obfuscated loaders evade the lint; a module could bypass an interface through them.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/code-security/round-2/24-plant-f109.log",
+        "docs/delivery/test-evidence/DG1/code-security/round-2/plant-f109.sh"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:26:50Z",
+          "status": "OPEN",
+          "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-208",
+      "stage_id": "DG1",
+      "requirement": "REQ-DLV-033",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The required real-stack e2e suite is red on the frozen candidate: the Arabic journeys fail on a locator that the round-2 glossary repair made ambiguous, and 6 AR journeys never run",
+      "reproduction": "Disposable clone at f32c705 (candidate sha256:991d3241... recomputed), `pnpm install --frozen-lockfile --offline`, `pnpm -r build`, then `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5452 e2e/support/qa-stack.sh npx playwright test e2e --workers=1`. Result: 13 passed, 1 failed, 6 did not run, exit 1. Re-run with --project=chromium-ar: same failure (2/2, deterministic). Failing step: apps/web/e2e/journeys.spec.ts:138 `nav.getByRole('link', { name: new RegExp(escape(tr(lang, 'nav.areas.myWork.label'))) })`. In Arabic, myWork = 'عملي', and the BAU label introduced by the round-2 glossary repair a5ff652 (F-DG1-003, apps/web/src/i18n/ar/nav.json:70) is 'العمليات الاعتيادية والتحسين', which contains the substring 'عملي'. The unanchored regex resolves to 2 links, a Playwright strict-mode violation. The serial describe then skips the 6 remaining AR journeys (create, list, edit-409, archive, administration, no-roles). The FE2 handback states that the real-stack journeys were not run before the freeze (T-DG1-FE2 handback, line 200).",
+      "expected": "On the frozen candidate the required e2e suite (CI job 'e2e'; the 'images' job needs it) exits 0 in EN and AR, so the DG1 bilingual-screen acceptance of REQ-DLV-033 (A20: Arabic/English screens) is evidenced on this candidate.",
+      "actual": "e2e exits 1, and the Arabic create/list/edit/archive/admin journeys have no passing run on this candidate. Diagnostic only: anchoring that single locator (`new RegExp('^' + ...)`) in a disposable copy gives 20/20 passed, EN and AR. So the product screens behave correctly, and the defect is in the e2e spec, not the product. A red required suite still blocks the gate (same class as F-DG1-201).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-2/11-e2e.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/12-e2e-ar-rerun.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/13-e2e-diagnostic.patch",
+        "docs/delivery/test-evidence/DG1/qa/round-2/13-e2e-diagnostic.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/screenshots/FAIL-ar-journeys-shell-strict-mode.png",
+        "apps/web/e2e/journeys.spec.ts",
+        "apps/web/src/i18n/ar/nav.json"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:30:43Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-2 QA verification; reproduced 2/2 on a disposable PostgreSQL stack."
+        }
+      ]
+    },
+    {
+      "id": "F-DG1-209",
+      "stage_id": "DG1",
+      "requirement": "REQ-S19-004",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Register evidence for REQ-S19-004 and REQ-DLV-033 is still the pre-repair integration log, and the REQ-S19-004 note still says 'migrations 0001-0006'",
+      "reproduction": "docs/delivery/requirements.csv rows REQ-S19-004 and REQ-DLV-033 cite docs/delivery/test-evidence/DG1/qa/T-DG1-QA-authoring/02-pnpm-test-integration.log (committed 2026-09-30 23:54, 181 tests). That run predates getBrandingTokens (0b42847) and migrations 0007/0008. The REQ-S19-004 note reads 'migrations 0001-0006 apply to a fresh database (migrate.test.ts, 7 tests, in the QA integration log)'. F-DG1-101 named this stale evidence explicitly; the round-2 register repair (dfcf42c) updated REQ-S16-004 (0001-0008) and REQ-S19-006, but not these two rows.",
+      "expected": "IMPLEMENTED rows cite evidence produced on the candidate they are gated on, and the notes describe the frozen schema (8 migrations, 0001-0008), for example the round-2 integration logs.",
+      "actual": "Two rows rest on a 181-test log from before the repairs, and one note understates the migration set. The behaviour itself is correct on this candidate: 8/8 migrations apply to a fresh database (migrate.test.ts in two runs; A18; schema probe).",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG1/qa/T-DG1-QA-authoring/02-pnpm-test-integration.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/09-integration-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-2/19-schema-probe.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-2/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T08:30:43Z",
+          "status": "OPEN",
+          "note": "Reported in DG1 round-2 QA verification (residual of F-DG1-101's stale-evidence point)."
+        }
+      ]
     }
   ]
 }

@@ -1,0 +1,101 @@
+{
+ "schema_version": 1,
+ "verifications": [
+  {
+   "finding_id": "F-DG1-101",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Contract integration suite exercises all 33 operations including getBrandingTokens; green on a fresh PostgreSQL 16 cluster (3 runs).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/20-integration-run1.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/06-test.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-103",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "OIDC login is browser-bound. Four cross-browser variants (callback in another browser, cookie swap, replay, forged cookie) all refused and audited; state not consumed.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/21-repro-oidc-r2.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/repro-oidc-login-csrf-r2.test.ts"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-104",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Every CI job installs through ci-install-deps.sh -> install-sandbox.sh frozen; the BLOCKED path exits 65 with no pnpm fallback.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/33-ci-install-blocked.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/08-deploy-scripts-tests.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-109",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "The module lint now catches createRequire and computed import()/require(); planted forms fail on the new lint and passed on the old (see F-DG1-117 for the remaining obfuscated-loader gap).",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/24-plant-f109.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/plant-f109.sh"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-111",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "install-sandbox.sh acceptance 10/10; with a read-only default store the setup failures now report FAIL instead of passing vacuously.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/10-install-sandbox-test.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-206",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "Same as F-DG1-111: the negative acceptance cases no longer pass vacuously.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/10-install-sandbox-test.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-202",
+   "result": "PASS",
+   "status_after": "CLOSED_VERIFIED",
+   "note": "assemble-runtime.sh includes @mth/design-tokens and verifies every shipped package's runtime dependency closure resolves and imports; the assembled API starts.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/29-assemble-closure-f202.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/31-assembled-api-start.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/28-assemble-runtime.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-102",
+   "result": "FAIL",
+   "status_after": "OPEN",
+   "note": "The hardening (clearenv, cap-drop, no secrets in env) holds, but the control-path read-only protection is bypassable (see F-DG1-113). Reopened.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/11-installer-escape.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-108",
+   "result": "FAIL",
+   "status_after": "OPEN",
+   "note": "pin-images --check exits 1: the committed lock has keycloak unpinned (quay.io denied here, D-049). The CI images job cannot pass on this candidate. Reopened.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/26-pin-images-check.log"
+   ]
+  },
+  {
+   "finding_id": "F-DG1-203",
+   "result": "FAIL",
+   "status_after": "OPEN",
+   "note": "Container images are not fully pinned by digest on the candidate (keycloak null). Reopened.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/26-pin-images-check.log"
+   ]
+  }
+ ]
+}

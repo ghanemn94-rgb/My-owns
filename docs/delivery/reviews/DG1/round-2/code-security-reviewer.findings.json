@@ -1,0 +1,137 @@
+{
+ "schema_version": 1,
+ "findings": [
+  {
+   "id": "F-DG1-113",
+   "stage_id": "DG1",
+   "requirement": "REQ-DLV-042",
+   "severity": "High",
+   "mandatory_violation": true,
+   "title": "install-sandbox.sh control-path read-only protection is circumventable: the writable parent directories of the protected paths let dependency code replace a protected subtree, and config surfaces that do not yet exist are unprotected",
+   "reproduction": "In a disposable clone, the reviewer ran the committed probe (see evidence). Direct writes to the protected paths (.git, .claude, .github, tools/{gates,agents,deps}, docs/delivery, CLAUDE.md) are correctly refused. The gap: the installer binds the whole repo tree writable and re-binds only specific existing children read-only, so (1) a protected subtree can be moved aside and recreated because its PARENT directory is writable, and (2) protected config files that are absent from the tree are never bound, so they can be created. Full host-side demonstration in the evidence log.",
+   "expected": "Code running under the installer sandbox can write only node_modules and, in create mode, the lockfile; every other repo path, including the installer and the delivery/agent tooling, is immutable, and no new control/config file can be planted.",
+   "actual": "The installer itself, the gate/agent tooling and the delivery records can be altered on the host, and Claude/MCP/IDE config files can be planted, because the repo is writable and protection is applied only to specific existing children.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/11-installer-escape.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/repro-installer-escape.sh",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/10-install-sandbox-test.log"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-10-01T08:26:50Z",
+     "status": "OPEN",
+     "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+    }
+   ]
+  },
+  {
+   "id": "F-DG1-114",
+   "stage_id": "DG1",
+   "requirement": "REQ-DLV-042",
+   "severity": "Medium",
+   "mandatory_violation": false,
+   "title": "The installer leaves configuration surfaces that the agent sandbox (D-025) denies to agents (CLAUDE.local.md, .mcp.json, nested CLAUDE.md, .vscode) creatable, because they do not exist in the tree and so are not re-bound read-only",
+   "reproduction": "Under the installer sandbox, creating those absent config files succeeds and the files persist on the host (see evidence). A subset of the F-DG1-113 root cause, tracked separately as the agent-config injection surface.",
+   "expected": "Configuration surfaces that influence later agent/CLI behaviour cannot be created by dependency code.",
+   "actual": "They can be created, giving dependency code an instruction-injection/persistence foothold for later agent runs.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/11-installer-escape.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/23-probe-f112-config.log"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
+   "owner": "delivery-orchestrator",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-10-01T08:26:50Z",
+     "status": "OPEN",
+     "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+    }
+   ]
+  },
+  {
+   "id": "F-DG1-115",
+   "stage_id": "DG1",
+   "requirement": "REQ-S16-003",
+   "severity": "Medium",
+   "mandatory_violation": true,
+   "title": "The derived creator assignment (F-DG1-106) can outlive a concurrent revocation of its source BU grant (write-skew), so a Transformation Lead keeps record access after the grant is revoked",
+   "reproduction": "An integration reproduction (3/3, see evidence) interleaves a create and a revoke of the source BU grant under READ COMMITTED: the create reads the source as active and inserts the derived transformation-scope row while the revoke's cascade cannot yet see that row; both commit, leaving an active derived assignment whose source is revoked. The Lead's live session is ended by the revoke, but after signing in again the Lead can read the record.",
+   "expected": "Revoking the source BU grant revokes every assignment derived from it, with no window in which an overlapping create leaves an active derived assignment behind.",
+   "actual": "An overlapping create leaves an active derived transformation-scope assignment after the source is revoked; the Lead regains read access after re-login. Root cause: the derive step reads the source grant without locking it, so a concurrent revoke is not serialized against it.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/22-repro-derived-race-run1.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/22-repro-derived-race-run2.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/22-repro-derived-race-run3.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/repro-derived-assignment-race.test.ts"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
+   "owner": "backend-workflow-engineer",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-10-01T08:26:50Z",
+     "status": "OPEN",
+     "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+    }
+   ]
+  },
+  {
+   "id": "F-DG1-116",
+   "stage_id": "DG1",
+   "requirement": "REQ-DLV-025",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "check-ci-needs.mjs accepts four further ways to alter how the delivery-gates step runs: a NODE_OPTIONS env, working-directory, shell:, or workflow-level defaults",
+   "reproduction": "On modified workflows the checker still reports OK when the gate/validate step carries a NODE_OPTIONS env, a working-directory override, a shell: override, or when workflow-level defaults change how run steps execute (see evidence).",
+   "expected": "The gate step's invocation of validate.mjs cannot be weakened by env, working-directory, shell or defaults overrides; check-ci-needs flags any of them.",
+   "actual": "Four override vectors are accepted, so a workflow could weaken the gate while check-ci-needs still passes.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/25-check-ci-needs-bypass.log"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
+   "owner": "devops-engineer",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-10-01T08:26:50Z",
+     "status": "OPEN",
+     "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+    }
+   ]
+  },
+  {
+   "id": "F-DG1-117",
+   "stage_id": "DG1",
+   "requirement": "REQ-S16-003",
+   "severity": "Low",
+   "mandatory_violation": false,
+   "title": "The module dependency-lint misses obfuscated module loaders (process.getBuiltinModule with a computed member, new Function)",
+   "reproduction": "A planted cross-module load via process.getBuiltinModule with a computed member, and via new Function, is not caught by architecture.test.ts (follow-on to F-DG1-109, which closed createRequire and computed import()).",
+   "expected": "The dependency-lint catches any cross-module import, including obfuscated dynamic loaders.",
+   "actual": "Those two obfuscated loaders evade the lint; a module could bypass an interface through them.",
+   "evidence": [
+    "docs/delivery/test-evidence/DG1/code-security/round-2/24-plant-f109.log",
+    "docs/delivery/test-evidence/DG1/code-security/round-2/plant-f109.sh"
+   ],
+   "reported_by": "code-security-reviewer",
+   "reported_in": "docs/delivery/reviews/DG1/round-2/code-security-reviewer.json",
+   "owner": "backend-workflow-engineer",
+   "status": "OPEN",
+   "history": [
+    {
+     "at": "2026-10-01T08:26:50Z",
+     "status": "OPEN",
+     "note": "Reported by code-security-reviewer in DG1 round 2. Transcribed by the orchestrator from the reviewer's result and committed evidence; the agent's own write was blocked by a safety classifier. Full reproduction is in the cited evidence log."
+    }
+   ]
+  }
+ ]
+}

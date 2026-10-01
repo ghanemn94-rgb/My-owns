@@ -1,0 +1,74 @@
+# determinism re-run, unmodified candidate spec, chromium-ar only
+# cmd: QA_E2E_PG_PORT=5452 e2e/support/qa-stack.sh npx playwright test e2e --workers=1 --project=chromium-ar
+qa e2e cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+mth-db migrate: applying 0001_identity_access.sql
+mth-db migrate: applying 0002_transformation.sql
+mth-db migrate: applying 0003_audit_event.sql
+mth-db migrate: applying 0004_outbox_jobs.sql
+mth-db migrate: applying 0005_seed_roles_permissions.sql
+mth-db migrate: applying 0006_pgboss_schema_v25.sql
+mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+mth-db migrate: applied 8 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 10 tests using 1 worker
+
+  ✓   1 [chromium-ar] › apps/web/e2e/journeys.spec.ts:108:1 › sign-in page: Arabic RTL by default, provisional wordmark, dev form in dev mode (976ms)
+  ✘   2 [chromium-ar] › apps/web/e2e/journeys.spec.ts:130:1 › shell: navigation, language persistence and My Work (Transformation Office) (504ms)
+  -   3 [chromium-ar] › apps/web/e2e/journeys.spec.ts:157:1 › create a modular transformation with an entry phase
+  -   4 [chromium-ar] › apps/web/e2e/journeys.spec.ts:190:1 › list: sort, filter chips, column selection and pagination controls
+  -   5 [chromium-ar] › apps/web/e2e/journeys.spec.ts:222:1 › edit: a concurrent change gives a 409 conflict with compare and re-apply
+  -   6 [chromium-ar] › apps/web/e2e/journeys.spec.ts:254:1 › archive with a mandatory reason makes the record read-only
+  -   7 [chromium-ar] › apps/web/e2e/journeys.spec.ts:275:1 › administration screens (access + technical administrator)
+  -   8 [chromium-ar] › apps/web/e2e/journeys.spec.ts:311:1 › a user without roles sees no Administration and no business records
+  ✓   9 [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:100:3 › A20 bilingual shell › Arabic RTL by default; English LTR after the switch; persisted; switch back (1.3s)
+  ✓  10 [chromium-ar] › e2e/a20-bilingual-shell.spec.ts:159:3 › A20 design tokens reach the rendered CSS › seeded --mth-* colours and referencing surfaces equal the built token source (564ms)
+
+
+  1) [chromium-ar] › apps/web/e2e/journeys.spec.ts:130:1 › shell: navigation, language persistence and My Work (Transformation Office) 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: getByRole('navigation', { name: 'التنقل الرئيسي' }).getByRole('link', { name: /عملي/ })
+    Expected: "page"
+    Error: strict mode violation: getByRole('navigation', { name: 'التنقل الرئيسي' }).getByRole('link', { name: /عملي/ }) resolved to 2 elements:
+        1) <a href="/my-work" data-area="myWork" aria-current="page" data-discover="true" class="app-nav__link active">…</a> aka getByRole('link', { name: 'عملي', exact: true })
+        2) <a data-area="bau" data-discover="true" class="app-nav__link" href="/bau-improvement">…</a> aka getByRole('link', { name: 'العمليات الاعتيادية والتحسين مخطط' })
+
+    Call log:
+      - Expect "toHaveAttribute" with timeout 5000ms
+      - waiting for getByRole('navigation', { name: 'التنقل الرئيسي' }).getByRole('link', { name: /عملي/ })
+
+
+      136 |   await expect(nav.locator("a[data-area]")).toHaveCount(13);
+      137 |   await expect(nav.getByRole("link", { name: tr(lang, "nav.areas.admin.label") })).toHaveCount(0);
+    > 138 |   await expect(nav.getByRole("link", { name: new RegExp(escape(tr(lang, "nav.areas.myWork.label"))) })).toHaveAttribute(
+          |                                                                                                         ^
+      139 |     "aria-current",
+      140 |     "page",
+      141 |   );
+        at /var/tmp/mth-run.AbtQ93/claude-0/review-qa/apps/web/e2e/journeys.spec.ts:138:105
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-journeys-shel-fc4a0-Work-Transformation-Office--chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/apps-web-e2e-journeys-shel-fc4a0-Work-Transformation-Office--chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/apps-web-e2e-journeys-shel-fc4a0-Work-Transformation-Office--chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/apps-web-e2e-journeys-shel-fc4a0-Work-Transformation-Office--chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium-ar] › apps/web/e2e/journeys.spec.ts:130:1 › shell: navigation, language persistence and My Work (Transformation Office) 
+  6 did not run
+  3 passed (5.6s)
+---- api.log (tail)
+exit=1
