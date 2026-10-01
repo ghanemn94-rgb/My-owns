@@ -1,0 +1,369 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 9,
+  "candidate_id": "sha256:05915c32b3f5c5b2a9e14324a70fbf5cd16e76a48bc3235d6cc30b290591babd",
+  "source_commit": "273d21f78b8ee4369ed7e864d5a1fe76cc4e3de1",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-QA-R9-qa-verifier-20261001T140344Z-39a6f4ff",
+    "session_id": "39a6f4ff-d966-4bd2-ab51-dce825ce90c6"
+  },
+  "implementation_author": ["backend-workflow-engineer", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no implementation in the reviewed scope. backend-workflow-engineer (T-DG1-BE10) authored the default-deny testkit and self-check change, and the orchestrator froze the candidate and recorded D-055. My only writes are QA evidence under docs/delivery/test-evidence/DG1/qa/ (the round-9 logs and one probe file, qa/tests/dg1-r9-default-deny-probe.test.ts) and this round's qa-verifier review files. I formed this verdict before reading any other round-9 reviewer record, and I have not read any. During my run the runner auto-committed the domain-reviewer round-9 record (HEAD 07f1a54 -> 39cfc4e); I saw only its file names in a git diff --stat and did not open it. The earlier-round records I read were my own round-8 qa-verifier record, findings and verifications sidecar, for the procedure and the F-DG1-213 wording."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-9/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "QA9-00-candidate",
+      "procedure": "Confirm the frozen candidate: HEAD, the recomputed candidate ID, a freeze-to-HEAD diff that contains metadata only, and a non-shallow disposable clone",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG1; git clone /home/user/My-owns $TMPDIR/review-qa && git checkout 273d21f78b8ee4369ed7e864d5a1fe76cc4e3de1 && git rev-parse --is-shallow-repository && node tools/gates/candidate.mjs --stage DG1 && git diff --stat 273d21f 07f1a54",
+      "environment": "Repository working tree and disposable clone at $TMPDIR/review-qa (agent OS sandbox, no network); node v22.22.2, pnpm 10.33.0",
+      "expected": "candidate_id sha256:05915c32...91babd in both; the 273d21f..HEAD diff touches only candidate-excluded metadata",
+      "actual": "Working-repo HEAD at start was 07f1a54055aaa42c372d3f73c1cbf0ddc2478a08, not the source commit. The diff 273d21f..07f1a54 covers only the 5 round-9 assignment files, the 05915c32b3f5c5b2 manifest and stages.json, so the candidate content is the same. candidate_id sha256:05915c32b3f5c5b2a9e14324a70fbf5cd16e76a48bc3235d6cc30b290591babd (390 files) in both the repo and the clone at 273d21f; shallow=false. Later in the run HEAD moved to 39cfc4e (the runner auto-committed the domain-reviewer record); the candidate ID recomputed unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-9/00-candidate.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/20-validate___reconcile.log"
+      ]
+    },
+    {
+      "id": "QA9-01-install",
+      "procedure": "Offline frozen-lockfile install in the disposable clone from a private copy of the local pnpm store",
+      "command": "cp -a <pnpm store> $TMPDIR/store/v10; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/store/v10",
+      "environment": "Disposable clone at 273d21f, no network",
+      "expected": "exit 0, lockfile unchanged",
+      "actual": "371 packages reused, 'Lockfile is up to date'. The only warnings are the known mth-db bin-link warnings, which appear before packages/db is built. exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/01-install.log"]
+    },
+    {
+      "id": "QA9-02-static",
+      "procedure": "Build and static checks: typecheck, build, lint, OpenAPI lint, no-CDN, format, design-token contrast",
+      "command": "pnpm -r typecheck; pnpm -r build; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "Disposable clone at 273d21f",
+      "expected": "All exit 0; OpenAPI reports 33 operations; contrast passes, with the documented prohibited pairs failing as designed",
+      "actual": "All seven exit=0. openapi: 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations'. no-cdn: 'PASS no-cdn: scanned apps, packages'. contrast: 'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S15-002", "REQ-S16-002", "REQ-S16-003", "REQ-S19-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-9/02-pnpm_-r_typecheck.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/02-pnpm_-r_build.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/02-pnpm_lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/02-pnpm_openapi_lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/02-pnpm_check_no-cdn.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/02-pnpm_format_check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/02-pnpm_contrast.log"
+      ]
+    },
+    {
+      "id": "QA9-03-unit",
+      "procedure": "Unit suites (unit-node + unit-web), including the new default-deny self-checks",
+      "command": "pnpm test",
+      "environment": "Disposable clone at 273d21f",
+      "expected": "About 294 tests, all green",
+      "actual": "Test Files 21 passed (21); Tests 294 passed (294); architecture.test.ts 101 tests. exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-001", "REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/03-unit.log"]
+    },
+    {
+      "id": "QA9-04-integration-x2",
+      "procedure": "Integration suite against a real disposable PostgreSQL 16 cluster on port 5492, run twice; scan both runner output and server logs for 57P01 / 'terminating connection' (F-DG1-009)",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash -c 'pnpm test:integration; ...cp pg.log...'  (run 1 and run 2); grep -E '57P01|terminating connection'",
+      "environment": "Disposable clone at 273d21f; PostgreSQL 16.13 initdb'd under $TMPDIR, user namespace, deleted on exit",
+      "expected": "Both runs exit 0 with the same pass count; 8 migrations applied; no 57P01 or terminated connection in either server log",
+      "actual": "Run 1: 19 files / 200 tests passed, exit=0. Run 2: 19 files / 200 tests passed, exit=0. 'applied 8 migrations to a fresh database' in both. 57P01/terminating matches: 0 in both PG server logs. The only runner-log match in each run is the test title 'a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)', which passed. A12 (14), A13 (5) and A14 (5) are included and green in both runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003", "REQ-S16-004", "REQ-S19-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-9/04-int-run1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/04-int-run1-pg.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/04-int-run2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/04-int-run2-pg.log"
+      ]
+    },
+    {
+      "id": "QA9-05-audit-trigger",
+      "procedure": "Independent probe: migrate a fresh database with the built CLI, list applied migrations, then attempt UPDATE/DELETE/TRUNCATE on audit_event as superuser, owner and app role",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash docs/delivery/test-evidence/DG1/qa/round-9/05-audit-trigger-probe.sh",
+      "environment": "Disposable clone at 273d21f; disposable PostgreSQL 16.13",
+      "expected": "Migrations 0001-0008 applied; app INSERT works; every UPDATE/DELETE/TRUNCATE is rejected; row count unchanged",
+      "actual": "schema_migration lists 0001_identity_access ... 0008_scoped_assignment_derived_from. App INSERT gives 'INSERT 0 1'. Superuser and owner UPDATE/DELETE/TRUNCATE give 'audit_event is append-only: <op> is not allowed' (trigger audit_event_immutable). App DELETE gives 'permission denied'. 1 row before and 1 row after.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-004", "REQ-S16-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-9/05-audit-trigger-probe.sh",
+        "docs/delivery/test-evidence/DG1/qa/round-9/05-audit-trigger-probe.log"
+      ]
+    },
+    {
+      "id": "QA9-05b-contract",
+      "procedure": "Contract suite (verbose): route coverage in both directions; every operation is validated against OpenAPI and the zod mirrors, including getBrandingTokens",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/contract --reporter=verbose",
+      "environment": "Disposable clone at 273d21f; disposable PostgreSQL 16.13",
+      "expected": "9/9 green, including 'branding tokens (getBrandingTokens)'",
+      "actual": "Tests 9 passed (9), including 'maps every governed Fastify route to an OpenAPI operation ... and back' and 'branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contract + zod valid'. exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-006", "REQ-S15-002"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/05b-contract-verbose.log"]
+    },
+    {
+      "id": "QA9-06-e2e",
+      "procedure": "Full Playwright e2e on the pre-installed Chromium, EN and AR projects, one worker, disposable PostgreSQL on port 5493 (includes the A20 bilingual shell and the F-DG1-210 BU-Lead journey)",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 e2e/support/qa-stack.sh npx playwright test --workers=1 --reporter=list",
+      "environment": "Disposable clone at 273d21f; Chromium 1194 from /opt/pw-browsers; PostgreSQL 16.13; 8 migrations and SYNTHETIC dev seed",
+      "expected": "All journeys green in chromium-en and chromium-ar",
+      "actual": "22 passed (1.0m), 0 failed or flaky. This includes '[chromium-en]/[chromium-ar] a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210)' and 'A20 bilingual shell: Arabic RTL by default; English LTR after the switch; persisted'. exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-002", "REQ-S15-005", "REQ-S15-006", "REQ-S15-002"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/06-e2e-run1.log"]
+    },
+    {
+      "id": "QA9-07-a18",
+      "procedure": "A18 clean start: fresh clone of the source commit, offline install, build, migrate, start API and worker, health/readiness, restart, negative unmigrated-database readiness",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 QA_A18_PG_PORT=5494 QA_A18_PORT=3181 e2e/clean-start/a18-clean-start.sh --commit 273d21f78b8ee4369ed7e864d5a1fe76cc4e3de1 --install",
+      "environment": "Disposable clone; PostgreSQL 16.13 on port 5494; API on port 3181",
+      "expected": "A18 CLEAN START: PASS",
+      "actual": "'A18 CLEAN START: PASS (commit 273d21f...; install step: pnpm install --frozen-lockfile --offline; total 31.7 s)'. healthz 200, readyz 200, SPA lang=ar dir=rtl, dev login 404 in production, /me 401, worker alive, ready again after restart, unmigrated database readyz 503 with migrations pending. exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-001", "REQ-S16-004", "REQ-DLV-033"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/07-a18-clean-start.log"]
+    },
+    {
+      "id": "QA9-08-a20",
+      "procedure": "A20 token propagation: change brand.deep in the token source of a second fresh clone, rebuild, and assert the rendered CSS custom property follows in EN and AR",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5495 e2e/support/a20-token-propagation.sh $TMPDIR/review-qa-a20",
+      "environment": "Second disposable clone at 273d21f (offline install + build); PostgreSQL 16.13 on port 5495; Chromium",
+      "expected": "The rendered value equals the changed token in both locales",
+      "actual": "'A20 token propagation: PASS (brand.deep rendered as #6B1D5C, original #003B73)'; 2 passed. exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/08-a20-token-propagation.log"]
+    },
+    {
+      "id": "QA9-09-f210",
+      "procedure": "Re-confirm F-DG1-210 with my independent round-4 spec (BU Lead create -> Edit (save) -> Archive without a reload), copied into the disposable clone only",
+      "command": "cp docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-lead-create-edit-archive-no-reload.spec.ts e2e/ && PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 e2e/support/qa-stack.sh npx playwright test e2e/dg1-r4-lead-create-edit-archive-no-reload.spec.ts --workers=1 --reporter=list",
+      "environment": "Disposable clone at 273d21f; Chromium; PostgreSQL 16.13",
+      "expected": "Green in EN and AR",
+      "actual": "2 passed (chromium-en, chromium-ar). exit=0. The spec was removed from the clone afterwards.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-002", "REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-9/09-f210-independent-spec.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-lead-create-edit-archive-no-reload.spec.ts"
+      ]
+    },
+    {
+      "id": "QA9-10-arch",
+      "procedure": "Architecture suite (verbose), including the DD1-DD20 default-deny negative controls, the D-055 positive controls and the real module-tree check",
+      "command": "pnpm vitest run --project unit-node apps/api/src/architecture.test.ts --reporter=verbose",
+      "environment": "Disposable clone at 273d21f",
+      "expected": "All green, including DD1 process.kill(self,SIGUSR1), DD2 process._debugProcess, DD4 the F-DG1-213 D1 full route, the positive controls and 'every import respects dependsOn, public surfaces and allowed packages'",
+      "actual": "Tests 101 passed (101), exit=0. DD1-DD20, 'default-deny keeps the allow-listed built-ins and process members clean (D-055 positive controls)' and 'every import respects dependsOn, public surfaces and allowed packages' are all green.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003", "REQ-S16-001"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/10-arch-verbose.log"]
+    },
+    {
+      "id": "QA9-11-default-deny-probe",
+      "procedure": "Independent QA probe (does not trust the implementer's table): enumerate EVERY built-in of the running Node (module.builtinModules + node:-only sqlite/test/test/reporters/sea) and EVERY property name on the running process object (own + prototype chain); assert that each is denied unless it is in a QA-held expected safe set; 23 evasion spellings of the F-DG1-129/213 routes and loader built-ins; 6 positive controls",
+      "command": "cp docs/delivery/test-evidence/DG1/qa/tests/dg1-r9-default-deny-probe.test.ts apps/api/src/ && pnpm vitest run --project unit-node apps/api/src/dg1-r9-default-deny-probe.test.ts --reporter=verbose",
+      "environment": "Disposable clone at 273d21f; Node v22.22.2",
+      "expected": "No non-safe built-in or process member is allowed; no safe one is denied; all evasions flagged; positive controls clean",
+      "actual": "34/34 passed, exit=0. P1: 72 built-ins, missed=[] and wrongly denied=[]; bare 'fs'/'child_process'/... are denied. P2: 120 process member names, missed=[] and wrongly flagged=[]; invented future members are flagged. P3: R1 process.kill SIGUSR1, R2 _debugProcess, R3 _kill, R4 process?.kill, R5 .call, R6 Reflect.apply, R7 destructuring, R8 indexing, R9 Reflect.get, R10 alias, R11 globalThis.process, R12/R13 node:process default/named, R14 require node:inspector, R15 import() node:child_process, R16 export * from node:vm, R17 import type node:worker_threads, R18 import('node:v8') type, R19 node:wasi, R20 node:net, R21 getBuiltinModule, R22 execve, R23 process.on are all flagged. P4: node:crypto/fs/path/fs-promises/os/url/util and process.env/exit/once/argv are clean.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-9/11-r9-default-deny-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r9-default-deny-probe.test.ts"
+      ]
+    },
+    {
+      "id": "QA9-12-r8-gap-probe-replay",
+      "procedure": "Replay my round-8 F-DG1-213 gap probe. It asserted 'no violation' for D1 (full _debugProcess + fetch + WebSocket Runtime.evaluate route), D2 (_debugProcess) and D3 (kill SIGUSR1), so it MUST now fail",
+      "command": "cp docs/delivery/test-evidence/DG1/qa/tests/dg1-r8-debugprocess-lint-probe.test.ts apps/api/src/ && pnpm vitest run --project unit-node apps/api/src/dg1-r8-debugprocess-lint-probe.test.ts --reporter=verbose",
+      "environment": "Disposable clone at 273d21f",
+      "expected": "3 failed (each plant now reports a violation)",
+      "actual": "Tests 3 failed (3), exit=1, as expected. D1 reports 'non-allow-listed process._debugProcess member (line 2)', D2 reports 'non-allow-listed process._debugProcess member (line 1)', D3 reports 'non-allow-listed process.kill member (line 1)'. The route is closed.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-9/12-r8-gap-probe-replay.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r8-debugprocess-lint-probe.test.ts"
+      ]
+    },
+    {
+      "id": "QA9-13-scope-and-real-tree",
+      "procedure": "Confirm the change is test-only, and that no legitimate module import is wrongly denied: diff 3bde225..273d21f restricted to code paths; testkit excluded from the API build; the node: specifiers and process.<member> uses actually present in apps/api/src/modules",
+      "command": "git diff --name-only 3bde225 273d21f [-- apps packages tests e2e scripts deploy docs/api]; grep tsconfig.build exclude; find apps/api/dist -name '*testkit*'; grep -rhoE node:/process.<member> apps/api/src/modules",
+      "environment": "Disposable clone at 273d21f (built)",
+      "expected": "Only architecture.test.ts and architecture.testkit.ts change among code paths; the testkit is not in the build output; module source uses only allow-listed built-ins and process members",
+      "actual": "The code-path diff is exactly apps/api/src/architecture.test.ts and apps/api/src/architecture.testkit.ts; the rest is delivery metadata (assignment, D-055, findings.json, handback, run evidence). tsconfig.build.json excludes src/**/*.testkit.ts, and dist contains 0 testkit files. Module source imports only node:crypto (5), node:fs (1), node:path (3) and node:url (1), all allow-listed, and uses no process.<member> at all. Loader built-in strings under apps/api/src occur only as planted self-check sources and comments in architecture.test.ts/testkit.ts; there are no real top-level imports (grep exit 1). Unit, integration and e2e are unaffected (QA9-03/04/06).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/13-real-tree-and-scope.log"]
+    },
+    {
+      "id": "QA9-14-negative-control",
+      "procedure": "Negative controls: (1) the pre-fix (round-8, 3bde225) testkit with the frozen round-9 architecture.test.ts; (2) my message-format-independent probe P2/P3 against the pre-fix testkit. Both must fail on the F-DG1-129/213 routes. Restore and re-run afterwards.",
+      "command": "git show 3bde225:apps/api/src/architecture.testkit.ts > apps/api/src/architecture.testkit.ts; pnpm vitest run --project unit-node apps/api/src/architecture.test.ts; (then the QA probe with -t 'P2|P3'); git checkout -- apps/api/src/architecture.testkit.ts",
+      "environment": "Disposable clone at 273d21f",
+      "expected": "The DD1-DD4/DD9 self-checks and QA R1-R4 fail with the pre-fix testkit; 101/101 after the restore",
+      "actual": "(1) 32 failed, exit=1, including DD1 kill, DD2 _debugProcess, DD3 _kill, DD4 the F-DG1-213 full route and DD9 process?.kill. Some failures (for example M8 node:vm) are due only to the new 'non-allow-listed node built-in' message text, which the old testkit does not produce, so I added control 2. (2) 10 failed / 15 passed, exit=1. The failures are exactly R1 kill, R2 _debugProcess, R3 _kill, R4 process?.kill, R18 node:v8, R19 node:wasi, R20 node:net, R23 process.on and the P2 enumeration; routes the old lint already closed (R5-R17, R21, R22) still pass. After the restore: 101 passed, exit=0, and the working tree is clean.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/14-negative-control.log"]
+    },
+    {
+      "id": "QA9-15-real-plant",
+      "procedure": "End-to-end plant: write a real file apps/api/src/modules/transformations/zz-qa-planted.ts using process.kill(pid,'SIGUSR1'), then process._debugProcess(pid), then node:inspector; run the real module-tree check; remove the file and re-run",
+      "command": "printf ... > apps/api/src/modules/transformations/zz-qa-planted.ts && pnpm vitest run --project unit-node apps/api/src/architecture.test.ts -t 'every import respects' (x3); rm ...; pnpm vitest run ... architecture.test.ts",
+      "environment": "Disposable clone at 273d21f",
+      "expected": "Each plant turns the module-tree check red; 101/101 after removal",
+      "actual": "Plant 1: 1 failed, 'non-allow-listed process.kill member (line 1)'. Plant 2: 1 failed, 'non-allow-listed process._debugProcess member (line 1)'. Plant 3: 1 failed, 'imports non-allow-listed node built-in node:inspector'. After removal: 101 passed, exit=0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/15-real-plant.log"]
+    },
+    {
+      "id": "QA9-16-f212-installer-log",
+      "procedure": "No F-DG1-212 regression: the REQ-DLV-042 installer acceptance log cited in the register is still the 14-case run, and tools/deps is unchanged since round 8",
+      "command": "git diff --stat 3bde225 HEAD -- tools/deps/ docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log; git diff --stat c36315b HEAD -- (same); grep -c '^PASS'/'^FAIL'; grep REQ-DLV-042 requirements.csv",
+      "environment": "Disposable clone at 273d21f",
+      "expected": "Empty diffs; 14 PASS / 0 FAIL; the register still cites the log",
+      "actual": "Both diffs are empty. The log was last changed in cc0198e (round-7 F-DG1-212 regeneration). It has PASS lines: 14, FAIL lines: 0, and the trailer 'install-sandbox acceptance: 14 passed, 0 failed'. The REQ-DLV-042 row cites install-sandbox-acceptance.log.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/16-f212-log-vs-suite.log"]
+    },
+    {
+      "id": "QA9-17-install-sandbox-suite",
+      "procedure": "Re-run the installer sandbox acceptance suite in the clone",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 tools/deps/tests/install-sandbox.test.sh",
+      "environment": "Disposable clone at 273d21f; bubblewrap available; NO network (registry egress refused by the sandbox proxy)",
+      "expected": "13 cases pass offline. AC-1 (effect) needs registry metadata for an unlocked fixture, so it cannot pass without network.",
+      "actual": "13 passed, 1 failed, exit=1; the failed case is AC-1 (effect). AC-1 to AC-10 otherwise pass, including AC-4, AC-5, AC-7, AC-9 and AC-10. The identical pattern appears in round 8. The cause is reproduced in QA9-18 (ERR_PNPM_META_FETCH_FAIL / ECONNREFUSED to registry.npmjs.org). The live-network AC-1 (effect) case is therefore BLOCKED in this sandbox, not a product failure, and the cited 14-case orchestrator log remains the requirement evidence (QA9-16).",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/17-install-sandbox-tests.log"]
+    },
+    {
+      "id": "QA9-18-ac1-effect-offline",
+      "procedure": "Reproduce the AC-1 (effect) cause through the unchanged wrapper, then the offline-equivalent fixture (same package.json + .npmrc offline=true + a lockfile pinning is-number@7.0.0)",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 tools/deps/install-sandbox.sh --root $TMPDIR/ac1net create; ... --root $TMPDIR/ac1off create; test -d $TMPDIR/ac1off/node_modules/is-number",
+      "environment": "Disposable clone at 273d21f; no network",
+      "expected": "(1) fails only for lack of registry access; (2) populates node_modules in the target tree with the lockfile unchanged",
+      "actual": "(1) ERR_PNPM_META_FETCH_FAIL GET https://registry.npmjs.org/is-number ... ECONNREFUSED 127.0.0.1:3128, wrapper exit=1. (2) wrapper exit=0, 'PASS AC-1 (effect, offline equivalent) create populated node_modules/is-number (7.0.0)', lockfile sha256 prefix 88818e6e51b71df8 before and after.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/18-ac1-effect-offline-equivalent.log"]
+    },
+    {
+      "id": "QA9-20-validators",
+      "procedure": "Gate validators: register rules at DG1, pipeline, reconcile",
+      "command": "node tools/gates/validate.mjs --register DG1; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --reconcile",
+      "environment": "Working repository (read-only use) at HEAD 39cfc4e: candidate content identical to 273d21f; the extra commits are candidate-excluded metadata",
+      "expected": "All three PASS (exit 0); reconcile may list the round-9 records not yet written",
+      "actual": "'PASS register rules at DG1' exit=0. 'PASS pipeline (active stage: DG1 REVIEWING)' exit=0. 'PASS reconcile (structure)' exit=0; it lists the round-9 reviewer records as missing, as expected while they are being written.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-9/20-validate__register_DG1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/20-validate__pipeline.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/20-validate__reconcile.log"
+      ]
+    },
+    {
+      "id": "QA9-22-requirements",
+      "procedure": "For each of the 12 DG1-final requirements: the register row exists, final_gate is DG1, the status is IMPLEMENTED, and every cited evidence path exists as a regular file",
+      "command": "python3 check over docs/delivery/requirements.csv (script inline; output in the log)",
+      "environment": "Working repository at 39cfc4e; requirements.csv byte-identical to 273d21f (git diff --quiet)",
+      "expected": "All 12 present, IMPLEMENTED, with no missing evidence",
+      "actual": "All 12 have final_gate DG1 and status IMPLEMENTED, with evidence counts 4/21/4/5/7/4/8/5/13/11/16/5 and none missing. RESULT: PASS, exit=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025",
+        "REQ-DLV-033",
+        "REQ-DLV-042",
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-003",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-9/22-requirements-evidence.log"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/qa/round-9/00-candidate.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/03-unit.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/04-int-run1.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/04-int-run2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/05-audit-trigger-probe.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/05b-contract-verbose.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/06-e2e-run1.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/07-a18-clean-start.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/08-a20-token-propagation.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/09-f210-independent-spec.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/10-arch-verbose.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/11-r9-default-deny-probe.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/12-r8-gap-probe-replay.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/13-real-tree-and-scope.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/14-negative-control.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/15-real-plant.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/16-f212-log-vs-suite.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/17-install-sandbox-tests.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/18-ac1-effect-offline-equivalent.log",
+    "docs/delivery/test-evidence/DG1/qa/round-9/22-requirements-evidence.log",
+    "docs/delivery/test-evidence/DG1/qa/tests/dg1-r9-default-deny-probe.test.ts",
+    "docs/delivery/reviews/DG1/round-9/qa-verifier.md"
+  ],
+  "reviewed_at": "2026-10-01T14:20:00Z",
+  "summary": "PASS on candidate sha256:05915c32...91babd (source 273d21f). The D-055 default-deny change closes F-DG1-129 / F-DG1-213. The process._debugProcess / process.kill SIGUSR1 routes and every other non-allow-listed built-in (72 enumerated) and process member (120 enumerated) on the running Node are denied. The safe set stays clean, and no real module import is wrongly denied. Negative controls and a real-file plant show that the checks discriminate. The change is test-only; unit 294/294, integration 200/200 twice with no 57P01, e2e 22/22 EN+AR (F-DG1-210 holds), A12/A13/A14/A18/A20 green. The F-DG1-212 14-case log is unchanged. One sub-check is BLOCKED by missing network (live AC-1 effect); it does not affect the verdict, because the cited 14-case log and an offline equivalent cover it. No new findings."
+}

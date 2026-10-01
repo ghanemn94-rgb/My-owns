@@ -1,0 +1,38 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-213",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The fix (7525b11, T-DG1-BE10, D-055) is in frozen candidate sha256:05915c32b3f5c5b2a9e14324a70fbf5cd16e76a48bc3235d6cc30b290591babd. The source commit is 273d21f; HEAD 07f1a54 adds only candidate-excluded metadata, and the ID recomputes identically in a full, non-shallow clone. Code: architecture.testkit.ts replaces the PROCESS_LOADERS and LOADER_BUILTINS denylists with the default-deny allow-lists SAFE_PROCESS_MEMBERS {env, exit, argv, once} (rule 3 now flags process.<member> unless the member is allow-listed) and SAFE_NODE_BUILTINS {crypto, fs, fs/promises, os, path, url, util} (bareAllowed). Replaying my round-8 gap probe, which asserted 0 violations, now fails on all three plants: D1, the full _debugProcess + fetch + WebSocket Runtime.evaluate route, reports 'non-allow-listed process._debugProcess member'; D2 reports the same; D3 reports 'non-allow-listed process.kill member' (12-r8-gap-probe-replay.log). The frozen self-checks pass 101/101, including DD1-DD20 and the positive controls. My independent probe passes 34/34 (11-r9-default-deny-probe.log). It does not use the implementer's table: it enumerates all 72 built-ins and all 120 process property names on Node v22.22.2 against a QA-held safe set, with none missed and none wrongly denied, plus 23 evasion spellings (process?.kill, .call, Reflect.apply/get, destructuring, indexing, aliasing, globalThis.process, node:process default/named, require/import()/export-from/import-type of loader built-ins) and 6 positive controls. Negative control: with the pre-fix testkit, my format-independent probe fails exactly on kill/_debugProcess/_kill/process?.kill (and v8/wasi/net/process.on), while routes the old lint already closed still pass (14-negative-control.log). A real file planted in modules/transformations turns the module-tree check red for kill, _debugProcess and node:inspector, and it is green again after removal (15-real-plant.log). The change is test-only: the code-path diff is architecture.test.ts plus architecture.testkit.ts, the testkit is excluded from the build, and module source uses only node:crypto/fs/path/url and no process member, so no legitimate import is denied (13-real-tree-and-scope.log). Unit 294/294, integration 200/200 twice, e2e 22/22 (EN+AR). The header's 'exhaustively' claim was removed, and the residuals are restated as (a) runtime data flow, (b) runtime code-gen + literal own-module import, and (c) WebAssembly. Scope note: the lint is static defence-in-depth for the module boundaries, not a runtime control; the SIGUSR1/_debugProcess capability still exists at Node runtime level.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-9/00-candidate.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/03-unit.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/10-arch-verbose.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/11-r9-default-deny-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/12-r8-gap-probe-replay.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/13-real-tree-and-scope.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/14-negative-control.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/15-real-plant.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r9-default-deny-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r8-debugprocess-lint-probe.test.ts",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-129",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "This is the same route as F-DG1-213, raised independently by code-security-reviewer. I verify it as a qualified non-author, as my round-9 assignment requires. process.kill(pid,'SIGUSR1') (N1) and process._debugProcess(pid) (N2) are now flagged by the default-deny SAFE_PROCESS_MEMBERS check in the candidate's self-checks (DD1, DD2, DD3 _kill, DD9 process?.kill: 10-arch-verbose.log). My independent enumeration probe flags them, every other process member on Node v22.22.2, and invented future members (11-r9-default-deny-probe.log). A real-file plant in the module tree turns the module-tree check red (15-real-plant.log). The pre-fix testkit fails these checks (negative control, 14-negative-control.log). Other loader/exec routes (node:inspector, inspector/promises, vm, worker_threads, child_process, sqlite, test, wasi, v8, net, http, module, process) are denied by default, and the safe set stays clean. The change is test-only, and the unit, integration and e2e suites are unaffected. This verification does not cover F-DG1-010, which belongs to domain-reviewer and is not assigned to me.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-9/10-arch-verbose.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/11-r9-default-deny-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/14-negative-control.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/15-real-plant.log",
+        "docs/delivery/test-evidence/DG1/qa/round-9/13-real-tree-and-scope.log",
+        "apps/api/src/architecture.testkit.ts"
+      ]
+    }
+  ]
+}
