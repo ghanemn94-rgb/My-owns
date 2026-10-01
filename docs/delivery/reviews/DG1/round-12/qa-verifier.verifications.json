@@ -1,0 +1,36 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG1-132",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on frozen candidate sha256:619d74ffa4e668933960fc14aa5d8c4c31850a2772972bceb647561be2efdfac (freeze 987ae02; the ID recomputes identically in a full disposable clone). Fix 792973b (T-DG1-BE13) is test-only. The r11->r12 manifest diff changes only apps/api/src/architecture.testkit.ts and architecture.test.ts, so no product runtime source changed. Rule 5 (NAMESPACE_RESTRICTED_BUILTINS = crypto, node:crypto) flags every namespace/default binding. The candidate self-check (E1-E5, N1-N10 and three controls) is green on Node v22.22.2 and v24.21.0. My independent probe (qa/tests/dg1-r12-rule5-probe.test.ts) runs 41/41 on both runtimes. It flags 21 binding forms, including ones not in the candidate's table: string-literal { \"default\" as c }, export { default } without alias, import c, * as d, template-literal import(), import().then, import attributes and multi-line. It flags the round-11 residual routes E1-E4 and X2, plus new X3 and X4, at the import. A runtime BFS (depth 4) over the 69 named exports of node:crypto never reaches setEngine or the module object, so named-only imports really close the enumeration route rather than relabel it. The 41 module files are clean, and the 5 that import node:crypto use named imports only. Spelled setEngine is still rule 1. Named imports, plain-object enumeration and namespace imports of other allow-listed built-ins stay allowed. Nothing regressed: unit 315/315 on both runtimes, integration 200/200 x3, e2e 22/22 on both runtimes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/08-r12-rule5-probe-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/08-r12-rule5-probe-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r12-rule5-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-12/07-f132-arch-selfcheck-extract.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/01b-candidate-diff-r11-r12.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/03-unit-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/04-unit-node24.log",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG1-133",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on frozen candidate sha256:619d74ff…dfac (freeze 987ae02). F-DG1-133's expected outcome is met by its first option: the lint closes the route with the narrow rule, so named imports only for node:crypto. At 987ae02 the testkit header no longer says 'not closable statically' and no longer cites identity/routes.ts or access/rules.ts as code a namespace ban would break (19-f133-wording-check.log). Residual (a) is now stated as plain-object/third-party data flow, 'ACCEPTED by choice (defence-in-depth lint over human-reviewed code)'. The rule-1 and member-audit wording now says enumeration is closed by rule 5, and architecture.test.ts:12-17 and :531-534 match. The cited plain-object idioms really exist: identity/routes.ts:35 (request.cookies) and access/rules.ts:55 (PERMISSIONS). The candidate's plain-object control and my P4 control both keep them allowed. One residual sentence lies outside this finding's scope, which named the header and the E-case comment: D-055 in docs/delivery/decisions.md still says 'reaching it by namespace enumeration is residual (a), F-DG1-132/215'. I raise it separately as F-DG1-216 (Low, docs-only).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/19-f133-wording-check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/07-f132-arch-selfcheck-extract.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/08-r12-rule5-probe-v24.21.0.log",
+        "apps/api/src/architecture.testkit.ts",
+        "apps/api/src/architecture.test.ts",
+        "apps/api/src/modules/identity/routes.ts",
+        "apps/api/src/modules/access/rules.ts"
+      ]
+    }
+  ]
+}

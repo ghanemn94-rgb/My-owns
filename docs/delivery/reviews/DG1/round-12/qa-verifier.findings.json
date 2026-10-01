@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG1-216",
+      "stage_id": "DG1",
+      "requirement": "REQ-S16-003",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-055 in docs/delivery/decisions.md (a candidate file) still says that reaching crypto.setEngine 'by namespace enumeration is residual (a), F-DG1-132/215'. Since rule 5 (F-DG1-132/133), the lint flags that route at the import, and the testkit header says it is CLOSED. The decision record contradicts the lint it documents.",
+      "reproduction": "Candidate sha256:619d74ff…dfac (freeze 987ae02). `git show 987ae02:docs/delivery/decisions.md | sed -n 7p | grep -o 'now banned by rule 1 (every spelled form; reaching it by namespace enumeration is residual (a), F-DG1-132/215)'` returns the sentence. Compare apps/api/src/architecture.testkit.ts:21-22 and :61-63 at the same commit ('the enumeration route is closed by rule 5'; 'is CLOSED by rule 5'). The r11->r12 manifest diff shows that decisions.md was not changed by the fix. The search for stale wording in the candidate (19-f133-wording-check.log, plus `git grep 'residual (a)|namespace enumeration' 987ae02`) finds this one sentence and no others outside metadata.",
+      "expected": "The D-055 text (or a new decision entry that supersedes it) records that the node:crypto namespace-enumeration route is closed by rule 5, named imports only (F-DG1-132/133). It no longer calls the route residual (a).",
+      "actual": "D-055 still describes the round-11 state, with enumeration as the accepted residual (a). The code and tests are correct, and only this decision record is stale. It is a documentation-accuracy defect in a delivery record with no runtime or security effect, so it is Low and non-mandatory and does not block DG1.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/19-f133-wording-check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/01b-candidate-diff-r11-r12.log",
+        "docs/delivery/decisions.md",
+        "apps/api/src/architecture.testkit.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG1/round-12/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-01T16:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG1 round 12 while verifying F-DG1-132/133. F-DG1-133's scope (the testkit header and the E-case comment) is fixed and verified. This is the one remaining stale statement, in D-055. Proposed ID: the next free number in the qa 2xx range (F-DG1-216); the orchestrator may renumber. Low and non-mandatory. I would accept it as an observation if the auditor agrees, or it can be fixed by a one-line D-055 correction."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG1",
+  "round": 12,
+  "candidate_id": "sha256:619d74ffa4e668933960fc14aa5d8c4c31850a2772972bceb647561be2efdfac",
+  "source_commit": "987ae029473f62c21e449e63178dedbe32201151",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG1-T-DG1-REV-QA-R12-qa-verifier-20261001T160109Z-b50b5196",
+    "session_id": "b50b5196-0e6a-47f2-8026-1969069d48fb"
+  },
+  "implementation_author": ["backend-workflow-engineer", "frontend-ux-engineer", "delivery-orchestrator"],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no implementation in the reviewed scope. backend-workflow-engineer (T-DG1-BE13, fix 792973b) authored the rule-5 change to architecture.testkit.ts and architecture.test.ts, which are the only candidate files changed since round 11. The orchestrator froze the candidate. My only writes are QA evidence under docs/delivery/test-evidence/DG1/qa/ (round-12 logs and screenshots, plus one probe file, qa/tests/dg1-r12-rule5-probe.test.ts) and this round's qa-verifier review files. All code ran in disposable clones under $TMPDIR, which I removed afterwards (50-cleanup.log). I formed this verdict before reading any other round-12 reviewer record, and I have not read any. During my run the runner auto-committed the domain-reviewer round-12 records (HEAD e77be1a -> 163d0ca). I saw only their file names (00b-head-moved.log), and the candidate ID was unchanged. The earlier-round records I read were my own round-11 qa-verifier record and verifications sidecar, for procedure; the round-11 code-security findings sidecar, for the findings sidecar format and F-DG1-133's text; and the F-DG1-009/132/133/210/214 entries in findings.json."
+  },
+  "assignment": "docs/delivery/assignments/DG1/round-12/review-qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-025",
+    "REQ-DLV-033",
+    "REQ-DLV-042",
+    "REQ-S15-002",
+    "REQ-S15-005",
+    "REQ-S15-006",
+    "REQ-S16-001",
+    "REQ-S16-002",
+    "REQ-S16-003",
+    "REQ-S16-004",
+    "REQ-S19-004",
+    "REQ-S19-006"
+  ],
+  "checks_run": [
+    {
+      "id": "QA12-00-candidate",
+      "procedure": "Confirm the frozen candidate. Check HEAD and that the diff from the freeze commit to HEAD is metadata-only, then recompute the candidate ID in the working repo and in a full disposable clone at the freeze commit. Re-check after HEAD moved mid-run. Diff the per-file manifests of the round-11 and round-12 candidates.",
+      "command": "git rev-parse HEAD; git diff --stat 987ae02 HEAD; node tools/gates/candidate.mjs --stage DG1; git clone /home/user/My-owns $TMPDIR/review-qa && git checkout 987ae02 && node tools/gates/candidate.mjs --stage DG1; compare manifests e5cc6ef9 vs 619d74ff",
+      "environment": "Working repo /home/user/My-owns (HEAD e77be1a, later 163d0ca); disposable non-shallow clone under $TMPDIR; Node v24.21.0 / v22.22.2",
+      "expected": "candidate_id sha256:619d74ff…dfac (391 files) in both places; HEAD adds only candidate-excluded metadata; r11->r12 changes are test-only",
+      "actual": "HEAD e77be1a = 987ae02 plus 7 metadata files (the round-12 assignments, the 619d74ff manifest and stages.json). The recomputed ID is sha256:619d74ffa4e668933960fc14aa5d8c4c31850a2772972bceb647561be2efdfac (391 files) in the repo and in the clone (shallow=false). HEAD later moved to 163d0ca through one runner auto-commit that adds only the domain-reviewer round-12 records and run evidence. None of those files is in the manifest, and the ID is unchanged. Manifest diff r11->r12: only apps/api/src/architecture.test.ts and apps/api/src/architecture.testkit.ts changed (391 -> 391 files). No product runtime source changed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/00-candidate.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/00b-head-moved.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/01b-candidate-diff-r11-r12.log"
+      ]
+    },
+    {
+      "id": "QA12-01-install",
+      "procedure": "Offline frozen install in the disposable clone, from a copy of the local pnpm store",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/store/v10",
+      "environment": "Disposable clone @987ae02; Node v22.22.2; pnpm 10.33.0; no network",
+      "expected": "exit 0, lockfile unchanged",
+      "actual": "exit 0, lockfile-diff-lines=0. The mth-db bin warnings are expected before packages/db is built.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-001"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-12/01-install.log"]
+    },
+    {
+      "id": "QA12-02-build-static",
+      "procedure": "Build and static checks: build, typecheck, lint, OpenAPI lint (33 operations), no-CDN, Prettier, design-token contrast",
+      "command": "pnpm -r build; pnpm -r typecheck; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "Disposable clone @987ae02; Node v22.22.2",
+      "expected": "All exit 0; OpenAPI 3.1.1 with 33 operations; contrast PASS",
+      "actual": "All seven exit 0. 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 33 operations'; 'PASS no-cdn: scanned apps, packages'; 'All matched files use Prettier code style!'; 'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented'",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S15-002", "REQ-S15-005", "REQ-S16-002", "REQ-S19-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/02-build.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/02-typecheck.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/02-lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/02-openapi_lint.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/02-check_no-cdn.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/02-format_check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/02-contrast.log"
+      ]
+    },
+    {
+      "id": "QA12-03-unit-node22",
+      "procedure": "Unit suites (unit-node and unit-web) on Node 22, in aggregate and per project (verbose)",
+      "command": "PATH=/opt/node22/bin:$PATH pnpm test; npx vitest run --project unit-node --reporter=verbose; npx vitest run --project unit-web --reporter=verbose",
+      "environment": "Disposable clone @987ae02; Node v22.22.2",
+      "expected": "315 passed; unit-web 110/110",
+      "actual": "pnpm test: 21 files, 315 passed (315), exit 0. Per project: unit-node 205/205 and unit-web 110/110. 0 AbortSignal errors.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-002", "REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/03-unit-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/05-unit-node-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/05-unit-web-v22.22.2.log"
+      ]
+    },
+    {
+      "id": "QA12-04-unit-node24",
+      "procedure": "F-DG1-214 regression: unit suites on Node 24, in aggregate and per project. Count occurrences of 'Expected signal to be an instance of AbortSignal'.",
+      "command": "PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH pnpm test; npx vitest run --project unit-node|unit-web --reporter=verbose",
+      "environment": "Disposable clone @987ae02; Node v24.21.0",
+      "expected": "315 passed; unit-web 110/110; 0 AbortSignal failures",
+      "actual": "pnpm test: 21 files, 315 passed (315), exit 0; 'AbortSignal failures: 0'. Per project: unit-node 205/205 and unit-web 110/110. The F-DG1-004/F-DG1-210 EN/AR/fail-safe unit regressions are green. F-DG1-214 still holds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/04-unit-node24.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/05-unit-node-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/05-unit-web-v24.21.0.log"
+      ]
+    },
+    {
+      "id": "QA12-05-f132-arch-selfcheck",
+      "procedure": "F-DG1-132/133: architecture.test.ts on Node 22 and Node 24. Rule-5 cases E1-E5 and N1-N10 must be violations, and the positive controls (named crypto imports, plain-object enumeration, namespace/default of other allow-listed built-ins) must stay clean. The F-DG1-133 wording is checked at the freeze commit: 'not closable statically' and the identity/routes.ts / access/rules.ts justification are gone from the testkit, and the cited plain-object idiom really exists in module code.",
+      "command": "grep architecture.test.ts results from 05-unit-node-<v>.log; git show 987ae02:<testkit|test> | grep -niE 'not closable|identity/routes.ts|access/rules.ts|residual \\(a\\)|rule 5'; git grep -n 'residual (a)|namespace enumeration' 987ae02",
+      "environment": "Disposable clone @987ae02; Node v22.22.2 and v24.21.0; repo git objects",
+      "expected": "architecture.test.ts green on both runtimes; E1-E5/N1-N10 flagged; controls clean; header honest (accepted by choice for plain objects; enumeration closed by rule 5)",
+      "actual": "Both runtimes: all 22 rule-5/F-DG1-132/133 tests pass (E1-E5, N1-N10 and three controls) and 0 tests fail. In the testkit at 987ae02, 'not closable statically' and the identity/routes.ts / access/rules.ts citation no longer appear. Residual (a) is now plain-object/third-party data flow, 'ACCEPTED by choice'. identity/routes.ts:35 (request.cookies) and access/rules.ts:55 (PERMISSIONS) enumerate plain objects, which the plain-object control pins as allowed. One stale sentence outside F-DG1-133's scope remains: D-055 in docs/delivery/decisions.md (a candidate file) still says setEngine 'reaching it by namespace enumeration is residual (a), F-DG1-132/215'. I raise this as F-DG1-216 (Low, docs-only).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003", "REQ-S16-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/07-f132-arch-selfcheck-extract.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/19-f133-wording-check.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/05-unit-node-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/05-unit-node-v24.21.0.log"
+      ]
+    },
+    {
+      "id": "QA12-06-r12-rule5-probe",
+      "procedure": "Independent QA probe that does not rely on the implementer's E/N tables. P1: 21 namespace/default binding forms must be flagged, including forms not in the candidate table: string-literal { \"default\" as c }, export { default } without alias, export { \"default\" as c }, import c, * as d, template-literal import(), import().then, import attributes, multi-line, and bare 'crypto'. P2: the round-11 residual routes E1-E4, my round-11 extra X2, and new X3 (dynamic import + enumerate) and X4 ({ default as c } + enumerate) must be rule-5 violations. P3 (runtime): a depth-4 BFS over the own properties of every NAMED export of node:crypto must never reach crypto.setEngine or the module object, so named-only really closes enumeration. P4: positive controls clean. P5: the real module tree is clean, and every node:crypto import line is named-only. P6: spelled setEngine is still rule 1.",
+      "command": "cp docs/delivery/test-evidence/DG1/qa/tests/dg1-r12-rule5-probe.test.ts apps/api/src/ && npx vitest run --project unit-node apps/api/src/dg1-r12-rule5-probe.test.ts --reporter=verbose",
+      "environment": "Disposable clone @987ae02 (probe file removed afterwards; candidate ID recomputed 619d74ff); Node v22.22.2 and v24.21.0",
+      "expected": "41/41 on both runtimes",
+      "actual": "41 passed (41), exit 0 on both runtimes. P1: 21/21 forms flagged with the rule-5 message; bare 'crypto' and require() also get their pre-existing violations. P2: 7/7 routes flagged at the import. P3: 69 named exports, 208 objects visited, hits=[]. P4: 7/7 clean. P5: 41 module files, 5 of which import node:crypto, all named-only, 0 problems. P6: 4/4 'native loader via setEngine'. No undocumented route found.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/tests/dg1-r12-rule5-probe.test.ts",
+        "docs/delivery/test-evidence/DG1/qa/round-12/08-r12-rule5-probe-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/08-r12-rule5-probe-v24.21.0.log"
+      ]
+    },
+    {
+      "id": "QA12-07-integration-x3",
+      "procedure": "Integration suite against a real disposable PostgreSQL cluster (port 5492): run twice on Node 22 and once on Node 24. It includes A12/A13/A14 (tests/qa/integration) and the F-DG1-009 scratch-drop. The server log is captured per run and searched for 57P01 and 'terminating connection'.",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash -c 'pnpm test:integration; cp $TMPDIR/qa-pg.*/pg.log 09-int-runN-pg.log'",
+      "environment": "Disposable clone @987ae02; PostgreSQL 16.13 (Ubuntu) disposable cluster; Node v22.22.2 (runs 1, 2) and v24.21.0 (run 3)",
+      "expected": "Deterministic exit 0 on every run; 8 migrations applied to a fresh DB; no 57P01 or terminated connections (F-DG1-009)",
+      "actual": "Run 1 (v22): 19 files, 200 passed, exit 0. Run 2 (v22): 200 passed, exit 0. Run 3 (v24): 200 passed, exit 0. Each run: 'applied 8 migrations to a fresh database'; 57P01=0 and 'terminating connection'=0 in all three server logs. A12 14/14, A13 5/5 and A14 5/5 on every run. F-DG1-009 still holds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-004", "REQ-S19-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/09-int-run1-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/09-int-run1-pg.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/09-int-run2-v22.22.2.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/09-int-run2-pg.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/09-int-run3-v24.21.0.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/09-int-run3-pg.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/16-a12-a13-a14-extract.log"
+      ]
+    },
+    {
+      "id": "QA12-08-contract-and-audit-trigger",
+      "procedure": "Run the contract suite verbose: every Fastify route maps to an OpenAPI operation, including getBrandingTokens. Then run an independent audit-trigger probe on a fresh DB: migrate 0001-0008; app INSERT; UPDATE/DELETE/TRUNCATE as superuser and as owner, and DELETE as app; compare row counts before and after.",
+      "command": "QA_PG_PORT=5492 tests/qa/support/with-pg.sh bash -c 'npx vitest run --project integration apps/api/test/integration/contract --reporter=verbose; bash 10-audit-trigger-probe.sh'",
+      "environment": "Disposable clone @987ae02; PostgreSQL 16.13 disposable cluster; Node v22.22.2",
+      "expected": "Contract 9/9 incl. getBrandingTokens; migrations 0001-0008 recorded; every UPDATE/DELETE/TRUNCATE rejected; audit row count unchanged",
+      "actual": "Contract 9 passed (9), including 'branding tokens (getBrandingTokens)' and 'covers every operation'. 'applied 8 migration(s)', and schema_migration lists 0001-0008. Superuser and owner UPDATE/DELETE/TRUNCATE each fail with 'audit_event is append-only: … is not allowed' (exit 1). App DELETE fails with 'permission denied'. Audit rows: 1 before, 1 after. The 'role already exists' notices come from the contract run's global setup and are harmless.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-004", "REQ-S19-006", "REQ-S16-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/10-contract-and-audit-probe.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/10-audit-trigger-probe.sh"
+      ]
+    },
+    {
+      "id": "QA12-09-e2e-node22-node24",
+      "procedure": "Full Playwright e2e on the pre-installed Chromium with --workers=1 and a disposable PG on port 5493: journeys in EN and AR with axe, plus A20 bilingual shell and token CSS. Run on Node 22 and Node 24, keeping the axe summaries and the key EN/AR screenshots.",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 E2E_SCREENSHOT_DIR=$TMPDIR/shotsN e2e/support/qa-stack.sh npx playwright test --workers=1 --reporter=list",
+      "environment": "Disposable clone @987ae02; Chromium from /opt/pw-browsers; PostgreSQL 16.13; Node v22.22.2 and v24.21.0",
+      "expected": "22/22 on each runtime, including BU-Lead create -> Edit/Archive + audit trail without reload (F-DG1-210) in EN and AR; no serious/critical axe violations",
+      "actual": "Node 22: 22 passed (52.3s), exit 0. Node 24: 22 passed (47.0s), exit 0. Tests 9 and 20, 'a business-unit Lead creates a record: Edit/Archive and the audit trail appear without a reload (F-DG1-210)', are green in EN and AR. Axe: 15 pages per language, 0 violations of any impact. The AR screenshot (17a) shows the RTL layout with Edit/Archive and the audit trail after create, and the provisional wordmark badge.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S15-006", "REQ-S16-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/11-e2e-node22.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/12-e2e-node24.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/screenshots/en/axe-summary.json",
+        "docs/delivery/test-evidence/DG1/qa/round-12/screenshots/ar/axe-summary.json",
+        "docs/delivery/test-evidence/DG1/qa/round-12/screenshots/en/17a-lead-created-controls.png",
+        "docs/delivery/test-evidence/DG1/qa/round-12/screenshots/ar/17a-lead-created-controls.png",
+        "docs/delivery/test-evidence/DG1/qa/round-12/screenshots/en/01-sign-in.png",
+        "docs/delivery/test-evidence/DG1/qa/round-12/screenshots/ar/01-sign-in.png"
+      ]
+    },
+    {
+      "id": "QA12-10-f210-independent-spec",
+      "procedure": "F-DG1-210 re-confirmation with the QA-authored spec (from round 4, unchanged): BU Lead create -> Edit (save) -> Archive with no document reload; the refreshed /me adds only the new record's grant",
+      "command": "cp docs/delivery/test-evidence/DG1/qa/tests/dg1-r4-lead-create-edit-archive-no-reload.spec.ts e2e/ && PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5493 e2e/support/qa-stack.sh npx playwright test e2e/dg1-r4-lead-create-edit-archive-no-reload.spec.ts --workers=1",
+      "environment": "Disposable clone @987ae02 (spec removed afterwards); Chromium; PostgreSQL 16.13; Node v22.22.2",
+      "expected": "2/2 (EN, AR); documentLoads after form = 0; exactly one added grant",
+      "actual": "2 passed. EN and AR each show '/me reads after 201=1', exactly one added grant (the new transformation id) and 'documentLoads after form=0'. F-DG1-210 still holds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-002", "REQ-S16-003"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-12/13-f210-independent-spec.log"]
+    },
+    {
+      "id": "QA12-11-a18-clean-start",
+      "procedure": "A18 clean start from the documented commands at the freeze commit with a real offline frozen install. Steps: build; fresh PG; migrate and idempotent re-migrate; api and worker in production config; healthz/readyz; SPA ar/rtl; no dev login; restart; an unmigrated DB is not ready.",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 QA_A18_PG_PORT=5494 QA_A18_PORT=3181 e2e/clean-start/a18-clean-start.sh --commit 987ae029473f62c21e449e63178dedbe32201151 --install",
+      "environment": "Fresh checkout made by the script; Node v22.22.2; PostgreSQL 16.13",
+      "expected": "A18 CLEAN START: PASS",
+      "actual": "'A18 CLEAN START: PASS (commit 987ae02…; install step: pnpm install --frozen-lockfile --offline; total 26.4 s)', 0 FAIL lines. Restart readyz is 200; on an unmigrated DB, readyz is 503 with migrations pending.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033", "REQ-S16-001", "REQ-S16-004", "REQ-S19-004"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-12/14-a18-clean-start.log"]
+    },
+    {
+      "id": "QA12-12-a20-token-propagation",
+      "procedure": "A20 token propagation: in a separate fresh clone (offline install and build), change brand.deep in the token source, rebuild, and confirm that the rendered CSS follows in EN and AR. Attempt 1 failed only because the target clone did not exist yet; that log is kept.",
+      "command": "git clone /home/user/My-owns $TMPDIR/review-qa-a20 && git checkout 987ae02 && pnpm install --offline --frozen-lockfile && pnpm -r build; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_E2E_PG_PORT=5495 e2e/support/a20-token-propagation.sh $TMPDIR/review-qa-a20",
+      "environment": "Fresh disposable clone @987ae02 (candidate ID 619d74ff); Chromium; PostgreSQL 16.13; Node v22.22.2",
+      "expected": "A20 token propagation: PASS",
+      "actual": "'A20 token propagation: PASS (brand.deep rendered as #6B1D5C, original #003B73)', 2 passed (EN, AR), exit 0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/15-a20-token-propagation.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/15-a20-token-propagation.attempt1-no-clone.log"
+      ]
+    },
+    {
+      "id": "QA12-13-req-dlv-042-installer",
+      "procedure": "REQ-DLV-042: confirm that tools/deps and the 14-case installer acceptance log are unchanged since round 11, and that the register cites that log",
+      "command": "git diff --stat 32e6478 987ae02 -- tools/deps/ docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log; grep -c ^PASS/^FAIL <log>; grep REQ-DLV-042 docs/delivery/requirements.csv",
+      "environment": "Repo git objects",
+      "expected": "Unchanged; log 14 PASS / 0 FAIL; register cites it",
+      "actual": "tools/deps and the log are unchanged (empty diff). The log has 14 PASS / 0 FAIL ('install-sandbox acceptance: 14 passed, 0 failed'), and the register cites install-sandbox-acceptance.log. My own re-run of the suite is recorded separately as QA12-13b.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/17-req-dlv-042-installer.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/17b-ac1-effect-BLOCKED.log",
+        "docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log"
+      ]
+    },
+    {
+      "id": "QA12-13b-ac1-effect-rerun",
+      "procedure": "REQ-DLV-042: re-run the installer acceptance suite in the disposable clone, then isolate the AC-1 (effect) sub-case (a sandboxed 'create' of a fixture that depends on is-number@7.0.0)",
+      "command": "npm_config_store_dir=$TMPDIR/store/v10 bash tools/deps/tests/install-sandbox.test.sh; npm_config_store_dir=$TMPDIR/store/v10 tools/deps/install-sandbox.sh --root $TMPDIR/ac1p create",
+      "environment": "Disposable clone @987ae02; Node v22.22.2; bubblewrap; reviewer sandbox with no registry network; the fixture package is not in the local store",
+      "expected": "14/14; node_modules/is-number populated",
+      "actual": "Suite: 13 passed, 1 failed (exit 1). AC-1 (write refused), AC-2 to AC-10 and every isolation property pass. The only failure is 'AC-1 (effect)', which is BLOCKED by the environment: ERR_PNPM_META_FETCH_FAIL GET https://registry.npmjs.org/is-number (ECONNREFUSED 127.0.0.1:3128; no registry access in the reviewer sandbox). It is not a product failure. tools/deps is unchanged, and I rely on the recorded 14-case orchestrator run (QA12-13) for this sub-case.",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "requirements": ["REQ-DLV-042"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/17-req-dlv-042-installer.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/17b-ac1-effect-BLOCKED.log"
+      ]
+    },
+    {
+      "id": "QA12-14-ci-needs-fonts-wordmark",
+      "procedure": "REQ-DLV-025: the CI-needs structure check. REQ-S15-005: the built SPA has no font CDN references and bundles its fonts locally. REQ-S15-006: the provisional wordmark strings are present (and visible in the screenshots).",
+      "command": "node deploy/scripts/check-ci-needs.mjs; grep font CDNs in apps/web/dist; count woff/woff2 in apps/web/dist/assets; grep -rli provisional apps/web/src",
+      "environment": "Disposable clone @987ae02 after build; Node v22.22.2",
+      "expected": "check-ci-needs OK; 0 CDN refs; local font files present; provisional wordmark present",
+      "actual": "'OK: .github/workflows/ci.yml: 5 jobs; first job delivery-gates …; every other job depends on it'. 0 CDN references and 12 local woff/woff2 assets. 6 source files carry 'provisional', and the AR/EN screenshots show the provisional wordmark badge.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-025", "REQ-S15-005", "REQ-S15-006"],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-12/20-ci-needs-fonts-wordmark.log"]
+    },
+    {
+      "id": "QA12-15-validators",
+      "procedure": "Gate validator: register rules at DG1, pipeline, reconcile",
+      "command": "node tools/gates/validate.mjs --register DG1; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --reconcile",
+      "environment": "Repo /home/user/My-owns HEAD 163d0ca; Node v22.22.2",
+      "expected": "All three PASS (exit 0)",
+      "actual": "'PASS register rules at DG1' exit 0; 'PASS pipeline (active stage: DG1 REVIEWING)' exit 0; 'PASS reconcile (structure)' exit 0. The reconcile line 'round 12 qa-verifier: missing' is expected, because this record did not exist yet.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-033"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG1/qa/round-12/18-validate-registerDG1.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/18-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG1/qa/round-12/18-validate-reconcile.log"
+      ]
+    },
+    {
+      "id": "QA12-16-requirements-evidence",
+      "procedure": "For the 12 DG1-final requirements, check the register's final_gate and status, and that every cited evidence path exists as a file",
+      "command": "python3 over docs/delivery/requirements.csv (status, final_gate, evidence paths -> os.path.isfile)",
+      "environment": "Repo /home/user/My-owns HEAD 163d0ca",
+      "expected": "All 12 are final_gate DG1 and IMPLEMENTED, with 0 missing evidence files",
+      "actual": "All 12 are final_gate=DG1 and status=IMPLEMENTED. Evidence path counts are 4/21/4/5/7/4/8/5/13/11/16/5, and TOTAL missing is 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-025",
+        "REQ-DLV-033",
+        "REQ-DLV-042",
+        "REQ-S15-002",
+        "REQ-S15-005",
+        "REQ-S15-006",
+        "REQ-S16-001",
+        "REQ-S16-002",
+        "REQ-S16-003",
+        "REQ-S16-004",
+        "REQ-S19-004",
+        "REQ-S19-006"
+      ],
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-12/19-requirements-evidence.log"]
+    },
+    {
+      "id": "QA12-17-cleanup",
+      "procedure": "Remove the probe file from the clone, recompute the candidate ID, and delete every disposable clone, store copy and screenshot scratch",
+      "command": "rm apps/api/src/dg1-r12-rule5-probe.test.ts; node tools/gates/candidate.mjs --stage DG1; rm -rf $TMPDIR/review-qa $TMPDIR/review-qa-a20 $TMPDIR/store …",
+      "environment": "$TMPDIR scratch",
+      "expected": "No tracked changes; ID 619d74ff; nothing left",
+      "actual": "No tracked changes; ID sha256:619d74ff…dfac; 0 remaining review/pg/store dirs",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG1/qa/round-12/50-cleanup.log"]
+    }
+  ],
+  "findings": ["F-DG1-216"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG1/qa/round-12/00-candidate.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/01b-candidate-diff-r11-r12.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/03-unit-node22.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/04-unit-node24.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/07-f132-arch-selfcheck-extract.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/08-r12-rule5-probe-v22.22.2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/08-r12-rule5-probe-v24.21.0.log",
+    "docs/delivery/test-evidence/DG1/qa/tests/dg1-r12-rule5-probe.test.ts",
+    "docs/delivery/test-evidence/DG1/qa/round-12/09-int-run1-v22.22.2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/09-int-run2-v22.22.2.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/09-int-run3-v24.21.0.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/10-contract-and-audit-probe.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/11-e2e-node22.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/12-e2e-node24.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/13-f210-independent-spec.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/14-a18-clean-start.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/15-a20-token-propagation.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/16-a12-a13-a14-extract.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/17-req-dlv-042-installer.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/18-validate-registerDG1.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/19-f133-wording-check.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/19-requirements-evidence.log",
+    "docs/delivery/test-evidence/DG1/qa/round-12/50-cleanup.log"
+  ],
+  "reviewed_at": "2026-10-01T16:20:00Z",
+  "summary": "PASS on candidate sha256:619d74ff…dfac (freeze 987ae02). The only change since round 11 is the test-side module lint (architecture.testkit.ts and architecture.test.ts). F-DG1-132 and F-DG1-133 verify. Rule 5 flags every namespace/default binding form of node:crypto, 21 forms in my independent probe and 7 enumeration routes, on Node 22 and Node 24. A runtime BFS confirms that named exports cannot reach setEngine. The real tree (5 crypto-importing files of 41) is named-only. Plain-object enumeration stays allowed, and the header's residual (a) is honest. No regression on either runtime: unit 315/315 (unit-web 110/110 on Node 24, so F-DG1-214 holds); integration 200/200 three times with 0 57P01 (F-DG1-009 holds); e2e 22/22 on both runtimes, including F-DG1-210 in EN and AR, and the QA F-DG1-210 spec 2/2; contract 9/9 with getBrandingTokens; migrations 0001-0008; the audit trigger rejects UPDATE/DELETE/TRUNCATE; A12/A13/A14/A18/A20 all PASS; validators PASS; 12/12 requirements IMPLEMENTED with 0 missing evidence. BLOCKED sub-check: REQ-DLV-042 AC-1 (effect) needs registry network; tools/deps and its 14/14 recorded log are unchanged. New finding: F-DG1-216 (Low, non-mandatory). D-055 in decisions.md still calls the setEngine enumeration route 'residual (a)', which contradicts rule 5."
+}
