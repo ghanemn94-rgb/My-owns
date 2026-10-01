@@ -5,6 +5,8 @@
 //  2. a module reaches into the composition root (server.ts, main.ts, index.ts, modules.ts) - except that a module's
 //     own *.test.ts may read the module map and the lint itself;
 //  3. a module evades the check: computed import()/require() specifiers, createRequire, or node:module (F-DG1-109);
+//     process.getBuiltinModule / computed members of process or globalThis, Function/eval/.constructor() code
+//     evaluation, or node:vm / worker_threads (F-DG1-117);
 //  4. a module directory is not in the module map, a P1 module has no index.ts, or a §16 business module has no
 //     test suite of its own (A12, D-048);
 //  5. the declared module graph has a cycle, or audit/access depend on a business module;
@@ -73,7 +75,7 @@ describe("API module boundaries (ADR-0002)", () => {
   });
 });
 
-describe("the checker itself catches planted violations (self-check, incl. F-DG1-109)", () => {
+describe("the checker itself catches planted violations (self-check, incl. F-DG1-109 and F-DG1-117)", () => {
   const planted = (mod: ApiModule, source: string, name = "planted.ts") =>
     fileViolations(mod, join(MODULES_DIR, mod, name), source);
 
@@ -115,6 +117,47 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     ],
     ["J undeclared module (via its index)", `import { x } from "../reporting/index.ts";`, /may not import module/],
     ["K unknown package", `import x from "left-pad";`, /imports package left-pad/],
+    // F-DG1-117: obfuscated loaders (process.getBuiltinModule with computed members, code evaluation).
+    [
+      "L getBuiltinModule + computed member",
+      `const m = (process.getBuiltinModule("node:module") as any)["create" + "Require"](import.meta.url)("../access/policy.ts");`,
+      /getBuiltinModule .* bypasses the module-interface check/,
+    ],
+    [
+      "L2 computed member of process",
+      `const g = (process as any)["getBuiltin" + "Module"]("node:module");`,
+      /computed member of process .* bypasses/,
+    ],
+    ["L3 loader name as a string key", `const g = (proc as any)["getBuiltinModule"];`, /getBuiltinModule .* bypasses/],
+    ["L4 process aliased", `const p: any = process;\nconst g = p[k];`, /process used as a value .* bypasses/],
+    ["L5 process destructured", `const { env, ...rest } = process;`, /process used as a value/],
+    [
+      "L6 computed member of globalThis",
+      `const p = (globalThis as any)["pro" + "cess"];`,
+      /computed member of globalThis/,
+    ],
+    ["L7 globalThis.process", `const g = globalThis.process.env;`, /globalThis\.process .* bypasses/],
+    [
+      "M new Function dynamic import",
+      `const m = new Function("s", "return import(s)")("../access/policy.ts");`,
+      /code evaluation via Function .* bypasses/,
+    ],
+    [
+      "M2 Function() call",
+      `const m = Function("return import('../access/policy.ts')")();`,
+      /code evaluation via Function/,
+    ],
+    ["M3 Function aliased", `const F = Function;\nnew F("return 1");`, /code evaluation via Function/],
+    ["M4 globalThis.Function", `const F = globalThis.Function;`, /globalThis\.Function/],
+    ["M5 eval", `const m = eval("import('../access/policy.ts')");`, /code evaluation via eval/],
+    [
+      "M6 AsyncFunction via .constructor",
+      `const m = (async () => {}).constructor("return import('../access/policy.ts')")();`,
+      /code evaluation via \.constructor\(\)/,
+    ],
+    ["M7 ['constructor'] member", `const C = (() => 0)["constructor"];`, /code evaluation via \["constructor"\]/],
+    ["M8 node:vm", `import vm from "node:vm";`, /imports package node:vm/],
+    ["M9 worker_threads", `import { Worker } from "worker_threads";`, /imports package worker_threads/],
   ])("%s is a violation", (_case, source, message) => {
     const v = planted("transformations", source);
     expect(v.length, `${_case}: ${JSON.stringify(v)}`).toBeGreaterThan(0);
@@ -130,6 +173,12 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
       `import { randomBytes } from "node:crypto";`,
       `import { toTransformation } from "./repository.ts";`,
       `export { x } from "./routes.ts";`,
+      // F-DG1-117 rules must not flag ordinary code: member reads of process, look-alike property names, types.
+      `const tz = process.env.TZ;`,
+      `const n = (process as NodeJS.Process).pid;`,
+      `const o = { process: 1, eval: 2, Function: 3 };\nconst e = o.eval + o.process + o.Function;`,
+      `let t: typeof process.env | undefined;`,
+      `class K { constructor() {} }\nconst k = new K();`,
     ].join("\n");
     expect(planted("transformations", clean)).toEqual([]);
   });

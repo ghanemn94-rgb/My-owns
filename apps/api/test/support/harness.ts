@@ -14,6 +14,7 @@ import { buildServer, type RouteRecord, type ServerOptions } from "../../src/ser
 import type { OidcService } from "../../src/modules/identity/index.ts";
 import { assertAcceptedRequest, assertContract } from "./contract.ts";
 import type {} from "../../../../packages/db/test/global-setup.ts";
+import { roleUrl } from "../../../../packages/db/test/helpers.ts";
 
 export const APP_ORIGIN = "http://localhost:3000";
 
@@ -46,9 +47,18 @@ export async function startApi(
     env?: Record<string, string>;
     oidc?: OidcService | null;
     migrationFiles?: ServerOptions["migrationFiles"];
+    /**
+     * Run against this (already migrated) scratch database of the run's cluster instead of the shared per-run
+     * database - for suites that must change shared data (e.g. the role catalogue) or add timing hooks, because the
+     * integration files of one run may execute concurrently.
+     */
+    database?: string;
   } = {},
 ): Promise<TestApi> {
-  const config = testConfig(options.env);
+  const { adminUrl } = inject("mthDb");
+  const config = testConfig(
+    options.database ? { DATABASE_URL: roleUrl(adminUrl, options.database, "mth_app"), ...options.env } : options.env,
+  );
   const pool = createPool(config.databaseUrl!, { max: 5, applicationName: "api-test" });
   const { app, db, routes } = await buildServer({
     config,
@@ -59,7 +69,10 @@ export async function startApi(
     ...(options.migrationFiles ? { migrationFiles: options.migrationFiles } : {}),
   });
   const owner = new pg.Pool({
-    connectionString: inject("mthDb").ownerUrl.replace(/\?.*$/, ""),
+    connectionString: (options.database ? roleUrl(adminUrl, options.database, null) : inject("mthDb").ownerUrl).replace(
+      /\?.*$/,
+      "",
+    ),
     options: "-c role=mth_owner",
     max: 2,
   });

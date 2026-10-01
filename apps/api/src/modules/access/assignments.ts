@@ -7,7 +7,15 @@ import type { RoleAssignment, RoleAssignmentCreate } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
 import { record, type AuditContext } from "../audit/index.ts";
 import { decodeCursor, filterHash, iso, isoOrNull, paginate, problems } from "../platform/index.ts";
-import { authorize, requireAction, requireRead, resolveTarget, scopeFilter, type Principal } from "./policy.ts";
+import {
+  authorize,
+  denialOf,
+  requireAction,
+  requireRead,
+  resolveTarget,
+  scopeFilter,
+  type Principal,
+} from "./policy.ts";
 import { decide, grantApplies, isApprovalPermission, type ResolvedTarget, type TargetLevel } from "./rules.ts";
 
 const selectAssignment = (db: DbOrTx) =>
@@ -452,18 +460,39 @@ export async function grantCreatorTransformationRoles(
       ![...g.permissions].some(isApprovalPermission),
   );
   if (sources.length === 0) return [];
-  const rows = await tx
+  // F-DG1-115: the source grants were read (loadGrants) without a lock, so a revoke of a source can be in flight.
+  // Lock every source row FOR SHARE and re-read it inside this transaction: FOR SHARE conflicts with the revoke's
+  // FOR UPDATE / UPDATE, so either (a) the revoke committed first - under READ COMMITTED the locked row is re-read in
+  // its latest version, we see revoked_at and derive nothing from it - or (b) we lock first, the revoke waits until
+  // this transaction commits, and its cascade (a new statement snapshot) then sees and revokes the derived row.
+  // Sorted ids give a stable lock order. The lock is taken on the assignment rows only (OF a), not on role rows.
+  const sourceIds = [...new Set(sources.map((g) => g.assignmentId))].sort();
+  const locked = await tx
     .selectFrom("scoped_assignment as a")
     .innerJoin("role as r", "r.id", "a.role_id")
-    .select(["a.id", "a.role_id", "a.effective_to", "r.code", "r.kind"])
-    .where(
-      "a.id",
-      "in",
-      sources.map((g) => g.assignmentId),
-    )
-    .where("a.revoked_at", "is", null)
-    .where("r.kind", "<>", "technical_admin")
+    .select(["a.id", "a.role_id", "a.effective_to", "a.revoked_at", "r.code", "r.kind"])
+    .where("a.id", "in", sourceIds)
+    .orderBy("a.id")
+    .forShare("a")
     .execute();
+  const rows = locked.filter((r) => r.revoked_at === null && r.kind !== "technical_admin");
+  const revokedMeanwhile = sourceIds.filter((sid) => !locked.some((r) => r.id === sid && r.revoked_at === null));
+  if (rows.length === 0 && revokedMeanwhile.length > 0) {
+    // Every grant that authorized this create has been revoked concurrently (the revoke is serialized before us).
+    // If no other grant of the principal authorizes the create either, the create itself is no longer authorized:
+    // fail it (the caller's transaction rolls back, so no transformation and no derived assignment are left).
+    const stillAuthorized = principal.grants.some(
+      (g) => !revokedMeanwhile.includes(g.assignmentId) && grantApplies(g, "transformation.create", businessUnitTarget),
+    );
+    if (!stillAuthorized) {
+      principal.tracker.decisions += 1;
+      // Audited like any failed authorization of a mutation (denials.ts, outside the rolled-back transaction).
+      throw problems
+        .forbidden("The assignment that authorized this create has been revoked.")
+        .withDenial(denialOf("transformation.create", businessUnitTarget));
+    }
+    return [];
+  }
   const created_: string[] = [];
   for (const src of rows) {
     const id = uuidv7();

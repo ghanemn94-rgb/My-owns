@@ -7,6 +7,16 @@
 //    substitutions included) - checked like a static import;
 //  - as violations in their own right: a computed `import(expr)` or `require(expr)` (the target cannot be checked),
 //    any use of `createRequire` (it builds an unchecked `require`), and any import of `module` / `node:module`.
+//  - F-DG1-117, obfuscated loaders (still a purely static check; nothing is executed):
+//     - the loader names `createRequire`, `getBuiltinModule`, `mainModule`, `_load` as identifiers, property names or
+//       string member keys (so `x["getBuiltinModule"]` is caught too);
+//     - a computed member of the runtime roots `process`, `globalThis`, `global` (`process["get" + "BuiltinModule"]`);
+//     - a runtime root used other than as `root.member` (aliased, passed, destructured: `const p = process`), and
+//       `globalThis.process` / `.Function` / `.eval` / `.require`;
+//     - code evaluation: `Function` / `eval` in any value position (`new Function("return import(s)")`), and
+//       `.constructor(...)` / `new x.constructor(...)` / `x["constructor"]` (e.g. the AsyncFunction constructor);
+//     - the built-ins that evaluate code: `vm`, `worker_threads` (with or without `node:`).
+//    Data flow through third-party code cannot be followed statically; the rules close every syntactic route.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,7 +32,13 @@ const apiPkg = JSON.parse(readFileSync(join(SRC, "../package.json"), "utf8")) as
 const THIRD_PARTY = new Set(Object.keys(apiPkg.dependencies).filter((d) => !d.startsWith("@mth/")));
 const SHARED_ALLOWED = new Set(["@mth/shared", "@mth/shared/schemas", "@mth/config", "@mth/db"]);
 /** Built-ins that hand out an unchecked loader; a module never needs them. */
-const LOADER_BUILTINS = new Set(["module", "node:module"]);
+const LOADER_BUILTINS = new Set(["module", "node:module", "vm", "node:vm", "worker_threads", "node:worker_threads"]);
+/** Names that reach a module loader at runtime (F-DG1-109, F-DG1-117). */
+const LOADER_NAMES = new Set(["createRequire", "getBuiltinModule", "mainModule", "_load"]);
+/** Global objects through which the runtime (and its loaders) can be reached by computed members. */
+const RUNTIME_ROOTS = new Set(["process", "globalThis", "global"]);
+/** Globals that evaluate a string as code - and can therefore contain an unchecked import(). */
+const CODE_EVALUATORS = new Set(["Function", "eval"]);
 /** Composition-root files a module's OWN TEST may read: the declarative module map and this lint (D-048). */
 const TEST_SUPPORT_FILES = new Set(["modules.ts", "architecture.testkit.ts"]);
 
@@ -47,6 +63,49 @@ export interface ScanResult {
   readonly specifiers: readonly string[];
   /** Constructs that evade the specifier check, described for the violation message. */
   readonly evasions: readonly string[];
+}
+
+/** Strips parentheses and type-only wrappers: `(process as any)` is still `process`. */
+function unwrap(node: ts.Expression): ts.Expression {
+  let n = node;
+  while (
+    ts.isParenthesizedExpression(n) ||
+    ts.isAsExpression(n) ||
+    ts.isNonNullExpression(n) ||
+    ts.isTypeAssertionExpression(n) ||
+    ts.isSatisfiesExpression(n)
+  )
+    n = n.expression;
+  return n;
+}
+
+const rootName = (node: ts.Expression): string | null => {
+  const n = unwrap(node);
+  return ts.isIdentifier(n) && RUNTIME_ROOTS.has(n.text) ? n.text : null;
+};
+
+/** True when `node` is an identifier in a VALUE position (not a property/member name, label or type). */
+function isValueReference(node: ts.Identifier): boolean {
+  const p = node.parent;
+  if (ts.isPropertyAccessExpression(p) && p.name === node) return false;
+  // Type positions: `typeof process.env`, `x: Function` (a QualifiedName occurs only inside types/namespaces).
+  if (ts.isQualifiedName(p) || ts.isTypeReferenceNode(p) || ts.isTypeQueryNode(p)) return false;
+  if (
+    (ts.isPropertyAssignment(p) ||
+      ts.isPropertyDeclaration(p) ||
+      ts.isPropertySignature(p) ||
+      ts.isMethodDeclaration(p) ||
+      ts.isMethodSignature(p) ||
+      ts.isGetAccessorDeclaration(p) ||
+      ts.isSetAccessorDeclaration(p) ||
+      ts.isEnumMember(p)) &&
+    p.name === node
+  )
+    return false;
+  if (ts.isBindingElement(p) && p.propertyName === node) return false;
+  if (ts.isImportSpecifier(p) || ts.isExportSpecifier(p) || ts.isLabeledStatement(p)) return false;
+  if (ts.isBreakOrContinueStatement(p)) return false;
+  return true;
 }
 
 function literalText(node: ts.Node | undefined): string | null {
@@ -85,12 +144,47 @@ export function scanSource(fileName: string, source: string): ScanResult {
         else evasions.push(`computed require() specifier (${at(node)})`);
       }
     }
-    if (
-      (ts.isIdentifier(node) && node.text === "createRequire") ||
-      (ts.isPropertyAccessExpression(node) && node.name.text === "createRequire")
-    ) {
-      if (!(ts.isPropertyAccessExpression(node.parent) && node.parent.name === node))
-        evasions.push(`createRequire (${at(node)})`);
+    // Loader names as identifiers or property names (F-DG1-109, F-DG1-117); as string keys below.
+    if (ts.isIdentifier(node) && LOADER_NAMES.has(node.text)) evasions.push(`${node.text} (${at(node)})`);
+    if (ts.isElementAccessExpression(node)) {
+      const root = rootName(node.expression);
+      if (root !== null) evasions.push(`computed member of ${root} (${at(node)})`);
+      const key = literalText(node.argumentExpression);
+      if (key !== null && LOADER_NAMES.has(key)) evasions.push(`${key} (${at(node)})`);
+      if (key !== null && (CODE_EVALUATORS.has(key) || key === "constructor"))
+        evasions.push(`code evaluation via ["${key}"] (${at(node)})`);
+    } else if (ts.isPropertyAccessExpression(node)) {
+      const root = rootName(node.expression);
+      if (root === "globalThis" || root === "global") {
+        const name = node.name.text;
+        if (RUNTIME_ROOTS.has(name) || CODE_EVALUATORS.has(name) || name === "require" || name === "module")
+          evasions.push(`${root}.${name} (${at(node)})`);
+      }
+      if (
+        node.name.text === "constructor" &&
+        (ts.isCallExpression(node.parent) || ts.isNewExpression(node.parent)) &&
+        node.parent.expression === node
+      )
+        evasions.push(`code evaluation via .constructor() (${at(node)})`);
+    } else if (ts.isIdentifier(node) && isValueReference(node)) {
+      if (CODE_EVALUATORS.has(node.text)) {
+        evasions.push(`code evaluation via ${node.text} (${at(node)})`);
+      } else if (RUNTIME_ROOTS.has(node.text)) {
+        // `process.env` / `(process as X).y` are member uses; anything else hands the runtime root on (an alias).
+        let up: ts.Node = node;
+        while (
+          ts.isParenthesizedExpression(up.parent) ||
+          ts.isAsExpression(up.parent) ||
+          ts.isNonNullExpression(up.parent) ||
+          ts.isTypeAssertionExpression(up.parent) ||
+          ts.isSatisfiesExpression(up.parent)
+        )
+          up = up.parent;
+        const wrappedMemberUse =
+          (ts.isPropertyAccessExpression(up.parent) || ts.isElementAccessExpression(up.parent)) &&
+          up.parent.expression === up;
+        if (!wrappedMemberUse) evasions.push(`${node.text} used as a value (${at(node)})`);
+      }
     }
     ts.forEachChild(node, visit);
   };
